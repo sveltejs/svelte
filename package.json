@@ -4,7 +4,8 @@
   "description": "The frameworkless UI framework",
   "main": "dist/svelte-compiler.js",
   "scripts": {
-    "test": "mocha --opts mocha.opts --recursive ./**/__test__.js"
+    "test": "mocha --opts mocha.opts --recursive ./**/__test__.js test/test.js",
+    "lint": "eslint compiler"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,9 @@
   },
   "homepage": "https://gitlab.com/Rich-Harris/svelte#README",
   "devDependencies": {
+    "eslint": "^3.10.2",
+    "eslint-plugin-import": "^2.2.0",
+    "jsdom": "^9.8.3",
     "mocha": "^3.1.2",
     "reify": "^0.4.0"
   },
