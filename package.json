@@ -1,0 +1,32 @@
+{
+  "name": "svelte",
+  "version": "1.0.0",
+  "description": "The frameworkless UI framework",
+  "main": "dist/svelte-compiler.js",
+  "scripts": {
+    "test": "mocha --opts mocha.opts --recursive ./**/__test__.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/Rich-Harris/svelte.git"
+  },
+  "keywords": [
+    "UI",
+    "framework",
+    "templates",
+    "templating"
+  ],
+  "author": "Rich Harris",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/Rich-Harris/svelte/issues"
+  },
+  "homepage": "https://gitlab.com/Rich-Harris/svelte#README",
+  "devDependencies": {
+    "mocha": "^3.1.2",
+    "reify": "^0.4.0"
+  },
+  "dependencies": {
+    "locate-character": "^2.0.0"
+  }
+}
