@@ -108,4 +108,39 @@ describe( 'parse', () => {
 			js: null
 		});
 	});
+
+	it( 'parses an {{#if}}...{{/if}} block', () => {
+		const template = `{{#if foo}}bar{{/if}}`;
+
+		assert.deepEqual( parse( template ), {
+			html: {
+				start: 0,
+				end: 21,
+				type: 'Fragment',
+				children: [
+					{
+						start: 0,
+						end: 21,
+						type: 'IfBlock',
+						expression: {
+							start: 6,
+							end: 9,
+							type: 'Identifier',
+							name: 'foo'
+						},
+						children: [
+							{
+								start: 11,
+								end: 14,
+								type: 'Text',
+								data: 'bar'
+							}
+						]
+					}
+				]
+			},
+			css: null,
+			js: null
+		});
+	});
 });

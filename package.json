@@ -32,7 +32,6 @@
   },
   "dependencies": {
     "acorn": "^4.0.3",
-    "deindent": "^0.1.0",
     "locate-character": "^2.0.0"
   }
 }

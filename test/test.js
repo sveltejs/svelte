@@ -1,11 +1,14 @@
 import { compile } from '../compiler/index.js';
 import * as assert from 'assert';
+import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
 
+const cache = {};
+
 require.extensions[ '.svelte' ] = function ( module, filename ) {
-	const source = fs.readFileSync( filename, 'utf-8' );
-	const { code } = compile( source );
+	const code = cache[ filename ];
+	if ( !code ) throw new Error( `not compiled: ${filename}` );
 
 	return module._compile( code, filename );
 };
@@ -39,22 +42,53 @@ describe( 'svelte', () => {
 	fs.readdirSync( 'test/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		it( dir, () => {
-			const config = loadConfig( dir );
+		const config = loadConfig( dir );
+
+		( config.solo ? it.only : it )( dir, () => {
+			let compiled;
+
+			try {
+				const source = fs.readFileSync( `test/samples/${dir}/main.svelte`, 'utf-8' );
+				compiled = compile( source );
+			} catch ( err ) {
+				if ( config.compileError ) {
+					config.compileError( err );
+					return;
+				} else {
+					throw err;
+				}
+			}
+
+			const { code } = compiled;
+
+			cache[ path.resolve( `test/samples/${dir}/main.svelte` ) ] = code;
 			const factory = require( `./samples/${dir}/main.svelte` ).default;
 
-			return env().then( window => {
-				const target = window.document.querySelector( 'main' );
+			if ( config.show ) {
+				console.log( code ); // eslint-disable-line no-console
+			}
 
-				const component = factory({
-					target,
-					data: config.data
+			return env()
+				.then( window => {
+					const target = window.document.querySelector( 'main' );
+
+					const component = factory({
+						target,
+						data: config.data
+					});
+
+					if ( config.html ) {
+						assert.equal( target.innerHTML, config.html );
+					}
+
+					if ( config.test ) {
+						config.test( component, target );
+					}
+				})
+				.catch( err => {
+					if ( !config.show ) console.log( code ); // eslint-disable-line no-console
+					throw err;
 				});
-
-				if ( config.html ) {
-					assert.equal( target.innerHTML, config.html );
-				}
-			});
 		});
 	});
 });

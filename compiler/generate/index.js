@@ -1,5 +1,7 @@
-import deindent from 'deindent';
-import walkHtml from './walkHtml.js';
+import deindent from './utils/deindent.js';
+import walkHtml from './utils/walkHtml.js';
+
+const ROOT = 'options.target';
 
 export default function generate ( parsed ) {
 	const counters = {
@@ -20,17 +22,28 @@ export default function generate ( parsed ) {
 	// create component
 
 	parsed.html.children.forEach( child => {
-		let currentElement = 'options.target';
-		const elementStack = [ currentElement ];
+		let current = {
+			target: ROOT,
+			indentation: 0,
+			block: []
+		};
+
+		const stack = [ current ];
 
 		walkHtml( child, {
 			enter ( node ) {
 				if ( node.type === 'Element' ) {
-					currentElement = `element_${counters.element++}`;
+					current = {
+						target: `element_${counters.element++}`,
+						indentation: current.indentation,
+						block: current.block
+					};
+
+					stack.push( current );
 
 					const renderBlock = deindent`
-						var ${currentElement} = document.createElement( '${node.name}' );
-						options.target.appendChild( ${currentElement} );
+						var ${current.target} = document.createElement( '${node.name}' );
+						options.target.appendChild( ${current.target} );
 					`;
 
 					renderBlocks.push( renderBlock );
@@ -40,14 +53,51 @@ export default function generate ( parsed ) {
 					// ` );
 
 					teardownBlocks.push( deindent`
-						${currentElement}.parentNode.removeChild( ${currentElement} );
+						${current.target}.parentNode.removeChild( ${current.target} );
 					` );
 				}
 
 				else if ( node.type === 'Text' ) {
+					if ( current.target === ROOT ) {
+						const identifier = `text_${counters.text++}`;
+
+						renderBlocks.push( deindent`
+							var ${identifier} = document.createTextNode( ${JSON.stringify( node.data )} );
+							${current.target}.appendChild( ${identifier} );
+						` );
+
+						teardownBlocks.push( deindent`
+							${identifier}.parentNode.removeChild( ${identifier} );
+						` );
+					}
+
+					else {
+						renderBlocks.push( deindent`
+							${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
+						` );
+					}
+				}
+
+				else if ( node.type === 'MustacheTag' ) {
+					const identifier = `text_${counters.text++}`;
+					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
+
 					renderBlocks.push( deindent`
-						${currentElement}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
+						var ${identifier} = document.createTextNode( '' );
+						${current.target}.appendChild( ${identifier} );
 					` );
+
+					updateBlocks.push( deindent`
+						if ( state.${expression} !== oldState.${expression} ) {
+							${identifier}.data = state.${expression};
+						}
+					` );
+
+					if ( current.target === ROOT ) {
+						teardownBlocks.push( deindent`
+							${identifier}.parentNode.removeChild( ${identifier} );
+						` );
+					}
 				}
 
 				else {
@@ -57,8 +107,8 @@ export default function generate ( parsed ) {
 
 			leave ( node ) {
 				if ( node.type === 'Element' ) {
-					elementStack.pop();
-					currentElement = elementStack[ elementStack.length - 1 ];
+					stack.pop();
+					current = stack[ stack.length - 1 ];
 				}
 			}
 		});
@@ -127,7 +177,7 @@ export default function generate ( parsed ) {
 
 			return component;
 		}
-	`.trim();
+	`;
 
 	return { code };
 }
