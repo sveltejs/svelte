@@ -1,8 +1,6 @@
 import * as assert from 'assert';
 
 export default {
-	solo: true,
-	show: true,
 	description: '{{#if}}...{{/if}} block',
 	data: {
 		visible: true
