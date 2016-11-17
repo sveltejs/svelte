@@ -1,7 +1,7 @@
 {
   "name": "svelte",
   "version": "0.0.1",
-  "description": "The frameworkless UI framework",
+  "description": "The magical disappearing UI framework",
   "main": "dist/svelte-compiler.js",
   "scripts": {
     "test": "mocha --opts mocha.opts --recursive ./**/__test__.js test/test.js",
