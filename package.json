@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "The frameworkless UI framework",
   "main": "dist/svelte-compiler.js",
   "scripts": {
@@ -31,6 +31,8 @@
     "reify": "^0.4.0"
   },
   "dependencies": {
+    "acorn": "^4.0.3",
+    "deindent": "^0.1.0",
     "locate-character": "^2.0.0"
   }
 }

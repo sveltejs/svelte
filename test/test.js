@@ -5,9 +5,9 @@ import jsdom from 'jsdom';
 
 require.extensions[ '.svelte' ] = function ( module, filename ) {
 	const source = fs.readFileSync( filename, 'utf-8' );
-	const compiled = compile( source );
+	const { code } = compile( source );
 
-	return module._compile( compiled, filename );
+	return module._compile( code, filename );
 };
 
 describe( 'svelte', () => {
@@ -29,6 +29,7 @@ describe( 'svelte', () => {
 				if ( err ) {
 					reject( err );
 				} else {
+					global.document = window.document;
 					fulfil( window );
 				}
 			});
