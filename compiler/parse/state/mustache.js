@@ -1,5 +1,7 @@
 import readExpression from '../read/expression.js';
 
+const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
+
 export default function mustache ( parser ) {
 	const start = parser.index;
 	parser.index += 2;
@@ -45,9 +47,6 @@ export default function mustache ( parser ) {
 
 		const expression = readExpression( parser );
 
-		parser.allowWhitespace();
-		parser.eat( '}}', true );
-
 		const block = {
 			start,
 			end: null,
@@ -55,6 +54,20 @@ export default function mustache ( parser ) {
 			expression,
 			children: []
 		};
+
+		parser.allowWhitespace();
+
+		// {{#each}} blocks must declare a context – {{#each list as item}}
+		if ( type === 'EachBlock' ) {
+			parser.eat( 'as', true );
+			parser.requireWhitespace();
+
+			block.context = parser.read( validIdentifier ); // TODO check it's not a keyword
+
+			parser.allowWhitespace();
+		}
+
+		parser.eat( '}}', true );
 
 		parser.current().children.push( block );
 		parser.stack.push( block );

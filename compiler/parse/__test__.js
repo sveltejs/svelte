@@ -143,4 +143,54 @@ describe( 'parse', () => {
 			js: null
 		});
 	});
+
+	it( 'parses an {{#each}}...{{/each}} block', () => {
+		const template = `{{#each animals as animal}}<p>{{animal}}</p>{{/each}}`;
+
+		assert.deepEqual( parse( template ), {
+			html: {
+				start: 0,
+				end: 53,
+				type: 'Fragment',
+				children: [
+					{
+						start: 0,
+						end: 53,
+						type: 'EachBlock',
+						expression: {
+							start: 8,
+							end: 15,
+							type: 'Identifier',
+							name: 'animals'
+						},
+						context: 'animal',
+						children: [
+							{
+								start: 27,
+								end: 44,
+								type: 'Element',
+								name: 'p',
+								attributes: [],
+								children: [
+									{
+										start: 30,
+										end: 40,
+										type: 'MustacheTag',
+										expression: {
+											start: 32,
+											end: 38,
+											type: 'Identifier',
+											name: 'animal'
+										}
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			css: null,
+			js: null
+		});
+	});
 });

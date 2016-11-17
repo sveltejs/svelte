@@ -39,6 +39,15 @@ export default function parse ( template ) {
 			}
 		},
 
+		read ( pattern ) {
+			const match = pattern.exec( this.template.slice( this.index ) );
+			if ( !match || match.index !== 0 ) return null;
+
+			parser.index += match[0].length;
+
+			return match[0];
+		},
+
 		readUntil ( pattern ) {
 			const match = pattern.exec( this.template.slice( this.index ) );
 			return this.template.slice( this.index, match ? ( this.index += match.index ) : this.template.length );
