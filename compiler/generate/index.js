@@ -6,10 +6,13 @@ const ROOT = 'options.target';
 
 export default function generate ( parsed, template ) {
 	const counters = {
+		fragment: 0,
 		element: 0,
 		text: 0,
 		anchor: 0,
-		if: 0
+		if: 0,
+		each: 0,
+		loop: 0
 	};
 
 	const initStatements = [];
@@ -160,6 +163,49 @@ export default function generate ( parsed, template ) {
 					stack.push( current );
 				}
 
+				else if ( node.type === 'EachBlock' ) {
+					const loopIndex = counters.loop++;
+
+					const anchor = `anchor_${counters.anchor++}`;
+
+					declarations.push( `var fragment_${loopIndex} = document.createDocumentFragment();` );
+					declarations.push( `var ${anchor};` );
+
+					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
+
+					current.renderBlocks.push( deindent`
+						${anchor} = document.createComment( '#each ${template.slice( node.expression.start, node.expression.end)}' );
+						${current.target}.appendChild( ${anchor} );
+					` );
+
+					current.removeBlocks.push( deindent`
+						${anchor}.parentNode.removeChild( ${anchor} );
+						${anchor} = null;
+					` );
+
+					current = {
+						target: current.target,
+						conditions: current.conditions,
+						renderBlocks: [],
+						removeBlocks: [],
+						anchor,
+						loopIndex
+					};
+
+					setStatements.push( deindent`
+						// TODO account for conditions (nested ifs)
+						if ( state.${expression} && !oldState.${expression} ) render_each_${loopIndex}();
+						else if ( !state.${expression} && oldState.${expression} ) remove_each_${loopIndex}();
+					` );
+
+					teardownStatements.push( deindent`
+						// TODO account for conditions (nested ifs)
+						if ( state.${expression} ) remove_each_${loopIndex}();
+					` );
+
+					stack.push( current );
+				}
+
 				else {
 					throw new Error( `Not implemented: ${node.type}` );
 				}
@@ -173,6 +219,90 @@ export default function generate ( parsed, template ) {
 						// (${line}:${column}) {{#if ${template.slice( node.expression.start, node.expression.end )}}}...{{/if}}
 						function ${current.renderName} () {
 							${current.renderBlocks.join( '\n\n' )}
+						}
+
+						function ${current.removeName} () {
+							${current.removeBlocks.join( '\n\n' )}
+						}
+					` );
+
+					stack.pop();
+					current = stack[ stack.length - 1 ];
+				}
+
+				else if ( node.type === 'EachBlock' ) {
+					const { line, column } = locator( node.start );
+
+					const loopIndex = current.loopIndex;
+
+					initStatements.push( deindent`
+						// (${line}:${column}) {{#each ${template.slice( node.expression.start, node.expression.end )}}}...{{/each}}
+						var each_${loopIndex} = {
+							iterations: [],
+
+							render () {
+								const target = document.createDocumentFragment();
+
+								let i;
+
+								for ( i = 0; i < state.${current.expression}.length; i += 1 ) {
+									if ( !this.iterations[i] ) {
+										this.iterations[i] = render_iteration_${loopIndex}( target );
+									}
+
+									const iteration = this.iterations[i];
+									update_iteration_${loopIndex}( this.iterations[i], state.people[i] );
+								}
+
+								for ( ; i < this.iterations.length; i += 1 ) {
+									remove_iteration_${loopIndex}( this.iterations[i] );
+								}
+
+								${current.anchor}.parentNode.insertBefore( target, ${current.anchor} );
+								loop_${loopIndex}.length = state.people.length;
+							},
+
+							renderIteration ( target ) {
+
+							},
+
+							update () {
+
+							},
+
+							updateIteration ( iteration, context ) {
+
+							},
+
+							remove () {
+
+							},
+
+							removeIteration ( iteration ) {
+
+							}
+						};
+
+						function ${current.renderName} () {
+							const target = document.createDocumentFragment();
+
+							let i;
+
+							for ( i = 0; i < state.${current.expression}.length; i += 1 ) {
+								if ( !loop_${loopIndex}[i] ) {
+									loop_${loopIndex}[i] = render_iteration_${loopIndex}( target );
+								}
+
+								const iteration = loop_${loopIndex}[i];
+								update_iteration_${loopIndex}( loop_${loopIndex}[i], state.people[i] );
+							}
+
+							for ( ; i < loop_${loopIndex}.length; i += 1 ) {
+								remove_iteration_${loopIndex}( loop_${loopIndex}[i] );
+							}
+
+							${current.anchor}.parentNode.insertBefore( target, ${current.anchor} );
+							loop_${loopIndex}.length = state.people.length;
 						}
 
 						function ${current.removeName} () {
