@@ -60,12 +60,26 @@ describe( 'svelte', () => {
 			}
 
 			const { code } = compiled;
+			const withLineNumbers = code.split( '\n' ).map( ( line, i ) => {
+				i = String( i + 1 );
+				while ( i.length < 3 ) i = ` ${i}`;
+
+				return `${i}: ${line}`;
+			}).join( '\n' );
 
 			cache[ path.resolve( `test/samples/${dir}/main.svelte` ) ] = code;
-			const factory = require( `./samples/${dir}/main.svelte` ).default;
+
+			let factory;
+
+			try {
+				factory = require( `./samples/${dir}/main.svelte` ).default;
+			} catch ( err ) {
+				console.log( withLineNumbers ); // eslint-disable-line no-console
+				throw err;
+			}
 
 			if ( config.show ) {
-				console.log( code ); // eslint-disable-line no-console
+				console.log( withLineNumbers ); // eslint-disable-line no-console
 			}
 
 			return env()
@@ -83,10 +97,13 @@ describe( 'svelte', () => {
 
 					if ( config.test ) {
 						config.test( component, target );
+					} else {
+						component.teardown();
+						assert.equal( target.innerHTML, '' );
 					}
 				})
 				.catch( err => {
-					if ( !config.show ) console.log( code ); // eslint-disable-line no-console
+					if ( !config.show ) console.log( withLineNumbers ); // eslint-disable-line no-console
 					throw err;
 				});
 		});

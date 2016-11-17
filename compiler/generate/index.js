@@ -1,31 +1,39 @@
+import { getLocator } from 'locate-character';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
 
 const ROOT = 'options.target';
 
-export default function generate ( parsed ) {
+export default function generate ( parsed, template ) {
 	const counters = {
 		element: 0,
 		text: 0,
-		anchor: 0
+		anchor: 0,
+		if: 0
 	};
 
-	const renderBlocks = [];
-	const updateBlocks = [];
-	const teardownBlocks = [];
-
-	const codeBlocks = [];
+	const initStatements = [];
+	const setStatements = [ deindent`
+		const oldState = state;
+		state = Object.assign( {}, oldState, newState );
+	` ];
+	const teardownStatements = [];
 
 	// TODO add contents of <script> tag, with `export default` replaced with `var template =`
 	// TODO css
 
-	// create component
+	const locator = getLocator( template );
 
 	parsed.html.children.forEach( child => {
+		const declarations = [];
+
 		let current = {
 			target: ROOT,
-			indentation: 0,
-			block: []
+			conditions: [],
+			children: [],
+			renderBlocks: [],
+			removeBlocks: [],
+			anchor: null
 		};
 
 		const stack = [ current ];
@@ -35,24 +43,30 @@ export default function generate ( parsed ) {
 				if ( node.type === 'Element' ) {
 					current = {
 						target: `element_${counters.element++}`,
-						indentation: current.indentation,
-						block: current.block
+						conditions: current.conditions,
+						children: current.children,
+						renderBlocks: current.renderBlocks,
+						removeBlocks: current.removeBlocks,
+						anchor: current.anchor
 					};
 
 					stack.push( current );
 
-					const renderBlock = deindent`
-						var ${current.target} = document.createElement( '${node.name}' );
-						options.target.appendChild( ${current.target} );
-					`;
+					declarations.push( `var ${current.target};` );
 
-					renderBlocks.push( renderBlock );
+					if ( current.anchor ) {
+						current.renderBlocks.push( deindent`
+							${current.target} = document.createElement( '${node.name}' );
+							${current.anchor}.parentNode.insertBefore( ${current.target}, ${current.anchor} );
+						` );
+					} else {
+						current.renderBlocks.push( deindent`
+							${current.target} = document.createElement( '${node.name}' );
+							options.target.appendChild( ${current.target} );
+						` );
+					}
 
-					// updateBlocks.push( deindent`
-					//
-					// ` );
-
-					teardownBlocks.push( deindent`
+					current.removeBlocks.push( deindent`
 						${current.target}.parentNode.removeChild( ${current.target} );
 					` );
 				}
@@ -61,18 +75,21 @@ export default function generate ( parsed ) {
 					if ( current.target === ROOT ) {
 						const identifier = `text_${counters.text++}`;
 
-						renderBlocks.push( deindent`
-							var ${identifier} = document.createTextNode( ${JSON.stringify( node.data )} );
+						declarations.push( `var ${identifier};` );
+
+						current.renderBlocks.push( deindent`
+							${identifier} = document.createTextNode( ${JSON.stringify( node.data )} );
 							${current.target}.appendChild( ${identifier} );
 						` );
 
-						teardownBlocks.push( deindent`
+						current.removeBlocks.push( deindent`
 							${identifier}.parentNode.removeChild( ${identifier} );
+							${identifier} = null;
 						` );
 					}
 
 					else {
-						renderBlocks.push( deindent`
+						current.renderBlocks.push( deindent`
 							${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
 						` );
 					}
@@ -82,22 +99,65 @@ export default function generate ( parsed ) {
 					const identifier = `text_${counters.text++}`;
 					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
 
-					renderBlocks.push( deindent`
-						var ${identifier} = document.createTextNode( '' );
+					declarations.push( `var ${identifier};` );
+
+					current.renderBlocks.push( deindent`
+						${identifier} = document.createTextNode( '' );
 						${current.target}.appendChild( ${identifier} );
 					` );
 
-					updateBlocks.push( deindent`
-						if ( state.${expression} !== oldState.${expression} ) {
+					setStatements.push( deindent`
+						if ( state.${expression} !== oldState.${expression} ) { // TODO and conditions
 							${identifier}.data = state.${expression};
 						}
 					` );
 
-					if ( current.target === ROOT ) {
-						teardownBlocks.push( deindent`
-							${identifier}.parentNode.removeChild( ${identifier} );
-						` );
-					}
+					current.removeBlocks.push( deindent`
+						${identifier}.parentNode.removeChild( ${identifier} );
+						${identifier} = null;
+					` );
+				}
+
+				else if ( node.type === 'IfBlock' ) {
+					const anchor = `anchor_${counters.anchor++}`;
+					const suffix = `if_${counters.if++}`;
+
+					declarations.push( `var ${anchor};` );
+
+					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
+
+					current.renderBlocks.push( deindent`
+						${anchor} = document.createComment( '#if ${template.slice( node.expression.start, node.expression.end)}' );
+						${current.target}.appendChild( ${anchor} );
+					` );
+
+					current.removeBlocks.push( deindent`
+						${anchor}.parentNode.removeChild( ${anchor} );
+						${anchor} = null;
+					` );
+
+					current = {
+						renderName: `render_${suffix}`,
+						removeName: `remove_${suffix}`,
+						target: current.target,
+						conditions: current.conditions.concat( expression ),
+						renderBlocks: [],
+						removeBlocks: [],
+						anchor
+					};
+
+					setStatements.push( deindent`
+						// TODO account for conditions (nested ifs)
+						if ( state.${expression} && !oldState.${expression} ) ${current.renderName}();
+						else if ( !state.${expression} && oldState.${expression} ) ${current.removeName}();
+					` );
+
+					teardownStatements.push( deindent`
+						// TODO account for conditions (nested ifs)
+						if ( state.${expression} ) ${current.removeName}();
+					` );
+
+					stack.push( current );
 				}
 
 				else {
@@ -106,13 +166,38 @@ export default function generate ( parsed ) {
 			},
 
 			leave ( node ) {
-				if ( node.type === 'Element' ) {
+				if ( node.type === 'IfBlock' ) {
+					const { line, column } = locator( node.start );
+
+					initStatements.push( deindent`
+						// (${line}:${column}) {{#if ${template.slice( node.expression.start, node.expression.end )}}}...{{/if}}
+						function ${current.renderName} () {
+							${current.renderBlocks.join( '\n\n' )}
+						}
+
+						function ${current.removeName} () {
+							${current.removeBlocks.join( '\n\n' )}
+						}
+					` );
+
+					stack.pop();
+					current = stack[ stack.length - 1 ];
+				}
+
+				else if ( node.type === 'Element' ) {
 					stack.pop();
 					current = stack[ stack.length - 1 ];
 				}
 			}
 		});
+
+		initStatements.push( ...current.renderBlocks );
+		teardownStatements.push( ...current.removeBlocks );
 	});
+
+	teardownStatements.push( deindent`
+		state = {};
+	` );
 
 	const code = deindent`
 		export default function createComponent ( options ) {
@@ -145,13 +230,6 @@ export default function generate ( parsed ) {
 				return state[ key ];
 			};
 
-			component.set = function set ( newState ) {
-				const oldState = state;
-				state = Object.assign( {}, oldState, newState );
-
-				${updateBlocks.join( '\n\n' )}
-			};
-
 			component.observe = function ( key, callback, options = {} ) {
 				const group = options.defer ? observers.deferred : observers.immediate;
 
@@ -166,12 +244,16 @@ export default function generate ( parsed ) {
 				};
 			};
 
-			component.teardown = function teardown () {
-				${teardownBlocks.join( '\n\n' )}
-				state = {};
+			// component-specific methods
+			component.set = function set ( newState ) {
+				${setStatements.join( '\n\n' )}
 			};
 
-			${renderBlocks.join( '\n\n' )}
+			component.teardown = function teardown () {
+				${teardownStatements.join( '\n\n' )}
+			};
+
+			${initStatements.join( '\n\n' )}
 
 			component.set( options.data );
 
