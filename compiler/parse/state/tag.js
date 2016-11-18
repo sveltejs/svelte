@@ -54,7 +54,7 @@ export default function tag ( parser ) {
 		}
 
 		parser.eat( '>', true );
-		parser[ special.id ] = special.read( parser, start, attributes );
+		parser[ special.property ] = special.read( parser, start, attributes );
 		return;
 	}
 

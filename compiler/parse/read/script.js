@@ -1,25 +1,38 @@
-import { parse, tokenizer, tokTypes } from 'acorn';
+import { parse, tokenizer } from 'acorn';
+
+function spaces ( i ) {
+	let result = '';
+	while ( i-- ) result += ' ';
+	return result;
+}
 
 export default function readScript ( parser, start, attributes ) {
 	const scriptStart = parser.index;
 	let scriptEnd = null;
 
-	const js = {
-		start,
-		end: null,
-		attributes,
-		content: null
-	};
-
-	const endPattern = /\s*<\/script\>/g;
-
 	for ( const token of tokenizer( parser.remaining() ) ) {
-		endPattern.lastIndex = scriptStart + token.end;
-		if ( endPattern.test( parser.template ) ) {
+		parser.index = scriptStart + token.end;
+		parser.allowWhitespace();
+
+		if ( parser.eat( '</script>' )  ) {
 			scriptEnd = scriptStart + token.end;
 			break;
 		}
 	}
 
-	js.content = parse( )
+	const source = spaces( scriptStart ) + parser.template.slice( scriptStart, scriptEnd );
+
+	const ast = parse( source, {
+		ecmaVersion: 8,
+		sourceType: 'module'
+	});
+
+	ast.start = scriptStart;
+
+	return {
+		start,
+		end: parser.index,
+		attributes,
+		content: ast
+	};
 }

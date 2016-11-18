@@ -67,7 +67,7 @@ export default function parse ( template ) {
 
 		html: {
 			start: 0,
-			end: template.length,
+			end: null,
 			type: 'Fragment',
 			children: []
 		},
@@ -84,6 +84,9 @@ export default function parse ( template ) {
 	while ( parser.index < parser.template.length ) {
 		state = state( parser ) || fragment;
 	}
+
+	const lastTemplateItem = parser.html.children[ parser.html.children.length - 1 ];
+	parser.html.end = lastTemplateItem ? lastTemplateItem.end : 0;
 
 	return {
 		html: parser.html,
