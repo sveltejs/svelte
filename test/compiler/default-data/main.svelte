@@ -1,0 +1,9 @@
+<h1>Hello {{name}}!</h1>
+
+<script>
+	export default {
+		data: () => ({
+			name: 'world'
+		})
+	};
+</script>

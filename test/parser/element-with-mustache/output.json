@@ -1,0 +1,43 @@
+{
+	"html": {
+		"start": 0,
+		"end": 24,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 24,
+				"type": "Element",
+				"name": "h1",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 10,
+						"type": "Text",
+						"data": "hello "
+					},
+					{
+						"start": 10,
+						"end": 18,
+						"type": "MustacheTag",
+						"expression": {
+							"start": 12,
+							"end": 16,
+							"type": "Identifier",
+							"name": "name"
+						}
+					},
+					{
+						"start": 18,
+						"end": 19,
+						"type": "Text",
+						"data": "!"
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

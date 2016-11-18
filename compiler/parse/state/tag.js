@@ -1,7 +1,21 @@
 import readExpression from '../read/expression.js';
+import readScript from '../read/script.js';
+import readStyle from '../read/style.js';
 
 const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
+
+const specials = {
+	script: {
+		read: readScript,
+		property: 'js'
+	},
+
+	style: {
+		read: readStyle,
+		property: 'css'
+	}
+};
 
 export default function tag ( parser ) {
 	const start = parser.index++;
@@ -30,6 +44,20 @@ export default function tag ( parser ) {
 
 	parser.allowWhitespace();
 
+	// special cases – <script> and <style>
+	if ( name in specials ) {
+		const special = specials[ name ];
+
+		if ( parser[ special.id ] ) {
+			parser.index = start;
+			parser.error( `You can only have one <${name}> tag per component` );
+		}
+
+		parser.eat( '>', true );
+		parser[ special.id ] = special.read( parser, start, attributes );
+		return;
+	}
+
 	const element = {
 		start,
 		end: null, // filled in later
@@ -43,9 +71,7 @@ export default function tag ( parser ) {
 
 	const selfClosing = parser.eat( '/' ) || voidElementNames.test( name );
 
-	if ( !parser.eat( '>' ) ) {
-		parser.error( `Expected >` );
-	}
+	parser.eat( '>', true );
 
 	if ( selfClosing ) {
 		element.end = parser.index;

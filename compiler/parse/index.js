@@ -63,20 +63,21 @@ export default function parse ( template ) {
 			}
 
 			this.allowWhitespace();
-		}
+		},
+
+		html: {
+			start: 0,
+			end: template.length,
+			type: 'Fragment',
+			children: []
+		},
+
+		css: null,
+
+		js: null
 	};
 
-	const html = {
-		start: 0,
-		end: template.length,
-		type: 'Fragment',
-		children: []
-	};
-
-	let css = null;
-	let js = null;
-
-	parser.stack.push( html );
+	parser.stack.push( parser.html );
 
 	let state = fragment;
 
@@ -84,5 +85,9 @@ export default function parse ( template ) {
 		state = state( parser ) || fragment;
 	}
 
-	return { html, css, js };
+	return {
+		html: parser.html,
+		css: parser.css,
+		js: parser.js
+	};
 }
