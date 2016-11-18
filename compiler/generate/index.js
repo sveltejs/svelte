@@ -266,7 +266,23 @@ export default function generate ( parsed, template ) {
 
 	renderers.push( createRenderer( current ) );
 
+	let js;
+	let hasDefaultData = false;
+
+	// TODO wrap all this in magic-string
+	if ( parsed.js ) {
+		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
+		if ( defaultExport ) {
+			js = `${template.slice( parsed.js.content.start, defaultExport.start )}const template = ${template.slice( defaultExport.declaration.start, parsed.js.content.end)}`;
+			hasDefaultData = defaultExport.declaration.properties.find( prop => prop.key.name === 'data' );
+		} else {
+			js = template.slice( parsed.js.content.start, parsed.js.content.end );
+		}
+	}
+
 	const code = deindent`
+		${js}
+
 		${renderers.reverse().join( '\n\n' )}
 
 		export default function createComponent ( options ) {
@@ -327,7 +343,7 @@ export default function generate ( parsed, template ) {
 			};
 
 			let mainFragment = renderMainFragment( options.target );
-			component.set( options.data );
+			component.set( ${hasDefaultData ? `Object.assign( template.data(), options.data )` : `options.data`} );
 
 			return component;
 		}
