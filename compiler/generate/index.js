@@ -1,332 +1,274 @@
 import { getLocator } from 'locate-character';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
+import flattenReference from './utils/flattenReference.js';
 
-const ROOT = 'options.target';
+function createRenderer ( fragment ) {
+	return deindent`
+		function ${fragment.name} ( target${fragment.useAnchor ? ', anchor' : ''} ) {
+			${fragment.initStatements.join( '\n\n' )}
+
+			return {
+				update: function ( ${fragment.contextChain.join( ', ' )} ) {
+					${fragment.updateStatements.join( '\n\n' )}
+				},
+
+				teardown: function () {
+					${fragment.teardownStatements.join( '\n\n' )}
+				}
+			}
+		}
+	`;
+}
 
 export default function generate ( parsed, template ) {
-	const counters = {
-		fragment: 0,
-		element: 0,
-		text: 0,
-		anchor: 0,
-		if: 0,
-		each: 0,
-		loop: 0
-	};
+	const locator = getLocator( template );
+	const renderers = [];
 
-	const initStatements = [];
-	const setStatements = [ deindent`
-		const oldState = state;
-		state = Object.assign( {}, oldState, newState );
-	` ];
-	const teardownStatements = [];
+	const counters = {
+		if: 0,
+		each: 0
+	};
 
 	// TODO add contents of <script> tag, with `export default` replaced with `var template =`
 	// TODO css
 
-	const locator = getLocator( template );
+	let current = {
+		useAnchor: false,
+		name: 'renderMainFragment',
+		target: 'target',
+
+		initStatements: [],
+		updateStatements: [],
+		teardownStatements: [],
+
+		contexts: {},
+		contextChain: [ 'context' ],
+
+		counters: {
+			element: 0,
+			text: 0,
+			anchor: 0
+		},
+
+		parent: null
+	};
+
+	function flattenExpression ( node, contexts ) {
+		const flattened = flattenReference( node );
+
+		if ( flattened ) {
+			if ( flattened.name in contexts ) return flattened.keypath;
+			// TODO handle globals, e.g. {{Math.round(foo)}}
+			return `context.${flattened.keypath}`;
+		}
+
+		throw new Error( 'TODO expressions' );
+	}
 
 	parsed.html.children.forEach( child => {
-		const declarations = [];
-
-		let current = {
-			target: ROOT,
-			conditions: [],
-			children: [],
-			renderBlocks: [],
-			removeBlocks: [],
-			anchor: null,
-			renderImmediately: true
-		};
-
-		const stack = [ current ];
-
 		walkHtml( child, {
 			Element: {
 				enter ( node ) {
-					const target = `element_${counters.element++}`;
+					const name = `element_${current.counters.element++}`;
 
-					stack.push( current );
-
-					declarations.push( `var ${target};` );
-
-					if ( current.renderImmediately ) {
-						current.renderBlocks.push( deindent`
-							${target} = document.createElement( '${node.name}' );
-							${current.target}.appendChild( ${target} );
-						` );
-					} else {
-						current.renderBlocks.push( deindent`
-							${target} = document.createElement( '${node.name}' );
-							${current.anchor}.parentNode.insertBefore( ${target}, ${current.anchor} );
-						` );
-					}
-
-					current.removeBlocks.push( deindent`
-						${target}.parentNode.removeChild( ${target} );
+					current.initStatements.push( deindent`
+						var ${name} = document.createElement( '${node.name}' );
 					` );
 
-					current = {
-						target,
-						conditions: current.conditions,
-						children: current.children,
-						renderBlocks: current.renderBlocks,
-						removeBlocks: current.removeBlocks,
-						anchor: current.anchor,
-						renderImmediately: false
-					};
+					current.teardownStatements.push( deindent`
+						${name}.parentNode.removeChild( ${name} );
+					` );
+
+					current = Object.assign( {}, current, {
+						target: name,
+						parent: current
+					});
 				},
 
 				leave () {
-					stack.pop();
-					current = stack[ stack.length - 1 ];
+					const name = current.target;
+
+					current = current.parent;
+
+					if ( current.useAnchor && current.target === 'target' ) {
+						current.initStatements.push( deindent`
+							target.insertBefore( ${name}, anchor );
+						` );
+					} else {
+						current.initStatements.push( deindent`
+							${current.target}.appendChild( ${name} );
+						` );
+					}
 				}
 			},
 
 			Text: {
 				enter ( node ) {
-					if ( current.target === ROOT ) {
-						const identifier = `text_${counters.text++}`;
-
-						declarations.push( `var ${identifier};` );
-
-						current.renderBlocks.push( deindent`
-							${identifier} = document.createTextNode( ${JSON.stringify( node.data )} );
-							${current.target}.appendChild( ${identifier} );
-						` );
-
-						current.removeBlocks.push( deindent`
-							${identifier}.parentNode.removeChild( ${identifier} );
-							${identifier} = null;
-						` );
-					}
-
-					else {
-						current.renderBlocks.push( deindent`
-							${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
-						` );
-					}
+					current.initStatements.push( deindent`
+						${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data ) }) );
+					` );
 				}
 			},
 
 			MustacheTag: {
 				enter ( node ) {
-					const identifier = `text_${counters.text++}`;
-					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
+					const name = `text_${current.counters.text++}`;
+					const expression = flattenExpression( node.expression, current.contexts );
 
-					declarations.push( `var ${identifier};` );
-
-					current.renderBlocks.push( deindent`
-						${identifier} = document.createTextNode( '' );
-						${current.target}.appendChild( ${identifier} );
+					current.initStatements.push( deindent`
+						var ${name} = document.createTextNode( '' );
+						var ${name}_value = '';
+						${current.target}.appendChild( ${name} );
 					` );
 
-					setStatements.push( deindent`
-						if ( state.${expression} !== oldState.${expression} ) { // TODO and conditions
-							${identifier}.data = state.${expression};
+					current.updateStatements.push( deindent`
+						if ( ${expression} !== ${name}_value ) {
+							${name}_value = ${expression};
+							${name}.data = ${name}_value;
 						}
-					` );
-
-					current.removeBlocks.push( deindent`
-						${identifier}.parentNode.removeChild( ${identifier} );
-						${identifier} = null;
 					` );
 				}
 			},
 
 			IfBlock: {
 				enter ( node ) {
-					const anchor = `anchor_${counters.anchor++}`;
-					const suffix = `if_${counters.if++}`;
+					const i = counters.if++;
+					const name = `ifBlock_${i}`;
+					const renderer = `renderIfBlock_${i}`;
 
-					declarations.push( `var ${anchor};` );
+					const expression = flattenExpression( node.expression, current.contexts );
 
-					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
-
-					current.renderBlocks.push( deindent`
-						${anchor} = document.createComment( '#if ${template.slice( node.expression.start, node.expression.end)}' );
-						${current.target}.appendChild( ${anchor} );
+					current.initStatements.push( deindent`
+						var ${name}_anchor = document.createComment( '#if ${template.slice( node.expression.start, node.expression.end )}' );
+						${current.target}.appendChild( ${name}_anchor );
+						var ${name} = null;
 					` );
 
-					current.removeBlocks.push( deindent`
-						${anchor}.parentNode.removeChild( ${anchor} );
-						${anchor} = null;
+					current.updateStatements.push( deindent`
+						if ( ${expression} && !${name} ) {
+							${name} = ${renderer}( ${current.target}, ${name}_anchor );
+						}
+
+						else if ( !${expression} && ${name} ) {
+							${name}.teardown();
+							${name} = null;
+						}
+
+						if ( ${name} ) {
+							${name}.update( context );
+						}
+					` );
+
+					current.teardownStatements.push( deindent`
+						if ( ${name} ) ${name}.teardown();
 					` );
 
 					current = {
-						renderName: `render_${suffix}`,
-						removeName: `remove_${suffix}`,
-						target: current.target,
-						conditions: current.conditions.concat( expression ),
-						renderBlocks: [],
-						removeBlocks: [],
-						anchor,
-						renderImmediately: false
+						useAnchor: true,
+						name: renderer,
+						target: 'target',
+
+						contextChain: current.contextChain,
+
+						initStatements: [],
+						updateStatements: [],
+						teardownStatements: [],
+
+						counters: {
+							element: 0,
+							text: 0,
+							anchor: 0
+						},
+
+						parent: current
 					};
-
-					setStatements.push( deindent`
-						// TODO account for conditions (nested ifs)
-						if ( state.${expression} && !oldState.${expression} ) ${current.renderName}();
-						else if ( !state.${expression} && oldState.${expression} ) ${current.removeName}();
-					` );
-
-					teardownStatements.push( deindent`
-						// TODO account for conditions (nested ifs)
-						if ( state.${expression} ) ${current.removeName}();
-					` );
-
-					stack.push( current );
 				},
 
-				leave ( node ) {
-					const { line, column } = locator( node.start );
-
-					initStatements.push( deindent`
-						// (${line}:${column}) {{#if ${template.slice( node.expression.start, node.expression.end )}}}...{{/if}}
-						function ${current.renderName} () {
-							${current.renderBlocks.join( '\n\n' )}
-						}
-
-						function ${current.removeName} () {
-							${current.removeBlocks.join( '\n\n' )}
-						}
-					` );
-
-					stack.pop();
-					current = stack[ stack.length - 1 ];
+				leave () {
+					renderers.push( createRenderer( current ) );
+					current = current.parent;
 				}
 			},
 
 			EachBlock: {
 				enter ( node ) {
-					const loopIndex = counters.loop++;
+					const i = counters.each++;
+					const name = `eachBlock_${i}`;
+					const renderer = `renderEachBlock_${i}`;
 
-					const anchor = `anchor_${counters.anchor++}`;
+					const expression = flattenExpression( node.expression, current.contexts );
 
-					declarations.push( `var fragment_${loopIndex} = document.createDocumentFragment();` );
-					declarations.push( `var ${anchor};` );
-
-					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
-
-					current.renderBlocks.push( deindent`
-						${anchor} = document.createComment( '#each ${template.slice( node.expression.start, node.expression.end)}' );
-						${current.target}.appendChild( ${anchor} );
+					current.initStatements.push( deindent`
+						var ${name}_anchor = document.createComment( '#each ${template.slice( node.expression.start, node.expression.end )}' );
+						${current.target}.appendChild( ${name}_anchor );
+						var ${name}_iterations = [];
+						const ${name}_fragment = document.createDocumentFragment();
 					` );
 
-					current.removeBlocks.push( deindent`
-						${anchor}.parentNode.removeChild( ${anchor} );
-						${anchor} = null;
+					current.updateStatements.push( deindent`
+						for ( var i = 0; i < ${expression}.length; i += 1 ) {
+							if ( !${name}_iterations[i] ) {
+								${name}_iterations[i] = ${renderer}( ${name}_fragment );
+							}
+
+							const iteration = ${name}_iterations[i];
+							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${expression}[i] );
+						}
+
+						for ( var i = ${expression}.length; i < ${name}_iterations.length; i += 1 ) {
+							${name}_iterations[i].teardown();
+						}
+
+						${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
+						${name}_iterations.length = ${expression}.length;
 					` );
+
+					current.teardownStatements.push( deindent`
+						for ( let i = 0; i < ${name}_iterations.length; i += 1 ) {
+							${name}_iterations[i].teardown();
+						}
+					` );
+
+					const contexts = Object.assign( {}, current.contexts );
+					contexts[ node.context ] = true;
 
 					current = {
-						target: `fragment_${loopIndex}`,
-						expression,
-						conditions: current.conditions,
-						renderBlocks: [],
-						removeBlocks: [],
-						anchor,
-						loopIndex,
-						renderImmediately: true
+						useAnchor: false,
+						name: renderer,
+						target: 'target',
+
+						contexts,
+						contextChain: current.contextChain.concat( node.context ),
+
+						initStatements: [],
+						updateStatements: [],
+						teardownStatements: [],
+
+						counters: {
+							element: 0,
+							text: 0,
+							anchor: 0
+						},
+
+						parent: current
 					};
-
-					setStatements.push( deindent`
-						// TODO account for conditions (nested ifs)
-						if ( '${expression}' in state ) each_${loopIndex}.update();
-					` );
-
-					// need to add teardown logic if this is at the
-					// top level (TODO or if there are event handlers attached?)
-					if ( current.target === ROOT ) {
-						teardownStatements.push( deindent`
-							if ( true ) { // <!-- TODO conditions
-								for ( let i = 0; i < state.${expression}.length; i += 1 ) {
-									each_${loopIndex}.removeIteration( i );
-								}
-							}
-						` );
-					}
-
-					stack.push( current );
 				},
 
-				leave ( node ) {
-					const { line, column } = locator( node.start );
+				leave () {
+					renderers.push( createRenderer( current ) );
 
-					const loopIndex = current.loopIndex;
-
-					initStatements.push( deindent`
-						// (${line}:${column}) {{#each ${template.slice( node.expression.start, node.expression.end )}}}...{{/each}}
-						${current.renderBlocks.join( '\n\n' )}
-
-						var each_${loopIndex} = {
-							iterations: [],
-
-							update: function () {
-								var target = document.createDocumentFragment();
-
-								var i;
-
-								for ( i = 0; i < state.${current.expression}.length; i += 1 ) {
-									if ( !this.iterations[i] ) {
-										this.iterations[i] = this.renderIteration( target );
-									}
-
-									const iteration = this.iterations[i];
-									this.updateIteration( this.iterations[i], state.${current.expression}[i] );
-								}
-
-								for ( ; i < this.iterations.length; i += 1 ) {
-									this.removeIteration( i );
-								}
-
-								${current.anchor}.parentNode.insertBefore( target, ${current.anchor} );
-								each_${loopIndex}.length = state.${current.expression}.length;
-							},
-
-							renderIteration: function ( target ) {
-								var fragment = fragment_0.cloneNode( true );
-
-								var element_0 = fragment.childNodes[0];
-								var text_0 = element_0.childNodes[0];
-
-								var iteration = {
-									element_0: element_0,
-									text_0: text_0
-								};
-
-								target.appendChild( fragment );
-								return iteration;
-							},
-
-							updateIteration: function ( iteration, context ) {
-								iteration.text_0.data = context;
-							},
-
-							removeIteration: function ( i ) {
-								var iteration = this.iterations[i];
-								iteration.element_0.parentNode.removeChild( iteration.element_0 );
-							}
-						};
-					` );
-
-					teardownStatements.push( ...current.removeBlocks );
-
-					stack.pop();
-					current = stack[ stack.length - 1 ];
+					current = current.parent;
 				}
 			}
 		});
-
-		initStatements.push( ...current.renderBlocks );
-		initStatements.unshift( declarations.join( '\n' ) );
-
-		teardownStatements.push( ...current.removeBlocks );
 	});
 
-	teardownStatements.push( 'state = {};' );
+	renderers.push( createRenderer( current ) );
 
 	const code = deindent`
+		${renderers.reverse().join( '\n\n' )}
+
 		export default function createComponent ( options ) {
 			var component = {};
 			var state = {};
@@ -373,16 +315,18 @@ export default function generate ( parsed, template ) {
 
 			// component-specific methods
 			component.set = function set ( newState ) {
-				${setStatements.join( '\n\n' )}
+				Object.assign( state, newState );
+				mainFragment.update( state );
 			};
 
 			component.teardown = function teardown () {
-				${teardownStatements.join( '\n\n' )}
+				mainFragment.teardown();
+				mainFragment = null;
+
+				state = {};
 			};
 
-			// initialisation
-			${initStatements.join( '\n\n' )}
-
+			let mainFragment = renderMainFragment( options.target );
 			component.set( options.data );
 
 			return component;

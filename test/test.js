@@ -64,7 +64,7 @@ describe( 'svelte', () => {
 				i = String( i + 1 );
 				while ( i.length < 3 ) i = ` ${i}`;
 
-				return `${i}: ${line}`;
+				return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
 			}).join( '\n' );
 
 			cache[ path.resolve( `test/samples/${dir}/main.svelte` ) ] = code;
