@@ -36,45 +36,56 @@ export default function generate ( parsed, template ) {
 			children: [],
 			renderBlocks: [],
 			removeBlocks: [],
-			anchor: null
+			anchor: null,
+			renderImmediately: true
 		};
 
 		const stack = [ current ];
 
 		walkHtml( child, {
-			enter ( node ) {
-				if ( node.type === 'Element' ) {
-					current = {
-						target: `element_${counters.element++}`,
-						conditions: current.conditions,
-						children: current.children,
-						renderBlocks: current.renderBlocks,
-						removeBlocks: current.removeBlocks,
-						anchor: current.anchor
-					};
+			Element: {
+				enter ( node ) {
+					const target = `element_${counters.element++}`;
 
 					stack.push( current );
 
-					declarations.push( `var ${current.target};` );
+					declarations.push( `var ${target};` );
 
-					if ( current.anchor ) {
+					if ( current.renderImmediately ) {
 						current.renderBlocks.push( deindent`
-							${current.target} = document.createElement( '${node.name}' );
-							${current.anchor}.parentNode.insertBefore( ${current.target}, ${current.anchor} );
+							${target} = document.createElement( '${node.name}' );
+							${current.target}.appendChild( ${target} );
 						` );
 					} else {
 						current.renderBlocks.push( deindent`
-							${current.target} = document.createElement( '${node.name}' );
-							options.target.appendChild( ${current.target} );
+							${target} = document.createElement( '${node.name}' );
+							${current.anchor}.parentNode.insertBefore( ${target}, ${current.anchor} );
 						` );
 					}
 
 					current.removeBlocks.push( deindent`
-						${current.target}.parentNode.removeChild( ${current.target} );
+						${target}.parentNode.removeChild( ${target} );
 					` );
-				}
 
-				else if ( node.type === 'Text' ) {
+					current = {
+						target,
+						conditions: current.conditions,
+						children: current.children,
+						renderBlocks: current.renderBlocks,
+						removeBlocks: current.removeBlocks,
+						anchor: current.anchor,
+						renderImmediately: false
+					};
+				},
+
+				leave () {
+					stack.pop();
+					current = stack[ stack.length - 1 ];
+				}
+			},
+
+			Text: {
+				enter ( node ) {
 					if ( current.target === ROOT ) {
 						const identifier = `text_${counters.text++}`;
 
@@ -97,8 +108,10 @@ export default function generate ( parsed, template ) {
 						` );
 					}
 				}
+			},
 
-				else if ( node.type === 'MustacheTag' ) {
+			MustacheTag: {
+				enter ( node ) {
 					const identifier = `text_${counters.text++}`;
 					const expression = node.expression.type === 'Identifier' ? node.expression.name : 'TODO'; // TODO handle block-local state
 
@@ -120,8 +133,10 @@ export default function generate ( parsed, template ) {
 						${identifier} = null;
 					` );
 				}
+			},
 
-				else if ( node.type === 'IfBlock' ) {
+			IfBlock: {
+				enter ( node ) {
 					const anchor = `anchor_${counters.anchor++}`;
 					const suffix = `if_${counters.if++}`;
 
@@ -146,7 +161,8 @@ export default function generate ( parsed, template ) {
 						conditions: current.conditions.concat( expression ),
 						renderBlocks: [],
 						removeBlocks: [],
-						anchor
+						anchor,
+						renderImmediately: false
 					};
 
 					setStatements.push( deindent`
@@ -161,9 +177,29 @@ export default function generate ( parsed, template ) {
 					` );
 
 					stack.push( current );
-				}
+				},
 
-				else if ( node.type === 'EachBlock' ) {
+				leave ( node ) {
+					const { line, column } = locator( node.start );
+
+					initStatements.push( deindent`
+						// (${line}:${column}) {{#if ${template.slice( node.expression.start, node.expression.end )}}}...{{/if}}
+						function ${current.renderName} () {
+							${current.renderBlocks.join( '\n\n' )}
+						}
+
+						function ${current.removeName} () {
+							${current.removeBlocks.join( '\n\n' )}
+						}
+					` );
+
+					stack.pop();
+					current = stack[ stack.length - 1 ];
+				}
+			},
+
+			EachBlock: {
+				enter ( node ) {
 					const loopIndex = counters.loop++;
 
 					const anchor = `anchor_${counters.anchor++}`;
@@ -184,137 +220,98 @@ export default function generate ( parsed, template ) {
 					` );
 
 					current = {
-						target: current.target,
+						target: `fragment_${loopIndex}`,
+						expression,
 						conditions: current.conditions,
 						renderBlocks: [],
 						removeBlocks: [],
 						anchor,
-						loopIndex
+						loopIndex,
+						renderImmediately: true
 					};
 
 					setStatements.push( deindent`
 						// TODO account for conditions (nested ifs)
-						if ( state.${expression} && !oldState.${expression} ) render_each_${loopIndex}();
-						else if ( !state.${expression} && oldState.${expression} ) remove_each_${loopIndex}();
+						if ( '${expression}' in state ) each_${loopIndex}.update();
 					` );
 
-					teardownStatements.push( deindent`
-						// TODO account for conditions (nested ifs)
-						if ( state.${expression} ) remove_each_${loopIndex}();
-					` );
+					// need to add teardown logic if this is at the
+					// top level (TODO or if there are event handlers attached?)
+					if ( current.target === ROOT ) {
+						teardownStatements.push( deindent`
+							if ( true ) { // <!-- TODO conditions
+								for ( let i = 0; i < state.${expression}.length; i += 1 ) {
+									each_${loopIndex}.removeIteration( i );
+								}
+							}
+						` );
+					}
 
 					stack.push( current );
-				}
+				},
 
-				else {
-					throw new Error( `Not implemented: ${node.type}` );
-				}
-			},
-
-			leave ( node ) {
-				if ( node.type === 'IfBlock' ) {
-					const { line, column } = locator( node.start );
-
-					initStatements.push( deindent`
-						// (${line}:${column}) {{#if ${template.slice( node.expression.start, node.expression.end )}}}...{{/if}}
-						function ${current.renderName} () {
-							${current.renderBlocks.join( '\n\n' )}
-						}
-
-						function ${current.removeName} () {
-							${current.removeBlocks.join( '\n\n' )}
-						}
-					` );
-
-					stack.pop();
-					current = stack[ stack.length - 1 ];
-				}
-
-				else if ( node.type === 'EachBlock' ) {
+				leave ( node ) {
 					const { line, column } = locator( node.start );
 
 					const loopIndex = current.loopIndex;
 
 					initStatements.push( deindent`
 						// (${line}:${column}) {{#each ${template.slice( node.expression.start, node.expression.end )}}}...{{/each}}
+						${current.renderBlocks.join( '\n\n' )}
+
 						var each_${loopIndex} = {
 							iterations: [],
 
-							render () {
-								const target = document.createDocumentFragment();
+							update: function () {
+								var target = document.createDocumentFragment();
 
-								let i;
+								var i;
 
 								for ( i = 0; i < state.${current.expression}.length; i += 1 ) {
 									if ( !this.iterations[i] ) {
-										this.iterations[i] = render_iteration_${loopIndex}( target );
+										this.iterations[i] = this.renderIteration( target );
 									}
 
 									const iteration = this.iterations[i];
-									update_iteration_${loopIndex}( this.iterations[i], state.people[i] );
+									this.updateIteration( this.iterations[i], state.${current.expression}[i] );
 								}
 
 								for ( ; i < this.iterations.length; i += 1 ) {
-									remove_iteration_${loopIndex}( this.iterations[i] );
+									this.removeIteration( i );
 								}
 
 								${current.anchor}.parentNode.insertBefore( target, ${current.anchor} );
-								loop_${loopIndex}.length = state.people.length;
+								each_${loopIndex}.length = state.${current.expression}.length;
 							},
 
-							renderIteration ( target ) {
+							renderIteration: function ( target ) {
+								var fragment = fragment_0.cloneNode( true );
 
+								var element_0 = fragment.childNodes[0];
+								var text_0 = element_0.childNodes[0];
+
+								var iteration = {
+									element_0: element_0,
+									text_0: text_0
+								};
+
+								target.appendChild( fragment );
+								return iteration;
 							},
 
-							update () {
-
+							updateIteration: function ( iteration, context ) {
+								iteration.text_0.data = context;
 							},
 
-							updateIteration ( iteration, context ) {
-
-							},
-
-							remove () {
-
-							},
-
-							removeIteration ( iteration ) {
-
+							removeIteration: function ( i ) {
+								var iteration = this.iterations[i];
+								iteration.element_0.parentNode.removeChild( iteration.element_0 );
 							}
 						};
-
-						function ${current.renderName} () {
-							const target = document.createDocumentFragment();
-
-							let i;
-
-							for ( i = 0; i < state.${current.expression}.length; i += 1 ) {
-								if ( !loop_${loopIndex}[i] ) {
-									loop_${loopIndex}[i] = render_iteration_${loopIndex}( target );
-								}
-
-								const iteration = loop_${loopIndex}[i];
-								update_iteration_${loopIndex}( loop_${loopIndex}[i], state.people[i] );
-							}
-
-							for ( ; i < loop_${loopIndex}.length; i += 1 ) {
-								remove_iteration_${loopIndex}( loop_${loopIndex}[i] );
-							}
-
-							${current.anchor}.parentNode.insertBefore( target, ${current.anchor} );
-							loop_${loopIndex}.length = state.people.length;
-						}
-
-						function ${current.removeName} () {
-							${current.removeBlocks.join( '\n\n' )}
-						}
 					` );
 
-					stack.pop();
-					current = stack[ stack.length - 1 ];
-				}
+					teardownStatements.push( ...current.removeBlocks );
 
-				else if ( node.type === 'Element' ) {
 					stack.pop();
 					current = stack[ stack.length - 1 ];
 				}
@@ -322,12 +319,12 @@ export default function generate ( parsed, template ) {
 		});
 
 		initStatements.push( ...current.renderBlocks );
+		initStatements.unshift( declarations.join( '\n' ) );
+
 		teardownStatements.push( ...current.removeBlocks );
 	});
 
-	teardownStatements.push( deindent`
-		state = {};
-	` );
+	teardownStatements.push( 'state = {};' );
 
 	const code = deindent`
 		export default function createComponent ( options ) {
@@ -383,6 +380,7 @@ export default function generate ( parsed, template ) {
 				${teardownStatements.join( '\n\n' )}
 			};
 
+			// initialisation
 			${initStatements.join( '\n\n' )}
 
 			component.set( options.data );

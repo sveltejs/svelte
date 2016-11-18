@@ -1,6 +1,9 @@
-export default function walkHtml ( html, { enter, leave } ) {
+export default function walkHtml ( html, visitors ) {
 	function visit ( node ) {
-		enter( node );
+		const visitor = visitors[ node.type ];
+		if ( !visitor ) throw new Error( `Not implemented: ${node.type}` );
+
+		if ( visitor.enter ) visitor.enter( node );
 
 		if ( node.children ) {
 			node.children.forEach( child => {
@@ -8,7 +11,7 @@ export default function walkHtml ( html, { enter, leave } ) {
 			});
 		}
 
-		leave( node );
+		if ( visitor.leave ) visitor.leave( node );
 	}
 
 	visit( html );
