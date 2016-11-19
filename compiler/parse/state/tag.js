@@ -62,6 +62,7 @@ export default function tag ( parser ) {
 	let attribute;
 	while ( attribute = readAttribute( parser ) ) {
 		attributes.push( attribute );
+		parser.allowWhitespace();
 	}
 
 	parser.allowWhitespace();
