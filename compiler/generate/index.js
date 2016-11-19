@@ -410,7 +410,7 @@ export default function generate ( parsed, template ) {
 							}
 
 							const iteration = ${name}_iterations[i];
-							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${expression}[i] );
+							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${expression}[i]${node.index ? `, i` : ''} );
 						}
 
 						for ( var i = ${expression}.length; i < ${name}_iterations.length; i += 1 ) {
@@ -425,10 +425,20 @@ export default function generate ( parsed, template ) {
 						for ( let i = 0; i < ${name}_iterations.length; i += 1 ) {
 							${name}_iterations[i].teardown();
 						}
+
+						${name}_anchor.parentNode.removeChild( ${name}_anchor );
 					` );
 
 					const contexts = Object.assign( {}, current.contexts );
+					const contextChain = current.contextChain.concat( node.context );
+
 					contexts[ node.context ] = true;
+
+					if ( node.index ) {
+						// not strictly a context, but we can treat it as such
+						contextChain.push( node.index );
+						contexts[ node.index ] = true;
+					}
 
 					current = {
 						useAnchor: false,
@@ -436,7 +446,7 @@ export default function generate ( parsed, template ) {
 						target: 'target',
 
 						contexts,
-						contextChain: current.contextChain.concat( node.context ),
+						contextChain,
 
 						initStatements: [],
 						updateStatements: [],
