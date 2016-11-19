@@ -3,7 +3,7 @@ export default function text ( parser ) {
 
 	let data = '';
 
-	while ( !parser.match( '<' ) && !parser.match( '{{' ) ) {
+	while ( parser.index < parser.template.length && !parser.match( '<' ) && !parser.match( '{{' ) ) {
 		data += parser.template[ parser.index++ ];
 	}
 

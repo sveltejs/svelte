@@ -1,7 +1,7 @@
 import { locate } from 'locate-character';
 import fragment from './state/fragment.js';
-
-const whitespace = /\s/;
+import { whitespace } from './patterns.js';
+import { trimStart, trimEnd } from './utils/trim.js';
 
 export default function parse ( template ) {
 	const parser = {
@@ -14,7 +14,7 @@ export default function parse ( template ) {
 		},
 
 		error ( message, index = this.index ) {
-			const { line, column } = locate( this.template, this.index );
+			const { line, column } = locate( this.template, index );
 			throw new Error( `${message} (${line}:${column})` );
 		},
 
@@ -66,7 +66,7 @@ export default function parse ( template ) {
 		},
 
 		html: {
-			start: 0,
+			start: null,
 			end: null,
 			type: 'Fragment',
 			children: []
@@ -85,8 +85,40 @@ export default function parse ( template ) {
 		state = state( parser ) || fragment;
 	}
 
-	const lastTemplateItem = parser.html.children[ parser.html.children.length - 1 ];
-	parser.html.end = lastTemplateItem ? lastTemplateItem.end : 0;
+	// trim unnecessary whitespace
+	while ( parser.html.children.length ) {
+		const firstChild = parser.html.children[0];
+		parser.html.start = firstChild.start;
+
+		if ( firstChild.type !== 'Text' ) break;
+
+		const length = firstChild.data.length;
+		firstChild.data = trimStart( firstChild.data );
+
+		if ( firstChild.data === '' ) {
+			parser.html.children.shift();
+		} else {
+			parser.html.start += length - firstChild.data.length;
+			break;
+		}
+	}
+
+	while ( parser.html.children.length ) {
+		const lastChild = parser.html.children[ parser.html.children.length - 1 ];
+		parser.html.end = lastChild.end;
+
+		if ( lastChild.type !== 'Text' ) break;
+
+		const length = lastChild.data.length;
+		lastChild.data = trimEnd( lastChild.data );
+
+		if ( lastChild.data === '' ) {
+			parser.html.children.pop();
+		} else {
+			parser.html.end -= length - lastChild.data.length;
+			break;
+		}
+	}
 
 	return {
 		html: parser.html,

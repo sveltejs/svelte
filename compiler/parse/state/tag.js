@@ -2,6 +2,7 @@ import readExpression from '../read/expression.js';
 import readScript from '../read/script.js';
 import readStyle from '../read/style.js';
 import { readEventHandlerDirective } from '../read/directives.js';
+import { trimStart, trimEnd } from '../utils/trim.js';
 
 const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
@@ -32,7 +33,25 @@ export default function tag ( parser ) {
 	if ( isClosingTag ) {
 		if ( !parser.eat( '>' ) ) parser.error( `Expected '>'` );
 
-		parser.current().end = parser.index;
+		const element = parser.current();
+
+		// strip leading/trailing whitespace as necessary
+		if ( element.children.length ) {
+			const firstChild = element.children[0];
+			const lastChild = element.children[ element.children.length - 1 ];
+
+			if ( firstChild.type === 'Text' ) {
+				firstChild.data = trimStart( firstChild.data );
+				if ( !firstChild.data ) element.children.shift();
+			}
+
+			if ( lastChild.type === 'Text' ) {
+				lastChild.data = trimEnd( lastChild.data );
+				if ( !lastChild.data ) element.children.pop();
+			}
+		}
+
+		element.end = parser.index;
 		parser.stack.pop();
 
 		return null;

@@ -1,0 +1,71 @@
+{
+	"html": {
+		"start": 0,
+		"end": 30,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 30,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 9,
+						"type": "MustacheTag",
+						"expression": {
+							"start": 6,
+							"end": 7,
+							"type": "Identifier",
+							"name": "a"
+						}
+					},
+					{
+						"start": 9,
+						"end": 10,
+						"type": "Text",
+						"data": " "
+					},
+					{
+						"start": 10,
+						"end": 15,
+						"type": "MustacheTag",
+						"expression": {
+							"start": 12,
+							"end": 13,
+							"type": "Identifier",
+							"name": "b"
+						}
+					},
+					{
+						"start": 15,
+						"end": 18,
+						"type": "Text",
+						"data": " : "
+					},
+					{
+						"start": 18,
+						"end": 23,
+						"type": "MustacheTag",
+						"expression": {
+							"start": 20,
+							"end": 21,
+							"type": "Identifier",
+							"name": "c"
+						}
+					},
+					{
+						"start": 23,
+						"end": 26,
+						"type": "Text",
+						"data": " :"
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

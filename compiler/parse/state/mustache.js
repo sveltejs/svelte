@@ -1,4 +1,6 @@
 import readExpression from '../read/expression.js';
+import { whitespace } from '../patterns.js';
+import { trimStart, trimEnd } from '../utils/trim.js';
 
 const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
 
@@ -10,12 +12,12 @@ export default function mustache ( parser ) {
 
 	// {{/if}} or {{/each}}
 	if ( parser.eat( '/' ) ) {
-		const current = parser.current();
+		const block = parser.current();
 		let expected;
 
-		if ( current.type === 'IfBlock' ) {
+		if ( block.type === 'IfBlock' ) {
 			expected = 'if';
-		} else if ( current.type === 'EachBlock' ) {
+		} else if ( block.type === 'EachBlock' ) {
 			expected = 'each';
 		} else {
 			parser.error( `Unexpected block closing tag` );
@@ -25,7 +27,25 @@ export default function mustache ( parser ) {
 		parser.allowWhitespace();
 		parser.eat( '}}', true );
 
-		current.end = parser.index;
+		// strip leading/trailing whitespace as necessary
+		if ( !block.children.length ) parser.error( `Empty block`, block.start );
+		const firstChild = block.children[0];
+		const lastChild = block.children[ block.children.length - 1 ];
+
+		const charBefore = parser.template[ block.start - 1 ];
+		const charAfter = parser.template[ parser.index ];
+
+		if ( firstChild.type === 'Text' && !charBefore || whitespace.test( charBefore ) ) {
+			firstChild.data = trimStart( firstChild.data );
+			if ( !firstChild.data ) block.children.shift();
+		}
+
+		if ( lastChild.type === 'Text' && !charAfter || whitespace.test( charAfter ) ) {
+			lastChild.data = trimEnd( lastChild.data );
+			if ( !lastChild.data ) block.children.pop();
+		}
+
+		block.end = parser.index;
 		parser.stack.pop();
 	}
 
