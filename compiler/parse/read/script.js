@@ -1,10 +1,5 @@
 import { parse, tokenizer } from 'acorn';
-
-function spaces ( i ) {
-	let result = '';
-	while ( i-- ) result += ' ';
-	return result;
-}
+import spaces from '../utils/spaces.js';
 
 export default function readScript ( parser, start, attributes ) {
 	const scriptStart = parser.index;
