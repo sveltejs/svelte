@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 
 export default {
-	description: 'hello world',
 	data: {
 		name: 'world'
 	},

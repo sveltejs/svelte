@@ -1,5 +1,4 @@
 export default {
-	description: 'nested {{#each}} blocks',
 	data: {
 		columns: [ 'a', 'b', 'c' ],
 		rows: [ 1, 2, 3 ]

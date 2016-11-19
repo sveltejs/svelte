@@ -1,0 +1,21 @@
+<button on:click='add1()'>+1</button>
+
+<p>{{counter}}</p>
+
+<script>
+	export default {
+		data: () => ({
+			counter: 0
+		}),
+
+		methods: {
+			add1 () {
+				this.set({ counter: this.get( 'counter' ) + 1 });
+			},
+
+			foo () {
+				return 42;
+			}
+		}
+	};
+</script>

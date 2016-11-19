@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 
 export default {
-	description: '{{#each}}...{{/each}} block',
 	data: {
 		animals: [ 'alpaca', 'baboon', 'capybara' ]
 	},

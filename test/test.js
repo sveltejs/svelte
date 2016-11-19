@@ -123,7 +123,7 @@ describe( 'svelte', () => {
 						}
 
 						if ( config.test ) {
-							config.test( component, target );
+							config.test( component, target, window );
 						} else {
 							component.teardown();
 							assert.equal( target.innerHTML, '' );

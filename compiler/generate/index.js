@@ -3,6 +3,7 @@ import { walk } from 'estree-walker';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
 import flattenReference from './utils/flattenReference.js';
+import contextualise from './utils/contextualise.js';
 import counter from './utils/counter.js';
 
 function createRenderer ( fragment ) {
@@ -26,22 +27,28 @@ function createRenderer ( fragment ) {
 export default function generate ( parsed, template ) {
 	const code = new MagicString( template );
 
-	let hasDefaultData = false;
-
-	// TODO wrap all this in magic-string
-	if ( parsed.js ) {
-		walk( parsed.js.content, {
+	function addSourcemapLocations ( node ) {
+		walk( node, {
 			enter ( node ) {
 				code.addSourcemapLocation( node.start );
 				code.addSourcemapLocation( node.end );
 			}
 		});
+	}
+
+	const templateProperties = {};
+
+	if ( parsed.js ) {
+		addSourcemapLocations( parsed.js.content );
 
 		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 		if ( defaultExport ) {
 			code.overwrite( defaultExport.start, defaultExport.declaration.start, `const template = ` );
-			hasDefaultData = defaultExport.declaration.properties.find( prop => prop.key.name === 'data' );
+
+			defaultExport.declaration.properties.forEach( prop => {
+				templateProperties[ prop.key.name ] = true;
+			});
 		}
 	}
 
@@ -65,7 +72,7 @@ export default function generate ( parsed, template ) {
 		teardownStatements: [],
 
 		contexts: {},
-		contextChain: [ 'context' ],
+		contextChain: [ 'root' ],
 
 		counter: counter(),
 
@@ -78,7 +85,7 @@ export default function generate ( parsed, template ) {
 		if ( flattened ) {
 			if ( flattened.name in contexts ) return flattened.keypath;
 			// TODO handle globals, e.g. {{Math.round(foo)}}
-			return `context.${flattened.keypath}`;
+			return `root.${flattened.keypath}`;
 		}
 
 		console.log( `node, contexts`, node, contexts )
@@ -96,31 +103,53 @@ export default function generate ( parsed, template ) {
 						`var ${name} = document.createElement( '${node.name}' );`
 					];
 
+					const updateStatements = [];
+
 					const teardownStatements = [
 						`${name}.parentNode.removeChild( ${name} );`
 					];
 
+					const allUsedContexts = new Set();
+
 					node.attributes.forEach( attribute => {
 						if ( attribute.type === 'EventHandler' ) {
-							// TODO use magic-string here, so that stack traces
-							// go through the template
-
 							// TODO verify that it's a valid callee (i.e. built-in or declared method)
-
 							const handler = current.counter( `${attribute.name}Handler` );
 
-							const callee = `component.${attribute.expression.callee.name}`;
-							const args = attribute.expression.arguments
-								.map( arg => flattenExpression( arg, current.contexts ) )
-								.join( ', ' );
+							addSourcemapLocations( attribute.expression );
+							code.insertRight( attribute.expression.start, 'component.' );
 
-							initStatements.push( deindent`
-								function ${handler} ( event ) {
-									${callee}(${args});
-								}
+							const usedContexts = new Set();
+							attribute.expression.arguments.forEach( arg => {
+								const contexts = contextualise( code, arg, current.contexts );
 
-								${name}.addEventListener( '${attribute.name}', ${handler}, false );
-							` );
+								contexts.forEach( context => {
+									usedContexts.add( context );
+									allUsedContexts.add( context );
+								});
+							});
+
+							// TODO hoist event handlers? can do `this.__component.method(...)`
+							if ( usedContexts.size ) {
+								initStatements.push( deindent`
+									function ${handler} ( event ) {
+										var context = this.__context;
+										${[...usedContexts].map( name => `var ${name} = context.${name}` ).join( '\n' )}
+
+										[✂${attribute.expression.start}-${attribute.expression.end}✂];
+									}
+
+									${name}.addEventListener( '${attribute.name}', ${handler}, false );
+								` );
+							} else {
+								initStatements.push( deindent`
+									function ${handler} ( event ) {
+										[✂${attribute.expression.start}-${attribute.expression.end}✂];
+									}
+
+									${name}.addEventListener( '${attribute.name}', ${handler}, false );
+								` );
+							}
 
 							teardownStatements.push( deindent`
 								${name}.removeEventListener( '${attribute.name}', ${handler}, false );
@@ -132,7 +161,18 @@ export default function generate ( parsed, template ) {
 						}
 					});
 
+					if ( allUsedContexts.size ) {
+						initStatements.push( deindent`
+							${name}.__context = {};
+						` );
+
+						updateStatements.push( deindent`
+							${[...allUsedContexts].map( contextName => `${name}.__context.${contextName} = ${contextName};` ).join( '\n' )}
+						` );
+					}
+
 					current.initStatements.push( initStatements.join( '\n' ) );
+					if ( updateStatements.length ) current.updateStatements.push( updateStatements.join( '\n' ) );
 					current.teardownStatements.push( teardownStatements.join( '\n' ) );
 
 					current = Object.assign( {}, current, {
@@ -211,7 +251,7 @@ export default function generate ( parsed, template ) {
 						}
 
 						if ( ${name} ) {
-							${name}.update( context );
+							${name}.update( ${current.contextChain.join( '\n' )} );
 						}
 					` );
 
@@ -319,7 +359,7 @@ export default function generate ( parsed, template ) {
 		${renderers.reverse().join( '\n\n' )}
 
 		export default function createComponent ( options ) {
-			var component = {};
+			var component = ${templateProperties.methods ? `Object.create( template.methods )` : `{}`};
 			var state = {};
 
 			var observers = {
@@ -374,13 +414,13 @@ export default function generate ( parsed, template ) {
 			};
 
 			let mainFragment = renderMainFragment( component, options.target );
-			component.set( ${hasDefaultData ? `Object.assign( template.data(), options.data )` : `options.data`} );
+			component.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
 
 			return component;
 		}
 	`;
 
-	const pattern = /\[✂(\d+)-(\d+)/;
+	const pattern = /\[✂(\d+)-(\d+)$/;
 
 	const parts = result.split( '✂]' );
 	const finalChunk = parts.pop();
@@ -404,7 +444,7 @@ export default function generate ( parsed, template ) {
 
 	sortedBySource.forEach( part => {
 		code.remove( c, part.start );
-		code.insertLeft( part.start, part.chunk );
+		code.insertRight( part.start, part.chunk );
 		c = part.end;
 	});
 

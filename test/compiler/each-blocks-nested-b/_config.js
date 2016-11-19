@@ -1,5 +1,4 @@
 export default {
-	description: 'nested {{#each}} blocks where inner iterates over property of outer',
 	data: {
 		categories: [
 			{
