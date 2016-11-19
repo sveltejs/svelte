@@ -3,10 +3,10 @@ export default function counter () {
 
 	return function ( label ) {
 		if ( label in counts ) {
-			return `label_${counts[ label ]++}`;
+			return `${label}${counts[ label ]++}`;
 		}
 
-		counts[ label ] = 0;
+		counts[ label ] = 1;
 		return label;
 	};
 }
