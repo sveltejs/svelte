@@ -165,15 +165,16 @@ function readQuotedAttributeValue ( parser, quoteMark ) {
 		}
 
 		else {
-			if ( parser.match( '{{' ) ) {
-				const index = parser.index;
+			const index = parser.index;
+
+			if ( parser.eat( '{{' ) ) {
 				currentChunk.end = index;
 
 				if ( currentChunk.data ) {
 					chunks.push( currentChunk );
 				}
 
-				const expression = readExpression();
+				const expression = readExpression( parser );
 				parser.allowWhitespace();
 				if ( !parser.eat( '}}' ) ) {
 					parser.error( `Expected }}` );

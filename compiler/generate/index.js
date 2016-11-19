@@ -6,6 +6,7 @@ import flattenReference from './utils/flattenReference.js';
 import isReference from './utils/isReference.js';
 import contextualise from './utils/contextualise.js';
 import counter from './utils/counter.js';
+import attributeLookup from './attributes/lookup.js';
 
 function createRenderer ( fragment ) {
 	return deindent`
@@ -115,7 +116,45 @@ export default function generate ( parsed, template ) {
 					const allUsedContexts = new Set();
 
 					node.attributes.forEach( attribute => {
-						if ( attribute.type === 'EventHandler' ) {
+						if ( attribute.type === 'Attribute' ) {
+							let metadata = attributeLookup[ attribute.name ];
+							if ( metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
+
+							if ( attribute.value === true ) {
+								// attributes without values, e.g. <textarea readonly>
+								if ( metadata ) {
+									initStatements.push( deindent`
+										${name}.${metadata.propertyName} = true;
+									` );
+								} else {
+									initStatements.push( deindent`
+										${name}.setAttribute( '${attribute.name}', true );
+									` );
+								}
+							}
+
+							else if ( attribute.value.length === 1 && attribute.value[0].type === 'Text' ) {
+								// static attributes
+								const value = JSON.stringify( attribute.value[0].data );
+
+								if ( metadata ) {
+									initStatements.push( deindent`
+										${name}.${metadata.propertyName} = ${value};
+									` );
+								} else {
+									initStatements.push( deindent`
+										${name}.setAttribute( '${attribute.name}', ${value} );
+									` );
+								}
+							}
+
+							else {
+								// need to handle boolean and string attributes differently
+								throw new Error( 'TODO dynamic attributes' );
+							}
+						}
+
+						else if ( attribute.type === 'EventHandler' ) {
 							// TODO verify that it's a valid callee (i.e. built-in or declared method)
 							const handler = current.counter( `${attribute.name}Handler` );
 
