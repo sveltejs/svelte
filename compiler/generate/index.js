@@ -2,7 +2,6 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
-import flattenReference from './utils/flattenReference.js';
 import isReference from './utils/isReference.js';
 import contextualise from './utils/contextualise.js';
 import counter from './utils/counter.js';
@@ -54,6 +53,13 @@ export default function generate ( parsed, template ) {
 		}
 	}
 
+	const helpers = {};
+	if ( templateProperties.helpers ) {
+		templateProperties.helpers.properties.forEach( prop => {
+			helpers[ prop.key.name ] = prop.value;
+		});
+	}
+
 	const renderers = [];
 	const expressionFunctions = [];
 
@@ -86,6 +92,10 @@ export default function generate ( parsed, template ) {
 
 	parsed.html.children.forEach( child => {
 		walkHtml( child, {
+			Comment: {
+				// do nothing
+			},
+
 			Element: {
 				enter ( node ) {
 					const name = current.counter( node.name );
@@ -105,7 +115,7 @@ export default function generate ( parsed, template ) {
 					node.attributes.forEach( attribute => {
 						if ( attribute.type === 'Attribute' ) {
 							let metadata = attributeLookup[ attribute.name ];
-							if ( metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
+							if ( metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
 
 							if ( attribute.value === true ) {
 								// attributes without values, e.g. <textarea readonly>
@@ -142,7 +152,7 @@ export default function generate ( parsed, template ) {
 
 								else {
 									// dynamic – but potentially non-string – attributes
-									contextualise( code, value.expression, current.contexts );
+									contextualise( code, value.expression, current.contexts, helpers );
 									result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
 									if ( metadata ) {
@@ -163,7 +173,7 @@ export default function generate ( parsed, template ) {
 										if ( chunk.type === 'Text' ) {
 											return JSON.stringify( chunk.data );
 										} else {
-											contextualise( code, chunk.expression, current.contexts );
+											contextualise( code, chunk.expression, current.contexts, helpers );
 											return `[✂${chunk.expression.start}-${chunk.expression.end}✂]`;
 										}
 									}).join( ' + ' )
@@ -190,7 +200,7 @@ export default function generate ( parsed, template ) {
 
 							const usedContexts = new Set();
 							attribute.expression.arguments.forEach( arg => {
-								const contexts = contextualise( code, arg, current.contexts );
+								const contexts = contextualise( code, arg, current.contexts, helpers );
 
 								contexts.forEach( context => {
 									usedContexts.add( context );
@@ -285,7 +295,7 @@ export default function generate ( parsed, template ) {
 						${current.target}.appendChild( ${name} );
 					` );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts );
+					const usedContexts = contextualise( code, node.expression, current.contexts, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					if ( isReference( node.expression ) ) {
@@ -299,17 +309,17 @@ export default function generate ( parsed, template ) {
 							}
 						` );
 					} else {
-						const expressionFunction = getName( 'expression' );
-						expressionFunctions.push( deindent`
-							function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
-								return ${snippet};
-							}
-						` );
+						// const expressionFunction = getName( 'expression' );
+						// expressionFunctions.push( deindent`
+						// 	function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
+						// 		return ${snippet};
+						// 	}
+						// ` );
 
 						const temp = getName( 'temp' );
 
 						current.updateStatements.push( deindent`
-							var ${temp} = ${expressionFunction}( ${usedContexts.join( ', ' )} );
+							var ${temp} = ${snippet};
 							if ( ${temp} !== ${name}_value ) {
 								${name}_value = ${temp};
 								${name}.data = ${name}_value;
@@ -331,7 +341,7 @@ export default function generate ( parsed, template ) {
 						var ${name} = null;
 					` );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts );
+					const usedContexts = contextualise( code, node.expression, current.contexts, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					let expression;
@@ -371,7 +381,7 @@ export default function generate ( parsed, template ) {
 						}
 
 						if ( ${name} ) {
-							${name}.update( ${current.contextChain.join( '\n' )} );
+							${name}.update( ${current.contextChain.join( ', ' )} );
 						}
 					` );
 
@@ -417,7 +427,7 @@ export default function generate ( parsed, template ) {
 						const ${name}_fragment = document.createDocumentFragment();
 					` );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts );
+					const usedContexts = contextualise( code, node.expression, current.contexts, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					let expression;

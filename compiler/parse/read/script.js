@@ -17,10 +17,16 @@ export default function readScript ( parser, start, attributes ) {
 
 	const source = spaces( scriptStart ) + parser.template.slice( scriptStart, scriptEnd );
 
-	const ast = parse( source, {
-		ecmaVersion: 8,
-		sourceType: 'module'
-	});
+	let ast;
+
+	try {
+		ast = parse( source, {
+			ecmaVersion: 8,
+			sourceType: 'module'
+		});
+	} catch ( err ) {
+		parser.acornError( err );
+	}
 
 	ast.start = scriptStart;
 
