@@ -1,1 +1,3 @@
-{{#each animals as animal}}<p>{{animal}}</p>{{/each}}
+{{#each animals as animal}}
+	<p>{{animal}}</p>
+{{/each}}

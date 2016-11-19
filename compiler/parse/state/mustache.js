@@ -83,8 +83,16 @@ export default function mustache ( parser ) {
 			parser.requireWhitespace();
 
 			block.context = parser.read( validIdentifier ); // TODO check it's not a keyword
+			if ( !block.context ) parser.error( `Expected name` );
 
 			parser.allowWhitespace();
+
+			if ( parser.eat( ',' ) ) {
+				parser.allowWhitespace();
+				block.index = parser.read( validIdentifier );
+				if ( !block.index ) parser.error( `Expected name` );
+				parser.allowWhitespace();
+			}
 		}
 
 		parser.eat( '}}', true );
