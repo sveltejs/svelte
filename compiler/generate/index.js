@@ -93,9 +93,7 @@ export default function generate ( parsed, template ) {
 			return `root.${flattened.keypath}`;
 		}
 
-		console.log( `node, contexts`, node, contexts )
-		return 'TODO'
-		throw new Error( 'TODO expressions' );
+		return 'TODO';
 	}
 
 	parsed.html.children.forEach( child => {

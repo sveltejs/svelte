@@ -11,6 +11,8 @@
 				"name": "button",
 				"attributes": [
 					{
+						"start": 8,
+						"end": 45,
 						"type": "EventHandler",
 						"name": "click",
 						"expression": {

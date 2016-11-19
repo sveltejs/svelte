@@ -1,13 +1,13 @@
 import { tokenizer, tokTypes, parseExpressionAt } from 'acorn';
 
-export function readEventHandlerDirective ( parser, name ) {
+export function readEventHandlerDirective ( parser, start, name ) {
 	const quoteMark = (
 		parser.eat( `'` ) ? `'` :
 		parser.eat( `"` ) ? `"` :
 		null
 	);
 
-	const start = parser.index;
+	const expressionStart = parser.index;
 	let end = null;
 
 	let depth = 0;
@@ -16,17 +16,17 @@ export function readEventHandlerDirective ( parser, name ) {
 		if ( token.type === tokTypes.parenR ) {
 			depth -= 1;
 			if ( depth === 0 ) {
-				end = start + token.end;
+				end = expressionStart + token.end;
 				break;
 			}
 		}
 	}
 
-	const expression = parseExpressionAt( parser.template.slice( 0, end ), start );
+	const expression = parseExpressionAt( parser.template.slice( 0, end ), expressionStart );
 	parser.index = expression.end;
 
 	if ( expression.type !== 'CallExpression' ) {
-		parser.error( `Expected call expression`, start );
+		parser.error( `Expected call expression`, expressionStart );
 	}
 
 	if ( quoteMark ) {
@@ -34,6 +34,8 @@ export function readEventHandlerDirective ( parser, name ) {
 	}
 
 	return {
+		start,
+		end: parser.index,
 		type: 'EventHandler',
 		name,
 		expression

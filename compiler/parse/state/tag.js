@@ -117,6 +117,8 @@ function readTagName ( parser ) {
 }
 
 function readAttribute ( parser ) {
+	const start = parser.index;
+
 	const name = parser.readUntil( /(\s|=|\/|>)/ );
 	if ( !name ) return null;
 
@@ -124,12 +126,14 @@ function readAttribute ( parser ) {
 
 	if ( /^on:/.test( name ) ) {
 		parser.eat( '=', true );
-		return readEventHandlerDirective( parser, name.slice( 3 ) );
+		return readEventHandlerDirective( parser, start, name.slice( 3 ) );
 	}
 
 	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
 
 	return {
+		start,
+		end: parser.index,
 		type: 'Attribute',
 		name,
 		value
@@ -147,7 +151,7 @@ function readQuotedAttributeValue ( parser, quoteMark ) {
 	let currentChunk = {
 		start: parser.index,
 		end: null,
-		type: 'AttributeText',
+		type: 'Text',
 		data: ''
 	};
 
@@ -185,20 +189,26 @@ function readQuotedAttributeValue ( parser, quoteMark ) {
 				currentChunk = {
 					start: parser.index,
 					end: null,
-					type: 'AttributeText',
+					type: 'Text',
 					data: ''
 				};
 			}
 
-			else if ( parser.match( '\\' ) ) {
+			else if ( parser.eat( '\\' ) ) {
 				escaped = true;
 			}
 
 			else if ( parser.match( quoteMark ) ) {
+				currentChunk.end = parser.index++;
+
 				if ( currentChunk.data ) {
 					chunks.push( currentChunk );
 					return chunks;
 				}
+			}
+
+			else {
+				currentChunk.data += parser.template[ parser.index++ ];
 			}
 		}
 	}
