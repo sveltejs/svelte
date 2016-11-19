@@ -1,11 +1,13 @@
-import { getLocator } from 'locate-character';
+import MagicString from 'magic-string';
+import { walk } from 'estree-walker';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
 import flattenReference from './utils/flattenReference.js';
+import counter from './utils/counter.js';
 
 function createRenderer ( fragment ) {
 	return deindent`
-		function ${fragment.name} ( target${fragment.useAnchor ? ', anchor' : ''} ) {
+		function ${fragment.name} ( component, target${fragment.useAnchor ? ', anchor' : ''} ) {
 			${fragment.initStatements.join( '\n\n' )}
 
 			return {
@@ -16,13 +18,14 @@ function createRenderer ( fragment ) {
 				teardown: function () {
 					${fragment.teardownStatements.join( '\n\n' )}
 				}
-			}
+			};
 		}
 	`;
 }
 
 export default function generate ( parsed, template ) {
-	const locator = getLocator( template );
+	const code = new MagicString( template );
+	
 	const renderers = [];
 
 	const counters = {
@@ -45,11 +48,7 @@ export default function generate ( parsed, template ) {
 		contexts: {},
 		contextChain: [ 'context' ],
 
-		counters: {
-			element: 0,
-			text: 0,
-			anchor: 0
-		},
+		counter: counter(),
 
 		parent: null
 	};
@@ -63,6 +62,8 @@ export default function generate ( parsed, template ) {
 			return `context.${flattened.keypath}`;
 		}
 
+		console.log( `node, contexts`, node, contexts )
+		return 'TODO'
 		throw new Error( 'TODO expressions' );
 	}
 
@@ -70,15 +71,50 @@ export default function generate ( parsed, template ) {
 		walkHtml( child, {
 			Element: {
 				enter ( node ) {
-					const name = `element_${current.counters.element++}`;
+					const name = current.counter( node.name );
 
-					current.initStatements.push( deindent`
-						var ${name} = document.createElement( '${node.name}' );
-					` );
+					const initStatements = [
+						`var ${name} = document.createElement( '${node.name}' );`
+					];
 
-					current.teardownStatements.push( deindent`
-						${name}.parentNode.removeChild( ${name} );
-					` );
+					const teardownStatements = [
+						`${name}.parentNode.removeChild( ${name} );`
+					];
+
+					node.attributes.forEach( attribute => {
+						if ( attribute.type === 'EventHandler' ) {
+							// TODO use magic-string here, so that stack traces
+							// go through the template
+
+							// TODO verify that it's a valid callee (i.e. built-in or declared method)
+
+							const handler = current.counter( `${attribute.name}Handler` );
+
+							const callee = `component.${attribute.expression.callee.name}`;
+							const args = attribute.expression.arguments
+								.map( arg => flattenExpression( arg, current.contexts ) )
+								.join( ', ' );
+
+							initStatements.push( deindent`
+								function ${handler} ( event ) {
+									${callee}(${args});
+								}
+
+								${name}.addEventListener( '${attribute.name}', ${handler}, false );
+							` );
+
+							teardownStatements.push( deindent`
+								${name}.removeEventListener( '${attribute.name}', ${handler}, false );
+							` );
+						}
+
+						else {
+							throw new Error( `Not implemented: ${attribute.type}` );
+						}
+					});
+
+					current.initStatements.push( initStatements.join( '\n' ) );
+					current.teardownStatements.push( teardownStatements.join( '\n' ) );
 
 					current = Object.assign( {}, current, {
 						target: name,
@@ -106,14 +142,14 @@ export default function generate ( parsed, template ) {
 			Text: {
 				enter ( node ) {
 					current.initStatements.push( deindent`
-						${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data ) }) );
+						${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
 					` );
 				}
 			},
 
 			MustacheTag: {
 				enter ( node ) {
-					const name = `text_${current.counters.text++}`;
+					const name = current.counter( 'text' );
 					const expression = flattenExpression( node.expression, current.contexts );
 
 					current.initStatements.push( deindent`
@@ -147,7 +183,7 @@ export default function generate ( parsed, template ) {
 
 					current.updateStatements.push( deindent`
 						if ( ${expression} && !${name} ) {
-							${name} = ${renderer}( ${current.target}, ${name}_anchor );
+							${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
 						}
 
 						else if ( !${expression} && ${name} ) {
@@ -175,11 +211,7 @@ export default function generate ( parsed, template ) {
 						updateStatements: [],
 						teardownStatements: [],
 
-						counters: {
-							element: 0,
-							text: 0,
-							anchor: 0
-						},
+						counter: counter(),
 
 						parent: current
 					};
@@ -209,7 +241,7 @@ export default function generate ( parsed, template ) {
 					current.updateStatements.push( deindent`
 						for ( var i = 0; i < ${expression}.length; i += 1 ) {
 							if ( !${name}_iterations[i] ) {
-								${name}_iterations[i] = ${renderer}( ${name}_fragment );
+								${name}_iterations[i] = ${renderer}( component, ${name}_fragment );
 							}
 
 							const iteration = ${name}_iterations[i];
@@ -245,11 +277,7 @@ export default function generate ( parsed, template ) {
 						updateStatements: [],
 						teardownStatements: [],
 
-						counters: {
-							element: 0,
-							text: 0,
-							anchor: 0
-						},
+						counter: counter(),
 
 						parent: current
 					};
@@ -266,7 +294,7 @@ export default function generate ( parsed, template ) {
 
 	renderers.push( createRenderer( current ) );
 
-	let js;
+	let js = '';
 	let hasDefaultData = false;
 
 	// TODO wrap all this in magic-string
@@ -280,7 +308,7 @@ export default function generate ( parsed, template ) {
 		}
 	}
 
-	const code = deindent`
+	const result = deindent`
 		${js}
 
 		${renderers.reverse().join( '\n\n' )}
@@ -294,7 +322,6 @@ export default function generate ( parsed, template ) {
 				deferred: Object.create( null )
 			};
 
-			// universal methods
 			function dispatchObservers ( group, state, oldState ) {
 				for ( const key in group ) {
 					const newValue = state[ key ];
@@ -315,6 +342,11 @@ export default function generate ( parsed, template ) {
 				return state[ key ];
 			};
 
+			component.set = function set ( newState ) {
+				Object.assign( state, newState );
+				mainFragment.update( state );
+			};
+
 			component.observe = function ( key, callback, options = {} ) {
 				const group = options.defer ? observers.deferred : observers.immediate;
 
@@ -329,12 +361,6 @@ export default function generate ( parsed, template ) {
 				};
 			};
 
-			// component-specific methods
-			component.set = function set ( newState ) {
-				Object.assign( state, newState );
-				mainFragment.update( state );
-			};
-
 			component.teardown = function teardown () {
 				mainFragment.teardown();
 				mainFragment = null;
@@ -342,12 +368,12 @@ export default function generate ( parsed, template ) {
 				state = {};
 			};
 
-			let mainFragment = renderMainFragment( options.target );
+			let mainFragment = renderMainFragment( component, options.target );
 			component.set( ${hasDefaultData ? `Object.assign( template.data(), options.data )` : `options.data`} );
 
 			return component;
 		}
 	`;
 
-	return { code };
+	return { code: result }; // TODO use magic-string
 }
