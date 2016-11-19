@@ -3,6 +3,7 @@ import { walk } from 'estree-walker';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
 import flattenReference from './utils/flattenReference.js';
+import isReference from './utils/isReference.js';
 import contextualise from './utils/contextualise.js';
 import counter from './utils/counter.js';
 
@@ -53,7 +54,11 @@ export default function generate ( parsed, template ) {
 	}
 
 	const renderers = [];
+	const expressionFunctions = [];
 
+	const getName = counter();
+
+	// TODO use getName instead of counters
 	const counters = {
 		if: 0,
 		each: 0
@@ -209,7 +214,6 @@ export default function generate ( parsed, template ) {
 			MustacheTag: {
 				enter ( node ) {
 					const name = current.counter( 'text' );
-					const expression = flattenExpression( node.expression, current.contexts );
 
 					current.initStatements.push( deindent`
 						var ${name} = document.createTextNode( '' );
@@ -217,12 +221,37 @@ export default function generate ( parsed, template ) {
 						${current.target}.appendChild( ${name} );
 					` );
 
-					current.updateStatements.push( deindent`
-						if ( ${expression} !== ${name}_value ) {
-							${name}_value = ${expression};
-							${name}.data = ${name}_value;
-						}
-					` );
+					const usedContexts = contextualise( code, node.expression, current.contexts );
+					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
+
+					if ( isReference( node.expression ) ) {
+						const reference = `${template.slice( node.expression.start, node.expression.end )}`;
+						const qualified = usedContexts[0] === 'root' ? `root.${reference}` : reference;
+
+						current.updateStatements.push( deindent`
+							if ( ${snippet} !== ${name}_value ) {
+								${name}_value = ${qualified};
+								${name}.data = ${name}_value;
+							}
+						` );
+					} else {
+						const expressionFunction = getName( 'expression' );
+						expressionFunctions.push( deindent`
+							function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
+								return ${snippet};
+							}
+						` );
+
+						const temp = getName( 'temp' );
+
+						current.updateStatements.push( deindent`
+							var ${temp} = ${expressionFunction}( ${usedContexts.join( ', ' )} );
+							if ( ${temp} !== ${name}_value ) {
+								${name}_value = ${temp};
+								${name}.data = ${name}_value;
+							}
+						` );
+					}
 				}
 			},
 
@@ -398,6 +427,8 @@ export default function generate ( parsed, template ) {
 
 	const result = deindent`
 		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
+
+		${expressionFunctions.join( '\n\n' )}
 
 		${renderers.reverse().join( '\n\n' )}
 
