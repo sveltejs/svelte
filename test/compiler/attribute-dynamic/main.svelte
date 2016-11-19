@@ -1,0 +1,9 @@
+<div style='color: {{color}};'>{{color}}</div>
+
+<script>
+	export default {
+		data: () => ({
+			color: 'red'
+		})
+	};
+</script>

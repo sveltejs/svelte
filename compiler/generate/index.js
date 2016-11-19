@@ -133,24 +133,64 @@ export default function generate ( parsed, template ) {
 								}
 							}
 
-							else if ( attribute.value.length === 1 && attribute.value[0].type === 'Text' ) {
-								// static attributes
-								const value = JSON.stringify( attribute.value[0].data );
+							else if ( attribute.value.length === 1 ) {
+								const value = attribute.value[0];
 
-								if ( metadata ) {
-									initStatements.push( deindent`
-										${name}.${metadata.propertyName} = ${value};
-									` );
-								} else {
-									initStatements.push( deindent`
-										${name}.setAttribute( '${attribute.name}', ${value} );
-									` );
+								let result = '';
+
+								if ( value.type === 'Text' ) {
+									// static attributes
+									result = JSON.stringify( value.data );
+
+									if ( metadata ) {
+										initStatements.push( deindent`
+											${name}.${metadata.propertyName} = ${result};
+										` );
+									} else {
+										initStatements.push( deindent`
+											${name}.setAttribute( '${attribute.name}', ${result} );
+										` );
+									}
+								}
+
+								else {
+									// dynamic – but potentially non-string – attributes
+									contextualise( value.expression );
+									result = `[✂${value.expression.start}-${value.expression.end}✂]`;
+
+									if ( metadata ) {
+										updateStatements.push( deindent`
+											${name}.${metadata.propertyName} = ${result};
+										` );
+									} else {
+										updateStatements.push( deindent`
+											${name}.setAttribute( '${attribute.name}', ${result} );
+										` );
+									}
 								}
 							}
 
 							else {
-								// need to handle boolean and string attributes differently
-								throw new Error( 'TODO dynamic attributes' );
+								const value = ( attribute.value[0].type === 'Text' ? '' : `"" + ` ) + (
+									attribute.value.map( chunk => {
+										if ( chunk.type === 'Text' ) {
+											return JSON.stringify( chunk.data );
+										} else {
+											contextualise( code, chunk.expression, current.contexts );
+											return `[✂${chunk.expression.start}-${chunk.expression.end}✂]`;
+										}
+									}).join( ' + ' )
+								);
+
+								if ( metadata ) {
+									updateStatements.push( deindent`
+										${name}.${metadata.propertyName} = ${value};
+									` );
+								} else {
+									updateStatements.push( deindent`
+										${name}.setAttribute( '${attribute.name}', ${value} );
+									` );
+								}
 							}
 						}
 
