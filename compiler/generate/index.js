@@ -65,8 +65,7 @@ export default function generate ( parsed, template ) {
 		each: 0
 	};
 
-	// TODO add contents of <script> tag, with `export default` replaced with `var template =`
-	// TODO css
+	// TODO (scoped) css
 
 	let current = {
 		useAnchor: false,
@@ -84,18 +83,6 @@ export default function generate ( parsed, template ) {
 
 		parent: null
 	};
-
-	function flattenExpression ( node, contexts ) {
-		const flattened = flattenReference( node );
-
-		if ( flattened ) {
-			if ( flattened.name in contexts ) return flattened.keypath;
-			// TODO handle globals, e.g. {{Math.round(foo)}}
-			return `root.${flattened.keypath}`;
-		}
-
-		return 'TODO';
-	}
 
 	parsed.html.children.forEach( child => {
 		walkHtml( child, {
@@ -398,6 +385,7 @@ export default function generate ( parsed, template ) {
 						name: renderer,
 						target: 'target',
 
+						contexts: current.contexts,
 						contextChain: current.contextChain,
 
 						initStatements: [],

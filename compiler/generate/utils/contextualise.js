@@ -15,6 +15,8 @@ export default function contextualise ( code, expression, contexts ) {
 					code.insertRight( node.start, `root.` );
 					if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 				}
+
+				this.skip();
 			}
 		}
 	});
