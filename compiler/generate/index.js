@@ -155,7 +155,7 @@ export default function generate ( parsed, template ) {
 
 								else {
 									// dynamic – but potentially non-string – attributes
-									contextualise( value.expression );
+									contextualise( code, value.expression, current.contexts );
 									result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
 									if ( metadata ) {
@@ -338,19 +338,46 @@ export default function generate ( parsed, template ) {
 					const name = `ifBlock_${i}`;
 					const renderer = `renderIfBlock_${i}`;
 
-					const expression = flattenExpression( node.expression, current.contexts );
-
 					current.initStatements.push( deindent`
-						var ${name}_anchor = document.createComment( '#if ${template.slice( node.expression.start, node.expression.end )}' );
+						var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${template.slice( node.expression.start, node.expression.end )}` )} );
 						${current.target}.appendChild( ${name}_anchor );
 						var ${name} = null;
 					` );
 
-					current.updateStatements.push( deindent`
-						if ( ${expression} && !${name} ) {
-							${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
-						}
+					const usedContexts = contextualise( code, node.expression, current.contexts );
+					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
+					let expression;
+
+					if ( isReference( node.expression ) ) {
+						const reference = `${template.slice( node.expression.start, node.expression.end )}`;
+						expression = usedContexts[0] === 'root' ? `root.${reference}` : reference;
+
+						current.updateStatements.push( deindent`
+							if ( ${snippet} && !${name} ) {
+								${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
+							}
+						` );
+					} else {
+						const expressionFunction = getName( 'expression' );
+						expressionFunctions.push( deindent`
+							function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
+								return ${snippet};
+							}
+						` );
+
+						expression = `${name}_value`;
+
+						current.updateStatements.push( deindent`
+							var ${expression} = ${expressionFunction}( ${usedContexts.join( ', ' )} );
+
+							if ( ${expression} && !${name} ) {
+								${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
+							}
+						` );
+					}
+
+					current.updateStatements.push( deindent`
 						else if ( !${expression} && ${name} ) {
 							${name}.teardown();
 							${name} = null;
@@ -363,6 +390,7 @@ export default function generate ( parsed, template ) {
 
 					current.teardownStatements.push( deindent`
 						if ( ${name} ) ${name}.teardown();
+						${name}_anchor.parentNode.removeChild( ${name}_anchor );
 					` );
 
 					current = {
@@ -394,31 +422,49 @@ export default function generate ( parsed, template ) {
 					const name = `eachBlock_${i}`;
 					const renderer = `renderEachBlock_${i}`;
 
-					const expression = flattenExpression( node.expression, current.contexts );
-
 					current.initStatements.push( deindent`
-						var ${name}_anchor = document.createComment( '#each ${template.slice( node.expression.start, node.expression.end )}' );
+						var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${template.slice( node.expression.start, node.expression.end )}` )} );
 						${current.target}.appendChild( ${name}_anchor );
 						var ${name}_iterations = [];
 						const ${name}_fragment = document.createDocumentFragment();
 					` );
 
+					const usedContexts = contextualise( code, node.expression, current.contexts );
+					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
+
+					let expression;
+
+					if ( isReference( node.expression ) ) {
+						expression = snippet;
+					} else {
+						const expressionFunction = getName( 'expression' );
+						expressionFunctions.push( deindent`
+							function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
+								return ${snippet};
+							}
+						` );
+
+						expression = `${expressionFunction}( ${usedContexts.join( ', ' )} )`;
+					}
+
 					current.updateStatements.push( deindent`
-						for ( var i = 0; i < ${expression}.length; i += 1 ) {
+						var ${name}_value = ${expression};
+
+						for ( var i = 0; i < ${name}_value.length; i += 1 ) {
 							if ( !${name}_iterations[i] ) {
 								${name}_iterations[i] = ${renderer}( component, ${name}_fragment );
 							}
 
 							const iteration = ${name}_iterations[i];
-							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${expression}[i]${node.index ? `, i` : ''} );
+							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${name}_value[i]${node.index ? `, i` : ''} );
 						}
 
-						for ( var i = ${expression}.length; i < ${name}_iterations.length; i += 1 ) {
+						for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
 							${name}_iterations[i].teardown();
 						}
 
 						${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
-						${name}_iterations.length = ${expression}.length;
+						${name}_iterations.length = ${name}_value.length;
 					` );
 
 					current.teardownStatements.push( deindent`
