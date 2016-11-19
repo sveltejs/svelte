@@ -1,0 +1,1 @@
+<textarea readonly='{{readonly}}'></textarea>

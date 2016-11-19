@@ -203,10 +203,8 @@ function readQuotedAttributeValue ( parser, quoteMark ) {
 			else if ( parser.match( quoteMark ) ) {
 				currentChunk.end = parser.index++;
 
-				if ( currentChunk.data ) {
-					chunks.push( currentChunk );
-					return chunks;
-				}
+				if ( currentChunk.data ) chunks.push( currentChunk );
+				return chunks;
 			}
 
 			else {
