@@ -1,6 +1,7 @@
 import readExpression from '../read/expression.js';
 import readScript from '../read/script.js';
 import readStyle from '../read/style.js';
+import { readEventHandlerDirective } from '../read/directives.js';
 
 const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
@@ -25,6 +26,8 @@ export default function tag ( parser ) {
 	// TODO handle cases like <li>one<li>two
 
 	const name = readTagName( parser );
+
+	parser.allowWhitespace();
 
 	if ( isClosingTag ) {
 		if ( !parser.eat( '>' ) ) parser.error( `Expected '>'` );
@@ -100,9 +103,18 @@ function readAttribute ( parser ) {
 
 	parser.allowWhitespace();
 
+	if ( /^on:/.test( name ) ) {
+		parser.eat( '=', true );
+		return readEventHandlerDirective( parser, name.slice( 3 ) );
+	}
+
 	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
 
-	return { name, value };
+	return {
+		type: 'Attribute',
+		name,
+		value
+	};
 }
 
 function readAttributeValue ( parser ) {

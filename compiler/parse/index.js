@@ -13,7 +13,7 @@ export default function parse ( template ) {
 			return this.stack[ this.stack.length - 1 ];
 		},
 
-		error ( message ) {
+		error ( message, index = this.index ) {
 			const { line, column } = locate( this.template, this.index );
 			throw new Error( `${message} (${line}:${column})` );
 		},

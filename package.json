@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "acorn": "^4.0.3",
-    "locate-character": "^2.0.0"
+    "locate-character": "^2.0.0",
+    "magic-string": "^0.16.0"
   }
 }

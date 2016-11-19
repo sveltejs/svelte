@@ -1,0 +1,107 @@
+{
+	"html": {
+		"start": 0,
+		"end": 101,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 61,
+				"type": "Element",
+				"name": "button",
+				"attributes": [
+					{
+						"type": "EventHandler",
+						"name": "click",
+						"expression": {
+							"start": 18,
+							"end": 44,
+							"type": "CallExpression",
+							"callee": {
+								"start": 18,
+								"end": 21,
+								"type": "Identifier",
+								"name": "set"
+							},
+							"arguments": [
+								{
+									"start": 22,
+									"end": 43,
+									"type": "ObjectExpression",
+									"properties": [
+										{
+											"start": 24,
+											"end": 41,
+											"type": "Property",
+											"kind": "init",
+											"computed": false,
+											"method": false,
+											"shorthand": false,
+											"key": {
+												"start": 24,
+												"end": 31,
+												"type": "Identifier",
+												"name": "visible"
+											},
+											"value": {
+												"start": 33,
+												"end": 41,
+												"type": "UnaryExpression",
+												"operator": "!",
+												"prefix": true,
+												"argument": {
+													"start": 34,
+													"end": 41,
+													"type": "Identifier",
+													"name": "visible"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"children": [
+					{
+						"data": "toggle",
+						"start": 46,
+						"end": 52,
+						"type": "Text"
+					}
+				]
+			},
+			{
+				"start": 63,
+				"end": 101,
+				"type": "IfBlock",
+				"expression": {
+					"end": 76,
+					"name": "visible",
+					"start": 69,
+					"type": "Identifier"
+				},
+				"children": [
+					{
+						"start": 80,
+						"end": 93,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"data": "hello!",
+								"end": 89,
+								"start": 83,
+								"type": "Text"
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

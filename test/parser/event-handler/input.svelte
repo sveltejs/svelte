@@ -1,0 +1,5 @@
+<button on:click='set({ visible: !visible })'>toggle</button>
+
+{{#if visible}}
+	<p>hello!</p>
+{{/if}}
