@@ -22,6 +22,20 @@ const specials = {
 export default function tag ( parser ) {
 	const start = parser.index++;
 
+	if ( parser.eat( '!--' ) ) {
+		const data = parser.readUntil( /-->/ );
+		parser.eat( '-->' );
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'Comment',
+			data
+		});
+
+		return null;
+	}
+
 	const isClosingTag = parser.eat( '/' );
 
 	// TODO handle cases like <li>one<li>two
