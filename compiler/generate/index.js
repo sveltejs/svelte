@@ -25,7 +25,26 @@ function createRenderer ( fragment ) {
 
 export default function generate ( parsed, template ) {
 	const code = new MagicString( template );
-	
+
+	let hasDefaultData = false;
+
+	// TODO wrap all this in magic-string
+	if ( parsed.js ) {
+		walk( parsed.js.content, {
+			enter ( node ) {
+				code.addSourcemapLocation( node.start );
+				code.addSourcemapLocation( node.end );
+			}
+		});
+
+		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
+
+		if ( defaultExport ) {
+			code.overwrite( defaultExport.start, defaultExport.declaration.start, `const template = ` );
+			hasDefaultData = defaultExport.declaration.properties.find( prop => prop.key.name === 'data' );
+		}
+	}
+
 	const renderers = [];
 
 	const counters = {
@@ -294,22 +313,8 @@ export default function generate ( parsed, template ) {
 
 	renderers.push( createRenderer( current ) );
 
-	let js = '';
-	let hasDefaultData = false;
-
-	// TODO wrap all this in magic-string
-	if ( parsed.js ) {
-		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
-		if ( defaultExport ) {
-			js = `${template.slice( parsed.js.content.start, defaultExport.start )}const template = ${template.slice( defaultExport.declaration.start, parsed.js.content.end)}`;
-			hasDefaultData = defaultExport.declaration.properties.find( prop => prop.key.name === 'data' );
-		} else {
-			js = template.slice( parsed.js.content.start, parsed.js.content.end );
-		}
-	}
-
 	const result = deindent`
-		${js}
+		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
 
 		${renderers.reverse().join( '\n\n' )}
 
@@ -375,5 +380,42 @@ export default function generate ( parsed, template ) {
 		}
 	`;
 
-	return { code: result }; // TODO use magic-string
+	const pattern = /\[✂(\d+)-(\d+)/;
+
+	const parts = result.split( '✂]' );
+	const finalChunk = parts.pop();
+
+	const sortedByResult = parts.map( ( str, index ) => {
+		const match = pattern.exec( str );
+
+		return {
+			index,
+			chunk: str.replace( pattern, '' ),
+			start: +match[1],
+			end: +match[2]
+		};
+	});
+
+	const sortedBySource = sortedByResult
+		.slice()
+		.sort( ( a, b ) => a.start - b.start );
+
+	let c = 0;
+
+	sortedBySource.forEach( part => {
+		code.remove( c, part.start );
+		code.insertLeft( part.start, part.chunk );
+		c = part.end;
+	});
+
+	code.remove( c, template.length );
+	code.append( finalChunk );
+
+	sortedByResult.forEach( part => {
+		code.move( part.start, part.end, 0 );
+	});
+
+	return {
+		code: code.toString()
+	};
 }
