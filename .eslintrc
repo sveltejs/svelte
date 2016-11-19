@@ -20,7 +20,8 @@
         "one-var": [ 2, "never" ],
         "prefer-arrow-callback": 2,
         "prefer-const": [ 2, { "destructuring": "all" } ],
-        "arrow-spacing": 2
+        "arrow-spacing": 2,
+        "no-inner-declarations": 0
     },
     "env": {
         "es6": true,

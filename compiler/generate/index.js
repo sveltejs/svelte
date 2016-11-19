@@ -47,7 +47,7 @@ export default function generate ( parsed, template ) {
 			code.overwrite( defaultExport.start, defaultExport.declaration.start, `const template = ` );
 
 			defaultExport.declaration.properties.forEach( prop => {
-				templateProperties[ prop.key.name ] = true;
+				templateProperties[ prop.key.name ] = prop.value;
 			});
 		}
 	}
@@ -353,6 +353,49 @@ export default function generate ( parsed, template ) {
 
 	renderers.push( createRenderer( current ) );
 
+	const setStatements = [ deindent`
+		const oldState = state;
+		state = Object.assign( {}, oldState, newState );
+	` ];
+
+	if ( templateProperties.computed ) {
+		const dependencies = new Map();
+
+		templateProperties.computed.properties.forEach( prop => {
+			const key = prop.key.name;
+			const value = prop.value;
+
+			const deps = value.params.map( param => param.name );
+			dependencies.set( key, deps );
+		});
+
+		const visited = new Set();
+
+		function visit ( key ) {
+			if ( !dependencies.has( key ) ) return; // not a computation
+
+			if ( visited.has( key ) ) return;
+			visited.add( key );
+
+			const deps = dependencies.get( key );
+			deps.forEach( visit );
+
+			setStatements.push( deindent`
+				if ( ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
+					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
+				}
+			` );
+		}
+
+		templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+	}
+
+	setStatements.push( deindent`
+		dispatchObservers( observers.immediate, newState, oldState );
+		mainFragment.update( state );
+		dispatchObservers( observers.deferred, newState, oldState );
+	` );
+
 	const result = deindent`
 		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
 
@@ -367,9 +410,11 @@ export default function generate ( parsed, template ) {
 				deferred: Object.create( null )
 			};
 
-			function dispatchObservers ( group, state, oldState ) {
+			function dispatchObservers ( group, newState, oldState ) {
 				for ( const key in group ) {
-					const newValue = state[ key ];
+					if ( !( key in newState ) ) continue;
+
+					const newValue = newState[ key ];
 					const oldValue = oldState[ key ];
 
 					if ( newValue === oldValue && typeof newValue !== 'object' ) continue;
@@ -388,8 +433,7 @@ export default function generate ( parsed, template ) {
 			};
 
 			component.set = function set ( newState ) {
-				Object.assign( state, newState );
-				mainFragment.update( state );
+				${setStatements.join( '\n\n' )}
 			};
 
 			component.observe = function ( key, callback, options = {} ) {
