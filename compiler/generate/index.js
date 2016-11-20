@@ -174,7 +174,7 @@ export default function generate ( parsed, template ) {
 											return JSON.stringify( chunk.data );
 										} else {
 											contextualise( code, chunk.expression, current.contexts, helpers );
-											return `[✂${chunk.expression.start}-${chunk.expression.end}✂]`;
+											return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
 										}
 									}).join( ' + ' )
 								);
