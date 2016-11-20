@@ -2,7 +2,7 @@ import { walk } from 'estree-walker';
 import isReference from './isReference.js';
 import flattenReference from './flattenReference.js';
 
-export default function contextualise ( code, expression, contexts, indexes, helpers ) {
+export default function contextualise ( code, expression, contexts, indexes, helpers, isEventHandler ) {
 	const usedContexts = [];
 
 	walk( expression, {
@@ -12,6 +12,10 @@ export default function contextualise ( code, expression, contexts, indexes, hel
 
 				if ( parent && parent.type === 'CallExpression' && node === parent.callee ) {
 					if ( helpers[ name ] ) code.insertRight( node.start, `template.helpers.` );
+					return;
+				}
+
+				if ( name === 'event' && isEventHandler ) {
 					return;
 				}
 

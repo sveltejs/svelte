@@ -199,14 +199,12 @@ export default function generate ( parsed, template ) {
 
 						else if ( attribute.type === 'EventHandler' ) {
 							// TODO verify that it's a valid callee (i.e. built-in or declared method)
-							const handler = current.counter( `${attribute.name}Handler` );
-
 							addSourcemapLocations( attribute.expression );
 							code.insertRight( attribute.expression.start, 'component.' );
 
 							const usedContexts = new Set();
 							attribute.expression.arguments.forEach( arg => {
-								const contexts = contextualise( code, arg, current.contexts, current.indexes, helpers );
+								const contexts = contextualise( code, arg, current.contexts, current.indexes, helpers, true );
 
 								contexts.forEach( context => {
 									usedContexts.add( context );
@@ -215,38 +213,43 @@ export default function generate ( parsed, template ) {
 							});
 
 							// TODO hoist event handlers? can do `this.__component.method(...)`
-							if ( usedContexts.size ) {
-								const declarations = [...usedContexts].map( name => {
-									if ( name === 'root' ) return 'var root = this.__svelte.root; // 2';
+							const declarations = [...usedContexts].map( name => {
+								if ( name === 'root' ) return 'var root = this.__svelte.root;';
 
-									const listName = current.listNames[ name ];
-									const indexName = current.indexNames[ name ];
+								const listName = current.listNames[ name ];
+								const indexName = current.indexNames[ name ];
 
-									return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
-								});
+								return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
+							});
 
+							const handlerName = current.counter( `${attribute.name}Handler` );
+							const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
+
+							const customEvent = templateProperties.events && templateProperties.events.properties.find( prop => prop.key.name === attribute.name );
+
+							if ( customEvent ) {
 								initStatements.push( deindent`
-									function ${handler} ( event ) {
-										${declarations}
+									const ${handlerName} = template.events.${attribute.name}( ${name}, function ( event ) {
+										${handlerBody}
+									});
+								` );
 
-										[✂${attribute.expression.start}-${attribute.expression.end}✂];
-									}
-
-									${name}.addEventListener( '${attribute.name}', ${handler}, false );
+								teardownStatements.push( deindent`
+									${handlerName}.teardown();
 								` );
 							} else {
 								initStatements.push( deindent`
-									function ${handler} ( event ) {
-										[✂${attribute.expression.start}-${attribute.expression.end}✂];
+									function ${handlerName} ( event ) {
+										${handlerBody}
 									}
 
-									${name}.addEventListener( '${attribute.name}', ${handler}, false );
+									${name}.addEventListener( '${attribute.name}', ${handlerName}, false );
+								` );
+
+								teardownStatements.push( deindent`
+									${name}.removeEventListener( '${attribute.name}', ${handlerName}, false );
 								` );
 							}
-
-							teardownStatements.push( deindent`
-								${name}.removeEventListener( '${attribute.name}', ${handler}, false );
-							` );
 						}
 
 						else if ( attribute.type === 'Binding' ) {

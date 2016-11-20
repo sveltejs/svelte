@@ -1,0 +1,29 @@
+<button on:tap='set({ x: event.x, y: event.y })'>{{x}}, {{y}}</button>
+
+<script>
+	export default {
+		data: () => ({
+			x: 0,
+			y: 0
+		}),
+
+		events: {
+			tap ( node, callback ) {
+				function clickHandler ( event ) {
+					callback({
+						x: event.clientX,
+						y: event.clientY
+					});
+				}
+
+				node.addEventListener( 'click', clickHandler, false );
+
+				return {
+					teardown () {
+						node.addEventListener( 'click', clickHandler, false );
+					}
+				};
+			}
+		}
+	};
+</script>
