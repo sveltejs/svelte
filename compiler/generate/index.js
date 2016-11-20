@@ -80,6 +80,7 @@ export default function generate ( parsed, template ) {
 	let current = {
 		useAnchor: false,
 		name: 'renderMainFragment',
+		namespace: null,
 		target: 'target',
 
 		initStatements: [],
@@ -109,10 +110,9 @@ export default function generate ( parsed, template ) {
 			Element: {
 				enter ( node ) {
 					const name = current.counter( node.name );
+					let namespace = name === 'svg' ? 'http://www.w3.org/2000/svg' : current.namespace;
 
-					const initStatements = [
-						`var ${name} = document.createElement( '${node.name}' );`
-					];
+					const initStatements = [];
 
 					const updateStatements = [];
 					const teardownStatements = [];
@@ -159,6 +159,12 @@ export default function generate ( parsed, template ) {
 										initStatements.push( deindent`
 											${name}.setAttribute( '${attribute.name}', ${result} );
 										` );
+									}
+
+									// special case
+									// TODO this attribute must be static – enforce at compile time
+									if ( attribute.name === 'xmlns' ) {
+										namespace = value;
 									}
 								}
 
@@ -298,6 +304,12 @@ export default function generate ( parsed, template ) {
 						updateStatements.push( declarations );
 					}
 
+					initStatements.unshift(
+						namespace ?
+							`var ${name} = document.createElementNS( '${namespace}', '${node.name}' );` :
+							`var ${name} = document.createElement( '${node.name}' );`
+					);
+
 					teardownStatements.push( `${name}.parentNode.removeChild( ${name} );` );
 
 					current.initStatements.push( initStatements.join( '\n' ) );
@@ -305,6 +317,7 @@ export default function generate ( parsed, template ) {
 					current.teardownStatements.push( teardownStatements.join( '\n' ) );
 
 					current = Object.assign( {}, current, {
+						namespace,
 						target: name,
 						parent: current
 					});
