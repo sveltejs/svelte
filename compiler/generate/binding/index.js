@@ -19,11 +19,17 @@ export default function createBinding ( node, name, attribute, current, initStat
 		}
 	}
 
-	if ( deep && contextual ) {
+	if ( contextual ) {
 		// TODO can we target only things that have changed?
+		// TODO computed values/observers that depend on this probably won't update...
+		const listName = current.listNames[ parts[0] ];
+		const indexName = current.indexNames[ parts[0] ];
+
 		setter = deindent`
-			var context = this.__context.${parts[0]};
-			context.${parts.slice( 1 ).join( '.' )} = this.${attribute.name};
+			var list = this.__svelte.${listName};
+			var index = this.__svelte.${indexName};
+			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = this.${attribute.name};
+
 			component.set({});
 		`;
 	} else if ( deep ) {
@@ -32,8 +38,6 @@ export default function createBinding ( node, name, attribute, current, initStat
 			${parts[0]}.${parts.slice( 1 ).join( '.' )} = this.${attribute.name};
 			component.set({ ${parts[0]}: ${parts[0]} });
 		`;
-	} else if ( contextual ) {
-		throw new Error( `Reassigning context is not currently supported` );
 	} else {
 		setter = `component.set({ ${attribute.value}: ${name}.${attribute.name} });`;
 	}

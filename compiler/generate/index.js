@@ -83,7 +83,11 @@ export default function generate ( parsed, template ) {
 		teardownStatements: [],
 
 		contexts: {},
+		indexes: {},
+
 		contextChain: [ 'root' ],
+		indexNames: {},
+		listNames: {},
 
 		counter: counter(),
 
@@ -152,7 +156,7 @@ export default function generate ( parsed, template ) {
 
 								else {
 									// dynamic – but potentially non-string – attributes
-									contextualise( code, value.expression, current.contexts, helpers );
+									contextualise( code, value.expression, current.contexts, current.indexes, helpers );
 									result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
 									if ( metadata ) {
@@ -173,7 +177,7 @@ export default function generate ( parsed, template ) {
 										if ( chunk.type === 'Text' ) {
 											return JSON.stringify( chunk.data );
 										} else {
-											contextualise( code, chunk.expression, current.contexts, helpers );
+											contextualise( code, chunk.expression, current.contexts, current.indexes, helpers );
 											return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
 										}
 									}).join( ' + ' )
@@ -200,7 +204,7 @@ export default function generate ( parsed, template ) {
 
 							const usedContexts = new Set();
 							attribute.expression.arguments.forEach( arg => {
-								const contexts = contextualise( code, arg, current.contexts, helpers );
+								const contexts = contextualise( code, arg, current.contexts, current.indexes, helpers );
 
 								contexts.forEach( context => {
 									usedContexts.add( context );
@@ -210,10 +214,18 @@ export default function generate ( parsed, template ) {
 
 							// TODO hoist event handlers? can do `this.__component.method(...)`
 							if ( usedContexts.size ) {
+								const declarations = [...usedContexts].map( name => {
+									if ( name === 'root' ) return 'var root = this.__svelte.root; // 2';
+
+									const listName = current.listNames[ name ];
+									const indexName = current.indexNames[ name ];
+
+									return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
+								});
+
 								initStatements.push( deindent`
 									function ${handler} ( event ) {
-										var context = this.__context;
-										${[...usedContexts].map( name => `var ${name} = context.${name}` ).join( '\n' )}
+										${declarations}
 
 										[✂${attribute.expression.start}-${attribute.expression.end}✂];
 									}
@@ -246,12 +258,19 @@ export default function generate ( parsed, template ) {
 
 					if ( allUsedContexts.size ) {
 						initStatements.push( deindent`
-							${name}.__context = {};
+							${name}.__svelte = {};
 						` );
 
-						updateStatements.push( deindent`
-							${[...allUsedContexts].map( contextName => `${name}.__context.${contextName} = ${contextName};` ).join( '\n' )}
-						` );
+						const declarations = [...allUsedContexts].map( contextName => {
+							if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
+
+							const listName = current.listNames[ contextName ];
+							const indexName = current.indexNames[ contextName ];
+
+							return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
+						}).join( '\n' );
+
+						updateStatements.push( declarations );
 					}
 
 					current.initStatements.push( initStatements.join( '\n' ) );
@@ -299,7 +318,7 @@ export default function generate ( parsed, template ) {
 						${current.target}.appendChild( ${name} );
 					` );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts, helpers );
+					const usedContexts = contextualise( code, node.expression, current.contexts, current.indexes, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					if ( isReference( node.expression ) ) {
@@ -338,7 +357,7 @@ export default function generate ( parsed, template ) {
 						var ${name} = null;
 					` );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts, helpers );
+					const usedContexts = contextualise( code, node.expression, current.contexts, current.indexes, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					let expression;
@@ -410,6 +429,8 @@ export default function generate ( parsed, template ) {
 					const name = `eachBlock_${i}`;
 					const renderer = `renderEachBlock_${i}`;
 
+					const listName = `${name}_value`;
+
 					current.initStatements.push( deindent`
 						var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${template.slice( node.expression.start, node.expression.end )}` )} );
 						${current.target}.appendChild( ${name}_anchor );
@@ -417,7 +438,7 @@ export default function generate ( parsed, template ) {
 						const ${name}_fragment = document.createDocumentFragment();
 					` );
 
-					contextualise( code, node.expression, current.contexts, helpers );
+					contextualise( code, node.expression, current.contexts, current.indexes, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					current.updateStatements.push( deindent`
@@ -429,7 +450,7 @@ export default function generate ( parsed, template ) {
 							}
 
 							const iteration = ${name}_iterations[i];
-							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${name}_value[i]${node.index ? `, i` : ''} );
+							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${listName}, ${listName}[i], i );
 						}
 
 						for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
@@ -437,7 +458,7 @@ export default function generate ( parsed, template ) {
 						}
 
 						${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
-						${name}_iterations.length = ${name}_value.length;
+						${name}_iterations.length = ${listName}.length;
 					` );
 
 					current.teardownStatements.push( deindent`
@@ -448,16 +469,19 @@ export default function generate ( parsed, template ) {
 						${name}_anchor.parentNode.removeChild( ${name}_anchor );
 					` );
 
-					const contexts = Object.assign( {}, current.contexts );
-					const contextChain = current.contextChain.concat( node.context );
+					const indexNames = Object.assign( {}, current.indexNames );
+					const indexName = indexNames[ node.context ] = ( node.index || `${node.context}__index` );
 
+					const listNames = Object.assign( {}, current.listNames );
+					listNames[ node.context ] = listName;
+
+					const contexts = Object.assign( {}, current.contexts );
 					contexts[ node.context ] = true;
 
-					if ( node.index ) {
-						// not strictly a context, but we can treat it as such
-						contextChain.push( node.index );
-						contexts[ node.index ] = true;
-					}
+					const indexes = Object.assign( {}, current.indexes );
+					if ( node.index ) indexes[ indexName ] = node.context;
+
+					const contextChain = current.contextChain.concat( listName, node.context, indexName );
 
 					current = {
 						useAnchor: false,
@@ -465,10 +489,19 @@ export default function generate ( parsed, template ) {
 						target: 'target',
 
 						contexts,
+						indexes,
+
+						indexNames,
+						listNames,
 						contextChain,
 
 						initStatements: [],
-						updateStatements: [],
+						updateStatements: [ Object.keys( contexts ).map( contextName => {
+							const listName = listNames[ contextName ];
+							const indexName = indexNames[ contextName ];
+
+							return `var ${contextName} = ${listName}[${indexName}];`;
+						}).join( '\n' ) ],
 						teardownStatements: [],
 
 						counter: counter(),
@@ -639,6 +672,7 @@ export default function generate ( parsed, template ) {
 	});
 
 	return {
-		code: code.toString()
+		code: code.toString(),
+		map: code.generateMap()
 	};
 }
