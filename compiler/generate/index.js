@@ -112,9 +112,7 @@ export default function generate ( parsed, template ) {
 
 					const updateStatements = [];
 
-					const teardownStatements = [
-						`${name}.parentNode.removeChild( ${name} );`
-					];
+					const teardownStatements = [];
 
 					const allUsedContexts = new Set();
 
@@ -264,6 +262,10 @@ export default function generate ( parsed, template ) {
 							initStatements.push( deindent`
 								component.refs.${attribute.name} = ${name};
 							` );
+
+							teardownStatements.push( deindent`
+								component.refs.${attribute.name} = null;
+							` );
 						}
 
 						else {
@@ -287,6 +289,8 @@ export default function generate ( parsed, template ) {
 
 						updateStatements.push( declarations );
 					}
+
+					teardownStatements.push( `${name}.parentNode.removeChild( ${name} );` );
 
 					current.initStatements.push( initStatements.join( '\n' ) );
 					if ( updateStatements.length ) current.updateStatements.push( updateStatements.join( '\n' ) );

@@ -1,0 +1,11 @@
+{{#if visible}}
+	<input ref:input on:blur='set({ blurred: true })'>
+{{/if}}
+
+<script>
+	export default {
+		data: () => ({
+			visible: true
+		})
+	};
+</script>
