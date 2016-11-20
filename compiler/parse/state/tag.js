@@ -1,7 +1,7 @@
 import readExpression from '../read/expression.js';
 import readScript from '../read/script.js';
 import readStyle from '../read/style.js';
-import { readEventHandlerDirective } from '../read/directives.js';
+import { readEventHandlerDirective, readBindingDirective } from '../read/directives.js';
 import { trimStart, trimEnd } from '../utils/trim.js';
 
 const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -142,6 +142,11 @@ function readAttribute ( parser ) {
 	if ( /^on:/.test( name ) ) {
 		parser.eat( '=', true );
 		return readEventHandlerDirective( parser, start, name.slice( 3 ) );
+	}
+
+	if ( /^bind:/.test( name ) ) {
+		parser.eat( '=', true );
+		return readBindingDirective( parser, start, name.slice( 5 ) );
 	}
 
 	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;

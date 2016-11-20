@@ -234,6 +234,33 @@ export default function generate ( parsed, template ) {
 							` );
 						}
 
+						else if ( attribute.type === 'Binding' ) {
+							if ( attribute.value in current.contexts ) {
+								throw new Error( `Can only bind top-level properties` );
+							}
+
+							const handler = current.counter( `${name}ChangeHandler` );
+
+							initStatements.push( deindent`
+								var ${name}_updating = false;
+								function ${handler} () {
+									${name}_updating = true;
+									component.set({ ${attribute.value}: ${name}.value });
+									${name}_updating = false;
+								}
+
+								${name}.addEventListener( 'input', ${handler}, false );
+							` );
+
+							updateStatements.push( deindent`
+								if ( !${name}_updating ) ${name}.value = root.${attribute.value};
+							` );
+
+							teardownStatements.push( deindent`
+								${name}.removeEventListener( 'input', ${handler}, false );
+							` );
+						}
+
 						else {
 							throw new Error( `Not implemented: ${attribute.type}` );
 						}

@@ -41,3 +41,26 @@ export function readEventHandlerDirective ( parser, start, name ) {
 		expression
 	};
 }
+
+export function readBindingDirective ( parser, start, name ) {
+	const quoteMark = (
+		parser.eat( `'` ) ? `'` :
+		parser.eat( `"` ) ? `"` :
+		null
+	);
+
+	const value = parser.read( /[a-zA-Z_$][a-zA-Z0-9_$]*/ ); // TODO – keypaths? /([a-zA-Z_$][a-zA-Z0-9_$]*)(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*/
+	if ( !value ) parser.error( `Expected valid property name` );
+
+	if ( quoteMark ) {
+		parser.eat( quoteMark, true );
+	}
+
+	return {
+		start,
+		end: parser.index,
+		type: 'Binding',
+		name,
+		value
+	};
+}
