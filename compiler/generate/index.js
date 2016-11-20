@@ -132,6 +132,11 @@ export default function generate ( parsed, template ) {
 										${name}.setAttribute( '${attribute.name}', true );
 									` );
 								}
+
+								// special case – autofocus
+								if ( attribute.name === 'autofocus' ) {
+									initStatements.push( `${name}.focus();` );
+								}
 							}
 
 							else if ( attribute.value.length === 1 ) {
