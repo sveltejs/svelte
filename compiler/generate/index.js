@@ -9,6 +9,10 @@ import attributeLookup from './attributes/lookup.js';
 import createBinding from './binding/index.js';
 
 function createRenderer ( fragment ) {
+	if ( fragment.autofocus ) {
+		fragment.initStatements.push( `${fragment.autofocus}.focus();` );
+	}
+
 	return deindent`
 		function ${fragment.name} ( component, target${fragment.useAnchor ? ', anchor' : ''} ) {
 			${fragment.initStatements.join( '\n\n' )}
@@ -111,7 +115,6 @@ export default function generate ( parsed, template ) {
 					];
 
 					const updateStatements = [];
-
 					const teardownStatements = [];
 
 					const allUsedContexts = new Set();
@@ -133,9 +136,9 @@ export default function generate ( parsed, template ) {
 									` );
 								}
 
-								// special case – autofocus
+								// special case – autofocus. has to be handled in a bit of a weird way
 								if ( attribute.name === 'autofocus' ) {
-									initStatements.push( `${name}.focus();` );
+									current.autofocus = name;
 								}
 							}
 
