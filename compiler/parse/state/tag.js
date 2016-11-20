@@ -149,6 +149,15 @@ function readAttribute ( parser ) {
 		return readBindingDirective( parser, start, name.slice( 5 ) );
 	}
 
+	if ( /^ref:/.test( name ) ) {
+		return {
+			start,
+			end: parser.index,
+			type: 'Ref',
+			name: name.slice( 4 )
+		};
+	}
+
 	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
 
 	return {

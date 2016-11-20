@@ -1,0 +1,1 @@
+<canvas ref:foo></canvas>

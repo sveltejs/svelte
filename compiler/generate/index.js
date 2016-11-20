@@ -94,6 +94,8 @@ export default function generate ( parsed, template ) {
 		parent: null
 	};
 
+	let usesRefs = false;
+
 	parsed.html.children.forEach( child => {
 		walkHtml( child, {
 			Comment: {
@@ -254,6 +256,14 @@ export default function generate ( parsed, template ) {
 
 						else if ( attribute.type === 'Binding' ) {
 							createBinding( node, name, attribute, current, initStatements, updateStatements, teardownStatements, allUsedContexts );
+						}
+
+						else if ( attribute.type === 'Ref' ) {
+							usesRefs = true;
+
+							initStatements.push( deindent`
+								component.refs.${attribute.name} = ${name};
+							` );
 						}
 
 						else {
@@ -580,7 +590,7 @@ export default function generate ( parsed, template ) {
 		${renderers.reverse().join( '\n\n' )}
 
 		export default function createComponent ( options ) {
-			var component = ${templateProperties.methods ? `Object.create( template.methods )` : `{}`};
+			var component = ${templateProperties.methods ? `Object.create( template.methods )` : `{}`};${usesRefs ? `\ncomponent.refs = {}` : ``}
 			var state = {};
 
 			var observers = {
