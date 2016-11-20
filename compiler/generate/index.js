@@ -177,6 +177,8 @@ export default function generate ( parsed, template ) {
 										if ( chunk.type === 'Text' ) {
 											return JSON.stringify( chunk.data );
 										} else {
+											addSourcemapLocations( chunk.expression );
+
 											contextualise( code, chunk.expression, current.contexts, current.indexes, helpers );
 											return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
 										}
@@ -318,6 +320,8 @@ export default function generate ( parsed, template ) {
 						${current.target}.appendChild( ${name} );
 					` );
 
+					addSourcemapLocations( node.expression );
+
 					const usedContexts = contextualise( code, node.expression, current.contexts, current.indexes, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
@@ -356,6 +360,8 @@ export default function generate ( parsed, template ) {
 						${current.target}.appendChild( ${name}_anchor );
 						var ${name} = null;
 					` );
+
+					addSourcemapLocations( node.expression );
 
 					const usedContexts = contextualise( code, node.expression, current.contexts, current.indexes, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
@@ -399,13 +405,10 @@ export default function generate ( parsed, template ) {
 						${name}_anchor.parentNode.removeChild( ${name}_anchor );
 					` );
 
-					current = {
+					current = Object.assign( {}, current, {
 						useAnchor: true,
 						name: renderer,
 						target: 'target',
-
-						contexts: current.contexts,
-						contextChain: current.contextChain,
 
 						initStatements: [],
 						updateStatements: [],
@@ -414,7 +417,7 @@ export default function generate ( parsed, template ) {
 						counter: counter(),
 
 						parent: current
-					};
+					});
 				},
 
 				leave () {
@@ -437,6 +440,8 @@ export default function generate ( parsed, template ) {
 						var ${name}_iterations = [];
 						const ${name}_fragment = document.createDocumentFragment();
 					` );
+
+					addSourcemapLocations( node.expression );
 
 					contextualise( code, node.expression, current.contexts, current.indexes, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
