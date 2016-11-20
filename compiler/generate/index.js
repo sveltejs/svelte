@@ -266,7 +266,7 @@ export default function generate ( parsed, template ) {
 
 					if ( current.useAnchor && current.target === 'target' ) {
 						current.initStatements.push( deindent`
-							target.insertBefore( ${name}, anchor );
+							anchor.parentNode.insertBefore( ${name}, anchor );
 						` );
 					} else {
 						current.initStatements.push( deindent`
