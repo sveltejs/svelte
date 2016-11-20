@@ -49,7 +49,7 @@ export function readBindingDirective ( parser, start, name ) {
 		null
 	);
 
-	const value = parser.read( /[a-zA-Z_$][a-zA-Z0-9_$]*/ ); // TODO – keypaths? /([a-zA-Z_$][a-zA-Z0-9_$]*)(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*/
+	const value = parser.read( /([a-zA-Z_$][a-zA-Z0-9_$]*)(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*/ );
 	if ( !value ) parser.error( `Expected valid property name` );
 
 	if ( quoteMark ) {

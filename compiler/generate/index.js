@@ -235,17 +235,29 @@ export default function generate ( parsed, template ) {
 						}
 
 						else if ( attribute.type === 'Binding' ) {
-							if ( attribute.value in current.contexts ) {
-								throw new Error( `Can only bind top-level properties` );
-							}
+							const parts = attribute.value.split( '.' );
+							const contextual = parts[0] in current.contexts;
 
 							const handler = current.counter( `${name}ChangeHandler` );
+							let setter;
+
+							if ( contextual ) {
+								allUsedContexts.add( parts[0] );
+								setter = deindent`
+									var context = this.__context.${parts[0]};
+									context.${parts.slice( 1 ).join( '.' )} = this.value;
+									component.set({ ${current.contextChain[0]}: component.get( '${current.contextChain[0]}' ) });
+								`;
+							} else {
+								setter = `component.set({ ${attribute.value}: ${name}.value });`;
+							}
 
 							initStatements.push( deindent`
 								var ${name}_updating = false;
+
 								function ${handler} () {
 									${name}_updating = true;
-									component.set({ ${attribute.value}: ${name}.value });
+									${setter}
 									${name}_updating = false;
 								}
 
@@ -253,7 +265,7 @@ export default function generate ( parsed, template ) {
 							` );
 
 							updateStatements.push( deindent`
-								if ( !${name}_updating ) ${name}.value = root.${attribute.value};
+								if ( !${name}_updating ) ${name}.value = ${contextual ? attribute.value : `root.${attribute.value}`}
 							` );
 
 							teardownStatements.push( deindent`
