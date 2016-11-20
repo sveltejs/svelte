@@ -1,4 +1,6 @@
 import deindent from '../utils/deindent.js';
+import isReference from '../utils/isReference.js';
+import flattenReference from '../utils/flattenReference.js';
 
 export default function createBinding ( node, name, attribute, current, initStatements, updateStatements, teardownStatements, allUsedContexts ) {
 	const parts = attribute.value.split( '.' );
@@ -20,8 +22,21 @@ export default function createBinding ( node, name, attribute, current, initStat
 	}
 
 	if ( contextual ) {
-		// TODO can we target only things that have changed?
-		// TODO computed values/observers that depend on this probably won't update...
+		// find the top-level property that this is a child of
+		let fragment = current;
+		let prop = parts[0];
+
+		do {
+			if ( fragment.expression && fragment.context === prop ) {
+				if ( !isReference( fragment.expression  ) ) {
+					// TODO this should happen in prior validation step
+					throw new Error( `${prop} is read-only, it cannot be bound` );
+				}
+
+				prop = flattenReference( fragment.expression ).name;
+			}
+		} while ( fragment = fragment.parent );
+
 		const listName = current.listNames[ parts[0] ];
 		const indexName = current.indexNames[ parts[0] ];
 
@@ -30,7 +45,7 @@ export default function createBinding ( node, name, attribute, current, initStat
 			var index = this.__svelte.${indexName};
 			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = this.${attribute.name};
 
-			component.set({});
+			component.set({ ${prop}: component.get( '${prop}' ) });
 		`;
 	} else if ( deep ) {
 		setter = deindent`

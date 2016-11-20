@@ -495,6 +495,8 @@ export default function generate ( parsed, template ) {
 						useAnchor: false,
 						name: renderer,
 						target: 'target',
+						expression: node.expression,
+						context: node.context,
 
 						contexts,
 						indexes,
