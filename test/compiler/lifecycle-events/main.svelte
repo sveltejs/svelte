@@ -2,12 +2,8 @@
 
 <script>
 	export default {
-		oninit () {
-			this.events = [ 'init' ];
-		},
-
 		onrender () {
-			this.events.push( 'render' );
+			this.events = [ 'render' ];
 		},
 
 		onteardown () {

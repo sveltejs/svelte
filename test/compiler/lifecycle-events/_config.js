@@ -2,8 +2,8 @@ import * as assert from 'assert';
 
 export default {
 	test ( component ) {
-		assert.deepEqual( component.events, [ 'init', 'render' ]);
+		assert.deepEqual( component.events, [ 'render' ]);
 		component.teardown();
-		assert.deepEqual( component.events, [ 'init', 'render', 'teardown' ]);
+		assert.deepEqual( component.events, [ 'render', 'teardown' ]);
 	}
 };
