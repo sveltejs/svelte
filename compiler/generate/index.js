@@ -6,6 +6,7 @@ import isReference from './utils/isReference.js';
 import contextualise from './utils/contextualise.js';
 import counter from './utils/counter.js';
 import attributeLookup from './attributes/lookup.js';
+import createBinding from './binding/index.js';
 
 function createRenderer ( fragment ) {
 	return deindent`
@@ -235,42 +236,7 @@ export default function generate ( parsed, template ) {
 						}
 
 						else if ( attribute.type === 'Binding' ) {
-							const parts = attribute.value.split( '.' );
-							const contextual = parts[0] in current.contexts;
-
-							const handler = current.counter( `${name}ChangeHandler` );
-							let setter;
-
-							if ( contextual ) {
-								allUsedContexts.add( parts[0] );
-								setter = deindent`
-									var context = this.__context.${parts[0]};
-									context.${parts.slice( 1 ).join( '.' )} = this.value;
-									component.set({ ${current.contextChain[0]}: component.get( '${current.contextChain[0]}' ) });
-								`;
-							} else {
-								setter = `component.set({ ${attribute.value}: ${name}.value });`;
-							}
-
-							initStatements.push( deindent`
-								var ${name}_updating = false;
-
-								function ${handler} () {
-									${name}_updating = true;
-									${setter}
-									${name}_updating = false;
-								}
-
-								${name}.addEventListener( 'input', ${handler}, false );
-							` );
-
-							updateStatements.push( deindent`
-								if ( !${name}_updating ) ${name}.value = ${contextual ? attribute.value : `root.${attribute.value}`}
-							` );
-
-							teardownStatements.push( deindent`
-								${name}.removeEventListener( 'input', ${handler}, false );
-							` );
+							createBinding( node, name, attribute, current, initStatements, updateStatements, teardownStatements, allUsedContexts );
 						}
 
 						else {

@@ -2,30 +2,28 @@ import * as assert from 'assert';
 
 export default {
 	data: {
-		items: [
-			{ description: 'one' },
-			{ description: 'two' },
-			{ description: 'three' }
-		]
+		user: {
+			name: 'alice'
+		}
 	},
-	html: `<div><input><p>one</p></div><div><input><p>two</p></div><div><input><p>three</p></div><!--#each items-->`,
+	html: `<input>\n<p>hello alice</p>`,
 	test ( component, target, window ) {
-		const inputs = [ ...target.querySelectorAll( 'input' ) ];
+		const input = target.querySelector( 'input' );
 
-		assert.equal( inputs[0].value, 'one' );
+		assert.equal( input.value, 'alice' );
 
 		const event = new window.Event( 'input' );
 
-		inputs[1].value = 'four';
-		inputs[1].dispatchEvent( event );
+		input.value = 'bob';
+		input.dispatchEvent( event );
 
-		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>three</p></div><!--#each items-->` );
+		assert.equal( target.innerHTML, `<input>\n<p>hello bob</p>` );
 
-		const items = component.get( 'items' );
-		items[2].description = 'five';
+		const user = component.get( 'user' );
+		user.name = 'carol';
 
-		component.set({ items });
-		assert.equal( inputs[2].value, 'five' );
-		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>five</p></div><!--#each items-->` );
+		component.set({ user });
+		assert.equal( input.value, 'carol' );
+		assert.equal( target.innerHTML, `<input>\n<p>hello carol</p>` );
 	}
 };

@@ -1,3 +1,2 @@
-{{#each items as item}}
-	<div><input bind:value='item.description'><p>{{item.description}}</p></div>
-{{/each}}
+<input bind:value='user.name'>
+<p>hello {{user.name}}</p>

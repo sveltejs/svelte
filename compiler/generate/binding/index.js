@@ -1,0 +1,60 @@
+import deindent from '../utils/deindent.js';
+
+export default function createBinding ( node, name, attribute, current, initStatements, updateStatements, teardownStatements, allUsedContexts ) {
+	const parts = attribute.value.split( '.' );
+
+	const deep = parts.length > 1;
+	const contextual = parts[0] in current.contexts;
+	if ( contextual ) allUsedContexts.add( parts[0] );
+
+	const handler = current.counter( `${name}ChangeHandler` );
+	let setter;
+
+	let eventName = 'change';
+	if ( node.name === 'input' ) {
+		const type = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
+		if ( !type || type.value[0].data === 'text' ) {
+			// TODO in validation, should throw if type attribute is not static
+			eventName = 'input';
+		}
+	}
+
+	if ( deep && contextual ) {
+		// TODO can we target only things that have changed?
+		setter = deindent`
+			var context = this.__context.${parts[0]};
+			context.${parts.slice( 1 ).join( '.' )} = this.${attribute.name};
+			component.set({});
+		`;
+	} else if ( deep ) {
+		setter = deindent`
+			var ${parts[0]} = component.get( '${parts[0]}' );
+			${parts[0]}.${parts.slice( 1 ).join( '.' )} = this.${attribute.name};
+			component.set({ ${parts[0]}: ${parts[0]} });
+		`;
+	} else if ( contextual ) {
+		throw new Error( `Reassigning context is not currently supported` );
+	} else {
+		setter = `component.set({ ${attribute.value}: ${name}.${attribute.name} });`;
+	}
+
+	initStatements.push( deindent`
+		var ${name}_updating = false;
+
+		function ${handler} () {
+			${name}_updating = true;
+			${setter}
+			${name}_updating = false;
+		}
+
+		${name}.addEventListener( '${eventName}', ${handler}, false );
+	` );
+
+	updateStatements.push( deindent`
+		if ( !${name}_updating ) ${name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}
+	` );
+
+	teardownStatements.push( deindent`
+		${name}.removeEventListener( '${eventName}', ${handler}, false );
+	` );
+}
