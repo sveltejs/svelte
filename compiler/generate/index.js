@@ -61,7 +61,6 @@ export default function generate ( parsed, template ) {
 	}
 
 	const renderers = [];
-	const expressionFunctions = [];
 
 	const getName = counter();
 
@@ -309,13 +308,6 @@ export default function generate ( parsed, template ) {
 							}
 						` );
 					} else {
-						// const expressionFunction = getName( 'expression' );
-						// expressionFunctions.push( deindent`
-						// 	function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
-						// 		return ${snippet};
-						// 	}
-						// ` );
-
 						const temp = getName( 'temp' );
 
 						current.updateStatements.push( deindent`
@@ -356,17 +348,10 @@ export default function generate ( parsed, template ) {
 							}
 						` );
 					} else {
-						const expressionFunction = getName( 'expression' );
-						expressionFunctions.push( deindent`
-							function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
-								return ${snippet};
-							}
-						` );
-
 						expression = `${name}_value`;
 
 						current.updateStatements.push( deindent`
-							var ${expression} = ${expressionFunction}( ${usedContexts.join( ', ' )} );
+							var ${expression} = ${snippet};
 
 							if ( ${expression} && !${name} ) {
 								${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
@@ -427,26 +412,11 @@ export default function generate ( parsed, template ) {
 						const ${name}_fragment = document.createDocumentFragment();
 					` );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts, helpers );
+					contextualise( code, node.expression, current.contexts, helpers );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
-					let expression;
-
-					if ( isReference( node.expression ) ) {
-						expression = snippet;
-					} else {
-						const expressionFunction = getName( 'expression' );
-						expressionFunctions.push( deindent`
-							function ${expressionFunction} ( ${usedContexts.join( ', ' )} ) {
-								return ${snippet};
-							}
-						` );
-
-						expression = `${expressionFunction}( ${usedContexts.join( ', ' )} )`;
-					}
-
 					current.updateStatements.push( deindent`
-						var ${name}_value = ${expression};
+						var ${name}_value = ${snippet};
 
 						for ( var i = 0; i < ${name}_value.length; i += 1 ) {
 							if ( !${name}_iterations[i] ) {
@@ -558,8 +528,6 @@ export default function generate ( parsed, template ) {
 
 	const result = deindent`
 		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
-
-		${expressionFunctions.join( '\n\n' )}
 
 		${renderers.reverse().join( '\n\n' )}
 
