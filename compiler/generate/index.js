@@ -617,10 +617,16 @@ export default function generate ( parsed, template ) {
 				mainFragment = null;
 
 				state = {};
+
+				${templateProperties.onteardown ? `template.onteardown.call( component );` : ``}
 			};
+
+			${templateProperties.oninit ? `template.oninit.call( component );` : ``}
 
 			let mainFragment = renderMainFragment( component, options.target );
 			component.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
+
+			${templateProperties.onrender ? `template.onrender.call( component );` : ``}
 
 			return component;
 		}
