@@ -1,3 +1,3 @@
-# svelte
+# Svelte
 
 Coming soon...

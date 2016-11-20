@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The magical disappearing UI framework",
   "main": "dist/svelte.umd.js",
   "module": "dist/svelte.es.js",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/Rich-Harris/svelte.git"
+    "url": "https://github.com/sveltejs/svelte.git"
   },
   "keywords": [
     "UI",
@@ -24,9 +24,9 @@
   "author": "Rich Harris",
   "license": "MIT",
   "bugs": {
-    "url": "https://gitlab.com/Rich-Harris/svelte/issues"
+    "url": "https://github.com/sveltejs/svelte/issues"
   },
-  "homepage": "https://gitlab.com/Rich-Harris/svelte#README",
+  "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
     "eslint": "^3.10.2",
     "eslint-plugin-import": "^2.2.0",
