@@ -31,7 +31,7 @@ describe( 'svelte', () => {
 			const solo = exists( `test/parser/${dir}/solo` );
 
 			( solo ? it.only : it )( dir, () => {
-				const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).trim();
+				const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' );
 
 				try {
 					const actual = parse( input );
