@@ -3,10 +3,10 @@ import { walk } from 'estree-walker';
 import deindent from './utils/deindent.js';
 import walkHtml from './utils/walkHtml.js';
 import isReference from './utils/isReference.js';
-import contextualise from './utils/contextualise.js';
 import counter from './utils/counter.js';
 import attributeLookup from './attributes/lookup.js';
 import createBinding from './binding/index.js';
+import flattenReference from './utils/flattenReference.js';
 
 function createRenderer ( fragment ) {
 	if ( fragment.autofocus ) {
@@ -31,53 +31,94 @@ function createRenderer ( fragment ) {
 }
 
 export default function generate ( parsed, template, options = {} ) {
-	const code = new MagicString( template );
+	const generator = {
+		code: new MagicString( template ),
 
-	function addSourcemapLocations ( node ) {
-		walk( node, {
-			enter ( node ) {
-				code.addSourcemapLocation( node.start );
-				code.addSourcemapLocation( node.end );
-			}
-		});
-	}
+		addSourcemapLocations ( node ) {
+			walk( node, {
+				enter ( node ) {
+					generator.code.addSourcemapLocation( node.start );
+					generator.code.addSourcemapLocation( node.end );
+				}
+			});
+		},
+
+		contextualise ( expression, isEventHandler ) {
+			const usedContexts = [];
+
+			const contexts = generator.current.contexts;
+			const indexes = generator.current.indexes;
+
+			walk( expression, {
+				enter ( node, parent ) {
+					if ( isReference( node, parent ) ) {
+						const { name } = flattenReference( node );
+
+						if ( parent && parent.type === 'CallExpression' && node === parent.callee ) {
+							if ( helpers[ name ] ) generator.code.insertRight( node.start, `template.helpers.` );
+							return;
+						}
+
+						if ( name === 'event' && isEventHandler ) {
+							return;
+						}
+
+						if ( contexts[ name ] ) {
+							if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
+						} else if ( indexes[ name ] ) {
+							const context = indexes[ name ];
+							if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
+						} else {
+							generator.code.insertRight( node.start, `root.` );
+							if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
+						}
+
+						this.skip();
+					}
+				}
+			});
+
+			return usedContexts;
+		},
+
+		renderers: [],
+
+		getName: counter(),
+
+		// TODO use getName instead of counters
+		counters: {
+			if: 0,
+			each: 0
+		},
+
+		usesRefs: false
+	};
 
 	const templateProperties = {};
+	const helpers = {};
+	const components = {};
 
 	if ( parsed.js ) {
-		addSourcemapLocations( parsed.js.content );
+		generator.addSourcemapLocations( parsed.js.content );
 
 		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 		if ( defaultExport ) {
-			code.overwrite( defaultExport.start, defaultExport.declaration.start, `const template = ` );
+			generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `const template = ` );
 
 			defaultExport.declaration.properties.forEach( prop => {
 				templateProperties[ prop.key.name ] = prop.value;
 			});
 		}
+
+		if ( templateProperties.helpers ) {
+			templateProperties.helpers.properties.forEach( prop => {
+				helpers[ prop.key.name ] = prop.value;
+			});
+		}
 	}
 
-	const helpers = {};
-	if ( templateProperties.helpers ) {
-		templateProperties.helpers.properties.forEach( prop => {
-			helpers[ prop.key.name ] = prop.value;
-		});
-	}
-
-	const renderers = [];
-
-	const getName = counter();
-
-	// TODO use getName instead of counters
-	const counters = {
-		if: 0,
-		each: 0
-	};
-
-	// TODO (scoped) css
-
-	let current = {
+	generator.current = {
 		useAnchor: false,
 		name: 'renderMainFragment',
 		namespace: null,
@@ -99,8 +140,6 @@ export default function generate ( parsed, template, options = {} ) {
 		parent: null
 	};
 
-	let usesRefs = false;
-
 	parsed.html.children.forEach( child => {
 		walkHtml( child, {
 			Comment: {
@@ -109,8 +148,8 @@ export default function generate ( parsed, template, options = {} ) {
 
 			Element: {
 				enter ( node ) {
-					const name = current.counter( node.name );
-					let namespace = name === 'svg' ? 'http://www.w3.org/2000/svg' : current.namespace;
+					const name = generator.current.counter( node.name );
+					let namespace = name === 'svg' ? 'http://www.w3.org/2000/svg' : generator.current.namespace;
 
 					const initStatements = [];
 
@@ -138,7 +177,7 @@ export default function generate ( parsed, template, options = {} ) {
 
 								// special case – autofocus. has to be handled in a bit of a weird way
 								if ( attribute.name === 'autofocus' ) {
-									current.autofocus = name;
+									generator.current.autofocus = name;
 								}
 							}
 
@@ -170,7 +209,7 @@ export default function generate ( parsed, template, options = {} ) {
 
 								else {
 									// dynamic – but potentially non-string – attributes
-									contextualise( code, value.expression, current.contexts, current.indexes, helpers );
+									generator.contextualise( value.expression );
 									result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
 									if ( metadata ) {
@@ -191,9 +230,9 @@ export default function generate ( parsed, template, options = {} ) {
 										if ( chunk.type === 'Text' ) {
 											return JSON.stringify( chunk.data );
 										} else {
-											addSourcemapLocations( chunk.expression );
+											generator.addSourcemapLocations( chunk.expression );
 
-											contextualise( code, chunk.expression, current.contexts, current.indexes, helpers );
+											generator.contextualise( chunk.expression );
 											return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
 										}
 									}).join( ' + ' )
@@ -213,12 +252,12 @@ export default function generate ( parsed, template, options = {} ) {
 
 						else if ( attribute.type === 'EventHandler' ) {
 							// TODO verify that it's a valid callee (i.e. built-in or declared method)
-							addSourcemapLocations( attribute.expression );
-							code.insertRight( attribute.expression.start, 'component.' );
+							generator.addSourcemapLocations( attribute.expression );
+							generator.code.insertRight( attribute.expression.start, 'component.' );
 
 							const usedContexts = new Set();
 							attribute.expression.arguments.forEach( arg => {
-								const contexts = contextualise( code, arg, current.contexts, current.indexes, helpers, true );
+								const contexts = generator.contextualise( arg, true );
 
 								contexts.forEach( context => {
 									usedContexts.add( context );
@@ -230,13 +269,13 @@ export default function generate ( parsed, template, options = {} ) {
 							const declarations = [...usedContexts].map( name => {
 								if ( name === 'root' ) return 'var root = this.__svelte.root;';
 
-								const listName = current.listNames[ name ];
-								const indexName = current.indexNames[ name ];
+								const listName = generator.current.listNames[ name ];
+								const indexName = generator.current.indexNames[ name ];
 
 								return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 							});
 
-							const handlerName = current.counter( `${attribute.name}Handler` );
+							const handlerName = generator.current.counter( `${attribute.name}Handler` );
 							const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 							const customEvent = templateProperties.events && templateProperties.events.properties.find( prop => prop.key.name === attribute.name );
@@ -267,11 +306,11 @@ export default function generate ( parsed, template, options = {} ) {
 						}
 
 						else if ( attribute.type === 'Binding' ) {
-							createBinding( node, name, attribute, current, initStatements, updateStatements, teardownStatements, allUsedContexts );
+							createBinding( node, name, attribute, generator.current, initStatements, updateStatements, teardownStatements, allUsedContexts );
 						}
 
 						else if ( attribute.type === 'Ref' ) {
-							usesRefs = true;
+							generator.usesRefs = true;
 
 							initStatements.push( deindent`
 								component.refs.${attribute.name} = ${name};
@@ -295,8 +334,8 @@ export default function generate ( parsed, template, options = {} ) {
 						const declarations = [...allUsedContexts].map( contextName => {
 							if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
-							const listName = current.listNames[ contextName ];
-							const indexName = current.indexNames[ contextName ];
+							const listName = generator.current.listNames[ contextName ];
+							const indexName = generator.current.indexNames[ contextName ];
 
 							return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 						}).join( '\n' );
@@ -312,29 +351,29 @@ export default function generate ( parsed, template, options = {} ) {
 
 					teardownStatements.push( `${name}.parentNode.removeChild( ${name} );` );
 
-					current.initStatements.push( initStatements.join( '\n' ) );
-					if ( updateStatements.length ) current.updateStatements.push( updateStatements.join( '\n' ) );
-					current.teardownStatements.push( teardownStatements.join( '\n' ) );
+					generator.current.initStatements.push( initStatements.join( '\n' ) );
+					if ( updateStatements.length ) generator.current.updateStatements.push( updateStatements.join( '\n' ) );
+					generator.current.teardownStatements.push( teardownStatements.join( '\n' ) );
 
-					current = Object.assign( {}, current, {
+					generator.current = Object.assign( {}, generator.current, {
 						namespace,
 						target: name,
-						parent: current
+						parent: generator.current
 					});
 				},
 
 				leave () {
-					const name = current.target;
+					const name = generator.current.target;
 
-					current = current.parent;
+					generator.current = generator.current.parent;
 
-					if ( current.useAnchor && current.target === 'target' ) {
-						current.initStatements.push( deindent`
+					if ( generator.current.useAnchor && generator.current.target === 'target' ) {
+						generator.current.initStatements.push( deindent`
 							anchor.parentNode.insertBefore( ${name}, anchor );
 						` );
 					} else {
-						current.initStatements.push( deindent`
-							${current.target}.appendChild( ${name} );
+						generator.current.initStatements.push( deindent`
+							${generator.current.target}.appendChild( ${name} );
 						` );
 					}
 				}
@@ -342,41 +381,41 @@ export default function generate ( parsed, template, options = {} ) {
 
 			Text: {
 				enter ( node ) {
-					current.initStatements.push( deindent`
-						${current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
+					generator.current.initStatements.push( deindent`
+						${generator.current.target}.appendChild( document.createTextNode( ${JSON.stringify( node.data )} ) );
 					` );
 				}
 			},
 
 			MustacheTag: {
 				enter ( node ) {
-					const name = current.counter( 'text' );
+					const name = generator.current.counter( 'text' );
 
-					current.initStatements.push( deindent`
+					generator.current.initStatements.push( deindent`
 						var ${name} = document.createTextNode( '' );
 						var ${name}_value = '';
-						${current.target}.appendChild( ${name} );
+						${generator.current.target}.appendChild( ${name} );
 					` );
 
-					addSourcemapLocations( node.expression );
+					generator.addSourcemapLocations( node.expression );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts, current.indexes, helpers );
+					const usedContexts = generator.contextualise( node.expression );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					if ( isReference( node.expression ) ) {
 						const reference = `${template.slice( node.expression.start, node.expression.end )}`;
 						const qualified = usedContexts[0] === 'root' ? `root.${reference}` : reference;
 
-						current.updateStatements.push( deindent`
+						generator.current.updateStatements.push( deindent`
 							if ( ${snippet} !== ${name}_value ) {
 								${name}_value = ${qualified};
 								${name}.data = ${name}_value;
 							}
 						` );
 					} else {
-						const temp = getName( 'temp' );
+						const temp = generator.getName( 'temp' );
 
-						current.updateStatements.push( deindent`
+						generator.current.updateStatements.push( deindent`
 							var ${temp} = ${snippet};
 							if ( ${temp} !== ${name}_value ) {
 								${name}_value = ${temp};
@@ -389,19 +428,19 @@ export default function generate ( parsed, template, options = {} ) {
 
 			IfBlock: {
 				enter ( node ) {
-					const i = counters.if++;
+					const i = generator.counters.if++;
 					const name = `ifBlock_${i}`;
 					const renderer = `renderIfBlock_${i}`;
 
-					current.initStatements.push( deindent`
+					generator.current.initStatements.push( deindent`
 						var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${template.slice( node.expression.start, node.expression.end )}` )} );
-						${current.target}.appendChild( ${name}_anchor );
+						${generator.current.target}.appendChild( ${name}_anchor );
 						var ${name} = null;
 					` );
 
-					addSourcemapLocations( node.expression );
+					generator.addSourcemapLocations( node.expression );
 
-					const usedContexts = contextualise( code, node.expression, current.contexts, current.indexes, helpers );
+					const usedContexts = generator.contextualise( node.expression );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 					let expression;
@@ -410,40 +449,40 @@ export default function generate ( parsed, template, options = {} ) {
 						const reference = `${template.slice( node.expression.start, node.expression.end )}`;
 						expression = usedContexts[0] === 'root' ? `root.${reference}` : reference;
 
-						current.updateStatements.push( deindent`
+						generator.current.updateStatements.push( deindent`
 							if ( ${snippet} && !${name} ) {
-								${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
+								${name} = ${renderer}( component, ${generator.current.target}, ${name}_anchor );
 							}
 						` );
 					} else {
 						expression = `${name}_value`;
 
-						current.updateStatements.push( deindent`
+						generator.current.updateStatements.push( deindent`
 							var ${expression} = ${snippet};
 
 							if ( ${expression} && !${name} ) {
-								${name} = ${renderer}( component, ${current.target}, ${name}_anchor );
+								${name} = ${renderer}( component, ${generator.current.target}, ${name}_anchor );
 							}
 						` );
 					}
 
-					current.updateStatements.push( deindent`
+					generator.current.updateStatements.push( deindent`
 						else if ( !${expression} && ${name} ) {
 							${name}.teardown();
 							${name} = null;
 						}
 
 						if ( ${name} ) {
-							${name}.update( ${current.contextChain.join( ', ' )} );
+							${name}.update( ${generator.current.contextChain.join( ', ' )} );
 						}
 					` );
 
-					current.teardownStatements.push( deindent`
+					generator.current.teardownStatements.push( deindent`
 						if ( ${name} ) ${name}.teardown();
 						${name}_anchor.parentNode.removeChild( ${name}_anchor );
 					` );
 
-					current = Object.assign( {}, current, {
+					generator.current = Object.assign( {}, generator.current, {
 						useAnchor: true,
 						name: renderer,
 						target: 'target',
@@ -454,37 +493,37 @@ export default function generate ( parsed, template, options = {} ) {
 
 						counter: counter(),
 
-						parent: current
+						parent: generator.current
 					});
 				},
 
 				leave () {
-					renderers.push( createRenderer( current ) );
-					current = current.parent;
+					generator.renderers.push( createRenderer( generator.current ) );
+					generator.current = generator.current.parent;
 				}
 			},
 
 			EachBlock: {
 				enter ( node ) {
-					const i = counters.each++;
+					const i = generator.counters.each++;
 					const name = `eachBlock_${i}`;
 					const renderer = `renderEachBlock_${i}`;
 
 					const listName = `${name}_value`;
 
-					current.initStatements.push( deindent`
+					generator.current.initStatements.push( deindent`
 						var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${template.slice( node.expression.start, node.expression.end )}` )} );
-						${current.target}.appendChild( ${name}_anchor );
+						${generator.current.target}.appendChild( ${name}_anchor );
 						var ${name}_iterations = [];
 						const ${name}_fragment = document.createDocumentFragment();
 					` );
 
-					addSourcemapLocations( node.expression );
+					generator.addSourcemapLocations( node.expression );
 
-					contextualise( code, node.expression, current.contexts, current.indexes, helpers );
+					generator.contextualise( node.expression );
 					const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
-					current.updateStatements.push( deindent`
+					generator.current.updateStatements.push( deindent`
 						var ${name}_value = ${snippet};
 
 						for ( var i = 0; i < ${name}_value.length; i += 1 ) {
@@ -493,7 +532,7 @@ export default function generate ( parsed, template, options = {} ) {
 							}
 
 							const iteration = ${name}_iterations[i];
-							${name}_iterations[i].update( ${current.contextChain.join( ', ' )}, ${listName}, ${listName}[i], i );
+							${name}_iterations[i].update( ${generator.current.contextChain.join( ', ' )}, ${listName}, ${listName}[i], i );
 						}
 
 						for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
@@ -504,7 +543,7 @@ export default function generate ( parsed, template, options = {} ) {
 						${name}_iterations.length = ${listName}.length;
 					` );
 
-					current.teardownStatements.push( deindent`
+					generator.current.teardownStatements.push( deindent`
 						for ( let i = 0; i < ${name}_iterations.length; i += 1 ) {
 							${name}_iterations[i].teardown();
 						}
@@ -512,21 +551,21 @@ export default function generate ( parsed, template, options = {} ) {
 						${name}_anchor.parentNode.removeChild( ${name}_anchor );
 					` );
 
-					const indexNames = Object.assign( {}, current.indexNames );
+					const indexNames = Object.assign( {}, generator.current.indexNames );
 					const indexName = indexNames[ node.context ] = ( node.index || `${node.context}__index` );
 
-					const listNames = Object.assign( {}, current.listNames );
+					const listNames = Object.assign( {}, generator.current.listNames );
 					listNames[ node.context ] = listName;
 
-					const contexts = Object.assign( {}, current.contexts );
+					const contexts = Object.assign( {}, generator.current.contexts );
 					contexts[ node.context ] = true;
 
-					const indexes = Object.assign( {}, current.indexes );
+					const indexes = Object.assign( {}, generator.current.indexes );
 					if ( node.index ) indexes[ indexName ] = node.context;
 
-					const contextChain = current.contextChain.concat( listName, node.context, indexName );
+					const contextChain = generator.current.contextChain.concat( listName, node.context, indexName );
 
-					current = {
+					generator.current = {
 						useAnchor: false,
 						name: renderer,
 						target: 'target',
@@ -551,20 +590,20 @@ export default function generate ( parsed, template, options = {} ) {
 
 						counter: counter(),
 
-						parent: current
+						parent: generator.current
 					};
 				},
 
 				leave () {
-					renderers.push( createRenderer( current ) );
+					generator.renderers.push( createRenderer( generator.current ) );
 
-					current = current.parent;
+					generator.current = generator.current.parent;
 				}
 			}
 		});
 	});
 
-	renderers.push( createRenderer( current ) );
+	generator.renderers.push( createRenderer( generator.current ) );
 
 	const setStatements = [ deindent`
 		const oldState = state;
@@ -614,10 +653,10 @@ export default function generate ( parsed, template, options = {} ) {
 	const result = deindent`
 		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
 
-		${renderers.reverse().join( '\n\n' )}
+		${generator.renderers.reverse().join( '\n\n' )}
 
 		export default function ${constructorName} ( options ) {
-			var component = this;${usesRefs ? `\nthis.refs = {}` : ``}
+			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
 			var state = {};
 
 			var observers = {
@@ -706,20 +745,20 @@ export default function generate ( parsed, template, options = {} ) {
 	let c = 0;
 
 	sortedBySource.forEach( part => {
-		code.remove( c, part.start );
-		code.insertRight( part.start, part.chunk );
+		generator.code.remove( c, part.start );
+		generator.code.insertRight( part.start, part.chunk );
 		c = part.end;
 	});
 
-	code.remove( c, template.length );
-	code.append( finalChunk );
+	generator.code.remove( c, template.length );
+	generator.code.append( finalChunk );
 
 	sortedByResult.forEach( part => {
-		code.move( part.start, part.end, 0 );
+		generator.code.move( part.start, part.end, 0 );
 	});
 
 	return {
-		code: code.toString(),
-		map: code.generateMap()
+		code: generator.code.toString(),
+		map: generator.code.generateMap()
 	};
 }
