@@ -272,12 +272,13 @@ export default function generate ( parsed, template, options = {} ) {
 			};
 
 			this.on = function on ( eventName, handler ) {
-				callbacks[ eventName ] || ( callbacks[ eventName ] = [] ).push( handler );
+				const handlers = callbacks[ eventName ] || ( callbacks[ eventName ] = [] );
+				handlers.push( handler );
 
 				return {
 					cancel: function () {
-						const index = callbacks.indexOf( handler );
-						if ( ~index ) callbacks.splice( index, 1 );
+						const index = handlers.indexOf( handler );
+						if ( ~index ) handlers.splice( index, 1 );
 					}
 				};
 			};

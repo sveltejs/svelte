@@ -57,7 +57,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 			const usedContexts = new Set();
 			attribute.expression.arguments.forEach( arg => {
-				const contexts = generator.contextualise( arg, true );
+				const contexts = generator.contextualise( arg, true, true );
 
 				contexts.forEach( context => {
 					usedContexts.add( context );
@@ -75,32 +75,13 @@ export default function addComponentAttributes ( generator, node, local ) {
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
-			const handlerName = generator.current.counter( `${attribute.name}Handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
-			if ( attribute.name in generator.events ) {
-				local.init.push( deindent`
-					const ${handlerName} = template.events.${attribute.name}( ${local.name}, function ( event ) {
-						${handlerBody}
-					});
-				` );
-
-				local.teardown.push( deindent`
-					${handlerName}.teardown();
-				` );
-			} else {
-				local.init.push( deindent`
-					function ${handlerName} ( event ) {
-						${handlerBody}
-					}
-
-					${local.name}.addEventListener( '${attribute.name}', ${handlerName}, false );
-				` );
-
-				local.teardown.push( deindent`
-					${local.name}.removeEventListener( '${attribute.name}', ${handlerName}, false );
-				` );
-			}
+			local.init.push( deindent`
+				${local.name}.on( '${attribute.name}', function ( event ) {
+					${handlerBody}
+				});
+			` );
 		}
 
 		else if ( attribute.type === 'Binding' ) {
