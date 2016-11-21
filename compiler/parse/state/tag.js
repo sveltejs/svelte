@@ -6,6 +6,7 @@ import { trimStart, trimEnd } from '../utils/trim.js';
 
 const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
+const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
 
 const specials = {
 	script: {
@@ -170,13 +171,11 @@ function readAttribute ( parser ) {
 }
 
 function readAttributeValue ( parser ) {
-	if ( parser.eat( `'` ) ) return readQuotedAttributeValue( parser, `'` );
-	if ( parser.eat( `"` ) ) return readQuotedAttributeValue( parser, `"` );
+	let quoteMark;
 
-	parser.error( `TODO unquoted attribute values` );
-}
+	if ( parser.eat( `'` ) ) quoteMark = `'`;
+	if ( parser.eat( `"` ) ) quoteMark = `"`;
 
-function readQuotedAttributeValue ( parser, quoteMark ) {
 	let currentChunk = {
 		start: parser.index,
 		end: null,
@@ -185,6 +184,10 @@ function readQuotedAttributeValue ( parser, quoteMark ) {
 	};
 
 	let escaped = false;
+
+	const done = quoteMark ?
+		char => char === quoteMark :
+		char => invalidUnquotedAttributeCharacters.test( char );
 
 	const chunks = [];
 
@@ -228,8 +231,9 @@ function readQuotedAttributeValue ( parser, quoteMark ) {
 				escaped = true;
 			}
 
-			else if ( parser.match( quoteMark ) ) {
-				currentChunk.end = parser.index++;
+			else if ( done( parser.template[ parser.index ] ) ) {
+				currentChunk.end = parser.index;
+				if ( quoteMark ) parser.index += 1;
 
 				if ( currentChunk.data ) chunks.push( currentChunk );
 				return chunks;

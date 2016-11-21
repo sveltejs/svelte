@@ -41,11 +41,15 @@ describe( 'svelte', () => {
 				} catch ( err ) {
 					if ( err.name !== 'ParseError' ) throw err;
 
-					const expected = require( `./parser/${dir}/error.json` );
+					try {
+						const expected = require( `./parser/${dir}/error.json` );
 
-					assert.equal( err.shortMessage, expected.message );
-					assert.deepEqual( err.loc, expected.loc );
-					assert.equal( err.pos, expected.pos );
+						assert.equal( err.shortMessage, expected.message );
+						assert.deepEqual( err.loc, expected.loc );
+						assert.equal( err.pos, expected.pos );
+					} catch ( err2 ) {
+						throw err2.code === 'MODULE_NOT_FOUND' ? err : err2;
+					}
 				}
 			});
 		});
