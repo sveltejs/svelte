@@ -1,41 +1,40 @@
 import deindent from '../../utils/deindent.js';
 
 export default function addComponentAttributes ( generator, node, local ) {
+	const variables = [];
+	local.data = [];
+
 	node.attributes.forEach( attribute => {
 		if ( attribute.type === 'Attribute' ) {
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
-				local.init.push( deindent`
-					${local.name}.setAttribute( '${attribute.name}', true );
-				` );
+				local.data.push( `${attribute.name}: true` );
 			}
 
 			else if ( attribute.value.length === 1 ) {
 				const value = attribute.value[0];
 
-				let result = '';
-
 				if ( value.type === 'Text' ) {
 					// static attributes
-					result = JSON.stringify( value.data );
-
-					local.init.push( deindent`
-						${local.name}.setAttribute( '${attribute.name}', ${result} );
-					` );
+					const result = isNaN( parseFloat( value.data ) ) ? JSON.stringify( value.data ) : value.data;
+					local.data.push( `${attribute.name}: ${result}` );
 				}
 
 				else {
 					// dynamic – but potentially non-string – attributes
 					generator.contextualise( value.expression );
-					result = `[✂${value.expression.start}-${value.expression.end}✂]`;
+					const result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
-					local.update.push( deindent`
-						${local.name}.setAttribute( '${attribute.name}', ${result} );
-					` );
+					throw new Error( 'TODO dynamic data' );
+					// local.update.push( deindent`
+					// 	${local.name}.setAttribute( '${attribute.name}', ${result} );
+					// ` );
 				}
 			}
 
 			else {
+				throw new Error( 'TODO dynamic data' );
+
 				const value = ( attribute.value[0].type === 'Text' ? '' : `"" + ` ) + (
 					attribute.value.map( chunk => {
 						if ( chunk.type === 'Text' ) {

@@ -20,11 +20,22 @@ export default {
 		if ( isComponent ) {
 			addComponentAttributes( generator, node, local );
 
-			local.init.unshift( deindent`
-				var ${name} = new template.components.${node.name}({
-					target: ${generator.current.target}
-				});
-			` );
+			if ( local.data.length ) {
+				local.init.unshift( deindent`
+					var ${name} = new template.components.${node.name}({
+						target: ${generator.current.target},
+						data: {
+							${local.data.join( ',\n' )}
+						}
+					});
+				` );
+			} else {
+				local.init.unshift( deindent`
+					var ${name} = new template.components.${node.name}({
+						target: ${generator.current.target}
+					});
+				` );
+			}
 
 			local.teardown.push( `${name}.teardown();` );
 		}
