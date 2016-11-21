@@ -7,7 +7,7 @@ import jsdom from 'jsdom';
 
 const cache = {};
 
-require.extensions[ '.svelte' ] = function ( module, filename ) {
+require.extensions[ '.html' ] = function ( module, filename ) {
 	const code = cache[ filename ];
 	if ( !code ) throw new Error( `not compiled: ${filename}` );
 
@@ -31,7 +31,7 @@ describe( 'svelte', () => {
 			const solo = exists( `test/parser/${dir}/solo` );
 
 			( solo ? it.only : it )( dir, () => {
-				const input = fs.readFileSync( `test/parser/${dir}/input.svelte`, 'utf-8' ).trim();
+				const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).trim();
 				const actual = parse( input );
 				const expected = require( `./parser/${dir}/output.json` );
 
@@ -75,7 +75,7 @@ describe( 'svelte', () => {
 				let compiled;
 
 				try {
-					const source = fs.readFileSync( `test/compiler/${dir}/main.svelte`, 'utf-8' );
+					const source = fs.readFileSync( `test/compiler/${dir}/main.html`, 'utf-8' );
 					compiled = compile( source );
 				} catch ( err ) {
 					if ( config.compileError ) {
@@ -94,12 +94,12 @@ describe( 'svelte', () => {
 					return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
 				}).join( '\n' );
 
-				cache[ path.resolve( `test/compiler/${dir}/main.svelte` ) ] = code;
+				cache[ path.resolve( `test/compiler/${dir}/main.html` ) ] = code;
 
 				let factory;
 
 				try {
-					factory = require( `./compiler/${dir}/main.svelte` ).default;
+					factory = require( `./compiler/${dir}/main.html` ).default;
 				} catch ( err ) {
 					console.log( withLineNumbers ); // eslint-disable-line no-console
 					throw err;
