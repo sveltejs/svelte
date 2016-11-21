@@ -8,9 +8,7 @@ import jsdom from 'jsdom';
 const cache = {};
 
 require.extensions[ '.html' ] = function ( module, filename ) {
-	const code = cache[ filename ];
-	if ( !code ) throw new Error( `not compiled: ${filename}` );
-
+	const code = cache[ filename ] || ( cache[ filename ] = compile( fs.readFileSync( filename, 'utf-8' ) ).code );
 	return module._compile( code, filename );
 };
 
