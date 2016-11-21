@@ -96,10 +96,10 @@ describe( 'svelte', () => {
 
 				cache[ path.resolve( `test/compiler/${dir}/main.html` ) ] = code;
 
-				let factory;
+				let SvelteComponent;
 
 				try {
-					factory = require( `./compiler/${dir}/main.html` ).default;
+					SvelteComponent = require( `./compiler/${dir}/main.html` ).default;
 				} catch ( err ) {
 					console.log( withLineNumbers ); // eslint-disable-line no-console
 					throw err;
@@ -113,7 +113,7 @@ describe( 'svelte', () => {
 					.then( window => {
 						const target = window.document.querySelector( 'main' );
 
-						const component = factory({
+						const component = new SvelteComponent({
 							target,
 							data: config.data
 						});

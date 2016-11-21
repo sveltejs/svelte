@@ -30,7 +30,7 @@ function createRenderer ( fragment ) {
 	`;
 }
 
-export default function generate ( parsed, template ) {
+export default function generate ( parsed, template, options = {} ) {
 	const code = new MagicString( template );
 
 	function addSourcemapLocations ( node ) {
@@ -609,13 +609,15 @@ export default function generate ( parsed, template ) {
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
 
+	const constructorName = options.name || 'SvelteComponent';
+
 	const result = deindent`
 		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
 
 		${renderers.reverse().join( '\n\n' )}
 
-		export default function createComponent ( options ) {
-			var component = ${templateProperties.methods ? `Object.create( template.methods )` : `{}`};${usesRefs ? `\ncomponent.refs = {}` : ``}
+		export default function ${constructorName} ( options ) {
+			var component = this;${usesRefs ? `\nthis.refs = {}` : ``}
 			var state = {};
 
 			var observers = {
@@ -641,15 +643,15 @@ export default function generate ( parsed, template ) {
 				}
 			}
 
-			component.get = function get ( key ) {
+			this.get = function get ( key ) {
 				return state[ key ];
 			};
 
-			component.set = function set ( newState ) {
+			this.set = function set ( newState ) {
 				${setStatements.join( '\n\n' )}
 			};
 
-			component.observe = function ( key, callback, options = {} ) {
+			this.observe = function ( key, callback, options = {} ) {
 				const group = options.defer ? observers.deferred : observers.immediate;
 
 				( group[ key ] || ( group[ key ] = [] ) ).push( callback );
@@ -663,22 +665,22 @@ export default function generate ( parsed, template ) {
 				};
 			};
 
-			component.teardown = function teardown () {
+			this.teardown = function teardown () {
 				mainFragment.teardown();
 				mainFragment = null;
 
 				state = {};
 
-				${templateProperties.onteardown ? `template.onteardown.call( component );` : ``}
+				${templateProperties.onteardown ? `template.onteardown.call( this );` : ``}
 			};
 
-			let mainFragment = renderMainFragment( component, options.target );
-			component.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
+			let mainFragment = renderMainFragment( this, options.target );
+			this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
 
-			${templateProperties.onrender ? `template.onrender.call( component );` : ``}
-
-			return component;
+			${templateProperties.onrender ? `template.onrender.call( this );` : ``}
 		}
+
+		${templateProperties.methods ? `${constructorName}.prototype = template.methods` : ''}
 	`;
 
 	const pattern = /\[✂(\d+)-(\d+)$/;
