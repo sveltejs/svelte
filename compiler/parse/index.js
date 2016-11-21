@@ -51,7 +51,7 @@ export default function parse ( template ) {
 		},
 
 		acornError ( err ) {
-			parser.error( err.message.replace( /\(\d+:\d+\)$/, '' ), err.pos );
+			parser.error( err.message.replace( / \(\d+:\d+\)$/, '' ), err.pos );
 		},
 
 		error ( message, index = this.index ) {

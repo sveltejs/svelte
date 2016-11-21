@@ -1,0 +1,8 @@
+{
+	"message": "Assigning to rvalue",
+	"loc": {
+		"line": 1,
+		"column": 2
+	},
+	"pos": 2
+}
