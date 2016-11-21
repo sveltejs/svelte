@@ -83,6 +83,7 @@ export default function generate ( parsed, template, options = {} ) {
 
 		helpers: {},
 		events: {},
+		components: {},
 
 		getName: counter(),
 
@@ -112,7 +113,7 @@ export default function generate ( parsed, template, options = {} ) {
 			});
 		}
 
-		[ 'helpers', 'events' ].forEach( key => {
+		[ 'helpers', 'events', 'components' ].forEach( key => {
 			if ( templateProperties[ key ] ) {
 				templateProperties[ key ].properties.forEach( prop => {
 					generator[ key ][ prop.key.name ] = prop.value;
