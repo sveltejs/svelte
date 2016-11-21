@@ -3,6 +3,7 @@ import readScript from '../read/script.js';
 import readStyle from '../read/style.js';
 import { readEventHandlerDirective, readBindingDirective } from '../read/directives.js';
 import { trimStart, trimEnd } from '../utils/trim.js';
+import { decodeCharacterReferences } from '../utils/html.js';
 
 const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
@@ -183,8 +184,6 @@ function readAttributeValue ( parser ) {
 		data: ''
 	};
 
-	let escaped = false;
-
 	const done = quoteMark ?
 		char => char === quoteMark :
 		char => invalidUnquotedAttributeCharacters.test( char );
@@ -192,56 +191,50 @@ function readAttributeValue ( parser ) {
 	const chunks = [];
 
 	while ( parser.index < parser.template.length ) {
-		if ( escaped ) {
-			currentChunk.data += parser.template[ parser.index++ ];
+		const index = parser.index;
+
+		if ( parser.eat( '{{' ) ) {
+			if ( currentChunk.data ) {
+				currentChunk.end = index;
+				chunks.push( currentChunk );
+			}
+
+			const expression = readExpression( parser );
+			parser.allowWhitespace();
+			if ( !parser.eat( '}}' ) ) {
+				parser.error( `Expected }}` );
+			}
+
+			chunks.push({
+				start: index,
+				end: parser.index,
+				type: 'MustacheTag',
+				expression
+			});
+
+			currentChunk = {
+				start: parser.index,
+				end: null,
+				type: 'Text',
+				data: ''
+			};
+		}
+
+		else if ( done( parser.template[ parser.index ] ) ) {
+			currentChunk.end = parser.index;
+			if ( quoteMark ) parser.index += 1;
+
+			if ( currentChunk.data ) chunks.push( currentChunk );
+
+			chunks.forEach( chunk => {
+				if ( chunk.type === 'Text' ) chunk.data = decodeCharacterReferences( chunk.data );
+			});
+
+			return chunks;
 		}
 
 		else {
-			const index = parser.index;
-
-			if ( parser.eat( '{{' ) ) {
-				currentChunk.end = index;
-
-				if ( currentChunk.data ) {
-					chunks.push( currentChunk );
-				}
-
-				const expression = readExpression( parser );
-				parser.allowWhitespace();
-				if ( !parser.eat( '}}' ) ) {
-					parser.error( `Expected }}` );
-				}
-
-				chunks.push({
-					start: index,
-					end: parser.index,
-					type: 'MustacheTag',
-					expression
-				});
-
-				currentChunk = {
-					start: parser.index,
-					end: null,
-					type: 'Text',
-					data: ''
-				};
-			}
-
-			else if ( parser.eat( '\\' ) ) {
-				escaped = true;
-			}
-
-			else if ( done( parser.template[ parser.index ] ) ) {
-				currentChunk.end = parser.index;
-				if ( quoteMark ) parser.index += 1;
-
-				if ( currentChunk.data ) chunks.push( currentChunk );
-				return chunks;
-			}
-
-			else {
-				currentChunk.data += parser.template[ parser.index++ ];
-			}
+			currentChunk.data += parser.template[ parser.index++ ];
 		}
 	}
 
