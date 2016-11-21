@@ -220,6 +220,8 @@ export default function generate ( parsed, template, options = {} ) {
 				deferred: Object.create( null )
 			};
 
+			var callbacks = Object.create( null );
+
 			function dispatchObservers ( group, newState, oldState ) {
 				for ( const key in group ) {
 					if ( !( key in newState ) ) continue;
@@ -237,6 +239,15 @@ export default function generate ( parsed, template, options = {} ) {
 					}
 				}
 			}
+
+			this.fire = function fire ( eventName, data ) {
+				var handlers = eventName in callbacks && callbacks[ eventName ].slice();
+				if ( !handlers ) return;
+
+				for ( var i = 0; i < handlers.length; i += 1 ) {
+					handlers[i].call( this, data );
+				}
+			};
 
 			this.get = function get ( key ) {
 				return state[ key ];
@@ -260,13 +271,24 @@ export default function generate ( parsed, template, options = {} ) {
 				};
 			};
 
+			this.on = function on ( eventName, handler ) {
+				callbacks[ eventName ] || ( callbacks[ eventName ] = [] ).push( handler );
+
+				return {
+					cancel: function () {
+						const index = callbacks.indexOf( handler );
+						if ( ~index ) callbacks.splice( index, 1 );
+					}
+				};
+			};
+
 			this.teardown = function teardown () {
 				mainFragment.teardown();
 				mainFragment = null;
 
 				state = {};
 
-				${templateProperties.onteardown ? `template.onteardown.call( this );` : ``}
+				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
 			};
 
 			let mainFragment = renderMainFragment( this, options.target );
