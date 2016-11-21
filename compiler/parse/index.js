@@ -33,8 +33,10 @@ function ParseError ( message, template, index ) {
 		})
 		.join( '\n' );
 
+	this.name = 'ParseError';
 	this.message = `${message} (${line + 1}:${column})\n${frame}`;
-	this.loc = { line, column };
+	this.loc = { line: line + 1, column };
+	this.pos = index;
 	this.shortMessage = message;
 }
 
@@ -121,6 +123,10 @@ export default function parse ( template ) {
 
 	while ( parser.index < parser.template.length ) {
 		state = state( parser ) || fragment;
+	}
+
+	if ( state !== fragment || parser.stack.length > 1 ) {
+		parser.error( 'Unexpected end of input' );
 	}
 
 	// trim unnecessary whitespace

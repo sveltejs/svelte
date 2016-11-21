@@ -32,10 +32,21 @@ describe( 'svelte', () => {
 
 			( solo ? it.only : it )( dir, () => {
 				const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).trim();
-				const actual = parse( input );
-				const expected = require( `./parser/${dir}/output.json` );
 
-				assert.deepEqual( actual, expected );
+				try {
+					const actual = parse( input );
+					const expected = require( `./parser/${dir}/output.json` );
+
+					assert.deepEqual( actual, expected );
+				} catch ( err ) {
+					if ( err.name !== 'ParseError' ) throw err;
+
+					const expected = require( `./parser/${dir}/error.json` );
+
+					assert.equal( err.shortMessage, expected.message );
+					assert.deepEqual( err.loc, expected.loc );
+					assert.equal( err.pos, expected.pos );
+				}
 			});
 		});
 	});
