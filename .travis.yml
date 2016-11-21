@@ -1,0 +1,9 @@
+sudo: false
+language: node_js
+node_js:
+  - "6"
+  - "stable"
+env:
+  global:
+    - BUILD_TIMEOUT=10000
+install: npm install
