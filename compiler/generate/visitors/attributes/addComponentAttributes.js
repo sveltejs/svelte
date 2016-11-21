@@ -1,8 +1,8 @@
 import deindent from '../../utils/deindent.js';
 
 export default function addComponentAttributes ( generator, node, local ) {
-	const variables = [];
-	local.data = [];
+	local.staticAttributes = [];
+	local.dynamicAttributes = [];
 
 	node.attributes.forEach( attribute => {
 		if ( attribute.type === 'Attribute' ) {
@@ -17,24 +17,21 @@ export default function addComponentAttributes ( generator, node, local ) {
 				if ( value.type === 'Text' ) {
 					// static attributes
 					const result = isNaN( parseFloat( value.data ) ) ? JSON.stringify( value.data ) : value.data;
-					local.data.push( `${attribute.name}: ${result}` );
+					local.staticAttributes.push( `${attribute.name}: ${result}` );
 				}
 
 				else {
-					// dynamic – but potentially non-string – attributes
+					// simple dynamic attributes
 					generator.contextualise( value.expression );
 					const result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
-					throw new Error( 'TODO dynamic data' );
-					// local.update.push( deindent`
-					// 	${local.name}.setAttribute( '${attribute.name}', ${result} );
-					// ` );
+					// TODO only update attributes that have changed
+					local.dynamicAttributes.push( `${attribute.name}: ${result}` );
 				}
 			}
 
 			else {
-				throw new Error( 'TODO dynamic data' );
-
+				// complex dynamic attributes
 				const value = ( attribute.value[0].type === 'Text' ? '' : `"" + ` ) + (
 					attribute.value.map( chunk => {
 						if ( chunk.type === 'Text' ) {
@@ -48,9 +45,8 @@ export default function addComponentAttributes ( generator, node, local ) {
 					}).join( ' + ' )
 				);
 
-				local.update.push( deindent`
-					${local.name}.setAttribute( '${attribute.name}', ${value} );
-				` );
+				// TODO only update attributes that have changed
+				local.dynamicAttributes.push( `${attribute.name}: ${value}` );
 			}
 		}
 

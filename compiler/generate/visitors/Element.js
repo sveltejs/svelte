@@ -20,12 +20,12 @@ export default {
 		if ( isComponent ) {
 			addComponentAttributes( generator, node, local );
 
-			if ( local.data.length ) {
+			if ( local.staticAttributes.length ) {
 				local.init.unshift( deindent`
 					var ${name} = new template.components.${node.name}({
 						target: ${generator.current.target},
 						data: {
-							${local.data.join( ',\n' )}
+							${local.staticAttributes.join( ',\n' )}
 						}
 					});
 				` );
@@ -33,6 +33,14 @@ export default {
 				local.init.unshift( deindent`
 					var ${name} = new template.components.${node.name}({
 						target: ${generator.current.target}
+					});
+				` );
+			}
+
+			if ( local.dynamicAttributes.length ) {
+				local.update.push( deindent`
+					${name}.set({
+						${local.dynamicAttributes.join( ',\n' )}
 					});
 				` );
 			}
