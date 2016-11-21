@@ -7,3 +7,4 @@ env:
   global:
     - BUILD_TIMEOUT=10000
 install: npm install
+after_success: npm run coverage

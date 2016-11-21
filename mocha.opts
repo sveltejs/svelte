@@ -1,1 +1,2 @@
+--require babel-register
 --require reify
