@@ -2,14 +2,14 @@ import deindent from '../../../utils/deindent.js';
 import isReference from '../../../utils/isReference.js';
 import flattenReference from '../../../utils/flattenReference.js';
 
-export default function createBinding ( node, name, attribute, current, initStatements, updateStatements, teardownStatements, allUsedContexts ) {
+export default function createBinding ( node, attribute, current, local ) {
 	const parts = attribute.value.split( '.' );
 
 	const deep = parts.length > 1;
 	const contextual = parts[0] in current.contexts;
-	if ( contextual ) allUsedContexts.add( parts[0] );
+	if ( contextual ) local.allUsedContexts.add( parts[0] );
 
-	const handler = current.counter( `${name}ChangeHandler` );
+	const handler = current.counter( `${local.name}ChangeHandler` );
 	let setter;
 
 	let eventName = 'change';
@@ -54,26 +54,43 @@ export default function createBinding ( node, name, attribute, current, initStat
 			component.set({ ${parts[0]}: ${parts[0]} });
 		`;
 	} else {
-		setter = `component.set({ ${attribute.value}: ${name}.${attribute.name} });`;
+		const value = local.isComponent ? `value` : `${local.name}.${attribute.name}`;
+		setter = `component.set({ ${attribute.value}: ${value} });`;
 	}
 
-	initStatements.push( deindent`
-		var ${name}_updating = false;
+	if ( local.isComponent ) {
+		local.init.push( deindent`
+			var ${local.name}_updating = false;
 
-		function ${handler} () {
-			${name}_updating = true;
-			${setter}
-			${name}_updating = false;
-		}
+			${local.name}.observe( '${attribute.name}', function ( value ) {
+				${local.name}_updating = true;
+				${setter}
+				${local.name}_updating = false;
+			});
+		` );
 
-		${name}.addEventListener( '${eventName}', ${handler}, false );
-	` );
+		local.update.push( deindent`
+			if ( !${local.name}_updating ) ${local.name}.set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
+		` );
+	} else {
+		local.init.push( deindent`
+			var ${local.name}_updating = false;
 
-	updateStatements.push( deindent`
-		if ( !${name}_updating ) ${name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}
-	` );
+			function ${handler} () {
+				${local.name}_updating = true;
+				${setter}
+				${local.name}_updating = false;
+			}
 
-	teardownStatements.push( deindent`
-		${name}.removeEventListener( '${eventName}', ${handler}, false );
-	` );
+			${local.name}.addEventListener( '${eventName}', ${handler}, false );
+		` );
+
+		local.update.push( deindent`
+			if ( !${local.name}_updating ) ${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}
+		` );
+
+		local.teardown.push( deindent`
+			${local.name}.removeEventListener( '${eventName}', ${handler}, false );
+		` );
+	}
 }

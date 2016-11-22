@@ -71,12 +71,12 @@ describe( 'svelte', () => {
 					}
 
 					if ( child.nodeType === 3 ) {
-						child.data = child.data.replace( /\s{2,}/, ' ' );
+						child.data = child.data.replace( /\s{2,}/, '\n' );
 
 						// text
 						if ( previous && previous.nodeType === 3 ) {
 							previous.data += child.data;
-							previous.data = previous.data.replace( /\s{2,}/, ' ' );
+							previous.data = previous.data.replace( /\s{2,}/, '\n' );
 
 							node.removeChild( child );
 						}
@@ -113,8 +113,6 @@ describe( 'svelte', () => {
 
 					assert.deepEqual( actual, expected, message );
 				};
-
-				assert.htmlEqual( ' <p>  foo</p>  ', '<p>foo</p>' );
 			});
 		});
 

@@ -149,7 +149,7 @@ export default function addElementAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			createBinding( node, local.name, attribute, generator.current, local.init, local.update, local.teardown, local.allUsedContexts );
+			createBinding( node, attribute, generator.current, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {

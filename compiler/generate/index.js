@@ -7,7 +7,7 @@ import flattenReference from './utils/flattenReference.js';
 import visitors from './visitors/index.js';
 import processCss from './css/process.js';
 
-export default function generate ( parsed, source, options = {} ) {
+export default function generate ( parsed, source, options ) {
 	const renderers = [];
 
 	const generator = {
@@ -255,11 +255,9 @@ export default function generate ( parsed, source, options = {} ) {
 
 	setStatements.push( deindent`
 		dispatchObservers( observers.immediate, newState, oldState );
-		mainFragment.update( state );
+		if ( mainFragment ) mainFragment.update( state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
-
-	const constructorName = options.name || 'SvelteComponent';
 
 	const topLevelStatements = [];
 
@@ -276,6 +274,8 @@ export default function generate ( parsed, source, options = {} ) {
 	}
 
 	topLevelStatements.push( ...renderers.reverse() );
+
+	const constructorName = options.name || 'SvelteComponent';
 
 	topLevelStatements.push( deindent`
 		export default function ${constructorName} ( options ) {
@@ -351,16 +351,16 @@ export default function generate ( parsed, source, options = {} ) {
 			};
 
 			this.teardown = function teardown () {
+				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
+
 				mainFragment.teardown();
 				mainFragment = null;
 
 				state = {};
-
-				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
 			};
 
 			${parsed.css ? `if ( !addedCss ) addCss();` : ''}
-			let mainFragment = renderMainFragment( this, options.target );
+			var mainFragment = renderMainFragment( this, options.target );
 			this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
 
 			${templateProperties.onrender ? `template.onrender.call( this );` : ``}
