@@ -104,9 +104,24 @@ export default function generate ( parsed, source, options = {} ) {
 	};
 
 	const templateProperties = {};
+	const imports = [];
 
 	if ( parsed.js ) {
 		generator.addSourcemapLocations( parsed.js.content );
+
+		// imports need to be hoisted out of the IIFE
+		for ( let i = 0; i < parsed.js.content.body.length; i += 1 ) {
+			const node = parsed.js.content.body[i];
+			if ( node.type === 'ImportDeclaration' ) {
+				let a = node.start;
+				let b = node.end;
+				while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
+				while ( source[b] === '\n' ) b += 1;
+
+				imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
+				generator.code.remove( a, b );
+			}
+		}
 
 		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
 
@@ -234,6 +249,10 @@ export default function generate ( parsed, source, options = {} ) {
 	const topLevelStatements = [];
 
 	if ( parsed.js ) {
+		if ( imports.length ) {
+			topLevelStatements.push( imports.join( '' ).trim() );
+		}
+
 		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
