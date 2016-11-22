@@ -1,0 +1,20 @@
+{{#if visible}}
+	<Foo bind:answer/>
+{{else}}
+	<Foo bind:answer/>
+{{/if}}
+
+<script>
+	import Foo from './Foo.html';
+
+	export default {
+		data: () => ({
+			visible: true,
+			answer: 42
+		}),
+
+		components: {
+			Foo
+		}
+	};
+</script>

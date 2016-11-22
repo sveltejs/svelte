@@ -254,9 +254,13 @@ export default function generate ( parsed, source, options ) {
 	}
 
 	setStatements.push( deindent`
+		if ( setting ) return;
+
+		setting = true;
 		dispatchObservers( observers.immediate, newState, oldState );
 		if ( mainFragment ) mainFragment.update( state );
 		dispatchObservers( observers.deferred, newState, oldState );
+		setting = false;
 	` );
 
 	const topLevelStatements = [];
@@ -324,6 +328,8 @@ export default function generate ( parsed, source, options ) {
 			this.get = function get ( key ) {
 				return state[ key ];
 			};
+
+			let setting = false;
 
 			this.set = function set ( newState ) {
 				${setStatements.join( '\n\n' )}
