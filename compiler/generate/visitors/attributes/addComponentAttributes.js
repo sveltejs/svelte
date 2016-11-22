@@ -9,7 +9,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 		if ( attribute.type === 'Attribute' ) {
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
-				local.data.push( `${attribute.name}: true` );
+				local.staticAttributes.push( `${attribute.name}: true` );
 			}
 
 			else if ( attribute.value.length === 1 ) {
