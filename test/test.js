@@ -5,6 +5,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
 
+import consoleGroup from 'console-group';
+consoleGroup.install();
+
 const cache = {};
 
 require.extensions[ '.html' ] = function ( module, filename ) {
