@@ -68,12 +68,15 @@ export default {
 				local.update.push( declarations );
 			}
 
-			local.init.unshift(
-				local.namespace ?
-					`var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );` :
-					`var ${name} = document.createElement( '${node.name}' );`
-			);
+			let render = local.namespace ?
+				`var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );` :
+				`var ${name} = document.createElement( '${node.name}' );`;
 
+			if ( generator.cssId && !generator.current.elementDepth ) {
+				render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
+			}
+
+			local.init.unshift( render );
 			local.teardown.push( `${name}.parentNode.removeChild( ${name} );` );
 		}
 
@@ -85,7 +88,8 @@ export default {
 			isComponent,
 			namespace: local.namespace,
 			target: name,
-			parent: generator.current
+			parent: generator.current,
+			elementDepth: generator.current.elementDepth + 1
 		});
 	},
 

@@ -1,0 +1,35 @@
+{
+	"html": {
+		"start": 0,
+		"end": 14,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 14,
+				"type": "Element",
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"start": 5,
+						"end": 8,
+						"type": "Text",
+						"data": "foo"
+					}
+				]
+			}
+		]
+	},
+	"css": {
+		"start": 16,
+		"end": 56,
+		"attributes": [],
+		"content": {
+			"start": 23,
+			"end": 48,
+			"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
+		}
+	},
+	"js": null
+}

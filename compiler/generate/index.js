@@ -5,13 +5,12 @@ import isReference from './utils/isReference.js';
 import counter from './utils/counter.js';
 import flattenReference from './utils/flattenReference.js';
 import visitors from './visitors/index.js';
+import processCss from './css/process.js';
 
 export default function generate ( parsed, template, options = {} ) {
 	const renderers = [];
 
 	const generator = {
-		code: new MagicString( template ),
-
 		addRenderer ( fragment ) {
 			if ( fragment.autofocus ) {
 				fragment.initStatements.push( `${fragment.autofocus}.focus();` );
@@ -42,6 +41,10 @@ export default function generate ( parsed, template, options = {} ) {
 				}
 			});
 		},
+
+		code: new MagicString( template ),
+
+		components: {},
 
 		contextualise ( expression, isEventHandler ) {
 			const usedContexts = [];
@@ -81,17 +84,19 @@ export default function generate ( parsed, template, options = {} ) {
 			return usedContexts;
 		},
 
-		helpers: {},
-		events: {},
-		components: {},
-
-		getName: counter(),
-
 		// TODO use getName instead of counters
 		counters: {
 			if: 0,
 			each: 0
 		},
+
+		events: {},
+
+		getName: counter(),
+
+		cssId: parsed.css ? `svelte-${parsed.hash}` : '',
+
+		helpers: {},
 
 		usesRefs: false,
 
@@ -127,6 +132,7 @@ export default function generate ( parsed, template, options = {} ) {
 		name: 'renderMainFragment',
 		namespace: null,
 		target: 'target',
+		elementDepth: 0,
 
 		initStatements: [],
 		updateStatements: [],
@@ -204,10 +210,14 @@ export default function generate ( parsed, template, options = {} ) {
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
 
+	const addCss = parsed.css ? processCss( parsed ) : null;
+
 	const constructorName = options.name || 'SvelteComponent';
 
 	const result = deindent`
 		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
+
+		${parsed.css ? addCss : ``}
 
 		${renderers.reverse().join( '\n\n' )}
 
@@ -292,6 +302,7 @@ export default function generate ( parsed, template, options = {} ) {
 				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
 			};
 
+			${parsed.css ? `if ( !addedCss ) addCss();` : ''}
 			let mainFragment = renderMainFragment( this, options.target );
 			this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
 

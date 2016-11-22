@@ -35,7 +35,9 @@ describe( 'svelte', () => {
 					const actual = parse( input );
 					const expected = require( `./parser/${dir}/output.json` );
 
-					assert.deepEqual( actual, expected );
+					assert.deepEqual( actual.html, expected.html );
+					assert.deepEqual( actual.css, expected.css );
+					assert.deepEqual( actual.js, expected.js );
 				} catch ( err ) {
 					if ( err.name !== 'ParseError' ) throw err;
 

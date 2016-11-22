@@ -2,7 +2,8 @@ import { locate } from 'locate-character';
 import fragment from './state/fragment.js';
 import { whitespace } from './patterns.js';
 import { trimStart, trimEnd } from './utils/trim.js';
-import spaces from './utils/spaces.js';
+import spaces from '../utils/spaces.js';
+import hash from './utils/hash.js';
 
 function tabsToSpaces ( str ) {
 	return str.replace( /^\t+/, match => match.split( '\t' ).join( '  ' ) );
@@ -165,6 +166,7 @@ export default function parse ( template ) {
 	}
 
 	return {
+		hash: hash( template ),
 		html: parser.html,
 		css: parser.css,
 		js: parser.js
