@@ -4,6 +4,10 @@
   "description": "The magical disappearing UI framework",
   "main": "dist/svelte.umd.js",
   "module": "dist/svelte.es.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "test": "mocha --opts mocha.opts",
     "precoverage": "mocha --opts mocha.coverage.opts",
