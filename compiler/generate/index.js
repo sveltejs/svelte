@@ -111,12 +111,31 @@ export default function generate ( parsed, template, options = {} ) {
 		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 		if ( defaultExport ) {
-			generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `const template = ` );
+			const finalNode = parsed.js.content.body[ parsed.js.content.body.length - 1 ];
+			if ( defaultExport === finalNode ) {
+				// export is last property, we can just return it
+				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
+			} else {
+				// TODO ensure `template` isn't already declared
+				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
+
+				let i = defaultExport.start;
+				while ( /\s/.test( template[ i - 1 ] ) ) i--;
+
+				const indentation = template.slice( i, defaultExport.start );
+				generator.code.insertLeft( finalNode.end, `\n\n${indentation}return template;` );
+			}
 
 			defaultExport.declaration.properties.forEach( prop => {
 				templateProperties[ prop.key.name ] = prop.value;
 			});
+
+			generator.code.insertRight( parsed.js.content.start, 'var template = (function () {' );
+		} else {
+			generator.code.insertRight( parsed.js.content.start, '(function () {' );
 		}
+
+		generator.code.insertLeft( parsed.js.content.end, '}());' );
 
 		[ 'helpers', 'events', 'components' ].forEach( key => {
 			if ( templateProperties[ key ] ) {
@@ -214,13 +233,19 @@ export default function generate ( parsed, template, options = {} ) {
 
 	const constructorName = options.name || 'SvelteComponent';
 
-	const result = deindent`
-		${parsed.js ? `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` : ``}
+	const topLevelStatements = [];
 
-		${parsed.css ? addCss : ``}
+	if ( parsed.js ) {
+		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
+	}
 
-		${renderers.reverse().join( '\n\n' )}
+	if ( parsed.css ) {
+		topLevelStatements.push( processCss( parsed ) );
+	}
 
+	topLevelStatements.push( ...renderers.reverse() );
+
+	topLevelStatements.push( deindent`
 		export default function ${constructorName} ( options ) {
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
 			var state = {};
@@ -308,9 +333,13 @@ export default function generate ( parsed, template, options = {} ) {
 
 			${templateProperties.onrender ? `template.onrender.call( this );` : ``}
 		}
+	` );
 
-		${templateProperties.methods ? `${constructorName}.prototype = template.methods` : ''}
-	`;
+	if ( templateProperties.methods ) {
+		topLevelStatements.push( `${constructorName}.prototype = template.methods;` );
+	}
+
+	const result = topLevelStatements.join( '\n\n' );
 
 	const pattern = /\[✂(\d+)-(\d+)$/;
 

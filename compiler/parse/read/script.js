@@ -9,10 +9,9 @@ export default function readScript ( parser, start, attributes ) {
 		parser.index = scriptStart + token.end;
 		parser.allowWhitespace();
 
-		if ( parser.eat( '</script>' )  ) {
-			scriptEnd = scriptStart + token.end;
-			break;
-		}
+		scriptEnd = parser.index;
+
+		if ( parser.eat( '</script>' ) ) break;
 	}
 
 	const source = spaces( scriptStart ) + parser.template.slice( scriptStart, scriptEnd );
