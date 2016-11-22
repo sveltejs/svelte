@@ -1,4 +1,5 @@
+--require babel-register
 --require reify
---recursive
+ --recursive
 ./**/__test__.js
 test/test.js

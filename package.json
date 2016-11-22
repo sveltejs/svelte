@@ -5,7 +5,8 @@
   "main": "dist/svelte.umd.js",
   "module": "dist/svelte.es.js",
   "scripts": {
-    "test": "nyc mocha --opts mocha.opts --recursive ./**/__test__.js test/test.js",
+    "test": "mocha --opts mocha.opts",
+    "precoverage": "mocha --opts mocha.coverage.opts",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "lint": "eslint compiler",
     "build": "rollup -c",
@@ -33,6 +34,7 @@
     "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "babel-register": "^6.18.0",
     "codecov": "^1.0.1",
+    "console-group": "^0.3.2",
     "eslint": "^3.10.2",
     "eslint-plugin-import": "^2.2.0",
     "jsdom": "^9.8.3",
