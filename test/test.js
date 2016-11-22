@@ -5,8 +5,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
 
-import consoleGroup from 'console-group';
-consoleGroup.install();
+import { install } from 'console-group';
+install();
 
 const cache = {};
 
@@ -59,6 +59,65 @@ describe( 'svelte', () => {
 	});
 
 	describe( 'compiler', () => {
+		before( () => {
+			function cleanChildren ( node ) {
+				let previous = null;
+
+				[ ...node.childNodes ].forEach( child => {
+					if ( child.nodeType === 8 ) {
+						// comment
+						node.removeChild( child );
+						return;
+					}
+
+					if ( child.nodeType === 3 ) {
+						child.data = child.data.replace( /\s{2,}/, ' ' );
+
+						// text
+						if ( previous && previous.nodeType === 3 ) {
+							previous.data += child.data;
+							previous.data = previous.data.replace( /\s{2,}/, ' ' );
+
+							node.removeChild( child );
+						}
+					}
+
+					else {
+						cleanChildren( child );
+					}
+
+					previous = child;
+				});
+
+				// collapse whitespace
+				if ( node.firstChild && node.firstChild.nodeType === 3 ) {
+					node.firstChild.data = node.firstChild.data.replace( /^\s+/, '' );
+					if ( !node.firstChild.data ) node.removeChild( node.firstChild );
+				}
+
+				if ( node.lastChild && node.lastChild.nodeType === 3 ) {
+					node.lastChild.data = node.lastChild.data.replace( /\s+$/, '' );
+					if ( !node.lastChild.data ) node.removeChild( node.lastChild );
+				}
+			}
+
+			return env().then( window => {
+				assert.htmlEqual = ( actual, expected, message ) => {
+					window.document.body.innerHTML = actual.trim();
+					cleanChildren( window.document.body, '' );
+					actual = window.document.body.innerHTML;
+
+					window.document.body.innerHTML = expected.trim();
+					cleanChildren( window.document.body, '' );
+					expected = window.document.body.innerHTML;
+
+					assert.deepEqual( actual, expected, message );
+				};
+
+				assert.htmlEqual( ' <p>  foo</p>  ', '<p>foo</p>' );
+			});
+		});
+
 		function loadConfig ( dir ) {
 			try {
 				return require( `./compiler/${dir}/_config.js` ).default;
@@ -137,7 +196,7 @@ describe( 'svelte', () => {
 						});
 
 						if ( config.html ) {
-							assert.equal( target.innerHTML, config.html );
+							assert.htmlEqual( target.innerHTML, config.html );
 						}
 
 						if ( config.test ) {
