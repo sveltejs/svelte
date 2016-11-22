@@ -16,8 +16,7 @@ export default function mustache ( parser ) {
 		let expected;
 
 		if ( block.type === 'ElseBlock' ) {
-			// TODO need to strip whitespace from else blocks
-			block.end = start;
+			// TODO need to strip whitespace from else and elseif blocks
 			parser.stack.pop();
 			block = parser.current();
 		}
@@ -33,6 +32,16 @@ export default function mustache ( parser ) {
 		parser.eat( expected, true );
 		parser.allowWhitespace();
 		parser.eat( '}}', true );
+
+		while ( block.elseif ) {
+			block.end = parser.index;
+			parser.stack.pop();
+			block = parser.current();
+		}
+
+		if ( block.else ) {
+			block.else.end = start;
+		}
 
 		// strip leading/trailing whitespace as necessary
 		if ( !block.children.length ) parser.error( `Empty block`, block.start );
@@ -57,7 +66,33 @@ export default function mustache ( parser ) {
 	}
 
 	else if ( parser.eat( 'elseif' ) ) {
-		throw new Error( 'TODO elseif' );
+		const block = parser.current();
+		if ( block.type !== 'IfBlock' ) parser.error( 'Cannot have an {{elseif ...}} block outside an {{#if ...}} block' );
+
+		parser.requireWhitespace();
+
+		const expression = readExpression( parser );
+
+		parser.allowWhitespace();
+		parser.eat( '}}', true );
+
+		block.else = {
+			start: parser.index,
+			end: null,
+			type: 'ElseBlock',
+			children: [
+				{
+					start: parser.index,
+					end: null,
+					type: 'IfBlock',
+					elseif: true,
+					expression,
+					children: []
+				}
+			]
+		};
+
+		parser.stack.push( block.else.children[0] );
 	}
 
 	else if ( parser.eat( 'else' ) ) {

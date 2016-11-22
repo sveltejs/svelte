@@ -1,0 +1,113 @@
+{
+	"html": {
+		"start": 0,
+		"end": 93,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 93,
+				"type": "IfBlock",
+				"expression": {
+					"start": 6,
+					"end": 12,
+					"type": "BinaryExpression",
+					"operator": ">",
+					"left": {
+						"start": 6,
+						"end": 7,
+						"type": "Identifier",
+						"name": "x"
+					},
+					"right": {
+						"start": 10,
+						"end": 12,
+						"type": "Literal",
+						"value": 10,
+						"raw": "10"
+					}
+				},
+				"children": [
+					{
+						"start": 16,
+						"end": 43,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 19,
+								"end": 39,
+								"type": "Text",
+								"data": "x is greater than 10"
+							}
+						]
+					}
+				],
+				"else": {
+					"start": 60,
+					"end": 86,
+					"type": "ElseBlock",
+					"children": [
+						{
+							"start": 60,
+							"end": 93,
+							"type": "IfBlock",
+							"elseif": true,
+							"expression": {
+								"start": 53,
+								"end": 58,
+								"type": "BinaryExpression",
+								"operator": "<",
+								"left": {
+									"start": 53,
+									"end": 54,
+									"type": "Identifier",
+									"name": "x"
+								},
+								"right": {
+									"start": 57,
+									"end": 58,
+									"type": "Literal",
+									"value": 5,
+									"raw": "5"
+								}
+							},
+							"children": [
+								{
+									"start": 60,
+									"end": 62,
+									"type": "Text",
+									"data": "\n\t"
+								},
+								{
+									"start": 62,
+									"end": 85,
+									"type": "Element",
+									"name": "p",
+									"attributes": [],
+									"children": [
+										{
+											"start": 65,
+											"end": 81,
+											"type": "Text",
+											"data": "x is less than 5"
+										}
+									]
+								},
+								{
+									"start": 85,
+									"end": 86,
+									"type": "Text",
+									"data": "\n"
+								}
+							]
+						}
+					]
+				}
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
