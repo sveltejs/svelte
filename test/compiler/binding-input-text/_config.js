@@ -1,11 +1,9 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		name: 'world'
 	},
 	html: `<input>\n<p>hello world</p>`,
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const input = target.querySelector( 'input' );
 		assert.equal( input.value, 'world' );
 

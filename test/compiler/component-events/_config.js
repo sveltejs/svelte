@@ -1,11 +1,9 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		visible: true
 	},
 	html: '<div><!--#if visible--><p>i am a widget</p></div>', // TODO comment should follow component...
-	test ( component ) {
+	test ( assert, component ) {
 		let count = 0;
 
 		component.on( 'widgetTornDown', function () {

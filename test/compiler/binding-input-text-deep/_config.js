@@ -1,5 +1,3 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		user: {
@@ -7,7 +5,7 @@ export default {
 		}
 	},
 	html: `<input>\n<p>hello alice</p>`,
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const input = target.querySelector( 'input' );
 
 		assert.equal( input.value, 'alice' );

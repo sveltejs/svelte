@@ -1,11 +1,9 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		visible: true
 	},
 	html: '<p>i am visible</p><!--#if visible-->',
-	test ( component, target ) {
+	test ( assert, component, target ) {
 		component.set({ visible: false });
 		assert.equal( target.innerHTML, '<!--#if visible-->' );
 		component.set({ visible: true });

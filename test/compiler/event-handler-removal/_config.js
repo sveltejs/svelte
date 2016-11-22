@@ -1,10 +1,8 @@
-import * as assert from 'assert';
-
 // TODO gah, JSDOM appears to behave differently to real browsers here... probably need to raise an issue
 
 export default {
 	html: '<input><!--#if visible-->',
-	test ( component ) {
+	test ( assert, component ) {
 		component.refs.input.focus();
 
 		// this should NOT trigger blur event

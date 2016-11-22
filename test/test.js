@@ -1,6 +1,6 @@
 import { compile } from '../compiler/index.js';
 import parse from '../compiler/parse/index.js';
-import * as assert from 'assert';
+import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
@@ -141,7 +141,7 @@ describe( 'svelte', () => {
 						}
 
 						if ( config.test ) {
-							config.test( component, target, window );
+							config.test( assert, component, target, window );
 						} else {
 							component.teardown();
 							assert.equal( target.innerHTML, '' );

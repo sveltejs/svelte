@@ -1,5 +1,3 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		bar: 'lol',
@@ -7,7 +5,7 @@ export default {
 		compound: 'piece of'
 	},
 	html: `<div><p>foo: lol</p>\n<p>baz: 42 (number)</p>\n<p>qux: this is a piece of string</p></div>`,
-	test ( component, target ) {
+	test ( assert, component, target ) {
 		component.set({
 			bar: 'wut',
 			x: 3,

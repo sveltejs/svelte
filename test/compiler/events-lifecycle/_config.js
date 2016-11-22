@@ -1,7 +1,5 @@
-import * as assert from 'assert';
-
 export default {
-	test ( component ) {
+	test ( assert, component ) {
 		let count = 0;
 
 		component.on( 'teardown', function () {

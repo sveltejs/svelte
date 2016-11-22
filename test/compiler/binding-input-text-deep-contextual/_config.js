@@ -1,5 +1,3 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		items: [
@@ -9,7 +7,7 @@ export default {
 		]
 	},
 	html: `<div><input><p>one</p></div><div><input><p>two</p></div><div><input><p>three</p></div><!--#each items-->`,
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const inputs = [ ...target.querySelectorAll( 'input' ) ];
 
 		assert.equal( inputs[0].value, 'one' );

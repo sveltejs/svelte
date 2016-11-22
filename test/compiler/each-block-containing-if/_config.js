@@ -1,7 +1,5 @@
-import * as assert from 'assert';
-
 export default {
-	test ( component, target ) {
+	test ( assert, component, target ) {
 		const items = component.get( 'items' );
 		items.forEach( item => item.completed = false );
 

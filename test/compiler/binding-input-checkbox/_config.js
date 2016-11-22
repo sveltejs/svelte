@@ -1,11 +1,9 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		foo: true
 	},
 	html: `<input type="checkbox">\n<p>true</p>`,
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const input = target.querySelector( 'input' );
 		assert.equal( input.checked, true );
 

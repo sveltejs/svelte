@@ -1,5 +1,3 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		items: [
@@ -9,7 +7,7 @@ export default {
 		]
 	},
 	html: `<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div><!--#each items-->\n\n<p>1 completed</p>`,
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const inputs = [ ...target.querySelectorAll( 'input' ) ];
 
 		assert.ok( inputs[0].checked );

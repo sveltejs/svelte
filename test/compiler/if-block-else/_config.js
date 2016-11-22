@@ -1,12 +1,10 @@
-import * as assert from 'assert';
-
 export default {
 	data: {
 		foo: true,
 		bar: false
 	},
 	html: '<p>foo</p><!--#if foo-->\n\n<p>not bar</p><!--#if bar-->',
-	test ( component, target ) {
+	test ( assert, component, target ) {
 		component.set({ foo: false });
 		assert.equal( target.innerHTML, '<p>not foo</p><!--#if foo-->\n\n<p>not bar</p><!--#if bar-->' );
 		component.set({ bar: true });

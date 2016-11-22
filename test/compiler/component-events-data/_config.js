@@ -1,7 +1,5 @@
-import * as assert from 'assert';
-
 export default {
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const buttons = target.querySelectorAll( 'button' );
 		const click = new window.MouseEvent( 'click' );
 

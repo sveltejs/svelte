@@ -1,8 +1,6 @@
-import * as assert from 'assert';
-
 export default {
 	html: '<button>toggle</button>\n\n<!--#if visible-->',
-	test ( component, target, window ) {
+	test ( assert, component, target, window ) {
 		const button = target.querySelector( 'button' );
 		const event = new window.MouseEvent( 'click' );
 
