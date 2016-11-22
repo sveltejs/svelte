@@ -147,7 +147,6 @@ function readAttribute ( parser ) {
 	}
 
 	if ( /^bind:/.test( name ) ) {
-		parser.eat( '=', true );
 		return readBindingDirective( parser, start, name.slice( 5 ) );
 	}
 

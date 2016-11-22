@@ -1,0 +1,27 @@
+{
+	"html": {
+		"start": 0,
+		"end": 18,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 18,
+				"type": "Element",
+				"name": "Widget",
+				"attributes": [
+					{
+						"start": 8,
+						"end": 16,
+						"type": "Binding",
+						"name": "foo",
+						"value": "foo"
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

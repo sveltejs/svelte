@@ -1,0 +1,1 @@
+<Widget bind:foo/>

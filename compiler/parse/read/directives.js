@@ -43,17 +43,21 @@ export function readEventHandlerDirective ( parser, start, name ) {
 }
 
 export function readBindingDirective ( parser, start, name ) {
-	const quoteMark = (
-		parser.eat( `'` ) ? `'` :
-		parser.eat( `"` ) ? `"` :
-		null
-	);
+	let value = name; // shorthand – bind:foo equivalent to bind:foo='foo'
 
-	const value = parser.read( /([a-zA-Z_$][a-zA-Z0-9_$]*)(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*/ );
-	if ( !value ) parser.error( `Expected valid property name` );
+	if ( parser.eat( '=' ) ) {
+		const quoteMark = (
+			parser.eat( `'` ) ? `'` :
+			parser.eat( `"` ) ? `"` :
+			null
+		);
 
-	if ( quoteMark ) {
-		parser.eat( quoteMark, true );
+		value = parser.read( /([a-zA-Z_$][a-zA-Z0-9_$]*)(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*/ );
+		if ( !value ) parser.error( `Expected valid property name` );
+
+		if ( quoteMark ) {
+			parser.eat( quoteMark, true );
+		}
 	}
 
 	return {
