@@ -17,7 +17,7 @@ export default {
 		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 		if ( isReference( node.expression ) ) {
-			const reference = `${generator.template.slice( node.expression.start, node.expression.end )}`;
+			const reference = `${generator.source.slice( node.expression.start, node.expression.end )}`;
 			const qualified = usedContexts[0] === 'root' ? `root.${reference}` : reference;
 
 			generator.current.updateStatements.push( deindent`

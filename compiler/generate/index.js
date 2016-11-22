@@ -7,7 +7,7 @@ import flattenReference from './utils/flattenReference.js';
 import visitors from './visitors/index.js';
 import processCss from './css/process.js';
 
-export default function generate ( parsed, template, options = {} ) {
+export default function generate ( parsed, source, options = {} ) {
 	const renderers = [];
 
 	const generator = {
@@ -42,7 +42,7 @@ export default function generate ( parsed, template, options = {} ) {
 			});
 		},
 
-		code: new MagicString( template ),
+		code: new MagicString( source ),
 
 		components: {},
 
@@ -100,7 +100,7 @@ export default function generate ( parsed, template, options = {} ) {
 
 		usesRefs: false,
 
-		template
+		source
 	};
 
 	const templateProperties = {};
@@ -120,9 +120,9 @@ export default function generate ( parsed, template, options = {} ) {
 				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
 
 				let i = defaultExport.start;
-				while ( /\s/.test( template[ i - 1 ] ) ) i--;
+				while ( /\s/.test( source[ i - 1 ] ) ) i--;
 
-				const indentation = template.slice( i, defaultExport.start );
+				const indentation = source.slice( i, defaultExport.start );
 				generator.code.insertLeft( finalNode.end, `\n\n${indentation}return template;` );
 			}
 
@@ -228,8 +228,6 @@ export default function generate ( parsed, template, options = {} ) {
 		mainFragment.update( state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
-
-	const addCss = parsed.css ? processCss( parsed ) : null;
 
 	const constructorName = options.name || 'SvelteComponent';
 
@@ -369,7 +367,7 @@ export default function generate ( parsed, template, options = {} ) {
 		c = part.end;
 	});
 
-	generator.code.remove( c, template.length );
+	generator.code.remove( c, source.length );
 	generator.code.append( finalChunk );
 
 	sortedByResult.forEach( part => {

@@ -9,7 +9,7 @@ export default {
 		const renderer = `renderIfBlock_${i}`;
 
 		generator.current.initStatements.push( deindent`
-			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.template.slice( node.expression.start, node.expression.end )}` )} );
+			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
 			${generator.current.target}.appendChild( ${name}_anchor );
 			var ${name} = null;
 		` );
@@ -22,7 +22,7 @@ export default {
 		let expression;
 
 		if ( isReference( node.expression ) ) {
-			const reference = `${generator.template.slice( node.expression.start, node.expression.end )}`;
+			const reference = `${generator.source.slice( node.expression.start, node.expression.end )}`;
 			expression = usedContexts[0] === 'root' ? `root.${reference}` : reference;
 
 			generator.current.updateStatements.push( deindent`

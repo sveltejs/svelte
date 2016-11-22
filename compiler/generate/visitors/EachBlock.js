@@ -10,7 +10,7 @@ export default {
 		const listName = `${name}_value`;
 
 		generator.current.initStatements.push( deindent`
-			var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${generator.template.slice( node.expression.start, node.expression.end )}` )} );
+			var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
 			${generator.current.target}.appendChild( ${name}_anchor );
 			var ${name}_iterations = [];
 			const ${name}_fragment = document.createDocumentFragment();
