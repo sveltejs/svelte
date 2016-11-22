@@ -302,7 +302,12 @@ export default function generate ( parsed, source, options ) {
 					if ( !callbacks ) continue;
 
 					for ( let i = 0; i < callbacks.length; i += 1 ) {
-						callbacks[i].call( component, newValue, oldValue );
+						const callback = callbacks[i];
+						if ( callback.__calling ) continue;
+
+						callback.__calling = true;
+						callback.call( component, newValue, oldValue );
+						callback.__calling = false;
 					}
 				}
 			}
@@ -328,7 +333,12 @@ export default function generate ( parsed, source, options ) {
 				const group = options.defer ? observers.deferred : observers.immediate;
 
 				( group[ key ] || ( group[ key ] = [] ) ).push( callback );
-				if ( options.init !== false ) callback( state[ key ] );
+
+				if ( options.init !== false ) {
+					callback.__calling = true;
+					callback.call( component, state[ key ] );
+					callback.__calling = false;
+				}
 
 				return {
 					cancel () {
