@@ -1,5 +1,4 @@
 import deindent from '../utils/deindent.js';
-import isReference from '../utils/isReference.js';
 import counter from '../utils/counter.js';
 
 export default {
@@ -8,57 +7,74 @@ export default {
 		const name = `ifBlock_${i}`;
 		const renderer = `renderIfBlock_${i}`;
 
+		const elseName = `elseBlock_${i}`;
+		const elseRenderer = `renderElseBlock_${i}`;
+
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
 			${generator.current.target}.appendChild( ${name}_anchor );
-			var ${name} = null;
+			var ${name} = null;${node.else ? `\nvar ${elseName} = null;` : ``}
 		` );
 
 		generator.addSourcemapLocations( node.expression );
+		generator.contextualise( node.expression );
 
-		const usedContexts = generator.contextualise( node.expression );
 		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
-		let expression;
+		const ifTrue = [ deindent`
+			if ( !${name } ) {
+				${name} = ${renderer}( component, ${generator.current.target}, ${name}_anchor );
+			}
+		` ];
 
-		if ( isReference( node.expression ) ) {
-			const reference = `${generator.source.slice( node.expression.start, node.expression.end )}`;
-			expression = usedContexts[0] === 'root' ? `root.${reference}` : reference;
-
-			generator.current.updateStatements.push( deindent`
-				if ( ${snippet} && !${name} ) {
-					${name} = ${renderer}( component, ${generator.current.target}, ${name}_anchor );
-				}
-			` );
-		} else {
-			expression = `${name}_value`;
-
-			generator.current.updateStatements.push( deindent`
-				var ${expression} = ${snippet};
-
-				if ( ${expression} && !${name} ) {
-					${name} = ${renderer}( component, ${generator.current.target}, ${name}_anchor );
+		if ( node.else ) {
+			ifTrue.push( deindent`
+				if ( ${elseName } ) {
+					${elseName}.teardown();
+					${elseName} = null;
 				}
 			` );
 		}
 
-		generator.current.updateStatements.push( deindent`
-			else if ( !${expression} && ${name} ) {
+		const ifFalse = [ deindent`
+			if ( ${name} ) {
 				${name}.teardown();
 				${name} = null;
 			}
+		` ];
 
-			if ( ${name} ) {
-				${name}.update( ${generator.current.contextChain.join( ', ' )} );
+		if ( node.else ) {
+			ifFalse.push( deindent`
+				if ( !${elseName } ) {
+					${elseName} = ${elseRenderer}( component, ${generator.current.target}, ${name}_anchor );
+				}
+			` );
+		}
+
+		let update = deindent`
+			if ( ${snippet} ) {
+				${ifTrue.join( '\n\n' )}
 			}
-		` );
+
+			else {
+				${ifFalse.join( '\n\n' )}
+			}
+
+			if ( ${name} ) ${name}.update( ${generator.current.contextChain.join( ', ' )} );
+		`;
+
+		if ( node.else ) {
+			update += `\nif ( ${elseName} ) ${elseName}.update( ${generator.current.contextChain.join( ', ' )} );`;
+		}
+
+		generator.current.updateStatements.push( update );
 
 		generator.current.teardownStatements.push( deindent`
-			if ( ${name} ) ${name}.teardown();
+			if ( ${name} ) ${name}.teardown();${node.else ? `\nif ( ${elseName} ) ${elseName}.teardown();` : ``}
 			${name}_anchor.parentNode.removeChild( ${name}_anchor );
 		` );
 
-		generator.current = Object.assign( {}, generator.current, {
+		generator.push({
 			useAnchor: true,
 			name: renderer,
 			target: 'target',
@@ -67,14 +83,17 @@ export default {
 			updateStatements: [],
 			teardownStatements: [],
 
-			counter: counter(),
-
-			parent: generator.current
+			counter: counter()
 		});
 	},
 
-	leave ( generator ) {
+	leave ( generator, node ) {
 		generator.addRenderer( generator.current );
-		generator.current = generator.current.parent;
+
+		if ( node.else ) {
+			generator.visit( node.else );
+		}
+
+		generator.pop();
 	}
 };

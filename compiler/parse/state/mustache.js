@@ -12,8 +12,15 @@ export default function mustache ( parser ) {
 
 	// {{/if}} or {{/each}}
 	if ( parser.eat( '/' ) ) {
-		const block = parser.current();
+		let block = parser.current();
 		let expected;
+
+		if ( block.type === 'ElseBlock' ) {
+			// TODO need to strip whitespace from else blocks
+			block.end = start;
+			parser.stack.pop();
+			block = parser.current();
+		}
 
 		if ( block.type === 'IfBlock' ) {
 			expected = 'if';
@@ -49,7 +56,26 @@ export default function mustache ( parser ) {
 		parser.stack.pop();
 	}
 
-	// TODO {{else}} and {{elseif expression}}
+	else if ( parser.eat( 'elseif' ) ) {
+		throw new Error( 'TODO elseif' );
+	}
+
+	else if ( parser.eat( 'else' ) ) {
+		const block = parser.current();
+		if ( block.type !== 'IfBlock' ) parser.error( 'Cannot have an {{else}} block outside an {{#if ...}} block' );
+
+		parser.allowWhitespace();
+		parser.eat( '}}', true );
+
+		block.else = {
+			start: parser.index,
+			end: null,
+			type: 'ElseBlock',
+			children: []
+		};
+
+		parser.stack.push( block.else );
+	}
 
 	// {{#if foo}} or {{#each foo}}
 	else if ( parser.eat( '#' ) ) {

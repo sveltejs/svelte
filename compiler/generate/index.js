@@ -98,9 +98,39 @@ export default function generate ( parsed, source, options = {} ) {
 
 		helpers: {},
 
+		pop () {
+			const tail = generator.current;
+			generator.current = tail.parent;
+
+			return tail;
+		},
+
+		push ( fragment ) {
+			const newFragment = Object.assign( {}, generator.current, fragment, {
+				parent: generator.current
+			});
+
+			generator.current = newFragment;
+		},
+
 		usesRefs: false,
 
-		source
+		source,
+
+		visit ( node ) {
+			const visitor = visitors[ node.type ];
+			if ( !visitor ) throw new Error( `Not implemented: ${node.type}` );
+
+			if ( visitor.enter ) visitor.enter( generator, node );
+
+			if ( node.children ) {
+				node.children.forEach( child => {
+					generator.visit( child );
+				});
+			}
+
+			if ( visitor.leave ) visitor.leave( generator, node );
+		}
 	};
 
 	const templateProperties = {};
@@ -161,7 +191,7 @@ export default function generate ( parsed, source, options = {} ) {
 		});
 	}
 
-	generator.current = {
+	generator.push({
 		useAnchor: false,
 		name: 'renderMainFragment',
 		namespace: null,
@@ -179,27 +209,12 @@ export default function generate ( parsed, source, options = {} ) {
 		indexNames: {},
 		listNames: {},
 
-		counter: counter(),
-
-		parent: null
-	};
-
-	parsed.html.children.forEach( function visit ( node ) {
-		const visitor = visitors[ node.type ];
-		if ( !visitor ) throw new Error( `Not implemented: ${node.type}` );
-
-		if ( visitor.enter ) visitor.enter( generator, node );
-
-		if ( node.children ) {
-			node.children.forEach( child => {
-				visit( child );
-			});
-		}
-
-		if ( visitor.leave ) visitor.leave( generator, node );
+		counter: counter()
 	});
 
-	generator.addRenderer( generator.current );
+	parsed.html.children.forEach( generator.visit );
+
+	generator.addRenderer( generator.pop() );
 
 	const setStatements = [ deindent`
 		const oldState = state;
