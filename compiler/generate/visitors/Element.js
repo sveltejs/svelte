@@ -82,6 +82,13 @@ export default {
 			local.teardown.push( `${name}.parentNode.removeChild( ${name} );` );
 		}
 
+		// special case – bound <option> without a value attribute
+		if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { // TODO check it's bound
+			// const dynamic = node.children.length > 1 || node.children[0].type !== 'Text';
+			// TODO do this in init for static values... have to do it in `leave`, because they don't exist yet
+			local.update.push( `${name}.__value = ${name}.textContent` );
+		}
+
 		generator.current.initStatements.push( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );

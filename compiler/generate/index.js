@@ -281,6 +281,26 @@ export default function generate ( parsed, source, options ) {
 
 	const constructorName = options.name || 'SvelteComponent';
 
+	const initStatements = [];
+
+	if ( parsed.css ) {
+		initStatements.push( `if ( !addedCss ) addCss();` );
+	}
+
+	if ( generator.hasComplexBindings ) {
+		initStatements.push( `this.__bindings = [];` );
+		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
+	}
+
+	initStatements.push( `
+		var mainFragment = renderMainFragment( this, options.target );
+		this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`} );
+	` );
+
+	if ( templateProperties.onrender ) {
+		initStatements.push( `template.onrender.call( this );` );
+	}
+
 	topLevelStatements.push( deindent`
 		export default function ${constructorName} ( options ) {
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
@@ -375,11 +395,7 @@ export default function generate ( parsed, source, options ) {
 				state = {};
 			};
 
-			${parsed.css ? `if ( !addedCss ) addCss();` : ''}
-			var mainFragment = renderMainFragment( this, options.target );
-			this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`} );
-
-			${templateProperties.onrender ? `template.onrender.call( this );` : ``}
+			${initStatements.join( '\n\n' )}
 		}
 	` );
 

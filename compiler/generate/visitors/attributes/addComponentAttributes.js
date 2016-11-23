@@ -86,7 +86,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			createBinding( node, attribute, generator.current, local );
+			createBinding( generator, node, attribute, generator.current, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {

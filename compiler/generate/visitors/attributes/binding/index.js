@@ -2,7 +2,7 @@ import deindent from '../../../utils/deindent.js';
 import isReference from '../../../utils/isReference.js';
 import flattenReference from '../../../utils/flattenReference.js';
 
-export default function createBinding ( node, attribute, current, local ) {
+export default function createBinding ( generator, node, attribute, current, local ) {
 	const parts = attribute.value.split( '.' );
 
 	const deep = parts.length > 1;
@@ -19,6 +19,17 @@ export default function createBinding ( node, attribute, current, local ) {
 			// TODO in validation, should throw if type attribute is not static
 			eventName = 'input';
 		}
+	}
+
+	let value;
+
+	if ( local.isComponent ) {
+		value = 'value';
+	} else if ( node.name === 'select' ) {
+		// TODO <select multiple> – can use select.selectedOptions
+		value = 'selectedOption && selectedOption.__value';
+	} else {
+		value = `${local.name}.${attribute.name}`;
 	}
 
 	if ( contextual ) {
@@ -43,19 +54,23 @@ export default function createBinding ( node, attribute, current, local ) {
 		setter = deindent`
 			var list = this.__svelte.${listName};
 			var index = this.__svelte.${indexName};
-			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = this.${attribute.name};
+			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = ${value};
 
 			component.set({ ${prop}: component.get( '${prop}' ) });
 		`;
 	} else if ( deep ) {
 		setter = deindent`
 			var ${parts[0]} = component.get( '${parts[0]}' );
-			${parts[0]}.${parts.slice( 1 ).join( '.' )} = this.${attribute.name};
+			${parts[0]}.${parts.slice( 1 ).join( '.' )} = ${value};
 			component.set({ ${parts[0]}: ${parts[0]} });
 		`;
 	} else {
-		const value = local.isComponent ? `value` : `${local.name}.${attribute.name}`;
 		setter = `component.set({ ${attribute.value}: ${value} });`;
+	}
+
+	// special case
+	if ( node.name === 'select' ) {
+		setter = `var selectedOption = ${local.name}.selectedOptions[0] || ${local.name}.options[0];\n` + setter;
 	}
 
 	if ( local.isComponent ) {
@@ -92,5 +107,10 @@ export default function createBinding ( node, attribute, current, local ) {
 		local.teardown.push( deindent`
 			${local.name}.removeEventListener( '${eventName}', ${handler}, false );
 		` );
+	}
+
+	if ( node.name === 'select' ) {
+		generator.hasComplexBindings = true;
+		local.init.push( `component.__bindings.push( ${handler} )` );
 	}
 }

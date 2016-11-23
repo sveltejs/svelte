@@ -146,7 +146,7 @@ describe( 'svelte', () => {
 
 			const config = loadConfig( dir );
 
-			( config.solo ? it.only : it )( dir, () => {
+			( config.skip ? it.skip : config.solo ? it.only : it )( dir, () => {
 				let compiled;
 
 				try {

@@ -8,11 +8,16 @@ export default function addElementAttributes ( generator, node, local ) {
 			let metadata = attributeLookup[ attribute.name ];
 			if ( metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
 
+			let dynamic = false;
+
+			const isBoundOptionValue = node.name === 'option' && attribute.name === 'value'; // TODO check it's actually bound
+			const propertyName = isBoundOptionValue ? '__value' : metadata && metadata.propertyName;
+
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
-				if ( metadata ) {
+				if ( propertyName ) {
 					local.init.push( deindent`
-						${local.name}.${metadata.propertyName} = true;
+						${local.name}.${propertyName} = true;
 					` );
 				} else {
 					local.init.push( deindent`
@@ -35,9 +40,9 @@ export default function addElementAttributes ( generator, node, local ) {
 					// static attributes
 					result = JSON.stringify( value.data );
 
-					if ( metadata ) {
+					if ( propertyName ) {
 						local.init.push( deindent`
-							${local.name}.${metadata.propertyName} = ${result};
+							${local.name}.${propertyName} = ${result};
 						` );
 					} else {
 						local.init.push( deindent`
@@ -53,13 +58,15 @@ export default function addElementAttributes ( generator, node, local ) {
 				}
 
 				else {
+					dynamic = true;
+
 					// dynamic – but potentially non-string – attributes
 					generator.contextualise( value.expression );
 					result = `[✂${value.expression.start}-${value.expression.end}✂]`;
 
-					if ( metadata ) {
+					if ( propertyName ) {
 						local.update.push( deindent`
-							${local.name}.${metadata.propertyName} = ${result};
+							${local.name}.${propertyName} = ${result};
 						` );
 					} else {
 						local.update.push( deindent`
@@ -70,6 +77,8 @@ export default function addElementAttributes ( generator, node, local ) {
 			}
 
 			else {
+				dynamic = true;
+
 				const value = ( attribute.value[0].type === 'Text' ? '' : `"" + ` ) + (
 					attribute.value.map( chunk => {
 						if ( chunk.type === 'Text' ) {
@@ -83,15 +92,19 @@ export default function addElementAttributes ( generator, node, local ) {
 					}).join( ' + ' )
 				);
 
-				if ( metadata ) {
+				if ( propertyName ) {
 					local.update.push( deindent`
-						${local.name}.${metadata.propertyName} = ${value};
+						${local.name}.${propertyName} = ${value};
 					` );
 				} else {
 					local.update.push( deindent`
 						${local.name}.setAttribute( '${attribute.name}', ${value} );
 					` );
 				}
+			}
+
+			if ( isBoundOptionValue ) {
+				( dynamic ? local.update : local.init ).push( `${local.name}.value = ${local.name}.__value` );
 			}
 		}
 
@@ -149,7 +162,7 @@ export default function addElementAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			createBinding( node, attribute, generator.current, local );
+			createBinding( generator, node, attribute, generator.current, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
