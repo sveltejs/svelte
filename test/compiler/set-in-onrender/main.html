@@ -1,0 +1,13 @@
+<p>{{foo}}</p>
+
+<script>
+	export default {
+		data: () => ({
+			foo: 1
+		}),
+
+		onrender () {
+			this.set({ foo: 2 });
+		}
+	};
+</script>

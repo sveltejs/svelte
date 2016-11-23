@@ -1,0 +1,16 @@
+<p>{{foo}}</p>
+<p>{{bar}}</p>
+
+<script>
+	export default {
+		data: () => ({
+			foo: 1
+		}),
+
+		onrender () {
+			this.observe( 'foo', foo => {
+				this.set({ bar: foo * 2 });
+			});
+		}
+	};
+</script>
