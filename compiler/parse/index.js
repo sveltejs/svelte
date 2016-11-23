@@ -94,8 +94,19 @@ export default function parse ( template ) {
 		},
 
 		readUntil ( pattern ) {
-			const match = pattern.exec( this.template.slice( this.index ) );
-			return this.template.slice( this.index, match ? ( this.index += match.index ) : this.template.length );
+			if ( this.index >= this.template.length ) parser.error( 'Unexpected end of input' );
+
+			const start = this.index;
+			const match = pattern.exec( this.template.slice( start ) );
+
+			if ( match ) {
+				const start = this.index;
+				this.index = start + match.index;
+				return this.template.slice( start, this.index );
+			}
+
+			this.index = this.template.length;
+			return this.template.slice( start );
 		},
 
 		remaining () {
