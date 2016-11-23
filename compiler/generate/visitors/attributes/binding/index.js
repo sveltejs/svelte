@@ -74,18 +74,24 @@ export default function createBinding ( generator, node, attribute, current, loc
 	}
 
 	if ( local.isComponent ) {
+		generator.hasComplexBindings = true;
+
 		local.init.push( deindent`
 			var ${local.name}_updating = false;
 
-			${local.name}.observe( '${attribute.name}', function ( value ) {
-				${local.name}_updating = true;
-				${setter}
-				${local.name}_updating = false;
+			component.__bindings.push( function () {
+				${local.name}.observe( '${attribute.name}', function ( value ) {
+					${local.name}_updating = true;
+					${setter}
+					${local.name}_updating = false;
+				});
 			});
 		` );
 
 		local.update.push( deindent`
-			if ( !${local.name}_updating ) ${local.name}.set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
+			if ( !${local.name}_updating && '${parts[0]}' in changed ) {
+				${local.name}.set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
+			}
 		` );
 	} else {
 		local.init.push( deindent`

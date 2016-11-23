@@ -260,13 +260,9 @@ export default function generate ( parsed, source, options ) {
 	}
 
 	setStatements.push( deindent`
-		if ( setting ) return;
-
-		setting = true;
 		dispatchObservers( observers.immediate, newState, oldState );
 		if ( mainFragment ) mainFragment.update( newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
-		setting = false;
 	` );
 
 	const topLevelStatements = [];

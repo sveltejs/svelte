@@ -1,0 +1,16 @@
+<Counter bind:count='x'/>
+<p>count: {{x}}</p>
+
+<script>
+	import Counter from './Counter.html';
+
+	export default {
+		data: () => ({
+			x: 10
+		}),
+
+		components: {
+			Counter
+		}
+	};
+</script>
