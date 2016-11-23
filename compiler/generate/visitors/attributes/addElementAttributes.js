@@ -137,7 +137,7 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			if ( attribute.name in generator.events ) {
 				local.init.push( deindent`
-					const ${handlerName} = template.events.${attribute.name}( ${local.name}, function ( event ) {
+					const ${handlerName} = template.events.${attribute.name}.call( component, ${local.name}, function ( event ) {
 						${handlerBody}
 					});
 				` );
