@@ -292,7 +292,7 @@ export default function generate ( parsed, source, options ) {
 		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
 	}
 
-	initStatements.push( `
+	initStatements.push( deindent`
 		var mainFragment = renderMainFragment( this, options.target );
 		this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`} );
 	` );
