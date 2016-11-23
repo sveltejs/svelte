@@ -23,16 +23,21 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 				else {
 					// simple dynamic attributes
-					generator.contextualise( value.expression );
-					const result = `[✂${value.expression.start}-${value.expression.end}✂]`;
+					const { dependencies, snippet } = generator.contextualise( value.expression );
 
 					// TODO only update attributes that have changed
-					local.dynamicAttributes.push( `${attribute.name}: ${result}` );
+					local.dynamicAttributes.push({
+						name: attribute.name,
+						value: snippet,
+						dependencies
+					});
 				}
 			}
 
 			else {
 				// complex dynamic attributes
+				const allDependencies = [];
+
 				const value = ( attribute.value[0].type === 'Text' ? '' : `"" + ` ) + (
 					attribute.value.map( chunk => {
 						if ( chunk.type === 'Text' ) {
@@ -40,14 +45,21 @@ export default function addComponentAttributes ( generator, node, local ) {
 						} else {
 							generator.addSourcemapLocations( chunk.expression );
 
-							generator.contextualise( chunk.expression );
+							const { dependencies } = generator.contextualise( chunk.expression );
+							dependencies.forEach( dependency => {
+								if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
+							});
+
 							return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
 						}
 					}).join( ' + ' )
 				);
 
-				// TODO only update attributes that have changed
-				local.dynamicAttributes.push( `${attribute.name}: ${value}` );
+				local.dynamicAttributes.push({
+					name: attribute.name,
+					value,
+					dependencies: allDependencies
+				});
 			}
 		}
 
@@ -58,7 +70,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 			const usedContexts = new Set();
 			attribute.expression.arguments.forEach( arg => {
-				const contexts = generator.contextualise( arg, true, true );
+				const { contexts } = generator.contextualise( arg, true, true );
 
 				contexts.forEach( context => {
 					usedContexts.add( context );

@@ -13,12 +13,12 @@ export default {
 
 		generator.addSourcemapLocations( node.expression );
 
-		const usedContexts = generator.contextualise( node.expression );
+		const { contexts } = generator.contextualise( node.expression );
 		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 		if ( isReference( node.expression ) ) {
 			const reference = `${generator.source.slice( node.expression.start, node.expression.end )}`;
-			const qualified = usedContexts[0] === 'root' ? `root.${reference}` : reference;
+			const qualified = contexts[0] === 'root' ? `root.${reference}` : reference;
 
 			generator.current.updateStatements.push( deindent`
 				if ( ${snippet} !== ${name}_value ) {

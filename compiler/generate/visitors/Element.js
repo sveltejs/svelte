@@ -40,10 +40,18 @@ export default {
 			}
 
 			if ( local.dynamicAttributes.length ) {
+				const updates = local.dynamicAttributes.map( attribute => {
+					return deindent`
+						if ( ${attribute.dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) ${name}_changes.${attribute.name} = ${attribute.value};
+					`;
+				});
+
 				local.update.push( deindent`
-					${name}.set({
-						${local.dynamicAttributes.join( ',\n' )}
-					});
+					var ${name}_changes = {};
+
+					${updates.join( '\n' )}
+
+					if ( Object.keys( ${name}_changes ).length ) ${name}.set( ${name}_changes );
 				` );
 			}
 

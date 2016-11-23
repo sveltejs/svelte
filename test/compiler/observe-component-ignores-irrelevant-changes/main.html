@@ -1,0 +1,14 @@
+<Foo ref:foo x='{{x}}'/>
+
+<script>
+	import Foo from './Foo.html';
+
+	export default {
+		data: () => ({
+			x: {},
+			y: {}
+		}),
+
+		components: { Foo }
+	};
+</script>

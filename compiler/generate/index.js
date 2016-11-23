@@ -21,7 +21,7 @@ export default function generate ( parsed, source, options ) {
 					${fragment.initStatements.join( '\n\n' )}
 
 					return {
-						update: function ( ${fragment.contextChain.join( ', ' )} ) {
+						update: function ( ${fragment.params.join( ', ' )} ) {
 							${fragment.updateStatements.join( '\n\n' )}
 						},
 
@@ -48,9 +48,9 @@ export default function generate ( parsed, source, options ) {
 
 		contextualise ( expression, isEventHandler ) {
 			const usedContexts = [];
+			const dependencies = [];
 
-			const contexts = generator.current.contexts;
-			const indexes = generator.current.indexes;
+			const { contextDependencies, contexts, indexes } = generator.current;
 
 			walk( expression, {
 				enter ( node, parent ) {
@@ -67,11 +67,13 @@ export default function generate ( parsed, source, options ) {
 						}
 
 						if ( contexts[ name ] ) {
+							dependencies.push( ...contextDependencies[ name ] );
 							if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
 						} else if ( indexes[ name ] ) {
 							const context = indexes[ name ];
 							if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
 						} else {
+							dependencies.push( node.name );
 							generator.code.insertRight( node.start, `root.` );
 							if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 						}
@@ -81,7 +83,11 @@ export default function generate ( parsed, source, options ) {
 				}
 			});
 
-			return usedContexts;
+			return {
+				dependencies,
+				contexts: usedContexts,
+				snippet: `[✂${expression.start}-${expression.end}✂]`
+			};
 		},
 
 		// TODO use getName instead of counters
@@ -205,7 +211,7 @@ export default function generate ( parsed, source, options ) {
 		contexts: {},
 		indexes: {},
 
-		contextChain: [ 'root' ],
+		params: [ 'changed', 'root' ],
 		indexNames: {},
 		listNames: {},
 
@@ -258,7 +264,7 @@ export default function generate ( parsed, source, options ) {
 
 		setting = true;
 		dispatchObservers( observers.immediate, newState, oldState );
-		if ( mainFragment ) mainFragment.update( state );
+		if ( mainFragment ) mainFragment.update( newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
 		setting = false;
 	` );

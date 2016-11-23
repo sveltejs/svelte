@@ -60,11 +60,11 @@ export default {
 				${ifFalse.join( '\n\n' )}
 			}
 
-			if ( ${name} ) ${name}.update( ${generator.current.contextChain.join( ', ' )} );
+			if ( ${name} ) ${name}.update( ${generator.current.params.join( ', ' )} );
 		`;
 
 		if ( node.else ) {
-			update += `\nif ( ${elseName} ) ${elseName}.update( ${generator.current.contextChain.join( ', ' )} );`;
+			update += `\nif ( ${elseName} ) ${elseName}.update( ${generator.current.params.join( ', ' )} );`;
 		}
 
 		generator.current.updateStatements.push( update );

@@ -115,7 +115,7 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			const usedContexts = new Set();
 			attribute.expression.arguments.forEach( arg => {
-				const contexts = generator.contextualise( arg, true );
+				const { contexts } = generator.contextualise( arg, true );
 
 				contexts.forEach( context => {
 					usedContexts.add( context );

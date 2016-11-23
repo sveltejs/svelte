@@ -18,7 +18,7 @@ export default {
 
 		generator.addSourcemapLocations( node.expression );
 
-		generator.contextualise( node.expression );
+		const { dependencies } = generator.contextualise( node.expression );
 		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
 
 		generator.current.updateStatements.push( deindent`
@@ -30,7 +30,7 @@ export default {
 				}
 
 				const iteration = ${name}_iterations[i];
-				${name}_iterations[i].update( ${generator.current.contextChain.join( ', ' )}, ${listName}, ${listName}[i], i );
+				${name}_iterations[i].update( ${generator.current.params.join( ', ' )}, ${listName}, ${listName}[i], i );
 			}
 
 			for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
@@ -61,7 +61,10 @@ export default {
 		const indexes = Object.assign( {}, generator.current.indexes );
 		if ( node.index ) indexes[ indexName ] = node.context;
 
-		const contextChain = generator.current.contextChain.concat( listName, node.context, indexName );
+		const contextDependencies = Object.assign( {}, generator.current.contextDependencies );
+		contextDependencies[ node.context ] = dependencies;
+
+		const params = generator.current.params.concat( listName, node.context, indexName );
 
 		generator.current = {
 			useAnchor: false,
@@ -70,12 +73,13 @@ export default {
 			expression: node.expression,
 			context: node.context,
 
+			contextDependencies,
 			contexts,
 			indexes,
 
 			indexNames,
 			listNames,
-			contextChain,
+			params,
 
 			initStatements: [],
 			updateStatements: [ Object.keys( contexts ).map( contextName => {
