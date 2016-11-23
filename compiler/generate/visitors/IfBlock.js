@@ -17,9 +17,7 @@ export default {
 		` );
 
 		generator.addSourcemapLocations( node.expression );
-		generator.contextualise( node.expression );
-
-		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
+		const { snippet } = generator.contextualise( node.expression );
 
 		const ifTrue = [ deindent`
 			if ( !${name } ) {

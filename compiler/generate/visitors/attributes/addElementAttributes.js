@@ -61,16 +61,15 @@ export default function addElementAttributes ( generator, node, local ) {
 					dynamic = true;
 
 					// dynamic – but potentially non-string – attributes
-					generator.contextualise( value.expression );
-					result = `[✂${value.expression.start}-${value.expression.end}✂]`;
+					const { snippet } = generator.contextualise( value.expression );
 
 					if ( propertyName ) {
 						local.update.push( deindent`
-							${local.name}.${propertyName} = ${result};
+							${local.name}.${propertyName} = ${snippet};
 						` );
 					} else {
 						local.update.push( deindent`
-							${local.name}.setAttribute( '${attribute.name}', ${result} );
+							${local.name}.setAttribute( '${attribute.name}', ${snippet} );
 						` );
 					}
 				}
@@ -86,8 +85,8 @@ export default function addElementAttributes ( generator, node, local ) {
 						} else {
 							generator.addSourcemapLocations( chunk.expression );
 
-							generator.contextualise( chunk.expression );
-							return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
+							const { snippet } = generator.contextualise( chunk.expression );
+							return `( ${snippet} )`;
 						}
 					}).join( ' + ' )
 				);

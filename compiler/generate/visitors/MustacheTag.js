@@ -13,8 +13,7 @@ export default {
 
 		generator.addSourcemapLocations( node.expression );
 
-		const { contexts } = generator.contextualise( node.expression );
-		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
+		const { contexts, snippet } = generator.contextualise( node.expression );
 
 		if ( isReference( node.expression ) ) {
 			const reference = `${generator.source.slice( node.expression.start, node.expression.end )}`;

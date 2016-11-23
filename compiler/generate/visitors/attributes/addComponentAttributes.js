@@ -45,12 +45,12 @@ export default function addComponentAttributes ( generator, node, local ) {
 						} else {
 							generator.addSourcemapLocations( chunk.expression );
 
-							const { dependencies } = generator.contextualise( chunk.expression );
+							const { dependencies, snippet } = generator.contextualise( chunk.expression );
 							dependencies.forEach( dependency => {
 								if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
 							});
 
-							return `( [✂${chunk.expression.start}-${chunk.expression.end}✂] )`;
+							return `( ${snippet} )`;
 						}
 					}).join( ' + ' )
 				);

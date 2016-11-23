@@ -18,8 +18,7 @@ export default {
 
 		generator.addSourcemapLocations( node.expression );
 
-		const { dependencies } = generator.contextualise( node.expression );
-		const snippet = `[✂${node.expression.start}-${node.expression.end}✂]`;
+		const { dependencies, snippet } = generator.contextualise( node.expression );
 
 		generator.current.updateStatements.push( deindent`
 			var ${name}_value = ${snippet};
