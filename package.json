@@ -14,7 +14,7 @@
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "lint": "eslint compiler",
     "build": "rollup -c",
-    "prebuild": "npm test",
+    "pretest": "npm run build",
     "prepublish": "npm run lint && npm run build"
   },
   "repository": {
