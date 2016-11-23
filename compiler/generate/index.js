@@ -377,7 +377,7 @@ export default function generate ( parsed, source, options ) {
 
 			${parsed.css ? `if ( !addedCss ) addCss();` : ''}
 			var mainFragment = renderMainFragment( this, options.target );
-			this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data`} );
+			this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`} );
 
 			${templateProperties.onrender ? `template.onrender.call( this );` : ``}
 		}
