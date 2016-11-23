@@ -42,6 +42,10 @@ function ParseError ( message, template, index ) {
 }
 
 export default function parse ( template ) {
+	if ( typeof template !== 'string' ) {
+		throw new TypeError( 'Template must be a string' );
+	}
+
 	const parser = {
 		index: 0,
 		template,
