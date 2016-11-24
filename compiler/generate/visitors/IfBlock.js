@@ -10,18 +10,36 @@ export default {
 		const elseName = `elseBlock_${i}`;
 		const elseRenderer = `renderElseBlock_${i}`;
 
+		generator.addSourcemapLocations( node.expression );
+		const { snippet, string } = generator.contextualise( node.expression );
+
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
 			${generator.current.target}.appendChild( ${name}_anchor );
-			var ${name} = null;${node.else ? `\nvar ${elseName} = null;` : ``}
 		` );
 
-		generator.addSourcemapLocations( node.expression );
-		const { snippet } = generator.contextualise( node.expression );
+		if ( node.else ) {
+			generator.current.initStatements.push( deindent`
+				var ${name} = null;
+				var ${elseName} = null;
+
+				if ( ${snippet} ) {
+					${name} = ${renderer}( ${generator.current.params}, component, ${generator.current.target}, ${name}_anchor );
+				} else {
+					${elseName} = ${elseRenderer}( ${generator.current.params}, component, ${generator.current.target}, ${name}_anchor );
+				}
+			` );
+		} else {
+			generator.current.initStatements.push( deindent`
+				var ${name} = ${snippet} ? ${renderer}( ${generator.current.params}, component, ${generator.current.target}, ${name}_anchor ) : null;
+			` );
+		}
 
 		const ifTrue = [ deindent`
 			if ( !${name } ) {
-				${name} = ${renderer}( component, ${generator.current.target}, ${name}_anchor );
+				${name} = ${renderer}( ${generator.current.params}, component, ${generator.current.target}, ${name}_anchor );
+			} else {
+				${name}.update( changed, ${generator.current.params} );
 			}
 		` ];
 
@@ -44,25 +62,25 @@ export default {
 		if ( node.else ) {
 			ifFalse.push( deindent`
 				if ( !${elseName } ) {
-					${elseName} = ${elseRenderer}( component, ${generator.current.target}, ${name}_anchor );
+					${elseName} = ${elseRenderer}( ${generator.current.params}, component, ${generator.current.target}, ${name}_anchor );
+				} else {
+					${elseName}.update( changed, ${generator.current.params} );
 				}
 			` );
 		}
 
 		let update = deindent`
-			if ( ${snippet} ) {
+			if ( ${string} ) {
 				${ifTrue.join( '\n\n' )}
 			}
 
 			else {
 				${ifFalse.join( '\n\n' )}
 			}
-
-			if ( ${name} ) ${name}.update( ${generator.current.params.join( ', ' )} );
 		`;
 
 		if ( node.else ) {
-			update += `\nif ( ${elseName} ) ${elseName}.update( ${generator.current.params.join( ', ' )} );`;
+			update += `\nif ( ${elseName} ) ${elseName}.update( changed, ${generator.current.params} );`;
 		}
 
 		generator.current.updateStatements.push( update );

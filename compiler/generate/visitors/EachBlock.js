@@ -9,27 +9,34 @@ export default {
 
 		const listName = `${name}_value`;
 
+		generator.addSourcemapLocations( node.expression );
+
+		const { dependencies, snippet, string } = generator.contextualise( node.expression );
+
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
 			${generator.current.target}.appendChild( ${name}_anchor );
+
+			var ${name}_value = ${snippet};
+			var ${name}_fragment = document.createDocumentFragment();
 			var ${name}_iterations = [];
-			const ${name}_fragment = document.createDocumentFragment();
+
+			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
+				${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
+			}
+
+			${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
 		` );
 
-		generator.addSourcemapLocations( node.expression );
-
-		const { dependencies, snippet } = generator.contextualise( node.expression );
-
 		generator.current.updateStatements.push( deindent`
-			var ${name}_value = ${snippet};
+			var ${name}_value = ${string};
 
 			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
 				if ( !${name}_iterations[i] ) {
-					${name}_iterations[i] = ${renderer}( component, ${name}_fragment );
+					${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
+				} else {
+					${name}_iterations[i].update( changed, ${generator.current.params}, ${listName}, ${listName}[i], i );
 				}
-
-				const iteration = ${name}_iterations[i];
-				${name}_iterations[i].update( ${generator.current.params.join( ', ' )}, ${listName}, ${listName}[i], i );
 			}
 
 			for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
@@ -63,7 +70,7 @@ export default {
 		const contextDependencies = Object.assign( {}, generator.current.contextDependencies );
 		contextDependencies[ node.context ] = dependencies;
 
-		const params = generator.current.params.concat( listName, node.context, indexName );
+		const params = generator.current.params + `, ${listName}, ${node.context}, ${indexName}`;
 
 		generator.current = {
 			useAnchor: false,

@@ -4,7 +4,9 @@ export default {
 			name: 'alice'
 		}
 	},
+
 	html: `<input>\n<p>hello alice</p>`,
+
 	test ( assert, component, target, window ) {
 		const input = target.querySelector( 'input' );
 

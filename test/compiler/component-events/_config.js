@@ -2,7 +2,9 @@ export default {
 	data: {
 		visible: true
 	},
-	html: '<div><!--#if visible--><p>i am a widget</p></div>', // TODO comment should follow component...
+
+	html: '<div><p>i am a widget</p></div>',
+
 	test ( assert, component ) {
 		let count = 0;
 

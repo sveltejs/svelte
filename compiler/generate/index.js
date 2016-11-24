@@ -17,11 +17,11 @@ export default function generate ( parsed, source, options ) {
 			}
 
 			renderers.push( deindent`
-				function ${fragment.name} ( component, target${fragment.useAnchor ? ', anchor' : ''} ) {
+				function ${fragment.name} ( ${fragment.params}, component, target${fragment.useAnchor ? ', anchor' : ''} ) {
 					${fragment.initStatements.join( '\n\n' )}
 
 					return {
-						update: function ( ${fragment.params.join( ', ' )} ) {
+						update: function ( changed, ${fragment.params} ) {
 							${fragment.updateStatements.join( '\n\n' )}
 						},
 
@@ -86,7 +86,8 @@ export default function generate ( parsed, source, options ) {
 			return {
 				dependencies,
 				contexts: usedContexts,
-				snippet: `[✂${expression.start}-${expression.end}✂]`
+				snippet: `[✂${expression.start}-${expression.end}✂]`,
+				string: generator.code.slice( expression.start, expression.end )
 			};
 		},
 
@@ -211,7 +212,7 @@ export default function generate ( parsed, source, options ) {
 		contexts: {},
 		indexes: {},
 
-		params: [ 'changed', 'root' ],
+		params: 'root',
 		indexNames: {},
 		listNames: {},
 
@@ -222,12 +223,15 @@ export default function generate ( parsed, source, options ) {
 
 	generator.addRenderer( generator.pop() );
 
+	const topLevelStatements = [];
+
 	const setStatements = [ deindent`
 		const oldState = state;
 		state = Object.assign( {}, oldState, newState );
 	` ];
 
 	if ( templateProperties.computed ) {
+		const statements = [];
 		const dependencies = new Map();
 
 		templateProperties.computed.properties.forEach( prop => {
@@ -249,7 +253,7 @@ export default function generate ( parsed, source, options ) {
 			const deps = dependencies.get( key );
 			deps.forEach( visit );
 
-			setStatements.push( deindent`
+			statements.push( deindent`
 				if ( ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
@@ -257,6 +261,14 @@ export default function generate ( parsed, source, options ) {
 		}
 
 		templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+
+		topLevelStatements.push( deindent`
+			function applyComputations ( state, newState, oldState ) {
+				${statements.join( '\n\n' )}
+			}
+		` );
+
+		setStatements.push( `applyComputations( state, newState, oldState )` );
 	}
 
 	setStatements.push( deindent`
@@ -264,8 +276,6 @@ export default function generate ( parsed, source, options ) {
 		if ( mainFragment ) mainFragment.update( newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
-
-	const topLevelStatements = [];
 
 	if ( parsed.js ) {
 		if ( imports.length ) {
@@ -290,23 +300,27 @@ export default function generate ( parsed, source, options ) {
 	}
 
 	if ( generator.hasComplexBindings ) {
-		initStatements.push( `this.__bindings = [];` );
-		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
-	}
+		initStatements.push( deindent`
+			this.__bindings = [];
+			var mainFragment = renderMainFragment( state, this, options.target );
+			while ( this.__bindings.length ) this.__bindings.pop()();
+		` );
 
-	initStatements.push( deindent`
-		var mainFragment = renderMainFragment( this, options.target );
-		this.set( ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`} );
-	` );
+		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
+	} else {
+		initStatements.push( `var mainFragment = renderMainFragment( state, this, options.target );` );
+	}
 
 	if ( templateProperties.onrender ) {
 		initStatements.push( `template.onrender.call( this );` );
 	}
 
+	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;
+
 	topLevelStatements.push( deindent`
 		export default function ${constructorName} ( options ) {
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
-			var state = {};
+			var state = ${initialState};${templateProperties.computed ? `\napplyComputations( state, state, {} );` : ``}
 
 			var observers = {
 				immediate: Object.create( null ),

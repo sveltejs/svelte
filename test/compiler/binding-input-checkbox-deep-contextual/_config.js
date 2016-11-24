@@ -6,7 +6,12 @@ export default {
 			{ description: 'three', completed: false }
 		]
 	},
-	html: `<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div><!--#each items-->\n\n<p>1 completed</p>`,
+
+	html: `
+		<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>
+		<p>1 completed</p>
+	`,
+
 	test ( assert, component, target, window ) {
 		const inputs = [ ...target.querySelectorAll( 'input' ) ];
 
@@ -20,13 +25,19 @@ export default {
 		inputs[1].dispatchEvent( event );
 
 		assert.equal( component.get( 'numCompleted' ), 2 );
-		assert.equal( target.innerHTML, `<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div><!--#each items-->\n\n<p>2 completed</p>` );
+		assert.htmlEqual( target.innerHTML, `
+			<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>
+			<p>2 completed</p>
+		` );
 
 		const items = component.get( 'items' );
 		items[2].completed = true;
 
 		component.set({ items });
 		assert.ok( inputs[2].checked );
-		assert.equal( target.innerHTML, `<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div><!--#each items-->\n\n<p>3 completed</p>` );
+		assert.htmlEqual( target.innerHTML, `
+			<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>
+			<p>3 completed</p>
+		` );
 	}
 };

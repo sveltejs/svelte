@@ -22,13 +22,39 @@ export default {
 		if ( isComponent ) {
 			addComponentAttributes( generator, node, local );
 
-			if ( local.staticAttributes.length ) {
+			if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
+				const initialProps = local.staticAttributes
+					.concat( local.dynamicAttributes )
+					.map( attribute => `${attribute.name}: ${attribute.value}` );
+
+				const statements = [];
+
+				if ( initialProps.length ) {
+					statements.push( deindent`
+						var ${name}_initialData = {
+							${initialProps.join( ',\n' )}
+						};
+					` );
+				} else {
+					statements.push( `var ${name}_initialData = {};` );
+				}
+
+				if ( local.bindings.length ) {
+					const bindings = local.bindings.map( binding => {
+						const parts = binding.value.split( '.' );
+						const tail = parts.pop();
+						return `if ( '${tail}' in ${parts.join( '.' )} ) ${name}_initialData.${binding.name} = ${binding.value};`;
+					});
+
+					statements.push( bindings.join( '\n' ) );
+				}
+
 				local.init.unshift( deindent`
+					${statements.join( '\n\n' )}
+
 					var ${name} = new template.components.${node.name}({
 						target: ${generator.current.target},
-						data: {
-							${local.staticAttributes.join( ',\n' )}
-						}
+						data: ${name}_initialData
 					});
 				` );
 			} else {
@@ -62,11 +88,18 @@ export default {
 			addElementAttributes( generator, node, local );
 
 			if ( local.allUsedContexts.size ) {
-				local.init.push( deindent`
-					${name}.__svelte = {};
-				` );
+				const contextNames = [...local.allUsedContexts];
 
-				const declarations = [...local.allUsedContexts].map( contextName => {
+				const initialProps = contextNames.map( contextName => {
+					if ( contextName === 'root' ) return `root: root`;
+
+					const listName = generator.current.listNames[ contextName ];
+					const indexName = generator.current.indexNames[ contextName ];
+
+					return `${listName}: ${listName},\n${indexName}: ${indexName}`;
+				}).join( ',\n' );
+
+				const updates = contextNames.map( contextName => {
 					if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
 					const listName = generator.current.listNames[ contextName ];
@@ -75,7 +108,13 @@ export default {
 					return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 				}).join( '\n' );
 
-				local.update.push( declarations );
+				local.init.push( deindent`
+					${name}.__svelte = {
+						${initialProps}
+					};
+				` );
+
+				local.update.push( updates );
 			}
 
 			let render = local.namespace ?

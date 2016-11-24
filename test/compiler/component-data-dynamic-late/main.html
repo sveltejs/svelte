@@ -1,0 +1,17 @@
+{{#if foo}}
+	<Widget p='{{q}}'/>
+{{/if}}
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data: () => ({
+			foo: false
+		}),
+
+		components: {
+			Widget
+		}
+	};
+</script>

@@ -4,12 +4,16 @@ import deindent from '../../utils/deindent.js';
 export default function addComponentAttributes ( generator, node, local ) {
 	local.staticAttributes = [];
 	local.dynamicAttributes = [];
+	local.bindings = [];
 
 	node.attributes.forEach( attribute => {
 		if ( attribute.type === 'Attribute' ) {
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
-				local.staticAttributes.push( `${attribute.name}: true` );
+				local.staticAttributes.push({
+					name: attribute.name,
+					value: true
+				});
 			}
 
 			else if ( attribute.value.length === 1 ) {
@@ -18,17 +22,20 @@ export default function addComponentAttributes ( generator, node, local ) {
 				if ( value.type === 'Text' ) {
 					// static attributes
 					const result = isNaN( parseFloat( value.data ) ) ? JSON.stringify( value.data ) : value.data;
-					local.staticAttributes.push( `${attribute.name}: ${result}` );
+					local.staticAttributes.push({
+						name: attribute.name,
+						value: result
+					});
 				}
 
 				else {
 					// simple dynamic attributes
-					const { dependencies, snippet } = generator.contextualise( value.expression );
+					const { dependencies, string } = generator.contextualise( value.expression );
 
 					// TODO only update attributes that have changed
 					local.dynamicAttributes.push({
 						name: attribute.name,
-						value: snippet,
+						value: string,
 						dependencies
 					});
 				}
@@ -45,12 +52,12 @@ export default function addComponentAttributes ( generator, node, local ) {
 						} else {
 							generator.addSourcemapLocations( chunk.expression );
 
-							const { dependencies, snippet } = generator.contextualise( chunk.expression );
+							const { dependencies, string } = generator.contextualise( chunk.expression );
 							dependencies.forEach( dependency => {
 								if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
 							});
 
-							return `( ${snippet} )`;
+							return `( ${string} )`;
 						}
 					}).join( ' + ' )
 				);

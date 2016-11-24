@@ -5,36 +5,17 @@ export default {
 	enter ( generator, node ) {
 		const name = generator.current.counter( 'text' );
 
+		const { snippet, string } = generator.contextualise( node.expression );
+
 		generator.current.initStatements.push( deindent`
-			var ${name} = document.createTextNode( '' );
-			var ${name}_value = '';
+			var ${name} = document.createTextNode( ${snippet} );
 			${generator.current.target}.appendChild( ${name} );
 		` );
 
 		generator.addSourcemapLocations( node.expression );
 
-		const { contexts, snippet } = generator.contextualise( node.expression );
-
-		if ( isReference( node.expression ) ) {
-			const reference = `${generator.source.slice( node.expression.start, node.expression.end )}`;
-			const qualified = contexts[0] === 'root' ? `root.${reference}` : reference;
-
-			generator.current.updateStatements.push( deindent`
-				if ( ${snippet} !== ${name}_value ) {
-					${name}_value = ${qualified};
-					${name}.data = ${name}_value;
-				}
-			` );
-		} else {
-			const temp = generator.getName( 'temp' );
-
-			generator.current.updateStatements.push( deindent`
-				var ${temp} = ${snippet};
-				if ( ${temp} !== ${name}_value ) {
-					${name}_value = ${temp};
-					${name}.data = ${name}_value;
-				}
-			` );
-		}
+		generator.current.updateStatements.push( deindent`
+			${name}.data = ${string};
+		` );
 	}
 };

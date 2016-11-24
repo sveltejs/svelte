@@ -5,6 +5,8 @@ export default {
 
 		component.set({ currentFilter: 'all' });
 
-		assert.equal( target.innerHTML, `<ul><li>one</li><!--#if filter(item, currentFilter)--><li>two</li><!--#if filter(item, currentFilter)--><li>three</li><!--#if filter(item, currentFilter)--><!--#each items--></ul>` );
+		assert.htmlEqual( target.innerHTML, `
+			<ul><li>one</li><li>two</li><li>three</li></ul>`
+		);
 	}
 };

@@ -61,17 +61,14 @@ export default function addElementAttributes ( generator, node, local ) {
 					dynamic = true;
 
 					// dynamic – but potentially non-string – attributes
-					const { snippet } = generator.contextualise( value.expression );
+					const { snippet, string } = generator.contextualise( value.expression );
 
-					if ( propertyName ) {
-						local.update.push( deindent`
-							${local.name}.${propertyName} = ${snippet};
-						` );
-					} else {
-						local.update.push( deindent`
-							${local.name}.setAttribute( '${attribute.name}', ${snippet} );
-						` );
-					}
+					const updater = propertyName ?
+						`${local.name}.${propertyName} = ${snippet};` :
+						`${local.name}.setAttribute( '${attribute.name}', ${string} );`; // TODO use snippet both times – see note below
+
+					local.init.push( updater );
+					local.update.push( updater );
 				}
 			}
 
@@ -85,21 +82,18 @@ export default function addElementAttributes ( generator, node, local ) {
 						} else {
 							generator.addSourcemapLocations( chunk.expression );
 
-							const { snippet } = generator.contextualise( chunk.expression );
-							return `( ${snippet} )`;
+							const { string } = generator.contextualise( chunk.expression ); // TODO use snippet for sourcemap support – need to add a 'copy' feature to MagicString first
+							return `( ${string} )`;
 						}
 					}).join( ' + ' )
 				);
 
-				if ( propertyName ) {
-					local.update.push( deindent`
-						${local.name}.${propertyName} = ${value};
-					` );
-				} else {
-					local.update.push( deindent`
-						${local.name}.setAttribute( '${attribute.name}', ${value} );
-					` );
-				}
+				const updater = propertyName ?
+					`${local.name}.${propertyName} = ${value};` :
+					`${local.name}.setAttribute( '${attribute.name}', ${value} );`;
+
+				local.init.push( updater );
+				local.update.push( updater );
 			}
 
 			if ( isBoundOptionValue ) {

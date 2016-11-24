@@ -7,7 +7,15 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	const deep = parts.length > 1;
 	const contextual = parts[0] in current.contexts;
+
 	if ( contextual ) local.allUsedContexts.add( parts[0] );
+
+	if ( local.isComponent ) {
+		local.bindings.push({
+			name: attribute.name,
+			value: contextual ? attribute.value : `root.${attribute.value}`
+		});
+	}
 
 	const handler = current.counter( `${local.name}ChangeHandler` );
 	let setter;
@@ -94,6 +102,8 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 		` );
 	} else {
+		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}`;
+
 		local.init.push( deindent`
 			var ${local.name}_updating = false;
 
@@ -104,10 +114,11 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 
 			${local.name}.addEventListener( '${eventName}', ${handler}, false );
+			${updateElement};
 		` );
 
 		local.update.push( deindent`
-			if ( !${local.name}_updating ) ${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}
+			if ( !${local.name}_updating ) ${updateElement};
 		` );
 
 		local.teardown.push( deindent`
