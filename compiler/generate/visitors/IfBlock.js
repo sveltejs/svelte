@@ -11,7 +11,7 @@ export default {
 		const elseRenderer = `renderElseBlock_${i}`;
 
 		generator.addSourcemapLocations( node.expression );
-		const { snippet, string } = generator.contextualise( node.expression );
+		const { snippet } = generator.contextualise( node.expression );
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
@@ -70,7 +70,7 @@ export default {
 		}
 
 		let update = deindent`
-			if ( ${string} ) {
+			if ( ${snippet} ) {
 				${ifTrue.join( '\n\n' )}
 			}
 

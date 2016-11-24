@@ -1,4 +1,4 @@
-import MagicString from 'magic-string';
+import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
 import deindent from './utils/deindent.js';
 import isReference from './utils/isReference.js';
@@ -365,8 +365,6 @@ export default function generate ( parsed, source, options ) {
 				return state[ key ];
 			};
 
-			let setting = false;
-
 			this.set = function set ( newState ) {
 				${setStatements.join( '\n\n' )}
 			};
@@ -426,38 +424,26 @@ export default function generate ( parsed, source, options ) {
 	const parts = result.split( '✂]' );
 	const finalChunk = parts.pop();
 
-	const sortedByResult = parts.map( ( str, index ) => {
+	const compiled = new Bundle({ separator: '' });
+
+	parts.forEach( str => {
 		const match = pattern.exec( str );
 
-		return {
-			index,
-			chunk: str.replace( pattern, '' ),
-			start: +match[1],
-			end: +match[2]
-		};
+		compiled.addSource({
+			filename: options.filename,
+			content: new MagicString( str.replace( pattern, '' ) )
+		});
+
+		compiled.addSource({
+			filename: options.filename,
+			content: generator.code.snip( +match[1], +match[2] )
+		});
 	});
 
-	const sortedBySource = sortedByResult
-		.slice()
-		.sort( ( a, b ) => a.start - b.start );
-
-	let c = 0;
-
-	sortedBySource.forEach( part => {
-		generator.code.remove( c, part.start );
-		generator.code.insertRight( part.start, part.chunk );
-		c = part.end;
-	});
-
-	generator.code.remove( c, source.length );
-	generator.code.append( finalChunk );
-
-	sortedByResult.forEach( part => {
-		generator.code.move( part.start, part.end, 0 );
-	});
+	compiled.append( finalChunk );
 
 	return {
-		code: generator.code.toString(),
-		map: generator.code.generateMap()
+		code: compiled.toString(),
+		map: compiled.generateMap()
 	};
 }

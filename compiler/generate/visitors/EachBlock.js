@@ -11,7 +11,7 @@ export default {
 
 		generator.addSourcemapLocations( node.expression );
 
-		const { dependencies, snippet, string } = generator.contextualise( node.expression );
+		const { dependencies, snippet } = generator.contextualise( node.expression );
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
@@ -29,7 +29,7 @@ export default {
 		` );
 
 		generator.current.updateStatements.push( deindent`
-			var ${name}_value = ${string};
+			var ${name}_value = ${snippet};
 
 			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
 				if ( !${name}_iterations[i] ) {

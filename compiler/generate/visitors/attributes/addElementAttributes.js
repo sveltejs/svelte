@@ -61,11 +61,11 @@ export default function addElementAttributes ( generator, node, local ) {
 					dynamic = true;
 
 					// dynamic – but potentially non-string – attributes
-					const { snippet, string } = generator.contextualise( value.expression );
+					const { snippet } = generator.contextualise( value.expression );
 
 					const updater = propertyName ?
 						`${local.name}.${propertyName} = ${snippet};` :
-						`${local.name}.setAttribute( '${attribute.name}', ${string} );`; // TODO use snippet both times – see note below
+						`${local.name}.setAttribute( '${attribute.name}', ${snippet} );`; // TODO use snippet both times – see note below
 
 					local.init.push( updater );
 					local.update.push( updater );

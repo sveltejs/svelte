@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	data: {
 		columns: [ 'a', 'b', 'c' ],
 		rows: [ 1, 2, 3 ]
