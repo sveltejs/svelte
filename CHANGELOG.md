@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 0.2.1
+
+* Transpile build
+
 ## 0.2.0
 
 * Only generate UMD build, for now

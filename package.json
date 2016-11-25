@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The magical disappearing UI framework",
   "main": "dist/svelte.js",
   "files": [
@@ -50,6 +50,7 @@
     "nyc": "^9.0.1",
     "reify": "^0.4.0",
     "rollup": "^0.36.3",
+    "rollup-plugin-buble": "^0.14.0",
     "rollup-plugin-node-resolve": "^2.0.0"
   },
   "nyc": {
