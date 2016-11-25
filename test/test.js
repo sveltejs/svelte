@@ -1,4 +1,4 @@
-import { compile, parse } from '../dist/svelte.es.js';
+import { compile, parse } from '../dist/svelte.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
