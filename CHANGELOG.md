@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 0.2.2
+
+* On second thoughts, don't transpile build. Was only really for Uglify's benefit, which is daft
+
 ## 0.2.1
 
 * Transpile build
