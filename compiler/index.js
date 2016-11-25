@@ -8,3 +8,5 @@ export function compile ( template, options = {} ) {
 
 	return generated;
 }
+
+export { parse };

@@ -1,5 +1,4 @@
-import { compile } from '../compiler/index.js';
-import parse from '../compiler/parse/index.js';
+import { compile, parse } from '../dist/svelte.es.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';

@@ -4,8 +4,7 @@ export default {
 	entry: 'compiler/index.js',
 	moduleName: 'svelte',
 	targets: [
-		{ dest: 'dist/svelte.umd.js', format: 'umd' },
-		{ dest: 'dist/svelte.es.js', format: 'es' }
+		{ dest: 'dist/svelte.js', format: 'umd' }
 	],
 	plugins: [
 		nodeResolve({ jsnext: true, module: true })

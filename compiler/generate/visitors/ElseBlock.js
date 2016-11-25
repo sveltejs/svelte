@@ -1,4 +1,3 @@
-import deindent from '../utils/deindent.js';
 import counter from '../utils/counter.js';
 
 export default {

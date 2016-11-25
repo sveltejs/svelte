@@ -1,5 +1,20 @@
 # Svelte changelog
 
+## 0.2.0
+
+* Only generate UMD build, for now
+* Include dependencies in the build, treat as `devDependencies`
+* Faster initial render
+* Parent data overrides child defaults
+* Remove top-level text nodes on teardown
+* Handle `readUntil` errors in parser
+* Basic `<select>` binding
+* Handle missing data
+* Prevent infinite set/observe loops
+* Add `bind:foo` shorthand
+* `else` and `elseif` blocks
+* Hoist imports
+
 ## 0.1.1
 
 * Support unquoted attributes
