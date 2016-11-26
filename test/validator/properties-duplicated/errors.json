@@ -1,0 +1,8 @@
+[{
+	"message": "Duplicate property 'methods'",
+	"loc": {
+		"line": 9,
+		"column": 2
+	},
+	"pos": 74
+}]

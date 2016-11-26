@@ -42,6 +42,7 @@
     "eslint": "^3.10.2",
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.3.0",
+    "fuzzyset.js": "0.0.1",
     "jsdom": "^9.8.3",
     "locate-character": "^2.0.0",
     "magic-string": "^0.16.0",
@@ -51,7 +52,9 @@
     "reify": "^0.4.0",
     "rollup": "^0.36.3",
     "rollup-plugin-buble": "^0.14.0",
-    "rollup-plugin-node-resolve": "^2.0.0"
+    "rollup-plugin-commonjs": "^5.0.5",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "source-map-support": "^0.4.6"
   },
   "nyc": {
     "include": [

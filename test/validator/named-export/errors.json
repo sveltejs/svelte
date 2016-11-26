@@ -1,0 +1,8 @@
+[{
+	"message": "A component can only have a default export",
+	"pos": 10,
+	"loc": {
+		"line": 2,
+		"column": 1
+	}
+}]

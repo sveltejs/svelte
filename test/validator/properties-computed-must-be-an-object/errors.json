@@ -1,0 +1,8 @@
+[{
+	"message": "The 'computed' property must be an object literal",
+	"loc": {
+		"line": 5,
+		"column": 2
+	},
+	"pos": 42
+}]

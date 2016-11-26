@@ -1,0 +1,8 @@
+[{
+	"message": "Unexpected property 'doSomething' (did you mean to include it in 'methods'?)",
+	"loc": {
+		"line": 5,
+		"column": 2
+	},
+	"pos": 42
+}]

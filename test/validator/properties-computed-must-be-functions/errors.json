@@ -1,0 +1,8 @@
+[{
+	"message": "Computed properties can be function expressions or arrow function expressions",
+	"loc": {
+		"line": 6,
+		"column": 8
+	},
+	"pos": 62
+}]

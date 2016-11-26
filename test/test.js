@@ -1,11 +1,14 @@
-import { compile, parse } from '../dist/svelte.js';
+import { compile, parse, validate } from '../dist/svelte.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
 
-import { install } from 'console-group';
-install();
+import * as consoleGroup from 'console-group';
+consoleGroup.install();
+
+import * as sourceMapSupport from 'source-map-support';
+sourceMapSupport.install();
 
 const cache = {};
 
@@ -24,7 +27,7 @@ function exists ( path ) {
 }
 
 describe( 'svelte', () => {
-	describe( 'parser', () => {
+	describe( 'parse', () => {
 		fs.readdirSync( 'test/parser' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
 
@@ -57,7 +60,51 @@ describe( 'svelte', () => {
 		});
 	});
 
-	describe( 'compiler', () => {
+	describe( 'validate', () => {
+		function tryToLoadJson ( file ) {
+			try {
+				return JSON.parse( fs.readFileSync( file ) );
+			} catch ( err ) {
+				if ( err.code !== 'ENOENT' ) throw err;
+				return null;
+			}
+		}
+
+		fs.readdirSync( 'test/validator' ).forEach( dir => {
+			if ( dir[0] === '.' ) return;
+
+			const solo = exists( `test/validator/${dir}/solo` );
+
+			( solo ? it.only : it )( dir, () => {
+				const input = fs.readFileSync( `test/validator/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
+
+				try {
+					const parsed = parse( input );
+					const { errors, warnings } = validate( parsed, input );
+
+					const expectedErrors = tryToLoadJson( `test/validator/${dir}/errors.json` ) || [];
+					const expectedWarnings = tryToLoadJson( `test/validator/${dir}/warnings.json` ) || [];
+
+					assert.deepEqual( errors, expectedErrors );
+					assert.deepEqual( warnings, expectedWarnings );
+				} catch ( err ) {
+					if ( err.name !== 'ParseError' ) throw err;
+
+					try {
+						const expected = require( `./validator/${dir}/error.json` );
+
+						assert.equal( err.shortMessage, expected.message );
+						assert.deepEqual( err.loc, expected.loc );
+						assert.equal( err.pos, expected.pos );
+					} catch ( err2 ) {
+						throw err2.code === 'MODULE_NOT_FOUND' ? err : err2;
+					}
+				}
+			});
+		});
+	});
+
+	describe( 'generate', () => {
 		before( () => {
 			function cleanChildren ( node ) {
 				let previous = null;
