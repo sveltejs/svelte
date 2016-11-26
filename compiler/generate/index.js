@@ -503,7 +503,7 @@ export default function generate ( parsed, source, options ) {
 
 	compiled.append( finalChunk );
 
-	addString( '\n\n' + getOutro( format, constructorName, imports ) );
+	addString( '\n\n' + getOutro( format, constructorName, options, imports ) );
 
 	return {
 		code: compiled.toString(),

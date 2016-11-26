@@ -7,7 +7,11 @@ export function compile ( source, options = {} ) {
 
 	if ( !options.onwarn ) {
 		options.onwarn = warning => {
-			console.warn( `(${warning.loc.line}:${warning.loc.column}) – ${warning.message}` ); // eslint-disable-line no-console
+			if ( warning.loc ) {
+				console.warn( `(${warning.loc.line}:${warning.loc.column}) – ${warning.message}` ); // eslint-disable-line no-console
+			} else {
+				console.warn( warning.message ); // eslint-disable-line no-console
+			}
 		};
 	}
 

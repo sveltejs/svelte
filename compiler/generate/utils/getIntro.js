@@ -1,31 +1,29 @@
-export default function getIntro ( format, options, imports ) {
-	const dependencies = imports.map( declaration => {
-		return {
-			source: declaration.source.value,
-			name: declaration.name
-		};
-	});
+import deindent from './deindent.js';
+import getGlobals from './getGlobals.js';
 
+export default function getIntro ( format, options, imports ) {
 	if ( format === 'es' ) return '';
-	if ( format === 'amd' ) return getAmdIntro( options.amd, dependencies );
-	if ( format === 'cjs' ) return getCjsIntro( dependencies );
+	if ( format === 'amd' ) return getAmdIntro( options, imports );
+	if ( format === 'cjs' ) return getCjsIntro( options, imports );
+	if ( format === 'iife' ) return getIifeIntro( options, imports );
+	if ( format === 'umd' ) return getUmdIntro( options, imports );
 
 	throw new Error( `Not implemented: ${format}` );
 }
 
-function getAmdIntro ( options = {}, dependencies ) {
-	const sourceString = dependencies.length ?
-		`[ ${dependencies.map( dep => `'${dep.source}'` ).join( ', ' )} ], ` :
+function getAmdIntro ( options, imports ) {
+	const sourceString = imports.length ?
+		`[ ${imports.map( declaration => `'${declaration.source.value}'` ).join( ', ' )} ], ` :
 		'';
 
-	const paramString = dependencies.length ? ` ${dependencies.map( dep => dep.name ).join( ', ' )} ` : '';
+	const id = options.amd && options.amd.id;
 
-	return `define(${options.id ? ` '${options.id}', ` : ''}${sourceString}function (${paramString}) { 'use strict';\n\n`;
+	return `define(${id ? ` '${id}', ` : ''}${sourceString}function (${paramString( imports )}) { 'use strict';\n\n`;
 }
 
-function getCjsIntro ( dependencies ) {
-	const requireBlock = dependencies
-		.map( dep => `var ${dep.name} = require( '${dep.source}' );` )
+function getCjsIntro ( options, imports ) {
+	const requireBlock = imports
+		.map( declaration => `var ${declaration.name} = require( '${declaration.source.value}' );` )
 		.join( '\n\n' );
 
 	if ( requireBlock ) {
@@ -33,4 +31,35 @@ function getCjsIntro ( dependencies ) {
 	}
 
 	return `'use strict';\n\n`;
+}
+
+function getIifeIntro ( options, imports ) {
+	if ( !options.name ) {
+		throw new Error( `Missing required 'name' option for IIFE export` );
+	}
+
+	return `var ${options.name} = (function (${paramString( imports )}) { 'use strict';\n\n`;
+}
+
+function getUmdIntro ( options, imports ) {
+	if ( !options.name ) {
+		throw new Error( `Missing required 'name' option for UMD export` );
+	}
+
+	const amdId = options.amd && options.amd.id ? `'${options.amd.id}', ` : '';
+
+	const amdDeps = imports.length ? `[${imports.map( declaration => `'${declaration.source.value}'` ).join( ', ')}], ` : '';
+	const cjsDeps = imports.map( declaration => `require('${declaration.source.value}')` ).join( ', ' );
+	const globalDeps = getGlobals( imports, options );
+
+	return deindent`
+		(function ( global, factory ) {
+			typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(${cjsDeps}) :
+			typeof define === 'function' && define.amd ? define(${amdId}${amdDeps}factory) :
+			(global.${options.name} = factory(${globalDeps}));
+		}(this, (function (${paramString( imports )}) { 'use strict';` + '\n\n';
+}
+
+function paramString ( imports ) {
+	return imports.length ? ` ${imports.map( dep => dep.name ).join( ', ' )} ` : '';
 }
