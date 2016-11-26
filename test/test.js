@@ -1,4 +1,5 @@
 import { compile, parse, validate } from '../dist/svelte.js';
+import deindent from '../compiler/generate/utils/deindent.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -26,7 +27,77 @@ function exists ( path ) {
 	}
 }
 
+function env () {
+	return new Promise( ( fulfil, reject ) => {
+		jsdom.env( '<main></main>', ( err, window ) => {
+			if ( err ) {
+				reject( err );
+			} else {
+				global.document = window.document;
+				fulfil( window );
+			}
+		});
+	});
+}
+
 describe( 'svelte', () => {
+	before( () => {
+		function cleanChildren ( node ) {
+			let previous = null;
+
+			[ ...node.childNodes ].forEach( child => {
+				if ( child.nodeType === 8 ) {
+					// comment
+					node.removeChild( child );
+					return;
+				}
+
+				if ( child.nodeType === 3 ) {
+					child.data = child.data.replace( /\s{2,}/, '\n' );
+
+					// text
+					if ( previous && previous.nodeType === 3 ) {
+						previous.data += child.data;
+						previous.data = previous.data.replace( /\s{2,}/, '\n' );
+
+						node.removeChild( child );
+					}
+				}
+
+				else {
+					cleanChildren( child );
+				}
+
+				previous = child;
+			});
+
+			// collapse whitespace
+			if ( node.firstChild && node.firstChild.nodeType === 3 ) {
+				node.firstChild.data = node.firstChild.data.replace( /^\s+/, '' );
+				if ( !node.firstChild.data ) node.removeChild( node.firstChild );
+			}
+
+			if ( node.lastChild && node.lastChild.nodeType === 3 ) {
+				node.lastChild.data = node.lastChild.data.replace( /\s+$/, '' );
+				if ( !node.lastChild.data ) node.removeChild( node.lastChild );
+			}
+		}
+
+		return env().then( window => {
+			assert.htmlEqual = ( actual, expected, message ) => {
+				window.document.body.innerHTML = actual.trim();
+				cleanChildren( window.document.body, '' );
+				actual = window.document.body.innerHTML;
+
+				window.document.body.innerHTML = expected.trim();
+				cleanChildren( window.document.body, '' );
+				expected = window.document.body.innerHTML;
+
+				assert.deepEqual( actual, expected, message );
+			};
+		});
+	});
+
 	describe( 'parse', () => {
 		fs.readdirSync( 'test/parser' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
@@ -125,63 +196,6 @@ describe( 'svelte', () => {
 	});
 
 	describe( 'generate', () => {
-		before( () => {
-			function cleanChildren ( node ) {
-				let previous = null;
-
-				[ ...node.childNodes ].forEach( child => {
-					if ( child.nodeType === 8 ) {
-						// comment
-						node.removeChild( child );
-						return;
-					}
-
-					if ( child.nodeType === 3 ) {
-						child.data = child.data.replace( /\s{2,}/, '\n' );
-
-						// text
-						if ( previous && previous.nodeType === 3 ) {
-							previous.data += child.data;
-							previous.data = previous.data.replace( /\s{2,}/, '\n' );
-
-							node.removeChild( child );
-						}
-					}
-
-					else {
-						cleanChildren( child );
-					}
-
-					previous = child;
-				});
-
-				// collapse whitespace
-				if ( node.firstChild && node.firstChild.nodeType === 3 ) {
-					node.firstChild.data = node.firstChild.data.replace( /^\s+/, '' );
-					if ( !node.firstChild.data ) node.removeChild( node.firstChild );
-				}
-
-				if ( node.lastChild && node.lastChild.nodeType === 3 ) {
-					node.lastChild.data = node.lastChild.data.replace( /\s+$/, '' );
-					if ( !node.lastChild.data ) node.removeChild( node.lastChild );
-				}
-			}
-
-			return env().then( window => {
-				assert.htmlEqual = ( actual, expected, message ) => {
-					window.document.body.innerHTML = actual.trim();
-					cleanChildren( window.document.body, '' );
-					actual = window.document.body.innerHTML;
-
-					window.document.body.innerHTML = expected.trim();
-					cleanChildren( window.document.body, '' );
-					expected = window.document.body.innerHTML;
-
-					assert.deepEqual( actual, expected, message );
-				};
-			});
-		});
-
 		function loadConfig ( dir ) {
 			try {
 				return require( `./compiler/${dir}/_config.js` ).default;
@@ -192,19 +206,6 @@ describe( 'svelte', () => {
 
 				throw err;
 			}
-		}
-
-		function env () {
-			return new Promise( ( fulfil, reject ) => {
-				jsdom.env( '<main></main>', ( err, window ) => {
-					if ( err ) {
-						reject( err );
-					} else {
-						global.document = window.document;
-						fulfil( window );
-					}
-				});
-			});
 		}
 
 		fs.readdirSync( 'test/compiler' ).forEach( dir => {
@@ -274,6 +275,91 @@ describe( 'svelte', () => {
 						if ( !config.show ) console.log( withLineNumbers ); // eslint-disable-line no-console
 						throw err;
 					});
+			});
+		});
+	});
+
+	describe( 'formats', () => {
+		describe( 'amd', () => {
+			it( 'generates an AMD module', () => {
+				const source = deindent`
+					<div>{{answer}}</div>
+
+					<script>
+						import answer from 'answer';
+
+						export default {
+							data () {
+								return { answer };
+							}
+						};
+					</script>
+				`;
+
+				const { code } = compile( source, {
+					format: 'amd',
+					amd: { id: 'foo' }
+				});
+
+				const fn = new Function( 'define', code );
+
+				return env().then( window => {
+					fn( ( id, dependencies, factory ) => {
+						assert.equal( id, 'foo' );
+						assert.deepEqual( dependencies, [ 'answer' ]);
+
+						const SvelteComponent = factory( 42 );
+
+						const main = window.document.body.querySelector( 'main' );
+						const component = new SvelteComponent({ target: main });
+
+						assert.htmlEqual( main.innerHTML, `<div>42</div>` );
+
+						component.teardown();
+					});
+				});
+			});
+		});
+
+		describe( 'cjs', () => {
+			it( 'generates a CommonJS module', () => {
+				const source = deindent`
+					<div>{{answer}}</div>
+
+					<script>
+						import answer from 'answer';
+
+						export default {
+							data () {
+								return { answer };
+							}
+						};
+					</script>
+				`;
+
+				const { code } = compile( source, {
+					format: 'cjs'
+				});
+
+				const fn = new Function( 'module', 'require', code );
+
+				return env().then( window => {
+					const module = {};
+					const require = id => {
+						if ( id === 'answer' ) return 42;
+					};
+
+					fn( module, require );
+
+					const SvelteComponent = module.exports;
+
+					const main = window.document.body.querySelector( 'main' );
+					const component = new SvelteComponent({ target: main });
+
+					assert.htmlEqual( main.innerHTML, `<div>42</div>` );
+
+					component.teardown();
+				});
 			});
 		});
 	});

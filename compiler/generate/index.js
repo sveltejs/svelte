@@ -4,10 +4,13 @@ import deindent from './utils/deindent.js';
 import isReference from './utils/isReference.js';
 import counter from './utils/counter.js';
 import flattenReference from './utils/flattenReference.js';
+import getIntro from './utils/getIntro.js';
+import getOutro from './utils/getOutro.js';
 import visitors from './visitors/index.js';
 import processCss from './css/process.js';
 
 export default function generate ( parsed, source, options ) {
+	const format = options.format || 'es';
 	const renderers = [];
 
 	const generator = {
@@ -155,7 +158,8 @@ export default function generate ( parsed, source, options ) {
 				while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
 				while ( source[b] === '\n' ) b += 1;
 
-				imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
+				//imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
+				imports.push( node );
 				generator.code.remove( a, b );
 			}
 		}
@@ -278,9 +282,35 @@ export default function generate ( parsed, source, options ) {
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
 
+	const importBlock = imports
+		.map( ( declaration, i ) => {
+			if ( format === 'es' ) {
+				return source.slice( declaration.start, declaration.end );
+			}
+
+			const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
+			const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
+			const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
+
+			const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
+			declaration.name = name; // hacky but makes life a bit easier later
+
+			const statements = namedImports.map( specifier => {
+				return `var ${specifier.local.name} = ${name}.${specifier.imported.name}`;
+			});
+
+			if ( defaultImport ) {
+				statements.push( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
+			}
+
+			return statements.join( '\n' );
+		})
+		.filter( Boolean )
+		.join( '\n' );
+
 	if ( parsed.js ) {
 		if ( imports.length ) {
-			topLevelStatements.push( imports.join( '' ).trim() );
+			topLevelStatements.push( importBlock );
 		}
 
 		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
@@ -343,7 +373,7 @@ export default function generate ( parsed, source, options ) {
 	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;
 
 	topLevelStatements.push( deindent`
-		export default function ${constructorName} ( options ) {
+		function ${constructorName} ( options ) {
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
 			var state = ${initialState};${templateProperties.computed ? `\napplyComputations( state, state, {} );` : ``}
 
@@ -451,13 +481,19 @@ export default function generate ( parsed, source, options ) {
 
 	const compiled = new Bundle({ separator: '' });
 
+	function addString ( str ) {
+		compiled.addSource({
+			filename: options.filename,
+			content: new MagicString( str )
+		});
+	}
+
+	addString( getIntro( format, options, imports ) );
+
 	parts.forEach( str => {
 		const match = pattern.exec( str );
 
-		compiled.addSource({
-			filename: options.filename,
-			content: new MagicString( str.replace( pattern, '' ) )
-		});
+		addString( str.replace( pattern, '' ) );
 
 		compiled.addSource({
 			filename: options.filename,
@@ -466,6 +502,8 @@ export default function generate ( parsed, source, options ) {
 	});
 
 	compiled.append( finalChunk );
+
+	addString( '\n\n' + getOutro( format, constructorName, imports ) );
 
 	return {
 		code: compiled.toString(),
