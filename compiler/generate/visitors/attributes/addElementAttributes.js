@@ -166,7 +166,7 @@ export default function addElementAttributes ( generator, node, local ) {
 			` );
 
 			local.teardown.push( deindent`
-				component.refs.${attribute.name} = null;
+				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;
 			` );
 		}
 
