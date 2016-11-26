@@ -52,7 +52,7 @@ export default {
 				${name}_iterations[i].teardown( detach );
 			}
 
-			${name}_anchor.parentNode.removeChild( ${name}_anchor );
+			if ( detach ) ${name}_anchor.parentNode.removeChild( ${name}_anchor );
 		` );
 
 		const indexNames = Object.assign( {}, generator.current.indexNames );
