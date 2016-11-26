@@ -8,14 +8,17 @@ import hash from './utils/hash.js';
 function ParseError ( message, template, index ) {
 	const { line, column } = locate( template, index );
 
-	const frame = getCodeFrame( template, line, column );
-
 	this.name = 'ParseError';
-	this.message = `${message} (${line + 1}:${column})\n${frame}`;
+	this.message = message;
+	this.frame = getCodeFrame( template, line, column );
+
 	this.loc = { line: line + 1, column };
 	this.pos = index;
-	this.shortMessage = message;
 }
+
+ParseError.prototype.toString = function () {
+	return `${this.message} (${this.loc.line}:${this.loc.column})\n${this.frame}`;
+};
 
 export default function parse ( template ) {
 	if ( typeof template !== 'string' ) {

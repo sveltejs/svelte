@@ -7,7 +7,7 @@ const validPropList = Object.keys( propValidators );
 
 const fuzzySet = new FuzzySet( validPropList );
 
-export default function validateJs ( validator, js, source ) {
+export default function validateJs ( validator, js ) {
 	js.content.body.forEach( node => {
 		// check there are no named exports
 		if ( node.type === 'ExportNamedDeclaration' ) {

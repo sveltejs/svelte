@@ -5,19 +5,13 @@ import generate from './generate/index.js';
 export function compile ( source, options = {} ) {
 	const parsed = parse( source, options );
 
-	const { errors, warnings } = validate( parsed, source, options );
-
-	if ( errors.length ) {
-		// TODO optionally show all errors?
-		throw errors[0];
+	if ( !options.onwarn ) {
+		options.onwarn = warning => {
+			console.warn( `(${warning.loc.line}:${warning.loc.column}) – ${warning.message}` ); // eslint-disable-line no-console
+		};
 	}
 
-	if ( warnings.length ) {
-		console.warn( `Svelte: ${warnings.length} ${warnings.length === 1 ? 'error' : 'errors'} in ${options.filename || 'template'}:` );
-		warnings.forEach( warning => {
-			console.warn( `(${warning.loc.line}:${warning.loc.column}) – ${warning.message}` );
-		});
-	}
+	validate( parsed, source, options );
 
 	return generate( parsed, source, options );
 }

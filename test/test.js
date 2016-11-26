@@ -49,7 +49,7 @@ describe( 'svelte', () => {
 					try {
 						const expected = require( `./parser/${dir}/error.json` );
 
-						assert.equal( err.shortMessage, expected.message );
+						assert.equal( err.message, expected.message );
 						assert.deepEqual( err.loc, expected.loc );
 						assert.equal( err.pos, expected.pos );
 					} catch ( err2 ) {
@@ -80,7 +80,27 @@ describe( 'svelte', () => {
 
 				try {
 					const parsed = parse( input );
-					const { errors, warnings } = validate( parsed, input );
+
+					const errors = [];
+					const warnings = [];
+
+					validate( parsed, input, {
+						onerror ( error ) {
+							errors.push({
+								message: error.message,
+								pos: error.pos,
+								loc: error.loc
+							});
+						},
+
+						onwarn ( warning ) {
+							warnings.push({
+								message: warning.message,
+								pos: warning.pos,
+								loc: warning.loc
+							});
+						}
+					});
 
 					const expectedErrors = tryToLoadJson( `test/validator/${dir}/errors.json` ) || [];
 					const expectedWarnings = tryToLoadJson( `test/validator/${dir}/warnings.json` ) || [];
