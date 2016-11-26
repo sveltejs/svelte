@@ -40,7 +40,7 @@ export default {
 			}
 
 			for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown();
+				${name}_iterations[i].teardown( true );
 			}
 
 			${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
@@ -49,7 +49,7 @@ export default {
 
 		generator.current.teardownStatements.push( deindent`
 			for ( let i = 0; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown();
+				${name}_iterations[i].teardown( detach );
 			}
 
 			${name}_anchor.parentNode.removeChild( ${name}_anchor );
@@ -78,6 +78,7 @@ export default {
 			target: 'target',
 			expression: node.expression,
 			context: node.context,
+			localElementDepth: 0,
 
 			contextDependencies,
 			contexts,

@@ -25,7 +25,7 @@ export default function generate ( parsed, source, options ) {
 							${fragment.updateStatements.join( '\n\n' )}
 						},
 
-						teardown: function () {
+						teardown: function ( detach ) {
 							${fragment.teardownStatements.join( '\n\n' )}
 						}
 					};
@@ -204,6 +204,7 @@ export default function generate ( parsed, source, options ) {
 		namespace: null,
 		target: 'target',
 		elementDepth: 0,
+		localElementDepth: 0,
 
 		initStatements: [],
 		updateStatements: [],
@@ -424,10 +425,10 @@ export default function generate ( parsed, source, options ) {
 				};
 			};
 
-			this.teardown = function teardown () {
+			this.teardown = function teardown ( detach ) {
 				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
 
-				mainFragment.teardown();
+				mainFragment.teardown( detach !== false );
 				mainFragment = null;
 
 				state = {};

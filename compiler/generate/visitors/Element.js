@@ -19,6 +19,8 @@ export default {
 			teardown: []
 		};
 
+		const shouldDetach = generator.current.localElementDepth === 0;
+
 		if ( isComponent ) {
 			generator.hasComponents = true;
 
@@ -85,7 +87,7 @@ export default {
 				` );
 			}
 
-			local.teardown.push( `${name}.teardown();` );
+			local.teardown.push( `${name}.teardown( ${shouldDetach} );` );
 		}
 
 		else {
@@ -130,7 +132,9 @@ export default {
 			}
 
 			local.init.unshift( render );
-			local.teardown.push( `${name}.parentNode.removeChild( ${name} );` );
+			if ( shouldDetach ) {
+				local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
+			}
 		}
 
 		// special case – bound <option> without a value attribute
@@ -149,7 +153,8 @@ export default {
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,
-			elementDepth: generator.current.elementDepth + 1
+			elementDepth: generator.current.elementDepth + 1,
+			localElementDepth: generator.current.localElementDepth + 1
 		});
 	},
 

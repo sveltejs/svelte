@@ -46,7 +46,7 @@ export default {
 		if ( node.else ) {
 			ifTrue.push( deindent`
 				if ( ${elseName } ) {
-					${elseName}.teardown();
+					${elseName}.teardown( true );
 					${elseName} = null;
 				}
 			` );
@@ -54,7 +54,7 @@ export default {
 
 		const ifFalse = [ deindent`
 			if ( ${name} ) {
-				${name}.teardown();
+				${name}.teardown( true );
 				${name} = null;
 			}
 		` ];
@@ -85,15 +85,25 @@ export default {
 
 		generator.current.updateStatements.push( update );
 
-		generator.current.teardownStatements.push( deindent`
-			if ( ${name} ) ${name}.teardown();${node.else ? `\nif ( ${elseName} ) ${elseName}.teardown();` : ``}
-			${name}_anchor.parentNode.removeChild( ${name}_anchor );
-		` );
+		const teardownStatements = [
+			`if ( ${name} ) ${name}.teardown( detach );`
+		];
+
+		if ( node.else ) {
+			teardownStatements.push( `if ( ${elseName} ) ${elseName}.teardown( detach );` );
+		}
+
+		if ( generator.current.localElementDepth === 0 ) {
+			teardownStatements.push( `if ( detach ) ${name}_anchor.parentNode.removeChild( ${name}_anchor );` );
+		}
+
+		generator.current.teardownStatements.push( teardownStatements.join( '\n' ) );
 
 		generator.push({
 			useAnchor: true,
 			name: renderer,
 			target: 'target',
+			localElementDepth: 0,
 
 			initStatements: [],
 			updateStatements: [],

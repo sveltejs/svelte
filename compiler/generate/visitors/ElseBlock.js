@@ -6,6 +6,7 @@ export default {
 
 		generator.push({
 			name,
+			localElementDepth: 0,
 
 			initStatements: [],
 			updateStatements: [],
