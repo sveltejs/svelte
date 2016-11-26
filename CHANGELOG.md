@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 0.3.0
+
+* Fix bug where departing element would unset `ref` incorrectly ([#24](https://github.com/sveltejs/svelte/issues/24))
+* Basic template validation ([#6](https://github.com/sveltejs/svelte/issues/6))
+* Fire `onrender` hooks once component is in DOM ([#18](https://github.com/sveltejs/svelte/issues/18))
+* Only detach nodes when necessary to do so ([#26](https://github.com/sveltejs/svelte/issues/26))
+
 ## 0.2.2
 
 * On second thoughts, don't transpile build. Was only really for Uglify's benefit, which is daft
