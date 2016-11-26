@@ -299,6 +299,12 @@ export default function generate ( parsed, source, options ) {
 		initStatements.push( `if ( !addedCss ) addCss();` );
 	}
 
+	if ( generator.hasComponents ) {
+		initStatements.push( deindent`
+			this.__renderHooks = [];
+		` );
+	}
+
 	if ( generator.hasComplexBindings ) {
 		initStatements.push( deindent`
 			this.__bindings = [];
@@ -311,8 +317,26 @@ export default function generate ( parsed, source, options ) {
 		initStatements.push( `var mainFragment = renderMainFragment( state, this, options.target );` );
 	}
 
+	if ( generator.hasComponents ) {
+		const statement = deindent`
+			while ( this.__renderHooks.length ) {
+				var hook = this.__renderHooks.pop();
+				hook.fn.call( hook.context );
+			}
+		`;
+
+		initStatements.push( statement );
+		setStatements.push( statement );
+	}
+
 	if ( templateProperties.onrender ) {
-		initStatements.push( `template.onrender.call( this );` );
+		initStatements.push( deindent`
+			if ( options.parent ) {
+				options.parent.__renderHooks.push({ fn: template.onrender, context: this });
+			} else {
+				template.onrender.call( this );
+			}
+		` );
 	}
 
 	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;

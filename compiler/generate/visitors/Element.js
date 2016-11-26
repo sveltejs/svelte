@@ -20,6 +20,8 @@ export default {
 		};
 
 		if ( isComponent ) {
+			generator.hasComponents = true;
+
 			addComponentAttributes( generator, node, local );
 
 			if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
@@ -54,13 +56,15 @@ export default {
 
 					var ${name} = new template.components.${node.name}({
 						target: ${generator.current.target},
+						parent: component,
 						data: ${name}_initialData
 					});
 				` );
 			} else {
 				local.init.unshift( deindent`
 					var ${name} = new template.components.${node.name}({
-						target: ${generator.current.target}
+						target: ${generator.current.target},
+						parent: component
 					});
 				` );
 			}
