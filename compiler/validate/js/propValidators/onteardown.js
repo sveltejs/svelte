@@ -1,3 +1,3 @@
-export default function onteardown ( validator, prop ) {
+export default function onteardown () {
 
 }

@@ -1,3 +1,3 @@
-export default function onrender ( validator, prop ) {
+export default function onrender () {
 
 }
