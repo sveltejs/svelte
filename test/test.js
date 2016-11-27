@@ -1,4 +1,3 @@
-import { compile, parse, validate } from '../dist/svelte.js';
 import deindent from '../compiler/generate/utils/deindent.js';
 import assert from 'assert';
 import * as path from 'path';
@@ -11,10 +10,18 @@ consoleGroup.install();
 import * as sourceMapSupport from 'source-map-support';
 sourceMapSupport.install();
 
+// for coverage purposes, we need to test source files,
+// but for sanity purposes, we need to test dist files
+const svelte = process.env.CI ? {
+	parse: require( '../compiler/parse/index.js' ),
+	validate: require( '../compiler/validate/index.js' ),
+	compile: require( '../compiler/index.js' )
+} : require( '../dist/svelte.js' );
+
 const cache = {};
 
 require.extensions[ '.html' ] = function ( module, filename ) {
-	const code = cache[ filename ] || ( cache[ filename ] = compile( fs.readFileSync( filename, 'utf-8' ) ).code );
+	const code = cache[ filename ] || ( cache[ filename ] = svelte.compile( fs.readFileSync( filename, 'utf-8' ) ).code );
 	return module._compile( code, filename );
 };
 
@@ -108,7 +115,7 @@ describe( 'svelte', () => {
 				const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
 				try {
-					const actual = parse( input );
+					const actual = svelte.parse( input );
 					const expected = require( `./parser/${dir}/output.json` );
 
 					assert.deepEqual( actual.html, expected.html );
@@ -150,12 +157,12 @@ describe( 'svelte', () => {
 				const input = fs.readFileSync( `test/validator/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
 				try {
-					const parsed = parse( input );
+					const parsed = svelte.parse( input );
 
 					const errors = [];
 					const warnings = [];
 
-					validate( parsed, input, {
+					svelte.validate( parsed, input, {
 						onerror ( error ) {
 							errors.push({
 								message: error.message,
@@ -218,7 +225,7 @@ describe( 'svelte', () => {
 
 				try {
 					const source = fs.readFileSync( `test/compiler/${dir}/main.html`, 'utf-8' );
-					compiled = compile( source );
+					compiled = svelte.compile( source );
 				} catch ( err ) {
 					if ( config.compileError ) {
 						config.compileError( err );
@@ -357,7 +364,7 @@ describe( 'svelte', () => {
 					</script>
 				`;
 
-				const { code } = compile( source, {
+				const { code } = svelte.compile( source, {
 					format: 'amd',
 					amd: { id: 'foo' }
 				});
@@ -382,7 +389,7 @@ describe( 'svelte', () => {
 					</script>
 				`;
 
-				const { code } = compile( source, {
+				const { code } = svelte.compile( source, {
 					format: 'cjs'
 				});
 
@@ -406,7 +413,7 @@ describe( 'svelte', () => {
 					</script>
 				`;
 
-				const { code } = compile( source, {
+				const { code } = svelte.compile( source, {
 					format: 'iife',
 					name: 'Foo',
 					globals: {
@@ -434,7 +441,7 @@ describe( 'svelte', () => {
 					</script>
 				`;
 
-				const { code } = compile( source, {
+				const { code } = svelte.compile( source, {
 					format: 'umd',
 					name: 'Foo',
 					globals: {
