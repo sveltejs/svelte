@@ -9,8 +9,10 @@
   ],
   "scripts": {
     "test": "mocha --opts mocha.opts",
-    "precoverage": "mocha --opts mocha.coverage.opts",
-    "coverage": "mkdir -p .nyc_output && nyc report --reporter=text-lcov > coverage.lcov && codecov",
+    "precoverage": "export COVERAGE=true && nyc mocha --opts mocha.coverage.opts",
+    "coverage": "nyc report --reporter=text-lcov > coverage.lcov",
+    "codecov": "codecov",
+    "precodecov": "npm run coverage",
     "lint": "eslint compiler",
     "build": "rollup -c",
     "pretest": "npm run build",
