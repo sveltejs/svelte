@@ -12,11 +12,9 @@ sourceMapSupport.install();
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
-const svelte = process.env.CI ? {
-	parse: require( '../compiler/parse/index.js' ),
-	validate: require( '../compiler/validate/index.js' ),
-	compile: require( '../compiler/index.js' )
-} : require( '../dist/svelte.js' );
+const svelte = process.env.CI ?
+	require( '../compiler/index.js' ) :
+	require( '../dist/svelte.js' );
 
 const cache = {};
 
