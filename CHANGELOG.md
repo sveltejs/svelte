@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.0.0
+
+* Generate AMD, CJS, IIFE and UMD builds
+* Correctly insert text nodes before anchors
+
 ## 0.3.0
 
 * Fix bug where departing element would unset `ref` incorrectly ([#24](https://github.com/sveltejs/svelte/issues/24))
