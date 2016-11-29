@@ -148,7 +148,7 @@ export default {
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
 
-		generator.current = Object.assign( {}, generator.current, {
+		generator.push({
 			isComponent,
 			namespace: local.namespace,
 			target: name,
@@ -162,7 +162,7 @@ export default {
 		const name = generator.current.target;
 		const isComponent = generator.current.isComponent;
 
-		generator.current = generator.current.parent;
+		generator.pop();
 
 		if ( isComponent ) return;
 

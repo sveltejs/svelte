@@ -72,7 +72,7 @@ export default {
 
 		const params = generator.current.params + `, ${listName}, ${node.context}, ${indexName}`;
 
-		generator.current = {
+		generator.push({
 			useAnchor: false,
 			name: renderer,
 			target: 'target',
@@ -100,11 +100,11 @@ export default {
 			counter: counter(),
 
 			parent: generator.current
-		};
+		});
 	},
 
 	leave ( generator ) {
 		generator.addRenderer( generator.current );
-		generator.current = generator.current.parent;
+		generator.pop();
 	}
 };
