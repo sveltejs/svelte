@@ -166,14 +166,7 @@ export default {
 
 		if ( isComponent ) return;
 
-		if ( generator.current.useAnchor && generator.current.target === 'target' ) {
-			generator.current.initStatements.push( deindent`
-				anchor.parentNode.insertBefore( ${name}, anchor );
-			` );
-		} else {
-			generator.current.initStatements.push( deindent`
-				${generator.current.target}.appendChild( ${name} );
-			` );
-		}
+		generator.current.initStatements.push(
+			generator.appendToTarget( name ) );
 	}
 };

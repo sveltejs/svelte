@@ -15,7 +15,7 @@ export default {
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
-			${generator.current.target}.appendChild( ${name}_anchor );
+			${generator.appendToTarget( `${name}_anchor` )};
 		` );
 
 		if ( node.else ) {
