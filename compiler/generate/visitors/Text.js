@@ -11,7 +11,7 @@ export default {
 
 			generator.current.initStatements.push( deindent`
 				var ${name} = document.createTextNode( ${JSON.stringify( node.data )} );
-				${generator.current.target}.appendChild( ${name} );
+				${generator.appendToTarget( name )};
 			` );
 
 			generator.current.teardownStatements.push( deindent`
