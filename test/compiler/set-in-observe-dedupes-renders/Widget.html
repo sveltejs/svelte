@@ -1,0 +1,17 @@
+<div>{{foo.x}}</div>
+
+<script>
+	export default {
+		onrender () {
+			this.observe( 'foo', foo => {
+				const bar = this.get( 'bar' );
+				if ( foo.x !== bar.x ) throw new Error( 'mismatch' );
+			});
+
+			this.observe( 'bar', bar => {
+				const foo = this.get( 'foo' );
+				if ( foo.x !== bar.x ) throw new Error( 'mismatch' );
+			});
+		}
+	};
+</script>
