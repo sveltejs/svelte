@@ -14,6 +14,13 @@ export default function generate ( parsed, source, options ) {
 	const renderers = [];
 
 	const generator = {
+		appendToTarget ( name ) {
+			if ( generator.current.useAnchor && generator.current.target === 'target' ) {
+				return `anchor.parentNode.insertBefore( ${name}, anchor )`;
+			}
+			return `${generator.current.target}.appendChild( ${name} )`;
+		},
+
 		addRenderer ( fragment ) {
 			if ( fragment.autofocus ) {
 				fragment.initStatements.push( `${fragment.autofocus}.focus();` );

@@ -8,7 +8,7 @@ export default {
 
 		generator.current.initStatements.push( deindent`
 			var ${name} = document.createTextNode( ${snippet} );
-			${generator.current.target}.appendChild( ${name} );
+			${generator.appendToTarget( name )};
 		` );
 
 		generator.addSourcemapLocations( node.expression );
