@@ -5,7 +5,7 @@ import deindent from '../../utils/deindent.js';
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {
 		if ( attribute.type === 'Attribute' ) {
-			let metadata = attributeLookup[ attribute.name ];
+			let metadata = generator.current.namespace ? null : attributeLookup[ attribute.name ];
 			if ( metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
 
 			let dynamic = false;
