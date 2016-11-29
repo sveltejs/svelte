@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.0.1
+
+* Preserve SVG namespace inside each blocks
+* Always use `setAttribute` with SVG elements
+
 ## 1.0.0
 
 * Generate AMD, CJS, IIFE and UMD builds
