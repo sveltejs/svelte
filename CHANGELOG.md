@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.0.3
+
+* Better generated code for `if` blocks, especially with `else`/`elseif` chains ([#28](https://github.com/sveltejs/svelte/pull/28))
+* Trim unnecessary whitespace from `else`/`elseif` blocks ([#49](https://github.com/sveltejs/svelte/pull/49))
+* Handle trailing comments in script tags ([#64](https://github.com/sveltejs/svelte/issues/64))
+
 ## 1.0.2
 
 Set `style.cssText` rather than `style` ([#44](https://github.com/sveltejs/svelte/issues/44))
@@ -12,7 +18,7 @@ Set `style.cssText` rather than `style` ([#44](https://github.com/sveltejs/svelt
 ## 1.0.0
 
 * Generate AMD, CJS, IIFE and UMD builds
-* Correctly insert text nodes before anchors
+* Correctly insert text nodes before anchors ([#31](https://github.com/sveltejs/svelte/pull/31))
 
 ## 0.3.0
 
