@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.0.4
+
+* Handle empty attributes in elements and components ([#63](https://github.com/sveltejs/svelte/issues/63))
+* Detach top-level text nodes inside departing each blocks ([#62](https://github.com/sveltejs/svelte/issues/62))
+
 ## 1.0.3
 
 * Better generated code for `if` blocks, especially with `else`/`elseif` chains ([#28](https://github.com/sveltejs/svelte/pull/28))
