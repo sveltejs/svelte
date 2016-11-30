@@ -16,6 +16,13 @@ export default function addComponentAttributes ( generator, node, local ) {
 				});
 			}
 
+			else if ( attribute.value.length === 0 ) {
+				local.staticAttributes.push({
+					name: attribute.name,
+					value: `''`
+				});
+			}
+
 			else if ( attribute.value.length === 1 ) {
 				const value = attribute.value[0];
 

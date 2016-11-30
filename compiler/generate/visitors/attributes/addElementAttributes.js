@@ -31,6 +31,18 @@ export default function addElementAttributes ( generator, node, local ) {
 				}
 			}
 
+			else if ( attribute.value.length === 0 ) {
+				if ( propertyName ) {
+					local.init.push( deindent`
+						${local.name}.${propertyName} = '';
+					` );
+				} else {
+					local.init.push( deindent`
+						${local.name}.setAttribute( '${attribute.name}', '' );
+					` );
+				}
+			}
+
 			else if ( attribute.value.length === 1 ) {
 				const value = attribute.value[0];
 
