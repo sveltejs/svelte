@@ -75,12 +75,6 @@
 							},
 							"children": [
 								{
-									"start": 60,
-									"end": 62,
-									"type": "Text",
-									"data": "\n\t"
-								},
-								{
 									"start": 62,
 									"end": 85,
 									"type": "Element",
@@ -94,12 +88,6 @@
 											"data": "x is less than 5"
 										}
 									]
-								},
-								{
-									"start": 85,
-									"end": 86,
-									"type": "Text",
-									"data": "\n"
 								}
 							]
 						}

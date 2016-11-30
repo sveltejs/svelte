@@ -37,12 +37,6 @@
 					"type": "ElseBlock",
 					"children": [
 						{
-							"start": 32,
-							"end": 34,
-							"type": "Text",
-							"data": "\n\t"
-						},
-						{
 							"start": 34,
 							"end": 48,
 							"type": "Element",
@@ -56,12 +50,6 @@
 									"data": "not foo"
 								}
 							]
-						},
-						{
-							"start": 48,
-							"end": 49,
-							"type": "Text",
-							"data": "\n"
 						}
 					]
 				}
