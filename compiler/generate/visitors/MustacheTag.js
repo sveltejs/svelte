@@ -16,5 +16,11 @@ export default {
 		generator.current.updateStatements.push( deindent`
 			${name}.data = ${snippet};
 		` );
+
+		if ( generator.current.localElementDepth === 0 ) {
+			generator.current.teardownStatements.push( deindent`
+				if ( detach ) ${name}.parentNode.removeChild( ${name} );
+			` );
+		}
 	}
 };
