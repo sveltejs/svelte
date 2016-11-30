@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.0.2
+
+Set `style.cssText` rather than `style` ([#44](https://github.com/sveltejs/svelte/issues/44))
+
 ## 1.0.1
 
 * Preserve SVG namespace inside each blocks

@@ -103,7 +103,7 @@ const lookup = {
 	srcset: { appliesTo: [ 'img' ] },
 	start: { appliesTo: [ 'ol' ] },
 	step: { appliesTo: [ 'input' ] },
-	style: {},
+	style: { propertyName: 'style.cssText' },
 	summary: { appliesTo: [ 'table' ] },
 	tabindex: { propertyName: 'tabIndex' },
 	target: { appliesTo: [ 'a', 'area', 'base', 'form' ] },
