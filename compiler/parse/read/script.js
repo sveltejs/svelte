@@ -11,7 +11,15 @@ export default function readScript ( parser, start, attributes ) {
 
 		scriptEnd = parser.index;
 
-		if ( parser.eat( '</script>' ) ) break;
+		if ( parser.eat( '/script>' ) ) {
+			// this happens with trailing comments!
+			scriptEnd -= 1;
+			break;
+		}
+
+		if ( parser.eat( '</script>' ) ) {
+			break;
+		}
 	}
 
 	const source = spaces( scriptStart ) + parser.template.slice( scriptStart, scriptEnd );
@@ -26,6 +34,8 @@ export default function readScript ( parser, start, attributes ) {
 	} catch ( err ) {
 		parser.acornError( err );
 	}
+
+	if ( !ast.body.length ) return null;
 
 	ast.start = scriptStart;
 
