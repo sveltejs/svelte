@@ -4,6 +4,29 @@ import { trimStart, trimEnd } from '../utils/trim.js';
 
 const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
 
+function trimWhitespace ( block, trimBefore, trimAfter ) {
+	const firstChild = block.children[0];
+	const lastChild = block.children[ block.children.length - 1 ];
+
+	if ( firstChild.type === 'Text' && trimBefore ) {
+		firstChild.data = trimStart( firstChild.data );
+		if ( !firstChild.data ) block.children.shift();
+	}
+
+	if ( lastChild.type === 'Text' && trimAfter ) {
+		lastChild.data = trimEnd( lastChild.data );
+		if ( !lastChild.data ) block.children.pop();
+	}
+
+	if ( block.else ) {
+		trimWhitespace( block.else, trimBefore, trimAfter );
+	}
+
+	if ( firstChild.elseif ) {
+		trimWhitespace( firstChild, trimBefore, trimAfter );
+	}
+}
+
 export default function mustache ( parser ) {
 	const start = parser.index;
 	parser.index += 2;
@@ -16,7 +39,7 @@ export default function mustache ( parser ) {
 		let expected;
 
 		if ( block.type === 'ElseBlock' ) {
-			// TODO need to strip whitespace from else and elseif blocks
+			block.end = start;
 			parser.stack.pop();
 			block = parser.current();
 		}
@@ -37,29 +60,21 @@ export default function mustache ( parser ) {
 			block.end = parser.index;
 			parser.stack.pop();
 			block = parser.current();
-		}
 
-		if ( block.else ) {
-			block.else.end = start;
+			if ( block.else ) {
+				block.else.end = start;
+			}
 		}
 
 		// strip leading/trailing whitespace as necessary
 		if ( !block.children.length ) parser.error( `Empty block`, block.start );
-		const firstChild = block.children[0];
-		const lastChild = block.children[ block.children.length - 1 ];
 
 		const charBefore = parser.template[ block.start - 1 ];
 		const charAfter = parser.template[ parser.index ];
+		const trimBefore = !charBefore || whitespace.test( charBefore );
+		const trimAfter = !charAfter || whitespace.test( charAfter );
 
-		if ( firstChild.type === 'Text' && !charBefore || whitespace.test( charBefore ) ) {
-			firstChild.data = trimStart( firstChild.data );
-			if ( !firstChild.data ) block.children.shift();
-		}
-
-		if ( lastChild.type === 'Text' && !charAfter || whitespace.test( charAfter ) ) {
-			lastChild.data = trimEnd( lastChild.data );
-			if ( !lastChild.data ) block.children.pop();
-		}
+		trimWhitespace( block, trimBefore, trimAfter );
 
 		block.end = parser.index;
 		parser.stack.pop();
