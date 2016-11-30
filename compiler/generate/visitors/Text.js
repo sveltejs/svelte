@@ -15,7 +15,7 @@ export default {
 			` );
 
 			generator.current.teardownStatements.push( deindent`
-				${name}.parentNode.removeChild( ${name} );
+				if ( detach ) ${name}.parentNode.removeChild( ${name} );
 			` );
 		}
 	}
