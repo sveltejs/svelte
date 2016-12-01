@@ -8,6 +8,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 
 * [svelte-cli](https://github.com/sveltejs/svelte-cli) – Command line interface for compiling components
 * [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) – Rollup plugin
+* [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
 * More to come!
 
 
