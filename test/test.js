@@ -228,7 +228,7 @@ describe( 'svelte', () => {
 					compiled = svelte.compile( source );
 				} catch ( err ) {
 					if ( config.compileError ) {
-						config.compileError( err );
+						config.compileError( assert, err );
 						return;
 					} else {
 						throw err;

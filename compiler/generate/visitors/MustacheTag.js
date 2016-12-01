@@ -8,9 +8,14 @@ export default {
 		generator.addSourcemapLocations( node.expression );
 
 		if (node.expression.name === 'yield') {
-			generator.current.initStatements.push( deindent`
-				component.yield = ${generator.current.target};
-			` );
+			if (generator.hasYield === undefined) {
+				generator.hasYield	= true;
+				generator.current.initStatements.push( deindent`
+					component.yield = ${generator.current.target};
+				` );
+			} else {
+				throw new Error( `Only one {{yield}} per component.` );
+			}
 		} else {
 			generator.addElement( name, `document.createTextNode( ${snippet} )`, true );
 
