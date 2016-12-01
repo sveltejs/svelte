@@ -514,13 +514,16 @@ export default function generate ( parsed, source, options ) {
 
 	addString( getIntro( format, options, imports ) );
 
+	// a filename is necessary for sourcemap generation
+	const filename = options.filename || 'SvelteComponent.html';
+
 	parts.forEach( str => {
 		const match = pattern.exec( str );
 
 		addString( str.replace( pattern, '' ) );
 
 		compiled.addSource({
-			filename: options.filename,
+			filename,
 			content: generator.code.snip( +match[1], +match[2] )
 		});
 	});
@@ -531,6 +534,6 @@ export default function generate ( parsed, source, options ) {
 
 	return {
 		code: compiled.toString(),
-		map: compiled.generateMap()
+		map: compiled.generateMap({ includeContent: true })
 	};
 }

@@ -1,7 +1,16 @@
-export function test ( assert, code, map, smc, locator ) {
-	console.log( `code`, code )
-	console.log( `map`, map )
+export function test ({ assert, smc, locateInSource, locateInGenerated }) {
+	const expected = locateInSource( 'foo.bar.baz' );
+	const loc = locateInGenerated( 'foo.bar.baz' );
 
-	let loc = locator( 'foo.bar.baz' );
-	console.log( `loc`, loc )
+	const actual = smc.originalPositionFor({
+		line: loc.line + 1,
+		column: loc.column
+	});
+
+	assert.deepEqual( actual, {
+		source: 'SvelteComponent.html',
+		name: null,
+		line: expected.line,
+		column: expected.column
+	});
 }
