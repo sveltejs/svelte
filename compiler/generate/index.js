@@ -508,7 +508,6 @@ export default function generate ( parsed, source, options ) {
 
 	function addString ( str ) {
 		compiled.addSource({
-			filename: options.filename,
 			content: new MagicString( str )
 		});
 	}
