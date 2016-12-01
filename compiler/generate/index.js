@@ -424,7 +424,7 @@ export default function generate ( parsed, source, options ) {
 			};
 
 			this.get = function get ( key ) {
-				return state[ key ];
+				return key ? state[ key ] : state;
 			};
 
 			this.set = function set ( newState ) {
