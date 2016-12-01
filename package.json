@@ -56,6 +56,7 @@
     "rollup-plugin-buble": "^0.14.0",
     "rollup-plugin-commonjs": "^5.0.5",
     "rollup-plugin-node-resolve": "^2.0.0",
+    "source-map": "^0.5.6",
     "source-map-support": "^0.4.6"
   },
   "nyc": {
