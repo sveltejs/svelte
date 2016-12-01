@@ -1,8 +1,10 @@
 import deindent from '../compiler/generate/utils/deindent.js';
+import spaces from '../compiler/utils/spaces.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
+import * as acorn from 'acorn';
 
 import * as consoleGroup from 'console-group';
 consoleGroup.install();
@@ -240,6 +242,16 @@ describe( 'svelte', () => {
 
 					return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
 				}).join( '\n' );
+
+				// check that no ES2015+ syntax slipped in
+				try {
+					const startIndex = code.indexOf( 'function renderMainFragment' ); // may change!
+					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
+					acorn.parse( es5, { ecmaVersion: 5 });
+				} catch ( err ) {
+					console.log( withLineNumbers ); // eslint-disable-line no-console
+					throw err;
+				}
 
 				cache[ path.resolve( `test/compiler/${dir}/main.html` ) ] = code;
 

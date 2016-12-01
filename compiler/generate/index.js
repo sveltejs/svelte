@@ -238,7 +238,7 @@ export default function generate ( parsed, source, options ) {
 	const topLevelStatements = [];
 
 	const setStatements = [ deindent`
-		const oldState = state;
+		var oldState = state;
 		state = Object.assign( {}, oldState, newState );
 	` ];
 
@@ -392,19 +392,19 @@ export default function generate ( parsed, source, options ) {
 			var callbacks = Object.create( null );
 
 			function dispatchObservers ( group, newState, oldState ) {
-				for ( const key in group ) {
+				for ( var key in group ) {
 					if ( !( key in newState ) ) continue;
 
-					const newValue = newState[ key ];
-					const oldValue = oldState[ key ];
+					var newValue = newState[ key ];
+					var oldValue = oldState[ key ];
 
 					if ( newValue === oldValue && typeof newValue !== 'object' ) continue;
 
-					const callbacks = group[ key ];
+					var callbacks = group[ key ];
 					if ( !callbacks ) continue;
 
-					for ( let i = 0; i < callbacks.length; i += 1 ) {
-						const callback = callbacks[i];
+					for ( var i = 0; i < callbacks.length; i += 1 ) {
+						var callback = callbacks[i];
 						if ( callback.__calling ) continue;
 
 						callback.__calling = true;
@@ -431,32 +431,32 @@ export default function generate ( parsed, source, options ) {
 				${setStatements.join( '\n\n' )}
 			};
 
-			this.observe = function ( key, callback, options = {} ) {
-				const group = options.defer ? observers.deferred : observers.immediate;
+			this.observe = function ( key, callback, options ) {
+				var group = ( options && options.defer ) ? observers.deferred : observers.immediate;
 
 				( group[ key ] || ( group[ key ] = [] ) ).push( callback );
 
-				if ( options.init !== false ) {
+				if ( !options || options.init !== false ) {
 					callback.__calling = true;
 					callback.call( component, state[ key ] );
 					callback.__calling = false;
 				}
 
 				return {
-					cancel () {
-						const index = group[ key ].indexOf( callback );
+					cancel: function () {
+						var index = group[ key ].indexOf( callback );
 						if ( ~index ) group[ key ].splice( index, 1 );
 					}
 				};
 			};
 
 			this.on = function on ( eventName, handler ) {
-				const handlers = callbacks[ eventName ] || ( callbacks[ eventName ] = [] );
+				var handlers = callbacks[ eventName ] || ( callbacks[ eventName ] = [] );
 				handlers.push( handler );
 
 				return {
 					cancel: function () {
-						const index = handlers.indexOf( handler );
+						var index = handlers.indexOf( handler );
 						if ( ~index ) handlers.splice( index, 1 );
 					}
 				};
