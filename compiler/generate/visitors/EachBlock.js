@@ -5,6 +5,7 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.each++;
 		const name = `eachBlock_${i}`;
+		const anchor = `${name}_anchor`;
 		const renderer = `renderEachBlock_${i}`;
 
 		const listName = `${name}_value`;
@@ -13,10 +14,9 @@ export default {
 
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
-		generator.current.initStatements.push( deindent`
-			var ${name}_anchor = document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
-			${generator.appendToTarget( `${name}_anchor` )};
+		generator.addElement( anchor, `document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} )`, true );
 
+		generator.current.initStatements.push( deindent`
 			var ${name}_value = ${snippet};
 			var ${name}_fragment = document.createDocumentFragment();
 			var ${name}_iterations = [];
@@ -25,7 +25,7 @@ export default {
 				${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
 			}
 
-			${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
+			${anchor}.parentNode.insertBefore( ${name}_fragment, ${anchor} );
 		` );
 
 		generator.current.updateStatements.push( deindent`
@@ -43,16 +43,15 @@ export default {
 				${name}_iterations[i].teardown( true );
 			}
 
-			${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
+			${anchor}.parentNode.insertBefore( ${name}_fragment, ${anchor} );
 			${name}_iterations.length = ${listName}.length;
 		` );
 
+		const needsTeardown = generator.current.localElementDepth === 0;
 		generator.current.teardownStatements.push( deindent`
 			for ( var i = 0; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( detach );
+				${name}_iterations[i].teardown( ${needsTeardown ? 'detach' : 'false'} );
 			}
-
-			if ( detach ) ${name}_anchor.parentNode.removeChild( ${name}_anchor );
 		` );
 
 		const indexNames = Object.assign( {}, generator.current.indexNames );

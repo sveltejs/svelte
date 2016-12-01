@@ -14,6 +14,24 @@ export default function generate ( parsed, source, options ) {
 	const renderers = [];
 
 	const generator = {
+		addElement ( name, renderStatement, needsIdentifier = false ) {
+			const needsTeardown = generator.current.localElementDepth === 0;
+			if ( needsIdentifier || needsTeardown ) {
+				generator.current.initStatements.push( deindent`
+					var ${name} = ${renderStatement};
+					${generator.appendToTarget( name )};
+				` );
+			} else {
+				generator.current.initStatements.push( deindent`
+					${generator.current.target}.appendChild( ${renderStatement} );
+				` );
+			}
+			if ( needsTeardown ) {
+				generator.current.teardownStatements.push( deindent`
+					if ( detach ) ${name}.parentNode.removeChild( ${name} );
+				` );
+			}
+		},
 		appendToTarget ( name ) {
 			if ( generator.current.useAnchor && generator.current.target === 'target' ) {
 				return `anchor.parentNode.insertBefore( ${name}, anchor )`;

@@ -4,23 +4,13 @@ export default {
 	enter ( generator, node ) {
 		const name = generator.current.counter( 'text' );
 
+		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );
 
-		generator.current.initStatements.push( deindent`
-			var ${name} = document.createTextNode( ${snippet} );
-			${generator.appendToTarget( name )};
-		` );
-
-		generator.addSourcemapLocations( node.expression );
+		generator.addElement( name, `document.createTextNode( ${snippet} )`, true );
 
 		generator.current.updateStatements.push( deindent`
 			${name}.data = ${snippet};
 		` );
-
-		if ( generator.current.localElementDepth === 0 ) {
-			generator.current.teardownStatements.push( deindent`
-				if ( detach ) ${name}.parentNode.removeChild( ${name} );
-			` );
-		}
 	}
 };
