@@ -1,7 +1,7 @@
 language: node_js
 node_js:
   - "6"
-  - "stable"
+  - "node"
 env:
   global:
     - BUILD_TIMEOUT=10000
