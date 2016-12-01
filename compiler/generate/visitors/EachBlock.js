@@ -48,7 +48,7 @@ export default {
 		` );
 
 		generator.current.teardownStatements.push( deindent`
-			for ( let i = 0; i < ${name}_iterations.length; i += 1 ) {
+			for ( var i = 0; i < ${name}_iterations.length; i += 1 ) {
 				${name}_iterations[i].teardown( detach );
 			}
 
