@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.0.5
+
+* Ensure compiler only generates ES5 code ([#75](https://github.com/sveltejs/svelte/issues/75))
+* `get()` without arguments returns entire state object ([#73](https://github.com/sveltejs/svelte/issues/73))
+
 ## 1.0.4
 
 * Handle empty attributes in elements and components ([#63](https://github.com/sveltejs/svelte/issues/63))
