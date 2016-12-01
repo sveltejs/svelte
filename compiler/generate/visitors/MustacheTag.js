@@ -3,14 +3,20 @@ import deindent from '../utils/deindent.js';
 export default {
 	enter ( generator, node ) {
 		const name = generator.current.counter( 'text' );
-
-		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );
 
-		generator.addElement( name, `document.createTextNode( ${snippet} )`, true );
+		generator.addSourcemapLocations( node.expression );
 
-		generator.current.updateStatements.push( deindent`
-			${name}.data = ${snippet};
-		` );
+		if (node.expression.name === 'yield') {
+			generator.current.initStatements.push( deindent`
+				component.yield = ${generator.current.target};
+			` );
+		} else {
+			generator.addElement( name, `document.createTextNode( ${snippet} )`, true );
+
+			generator.current.updateStatements.push( deindent`
+				${name}.data = ${snippet};
+			` );
+		}
 	}
 };
