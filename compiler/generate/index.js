@@ -14,6 +14,19 @@ export default function generate ( parsed, source, options ) {
 	const renderers = [];
 
 	const generator = {
+		addElement ( name, definition ) {
+			generator.current.initStatements.push( deindent`
+				var ${name} = instance.${name} = ${definition};
+				${generator.appendToTarget( name )};
+			` );
+
+			if ( generator.current.localElementDepth === 0 ) {
+				generator.current.teardownStatements.push( deindent`
+					if ( detach ) instance.${name}.parentNode.removeChild( instance.${name} );
+				` );
+			}
+		},
+
 		appendToTarget ( name ) {
 			if ( generator.current.useAnchor && generator.current.target === 'target' ) {
 				return `anchor.parentNode.insertBefore( ${name}, anchor )`;
@@ -29,23 +42,15 @@ export default function generate ( parsed, source, options ) {
 			renderers.push( deindent`
 				var ${fragment.name} = {
 					render: function ( ${fragment.params}, component, target${fragment.useAnchor ? ', anchor' : ''} ) {
+						var instance = {};
 						${fragment.initStatements.join( '\n\n' )}
-
-						return {
-							update: function ( changed, ${fragment.params} ) {
-								${fragment.updateStatements.join( '\n\n' )}
-							},
-
-							teardown: function ( detach ) {
-								${fragment.teardownStatements.join( '\n\n' )}
-							}
-						};
-						},
+						return instance;
+					},
 					update: function ( instance, changed, ${fragment.params} ) {
-						instance.update( changed, ${fragment.params} );
+						${fragment.updateStatements.join( '\n\n' )}
 					},
 					teardown: function ( instance, detach ) {
-						instance.teardown( detach );
+						${fragment.teardownStatements.join( '\n\n' )}
 					},
 				};
 			` );
