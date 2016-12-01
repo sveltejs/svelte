@@ -56,15 +56,15 @@ export default {
 
 		const { params, target } = generator.current;
 		const name = `ifBlock_${i}`;
+		const anchor = `${name}_anchor`;
 		const getBlock = `getBlock_${i}`;
 		const currentBlock = `currentBlock_${i}`;
 
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `renderIfBlock_${i}` );
 
-		generator.current.initStatements.push( deindent`
-			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
-			${generator.appendToTarget( `${name}_anchor` )};
+		generator.addElement( anchor, `document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} )`, true );
 
+		generator.current.initStatements.push( deindent`
 			function ${getBlock} ( ${params} ) {
 				${conditionsAndBlocks.map( ({ condition, block }) => {
 					return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
@@ -72,7 +72,7 @@ export default {
 			}
 
 			var ${currentBlock} = ${getBlock}( ${params} );
-			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${name}_anchor );
+			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${anchor} );
 		` );
 
 		generator.current.updateStatements.push( deindent`
@@ -82,18 +82,10 @@ export default {
 				${name}.update( changed, ${params} );
 			} else {
 				if ( ${name} ) ${name}.teardown( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${name}_anchor );
+				${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${anchor} );
 			}
 		` );
 
-		const teardownStatements = [
-			`if ( ${name} ) ${name}.teardown( detach );`
-		];
-
-		if ( generator.current.localElementDepth === 0 ) {
-			teardownStatements.push( `if ( detach ) ${name}_anchor.parentNode.removeChild( ${name}_anchor );` );
-		}
-
-		generator.current.teardownStatements.push( teardownStatements.join( '\n' ) );
+		generator.current.teardownStatements.push( `if ( ${name} ) ${name}.teardown( detach );` );
 	}
 };
