@@ -5,7 +5,7 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.each++;
 		const name = `eachBlock_${i}`;
-		const renderer = `renderEachBlock_${i}`;
+		const renderer = `EachBlock_${i}`;
 
 		const listName = `${name}_value`;
 
@@ -22,7 +22,7 @@ export default {
 			var ${name}_iterations = [];
 
 			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
-				${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
+				${name}_iterations[i] = ${renderer}.render( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
 			}
 
 			${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
@@ -33,14 +33,14 @@ export default {
 
 			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
 				if ( !${name}_iterations[i] ) {
-					${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
+					${name}_iterations[i] = ${renderer}.render( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
 				} else {
-					${name}_iterations[i].update( changed, ${generator.current.params}, ${listName}, ${listName}[i], i );
+					${renderer}.update( ${name}_iterations[i], changed, ${generator.current.params}, ${listName}, ${listName}[i], i );
 				}
 			}
 
 			for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( true );
+				${renderer}.teardown( ${name}_iterations[i], true );
 			}
 
 			${name}_anchor.parentNode.insertBefore( ${name}_fragment, ${name}_anchor );
@@ -49,7 +49,7 @@ export default {
 
 		generator.current.teardownStatements.push( deindent`
 			for ( let i = 0; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( detach );
+				${renderer}.teardown( ${name}_iterations[i], detach );
 			}
 
 			if ( detach ) ${name}_anchor.parentNode.removeChild( ${name}_anchor );

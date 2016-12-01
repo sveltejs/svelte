@@ -59,7 +59,7 @@ export default {
 		const getBlock = `getBlock_${i}`;
 		const currentBlock = `currentBlock_${i}`;
 
-		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `renderIfBlock_${i}` );
+		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `IfBlock_${i}` );
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_anchor = document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} );
@@ -72,22 +72,22 @@ export default {
 			}
 
 			var ${currentBlock} = ${getBlock}( ${params} );
-			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${name}_anchor );
+			var ${name} = ${currentBlock} && ${currentBlock}.render( ${params}, component, ${target}, ${name}_anchor );
 		` );
 
 		generator.current.updateStatements.push( deindent`
 			var _${currentBlock} = ${currentBlock};
 			${currentBlock} = ${getBlock}( ${params} );
 			if ( _${currentBlock} === ${currentBlock} && ${name}) {
-				${name}.update( changed, ${params} );
+				${currentBlock}.update( ${name}, changed, ${params} );
 			} else {
 				if ( ${name} ) ${name}.teardown( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${name}_anchor );
+				${name} = ${currentBlock} && ${currentBlock}.render( ${params}, component, ${target}, ${name}_anchor );
 			}
 		` );
 
 		const teardownStatements = [
-			`if ( ${name} ) ${name}.teardown( detach );`
+			`if ( ${name} ) ${currentBlock}.teardown( ${name}, detach );`
 		];
 
 		if ( generator.current.localElementDepth === 0 ) {

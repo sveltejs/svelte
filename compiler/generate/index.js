@@ -27,19 +27,27 @@ export default function generate ( parsed, source, options ) {
 			}
 
 			renderers.push( deindent`
-				function ${fragment.name} ( ${fragment.params}, component, target${fragment.useAnchor ? ', anchor' : ''} ) {
-					${fragment.initStatements.join( '\n\n' )}
+				var ${fragment.name} = {
+					render: function ( ${fragment.params}, component, target${fragment.useAnchor ? ', anchor' : ''} ) {
+						${fragment.initStatements.join( '\n\n' )}
 
-					return {
-						update: function ( changed, ${fragment.params} ) {
-							${fragment.updateStatements.join( '\n\n' )}
+						return {
+							update: function ( changed, ${fragment.params} ) {
+								${fragment.updateStatements.join( '\n\n' )}
+							},
+
+							teardown: function ( detach ) {
+								${fragment.teardownStatements.join( '\n\n' )}
+							}
+						};
 						},
-
-						teardown: function ( detach ) {
-							${fragment.teardownStatements.join( '\n\n' )}
-						}
-					};
-				}
+					update: function ( instance, changed, ${fragment.params} ) {
+						instance.update( changed, ${fragment.params} );
+					},
+					teardown: function ( instance, detach ) {
+						instance.teardown( detach );
+					},
+				};
 			` );
 		},
 
@@ -211,7 +219,7 @@ export default function generate ( parsed, source, options ) {
 
 	generator.push({
 		useAnchor: false,
-		name: 'renderMainFragment',
+		name: 'MainFragment',
 		namespace: null,
 		target: 'target',
 		elementDepth: 0,
@@ -285,7 +293,7 @@ export default function generate ( parsed, source, options ) {
 
 	setStatements.push( deindent`
 		dispatchObservers( observers.immediate, newState, oldState );
-		if ( mainFragment ) mainFragment.update( newState, state );
+		if ( mainFragment ) MainFragment.update( mainFragment, newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
 
@@ -346,13 +354,13 @@ export default function generate ( parsed, source, options ) {
 	if ( generator.hasComplexBindings ) {
 		initStatements.push( deindent`
 			this.__bindings = [];
-			var mainFragment = renderMainFragment( state, this, options.target );
+			var mainFragment = MainFragment.render( state, this, options.target );
 			while ( this.__bindings.length ) this.__bindings.pop()();
 		` );
 
 		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
 	} else {
-		initStatements.push( `var mainFragment = renderMainFragment( state, this, options.target );` );
+		initStatements.push( `var mainFragment = MainFragment.render( state, this, options.target );` );
 	}
 
 	if ( generator.hasComponents ) {
@@ -465,7 +473,7 @@ export default function generate ( parsed, source, options ) {
 			this.teardown = function teardown ( detach ) {
 				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
 
-				mainFragment.teardown( detach !== false );
+				MainFragment.teardown( mainFragment, detach !== false );
 				mainFragment = null;
 
 				state = {};
