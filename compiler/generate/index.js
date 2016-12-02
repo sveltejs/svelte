@@ -86,7 +86,7 @@ export default function generate ( parsed, source, options ) {
 						const { name } = flattenReference( node );
 
 						if ( parent && parent.type === 'CallExpression' && node === parent.callee ) {
-							if ( generator.helpers[ name ] ) generator.code.insertRight( node.start, `template.helpers.` );
+							if ( generator.helpers[ name ] ) generator.code.prependRight( node.start, `template.helpers.` );
 							return;
 						}
 
@@ -102,7 +102,7 @@ export default function generate ( parsed, source, options ) {
 							if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
 						} else {
 							dependencies.push( node.name );
-							generator.code.insertRight( node.start, `root.` );
+							generator.code.prependRight( node.start, `root.` );
 							if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 						}
 
@@ -204,19 +204,19 @@ export default function generate ( parsed, source, options ) {
 				while ( /\s/.test( source[ i - 1 ] ) ) i--;
 
 				const indentation = source.slice( i, defaultExport.start );
-				generator.code.insertLeft( finalNode.end, `\n\n${indentation}return template;` );
+				generator.code.appendLeft( finalNode.end, `\n\n${indentation}return template;` );
 			}
 
 			defaultExport.declaration.properties.forEach( prop => {
 				templateProperties[ prop.key.name ] = prop.value;
 			});
 
-			generator.code.insertRight( parsed.js.content.start, 'var template = (function () {' );
+			generator.code.prependRight( parsed.js.content.start, 'var template = (function () {' );
 		} else {
-			generator.code.insertRight( parsed.js.content.start, '(function () {' );
+			generator.code.prependRight( parsed.js.content.start, '(function () {' );
 		}
 
-		generator.code.insertLeft( parsed.js.content.end, '}());' );
+		generator.code.appendLeft( parsed.js.content.end, '}());' );
 
 		[ 'helpers', 'events', 'components' ].forEach( key => {
 			if ( templateProperties[ key ] ) {
@@ -508,30 +508,35 @@ export default function generate ( parsed, source, options ) {
 
 	function addString ( str ) {
 		compiled.addSource({
-			filename: options.filename,
 			content: new MagicString( str )
 		});
 	}
 
-	addString( getIntro( format, options, imports ) );
+	const intro = getIntro( format, options, imports );
+	if ( intro ) addString( intro );
+
+	// a filename is necessary for sourcemap generation
+	const filename = options.filename || 'SvelteComponent.html';
 
 	parts.forEach( str => {
+		const chunk = str.replace( pattern, '' );
+		if ( chunk ) addString( chunk );
+
 		const match = pattern.exec( str );
 
-		addString( str.replace( pattern, '' ) );
+		const snippet = generator.code.snip( +match[1], +match[2] );
 
 		compiled.addSource({
-			filename: options.filename,
-			content: generator.code.snip( +match[1], +match[2] )
+			filename,
+			content: snippet
 		});
 	});
 
-	compiled.append( finalChunk );
-
+	addString( finalChunk );
 	addString( '\n\n' + getOutro( format, constructorName, options, imports ) );
 
 	return {
 		code: compiled.toString(),
-		map: compiled.generateMap()
+		map: compiled.generateMap({ includeContent: true })
 	};
 }

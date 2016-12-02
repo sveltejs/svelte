@@ -116,7 +116,7 @@ export default function addElementAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'EventHandler' ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
-			generator.code.insertRight( attribute.expression.start, 'component.' );
+			generator.code.prependRight( attribute.expression.start, 'component.' );
 
 			const usedContexts = new Set();
 			attribute.expression.arguments.forEach( arg => {
