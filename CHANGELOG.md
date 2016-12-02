@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.0.7
+
+* Correctly escape HTML entities ([#85](https://github.com/sveltejs/svelte/issues/85))
+
+## 1.0.6
+
+* Generate useful sourcemaps ([#60](https://github.com/sveltejs/svelte/issues/60))
+
 ## 1.0.5
 
 * Ensure compiler only generates ES5 code ([#75](https://github.com/sveltejs/svelte/issues/75))

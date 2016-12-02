@@ -5,6 +5,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import jsdom from 'jsdom';
 import * as acorn from 'acorn';
+import { SourceMapConsumer } from 'source-map';
+import { getLocator } from 'locate-character';
 
 import * as consoleGroup from 'console-group';
 consoleGroup.install();
@@ -465,6 +467,31 @@ describe( 'svelte', () => {
 				return testAmd( code, 'foo', { answer: 42 }, `<div>42</div>` )
 					.then( () => testCjs( code, { answer: 42 }, `<div>42</div>` ) )
 					.then( () => testIife( code, 'Foo', { answer: 42 }, `<div>42</div>` ) );
+			});
+		});
+	});
+
+	describe( 'sourcemaps', () => {
+		fs.readdirSync( 'test/sourcemaps' ).forEach( dir => {
+			if ( dir[0] === '.' ) return;
+
+			const solo = exists( `test/sourcemaps/${dir}/solo` );
+
+			( solo ? it.only : it )( dir, () => {
+				const input = fs.readFileSync( `test/sourcemaps/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
+				const { code, map } = svelte.compile( input );
+
+				fs.writeFileSync( `test/sourcemaps/${dir}/output.js`, `${code}\n//# sourceMappingURL=output.js.map` );
+				fs.writeFileSync( `test/sourcemaps/${dir}/output.js.map`, JSON.stringify( map, null, '  ' ) );
+
+				const { test } = require( `./sourcemaps/${dir}/test.js` );
+
+				const smc = new SourceMapConsumer( map );
+
+				const locateInSource = getLocator( input );
+				const locateInGenerated = getLocator( code );
+
+				test({ assert, code, map, smc, locateInSource, locateInGenerated });
 			});
 		});
 	});
