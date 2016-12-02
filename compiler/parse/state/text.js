@@ -1,3 +1,5 @@
+import { decodeCharacterReferences } from '../utils/html.js';
+
 export default function text ( parser ) {
 	const start = parser.index;
 
@@ -11,7 +13,7 @@ export default function text ( parser ) {
 		start,
 		end: parser.index,
 		type: 'Text',
-		data
+		data: decodeCharacterReferences( data )
 	});
 
 	return null;

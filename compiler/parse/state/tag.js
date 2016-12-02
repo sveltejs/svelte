@@ -57,12 +57,12 @@ export default function tag ( parser ) {
 			const lastChild = element.children[ element.children.length - 1 ];
 
 			if ( firstChild.type === 'Text' ) {
-				firstChild.data = trimStart( decodeCharacterReferences( firstChild.data ) );
+				firstChild.data = trimStart( firstChild.data );
 				if ( !firstChild.data ) element.children.shift();
 			}
 
 			if ( lastChild.type === 'Text' ) {
-				lastChild.data = trimEnd( decodeCharacterReferences( lastChild.data ) );
+				lastChild.data = trimEnd( lastChild.data );
 				if ( !lastChild.data ) element.children.pop();
 			}
 		}
