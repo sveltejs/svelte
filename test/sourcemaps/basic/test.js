@@ -1,8 +1,12 @@
 export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 	const expected = locateInSource( 'foo.bar.baz' );
-	const loc = locateInGenerated( 'foo.bar.baz' );
 
-	const actual = smc.originalPositionFor({
+	let loc;
+	let actual;
+
+	loc = locateInGenerated( 'foo.bar.baz' );
+
+	actual = smc.originalPositionFor({
 		line: loc.line + 1,
 		column: loc.column
 	});
@@ -10,7 +14,21 @@ export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 	assert.deepEqual( actual, {
 		source: 'SvelteComponent.html',
 		name: null,
-		line: expected.line,
+		line: expected.line + 1,
+		column: expected.column
+	});
+
+	loc = locateInGenerated( 'foo.bar.baz', loc.character + 1 );
+
+	actual = smc.originalPositionFor({
+		line: loc.line + 1,
+		column: loc.column
+	});
+
+	assert.deepEqual( actual, {
+		source: 'SvelteComponent.html',
+		name: null,
+		line: expected.line + 1,
 		column: expected.column
 	});
 }
