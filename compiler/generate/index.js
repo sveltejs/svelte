@@ -45,6 +45,13 @@ export default function generate ( parsed, source, options ) {
 			}
 		},
 
+		createAnchor ( _name, description = '' ) {
+			const name = `${_name}_anchor`;
+			const statement = `document.createComment( ${JSON.stringify( description )} )`;
+			generator.addElement( name, statement, true );
+			return name;
+		},
+
 		addRenderer ( fragment ) {
 			if ( fragment.autofocus ) {
 				fragment.initStatements.push( `${fragment.autofocus}.focus();` );
