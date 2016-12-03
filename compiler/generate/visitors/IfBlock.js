@@ -56,13 +56,12 @@ export default {
 
 		const { params, target } = generator.current;
 		const name = `ifBlock_${i}`;
-		const anchor = `${name}_anchor`;
 		const getBlock = `getBlock_${i}`;
 		const currentBlock = `currentBlock_${i}`;
 
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `renderIfBlock_${i}` );
 
-		generator.addElement( anchor, `document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} )`, true );
+		const anchor = generator.createAnchor( name, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.initStatements.push( deindent`
 			function ${getBlock} ( ${params} ) {

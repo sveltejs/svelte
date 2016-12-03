@@ -5,7 +5,6 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.each++;
 		const name = `eachBlock_${i}`;
-		const anchor = `${name}_anchor`;
 		const renderer = `renderEachBlock_${i}`;
 
 		const listName = `${name}_value`;
@@ -14,7 +13,7 @@ export default {
 
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
-		generator.addElement( anchor, `document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} )`, true );
+		const anchor = generator.createAnchor( name, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_value = ${snippet};
