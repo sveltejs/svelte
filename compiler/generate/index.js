@@ -489,6 +489,8 @@ export default function generate ( parsed, source, options ) {
 				state = {};
 			};
 
+			this._parent = options.parent;
+
 			${initStatements.join( '\n\n' )}
 		}
 	` );

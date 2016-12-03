@@ -1,0 +1,9 @@
+<p ref:x>{{inDocument}}</p>
+
+<script>
+	export default {
+		onrender () {
+			this.set({ inDocument: document.contains( this.refs.x ) })
+		}
+	};
+</script>

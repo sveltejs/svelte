@@ -58,7 +58,7 @@ export default {
 
 					var ${name} = new template.components.${node.name}({
 						target: ${generator.current.target},
-						parent: component,
+						parent: component._parent || component,
 						data: ${name}_initialData
 					});
 				` );
@@ -66,7 +66,7 @@ export default {
 				local.init.unshift( deindent`
 					var ${name} = new template.components.${node.name}({
 						target: ${generator.current.target},
-						parent: component
+						parent: component._parent || component
 					});
 				` );
 			}
