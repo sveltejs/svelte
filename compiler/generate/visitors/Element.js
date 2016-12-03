@@ -15,6 +15,7 @@ export default {
 			allUsedContexts: new Set(),
 
 			init: [],
+			mount: [],
 			update: [],
 			teardown: []
 		};
@@ -57,7 +58,7 @@ export default {
 					${statements.join( '\n\n' )}
 
 					var ${name} = new template.components.${node.name}({
-						target: ${generator.current.target},
+						target: ${!shouldDetach ? generator.current.target: 'null'},
 						parent: component,
 						data: ${name}_initialData
 					});
@@ -65,10 +66,13 @@ export default {
 			} else {
 				local.init.unshift( deindent`
 					var ${name} = new template.components.${node.name}({
-						target: ${generator.current.target},
+						target: ${!shouldDetach ? generator.current.target: 'null'},
 						parent: component
 					});
 				` );
+			}
+			if ( shouldDetach ) {
+				local.mount.unshift( `${name}.mount( target, anchor );` );
 			}
 
 			if ( local.dynamicAttributes.length ) {
@@ -146,6 +150,7 @@ export default {
 
 		generator.current.initStatements.push( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
+		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
 
 		generator.push({
@@ -166,7 +171,6 @@ export default {
 
 		if ( isComponent ) return;
 
-		generator.current.initStatements.push(
-			generator.appendToTarget( name ) );
+		generator.createMountStatement( name );
 	}
 };
