@@ -47,10 +47,10 @@ export default {
 			${name}_iterations.length = ${listName}.length;
 		` );
 
-		const needsTeardown = generator.current.localElementDepth === 0;
+		const isToplevel = generator.current.localElementDepth === 0;
 		generator.current.teardownStatements.push( deindent`
 			for ( var i = 0; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( ${needsTeardown ? 'detach' : 'false'} );
+				${name}_iterations[i].teardown( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 

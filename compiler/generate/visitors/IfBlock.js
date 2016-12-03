@@ -17,12 +17,12 @@ function generateBlock ( generator, node, name ) {
 		counter: counter()
 	});
 	node.children.forEach( generator.visit );
-	//generator.visit( node.children );
 	generator.addRenderer( generator.current );
 	generator.pop();
 	// unset the children, to avoid them being visited again
 	node.children = [];
 }
+
 function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
 	const name = `${_name}_${i}`;
@@ -86,6 +86,9 @@ export default {
 			}
 		` );
 
-		generator.current.teardownStatements.push( `if ( ${name} ) ${name}.teardown( detach );` );
+		const isToplevel = generator.current.localElementDepth === 0;
+		generator.current.teardownStatements.push( deindent`
+			if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );
+		` );
 	}
 };

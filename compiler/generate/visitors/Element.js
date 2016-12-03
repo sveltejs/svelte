@@ -19,7 +19,7 @@ export default {
 			teardown: []
 		};
 
-		const shouldDetach = generator.current.localElementDepth === 0;
+		const isToplevel = generator.current.localElementDepth === 0;
 
 		if ( isComponent ) {
 			generator.hasComponents = true;
@@ -87,7 +87,7 @@ export default {
 				` );
 			}
 
-			local.teardown.push( `${name}.teardown( ${shouldDetach} );` );
+			local.teardown.push( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
 		}
 
 		else {
@@ -132,7 +132,7 @@ export default {
 			}
 
 			local.init.unshift( render );
-			if ( shouldDetach ) {
+			if ( isToplevel ) {
 				local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
 			}
 		}
@@ -166,7 +166,6 @@ export default {
 
 		if ( isComponent ) return;
 
-		generator.current.initStatements.push(
-			generator.appendToTarget( name ) );
+		generator.createMountStatement( name );
 	}
 };
