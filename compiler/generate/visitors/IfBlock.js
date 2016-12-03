@@ -11,18 +11,19 @@ function generateBlock ( generator, node, name ) {
 		localElementDepth: 0,
 
 		initStatements: [],
+		mountStatements: [],
 		updateStatements: [],
 		teardownStatements: [],
 
 		counter: counter()
 	});
 	node.children.forEach( generator.visit );
-	//generator.visit( node.children );
 	generator.addRenderer( generator.current );
 	generator.pop();
 	// unset the children, to avoid them being visited again
 	node.children = [];
 }
+
 function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
 	const name = `${_name}_${i}`;
@@ -54,12 +55,13 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.if++;
 
-		const { params, target } = generator.current;
+		const { params } = generator.current;
 		const name = `ifBlock_${i}`;
 		const anchor = `${name}_anchor`;
 		const getBlock = `getBlock_${i}`;
 		const currentBlock = `currentBlock_${i}`;
 
+		const isToplevel = generator.current.localElementDepth === 0;
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `renderIfBlock_${i}` );
 
 		generator.addElement( anchor, `document.createComment( ${JSON.stringify( `#if ${generator.source.slice( node.expression.start, node.expression.end )}` )} )`, true );
@@ -72,8 +74,15 @@ export default {
 			}
 
 			var ${currentBlock} = ${getBlock}( ${params} );
-			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${anchor} );
+			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component );
 		` );
+
+		const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
+		if ( isToplevel ) {
+			generator.current.mountStatements.push( mountStatement );
+		} else {
+			generator.current.initStatements.push( mountStatement );
+		}
 
 		generator.current.updateStatements.push( deindent`
 			var _${currentBlock} = ${currentBlock};
@@ -82,10 +91,13 @@ export default {
 				${name}.update( changed, ${params} );
 			} else {
 				if ( ${name} ) ${name}.teardown( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${anchor} );
+				${name} = ${currentBlock} && ${currentBlock}( ${params}, component );
+				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 			}
 		` );
 
-		generator.current.teardownStatements.push( `if ( ${name} ) ${name}.teardown( detach );` );
+		generator.current.teardownStatements.push( deindent`
+			if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );
+		` );
 	}
 };
