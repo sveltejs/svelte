@@ -102,6 +102,7 @@ export default {
 
 				return `var ${contextName} = ${listName}[${indexName}];`;
 			}).join( '\n' ) ],
+			detachStatements: [],
 			teardownStatements: [],
 
 			counter: counter(),
