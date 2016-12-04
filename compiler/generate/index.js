@@ -387,8 +387,8 @@ export default function generate ( parsed, source, options ) {
 
 	if ( templateProperties.onrender ) {
 		initStatements.push( deindent`
-			if ( options.parent ) {
-				options.parent.__renderHooks.push({ fn: template.onrender, context: this });
+			if ( options.root ) {
+				options.root.__renderHooks.push({ fn: template.onrender, context: this });
 			} else {
 				template.onrender.call( this );
 			}
@@ -489,7 +489,7 @@ export default function generate ( parsed, source, options ) {
 				state = {};
 			};
 
-			this._parent = options.parent;
+			this.root = options.root;
 
 			${initStatements.join( '\n\n' )}
 		}
