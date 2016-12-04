@@ -101,7 +101,7 @@ export default function generate ( parsed, source, options ) {
 							const context = indexes[ name ];
 							if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
 						} else {
-							dependencies.push( node.name );
+							dependencies.push( name );
 							generator.code.prependRight( node.start, `root.` );
 							if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 						}
