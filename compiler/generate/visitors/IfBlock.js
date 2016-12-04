@@ -13,6 +13,7 @@ function generateBlock ( generator, node, name ) {
 		initStatements: [],
 		mountStatements: [],
 		updateStatements: [],
+		detachStatements: [],
 		teardownStatements: [],
 
 		counter: counter()
