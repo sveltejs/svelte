@@ -1,0 +1,15 @@
+<p>
+  Hello
+  {{#if test}}
+    {{yield}}
+  {{/if}}
+</p>
+<script>
+  export default {
+    data(){
+      return {
+        test: true
+      }
+    }
+  }
+</script>
