@@ -5,7 +5,7 @@ import counter from '../utils/counter.js';
 
 export default {
 	enter ( generator, node ) {
-		const hasChildren = node.children.length > 0
+		const hasChildren = node.children.length > 0;
 		const isComponent = node.name in generator.components;
 		const name = generator.current.counter( isComponent ? `${node.name[0].toLowerCase()}${node.name.slice( 1 )}` : node.name );
 
@@ -60,7 +60,7 @@ export default {
 				node.children = [];
 
 				generator.current.initStatements.push(`var ${name}_yieldFragment = ${yieldName}( root, component );`);
-				generator.current.updateStatements.push(`${name}_yieldFragment.update ( changed, root );`)
+				generator.current.updateStatements.push(`${name}_yieldFragment.update ( changed, root );`);
 
 				componentInitProperties.push(`yield: ${name}_yieldFragment`);
 			}
