@@ -34,12 +34,12 @@ export default function generate ( parsed, source, options ) {
 		},
 
 		createMountStatement ( name ) {
-			if ( generator.current.useAnchor && generator.current.target === 'target' ) {
-				generator.current.initStatements.push( deindent `
-					anchor.parentNode.insertBefore( ${name}, anchor );
+			if ( generator.current.target === 'target' ) {
+				generator.current.mountStatements.push( deindent`
+					target.insertBefore( ${name}, anchor );
 				` );
 			} else {
-				generator.current.initStatements.push( deindent `
+				generator.current.initStatements.push( deindent`
 					${generator.current.target}.appendChild( ${name} );
 				` );
 			}
@@ -58,10 +58,14 @@ export default function generate ( parsed, source, options ) {
 			}
 
 			renderers.push( deindent`
-				function ${fragment.name} ( ${fragment.params}, component, target${fragment.useAnchor ? ', anchor' : ''} ) {
+				function ${fragment.name} ( ${fragment.params}, component ) {
 					${fragment.initStatements.join( '\n\n' )}
 
 					return {
+						mount: function ( target, anchor ) {
+							${fragment.mountStatements.join( '\n\n' )}
+						},
+
 						update: function ( changed, ${fragment.params} ) {
 							${fragment.updateStatements.join( '\n\n' )}
 						},
@@ -249,6 +253,7 @@ export default function generate ( parsed, source, options ) {
 		localElementDepth: 0,
 
 		initStatements: [],
+		mountStatements: [],
 		updateStatements: [],
 		teardownStatements: [],
 
@@ -377,13 +382,17 @@ export default function generate ( parsed, source, options ) {
 	if ( generator.hasComplexBindings ) {
 		initStatements.push( deindent`
 			this.__bindings = [];
-			var mainFragment = renderMainFragment( state, this, options.target );
+			var mainFragment = renderMainFragment( state, this );
+			if ( options.target ) this.mount( options.target );
 			while ( this.__bindings.length ) this.__bindings.pop()();
 		` );
 
 		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
 	} else {
-		initStatements.push( `var mainFragment = renderMainFragment( state, this, options.target );` );
+		initStatements.push( deindent`
+			var mainFragment = renderMainFragment( state, this );
+			if ( options.target ) this.mount( options.target );
+		` );
 	}
 
 	if ( generator.hasComponents ) {
@@ -461,6 +470,10 @@ export default function generate ( parsed, source, options ) {
 			this.set = function set ( newState ) {
 				${setStatements.join( '\n\n' )}
 			};
+
+			this.mount = function mount ( target, anchor ) {
+				mainFragment.mount( target, anchor );
+			}
 
 			this.observe = function ( key, callback, options ) {
 				var group = ( options && options.defer ) ? observers.deferred : observers.immediate;
