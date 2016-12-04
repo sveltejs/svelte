@@ -1,16 +1,20 @@
 import deindent from '../utils/deindent.js';
-import addComponentAttributes from './attributes/addComponentAttributes.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
+import Component from './Component.js';
 
 export default {
 	enter ( generator, node ) {
 		const isComponent = node.name in generator.components;
-		const name = generator.current.counter( isComponent ? `${node.name[0].toLowerCase()}${node.name.slice( 1 )}` : node.name );
+		if ( isComponent ) {
+			return Component.enter( generator, node );
+		}
+
+		const name = generator.current.counter( node.name );
 
 		const local = {
 			name,
 			namespace: name === 'svg' ? 'http://www.w3.org/2000/svg' : generator.current.namespace,
-			isComponent,
+			isComponent: false,
 
 			allUsedContexts: new Set(),
 
@@ -22,124 +26,49 @@ export default {
 
 		const isToplevel = generator.current.localElementDepth === 0;
 
-		if ( isComponent ) {
-			generator.hasComponents = true;
+		addElementAttributes( generator, node, local );
 
-			addComponentAttributes( generator, node, local );
+		if ( local.allUsedContexts.size ) {
+			const contextNames = [...local.allUsedContexts];
 
-			if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
-				const initialProps = local.staticAttributes
-					.concat( local.dynamicAttributes )
-					.map( attribute => `${attribute.name}: ${attribute.value}` );
+			const initialProps = contextNames.map( contextName => {
+				if ( contextName === 'root' ) return `root: root`;
 
-				const statements = [];
+				const listName = generator.current.listNames[ contextName ];
+				const indexName = generator.current.indexNames[ contextName ];
 
-				if ( initialProps.length ) {
-					statements.push( deindent`
-						var ${name}_initialData = {
-							${initialProps.join( ',\n' )}
-						};
-					` );
-				} else {
-					statements.push( `var ${name}_initialData = {};` );
-				}
+				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
+			}).join( ',\n' );
 
-				if ( local.bindings.length ) {
-					const bindings = local.bindings.map( binding => {
-						const parts = binding.value.split( '.' );
-						const tail = parts.pop();
-						return `if ( '${tail}' in ${parts.join( '.' )} ) ${name}_initialData.${binding.name} = ${binding.value};`;
-					});
+			const updates = contextNames.map( contextName => {
+				if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
-					statements.push( bindings.join( '\n' ) );
-				}
+				const listName = generator.current.listNames[ contextName ];
+				const indexName = generator.current.indexNames[ contextName ];
 
-				local.init.unshift( deindent`
-					${statements.join( '\n\n' )}
+				return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
+			}).join( '\n' );
 
-					var ${name} = new template.components.${node.name}({
-						target: ${!isToplevel ? generator.current.target: 'null'},
-						root: component.root || component,
-						data: ${name}_initialData
-					});
-				` );
-			} else {
-				local.init.unshift( deindent`
-					var ${name} = new template.components.${node.name}({
-						target: ${!isToplevel ? generator.current.target: 'null'},
-						root: component.root || component
-					});
-				` );
-			}
+			local.init.push( deindent`
+				${name}.__svelte = {
+					${initialProps}
+				};
+			` );
 
-			if ( isToplevel ) {
-				local.mount.unshift( `${name}.mount( target, anchor );` );
-			}
-
-			if ( local.dynamicAttributes.length ) {
-				const updates = local.dynamicAttributes.map( attribute => {
-					return deindent`
-						if ( ${attribute.dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) ${name}_changes.${attribute.name} = ${attribute.value};
-					`;
-				});
-
-				local.update.push( deindent`
-					var ${name}_changes = {};
-
-					${updates.join( '\n' )}
-
-					if ( Object.keys( ${name}_changes ).length ) ${name}.set( ${name}_changes );
-				` );
-			}
-
-			local.teardown.push( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
+			local.update.push( updates );
 		}
 
-		else {
-			addElementAttributes( generator, node, local );
+		let render = local.namespace ?
+			`var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );` :
+			`var ${name} = document.createElement( '${node.name}' );`;
 
-			if ( local.allUsedContexts.size ) {
-				const contextNames = [...local.allUsedContexts];
+		if ( generator.cssId && !generator.current.elementDepth ) {
+			render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
+		}
 
-				const initialProps = contextNames.map( contextName => {
-					if ( contextName === 'root' ) return `root: root`;
-
-					const listName = generator.current.listNames[ contextName ];
-					const indexName = generator.current.indexNames[ contextName ];
-
-					return `${listName}: ${listName},\n${indexName}: ${indexName}`;
-				}).join( ',\n' );
-
-				const updates = contextNames.map( contextName => {
-					if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
-
-					const listName = generator.current.listNames[ contextName ];
-					const indexName = generator.current.indexNames[ contextName ];
-
-					return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
-				}).join( '\n' );
-
-				local.init.push( deindent`
-					${name}.__svelte = {
-						${initialProps}
-					};
-				` );
-
-				local.update.push( updates );
-			}
-
-			let render = local.namespace ?
-				`var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );` :
-				`var ${name} = document.createElement( '${node.name}' );`;
-
-			if ( generator.cssId && !generator.current.elementDepth ) {
-				render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
-			}
-
-			local.init.unshift( render );
-			if ( isToplevel ) {
-				local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
-			}
+		local.init.unshift( render );
+		if ( isToplevel ) {
+			local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
 		}
 
 		// special case – bound <option> without a value attribute
@@ -154,8 +83,9 @@ export default {
 		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
 
+		generator.createMountStatement( name );
+
 		generator.push({
-			isComponent,
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,
@@ -164,14 +94,12 @@ export default {
 		});
 	},
 
-	leave ( generator ) {
-		const name = generator.current.target;
-		const isComponent = generator.current.isComponent;
+	leave ( generator, node ) {
+		const isComponent = node.name in generator.components;
+		if ( isComponent ) {
+			return Component.leave( generator, node );
+		}
 
 		generator.pop();
-
-		if ( isComponent ) return;
-
-		generator.createMountStatement( name );
 	}
 };
