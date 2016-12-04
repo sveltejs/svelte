@@ -43,7 +43,7 @@ const { code, map } = svelte.compile( source, {
 		console.error( err.message );
 	},
 
-	onwarning: warning => {
+	onwarn: warning => {
 		console.warn( warning.message );
 	}
 });
