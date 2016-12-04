@@ -11,6 +11,7 @@ function generateBlock ( generator, node, name ) {
 		localElementDepth: 0,
 
 		initStatements: [],
+		mountStatements: [],
 		updateStatements: [],
 		teardownStatements: [],
 
@@ -54,11 +55,12 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.if++;
 
-		const { params, target } = generator.current;
+		const { params } = generator.current;
 		const name = `ifBlock_${i}`;
 		const getBlock = `getBlock_${i}`;
 		const currentBlock = `currentBlock_${i}`;
 
+		const isToplevel = generator.current.localElementDepth === 0;
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `renderIfBlock_${i}` );
 
 		const anchor = generator.createAnchor( name, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
@@ -71,8 +73,15 @@ export default {
 			}
 
 			var ${currentBlock} = ${getBlock}( ${params} );
-			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${anchor} );
+			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component );
 		` );
+
+		const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
+		if ( isToplevel ) {
+			generator.current.mountStatements.push( mountStatement );
+		} else {
+			generator.current.initStatements.push( mountStatement );
+		}
 
 		generator.current.updateStatements.push( deindent`
 			var _${currentBlock} = ${currentBlock};
@@ -81,11 +90,11 @@ export default {
 				${name}.update( changed, ${params} );
 			} else {
 				if ( ${name} ) ${name}.teardown( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, component, ${target}, ${anchor} );
+				${name} = ${currentBlock} && ${currentBlock}( ${params}, component );
+				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 			}
 		` );
 
-		const isToplevel = generator.current.localElementDepth === 0;
 		generator.current.teardownStatements.push( deindent`
 			if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );
 		` );
