@@ -5,9 +5,12 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.each++;
 		const name = `eachBlock_${i}`;
+		const iterations = `${name}_iterations`;
 		const renderer = `renderEachBlock_${i}`;
 
 		const listName = `${name}_value`;
+
+		const isToplevel = generator.current.localElementDepth === 0;
 
 		generator.addSourcemapLocations( node.expression );
 
@@ -17,39 +20,44 @@ export default {
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_value = ${snippet};
-			var ${name}_fragment = document.createDocumentFragment();
-			var ${name}_iterations = [];
+			var ${iterations} = [];
 
 			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
-				${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
+				${iterations}[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component );
+				${!isToplevel ? `${iterations}[i].mount( ${anchor}.parentNode, ${anchor} );` : ''}
 			}
-
-			${anchor}.parentNode.insertBefore( ${name}_fragment, ${anchor} );
 		` );
+
+		if ( isToplevel ) {
+			generator.current.mountStatements.push( deindent`
+				for ( var i = 0; i < ${iterations}.length; i += 1 ) {
+					${iterations}[i].mount( ${anchor}.parentNode, ${anchor} );
+				}
+			` );
+		}
 
 		generator.current.updateStatements.push( deindent`
 			var ${name}_value = ${snippet};
 
 			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
-				if ( !${name}_iterations[i] ) {
-					${name}_iterations[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component, ${name}_fragment );
+				if ( !${iterations}[i] ) {
+					${iterations}[i] = ${renderer}( ${generator.current.params}, ${listName}, ${listName}[i], i, component );
+					${iterations}[i].mount( ${anchor}.parentNode, ${anchor} );
 				} else {
-					${name}_iterations[i].update( changed, ${generator.current.params}, ${listName}, ${listName}[i], i );
+					${iterations}[i].update( changed, ${generator.current.params}, ${listName}, ${listName}[i], i );
 				}
 			}
 
-			for ( var i = ${name}_value.length; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( true );
+			for ( var i = ${name}_value.length; i < ${iterations}.length; i += 1 ) {
+				${iterations}[i].teardown( true );
 			}
 
-			${anchor}.parentNode.insertBefore( ${name}_fragment, ${anchor} );
-			${name}_iterations.length = ${listName}.length;
+			${iterations}.length = ${listName}.length;
 		` );
 
-		const isToplevel = generator.current.localElementDepth === 0;
 		generator.current.teardownStatements.push( deindent`
-			for ( var i = 0; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( ${isToplevel ? 'detach' : 'false'} );
+			for ( var i = 0; i < ${iterations}.length; i += 1 ) {
+				${iterations}[i].teardown( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 
@@ -87,6 +95,7 @@ export default {
 			params,
 
 			initStatements: [],
+			mountStatements: [],
 			updateStatements: [ Object.keys( contexts ).map( contextName => {
 				const listName = listNames[ contextName ];
 				const indexName = indexNames[ contextName ];
