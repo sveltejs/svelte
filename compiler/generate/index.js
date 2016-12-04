@@ -15,28 +15,41 @@ export default function generate ( parsed, source, options ) {
 
 	const generator = {
 		addElement ( name, renderStatement, needsIdentifier = false ) {
-			const needsTeardown = generator.current.localElementDepth === 0;
-			if ( needsIdentifier || needsTeardown ) {
+			const isToplevel = generator.current.localElementDepth === 0;
+			if ( needsIdentifier || isToplevel ) {
 				generator.current.initStatements.push( deindent`
 					var ${name} = ${renderStatement};
-					${generator.appendToTarget( name )};
 				` );
+				generator.createMountStatement( name );
 			} else {
 				generator.current.initStatements.push( deindent`
 					${generator.current.target}.appendChild( ${renderStatement} );
 				` );
 			}
-			if ( needsTeardown ) {
+			if ( isToplevel ) {
 				generator.current.teardownStatements.push( deindent`
 					if ( detach ) ${name}.parentNode.removeChild( ${name} );
 				` );
 			}
 		},
-		appendToTarget ( name ) {
+
+		createMountStatement ( name ) {
 			if ( generator.current.useAnchor && generator.current.target === 'target' ) {
-				return `anchor.parentNode.insertBefore( ${name}, anchor )`;
+				generator.current.initStatements.push( deindent `
+					anchor.parentNode.insertBefore( ${name}, anchor );
+				` );
+			} else {
+				generator.current.initStatements.push( deindent `
+					${generator.current.target}.appendChild( ${name} );
+				` );
 			}
-			return `${generator.current.target}.appendChild( ${name} )`;
+		},
+
+		createAnchor ( _name, description = '' ) {
+			const name = `${_name}_anchor`;
+			const statement = `document.createComment( ${JSON.stringify( description )} )`;
+			generator.addElement( name, statement, true );
+			return name;
 		},
 
 		addRenderer ( fragment ) {

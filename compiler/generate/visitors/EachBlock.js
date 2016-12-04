@@ -5,7 +5,6 @@ export default {
 	enter ( generator, node ) {
 		const i = generator.counters.each++;
 		const name = `eachBlock_${i}`;
-		const anchor = `${name}_anchor`;
 		const renderer = `renderEachBlock_${i}`;
 
 		const listName = `${name}_value`;
@@ -14,7 +13,7 @@ export default {
 
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
-		generator.addElement( anchor, `document.createComment( ${JSON.stringify( `#each ${generator.source.slice( node.expression.start, node.expression.end )}` )} )`, true );
+		const anchor = generator.createAnchor( name, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.initStatements.push( deindent`
 			var ${name}_value = ${snippet};
@@ -47,10 +46,10 @@ export default {
 			${name}_iterations.length = ${listName}.length;
 		` );
 
-		const needsTeardown = generator.current.localElementDepth === 0;
+		const isToplevel = generator.current.localElementDepth === 0;
 		generator.current.teardownStatements.push( deindent`
 			for ( var i = 0; i < ${name}_iterations.length; i += 1 ) {
-				${name}_iterations[i].teardown( ${needsTeardown ? 'detach' : 'false'} );
+				${name}_iterations[i].teardown( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 
