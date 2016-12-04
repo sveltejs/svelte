@@ -15,11 +15,12 @@ export default {
 			allUsedContexts: new Set(),
 
 			init: [],
+			mount: [],
 			update: [],
 			teardown: []
 		};
 
-		const shouldDetach = generator.current.localElementDepth === 0;
+		const isToplevel = generator.current.localElementDepth === 0;
 
 		if ( isComponent ) {
 			generator.hasComponents = true;
@@ -57,18 +58,22 @@ export default {
 					${statements.join( '\n\n' )}
 
 					var ${name} = new template.components.${node.name}({
-						target: ${generator.current.target},
-						parent: component,
+						target: ${!isToplevel ? generator.current.target: 'null'},
+						root: component.root || component,
 						data: ${name}_initialData
 					});
 				` );
 			} else {
 				local.init.unshift( deindent`
 					var ${name} = new template.components.${node.name}({
-						target: ${generator.current.target},
-						parent: component
+						target: ${!isToplevel ? generator.current.target: 'null'},
+						root: component.root || component
 					});
 				` );
+			}
+
+			if ( isToplevel ) {
+				local.mount.unshift( `${name}.mount( target, anchor );` );
 			}
 
 			if ( local.dynamicAttributes.length ) {
@@ -87,7 +92,7 @@ export default {
 				` );
 			}
 
-			local.teardown.push( `${name}.teardown( ${shouldDetach} );` );
+			local.teardown.push( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
 		}
 
 		else {
@@ -132,7 +137,7 @@ export default {
 			}
 
 			local.init.unshift( render );
-			if ( shouldDetach ) {
+			if ( isToplevel ) {
 				local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
 			}
 		}
@@ -146,6 +151,7 @@ export default {
 
 		generator.current.initStatements.push( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
+		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
 
 		generator.push({
@@ -166,7 +172,6 @@ export default {
 
 		if ( isComponent ) return;
 
-		generator.current.initStatements.push(
-			generator.appendToTarget( name ) );
+		generator.createMountStatement( name );
 	}
 };
