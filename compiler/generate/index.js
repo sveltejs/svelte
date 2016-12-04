@@ -489,6 +489,10 @@ export default function generate ( parsed, source, options ) {
 				state = {};
 			};
 
+			this.appendChild = function appendChild ( child ) {
+				this.yield.appendChild(child);
+			}
+
 			${initStatements.join( '\n\n' )}
 		}
 	` );
