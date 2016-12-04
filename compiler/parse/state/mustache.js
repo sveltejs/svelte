@@ -177,6 +177,19 @@ export default function mustache ( parser ) {
 		parser.stack.push( block );
 	}
 
+	// {{yield}}
+	else if ( parser.eat( 'yield' ) ) {
+
+		parser.allowWhitespace();
+		parser.eat( '}}', true );
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'YieldTag'
+		});
+	}
+
 	else {
 		const expression = readExpression( parser );
 
