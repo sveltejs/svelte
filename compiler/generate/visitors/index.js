@@ -4,6 +4,7 @@ import Element from './Element.js';
 import IfBlock from './IfBlock.js';
 import MustacheTag from './MustacheTag.js';
 import Text from './Text.js';
+import YieldTag from './YieldTag.js';
 
 export default {
 	Comment,
@@ -11,5 +12,6 @@ export default {
 	Element,
 	IfBlock,
 	MustacheTag,
-	Text
+	Text,
+	YieldTag
 };
