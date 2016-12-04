@@ -59,13 +59,10 @@ export default function generate ( parsed, source, options ) {
 
 			renderers.push( deindent`
 				function ${fragment.name} ( ${fragment.params}, component ) {
-					var target, anchor;
 					${fragment.initStatements.join( '\n\n' )}
 
 					return {
-						mount: function ( _target, _anchor ) {
-							target = _target;
-							anchor = _anchor;
+						mount: function ( target, anchor ) {
 							${fragment.mountStatements.join( '\n\n' )}
 						},
 
