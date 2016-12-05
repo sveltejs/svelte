@@ -1,0 +1,9 @@
+[ignore]
+<PROJECT_ROOT>/dist/.*
+
+[include]
+
+[libs]
+
+[options]
+strip_root=true
