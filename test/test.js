@@ -22,8 +22,12 @@ const svelte = process.env.COVERAGE ?
 
 const cache = {};
 
+let showCompiledCode = false;
+
 require.extensions[ '.html' ] = function ( module, filename ) {
 	const code = cache[ filename ] || ( cache[ filename ] = svelte.compile( fs.readFileSync( filename, 'utf-8' ) ).code );
+	if ( showCompiledCode ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
+
 	return module._compile( code, filename );
 };
 
@@ -47,6 +51,15 @@ function env () {
 			}
 		});
 	});
+}
+
+function addLineNumbers ( code ) {
+	return code.split( '\n' ).map( ( line, i ) => {
+		i = String( i + 1 );
+		while ( i.length < 3 ) i = ` ${i}`;
+
+		return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
+	}).join( '\n' );
 }
 
 describe( 'svelte', () => {
@@ -225,6 +238,8 @@ describe( 'svelte', () => {
 			( config.skip ? it.skip : config.solo ? it.only : it )( dir, () => {
 				let compiled;
 
+				showCompiledCode = config.show;
+
 				try {
 					const source = fs.readFileSync( `test/compiler/${dir}/main.html`, 'utf-8' );
 					compiled = svelte.compile( source );
@@ -238,12 +253,6 @@ describe( 'svelte', () => {
 				}
 
 				const { code } = compiled;
-				const withLineNumbers = code.split( '\n' ).map( ( line, i ) => {
-					i = String( i + 1 );
-					while ( i.length < 3 ) i = ` ${i}`;
-
-					return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
-				}).join( '\n' );
 
 				// check that no ES2015+ syntax slipped in
 				try {
@@ -251,7 +260,7 @@ describe( 'svelte', () => {
 					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
 					acorn.parse( es5, { ecmaVersion: 5 });
 				} catch ( err ) {
-					console.log( withLineNumbers ); // eslint-disable-line no-console
+					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 					throw err;
 				}
 
@@ -262,12 +271,8 @@ describe( 'svelte', () => {
 				try {
 					SvelteComponent = require( `./compiler/${dir}/main.html` ).default;
 				} catch ( err ) {
-					console.log( withLineNumbers ); // eslint-disable-line no-console
+					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 					throw err;
-				}
-
-				if ( config.show ) {
-					console.log( withLineNumbers ); // eslint-disable-line no-console
 				}
 
 				return env()
@@ -291,7 +296,7 @@ describe( 'svelte', () => {
 						}
 					})
 					.catch( err => {
-						if ( !config.show ) console.log( withLineNumbers ); // eslint-disable-line no-console
+						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 						throw err;
 					});
 			});

@@ -21,6 +21,7 @@ export default {
 			init: [],
 			mount: [],
 			update: [],
+			detach: [],
 			teardown: []
 		};
 
@@ -81,6 +82,7 @@ export default {
 		generator.current.initStatements.push( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
 		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
+		generator.current.detachStatements.push( local.detach.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
 
 		generator.createMountStatement( name );

@@ -21,7 +21,14 @@ export default function computed ( validator, prop ) {
 			return;
 		}
 
-		computation.value.params.forEach( param => {
+		const params = computation.value.params;
+
+		if ( params.length === 0 ) {
+			validator.error( `A computed value must depend on at least one property`, computation.value.start );
+			return;
+		}
+
+		params.forEach( param => {
 			const valid = param.type === 'Identifier' || param.type === 'AssignmentPattern' && param.left.type === 'Identifier';
 
 			if ( !valid ) {
