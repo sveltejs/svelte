@@ -69,7 +69,7 @@ export default {
 
 		local.init.unshift( render );
 		if ( isToplevel ) {
-			local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
+			local.detach.push( `${name}.parentNode.removeChild( ${name} );` );
 		}
 
 		// special case – bound <option> without a value attribute
