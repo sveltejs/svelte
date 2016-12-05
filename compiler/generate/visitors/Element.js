@@ -48,6 +48,7 @@ export default {
 					initStatements: [],
 					mountStatements: [],
 					updateStatements: [],
+					detachStatements: [],
 					teardownStatements: [],
 
 					counter: counter()
