@@ -521,6 +521,7 @@ export default function generate ( parsed, source, options ) {
 			};
 
 			this.root = options.root;
+			this.yield = options.yield;
 
 			${initStatements.join( '\n\n' )}
 		}
