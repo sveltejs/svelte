@@ -57,6 +57,19 @@ export default function generate ( parsed, source, options ) {
 				fragment.initStatements.push( `${fragment.autofocus}.focus();` );
 			}
 
+			const detachStatements = fragment.detachStatements.join( '\n\n' );
+			const teardownStatements = fragment.teardownStatements.join( '\n\n' );
+
+			const detachBlock = deindent`
+				if ( detach ) {
+					${detachStatements}
+				}
+			`;
+
+			const teardownBlock = deindent`
+				${teardownStatements}${detachStatements ? `\n\n${detachBlock}` : ``}
+			`;
+
 			renderers.push( deindent`
 				function ${fragment.name} ( ${fragment.params}, component ) {
 					${fragment.initStatements.join( '\n\n' )}
@@ -71,11 +84,7 @@ export default function generate ( parsed, source, options ) {
 						},
 
 						teardown: function ( detach ) {
-							${fragment.teardownStatements.join( '\n\n' )}
-
-							if ( detach ) {
-								${fragment.detachStatements.join( '\n\n' )}
-							}
+							${teardownBlock}
 						}
 					};
 				}
