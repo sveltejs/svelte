@@ -1,9 +1,11 @@
 import deindent from '../utils/deindent.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
+import counter from '../utils/counter.js';
 
 export default {
 	enter ( generator, node ) {
+		const hasChildren = node.children.length > 0;
 		const isComponent = node.name in generator.components;
 		const name = generator.current.counter( isComponent ? `${node.name[0].toLowerCase()}${node.name.slice( 1 )}` : node.name );
 
@@ -28,12 +30,48 @@ export default {
 
 			addComponentAttributes( generator, node, local );
 
+			const componentInitProperties = [
+				`target: ${!isToplevel ? generator.current.target: 'null'}`,
+				'root: component.root || component'
+			];
+			// Component has children
+			if ( hasChildren ) {
+				const yieldName = `render${name}YieldFragment`;
+
+				// {{YIELD STUFF}}
+				generator.push({
+					useAnchor: true,
+					name: generator.current.counter(yieldName),
+					target: 'target',
+					localElementDepth: 0,
+
+					initStatements: [],
+					mountStatements: [],
+					updateStatements: [],
+					teardownStatements: [],
+
+					counter: counter()
+				});
+
+				node.children.forEach( generator.visit );
+				generator.addRenderer( generator.current );
+				generator.pop();
+
+				// Don't render children twice
+				node.children = [];
+
+				generator.current.initStatements.push(`var ${name}_yieldFragment = ${yieldName}( root, component );`);
+				generator.current.updateStatements.push(`${name}_yieldFragment.update ( changed, root );`);
+
+				componentInitProperties.push(`yield: ${name}_yieldFragment`);
+			}
+
+			const statements = [];
+
 			if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
 				const initialProps = local.staticAttributes
 					.concat( local.dynamicAttributes )
 					.map( attribute => `${attribute.name}: ${attribute.value}` );
-
-				const statements = [];
 
 				if ( initialProps.length ) {
 					statements.push( deindent`
@@ -54,24 +92,17 @@ export default {
 
 					statements.push( bindings.join( '\n' ) );
 				}
-
-				local.init.unshift( deindent`
-					${statements.join( '\n\n' )}
-
-					var ${name} = new template.components.${node.name}({
-						target: ${!isToplevel ? generator.current.target: 'null'},
-						root: component.root || component,
-						data: ${name}_initialData
-					});
-				` );
-			} else {
-				local.init.unshift( deindent`
-					var ${name} = new template.components.${node.name}({
-						target: ${!isToplevel ? generator.current.target: 'null'},
-						root: component.root || component
-					});
-				` );
+				componentInitProperties.push(`data: ${name}_initialData`);
 			}
+
+			local.init.unshift( deindent`
+				${statements.join( '\n\n' )}
+
+				var ${name} = new template.components.${node.name}({
+					${componentInitProperties.join(',\n')}
+				});
+			` );
+
 
 			if ( isToplevel ) {
 				local.mount.unshift( `${name}.mount( target, anchor );` );
