@@ -1,0 +1,48 @@
+{
+	"html": {
+		"start": 0,
+		"end": 30,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 30,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 14,
+						"type": "RawMustacheTag",
+						"expression": {
+							"start": 7,
+							"end": 11,
+							"type": "Identifier",
+							"name": "raw1"
+						}
+					},
+					{
+						"start": 14,
+						"end": 15,
+						"type": "Text",
+						"data": " "
+					},
+					{
+						"start": 15,
+						"end": 25,
+						"type": "RawMustacheTag",
+						"expression": {
+							"start": 18,
+							"end": 22,
+							"type": "Identifier",
+							"name": "raw2"
+						}
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
