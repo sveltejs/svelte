@@ -69,7 +69,7 @@ export default {
 
 		local.init.unshift( render );
 		if ( isToplevel ) {
-			local.teardown.push( `if ( detach ) ${name}.parentNode.removeChild( ${name} );` );
+			local.detach.push( `${name}.parentNode.removeChild( ${name} );` );
 		}
 
 		// special case – bound <option> without a value attribute
@@ -82,7 +82,7 @@ export default {
 		generator.current.initStatements.push( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
 		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
-		generator.current.detachStatements.push( local.detach.join( '\n' ) );
+		if ( local.detach.length ) generator.current.detachStatements.push( local.detach.join( '\n' ) );
 		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
 
 		generator.createMountStatement( name );
