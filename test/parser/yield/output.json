@@ -1,0 +1,14 @@
+{
+  "html": {
+    "start": 0,
+    "end": 9,
+    "type": "Fragment",
+    "children": [
+      {
+        "start": 0,
+        "end": 9,
+        "type": "YieldTag"
+      }
+    ]
+  }
+}

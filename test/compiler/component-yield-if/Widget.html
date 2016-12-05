@@ -1,0 +1,15 @@
+<p>
+	{{#if show}}
+		{{yield}}
+	{{/if}}
+</p>
+
+<script>
+	export default {
+		data () {
+			return {
+				show: false
+			}
+		}
+	};
+</script>

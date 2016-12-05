@@ -27,8 +27,8 @@ export default function generate ( parsed, source, options ) {
 				` );
 			}
 			if ( isToplevel ) {
-				generator.current.teardownStatements.push( deindent`
-					if ( detach ) ${name}.parentNode.removeChild( ${name} );
+				generator.current.detachStatements.push( deindent`
+					${name}.parentNode.removeChild( ${name} );
 				` );
 			}
 		},
@@ -72,6 +72,10 @@ export default function generate ( parsed, source, options ) {
 
 						teardown: function ( detach ) {
 							${fragment.teardownStatements.join( '\n\n' )}
+
+							if ( detach ) {
+								${fragment.detachStatements.join( '\n\n' )}
+							}
 						}
 					};
 				}
@@ -255,6 +259,7 @@ export default function generate ( parsed, source, options ) {
 		initStatements: [],
 		mountStatements: [],
 		updateStatements: [],
+		detachStatements: [],
 		teardownStatements: [],
 
 		contexts: {},
@@ -516,6 +521,7 @@ export default function generate ( parsed, source, options ) {
 			};
 
 			this.root = options.root;
+			this.yield = options.yield;
 
 			${initStatements.join( '\n\n' )}
 		}
