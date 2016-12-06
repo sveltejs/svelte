@@ -13,7 +13,7 @@ export default {
 
 		const local = {
 			name,
-			namespace: name === 'svg' ? 'http://www.w3.org/2000/svg' : generator.current.namespace,
+			namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : generator.current.namespace,
 			isComponent: false,
 
 			allUsedContexts: new Set(),
