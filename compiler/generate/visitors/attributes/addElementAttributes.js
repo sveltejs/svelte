@@ -138,7 +138,7 @@ export default function addElementAttributes ( generator, node, local ) {
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
-			const handlerName = generator.current.counter( `${attribute.name}Handler` );
+			const handlerName = generator.current.getUniqueName( `${attribute.name}Handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( attribute.name in generator.events ) {

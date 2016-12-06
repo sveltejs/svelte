@@ -15,9 +15,9 @@ export function compile ( source, options = {} ) {
 		};
 	}
 
-	validate( parsed, source, options );
+	const { names } = validate( parsed, source, options );
 
-	return generate( parsed, source, options );
+	return generate( parsed, source, options, names );
 }
 
 export { parse, validate };

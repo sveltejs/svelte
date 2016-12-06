@@ -2,7 +2,7 @@ import deindent from '../utils/deindent.js';
 
 export default {
 	enter ( generator, node ) {
-		const name = generator.current.counter( 'text' );
+		const name = generator.current.getUniqueName( 'text' );
 
 		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );

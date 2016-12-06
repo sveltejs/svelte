@@ -177,7 +177,7 @@ describe( 'svelte', () => {
 					const errors = [];
 					const warnings = [];
 
-					svelte.validate( parsed, input, {
+					const { names } = svelte.validate( parsed, input, {
 						onerror ( error ) {
 							errors.push({
 								message: error.message,
@@ -197,9 +197,11 @@ describe( 'svelte', () => {
 
 					const expectedErrors = tryToLoadJson( `test/validator/${dir}/errors.json` ) || [];
 					const expectedWarnings = tryToLoadJson( `test/validator/${dir}/warnings.json` ) || [];
+					const expectedNames = tryToLoadJson( `test/validator/${dir}/names.json` ) || [];
 
 					assert.deepEqual( errors, expectedErrors );
 					assert.deepEqual( warnings, expectedWarnings );
+					assert.deepEqual( names, expectedNames );
 				} catch ( err ) {
 					if ( err.name !== 'ParseError' ) throw err;
 

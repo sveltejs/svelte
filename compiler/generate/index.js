@@ -9,7 +9,7 @@ import getOutro from './utils/getOutro.js';
 import visitors from './visitors/index.js';
 import processCss from './css/process.js';
 
-export default function generate ( parsed, source, options ) {
+export default function generate ( parsed, source, options, names ) {
 	const format = options.format || 'es';
 	const renderers = [];
 
@@ -149,15 +149,13 @@ export default function generate ( parsed, source, options ) {
 			};
 		},
 
-		// TODO use getName instead of counters
-		counters: {
-			if: 0,
-			each: 0
-		},
-
 		events: {},
 
-		getName: counter(),
+		getUniqueName: counter( names ),
+
+		getUniqueNameMaker () {
+			return counter( names );
+		},
 
 		cssId: parsed.css ? `svelte-${parsed.hash}` : '',
 
@@ -278,7 +276,7 @@ export default function generate ( parsed, source, options ) {
 		indexNames: {},
 		listNames: {},
 
-		counter: counter()
+		getUniqueName: generator.getUniqueNameMaker()
 	});
 
 	parsed.html.children.forEach( generator.visit );
