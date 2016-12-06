@@ -1,11 +1,10 @@
 import deindent from '../utils/deindent.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
-import counter from '../utils/counter.js';
 
 export default {
 	enter ( generator, node ) {
 		const hasChildren = node.children.length > 0;
-		const name = generator.current.counter( `${node.name[0].toLowerCase()}${node.name.slice( 1 )}` );
+		const name = generator.current.getUniqueName( `${node.name[0].toLowerCase()}${node.name.slice( 1 )}` );
 
 		const local = {
 			name,
@@ -33,12 +32,12 @@ export default {
 		];
 		// Component has children
 		if ( hasChildren ) {
-			const yieldName = `render${name}YieldFragment`;
+			const yieldName = generator.current.getUniqueName( `render${name}YieldFragment` );
 
 			// {{YIELD STUFF}}
 			generator.push({
 				useAnchor: true,
-				name: generator.current.counter(yieldName),
+				name: yieldName,
 				target: 'target',
 				localElementDepth: 0,
 
@@ -48,7 +47,7 @@ export default {
 				detachStatements: [],
 				teardownStatements: [],
 
-				counter: counter()
+				getUniqueName: generator.getUniqueNameMaker()
 			});
 
 			node.children.forEach( generator.visit );

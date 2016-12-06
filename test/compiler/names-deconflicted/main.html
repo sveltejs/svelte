@@ -1,0 +1,21 @@
+{{#each widgets as widget, i}}
+	<Widget widget='{{widget}}' index='{{i}}'/>
+{{/each}}
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data () {
+			return {
+				widgets: [
+					{ name: 'foo' },
+					{ name: 'bar' },
+					{ name: 'baz' }
+				]
+			};
+		},
+
+		components: { Widget }
+	};
+</script>

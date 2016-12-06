@@ -1,5 +1,4 @@
 import deindent from '../utils/deindent.js';
-import counter from '../utils/counter.js';
 
 // collect all the conditions and blocks in the if/elseif/else chain
 function generateBlock ( generator, node, name ) {
@@ -16,7 +15,7 @@ function generateBlock ( generator, node, name ) {
 		detachStatements: [],
 		teardownStatements: [],
 
-		counter: counter()
+		getUniqueName: generator.getUniqueNameMaker()
 	});
 	node.children.forEach( generator.visit );
 	generator.addRenderer( generator.current );
@@ -54,15 +53,13 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 
 export default {
 	enter ( generator, node ) {
-		const i = generator.counters.if++;
-
 		const { params } = generator.current;
-		const name = `ifBlock_${i}`;
-		const getBlock = `getBlock_${i}`;
-		const currentBlock = `currentBlock_${i}`;
+		const name = generator.getUniqueName( `ifBlock` );
+		const getBlock = generator.getUniqueName( `getBlock` );
+		const currentBlock = generator.getUniqueName( `currentBlock` );
 
 		const isToplevel = generator.current.localElementDepth === 0;
-		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, `renderIfBlock_${i}` );
+		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
 
 		const anchor = generator.createAnchor( name, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
