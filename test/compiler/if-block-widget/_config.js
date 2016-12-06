@@ -1,5 +1,4 @@
 export default {
-	skip: true,
 	data: {
 		visible: true
 	},
