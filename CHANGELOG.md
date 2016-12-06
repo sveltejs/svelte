@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 1.1.0
+
+* Separate fragment creation from `mount` ([#91](https://github.com/sveltejs/svelte/pull/91))
+* Trigger `onrender` hook at correct time for nested components ([#103](https://github.com/sveltejs/svelte/pull/103))
+* Fix keypath dynamic attributes in components ([#46](https://github.com/sveltejs/svelte/issues/46))
+* Implement `{{yield}}` ([#112](https://github.com/sveltejs/svelte/pull/112))
+* Optimise teardown ([#99](https://github.com/sveltejs/svelte/issues/99))
+* Require computed properties to have at least one dependency ([#115](https://github.com/sveltejs/svelte/pull/115))
+* Support `{{#each ...}}...{{else}}...{{/each}}` ([#90](https://github.com/sveltejs/svelte/issues/90))
+* Triple mustaches ([#35](https://github.com/sveltejs/svelte/issues/35))
+
 ## 1.0.7
 
 * Correctly escape HTML entities ([#85](https://github.com/sveltejs/svelte/issues/85))
