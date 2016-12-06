@@ -1,7 +1,4 @@
-// Hmm, another JSDOM quirk
 export default {
-	skip: true,
-
 	html: `
 		<svg>
 			<g>
