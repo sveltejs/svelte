@@ -11,6 +11,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
 * [gulp-svelte](https://github.com/shinnn/gulp-svelte) - gulp plugin
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
+* [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * More to come!
 
 
