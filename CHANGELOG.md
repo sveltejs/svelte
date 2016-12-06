@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.1.2
+
+* Deconflict variable names ([#88](https://github.com/sveltejs/svelte/issues/88), [#126](https://github.com/sveltejs/svelte/issues/126))
+
 ## 1.1.1
 
 * Support multiple SVG elements in a component ([#130](https://github.com/sveltejs/svelte/issues/130))
