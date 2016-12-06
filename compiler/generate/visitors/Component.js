@@ -106,9 +106,15 @@ export default {
 
 		if ( local.dynamicAttributes.length ) {
 			const updates = local.dynamicAttributes.map( attribute => {
-				return deindent`
-					if ( ${attribute.dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) ${name}_changes.${attribute.name} = ${attribute.value};
-				`;
+				if ( attribute.dependencies.length ) {
+					return deindent`
+						if ( ${attribute.dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) ${name}_changes.${attribute.name} = ${attribute.value};
+					`;
+				}
+
+				// TODO this is an odd situation to encounter – I *think* it should only happen with
+				// each block indices, in which case it may be possible to optimise this
+				return `${name}_changes.${attribute.name} = ${attribute.value};`;
 			});
 
 			local.update.push( deindent`
