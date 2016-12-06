@@ -74,9 +74,10 @@ export default function tag ( parser ) {
 	}
 
 	const attributes = [];
+	const uniqueNames = new Map();
 
 	let attribute;
-	while ( attribute = readAttribute( parser ) ) {
+	while ( attribute = readAttribute( parser, uniqueNames ) ) {
 		attributes.push( attribute );
 		parser.allowWhitespace();
 	}
@@ -133,11 +134,17 @@ function readTagName ( parser ) {
 	return name;
 }
 
-function readAttribute ( parser ) {
+function readAttribute ( parser, uniqueNames ) {
 	const start = parser.index;
 
 	const name = parser.readUntil( /(\s|=|\/|>)/ );
 	if ( !name ) return null;
+	if ( uniqueNames.has(name) ) {
+		parser.error( 'Attributes need to be unique', start );
+		return null;
+	}
+
+	uniqueNames.set(name, true);
 
 	parser.allowWhitespace();
 
