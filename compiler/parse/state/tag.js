@@ -141,7 +141,6 @@ function readAttribute ( parser, uniqueNames ) {
 	if ( !name ) return null;
 	if ( uniqueNames.has(name) ) {
 		parser.error( 'Attributes need to be unique', start );
-		return null;
 	}
 
 	uniqueNames.set(name, true);
