@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.1.1
+
+* Support multiple SVG elements in a component ([#130](https://github.com/sveltejs/svelte/issues/130))
+
 ## 1.1.0
 
 * Separate fragment creation from `mount` ([#91](https://github.com/sveltejs/svelte/pull/91))
