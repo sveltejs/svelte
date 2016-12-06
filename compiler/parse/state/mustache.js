@@ -112,7 +112,9 @@ export default function mustache ( parser ) {
 
 	else if ( parser.eat( 'else' ) ) {
 		const block = parser.current();
-		if ( block.type !== 'IfBlock' ) parser.error( 'Cannot have an {{else}} block outside an {{#if ...}} block' );
+		if ( block.type !== 'IfBlock' && block.type !== 'EachBlock' ) {
+			parser.error( 'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block' );
+		}
 
 		parser.allowWhitespace();
 		parser.eat( '}}', true );
