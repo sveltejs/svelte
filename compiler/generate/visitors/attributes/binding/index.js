@@ -17,7 +17,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		});
 	}
 
-	const handler = current.counter( `${local.name}ChangeHandler` );
+	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
 	let setter;
 
 	let eventName = 'change';

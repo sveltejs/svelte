@@ -1,12 +1,14 @@
-export default function counter () {
+export default function counter ( used ) {
 	const counts = {};
 
-	return function ( label ) {
-		if ( label in counts ) {
-			return `${label}${counts[ label ]++}`;
+	used.forEach( name => counts[ name ] = 1 );
+
+	return function ( name ) {
+		if ( name in counts ) {
+			return `${name}${counts[ name ]++}`;
 		}
 
-		counts[ label ] = 1;
-		return label;
+		counts[ name ] = 1;
+		return name;
 	};
 }

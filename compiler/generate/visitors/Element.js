@@ -9,7 +9,7 @@ export default {
 			return Component.enter( generator, node );
 		}
 
-		const name = generator.current.counter( node.name );
+		const name = generator.current.getUniqueName( node.name );
 
 		const local = {
 			name,
