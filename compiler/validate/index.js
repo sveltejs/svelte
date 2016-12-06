@@ -1,4 +1,5 @@
 import validateJs from './js/index.js';
+import validateHtml from './html/index.js';
 import { getLocator } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame.js';
 
@@ -39,16 +40,18 @@ export default function validate ( parsed, source, options ) {
 
 		templateProperties: {},
 
-		errors: [],
-		warnings: []
+		names: []
 	};
+
+	if ( parsed.html ) {
+		validateHtml( validator, parsed.html );
+	}
 
 	if ( parsed.js ) {
 		validateJs( validator, parsed.js );
 	}
 
 	return {
-		errors: validator.errors,
-		warnings: validator.warnings
+		names: validator.names
 	};
 }

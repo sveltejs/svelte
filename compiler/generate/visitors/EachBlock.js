@@ -1,14 +1,13 @@
 import deindent from '../utils/deindent.js';
-import counter from '../utils/counter.js';
 
 export default {
 	enter ( generator, node ) {
-		const i = generator.counters.each++;
-		const name = `eachBlock_${i}`;
+		const name = generator.getUniqueName( `eachBlock` );
+		const renderer = generator.getUniqueName( `renderEachBlock` );
 		const elseName = `${name}_else`;
 		const iterations = `${name}_iterations`;
-		const renderer = `renderEachBlock_${i}`;
 		const renderElse = `${renderer}_else`;
+		const i = generator.current.getUniqueName( `i` );
 		const { params } = generator.current;
 
 		const listName = `${name}_value`;
@@ -26,9 +25,9 @@ export default {
 			var ${iterations} = [];
 			${node.else ? `var ${elseName} = null;` : ''}
 
-			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
-				${iterations}[i] = ${renderer}( ${params}, ${listName}, ${listName}[i], i, component );
-				${!isToplevel ? `${iterations}[i].mount( ${anchor}.parentNode, ${anchor} );` : ''}
+			for ( var ${i} = 0; ${i} < ${name}_value.length; ${i} += 1 ) {
+				${iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, component );
+				${!isToplevel ? `${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );` : ''}
 			}
 		` );
 		if ( node.else ) {
@@ -42,8 +41,8 @@ export default {
 
 		if ( isToplevel ) {
 			generator.current.mountStatements.push( deindent`
-				for ( var i = 0; i < ${iterations}.length; i += 1 ) {
-					${iterations}[i].mount( ${anchor}.parentNode, ${anchor} );
+				for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+					${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 				}
 			` );
 			if ( node.else ) {
@@ -58,21 +57,22 @@ export default {
 		generator.current.updateStatements.push( deindent`
 			var ${name}_value = ${snippet};
 
-			for ( var i = 0; i < ${name}_value.length; i += 1 ) {
-				if ( !${iterations}[i] ) {
-					${iterations}[i] = ${renderer}( ${params}, ${listName}, ${listName}[i], i, component );
-					${iterations}[i].mount( ${anchor}.parentNode, ${anchor} );
+			for ( var ${i} = 0; ${i} < ${name}_value.length; ${i} += 1 ) {
+				if ( !${iterations}[${i}] ) {
+					${iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, component );
+					${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 				} else {
-					${iterations}[i].update( changed, ${params}, ${listName}, ${listName}[i], i );
+					${iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 				}
 			}
 
-			for ( var i = ${name}_value.length; i < ${iterations}.length; i += 1 ) {
-				${iterations}[i].teardown( true );
+			for ( var ${i} = ${name}_value.length; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${iterations}[${i}].teardown( true );
 			}
 
 			${iterations}.length = ${listName}.length;
 		` );
+
 		if ( node.else ) {
 			generator.current.updateStatements.push( deindent`
 				if ( !${name}_value.length && ${elseName} ) {
@@ -87,10 +87,11 @@ export default {
 		}
 
 		generator.current.teardownStatements.push( deindent`
-			for ( var i = 0; i < ${iterations}.length; i += 1 ) {
-				${iterations}[i].teardown( ${isToplevel ? 'detach' : 'false'} );
+			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${iterations}[${i}].teardown( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
+
 		if ( node.else ) {
 			generator.current.teardownStatements.push( deindent`
 				if ( ${elseName} ) {
@@ -112,7 +113,7 @@ export default {
 				detachStatements: [],
 				teardownStatements: [],
 
-				counter: counter()
+				getUniqueName: generator.getUniqueNameMaker()
 			});
 			node.else.children.forEach( generator.visit );
 			generator.addRenderer( generator.current );
@@ -163,9 +164,7 @@ export default {
 			detachStatements: [],
 			teardownStatements: [],
 
-			counter: counter(),
-
-			parent: generator.current
+			getUniqueName: generator.getUniqueNameMaker()
 		});
 	},
 

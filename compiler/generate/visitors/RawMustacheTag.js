@@ -2,7 +2,7 @@ import deindent from '../utils/deindent.js';
 
 export default {
 	enter ( generator, node ) {
-		const name = generator.current.counter( 'raw' );
+		const name = generator.current.getUniqueName( 'raw' );
 
 		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );
@@ -25,7 +25,7 @@ export default {
 			}
 		`;
 
-		if ( isToplevel ) { 
+		if ( isToplevel ) {
 			generator.current.mountStatements.push(mountStatement);
 		} else {
 			generator.current.initStatements.push(mountStatement);
