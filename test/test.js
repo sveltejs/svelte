@@ -23,9 +23,11 @@ const svelte = process.env.COVERAGE ?
 const cache = {};
 
 let showCompiledCode = false;
+let compileOptions = null;
 
 require.extensions[ '.html' ] = function ( module, filename ) {
-	const code = cache[ filename ] || ( cache[ filename ] = svelte.compile( fs.readFileSync( filename, 'utf-8' ) ).code );
+	const options = Object.assign({ filename }, compileOptions );
+	const code = cache[ filename ] || ( cache[ filename ] = svelte.compile( fs.readFileSync( filename, 'utf-8' ), options ).code );
 	if ( showCompiledCode ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 
 	return module._compile( code, filename );
@@ -250,6 +252,7 @@ describe( 'svelte', () => {
 				let compiled;
 
 				showCompiledCode = config.show;
+				compileOptions = config.compileOptions || {};
 
 				try {
 					const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );

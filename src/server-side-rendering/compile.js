@@ -8,7 +8,7 @@ import processCss from '../generate/css/process.js';
 
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
 
-export default function compile ( source, filename ) {
+export default function compile ( source, { filename }) {
 	const parsed = parse( source, {} );
 	validate( parsed, source, {} );
 
