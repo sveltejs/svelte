@@ -17,8 +17,8 @@ sourceMapSupport.install();
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
 const svelte = process.env.COVERAGE ?
-	require( '../compiler/index.js' ) :
-	require( '../dist/svelte.js' );
+	require( '../src/index.js' ) :
+	require( '../compiler/svelte.js' );
 
 const cache = {};
 
