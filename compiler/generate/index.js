@@ -256,7 +256,6 @@ export default function generate ( parsed, source, options, names ) {
 	}
 
 	generator.push({
-		useAnchor: false,
 		name: 'renderMainFragment',
 		namespace: null,
 		target: 'target',

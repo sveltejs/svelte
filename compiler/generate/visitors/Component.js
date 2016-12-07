@@ -36,7 +36,6 @@ export default {
 
 			// {{YIELD STUFF}}
 			generator.push({
-				useAnchor: true,
 				name: yieldName,
 				target: 'target',
 				localElementDepth: 0,

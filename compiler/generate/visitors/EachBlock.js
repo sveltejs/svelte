@@ -102,7 +102,6 @@ export default {
 
 		if ( node.else ) {
 			generator.push({
-				useAnchor: false,
 				name: renderElse,
 				target: 'target',
 				localElementDepth: 0,
@@ -138,7 +137,6 @@ export default {
 		const blockParams = generator.current.params + `, ${listName}, ${node.context}, ${indexName}`;
 
 		generator.push({
-			useAnchor: false,
 			name: renderer,
 			target: 'target',
 			expression: node.expression,

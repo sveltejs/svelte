@@ -4,7 +4,6 @@ import deindent from '../utils/deindent.js';
 function generateBlock ( generator, node, name ) {
 	// walk the children here
 	generator.push({
-		useAnchor: true,
 		name,
 		target: 'target',
 		localElementDepth: 0,
