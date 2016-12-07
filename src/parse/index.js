@@ -25,6 +25,8 @@ export default function parse ( template ) {
 		throw new TypeError( 'Template must be a string' );
 	}
 
+	template = template.replace( /\s+$/, '' );
+
 	const parser = {
 		index: 0,
 		template,
