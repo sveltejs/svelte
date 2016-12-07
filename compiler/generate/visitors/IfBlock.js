@@ -1,28 +1,5 @@
 import deindent from '../utils/deindent.js';
 
-// collect all the conditions and blocks in the if/elseif/else chain
-function generateBlock ( generator, node, name ) {
-	// walk the children here
-	generator.push({
-		name,
-		target: 'target',
-		localElementDepth: 0,
-
-		initStatements: [],
-		mountStatements: [],
-		updateStatements: [],
-		detachStatements: [],
-		teardownStatements: [],
-
-		getUniqueName: generator.getUniqueNameMaker()
-	});
-	node.children.forEach( generator.visit );
-	generator.addRenderer( generator.current );
-	generator.pop();
-	// unset the children, to avoid them being visited again
-	node.children = [];
-}
-
 function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
 	const name = `${_name}_${i}`;
@@ -31,7 +8,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		condition: generator.contextualise( node.expression ).snippet,
 		block: name
 	}];
-	generateBlock( generator, node, name );
+	generator.generateBlock( node, name );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
@@ -44,7 +21,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 			block: node.else ? name : null,
 		});
 		if (node.else) {
-			generateBlock( generator, node.else, name );
+			generator.generateBlock( node.else, name );
 		}
 	}
 	return conditionsAndBlocks;

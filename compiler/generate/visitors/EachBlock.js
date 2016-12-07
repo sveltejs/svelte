@@ -101,22 +101,7 @@ export default {
 		}
 
 		if ( node.else ) {
-			generator.push({
-				name: renderElse,
-				target: 'target',
-				localElementDepth: 0,
-
-				initStatements: [],
-				mountStatements: [],
-				updateStatements: [],
-				detachStatements: [],
-				teardownStatements: [],
-
-				getUniqueName: generator.getUniqueNameMaker()
-			});
-			node.else.children.forEach( generator.visit );
-			generator.addRenderer( generator.current );
-			generator.pop();
+			generator.generateBlock( node.else, renderElse );
 		}
 
 		const indexNames = Object.assign( {}, generator.current.indexNames );
