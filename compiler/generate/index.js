@@ -433,6 +433,8 @@ export default function generate ( parsed, source, options, names ) {
 
 	topLevelStatements.push( deindent`
 		function ${constructorName} ( options ) {
+			options = options || {};
+
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
 			var state = ${initialState};${templateProperties.computed ? `\napplyComputations( state, state, {} );` : ``}
 
