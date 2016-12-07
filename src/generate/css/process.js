@@ -1,4 +1,4 @@
-import deindent from '../utils/deindent.js';
+import deindent from '../../utils/deindent.js';
 import spaces from '../../utils/spaces.js';
 import transform from './transform.js';
 

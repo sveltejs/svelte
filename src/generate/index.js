@@ -1,9 +1,9 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
-import deindent from './utils/deindent.js';
-import isReference from './utils/isReference.js';
+import deindent from '../utils/deindent.js';
+import isReference from '../utils/isReference.js';
 import counter from './utils/counter.js';
-import flattenReference from './utils/flattenReference.js';
+import flattenReference from '../utils/flattenReference.js';
 import getIntro from './utils/getIntro.js';
 import getOutro from './utils/getOutro.js';
 import visitors from './visitors/index.js';
