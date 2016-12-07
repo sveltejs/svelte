@@ -1,5 +1,5 @@
-import deindent from '../compiler/generate/utils/deindent.js';
-import spaces from '../compiler/utils/spaces.js';
+import deindent from '../src/utils/deindent.js';
+import spaces from '../src/utils/spaces.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -17,8 +17,8 @@ sourceMapSupport.install();
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
 const svelte = process.env.COVERAGE ?
-	require( '../compiler/index.js' ) :
-	require( '../dist/svelte.js' );
+	require( '../src/index.js' ) :
+	require( '../compiler/svelte.js' );
 
 const cache = {};
 
@@ -60,6 +60,15 @@ function addLineNumbers ( code ) {
 
 		return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
 	}).join( '\n' );
+}
+
+function tryToLoadJson ( file ) {
+	try {
+		return JSON.parse( fs.readFileSync( file ) );
+	} catch ( err ) {
+		if ( err.code !== 'ENOENT' ) throw err;
+		return null;
+	}
 }
 
 describe( 'svelte', () => {
@@ -154,15 +163,6 @@ describe( 'svelte', () => {
 	});
 
 	describe( 'validate', () => {
-		function tryToLoadJson ( file ) {
-			try {
-				return JSON.parse( fs.readFileSync( file ) );
-			} catch ( err ) {
-				if ( err.code !== 'ENOENT' ) throw err;
-				return null;
-			}
-		}
-
 		fs.readdirSync( 'test/validator' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
 
@@ -222,7 +222,7 @@ describe( 'svelte', () => {
 	describe( 'generate', () => {
 		function loadConfig ( dir ) {
 			try {
-				return require( `./compiler/${dir}/_config.js` ).default;
+				return require( `./generator/${dir}/_config.js` ).default;
 			} catch ( err ) {
 				if ( err.code === 'E_NOT_FOUND' ) {
 					return {};
@@ -232,7 +232,7 @@ describe( 'svelte', () => {
 			}
 		}
 
-		fs.readdirSync( 'test/compiler' ).forEach( dir => {
+		fs.readdirSync( 'test/generator' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
 
 			const config = loadConfig( dir );
@@ -243,7 +243,7 @@ describe( 'svelte', () => {
 				showCompiledCode = config.show;
 
 				try {
-					const source = fs.readFileSync( `test/compiler/${dir}/main.html`, 'utf-8' );
+					const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
 					compiled = svelte.compile( source );
 				} catch ( err ) {
 					if ( config.compileError ) {
@@ -266,12 +266,12 @@ describe( 'svelte', () => {
 					throw err;
 				}
 
-				cache[ path.resolve( `test/compiler/${dir}/main.html` ) ] = code;
+				cache[ path.resolve( `test/generator/${dir}/main.html` ) ] = code;
 
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require( `./compiler/${dir}/main.html` ).default;
+					SvelteComponent = require( `./generator/${dir}/main.html` ).default;
 				} catch ( err ) {
 					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 					throw err;
@@ -502,6 +502,31 @@ describe( 'svelte', () => {
 				const locateInGenerated = getLocator( code );
 
 				test({ assert, code, map, smc, locateInSource, locateInGenerated });
+			});
+		});
+	});
+
+	describe( 'ssr', () => {
+		before( () => {
+			require( '../ssr/register' );
+		});
+
+		fs.readdirSync( 'test/server-side-rendering' ).forEach( dir => {
+			if ( dir[0] === '.' ) return;
+
+			const solo = exists( `test/server-side-rendering/${dir}/solo` );
+
+			( solo ? it.only : it )( dir, () => {
+				const component = require( `./server-side-rendering/${dir}/main.html` );
+
+				const expected = fs.readFileSync( `test/server-side-rendering/${dir}/_expected.html`, 'utf-8' );
+
+				const data = tryToLoadJson( `test/server-side-rendering/${dir}/data.json` );
+				const actual = component.render( data );
+
+				fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.html`, actual );
+
+				assert.htmlEqual( actual, expected );
 			});
 		});
 	});

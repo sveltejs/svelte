@@ -1,0 +1,15 @@
+<p>{{thrice(foo)}}</p>
+
+<script>
+	export default {
+		data () {
+			return {
+				foo: 1
+			}
+		},
+
+		helpers: {
+			thrice: num => 3 * num
+		}
+	};
+</script>

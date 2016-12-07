@@ -1,6 +1,9 @@
 .DS_Store
 node_modules
-dist
+compiler
+ssr
+!test/compiler
+!test/ssr
 .nyc_output
 coverage
 coverage.lcov
