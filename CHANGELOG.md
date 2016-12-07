@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.2.0
+
+* Server-side rendering of HTML ([#148](https://github.com/sveltejs/svelte/pull/148)) and CSS ([#154](https://github.com/sveltejs/svelte/pull/154))
+
 ## 1.1.3
 
 * Handle `xmlns` attributes correctly ([#142](https://github.com/sveltejs/svelte/issues/142))
