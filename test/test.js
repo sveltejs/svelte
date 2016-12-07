@@ -279,6 +279,9 @@ describe( 'svelte', () => {
 
 				return env()
 					.then( window => {
+						// Put the constructor on window for testing
+						window.SvelteComponent = SvelteComponent;
+
 						const target = window.document.querySelector( 'main' );
 
 						const component = new SvelteComponent({
