@@ -12,6 +12,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [gulp-svelte](https://github.com/shinnn/gulp-svelte) - gulp plugin
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
+* [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
 * More to come!
 
 
