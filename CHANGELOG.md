@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.1.3
+
+* Handle `xmlns` attributes correctly ([#142](https://github.com/sveltejs/svelte/issues/142))
+* Error on duplicate `<style>`/`<script>` tags rather than failing silently ([#142](https://github.com/sveltejs/svelte/issues/142))
+* Don't create whitespace text nodes inside SVG elements ([#142](https://github.com/sveltejs/svelte/issues/142))
+* Require void elements to be lowercase, to eliminate confusion with components ([#137](https://github.com/sveltejs/svelte/issues/137))
+
 ## 1.1.2
 
 * Deconflict variable names ([#88](https://github.com/sveltejs/svelte/issues/88), [#126](https://github.com/sveltejs/svelte/issues/126))
