@@ -1,5 +1,5 @@
-import deindent from '../compiler/generate/utils/deindent.js';
-import spaces from '../compiler/utils/spaces.js';
+import deindent from '../src/utils/deindent.js';
+import spaces from '../src/utils/spaces.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';

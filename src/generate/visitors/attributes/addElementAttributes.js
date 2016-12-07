@@ -1,6 +1,6 @@
 import attributeLookup from './lookup.js';
 import createBinding from './binding/index.js';
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
 
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {

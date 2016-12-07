@@ -1,6 +1,6 @@
-import deindent from '../../../utils/deindent.js';
-import isReference from '../../../utils/isReference.js';
-import flattenReference from '../../../utils/flattenReference.js';
+import deindent from '../../../../utils/deindent.js';
+import isReference from '../../../../utils/isReference.js';
+import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function createBinding ( generator, node, attribute, current, local ) {
 	const parts = attribute.value.split( '.' );

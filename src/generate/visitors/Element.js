@@ -1,4 +1,4 @@
-import deindent from '../utils/deindent.js';
+import deindent from '../../utils/deindent.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
 import Component from './Component.js';
 

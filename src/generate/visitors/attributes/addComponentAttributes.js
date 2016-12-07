@@ -1,5 +1,5 @@
 import createBinding from './binding/index.js';
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
 
 export default function addComponentAttributes ( generator, node, local ) {
 	local.staticAttributes = [];
