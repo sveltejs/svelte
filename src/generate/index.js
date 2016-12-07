@@ -392,7 +392,7 @@ export default function generate ( parsed, source, options, names ) {
 		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
-	if ( parsed.css ) {
+	if ( parsed.css && options.css !== false ) {
 		topLevelStatements.push( deindent`
 			let addedCss = false;
 			function addCss () {
@@ -411,7 +411,7 @@ export default function generate ( parsed, source, options, names ) {
 
 	const initStatements = [];
 
-	if ( parsed.css ) {
+	if ( parsed.css && options.css !== false ) {
 		initStatements.push( `if ( !addedCss ) addCss();` );
 	}
 
