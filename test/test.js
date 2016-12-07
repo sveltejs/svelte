@@ -62,6 +62,15 @@ function addLineNumbers ( code ) {
 	}).join( '\n' );
 }
 
+function tryToLoadJson ( file ) {
+	try {
+		return JSON.parse( fs.readFileSync( file ) );
+	} catch ( err ) {
+		if ( err.code !== 'ENOENT' ) throw err;
+		return null;
+	}
+}
+
 describe( 'svelte', () => {
 	before( () => {
 		function cleanChildren ( node ) {
@@ -154,15 +163,6 @@ describe( 'svelte', () => {
 	});
 
 	describe( 'validate', () => {
-		function tryToLoadJson ( file ) {
-			try {
-				return JSON.parse( fs.readFileSync( file ) );
-			} catch ( err ) {
-				if ( err.code !== 'ENOENT' ) throw err;
-				return null;
-			}
-		}
-
 		fs.readdirSync( 'test/validator' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
 
@@ -502,6 +502,31 @@ describe( 'svelte', () => {
 				const locateInGenerated = getLocator( code );
 
 				test({ assert, code, map, smc, locateInSource, locateInGenerated });
+			});
+		});
+	});
+
+	describe( 'ssr', () => {
+		before( () => {
+			require( '../ssr/register' );
+		});
+
+		fs.readdirSync( 'test/ssr' ).forEach( dir => {
+			if ( dir[0] === '.' ) return;
+
+			const solo = exists( `test/ssr/${dir}/solo` );
+
+			( solo ? it.only : it )( dir, () => {
+				const component = require( `./ssr/${dir}/main.html` );
+
+				const expected = fs.readFileSync( `test/ssr/${dir}/_expected.html`, 'utf-8' );
+
+				const data = tryToLoadJson( `test/ssr/${dir}/data.json` );
+				const actual = component.render( data );
+
+				fs.writeFileSync( `test/ssr/${dir}/_actual.html`, actual );
+
+				assert.htmlEqual( actual, expected );
 			});
 		});
 	});
