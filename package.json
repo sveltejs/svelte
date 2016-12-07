@@ -14,7 +14,7 @@
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov",
     "codecov": "codecov",
     "precodecov": "npm run coverage",
-    "lint": "eslint compiler",
+    "lint": "eslint src",
     "build": "npm run build:main && npm run build:ssr",
     "build:main": "rollup -c rollup.config.main.js",
     "build:ssr": "rollup -c rollup.config.ssr.js",
