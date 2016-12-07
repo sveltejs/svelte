@@ -52,6 +52,28 @@ export default function generate ( parsed, source, options, names ) {
 			return name;
 		},
 
+		generateBlock ( node, name ) {
+			generator.push({
+				name,
+				target: 'target',
+				localElementDepth: 0,
+
+				initStatements: [],
+				mountStatements: [],
+				updateStatements: [],
+				detachStatements: [],
+				teardownStatements: [],
+
+				getUniqueName: generator.getUniqueNameMaker()
+			});
+			// walk the children here
+			node.children.forEach( generator.visit );
+			generator.addRenderer( generator.current );
+			generator.pop();
+			// unset the children, to avoid them being visited again
+			node.children = [];
+		},
+
 		addRenderer ( fragment ) {
 			if ( fragment.autofocus ) {
 				fragment.initStatements.push( `${fragment.autofocus}.focus();` );

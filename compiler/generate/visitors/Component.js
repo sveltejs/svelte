@@ -30,31 +30,12 @@ export default {
 			`target: ${!isToplevel ? generator.current.target: 'null'}`,
 			'root: component.root || component'
 		];
-		// Component has children
+
+		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
 			const yieldName = generator.current.getUniqueName( `render${name}YieldFragment` );
 
-			// {{YIELD STUFF}}
-			generator.push({
-				name: yieldName,
-				target: 'target',
-				localElementDepth: 0,
-
-				initStatements: [],
-				mountStatements: [],
-				updateStatements: [],
-				detachStatements: [],
-				teardownStatements: [],
-
-				getUniqueName: generator.getUniqueNameMaker()
-			});
-
-			node.children.forEach( generator.visit );
-			generator.addRenderer( generator.current );
-			generator.pop();
-
-			// Don't render children twice
-			node.children = [];
+			generator.generateBlock( node, yieldName );
 
 			generator.current.initStatements.push(`var ${name}_yieldFragment = ${yieldName}( root, component );`);
 			generator.current.updateStatements.push(`${name}_yieldFragment.update ( changed, root );`);
