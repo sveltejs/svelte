@@ -132,6 +132,75 @@ function flatten ( node ) {
 	return { name, keypath: parts.join( '.' ) };
 }
 
+function spaces ( i ) {
+	let result = '';
+	while ( i-- ) result += ' ';
+	return result;
+}
+
+// largely borrowed from Ractive – https://github.com/ractivejs/ractive/blob/2ec648aaf5296bb88c21812e947e0e42fcc456e3/src/Ractive/config/custom/css/transform.js
+const selectorsPattern = /(?:^|\})?\s*([^\{\}]+)\s*\{/g;
+const commentsPattern = /\/\*.*?\*\//g;
+const selectorUnitPattern = /((?:(?:\[[^\]+]\])|(?:[^\s\+\>~:]))+)((?:::?[^\s\+\>\~\(:]+(?:\([^\)]+\))?)*\s*[\s\+\>\~]?)\s*/g;
+const excludePattern = /^(?:@|\d+%)/;
+
+function transformSelector ( selector, parent ) {
+	const selectorUnits = [];
+	let match;
+
+	while ( match = selectorUnitPattern.exec( selector ) ) {
+		selectorUnits.push({
+			str: match[0],
+			base: match[1],
+			modifiers: match[2]
+		});
+	}
+
+	// For each simple selector within the selector, we need to create a version
+	// that a) combines with the id, and b) is inside the id
+	const base = selectorUnits.map( unit => unit.str );
+
+	const transformed = [];
+	let i = selectorUnits.length;
+
+	while ( i-- ) {
+		const appended = base.slice();
+
+		// Pseudo-selectors should go after the attribute selector
+		const unit = selectorUnits[i];
+		appended[i] = unit.base + parent + unit.modifiers || '';
+
+		const prepended = base.slice();
+		prepended[i] = parent + ' ' + prepended[i];
+
+		transformed.push( appended.join( ' ' ), prepended.join( ' ' ) );
+	}
+
+	return transformed.join( ', ' );
+}
+
+function transformCss ( css, hash ) {
+	const attr = `[svelte-${hash}]`;
+
+	return css
+		.replace( commentsPattern, '' )
+		.replace( selectorsPattern, ( match, $1 ) => {
+			// don't transform at-rules and keyframe declarations
+			if ( excludePattern.test( $1 ) ) return match;
+
+			const selectors = $1.split( ',' ).map( selector => selector.trim() );
+			const transformed = selectors
+				.map( selector => transformSelector( selector, attr ) )
+				.join( ', ' ) + ' ';
+
+			return match.replace( $1, transformed );
+		});
+}
+
+function process ( parsed ) {
+	return transformCss( spaces( parsed.css.content.start ) + parsed.css.content.styles, parsed.hash );
+}
+
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
 
 function compile ( source, filename ) {
@@ -240,6 +309,8 @@ function compile ( source, filename ) {
 		};
 	}
 
+	let elementDepth = 0;
+
 	const stringifiers = {
 		Component ( node ) {
 			const props = node.attributes.map( attribute => {
@@ -314,12 +385,18 @@ function compile ( source, filename ) {
 				element += str;
 			});
 
+			if ( parsed.css && elementDepth === 0 ) {
+				element += ` svelte-${parsed.hash}`;
+			}
+
 			if ( voidElementNames.test( node.name ) ) {
 				element += '>';
 			} else if ( node.children.length === 0 ) {
 				element += '/>';
 			} else {
+				elementDepth += 1;
 				element += '>' + node.children.map( stringify ).join( '' ) + `</${node.name}>`;
+				elementDepth -= 1;
 			}
 
 			return element;
@@ -405,10 +482,6 @@ function compile ( source, filename ) {
 		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
-	if ( parsed.css ) {
-		throw new Error( 'TODO handle css' );
-	}
-
 	const renderStatements = [
 		templateProperties.data ? `data = Object.assign( template.data(), data || {} );` : `data = data || {};`
 	];
@@ -452,9 +525,54 @@ function compile ( source, filename ) {
 		`return rendered;`
 	);
 
+	const renderCssStatements = [
+		`var components = [];`
+	];
+
+	if ( parsed.css ) {
+		renderCssStatements.push( deindent`
+			components.push({
+				filename: exports.filename,
+				css: ${JSON.stringify( process( parsed ) )},
+				map: null // TODO
+			});
+		` );
+	}
+
+	if ( templateProperties.components ) {
+		renderCssStatements.push( deindent`
+			var seen = {};
+
+			function addComponent ( component ) {
+				var result = component.renderCss();
+				result.components.forEach( x => {
+					if ( seen[ x.filename ] ) return;
+					seen[ x.filename ] = true;
+					components.push( x );
+				});
+			}
+		` );
+
+		renderCssStatements.push( templateProperties.components.properties.map( prop => `addComponent( template.components.${prop.key.name} );` ).join( '\n' ) );
+	}
+
+	renderCssStatements.push( deindent`
+		return {
+			css: components.map( x => x.css ).join( '\\n' ),
+			map: null,
+			components
+		};
+	` );
+
 	topLevelStatements.push( deindent`
+		exports.filename = ${JSON.stringify( filename )};
+
 		exports.render = function ( data, options ) {
 			${renderStatements.join( '\n\n' )}
+		};
+
+		exports.renderCss = function () {
+			${renderCssStatements.join( '\n\n' )}
 		};
 	` );
 
@@ -496,6 +614,12 @@ function compile ( source, filename ) {
 
 require.extensions[ '.html' ] = function ( module, filename ) {
 	const { code } = compile( fs.readFileSync( filename, 'utf-8' ) );
-	return module._compile( code, filename );
+
+	try {
+		return module._compile( code, filename );
+	} catch ( err ) {
+		console.log( code );
+		throw err;
+	}
 };
 //# sourceMappingURL=register.js.map
