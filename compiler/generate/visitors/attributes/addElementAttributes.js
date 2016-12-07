@@ -52,7 +52,11 @@ export default function addElementAttributes ( generator, node, local ) {
 					// static attributes
 					result = JSON.stringify( value.data );
 
-					if ( propertyName ) {
+					if ( attribute.name === 'xmlns' ) {
+						// special case
+						// TODO this attribute must be static – enforce at compile time
+						local.namespace = value.data;
+					} else if ( propertyName ) {
 						local.init.push( deindent`
 							${local.name}.${propertyName} = ${result};
 						` );
@@ -60,12 +64,6 @@ export default function addElementAttributes ( generator, node, local ) {
 						local.init.push( deindent`
 							${local.name}.setAttribute( '${attribute.name}', ${result} );
 						` );
-					}
-
-					// special case
-					// TODO this attribute must be static – enforce at compile time
-					if ( attribute.name === 'xmlns' ) {
-						local.namespace = value;
 					}
 				}
 
