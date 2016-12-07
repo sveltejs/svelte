@@ -88,7 +88,7 @@ export default function tag ( parser ) {
 	if ( name in specials ) {
 		const special = specials[ name ];
 
-		if ( parser[ special.id ] ) {
+		if ( parser[ special.property ] ) {
 			parser.index = start;
 			parser.error( `You can only have one <${name}> tag per component` );
 		}
