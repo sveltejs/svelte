@@ -393,7 +393,16 @@ export default function generate ( parsed, source, options, names ) {
 	}
 
 	if ( parsed.css ) {
-		topLevelStatements.push( processCss( parsed ) );
+		topLevelStatements.push( deindent`
+			let addedCss = false;
+			function addCss () {
+				var style = document.createElement( 'style' );
+				style.textContent = ${JSON.stringify( processCss( parsed ) )};
+				document.head.appendChild( style );
+
+				addedCss = true;
+			}
+		` );
 	}
 
 	topLevelStatements.push( ...renderers.reverse() );

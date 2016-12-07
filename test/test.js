@@ -71,6 +71,15 @@ function tryToLoadJson ( file ) {
 	}
 }
 
+function tryToReadFile ( file ) {
+	try {
+		return fs.readFileSync( file, 'utf-8' );
+	} catch ( err ) {
+		if ( err.code !== 'ENOENT' ) throw err;
+		return null;
+	}
+}
+
 describe( 'svelte', () => {
 	before( () => {
 		function cleanChildren ( node ) {
@@ -519,14 +528,18 @@ describe( 'svelte', () => {
 			( solo ? it.only : it )( dir, () => {
 				const component = require( `./server-side-rendering/${dir}/main.html` );
 
-				const expected = fs.readFileSync( `test/server-side-rendering/${dir}/_expected.html`, 'utf-8' );
+				const expectedHtml = tryToReadFile( `test/server-side-rendering/${dir}/_expected.html` );
+				const expectedCss = tryToReadFile( `test/server-side-rendering/${dir}/_expected.css` ) || '';
 
 				const data = tryToLoadJson( `test/server-side-rendering/${dir}/data.json` );
-				const actual = component.render( data );
+				const html = component.render( data );
+				const { css } = component.renderCss();
 
-				fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.html`, actual );
+				fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.html`, html );
+				if ( css ) fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.css`, css );
 
-				assert.htmlEqual( actual, expected );
+				assert.htmlEqual( html, expectedHtml );
+				assert.equal( css.replace( /^\s+/gm, '' ), expectedCss.replace( /^\s+/gm, '' ) );
 			});
 		});
 	});
