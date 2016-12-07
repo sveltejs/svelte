@@ -4,10 +4,11 @@ import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
 import flattenReference from '../utils/flattenReference.js';
 import MagicString, { Bundle } from 'magic-string';
+import processCss from '../generate/css/process.js';
 
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
 
-export default function compile ( source, filename ) {
+export default function compile ( source, { filename }) {
 	const parsed = parse( source, {} );
 	validate( parsed, source, {} );
 
@@ -113,6 +114,8 @@ export default function compile ( source, filename ) {
 		};
 	}
 
+	let elementDepth = 0;
+
 	const stringifiers = {
 		Component ( node ) {
 			const props = node.attributes.map( attribute => {
@@ -187,12 +190,18 @@ export default function compile ( source, filename ) {
 				element += str;
 			});
 
+			if ( parsed.css && elementDepth === 0 ) {
+				element += ` svelte-${parsed.hash}`;
+			}
+
 			if ( voidElementNames.test( node.name ) ) {
 				element += '>';
 			} else if ( node.children.length === 0 ) {
 				element += '/>';
 			} else {
+				elementDepth += 1;
 				element += '>' + node.children.map( stringify ).join( '' ) + `</${node.name}>`;
+				elementDepth -= 1;
 			}
 
 			return element;
@@ -278,10 +287,6 @@ export default function compile ( source, filename ) {
 		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
-	if ( parsed.css ) {
-		throw new Error( 'TODO handle css' );
-	}
-
 	const renderStatements = [
 		templateProperties.data ? `data = Object.assign( template.data(), data || {} );` : `data = data || {};`
 	];
@@ -325,9 +330,54 @@ export default function compile ( source, filename ) {
 		`return rendered;`
 	);
 
+	const renderCssStatements = [
+		`var components = [];`
+	];
+
+	if ( parsed.css ) {
+		renderCssStatements.push( deindent`
+			components.push({
+				filename: exports.filename,
+				css: ${JSON.stringify( processCss( parsed ) )},
+				map: null // TODO
+			});
+		` );
+	}
+
+	if ( templateProperties.components ) {
+		renderCssStatements.push( deindent`
+			var seen = {};
+
+			function addComponent ( component ) {
+				var result = component.renderCss();
+				result.components.forEach( x => {
+					if ( seen[ x.filename ] ) return;
+					seen[ x.filename ] = true;
+					components.push( x );
+				});
+			}
+		` );
+
+		renderCssStatements.push( templateProperties.components.properties.map( prop => `addComponent( template.components.${prop.key.name} );` ).join( '\n' ) );
+	}
+
+	renderCssStatements.push( deindent`
+		return {
+			css: components.map( x => x.css ).join( '\\n' ),
+			map: null,
+			components
+		};
+	` );
+
 	topLevelStatements.push( deindent`
+		exports.filename = ${JSON.stringify( filename )};
+
 		exports.render = function ( data, options ) {
 			${renderStatements.join( '\n\n' )}
+		};
+
+		exports.renderCss = function () {
+			${renderCssStatements.join( '\n\n' )}
 		};
 	` );
 

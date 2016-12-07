@@ -392,8 +392,17 @@ export default function generate ( parsed, source, options, names ) {
 		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
-	if ( parsed.css ) {
-		topLevelStatements.push( processCss( parsed ) );
+	if ( parsed.css && options.css !== false ) {
+		topLevelStatements.push( deindent`
+			let addedCss = false;
+			function addCss () {
+				var style = document.createElement( 'style' );
+				style.textContent = ${JSON.stringify( processCss( parsed ) )};
+				document.head.appendChild( style );
+
+				addedCss = true;
+			}
+		` );
 	}
 
 	topLevelStatements.push( ...renderers.reverse() );
@@ -402,7 +411,7 @@ export default function generate ( parsed, source, options, names ) {
 
 	const initStatements = [];
 
-	if ( parsed.css ) {
+	if ( parsed.css && options.css !== false ) {
 		initStatements.push( `if ( !addedCss ) addCss();` );
 	}
 

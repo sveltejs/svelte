@@ -1,0 +1,16 @@
+<div>green: {{message}}</div>
+<Two message='{{message}}'/>
+
+<style>
+	div {
+		color: green;
+	}
+</style>
+
+<script>
+	import Two from './Two.html';
+
+	export default {
+		components: { Two }
+	};
+</script>
