@@ -2,6 +2,8 @@
 node_modules
 compiler
 ssr
+!test/compiler
+!test/ssr
 .nyc_output
 coverage
 coverage.lcov

@@ -222,7 +222,7 @@ describe( 'svelte', () => {
 	describe( 'generate', () => {
 		function loadConfig ( dir ) {
 			try {
-				return require( `./compiler/${dir}/_config.js` ).default;
+				return require( `./generator/${dir}/_config.js` ).default;
 			} catch ( err ) {
 				if ( err.code === 'E_NOT_FOUND' ) {
 					return {};
@@ -232,7 +232,7 @@ describe( 'svelte', () => {
 			}
 		}
 
-		fs.readdirSync( 'test/compiler' ).forEach( dir => {
+		fs.readdirSync( 'test/generator' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
 
 			const config = loadConfig( dir );
@@ -243,7 +243,7 @@ describe( 'svelte', () => {
 				showCompiledCode = config.show;
 
 				try {
-					const source = fs.readFileSync( `test/compiler/${dir}/main.html`, 'utf-8' );
+					const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
 					compiled = svelte.compile( source );
 				} catch ( err ) {
 					if ( config.compileError ) {
@@ -266,12 +266,12 @@ describe( 'svelte', () => {
 					throw err;
 				}
 
-				cache[ path.resolve( `test/compiler/${dir}/main.html` ) ] = code;
+				cache[ path.resolve( `test/generator/${dir}/main.html` ) ] = code;
 
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require( `./compiler/${dir}/main.html` ).default;
+					SvelteComponent = require( `./generator/${dir}/main.html` ).default;
 				} catch ( err ) {
 					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 					throw err;
@@ -511,20 +511,20 @@ describe( 'svelte', () => {
 			require( '../ssr/register' );
 		});
 
-		fs.readdirSync( 'test/ssr' ).forEach( dir => {
+		fs.readdirSync( 'test/server-side-rendering' ).forEach( dir => {
 			if ( dir[0] === '.' ) return;
 
-			const solo = exists( `test/ssr/${dir}/solo` );
+			const solo = exists( `test/server-side-rendering/${dir}/solo` );
 
 			( solo ? it.only : it )( dir, () => {
-				const component = require( `./ssr/${dir}/main.html` );
+				const component = require( `./server-side-rendering/${dir}/main.html` );
 
-				const expected = fs.readFileSync( `test/ssr/${dir}/_expected.html`, 'utf-8' );
+				const expected = fs.readFileSync( `test/server-side-rendering/${dir}/_expected.html`, 'utf-8' );
 
-				const data = tryToLoadJson( `test/ssr/${dir}/data.json` );
+				const data = tryToLoadJson( `test/server-side-rendering/${dir}/data.json` );
 				const actual = component.render( data );
 
-				fs.writeFileSync( `test/ssr/${dir}/_actual.html`, actual );
+				fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.html`, actual );
 
 				assert.htmlEqual( actual, expected );
 			});

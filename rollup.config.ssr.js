@@ -2,7 +2,7 @@ import nodeResolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 
 export default {
-	entry: 'src/ssr/register.js',
+	entry: 'src/server-side-rendering/register.js',
 	moduleName: 'svelte',
 	targets: [
 		{ dest: 'ssr/register.js', format: 'cjs' }
@@ -13,7 +13,7 @@ export default {
 	],
 	external: [ 'svelte', 'magic-string' ],
 	paths: {
-		svelte: '../dist/svelte.js'
+		svelte: '../compiler/svelte.js'
 	},
 	sourceMap: true
 };

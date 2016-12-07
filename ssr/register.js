@@ -3,7 +3,7 @@
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var fs = require('fs');
-var ___dist_svelte_js = require('../dist/svelte.js');
+var ___compiler_svelte_js = require('../compiler/svelte.js');
 var MagicString = require('magic-string');
 var MagicString__default = _interopDefault(MagicString);
 
@@ -135,8 +135,8 @@ function flatten ( node ) {
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
 
 function compile ( source, filename ) {
-	const parsed = ___dist_svelte_js.parse( source, {} );
-	___dist_svelte_js.validate( parsed, source, {} );
+	const parsed = ___compiler_svelte_js.parse( source, {} );
+	___compiler_svelte_js.validate( parsed, source, {} );
 
 	const code = new MagicString__default( source );
 
