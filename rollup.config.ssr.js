@@ -1,3 +1,4 @@
+import * as path from 'path';
 import nodeResolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 
@@ -11,9 +12,9 @@ export default {
 		nodeResolve({ jsnext: true, module: true }),
 		commonjs()
 	],
-	external: [ 'src/index.js', 'magic-string' ],
+	external: [ path.resolve( 'src/index.js' ), 'magic-string' ],
 	paths: {
-		'src/index.js': '../compiler/svelte.js'
+		[ path.resolve( 'src/index.js' ) ]: '../compiler/svelte.js'
 	},
 	sourceMap: true
 };
