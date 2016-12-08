@@ -1,0 +1,20 @@
+<p>{{scale(x)}}</p>
+
+<script>
+	export default {
+		data: () => ({
+			x: 5,
+			domain: [ 0, 10 ],
+			range: [ 0, 100 ]
+		}),
+
+		computed: {
+			scale: ( domain, range ) => {
+				return num => {
+					const t = domain[0] + ( num - domain[0] ) / ( domain[1] - domain[0] );
+					return range[0] + t * ( range[1] - range[0] );
+				}
+			}
+		}
+	};
+</script>
