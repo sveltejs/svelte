@@ -11,9 +11,9 @@ export default {
 		nodeResolve({ jsnext: true, module: true }),
 		commonjs()
 	],
-	external: [ 'svelte', 'magic-string' ],
+	external: [ 'src/index.js', 'magic-string' ],
 	paths: {
-		svelte: '../compiler/svelte.js'
+		'src/index.js': '../compiler/svelte.js'
 	},
 	sourceMap: true
 };
