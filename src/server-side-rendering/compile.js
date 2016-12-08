@@ -113,6 +113,10 @@ export default function compile ( parsed, source, { filename }) {
 	let elementDepth = 0;
 
 	const stringifiers = {
+		Comment () {
+			return '';
+		},
+
 		Component ( node ) {
 			const props = node.attributes.map( attribute => {
 				let value;
