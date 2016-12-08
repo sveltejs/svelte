@@ -588,8 +588,7 @@ export default function generate ( parsed, source, options, names ) {
 	const intro = getIntro( format, options, imports );
 	if ( intro ) addString( intro );
 
-	// a filename is necessary for sourcemap generation
-	const filename = options.filename || 'SvelteComponent.html';
+	const { filename } = options;
 
 	parts.forEach( str => {
 		const chunk = str.replace( pattern, '' );
