@@ -1,4 +1,3 @@
-import { parse, validate } from '../index.js';
 import { walk } from 'estree-walker';
 import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
@@ -8,10 +7,7 @@ import processCss from '../generate/css/process.js';
 
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
 
-export default function compile ( source, { filename }) {
-	const parsed = parse( source, {} );
-	validate( parsed, source, {} );
-
+export default function compile ( parsed, source, { filename }) {
 	const code = new MagicString( source );
 
 	const templateProperties = {};
