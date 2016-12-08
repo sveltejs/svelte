@@ -137,8 +137,8 @@ export default function generate ( parsed, source, options, names ) {
 					if ( isReference( node, parent ) ) {
 						const { name } = flattenReference( node );
 
-						if ( parent && parent.type === 'CallExpression' && node === parent.callee ) {
-							if ( generator.helpers[ name ] ) generator.code.prependRight( node.start, `template.helpers.` );
+						if ( parent && parent.type === 'CallExpression' && node === parent.callee && generator.helpers[ name ] ) {
+							generator.code.prependRight( node.start, `template.helpers.` );
 							return;
 						}
 
