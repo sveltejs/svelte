@@ -1,4 +1,3 @@
-import { parse, validate } from '../index.js';
 import { walk } from 'estree-walker';
 import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
