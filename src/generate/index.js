@@ -425,7 +425,7 @@ export default function generate ( parsed, source, options, names ) {
 		initStatements.push( deindent`
 			this.__bindings = [];
 			var mainFragment = renderMainFragment( state, this );
-			if ( options.target ) this.mount( options.target );
+			if ( options.target ) this._mount( options.target );
 			while ( this.__bindings.length ) this.__bindings.pop()();
 		` );
 
@@ -433,7 +433,7 @@ export default function generate ( parsed, source, options, names ) {
 	} else {
 		initStatements.push( deindent`
 			var mainFragment = renderMainFragment( state, this );
-			if ( options.target ) this.mount( options.target );
+			if ( options.target ) this._mount( options.target );
 		` );
 	}
 
@@ -515,7 +515,7 @@ export default function generate ( parsed, source, options, names ) {
 				${setStatements.join( '\n\n' )}
 			};
 
-			this.mount = function mount ( target, anchor ) {
+			this._mount = function mount ( target, anchor ) {
 				mainFragment.mount( target, anchor );
 			}
 
