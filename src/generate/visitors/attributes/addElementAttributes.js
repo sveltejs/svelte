@@ -1,6 +1,7 @@
 import attributeLookup from './lookup.js';
 import createBinding from './binding/index.js';
 import deindent from '../../../utils/deindent.js';
+import flattenReference from '../../../utils/flattenReference.js';
 
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {
@@ -114,7 +115,12 @@ export default function addElementAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'EventHandler' ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
-			generator.code.prependRight( attribute.expression.start, 'component.' );
+
+			const flattened = flattenReference( attribute.expression.callee );
+			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
+				// allow event.stopPropagation(), this.select() etc
+				generator.code.prependRight( attribute.expression.start, 'component.' );
+			}
 
 			const usedContexts = new Set();
 			attribute.expression.arguments.forEach( arg => {
