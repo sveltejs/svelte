@@ -174,6 +174,8 @@ export default function compile ( parsed, source, { filename }) {
 			let element = `<${node.name}`;
 
 			node.attributes.forEach( attribute => {
+				if ( attribute.type !== 'Attribute' ) return;
+
 				let str = ` ${attribute.name}`;
 
 				if ( attribute.value !== true ) {
