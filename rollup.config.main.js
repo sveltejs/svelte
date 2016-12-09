@@ -12,5 +12,8 @@ export default {
 		commonjs()
 	],
 	external: [ 'magic-string' ],
+	globals: {
+		'magic-string': 'MagicString'
+	},
 	sourceMap: true
 };

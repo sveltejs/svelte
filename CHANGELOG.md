@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.2.1
+
+* Server-side rendering is available as a compiler option (`generate: 'ssr'`) ([#159](https://github.com/sveltejs/svelte/pull/159))
+* Allow call expressions where function is not in `helpers` ([#163](https://github.com/sveltejs/svelte/issues/163))
+
 ## 1.2.0
 
 * Server-side rendering of HTML ([#148](https://github.com/sveltejs/svelte/pull/148)) and CSS ([#154](https://github.com/sveltejs/svelte/pull/154))
