@@ -1,7 +1,4 @@
 export default {
-	solo: true,
-	show: true,
-
 	test ( assert, component, target, window ) {
 		const allow = target.querySelector( '.allow-propagation' );
 		const stop = target.querySelector( '.stop-propagation' );

@@ -117,8 +117,8 @@ export default function addElementAttributes ( generator, node, local ) {
 			generator.addSourcemapLocations( attribute.expression );
 
 			const flattened = flattenReference( attribute.expression.callee );
-			if ( flattened.name !== 'event' ) {
-				// allow event.stopPropagation() etc
+			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
+				// allow event.stopPropagation(), this.select() etc
 				generator.code.prependRight( attribute.expression.start, 'component.' );
 			}
 
