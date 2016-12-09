@@ -7,10 +7,10 @@ export default function flatten ( node ) {
 		node = node.object;
 	}
 
-	if ( node.type !== 'Identifier' ) return null;
+	const name = node.type === 'Identifier' ? node.name : node.type === 'ThisExpression' ? 'this' : null;
 
-	const name = node.name;
+	if ( !name ) return null;
+
 	parts.unshift( name );
-
 	return { name, keypath: parts.join( '.' ) };
 }
