@@ -1,0 +1,18 @@
+<div on:click='set({ foo: true })'>
+	<button class='allow-propagation'>click me</button>
+</div>
+
+<div on:click='set({ bar: true })'>
+	<button class='stop-propagation' on:click='event.stopPropagation()'>click me</button>
+</div>
+
+<script>
+	export default {
+		data () {
+			return {
+				foo: false,
+				bar: false
+			};
+		}
+	};
+</script>
