@@ -1,5 +1,6 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
+import CodeBuilder from '../utils/CodeBuilder.js';
 import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
 import counter from './utils/counter.js';
@@ -304,15 +305,17 @@ export default function generate ( parsed, source, options, names ) {
 
 	generator.addRenderer( generator.pop() );
 
-	const topLevelStatements = [];
+	const builders = {
+		main: new CodeBuilder(),
+		init: new CodeBuilder(),
+		set: new CodeBuilder()
+	};
 
-	const setStatements = [ deindent`
-		var oldState = state;
-		state = Object.assign( {}, oldState, newState );
-	` ];
+	builders.set.addLine( 'var oldState = state;' );
+	builders.set.addLine( 'state = Object.assign( {}, oldState, newState );' );
 
 	if ( templateProperties.computed ) {
-		const statements = [];
+		const builder = new CodeBuilder();
 		const dependencies = new Map();
 
 		templateProperties.computed.properties.forEach( prop => {
@@ -334,7 +337,7 @@ export default function generate ( parsed, source, options, names ) {
 			const deps = dependencies.get( key );
 			deps.forEach( visit );
 
-			statements.push( deindent`
+			builder.addBlock( deindent`
 				if ( ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
@@ -343,57 +346,49 @@ export default function generate ( parsed, source, options, names ) {
 
 		templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
 
-		topLevelStatements.push( deindent`
+		builders.main.addBlock( deindent`
 			function applyComputations ( state, newState, oldState ) {
-				${statements.join( '\n\n' )}
+				${builder}
 			}
 		` );
 
-		setStatements.push( `applyComputations( state, newState, oldState )` );
+		builders.set.addLine( `applyComputations( state, newState, oldState )` );
 	}
 
-	setStatements.push( deindent`
+	builders.set.addBlock( deindent`
 		dispatchObservers( observers.immediate, newState, oldState );
 		if ( mainFragment ) mainFragment.update( newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
 
-	const importBlock = imports
-		.map( ( declaration, i ) => {
-			if ( format === 'es' ) {
-				return source.slice( declaration.start, declaration.end );
-			}
-
-			const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
-			const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
-			const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
-
-			const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
-			declaration.name = name; // hacky but makes life a bit easier later
-
-			const statements = namedImports.map( specifier => {
-				return `var ${specifier.local.name} = ${name}.${specifier.imported.name}`;
-			});
-
-			if ( defaultImport ) {
-				statements.push( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
-			}
-
-			return statements.join( '\n' );
-		})
-		.filter( Boolean )
-		.join( '\n' );
-
-	if ( parsed.js ) {
-		if ( imports.length ) {
-			topLevelStatements.push( importBlock );
+	imports.forEach( ( declaration, i ) => {
+		if ( format === 'es' ) {
+			builders.main.addLine( source.slice( declaration.start, declaration.end ) );
+			return;
 		}
 
-		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
+		const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
+		const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
+		const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
+
+		const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
+		declaration.name = name; // hacky but makes life a bit easier later
+
+		namedImports.forEach( specifier => {
+			builders.main.addLine( `var ${specifier.local.name} = ${name}.${specifier.imported.name}` );
+		});
+
+		if ( defaultImport ) {
+			builders.main.addLine( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
+		}
+	});
+
+	if ( parsed.js ) {
+		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
 	if ( parsed.css && options.css !== false ) {
-		topLevelStatements.push( deindent`
+		builders.main.addBlock( deindent`
 			let addedCss = false;
 			function addCss () {
 				var style = document.createElement( 'style' );
@@ -405,33 +400,30 @@ export default function generate ( parsed, source, options, names ) {
 		` );
 	}
 
-	topLevelStatements.push( ...renderers.reverse() );
+	let i = renderers.length;
+	while ( i-- ) builders.main.addBlock( renderers[i] );
 
 	const constructorName = options.name || 'SvelteComponent';
 
-	const initStatements = [];
-
 	if ( parsed.css && options.css !== false ) {
-		initStatements.push( `if ( !addedCss ) addCss();` );
+		builders.init.addLine( `if ( !addedCss ) addCss();` );
 	}
 
 	if ( generator.hasComponents ) {
-		initStatements.push( deindent`
-			this.__renderHooks = [];
-		` );
+		builders.init.addLine( `this.__renderHooks = [];` );
 	}
 
 	if ( generator.hasComplexBindings ) {
-		initStatements.push( deindent`
+		builders.init.addBlock( deindent`
 			this.__bindings = [];
 			var mainFragment = renderMainFragment( state, this );
 			if ( options.target ) this.mount( options.target );
 			while ( this.__bindings.length ) this.__bindings.pop()();
 		` );
 
-		setStatements.push( `while ( this.__bindings.length ) this.__bindings.pop()();` );
+		builders.set.addLine( `while ( this.__bindings.length ) this.__bindings.pop()();` );
 	} else {
-		initStatements.push( deindent`
+		builders.init.addBlock( deindent`
 			var mainFragment = renderMainFragment( state, this );
 			if ( options.target ) this.mount( options.target );
 		` );
@@ -445,12 +437,12 @@ export default function generate ( parsed, source, options, names ) {
 			}
 		`;
 
-		initStatements.push( statement );
-		setStatements.push( statement );
+		builders.init.addBlock( statement );
+		builders.set.addBlock( statement );
 	}
 
 	if ( templateProperties.onrender ) {
-		initStatements.push( deindent`
+		builders.init.addBlock( deindent`
 			if ( options.root ) {
 				options.root.__renderHooks.push({ fn: template.onrender, context: this });
 			} else {
@@ -461,7 +453,7 @@ export default function generate ( parsed, source, options, names ) {
 
 	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;
 
-	topLevelStatements.push( deindent`
+	builders.main.addBlock( deindent`
 		function ${constructorName} ( options ) {
 			options = options || {};
 
@@ -512,7 +504,7 @@ export default function generate ( parsed, source, options, names ) {
 			};
 
 			this.set = function set ( newState ) {
-				${setStatements.join( '\n\n' )}
+				${builders.set}
 			};
 
 			this.mount = function mount ( target, anchor ) {
@@ -562,15 +554,15 @@ export default function generate ( parsed, source, options, names ) {
 			this.root = options.root;
 			this.yield = options.yield;
 
-			${initStatements.join( '\n\n' )}
+			${builders.init}
 		}
 	` );
 
 	if ( templateProperties.methods ) {
-		topLevelStatements.push( `${constructorName}.prototype = template.methods;` );
+		builders.main.addBlock( `${constructorName}.prototype = template.methods;` );
 	}
 
-	const result = topLevelStatements.join( '\n\n' );
+	const result = builders.main.toString();
 
 	const pattern = /\[✂(\d+)-(\d+)$/;
 
