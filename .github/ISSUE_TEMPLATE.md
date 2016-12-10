@@ -3,6 +3,7 @@ Thanks for raising an issue! To help us help you, if you've found a bug please c
 
 * If you can demonstrate the bug using https://svelte.technology/repl, please do.
 * If that's not possible, we recommend creating a small repo that illustrates the problem.
+* Make sure you include information about the browser, and which version of Svelte you're using
 
 Reproductions should be small, self-contained, correct examples – http://sscce.org.
 
