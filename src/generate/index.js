@@ -29,18 +29,19 @@ export default function generate ( parsed, source, options, names ) {
 					`${generator.current.target}.appendChild( ${renderStatement} );`
 				);
 			}
+
 			if ( isToplevel ) {
-				generator.current.detachStatements.push( deindent`
-					${name}.parentNode.removeChild( ${name} );
-				` );
+				generator.current.builders.detach.addLine(
+					`${name}.parentNode.removeChild( ${name} );`
+				);
 			}
 		},
 
 		createMountStatement ( name ) {
 			if ( generator.current.target === 'target' ) {
-				generator.current.mountStatements.push( deindent`
-					target.insertBefore( ${name}, anchor );
-				` );
+				generator.current.builders.mount.addLine(
+					`target.insertBefore( ${name}, anchor );`
+				);
 			} else {
 				generator.current.builders.init.addLine(
 					`${generator.current.target}.appendChild( ${name} );` );
@@ -59,12 +60,6 @@ export default function generate ( parsed, source, options, names ) {
 				name,
 				target: 'target',
 				localElementDepth: 0,
-
-				mountStatements: [],
-				updateStatements: [],
-				detachStatements: [],
-				teardownStatements: [],
-
 				builders: generator.getBuilders(),
 				getUniqueName: generator.getUniqueNameMaker()
 			});
@@ -81,18 +76,13 @@ export default function generate ( parsed, source, options, names ) {
 				fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
 			}
 
-			const detachStatements = fragment.detachStatements.join( '\n\n' );
-			const teardownStatements = fragment.teardownStatements.join( '\n\n' );
-
-			const detachBlock = deindent`
-				if ( detach ) {
-					${detachStatements}
-				}
-			`;
-
-			const teardownBlock = deindent`
-				${teardownStatements}${detachStatements ? `\n\n${detachBlock}` : ``}
-			`;
+			if ( !fragment.builders.detach.isEmpty() ) {
+				fragment.builders.teardown.addBlock( deindent`
+					if ( detach ) {
+						${fragment.builders.detach}
+					}
+				` );
+			}
 
 			renderers.push( deindent`
 				function ${fragment.name} ( ${fragment.params}, component ) {
@@ -100,15 +90,15 @@ export default function generate ( parsed, source, options, names ) {
 
 					return {
 						mount: function ( target, anchor ) {
-							${fragment.mountStatements.join( '\n\n' )}
+							${fragment.builders.mount}
 						},
 
 						update: function ( changed, ${fragment.params} ) {
-							${fragment.updateStatements.join( '\n\n' )}
+							${fragment.builders.update}
 						},
 
 						teardown: function ( detach ) {
-							${teardownBlock}
+							${fragment.builders.teardown}
 						}
 					};
 				}
@@ -303,12 +293,7 @@ export default function generate ( parsed, source, options, names ) {
 		target: 'target',
 		elementDepth: 0,
 		localElementDepth: 0,
-
-		mountStatements: [],
-		updateStatements: [],
-		detachStatements: [],
-		teardownStatements: [],
-
+		
 		contexts: {},
 		indexes: {},
 

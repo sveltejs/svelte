@@ -23,6 +23,10 @@ export default class CodeBuilder {
 		this.last = BLOCK;
 	}
 
+	isEmpty () {
+		return this.result === '';
+	}
+
 	toString () {
 		return this.result.trim();
 	}
