@@ -152,7 +152,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					});
 				` );
 
-				local.teardown.push( deindent`
+				generator.current.builders.teardown.addLine( deindent`
 					${handlerName}.teardown();
 				` );
 			} else {
@@ -164,7 +164,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					${local.name}.addEventListener( '${attribute.name}', ${handlerName}, false );
 				` );
 
-				local.teardown.push( deindent`
+				generator.current.builders.teardown.addLine( deindent`
 					${local.name}.removeEventListener( '${attribute.name}', ${handlerName}, false );
 				` );
 			}
@@ -181,7 +181,7 @@ export default function addElementAttributes ( generator, node, local ) {
 				component.refs.${attribute.name} = ${local.name};
 			` );
 
-			local.teardown.push( deindent`
+			generator.current.builders.teardown.addLine( deindent`
 				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;
 			` );
 		}

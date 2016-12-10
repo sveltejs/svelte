@@ -110,13 +110,11 @@ export default {
 			` );
 		}
 
-		local.teardown.push( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
+		generator.current.builders.teardown.addLine( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
 
 		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.builders.update.addBlock( local.update.join( '\n' ) );
 		if ( local.mount.length ) generator.current.builders.mount.addBlock( local.mount.join( '\n' ) );
-		if ( local.detach.length ) generator.current.builders.detach.addBlock( local.detach.join( '\n' ) );
-		generator.current.builders.teardown.addBlock( local.teardown.join( '\n' ) );
 
 		generator.push({
 			namespace: local.namespace,

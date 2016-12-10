@@ -122,7 +122,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 				component.refs.${attribute.name} = ${local.name};
 			` );
 
-			local.teardown.push( deindent`
+			generator.current.builders.teardown.addLine( deindent`
 				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;
 			` );
 		}
