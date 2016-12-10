@@ -69,7 +69,7 @@ export default {
 
 		local.init.unshift( render );
 		if ( isToplevel ) {
-			local.detach.push( `${name}.parentNode.removeChild( ${name} );` );
+			generator.current.builders.detach.addLine( `${name}.parentNode.removeChild( ${name} );` );
 		}
 
 		// special case – bound <option> without a value attribute
@@ -82,8 +82,6 @@ export default {
 		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.builders.update.addBlock( local.update.join( '\n' ) );
 		if ( local.mount.length ) generator.current.builders.mount.addBlock( local.mount.join( '\n' ) );
-		if ( local.detach.length ) generator.current.builders.detach.addBlock( local.detach.join( '\n' ) );
-		generator.current.builders.teardown.addBlock( local.teardown.join( '\n' ) );
 
 		generator.createMountStatement( name );
 

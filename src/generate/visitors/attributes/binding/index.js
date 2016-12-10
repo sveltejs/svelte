@@ -121,7 +121,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			if ( !${local.name}_updating ) ${updateElement};
 		` );
 
-		local.teardown.push( deindent`
+		generator.current.builders.teardown.addLine( deindent`
 			${local.name}.removeEventListener( '${eventName}', ${handler}, false );
 		` );
 	}
