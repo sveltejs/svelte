@@ -32,12 +32,6 @@ export default {
 		generator.current.builders.update.addBlock( detachStatement );
 		generator.current.builders.update.addBlock( mountStatement );
 
-		// if ( isToplevel ) {
-		// 	const { detachStatements } = generator.current;
-		// 	// we need `before` and `after` to still be in the DOM when running the
-		// 	// detach code, so splice in the detach code *before* detaching
-		// 	// `before`/`after`.
-		// 	detachStatements.splice( detachStatements.length - 2, 0, detachStatement);
-		// }
+		generator.current.builders.detachRaw.addBlock( detachStatement );
 	}
 };
