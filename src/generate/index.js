@@ -19,14 +19,15 @@ export default function generate ( parsed, source, options, names ) {
 		addElement ( name, renderStatement, needsIdentifier = false ) {
 			const isToplevel = generator.current.localElementDepth === 0;
 			if ( needsIdentifier || isToplevel ) {
-				generator.current.initStatements.push( deindent`
-					var ${name} = ${renderStatement};
-				` );
+				generator.current.builders.init.addLine(
+					`var ${name} = ${renderStatement};`
+				);
+
 				generator.createMountStatement( name );
 			} else {
-				generator.current.initStatements.push( deindent`
-					${generator.current.target}.appendChild( ${renderStatement} );
-				` );
+				generator.current.builders.init.addLine(
+					`${generator.current.target}.appendChild( ${renderStatement} );`
+				);
 			}
 			if ( isToplevel ) {
 				generator.current.detachStatements.push( deindent`
@@ -41,9 +42,8 @@ export default function generate ( parsed, source, options, names ) {
 					target.insertBefore( ${name}, anchor );
 				` );
 			} else {
-				generator.current.initStatements.push( deindent`
-					${generator.current.target}.appendChild( ${name} );
-				` );
+				generator.current.builders.init.addLine(
+					`${generator.current.target}.appendChild( ${name} );` );
 			}
 		},
 
@@ -60,12 +60,12 @@ export default function generate ( parsed, source, options, names ) {
 				target: 'target',
 				localElementDepth: 0,
 
-				initStatements: [],
 				mountStatements: [],
 				updateStatements: [],
 				detachStatements: [],
 				teardownStatements: [],
 
+				builders: generator.getBuilders(),
 				getUniqueName: generator.getUniqueNameMaker()
 			});
 			// walk the children here
@@ -78,7 +78,7 @@ export default function generate ( parsed, source, options, names ) {
 
 		addRenderer ( fragment ) {
 			if ( fragment.autofocus ) {
-				fragment.initStatements.push( `${fragment.autofocus}.focus();` );
+				fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
 			}
 
 			const detachStatements = fragment.detachStatements.join( '\n\n' );
@@ -96,7 +96,7 @@ export default function generate ( parsed, source, options, names ) {
 
 			renderers.push( deindent`
 				function ${fragment.name} ( ${fragment.params}, component ) {
-					${fragment.initStatements.join( '\n\n' )}
+					${fragment.builders.init}
 
 					return {
 						mount: function ( target, anchor ) {
@@ -174,6 +174,16 @@ export default function generate ( parsed, source, options, names ) {
 		},
 
 		events: {},
+
+		getBuilders () {
+			return {
+				init: new CodeBuilder(),
+				mount: new CodeBuilder(),
+				update: new CodeBuilder(),
+				detach: new CodeBuilder(),
+				teardown: new CodeBuilder()
+			};
+		},
 
 		getUniqueName: counter( names ),
 
@@ -294,7 +304,6 @@ export default function generate ( parsed, source, options, names ) {
 		elementDepth: 0,
 		localElementDepth: 0,
 
-		initStatements: [],
 		mountStatements: [],
 		updateStatements: [],
 		detachStatements: [],
@@ -307,6 +316,7 @@ export default function generate ( parsed, source, options, names ) {
 		indexNames: {},
 		listNames: {},
 
+		builders: generator.getBuilders(),
 		getUniqueName: generator.getUniqueNameMaker()
 	});
 

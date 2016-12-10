@@ -37,7 +37,10 @@ export default {
 
 			generator.generateBlock( node, yieldName );
 
-			generator.current.initStatements.push(`var ${name}_yieldFragment = ${yieldName}( root, component );`);
+			generator.current.builders.init.addLine(
+				`var ${name}_yieldFragment = ${yieldName}( root, component );`
+			);
+
 			generator.current.updateStatements.push(`${name}_yieldFragment.update ( changed, root );`);
 
 			componentInitProperties.push(`yield: ${name}_yieldFragment`);
@@ -107,7 +110,7 @@ export default {
 
 		local.teardown.push( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
 
-		generator.current.initStatements.push( local.init.join( '\n' ) );
+		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
 		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
 		if ( local.detach.length ) generator.current.detachStatements.push( local.detach.join( '\n' ) );
