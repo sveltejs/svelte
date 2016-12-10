@@ -81,7 +81,6 @@ export default {
 
 		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.builders.update.addBlock( local.update.join( '\n' ) );
-		if ( local.mount.length ) generator.current.builders.mount.addBlock( local.mount.join( '\n' ) );
 
 		generator.createMountStatement( name );
 

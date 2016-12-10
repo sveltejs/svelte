@@ -85,7 +85,7 @@ export default {
 		` );
 
 		if ( isToplevel ) {
-			local.mount.unshift( `${name}._mount( target, anchor );` );
+			generator.current.builders.mount.addLine( `${name}._mount( target, anchor );` );
 		}
 
 		if ( local.dynamicAttributes.length ) {
@@ -114,7 +114,6 @@ export default {
 
 		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
 		if ( local.update.length ) generator.current.builders.update.addBlock( local.update.join( '\n' ) );
-		if ( local.mount.length ) generator.current.builders.mount.addBlock( local.mount.join( '\n' ) );
 
 		generator.push({
 			namespace: local.namespace,
