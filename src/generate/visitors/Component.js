@@ -80,7 +80,7 @@ export default {
 		` );
 
 		if ( isToplevel ) {
-			local.mount.unshift( `${name}.mount( target, anchor );` );
+			local.mount.unshift( `${name}._mount( target, anchor );` );
 		}
 
 		if ( local.dynamicAttributes.length ) {

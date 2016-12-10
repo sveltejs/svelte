@@ -1,4 +1,3 @@
-import { parse, validate } from '../index.js';
 import { walk } from 'estree-walker';
 import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
@@ -8,10 +7,7 @@ import processCss from '../generate/css/process.js';
 
 const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
 
-export default function compile ( source, { filename }) {
-	const parsed = parse( source, {} );
-	validate( parsed, source, {} );
-
+export default function compile ( parsed, source, { filename }) {
 	const code = new MagicString( source );
 
 	const templateProperties = {};
@@ -117,6 +113,10 @@ export default function compile ( source, { filename }) {
 	let elementDepth = 0;
 
 	const stringifiers = {
+		Comment () {
+			return '';
+		},
+
 		Component ( node ) {
 			const props = node.attributes.map( attribute => {
 				let value;
@@ -174,6 +174,8 @@ export default function compile ( source, { filename }) {
 			let element = `<${node.name}`;
 
 			node.attributes.forEach( attribute => {
+				if ( attribute.type !== 'Attribute' ) return;
+
 				let str = ` ${attribute.name}`;
 
 				if ( attribute.value !== true ) {

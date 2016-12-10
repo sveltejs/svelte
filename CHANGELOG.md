@@ -1,5 +1,17 @@
 # Svelte changelog
 
+## 1.2.2
+
+* Omit directives in server-side rendering ([#163](https://github.com/sveltejs/svelte/issues/167))
+* Handle comments in SSR ([#165](https://github.com/sveltejs/svelte/issues/165))
+* Support calling methods of `event`/`this` in event handlers ([#162](https://github.com/sveltejs/svelte/issues/162))
+* Remove `mount` from public API ([#150](https://github.com/sveltejs/svelte/issues/150))
+
+## 1.2.1
+
+* Server-side rendering is available as a compiler option (`generate: 'ssr'`) ([#159](https://github.com/sveltejs/svelte/pull/159))
+* Allow call expressions where function is not in `helpers` ([#163](https://github.com/sveltejs/svelte/issues/163))
+
 ## 1.2.0
 
 * Server-side rendering of HTML ([#148](https://github.com/sveltejs/svelte/pull/148)) and CSS ([#154](https://github.com/sveltejs/svelte/pull/154))
