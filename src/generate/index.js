@@ -4,6 +4,7 @@ import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
 import counter from './utils/counter.js';
 import flattenReference from '../utils/flattenReference.js';
+import namespaces from '../utils/namespaces.js';
 import getIntro from './utils/getIntro.js';
 import getOutro from './utils/getOutro.js';
 import visitors from './visitors/index.js';
@@ -277,9 +278,17 @@ export default function generate ( parsed, source, options, names ) {
 		});
 	}
 
+	let namespace = null;
+	if ( templateProperties.namespace ) {
+		const ns = templateProperties.namespace.value;
+		namespace = namespaces[ ns ] || ns;
+
+		// TODO remove the namespace property from the generated code, it's unused past this point
+	}
+
 	generator.push({
 		name: 'renderMainFragment',
-		namespace: null,
+		namespace,
 		target: 'target',
 		elementDepth: 0,
 		localElementDepth: 0,
