@@ -6,6 +6,7 @@ import helpers from './helpers.js';
 import methods from './methods.js';
 import components from './components.js';
 import events from './events.js';
+import namespace from './namespace.js';
 
 export default {
 	data,
@@ -15,5 +16,6 @@ export default {
 	helpers,
 	methods,
 	components,
-	events
+	events,
+	namespace
 };

@@ -2,6 +2,7 @@ import propValidators from './propValidators/index.js';
 import FuzzySet from './utils/FuzzySet.js';
 import checkForDupes from './utils/checkForDupes.js';
 import checkForComputedKeys from './utils/checkForComputedKeys.js';
+import namespaces from '../../utils/namespaces.js';
 
 const validPropList = Object.keys( propValidators );
 
@@ -29,7 +30,7 @@ export default function validateJs ( validator, js ) {
 		checkForDupes( validator, validator.defaultExport.declaration.properties );
 
 		validator.defaultExport.declaration.properties.forEach( prop => {
-			validator.templateProperties[ prop.key.value ] = prop;
+			validator.templateProperties[ prop.key.name ] = prop;
 		});
 
 		validator.defaultExport.declaration.properties.forEach( prop => {
@@ -48,5 +49,10 @@ export default function validateJs ( validator, js ) {
 				}
 			}
 		});
+
+		if ( validator.templateProperties.namespace ) {
+			const ns = validator.templateProperties.namespace.value.value;
+			validator.namespace = namespaces[ ns ] || ns;
+		}
 	}
 }
