@@ -76,10 +76,14 @@ export default function generate ( parsed, source, options, names ) {
 				fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
 			}
 
-			if ( !fragment.builders.detach.isEmpty() ) {
+			// minor hack – we need to ensure that any {{{triples}}} are detached
+			// first, so we append normal detach statements to detachRaw
+			fragment.builders.detachRaw.addBlock( fragment.builders.detach );
+
+			if ( !fragment.builders.detachRaw.isEmpty() ) {
 				fragment.builders.teardown.addBlock( deindent`
 					if ( detach ) {
-						${fragment.builders.detach}
+						${fragment.builders.detachRaw}
 					}
 				` );
 			}
@@ -171,6 +175,7 @@ export default function generate ( parsed, source, options, names ) {
 				mount: new CodeBuilder(),
 				update: new CodeBuilder(),
 				detach: new CodeBuilder(),
+				detachRaw: new CodeBuilder(),
 				teardown: new CodeBuilder()
 			};
 		},
@@ -293,7 +298,7 @@ export default function generate ( parsed, source, options, names ) {
 		target: 'target',
 		elementDepth: 0,
 		localElementDepth: 0,
-		
+
 		contexts: {},
 		indexes: {},
 
