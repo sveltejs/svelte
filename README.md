@@ -56,6 +56,7 @@ const { code, map } = svelte.compile( source, {
 
 * [charpeni/svelte-example](https://github.com/charpeni/svelte-example) - Some Svelte examples with configured Rollup, Babel, ESLint, directives, Two-Way binding, and nested components
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
+* [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
 
 
 ## License

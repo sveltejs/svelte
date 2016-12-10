@@ -40,15 +40,17 @@ export default function validate ( parsed, source, options ) {
 
 		templateProperties: {},
 
-		names: []
-	};
+		names: [],
 
-	if ( parsed.html ) {
-		validateHtml( validator, parsed.html );
-	}
+		namespace: null
+	};
 
 	if ( parsed.js ) {
 		validateJs( validator, parsed.js );
+	}
+
+	if ( parsed.html ) {
+		validateHtml( validator, parsed.html );
 	}
 
 	return {
