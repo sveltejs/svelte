@@ -52,12 +52,12 @@ export default {
 
 		const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
 		if ( isToplevel ) {
-			generator.current.mountStatements.push( mountStatement );
+			generator.current.builders.mount.addLine( mountStatement );
 		} else {
 			generator.current.builders.init.addLine( mountStatement );
 		}
 
-		generator.current.updateStatements.push( deindent`
+		generator.current.builders.update.addBlock( deindent`
 			var _${currentBlock} = ${currentBlock};
 			${currentBlock} = ${getBlock}( ${params} );
 			if ( _${currentBlock} === ${currentBlock} && ${name}) {
@@ -69,8 +69,8 @@ export default {
 			}
 		` );
 
-		generator.current.teardownStatements.push( deindent`
-			if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );
-		` );
+		generator.current.builders.teardown.addLine(
+			`if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );`
+		);
 	}
 };

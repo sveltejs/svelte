@@ -9,7 +9,7 @@ export default {
 
 		generator.addElement( name, `document.createTextNode( ${snippet} )`, true );
 
-		generator.current.updateStatements.push( deindent`
+		generator.current.builders.update.addBlock( deindent`
 			${name}.data = ${snippet};
 		` );
 	}
