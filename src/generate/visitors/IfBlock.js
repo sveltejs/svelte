@@ -39,7 +39,7 @@ export default {
 
 		const anchor = generator.createAnchor( name, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
-		generator.current.initStatements.push( deindent`
+		generator.current.builders.init.addBlock( deindent`
 			function ${getBlock} ( ${params} ) {
 				${conditionsAndBlocks.map( ({ condition, block }) => {
 					return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
@@ -54,7 +54,7 @@ export default {
 		if ( isToplevel ) {
 			generator.current.mountStatements.push( mountStatement );
 		} else {
-			generator.current.initStatements.push( mountStatement );
+			generator.current.builders.init.addLine( mountStatement );
 		}
 
 		generator.current.updateStatements.push( deindent`
