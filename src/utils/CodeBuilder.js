@@ -12,33 +12,49 @@ export default class CodeBuilder {
 	addLine ( line ) {
 		if ( this.last === BLOCK ) {
 			this.result += `\n\n${line}`;
-		} else {
+		} else if ( this.last === LINE ) {
 			this.result += `\n${line}`;
+		} else {
+			this.result += line;
 		}
 
 		this.last = LINE;
+		if ( !this.first ) this.first = LINE;
 	}
 
 	addLineAtStart ( line ) {
 		if ( this.first === BLOCK ) {
 			this.result = `${line}\n\n${this.result}`;
-		} else {
+		} else if ( this.first === LINE ) {
 			this.result = `${line}\n${this.result}`;
+		} else {
+			this.result += line;
 		}
 
 		this.first = LINE;
+		if ( !this.last ) this.last = LINE;
 	}
 
 	addBlock ( block ) {
-		this.result += `\n\n${block}`;
+		if ( this.result ) {
+			this.result += `\n\n${block}`;
+		} else {
+			this.result += block;
+		}
 
 		this.last = BLOCK;
+		if ( !this.first ) this.first = BLOCK;
 	}
 
 	addBlockAtStart ( block ) {
-		this.result = `${block}\n\n${this.result}`;
+		if ( this.result ) {
+			this.result = `${block}\n\n${this.result}`;
+		} else {
+			this.result += block;
+		}
 
 		this.first = BLOCK;
+		if ( !this.last ) this.last = BLOCK;
 	}
 
 	isEmpty () {
