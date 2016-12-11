@@ -1,0 +1,8 @@
+[{
+	"message": "Method 'foo' should be a function expression, not an arrow function expression",
+	"pos": 79,
+	"loc": {
+		"line": 6,
+		"column": 3
+	}
+}]
