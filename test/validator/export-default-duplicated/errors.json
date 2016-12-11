@@ -1,0 +1,8 @@
+[{
+	"message": "Duplicate export 'default'",
+	"pos": 37,
+	"loc": {
+		"line": 3,
+		"column": 8
+	}
+}]
