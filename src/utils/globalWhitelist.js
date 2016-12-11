@@ -16,7 +16,6 @@ export default {
 	Math: true,
 	NaN: true,
 	Number: true,
-	null: true,
 	Object: true,
 	parseFloat: true,
 	parseInt: true,
