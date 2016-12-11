@@ -16,10 +16,6 @@ export default function validateJs ( validator, js ) {
 		}
 
 		if ( node.type === 'ExportDefaultDeclaration' ) {
-			if ( validator.defaultExport ) {
-				return validator.error( `Duplicate default export`, node.start );
-			}
-
 			if ( node.declaration.type !== 'ObjectExpression' ) {
 				return validator.error( `Default export must be an object literal`, node.declaration.start );
 			}
