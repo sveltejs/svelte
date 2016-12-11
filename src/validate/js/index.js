@@ -17,42 +17,44 @@ export default function validateJs ( validator, js ) {
 
 		if ( node.type === 'ExportDefaultDeclaration' ) {
 			if ( validator.defaultExport ) {
-				validator.error( `Duplicate default export`, node.start );
+				return validator.error( `Duplicate default export`, node.start );
+			}
+
+			if ( node.declaration.type !== 'ObjectExpression' ) {
+				return validator.error( `Default export must be an object literal`, node.declaration.start );
+			}
+
+			checkForComputedKeys( validator, node.declaration.properties );
+			checkForDupes( validator, node.declaration.properties );
+
+			node.declaration.properties.forEach( prop => {
+				validator.templateProperties[ prop.key.name ] = prop;
+			});
+
+			// ensure all exported props are valid
+			node.declaration.properties.forEach( prop => {
+				const propValidator = propValidators[ prop.key.name ];
+
+				if ( propValidator ) {
+					propValidator( validator, prop );
+				} else {
+					const matches = fuzzySet.get( prop.key.name );
+					if ( matches && matches[0] && matches[0][0] > 0.7 ) {
+						validator.error( `Unexpected property '${prop.key.name}' (did you mean '${matches[0][1]}'?)`, prop.start );
+					} else if ( /FunctionExpression/.test( prop.value.type ) ) {
+						validator.error( `Unexpected property '${prop.key.name}' (did you mean to include it in 'methods'?)`, prop.start );
+					} else {
+						validator.error( `Unexpected property '${prop.key.name}'`, prop.start );
+					}
+				}
+			});
+
+			if ( validator.templateProperties.namespace ) {
+				const ns = validator.templateProperties.namespace.value.value;
+				validator.namespace = namespaces[ ns ] || ns;
 			}
 
 			validator.defaultExport = node;
 		}
 	});
-
-	// ensure all exported props are valid
-	if ( validator.defaultExport ) {
-		checkForComputedKeys( validator, validator.defaultExport.declaration.properties );
-		checkForDupes( validator, validator.defaultExport.declaration.properties );
-
-		validator.defaultExport.declaration.properties.forEach( prop => {
-			validator.templateProperties[ prop.key.name ] = prop;
-		});
-
-		validator.defaultExport.declaration.properties.forEach( prop => {
-			const propValidator = propValidators[ prop.key.name ];
-
-			if ( propValidator ) {
-				propValidator( validator, prop );
-			} else {
-				const matches = fuzzySet.get( prop.key.name );
-				if ( matches && matches[0] && matches[0][0] > 0.7 ) {
-					validator.error( `Unexpected property '${prop.key.name}' (did you mean '${matches[0][1]}'?)`, prop.start );
-				} else if ( /FunctionExpression/.test( prop.value.type ) ) {
-					validator.error( `Unexpected property '${prop.key.name}' (did you mean to include it in 'methods'?)`, prop.start );
-				} else {
-					validator.error( `Unexpected property '${prop.key.name}'`, prop.start );
-				}
-			}
-		});
-
-		if ( validator.templateProperties.namespace ) {
-			const ns = validator.templateProperties.namespace.value.value;
-			validator.namespace = namespaces[ ns ] || ns;
-		}
-	}
 }
