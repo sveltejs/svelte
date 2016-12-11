@@ -1,4 +1,5 @@
 import deindent from '../../utils/deindent.js';
+import CodeBuilder from '../../utils/CodeBuilder.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 export default {
@@ -13,11 +14,8 @@ export default {
 
 			allUsedContexts: new Set(),
 
-			init: [],
-			mount: [],
-			update: [],
-			detach: [],
-			teardown: []
+			init: new CodeBuilder(),
+			update: new CodeBuilder()
 		};
 
 		const isToplevel = generator.current.localElementDepth === 0;
@@ -77,7 +75,7 @@ export default {
 			componentInitProperties.push(`data: ${name}_initialData`);
 		}
 
-		local.init.unshift( deindent`
+		local.init.addBlockAtStart( deindent`
 			${statements.join( '\n\n' )}
 			var ${name} = new template.components.${node.name}({
 				${componentInitProperties.join(',\n')}
@@ -101,7 +99,7 @@ export default {
 				return `${name}_changes.${attribute.name} = ${attribute.value};`;
 			});
 
-			local.update.push( deindent`
+			local.update.addBlock( deindent`
 				var ${name}_changes = {};
 
 				${updates.join( '\n' )}
@@ -112,8 +110,8 @@ export default {
 
 		generator.current.builders.teardown.addLine( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
 
-		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
-		if ( local.update.length ) generator.current.builders.update.addBlock( local.update.join( '\n' ) );
+		generator.current.builders.init.addBlock( local.init );
+		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
 
 		generator.push({
 			namespace: local.namespace,

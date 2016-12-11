@@ -17,13 +17,13 @@ export default function addElementAttributes ( generator, node, local ) {
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
 				if ( propertyName ) {
-					local.init.push( deindent`
-						${local.name}.${propertyName} = true;
-					` );
+					local.init.addLine(
+						`${local.name}.${propertyName} = true;`
+					);
 				} else {
-					local.init.push( deindent`
-						${local.name}.setAttribute( '${attribute.name}', true );
-					` );
+					local.init.addLine(
+						`${local.name}.setAttribute( '${attribute.name}', true );`
+					);
 				}
 
 				// special case – autofocus. has to be handled in a bit of a weird way
@@ -34,13 +34,13 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			else if ( attribute.value.length === 0 ) {
 				if ( propertyName ) {
-					local.init.push( deindent`
-						${local.name}.${propertyName} = '';
-					` );
+					local.init.addLine(
+						`${local.name}.${propertyName} = '';`
+					);
 				} else {
-					local.init.push( deindent`
-						${local.name}.setAttribute( '${attribute.name}', '' );
-					` );
+					local.init.addLine(
+						`${local.name}.setAttribute( '${attribute.name}', '' );`
+					);
 				}
 			}
 
@@ -58,13 +58,13 @@ export default function addElementAttributes ( generator, node, local ) {
 						// TODO this attribute must be static – enforce at compile time
 						local.namespace = value.data;
 					} else if ( propertyName ) {
-						local.init.push( deindent`
-							${local.name}.${propertyName} = ${result};
-						` );
+						local.init.addLine(
+							`${local.name}.${propertyName} = ${result};`
+						);
 					} else {
-						local.init.push( deindent`
-							${local.name}.setAttribute( '${attribute.name}', ${result} );
-						` );
+						local.init.addLine(
+							`${local.name}.setAttribute( '${attribute.name}', ${result} );`
+						);
 					}
 				}
 
@@ -78,8 +78,8 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = ${snippet};` :
 						`${local.name}.setAttribute( '${attribute.name}', ${snippet} );`; // TODO use snippet both times – see note below
 
-					local.init.push( updater );
-					local.update.push( updater );
+					local.init.addLine( updater );
+					local.update.addLine( updater );
 				}
 			}
 
@@ -103,12 +103,12 @@ export default function addElementAttributes ( generator, node, local ) {
 					`${local.name}.${propertyName} = ${value};` :
 					`${local.name}.setAttribute( '${attribute.name}', ${value} );`;
 
-				local.init.push( updater );
-				local.update.push( updater );
+				local.init.addLine( updater );
+				local.update.addLine( updater );
 			}
 
 			if ( isBoundOptionValue ) {
-				( dynamic ? local.update : local.init ).push( `${local.name}.value = ${local.name}.__value` );
+				( dynamic ? local.update : local.init ).addLine( `${local.name}.value = ${local.name}.__value` );
 			}
 		}
 
@@ -146,7 +146,7 @@ export default function addElementAttributes ( generator, node, local ) {
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( attribute.name in generator.events ) {
-				local.init.push( deindent`
+				local.init.addBlock( deindent`
 					var ${handlerName} = template.events.${attribute.name}.call( component, ${local.name}, function ( event ) {
 						${handlerBody}
 					});
@@ -156,7 +156,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					${handlerName}.teardown();
 				` );
 			} else {
-				local.init.push( deindent`
+				local.init.addBlock( deindent`
 					function ${handlerName} ( event ) {
 						${handlerBody}
 					}
@@ -177,9 +177,9 @@ export default function addElementAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
-			local.init.push( deindent`
-				component.refs.${attribute.name} = ${local.name};
-			` );
+			local.init.addLine(
+				`component.refs.${attribute.name} = ${local.name};`
+			);
 
 			generator.current.builders.teardown.addLine( deindent`
 				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;

@@ -1,3 +1,4 @@
+import CodeBuilder from '../../utils/CodeBuilder.js';
 import deindent from '../../utils/deindent.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
 import Component from './Component.js';
@@ -18,11 +19,8 @@ export default {
 
 			allUsedContexts: new Set(),
 
-			init: [],
-			mount: [],
-			update: [],
-			detach: [],
-			teardown: []
+			init: new CodeBuilder(),
+			update: new CodeBuilder()
 		};
 
 		const isToplevel = generator.current.localElementDepth === 0;
@@ -50,13 +48,13 @@ export default {
 				return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 			}).join( '\n' );
 
-			local.init.push( deindent`
+			local.init.addBlock( deindent`
 				${name}.__svelte = {
 					${initialProps}
 				};
 			` );
 
-			local.update.push( updates );
+			local.update.addBlock( updates );
 		}
 
 		let render = local.namespace ?
@@ -67,7 +65,7 @@ export default {
 			render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
 		}
 
-		local.init.unshift( render );
+		local.init.addLineAtStart( render );
 		if ( isToplevel ) {
 			generator.current.builders.detach.addLine( `${name}.parentNode.removeChild( ${name} );` );
 		}
@@ -76,11 +74,13 @@ export default {
 		if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { // TODO check it's bound
 			// const dynamic = node.children.length > 1 || node.children[0].type !== 'Text';
 			// TODO do this in init for static values... have to do it in `leave`, because they don't exist yet
-			local.update.push( `${name}.__value = ${name}.textContent` );
+			local.update.addLine(
+				`${name}.__value = ${name}.textContent`
+			);
 		}
 
-		generator.current.builders.init.addBlock( local.init.join( '\n' ) );
-		if ( local.update.length ) generator.current.builders.update.addBlock( local.update.join( '\n' ) );
+		generator.current.builders.init.addBlock( local.init );
+		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
 
 		generator.createMountStatement( name );
 
