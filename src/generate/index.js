@@ -5,6 +5,7 @@ import isReference from '../utils/isReference.js';
 import counter from './utils/counter.js';
 import flattenReference from '../utils/flattenReference.js';
 import namespaces from '../utils/namespaces.js';
+import globalWhitelist from '../utils/globalWhitelist.js';
 import getIntro from './utils/getIntro.js';
 import getOutro from './utils/getOutro.js';
 import visitors from './visitors/index.js';
@@ -153,7 +154,7 @@ export default function generate ( parsed, source, options, names ) {
 						} else if ( indexes[ name ] ) {
 							const context = indexes[ name ];
 							if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
-						} else {
+						} else if ( !globalWhitelist[ name ] ) {
 							dependencies.push( name );
 							generator.code.prependRight( node.start, `root.` );
 							if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
