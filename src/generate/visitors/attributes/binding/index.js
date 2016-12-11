@@ -84,7 +84,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 	if ( local.isComponent ) {
 		generator.hasComplexBindings = true;
 
-		local.init.push( deindent`
+		local.init.addBlock( deindent`
 			var ${local.name}_updating = false;
 
 			component.__bindings.push( function () {
@@ -96,7 +96,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			});
 		` );
 
-		local.update.push( deindent`
+		local.update.addBlock( deindent`
 			if ( !${local.name}_updating && '${parts[0]}' in changed ) {
 				${local.name}.set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
 			}
@@ -104,7 +104,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 	} else {
 		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}`;
 
-		local.init.push( deindent`
+		local.init.addBlock( deindent`
 			var ${local.name}_updating = false;
 
 			function ${handler} () {
@@ -117,9 +117,9 @@ export default function createBinding ( generator, node, attribute, current, loc
 			${updateElement};
 		` );
 
-		local.update.push( deindent`
-			if ( !${local.name}_updating ) ${updateElement};
-		` );
+		local.update.addLine(
+			`if ( !${local.name}_updating ) ${updateElement};`
+		);
 
 		generator.current.builders.teardown.addLine( deindent`
 			${local.name}.removeEventListener( '${eventName}', ${handler}, false );
@@ -128,6 +128,6 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	if ( node.name === 'select' ) {
 		generator.hasComplexBindings = true;
-		local.init.push( `component.__bindings.push( ${handler} )` );
+		local.init.addLine( `component.__bindings.push( ${handler} )` );
 	}
 }
