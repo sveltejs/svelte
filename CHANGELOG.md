@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.2.3
+
+* Add support for `namespace` declaration for SVG (etc) components ([#147](https://github.com/sveltejs/svelte/issues/147))
+* Throw error if methods or lifecycle hooks are arrow functions that use `this` or `arguments` ([#179](https://github.com/sveltejs/svelte/issues/179))
+* Use `setAttribute()` for `list` attributes, to preserve link to `<datalist>` ([#178](https://github.com/sveltejs/svelte/issues/178))
+* Throw error if default export is not an object literal ([#190](https://github.com/sveltejs/svelte/pull/190))
+* Internal refactoring
+
 ## 1.2.2
 
 * Omit directives in server-side rendering ([#163](https://github.com/sveltejs/svelte/issues/167))
