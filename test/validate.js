@@ -46,9 +46,9 @@ describe( 'validate', () => {
 				if ( err.name !== 'ParseError' ) throw err;
 
 				try {
-					const expected = require( `./validator/${dir}/error.json` );
+					const expected = require( `./validator/${dir}/errors.json` )[0];
 
-					assert.equal( err.shortMessage, expected.message );
+					assert.equal( err.message, expected.message );
 					assert.deepEqual( err.loc, expected.loc );
 					assert.equal( err.pos, expected.pos );
 				} catch ( err2 ) {
