@@ -20,7 +20,7 @@ export default {
 
 		const anchor = generator.createAnchor( name, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
-		generator.current.initStatements.push( deindent`
+		generator.current.builders.init.addBlock( deindent`
 			var ${name}_value = ${snippet};
 			var ${iterations} = [];
 			${node.else ? `var ${elseName} = null;` : ''}
@@ -31,7 +31,7 @@ export default {
 			}
 		` );
 		if ( node.else ) {
-			generator.current.initStatements.push( deindent`
+			generator.current.builders.init.addBlock( deindent`
 				if ( !${name}_value.length ) {
 					${elseName} = ${renderElse}( ${params}, component );
 					${!isToplevel ? `${elseName}.mount( ${anchor}.parentNode, ${anchor} );` : ''}
@@ -40,13 +40,13 @@ export default {
 		}
 
 		if ( isToplevel ) {
-			generator.current.mountStatements.push( deindent`
+			generator.current.builders.mount.addBlock( deindent`
 				for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
 					${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 				}
 			` );
 			if ( node.else ) {
-				generator.current.mountStatements.push( deindent`
+				generator.current.builders.mount.addBlock( deindent`
 					if ( ${elseName} ) {
 						${elseName}.mount( ${anchor}.parentNode, ${anchor} );
 					}
@@ -54,7 +54,7 @@ export default {
 			}
 		}
 
-		generator.current.updateStatements.push( deindent`
+		generator.current.builders.update.addBlock( deindent`
 			var ${name}_value = ${snippet};
 
 			for ( var ${i} = 0; ${i} < ${name}_value.length; ${i} += 1 ) {
@@ -74,7 +74,7 @@ export default {
 		` );
 
 		if ( node.else ) {
-			generator.current.updateStatements.push( deindent`
+			generator.current.builders.update.addBlock( deindent`
 				if ( !${name}_value.length && ${elseName} ) {
 					${elseName}.update( changed, ${params} );
 				} else if ( !${name}_value.length ) {
@@ -86,14 +86,14 @@ export default {
 			` );
 		}
 
-		generator.current.teardownStatements.push( deindent`
+		generator.current.builders.teardown.addBlock( deindent`
 			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
 				${iterations}[${i}].teardown( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 
 		if ( node.else ) {
-			generator.current.teardownStatements.push( deindent`
+			generator.current.builders.teardown.addBlock( deindent`
 				if ( ${elseName} ) {
 					${elseName}.teardown( ${isToplevel ? 'detach' : 'false'} );
 				}
@@ -136,18 +136,17 @@ export default {
 			listNames,
 			params: blockParams,
 
-			initStatements: [],
-			mountStatements: [],
-			updateStatements: [ Object.keys( contexts ).map( contextName => {
-				const listName = listNames[ contextName ];
-				const indexName = indexNames[ contextName ];
-
-				return `var ${contextName} = ${listName}[${indexName}];`;
-			}).join( '\n' ) ],
-			detachStatements: [],
-			teardownStatements: [],
-
+			builders: generator.getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker()
+		});
+
+		Object.keys( contexts ).forEach( contextName => {
+			const listName = listNames[ contextName ];
+			const indexName = indexNames[ contextName ];
+
+			generator.current.builders.update.addLine(
+				`var ${contextName} = ${listName}[${indexName}];`
+			);
 		});
 	},
 

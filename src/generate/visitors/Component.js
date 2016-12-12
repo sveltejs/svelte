@@ -1,4 +1,5 @@
 import deindent from '../../utils/deindent.js';
+import CodeBuilder from '../../utils/CodeBuilder.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 export default {
@@ -13,11 +14,8 @@ export default {
 
 			allUsedContexts: new Set(),
 
-			init: [],
-			mount: [],
-			update: [],
-			detach: [],
-			teardown: []
+			init: new CodeBuilder(),
+			update: new CodeBuilder()
 		};
 
 		const isToplevel = generator.current.localElementDepth === 0;
@@ -37,8 +35,13 @@ export default {
 
 			generator.generateBlock( node, yieldName );
 
-			generator.current.initStatements.push(`var ${name}_yieldFragment = ${yieldName}( root, component );`);
-			generator.current.updateStatements.push(`${name}_yieldFragment.update ( changed, root );`);
+			generator.current.builders.init.addLine(
+				`var ${name}_yieldFragment = ${yieldName}( root, component );`
+			);
+
+			generator.current.builders.update.addLine(
+				`${name}_yieldFragment.update( changed, root );`
+			);
 
 			componentInitProperties.push(`yield: ${name}_yieldFragment`);
 		}
@@ -72,7 +75,7 @@ export default {
 			componentInitProperties.push(`data: ${name}_initialData`);
 		}
 
-		local.init.unshift( deindent`
+		local.init.addBlockAtStart( deindent`
 			${statements.join( '\n\n' )}
 			var ${name} = new template.components.${node.name}({
 				${componentInitProperties.join(',\n')}
@@ -80,7 +83,7 @@ export default {
 		` );
 
 		if ( isToplevel ) {
-			local.mount.unshift( `${name}._mount( target, anchor );` );
+			generator.current.builders.mount.addLine( `${name}._mount( target, anchor );` );
 		}
 
 		if ( local.dynamicAttributes.length ) {
@@ -96,7 +99,7 @@ export default {
 				return `${name}_changes.${attribute.name} = ${attribute.value};`;
 			});
 
-			local.update.push( deindent`
+			local.update.addBlock( deindent`
 				var ${name}_changes = {};
 
 				${updates.join( '\n' )}
@@ -105,13 +108,10 @@ export default {
 			` );
 		}
 
-		local.teardown.push( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
+		generator.current.builders.teardown.addLine( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
 
-		generator.current.initStatements.push( local.init.join( '\n' ) );
-		if ( local.update.length ) generator.current.updateStatements.push( local.update.join( '\n' ) );
-		if ( local.mount.length ) generator.current.mountStatements.push( local.mount.join( '\n' ) );
-		if ( local.detach.length ) generator.current.detachStatements.push( local.detach.join( '\n' ) );
-		generator.current.teardownStatements.push( local.teardown.join( '\n' ) );
+		generator.current.builders.init.addBlock( local.init );
+		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
 
 		generator.push({
 			namespace: local.namespace,
