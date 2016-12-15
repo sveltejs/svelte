@@ -1,0 +1,8 @@
+[{
+	"message": "Default export must be an object literal",
+	"pos": 25,
+	"loc": {
+		"line": 2,
+		"column": 16
+	}
+}]

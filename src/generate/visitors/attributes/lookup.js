@@ -60,7 +60,6 @@ const lookup = {
 	label: { appliesTo: [ 'track' ] },
 	lang: {},
 	language: { appliesTo: [ 'script' ] },
-	list: { appliesTo: [ 'input' ] },
 	loop: { appliesTo: [ 'audio', 'bgsound', 'marquee', 'video' ] },
 	low: { appliesTo: [ 'meter' ] },
 	manifest: { appliesTo: [ 'html' ] },
