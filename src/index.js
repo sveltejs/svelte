@@ -30,7 +30,7 @@ export function compile ( source, _options ) {
 	let parsed;
 
 	try {
-		parsed = parse( source );
+		parsed = parse( source, options );
 	} catch ( err ) {
 		options.onerror( err );
 		return;

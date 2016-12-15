@@ -9,7 +9,8 @@ describe( 'validate', () => {
 		const solo = exists( `test/validator/${dir}/solo` );
 
 		( solo ? it.only : it )( dir, () => {
-			const input = fs.readFileSync( `test/validator/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
+			const filename = `test/validator/${dir}/input.html`;
+			const input = fs.readFileSync( filename, 'utf-8' ).replace( /\s+$/, '' );
 
 			try {
 				const parsed = svelte.parse( input );
