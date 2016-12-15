@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.2.4
+
+* SSR compiler: Implement `{{{tripes}}}` ([#197](https://github.com/sveltejs/svelte/issues/197))
+* SSR compiler: Escape HTML in tags ([#197](https://github.com/sveltejs/svelte/issues/197))
+
 ## 1.2.3
 
 * Add support for `namespace` declaration for SVG (etc) components ([#147](https://github.com/sveltejs/svelte/issues/147))
