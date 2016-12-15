@@ -33,4 +33,23 @@ describe( 'parse', () => {
 			}
 		});
 	});
+
+	it( 'handles errors with options.onerror', () => {
+		let errored = false;
+
+		svelte.compile( `<h1>unclosed`, {
+			onerror ( err ) {
+				errored = true;
+				assert.equal( err.message, `Unexpected end of input` );
+			}
+		});
+
+		assert.ok( errored );
+	});
+
+	it( 'throws without options.onerror', () => {
+		assert.throws( () => {
+			svelte.compile( `<h1>unclosed` );
+		}, /Unexpected end of input/ );
+	});
 });
