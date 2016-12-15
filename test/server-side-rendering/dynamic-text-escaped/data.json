@@ -1,0 +1,3 @@
+{
+	"foo": "<p>this should be <em>escaped</em> & so should 'this'</p>"
+}

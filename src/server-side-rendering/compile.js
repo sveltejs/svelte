@@ -220,6 +220,11 @@ export default function compile ( parsed, source, { filename }) {
 
 		MustacheTag ( node ) {
 			const { snippet } = contextualise( node.expression ); // TODO use snippet, for sourcemap support
+			return '${__escape( String( ' + snippet + ') )}';
+		},
+
+		RawMustacheTag ( node ) {
+			const { snippet } = contextualise( node.expression ); // TODO use snippet, for sourcemap support
 			return '${' + snippet + '}';
 		},
 
@@ -381,6 +386,18 @@ export default function compile ( parsed, source, { filename }) {
 		exports.renderCss = function () {
 			${renderCssStatements.join( '\n\n' )}
 		};
+
+		var escaped = {
+			'"': '&quot;',
+			"'": '&39;',
+			'&': '&amp;',
+			'<': '&lt;',
+			'>': '&gt;'
+		};
+
+		function __escape ( html ) {
+			return html.replace( /["'&<>]/g, match => escaped[ match ] );
+		}
 	` );
 
 	const rendered = topLevelStatements.join( '\n\n' );
