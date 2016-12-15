@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.2.5
+
+* Allow whitelisted globals in templates ([#185](https://github.com/sveltejs/svelte/issues/185))
+* Intercept parse errors with `options.onerror`
+
 ## 1.2.4
 
 * SSR compiler: Implement `{{{tripes}}}` ([#197](https://github.com/sveltejs/svelte/issues/197))
