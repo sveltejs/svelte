@@ -16,13 +16,25 @@ function normalizeOptions ( options ) {
 			} else {
 				console.warn( warning.message ); // eslint-disable-line no-console
 			}
+		},
+
+		onerror: error => {
+			throw error;
 		}
 	}, options );
 }
 
 export function compile ( source, _options ) {
 	const options = normalizeOptions( _options );
-	const parsed = parse( source, options );
+
+	let parsed;
+
+	try {
+		parsed = parse( source );
+	} catch ( err ) {
+		options.onerror( err );
+		return;
+	}
 
 	const { names } = validate( parsed, source, options );
 
