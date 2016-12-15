@@ -198,8 +198,6 @@ export default function compile ( parsed, source, { filename }) {
 
 			if ( voidElementNames.test( node.name ) ) {
 				element += '>';
-			} else if ( node.children.length === 0 ) {
-				element += '/>';
 			} else {
 				elementDepth += 1;
 				element += '>' + node.children.map( stringify ).join( '' ) + `</${node.name}>`;
