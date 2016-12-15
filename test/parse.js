@@ -46,4 +46,10 @@ describe( 'parse', () => {
 
 		assert.ok( errored );
 	});
+
+	it( 'throws without options.onerror', () => {
+		assert.throws( () => {
+			svelte.compile( `<h1>unclosed` );
+		}, /Unexpected end of input/ );
+	});
 });
