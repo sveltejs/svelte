@@ -6,8 +6,9 @@ import isReference from '../utils/isReference.js';
 import counter from './utils/counter.js';
 import flattenReference from '../utils/flattenReference.js';
 import visitors from './visitors/index.js';
+import globalWhitelist from '../utils/globalWhitelist.js';
 
-export default function generator ( parsed, source, names ) {
+export default function createGenerator ( parsed, source, names ) {
 	const generator = {
 		addElement ( name, renderStatement, needsIdentifier = false ) {
 			const isToplevel = generator.current.localElementDepth === 0;
@@ -130,22 +131,31 @@ export default function generator ( parsed, source, names ) {
 
 						if ( parent && parent.type === 'CallExpression' && node === parent.callee && generator.helpers[ name ] ) {
 							generator.code.prependRight( node.start, `template.helpers.` );
-							return;
 						}
 
-						if ( name === 'event' && isEventHandler ) {
-							return;
+						else if ( name === 'event' && isEventHandler ) {
+							// noop
 						}
 
-						if ( contexts[ name ] ) {
+						else if ( contexts[ name ] ) {
 							dependencies.push( ...contextDependencies[ name ] );
 							if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
-						} else if ( indexes[ name ] ) {
+						}
+
+						else if ( indexes[ name ] ) {
 							const context = indexes[ name ];
 							if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
-						} else {
+						}
+
+						else {
+							if ( globalWhitelist[ name ] ) {
+								generator.code.prependRight( node.start, `( '${name}' in root ? root.` );
+								generator.code.appendLeft( node.object.end, ` : ${name} )` );
+							} else {
+								generator.code.prependRight( node.start, `root.` );
+							}
+
 							dependencies.push( name );
-							generator.code.prependRight( node.start, `root.` );
 							if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 						}
 

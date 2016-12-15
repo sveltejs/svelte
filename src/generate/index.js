@@ -5,12 +5,12 @@ import namespaces from '../utils/namespaces.js';
 import getIntro from './utils/getIntro.js';
 import getOutro from './utils/getOutro.js';
 import processCss from './css/process.js';
-import Generator from './generator.js';
+import createGenerator from './createGenerator.js';
 
 export default function generate ( parsed, source, options, names ) {
 	const format = options.format || 'es';
 
-	const generator = Generator( parsed, source, names );
+	const generator = createGenerator( parsed, source, names );
 
 	const templateProperties = {};
 	const imports = [];
