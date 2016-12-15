@@ -2,7 +2,6 @@ import MagicString, { Bundle } from 'magic-string';
 import CodeBuilder from '../utils/CodeBuilder.js';
 import deindent from '../utils/deindent.js';
 import namespaces from '../utils/namespaces.js';
-import globalWhitelist from '../utils/globalWhitelist.js';
 import getIntro from './utils/getIntro.js';
 import getOutro from './utils/getOutro.js';
 import processCss from './css/process.js';
