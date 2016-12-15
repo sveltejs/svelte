@@ -16,9 +16,7 @@ export default {
 
 		const isToplevel = generator.current.localElementDepth === 0;
 
-		const mountStatement = deindent`
-			${before}.insertAdjacentHTML( 'afterend', ${snippet} );
-		`;
+		const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${snippet} );`;
 		const detachStatement = deindent`
 			while ( ${before}.nextSibling && ${before}.nextSibling !== ${after} ) {
 				${before}.parentNode.removeChild( ${before}.nextSibling );
@@ -26,22 +24,14 @@ export default {
 		`;
 
 		if ( isToplevel ) {
-			generator.current.mountStatements.push(mountStatement);
+			generator.current.builders.mount.addLine( mountStatement );
 		} else {
-			generator.current.initStatements.push(mountStatement);
+			generator.current.builders.init.addLine( mountStatement );
 		}
 
-		generator.current.updateStatements.push( deindent`
-			${detachStatement}
-			${mountStatement}
-		` );
+		generator.current.builders.update.addBlock( detachStatement );
+		generator.current.builders.update.addBlock( mountStatement );
 
-		if ( isToplevel ) {
-			const { detachStatements } = generator.current;
-			// we need `before` and `after` to still be in the DOM when running the
-			// detach code, so splice in the detach code *before* detaching
-			// `before`/`after`.
-			detachStatements.splice( detachStatements.length - 2, 0, detachStatement);
-		}
+		generator.current.builders.detachRaw.addBlock( detachStatement );
 	}
 };
