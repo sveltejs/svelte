@@ -5,7 +5,7 @@ import { trimStart, trimEnd } from './utils/trim.js';
 import getCodeFrame from '../utils/getCodeFrame.js';
 import hash from './utils/hash.js';
 
-function ParseError ( message, template, index ) {
+function ParseError ( message, template, index, filename ) {
 	const { line, column } = locate( template, index );
 
 	this.name = 'ParseError';
@@ -14,13 +14,14 @@ function ParseError ( message, template, index ) {
 
 	this.loc = { line: line + 1, column };
 	this.pos = index;
+	this.filename = filename;
 }
 
 ParseError.prototype.toString = function () {
 	return `${this.message} (${this.loc.line}:${this.loc.column})\n${this.frame}`;
 };
 
-export default function parse ( template ) {
+export default function parse ( template, options = {} ) {
 	if ( typeof template !== 'string' ) {
 		throw new TypeError( 'Template must be a string' );
 	}
@@ -41,7 +42,7 @@ export default function parse ( template ) {
 		},
 
 		error ( message, index = this.index ) {
-			throw new ParseError( message, this.template, index );
+			throw new ParseError( message, this.template, index, options.filename );
 		},
 
 		eat ( str, required ) {
