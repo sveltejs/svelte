@@ -45,40 +45,6 @@ export default class Generator {
 		}
 	}
 
-	createMountStatement ( name ) {
-		if ( this.current.target === 'target' ) {
-			this.current.builders.mount.addLine(
-				`target.insertBefore( ${name}, anchor );`
-			);
-		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${name} );` );
-		}
-	}
-
-	createAnchor ( _name, description = '' ) {
-		const name = `${_name}_anchor`;
-		const statement = `document.createComment( ${JSON.stringify( description )} )`;
-		this.addElement( name, statement, true );
-		return name;
-	}
-
-	generateBlock ( node, name ) {
-		this.push({
-			name,
-			target: 'target',
-			localElementDepth: 0,
-			builders: this.getBuilders(),
-			getUniqueName: this.getUniqueNameMaker()
-		});
-		// walk the children here
-		node.children.forEach( node => this.visit( node ) );
-		this.addRenderer( this.current );
-		this.pop();
-		// unset the children, to avoid them being visited again
-		node.children = [];
-	}
-
 	addRenderer ( fragment ) {
 		if ( fragment.autofocus ) {
 			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
@@ -179,6 +145,40 @@ export default class Generator {
 			snippet: `[✂${expression.start}-${expression.end}✂]`,
 			string: this.code.slice( expression.start, expression.end )
 		};
+	}
+
+	createAnchor ( _name, description = '' ) {
+		const name = `${_name}_anchor`;
+		const statement = `document.createComment( ${JSON.stringify( description )} )`;
+		this.addElement( name, statement, true );
+		return name;
+	}
+
+	createMountStatement ( name ) {
+		if ( this.current.target === 'target' ) {
+			this.current.builders.mount.addLine(
+				`target.insertBefore( ${name}, anchor );`
+			);
+		} else {
+			this.current.builders.init.addLine(
+				`${this.current.target}.appendChild( ${name} );` );
+		}
+	}
+
+	generateBlock ( node, name ) {
+		this.push({
+			name,
+			target: 'target',
+			localElementDepth: 0,
+			builders: this.getBuilders(),
+			getUniqueName: this.getUniqueNameMaker()
+		});
+		// walk the children here
+		node.children.forEach( node => this.visit( node ) );
+		this.addRenderer( this.current );
+		this.pop();
+		// unset the children, to avoid them being visited again
+		node.children = [];
 	}
 
 	getBuilders () {
