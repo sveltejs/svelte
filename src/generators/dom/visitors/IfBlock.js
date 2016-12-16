@@ -1,4 +1,4 @@
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
 
 function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );

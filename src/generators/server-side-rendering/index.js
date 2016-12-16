@@ -1,10 +1,10 @@
-import { walk } from 'estree-walker';
-import deindent from '../utils/deindent.js';
-import isReference from '../utils/isReference.js';
-import flattenReference from '../utils/flattenReference.js';
 import MagicString, { Bundle } from 'magic-string';
-import processCss from '../generate/css/process.js';
-import voidElementNames from '../utils/voidElementNames.js';
+import { walk } from 'estree-walker';
+import deindent from '../../utils/deindent.js';
+import isReference from '../../utils/isReference.js';
+import flattenReference from '../../utils/flattenReference.js';
+import voidElementNames from '../../utils/voidElementNames.js';
+import processCss from '../shared/css/process.js';
 
 export default function compile ( parsed, source, { filename }) {
 	const code = new MagicString( source );

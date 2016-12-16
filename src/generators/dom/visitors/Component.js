@@ -1,5 +1,5 @@
-import deindent from '../../utils/deindent.js';
-import CodeBuilder from '../../utils/CodeBuilder.js';
+import deindent from '../../../utils/deindent.js';
+import CodeBuilder from '../../../utils/CodeBuilder.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 export default {
