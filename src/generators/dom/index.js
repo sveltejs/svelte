@@ -6,12 +6,12 @@ import getIntro from '../shared/utils/getIntro.js';
 import getOutro from '../shared/utils/getOutro.js';
 import processCss from '../shared/css/process.js';
 import visitors from './visitors/index.js';
-import createGenerator from '../createGenerator.js';
+import Generator from '../Generator.js';
 
 export default function dom ( parsed, source, options, names ) {
 	const format = options.format || 'es';
 
-	const generator = createGenerator( parsed, source, names, visitors );
+	const generator = new Generator( parsed, source, names, visitors );
 
 	const templateProperties = {};
 	const imports = [];
@@ -98,7 +98,7 @@ export default function dom ( parsed, source, options, names ) {
 		getUniqueName: generator.getUniqueNameMaker()
 	});
 
-	parsed.html.children.forEach( generator.visit );
+	parsed.html.children.forEach( node => generator.visit( node ) );
 
 	generator.addRenderer( generator.pop() );
 
