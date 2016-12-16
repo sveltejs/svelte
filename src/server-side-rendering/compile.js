@@ -4,8 +4,7 @@ import isReference from '../utils/isReference.js';
 import flattenReference from '../utils/flattenReference.js';
 import MagicString, { Bundle } from 'magic-string';
 import processCss from '../generate/css/process.js';
-
-const voidElementNames = /^(?:area|base|br|col|command|doctype|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
+import voidElementNames from '../utils/voidElementNames.js';
 
 export default function compile ( parsed, source, { filename }) {
 	const code = new MagicString( source );
