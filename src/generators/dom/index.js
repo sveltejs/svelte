@@ -1,9 +1,7 @@
-import MagicString, { Bundle } from 'magic-string';
 import deindent from '../../utils/deindent.js';
+import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import namespaces from '../../utils/namespaces.js';
-import getIntro from '../shared/utils/getIntro.js';
-import getOutro from '../shared/utils/getOutro.js';
 import processCss from '../shared/css/process.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
@@ -13,7 +11,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	const generator = new Generator( parsed, source, names, visitors );
 
-	const { computations, imports, templateProperties } = generator; // TODO make this generator.parseJs() or similar?
+	const { computations, imports, templateProperties } = generator.parseJs();
 
 	const renderers = [];
 	function addRenderer ( fragment ) {
@@ -63,7 +61,7 @@ export default function dom ( parsed, source, options, names ) {
 				`var ${name} = ${renderStatement};`
 			);
 
-			generator.createMountStatement( name );
+			generator.fire( 'createMountStatement', name );
 		} else {
 			generator.current.builders.init.addLine(
 				`${generator.current.target}.appendChild( ${renderStatement} );`
@@ -85,6 +83,35 @@ export default function dom ( parsed, source, options, names ) {
 			renderStatement,
 			needsIdentifier: true
 		});
+	});
+
+	generator.on( 'createMountStatement', name => {
+		if ( generator.current.target === 'target' ) {
+			generator.current.builders.mount.addLine(
+				`target.insertBefore( ${name}, anchor );`
+			);
+		} else {
+			generator.current.builders.init.addLine(
+				`${generator.current.target}.appendChild( ${name} );` );
+		}
+	});
+
+	generator.on( 'generateBlock', ({ node, name }) => {
+		generator.push({
+			name,
+			target: 'target',
+			localElementDepth: 0,
+			builders: getBuilders(),
+			getUniqueName: generator.getUniqueNameMaker()
+		});
+
+		// walk the children here
+		node.children.forEach( node => generator.visit( node ) );
+		generator.fire( 'addRenderer', generator.current );
+		generator.pop();
+
+		// unset the children, to avoid them being visited again
+		node.children = [];
 	});
 
 	let namespace = null;
@@ -109,7 +136,7 @@ export default function dom ( parsed, source, options, names ) {
 		indexNames: {},
 		listNames: {},
 
-		builders: generator.getBuilders(),
+		builders: getBuilders(),
 		getUniqueName: generator.getUniqueNameMaker()
 	});
 
@@ -353,45 +380,5 @@ export default function dom ( parsed, source, options, names ) {
 		builders.main.addBlock( `${constructorName}.prototype = template.methods;` );
 	}
 
-	const result = builders.main.toString();
-
-	const pattern = /\[✂(\d+)-(\d+)$/;
-
-	const parts = result.split( '✂]' );
-	const finalChunk = parts.pop();
-
-	const compiled = new Bundle({ separator: '' });
-
-	function addString ( str ) {
-		compiled.addSource({
-			content: new MagicString( str )
-		});
-	}
-
-	const intro = getIntro( format, options, imports );
-	if ( intro ) addString( intro );
-
-	const { filename } = options;
-
-	parts.forEach( str => {
-		const chunk = str.replace( pattern, '' );
-		if ( chunk ) addString( chunk );
-
-		const match = pattern.exec( str );
-
-		const snippet = generator.code.snip( +match[1], +match[2] );
-
-		compiled.addSource({
-			filename,
-			content: snippet
-		});
-	});
-
-	addString( finalChunk );
-	addString( '\n\n' + getOutro( format, constructorName, options, imports ) );
-
-	return {
-		code: compiled.toString(),
-		map: compiled.generateMap({ includeContent: true })
-	};
+	return generator.generate( builders.main.toString(), options, { constructorName, format } );
 }

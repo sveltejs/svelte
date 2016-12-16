@@ -33,7 +33,10 @@ export default {
 		if ( hasChildren ) {
 			const yieldName = generator.current.getUniqueName( `render${name}YieldFragment` );
 
-			generator.generateBlock( node, yieldName );
+			generator.fire( 'generateBlock', {
+				node,
+				name: yieldName
+			});
 
 			generator.current.builders.init.addLine(
 				`var ${name}_yieldFragment = ${yieldName}( root, component );`
