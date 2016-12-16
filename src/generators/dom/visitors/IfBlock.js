@@ -37,7 +37,11 @@ export default {
 		const isToplevel = generator.current.localElementDepth === 0;
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
 
-		const anchor = generator.createAnchor( name, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
+		const anchor = `${name}_anchor`;
+		generator.fire( 'createAnchor', {
+			name: anchor,
+			description: `#if ${generator.source.slice( node.expression.start, node.expression.end )}`
+		});
 
 		generator.current.builders.init.addBlock( deindent`
 			function ${getBlock} ( ${params} ) {

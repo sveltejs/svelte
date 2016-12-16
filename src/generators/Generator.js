@@ -96,19 +96,6 @@ export default class Generator {
 		};
 	}
 
-	createAnchor ( _name, description = '' ) {
-		const name = `${_name}_anchor`;
-		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
-
-		this.fire( 'addElement', {
-			name,
-			renderStatement,
-			needsIdentifier: true
-		});
-
-		return name;
-	}
-
 	createMountStatement ( name ) {
 		if ( this.current.target === 'target' ) {
 			this.current.builders.mount.addLine(
