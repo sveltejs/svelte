@@ -13,64 +13,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	const generator = new Generator( parsed, source, names, visitors );
 
-	const templateProperties = {};
-	const imports = [];
-
-	if ( parsed.js ) {
-		generator.addSourcemapLocations( parsed.js.content );
-
-		// imports need to be hoisted out of the IIFE
-		for ( let i = 0; i < parsed.js.content.body.length; i += 1 ) {
-			const node = parsed.js.content.body[i];
-			if ( node.type === 'ImportDeclaration' ) {
-				let a = node.start;
-				let b = node.end;
-				while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
-				while ( source[b] === '\n' ) b += 1;
-
-				//imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
-				imports.push( node );
-				generator.code.remove( a, b );
-			}
-		}
-
-		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
-
-		if ( defaultExport ) {
-			const finalNode = parsed.js.content.body[ parsed.js.content.body.length - 1 ];
-			if ( defaultExport === finalNode ) {
-				// export is last property, we can just return it
-				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
-			} else {
-				// TODO ensure `template` isn't already declared
-				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
-
-				let i = defaultExport.start;
-				while ( /\s/.test( source[ i - 1 ] ) ) i--;
-
-				const indentation = source.slice( i, defaultExport.start );
-				generator.code.appendLeft( finalNode.end, `\n\n${indentation}return template;` );
-			}
-
-			defaultExport.declaration.properties.forEach( prop => {
-				templateProperties[ prop.key.name ] = prop.value;
-			});
-
-			generator.code.prependRight( parsed.js.content.start, 'var template = (function () {' );
-		} else {
-			generator.code.prependRight( parsed.js.content.start, '(function () {' );
-		}
-
-		generator.code.appendLeft( parsed.js.content.end, '}());' );
-
-		[ 'helpers', 'events', 'components' ].forEach( key => {
-			if ( templateProperties[ key ] ) {
-				templateProperties[ key ].properties.forEach( prop => {
-					generator[ key ][ prop.key.name ] = prop.value;
-				});
-			}
-		});
-	}
+	const { templateProperties, imports } = generator;
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {

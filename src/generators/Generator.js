@@ -14,14 +14,21 @@ export default class Generator {
 		this.names = names;
 		this.visitors = visitors;
 
-		this.renderers = [];
-		this.code = new MagicString( source );
+		this.imports = [];
+		this.templateProperties = {};
+		this.helpers = {};
 		this.components = {};
 		this.events = {};
-		this.helpers = {};
+
+		this.renderers = [];
+		this.code = new MagicString( source );
 		this.getUniqueName = counter( names );
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
+
+		this._callbacks = {};
+
+		this.init();
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -165,6 +172,15 @@ export default class Generator {
 		}
 	}
 
+	fire ( eventName, data ) {
+		const handlers = eventName in this._callbacks && this._callbacks[ eventName ].slice();
+		if ( !handlers ) return;
+
+		for ( let i = 0; i < handlers.length; i += 1 ) {
+			handlers[i].call( this, data );
+		}
+	}
+
 	generateBlock ( node, name ) {
 		this.push({
 			name,
@@ -194,6 +210,71 @@ export default class Generator {
 
 	getUniqueNameMaker () {
 		return counter( this.names );
+	}
+
+	init () {
+		const { imports, source } = this;
+		const { js } = this.parsed;
+		if ( js ) {
+			this.addSourcemapLocations( js.content );
+
+			// imports need to be hoisted out of the IIFE
+			for ( let i = 0; i < js.content.body.length; i += 1 ) {
+				const node = js.content.body[i];
+				if ( node.type === 'ImportDeclaration' ) {
+					let a = node.start;
+					let b = node.end;
+					while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
+					while ( source[b] === '\n' ) b += 1;
+
+					//imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
+					imports.push( node );
+					this.code.remove( a, b );
+				}
+			}
+
+			const defaultExport = js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
+
+			if ( defaultExport ) {
+				const finalNode = js.content.body[ js.content.body.length - 1 ];
+				if ( defaultExport === finalNode ) {
+					// export is last property, we can just return it
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
+				} else {
+					// TODO ensure `template` isn't already declared
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
+
+					let i = defaultExport.start;
+					while ( /\s/.test( source[ i - 1 ] ) ) i--;
+
+					const indentation = source.slice( i, defaultExport.start );
+					this.code.appendLeft( finalNode.end, `\n\n${indentation}return template;` );
+				}
+
+				defaultExport.declaration.properties.forEach( prop => {
+					this.templateProperties[ prop.key.name ] = prop.value;
+				});
+
+				this.code.prependRight( js.content.start, 'var template = (function () {' );
+			} else {
+				this.code.prependRight( js.content.start, '(function () {' );
+			}
+
+			this.code.appendLeft( js.content.end, '}());' );
+
+			[ 'helpers', 'events', 'components' ].forEach( key => {
+				if ( this.templateProperties[ key ] ) {
+					this.templateProperties[ key ].properties.forEach( prop => {
+						this[ key ][ prop.key.name ] = prop.value;
+					});
+				}
+			});
+		}
+	}
+
+	on ( eventName, handler ) {
+		const handlers = this._callbacks[ eventName ] || ( this._callbacks[ eventName ] = [] );
+		handlers.push( handler );
 	}
 
 	pop () {
