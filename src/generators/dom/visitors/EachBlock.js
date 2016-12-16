@@ -151,7 +151,7 @@ export default {
 	},
 
 	leave ( generator ) {
-		generator.addRenderer( generator.current );
+		generator.fire( 'addRenderer', generator.current );
 		generator.pop();
 	}
 };

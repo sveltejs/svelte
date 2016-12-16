@@ -10,9 +10,18 @@ export default {
 		// we would have used comments here, but the `insertAdjacentHTML` api only
 		// exists for `Element`s.
 		const before = `${name}_before`;
-		generator.addElement( before, `document.createElement( 'noscript' )`, true );
+		generator.fire( 'addElement', {
+			name: before,
+			renderStatement: `document.createElement( 'noscript' )`,
+			needsIdentifier: true
+		});
+		
 		const after = `${name}_after`;
-		generator.addElement( after, `document.createElement( 'noscript' )`, true );
+		generator.fire( 'addElement', {
+			name: after,
+			renderStatement: `document.createElement( 'noscript' )`,
+			needsIdentifier: true
+		});
 
 		const isToplevel = generator.current.localElementDepth === 0;
 

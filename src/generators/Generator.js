@@ -14,13 +14,14 @@ export default class Generator {
 		this.names = names;
 		this.visitors = visitors;
 
-		this.imports = [];
 		this.templateProperties = {};
 		this.helpers = {};
 		this.components = {};
 		this.events = {};
 
-		this.renderers = [];
+		this.imports = [];
+		this.computations = [];
+
 		this.code = new MagicString( source );
 		this.getUniqueName = counter( names );
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
@@ -29,65 +30,6 @@ export default class Generator {
 		this._callbacks = {};
 
 		this.init();
-	}
-
-	addElement ( name, renderStatement, needsIdentifier = false ) {
-		const isToplevel = this.current.localElementDepth === 0;
-		if ( needsIdentifier || isToplevel ) {
-			this.current.builders.init.addLine(
-				`var ${name} = ${renderStatement};`
-			);
-
-			this.createMountStatement( name );
-		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${renderStatement} );`
-			);
-		}
-
-		if ( isToplevel ) {
-			this.current.builders.detach.addLine(
-				`${name}.parentNode.removeChild( ${name} );`
-			);
-		}
-	}
-
-	addRenderer ( fragment ) {
-		if ( fragment.autofocus ) {
-			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
-		}
-
-		// minor hack – we need to ensure that any {{{triples}}} are detached
-		// first, so we append normal detach statements to detachRaw
-		fragment.builders.detachRaw.addBlock( fragment.builders.detach );
-
-		if ( !fragment.builders.detachRaw.isEmpty() ) {
-			fragment.builders.teardown.addBlock( deindent`
-				if ( detach ) {
-					${fragment.builders.detachRaw}
-				}
-			` );
-		}
-
-		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params}, component ) {
-				${fragment.builders.init}
-
-				return {
-					mount: function ( target, anchor ) {
-						${fragment.builders.mount}
-					},
-
-					update: function ( changed, ${fragment.params} ) {
-						${fragment.builders.update}
-					},
-
-					teardown: function ( detach ) {
-						${fragment.builders.teardown}
-					}
-				};
-			}
-		` );
 	}
 
 	addSourcemapLocations ( node ) {
@@ -156,8 +98,14 @@ export default class Generator {
 
 	createAnchor ( _name, description = '' ) {
 		const name = `${_name}_anchor`;
-		const statement = `document.createComment( ${JSON.stringify( description )} )`;
-		this.addElement( name, statement, true );
+		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
+
+		this.fire( 'addElement', {
+			name,
+			renderStatement,
+			needsIdentifier: true
+		});
+
 		return name;
 	}
 
@@ -191,7 +139,7 @@ export default class Generator {
 		});
 		// walk the children here
 		node.children.forEach( node => this.visit( node ) );
-		this.addRenderer( this.current );
+		this.fire( 'addRenderer', this.current );
 		this.pop();
 		// unset the children, to avoid them being visited again
 		node.children = [];
@@ -213,8 +161,9 @@ export default class Generator {
 	}
 
 	init () {
-		const { imports, source } = this;
+		const { computations, imports, source } = this;
 		const { js } = this.parsed;
+
 		if ( js ) {
 			this.addSourcemapLocations( js.content );
 
@@ -269,6 +218,34 @@ export default class Generator {
 					});
 				}
 			});
+
+			if ( this.templateProperties.computed ) {
+				const dependencies = new Map();
+
+				this.templateProperties.computed.properties.forEach( prop => {
+					const key = prop.key.name;
+					const value = prop.value;
+
+					const deps = value.params.map( param => param.name );
+					dependencies.set( key, deps );
+				});
+
+				const visited = new Set();
+
+				function visit ( key ) {
+					if ( !dependencies.has( key ) ) return; // not a computation
+
+					if ( visited.has( key ) ) return;
+					visited.add( key );
+
+					const deps = dependencies.get( key );
+					deps.forEach( visit );
+
+					computations.push({ key, deps });
+				}
+
+				this.templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+			}
 		}
 	}
 
