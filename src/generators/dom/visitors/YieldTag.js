@@ -1,6 +1,10 @@
 export default {
 	enter ( generator ) {
-		const anchor = generator.createAnchor( 'yield', 'yield' );
+		const anchor = `yield_anchor`;
+		generator.fire( 'createAnchor', {
+			name: anchor,
+			description: 'yield'
+		});
 
 		generator.current.builders.mount.addLine(
 			`component.yield && component.yield.mount( ${generator.current.target}, ${anchor} );`

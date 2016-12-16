@@ -18,7 +18,11 @@ export default {
 
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
-		const anchor = generator.createAnchor( name, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
+		const anchor = `${name}_anchor`;
+		generator.fire( 'createAnchor', {
+			name: anchor,
+			description: `#each ${generator.source.slice( node.expression.start, node.expression.end )}`
+		});
 
 		generator.current.builders.init.addBlock( deindent`
 			var ${name}_value = ${snippet};

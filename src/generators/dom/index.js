@@ -56,8 +56,8 @@ export default function dom ( parsed, source, options, names ) {
 
 	generator.on( 'addRenderer', addRenderer );
 
-	generator.on( 'addElement', function addElement ({ name, renderStatement, needsIdentifier }) {
-		const isToplevel = this.current.localElementDepth === 0;
+	generator.on( 'addElement', ({ name, renderStatement, needsIdentifier }) => {
+		const isToplevel = generator.current.localElementDepth === 0;
 		if ( needsIdentifier || isToplevel ) {
 			generator.current.builders.init.addLine(
 				`var ${name} = ${renderStatement};`
@@ -75,6 +75,16 @@ export default function dom ( parsed, source, options, names ) {
 				`${name}.parentNode.removeChild( ${name} );`
 			);
 		}
+	});
+
+	generator.on( 'createAnchor', ({ name, description = '' }) => {
+		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
+
+		generator.fire( 'addElement', {
+			name,
+			renderStatement,
+			needsIdentifier: true
+		});
 	});
 
 	let namespace = null;
