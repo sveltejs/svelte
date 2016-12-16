@@ -19,6 +19,8 @@ export default class Generator {
 		this.components = {};
 		this.events = {};
 
+		this.elementDepth = 0;
+
 		this.code = new MagicString( source );
 		this.getUniqueName = counter( names );
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
@@ -271,10 +273,18 @@ export default class Generator {
 
 		if ( visitor.enter ) visitor.enter( this, node );
 
+		if ( visitor.type === 'Element' ) {
+			this.elementDepth += 1;
+		}
+
 		if ( node.children ) {
 			node.children.forEach( child => {
 				this.visit( child );
 			});
+		}
+
+		if ( visitor.type === 'Element' ) {
+			this.elementDepth -= 1;
 		}
 
 		if ( visitor.leave ) visitor.leave( this, node );
