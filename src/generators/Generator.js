@@ -1,11 +1,11 @@
-import MagicString from 'magic-string';
-import CodeBuilder from '../utils/CodeBuilder.js';
+import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
-import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
 import counter from './shared/utils/counter.js';
 import flattenReference from '../utils/flattenReference.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
+import getIntro from './shared/utils/getIntro.js';
+import getOutro from './shared/utils/getOutro.js';
 
 export default class Generator {
 	constructor ( parsed, source, names, visitors ) {
@@ -14,13 +14,10 @@ export default class Generator {
 		this.names = names;
 		this.visitors = visitors;
 
-		this.templateProperties = {};
+		this.imports = [];
 		this.helpers = {};
 		this.components = {};
 		this.events = {};
-
-		this.imports = [];
-		this.computations = [];
 
 		this.code = new MagicString( source );
 		this.getUniqueName = counter( names );
@@ -28,8 +25,6 @@ export default class Generator {
 		this.usesRefs = false;
 
 		this._callbacks = {};
-
-		this.init();
 	}
 
 	addSourcemapLocations ( node ) {
@@ -96,17 +91,6 @@ export default class Generator {
 		};
 	}
 
-	createMountStatement ( name ) {
-		if ( this.current.target === 'target' ) {
-			this.current.builders.mount.addLine(
-				`target.insertBefore( ${name}, anchor );`
-			);
-		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${name} );` );
-		}
-	}
-
 	fire ( eventName, data ) {
 		const handlers = eventName in this._callbacks && this._callbacks[ eventName ].slice();
 		if ( !handlers ) return;
@@ -116,30 +100,45 @@ export default class Generator {
 		}
 	}
 
-	generateBlock ( node, name ) {
-		this.push({
-			name,
-			target: 'target',
-			localElementDepth: 0,
-			builders: this.getBuilders(),
-			getUniqueName: this.getUniqueNameMaker()
-		});
-		// walk the children here
-		node.children.forEach( node => this.visit( node ) );
-		this.fire( 'addRenderer', this.current );
-		this.pop();
-		// unset the children, to avoid them being visited again
-		node.children = [];
-	}
+	generate ( result, options, { constructorName, format } ) {
+		const pattern = /\[✂(\d+)-(\d+)$/;
 
-	getBuilders () {
+		const parts = result.split( '✂]' );
+		const finalChunk = parts.pop();
+
+		const compiled = new Bundle({ separator: '' });
+
+		function addString ( str ) {
+			compiled.addSource({
+				content: new MagicString( str )
+			});
+		}
+
+		const intro = getIntro( format, options, this.imports );
+		if ( intro ) addString( intro );
+
+		const { filename } = options;
+
+		parts.forEach( str => {
+			const chunk = str.replace( pattern, '' );
+			if ( chunk ) addString( chunk );
+
+			const match = pattern.exec( str );
+
+			const snippet = this.code.snip( +match[1], +match[2] );
+
+			compiled.addSource({
+				filename,
+				content: snippet
+			});
+		});
+
+		addString( finalChunk );
+		addString( '\n\n' + getOutro( format, constructorName, options, this.imports ) );
+
 		return {
-			init: new CodeBuilder(),
-			mount: new CodeBuilder(),
-			update: new CodeBuilder(),
-			detach: new CodeBuilder(),
-			detachRaw: new CodeBuilder(),
-			teardown: new CodeBuilder()
+			code: compiled.toString(),
+			map: compiled.generateMap({ includeContent: true })
 		};
 	}
 
@@ -147,9 +146,13 @@ export default class Generator {
 		return counter( this.names );
 	}
 
-	init () {
-		const { computations, imports, source } = this;
+	parseJs () {
+		const { source } = this;
 		const { js } = this.parsed;
+
+		const imports = this.imports;
+		const computations = [];
+		const templateProperties = {};
 
 		if ( js ) {
 			this.addSourcemapLocations( js.content );
@@ -188,7 +191,7 @@ export default class Generator {
 				}
 
 				defaultExport.declaration.properties.forEach( prop => {
-					this.templateProperties[ prop.key.name ] = prop.value;
+					templateProperties[ prop.key.name ] = prop.value;
 				});
 
 				this.code.prependRight( js.content.start, 'var template = (function () {' );
@@ -199,17 +202,17 @@ export default class Generator {
 			this.code.appendLeft( js.content.end, '}());' );
 
 			[ 'helpers', 'events', 'components' ].forEach( key => {
-				if ( this.templateProperties[ key ] ) {
-					this.templateProperties[ key ].properties.forEach( prop => {
+				if ( templateProperties[ key ] ) {
+					templateProperties[ key ].properties.forEach( prop => {
 						this[ key ][ prop.key.name ] = prop.value;
 					});
 				}
 			});
 
-			if ( this.templateProperties.computed ) {
+			if ( templateProperties.computed ) {
 				const dependencies = new Map();
 
-				this.templateProperties.computed.properties.forEach( prop => {
+				templateProperties.computed.properties.forEach( prop => {
 					const key = prop.key.name;
 					const value = prop.value;
 
@@ -231,9 +234,15 @@ export default class Generator {
 					computations.push({ key, deps });
 				}
 
-				this.templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+				templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
 			}
 		}
+
+		return {
+			computations,
+			imports,
+			templateProperties
+		};
 	}
 
 	on ( eventName, handler ) {

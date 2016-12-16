@@ -8,7 +8,11 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		condition: generator.contextualise( node.expression ).snippet,
 		block: name
 	}];
-	generator.generateBlock( node, name );
+
+	generator.fire( 'generateBlock', {
+		node,
+		name
+	});
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
@@ -21,7 +25,10 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 			block: node.else ? name : null,
 		});
 		if (node.else) {
-			generator.generateBlock( node.else, name );
+			generator.fire( 'generateBlock', {
+				node: node.else,
+				name
+			});
 		}
 	}
 	return conditionsAndBlocks;

@@ -1,4 +1,5 @@
 import deindent from '../../../utils/deindent.js';
+import getBuilders from '../utils/getBuilders.js';
 
 export default {
 	enter ( generator, node ) {
@@ -105,7 +106,10 @@ export default {
 		}
 
 		if ( node.else ) {
-			generator.generateBlock( node.else, renderElse );
+			generator.fire( 'generateBlock', {
+				node: node.else,
+				name: renderElse
+			});
 		}
 
 		const indexNames = Object.assign( {}, generator.current.indexNames );
@@ -140,7 +144,7 @@ export default {
 			listNames,
 			params: blockParams,
 
-			builders: generator.getBuilders(),
+			builders: getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker()
 		});
 
