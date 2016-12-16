@@ -13,7 +13,69 @@ export default function dom ( parsed, source, options, names ) {
 
 	const generator = new Generator( parsed, source, names, visitors );
 
-	const { templateProperties, imports } = generator;
+	const { computations, imports, templateProperties } = generator; // TODO make this generator.parseJs() or similar?
+
+	const renderers = [];
+	function addRenderer ( fragment ) {
+		if ( fragment.autofocus ) {
+			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
+		}
+
+		// minor hack – we need to ensure that any {{{triples}}} are detached
+		// first, so we append normal detach statements to detachRaw
+		fragment.builders.detachRaw.addBlock( fragment.builders.detach );
+
+		if ( !fragment.builders.detachRaw.isEmpty() ) {
+			fragment.builders.teardown.addBlock( deindent`
+				if ( detach ) {
+					${fragment.builders.detachRaw}
+				}
+			` );
+		}
+
+		renderers.push( deindent`
+			function ${fragment.name} ( ${fragment.params}, component ) {
+				${fragment.builders.init}
+
+				return {
+					mount: function ( target, anchor ) {
+						${fragment.builders.mount}
+					},
+
+					update: function ( changed, ${fragment.params} ) {
+						${fragment.builders.update}
+					},
+
+					teardown: function ( detach ) {
+						${fragment.builders.teardown}
+					}
+				};
+			}
+		` );
+	}
+
+	generator.on( 'addRenderer', addRenderer );
+
+	generator.on( 'addElement', function addElement ({ name, renderStatement, needsIdentifier }) {
+		const isToplevel = this.current.localElementDepth === 0;
+		if ( needsIdentifier || isToplevel ) {
+			generator.current.builders.init.addLine(
+				`var ${name} = ${renderStatement};`
+			);
+
+			generator.createMountStatement( name );
+		} else {
+			generator.current.builders.init.addLine(
+				`${generator.current.target}.appendChild( ${renderStatement} );`
+			);
+		}
+
+		if ( isToplevel ) {
+			generator.current.builders.detach.addLine(
+				`${name}.parentNode.removeChild( ${name} );`
+			);
+		}
+	});
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {
@@ -43,7 +105,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	parsed.html.children.forEach( node => generator.visit( node ) );
 
-	generator.addRenderer( generator.pop() );
+	addRenderer( generator.pop() );
 
 	const builders = {
 		main: new CodeBuilder(),
@@ -54,37 +116,16 @@ export default function dom ( parsed, source, options, names ) {
 	builders.set.addLine( 'var oldState = state;' );
 	builders.set.addLine( 'state = Object.assign( {}, oldState, newState );' );
 
-	if ( templateProperties.computed ) {
+	if ( computations.length ) {
 		const builder = new CodeBuilder();
-		const dependencies = new Map();
 
-		templateProperties.computed.properties.forEach( prop => {
-			const key = prop.key.name;
-			const value = prop.value;
-
-			const deps = value.params.map( param => param.name );
-			dependencies.set( key, deps );
-		});
-
-		const visited = new Set();
-
-		function visit ( key ) {
-			if ( !dependencies.has( key ) ) return; // not a computation
-
-			if ( visited.has( key ) ) return;
-			visited.add( key );
-
-			const deps = dependencies.get( key );
-			deps.forEach( visit );
-
+		computations.forEach( ({ key, deps }) => {
 			builder.addBlock( deindent`
 				if ( ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
 			` );
-		}
-
-		templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+		});
 
 		builders.main.addBlock( deindent`
 			function applyComputations ( state, newState, oldState ) {
@@ -140,8 +181,8 @@ export default function dom ( parsed, source, options, names ) {
 		` );
 	}
 
-	let i = generator.renderers.length;
-	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
+	let i = renderers.length;
+	while ( i-- ) builders.main.addBlock( renderers[i] );
 
 	const constructorName = options.name || 'SvelteComponent';
 
