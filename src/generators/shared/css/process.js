@@ -1,4 +1,4 @@
-import spaces from '../../utils/spaces.js';
+import spaces from '../../../utils/spaces.js';
 import transform from './transform.js';
 
 export default function process ( parsed ) {

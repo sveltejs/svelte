@@ -1,16 +1,17 @@
 import MagicString, { Bundle } from 'magic-string';
-import CodeBuilder from '../utils/CodeBuilder.js';
-import deindent from '../utils/deindent.js';
-import namespaces from '../utils/namespaces.js';
-import getIntro from './utils/getIntro.js';
-import getOutro from './utils/getOutro.js';
-import processCss from './css/process.js';
-import createGenerator from './createGenerator.js';
+import deindent from '../../utils/deindent.js';
+import CodeBuilder from '../../utils/CodeBuilder.js';
+import namespaces from '../../utils/namespaces.js';
+import getIntro from '../shared/utils/getIntro.js';
+import getOutro from '../shared/utils/getOutro.js';
+import processCss from '../shared/css/process.js';
+import visitors from './visitors/index.js';
+import createGenerator from '../createGenerator.js';
 
-export default function generate ( parsed, source, options, names ) {
+export default function dom ( parsed, source, options, names ) {
 	const format = options.format || 'es';
 
-	const generator = createGenerator( parsed, source, names );
+	const generator = createGenerator( parsed, source, names, visitors );
 
 	const templateProperties = {};
 	const imports = [];

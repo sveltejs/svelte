@@ -3,12 +3,11 @@ import CodeBuilder from '../utils/CodeBuilder.js';
 import { walk } from 'estree-walker';
 import deindent from '../utils/deindent.js';
 import isReference from '../utils/isReference.js';
-import counter from './utils/counter.js';
+import counter from './shared/utils/counter.js';
 import flattenReference from '../utils/flattenReference.js';
-import visitors from './visitors/index.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
 
-export default function createGenerator ( parsed, source, names ) {
+export default function createGenerator ( parsed, source, names, visitors ) {
 	const generator = {
 		addElement ( name, renderStatement, needsIdentifier = false ) {
 			const isToplevel = generator.current.localElementDepth === 0;
