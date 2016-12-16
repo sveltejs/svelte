@@ -6,12 +6,19 @@ import Generator from '../Generator.js';
 
 export default function ssr ( parsed, source, options, names ) {
 	const format = options.format || 'cjs';
-	const constructorName = options.name || 'SvelteComponent';
+	const name = options.name || 'SvelteComponent';
 
 	const generator = new Generator( parsed, source, names, visitors );
 
 	const { computations, templateProperties } = generator.parseJs();
 
+	const builders = {
+		main: new CodeBuilder(),
+		render: new CodeBuilder(),
+		renderCss: new CodeBuilder()
+	};
+
+	// create main render() function
 	generator.push({
 		contexts: {},
 		indexes: {}
@@ -24,34 +31,21 @@ export default function ssr ( parsed, source, options, names ) {
 
 	parsed.html.children.forEach( node => generator.visit( node ) );
 
-	const builders = {
-		main: new CodeBuilder(),
-		render: new CodeBuilder(),
-		renderCss: new CodeBuilder()
-	};
-
-	if ( parsed.js ) {
-		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
-	}
-
-	builders.main.addBlock( `var ${constructorName} = {};` );
-
 	builders.render.addLine(
 		templateProperties.data ? `root = Object.assign( template.data(), root || {} );` : `root = root || {};`
 	);
 
-	if ( computations.length ) {
-		computations.forEach( ({ key, deps }) => {
-			builders.render.addLine(
-				`root.${key} = template.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
-			);
-		});
-	}
+	computations.forEach( ({ key, deps }) => {
+		builders.render.addLine(
+			`root.${key} = template.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
+		);
+	});
 
 	builders.render.addBlock(
 		`return \`${renderCode}\`;`
 	);
 
+	// create renderCss() function
 	builders.renderCss.addBlock(
 		`var components = [];`
 	);
@@ -59,7 +53,7 @@ export default function ssr ( parsed, source, options, names ) {
 	if ( parsed.css ) {
 		builders.renderCss.addBlock( deindent`
 			components.push({
-				filename: ${constructorName}.filename,
+				filename: ${name}.filename,
 				css: ${JSON.stringify( processCss( parsed ) )},
 				map: null // TODO
 			});
@@ -93,14 +87,20 @@ export default function ssr ( parsed, source, options, names ) {
 		};
 	` );
 
-	builders.main.addBlock( deindent`
-		${constructorName}.filename = ${JSON.stringify( options.filename )};
+	if ( parsed.js ) {
+		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
+	}
 
-		${constructorName}.render = function ( root, options ) {
+	builders.main.addBlock( deindent`
+		var ${name} = {};
+
+		${name}.filename = ${JSON.stringify( options.filename )};
+
+		${name}.render = function ( root, options ) {
 			${builders.render}
 		};
 
-		${constructorName}.renderCss = function () {
+		${name}.renderCss = function () {
 			${builders.renderCss}
 		};
 
@@ -119,5 +119,5 @@ export default function ssr ( parsed, source, options, names ) {
 
 	const result = builders.main.toString();
 
-	return generator.generate( result, options, { constructorName, format } );
+	return generator.generate( result, options, { name, format } );
 }

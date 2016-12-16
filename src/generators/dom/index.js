@@ -8,6 +8,7 @@ import Generator from '../Generator.js';
 
 export default function dom ( parsed, source, options, names ) {
 	const format = options.format || 'es';
+	const name = options.name || 'SvelteComponent';
 
 	const generator = new Generator( parsed, source, names, visitors );
 
@@ -198,8 +199,6 @@ export default function dom ( parsed, source, options, names ) {
 	let i = renderers.length;
 	while ( i-- ) builders.main.addBlock( renderers[i] );
 
-	const constructorName = options.name || 'SvelteComponent';
-
 	if ( parsed.css && options.css !== false ) {
 		builders.init.addLine( `if ( !addedCss ) addCss();` );
 	}
@@ -249,7 +248,7 @@ export default function dom ( parsed, source, options, names ) {
 	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;
 
 	builders.main.addBlock( deindent`
-		function ${constructorName} ( options ) {
+		function ${name} ( options ) {
 			options = options || {};
 
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
@@ -354,8 +353,8 @@ export default function dom ( parsed, source, options, names ) {
 	` );
 
 	if ( templateProperties.methods ) {
-		builders.main.addBlock( `${constructorName}.prototype = template.methods;` );
+		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
 
-	return generator.generate( builders.main.toString(), options, { constructorName, format } );
+	return generator.generate( builders.main.toString(), options, { name, format } );
 }
