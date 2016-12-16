@@ -102,7 +102,7 @@ export default class Generator {
 		}
 	}
 
-	generate ( result, options, { constructorName, format } ) {
+	generate ( result, options, { name, format } ) {
 		if ( this.imports.length ) {
 			const statements = [];
 
@@ -164,7 +164,7 @@ export default class Generator {
 		});
 
 		addString( finalChunk );
-		addString( '\n\n' + getOutro( format, constructorName, options, this.imports ) );
+		addString( '\n\n' + getOutro( format, name, options, this.imports ) );
 
 		return {
 			code: compiled.toString(),
