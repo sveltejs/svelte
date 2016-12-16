@@ -1,262 +1,34 @@
-import MagicString, { Bundle } from 'magic-string';
-import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
-import isReference from '../../utils/isReference.js';
-import flattenReference from '../../utils/flattenReference.js';
-import voidElementNames from '../../utils/voidElementNames.js';
+import CodeBuilder from '../../utils/CodeBuilder.js';
 import processCss from '../shared/css/process.js';
+import visitors from './visitors/index.js';
+import Generator from '../Generator.js';
 
-export default function compile ( parsed, source, { filename }) {
-	const code = new MagicString( source );
+export default function ssr ( parsed, source, options, names ) {
+	const format = options.format || 'cjs';
+	const constructorName = options.name || 'SvelteComponent';
 
-	const templateProperties = {};
-	const components = {};
-	const helpers = {};
+	const generator = new Generator( parsed, source, names, visitors );
 
-	const imports = [];
+	const { computations, imports, templateProperties } = generator.parseJs();
 
-	if ( parsed.js ) {
-		walk( parsed.js.content, {
-			enter ( node ) {
-				code.addSourcemapLocation( node.start );
-				code.addSourcemapLocation( node.end );
-			}
-		});
-
-		// imports need to be hoisted out of the IIFE
-		for ( let i = 0; i < parsed.js.content.body.length; i += 1 ) {
-			const node = parsed.js.content.body[i];
-			if ( node.type === 'ImportDeclaration' ) {
-				let a = node.start;
-				let b = node.end;
-				while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
-				while ( source[b] === '\n' ) b += 1;
-
-				//imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
-				imports.push( node );
-				code.remove( a, b );
-			}
-		}
-
-		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
-
-		if ( defaultExport ) {
-			const finalNode = parsed.js.content.body[ parsed.js.content.body.length - 1 ];
-			if ( defaultExport === finalNode ) {
-				// export is last property, we can just return it
-				code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
-			} else {
-				// TODO ensure `template` isn't already declared
-				code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
-
-				let i = defaultExport.start;
-				while ( /\s/.test( source[ i - 1 ] ) ) i--;
-
-				const indentation = source.slice( i, defaultExport.start );
-				code.appendLeft( finalNode.end, `\n\n${indentation}return template;` );
-			}
-
-			defaultExport.declaration.properties.forEach( prop => {
-				templateProperties[ prop.key.name ] = prop.value;
-			});
-
-			code.prependRight( parsed.js.content.start, 'var template = (function () {' );
-		} else {
-			code.prependRight( parsed.js.content.start, '(function () {' );
-		}
-
-		code.appendLeft( parsed.js.content.end, '}());' );
-
-		if ( templateProperties.helpers ) {
-			templateProperties.helpers.properties.forEach( prop => {
-				helpers[ prop.key.name ] = prop.value;
-			});
-		}
-
-		if ( templateProperties.components ) {
-			templateProperties.components.properties.forEach( prop => {
-				components[ prop.key.name ] = prop.value;
-			});
-		}
-	}
-
-	let scope = new Set();
-	const scopes = [ scope ];
-
-	function contextualise ( expression ) {
-		walk( expression, {
-			enter ( node, parent ) {
-				if ( isReference( node, parent ) ) {
-					const { name } = flattenReference( node );
-
-					if ( parent && parent.type === 'CallExpression' && node === parent.callee && helpers[ name ] ) {
-						code.prependRight( node.start, `template.helpers.` );
-						return;
-					}
-
-					if ( !scope.has( name ) ) {
-						code.prependRight( node.start, `data.` );
-					}
-
-					this.skip();
-				}
-			}
-		});
-
-		return {
-			snippet: `[✂${expression.start}-${expression.end}✂]`,
-			string: code.slice( expression.start, expression.end )
-		};
-	}
-
-	let elementDepth = 0;
-
-	const stringifiers = {
-		Comment () {
-			return '';
-		},
-
-		Component ( node ) {
-			const props = node.attributes.map( attribute => {
-				let value;
-
-				if ( attribute.value === true ) {
-					value = `true`;
-				} else if ( attribute.value.length === 0 ) {
-					value = `''`;
-				} else if ( attribute.value.length === 1 ) {
-					const chunk = attribute.value[0];
-					if ( chunk.type === 'Text' ) {
-						value = isNaN( parseFloat( chunk.data ) ) ? JSON.stringify( chunk.data ) : chunk.data;
-					} else {
-						const { snippet } = contextualise( chunk.expression );
-						value = snippet;
-					}
-				} else {
-					value = '`' + attribute.value.map( stringify ).join( '' ) + '`';
-				}
-
-				return `${attribute.name}: ${value}`;
-			}).join( ', ' );
-
-			let params = `{${props}}`;
-
-			if ( node.children.length ) {
-				params += `, { yield: () => \`${node.children.map( stringify ).join( '' )}\` }`;
-			}
-
-			return `\${template.components.${node.name}.render(${params})}`;
-		},
-
-		EachBlock ( node ) {
-			const { snippet } = contextualise( node.expression );
-
-			scope = new Set();
-			scope.add( node.context );
-			if ( node.index ) scope.add( node.index );
-
-			scopes.push( scope );
-
-			const block = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \`${ node.children.map( stringify ).join( '' )}\` ).join( '' )}`;
-
-			scopes.pop();
-			scope = scopes[ scopes.length - 1 ];
-
-			return block;
-		},
-
-		Element ( node ) {
-			if ( node.name in components ) {
-				return stringifiers.Component( node );
-			}
-
-			let element = `<${node.name}`;
-
-			node.attributes.forEach( attribute => {
-				if ( attribute.type !== 'Attribute' ) return;
-
-				let str = ` ${attribute.name}`;
-
-				if ( attribute.value !== true ) {
-					str += `="` + attribute.value.map( chunk => {
-						if ( chunk.type === 'Text' ) {
-							return chunk.data;
-						}
-
-						const { snippet } = contextualise( chunk.expression );
-						return '${' + snippet + '}';
-					}).join( '' ) + `"`;
-				}
-
-				element += str;
-			});
-
-			if ( parsed.css && elementDepth === 0 ) {
-				element += ` svelte-${parsed.hash}`;
-			}
-
-			if ( voidElementNames.test( node.name ) ) {
-				element += '>';
-			} else {
-				elementDepth += 1;
-				element += '>' + node.children.map( stringify ).join( '' ) + `</${node.name}>`;
-				elementDepth -= 1;
-			}
-
-			return element;
-		},
-
-		IfBlock ( node ) {
-			const { snippet } = contextualise( node.expression ); // TODO use snippet, for sourcemap support
-
-			const consequent = node.children.map( stringify ).join( '' );
-			const alternate = node.else ? node.else.children.map( stringify ).join( '' ) : '';
-
-			return '${ ' + snippet + ' ? `' + consequent + '` : `' + alternate + '` }';
-		},
-
-		MustacheTag ( node ) {
-			const { snippet } = contextualise( node.expression ); // TODO use snippet, for sourcemap support
-			return '${__escape( String( ' + snippet + ') )}';
-		},
-
-		RawMustacheTag ( node ) {
-			const { snippet } = contextualise( node.expression ); // TODO use snippet, for sourcemap support
-			return '${' + snippet + '}';
-		},
-
-		Text ( node ) {
-			return node.data.replace( /\${/g, '\\${' );
-		},
-
-		YieldTag () {
-			return `\${options.yield()}`;
-		}
-	};
-
-	function stringify ( node ) {
-		const stringifier = stringifiers[ node.type ];
-
-		if ( !stringifier ) {
-			throw new Error( `Not implemented: ${node.type}` );
-		}
-
-		return stringifier( node );
-	}
-
-	function createBlock ( node ) {
-		const str = stringify( node );
-		if ( str.slice( 0, 2 ) === '${' ) return str.slice( 2, -1 );
-		return '`' + str + '`';
-	}
-
-	const blocks = parsed.html.children.map( node => {
-		return deindent`
-			rendered += ${createBlock( node )};
-		`;
+	generator.push({
+		contexts: {},
+		indexes: {}
 	});
 
-	const topLevelStatements = [];
+	let renderCode = '';
+	generator.on( 'append', str => {
+		renderCode += str;
+	});
+
+	parsed.html.children.forEach( node => generator.visit( node ) );
+
+	const builders = {
+		main: new CodeBuilder(),
+		render: new CodeBuilder(),
+		renderCss: new CodeBuilder()
+	};
 
 	const importBlock = imports
 		.map( ( declaration, i ) => {
@@ -285,63 +57,38 @@ export default function compile ( parsed, source, { filename }) {
 
 	if ( parsed.js ) {
 		if ( imports.length ) {
-			topLevelStatements.push( importBlock );
+			builders.main.addBlock( importBlock );
 		}
 
-		topLevelStatements.push( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
+		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
-	const renderStatements = [
-		templateProperties.data ? `data = Object.assign( template.data(), data || {} );` : `data = data || {};`
-	];
+	builders.main.addBlock( `var ${constructorName} = {};` );
 
-	if ( templateProperties.computed ) {
-		const statements = [];
-		const dependencies = new Map();
-
-		templateProperties.computed.properties.forEach( prop => {
-			const key = prop.key.name;
-			const value = prop.value;
-
-			const deps = value.params.map( param => param.name );
-			dependencies.set( key, deps );
-		});
-
-		const visited = new Set();
-
-		function visit ( key ) {
-			if ( !dependencies.has( key ) ) return; // not a computation
-
-			if ( visited.has( key ) ) return;
-			visited.add( key );
-
-			const deps = dependencies.get( key );
-			deps.forEach( visit );
-
-			statements.push( deindent`
-				data.${key} = template.computed.${key}( ${deps.map( dep => `data.${dep}` ).join( ', ' )} );
-			` );
-		}
-
-		templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
-
-		renderStatements.push( statements.join( '\n' ) );
-	}
-
-	renderStatements.push(
-		`var rendered = '';`,
-		blocks.join( '\n\n' ),
-		`return rendered;`
+	builders.render.addLine(
+		templateProperties.data ? `root = Object.assign( template.data(), root || {} );` : `root = root || {};`
 	);
 
-	const renderCssStatements = [
+	if ( computations.length ) {
+		computations.forEach( ({ key, deps }) => {
+			builders.render.addLine(
+				`root.${key} = template.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
+			);
+		});
+	}
+
+	builders.render.addBlock(
+		`return \`${renderCode}\`;`
+	);
+
+	builders.renderCss.addBlock(
 		`var components = [];`
-	];
+	);
 
 	if ( parsed.css ) {
-		renderCssStatements.push( deindent`
+		builders.renderCss.addBlock( deindent`
 			components.push({
-				filename: exports.filename,
+				filename: ${constructorName}.filename,
 				css: ${JSON.stringify( processCss( parsed ) )},
 				map: null // TODO
 			});
@@ -349,7 +96,7 @@ export default function compile ( parsed, source, { filename }) {
 	}
 
 	if ( templateProperties.components ) {
-		renderCssStatements.push( deindent`
+		builders.renderCss.addBlock( deindent`
 			var seen = {};
 
 			function addComponent ( component ) {
@@ -362,10 +109,12 @@ export default function compile ( parsed, source, { filename }) {
 			}
 		` );
 
-		renderCssStatements.push( templateProperties.components.properties.map( prop => `addComponent( template.components.${prop.key.name} );` ).join( '\n' ) );
+		templateProperties.components.properties.forEach( prop => {
+			builders.renderCss.addLine( `addComponent( template.components.${prop.key.name} );` );
+		});
 	}
 
-	renderCssStatements.push( deindent`
+	builders.renderCss.addBlock( deindent`
 		return {
 			css: components.map( x => x.css ).join( '\\n' ),
 			map: null,
@@ -373,15 +122,15 @@ export default function compile ( parsed, source, { filename }) {
 		};
 	` );
 
-	topLevelStatements.push( deindent`
-		exports.filename = ${JSON.stringify( filename )};
+	builders.main.addBlock( deindent`
+		${constructorName}.filename = ${JSON.stringify( options.filename )};
 
-		exports.render = function ( data, options ) {
-			${renderStatements.join( '\n\n' )}
+		${constructorName}.render = function ( root, options ) {
+			${builders.render}
 		};
 
-		exports.renderCss = function () {
-			${renderCssStatements.join( '\n\n' )}
+		${constructorName}.renderCss = function () {
+			${builders.renderCss}
 		};
 
 		var escaped = {
@@ -393,42 +142,15 @@ export default function compile ( parsed, source, { filename }) {
 		};
 
 		function __escape ( html ) {
-			return html.replace( /["'&<>]/g, match => escaped[ match ] );
+			return String( html ).replace( /["'&<>]/g, match => escaped[ match ] );
 		}
 	` );
 
-	const rendered = topLevelStatements.join( '\n\n' );
+	const result = builders.main.toString();
 
-	const pattern = /\[✂(\d+)-(\d+)$/;
+	const generated = generator.generate( result, options, { constructorName, format } );
 
-	const parts = rendered.split( '✂]' );
-	const finalChunk = parts.pop();
+	// console.log( generated.code )
 
-	const compiled = new Bundle({ separator: '' });
-
-	function addString ( str ) {
-		compiled.addSource({
-			content: new MagicString( str )
-		});
-	}
-
-	parts.forEach( str => {
-		const chunk = str.replace( pattern, '' );
-		if ( chunk ) addString( chunk );
-
-		const match = pattern.exec( str );
-
-		const snippet = code.snip( +match[1], +match[2] );
-
-		compiled.addSource({
-			filename,
-			content: snippet
-		});
-	});
-
-	addString( finalChunk );
-
-	return {
-		code: compiled.toString()
-	};
+	return generated;
 }
