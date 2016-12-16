@@ -1,9 +1,5 @@
 export default {
-	enter ( generator, node ) {
+	enter ( generator ) {
 		generator.fire( 'append', `\${options.yield()}` );
-	},
-
-	leave ( generator ) {
-
 	}
 };
