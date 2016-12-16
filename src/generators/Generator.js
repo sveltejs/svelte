@@ -103,6 +103,34 @@ export default class Generator {
 	}
 
 	generate ( result, options, { constructorName, format } ) {
+		if ( this.imports.length ) {
+			const statements = [];
+
+			this.imports.forEach( ( declaration, i ) => {
+				if ( format === 'es' ) {
+					statements.push( this.source.slice( declaration.start, declaration.end ) );
+					return;
+				}
+
+				const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
+				const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
+				const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
+
+				const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
+				declaration.name = name; // hacky but makes life a bit easier later
+
+				namedImports.forEach( specifier => {
+					statements.push( `var ${specifier.local.name} = ${name}.${specifier.imported.name}` );
+				});
+
+				if ( defaultImport ) {
+					statements.push( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
+				}
+			});
+
+			result = `${statements.join( '\n' )}\n\n${result}`;
+		}
+
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
 		const parts = result.split( '✂]' );
@@ -242,7 +270,6 @@ export default class Generator {
 
 		return {
 			computations,
-			imports,
 			templateProperties
 		};
 	}

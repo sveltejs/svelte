@@ -10,7 +10,7 @@ export default function ssr ( parsed, source, options, names ) {
 
 	const generator = new Generator( parsed, source, names, visitors );
 
-	const { computations, imports, templateProperties } = generator.parseJs();
+	const { computations, templateProperties } = generator.parseJs();
 
 	generator.push({
 		contexts: {},
@@ -30,36 +30,7 @@ export default function ssr ( parsed, source, options, names ) {
 		renderCss: new CodeBuilder()
 	};
 
-	const importBlock = imports
-		.map( ( declaration, i ) => {
-			const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
-			const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
-			const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
-
-			const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
-
-			const statements = [
-				`var ${name} = require( '${declaration.source.value}' );`
-			];
-
-			namedImports.forEach( specifier => {
-				statements.push( `var ${specifier.local.name} = ${name}.${specifier.imported.name};` );
-			});
-
-			if ( defaultImport ) {
-				statements.push( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
-			}
-
-			return statements.join( '\n' );
-		})
-		.filter( Boolean )
-		.join( '\n' );
-
 	if ( parsed.js ) {
-		if ( imports.length ) {
-			builders.main.addBlock( importBlock );
-		}
-
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
@@ -148,9 +119,5 @@ export default function ssr ( parsed, source, options, names ) {
 
 	const result = builders.main.toString();
 
-	const generated = generator.generate( result, options, { constructorName, format } );
-
-	// console.log( generated.code )
-
-	return generated;
+	return generator.generate( result, options, { constructorName, format } );
 }
