@@ -120,7 +120,6 @@ export default {
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,
-			elementDepth: generator.current.elementDepth + 1,
 			localElementDepth: generator.current.localElementDepth + 1
 		});
 	},

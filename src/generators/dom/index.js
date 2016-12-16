@@ -11,7 +11,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	const generator = new Generator( parsed, source, names, visitors );
 
-	const { computations, imports, templateProperties } = generator.parseJs();
+	const { computations, templateProperties } = generator.parseJs();
 
 	const renderers = [];
 	function addRenderer ( fragment ) {
@@ -126,7 +126,6 @@ export default function dom ( parsed, source, options, names ) {
 		name: 'renderMainFragment',
 		namespace,
 		target: 'target',
-		elementDepth: 0,
 		localElementDepth: 0,
 
 		contexts: {},
@@ -178,28 +177,6 @@ export default function dom ( parsed, source, options, names ) {
 		if ( mainFragment ) mainFragment.update( newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
-
-	imports.forEach( ( declaration, i ) => {
-		if ( format === 'es' ) {
-			builders.main.addLine( source.slice( declaration.start, declaration.end ) );
-			return;
-		}
-
-		const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
-		const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
-		const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
-
-		const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
-		declaration.name = name; // hacky but makes life a bit easier later
-
-		namedImports.forEach( specifier => {
-			builders.main.addLine( `var ${specifier.local.name} = ${name}.${specifier.imported.name}` );
-		});
-
-		if ( defaultImport ) {
-			builders.main.addLine( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
-		}
-	});
 
 	if ( parsed.js ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );

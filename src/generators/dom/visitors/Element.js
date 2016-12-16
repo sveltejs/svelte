@@ -61,7 +61,7 @@ export default {
 			`var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );` :
 			`var ${name} = document.createElement( '${node.name}' );`;
 
-		if ( generator.cssId && !generator.current.elementDepth ) {
+		if ( generator.cssId && !generator.elementDepth ) {
 			render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
 		}
 
@@ -88,7 +88,6 @@ export default {
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,
-			elementDepth: generator.current.elementDepth + 1,
 			localElementDepth: generator.current.localElementDepth + 1
 		});
 	},
