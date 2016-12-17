@@ -36,11 +36,11 @@ export default {
 			open += `, { yield: () => \``;
 		}
 
-		generator.fire( 'append', open );
+		generator.append( open );
 	},
 
 	leave ( generator, node ) {
 		const close = node.children.length ? `\` })}` : ')}';
-		generator.fire( 'append', close );
+		generator.append( close );
 	}
 };

@@ -1,5 +1,5 @@
 export default {
 	enter ( generator ) {
-		generator.fire( 'append', `\${options.yield()}` );
+		generator.append( `\${options.yield()}` );
 	}
 };

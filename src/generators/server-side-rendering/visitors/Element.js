@@ -35,7 +35,7 @@ export default {
 
 		openingTag += '>';
 
-		generator.fire( 'append', openingTag );
+		generator.append( openingTag );
 	},
 
 	leave ( generator, node ) {
@@ -45,7 +45,7 @@ export default {
 		}
 
 		if ( !voidElementNames.test( node.name ) ) {
-			generator.fire( 'append', `</${node.name}>` );
+			generator.append( `</${node.name}>` );
 		}
 	}
 };

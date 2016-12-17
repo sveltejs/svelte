@@ -1,5 +1,5 @@
 export default {
 	enter ( generator, node ) {
-		generator.fire( 'append', node.data.replace( /\${/g, '\\${' ) );
+		generator.append( node.data.replace( /\${/g, '\\${' ) );
 	}
 };
