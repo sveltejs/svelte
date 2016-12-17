@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.3.1
+
+* Remove file extensions from AMD dependencies ([#144](https://github.com/sveltejs/svelte/issues/144))
+* Throw if `options.name` is illegal ([#102](https://github.com/sveltejs/svelte/issues/102))
+
 ## 1.3.0
 
 * SSR compiler: Support `format` option ([#196](https://github.com/sveltejs/svelte/issues/196))
