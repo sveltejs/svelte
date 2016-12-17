@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.3.0
+
+* SSR compiler: Support `format` option ([#196](https://github.com/sveltejs/svelte/issues/196))
+* SSR compiler: Don't self-close 'normal' elements ([#200](https://github.com/sveltejs/svelte/issues/200))
+* Remove leading spaces from scoped CSS ([#140](https://github.com/sveltejs/svelte/issues/140))
+* Internal refactoring
+
 ## 1.2.5
 
 * Allow whitelisted globals in templates ([#185](https://github.com/sveltejs/svelte/issues/185))
