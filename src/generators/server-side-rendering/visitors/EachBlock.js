@@ -3,7 +3,7 @@ export default {
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
 		const open = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \``;
-		generator.fire( 'append', open );
+		generator.append( open );
 
 		// TODO should this be the generator's job? It's duplicated between
 		// here and the equivalent DOM compiler visitor
@@ -25,7 +25,7 @@ export default {
 
 	leave ( generator ) {
 		const close = `\` ).join( '' )}`;
-		generator.fire( 'append', close );
+		generator.append( close );
 
 		generator.pop();
 	}

@@ -4,11 +4,22 @@ import processCss from '../shared/css/process.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 
+class SsrGenerator extends Generator {
+	constructor ( parsed, source, names, visitors ) {
+		super( parsed, source, names, visitors );
+		this.renderCode = '';
+	}
+
+	append ( code ) {
+		this.renderCode += code;
+	}
+}
+
 export default function ssr ( parsed, source, options, names ) {
 	const format = options.format || 'cjs';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new Generator( parsed, source, names, visitors );
+	const generator = new SsrGenerator( parsed, source, names, visitors );
 
 	const { computations, templateProperties } = generator.parseJs();
 
@@ -24,11 +35,6 @@ export default function ssr ( parsed, source, options, names ) {
 		indexes: {}
 	});
 
-	let renderCode = '';
-	generator.on( 'append', str => {
-		renderCode += str;
-	});
-
 	parsed.html.children.forEach( node => generator.visit( node ) );
 
 	builders.render.addLine(
@@ -42,7 +48,7 @@ export default function ssr ( parsed, source, options, names ) {
 	});
 
 	builders.render.addBlock(
-		`return \`${renderCode}\`;`
+		`return \`${generator.renderCode}\`;`
 	);
 
 	// create renderCss() function
