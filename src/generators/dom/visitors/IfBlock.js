@@ -1,4 +1,4 @@
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
 
 function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
@@ -8,19 +8,22 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		condition: generator.contextualise( node.expression ).snippet,
 		block: name
 	}];
+
 	generator.generateBlock( node, name );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
 		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, node.else.children[0], _name, i + 1 ) );
+			...getConditionsAndBlocks( generator, node.else.children[0], _name, i + 1 )
+		);
 	} else {
 		const name = `${_name}_${i + 1}`;
 		conditionsAndBlocks.push({
 			condition: null,
 			block: node.else ? name : null,
 		});
-		if (node.else) {
+
+		if ( node.else ) {
 			generator.generateBlock( node.else, name );
 		}
 	}
@@ -37,7 +40,8 @@ export default {
 		const isToplevel = generator.current.localElementDepth === 0;
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
 
-		const anchor = generator.createAnchor( name, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
+		const anchor = `${name}_anchor`;
+		generator.createAnchor( anchor, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.builders.init.addBlock( deindent`
 			function ${getBlock} ( ${params} ) {

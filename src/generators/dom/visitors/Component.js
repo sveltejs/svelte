@@ -1,5 +1,5 @@
-import deindent from '../../utils/deindent.js';
-import CodeBuilder from '../../utils/CodeBuilder.js';
+import deindent from '../../../utils/deindent.js';
+import CodeBuilder from '../../../utils/CodeBuilder.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 export default {
@@ -117,7 +117,6 @@ export default {
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,
-			elementDepth: generator.current.elementDepth + 1,
 			localElementDepth: generator.current.localElementDepth + 1
 		});
 	},

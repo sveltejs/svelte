@@ -1,75 +1,118 @@
-import MagicString, { Bundle } from 'magic-string';
-import CodeBuilder from '../utils/CodeBuilder.js';
-import deindent from '../utils/deindent.js';
-import namespaces from '../utils/namespaces.js';
-import getIntro from './utils/getIntro.js';
-import getOutro from './utils/getOutro.js';
-import processCss from './css/process.js';
-import createGenerator from './createGenerator.js';
+import deindent from '../../utils/deindent.js';
+import getBuilders from './utils/getBuilders.js';
+import CodeBuilder from '../../utils/CodeBuilder.js';
+import namespaces from '../../utils/namespaces.js';
+import processCss from '../shared/css/process.js';
+import visitors from './visitors/index.js';
+import Generator from '../Generator.js';
 
-export default function generate ( parsed, source, options, names ) {
-	const format = options.format || 'es';
-
-	const generator = createGenerator( parsed, source, names );
-
-	const templateProperties = {};
-	const imports = [];
-
-	if ( parsed.js ) {
-		generator.addSourcemapLocations( parsed.js.content );
-
-		// imports need to be hoisted out of the IIFE
-		for ( let i = 0; i < parsed.js.content.body.length; i += 1 ) {
-			const node = parsed.js.content.body[i];
-			if ( node.type === 'ImportDeclaration' ) {
-				let a = node.start;
-				let b = node.end;
-				while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
-				while ( source[b] === '\n' ) b += 1;
-
-				//imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
-				imports.push( node );
-				generator.code.remove( a, b );
-			}
-		}
-
-		const defaultExport = parsed.js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
-
-		if ( defaultExport ) {
-			const finalNode = parsed.js.content.body[ parsed.js.content.body.length - 1 ];
-			if ( defaultExport === finalNode ) {
-				// export is last property, we can just return it
-				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
-			} else {
-				// TODO ensure `template` isn't already declared
-				generator.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
-
-				let i = defaultExport.start;
-				while ( /\s/.test( source[ i - 1 ] ) ) i--;
-
-				const indentation = source.slice( i, defaultExport.start );
-				generator.code.appendLeft( finalNode.end, `\n\n${indentation}return template;` );
-			}
-
-			defaultExport.declaration.properties.forEach( prop => {
-				templateProperties[ prop.key.name ] = prop.value;
-			});
-
-			generator.code.prependRight( parsed.js.content.start, 'var template = (function () {' );
-		} else {
-			generator.code.prependRight( parsed.js.content.start, '(function () {' );
-		}
-
-		generator.code.appendLeft( parsed.js.content.end, '}());' );
-
-		[ 'helpers', 'events', 'components' ].forEach( key => {
-			if ( templateProperties[ key ] ) {
-				templateProperties[ key ].properties.forEach( prop => {
-					generator[ key ][ prop.key.name ] = prop.value;
-				});
-			}
-		});
+class DomGenerator extends Generator {
+	constructor ( parsed, source, names, visitors ) {
+		super( parsed, source, names, visitors );
+		this.renderers = [];
 	}
+
+	addElement ( name, renderStatement, needsIdentifier = false ) {
+		const isToplevel = this.current.localElementDepth === 0;
+		if ( needsIdentifier || isToplevel ) {
+			this.current.builders.init.addLine(
+				`var ${name} = ${renderStatement};`
+			);
+
+			this.createMountStatement( name );
+		} else {
+			this.current.builders.init.addLine(
+				`${this.current.target}.appendChild( ${renderStatement} );`
+			);
+		}
+
+		if ( isToplevel ) {
+			this.current.builders.detach.addLine(
+				`${name}.parentNode.removeChild( ${name} );`
+			);
+		}
+	}
+
+	addRenderer ( fragment ) {
+		if ( fragment.autofocus ) {
+			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
+		}
+
+		// minor hack – we need to ensure that any {{{triples}}} are detached
+		// first, so we append normal detach statements to detachRaw
+		fragment.builders.detachRaw.addBlock( fragment.builders.detach );
+
+		if ( !fragment.builders.detachRaw.isEmpty() ) {
+			fragment.builders.teardown.addBlock( deindent`
+				if ( detach ) {
+					${fragment.builders.detachRaw}
+				}
+			` );
+		}
+
+		this.renderers.push( deindent`
+			function ${fragment.name} ( ${fragment.params}, component ) {
+				${fragment.builders.init}
+
+				return {
+					mount: function ( target, anchor ) {
+						${fragment.builders.mount}
+					},
+
+					update: function ( changed, ${fragment.params} ) {
+						${fragment.builders.update}
+					},
+
+					teardown: function ( detach ) {
+						${fragment.builders.teardown}
+					}
+				};
+			}
+		` );
+	}
+
+	createAnchor ( name, description = '' ) {
+		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
+		this.addElement( name, renderStatement, true );
+	}
+
+	createMountStatement ( name ) {
+		if ( this.current.target === 'target' ) {
+			this.current.builders.mount.addLine(
+				`target.insertBefore( ${name}, anchor );`
+			);
+		} else {
+			this.current.builders.init.addLine(
+				`${this.current.target}.appendChild( ${name} );` );
+		}
+	}
+
+	generateBlock ( node, name ) {
+		this.push({
+			name,
+			target: 'target',
+			localElementDepth: 0,
+			builders: getBuilders(),
+			getUniqueName: this.getUniqueNameMaker()
+		});
+
+		// walk the children here
+		node.children.forEach( node => this.visit( node ) );
+		this.addRenderer( this.current );
+		this.pop();
+
+		// unset the children, to avoid them being visited again
+		node.children = [];
+	}
+}
+
+export default function dom ( parsed, source, options, names ) {
+	const format = options.format || 'es';
+	const name = options.name || 'SvelteComponent';
+
+	const generator = new DomGenerator( parsed, source, names, visitors );
+
+	const { computations, templateProperties } = generator.parseJs();
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {
@@ -83,7 +126,6 @@ export default function generate ( parsed, source, options, names ) {
 		name: 'renderMainFragment',
 		namespace,
 		target: 'target',
-		elementDepth: 0,
 		localElementDepth: 0,
 
 		contexts: {},
@@ -93,11 +135,11 @@ export default function generate ( parsed, source, options, names ) {
 		indexNames: {},
 		listNames: {},
 
-		builders: generator.getBuilders(),
+		builders: getBuilders(),
 		getUniqueName: generator.getUniqueNameMaker()
 	});
 
-	parsed.html.children.forEach( generator.visit );
+	parsed.html.children.forEach( node => generator.visit( node ) );
 
 	generator.addRenderer( generator.pop() );
 
@@ -110,37 +152,16 @@ export default function generate ( parsed, source, options, names ) {
 	builders.set.addLine( 'var oldState = state;' );
 	builders.set.addLine( 'state = Object.assign( {}, oldState, newState );' );
 
-	if ( templateProperties.computed ) {
+	if ( computations.length ) {
 		const builder = new CodeBuilder();
-		const dependencies = new Map();
 
-		templateProperties.computed.properties.forEach( prop => {
-			const key = prop.key.name;
-			const value = prop.value;
-
-			const deps = value.params.map( param => param.name );
-			dependencies.set( key, deps );
-		});
-
-		const visited = new Set();
-
-		function visit ( key ) {
-			if ( !dependencies.has( key ) ) return; // not a computation
-
-			if ( visited.has( key ) ) return;
-			visited.add( key );
-
-			const deps = dependencies.get( key );
-			deps.forEach( visit );
-
+		computations.forEach( ({ key, deps }) => {
 			builder.addBlock( deindent`
 				if ( ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
 			` );
-		}
-
-		templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+		});
 
 		builders.main.addBlock( deindent`
 			function applyComputations ( state, newState, oldState ) {
@@ -156,28 +177,6 @@ export default function generate ( parsed, source, options, names ) {
 		if ( mainFragment ) mainFragment.update( newState, state );
 		dispatchObservers( observers.deferred, newState, oldState );
 	` );
-
-	imports.forEach( ( declaration, i ) => {
-		if ( format === 'es' ) {
-			builders.main.addLine( source.slice( declaration.start, declaration.end ) );
-			return;
-		}
-
-		const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
-		const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
-		const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
-
-		const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
-		declaration.name = name; // hacky but makes life a bit easier later
-
-		namedImports.forEach( specifier => {
-			builders.main.addLine( `var ${specifier.local.name} = ${name}.${specifier.imported.name}` );
-		});
-
-		if ( defaultImport ) {
-			builders.main.addLine( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
-		}
-	});
 
 	if ( parsed.js ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
@@ -198,8 +197,6 @@ export default function generate ( parsed, source, options, names ) {
 
 	let i = generator.renderers.length;
 	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
-
-	const constructorName = options.name || 'SvelteComponent';
 
 	if ( parsed.css && options.css !== false ) {
 		builders.init.addLine( `if ( !addedCss ) addCss();` );
@@ -250,7 +247,7 @@ export default function generate ( parsed, source, options, names ) {
 	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;
 
 	builders.main.addBlock( deindent`
-		function ${constructorName} ( options ) {
+		function ${name} ( options ) {
 			options = options || {};
 
 			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
@@ -355,48 +352,8 @@ export default function generate ( parsed, source, options, names ) {
 	` );
 
 	if ( templateProperties.methods ) {
-		builders.main.addBlock( `${constructorName}.prototype = template.methods;` );
+		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
 
-	const result = builders.main.toString();
-
-	const pattern = /\[✂(\d+)-(\d+)$/;
-
-	const parts = result.split( '✂]' );
-	const finalChunk = parts.pop();
-
-	const compiled = new Bundle({ separator: '' });
-
-	function addString ( str ) {
-		compiled.addSource({
-			content: new MagicString( str )
-		});
-	}
-
-	const intro = getIntro( format, options, imports );
-	if ( intro ) addString( intro );
-
-	const { filename } = options;
-
-	parts.forEach( str => {
-		const chunk = str.replace( pattern, '' );
-		if ( chunk ) addString( chunk );
-
-		const match = pattern.exec( str );
-
-		const snippet = generator.code.snip( +match[1], +match[2] );
-
-		compiled.addSource({
-			filename,
-			content: snippet
-		});
-	});
-
-	addString( finalChunk );
-	addString( '\n\n' + getOutro( format, constructorName, options, imports ) );
-
-	return {
-		code: compiled.toString(),
-		map: compiled.generateMap({ includeContent: true })
-	};
+	return generator.generate( builders.main.toString(), options, { name, format } );
 }
