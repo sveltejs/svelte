@@ -18,11 +18,7 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 
 			error.toString = () => `${error.message} (${error.loc.line}:${error.loc.column})\n${error.frame}`;
 
-			if ( onerror ) {
-				onerror( error );
-			} else {
-				throw error;
-			}
+			onerror( error );
 		},
 
 		warn: ( message, pos ) => {
@@ -49,12 +45,7 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 
 	if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {
 		const error = new Error( `options.name must be a valid identifier` );
-
-		if ( onerror ) {
-			onerror( error );
-		} else {
-			throw error;
-		}
+		onerror( error );
 	}
 
 	if ( parsed.js ) {
