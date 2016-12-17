@@ -13,7 +13,7 @@ export default function getIntro ( format, options, imports ) {
 
 function getAmdIntro ( options, imports ) {
 	const sourceString = imports.length ?
-		`[ ${imports.map( declaration => `'${declaration.source.value}'` ).join( ', ' )} ], ` :
+		`[ ${imports.map( declaration => `'${removeExtension( declaration.source.value )}'` ).join( ', ' )} ], ` :
 		'';
 
 	const id = options.amd && options.amd.id;
@@ -48,7 +48,7 @@ function getUmdIntro ( options, imports ) {
 
 	const amdId = options.amd && options.amd.id ? `'${options.amd.id}', ` : '';
 
-	const amdDeps = imports.length ? `[${imports.map( declaration => `'${declaration.source.value}'` ).join( ', ')}], ` : '';
+	const amdDeps = imports.length ? `[${imports.map( declaration => `'${removeExtension( declaration.source.value )}'` ).join( ', ')}], ` : '';
 	const cjsDeps = imports.map( declaration => `require('${declaration.source.value}')` ).join( ', ' );
 	const globalDeps = getGlobals( imports, options );
 
@@ -62,4 +62,9 @@ function getUmdIntro ( options, imports ) {
 
 function paramString ( imports ) {
 	return imports.length ? ` ${imports.map( dep => dep.name ).join( ', ' )} ` : '';
+}
+
+function removeExtension ( file ) {
+	const index = file.lastIndexOf( '.' );
+	return ~index ? file.slice( 0, index ) : file;
 }
