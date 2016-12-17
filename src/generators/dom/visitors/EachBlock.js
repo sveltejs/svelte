@@ -20,10 +20,7 @@ export default {
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
 		const anchor = `${name}_anchor`;
-		generator.fire( 'createAnchor', {
-			name: anchor,
-			description: `#each ${generator.source.slice( node.expression.start, node.expression.end )}`
-		});
+		generator.createAnchor( anchor, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.builders.init.addBlock( deindent`
 			var ${name}_value = ${snippet};
@@ -106,10 +103,7 @@ export default {
 		}
 
 		if ( node.else ) {
-			generator.fire( 'generateBlock', {
-				node: node.else,
-				name: renderElse
-			});
+			generator.generateBlock( node.else, renderElse );
 		}
 
 		const indexNames = Object.assign( {}, generator.current.indexNames );
@@ -159,7 +153,7 @@ export default {
 	},
 
 	leave ( generator ) {
-		generator.fire( 'addRenderer', generator.current );
+		generator.addRenderer( generator.current );
 		generator.pop();
 	}
 };
