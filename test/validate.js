@@ -58,4 +58,12 @@ describe( 'validate', () => {
 			}
 		});
 	});
+
+	it( 'errors if options.name is illegal', () => {
+		assert.throws( () => {
+			svelte.compile( '<div></div>', {
+				name: 'not.valid'
+			});
+		}, /options\.name must be a valid identifier/ );
+	});
 });
