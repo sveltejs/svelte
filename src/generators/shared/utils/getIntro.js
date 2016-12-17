@@ -1,4 +1,4 @@
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
 import getGlobals from './getGlobals.js';
 
 export default function getIntro ( format, options, imports ) {

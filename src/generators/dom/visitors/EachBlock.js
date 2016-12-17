@@ -1,4 +1,5 @@
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
+import getBuilders from '../utils/getBuilders.js';
 
 export default {
 	enter ( generator, node ) {
@@ -18,7 +19,8 @@ export default {
 
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
-		const anchor = generator.createAnchor( name, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
+		const anchor = `${name}_anchor`;
+		generator.createAnchor( anchor, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.builders.init.addBlock( deindent`
 			var ${name}_value = ${snippet};
@@ -136,7 +138,7 @@ export default {
 			listNames,
 			params: blockParams,
 
-			builders: generator.getBuilders(),
+			builders: getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker()
 		});
 

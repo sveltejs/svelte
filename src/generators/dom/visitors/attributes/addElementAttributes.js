@@ -1,7 +1,7 @@
 import attributeLookup from './lookup.js';
 import createBinding from './binding/index.js';
-import deindent from '../../../utils/deindent.js';
-import flattenReference from '../../../utils/flattenReference.js';
+import deindent from '../../../../utils/deindent.js';
+import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {

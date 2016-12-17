@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as fs from 'fs';
 
-import { exists, tryToLoadJson } from './helpers.js';
+import { exists, setupHtmlEqual, tryToLoadJson } from './helpers.js';
 
 function tryToReadFile ( file ) {
 	try {
@@ -17,6 +17,8 @@ describe( 'ssr', () => {
 		require( process.env.COVERAGE ?
 			'../src/server-side-rendering/register.js' :
 			'../ssr/register' );
+
+		return setupHtmlEqual();
 	});
 
 	fs.readdirSync( 'test/server-side-rendering' ).forEach( dir => {

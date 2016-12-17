@@ -1,4 +1,4 @@
-import deindent from '../../utils/deindent.js';
+import deindent from '../../../utils/deindent.js';
 
 export default {
 	enter ( generator, node ) {
@@ -11,6 +11,7 @@ export default {
 		// exists for `Element`s.
 		const before = `${name}_before`;
 		generator.addElement( before, `document.createElement( 'noscript' )`, true );
+
 		const after = `${name}_after`;
 		generator.addElement( after, `document.createElement( 'noscript' )`, true );
 
