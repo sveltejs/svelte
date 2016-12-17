@@ -6,16 +6,34 @@ import processCss from '../shared/css/process.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 
-export default function dom ( parsed, source, options, names ) {
-	const format = options.format || 'es';
-	const name = options.name || 'SvelteComponent';
+class DomGenerator extends Generator {
+	constructor ( parsed, source, names, visitors ) {
+		super( parsed, source, names, visitors );
+		this.renderers = [];
+	}
 
-	const generator = new Generator( parsed, source, names, visitors );
+	addElement ( name, renderStatement, needsIdentifier = false ) {
+		const isToplevel = this.current.localElementDepth === 0;
+		if ( needsIdentifier || isToplevel ) {
+			this.current.builders.init.addLine(
+				`var ${name} = ${renderStatement};`
+			);
 
-	const { computations, templateProperties } = generator.parseJs();
+			this.createMountStatement( name );
+		} else {
+			this.current.builders.init.addLine(
+				`${this.current.target}.appendChild( ${renderStatement} );`
+			);
+		}
 
-	const renderers = [];
-	function addRenderer ( fragment ) {
+		if ( isToplevel ) {
+			this.current.builders.detach.addLine(
+				`${name}.parentNode.removeChild( ${name} );`
+			);
+		}
+	}
+
+	addRenderer ( fragment ) {
 		if ( fragment.autofocus ) {
 			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
 		}
@@ -32,7 +50,7 @@ export default function dom ( parsed, source, options, names ) {
 			` );
 		}
 
-		renderers.push( deindent`
+		this.renderers.push( deindent`
 			function ${fragment.name} ( ${fragment.params}, component ) {
 				${fragment.builders.init}
 
@@ -53,67 +71,48 @@ export default function dom ( parsed, source, options, names ) {
 		` );
 	}
 
-	generator.on( 'addRenderer', addRenderer );
-
-	generator.on( 'addElement', ({ name, renderStatement, needsIdentifier }) => {
-		const isToplevel = generator.current.localElementDepth === 0;
-		if ( needsIdentifier || isToplevel ) {
-			generator.current.builders.init.addLine(
-				`var ${name} = ${renderStatement};`
-			);
-
-			generator.fire( 'createMountStatement', name );
-		} else {
-			generator.current.builders.init.addLine(
-				`${generator.current.target}.appendChild( ${renderStatement} );`
-			);
-		}
-
-		if ( isToplevel ) {
-			generator.current.builders.detach.addLine(
-				`${name}.parentNode.removeChild( ${name} );`
-			);
-		}
-	});
-
-	generator.on( 'createAnchor', ({ name, description = '' }) => {
+	createAnchor ( name, description = '' ) {
 		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
+		this.addElement( name, renderStatement, true );
+	}
 
-		generator.fire( 'addElement', {
-			name,
-			renderStatement,
-			needsIdentifier: true
-		});
-	});
-
-	generator.on( 'createMountStatement', name => {
-		if ( generator.current.target === 'target' ) {
-			generator.current.builders.mount.addLine(
+	createMountStatement ( name ) {
+		if ( this.current.target === 'target' ) {
+			this.current.builders.mount.addLine(
 				`target.insertBefore( ${name}, anchor );`
 			);
 		} else {
-			generator.current.builders.init.addLine(
-				`${generator.current.target}.appendChild( ${name} );` );
+			this.current.builders.init.addLine(
+				`${this.current.target}.appendChild( ${name} );` );
 		}
-	});
+	}
 
-	generator.on( 'generateBlock', ({ node, name }) => {
-		generator.push({
+	generateBlock ( node, name ) {
+		this.push({
 			name,
 			target: 'target',
 			localElementDepth: 0,
 			builders: getBuilders(),
-			getUniqueName: generator.getUniqueNameMaker()
+			getUniqueName: this.getUniqueNameMaker()
 		});
 
 		// walk the children here
-		node.children.forEach( node => generator.visit( node ) );
-		generator.fire( 'addRenderer', generator.current );
-		generator.pop();
+		node.children.forEach( node => this.visit( node ) );
+		this.addRenderer( this.current );
+		this.pop();
 
 		// unset the children, to avoid them being visited again
 		node.children = [];
-	});
+	}
+}
+
+export default function dom ( parsed, source, options, names ) {
+	const format = options.format || 'es';
+	const name = options.name || 'SvelteComponent';
+
+	const generator = new DomGenerator( parsed, source, names, visitors );
+
+	const { computations, templateProperties } = generator.parseJs();
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {
@@ -142,7 +141,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	parsed.html.children.forEach( node => generator.visit( node ) );
 
-	addRenderer( generator.pop() );
+	generator.addRenderer( generator.pop() );
 
 	const builders = {
 		main: new CodeBuilder(),
@@ -196,8 +195,8 @@ export default function dom ( parsed, source, options, names ) {
 		` );
 	}
 
-	let i = renderers.length;
-	while ( i-- ) builders.main.addBlock( renderers[i] );
+	let i = generator.renderers.length;
+	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
 
 	if ( parsed.css && options.css !== false ) {
 		builders.init.addLine( `if ( !addedCss ) addCss();` );

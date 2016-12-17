@@ -82,7 +82,7 @@ export default {
 		generator.current.builders.init.addBlock( local.init );
 		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
 
-		generator.fire( 'createMountStatement', name );
+		generator.createMountStatement( name );
 
 		generator.push({
 			namespace: local.namespace,

@@ -5,10 +5,6 @@ export default {
 		}
 
 		const name = generator.current.getUniqueName( `text` );
-		generator.fire( 'addElement', {
-			name,
-			renderStatement: `document.createTextNode( ${JSON.stringify( node.data )} )`,
-			needsIdentifier: false
-		});
+		generator.addElement( name, `document.createTextNode( ${JSON.stringify( node.data )} )`, false );
 	}
 };

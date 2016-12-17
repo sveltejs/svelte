@@ -9,26 +9,22 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		block: name
 	}];
 
-	generator.fire( 'generateBlock', {
-		node,
-		name
-	});
+	generator.generateBlock( node, name );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
 		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, node.else.children[0], _name, i + 1 ) );
+			...getConditionsAndBlocks( generator, node.else.children[0], _name, i + 1 )
+		);
 	} else {
 		const name = `${_name}_${i + 1}`;
 		conditionsAndBlocks.push({
 			condition: null,
 			block: node.else ? name : null,
 		});
-		if (node.else) {
-			generator.fire( 'generateBlock', {
-				node: node.else,
-				name
-			});
+
+		if ( node.else ) {
+			generator.generateBlock( node.else, name );
 		}
 	}
 	return conditionsAndBlocks;
@@ -45,10 +41,7 @@ export default {
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
 
 		const anchor = `${name}_anchor`;
-		generator.fire( 'createAnchor', {
-			name: anchor,
-			description: `#if ${generator.source.slice( node.expression.start, node.expression.end )}`
-		});
+		generator.createAnchor( anchor, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
 
 		generator.current.builders.init.addBlock( deindent`
 			function ${getBlock} ( ${params} ) {
