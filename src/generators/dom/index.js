@@ -242,7 +242,7 @@ export default function dom ( parsed, source, options, names ) {
 		builders.init.addBlock( deindent`
 			this.__bindings = [];
 			this._fragment = renderMainFragment( this._state, this );
-			if ( options.target ) this._mount( options.target );
+			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this.__bindings.length ) this.__bindings.pop()();
 		` );
 
@@ -250,7 +250,7 @@ export default function dom ( parsed, source, options, names ) {
 	} else {
 		builders.init.addBlock( deindent`
 			this._fragment = renderMainFragment( this._state, this );
-			if ( options.target ) this._mount( options.target );
+			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
 
@@ -297,10 +297,6 @@ export default function dom ( parsed, source, options, names ) {
 			this.on = on;
 			this.set = set;
 			this.teardown = teardown;
-
-			this._mount = function mount ( target, anchor ) {
-				this._fragment.mount( target, anchor );
-			}
 
 			this.root = options.root;
 			this.yield = options.yield;
