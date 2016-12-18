@@ -5,11 +5,13 @@ import namespaces from '../../utils/namespaces.js';
 import processCss from '../shared/css/process.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
+import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
 	constructor ( parsed, source, names, visitors ) {
 		super( parsed, source, names, visitors );
 		this.renderers = [];
+		this.uses = {};
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -21,15 +23,13 @@ class DomGenerator extends Generator {
 
 			this.createMountStatement( name );
 		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${renderStatement} );`
-			);
+			this.uses.appendNode = true;
+			this.current.builders.init.addLine( `appendNode( ${renderStatement}, ${this.current.target} );` );
 		}
 
 		if ( isToplevel ) {
-			this.current.builders.detach.addLine(
-				`${name}.parentNode.removeChild( ${name} );`
-			);
+			this.uses.detachNode = true;
+			this.current.builders.detach.addLine( `detachNode( ${name} );` );
 		}
 	}
 
@@ -54,19 +54,38 @@ class DomGenerator extends Generator {
 
 		if ( fragment.key ) properties.addBlock( `key: key,` );
 
-		properties.addBlock( deindent`
-			mount: function ( target, anchor ) {
-				${fragment.builders.mount}
-			},
+		if ( fragment.builders.mount.isEmpty() ) {
+			this.uses.noop = true;
+			properties.addBlock( `mount: noop,` );
+		} else {
+			properties.addBlock( deindent`
+				mount: function ( target, anchor ) {
+					${fragment.builders.mount}
+				},
+			` );
+		}
 
-			update: function ( changed, ${fragment.params} ) {
-				${fragment.builders.update}
-			},
+		if ( fragment.builders.update.isEmpty() ) {
+			this.uses.noop = true;
+			properties.addBlock( `update: noop,` );
+		} else {
+			properties.addBlock( deindent`
+				update: function ( changed, ${fragment.params} ) {
+					${fragment.builders.update}
+				},
+			` );
+		}
 
-			teardown: function ( detach ) {
-				${fragment.builders.teardown}
-			}
-		` );
+		if ( fragment.builders.teardown.isEmpty() ) {
+			this.uses.noop = true;
+			properties.addBlock( `teardown: noop,` );
+		} else {
+			properties.addBlock( deindent`
+				teardown: function ( detach ) {
+					${fragment.builders.teardown}
+				},
+			` );
+		}
 
 		this.renderers.push( deindent`
 			function ${fragment.name} ( ${fragment.params}, component${fragment.key ? `, key` : ''} ) {
@@ -80,18 +99,18 @@ class DomGenerator extends Generator {
 	}
 
 	createAnchor ( name, description = '' ) {
-		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
+		this.uses.createComment = true;
+		const renderStatement = `createComment( ${JSON.stringify( description )} )`;
 		this.addElement( name, renderStatement, true );
 	}
 
 	createMountStatement ( name ) {
 		if ( this.current.target === 'target' ) {
-			this.current.builders.mount.addLine(
-				`target.insertBefore( ${name}, anchor );`
-			);
+			this.uses.insertNode = true;
+			this.current.builders.mount.addLine( `insertNode( ${name}, target, anchor );` );
 		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${name} );` );
+			this.uses.appendNode = true;
+			this.current.builders.init.addLine( `appendNode( ${name}, ${this.current.target} );` );
 		}
 	}
 
@@ -192,12 +211,15 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( parsed.css && options.css !== false ) {
+		generator.uses.appendNode = true;
+		generator.uses.createElement = true;
+
 		builders.main.addBlock( deindent`
 			let addedCss = false;
 			function addCss () {
-				var style = document.createElement( 'style' );
+				var style = createElement( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed ) )};
-				document.head.appendChild( style );
+				appendNode( style, document.head );
 
 				addedCss = true;
 			}
@@ -363,6 +385,11 @@ export default function dom ( parsed, source, options, names ) {
 	if ( templateProperties.methods ) {
 		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
+
+	Object.keys( generator.uses ).forEach( key => {
+		const fn = shared[ key ]; // eslint-disable-line import/namespace
+		builders.main.addBlock( fn.toString() );
+	});
 
 	return generator.generate( builders.main.toString(), options, { name, format } );
 }
