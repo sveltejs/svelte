@@ -117,7 +117,8 @@ export default {
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,
-			localElementDepth: generator.current.localElementDepth + 1
+			localElementDepth: generator.current.localElementDepth + 1,
+			key: null
 		});
 	},
 
