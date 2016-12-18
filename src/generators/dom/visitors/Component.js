@@ -83,7 +83,7 @@ export default {
 		` );
 
 		if ( isToplevel ) {
-			generator.current.builders.mount.addLine( `${name}._mount( target, anchor );` );
+			generator.current.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
 		}
 
 		if ( local.dynamicAttributes.length ) {
