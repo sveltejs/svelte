@@ -171,6 +171,12 @@ export default function mustache ( parser ) {
 				if ( !block.index ) parser.error( `Expected name` );
 				parser.allowWhitespace();
 			}
+
+			if ( parser.eat( '@' ) ) {
+				block.key = parser.read( validIdentifier );
+				if ( !block.key ) parser.error( `Expected name` );
+				parser.allowWhitespace();
+			}
 		}
 
 		parser.eat( '}}', true );
