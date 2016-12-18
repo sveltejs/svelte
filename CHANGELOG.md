@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.4.0
+
+* Keyed `each` blocks ([#81](https://github.com/sveltejs/svelte/issues/81))
+
 ## 1.3.1
 
 * Remove file extensions from AMD dependencies ([#144](https://github.com/sveltejs/svelte/issues/144))
