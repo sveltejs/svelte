@@ -18,6 +18,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
+* [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
 * More to come!
 
 
