@@ -1,29 +1,27 @@
+export * from './dom.js';
+export * from './methods.js';
+
 export function noop () {}
 
-export function appendNode ( node, target ) {
-	target.appendChild( node );
-}
+export function dispatchObservers ( component, group, newState, oldState ) {
+	for ( var key in group ) {
+		if ( !( key in newState ) ) continue;
 
-export function insertNode ( node, target, anchor ) {
-	target.insertBefore( node, anchor );
-}
+		var newValue = newState[ key ];
+		var oldValue = oldState[ key ];
 
-export function detachNode ( node ) {
-	node.parentNode.removeChild( node );
-}
+		if ( newValue === oldValue && typeof newValue !== 'object' ) continue;
 
-export function createElement ( name ) {
-	return document.createElement( name );
-}
+		var callbacks = group[ key ];
+		if ( !callbacks ) continue;
 
-export function createSvgElement ( name ) {
-	return document.createElementNS( 'http://www.w3.org/2000/svg', name );
-}
+		for ( var i = 0; i < callbacks.length; i += 1 ) {
+			var callback = callbacks[i];
+			if ( callback.__calling ) continue;
 
-export function createText ( data ) {
-	return document.createTextNode( data );
-}
-
-export function createComment ( data ) {
-	return document.createComment( data );
+			callback.__calling = true;
+			callback.call( component, newValue, oldValue );
+			callback.__calling = false;
+		}
+	}
 }
