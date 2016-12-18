@@ -1,6 +1,11 @@
 # Svelte
 
-The magical disappearing UI framework. [Read the introductory blog post.](https://svelte.technology/blog/frameworks-without-the-framework/)
+The magical disappearing UI framework.
+
+* [Read the introductory blog post.](https://svelte.technology/blog/frameworks-without-the-framework/)
+* [Read the guide](https://svelte.technology/guide)
+* [Try it out](https://svelte.technology/repl)
+* [Chat on Gitter](https://gitter.im/sveltejs/svelte)
 
 ---
 
