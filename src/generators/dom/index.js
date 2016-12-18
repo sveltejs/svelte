@@ -50,22 +50,30 @@ class DomGenerator extends Generator {
 			` );
 		}
 
+		const properties = new CodeBuilder();
+
+		if ( fragment.key ) properties.addBlock( `key: key,` );
+
+		properties.addBlock( deindent`
+			mount: function ( target, anchor ) {
+				${fragment.builders.mount}
+			},
+
+			update: function ( changed, ${fragment.params} ) {
+				${fragment.builders.update}
+			},
+
+			teardown: function ( detach ) {
+				${fragment.builders.teardown}
+			}
+		` );
+
 		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params}, component ) {
+			function ${fragment.name} ( ${fragment.params}, component${fragment.key ? `, key` : ''} ) {
 				${fragment.builders.init}
 
 				return {
-					mount: function ( target, anchor ) {
-						${fragment.builders.mount}
-					},
-
-					update: function ( changed, ${fragment.params} ) {
-						${fragment.builders.update}
-					},
-
-					teardown: function ( detach ) {
-						${fragment.builders.teardown}
-					}
+					${properties}
 				};
 			}
 		` );
@@ -127,6 +135,7 @@ export default function dom ( parsed, source, options, names ) {
 		namespace,
 		target: 'target',
 		localElementDepth: 0,
+		key: null,
 
 		contexts: {},
 		indexes: {},
