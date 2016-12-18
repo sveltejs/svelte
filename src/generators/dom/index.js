@@ -177,8 +177,8 @@ export default function dom ( parsed, source, options, names ) {
 		set: new CodeBuilder()
 	};
 
-	builders.set.addLine( 'var oldState = state;' );
-	builders.set.addLine( 'state = Object.assign( {}, oldState, newState );' );
+	builders.set.addLine( 'var oldState = this._state;' );
+	builders.set.addLine( 'this._state = Object.assign( {}, oldState, newState );' );
 
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
@@ -197,13 +197,14 @@ export default function dom ( parsed, source, options, names ) {
 			}
 		` );
 
-		builders.set.addLine( `applyComputations( state, newState, oldState )` );
+		builders.set.addLine( `applyComputations( this._state, newState, oldState )` );
 	}
 
+	// TODO is the `if` necessary?
 	builders.set.addBlock( deindent`
-		dispatchObservers( observers.immediate, newState, oldState );
-		if ( mainFragment ) mainFragment.update( newState, state );
-		dispatchObservers( observers.deferred, newState, oldState );
+		dispatchObservers( this, this._observers.pre, newState, oldState );
+		if ( this._fragment ) this._fragment.update( newState, this._state );
+		dispatchObservers( this, this._observers.post, newState, oldState );
 	` );
 
 	if ( parsed.js ) {
@@ -240,7 +241,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this.__bindings = [];
-			var mainFragment = renderMainFragment( state, this );
+			this._fragment = renderMainFragment( this._state, this );
 			if ( options.target ) this._mount( options.target );
 			while ( this.__bindings.length ) this.__bindings.pop()();
 		` );
@@ -248,7 +249,7 @@ export default function dom ( parsed, source, options, names ) {
 		builders.set.addLine( `while ( this.__bindings.length ) this.__bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			var mainFragment = renderMainFragment( state, this );
+			this._fragment = renderMainFragment( this._state, this );
 			if ( options.target ) this._mount( options.target );
 		` );
 	}
@@ -280,111 +281,57 @@ export default function dom ( parsed, source, options, names ) {
 	builders.main.addBlock( deindent`
 		function ${name} ( options ) {
 			options = options || {};
+			${generator.usesRefs ? `\nthis.refs = {}` : ``}
+			this._state = ${initialState};${templateProperties.computed ? `\napplyComputations( this._state, this._state, {} );` : ``}
 
-			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
-			var state = ${initialState};${templateProperties.computed ? `\napplyComputations( state, state, {} );` : ``}
-
-			var observers = {
-				immediate: Object.create( null ),
-				deferred: Object.create( null )
+			this._observers = {
+				pre: Object.create( null ),
+				post: Object.create( null )
 			};
 
-			var callbacks = Object.create( null );
+			this._handlers = Object.create( null );
 
-			function dispatchObservers ( group, newState, oldState ) {
-				for ( var key in group ) {
-					if ( !( key in newState ) ) continue;
-
-					var newValue = newState[ key ];
-					var oldValue = oldState[ key ];
-
-					if ( newValue === oldValue && typeof newValue !== 'object' ) continue;
-
-					var callbacks = group[ key ];
-					if ( !callbacks ) continue;
-
-					for ( var i = 0; i < callbacks.length; i += 1 ) {
-						var callback = callbacks[i];
-						if ( callback.__calling ) continue;
-
-						callback.__calling = true;
-						callback.call( component, newValue, oldValue );
-						callback.__calling = false;
-					}
-				}
-			}
-
-			this.fire = function fire ( eventName, data ) {
-				var handlers = eventName in callbacks && callbacks[ eventName ].slice();
-				if ( !handlers ) return;
-
-				for ( var i = 0; i < handlers.length; i += 1 ) {
-					handlers[i].call( this, data );
-				}
-			};
-
-			this.get = function get ( key ) {
-				return key ? state[ key ] : state;
-			};
-
-			this.set = function set ( newState ) {
-				${builders.set}
-			};
+			this.get = get;
+			this.fire = fire;
+			this.observe = observe;
+			this.on = on;
+			this.set = set;
+			this.teardown = teardown;
 
 			this._mount = function mount ( target, anchor ) {
-				mainFragment.mount( target, anchor );
+				this._fragment.mount( target, anchor );
 			}
-
-			this.observe = function ( key, callback, options ) {
-				var group = ( options && options.defer ) ? observers.deferred : observers.immediate;
-
-				( group[ key ] || ( group[ key ] = [] ) ).push( callback );
-
-				if ( !options || options.init !== false ) {
-					callback.__calling = true;
-					callback.call( component, state[ key ] );
-					callback.__calling = false;
-				}
-
-				return {
-					cancel: function () {
-						var index = group[ key ].indexOf( callback );
-						if ( ~index ) group[ key ].splice( index, 1 );
-					}
-				};
-			};
-
-			this.on = function on ( eventName, handler ) {
-				var handlers = callbacks[ eventName ] || ( callbacks[ eventName ] = [] );
-				handlers.push( handler );
-
-				return {
-					cancel: function () {
-						var index = handlers.indexOf( handler );
-						if ( ~index ) handlers.splice( index, 1 );
-					}
-				};
-			};
-
-			this.teardown = function teardown ( detach ) {
-				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
-
-				mainFragment.teardown( detach !== false );
-				mainFragment = null;
-
-				state = {};
-			};
 
 			this.root = options.root;
 			this.yield = options.yield;
 
 			${builders.init}
 		}
+
+		function set ( newState ) {
+			${builders.set}
+		}
+
+		function teardown ( detach ) {
+			this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
+
+			this._fragment.teardown( detach !== false );
+			this._fragment = null;
+
+			this._state = {};
+		}
 	` );
 
 	if ( templateProperties.methods ) {
 		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
+
+	builders.main.addBlock( shared.fire.toString() );
+	builders.main.addBlock( shared.get.toString() );
+	builders.main.addBlock( shared.observe.toString() );
+	builders.main.addBlock( shared.on.toString() );
+
+	builders.main.addBlock( shared.dispatchObservers.toString() );
 
 	Object.keys( generator.uses ).forEach( key => {
 		const fn = shared[ key ]; // eslint-disable-line import/namespace
