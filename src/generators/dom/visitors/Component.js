@@ -26,7 +26,7 @@ export default {
 
 		const componentInitProperties = [
 			`target: ${!isToplevel ? generator.current.target: 'null'}`,
-			'root: component.root || component'
+			'_root: component._root || component'
 		];
 
 		// Component has children, put them in a separate {{yield}} block
@@ -43,7 +43,7 @@ export default {
 				`${name}_yieldFragment.update( changed, root );`
 			);
 
-			componentInitProperties.push(`yield: ${name}_yieldFragment`);
+			componentInitProperties.push( `_yield: ${name}_yieldFragment`);
 		}
 
 		const statements = [];
@@ -83,7 +83,7 @@ export default {
 		` );
 
 		if ( isToplevel ) {
-			generator.current.builders.mount.addLine( `${name}._mount( target, anchor );` );
+			generator.current.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
 		}
 
 		if ( local.dynamicAttributes.length ) {

@@ -87,7 +87,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		local.init.addBlock( deindent`
 			var ${local.name}_updating = false;
 
-			component.__bindings.push( function () {
+			component._bindings.push( function () {
 				${local.name}.observe( '${attribute.name}', function ( value ) {
 					${local.name}_updating = true;
 					${setter}
@@ -128,6 +128,6 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	if ( node.name === 'select' ) {
 		generator.hasComplexBindings = true;
-		local.init.addLine( `component.__bindings.push( ${handler} )` );
+		local.init.addLine( `component._bindings.push( ${handler} )` );
 	}
 }
