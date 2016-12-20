@@ -9,6 +9,8 @@ export default {
 		}
 
 		const props = node.attributes.map( attribute => {
+			if ( attribute.type !== 'Attribute' ) return;
+
 			let value;
 
 			if ( attribute.value === true ) {
