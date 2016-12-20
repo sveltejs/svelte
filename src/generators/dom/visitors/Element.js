@@ -57,9 +57,19 @@ export default {
 			local.update.addBlock( updates );
 		}
 
-		let render = local.namespace ?
-			`var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );` :
-			`var ${name} = document.createElement( '${node.name}' );`;
+		let render;
+
+		if ( local.namespace ) {
+			if ( local.namespace === 'http://www.w3.org/2000/svg' ) {
+				generator.uses.createSvgElement = true;
+				render = `var ${name} = createSvgElement( '${node.name}' )`;
+			} else {
+				render = `var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );`;
+			}
+		} else {
+			generator.uses.createElement = true;
+			render = `var ${name} = createElement( '${node.name}' );`;
+		}
 
 		if ( generator.cssId && !generator.elementDepth ) {
 			render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
@@ -67,7 +77,8 @@ export default {
 
 		local.init.addLineAtStart( render );
 		if ( isToplevel ) {
-			generator.current.builders.detach.addLine( `${name}.parentNode.removeChild( ${name} );` );
+			generator.uses.detachNode = true;
+			generator.current.builders.detach.addLine( `detachNode( ${name} );` );
 		}
 
 		// special case – bound <option> without a value attribute

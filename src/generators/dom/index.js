@@ -5,11 +5,13 @@ import namespaces from '../../utils/namespaces.js';
 import processCss from '../shared/css/process.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
+import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
 	constructor ( parsed, source, names, visitors ) {
 		super( parsed, source, names, visitors );
 		this.renderers = [];
+		this.uses = {};
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -21,15 +23,13 @@ class DomGenerator extends Generator {
 
 			this.createMountStatement( name );
 		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${renderStatement} );`
-			);
+			this.uses.appendNode = true;
+			this.current.builders.init.addLine( `appendNode( ${renderStatement}, ${this.current.target} );` );
 		}
 
 		if ( isToplevel ) {
-			this.current.builders.detach.addLine(
-				`${name}.parentNode.removeChild( ${name} );`
-			);
+			this.uses.detachNode = true;
+			this.current.builders.detach.addLine( `detachNode( ${name} );` );
 		}
 	}
 
@@ -54,19 +54,38 @@ class DomGenerator extends Generator {
 
 		if ( fragment.key ) properties.addBlock( `key: key,` );
 
-		properties.addBlock( deindent`
-			mount: function ( target, anchor ) {
-				${fragment.builders.mount}
-			},
+		if ( fragment.builders.mount.isEmpty() ) {
+			this.uses.noop = true;
+			properties.addBlock( `mount: noop,` );
+		} else {
+			properties.addBlock( deindent`
+				mount: function ( target, anchor ) {
+					${fragment.builders.mount}
+				},
+			` );
+		}
 
-			update: function ( changed, ${fragment.params} ) {
-				${fragment.builders.update}
-			},
+		if ( fragment.builders.update.isEmpty() ) {
+			this.uses.noop = true;
+			properties.addBlock( `update: noop,` );
+		} else {
+			properties.addBlock( deindent`
+				update: function ( changed, ${fragment.params} ) {
+					${fragment.builders.update}
+				},
+			` );
+		}
 
-			teardown: function ( detach ) {
-				${fragment.builders.teardown}
-			}
-		` );
+		if ( fragment.builders.teardown.isEmpty() ) {
+			this.uses.noop = true;
+			properties.addBlock( `teardown: noop,` );
+		} else {
+			properties.addBlock( deindent`
+				teardown: function ( detach ) {
+					${fragment.builders.teardown}
+				},
+			` );
+		}
 
 		this.renderers.push( deindent`
 			function ${fragment.name} ( ${fragment.params}, component${fragment.key ? `, key` : ''} ) {
@@ -80,18 +99,18 @@ class DomGenerator extends Generator {
 	}
 
 	createAnchor ( name, description = '' ) {
-		const renderStatement = `document.createComment( ${JSON.stringify( description )} )`;
+		this.uses.createComment = true;
+		const renderStatement = `createComment( ${JSON.stringify( description )} )`;
 		this.addElement( name, renderStatement, true );
 	}
 
 	createMountStatement ( name ) {
 		if ( this.current.target === 'target' ) {
-			this.current.builders.mount.addLine(
-				`target.insertBefore( ${name}, anchor );`
-			);
+			this.uses.insertNode = true;
+			this.current.builders.mount.addLine( `insertNode( ${name}, target, anchor );` );
 		} else {
-			this.current.builders.init.addLine(
-				`${this.current.target}.appendChild( ${name} );` );
+			this.uses.appendNode = true;
+			this.current.builders.init.addLine( `appendNode( ${name}, ${this.current.target} );` );
 		}
 	}
 
@@ -158,8 +177,8 @@ export default function dom ( parsed, source, options, names ) {
 		set: new CodeBuilder()
 	};
 
-	builders.set.addLine( 'var oldState = state;' );
-	builders.set.addLine( 'state = Object.assign( {}, oldState, newState );' );
+	builders.set.addLine( 'var oldState = this._state;' );
+	builders.set.addLine( 'this._state = Object.assign( {}, oldState, newState );' );
 
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
@@ -178,13 +197,14 @@ export default function dom ( parsed, source, options, names ) {
 			}
 		` );
 
-		builders.set.addLine( `applyComputations( state, newState, oldState )` );
+		builders.set.addLine( `applyComputations( this._state, newState, oldState )` );
 	}
 
+	// TODO is the `if` necessary?
 	builders.set.addBlock( deindent`
-		dispatchObservers( observers.immediate, newState, oldState );
-		if ( mainFragment ) mainFragment.update( newState, state );
-		dispatchObservers( observers.deferred, newState, oldState );
+		dispatchObservers( this, this._observers.pre, newState, oldState );
+		if ( this._fragment ) this._fragment.update( newState, this._state );
+		dispatchObservers( this, this._observers.post, newState, oldState );
 	` );
 
 	if ( parsed.js ) {
@@ -192,12 +212,15 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( parsed.css && options.css !== false ) {
+		generator.uses.appendNode = true;
+		generator.uses.createElement = true;
+
 		builders.main.addBlock( deindent`
 			let addedCss = false;
 			function addCss () {
-				var style = document.createElement( 'style' );
+				var style = createElement( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed ) )};
-				document.head.appendChild( style );
+				appendNode( style, document.head );
 
 				addedCss = true;
 			}
@@ -212,29 +235,29 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( generator.hasComponents ) {
-		builders.init.addLine( `this.__renderHooks = [];` );
+		builders.init.addLine( `this._renderHooks = [];` );
 	}
 
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
-			this.__bindings = [];
-			var mainFragment = renderMainFragment( state, this );
-			if ( options.target ) this._mount( options.target );
-			while ( this.__bindings.length ) this.__bindings.pop()();
+			this._bindings = [];
+			this._fragment = renderMainFragment( this._state, this );
+			if ( options.target ) this._fragment.mount( options.target, null );
+			while ( this._bindings.length ) this._bindings.pop()();
 		` );
 
-		builders.set.addLine( `while ( this.__bindings.length ) this.__bindings.pop()();` );
+		builders.set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			var mainFragment = renderMainFragment( state, this );
-			if ( options.target ) this._mount( options.target );
+			this._fragment = renderMainFragment( this._state, this );
+			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
 
 	if ( generator.hasComponents ) {
 		const statement = deindent`
-			while ( this.__renderHooks.length ) {
-				var hook = this.__renderHooks.pop();
+			while ( this._renderHooks.length ) {
+				var hook = this._renderHooks.pop();
 				hook.fn.call( hook.context );
 			}
 		`;
@@ -245,8 +268,8 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( templateProperties.onrender ) {
 		builders.init.addBlock( deindent`
-			if ( options.root ) {
-				options.root.__renderHooks.push({ fn: template.onrender, context: this });
+			if ( options._root ) {
+				options._root._renderHooks.push({ fn: template.onrender, context: this });
 			} else {
 				template.onrender.call( this );
 			}
@@ -258,103 +281,18 @@ export default function dom ( parsed, source, options, names ) {
 	builders.main.addBlock( deindent`
 		function ${name} ( options ) {
 			options = options || {};
+			${generator.usesRefs ? `\nthis.refs = {}` : ``}
+			this._state = ${initialState};${templateProperties.computed ? `\napplyComputations( this._state, this._state, {} );` : ``}
 
-			var component = this;${generator.usesRefs ? `\nthis.refs = {}` : ``}
-			var state = ${initialState};${templateProperties.computed ? `\napplyComputations( state, state, {} );` : ``}
-
-			var observers = {
-				immediate: Object.create( null ),
-				deferred: Object.create( null )
+			this._observers = {
+				pre: Object.create( null ),
+				post: Object.create( null )
 			};
 
-			var callbacks = Object.create( null );
+			this._handlers = Object.create( null );
 
-			function dispatchObservers ( group, newState, oldState ) {
-				for ( var key in group ) {
-					if ( !( key in newState ) ) continue;
-
-					var newValue = newState[ key ];
-					var oldValue = oldState[ key ];
-
-					if ( newValue === oldValue && typeof newValue !== 'object' ) continue;
-
-					var callbacks = group[ key ];
-					if ( !callbacks ) continue;
-
-					for ( var i = 0; i < callbacks.length; i += 1 ) {
-						var callback = callbacks[i];
-						if ( callback.__calling ) continue;
-
-						callback.__calling = true;
-						callback.call( component, newValue, oldValue );
-						callback.__calling = false;
-					}
-				}
-			}
-
-			this.fire = function fire ( eventName, data ) {
-				var handlers = eventName in callbacks && callbacks[ eventName ].slice();
-				if ( !handlers ) return;
-
-				for ( var i = 0; i < handlers.length; i += 1 ) {
-					handlers[i].call( this, data );
-				}
-			};
-
-			this.get = function get ( key ) {
-				return key ? state[ key ] : state;
-			};
-
-			this.set = function set ( newState ) {
-				${builders.set}
-			};
-
-			this._mount = function mount ( target, anchor ) {
-				mainFragment.mount( target, anchor );
-			}
-
-			this.observe = function ( key, callback, options ) {
-				var group = ( options && options.defer ) ? observers.deferred : observers.immediate;
-
-				( group[ key ] || ( group[ key ] = [] ) ).push( callback );
-
-				if ( !options || options.init !== false ) {
-					callback.__calling = true;
-					callback.call( component, state[ key ] );
-					callback.__calling = false;
-				}
-
-				return {
-					cancel: function () {
-						var index = group[ key ].indexOf( callback );
-						if ( ~index ) group[ key ].splice( index, 1 );
-					}
-				};
-			};
-
-			this.on = function on ( eventName, handler ) {
-				var handlers = callbacks[ eventName ] || ( callbacks[ eventName ] = [] );
-				handlers.push( handler );
-
-				return {
-					cancel: function () {
-						var index = handlers.indexOf( handler );
-						if ( ~index ) handlers.splice( index, 1 );
-					}
-				};
-			};
-
-			this.teardown = function teardown ( detach ) {
-				this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
-
-				mainFragment.teardown( detach !== false );
-				mainFragment = null;
-
-				state = {};
-			};
-
-			this.root = options.root;
-			this.yield = options.yield;
+			this._root = options._root;
+			this._yield = options._yield;
 
 			${builders.init}
 		}
@@ -363,6 +301,36 @@ export default function dom ( parsed, source, options, names ) {
 	if ( templateProperties.methods ) {
 		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
+
+	builders.main.addBlock( deindent`
+		${name}.prototype.get = ${shared.get};
+
+		${name}.prototype.fire = ${shared.fire};
+
+		${name}.prototype.observe = ${shared.observe};
+
+		${name}.prototype.on = ${shared.on};
+
+		${name}.prototype.set = function set ( newState ) {
+			${builders.set}
+		};
+
+		${name}.prototype.teardown = function teardown ( detach ) {
+			this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
+
+			this._fragment.teardown( detach !== false );
+			this._fragment = null;
+
+			this._state = {};
+		};
+	` );
+
+	builders.main.addBlock( shared.dispatchObservers.toString() );
+
+	Object.keys( generator.uses ).forEach( key => {
+		const fn = shared[ key ]; // eslint-disable-line import/namespace
+		builders.main.addBlock( fn.toString() );
+	});
 
 	return generator.generate( builders.main.toString(), options, { name, format } );
 }
