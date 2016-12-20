@@ -268,8 +268,8 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( templateProperties.onrender ) {
 		builders.init.addBlock( deindent`
-			if ( options.root ) {
-				options.root.__renderHooks.push({ fn: template.onrender, context: this });
+			if ( options._root ) {
+				options._root.__renderHooks.push({ fn: template.onrender, context: this });
 			} else {
 				template.onrender.call( this );
 			}
@@ -298,8 +298,8 @@ export default function dom ( parsed, source, options, names ) {
 			this.set = set;
 			this.teardown = teardown;
 
-			this.root = options.root;
-			this.yield = options.yield;
+			this._root = options._root;
+			this._yield = options._yield;
 
 			${builders.init}
 		}
