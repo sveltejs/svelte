@@ -2,6 +2,8 @@
 node_modules
 compiler
 ssr
+shared.js
+scratch
 !test/compiler
 !test/ssr
 .nyc_output
@@ -9,4 +11,3 @@ coverage
 coverage.lcov
 test/sourcemaps/*/output.js
 test/sourcemaps/*/output.js.map
-scratch
