@@ -6,17 +6,16 @@ import * as acorn from 'acorn';
 
 import { svelte, env, setupHtmlEqual } from './helpers.js';
 
-const cache = {};
-
 let showCompiledCode = false;
 let compileOptions = null;
 
 require.extensions[ '.html' ] = function ( module, filename ) {
 	const options = Object.assign({ filename }, compileOptions );
-	const code = cache[ filename ] || ( cache[ filename ] = svelte.compile( fs.readFileSync( filename, 'utf-8' ), options ).code );
+	const { code } = svelte.compile( fs.readFileSync( filename, 'utf-8' ), options );
+
 	if ( showCompiledCode ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 
-	return module._compile( code, filename );
+	return module._compile( code.replace( 'svelte/shared.js', path.resolve( 'shared.js' ) ), filename );
 };
 
 function addLineNumbers ( code ) {
@@ -30,7 +29,9 @@ function addLineNumbers ( code ) {
 
 function loadConfig ( dir ) {
 	try {
-		return require( `./generator/${dir}/_config.js` ).default;
+		const resolved = require.resolve( `./generator/${dir}/_config.js` );
+		delete require.cache[ resolved ];
+		return require( resolved ).default;
 	} catch ( err ) {
 		if ( err.code === 'E_NOT_FOUND' ) {
 			return {};
@@ -43,7 +44,7 @@ function loadConfig ( dir ) {
 describe( 'generate', () => {
 	before( setupHtmlEqual );
 
-	fs.readdirSync( 'test/generator' ).forEach( dir => {
+	function runTest ( dir, standalone ) {
 		if ( dir[0] === '.' ) return;
 
 		const config = loadConfig( dir );
@@ -53,6 +54,7 @@ describe( 'generate', () => {
 
 			showCompiledCode = config.show;
 			compileOptions = config.compileOptions || {};
+			compileOptions.standalone = standalone;
 
 			try {
 				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
@@ -78,7 +80,9 @@ describe( 'generate', () => {
 				throw err;
 			}
 
-			cache[ path.resolve( `test/generator/${dir}/main.html` ) ] = code;
+			Object.keys( require.cache ).filter( x => x.endsWith( '.html' ) ).forEach( file => {
+				delete require.cache[ file ];
+			});
 
 			let SvelteComponent;
 
@@ -116,6 +120,18 @@ describe( 'generate', () => {
 					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 					throw err;
 				});
+		});
+	}
+
+	describe( 'standalone', () => {
+		fs.readdirSync( 'test/generator' ).forEach( dir => {
+			runTest( dir, true );
+		});
+	});
+
+	describe( 'non-standalone', () => {
+		fs.readdirSync( 'test/generator' ).forEach( dir => {
+			runTest( dir, false );
 		});
 	});
 });
