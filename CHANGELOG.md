@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.5.0
+
+* Implement `standalone: false` ([#9](https://github.com/sveltejs/svelte/issues/9))
+* SSR: Handle component directives ([216](https://github.com/sveltejs/svelte/issues/216))
+
 ## 1.4.0
 
 * Keyed `each` blocks ([#81](https://github.com/sveltejs/svelte/issues/81))
