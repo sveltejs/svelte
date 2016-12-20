@@ -302,15 +302,26 @@ export default function dom ( parsed, source, options, names ) {
 		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
 
+	const standalone = options.standalone !== false;
+
+	builders.main.addBlock( standalone ?
+		deindent`
+			${name}.prototype.get = ${shared.get};
+
+			${name}.prototype.fire = ${shared.fire};
+
+			${name}.prototype.observe = ${shared.observe};
+
+			${name}.prototype.on = ${shared.on};
+		` :
+		deindent`
+			${name}.prototype.get = get;
+			${name}.prototype.fire = fire;
+			${name}.prototype.observe = observe;
+			${name}.prototype.on = on;
+		` );
+
 	builders.main.addBlock( deindent`
-		${name}.prototype.get = ${shared.get};
-
-		${name}.prototype.fire = ${shared.fire};
-
-		${name}.prototype.observe = ${shared.observe};
-
-		${name}.prototype.on = ${shared.on};
-
 		${name}.prototype.set = function set ( newState ) {
 			${builders.set}
 		};
@@ -325,12 +336,23 @@ export default function dom ( parsed, source, options, names ) {
 		};
 	` );
 
-	builders.main.addBlock( shared.dispatchObservers.toString() );
+	if ( standalone ) {
+		builders.main.addBlock( shared.dispatchObservers.toString() );
 
-	Object.keys( generator.uses ).forEach( key => {
-		const fn = shared[ key ]; // eslint-disable-line import/namespace
-		builders.main.addBlock( fn.toString() );
-	});
+		Object.keys( generator.uses ).forEach( key => {
+			const fn = shared[ key ]; // eslint-disable-line import/namespace
+			builders.main.addBlock( fn.toString() );
+		});
+	} else {
+		if ( format !== 'es' ) {
+			throw new Error( `Non-standalone components must be compiled to ES2015 modules (format: 'es')` );
+		}
+
+		const names = [ 'get', 'fire', 'observe', 'on', 'dispatchObservers' ].concat( Object.keys( generator.uses ) );
+		builders.main.addLineAtStart(
+			`import { ${names.join( ', ' )} } from 'svelte/shared.js'`
+		);
+	}
 
 	return generator.generate( builders.main.toString(), options, { name, format } );
 }
