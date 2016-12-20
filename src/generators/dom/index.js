@@ -291,30 +291,10 @@ export default function dom ( parsed, source, options, names ) {
 
 			this._handlers = Object.create( null );
 
-			this.get = get;
-			this.fire = fire;
-			this.observe = observe;
-			this.on = on;
-			this.set = set;
-			this.teardown = teardown;
-
 			this._root = options._root;
 			this._yield = options._yield;
 
 			${builders.init}
-		}
-
-		function set ( newState ) {
-			${builders.set}
-		}
-
-		function teardown ( detach ) {
-			this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
-
-			this._fragment.teardown( detach !== false );
-			this._fragment = null;
-
-			this._state = {};
 		}
 	` );
 
@@ -322,10 +302,28 @@ export default function dom ( parsed, source, options, names ) {
 		builders.main.addBlock( `${name}.prototype = template.methods;` );
 	}
 
-	builders.main.addBlock( shared.fire.toString() );
-	builders.main.addBlock( shared.get.toString() );
-	builders.main.addBlock( shared.observe.toString() );
-	builders.main.addBlock( shared.on.toString() );
+	builders.main.addBlock( deindent`
+		${name}.prototype.get = ${shared.get};
+
+		${name}.prototype.fire = ${shared.fire};
+
+		${name}.prototype.observe = ${shared.observe};
+
+		${name}.prototype.on = ${shared.on};
+
+		${name}.prototype.set = function set ( newState ) {
+			${builders.set}
+		};
+
+		${name}.prototype.teardown = function teardown ( detach ) {
+			this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
+
+			this._fragment.teardown( detach !== false );
+			this._fragment = null;
+
+			this._state = {};
+		};
+	` );
 
 	builders.main.addBlock( shared.dispatchObservers.toString() );
 
