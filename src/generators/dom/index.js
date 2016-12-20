@@ -235,18 +235,18 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( generator.hasComponents ) {
-		builders.init.addLine( `this.__renderHooks = [];` );
+		builders.init.addLine( `this._renderHooks = [];` );
 	}
 
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
-			this.__bindings = [];
+			this._bindings = [];
 			this._fragment = renderMainFragment( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
-			while ( this.__bindings.length ) this.__bindings.pop()();
+			while ( this._bindings.length ) this._bindings.pop()();
 		` );
 
-		builders.set.addLine( `while ( this.__bindings.length ) this.__bindings.pop()();` );
+		builders.set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
 			this._fragment = renderMainFragment( this._state, this );
@@ -256,8 +256,8 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( generator.hasComponents ) {
 		const statement = deindent`
-			while ( this.__renderHooks.length ) {
-				var hook = this.__renderHooks.pop();
+			while ( this._renderHooks.length ) {
+				var hook = this._renderHooks.pop();
 				hook.fn.call( hook.context );
 			}
 		`;
@@ -269,7 +269,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( templateProperties.onrender ) {
 		builders.init.addBlock( deindent`
 			if ( options._root ) {
-				options._root.__renderHooks.push({ fn: template.onrender, context: this });
+				options._root._renderHooks.push({ fn: template.onrender, context: this });
 			} else {
 				template.onrender.call( this );
 			}
