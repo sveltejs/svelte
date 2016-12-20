@@ -7,7 +7,8 @@ export default {
 		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );
 
-		generator.addElement( name, `document.createTextNode( ${snippet} )`, true );
+		generator.uses.createText = true;
+		generator.addElement( name, `createText( ${snippet} )`, true );
 
 		generator.current.builders.update.addBlock( deindent`
 			${name}.data = ${snippet};
