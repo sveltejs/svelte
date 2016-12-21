@@ -15,7 +15,7 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 
 	if ( showCompiledCode ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 
-	return module._compile( code.replace( 'svelte/shared.js', path.resolve( 'shared.js' ) ), filename );
+	return module._compile( code, filename );
 };
 
 function addLineNumbers ( code ) {
@@ -44,7 +44,7 @@ function loadConfig ( dir ) {
 describe( 'generate', () => {
 	before( setupHtmlEqual );
 
-	function runTest ( dir, standalone ) {
+	function runTest ( dir, shared ) {
 		if ( dir[0] === '.' ) return;
 
 		const config = loadConfig( dir );
@@ -54,7 +54,7 @@ describe( 'generate', () => {
 
 			showCompiledCode = config.show;
 			compileOptions = config.compileOptions || {};
-			compileOptions.standalone = standalone;
+			compileOptions.shared = shared;
 
 			try {
 				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
@@ -123,15 +123,15 @@ describe( 'generate', () => {
 		});
 	}
 
-	describe( 'standalone', () => {
+	describe( 'inline helpers', () => {
 		fs.readdirSync( 'test/generator' ).forEach( dir => {
-			runTest( dir, true );
+			runTest( dir, null );
 		});
 	});
 
-	describe( 'non-standalone', () => {
+	describe( 'shared helpers', () => {
 		fs.readdirSync( 'test/generator' ).forEach( dir => {
-			runTest( dir, false );
+			runTest( dir, path.resolve( 'shared.js' ) );
 		});
 	});
 });
