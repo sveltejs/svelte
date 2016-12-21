@@ -1,3 +1,27 @@
 {{#each things as thing, index}}
+
 	<p>{{index}}: {{thing}}</p>
+
+{{else}}
+
+	{{#each things as thingEachElse, indexEachElse}}
+		<p>{{indexEachElse}}: {{thingEachElse}}</p>
+	{{/each}}
+
 {{/each}}
+
+{{#if foo}}
+
+{{elseif bar}}
+
+	{{#each things as thingIfElse, indexIfElse}}
+		<p>{{indexIfElse}}: {{thingIfElse}}</p>
+	{{/each}}
+
+{{else}}
+
+	{{#each things as thingElse, indexElse}}
+		<p>{{indexElse}}: {{thingElse}}</p>
+	{{/each}}
+
+	{{/if}}

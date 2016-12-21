@@ -1,4 +1,10 @@
 [
 	"thing",
-	"index"
+	"index",
+	"thingEachElse",
+	"indexEachElse",
+	"thingIfElse",
+	"indexIfElse",
+	"thingElse",
+	"indexElse"
 ]

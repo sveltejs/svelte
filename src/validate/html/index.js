@@ -23,6 +23,10 @@ export default function validateHtml ( validator, html ) {
 			node.children.forEach( visit );
 		}
 
+		if (node.else ) {
+			visit( node.else );
+		}
+
 		if ( node.type === 'Element' ) {
 			elementDepth -= 1;
 		}
