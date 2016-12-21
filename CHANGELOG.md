@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.6.0
+
+* Replace `standalone: false` with `shared: true`, or `shared: 'custom/path/to/shared.js'` ([#218](https://github.com/sveltejs/svelte/issues/218))
+* Include `shared.js` in package
+
 ## 1.5.0
 
 * Implement `standalone: false` ([#9](https://github.com/sveltejs/svelte/issues/9))
