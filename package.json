@@ -6,6 +6,7 @@
   "files": [
     "compiler",
     "ssr",
+    "shared.js",
     "README.md"
   ],
   "scripts": {
