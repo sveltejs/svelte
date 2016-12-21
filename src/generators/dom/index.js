@@ -98,9 +98,9 @@ class DomGenerator extends Generator {
 		` );
 	}
 
-	createAnchor ( name, description = '' ) {
+	createAnchor ( name ) {
 		this.uses.createComment = true;
-		const renderStatement = `createComment( ${JSON.stringify( description )} )`;
+		const renderStatement = `createComment()`;
 		this.addElement( name, renderStatement, true );
 	}
 
