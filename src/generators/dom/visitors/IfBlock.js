@@ -41,7 +41,7 @@ export default {
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
 
 		const anchor = `${name}_anchor`;
-		generator.createAnchor( anchor, `#if ${generator.source.slice( node.expression.start, node.expression.end )}` );
+		generator.createAnchor( anchor );
 
 		generator.current.builders.init.addBlock( deindent`
 			function ${getBlock} ( ${params} ) {
