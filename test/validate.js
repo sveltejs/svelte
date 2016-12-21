@@ -38,11 +38,13 @@ describe( 'validate', () => {
 
 				const expectedErrors = tryToLoadJson( `test/validator/${dir}/errors.json` ) || [];
 				const expectedWarnings = tryToLoadJson( `test/validator/${dir}/warnings.json` ) || [];
-				const expectedNames = tryToLoadJson( `test/validator/${dir}/names.json` ) || [];
+				const expectedNames = tryToLoadJson( `test/validator/${dir}/names.json` );
 
 				assert.deepEqual( errors, expectedErrors );
 				assert.deepEqual( warnings, expectedWarnings );
-				assert.deepEqual( names, expectedNames );
+				if ( expectedNames ) {
+					assert.deepEqual( names, expectedNames );
+				}
 			} catch ( err ) {
 				if ( err.name !== 'ParseError' ) throw err;
 
