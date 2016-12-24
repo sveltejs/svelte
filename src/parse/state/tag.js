@@ -47,6 +47,10 @@ export default function tag ( parser ) {
 	parser.allowWhitespace();
 
 	if ( isClosingTag ) {
+		if ( voidElementNames.test( name ) ) {
+			parser.error( `<${name}> is a void element and cannot have children, or a closing tag`, start );
+		}
+
 		if ( !parser.eat( '>' ) ) parser.error( `Expected '>'` );
 
 		const element = parser.current();
