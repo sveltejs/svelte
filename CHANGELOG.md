@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.6.1
+
+* SSR: Handle component directives at arbitrary positions ([#221](https://github.com/sveltejs/svelte/issues/221))
+* Provide useful feedback on invalid void closing tag ([#224](https://github.com/sveltejs/svelte/issues/224))
+
 ## 1.6.0
 
 * Replace `standalone: false` with `shared: true`, or `shared: 'custom/path/to/shared.js'` ([#218](https://github.com/sveltejs/svelte/issues/218))
