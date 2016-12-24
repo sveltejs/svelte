@@ -8,29 +8,32 @@ export default {
 			}
 		}
 
-		const props = node.attributes.map( attribute => {
-			if ( attribute.type !== 'Attribute' ) return;
+		const props = node.attributes
+			.map( attribute => {
+				if ( attribute.type !== 'Attribute' ) return;
 
-			let value;
+				let value;
 
-			if ( attribute.value === true ) {
-				value = `true`;
-			} else if ( attribute.value.length === 0 ) {
-				value = `''`;
-			} else if ( attribute.value.length === 1 ) {
-				const chunk = attribute.value[0];
-				if ( chunk.type === 'Text' ) {
-					value = isNaN( parseFloat( chunk.data ) ) ? JSON.stringify( chunk.data ) : chunk.data;
+				if ( attribute.value === true ) {
+					value = `true`;
+				} else if ( attribute.value.length === 0 ) {
+					value = `''`;
+				} else if ( attribute.value.length === 1 ) {
+					const chunk = attribute.value[0];
+					if ( chunk.type === 'Text' ) {
+						value = isNaN( parseFloat( chunk.data ) ) ? JSON.stringify( chunk.data ) : chunk.data;
+					} else {
+						const { snippet } = generator.contextualise( chunk.expression );
+						value = snippet;
+					}
 				} else {
-					const { snippet } = generator.contextualise( chunk.expression );
-					value = snippet;
+					value = '`' + attribute.value.map( stringify ).join( '' ) + '`';
 				}
-			} else {
-				value = '`' + attribute.value.map( stringify ).join( '' ) + '`';
-			}
 
-			return `${attribute.name}: ${value}`;
-		}).join( ', ' );
+				return `${attribute.name}: ${value}`;
+			})
+			.filter( Boolean )
+			.join( ', ' );
 
 		let open = `\${template.components.${node.name}.render({${props}}`;
 

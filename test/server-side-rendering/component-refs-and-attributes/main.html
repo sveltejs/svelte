@@ -1,0 +1,13 @@
+<div><Widget ref:widget foo='{{foo}}'/></div>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		components: { Widget },
+
+		data () {
+			return { foo: 42 }
+		}
+	};
+</script>
