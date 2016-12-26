@@ -72,7 +72,8 @@ export default {
 		}
 
 		if ( generator.cssId && !generator.elementDepth ) {
-			render += `\n${name}.setAttribute( '${generator.cssId}', '' );`;
+			generator.uses.setAttribute = true;
+			render += `\nsetAttribute( ${name}, '${generator.cssId}', '' );`;
 		}
 
 		local.init.addLineAtStart( render );
