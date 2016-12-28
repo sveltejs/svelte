@@ -343,7 +343,7 @@ export default function dom ( parsed, source, options, names ) {
 
 		const names = [ 'get', 'fire', 'observe', 'on', 'dispatchObservers' ].concat( Object.keys( generator.uses ) );
 		builders.main.addLineAtStart(
-			`import { ${names.join( ', ' )} } from '${sharedPath}'`
+			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
 		);
 	} else {
 		builders.main.addBlock( shared.dispatchObservers.toString() );
