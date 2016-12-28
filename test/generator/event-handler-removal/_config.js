@@ -1,7 +1,7 @@
 // TODO gah, JSDOM appears to behave differently to real browsers here... probably need to raise an issue
 
 export default {
-	html: '<input><!--#if visible-->',
+	html: '<input><!---->',
 	test ( assert, component ) {
 		component.refs.input.focus();
 
