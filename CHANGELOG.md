@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.6.2
+
+* Use helpers for `addEventListener`, `removeEventListener`, `setAttribute` ([#227](https://github.com/sveltejs/svelte/pull/227))
+* Escape `sharedPath` ([#229](https://github.com/sveltejs/svelte/pull/229))
+* Handle attributes with values that begin with a number ([#234](https://github.com/sveltejs/svelte/issues/234))
+* Update dependencies
+
 ## 1.6.1
 
 * SSR: Handle component directives at arbitrary positions ([#221](https://github.com/sveltejs/svelte/issues/221))
