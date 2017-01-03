@@ -7,7 +7,7 @@ Thanks for raising an issue! To help us help you, if you've found a bug please c
 
 Reproductions should be small, self-contained, correct examples – http://sscce.org.
 
-Occasionally, this won't be possible, and that's fine – we still appreciate you raising the issue. But please understand that Svelte is run by unpaid volunteers in their free time, and we will prioritise bugs that follow these instructions.
+Occasionally, this won't be possible, and that's fine – we still appreciate you raising the issue. But please understand that Svelte is run by unpaid volunteers in their free time, and issues that follow these instructions will get fixed faster.
 
 If you have a stack trace to include, we recommend putting inside a `<details>` block for the sake of the thread's readability:
 
