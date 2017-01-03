@@ -28,7 +28,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 				if ( value.type === 'Text' ) {
 					// static attributes
-					const result = isNaN( parseFloat( value.data ) ) ? JSON.stringify( value.data ) : value.data;
+					const result = isNaN( value.data ) ? JSON.stringify( value.data ) : value.data;
 					local.staticAttributes.push({
 						name: attribute.name,
 						value: result
