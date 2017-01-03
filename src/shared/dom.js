@@ -25,3 +25,15 @@ export function createText ( data ) {
 export function createComment ( data ) {
 	return document.createComment( data );
 }
+
+export function addEventListener ( node, event, handler ) {
+	node.addEventListener ( event, handler, false );
+}
+
+export function removeEventListener ( node, event, handler ) {
+	node.removeEventListener ( event, handler, false );
+}
+
+export function setAttribute ( node, attribute, value ) {
+	node.setAttribute ( attribute, value );
+}
