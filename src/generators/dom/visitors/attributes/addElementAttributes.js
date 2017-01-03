@@ -21,8 +21,9 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = true;`
 					);
 				} else {
+					generator.uses.setAttribute = true;
 					local.init.addLine(
-						`${local.name}.setAttribute( '${attribute.name}', true );`
+						`setAttribute( ${local.name}, '${attribute.name}', true );`
 					);
 				}
 
@@ -38,8 +39,9 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = '';`
 					);
 				} else {
+					generator.uses.setAttribute = true;
 					local.init.addLine(
-						`${local.name}.setAttribute( '${attribute.name}', '' );`
+						`setAttribute( ${local.name}, '${attribute.name}', '' );`
 					);
 				}
 			}
@@ -62,8 +64,9 @@ export default function addElementAttributes ( generator, node, local ) {
 							`${local.name}.${propertyName} = ${result};`
 						);
 					} else {
+						generator.uses.setAttribute = true;
 						local.init.addLine(
-							`${local.name}.setAttribute( '${attribute.name}', ${result} );`
+							`setAttribute( ${local.name}, '${attribute.name}', ${result} );`
 						);
 					}
 				}
@@ -74,9 +77,13 @@ export default function addElementAttributes ( generator, node, local ) {
 					// dynamic – but potentially non-string – attributes
 					const { snippet } = generator.contextualise( value.expression );
 
-					const updater = propertyName ?
-						`${local.name}.${propertyName} = ${snippet};` :
-						`${local.name}.setAttribute( '${attribute.name}', ${snippet} );`; // TODO use snippet both times – see note below
+					let updater;
+					if (propertyName) {
+						updater = `${local.name}.${propertyName} = ${snippet};`;
+					} else {
+						generator.uses.setAttribute = true;
+						updater = `setAttribute( ${local.name}, '${attribute.name}', ${snippet} );`; // TODO use snippet both times – see note below
+					}
 
 					local.init.addLine( updater );
 					local.update.addLine( updater );
@@ -99,9 +106,13 @@ export default function addElementAttributes ( generator, node, local ) {
 					}).join( ' + ' )
 				);
 
-				const updater = propertyName ?
-					`${local.name}.${propertyName} = ${value};` :
-					`${local.name}.setAttribute( '${attribute.name}', ${value} );`;
+				let updater;
+				if (propertyName) {
+					updater = `${local.name}.${propertyName} = ${value};`;
+				} else {
+					generator.uses.setAttribute = true;
+					updater = `setAttribute( ${local.name}, '${attribute.name}', ${value} );`;
+				}
 
 				local.init.addLine( updater );
 				local.update.addLine( updater );
@@ -156,16 +167,18 @@ export default function addElementAttributes ( generator, node, local ) {
 					${handlerName}.teardown();
 				` );
 			} else {
+				generator.uses.addEventListener = true;
+				generator.uses.removeEventListener = true;
 				local.init.addBlock( deindent`
 					function ${handlerName} ( event ) {
 						${handlerBody}
 					}
 
-					${local.name}.addEventListener( '${attribute.name}', ${handlerName}, false );
+					addEventListener( ${local.name}, '${attribute.name}', ${handlerName} );
 				` );
 
 				generator.current.builders.teardown.addLine( deindent`
-					${local.name}.removeEventListener( '${attribute.name}', ${handlerName}, false );
+					removeEventListener( ${local.name}, '${attribute.name}', ${handlerName} );
 				` );
 			}
 		}
