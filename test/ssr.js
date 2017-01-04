@@ -26,6 +26,10 @@ describe( 'ssr', () => {
 
 		const solo = exists( `test/server-side-rendering/${dir}/solo` );
 
+		if ( solo && process.env.CI ) {
+			throw new Error( 'Forgot to remove `solo: true` from test' );
+		}
+
 		( solo ? it.only : it )( dir, () => {
 			const component = require( `./server-side-rendering/${dir}/main.html` );
 

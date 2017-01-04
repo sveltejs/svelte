@@ -10,6 +10,10 @@ describe( 'sourcemaps', () => {
 
 		const solo = exists( `test/sourcemaps/${dir}/solo` );
 
+		if ( solo && process.env.CI ) {
+			throw new Error( 'Forgot to remove `solo: true` from test' );
+		}
+
 		( solo ? it.only : it )( dir, () => {
 			const input = fs.readFileSync( `test/sourcemaps/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 			const { code, map } = svelte.compile( input );
