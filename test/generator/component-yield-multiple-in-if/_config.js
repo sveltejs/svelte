@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	html: `
 		<div><p class='widget'>Hello</p></div>
 	`,
