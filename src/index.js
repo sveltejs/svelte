@@ -2,6 +2,7 @@ import parse from './parse/index.js';
 import validate from './validate/index.js';
 import generate from './generators/dom/index.js';
 import generateSSR from './generators/server-side-rendering/index.js';
+import { version } from '../package.json';
 
 function normalizeOptions ( options ) {
 	return Object.assign( {
@@ -45,4 +46,4 @@ export function compile ( source, _options ) {
 	return compiler( parsed, source, options, names );
 }
 
-export { parse, validate };
+export { parse, validate, version as VERSION };
