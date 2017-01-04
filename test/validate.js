@@ -8,6 +8,10 @@ describe( 'validate', () => {
 
 		const solo = exists( `test/validator/${dir}/solo` );
 
+		if ( solo && process.env.CI ) {
+			throw new Error( 'Forgot to remove `solo: true` from test' );
+		}
+
 		( solo ? it.only : it )( dir, () => {
 			const filename = `test/validator/${dir}/input.html`;
 			const input = fs.readFileSync( filename, 'utf-8' ).replace( /\s+$/, '' );

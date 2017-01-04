@@ -49,6 +49,10 @@ describe( 'generate', () => {
 
 		const config = loadConfig( dir );
 
+		if ( config.solo && process.env.CI ) {
+			throw new Error( 'Forgot to remove `solo: true` from test' );
+		}
+
 		( config.skip ? it.skip : config.solo ? it.only : it )( dir, () => {
 			let compiled;
 
