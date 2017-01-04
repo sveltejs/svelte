@@ -62,6 +62,7 @@
     "rollup": "^0.39.0",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-commonjs": "^7.0.0",
+    "rollup-plugin-json": "^2.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
     "source-map": "^0.5.6",
     "source-map-support": "^0.4.8"
