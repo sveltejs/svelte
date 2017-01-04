@@ -1,5 +1,7 @@
 <!--
-Thanks for raising an issue! To help us help you, if you've found a bug please consider the following:
+Thanks for raising an issue! (For *questions*, we recommend instead using https://stackoverflow.com and adding the 'svelte' tag.)
+
+To help us help you, if you've found a bug please consider the following:
 
 * If you can demonstrate the bug using https://svelte.technology/repl, please do.
 * If that's not possible, we recommend creating a small repo that illustrates the problem.
