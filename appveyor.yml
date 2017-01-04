@@ -1,0 +1,30 @@
+# http://www.appveyor.com/docs/appveyor-yml
+
+version: "{build}"
+
+clone_depth: 10
+
+init:
+  - git config --global core.autocrlf false
+
+environment:
+  matrix:
+    # node.js
+    - nodejs_version: 6
+
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - npm install
+
+build: off
+
+test_script:
+  - node --version && npm --version
+  - npm test
+
+matrix:
+  fast_finish: false
+
+# cache:
+#   - C:\Users\appveyor\AppData\Roaming\npm-cache -> package.json     # npm cache
+#   - node_modules -> package.json                                    # local npm modules
