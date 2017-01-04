@@ -1,0 +1,19 @@
+{{#each people as person}}
+	<Widget>Hello {{person}}</Widget>
+{{/each}}
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data () {
+			return {
+				people: [ 'Alice', 'Bob', 'Charles' ]
+			};
+		},
+
+		components: {
+			Widget
+		}
+	};
+</script>

@@ -36,7 +36,7 @@ export default {
 			generator.generateBlock( node, yieldName );
 
 			generator.current.builders.init.addLine(
-				`var ${name}_yieldFragment = ${yieldName}( root, component );`
+				`var ${name}_yieldFragment = ${yieldName}( ${generator.current.params}, component );`
 			);
 
 			generator.current.builders.update.addLine(
