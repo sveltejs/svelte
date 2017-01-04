@@ -1,0 +1,1 @@
+<svg class='foo'></svg>
