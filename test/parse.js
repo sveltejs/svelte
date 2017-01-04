@@ -8,6 +8,10 @@ describe( 'parse', () => {
 
 		const solo = exists( `test/parser/${dir}/solo` );
 
+		if ( solo && process.env.CI ) {
+			throw new Error( 'Forgot to remove `solo: true` from test' );
+		}
+
 		( solo ? it.only : it )( dir, () => {
 			const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
