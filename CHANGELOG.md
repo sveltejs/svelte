@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.6.3
+
+* Fix `{{yield}}` bugs for components inside `if` and `each` blocks ([#230](https://github.com/sveltejs/svelte/issues/230), [#231](https://github.com/sveltejs/svelte/issues/231))
+* Set attributes on `<svg>` elements correctly ([#233](https://github.com/sveltejs/svelte/issues/233))
+* Add `svelte.VERSION` property to compiler
+
 ## 1.6.2
 
 * Use helpers for `addEventListener`, `removeEventListener`, `setAttribute` ([#227](https://github.com/sveltejs/svelte/pull/227))
