@@ -6,7 +6,7 @@ import flattenReference from '../../../../utils/flattenReference.js';
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {
 		if ( attribute.type === 'Attribute' ) {
-			let metadata = generator.current.namespace ? null : attributeLookup[ attribute.name ];
+			let metadata = local.namespace ? null : attributeLookup[ attribute.name ];
 			if ( metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
 
 			let dynamic = false;
