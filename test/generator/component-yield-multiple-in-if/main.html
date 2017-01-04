@@ -1,0 +1,23 @@
+<div>
+	{{#if arriving}}
+		<Widget>Hello</Widget>
+	{{else}}
+		<Widget>Goodbye</Widget>
+	{{/if}}
+</div>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data () {
+			return {
+				arriving: true
+			}
+		},
+
+		components: {
+			Widget
+		}
+	};
+</script>

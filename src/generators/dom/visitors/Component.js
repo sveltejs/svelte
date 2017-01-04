@@ -31,7 +31,7 @@ export default {
 
 		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
-			const yieldName = generator.current.getUniqueName( `render${name}YieldFragment` );
+			const yieldName = generator.getUniqueName( `render${name}YieldFragment` );
 
 			generator.generateBlock( node, yieldName );
 

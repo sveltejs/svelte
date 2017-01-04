@@ -83,7 +83,7 @@ class DomGenerator extends Generator {
 			properties.addBlock( deindent`
 				teardown: function ( detach ) {
 					${fragment.builders.teardown}
-				},
+				}
 			` );
 		}
 
