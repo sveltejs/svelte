@@ -207,15 +207,6 @@ export default {
 			builders: getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker()
 		});
-
-		Object.keys( contexts ).forEach( contextName => {
-			const listName = listNames[ contextName ];
-			const indexName = indexNames[ contextName ];
-
-			generator.current.builders.update.addLine(
-				`var ${contextName} = ${listName}[${indexName}];`
-			);
-		});
 	},
 
 	leave ( generator ) {
