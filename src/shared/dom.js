@@ -10,6 +10,18 @@ export function detachNode ( node ) {
 	node.parentNode.removeChild( node );
 }
 
+export function detachBetween ( before, after ) {
+	while ( before.nextSibling && before.nextSibling !== after ) {
+		before.parentNode.removeChild( before.nextSibling );
+	}
+}
+
+export function teardownEach ( iterations, detach, start ) {
+	for ( var i = ( start || 0 ); i < iterations.length; i += 1 ) {
+		iterations[i].teardown( detach );
+	}
+}
+
 export function createElement ( name ) {
 	return document.createElement( name );
 }

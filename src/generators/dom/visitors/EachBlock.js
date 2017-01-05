@@ -132,9 +132,7 @@ export default {
 					}
 				}
 
-				for ( var ${i} = ${name}_value.length; ${i} < ${iterations}.length; ${i} += 1 ) {
-					${iterations}[${i}].teardown( true );
-				}
+				teardownEach( ${iterations}, true, ${name}_value.length );
 
 				${iterations}.length = ${listName}.length;
 			` );
@@ -153,11 +151,9 @@ export default {
 			` );
 		}
 
-		generator.current.builders.teardown.addBlock( deindent`
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].teardown( ${isToplevel ? 'detach' : 'false'} );
-			}
-		` );
+		generator.uses.teardownEach = true;
+		generator.current.builders.teardown.addBlock(
+			`teardownEach( ${iterations}, ${isToplevel ? 'detach' : 'false'} );` );
 
 		if ( node.else ) {
 			generator.current.builders.teardown.addBlock( deindent`
