@@ -32,6 +32,7 @@ export default {
 		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
 			const yieldName = generator.getUniqueName( `render${name}YieldFragment` );
+			const { params } = generator.current;
 
 			generator.generateBlock( node, yieldName );
 
@@ -40,7 +41,7 @@ export default {
 			);
 
 			generator.current.builders.update.addLine(
-				`${name}_yieldFragment.update( changed, root );`
+				`${name}_yieldFragment.update( changed, ${params} );`
 			);
 
 			componentInitProperties.push( `_yield: ${name}_yieldFragment`);
