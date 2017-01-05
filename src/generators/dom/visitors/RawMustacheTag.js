@@ -1,5 +1,3 @@
-import deindent from '../../../utils/deindent.js';
-
 export default {
 	enter ( generator, node ) {
 		const name = generator.current.getUniqueName( 'raw' );
@@ -20,11 +18,8 @@ export default {
 		const isToplevel = generator.current.localElementDepth === 0;
 
 		const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${snippet} );`;
-		const detachStatement = deindent`
-			while ( ${before}.nextSibling && ${before}.nextSibling !== ${after} ) {
-				${before}.parentNode.removeChild( ${before}.nextSibling );
-			}
-		`;
+		generator.uses.detachBetween = true;
+		const detachStatement = `detachBetween( ${before}, ${after} );`;
 
 		if ( isToplevel ) {
 			generator.current.builders.mount.addLine( mountStatement );
