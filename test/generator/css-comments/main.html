@@ -1,0 +1,11 @@
+<p>red</p>
+
+<style>
+	/*
+		div {}
+	*/
+
+	p {
+		color: red;
+	}
+</style>
