@@ -110,3 +110,26 @@ export function setupHtmlEqual () {
 		};
 	});
 }
+
+export function loadConfig ( file ) {
+	try {
+		const resolved = require.resolve( file );
+		delete require.cache[ resolved ];
+		return require( resolved ).default;
+	} catch ( err ) {
+		if ( err.code === 'E_NOT_FOUND' ) {
+			return {};
+		}
+
+		throw err;
+	}
+}
+
+export function addLineNumbers ( code ) {
+	return code.split( '\n' ).map( ( line, i ) => {
+		i = String( i + 1 );
+		while ( i.length < 3 ) i = ` ${i}`;
+
+		return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
+	}).join( '\n' );
+}
