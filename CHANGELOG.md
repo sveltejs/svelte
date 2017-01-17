@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.6.4
+
+* Fix updates of yields inside each blocks ([20e1b05](https://github.com/sveltejs/svelte/commit/20e1b05c45dc9fcddfe2e7c5c9fc3109f0d45fa9))
+* SSR: Handle attributes with values that begin with a number ([#248](https://github.com/sveltejs/svelte/issues/248))
+* Handle multiline comments in CSS ([#252](https://github.com/sveltejs/svelte/issues/252))
+
 ## 1.6.3
 
 * Fix `{{yield}}` bugs for components inside `if` and `each` blocks ([#230](https://github.com/sveltejs/svelte/issues/230), [#231](https://github.com/sveltejs/svelte/issues/231))
