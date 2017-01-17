@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as acorn from 'acorn';
 
-import { svelte, env, setupHtmlEqual } from './helpers.js';
+import { addLineNumbers, loadConfig, svelte, env, setupHtmlEqual } from './helpers.js';
 
 let showCompiledCode = false;
 let compileOptions = null;
@@ -18,36 +18,13 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 	return module._compile( code, filename );
 };
 
-function addLineNumbers ( code ) {
-	return code.split( '\n' ).map( ( line, i ) => {
-		i = String( i + 1 );
-		while ( i.length < 3 ) i = ` ${i}`;
-
-		return `${i}: ${line.replace( /^\t+/, match => match.split( '\t' ).join( '    ' ) )}`;
-	}).join( '\n' );
-}
-
-function loadConfig ( dir ) {
-	try {
-		const resolved = require.resolve( `./generator/${dir}/_config.js` );
-		delete require.cache[ resolved ];
-		return require( resolved ).default;
-	} catch ( err ) {
-		if ( err.code === 'E_NOT_FOUND' ) {
-			return {};
-		}
-
-		throw err;
-	}
-}
-
 describe( 'generate', () => {
 	before( setupHtmlEqual );
 
 	function runTest ( dir, shared ) {
 		if ( dir[0] === '.' ) return;
 
-		const config = loadConfig( dir );
+		const config = loadConfig( `./generator/${dir}/_config.js` );
 
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );

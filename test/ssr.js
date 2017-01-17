@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as fs from 'fs';
 
-import { exists, setupHtmlEqual, tryToLoadJson } from './helpers.js';
+import { exists, loadConfig, setupHtmlEqual, svelte, tryToLoadJson } from './helpers.js';
 
 function tryToReadFile ( file ) {
 	try {
@@ -45,6 +45,39 @@ describe( 'ssr', () => {
 
 			assert.htmlEqual( html, expectedHtml );
 			assert.equal( css.replace( /^\s+/gm, '' ), expectedCss.replace( /^\s+/gm, '' ) );
+		});
+	});
+
+	// duplicate client-side tests, as far as possible
+	fs.readdirSync( 'test/generator' ).forEach( dir => {
+		if ( dir[0] === '.' ) return;
+
+		const config = loadConfig( `./generator/${dir}/_config.js` );
+
+		if ( config.solo && process.env.CI ) {
+			throw new Error( 'Forgot to remove `solo: true` from test' );
+		}
+
+		( config.skip ? it.skip : config.solo ? it.only : it )( dir, () => {
+			try {
+				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
+				svelte.compile( source, { generate: 'ssr' });
+			} catch ( err ) {
+				if ( config.compileError ) {
+					config.compileError( err );
+					return;
+				} else {
+					throw err;
+				}
+			}
+
+			const component = require( `./generator/${dir}/main.html` );
+
+			const html = component.render( config.data );
+
+			if ( config.html ) {
+				assert.htmlEqual( html, config.html );
+			}
 		});
 	});
 });
