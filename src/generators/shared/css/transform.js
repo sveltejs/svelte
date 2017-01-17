@@ -1,6 +1,6 @@
 // largely borrowed from Ractive – https://github.com/ractivejs/ractive/blob/2ec648aaf5296bb88c21812e947e0e42fcc456e3/src/Ractive/config/custom/css/transform.js
 const selectorsPattern = /(?:^|\})?\s*([^\{\}]+)\s*\{/g;
-const commentsPattern = /\/\*.*?\*\//g;
+const commentsPattern = /\/\*[\s\S]*?\*\//g;
 const selectorUnitPattern = /((?:(?:\[[^\]+]\])|(?:[^\s\+\>~:]))+)((?:::?[^\s\+\>\~\(:]+(?:\([^\)]+\))?)*\s*[\s\+\>\~]?)\s*/g;
 const excludePattern = /^(?:@|\d+%)/;
 
