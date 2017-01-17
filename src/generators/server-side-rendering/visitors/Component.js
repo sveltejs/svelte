@@ -21,7 +21,7 @@ export default {
 				} else if ( attribute.value.length === 1 ) {
 					const chunk = attribute.value[0];
 					if ( chunk.type === 'Text' ) {
-						value = isNaN( parseFloat( chunk.data ) ) ? JSON.stringify( chunk.data ) : chunk.data;
+						value = isNaN( chunk.data ) ? JSON.stringify( chunk.data ) : chunk.data;
 					} else {
 						const { snippet } = generator.contextualise( chunk.expression );
 						value = snippet;
