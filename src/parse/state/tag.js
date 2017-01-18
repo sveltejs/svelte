@@ -6,7 +6,7 @@ import { trimStart, trimEnd } from '../utils/trim.js';
 import { decodeCharacterReferences } from '../utils/html.js';
 import voidElementNames from '../../utils/voidElementNames.js';
 
-const validTagName = /^[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
+const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
 
 const specials = {
