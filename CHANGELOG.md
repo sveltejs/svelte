@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.6.5
+
+* Handle `<!doctype>` declarations ([#255](https://github.com/sveltejs/svelte/pull/255))
+
 ## 1.6.4
 
 * Fix updates of yields inside each blocks ([20e1b05](https://github.com/sveltejs/svelte/commit/20e1b05c45dc9fcddfe2e7c5c9fc3109f0d45fa9))
