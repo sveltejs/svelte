@@ -55,15 +55,21 @@ export default function addElementAttributes ( generator, node, local ) {
 					// static attributes
 					result = JSON.stringify( value.data );
 
+					let addAttribute = false;
 					if ( attribute.name === 'xmlns' ) {
 						// special case
 						// TODO this attribute must be static – enforce at compile time
 						local.namespace = value.data;
+						addAttribute = true;
 					} else if ( propertyName ) {
 						local.init.addLine(
 							`${local.name}.${propertyName} = ${result};`
 						);
 					} else {
+						addAttribute = true;
+					}
+
+					if (addAttribute) {
 						generator.uses.setAttribute = true;
 						local.init.addLine(
 							`setAttribute( ${local.name}, '${attribute.name}', ${result} );`
