@@ -1,4 +1,6 @@
 export default {
+	'skip-ssr': true, // uses onrender
+
 	html: `
 		<p>1</p>
 		<p>2</p>
