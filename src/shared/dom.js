@@ -49,3 +49,7 @@ export function removeEventListener ( node, event, handler ) {
 export function setAttribute ( node, attribute, value ) {
 	node.setAttribute ( attribute, value );
 }
+
+export function setXlinkAttribute ( node, attribute, value ) {
+	node.setAttributeNS( 'http://www.w3.org/1999/xlink', attribute, value );
+}
