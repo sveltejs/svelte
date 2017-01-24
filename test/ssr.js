@@ -57,8 +57,10 @@ describe( 'ssr', () => {
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
 		}
+		
+		if ( config['skip-ssr'] ) return;
 
-		( config.skip || config['skip-ssr'] ? it.skip : config.solo ? it.only : it )( dir, () => {
+		( config.skip ? it.skip : config.solo ? it.only : it )( dir, () => {
 			try {
 				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
 				svelte.compile( source, { generate: 'ssr' });
