@@ -6,7 +6,7 @@ export default {
 			'three'
 		]
 	},
-	html: `<div><input><p>one</p></div><div><input><p>two</p></div><div><input><p>three</p></div><!--#each items-->`,
+	html: `<div><input><p>one</p></div><div><input><p>two</p></div><div><input><p>three</p></div><!---->`,
 	test ( assert, component, target, window ) {
 		const inputs = [ ...target.querySelectorAll( 'input' ) ];
 		const items = component.get( 'items' );
@@ -18,12 +18,12 @@ export default {
 		inputs[1].dispatchEvent( event );
 
 		assert.equal( items[1], 'four' );
-		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>three</p></div><!--#each items-->` );
+		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>three</p></div><!---->` );
 
 		items[2] = 'five';
 
 		component.set({ items });
 		assert.equal( inputs[2].value, 'five' );
-		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>five</p></div><!--#each items-->` );
+		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>five</p></div><!---->` );
 	}
 };

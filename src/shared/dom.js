@@ -34,8 +34,8 @@ export function createText ( data ) {
 	return document.createTextNode( data );
 }
 
-export function createComment ( data ) {
-	return document.createComment( data );
+export function createComment () {
+	return document.createComment( '' );
 }
 
 export function addEventListener ( node, event, handler ) {
