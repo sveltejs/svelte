@@ -1,4 +1,6 @@
 export default {
+	'skip-ssr': true, // uses onrender
+
 	html: `<div><p>true</p></div>`,
 
 	test ( assert, component, target ) {
