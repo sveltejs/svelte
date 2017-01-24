@@ -57,6 +57,8 @@ describe( 'ssr', () => {
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
 		}
+		
+		if ( config['skip-ssr'] ) return;
 
 		( config.skip ? it.skip : config.solo ? it.only : it )( dir, () => {
 			try {
