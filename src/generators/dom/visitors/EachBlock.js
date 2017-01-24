@@ -21,7 +21,7 @@ export default {
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
 		const anchor = `${name}_anchor`;
-		generator.createAnchor( anchor, `#each ${generator.source.slice( node.expression.start, node.expression.end )}` );
+		generator.createAnchor( anchor );
 
 		generator.current.builders.init.addLine( `var ${name}_value = ${snippet};` );
 		generator.current.builders.init.addLine( `var ${iterations} = [];` );
