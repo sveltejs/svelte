@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.6.6
+
+* Omit text from comment anchors ([#247](https://github.com/sveltejs/svelte/issues/247))
+* Handle `xlink` attributes ([#264](https://github.com/sveltejs/svelte/issues/264))
+
 ## 1.6.5
 
 * Handle `<!doctype>` declarations ([#255](https://github.com/sveltejs/svelte/pull/255))
