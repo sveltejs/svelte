@@ -65,6 +65,10 @@ function cleanChildren ( node ) {
 		}
 
 		if ( child.nodeType === 3 ) {
+			if ( node.namespaceURI === 'http://www.w3.org/2000/svg' && node.tagName !== 'text' && node.tagName !== 'tspan' ) {
+				node.removeChild( child );
+			}
+
 			child.data = child.data.replace( /\s{2,}/, '\n' );
 
 			// text
