@@ -112,7 +112,7 @@ export default function ssr ( parsed, source, options, names ) {
 
 		var escaped = {
 			'"': '&quot;',
-			"'": '&39;',
+			"'": '&#39;',
 			'&': '&amp;',
 			'<': '&lt;',
 			'>': '&gt;'
