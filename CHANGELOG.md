@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.6.7
+
+* SSR: Fix apostrophes ([#267](https://github.com/sveltejs/svelte/issues/267))
+* Add `xmlns` attributes to SVGs ([#262](https://github.com/sveltejs/svelte/pull/262))
+
 ## 1.6.6
 
 * Omit text from comment anchors ([#247](https://github.com/sveltejs/svelte/issues/247))
