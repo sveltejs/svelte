@@ -78,7 +78,7 @@ export default function addElementAttributes ( generator, node, local ) {
 						addAttribute = true;
 					}
 
-					if (addAttribute) {
+					if ( addAttribute ) {
 						generator.uses[ helper ] = true;
 						local.init.addLine(
 							`${helper}( ${local.name}, '${name}', ${result} );`
