@@ -1,0 +1,16 @@
+<span>{{foo}}</span>
+
+<script>
+	export default {
+		data () {
+			return {
+				foo: 'XX'
+			};
+		},
+		onrender () {
+			this.observe( 'item', item => {
+				this.set({ foo: item });
+			});
+		}
+	};
+</script>
