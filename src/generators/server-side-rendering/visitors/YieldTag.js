@@ -1,5 +1,5 @@
 export default {
 	enter ( generator ) {
-		generator.append( `\${options.yield()}` );
+		generator.append( `\${options && options.yield ? options.yield() : ''}` );
 	}
 };

@@ -1,8 +1,12 @@
 const ns = '<noscript></noscript>';
+
 export default {
+	'skip-ssr': true,
+
 	data: {
 		raw: '<span><em>raw html!!!\\o/</span></em>'
 	},
+
 	html: `before${ns}<span><em>raw html!!!\\o/</span></em>${ns}after`,
 
 	test ( assert, component, target ) {
