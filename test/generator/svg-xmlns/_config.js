@@ -1,4 +1,6 @@
 export default {
+	'skip-ssr': true,
+
 	data: {
 		x: 0,
 		y: 0,
