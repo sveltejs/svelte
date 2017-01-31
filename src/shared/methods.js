@@ -41,3 +41,17 @@ export function on ( eventName, handler ) {
 		}
 	};
 }
+
+export function set ( newState ) {
+	this._set( newState );
+	( this._root || this )._flush();
+}
+
+export function _flush () {
+	if ( !this._renderHooks ) return;
+
+	while ( this._renderHooks.length ) {
+		var hook = this._renderHooks.pop();
+		hook.fn.call( hook.context );
+	}
+}

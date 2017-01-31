@@ -174,11 +174,11 @@ export default function dom ( parsed, source, options, names ) {
 	const builders = {
 		main: new CodeBuilder(),
 		init: new CodeBuilder(),
-		set: new CodeBuilder()
+		_set: new CodeBuilder()
 	};
 
-	builders.set.addLine( 'var oldState = this._state;' );
-	builders.set.addLine( 'this._state = Object.assign( {}, oldState, newState );' );
+	builders._set.addLine( 'var oldState = this._state;' );
+	builders._set.addLine( 'this._state = Object.assign( {}, oldState, newState );' );
 
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
@@ -197,11 +197,11 @@ export default function dom ( parsed, source, options, names ) {
 			}
 		` );
 
-		builders.set.addLine( `applyComputations( this._state, newState, oldState )` );
+		builders._set.addLine( `applyComputations( this._state, newState, oldState )` );
 	}
 
 	// TODO is the `if` necessary?
-	builders.set.addBlock( deindent`
+	builders._set.addBlock( deindent`
 		dispatchObservers( this, this._observers.pre, newState, oldState );
 		if ( this._fragment ) this._fragment.update( newState, this._state );
 		dispatchObservers( this, this._observers.post, newState, oldState );
@@ -246,7 +246,7 @@ export default function dom ( parsed, source, options, names ) {
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
 
-		builders.set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
+		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
 			this._fragment = renderMainFragment( this._state, this );
@@ -255,15 +255,10 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( generator.hasComponents ) {
-		const statement = deindent`
-			while ( this._renderHooks.length ) {
-				var hook = this._renderHooks.pop();
-				hook.fn.call( hook.context );
-			}
-		`;
+		const statement = `this._flush();`;
 
 		builders.init.addBlock( statement );
-		builders.set.addBlock( statement );
+		builders._set.addBlock( statement );
 	}
 
 	if ( templateProperties.onrender ) {
@@ -310,6 +305,8 @@ export default function dom ( parsed, source, options, names ) {
 			${name}.prototype.fire = fire;
 			${name}.prototype.observe = observe;
 			${name}.prototype.on = on;
+			${name}.prototype.set = set;
+			${name}.prototype._flush = _flush;
 		` :
 		deindent`
 			${name}.prototype.get = ${shared.get};
@@ -319,11 +316,15 @@ export default function dom ( parsed, source, options, names ) {
 			${name}.prototype.observe = ${shared.observe};
 
 			${name}.prototype.on = ${shared.on};
+
+			${name}.prototype.set = ${shared.set};
+
+			${name}.prototype._flush = ${shared._flush};
 		` );
 
 	builders.main.addBlock( deindent`
-		${name}.prototype.set = function set ( newState ) {
-			${builders.set}
+		${name}.prototype._set = function _set ( newState ) {
+			${builders._set}
 		};
 
 		${name}.prototype.teardown = function teardown ( detach ) {
@@ -341,7 +342,7 @@ export default function dom ( parsed, source, options, names ) {
 			throw new Error( `Components with shared helpers must be compiled to ES2015 modules (format: 'es')` );
 		}
 
-		const names = [ 'get', 'fire', 'observe', 'on', 'dispatchObservers' ].concat( Object.keys( generator.uses ) );
+		const names = [ 'get', 'fire', 'observe', 'on', 'set', '_flush', 'dispatchObservers' ].concat( Object.keys( generator.uses ) );
 		builders.main.addLineAtStart(
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
 		);

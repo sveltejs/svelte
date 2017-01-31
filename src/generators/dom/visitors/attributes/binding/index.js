@@ -64,7 +64,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			var index = this.__svelte.${indexName};
 			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = ${value};
 
-			component.set({ ${prop}: component.get( '${prop}' ) });
+			component._set({ ${prop}: component.get( '${prop}' ) });
 		`;
 	} else if ( deep ) {
 		setter = deindent`
@@ -98,7 +98,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 		local.update.addBlock( deindent`
 			if ( !${local.name}_updating && '${parts[0]}' in changed ) {
-				${local.name}.set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
+				${local.name}._set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
 			}
 		` );
 	} else {
