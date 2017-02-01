@@ -1,4 +1,6 @@
 export default {
+	'skip-ssr': true,
+
 	html: `
 		<span>3</span><span>2</span><span>1</span>
 	`,
