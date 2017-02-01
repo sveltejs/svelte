@@ -1,3 +1,3 @@
 export default {
-  html: '<p>Hello</p>'
-}
+	html: '<p>Hello</p>'
+};

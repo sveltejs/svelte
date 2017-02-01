@@ -1,4 +1,6 @@
 export default {
+	'skip-ssr': true, // TODO delete this line, once binding works
+
 	html: `
 		<button>+1</button>
 		<p>count: 0</p>
