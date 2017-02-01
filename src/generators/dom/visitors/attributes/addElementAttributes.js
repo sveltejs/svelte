@@ -5,14 +5,23 @@ import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {
+		const name = attribute.name;
+
 		if ( attribute.type === 'Attribute' ) {
-			let metadata = local.namespace ? null : attributeLookup[ attribute.name ];
+			let metadata = local.namespace ? null : attributeLookup[ name ];
 			if ( metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
 
 			let dynamic = false;
 
-			const isBoundOptionValue = node.name === 'option' && attribute.name === 'value'; // TODO check it's actually bound
+			const isBoundOptionValue = node.name === 'option' && name === 'value'; // TODO check it's actually bound
 			const propertyName = isBoundOptionValue ? '__value' : metadata && metadata.propertyName;
+
+			const isXlink = name.slice( 0, 6 ) === 'xlink:';
+
+			// xlink is a special case... we could maybe extend this to generic
+			// namespaced attributes but I'm not sure that's applicable in
+			// HTML5?
+			const helper = isXlink ? 'setXlinkAttribute' : 'setAttribute';
 
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
@@ -21,14 +30,14 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = true;`
 					);
 				} else {
-					generator.uses.setAttribute = true;
+					generator.uses[ helper ] = true;
 					local.init.addLine(
-						`setAttribute( ${local.name}, '${attribute.name}', true );`
+						`${helper}( ${local.name}, '${name}', true );`
 					);
 				}
 
 				// special case – autofocus. has to be handled in a bit of a weird way
-				if ( attribute.name === 'autofocus' ) {
+				if ( name === 'autofocus' ) {
 					generator.current.autofocus = local.name;
 				}
 			}
@@ -39,9 +48,9 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = '';`
 					);
 				} else {
-					generator.uses.setAttribute = true;
+					generator.uses[ helper ] = true;
 					local.init.addLine(
-						`setAttribute( ${local.name}, '${attribute.name}', '' );`
+						`${helper}( ${local.name}, '${name}', '' );`
 					);
 				}
 			}
@@ -55,18 +64,24 @@ export default function addElementAttributes ( generator, node, local ) {
 					// static attributes
 					result = JSON.stringify( value.data );
 
-					if ( attribute.name === 'xmlns' ) {
+					let addAttribute = false;
+					if ( name === 'xmlns' ) {
 						// special case
 						// TODO this attribute must be static – enforce at compile time
 						local.namespace = value.data;
+						addAttribute = true;
 					} else if ( propertyName ) {
 						local.init.addLine(
 							`${local.name}.${propertyName} = ${result};`
 						);
 					} else {
-						generator.uses.setAttribute = true;
+						addAttribute = true;
+					}
+
+					if ( addAttribute ) {
+						generator.uses[ helper ] = true;
 						local.init.addLine(
-							`setAttribute( ${local.name}, '${attribute.name}', ${result} );`
+							`${helper}( ${local.name}, '${name}', ${result} );`
 						);
 					}
 				}
@@ -81,8 +96,8 @@ export default function addElementAttributes ( generator, node, local ) {
 					if (propertyName) {
 						updater = `${local.name}.${propertyName} = ${snippet};`;
 					} else {
-						generator.uses.setAttribute = true;
-						updater = `setAttribute( ${local.name}, '${attribute.name}', ${snippet} );`; // TODO use snippet both times – see note below
+						generator.uses[ helper ] = true;
+						updater = `${helper}( ${local.name}, '${name}', ${snippet} );`; // TODO use snippet both times – see note below
 					}
 
 					local.init.addLine( updater );
@@ -110,8 +125,8 @@ export default function addElementAttributes ( generator, node, local ) {
 				if (propertyName) {
 					updater = `${local.name}.${propertyName} = ${value};`;
 				} else {
-					generator.uses.setAttribute = true;
-					updater = `setAttribute( ${local.name}, '${attribute.name}', ${value} );`;
+					generator.uses[ helper ] = true;
+					updater = `${helper}( ${local.name}, '${name}', ${value} );`;
 				}
 
 				local.init.addLine( updater );
@@ -153,12 +168,12 @@ export default function addElementAttributes ( generator, node, local ) {
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
-			const handlerName = generator.current.getUniqueName( `${attribute.name}Handler` );
+			const handlerName = generator.current.getUniqueName( `${name}Handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
-			if ( attribute.name in generator.events ) {
+			if ( name in generator.events ) {
 				local.init.addBlock( deindent`
-					var ${handlerName} = template.events.${attribute.name}.call( component, ${local.name}, function ( event ) {
+					var ${handlerName} = template.events.${name}.call( component, ${local.name}, function ( event ) {
 						${handlerBody}
 					});
 				` );
@@ -174,11 +189,11 @@ export default function addElementAttributes ( generator, node, local ) {
 						${handlerBody}
 					}
 
-					addEventListener( ${local.name}, '${attribute.name}', ${handlerName} );
+					addEventListener( ${local.name}, '${name}', ${handlerName} );
 				` );
 
 				generator.current.builders.teardown.addLine( deindent`
-					removeEventListener( ${local.name}, '${attribute.name}', ${handlerName} );
+					removeEventListener( ${local.name}, '${name}', ${handlerName} );
 				` );
 			}
 		}
@@ -191,11 +206,11 @@ export default function addElementAttributes ( generator, node, local ) {
 			generator.usesRefs = true;
 
 			local.init.addLine(
-				`component.refs.${attribute.name} = ${local.name};`
+				`component.refs.${name} = ${local.name};`
 			);
 
 			generator.current.builders.teardown.addLine( deindent`
-				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;
+				if ( component.refs.${name} === ${local.name} ) component.refs.${name} = null;
 			` );
 		}
 

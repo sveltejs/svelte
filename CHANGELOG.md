@@ -1,5 +1,25 @@
 # Svelte changelog
 
+## 1.6.7
+
+* SSR: Fix apostrophes ([#267](https://github.com/sveltejs/svelte/issues/267))
+* Add `xmlns` attributes to SVGs ([#262](https://github.com/sveltejs/svelte/pull/262))
+
+## 1.6.6
+
+* Omit text from comment anchors ([#247](https://github.com/sveltejs/svelte/issues/247))
+* Handle `xlink` attributes ([#264](https://github.com/sveltejs/svelte/issues/264))
+
+## 1.6.5
+
+* Handle `<!doctype>` declarations ([#255](https://github.com/sveltejs/svelte/pull/255))
+
+## 1.6.4
+
+* Fix updates of yields inside each blocks ([20e1b05](https://github.com/sveltejs/svelte/commit/20e1b05c45dc9fcddfe2e7c5c9fc3109f0d45fa9))
+* SSR: Handle attributes with values that begin with a number ([#248](https://github.com/sveltejs/svelte/issues/248))
+* Handle multiline comments in CSS ([#252](https://github.com/sveltejs/svelte/issues/252))
+
 ## 1.6.3
 
 * Fix `{{yield}}` bugs for components inside `if` and `each` blocks ([#230](https://github.com/sveltejs/svelte/issues/230), [#231](https://github.com/sveltejs/svelte/issues/231))
