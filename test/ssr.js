@@ -85,7 +85,7 @@ describe( 'ssr', () => {
 					assert.htmlEqual( html, config.html );
 				}
 			} catch ( err ) {
-				console.log( addLineNumbers( compiled.code ) );
+				console.log( addLineNumbers( compiled.code ) ); // eslint-disable-line no-console
 				throw err;
 			}
 		});
