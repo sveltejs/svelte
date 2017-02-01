@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.6.8
+
+* Always trigger `onrender`, including when change initiator is a nested component ([#263](https://github.com/sveltejs/svelte/issues/263))
+* Handle default function parameters in computations ([#274](https://github.com/sveltejs/svelte/issues/274))
+
 ## 1.6.7
 
 * SSR: Fix apostrophes ([#267](https://github.com/sveltejs/svelte/issues/267))
