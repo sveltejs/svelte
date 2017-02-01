@@ -185,19 +185,19 @@ export default function dom ( parsed, source, options, names ) {
 
 		computations.forEach( ({ key, deps }) => {
 			builder.addBlock( deindent`
-				if ( ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
+				if ( isInitial || ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
 			` );
 		});
 
 		builders.main.addBlock( deindent`
-			function applyComputations ( state, newState, oldState ) {
+			function applyComputations ( state, newState, oldState, isInitial ) {
 				${builder}
 			}
 		` );
 
-		builders._set.addLine( `applyComputations( this._state, newState, oldState )` );
+		builders._set.addLine( `applyComputations( this._state, newState, oldState, false )` );
 	}
 
 	// TODO is the `if` necessary?
@@ -277,7 +277,7 @@ export default function dom ( parsed, source, options, names ) {
 		function ${name} ( options ) {
 			options = options || {};
 			${generator.usesRefs ? `\nthis.refs = {}` : ``}
-			this._state = ${initialState};${templateProperties.computed ? `\napplyComputations( this._state, this._state, {} );` : ``}
+			this._state = ${initialState};${templateProperties.computed ? `\napplyComputations( this._state, this._state, {}, true );` : ``}
 
 			this._observers = {
 				pre: Object.create( null ),
