@@ -34,8 +34,8 @@ export function createText ( data ) {
 	return document.createTextNode( data );
 }
 
-export function createComment ( data ) {
-	return document.createComment( data );
+export function createComment () {
+	return document.createComment( '' );
 }
 
 export function addEventListener ( node, event, handler ) {
@@ -48,4 +48,8 @@ export function removeEventListener ( node, event, handler ) {
 
 export function setAttribute ( node, attribute, value ) {
 	node.setAttribute ( attribute, value );
+}
+
+export function setXlinkAttribute ( node, attribute, value ) {
+	node.setAttributeNS( 'http://www.w3.org/1999/xlink', attribute, value );
 }

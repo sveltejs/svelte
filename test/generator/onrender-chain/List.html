@@ -1,0 +1,25 @@
+{{#each items as item}}
+	<Item item={{item}} />
+{{/each}}
+
+<script>
+	import Item from './Item.html';
+
+	export default {
+		data () {
+			return {
+				items: [ 3, 2, 1 ]
+			};
+		},
+		methods: {
+			update () {
+				this.set({
+					items: [ 1, 2, 3, 4, 5 ]
+				});
+			}
+		},
+		components: {
+			Item
+		}
+	};
+</script>
