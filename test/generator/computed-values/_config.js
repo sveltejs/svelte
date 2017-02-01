@@ -5,5 +5,6 @@ export default {
 		assert.equal( component.get( 'c' ), 5 );
 		assert.equal( component.get( 'cSquared' ), 25 );
 		assert.equal( target.innerHTML, '<p>3 + 2 = 5</p>\n<p>5 * 5 = 25</p>' );
+		component.teardown();
 	}
 };

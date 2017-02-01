@@ -246,7 +246,7 @@ export default class Generator {
 					const key = prop.key.name;
 					const value = prop.value;
 
-					const deps = value.params.map( param => param.name );
+					const deps = value.params.map( param => param.type === 'AssignmentPattern' ? param.left.name : param.name );
 					dependencies.set( key, deps );
 				});
 
