@@ -70,10 +70,10 @@ export default function createBinding ( generator, node, attribute, current, loc
 		setter = deindent`
 			var ${parts[0]} = component.get( '${parts[0]}' );
 			${parts[0]}.${parts.slice( 1 ).join( '.' )} = ${value};
-			component.set({ ${parts[0]}: ${parts[0]} });
+			component._set({ ${parts[0]}: ${parts[0]} });
 		`;
 	} else {
-		setter = `component.set({ ${attribute.value}: ${value} });`;
+		setter = `component._set({ ${attribute.value}: ${value} });`;
 	}
 
 	// special case
