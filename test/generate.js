@@ -9,8 +9,13 @@ import { addLineNumbers, loadConfig, svelte, env, setupHtmlEqual } from './helpe
 let showCompiledCode = false;
 let compileOptions = null;
 
+function getName ( filename ) {
+	const base = path.basename( filename ).replace( '.html', '' );
+	return base[0].toUpperCase() + base.slice( 1 );
+}
+
 require.extensions[ '.html' ] = function ( module, filename ) {
-	const options = Object.assign({ filename }, compileOptions );
+	const options = Object.assign({ filename, name: getName( filename ) }, compileOptions );
 	const { code } = svelte.compile( fs.readFileSync( filename, 'utf-8' ), options );
 
 	if ( showCompiledCode ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
