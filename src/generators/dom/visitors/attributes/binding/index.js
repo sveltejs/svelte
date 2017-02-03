@@ -88,6 +88,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			var ${local.name}_updating = false;
 
 			component._bindings.push( function () {
+				if ( ${local.name}._torndown ) return;
 				${local.name}.observe( '${attribute.name}', function ( value ) {
 					${local.name}_updating = true;
 					${setter}
