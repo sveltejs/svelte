@@ -1,0 +1,23 @@
+<p>y: {{y}}</p>
+
+{{#if x}}
+	<Foo bind:y/>
+{{else}}
+	<Bar bind:y/>
+{{/if}}
+
+<Baz bind:x/>
+
+<script>
+	import Foo from './Foo.html';
+	import Bar from './Bar.html';
+	import Baz from './Baz.html';
+
+	export default {
+		components: {
+			Foo,
+			Bar,
+			Baz
+		}
+	};
+</script>
