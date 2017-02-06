@@ -167,7 +167,7 @@ export default function dom ( parsed, source, options, names ) {
 		getUniqueName: generator.getUniqueNameMaker()
 	});
 
-	parsed.html.children.forEach( node => generator.visit( node ) );
+	parsed.html.children.forEach( node => generator.visit(node) );
 
 	generator.addRenderer( generator.pop() );
 
