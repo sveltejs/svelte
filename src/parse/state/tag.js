@@ -175,7 +175,7 @@ function readAttribute ( parser, uniqueNames ) {
 			end: parser.index,
 			type: 'Spread',
 			name: name.slice( 2, -2 )
-		}
+		};
 	}
 
 	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
