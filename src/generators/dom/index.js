@@ -230,6 +230,8 @@ export default function dom ( parsed, source, options, names ) {
 	let i = generator.renderers.length;
 	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
 
+	builders.init.addLine( `this._torndown = false;` );
+
 	if ( parsed.css && options.css !== false ) {
 		builders.init.addLine( `if ( !addedCss ) addCss();` );
 	}
@@ -334,6 +336,7 @@ export default function dom ( parsed, source, options, names ) {
 			this._fragment = null;
 
 			this._state = {};
+			this._torndown = true;
 		};
 	` );
 
