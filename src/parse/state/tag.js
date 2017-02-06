@@ -169,6 +169,15 @@ function readAttribute ( parser, uniqueNames ) {
 		};
 	}
 
+	if ( name.indexOf( '{{' ) === 0 && name.indexOf( '}}' ) === name.length - 2 ) {
+		return {
+			start,
+			end: parser.index,
+			type: 'Spread',
+			name: name.slice( 2, -2 )
+		}
+	}
+
 	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
 
 	return {

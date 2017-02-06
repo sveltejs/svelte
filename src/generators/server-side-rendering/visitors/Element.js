@@ -11,6 +11,10 @@ export default {
 		let openingTag = `<${node.name}`;
 
 		node.attributes.forEach( attribute => {
+			if ( attribute.type === 'Spread' ) {
+				openingTag += ` \${Object.keys( root.${attribute.name} ).map( prop => \`\${prop}="\${root.${attribute.name}[prop]}"\` ).join( ' ' )}`;
+				return;
+			}
 			if ( attribute.type !== 'Attribute' ) return;
 
 			let str = ` ${attribute.name}`;

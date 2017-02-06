@@ -22,7 +22,6 @@ export default function addElementAttributes ( generator, node, local ) {
 			// namespaced attributes but I'm not sure that's applicable in
 			// HTML5?
 			const helper = isXlink ? 'setXlinkAttribute' : 'setAttribute';
-
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
 				if ( propertyName ) {
@@ -212,6 +211,17 @@ export default function addElementAttributes ( generator, node, local ) {
 			generator.current.builders.teardown.addLine( deindent`
 				if ( component.refs.${name} === ${local.name} ) component.refs.${name} = null;
 			` );
+		}
+
+		else if ( attribute.type === 'Spread' ) {
+			// spread, turns <input {{obj}}/> where obj = {type: text, value: hello world} -> <input type="text" value="hello world"/>
+			generator.uses.spreadAttributes = true;
+			generator.uses.setXlinkAttribute = true;
+			generator.uses.setAttribute = true;
+			// we have to include setXLinkAttibute and setAttribute because the data is dynamic
+			// we have no idea at compile time what is being used
+
+			local.init.addLine( `spreadAttributes( ${local.name}, root.${name} );` );
 		}
 
 		else {
