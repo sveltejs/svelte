@@ -4,6 +4,7 @@ import deindent from '../../../../utils/deindent.js';
 export default function addComponentAttributes ( generator, node, local ) {
 	local.staticAttributes = [];
 	local.dynamicAttributes = [];
+	local.spreadAttributes = [];
 	local.bindings = [];
 
 	node.attributes.forEach( attribute => {
@@ -125,6 +126,11 @@ export default function addComponentAttributes ( generator, node, local ) {
 			generator.current.builders.teardown.addLine( deindent`
 				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;
 			` );
+		}
+
+		else if ( attribute.type === 'Spread' ) {
+			local.spreadAttributes.push( attribute.name );
+			local.update.addLine( `${local.name}.set( root.${attribute.name} );` );
 		}
 
 		else {
