@@ -8,10 +8,19 @@ export default {
 			}
 		}
 
-		const props = node.attributes
-			.map( attribute => {
-				if ( attribute.type !== 'Attribute' ) return;
+		const attributes = [];
+		const bindings = [];
 
+		node.attributes.forEach( attribute => {
+			if ( attribute.type === 'Attribute' ) {
+				attributes.push( attribute );
+			} else if ( attribute.type === 'Binding' ) {
+				bindings.push( attribute );
+			}
+		});
+
+		const props = attributes
+			.map( attribute => {
 				let value;
 
 				if ( attribute.value === true ) {
@@ -32,8 +41,11 @@ export default {
 
 				return `${attribute.name}: ${value}`;
 			})
-			.filter( Boolean )
 			.join( ', ' );
+
+		bindings.forEach( binding => {
+			generator.addBinding( binding, node.name );
+		});
 
 		let open = `\${template.components.${node.name}.render({${props}}`;
 
