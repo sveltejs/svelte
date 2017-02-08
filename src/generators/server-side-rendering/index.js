@@ -7,7 +7,24 @@ import Generator from '../Generator.js';
 class SsrGenerator extends Generator {
 	constructor ( parsed, source, names, visitors ) {
 		super( parsed, source, names, visitors );
+		this.bindings = [];
 		this.renderCode = '';
+	}
+
+	addBinding ( binding, name ) {
+		const conditions = [ `!( '${binding.name}' in root )`].concat( // TODO handle contextual bindings...
+			this.current.conditions.map( c => `(${c})` )
+		);
+
+		this.bindings.push( deindent`
+			if ( ${conditions.join( '&&' )} ) {
+				tmp = template.components.${name}.data();
+				if ( '${binding.value}' in tmp ) {
+					root.${binding.name} = tmp.${binding.value};
+					settled = false;
+				}
+			}
+		` );
 	}
 
 	append ( code ) {
@@ -25,6 +42,7 @@ export default function ssr ( parsed, source, options, names ) {
 
 	const builders = {
 		main: new CodeBuilder(),
+		bindings: new CodeBuilder(),
 		render: new CodeBuilder(),
 		renderCss: new CodeBuilder()
 	};
@@ -32,7 +50,8 @@ export default function ssr ( parsed, source, options, names ) {
 	// create main render() function
 	generator.push({
 		contexts: {},
-		indexes: {}
+		indexes: {},
+		conditions: []
 	});
 
 	parsed.html.children.forEach( node => generator.visit( node ) );
@@ -46,6 +65,21 @@ export default function ssr ( parsed, source, options, names ) {
 			`root.${key} = template.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
 		);
 	});
+
+	if ( generator.bindings.length ) {
+		const bindings = generator.bindings.join( '\n\n' );
+
+		builders.render.addBlock( deindent`
+			var settled = false;
+			var tmp;
+
+			while ( !settled ) {
+				settled = true;
+
+				${bindings}
+			}
+		` );
+	}
 
 	builders.render.addBlock(
 		`return \`${generator.renderCode}\`;`
@@ -101,6 +135,10 @@ export default function ssr ( parsed, source, options, names ) {
 		var ${name} = {};
 
 		${name}.filename = ${JSON.stringify( options.filename )};
+
+		${name}.data = function () {
+			return ${templateProperties.data ? `template.data()` : `{}`};
+		};
 
 		${name}.render = function ( root, options ) {
 			${builders.render}
