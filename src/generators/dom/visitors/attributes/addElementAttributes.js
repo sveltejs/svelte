@@ -221,7 +221,10 @@ export default function addElementAttributes ( generator, node, local ) {
 			// we have to include setXLinkAttibute and setAttribute because the data is dynamic
 			// we have no idea at compile time what is being used
 
-			local.init.addLine( `spreadAttributes( ${local.name}, root.${name} );` );
+			const statement = `spreadAttributes( ${local.name}, root.${name} );`;
+
+			local.init.addLine( statement );
+			local.update.addLine( statement );
 		}
 
 		else {

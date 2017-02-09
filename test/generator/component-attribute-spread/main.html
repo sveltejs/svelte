@@ -1,4 +1,4 @@
-<Widget options="{{options}}"/>
+<Widget ref:widget {{options}}/>
 
 <script>
 	import Widget from './Widget.html';
@@ -6,12 +6,13 @@
 	export default {
 		data: () => ({
 			options: {
-			    type: 'text',
-					value: 'Hello World'
+				foo: 1,
+				bar: 2
 			}
 		}),
+
 		components: {
-		    Widget
+			Widget
 		}
 	};
 </script>

@@ -8,10 +8,22 @@ export default {
 			}
 		}
 
-		const props = node.attributes
-			.map( attribute => {
-				if ( attribute.type !== 'Attribute' ) return;
+		const attributes = [];
+		const bindings = [];
+		const spreads = [];
 
+		node.attributes.forEach( attribute => {
+			if ( attribute.type === 'Attribute' ) {
+				attributes.push( attribute );
+			} else if ( attribute.type === 'Binding' ) {
+				bindings.push( attribute );
+			} else if ( attribute.type === 'Spread' ) {
+				spreads.push( attribute );
+			}
+		});
+
+		const props = attributes
+			.map( attribute => {
 				let value;
 
 				if ( attribute.value === true ) {
@@ -32,10 +44,17 @@ export default {
 
 				return `${attribute.name}: ${value}`;
 			})
-			.filter( Boolean )
 			.join( ', ' );
 
-		let open = `\${template.components.${node.name}.render({${props}}`;
+		bindings.forEach( binding => {
+			generator.addBinding( binding, node.name );
+		});
+
+		const spreadProps = spreads.map( spread => `root.${spread.name}` ).join( ', ' );
+
+		const data = spreads.length ? `Object.assign({${props}}, ${spreadProps})` : `{${props}}`;
+
+		let open = `\${template.components.${node.name}.render(${data}`;
 
 		if ( node.children.length ) {
 			open += `, { yield: () => \``;

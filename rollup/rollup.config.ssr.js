@@ -12,7 +12,7 @@ export default {
 		nodeResolve({ jsnext: true, module: true }),
 		commonjs()
 	],
-	external: [ path.resolve( 'src/index.js' ), 'fs', 'magic-string' ],
+	external: [ path.resolve( 'src/index.js' ), 'fs', 'path', 'magic-string' ],
 	paths: {
 		[ path.resolve( 'src/index.js' ) ]: '../compiler/svelte.js'
 	},
