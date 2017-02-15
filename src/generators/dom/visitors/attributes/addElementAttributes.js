@@ -92,16 +92,24 @@ export default function addElementAttributes ( generator, node, local ) {
 					// dynamic – but potentially non-string – attributes
 					const { snippet } = generator.contextualise( value.expression );
 
+					const last = `last_${local.name}_${name.replace( /-/g, '_')}`;
+					local.init.addLine( `var ${last} = ${snippet};` );
+
 					let updater;
-					if (propertyName) {
-						updater = `${local.name}.${propertyName} = ${snippet};`;
+					if ( propertyName ) {
+						updater = `${local.name}.${propertyName} = ${last};`;
 					} else {
 						generator.uses[ helper ] = true;
-						updater = `${helper}( ${local.name}, '${name}', ${snippet} );`; // TODO use snippet both times – see note below
+						updater = `${helper}( ${local.name}, '${name}', ${last} );`; // TODO use snippet both times – see note below
 					}
 
 					local.init.addLine( updater );
-					local.update.addLine( updater );
+					local.update.addBlock( deindent`
+						if ( ( __tmp = ${snippet} ) !== ${last} ) {
+							${last} = __tmp;
+							${updater}
+						}
+					` );
 				}
 			}
 
