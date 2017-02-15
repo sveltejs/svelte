@@ -71,6 +71,8 @@ class DomGenerator extends Generator {
 		} else {
 			properties.addBlock( deindent`
 				update: function ( changed, ${fragment.params} ) {
+					var __tmp;
+
 					${fragment.builders.update}
 				},
 			` );
