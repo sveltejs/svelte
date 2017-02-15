@@ -1,3 +1,5 @@
+import deindent from '../../../utils/deindent.js';
+
 export default {
 	enter ( generator, node ) {
 		const name = generator.current.getUniqueName( 'raw' );
@@ -17,7 +19,8 @@ export default {
 
 		const isToplevel = generator.current.localElementDepth === 0;
 
-		const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${snippet} );`;
+		generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
+		const mountStatement = `${before}.insertAdjacentHTML( 'afterend', last_${name} );`;
 		generator.uses.detachBetween = true;
 		const detachStatement = `detachBetween( ${before}, ${after} );`;
 
@@ -27,8 +30,13 @@ export default {
 			generator.current.builders.init.addLine( mountStatement );
 		}
 
-		generator.current.builders.update.addBlock( detachStatement );
-		generator.current.builders.update.addBlock( mountStatement );
+		generator.current.builders.update.addBlock( deindent`
+			if ( ( __tmp = ${snippet} ) !== last_${name} ) {
+				last_${name} = __tmp;
+				${detachStatement}
+				${mountStatement}
+			}
+		` );
 
 		generator.current.builders.detachRaw.addBlock( detachStatement );
 	}
