@@ -1,0 +1,11 @@
+<p class='foo bar'>red on black</p>
+
+<style>
+	.foo {
+		color: red;
+	}
+
+	[class*=" bar"] {
+		background: black;
+	}
+</style>
