@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.6.10
+
+* Ensure `sources` and `sourcesContent` are populated in sourcemaps, even if none of the original code is used ([#295](https://github.com/sveltejs/svelte/pull/295))
+* Add `outputFilename` option to populate `file` and `sources` sourcemap properties correctly ([#295](https://github.com/sveltejs/svelte/pull/295))
+
 ## 1.6.9
 
 * Don't trigger bindings for torn-down components ([#277](https://github.com/sveltejs/svelte/issues/277))
