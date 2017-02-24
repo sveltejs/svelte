@@ -1,0 +1,21 @@
+{{#each a as x}}
+	<Widget bind:value='x'/>
+{{/each}}
+
+<p>{{a.join(', ')}}</p>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data () {
+			return {
+				a: [ 'foo', 'bar', 'baz' ]
+			};
+		},
+
+		components: {
+			Widget
+		}
+	};
+</script>
