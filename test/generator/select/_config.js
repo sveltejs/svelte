@@ -15,13 +15,6 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ item:
-			{
-				name: 'One',
-				key: 'a'
-			}
-		})
-
 		assert.htmlEqual( target.innerHTML,`
 			<select>
 				<option value="a">One</option>
@@ -29,6 +22,8 @@ export default {
 				<option value="c">Three</option>
 			</select>
 		`);
+
+		assert.equal( target.querySelector( 'select' ).value, 'a' );
 
 		component.teardown();
 		assert.htmlEqual( target.innerHTML, '' );
