@@ -49,6 +49,7 @@
     "babel-register": "^6.18.0",
     "codecov": "^1.0.1",
     "console-group": "^0.3.2",
+    "css-tree": "^1.0.0-alpha16",
     "eslint": "^3.12.2",
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.3.0",
