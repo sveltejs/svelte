@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import assert from 'assert';
 import { svelte, exists } from './helpers.js';
 import { SourceMapConsumer } from 'source-map';
@@ -15,11 +16,19 @@ describe( 'sourcemaps', () => {
 		}
 
 		( solo ? it.only : it )( dir, () => {
-			const input = fs.readFileSync( `test/sourcemaps/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
-			const { code, map } = svelte.compile( input );
+			const filename = path.resolve( `test/sourcemaps/${dir}/input.html` );
+			const outputFilename = path.resolve( `test/sourcemaps/${dir}/output.js` );
 
-			fs.writeFileSync( `test/sourcemaps/${dir}/output.js`, `${code}\n//# sourceMappingURL=output.js.map` );
-			fs.writeFileSync( `test/sourcemaps/${dir}/output.js.map`, JSON.stringify( map, null, '  ' ) );
+			const input = fs.readFileSync( filename, 'utf-8' ).replace( /\s+$/, '' );
+			const { code, map } = svelte.compile( input, {
+				filename,
+				outputFilename
+			});
+
+			fs.writeFileSync( outputFilename, `${code}\n//# sourceMappingURL=output.js.map` );
+			fs.writeFileSync( `${outputFilename}.map`, JSON.stringify( map, null, '  ' ) );
+
+			assert.deepEqual( map.sources, [ 'input.html' ]);
 
 			const { test } = require( `./sourcemaps/${dir}/test.js` );
 
