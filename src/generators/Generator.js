@@ -168,7 +168,7 @@ export default class Generator {
 
 		return {
 			code: compiled.toString(),
-			map: compiled.generateMap({ includeContent: true })
+			map: compiled.generateMap({ includeContent: true, file: options.outputFilename })
 		};
 	}
 
