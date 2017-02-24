@@ -1,6 +1,6 @@
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
-import processCss from '../shared/css/process.js';
+import processCss from '../shared/processCss.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 
@@ -94,7 +94,7 @@ export default function ssr ( parsed, source, options, names ) {
 		builders.renderCss.addBlock( deindent`
 			components.push({
 				filename: ${name}.filename,
-				css: ${JSON.stringify( processCss( parsed ) )},
+				css: ${JSON.stringify( processCss( parsed, generator.code ) )},
 				map: null // TODO
 			});
 		` );

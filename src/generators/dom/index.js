@@ -2,7 +2,7 @@ import deindent from '../../utils/deindent.js';
 import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import namespaces from '../../utils/namespaces.js';
-import processCss from '../shared/css/process.js';
+import processCss from '../shared/processCss.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
@@ -221,7 +221,7 @@ export default function dom ( parsed, source, options, names ) {
 			let addedCss = false;
 			function addCss () {
 				var style = createElement( 'style' );
-				style.textContent = ${JSON.stringify( processCss( parsed ) )};
+				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
 				appendNode( style, document.head );
 
 				addedCss = true;
