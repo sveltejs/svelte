@@ -149,6 +149,15 @@ export default class Generator {
 
 		const { filename } = options;
 
+		// special case — the source file doesn't actually get used anywhere. we need
+		// to add an empty file to populate map.sources and map.sourcesContent
+		if ( !parts.length ) {
+			compiled.addSource({
+				filename,
+				content: new MagicString( this.source ).remove( 0, this.source.length )
+			});
+		}
+
 		parts.forEach( str => {
 			const chunk = str.replace( pattern, '' );
 			if ( chunk ) addString( chunk );
@@ -168,7 +177,7 @@ export default class Generator {
 
 		return {
 			code: compiled.toString(),
-			map: compiled.generateMap({ includeContent: true })
+			map: compiled.generateMap({ includeContent: true, file: options.outputFilename })
 		};
 	}
 
