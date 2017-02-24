@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.6.9
+
+* Don't trigger bindings for torn-down components ([#277](https://github.com/sveltejs/svelte/issues/277))
+* SSR: Handle two-way bindings ([#275](https://github.com/sveltejs/svelte/issues/275))
+* Improve performance by checking data has changed before updates ([#279](https://github.com/sveltejs/svelte/pull/279))
+* Parse CSS with css-tree to prevent transformation errors with unconventional styles ([#288](https://github.com/sveltejs/svelte/issues/288))
+
 ## 1.6.8
 
 * Always trigger `onrender`, including when change initiator is a nested component ([#263](https://github.com/sveltejs/svelte/issues/263))
