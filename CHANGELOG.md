@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.6.11
+
+* Initialise dynamic `<option>` value correctly ([#291](https://github.com/sveltejs/svelte/issues/291))
+
 ## 1.6.10
 
 * Ensure `sources` and `sourcesContent` are populated in sourcemaps, even if none of the original code is used ([#295](https://github.com/sveltejs/svelte/pull/295))
