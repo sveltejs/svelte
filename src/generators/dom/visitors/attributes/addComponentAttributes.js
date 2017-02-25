@@ -94,12 +94,12 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 			// TODO hoist event handlers? can do `this.__component.method(...)`
 			const declarations = [...usedContexts].map( name => {
-				if ( name === 'root' ) return 'var root = this.__svelte.root;';
+				if ( name === 'root' ) return 'var root = this._context.root;';
 
 				const listName = generator.current.listNames[ name ];
 				const indexName = generator.current.indexNames[ name ];
 
-				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
+				return `var ${listName} = this._context.${listName}, ${indexName} = this._context.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;

@@ -24,6 +24,36 @@ export default {
 
 		addComponentAttributes( generator, node, local );
 
+		if ( local.allUsedContexts.size ) {
+			const contextNames = [...local.allUsedContexts];
+
+			const initialProps = contextNames.map( contextName => {
+				if ( contextName === 'root' ) return `root: root`;
+
+				const listName = generator.current.listNames[ contextName ];
+				const indexName = generator.current.indexNames[ contextName ];
+
+				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
+			}).join( ',\n' );
+
+			const updates = contextNames.map( contextName => {
+				if ( contextName === 'root' ) return `${name}._context.root = root;`;
+
+				const listName = generator.current.listNames[ contextName ];
+				const indexName = generator.current.indexNames[ contextName ];
+
+				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
+			}).join( '\n' );
+
+			local.init.addBlock( deindent`
+				${name}._context = {
+					${initialProps}
+				};
+			` );
+
+			local.update.addBlock( updates );
+		}
+
 		const componentInitProperties = [
 			`target: ${!isToplevel ? generator.current.target: 'null'}`,
 			'_root: component._root || component'
