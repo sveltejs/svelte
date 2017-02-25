@@ -1,0 +1,19 @@
+<div>
+	{{#each items as item}}
+		<Widget on:foo='foo(item)'/>
+	{{/each}}
+</div>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		components: { Widget },
+
+		methods: {
+			foo ( item ) {
+				this.fire( 'foo', item );
+			}
+		}
+	};
+</script>
