@@ -10,7 +10,7 @@ export default {
 			return Component.enter( generator, node );
 		}
 
-		const name = node.localName = generator.current.getUniqueName( node.name );
+		const name = generator.current.getUniqueName( node.name );
 
 		const local = {
 			name,
@@ -111,8 +111,12 @@ export default {
 			return Component.leave( generator, node );
 		}
 
-		if ( generator.current.initialUpdate ) {
-			generator.current.builders.init.addBlock( generator.current.initialUpdate );
+		if ( node.initialUpdate ) {
+			console.log( `node.initialUpdate`, node.initialUpdate )
+			//generator.current.builders.init.addBlock( node.initialUpdate );
+			generator.current.builders.init.addBlock(
+				`/*HELLO*/` + node.initialUpdate
+			);
 		}
 
 		generator.pop();

@@ -116,7 +116,27 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 		` );
 	} else {
-		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`};`;
+		let updateElement;
+
+		if ( node.name === 'select' ) {
+			// TODO select multiple
+			const value = generator.current.getUniqueName( 'value' );
+			const i = generator.current.getUniqueName( 'i' );
+			const option = generator.current.getUniqueName( 'option' );
+
+			updateElement = deindent`
+				var ${value} = ${contextual ? attribute.value : `root.${attribute.value}`};
+				for ( var ${i} = 0; ${i} < ${local.name}.options.length; ${i} += 1 ) {
+					var ${option} = ${local.name}.options[${i}];
+					if ( ${option}.__value === ${value} ) {
+						${option}.selected = true;
+						break;
+					}
+				}
+			`;
+		} else {
+			updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`};`;
+		}
 
 		generator.uses.addEventListener = true;
 		generator.uses.removeEventListener = true;
@@ -132,7 +152,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			addEventListener( ${local.name}, '${eventName}', ${handler} );
 		` );
 
-		generator.current.initialUpdate = updateElement;
+		node.initialUpdate = updateElement;
 
 		local.update.addLine(
 			`if ( !${local.name}_updating ) ${updateElement}`
