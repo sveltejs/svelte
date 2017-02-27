@@ -1,0 +1,22 @@
+{{#each a as x}}
+	<Widget bind:value='x.name'/>
+{{/each}}
+
+<p>{{a.map(getName).join(', ')}}</p>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data () {
+			return {
+				a: [{ name: 'foo' }, { name: 'bar' }, { name: 'baz' }],
+				getName: x => x.name
+			};
+		},
+
+		components: {
+			Widget
+		}
+	};
+</script>

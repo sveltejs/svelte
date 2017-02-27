@@ -11,10 +11,21 @@ export default function createBinding ( generator, node, attribute, current, loc
 	if ( contextual ) local.allUsedContexts.add( parts[0] );
 
 	if ( local.isComponent ) {
-		local.bindings.push({
-			name: attribute.name,
-			value: contextual ? attribute.value : `root.${attribute.value}`
-		});
+		let obj;
+		let prop;
+		let value;
+
+		if ( contextual ) {
+			obj = current.listNames[ parts[0] ];
+			prop = current.indexNames[ parts[0] ];
+			value = attribute.value;
+		} else {
+			prop = `'${parts.slice( -1 )}'`;
+			obj = parts.length > 1 ? `root.${parts.slice( 0, -1 ).join( '.' )}` : `root`;
+			value = `root.${attribute.value}`;
+		}
+
+		local.bindings.push({ name: attribute.name, value, obj, prop });
 	}
 
 	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
@@ -59,9 +70,11 @@ export default function createBinding ( generator, node, attribute, current, loc
 		const listName = current.listNames[ parts[0] ];
 		const indexName = current.indexNames[ parts[0] ];
 
+		const context = local.isComponent ? `_context` : `__svelte`;
+
 		setter = deindent`
-			var list = this.__svelte.${listName};
-			var index = this.__svelte.${indexName};
+			var list = this.${context}.${listName};
+			var index = this.${context}.${indexName};
 			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = ${value};
 
 			component._set({ ${prop}: component.get( '${prop}' ) });
