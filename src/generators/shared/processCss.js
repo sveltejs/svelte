@@ -1,31 +1,24 @@
-import parse from 'css-tree/lib/parser/index.js';
-import walk from 'css-tree/lib/utils/walk.js';
-
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
 
 export default function processCss ( parsed, code ) {
 	const css = parsed.css.content.styles;
 	const offset = parsed.css.content.start;
 
-	const ast = parse( css, {
-		positions: true
-	});
-
 	const attr = `[svelte-${parsed.hash}]`;
 
-	walk.rules( ast, rule => {
-		rule.selector.children.each( selector => {
-			const start = selector.loc.start.offset;
-			const end = selector.loc.end.offset;
+	function transform ( rule ) {
+		rule.selector.children.forEach( selector => {
+			const start = selector.start - offset;
+			const end = selector.end - offset;
 
 			const selectorString = css.slice( start, end );
 
-			const firstToken = selector.children.head;
+			const firstToken = selector.children[0];
 
 			let transformed;
 
-			if ( firstToken.data.type === 'TypeSelector' ) {
-				const insert = firstToken.data.loc.end.offset;
+			if ( firstToken.type === 'TypeSelector' ) {
+				const insert = firstToken.end - offset;
 				const head = css.slice( start, insert );
 				const tail = css.slice( insert, end );
 
@@ -36,7 +29,19 @@ export default function processCss ( parsed, code ) {
 
 			code.overwrite( start + offset, end + offset, transformed );
 		});
-	});
+	}
+
+	function walk ( node ) {
+		if ( node.type === 'Rule' ) {
+			transform( node );
+		} else if ( node.children ) {
+			node.children.forEach( walk );
+		} else if ( node.block ) {
+			walk( node.block );
+		}
+	}
+
+	parsed.css.children.forEach( walk );
 
 	// remove comments. TODO would be nice if this was exposed in css-tree
 	let match;
