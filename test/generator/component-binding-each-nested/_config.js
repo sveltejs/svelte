@@ -5,11 +5,11 @@ export default {
 	`,
 
 	test ( assert, component, target, window ) {
-		const change = new window.MouseEvent( 'change' );
+		const event = new window.MouseEvent( 'input' );
 		const inputs = target.querySelectorAll( 'input' );
 
 		inputs[0].value = 'blah';
-		inputs[0].dispatchEvent( change );
+		inputs[0].dispatchEvent( event );
 
 		assert.deepEqual( component.get( 'a' ), [{ name: 'blah' }, { name: 'bar' }, { name: 'baz' }] );
 		assert.htmlEqual( target.innerHTML, `
