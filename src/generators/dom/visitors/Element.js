@@ -10,7 +10,7 @@ export default {
 			return Component.enter( generator, node );
 		}
 
-		const name = generator.current.getUniqueName( node.name );
+		const name = node.localName = generator.current.getUniqueName( node.name );
 
 		const local = {
 			name,
@@ -109,6 +109,10 @@ export default {
 		const isComponent = node.name in generator.components;
 		if ( isComponent ) {
 			return Component.leave( generator, node );
+		}
+
+		if ( generator.current.initialUpdate ) {
+			generator.current.builders.init.addBlock( generator.current.initialUpdate );
 		}
 
 		generator.pop();
