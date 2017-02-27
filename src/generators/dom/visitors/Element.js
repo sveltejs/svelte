@@ -111,6 +111,10 @@ export default {
 			return Component.leave( generator, node );
 		}
 
+		if ( node.initialUpdate ) {
+			generator.current.builders.init.addBlock( node.initialUpdate );
+		}
+
 		generator.pop();
 	}
 };
