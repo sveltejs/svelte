@@ -27,7 +27,7 @@ export default function readStyle ( parser, start, attributes ) {
 		start,
 		end,
 		attributes,
-		ast,
+		children: JSON.parse( JSON.stringify( ast.children ) ),
 		content: {
 			start: contentStart,
 			end: contentEnd,
