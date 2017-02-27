@@ -6,10 +6,20 @@ export default function readStyle ( parser, start, attributes ) {
 	const styles = parser.readUntil( /<\/style>/ );
 	const contentEnd = parser.index;
 
-	const ast = parse( styles, {
-		positions: true,
-		offset: contentStart
-	});
+	let ast;
+
+	try {
+		ast = parse( styles, {
+			positions: true,
+			offset: contentStart
+		});
+	} catch ( err ) {
+		if ( err.name === 'CssSyntaxError' ) {
+			parser.error( err.message, err.offset );
+		} else {
+			throw err;
+		}
+	}
 
 	// tidy up AST
 	walk.all( ast, node => {
