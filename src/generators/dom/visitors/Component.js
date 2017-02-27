@@ -96,8 +96,6 @@ export default {
 
 			if ( local.bindings.length ) {
 				const bindings = local.bindings.map( binding => {
-					const parts = binding.value.split( '.' );
-					const tail = parts.pop();
 					return `if ( ${binding.prop} in ${binding.obj} ) ${name}_initialData.${binding.name} = ${binding.value};`;
 				});
 
