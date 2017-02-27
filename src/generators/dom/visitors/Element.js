@@ -112,11 +112,7 @@ export default {
 		}
 
 		if ( node.initialUpdate ) {
-			console.log( `node.initialUpdate`, node.initialUpdate )
-			//generator.current.builders.init.addBlock( node.initialUpdate );
-			generator.current.builders.init.addBlock(
-				`/*HELLO*/` + node.initialUpdate
-			);
+			generator.current.builders.init.addBlock( node.initialUpdate );
 		}
 
 		generator.pop();
