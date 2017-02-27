@@ -1,4 +1,6 @@
 export default {
+	// solo: true,
+
 	test ( assert, component, target, window ) {
 		const [ control, test ] = target.querySelectorAll( 'p' );
 
