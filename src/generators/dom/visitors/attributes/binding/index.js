@@ -116,7 +116,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 		` );
 	} else {
-		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}`;
+		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`};`;
 
 		generator.uses.addEventListener = true;
 		generator.uses.removeEventListener = true;
@@ -130,20 +130,16 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 
 			addEventListener( ${local.name}, '${eventName}', ${handler} );
-			${updateElement};
 		` );
 
+		generator.current.initialUpdate = updateElement;
+
 		local.update.addLine(
-			`if ( !${local.name}_updating ) ${updateElement};`
+			`if ( !${local.name}_updating ) ${updateElement}`
 		);
 
 		generator.current.builders.teardown.addLine( deindent`
 			removeEventListener( ${local.name}, '${eventName}', ${handler} );
 		` );
-	}
-
-	if ( node.name === 'select' ) {
-		generator.hasComplexBindings = true;
-		local.init.addLine( `component._bindings.push( ${handler} )` );
 	}
 }
