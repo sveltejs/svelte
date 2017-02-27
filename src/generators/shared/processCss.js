@@ -1,4 +1,3 @@
-import parse from 'css-tree/lib/parser/index.js';
 import walk from 'css-tree/lib/utils/walk.js';
 
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
@@ -7,16 +6,12 @@ export default function processCss ( parsed, code ) {
 	const css = parsed.css.content.styles;
 	const offset = parsed.css.content.start;
 
-	const ast = parse( css, {
-		positions: true
-	});
-
 	const attr = `[svelte-${parsed.hash}]`;
 
-	walk.rules( ast, rule => {
+	walk.rules( parsed.css.ast, rule => {
 		rule.selector.children.each( selector => {
-			const start = selector.loc.start.offset;
-			const end = selector.loc.end.offset;
+			const start = selector.start - offset;
+			const end = selector.end - offset;
 
 			const selectorString = css.slice( start, end );
 
@@ -25,7 +20,7 @@ export default function processCss ( parsed, code ) {
 			let transformed;
 
 			if ( firstToken.data.type === 'TypeSelector' ) {
-				const insert = firstToken.data.loc.end.offset;
+				const insert = firstToken.data.end - offset;
 				const head = css.slice( start, insert );
 				const tail = css.slice( insert, end );
 
@@ -41,7 +36,7 @@ export default function processCss ( parsed, code ) {
 	// remove comments. TODO would be nice if this was exposed in css-tree
 	let match;
 	while ( match = commentsPattern.exec( css ) ) {
-		const start = match.index + offset;
+		const start = match.index;
 		const end = start + match[0].length;
 
 		code.remove( start, end );
