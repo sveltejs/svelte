@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.7.0
+
+* Include CSS AST in `svelte.parse` output ([#302](https://github.com/sveltejs/svelte/pull/302))
+* Better handling of CSS parse errors ([#302](https://github.com/sveltejs/svelte/pull/302))
+* Initialise `<select>` elements with two-way binding correctly ([#301](https://github.com/sveltejs/svelte/issues/301))
+* Allow local context in component event handlers inside `each` blocks ([#290](https://github.com/sveltejs/svelte/issues/290))
+* Fix two-way binding for components inside `each` blocks ([#290](https://github.com/sveltejs/svelte/issues/290))
+
 ## 1.6.11
 
 * Initialise dynamic `<option>` value correctly ([#291](https://github.com/sveltejs/svelte/issues/291))
