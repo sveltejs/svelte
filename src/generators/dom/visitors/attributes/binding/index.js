@@ -116,7 +116,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 		` );
 	} else {
-		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`}`;
+		const updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `typeof root.${attribute.value} == 'undefined' ? '' : root.${attribute.value}`}`;
 
 		generator.uses.addEventListener = true;
 		generator.uses.removeEventListener = true;
