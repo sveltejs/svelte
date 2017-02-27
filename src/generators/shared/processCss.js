@@ -46,7 +46,7 @@ export default function processCss ( parsed, code ) {
 	// remove comments. TODO would be nice if this was exposed in css-tree
 	let match;
 	while ( match = commentsPattern.exec( css ) ) {
-		const start = match.index;
+		const start = match.index + offset;
 		const end = start + match[0].length;
 
 		code.remove( start, end );
