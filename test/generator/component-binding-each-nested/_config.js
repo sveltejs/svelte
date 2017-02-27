@@ -1,9 +1,6 @@
 export default {
 	html: `
-		<input>
-		<input>
-		<input>
-		
+		<input><input><input>
 		<p>foo, bar, baz</p>
 	`,
 
@@ -14,12 +11,9 @@ export default {
 		inputs[0].value = 'blah';
 		inputs[0].dispatchEvent( change );
 
-		assert.deepEqual( component.get( 'a' ), [ 'blah', 'bar', 'baz' ] );
+		assert.deepEqual( component.get( 'a' ), [{ name: 'blah' }, { name: 'bar' }, { name: 'baz' }] );
 		assert.htmlEqual( target.innerHTML, `
-			<input>
-			<input>
-			<input>
-			
+			<input><input><input>
 			<p>blah, bar, baz</p>
 		` );
 		
