@@ -142,7 +142,11 @@ export default function addElementAttributes ( generator, node, local ) {
 			}
 
 			if ( isBoundOptionValue ) {
-				( dynamic ? local.update : local.init ).addLine( `${local.name}.value = ${local.name}.__value` );
+				local.init.addLine( `${local.name}.value = ${local.name}.__value` );
+
+				if (dynamic) {
+					local.update.addLine( `${local.name}.value = ${local.name}.__value` );
+				}
 			}
 		}
 
