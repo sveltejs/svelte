@@ -151,9 +151,8 @@ export default {
 			` );
 		}
 
-		generator.uses.teardownEach = true;
 		generator.current.builders.teardown.addBlock(
-			`teardownEach( ${iterations}, ${isToplevel ? 'detach' : 'false'} );` );
+			`${generator.helper( 'teardownEach' )}( ${iterations}, ${isToplevel ? 'detach' : 'false'} );` );
 
 		if ( node.else ) {
 			generator.current.builders.teardown.addBlock( deindent`

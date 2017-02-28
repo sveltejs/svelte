@@ -9,20 +9,17 @@ export default {
 
 		// we would have used comments here, but the `insertAdjacentHTML` api only
 		// exists for `Element`s.
-		generator.uses.createElement = true;
-
 		const before = `${name}_before`;
-		generator.addElement( before, `createElement( 'noscript' )`, true );
+		generator.addElement( before, `${generator.helper( 'createElement' )}( 'noscript' )`, true );
 
 		const after = `${name}_after`;
-		generator.addElement( after, `createElement( 'noscript' )`, true );
+		generator.addElement( after, `${generator.helper( 'createElement' )}( 'noscript' )`, true );
 
 		const isToplevel = generator.current.localElementDepth === 0;
 
 		generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
 		const mountStatement = `${before}.insertAdjacentHTML( 'afterend', last_${name} );`;
-		generator.uses.detachBetween = true;
-		const detachStatement = `detachBetween( ${before}, ${after} );`;
+		const detachStatement = `${generator.helper( 'detachBetween' )}( ${before}, ${after} );`;
 
 		if ( isToplevel ) {
 			generator.current.builders.mount.addLine( mountStatement );
