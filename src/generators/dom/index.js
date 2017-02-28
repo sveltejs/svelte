@@ -71,7 +71,7 @@ class DomGenerator extends Generator {
 			properties.addBlock( `update: ${this.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
-				update: function ( changed, ${fragment.params} ) {
+				update: function ( changed, ${fragment.params.join( ', ' )} ) {
 					var __tmp;
 
 					${fragment.builders.update}
@@ -90,7 +90,7 @@ class DomGenerator extends Generator {
 		}
 
 		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params}, component${fragment.key ? `, key` : ''} ) {
+			function ${fragment.name} ( ${fragment.params.join( ', ' )}, component${fragment.key ? `, key` : ''} ) {
 				${fragment.builders.init}
 
 				return {
