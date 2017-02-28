@@ -44,7 +44,7 @@ describe( 'generate', () => {
 
 			try {
 				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
-				compiled = svelte.compile( source );
+				compiled = svelte.compile( source, compileOptions );
 			} catch ( err ) {
 				if ( config.compileError ) {
 					config.compileError( err );

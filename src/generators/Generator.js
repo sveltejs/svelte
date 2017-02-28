@@ -213,7 +213,6 @@ export default class Generator {
 					while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
 					while ( source[b] === '\n' ) b += 1;
 
-					//imports.push( source.slice( a, b ).replace( /^\s/, '' ) );
 					imports.push( node );
 					this.code.remove( a, b );
 				}
