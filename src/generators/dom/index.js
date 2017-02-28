@@ -364,7 +364,7 @@ export default function dom ( parsed, source, options, names ) {
 		}
 
 		const names = [ 'get', 'fire', 'observe', 'on', 'set', '_flush', 'dispatchObservers' ].concat( Object.keys( generator.uses ) )
-			.map( name => name in generator.aliases ? `${name} as ${generator.aliases[ name ]}` : name );
+			.map( name => name in generator.aliases && name !== generator.aliases[ name ] ? `${name} as ${generator.aliases[ name ]}` : name );
 
 		builders.main.addLineAtStart(
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
