@@ -180,7 +180,7 @@ export default function dom ( parsed, source, options, names ) {
 		contexts: {},
 		indexes: {},
 
-		params: 'root',
+		params: [ 'root' ],
 		indexNames: {},
 		listNames: {},
 
