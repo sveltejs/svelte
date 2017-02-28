@@ -32,7 +32,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 
 export default {
 	enter ( generator, node ) {
-		const { params } = generator.current;
+		const params = generator.current.params.join( ', ' );
 		const name = generator.getUniqueName( `ifBlock` );
 		const getBlock = generator.getUniqueName( `getBlock` );
 		const currentBlock = generator.getUniqueName( `currentBlock` );
