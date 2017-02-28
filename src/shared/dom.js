@@ -22,6 +22,20 @@ export function teardownEach ( iterations, detach, start ) {
 	}
 }
 
+export function spreadAttributes ( node, obj ) {
+	if (obj !== null && typeof obj === 'object') {
+		for ( var property in obj ) {
+			if ( obj.hasOwnProperty( property ) ) {
+				if ( property.slice( 0, 6 ) === 'xlink:' ) {
+					setXlinkAttribute( node, property, obj[property] );
+				} else {
+					setAttribute( node, property, obj[property] );
+				}
+			}
+		}
+	}
+}
+
 export function createElement ( name ) {
 	return document.createElement( name );
 }

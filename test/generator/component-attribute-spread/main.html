@@ -1,0 +1,18 @@
+<Widget ref:widget {{options}}/>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data: () => ({
+			options: {
+				foo: 1,
+				bar: 2
+			}
+		}),
+
+		components: {
+			Widget
+		}
+	};
+</script>

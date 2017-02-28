@@ -10,12 +10,15 @@ export default {
 
 		const attributes = [];
 		const bindings = [];
+		const spreads = [];
 
 		node.attributes.forEach( attribute => {
 			if ( attribute.type === 'Attribute' ) {
 				attributes.push( attribute );
 			} else if ( attribute.type === 'Binding' ) {
 				bindings.push( attribute );
+			} else if ( attribute.type === 'Spread' ) {
+				spreads.push( attribute );
 			}
 		});
 
@@ -47,7 +50,11 @@ export default {
 			generator.addBinding( binding, node.name );
 		});
 
-		let open = `\${template.components.${node.name}.render({${props}}`;
+		const spreadProps = spreads.map( spread => `root.${spread.name}` ).join( ', ' );
+
+		const data = spreads.length ? `Object.assign({${props}}, ${spreadProps})` : `{${props}}`;
+
+		let open = `\${template.components.${node.name}.render(${data}`;
 
 		if ( node.children.length ) {
 			open += `, { yield: () => \``;

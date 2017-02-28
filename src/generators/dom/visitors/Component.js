@@ -79,7 +79,7 @@ export default {
 
 		const statements = [];
 
-		if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
+		if ( local.staticAttributes.length || local.dynamicAttributes.length || local.spreadAttributes.length || local.bindings.length ) {
 			const initialProps = local.staticAttributes
 				.concat( local.dynamicAttributes )
 				.map( attribute => `${attribute.name}: ${attribute.value}` );
@@ -101,7 +101,14 @@ export default {
 
 				statements.push( bindings.join( '\n' ) );
 			}
-			componentInitProperties.push(`data: ${name}_initialData`);
+
+			if ( local.spreadAttributes.length ) {
+				local.spreadAttributes.forEach( name => {
+					statements.push( `Object.assign( ${local.name}_initialData, root.${name} );` );
+				});
+			}
+
+			componentInitProperties.push( `data: ${name}_initialData` );
 		}
 
 		local.init.addBlockAtStart( deindent`

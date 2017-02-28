@@ -1,0 +1,19 @@
+<svg>
+	<defs>
+		<circle id='stamp' r='10' fill='blue'/>
+	</defs>
+
+	<use {{options}}/>
+</svg>
+
+<script>
+	export default {
+		data: () => ({
+			options: {
+				'xlink:href': '#stamp',
+				x: '20',
+				y: '20'
+			}
+		})
+	};
+</script>
