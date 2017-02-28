@@ -46,7 +46,7 @@ export default class Generator {
 		const { contextDependencies, contexts, indexes } = this.current;
 
 		walk( expression, {
-			enter ( node, parent ) {
+			enter ( node, parent, key ) {
 				if ( isReference( node, parent ) ) {
 					const { name } = flattenReference( node );
 
@@ -69,6 +69,14 @@ export default class Generator {
 					}
 
 					else {
+						// handle shorthand properties
+						if ( parent.type === 'Property' && parent.shorthand ) {
+							if ( key === 'key' ) {
+								code.appendLeft( node.start, `${name}: ` );
+								return;
+							}
+						}
+
 						if ( globalWhitelist[ name ] ) {
 							code.prependRight( node.start, `( '${name}' in root ? root.` );
 							code.appendLeft( node.object.end, ` : ${name} )` );
