@@ -8,7 +8,7 @@ export default {
 		// TODO should this be the generator's job? It's duplicated between
 		// here and the equivalent DOM compiler visitor
 		const contexts = Object.assign( {}, generator.current.contexts );
-		contexts[ node.context ] = true;
+		contexts[ node.context ] = node.context;
 
 		const indexes = Object.assign( {}, generator.current.indexes );
 		if ( node.index ) indexes[ node.index ] = node.context;
