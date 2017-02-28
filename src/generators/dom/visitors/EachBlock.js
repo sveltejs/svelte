@@ -2,6 +2,11 @@ import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
 import getBuilders from '../utils/getBuilders.js';
 
+const reserved = {
+	component: true,
+	root: true
+};
+
 export default {
 	enter ( generator, node ) {
 		const name = generator.getUniqueName( `eachBlock` );
@@ -172,8 +177,16 @@ export default {
 		const listNames = Object.assign( {}, generator.current.listNames );
 		listNames[ node.context ] = listName;
 
+		// ensure that contexts like `root` or `component` don't blow up the whole show
+		let context = node.context;
+		let c = 1;
+
+		while ( context in reserved || ~generator.current.params.indexOf( context ) ) {
+			context = `${node.context}$${c++}`;
+		}
+
 		const contexts = Object.assign( {}, generator.current.contexts );
-		contexts[ node.context ] = true;
+		contexts[ node.context ] = context;
 
 		const indexes = Object.assign( {}, generator.current.indexes );
 		if ( node.index ) indexes[ indexName ] = node.context;
@@ -181,7 +194,7 @@ export default {
 		const contextDependencies = Object.assign( {}, generator.current.contextDependencies );
 		contextDependencies[ node.context ] = dependencies;
 
-		const blockParams = generator.current.params + `, ${listName}, ${node.context}, ${indexName}`;
+		const blockParams = generator.current.params.concat( listName, context, indexName );
 
 		generator.push({
 			name: renderer,
