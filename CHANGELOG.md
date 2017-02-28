@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.7.1
+
+* Deconflict imports and shared helpers ([#222](https://github.com/sveltejs/svelte/issues/222))
+* Deconflict each-block contexts and reserved words ([#222](https://github.com/sveltejs/svelte/issues/222))
+* Allow shorthand properties in expressions ([#296](https://github.com/sveltejs/svelte/issues/296))
+
 ## 1.7.0
 
 * Include CSS AST in `svelte.parse` output ([#302](https://github.com/sveltejs/svelte/pull/302))
