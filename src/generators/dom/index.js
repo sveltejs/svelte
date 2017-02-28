@@ -12,6 +12,11 @@ class DomGenerator extends Generator {
 		super( parsed, source, names, visitors );
 		this.renderers = [];
 		this.uses = {};
+
+		// allow compiler to deconflict user's `import { get } from 'whatever'` and
+		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
+		this.importedNames = {};
+		this.aliases = {};
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -23,13 +28,11 @@ class DomGenerator extends Generator {
 
 			this.createMountStatement( name );
 		} else {
-			this.uses.appendNode = true;
-			this.current.builders.init.addLine( `appendNode( ${renderStatement}, ${this.current.target} );` );
+			this.current.builders.init.addLine( `${this.helper( 'appendNode' )}( ${renderStatement}, ${this.current.target} );` );
 		}
 
 		if ( isToplevel ) {
-			this.uses.detachNode = true;
-			this.current.builders.detach.addLine( `detachNode( ${name} );` );
+			this.current.builders.detach.addLine( `${this.helper( 'detachNode' )}( ${name} );` );
 		}
 	}
 
@@ -55,8 +58,7 @@ class DomGenerator extends Generator {
 		if ( fragment.key ) properties.addBlock( `key: key,` );
 
 		if ( fragment.builders.mount.isEmpty() ) {
-			this.uses.noop = true;
-			properties.addBlock( `mount: noop,` );
+			properties.addBlock( `mount: ${this.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
 				mount: function ( target, anchor ) {
@@ -66,8 +68,7 @@ class DomGenerator extends Generator {
 		}
 
 		if ( fragment.builders.update.isEmpty() ) {
-			this.uses.noop = true;
-			properties.addBlock( `update: noop,` );
+			properties.addBlock( `update: ${this.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
 				update: function ( changed, ${fragment.params} ) {
@@ -79,8 +80,7 @@ class DomGenerator extends Generator {
 		}
 
 		if ( fragment.builders.teardown.isEmpty() ) {
-			this.uses.noop = true;
-			properties.addBlock( `teardown: noop,` );
+			properties.addBlock( `teardown: ${this.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
 				teardown: function ( detach ) {
@@ -101,18 +101,15 @@ class DomGenerator extends Generator {
 	}
 
 	createAnchor ( name ) {
-		this.uses.createComment = true;
-		const renderStatement = `createComment()`;
+		const renderStatement = `${this.helper( 'createComment' )}()`;
 		this.addElement( name, renderStatement, true );
 	}
 
 	createMountStatement ( name ) {
 		if ( this.current.target === 'target' ) {
-			this.uses.insertNode = true;
-			this.current.builders.mount.addLine( `insertNode( ${name}, target, anchor );` );
+			this.current.builders.mount.addLine( `${this.helper( 'insertNode' )}( ${name}, target, anchor );` );
 		} else {
-			this.uses.appendNode = true;
-			this.current.builders.init.addLine( `appendNode( ${name}, ${this.current.target} );` );
+			this.current.builders.init.addLine( `${this.helper( 'appendNode' )}( ${name}, ${this.current.target} );` );
 		}
 	}
 
@@ -133,6 +130,22 @@ class DomGenerator extends Generator {
 		// unset the children, to avoid them being visited again
 		node.children = [];
 	}
+
+	helper ( name ) {
+		this.uses[ name ] = true;
+
+		if ( !( name in this.aliases ) ) {
+			let alias = name;
+			let i = 1;
+			while ( alias in this.importedNames ) {
+				alias = `${name}$${i++}`;
+			}
+
+			this.aliases[ name ] = alias;
+		}
+
+		return this.aliases[ name ];
+	}
 }
 
 export default function dom ( parsed, source, options, names ) {
@@ -142,6 +155,12 @@ export default function dom ( parsed, source, options, names ) {
 	const generator = new DomGenerator( parsed, source, names, visitors );
 
 	const { computations, templateProperties } = generator.parseJs();
+
+	generator.imports.forEach( node => {
+		node.specifiers.forEach( specifier => {
+			generator.importedNames[ specifier.local.name ] = true;
+		});
+	});
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {
@@ -214,15 +233,12 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( parsed.css && options.css !== false ) {
-		generator.uses.appendNode = true;
-		generator.uses.createElement = true;
-
 		builders.main.addBlock( deindent`
 			let addedCss = false;
 			function addCss () {
-				var style = createElement( 'style' );
+				var style = ${generator.helper( 'createElement' )}( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
-				appendNode( style, document.head );
+				${generator.helper( 'appendNode' )}( style, document.head );
 
 				addedCss = true;
 			}
@@ -305,12 +321,12 @@ export default function dom ( parsed, source, options, names ) {
 
 	builders.main.addBlock( sharedPath ?
 		deindent`
-			${name}.prototype.get = get;
-			${name}.prototype.fire = fire;
-			${name}.prototype.observe = observe;
-			${name}.prototype.on = on;
-			${name}.prototype.set = set;
-			${name}.prototype._flush = _flush;
+			${name}.prototype.get = ${generator.helper( 'get' )};
+			${name}.prototype.fire = ${generator.helper( 'fire' )};
+			${name}.prototype.observe = ${generator.helper( 'observe' )};
+			${name}.prototype.on = ${generator.helper( 'on' )};
+			${name}.prototype.set = ${generator.helper( 'set' )};
+			${name}.prototype._flush = ${generator.helper( '_flush' )};
 		` :
 		deindent`
 			${name}.prototype.get = ${shared.get};
@@ -347,7 +363,9 @@ export default function dom ( parsed, source, options, names ) {
 			throw new Error( `Components with shared helpers must be compiled to ES2015 modules (format: 'es')` );
 		}
 
-		const names = [ 'get', 'fire', 'observe', 'on', 'set', '_flush', 'dispatchObservers' ].concat( Object.keys( generator.uses ) );
+		const names = [ 'get', 'fire', 'observe', 'on', 'set', '_flush', 'dispatchObservers' ].concat( Object.keys( generator.uses ) )
+			.map( name => name in generator.aliases ? `${name} as ${generator.aliases[ name ]}` : name );
+
 		builders.main.addLineAtStart(
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
 		);

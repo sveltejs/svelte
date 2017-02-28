@@ -21,7 +21,7 @@ export default function addElementAttributes ( generator, node, local ) {
 			// xlink is a special case... we could maybe extend this to generic
 			// namespaced attributes but I'm not sure that's applicable in
 			// HTML5?
-			const helper = isXlink ? 'setXlinkAttribute' : 'setAttribute';
+			const method = isXlink ? 'setXlinkAttribute' : 'setAttribute';
 
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
@@ -30,9 +30,8 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = true;`
 					);
 				} else {
-					generator.uses[ helper ] = true;
 					local.init.addLine(
-						`${helper}( ${local.name}, '${name}', true );`
+						`${generator.helper( method )}( ${local.name}, '${name}', true );`
 					);
 				}
 
@@ -48,9 +47,8 @@ export default function addElementAttributes ( generator, node, local ) {
 						`${local.name}.${propertyName} = '';`
 					);
 				} else {
-					generator.uses[ helper ] = true;
 					local.init.addLine(
-						`${helper}( ${local.name}, '${name}', '' );`
+						`${generator.helper( method )}( ${local.name}, '${name}', '' );`
 					);
 				}
 			}
@@ -79,9 +77,8 @@ export default function addElementAttributes ( generator, node, local ) {
 					}
 
 					if ( addAttribute ) {
-						generator.uses[ helper ] = true;
 						local.init.addLine(
-							`${helper}( ${local.name}, '${name}', ${result} );`
+							`${generator.helper( method )}( ${local.name}, '${name}', ${result} );`
 						);
 					}
 				}
@@ -99,8 +96,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					if ( propertyName ) {
 						updater = `${local.name}.${propertyName} = ${last};`;
 					} else {
-						generator.uses[ helper ] = true;
-						updater = `${helper}( ${local.name}, '${name}', ${last} );`; // TODO use snippet both times – see note below
+						updater = `${generator.helper( method )}( ${local.name}, '${name}', ${last} );`; // TODO use snippet both times – see note below
 					}
 
 					local.init.addLine( updater );
@@ -133,8 +129,7 @@ export default function addElementAttributes ( generator, node, local ) {
 				if (propertyName) {
 					updater = `${local.name}.${propertyName} = ${value};`;
 				} else {
-					generator.uses[ helper ] = true;
-					updater = `${helper}( ${local.name}, '${name}', ${value} );`;
+					updater = `${generator.helper( method )}( ${local.name}, '${name}', ${value} );`;
 				}
 
 				local.init.addLine( updater );
@@ -194,18 +189,16 @@ export default function addElementAttributes ( generator, node, local ) {
 					${handlerName}.teardown();
 				` );
 			} else {
-				generator.uses.addEventListener = true;
-				generator.uses.removeEventListener = true;
 				local.init.addBlock( deindent`
 					function ${handlerName} ( event ) {
 						${handlerBody}
 					}
 
-					addEventListener( ${local.name}, '${name}', ${handlerName} );
+					${generator.helper( 'addEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 
 				generator.current.builders.teardown.addLine( deindent`
-					removeEventListener( ${local.name}, '${name}', ${handlerName} );
+					${generator.helper( 'removeEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 			}
 		}
