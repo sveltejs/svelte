@@ -33,11 +33,16 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	let eventName = 'change';
 	if ( node.name === 'input' ) {
-		const type = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
-		if ( !type || type.value[0].data === 'text' ) {
-			// TODO in validation, should throw if type attribute is not static
+		const typeAttribute = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
+		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
+
+		if ( type !== 'checkbox' && type !== 'radio' ) {
 			eventName = 'input';
 		}
+	}
+
+	else if ( node.name === 'textarea' ) {
+		eventName = 'input';
 	}
 
 	let value;
