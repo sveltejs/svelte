@@ -58,7 +58,13 @@ export default class Generator {
 						// noop
 					}
 
-					else if ( contexts[ name ] ) {
+					else if ( name in contexts ) {
+						const context = contexts[ name ];
+						if ( context !== name ) {
+							// this is true for 'reserved' names like `root` and `component`
+							code.overwrite( node.start, node.start + name.length, context, true );
+						}
+
 						dependencies.push( ...contextDependencies[ name ] );
 						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
 					}

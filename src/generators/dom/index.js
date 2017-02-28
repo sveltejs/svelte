@@ -71,7 +71,7 @@ class DomGenerator extends Generator {
 			properties.addBlock( `update: ${this.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
-				update: function ( changed, ${fragment.params} ) {
+				update: function ( changed, ${fragment.params.join( ', ' )} ) {
 					var __tmp;
 
 					${fragment.builders.update}
@@ -90,7 +90,7 @@ class DomGenerator extends Generator {
 		}
 
 		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params}, component${fragment.key ? `, key` : ''} ) {
+			function ${fragment.name} ( ${fragment.params.join( ', ' )}, component${fragment.key ? `, key` : ''} ) {
 				${fragment.builders.init}
 
 				return {
@@ -180,7 +180,7 @@ export default function dom ( parsed, source, options, names ) {
 		contexts: {},
 		indexes: {},
 
-		params: 'root',
+		params: [ 'root' ],
 		indexNames: {},
 		listNames: {},
 
@@ -364,7 +364,7 @@ export default function dom ( parsed, source, options, names ) {
 		}
 
 		const names = [ 'get', 'fire', 'observe', 'on', 'set', '_flush', 'dispatchObservers' ].concat( Object.keys( generator.uses ) )
-			.map( name => name in generator.aliases ? `${name} as ${generator.aliases[ name ]}` : name );
+			.map( name => name in generator.aliases && name !== generator.aliases[ name ] ? `${name} as ${generator.aliases[ name ]}` : name );
 
 		builders.main.addLineAtStart(
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`

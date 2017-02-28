@@ -62,7 +62,7 @@ export default {
 		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
 			const yieldName = generator.getUniqueName( `render${name}YieldFragment` );
-			const { params } = generator.current;
+			const params = generator.current.params.join( ', ' );
 
 			generator.generateBlock( node, yieldName );
 
