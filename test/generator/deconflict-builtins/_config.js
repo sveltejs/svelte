@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	html: `<span>got</span>`,
 
 	test ( assert, component ) {

@@ -12,7 +12,7 @@ function tryToReadFile ( file ) {
 	}
 }
 
-describe.skip( 'ssr', () => {
+describe( 'ssr', () => {
 	before( () => {
 		require( process.env.COVERAGE ?
 			'../src/server-side-rendering/register.js' :
