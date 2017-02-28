@@ -61,25 +61,21 @@ export default {
 
 		if ( local.namespace ) {
 			if ( local.namespace === 'http://www.w3.org/2000/svg' ) {
-				generator.uses.createSvgElement = true;
-				render = `var ${name} = createSvgElement( '${node.name}' )`;
+				render = `var ${name} = ${generator.helper( 'createSvgElement' )}( '${node.name}' )`;
 			} else {
 				render = `var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );`;
 			}
 		} else {
-			generator.uses.createElement = true;
-			render = `var ${name} = createElement( '${node.name}' );`;
+			render = `var ${name} = ${generator.helper( 'createElement' )}( '${node.name}' );`;
 		}
 
 		if ( generator.cssId && !generator.elementDepth ) {
-			generator.uses.setAttribute = true;
-			render += `\nsetAttribute( ${name}, '${generator.cssId}', '' );`;
+			render += `\n${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );`;
 		}
 
 		local.init.addLineAtStart( render );
 		if ( isToplevel ) {
-			generator.uses.detachNode = true;
-			generator.current.builders.detach.addLine( `detachNode( ${name} );` );
+			generator.current.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 		}
 
 		// special case – bound <option> without a value attribute

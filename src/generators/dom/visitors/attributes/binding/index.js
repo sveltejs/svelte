@@ -138,8 +138,6 @@ export default function createBinding ( generator, node, attribute, current, loc
 			updateElement = `${local.name}.${attribute.name} = ${contextual ? attribute.value : `root.${attribute.value}`};`;
 		}
 
-		generator.uses.addEventListener = true;
-		generator.uses.removeEventListener = true;
 		local.init.addBlock( deindent`
 			var ${local.name}_updating = false;
 
@@ -149,7 +147,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 				${local.name}_updating = false;
 			}
 
-			addEventListener( ${local.name}, '${eventName}', ${handler} );
+			${generator.helper( 'addEventListener' )}( ${local.name}, '${eventName}', ${handler} );
 		` );
 
 		node.initialUpdate = updateElement;
@@ -159,7 +157,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		);
 
 		generator.current.builders.teardown.addLine( deindent`
-			removeEventListener( ${local.name}, '${eventName}', ${handler} );
+			${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
 		` );
 	}
 }

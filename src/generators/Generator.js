@@ -193,6 +193,11 @@ export default class Generator {
 		return counter( this.names );
 	}
 
+	helper ( name ) {
+		this.uses[ name ] = true;
+		return name;
+	}
+
 	parseJs () {
 		const { source } = this;
 		const { js } = this.parsed;
