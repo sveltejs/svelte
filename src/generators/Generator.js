@@ -70,7 +70,7 @@ export default class Generator {
 
 					else {
 						// handle shorthand properties
-						if ( parent.type === 'Property' && parent.shorthand ) {
+						if ( parent && parent.type === 'Property' && parent.shorthand ) {
 							if ( key === 'key' ) {
 								code.appendLeft( node.start, `${name}: ` );
 								return;
