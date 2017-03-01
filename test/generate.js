@@ -98,7 +98,7 @@ describe( 'generate', () => {
 					if ( config.test ) {
 						config.test( assert, component, target, window );
 					} else {
-						component.teardown();
+						component.destroy();
 						assert.equal( target.innerHTML, '' );
 					}
 				})

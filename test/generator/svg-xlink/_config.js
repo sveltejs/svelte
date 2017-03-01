@@ -14,6 +14,6 @@ export default {
 
 		assert.equal( href.namespaceURI, 'http://www.w3.org/1999/xlink' );
 
-		component.teardown();
+		component.destroy();
 	}
 };

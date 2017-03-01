@@ -10,6 +10,6 @@ export default {
 	test ( assert, component, target ) {
 		const circle = target.querySelector( 'circle' );
 		assert.equal( circle.getAttribute( 'class' ), 'red' );
-		component.teardown();
+		component.destroy();
 	}
 };

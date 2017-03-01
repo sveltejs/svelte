@@ -18,6 +18,6 @@ export default {
 			<p>x is between 5 and 10</p>
 		` );
 
-		component.teardown();
+		component.destroy();
 	}
 };
