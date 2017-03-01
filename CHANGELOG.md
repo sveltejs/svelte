@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.9.0
+
+* Add development warnings ([#13](https://github.com/sveltejs/svelte/issues/13)), ([#320](https://github.com/sveltejs/svelte/pull/320)), ([#177](https://github.com/sveltejs/svelte/issues/177)), ([#249](https://github.com/sveltejs/svelte/issues/249))
+* Better error if parser encounters an unmatched closing tag ([#321](https://github.com/sveltejs/svelte/issues/321))
+
 ## 1.8.1
 
 * Allow implicitly closed elements ([#318](https://github.com/sveltejs/svelte/pull/318))
