@@ -2,11 +2,11 @@
 
 <script>
 	export default {
-		onrender () {
+		oncreate () {
 			this.events = [ 'render' ];
 		},
 
-		onteardown () {
+		ondestroy () {
 			this.events.push( 'teardown' );
 		}
 	};
