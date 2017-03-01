@@ -134,4 +134,18 @@ describe( 'generate', () => {
 			runTest( dir, path.resolve( 'shared.js' ) );
 		});
 	});
+
+	it( 'fails if options.target is missing in dev mode', () => {
+		const { code } = svelte.compile( `<div></div>`, {
+			format: 'iife',
+			name: 'SvelteComponent',
+			dev: true
+		});
+
+		const SvelteComponent = eval( `(function () { ${code}; return SvelteComponent; }())` );
+
+		assert.throws( () => {
+			new SvelteComponent();
+		}, /'target' is a required option/ );
+	});
 });

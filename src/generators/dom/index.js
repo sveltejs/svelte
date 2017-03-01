@@ -304,44 +304,50 @@ export default function dom ( parsed, source, options, names ) {
 		` );
 	}
 
-	const stateBlock = new CodeBuilder();
+	const constructorBlock = new CodeBuilder();
 
-	stateBlock.addLine(
+	constructorBlock.addLine( `options = options || {};` );
+	if ( generator.usesRefs ) constructorBlock.addLine( `this.refs = {};` );
+
+	constructorBlock.addLine(
 		`this._state = ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`};`
 	);
 
 	if ( templateProperties.computed ) {
-		stateBlock.addLine(
+		constructorBlock.addLine(
 			`applyComputations( this._state, this._state, {}, true );`
 		);
 	}
 
 	if ( options.dev ) {
 		Object.keys( generator.expectedProperties ).forEach( prop => {
-			stateBlock.addLine(
+			constructorBlock.addLine(
 				`if ( !( '${prop}' in this._state ) ) throw new Error( "Component was created without expected data property '${prop}'" );`
 			);
 		});
+
+		constructorBlock.addBlock(
+			`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`
+		);
 	}
+
+	constructorBlock.addBlock( deindent`
+		this._observers = {
+			pre: Object.create( null ),
+			post: Object.create( null )
+		};
+
+		this._handlers = Object.create( null );
+
+		this._root = options._root;
+		this._yield = options._yield;
+
+		${builders.init}
+	` );
 
 	builders.main.addBlock( deindent`
 		function ${name} ( options ) {
-			options = options || {};
-			${generator.usesRefs ? `\nthis.refs = {}` : ``}
-
-			${stateBlock}
-
-			this._observers = {
-				pre: Object.create( null ),
-				post: Object.create( null )
-			};
-
-			this._handlers = Object.create( null );
-
-			this._root = options._root;
-			this._yield = options._yield;
-
-			${builders.init}
+			${constructorBlock}
 		}
 	` );
 
