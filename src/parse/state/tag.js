@@ -90,6 +90,8 @@ export default function tag ( parser ) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while ( parent.name !== name ) {
+			if ( parent.type !== 'Element' ) parser.error( `</${name}> attempted to close an element that was not open`, start );
+
 			parent.end = start;
 			parser.stack.pop();
 
