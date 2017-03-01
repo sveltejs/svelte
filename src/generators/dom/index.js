@@ -322,7 +322,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( options.dev ) {
 		Object.keys( generator.expectedProperties ).forEach( prop => {
 			constructorBlock.addLine(
-				`if ( !( '${prop}' in this._state ) ) throw new Error( "Component was created without expected data property 'foo'" );`
+				`if ( !( '${prop}' in this._state ) ) throw new Error( "Component was created without expected data property '${prop}'" );`
 			);
 		});
 
