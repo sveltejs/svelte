@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.8.1
+
+* Allow implicitly closed elements ([#318](https://github.com/sveltejs/svelte/pull/318))
+* More informative error messages for unclosed elements/blocks ([#258](https://github.com/sveltejs/svelte/issues/258))
+
 ## 1.8.0
 
 * Prevent duplicate imports ([#308](https://github.com/sveltejs/svelte/issues/308))
