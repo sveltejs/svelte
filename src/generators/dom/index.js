@@ -283,8 +283,8 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( templateProperties.onrender ) {
 		builders.init.addBlock( deindent`
-			if ( options._root ) {
-				options._root._renderHooks.push({ fn: template.onrender, context: this });
+			if ( options._parent ) {
+				options._parent._renderHooks.push({ fn: template.onrender, context: this });
 			} else {
 				template.onrender.call( this );
 			}
@@ -306,7 +306,7 @@ export default function dom ( parsed, source, options, names ) {
 
 			this._handlers = Object.create( null );
 
-			this._root = options._root;
+			this._parent = options._parent;
 			this._yield = options._yield;
 
 			${builders.init}

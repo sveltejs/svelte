@@ -56,7 +56,7 @@ export default {
 
 		const componentInitProperties = [
 			`target: ${!isToplevel ? generator.current.target: 'null'}`,
-			'_root: component._root || component'
+			'_parent: component'
 		];
 
 		// Component has children, put them in a separate {{yield}} block
