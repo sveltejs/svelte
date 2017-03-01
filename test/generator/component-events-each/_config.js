@@ -22,6 +22,6 @@ export default {
 		buttons[2].dispatchEvent( event );
 
 		assert.deepEqual( clicks, [ 'a', 'c' ]);
-		component.teardown();
+		component.destroy();
 	}
 };

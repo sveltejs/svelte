@@ -23,6 +23,6 @@ export default {
 		assert.ok( !target.contains( p1 ), 'first <p> element should be removed' );
 		assert.equal( p2, p3, 'second <p> element should be retained' );
 
-		component.teardown();
+		component.destroy();
 	}
 };

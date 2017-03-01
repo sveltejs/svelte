@@ -18,6 +18,6 @@ export default {
 			before-else-after
 		` );
 
-		component.teardown();
+		component.destroy();
 	}
 };

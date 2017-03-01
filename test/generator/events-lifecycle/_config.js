@@ -7,7 +7,7 @@ export default {
 			count += 1;
 		});
 
-		component.teardown();
+		component.destroy();
 		assert.equal( count, 1 );
 	}
 };

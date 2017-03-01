@@ -3,6 +3,6 @@ export default {
 
 	test ( assert, component ) {
 		assert.equal( component.get( 'foo' ), 'got' );
-		component.teardown();
+		component.destroy();
 	}
 };

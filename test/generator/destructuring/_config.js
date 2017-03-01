@@ -22,6 +22,6 @@ export default {
 		assert.equal( count, 1 );
 		assert.equal( number, 42 );
 
-		component.teardown();
+		component.destroy();
 	}
 };

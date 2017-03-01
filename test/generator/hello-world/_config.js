@@ -9,7 +9,7 @@ export default {
 		component.set({ name: 'everybody' });
 		assert.htmlEqual( target.innerHTML, '<h1>Hello everybody!</h1>' );
 
-		component.teardown();
+		component.destroy();
 		assert.htmlEqual( target.innerHTML, '' );
 	}
 };

@@ -12,6 +12,6 @@ export default {
 		component.fire( 'foo', expected );
 		assert.equal( count, 1 );
 
-		component.teardown();
+		component.destroy();
 	}
 };
