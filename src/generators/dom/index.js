@@ -223,9 +223,9 @@ export default function dom ( parsed, source, options, names ) {
 
 	// TODO is the `if` necessary?
 	builders._set.addBlock( deindent`
-		dispatchObservers( this, this._observers.pre, newState, oldState );
+		${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );
 		if ( this._fragment ) this._fragment.update( newState, this._state );
-		dispatchObservers( this, this._observers.post, newState, oldState );
+		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
 	` );
 
 	if ( parsed.js ) {
@@ -363,14 +363,15 @@ export default function dom ( parsed, source, options, names ) {
 			throw new Error( `Components with shared helpers must be compiled to ES2015 modules (format: 'es')` );
 		}
 
-		const names = [ 'get', 'fire', 'observe', 'on', 'set', '_flush', 'dispatchObservers' ].concat( Object.keys( generator.uses ) )
-			.map( name => name in generator.aliases && name !== generator.aliases[ name ] ? `${name} as ${generator.aliases[ name ]}` : name );
+		const names = Object.keys( generator.uses ).map( name => {
+			return name !== generator.aliases[ name ] ? `${name} as ${generator.aliases[ name ]}` : name;
+		});
 
 		builders.main.addLineAtStart(
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
 		);
 	} else {
-		builders.main.addBlock( shared.dispatchObservers.toString() );
+		builders.main.addBlock( `var ${generator.aliases.dispatchObservers} = ${shared.dispatchObservers.toString()}` );
 
 		Object.keys( generator.uses ).forEach( key => {
 			const fn = shared[ key ]; // eslint-disable-line import/namespace
