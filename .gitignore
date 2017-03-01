@@ -11,3 +11,4 @@ coverage
 coverage.lcov
 test/sourcemaps/*/output.js
 test/sourcemaps/*/output.js.map
+_actual.json
