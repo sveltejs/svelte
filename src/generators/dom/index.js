@@ -355,12 +355,13 @@ export default function dom ( parsed, source, options, names ) {
 			${name}.prototype._flush = ${shared._flush};
 		` );
 
+	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`
 		${name}.prototype._set = function _set ( newState ) {
 			${builders._set}
 		};
 
-		${name}.prototype.teardown = function teardown ( detach ) {
+		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
 			this.fire( 'teardown' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
 
 			this._fragment.teardown( detach !== false );
