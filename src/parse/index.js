@@ -123,7 +123,14 @@ export default function parse ( template, options = {} ) {
 		state = state( parser ) || fragment;
 	}
 
-	if ( state !== fragment || parser.stack.length > 1 ) {
+	if ( parser.stack.length > 1 ) {
+		const current = parser.current();
+
+		const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
+		parser.error( `${type} was left open`, current.start );
+	}
+
+	if ( state !== fragment ) {
 		parser.error( 'Unexpected end of input' );
 	}
 
