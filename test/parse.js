@@ -16,7 +16,8 @@ describe( 'parse', () => {
 			const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
 			try {
-				const actual = JSON.parse( JSON.stringify( svelte.parse( input ) ) );
+				const actual = svelte.parse( input );
+				fs.writeFileSync( `test/parser/${dir}/_actual.json`, JSON.stringify( actual, null, '\t' ) );
 				const expected = require( `./parser/${dir}/output.json` );
 
 				assert.deepEqual( actual.html, expected.html );
