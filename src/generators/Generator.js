@@ -19,6 +19,10 @@ export default class Generator {
 		this.components = {};
 		this.events = {};
 
+		// track which properties are needed, so we can provide useful info
+		// in dev mode
+		this.expectedProperties = {};
+
 		this.elementDepth = 0;
 
 		this.code = new MagicString( source );
@@ -97,6 +101,10 @@ export default class Generator {
 					this.skip();
 				}
 			}
+		});
+
+		dependencies.forEach( name => {
+			this.expectedProperties[ name ] = true;
 		});
 
 		return {
