@@ -14,7 +14,7 @@ export default function processCss ( parsed, code ) {
 				if ( expression.type === 'Identifier' ) {
 					const newName = `svelte-${parsed.hash}-${expression.name}`;
 					code.overwrite( expression.start, expression.end, newName );
-					keyframes.set( expression.name.toLowerCase(), newName );
+					keyframes.set( expression.name, newName );
 				}
 			});
 		} else if ( node.children ) {
@@ -56,7 +56,7 @@ export default function processCss ( parsed, code ) {
 				if ( property === 'animation' || property === 'animation-name' ) {
 					block.value.children.forEach( block => {
 						if ( block.type === 'Identifier' ) {
-							const name = block.name.toLowerCase();
+							const name = block.name;
 							if ( keyframes.has( name ) ) {
 								code.overwrite( block.start, block.end, keyframes.get( name ) );
 							}
