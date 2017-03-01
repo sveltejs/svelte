@@ -41,6 +41,7 @@ describe( 'generate', () => {
 			showCompiledCode = config.show;
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
+			compileOptions.dev = config.dev;
 
 			try {
 				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
@@ -79,6 +80,8 @@ describe( 'generate', () => {
 				throw err;
 			}
 
+			let unintendedError = null;
+
 			return env()
 				.then( window => {
 					// Put the constructor on window for testing
@@ -90,6 +93,11 @@ describe( 'generate', () => {
 						target,
 						data: config.data
 					});
+
+					if ( config.error ) {
+						unintendedError = true;
+						throw new Error( 'Expected a runtime error' );
+					}
 
 					if ( config.html ) {
 						assert.htmlEqual( target.innerHTML, config.html );
@@ -103,8 +111,14 @@ describe( 'generate', () => {
 					}
 				})
 				.catch( err => {
-					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
-					throw err;
+					if ( config.error && !unintendedError ) {
+						config.error( assert, err );
+					}
+
+					else {
+						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
+						throw err;
+					}
 				});
 		});
 	}
