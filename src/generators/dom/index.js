@@ -291,13 +291,32 @@ export default function dom ( parsed, source, options, names ) {
 		` );
 	}
 
-	const initialState = templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`;
+	const stateBlock = new CodeBuilder();
+
+	stateBlock.addLine(
+		`this._state = ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`};`
+	);
+
+	if ( templateProperties.computed ) {
+		stateBlock.addLine(
+			`applyComputations( this._state, this._state, {}, true );`
+		);
+	}
+
+	if ( options.dev ) {
+		Object.keys( generator.expectedProperties ).forEach( prop => {
+			stateBlock.addLine(
+				`if ( !( '${prop}' in this._state ) ) throw new Error( "Component was created without expected data property 'foo'" );`
+			);
+		});
+	}
 
 	builders.main.addBlock( deindent`
 		function ${name} ( options ) {
 			options = options || {};
 			${generator.usesRefs ? `\nthis.refs = {}` : ``}
-			this._state = ${initialState};${templateProperties.computed ? `\napplyComputations( this._state, this._state, {}, true );` : ``}
+
+			${stateBlock}
 
 			this._observers = {
 				pre: Object.create( null ),
