@@ -7,6 +7,6 @@ export default {
 		component.set({ arriving: false });
 		assert.htmlEqual( target.innerHTML, `<div><p class='widget'>Goodbye</p></div>` );
 
-		component.teardown();
+		component.destroy();
 	}
 };

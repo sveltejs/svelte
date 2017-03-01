@@ -14,7 +14,7 @@ export default {
 		assert.equal( target.innerHTML, `before${ns}${ns}after` );
 		component.set({ raw: 'how about <strong>unclosed elements?' });
 		assert.equal( target.innerHTML, `before${ns}how about <strong>unclosed elements?</strong>${ns}after` );
-		component.teardown();
+		component.destroy();
 		assert.equal( target.innerHTML, '' );
 	}
 };

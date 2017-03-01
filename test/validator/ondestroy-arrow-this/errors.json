@@ -1,0 +1,8 @@
+[{
+	"message": "'ondestroy' should be a function expression, not an arrow function expression",
+	"pos": 29,
+	"loc": {
+		"line": 3,
+		"column": 2
+	}
+}]

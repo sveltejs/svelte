@@ -17,7 +17,7 @@ function testAmd ( code, expectedId, dependencies, html ) {
 
 			assert.htmlEqual( main.innerHTML, html );
 
-			component.teardown();
+			component.destroy();
 		}
 
 		define.amd = true;
@@ -44,7 +44,7 @@ function testCjs ( code, dependencyById, html ) {
 
 		assert.htmlEqual( main.innerHTML, html );
 
-		component.teardown();
+		component.destroy();
 	});
 }
 
@@ -59,7 +59,7 @@ function testIife ( code, name, globals, html ) {
 
 		assert.htmlEqual( main.innerHTML, html );
 
-		component.teardown();
+		component.destroy();
 	});
 }
 

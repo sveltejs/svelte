@@ -7,7 +7,7 @@
 			foo: 1
 		}),
 
-		onrender () {
+		oncreate () {
 			this.observe( 'foo', foo => {
 				this.set({ bar: foo * 2 });
 			});

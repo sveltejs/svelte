@@ -2,7 +2,7 @@
 
 <script>
 	export default {
-		onrender () {
+		oncreate () {
 			this.observe( 'foo', foo => {
 				const bar = this.get( 'bar' );
 				if ( foo.x !== bar.x ) throw new Error( 'mismatch' );

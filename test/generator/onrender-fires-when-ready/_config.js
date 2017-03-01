@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true, // uses onrender
+	'skip-ssr': true, // uses oncreate
 
 	html: `<div><p>true</p></div>`,
 
@@ -7,6 +7,6 @@ export default {
 		component.set({ foo: true });
 		assert.htmlEqual( target.innerHTML, `<div><p>true</p>\n<p>true</p></div>` );
 
-		component.teardown();
+		component.destroy();
 	}
 };

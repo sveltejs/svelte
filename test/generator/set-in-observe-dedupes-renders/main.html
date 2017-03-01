@@ -11,7 +11,7 @@
 			}
 		},
 
-		onrender () {
+		oncreate () {
 			this.observe( 'foo', foo => {
 				this.set({ bar: foo });
 			});
