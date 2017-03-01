@@ -63,7 +63,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 		do {
 			if ( fragment.expression && fragment.context === prop ) {
-				if ( !isReference( fragment.expression  ) ) {
+				if ( !isReference( fragment.expression ) ) {
 					// TODO this should happen in prior validation step
 					throw new Error( `${prop} is read-only, it cannot be bound` );
 				}
@@ -71,6 +71,8 @@ export default function createBinding ( generator, node, attribute, current, loc
 				prop = flattenReference( fragment.expression ).name;
 			}
 		} while ( fragment = fragment.parent );
+
+		generator.expectedProperties[ prop ] = true;
 
 		const listName = current.listNames[ parts[0] ];
 		const indexName = current.indexNames[ parts[0] ];
@@ -84,14 +86,18 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 			component._set({ ${prop}: component.get( '${prop}' ) });
 		`;
-	} else if ( deep ) {
-		setter = deindent`
-			var ${parts[0]} = component.get( '${parts[0]}' );
-			${parts[0]}.${parts.slice( 1 ).join( '.' )} = ${value};
-			component._set({ ${parts[0]}: ${parts[0]} });
-		`;
 	} else {
-		setter = `component._set({ ${attribute.value}: ${value} });`;
+		if ( deep ) {
+			setter = deindent`
+				var ${parts[0]} = component.get( '${parts[0]}' );
+				${parts[0]}.${parts.slice( 1 ).join( '.' )} = ${value};
+				component._set({ ${parts[0]}: ${parts[0]} });
+			`;
+		} else {
+			setter = `component._set({ ${attribute.value}: ${value} });`;
+		}
+
+		generator.expectedProperties[ parts[0] ] = true;
 	}
 
 	// special case
