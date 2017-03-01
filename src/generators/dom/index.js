@@ -156,6 +156,19 @@ export default function dom ( parsed, source, options, names ) {
 
 	const { computations, templateProperties } = generator.parseJs();
 
+	// Remove these after version 2
+	if ( templateProperties.onrender ) {
+		const { key } = templateProperties.onrender;
+		generator.code.overwrite( key.start, key.end, 'oncreate', true );
+		templateProperties.oncreate = templateProperties.onrender;
+	}
+
+	if ( templateProperties.onteardown ) {
+		const { key } = templateProperties.onteardown;
+		generator.code.overwrite( key.start, key.end, 'ondestroy', true );
+		templateProperties.ondestroy = templateProperties.onteardown;
+	}
+
 	generator.imports.forEach( node => {
 		node.specifiers.forEach( specifier => {
 			generator.importedNames[ specifier.local.name ] = true;
@@ -164,7 +177,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {
-		const ns = templateProperties.namespace.value;
+		const ns = templateProperties.namespace.value.value;
 		namespace = namespaces[ ns ] || ns;
 
 		// TODO remove the namespace property from the generated code, it's unused past this point
@@ -281,12 +294,12 @@ export default function dom ( parsed, source, options, names ) {
 		builders._set.addBlock( statement );
 	}
 
-	if ( templateProperties.onrender ) {
+	if ( templateProperties.oncreate ) {
 		builders.init.addBlock( deindent`
 			if ( options._root ) {
-				options._root._renderHooks.push({ fn: template.onrender, context: this });
+				options._root._renderHooks.push({ fn: template.oncreate, context: this });
 			} else {
-				template.onrender.call( this );
+				template.oncreate.call( this );
 			}
 		` );
 	}
@@ -348,7 +361,7 @@ export default function dom ( parsed, source, options, names ) {
 		};
 
 		${name}.prototype.teardown = function teardown ( detach ) {
-			this.fire( 'teardown' );${templateProperties.onteardown ? `\ntemplate.onteardown.call( this );` : ``}
+			this.fire( 'teardown' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
 
 			this._fragment.teardown( detach !== false );
 			this._fragment = null;

@@ -1,9 +1,6 @@
-import usesThisOrArguments from '../utils/usesThisOrArguments.js';
+import oncreate from './oncreate.js';
 
 export default function onrender ( validator, prop ) {
-	if ( prop.value.type === 'ArrowFunctionExpression' ) {
-		if ( usesThisOrArguments( prop.value.body ) ) {
-			validator.error( `'onrender' should be a function expression, not an arrow function expression`, prop.start );
-		}
-	}
+	validator.warn( `'onrender' has been deprecated in favour of 'oncreate', and will cause an error in Svelte 2.x`, prop.start );
+	oncreate( validator, prop );
 }
