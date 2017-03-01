@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.8.0
+
+* Prevent duplicate imports ([#308](https://github.com/sveltejs/svelte/issues/308))
+* Use `input` events (not `change`) for all input elements other than `checkbox` and `radio`, and textareas ([#309](https://github.com/sveltejs/svelte/pull/309))
+* Encapsulate keyframe declarations ([#245](https://github.com/sveltejs/svelte/issues/245))
+
 ## 1.7.1
 
 * Deconflict imports and shared helpers ([#222](https://github.com/sveltejs/svelte/issues/222))
