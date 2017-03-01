@@ -21,8 +21,45 @@ const specials = {
 	}
 };
 
+// based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
+const disallowedContents = {
+	li: [ 'li' ],
+	dt: [ 'dt', 'dd' ],
+	dd: [ 'dt', 'dd' ],
+	p: 'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split( ' ' ),
+	rt: [ 'rt', 'rp' ],
+	rp: [ 'rt', 'rp' ],
+	optgroup: [ 'optgroup' ],
+	option: [ 'option', 'optgroup' ],
+	thead: [ 'tbody', 'tfoot' ],
+	tbody: [ 'tbody', 'tfoot' ],
+	tfoot: [ 'tbody' ],
+	tr: [ 'tr', 'tbody' ],
+	td: [ 'td', 'th', 'tr' ],
+	th: [ 'td', 'th', 'tr' ]
+};
+
+function stripWhitespace ( element ) {
+	if ( element.children.length ) {
+		const firstChild = element.children[0];
+		const lastChild = element.children[ element.children.length - 1 ];
+
+		if ( firstChild.type === 'Text' ) {
+			firstChild.data = trimStart( firstChild.data );
+			if ( !firstChild.data ) element.children.shift();
+		}
+
+		if ( lastChild.type === 'Text' ) {
+			lastChild.data = trimEnd( lastChild.data );
+			if ( !lastChild.data ) element.children.pop();
+		}
+	}
+}
+
 export default function tag ( parser ) {
 	const start = parser.index++;
+
+	let parent = parser.current();
 
 	if ( parser.eat( '!--' ) ) {
 		const data = parser.readUntil( /-->/ );
@@ -40,8 +77,6 @@ export default function tag ( parser ) {
 
 	const isClosingTag = parser.eat( '/' );
 
-	// TODO handle cases like <li>one<li>two
-
 	const name = readTagName( parser );
 
 	parser.allowWhitespace();
@@ -53,28 +88,31 @@ export default function tag ( parser ) {
 
 		if ( !parser.eat( '>' ) ) parser.error( `Expected '>'` );
 
-		const element = parser.current();
+		// close any elements that don't have their own closing tags, e.g. <div><p></div>
+		while ( parent.name !== name ) {
+			parent.end = start;
+			parser.stack.pop();
 
-		// strip leading/trailing whitespace as necessary
-		if ( element.children.length ) {
-			const firstChild = element.children[0];
-			const lastChild = element.children[ element.children.length - 1 ];
-
-			if ( firstChild.type === 'Text' ) {
-				firstChild.data = trimStart( firstChild.data );
-				if ( !firstChild.data ) element.children.shift();
-			}
-
-			if ( lastChild.type === 'Text' ) {
-				lastChild.data = trimEnd( lastChild.data );
-				if ( !lastChild.data ) element.children.pop();
-			}
+			parent = parser.current();
 		}
 
-		element.end = parser.index;
+		// strip leading/trailing whitespace as necessary
+		stripWhitespace( parent );
+
+		parent.end = parser.index;
 		parser.stack.pop();
 
 		return null;
+	} else if ( parent.name in disallowedContents ) {
+		// can this be a child of the parent element, or does it implicitly
+		// close it, like `<li>one<li>two`?
+		const disallowed = disallowedContents[ parent.name ];
+		if ( ~disallowed.indexOf( name ) ) {
+			stripWhitespace( parent );
+
+			parent.end = start;
+			parser.stack.pop();
+		}
 	}
 
 	const attributes = [];
