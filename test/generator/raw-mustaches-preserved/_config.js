@@ -16,6 +16,6 @@ export default {
 		assert.equal( target.innerHTML, `<div>${ns}<p>does not change</p>${ns}</div>` );
 		assert.strictEqual( target.querySelector( 'p' ), p );
 
-		component.teardown();
+		component.destroy();
 	}
 };

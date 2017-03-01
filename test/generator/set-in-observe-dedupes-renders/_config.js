@@ -3,6 +3,6 @@ export default {
 
 	test ( assert, component ) {
 		component.set({ foo: { x: 2 } });
-		component.teardown();
+		component.destroy();
 	}
 };

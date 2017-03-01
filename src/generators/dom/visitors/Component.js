@@ -137,7 +137,7 @@ export default {
 			` );
 		}
 
-		generator.current.builders.teardown.addLine( `${name}.teardown( ${isToplevel ? 'detach' : 'false'} );` );
+		generator.current.builders.teardown.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
 
 		generator.current.builders.init.addBlock( local.init );
 		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );

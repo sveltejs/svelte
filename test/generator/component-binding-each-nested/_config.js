@@ -17,6 +17,6 @@ export default {
 			<p>blah, bar, baz</p>
 		` );
 		
-		component.teardown();
+		component.destroy();
 	}
 };

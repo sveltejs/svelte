@@ -25,7 +25,7 @@ export default {
 
 		assert.equal( target.querySelector( 'select' ).value, 'a' );
 
-		component.teardown();
+		component.destroy();
 		assert.htmlEqual( target.innerHTML, '' );
 	}
 };

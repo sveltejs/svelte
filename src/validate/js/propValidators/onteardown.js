@@ -1,9 +1,6 @@
-import usesThisOrArguments from '../utils/usesThisOrArguments.js';
+import ondestroy from './ondestroy.js';
 
 export default function onteardown ( validator, prop ) {
-	if ( prop.value.type === 'ArrowFunctionExpression' ) {
-		if ( usesThisOrArguments( prop.value.body ) ) {
-			validator.error( `'onteardown' should be a function expression, not an arrow function expression`, prop.start );
-		}
-	}
+	validator.warn( `'onteardown' has been deprecated in favour of 'ondestroy', and will cause an error in Svelte 2.x`, prop.start );
+	ondestroy( validator, prop );
 }

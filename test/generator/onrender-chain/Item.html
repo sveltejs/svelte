@@ -7,7 +7,7 @@
 				foo: 'XX'
 			};
 		},
-		onrender () {
+		oncreate () {
 			this.observe( 'item', item => {
 				this.set({ foo: item });
 			});

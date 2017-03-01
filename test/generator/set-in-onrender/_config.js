@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true, // uses onrender
+	'skip-ssr': true, // uses oncreate
 
 	html: '<p>2</p>'
 };

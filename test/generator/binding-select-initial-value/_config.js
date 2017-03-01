@@ -24,6 +24,6 @@ export default {
 		assert.equal( select.value, 'b' );
 		assert.ok( options[1].selected );
 
-		component.teardown();
+		component.destroy();
 	}
 };
