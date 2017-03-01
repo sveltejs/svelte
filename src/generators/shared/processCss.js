@@ -6,6 +6,26 @@ export default function processCss ( parsed, code ) {
 
 	const attr = `[svelte-${parsed.hash}]`;
 
+	const keyframes = new Map();
+
+	function walkKeyframes ( node ) {
+		if ( node.type === 'Atrule' && node.name.toLowerCase() === 'keyframes' ) {
+			node.expression.children.forEach( expression => {
+				if ( expression.type === 'Identifier' ) {
+					const newName = `svelte-${parsed.hash}-${expression.name}`;
+					code.overwrite( expression.start, expression.end, newName );
+					keyframes.set( expression.name, newName );
+				}
+			});
+		} else if ( node.children ) {
+			node.children.forEach( walkKeyframes );
+		} else if ( node.block ) {
+			walkKeyframes( node.block );
+		}
+	}
+
+	parsed.css.children.forEach( walkKeyframes );
+
 	function transform ( rule ) {
 		rule.selector.children.forEach( selector => {
 			const start = selector.start - offset;
@@ -29,11 +49,29 @@ export default function processCss ( parsed, code ) {
 
 			code.overwrite( start + offset, end + offset, transformed );
 		});
+
+		rule.block.children.forEach( block => {
+			if ( block.type === 'Declaration' ) {
+				const property = block.property.toLowerCase();
+				if ( property === 'animation' || property === 'animation-name' ) {
+					block.value.children.forEach( block => {
+						if ( block.type === 'Identifier' ) {
+							const name = block.name;
+							if ( keyframes.has( name ) ) {
+								code.overwrite( block.start, block.end, keyframes.get( name ) );
+							}
+						}
+					});
+				}
+			}
+		});
 	}
 
 	function walk ( node ) {
 		if ( node.type === 'Rule' ) {
 			transform( node );
+		} else if ( node.type === 'Atrule' && node.name.toLowerCase() === 'keyframes' ) {
+			// these have already been processed
 		} else if ( node.children ) {
 			node.children.forEach( walk );
 		} else if ( node.block ) {
