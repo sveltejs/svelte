@@ -243,7 +243,7 @@ export default class Generator {
 				}
 
 				defaultExport.declaration.properties.forEach( prop => {
-					templateProperties[ prop.key.name ] = prop.value;
+					templateProperties[ prop.key.name ] = prop;
 				});
 
 				this.code.prependRight( js.content.start, 'var template = (function () {' );
@@ -255,7 +255,7 @@ export default class Generator {
 
 			[ 'helpers', 'events', 'components' ].forEach( key => {
 				if ( templateProperties[ key ] ) {
-					templateProperties[ key ].properties.forEach( prop => {
+					templateProperties[ key ].value.properties.forEach( prop => {
 						this[ key ][ prop.key.name ] = prop.value;
 					});
 				}
@@ -264,7 +264,7 @@ export default class Generator {
 			if ( templateProperties.computed ) {
 				const dependencies = new Map();
 
-				templateProperties.computed.properties.forEach( prop => {
+				templateProperties.computed.value.properties.forEach( prop => {
 					const key = prop.key.name;
 					const value = prop.value;
 
@@ -286,7 +286,7 @@ export default class Generator {
 					computations.push({ key, deps });
 				}
 
-				templateProperties.computed.properties.forEach( prop => visit( prop.key.name ) );
+				templateProperties.computed.value.properties.forEach( prop => visit( prop.key.name ) );
 			}
 		}
 

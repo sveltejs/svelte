@@ -114,7 +114,7 @@ export default function ssr ( parsed, source, options, names ) {
 			}
 		` );
 
-		templateProperties.components.properties.forEach( prop => {
+		templateProperties.components.value.properties.forEach( prop => {
 			builders.renderCss.addLine( `addComponent( template.components.${prop.key.name} );` );
 		});
 	}

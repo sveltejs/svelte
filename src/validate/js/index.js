@@ -23,9 +23,20 @@ export default function validateJs ( validator, js ) {
 			checkForComputedKeys( validator, node.declaration.properties );
 			checkForDupes( validator, node.declaration.properties );
 
+			const templateProperties = {};
+
 			node.declaration.properties.forEach( prop => {
-				validator.templateProperties[ prop.key.name ] = prop;
+				templateProperties[ prop.key.name ] = prop;
 			});
+
+			// Remove these checks in version 2
+			if ( templateProperties.oncreate && templateProperties.onrender ) {
+				validator.error( 'Cannot have both oncreate and onrender', templateProperties.onrender.start );
+			}
+
+			if ( templateProperties.ondestroy && templateProperties.onteardown ) {
+				validator.error( 'Cannot have both ondestroy and onteardown', templateProperties.onteardown.start );
+			}
 
 			// ensure all exported props are valid
 			node.declaration.properties.forEach( prop => {
@@ -45,8 +56,8 @@ export default function validateJs ( validator, js ) {
 				}
 			});
 
-			if ( validator.templateProperties.namespace ) {
-				const ns = validator.templateProperties.namespace.value.value;
+			if ( templateProperties.namespace ) {
+				const ns = templateProperties.namespace.value.value;
 				validator.namespace = namespaces[ ns ] || ns;
 			}
 

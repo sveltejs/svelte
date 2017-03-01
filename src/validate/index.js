@@ -36,8 +36,6 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 			});
 		},
 
-		templateProperties: {},
-
 		names: [],
 
 		namespace: null
