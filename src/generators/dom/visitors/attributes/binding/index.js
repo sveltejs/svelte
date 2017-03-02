@@ -45,13 +45,17 @@ export default function createBinding ( generator, node, attribute, current, loc
 		eventName = 'input';
 	}
 
+	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO ensure that this is a static attribute
 	let value;
 
 	if ( local.isComponent ) {
 		value = 'value';
 	} else if ( node.name === 'select' ) {
-		// TODO <select multiple> – can use select.selectedOptions
-		value = 'selectedOption && selectedOption.__value';
+		if ( isMultipleSelect ) {
+			value = `[].map.call( ${local.name}.selectedOptions, function ( option ) { return option.__value; })`;
+		} else {
+			value = 'selectedOption && selectedOption.__value';
+		}
 	} else {
 		value = `${local.name}.${attribute.name}`;
 	}
@@ -101,7 +105,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 	}
 
 	// special case
-	if ( node.name === 'select' ) {
+	if ( node.name === 'select' && !isMultipleSelect ) {
 		setter = `var selectedOption = ${local.name}.selectedOptions[0] || ${local.name}.options[0];\n` + setter;
 	}
 
@@ -130,19 +134,26 @@ export default function createBinding ( generator, node, attribute, current, loc
 		let updateElement;
 
 		if ( node.name === 'select' ) {
-			// TODO select multiple
 			const value = generator.current.getUniqueName( 'value' );
 			const i = generator.current.getUniqueName( 'i' );
 			const option = generator.current.getUniqueName( 'option' );
 
-			updateElement = deindent`
-				var ${value} = ${contextual ? attribute.value : `root.${attribute.value}`};
-				for ( var ${i} = 0; ${i} < ${local.name}.options.length; ${i} += 1 ) {
-					var ${option} = ${local.name}.options[${i}];
+			const ifStatement = isMultipleSelect ?
+				deindent`
+					${option}.selected = ~${value}.indexOf( ${option}.__value );` :
+				deindent`
 					if ( ${option}.__value === ${value} ) {
 						${option}.selected = true;
 						break;
-					}
+					}`;
+
+			updateElement = deindent`
+				var ${value} = ${contextual ? attribute.value : `root.${attribute.value}`};
+				console.log( 'value', ${value} );
+				for ( var ${i} = 0; ${i} < ${local.name}.options.length; ${i} += 1 ) {
+					var ${option} = ${local.name}.options[${i}];
+
+					${ifStatement}
 				}
 			`;
 		} else {
@@ -164,7 +175,9 @@ export default function createBinding ( generator, node, attribute, current, loc
 		node.initialUpdate = updateElement;
 
 		local.update.addLine(
-			`if ( !${local.name}_updating ) ${updateElement}`
+			`if ( !${local.name}_updating ) {
+				${updateElement}
+			}`
 		);
 
 		generator.current.builders.teardown.addLine( deindent`
