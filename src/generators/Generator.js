@@ -6,6 +6,7 @@ import flattenReference from '../utils/flattenReference.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
+import annotateWithScopes from './annotateWithScopes.js';
 
 export default class Generator {
 	constructor ( parsed, source, names, visitors ) {
@@ -49,10 +50,18 @@ export default class Generator {
 		const { code, helpers } = this;
 		const { contextDependencies, contexts, indexes } = this.current;
 
+		let scope = annotateWithScopes( expression );
+
 		walk( expression, {
 			enter ( node, parent, key ) {
+				if ( node._scope ) {
+					scope = node._scope;
+					return;
+				}
+
 				if ( isReference( node, parent ) ) {
 					const { name } = flattenReference( node );
+					if ( scope.has( name ) ) return;
 
 					if ( parent && parent.type === 'CallExpression' && node === parent.callee && helpers[ name ] ) {
 						code.prependRight( node.start, `template.helpers.` );
@@ -100,6 +109,10 @@ export default class Generator {
 
 					this.skip();
 				}
+			},
+
+			leave ( node ) {
+				if ( node._scope ) scope = scope.parent;
 			}
 		});
 
@@ -347,3 +360,4 @@ export default class Generator {
 		if ( visitor.leave ) visitor.leave( this, node );
 	}
 }
+
