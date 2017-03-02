@@ -58,13 +58,15 @@ describe( 'generate', () => {
 			const { code } = compiled;
 
 			// check that no ES2015+ syntax slipped in
-			try {
-				const startIndex = code.indexOf( 'function renderMainFragment' ); // may change!
-				const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
-				acorn.parse( es5, { ecmaVersion: 5 });
-			} catch ( err ) {
-				if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
-				throw err;
+			if ( !config.allowES2015 ) {
+				try {
+					const startIndex = code.indexOf( 'function renderMainFragment' ); // may change!
+					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
+					acorn.parse( es5, { ecmaVersion: 5 });
+				} catch ( err ) {
+					if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
+					throw err;
+				}
 			}
 
 			Object.keys( require.cache ).filter( x => x.endsWith( '.html' ) ).forEach( file => {
