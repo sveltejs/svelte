@@ -1,4 +1,5 @@
-import { tokenizer, tokTypes, parseExpressionAt } from 'acorn';
+import { parse } from 'acorn';
+import spaces from '../../utils/spaces.js';
 
 export function readEventHandlerDirective ( parser, start, name ) {
 	const quoteMark = (
@@ -8,29 +9,51 @@ export function readEventHandlerDirective ( parser, start, name ) {
 	);
 
 	const expressionStart = parser.index;
-	let end = null;
 
-	let depth = 0;
-	for ( const token of tokenizer( parser.remaining() ) ) {
-		if ( token.type === tokTypes.parenL ) depth += 1;
-		if ( token.type === tokTypes.parenR ) {
-			depth -= 1;
-			if ( depth === 0 ) {
-				end = expressionStart + token.end;
-				break;
+	let str = '';
+	let escaped = false;
+
+	for ( let i = expressionStart; i < parser.template.length; i += 1 ) {
+		const char = parser.template[i];
+
+		if ( quoteMark ) {
+			if ( char === quoteMark ) {
+				if ( escaped ) {
+					str += quoteMark;
+				} else {
+					parser.index = i + 1;
+					break;
+				}
+			} else if ( escaped ) {
+				str += '\\' + char;
+				escaped = false;
+			} else if ( char === '\\' ) {
+				escaped = true;
+			} else {
+				str += char;
 			}
+		}
+
+		else if ( /\s/.test( char ) ) {
+			parser.index = i;
+			break;
+		}
+
+		else {
+			str += char;
 		}
 	}
 
-	const expression = parseExpressionAt( parser.template.slice( 0, end ), expressionStart );
-	parser.index = expression.end;
+	const ast = parse( spaces( expressionStart ) + str );
+
+	if ( ast.body.length > 1 ) {
+		parser.error( `Event handler should be a single call expression`, ast.body[1].start );
+	}
+
+	const expression = ast.body[0].expression;
 
 	if ( expression.type !== 'CallExpression' ) {
 		parser.error( `Expected call expression`, expressionStart );
-	}
-
-	if ( quoteMark ) {
-		parser.eat( quoteMark, true );
 	}
 
 	return {

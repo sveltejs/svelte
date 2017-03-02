@@ -1,0 +1,8 @@
+{
+	"message": "Expected call expression",
+	"loc": {
+		"line": 1,
+		"column": 15
+	},
+	"pos": 15
+}
