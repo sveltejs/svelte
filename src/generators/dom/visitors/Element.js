@@ -79,12 +79,10 @@ export default {
 		}
 
 		// special case – bound <option> without a value attribute
-		if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { // TODO check it's bound
-			// const dynamic = node.children.length > 1 || node.children[0].type !== 'Text';
-			// TODO do this in init for static values... have to do it in `leave`, because they don't exist yet
-			local.update.addLine(
-				`${name}.__value = ${name}.textContent`
-			);
+		if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
+			const statement = `${name}.__value = ${name}.textContent;`;
+			local.update.addLine( statement );
+			node.initialUpdate = statement;
 		}
 
 		generator.current.builders.init.addBlock( local.init );
