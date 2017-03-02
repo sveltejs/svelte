@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.9.1
+
+* Better error for malformed event handlers ([#220](https://github.com/sveltejs/svelte/issues/220))
+* Allow function expressions in tags ([#269](https://github.com/sveltejs/svelte/issues/269))
+
 ## 1.9.0
 
 * Add development warnings ([#13](https://github.com/sveltejs/svelte/issues/13)), ([#320](https://github.com/sveltejs/svelte/pull/320)), ([#177](https://github.com/sveltejs/svelte/issues/177)), ([#249](https://github.com/sveltejs/svelte/issues/249))
@@ -9,6 +14,7 @@
 
 * Allow implicitly closed elements ([#318](https://github.com/sveltejs/svelte/pull/318))
 * More informative error messages for unclosed elements/blocks ([#258](https://github.com/sveltejs/svelte/issues/258))
+* Deprecate `onrender` and `onteardown` in favour of `oncreate` and `ondestroy` ([#40](https://github.com/sveltejs/svelte/issues/40))
 
 ## 1.8.0
 
