@@ -247,13 +247,12 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( parsed.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
-			let addedCss = false;
-			function addCss () {
+			function addCss (document) {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
 				${generator.helper( 'appendNode' )}( style, document.head );
 
-				addedCss = true;
+				document.__sveltecss_${parsed.hash} = true;
 			}
 		` );
 	}
@@ -264,7 +263,7 @@ export default function dom ( parsed, source, options, names ) {
 	builders.init.addLine( `this._torndown = false;` );
 
 	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !addedCss ) addCss();` );
+		builders.init.addLine( `if ( !this._document.__sveltecss_${parsed.hash} ) addCss(this._document);` );
 	}
 
 	if ( generator.hasComponents ) {
@@ -341,6 +340,10 @@ export default function dom ( parsed, source, options, names ) {
 
 		this._root = options._root;
 		this._yield = options._yield;
+
+		this._document = this._root
+			? this._root._document
+			: options.target ? options.target.ownerDocument : document;
 
 		${builders.init}
 	` );
