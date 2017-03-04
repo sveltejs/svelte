@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.10.0
+
+* Component self-references with `<:Self/>` ([#51](https://github.com/sveltejs/svelte/issues/51))
+* Two-way binding with `<select multiple>` ([#313](https://github.com/sveltejs/svelte/issues/313))
+
 ## 1.9.1
 
 * Better error for malformed event handlers ([#220](https://github.com/sveltejs/svelte/issues/220))
