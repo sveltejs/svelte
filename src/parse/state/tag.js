@@ -180,7 +180,7 @@ function readTagName ( parser ) {
 
 		while ( i-- ) {
 			const fragment = parser.stack[i];
-			if ( fragment.type === 'IfBlock' || fragment.type === 'ElseBlock' ) {
+			if ( fragment.type === 'IfBlock' || fragment.type === 'EachBlock' ) {
 				legal = true;
 				break;
 			}
