@@ -9,6 +9,8 @@ import voidElementNames from '../../utils/voidElementNames.js';
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
 
+const SELF = ':Self';
+
 const specials = {
 	script: {
 		read: readScript,
@@ -169,6 +171,27 @@ export default function tag ( parser ) {
 
 function readTagName ( parser ) {
 	const start = parser.index;
+
+	if ( parser.eat( SELF ) ) {
+		// check we're inside a block, otherwise this
+		// will cause infinite recursion
+		let i = parser.stack.length;
+		let legal = false;
+
+		while ( i-- ) {
+			const fragment = parser.stack[i];
+			if ( fragment.type === 'IfBlock' || fragment.type === 'ElseBlock' ) {
+				legal = true;
+				break;
+			}
+		}
+
+		if ( !legal ) {
+			parser.error( `<${SELF}> components can only exist inside if-blocks or each-blocks`, start );
+		}
+
+		return SELF;
+	}
 
 	const name = parser.readUntil( /(\s|\/|>)/ );
 	if ( !validTagName.test( name ) ) {
