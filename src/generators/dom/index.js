@@ -8,8 +8,8 @@ import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
-	constructor ( parsed, source, names, visitors ) {
-		super( parsed, source, names, visitors );
+	constructor ( parsed, source, name, names, visitors ) {
+		super( parsed, source, name, names, visitors );
 		this.renderers = [];
 		this.uses = {};
 
@@ -152,7 +152,7 @@ export default function dom ( parsed, source, options, names ) {
 	const format = options.format || 'es';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new DomGenerator( parsed, source, names, visitors );
+	const generator = new DomGenerator( parsed, source, name, names, visitors );
 
 	const { computations, templateProperties } = generator.parseJs();
 

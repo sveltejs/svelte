@@ -1,0 +1,8 @@
+{
+	"message": "<:Self> components can only exist inside if-blocks or each-blocks",
+	"loc": {
+		"line": 1,
+		"column": 1
+	},
+	"pos": 1
+}
