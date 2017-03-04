@@ -43,11 +43,13 @@ export default {
 			})
 			.join( ', ' );
 
+		const expression = node.name === ':Self' ? generator.name : `template.components.${node.name}`;
+
 		bindings.forEach( binding => {
-			generator.addBinding( binding, node.name );
+			generator.addBinding( binding, expression );
 		});
 
-		let open = `\${template.components.${node.name}.render({${props}}`;
+		let open = `\${${expression}.render({${props}}`;
 
 		if ( node.children.length ) {
 			open += `, { yield: () => \``;

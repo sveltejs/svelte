@@ -9,9 +9,10 @@ import getOutro from './shared/utils/getOutro.js';
 import annotateWithScopes from './annotateWithScopes.js';
 
 export default class Generator {
-	constructor ( parsed, source, names, visitors ) {
+	constructor ( parsed, source, name, names, visitors ) {
 		this.parsed = parsed;
 		this.source = source;
+		this.name = name;
 		this.names = names;
 		this.visitors = visitors;
 

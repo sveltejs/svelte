@@ -2,10 +2,14 @@ import deindent from '../../../utils/deindent.js';
 import CodeBuilder from '../../../utils/CodeBuilder.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
+function capDown ( name ) {
+	return `${name[0].toLowerCase()}${name.slice( 1 )}`;
+}
+
 export default {
 	enter ( generator, node ) {
 		const hasChildren = node.children.length > 0;
-		const name = generator.current.getUniqueName( `${node.name[0].toLowerCase()}${node.name.slice( 1 )}` );
+		const name = generator.current.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
 
 		const local = {
 			name,
@@ -104,9 +108,11 @@ export default {
 			componentInitProperties.push(`data: ${name}_initialData`);
 		}
 
+		const expression = node.name === ':Self' ? generator.name : `template.components.${node.name}`;
+
 		local.init.addBlockAtStart( deindent`
 			${statements.join( '\n\n' )}
-			var ${name} = new template.components.${node.name}({
+			var ${name} = new ${expression}({
 				${componentInitProperties.join(',\n')}
 			});
 		` );
