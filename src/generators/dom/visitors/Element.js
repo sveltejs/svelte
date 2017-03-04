@@ -5,7 +5,7 @@ import Component from './Component.js';
 
 export default {
 	enter ( generator, node ) {
-		const isComponent = node.name in generator.components;
+		const isComponent = node.name in generator.components || node.name === ':Self';
 		if ( isComponent ) {
 			return Component.enter( generator, node );
 		}
