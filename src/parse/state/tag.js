@@ -130,13 +130,13 @@ export default function tag ( parser ) {
 
 	parser.allowWhitespace();
 
-	// special cases – <script> and <style>
-	if ( name in specials ) {
+	// special cases – top-level <script> and <style>
+	if ( name in specials && parser.stack.length === 1 ) {
 		const special = specials[ name ];
 
 		if ( parser[ special.property ] ) {
 			parser.index = start;
-			parser.error( `You can only have one <${name}> tag per component` );
+			parser.error( `You can only have one top-level <${name}> tag per component` );
 		}
 
 		parser.eat( '>', true );
