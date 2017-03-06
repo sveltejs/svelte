@@ -211,6 +211,14 @@ export default function dom ( parsed, source, options, names ) {
 		_set: new CodeBuilder()
 	};
 
+	if ( options.dev ) {
+		builders._set.addBlock ( deindent`
+			if ( typeof newState !== 'object' ) {
+				throw new Error( 'Component .set was called without an object of data key-values to update.' );
+			}
+		`);
+	}
+
 	builders._set.addLine( 'var oldState = this._state;' );
 	builders._set.addLine( 'this._state = Object.assign( {}, oldState, newState );' );
 
