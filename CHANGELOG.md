@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.10.2
+
+* Accept any case for doctype declarations ([#336](https://github.com/sveltejs/svelte/issues/336))
+* Allow non-top-level `<script>` and `<style>` tags to pass through without processing ([#335](https://github.com/sveltejs/svelte/issues/335))
+
 ## 1.10.1
 
 * typecheck argument in _set when in dev mode ([#342](https://github.com/sveltejs/svelte/issues/342))
