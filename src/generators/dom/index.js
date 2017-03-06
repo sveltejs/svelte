@@ -410,11 +410,13 @@ export default function dom ( parsed, source, options, names ) {
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
 		);
 	} else {
-		builders.main.addBlock( `var ${generator.aliases.dispatchObservers} = ${shared.dispatchObservers.toString()}` );
-
 		Object.keys( generator.uses ).forEach( key => {
 			const fn = shared[ key ]; // eslint-disable-line import/namespace
-			builders.main.addBlock( fn.toString() );
+			if ( key !== generator.aliases[ key ] ) {
+				builders.main.addBlock( `var ${generator.aliases[ key ]} = ${fn.toString()}}` );
+			} else {
+				builders.main.addBlock( fn.toString() );
+			}
 		});
 	}
 
