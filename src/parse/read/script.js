@@ -17,7 +17,7 @@ export default function readScript ( parser, start, attributes ) {
 			break;
 		}
 
-		if ( parser.eat( '</script>' ) ) {
+		if ( parser.eat( '<\/script>' ) ) {
 			break;
 		}
 	}
