@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.10.1
+
+* typecheck argument in _set when in dev mode ([#342](https://github.com/sveltejs/svelte/issues/342))
+* Prevent duplicate helpers in non-shared mode ([#337](https://github.com/sveltejs/svelte/issues/337))
+
 ## 1.10.0
 
 * Component self-references with `<:Self/>` ([#51](https://github.com/sveltejs/svelte/issues/51))
