@@ -4,7 +4,7 @@ import readStyle from '../read/style.js';
 import { readEventHandlerDirective, readBindingDirective } from '../read/directives.js';
 import { trimStart, trimEnd } from '../utils/trim.js';
 import { decodeCharacterReferences } from '../utils/html.js';
-import voidElementNames from '../../utils/voidElementNames.js';
+import isVoidElementName from '../../utils/isVoidElementName.js';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
@@ -84,7 +84,7 @@ export default function tag ( parser ) {
 	parser.allowWhitespace();
 
 	if ( isClosingTag ) {
-		if ( voidElementNames.test( name ) ) {
+		if ( isVoidElementName( name ) ) {
 			parser.error( `<${name}> is a void element and cannot have children, or a closing tag`, start );
 		}
 
@@ -155,7 +155,7 @@ export default function tag ( parser ) {
 
 	parser.current().children.push( element );
 
-	const selfClosing = parser.eat( '/' ) || voidElementNames.test( name );
+	const selfClosing = parser.eat( '/' ) || isVoidElementName( name );
 
 	parser.eat( '>', true );
 
