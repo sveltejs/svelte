@@ -1,5 +1,5 @@
 import Component from './Component.js';
-import voidElementNames from '../../../utils/voidElementNames.js';
+import isVoidElementName from '../../../utils/isVoidElementName.js';
 
 export default {
 	enter ( generator, node ) {
@@ -44,7 +44,7 @@ export default {
 			return;
 		}
 
-		if ( !voidElementNames.test( node.name ) ) {
+		if ( !isVoidElementName( node.name ) ) {
 			generator.append( `</${node.name}>` );
 		}
 	}
