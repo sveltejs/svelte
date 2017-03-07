@@ -16,7 +16,7 @@ export default {
 			namespace: generator.current.namespace,
 			isComponent: true,
 
-			allUsedContexts: new Set(),
+			allUsedContexts: [],
 
 			init: new CodeBuilder(),
 			update: new CodeBuilder()
@@ -28,10 +28,8 @@ export default {
 
 		addComponentAttributes( generator, node, local );
 
-		if ( local.allUsedContexts.size ) {
-			const contextNames = [...local.allUsedContexts];
-
-			const initialProps = contextNames.map( contextName => {
+		if ( local.allUsedContexts.length ) {
+			const initialProps = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `root: root`;
 
 				const listName = generator.current.listNames[ contextName ];
@@ -40,7 +38,7 @@ export default {
 				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 			}).join( ',\n' );
 
-			const updates = contextNames.map( contextName => {
+			const updates = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `${name}._context.root = root;`;
 
 				const listName = generator.current.listNames[ contextName ];

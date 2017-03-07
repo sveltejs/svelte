@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "file": "output.js",
+  "sources": [
+    "input.html"
+  ],
+  "sourcesContent": [
+    "{{foo.bar.baz}}"
+  ],
+  "names": [],
+  "mappings": ";sBAAE,GAAG,CAAC,GAAG,CAAC,GAAG;;;;;;;;;;;uBAAX,GAAG,CAAC,GAAG,CAAC,GAAG;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+}

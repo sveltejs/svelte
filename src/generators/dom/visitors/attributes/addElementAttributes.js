@@ -155,18 +155,18 @@ export default function addElementAttributes ( generator, node, local ) {
 				generator.code.prependRight( attribute.expression.start, 'component.' );
 			}
 
-			const usedContexts = new Set();
+			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
 				const { contexts } = generator.contextualise( arg, true );
 
 				contexts.forEach( context => {
-					usedContexts.add( context );
-					local.allUsedContexts.add( context );
+					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
+					if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 				});
 			});
 
 			// TODO hoist event handlers? can do `this.__component.method(...)`
-			const declarations = [...usedContexts].map( name => {
+			const declarations = usedContexts.map( name => {
 				if ( name === 'root' ) return 'var root = this.__svelte.root;';
 
 				const listName = generator.current.listNames[ name ];

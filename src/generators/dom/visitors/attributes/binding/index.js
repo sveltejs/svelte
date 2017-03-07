@@ -8,7 +8,9 @@ export default function createBinding ( generator, node, attribute, current, loc
 	const deep = parts.length > 1;
 	const contextual = parts[0] in current.contexts;
 
-	if ( contextual ) local.allUsedContexts.add( parts[0] );
+	if ( contextual && !~local.allUsedContexts.indexOf( parts[0] ) ) {
+		local.allUsedContexts.push( parts[0] );
+	}
 
 	if ( local.isComponent ) {
 		let obj;
@@ -174,11 +176,11 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 		node.initialUpdate = updateElement;
 
-		local.update.addLine(
-			`if ( !${local.name}_updating ) {
+		local.update.addLine( deindent`
+			if ( !${local.name}_updating ) {
 				${updateElement}
-			}`
-		);
+			}
+		` );
 
 		generator.current.builders.teardown.addLine( deindent`
 			${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
