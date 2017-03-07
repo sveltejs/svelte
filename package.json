@@ -44,9 +44,17 @@
   },
   "devDependencies": {
     "acorn": "^4.0.4",
+    "babel": "^6.23.0",
+    "babel-core": "^6.23.1",
     "babel-plugin-istanbul": "^3.0.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
-    "babel-register": "^6.18.0",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
+    "babel-plugin-transform-es2015-block-scoping": "^6.23.0",
+    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.23.0",
+    "babel-plugin-transform-es2015-parameters": "^6.23.0",
+    "babel-plugin-transform-es2015-spread": "^6.22.0",
+    "babel-preset-env": "^1.2.1",
+    "babel-register": "^6.23.0",
     "codecov": "^1.0.1",
     "console-group": "^0.3.2",
     "css-tree": "^1.0.0-alpha16",
@@ -54,6 +62,7 @@
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.3.0",
     "fuzzyset.js": "0.0.1",
+    "glob": "^7.1.1",
     "jsdom": "^9.9.1",
     "locate-character": "^2.0.0",
     "mocha": "^3.2.0",
@@ -78,6 +87,11 @@
   },
   "babel": {
     "plugins": [
+      "transform-es2015-arrow-functions",
+      "transform-es2015-block-scoping",
+      "transform-es2015-spread",
+      "transform-es2015-parameters",
+      "transform-es2015-destructuring",
       "transform-es2015-modules-commonjs"
     ]
   }
