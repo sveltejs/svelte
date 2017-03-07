@@ -255,7 +255,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( parsed.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
-			let addedCss = false;
+			var addedCss = false;
 			function addCss () {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
