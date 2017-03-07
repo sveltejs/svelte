@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "file": "output.js",
+  "sources": [
+    "input.html"
+  ],
+  "sourcesContent": [
+    "<div></div>\n\n<script>\n\texport default {\n\t\toncreate () {\n\t\t\tconsole.log( 42 );\n\t\t}\n\t}\n</script>"
+  ],
+  "names": [],
+  "mappings": "6BAEQ;CACP,OAAe;EACd,QAAQ,CAAC,GAAG;GACX,OAAO,CAAC,GAAG,EAAE,EAAE,EAAE,CAAC;GAClB;EACD;AACF;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
+}

@@ -1,10 +1,11 @@
-import spaces from '../src/utils/spaces.js';
+import spaces from '../../src/utils/spaces.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as acorn from 'acorn';
+import * as babel from 'babel-core';
 
-import { addLineNumbers, loadConfig, svelte, env, setupHtmlEqual } from './helpers.js';
+import { addLineNumbers, loadConfig, svelte, env, setupHtmlEqual } from '../helpers.js';
 
 let showCompiledCode = false;
 let compileOptions = null;
@@ -14,11 +15,17 @@ function getName ( filename ) {
 	return base[0].toUpperCase() + base.slice( 1 );
 }
 
+const nodeVersionMatch = /^v(\d)/.exec( process.version );
+const legacy = +nodeVersionMatch[1] < 6;
+const babelrc = require( '../../package.json' ).babel;
+
 require.extensions[ '.html' ] = function ( module, filename ) {
 	const options = Object.assign({ filename, name: getName( filename ) }, compileOptions );
-	const { code } = svelte.compile( fs.readFileSync( filename, 'utf-8' ), options );
+	let { code } = svelte.compile( fs.readFileSync( filename, 'utf-8' ), options );
 
 	if ( showCompiledCode ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
+
+	if ( legacy ) code = babel.transform( code, babelrc ).code;
 
 	return module._compile( code, filename );
 };
@@ -29,7 +36,7 @@ describe( 'generate', () => {
 	function runTest ( dir, shared ) {
 		if ( dir[0] === '.' ) return;
 
-		const config = loadConfig( `./generator/${dir}/_config.js` );
+		const config = loadConfig( `./generator/samples/${dir}/_config.js` );
 
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
@@ -44,7 +51,7 @@ describe( 'generate', () => {
 			compileOptions.dev = config.dev;
 
 			try {
-				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
+				const source = fs.readFileSync( `test/generator/samples/${dir}/main.html`, 'utf-8' );
 				compiled = svelte.compile( source, compileOptions );
 			} catch ( err ) {
 				if ( config.compileError ) {
@@ -76,7 +83,7 @@ describe( 'generate', () => {
 			let SvelteComponent;
 
 			try {
-				SvelteComponent = require( `./generator/${dir}/main.html` ).default;
+				SvelteComponent = require( `./samples/${dir}/main.html` ).default;
 			} catch ( err ) {
 				if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 				throw err;
@@ -126,13 +133,13 @@ describe( 'generate', () => {
 	}
 
 	describe( 'inline helpers', () => {
-		fs.readdirSync( 'test/generator' ).forEach( dir => {
+		fs.readdirSync( 'test/generator/samples' ).forEach( dir => {
 			runTest( dir, null );
 		});
 	});
 
 	describe( 'shared helpers', () => {
-		fs.readdirSync( 'test/generator' ).forEach( dir => {
+		fs.readdirSync( 'test/generator/samples' ).forEach( dir => {
 			runTest( dir, path.resolve( 'shared.js' ) );
 		});
 	});
