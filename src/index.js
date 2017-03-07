@@ -46,4 +46,28 @@ export function compile ( source, _options ) {
 	return compiler( parsed, source, options, names );
 }
 
+export function create ( source, _options = {} ) {
+	_options.format = 'eval';
+
+	const compiled = compile( source, _options );
+
+	if ( !compiled || !compiled.code ) {
+		return;
+	}
+
+	let result;
+	try {
+		result = ( 1, eval )( compiled.code );
+	} catch ( err ) {
+		if ( _options.onerror ) {
+			_options.onerror( err );
+		} else {
+			throw err;
+		}
+		return;
+	}
+
+	return result;
+}
+
 export { parse, validate, version as VERSION };

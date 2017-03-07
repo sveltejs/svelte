@@ -18,6 +18,11 @@ export default function getOutro ( format, name, options, imports ) {
 		return `return ${name};\n\n}(${globals.join( ', ' )}));`;
 	}
 
+	if ( format === 'eval' ) {
+		const globals = getGlobals( imports, options );
+		return `return ${name};\n\n}(${globals.join( ', ' )}));`;
+	}
+
 	if ( format === 'umd' ) {
 		return `return ${name};\n\n})));`;
 	}
