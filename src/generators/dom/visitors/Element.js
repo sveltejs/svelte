@@ -17,7 +17,7 @@ export default {
 			namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : generator.current.namespace,
 			isComponent: false,
 
-			allUsedContexts: new Set(),
+			allUsedContexts: [],
 
 			init: new CodeBuilder(),
 			update: new CodeBuilder()
@@ -27,10 +27,8 @@ export default {
 
 		addElementAttributes( generator, node, local );
 
-		if ( local.allUsedContexts.size ) {
-			const contextNames = [...local.allUsedContexts];
-
-			const initialProps = contextNames.map( contextName => {
+		if ( local.allUsedContexts.length ) {
+			const initialProps = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `root: root`;
 
 				const listName = generator.current.listNames[ contextName ];
@@ -39,7 +37,7 @@ export default {
 				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 			}).join( ',\n' );
 
-			const updates = contextNames.map( contextName => {
+			const updates = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
 				const listName = generator.current.listNames[ contextName ];

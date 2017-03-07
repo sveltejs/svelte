@@ -1,6 +1,7 @@
 import nodeResolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
+import buble from 'rollup-plugin-buble';
 
 export default {
 	entry: 'src/index.js',
@@ -11,7 +12,14 @@ export default {
 	plugins: [
 		nodeResolve({ jsnext: true, module: true }),
 		commonjs(),
-		json()
+		json(),
+		buble({
+			include: 'src/**',
+			exclude: 'src/shared/**',
+			transforms: {
+				dangerousTaggedTemplateString: true
+			}
+		})
 	],
 	external: [ 'magic-string' ],
 	globals: {
