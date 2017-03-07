@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.11.0
+
+* Add `format: 'eval'` and `svelte.create`, to create components directly from source code ([#345](https://github.com/sveltejs/svelte/issues/345))
+* Node 4 compatibility ([#109](https://github.com/sveltejs/svelte/issues/109))
+
 ## 1.10.3
 
 * Prevent `'</script>'` string occurence breaking pages ([#349](https://github.com/sveltejs/svelte/pull/349))
