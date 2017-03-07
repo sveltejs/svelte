@@ -99,7 +99,7 @@ export default class Generator {
 
 						if ( globalWhitelist[ name ] ) {
 							code.prependRight( node.start, `( '${name}' in root ? root.` );
-							code.appendLeft( node.object.end, ` : ${name} )` );
+							code.appendLeft( node.object ? node.object.end : node.end, ` : ${name} )` );
 						} else {
 							code.prependRight( node.start, `root.` );
 						}
@@ -361,4 +361,3 @@ export default class Generator {
 		if ( visitor.leave ) visitor.leave( this, node );
 	}
 }
-
