@@ -1,1 +1,1 @@
-export const whitespace = /\s/;
+export const whitespace = /[ \t\r\n]/;
