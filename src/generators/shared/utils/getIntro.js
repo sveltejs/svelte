@@ -7,6 +7,7 @@ export default function getIntro ( format, options, imports ) {
 	if ( format === 'cjs' ) return getCjsIntro( options, imports );
 	if ( format === 'iife' ) return getIifeIntro( options, imports );
 	if ( format === 'umd' ) return getUmdIntro( options, imports );
+	if ( format === 'eval' ) return getEvalIntro( options, imports );
 
 	throw new Error( `Not implemented: ${format}` );
 }
@@ -58,6 +59,10 @@ function getUmdIntro ( options, imports ) {
 			typeof define === 'function' && define.amd ? define(${amdId}${amdDeps}factory) :
 			(global.${options.name} = factory(${globalDeps}));
 		}(this, (function (${paramString( imports )}) { 'use strict';` + '\n\n';
+}
+
+function getEvalIntro ( options, imports ) {
+	return `(function (${paramString( imports )}) { 'use strict';\n\n`;
 }
 
 function paramString ( imports ) {
