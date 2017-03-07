@@ -174,11 +174,11 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 		node.initialUpdate = updateElement;
 
-		local.update.addLine(
-			`if ( !${local.name}_updating ) {
+		local.update.addLine( deindent`
+			if ( !${local.name}_updating ) {
 				${updateElement}
-			}`
-		);
+			}
+		` );
 
 		generator.current.builders.teardown.addLine( deindent`
 			${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
