@@ -2,4 +2,4 @@
 --require reify
  --recursive
 ./**/__test__.js
-test/*.js
+test/*/index.js

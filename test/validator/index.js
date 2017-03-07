@@ -1,19 +1,19 @@
 import * as fs from 'fs';
 import assert from 'assert';
-import { svelte, exists, tryToLoadJson } from './helpers.js';
+import { svelte, exists, tryToLoadJson } from '../helpers.js';
 
 describe( 'validate', () => {
-	fs.readdirSync( 'test/validator' ).forEach( dir => {
+	fs.readdirSync( 'test/validator/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const solo = exists( `test/validator/${dir}/solo` );
+		const solo = exists( `test/validator/samples/${dir}/solo` );
 
 		if ( solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
 		}
 
 		( solo ? it.only : it )( dir, () => {
-			const filename = `test/validator/${dir}/input.html`;
+			const filename = `test/validator/samples/${dir}/input.html`;
 			const input = fs.readFileSync( filename, 'utf-8' ).replace( /\s+$/, '' );
 
 			try {
@@ -40,9 +40,9 @@ describe( 'validate', () => {
 					}
 				});
 
-				const expectedErrors = tryToLoadJson( `test/validator/${dir}/errors.json` ) || [];
-				const expectedWarnings = tryToLoadJson( `test/validator/${dir}/warnings.json` ) || [];
-				const expectedNames = tryToLoadJson( `test/validator/${dir}/names.json` );
+				const expectedErrors = tryToLoadJson( `test/validator/samples/${dir}/errors.json` ) || [];
+				const expectedWarnings = tryToLoadJson( `test/validator/samples/${dir}/warnings.json` ) || [];
+				const expectedNames = tryToLoadJson( `test/validator/samples/${dir}/names.json` );
 
 				assert.deepEqual( errors, expectedErrors );
 				assert.deepEqual( warnings, expectedWarnings );
@@ -53,7 +53,7 @@ describe( 'validate', () => {
 				if ( err.name !== 'ParseError' ) throw err;
 
 				try {
-					const expected = require( `./validator/${dir}/errors.json` )[0];
+					const expected = require( `./samples/${dir}/errors.json` )[0];
 
 					assert.equal( err.message, expected.message );
 					assert.deepEqual( err.loc, expected.loc );

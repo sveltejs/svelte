@@ -1,7 +1,7 @@
 import assert from 'assert';
 import * as fs from 'fs';
 
-import { addLineNumbers, exists, loadConfig, setupHtmlEqual, svelte, tryToLoadJson } from './helpers.js';
+import { addLineNumbers, exists, loadConfig, setupHtmlEqual, svelte, tryToLoadJson } from '../helpers.js';
 
 function tryToReadFile ( file ) {
 	try {
@@ -15,33 +15,33 @@ function tryToReadFile ( file ) {
 describe( 'ssr', () => {
 	before( () => {
 		require( process.env.COVERAGE ?
-			'../src/server-side-rendering/register.js' :
-			'../ssr/register' );
+			'../../src/server-side-rendering/register.js' :
+			'../../ssr/register' );
 
 		return setupHtmlEqual();
 	});
 
-	fs.readdirSync( 'test/server-side-rendering' ).forEach( dir => {
+	fs.readdirSync( 'test/server-side-rendering/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const solo = exists( `test/server-side-rendering/${dir}/solo` );
+		const solo = exists( `test/server-side-rendering/samples/${dir}/solo` );
 
 		if ( solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
 		}
 
 		( solo ? it.only : it )( dir, () => {
-			const component = require( `./server-side-rendering/${dir}/main.html` );
+			const component = require( `./samples/${dir}/main.html` );
 
-			const expectedHtml = tryToReadFile( `test/server-side-rendering/${dir}/_expected.html` );
-			const expectedCss = tryToReadFile( `test/server-side-rendering/${dir}/_expected.css` ) || '';
+			const expectedHtml = tryToReadFile( `test/server-side-rendering/samples/${dir}/_expected.html` );
+			const expectedCss = tryToReadFile( `test/server-side-rendering/samples/${dir}/_expected.css` ) || '';
 
-			const data = tryToLoadJson( `test/server-side-rendering/${dir}/data.json` );
+			const data = tryToLoadJson( `test/server-side-rendering/samples/${dir}/data.json` );
 			const html = component.render( data );
 			const { css } = component.renderCss();
 
-			fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.html`, html );
-			if ( css ) fs.writeFileSync( `test/server-side-rendering/${dir}/_actual.css`, css );
+			fs.writeFileSync( `test/server-side-rendering/samples/${dir}/_actual.html`, html );
+			if ( css ) fs.writeFileSync( `test/server-side-rendering/samples/${dir}/_actual.css`, css );
 
 			assert.htmlEqual( html, expectedHtml );
 			assert.equal( css.replace( /^\s+/gm, '' ), expectedCss.replace( /^\s+/gm, '' ) );
@@ -49,10 +49,10 @@ describe( 'ssr', () => {
 	});
 
 	// duplicate client-side tests, as far as possible
-	fs.readdirSync( 'test/generator' ).forEach( dir => {
+	fs.readdirSync( 'test/generator/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const config = loadConfig( `./generator/${dir}/_config.js` );
+		const config = loadConfig( `./generator/samples/${dir}/_config.js` );
 
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
@@ -64,7 +64,7 @@ describe( 'ssr', () => {
 			let compiled;
 
 			try {
-				const source = fs.readFileSync( `test/generator/${dir}/main.html`, 'utf-8' );
+				const source = fs.readFileSync( `test/generator/samples/${dir}/main.html`, 'utf-8' );
 				compiled = svelte.compile( source, { generate: 'ssr' });
 			} catch ( err ) {
 				if ( config.compileError ) {
@@ -75,7 +75,7 @@ describe( 'ssr', () => {
 				}
 			}
 
-			const component = require( `./generator/${dir}/main.html` );
+			const component = require( `../generator/samples/${dir}/main.html` );
 			let html;
 
 			try {

@@ -1,24 +1,24 @@
 import assert from 'assert';
 import * as fs from 'fs';
-import { svelte, exists } from './helpers.js';
+import { svelte, exists } from '../helpers.js';
 
 describe( 'parse', () => {
-	fs.readdirSync( 'test/parser' ).forEach( dir => {
+	fs.readdirSync( 'test/parser/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const solo = exists( `test/parser/${dir}/solo` );
+		const solo = exists( `test/parser/samples/${dir}/solo` );
 
 		if ( solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
 		}
 
 		( solo ? it.only : it )( dir, () => {
-			const input = fs.readFileSync( `test/parser/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
+			const input = fs.readFileSync( `test/parser/samples/${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
 			try {
 				const actual = svelte.parse( input );
-				fs.writeFileSync( `test/parser/${dir}/_actual.json`, JSON.stringify( actual, null, '\t' ) );
-				const expected = require( `./parser/${dir}/output.json` );
+				fs.writeFileSync( `test/parser/samples/${dir}/_actual.json`, JSON.stringify( actual, null, '\t' ) );
+				const expected = require( `./samples/${dir}/output.json` );
 
 				assert.deepEqual( actual.html, expected.html );
 				assert.deepEqual( actual.css, expected.css );
@@ -27,7 +27,7 @@ describe( 'parse', () => {
 				if ( err.name !== 'ParseError' ) throw err;
 
 				try {
-					const expected = require( `./parser/${dir}/error.json` );
+					const expected = require( `./samples/${dir}/error.json` );
 
 					assert.equal( err.message, expected.message );
 					assert.deepEqual( err.loc, expected.loc );
