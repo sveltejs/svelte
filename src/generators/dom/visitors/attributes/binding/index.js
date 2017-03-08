@@ -151,7 +151,6 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 			updateElement = deindent`
 				var ${value} = ${contextual ? attribute.value : `root.${attribute.value}`};
-				console.log( 'value', ${value} );
 				for ( var ${i} = 0; ${i} < ${local.name}.options.length; ${i} += 1 ) {
 					var ${option} = ${local.name}.options[${i}];
 
