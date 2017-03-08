@@ -127,8 +127,10 @@ export default function createBinding ( generator, node, attribute, current, loc
 			});
 		` );
 
+		const dependencies = parts[0] in current.contexts ? current.contextDependencies[ parts[0] ] : [ parts[0] ];
+
 		local.update.addBlock( deindent`
-			if ( !${local.name}_updating && '${parts[0]}' in changed ) {
+			if ( !${local.name}_updating && ${dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) {
 				${local.name}._set({ ${attribute.name}: ${contextual ? attribute.value : `root.${attribute.value}`} });
 			}
 		` );
