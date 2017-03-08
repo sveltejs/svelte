@@ -41,6 +41,11 @@ export default {
 
 				return `${attribute.name}: ${value}`;
 			})
+			.concat( bindings.map( binding => {
+				const parts = binding.value.split( '.' );
+				const value = parts[0] in generator.current.contexts ? binding.value : `root.${binding.value}`;
+				return `${binding.name}: ${value}`;
+			}))
 			.join( ', ' );
 
 		const expression = node.name === ':Self' ? generator.name : `template.components.${node.name}`;
