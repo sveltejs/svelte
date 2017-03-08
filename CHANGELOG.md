@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.11.1
+
+* Fix two-way binding for components inside `each` blocks ([#356](https://github.com/sveltejs/svelte/issues/356))
+
 ## 1.11.0
 
 * Add `format: 'eval'` and `svelte.create`, to create components directly from source code ([#345](https://github.com/sveltejs/svelte/issues/345))
