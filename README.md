@@ -22,14 +22,14 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * More to come!
 
 
-## API
+## Example usage
 
 ```js
 import * as svelte from 'svelte';
 
 const { code, map } = svelte.compile( source, {
 	// the target module format – defaults to 'es' (ES2015 modules), can
-	// also be 'amd', 'cjs', 'umd' or 'iife'
+	// also be 'amd', 'cjs', 'umd', 'iife' or 'eval'
 	format: 'umd',
 
 	// the filename of the source file, used in e.g. generating sourcemaps
@@ -57,6 +57,94 @@ const { code, map } = svelte.compile( source, {
 });
 ```
 
+
+## API
+
+The Svelte compiler exposes the following API:
+
+* `compile( source [, options ] ) => { code, map }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript and a sourcemap.
+* `create( source [, options ] ) => function` - Compile the component and return the component itself.
+* `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
+
+### Options
+
+The Svelte compiler optionally takes a second argument, an object of configuration options:
+
+<table>
+
+<tr>
+	<td>
+	<td>**Values**
+	<td>**Description**
+	<td>**Default**
+
+<tr>
+	<td>`format`
+	<td>`'es'`, `'amd'`, `'cjs'`, `'umd'`, `'iife'`, `'eval'`
+	<td>The format to output in the compiled component.<br>`'es'` - ES6/ES2015 module, suitable for consumption by a bundler<br>`'amd'` - AMD module<br>`'cjs'` - CommonJS module<br>`'iife'` - IIFE-wrapped function defining a global variable, suitable for use directly in browser<br>`'eval'` - standalone function, suitable for passing to `eval()`
+	<td>`'es'`
+
+<tr>
+	<td>`generate`
+	<td>`'dom'`, `'ssr'`
+	<td>Whether to generate JavaScript code intended for use on the client (`'dom'`), or for use in server-side rendering (`'ssr'`).
+	<td>`'dom'`
+
+<tr>
+	<td>`name`
+	<td>`string`
+	<td>The name of the constructor in the compiled component.
+	<td>`'SvelteComponent'`
+
+<tr>
+	<td>`filename`
+	<td>`string`
+	<td>The filename to use in sourcemaps and compiler error and warning messages.
+	<td>`'SvelteComponent.html'`
+
+<tr>
+	<td>`amd`.`id`
+	<td>`string`
+	<td>The AMD module ID to use for the `'amd'` and `'umd'` output formats.
+	<td>`undefined`
+
+<tr>
+	<td>`shared`
+	<td>`true`, `false`, `string`
+	<td>Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`.
+	<td>`false`
+
+<tr>
+	<td>`dev`
+	<td>`true`, `false`
+	<td>Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down.
+	<td>`false`
+
+<tr>
+	<td>`css`
+	<td>`true`, `false`
+	<td>Whether to include code to inject your component's styles into the DOM.
+	<td>`true`
+
+<tr>
+	<td>`globals`
+	<td>`object`, `function`
+	<td>When outputting to the `'umd'`, `'iife'` or `'eval'` formats, an object or function mapping the names of imported dependencies to the names of global variables.
+	<td>`{}`
+
+<tr>
+	<td>`onerror`
+	<td>`function`
+	<td>Specify a callback for when Svelte encounters an error while compiling the component.
+	<td>(exception is thrown)
+
+<tr>
+	<td>`onwarn`
+	<td>`function`
+	<td>Specify a callback for when Svelte encounters a non-fatal warning while compiling the component.
+	<td>(warning is logged to console)
+
+</table>
 
 ## Example/starter repos
 
