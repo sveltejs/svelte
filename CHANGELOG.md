@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.11.2
+
+* Add component CSS to each document a component is rendered to ([#331](https://github.com/sveltejs/svelte/issues/331))
+
 ## 1.11.1
 
 * Fix two-way binding for components inside `each` blocks ([#356](https://github.com/sveltejs/svelte/issues/356))
