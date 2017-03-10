@@ -57,7 +57,7 @@ export function create ( source, _options = {} ) {
 
 	let result;
 	try {
-		result = ( 1, eval )( compiled.code );
+		result = (new Function( 'return ' + compiled.code ))();
 	} catch ( err ) {
 		if ( _options.onerror ) {
 			_options.onerror( err );
