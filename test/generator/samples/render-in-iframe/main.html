@@ -1,6 +1,18 @@
-<h1>Just some static HTML</h1>
+<p>control</p>
+<div>
+	<Widget/>
+</div>
+
 <style>
-h1 {
-	color: rgb(255, 0, 0);
-}
+	p {
+		color: blue;
+	}
 </style>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		components: { Widget }
+	};
+</script>
