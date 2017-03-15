@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.11.3
+
+* Undo CSS behaviour change in 1.11.2 ([#372](https://github.com/sveltejs/svelte/issues/372))
+* Pin version of css-tree ([#370](https://github.com/sveltejs/svelte/pull/370))
+
 ## 1.11.2
 
 * Add component CSS to each document a component is rendered to ([#331](https://github.com/sveltejs/svelte/issues/331))
