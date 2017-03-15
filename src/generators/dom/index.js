@@ -201,29 +201,15 @@ export default function dom ( parsed, source, options, names ) {
 		getUniqueName: generator.getUniqueNameMaker()
 	});
 
+	parsed.html.children.forEach( node => generator.visit( node ) );
+
+	generator.addRenderer( generator.pop() );
+
 	const builders = {
 		main: new CodeBuilder(),
 		init: new CodeBuilder(),
 		_set: new CodeBuilder()
 	};
-
-	if ( parsed.css && options.css !== false ) {
-		generator.current.builders.mount.addLine( `if ( !target.ownerDocument.__sveltecss_${parsed.hash} ) addCss( target.ownerDocument );` );
-
-		builders.main.addBlock( deindent`
-			function addCss ( document ) {
-				var style = ${generator.helper( 'createElement' )}( 'style' );
-				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
-				${generator.helper( 'appendNode' )}( style, document.head );
-
-				document.__sveltecss_${parsed.hash} = true;
-			}
-		` );
-	}
-
-	parsed.html.children.forEach( node => generator.visit( node ) );
-
-	generator.addRenderer( generator.pop() );
 
 	if ( options.dev ) {
 		builders._set.addBlock ( deindent`
@@ -267,10 +253,27 @@ export default function dom ( parsed, source, options, names ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
+	 if ( parsed.css && options.css !== false ) {
+		builders.main.addBlock( deindent`
+			var addedCss = false;
+			function addCss () {
+				var style = ${generator.helper( 'createElement' )}( 'style' );
+				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
+				${generator.helper( 'appendNode' )}( style, document.head );
+
+				addedCss = true;
+			}
+		` );
+	}
+
 	let i = generator.renderers.length;
 	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
 
 	builders.init.addLine( `this._torndown = false;` );
+
+	if ( parsed.css && options.css !== false ) {
+		builders.init.addLine( `if ( !addedCss ) addCss();` );
+	}
 
 	if ( generator.hasComponents ) {
 		builders.init.addLine( `this._renderHooks = [];` );
