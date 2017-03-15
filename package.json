@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "1.11.2",
+  "version": "1.11.3",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
@@ -57,7 +57,7 @@
     "babel-register": "^6.23.0",
     "codecov": "^1.0.1",
     "console-group": "^0.3.2",
-    "css-tree": "^1.0.0-alpha16",
+    "css-tree": "1.0.0-alpha16",
     "eslint": "^3.12.2",
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.3.0",
