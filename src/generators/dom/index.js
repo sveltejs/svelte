@@ -207,8 +207,19 @@ export default function dom ( parsed, source, options, names ) {
 		_set: new CodeBuilder()
 	};
 
-	if ( parsed.css && options.css !== false ) {
-		generator.current.builders.mount.addLine( `if ( !target.ownerDocument.__sveltecss_${parsed.hash} ) addCss( target.ownerDocument );` );
+	const includeCss = parsed.css && options.css !== false;
+
+	if ( includeCss ) {
+		generator.current.builders.mount.addBlock( deindent`
+			var _addCss = function() {
+				if ( !target.ownerDocument.__sveltecss_${parsed.hash} ) addCss( target.ownerDocument );
+			}
+			if ( component._root ) {
+				component._root._renderHooks.push({ fn: _addCss, context: this });
+			} else {
+				component._renderHooks.push({ fn: _addCss, context: this })
+			}
+		` );
 
 		builders.main.addBlock( deindent`
 			function addCss ( document ) {
@@ -272,7 +283,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	builders.init.addLine( `this._torndown = false;` );
 
-	if ( generator.hasComponents ) {
+	if ( generator.hasComponents || includeCss ) {
 		builders.init.addLine( `this._renderHooks = [];` );
 	}
 
@@ -292,11 +303,13 @@ export default function dom ( parsed, source, options, names ) {
 		` );
 	}
 
-	if ( generator.hasComponents ) {
+	if ( generator.hasComponents || includeCss ) {
 		const statement = `this._flush();`;
 
 		builders.init.addBlock( statement );
-		builders._set.addBlock( statement );
+		if ( generator.hasComponents ) {
+			builders._set.addBlock( statement );
+		}
 	}
 
 	if ( templateProperties.oncreate ) {
