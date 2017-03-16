@@ -1,5 +1,4 @@
-import { parse } from 'acorn';
-import { parseExpressionAt } from 'acorn';
+import { parse, parseExpressionAt } from 'acorn';
 import spaces from '../../utils/spaces.js';
 
 export function readEventHandlerDirective ( parser, start, name ) {
