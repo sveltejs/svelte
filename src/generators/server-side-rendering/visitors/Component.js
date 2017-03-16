@@ -1,3 +1,5 @@
+import flattenReference from '../../../utils/flattenReference.js';
+
 export default {
 	enter ( generator, node ) {
 		function stringify ( chunk ) {
@@ -42,8 +44,8 @@ export default {
 				return `${attribute.name}: ${value}`;
 			})
 			.concat( bindings.map( binding => {
-				const parts = binding.value.split( '.' );
-				const value = parts[0] in generator.current.contexts ? binding.value : `root.${binding.value}`;
+				const { name, keypath } = flattenReference( binding.value );
+				const value = name in generator.current.contexts ? keypath : `root.${keypath}`;
 				return `${binding.name}: ${value}`;
 			}))
 			.join( ', ' );

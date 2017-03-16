@@ -15,7 +15,12 @@
 						"end": 16,
 						"type": "Binding",
 						"name": "foo",
-						"value": "foo"
+						"value": {
+							"type": "Identifier",
+							"start": 13,
+							"end": 16,
+							"name": "foo"
+						}
 					}
 				],
 				"children": []

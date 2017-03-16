@@ -1,5 +1,6 @@
 import deindent from '../../../utils/deindent.js';
 import CodeBuilder from '../../../utils/CodeBuilder.js';
+import flattenReference from '../../../utils/flattenReference.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 function capDown ( name ) {
