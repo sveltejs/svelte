@@ -71,12 +71,8 @@ function cleanChildren ( node ) {
 
 			child.data = child.data.replace( /\s{2,}/, '\n' );
 
-			if ( child.data === '\n' ) {
-				node.removeChild( child );
-			}
-
 			// text
-			else if ( previous && previous.nodeType === 3 ) {
+			if ( previous && previous.nodeType === 3 ) {
 				previous.data += child.data;
 				previous.data = previous.data.replace( /\s{2,}/, '\n' );
 
@@ -106,11 +102,11 @@ function cleanChildren ( node ) {
 export function setupHtmlEqual () {
 	return env().then( window => {
 		assert.htmlEqual = ( actual, expected, message ) => {
-			window.document.body.innerHTML = actual.trim();
+			window.document.body.innerHTML = actual.replace( />[\s\r\n]+</g, '><' ).trim();
 			cleanChildren( window.document.body, '' );
 			actual = window.document.body.innerHTML;
 
-			window.document.body.innerHTML = expected.trim();
+			window.document.body.innerHTML = expected.replace( />[\s\r\n]+</g, '><' ).trim();
 			cleanChildren( window.document.body, '' );
 			expected = window.document.body.innerHTML;
 
