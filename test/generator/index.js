@@ -96,6 +96,11 @@ describe( 'generate', () => {
 					// Put the constructor on window for testing
 					window.SvelteComponent = SvelteComponent;
 
+					const warnings = [];
+					window.console.warn = warning => {
+						warnings.push( warning );
+					};
+
 					const target = window.document.querySelector( 'main' );
 
 					const component = new SvelteComponent({
@@ -106,6 +111,13 @@ describe( 'generate', () => {
 					if ( config.error ) {
 						unintendedError = true;
 						throw new Error( 'Expected a runtime error' );
+					}
+
+					if ( config.warnings ) {
+						assert.deepEqual( warnings, config.warnings );
+					} else if ( warnings.length ) {
+						unintendedError = true;
+						throw new Error( 'Received unexpected warnings' );
 					}
 
 					if ( config.html ) {

@@ -1,0 +1,9 @@
+<script>
+	export default {
+		oncreate () {
+			this.on( 'teardown', () => {
+				this.destroyed = true;
+			});
+		}
+	};
+</script>

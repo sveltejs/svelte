@@ -1,0 +1,9 @@
+<script>
+	export default {
+		oncreate () {
+			this.observe( 'nested.data', data => {
+				console.log( 'nope' );
+			});
+		}
+	};
+</script>
