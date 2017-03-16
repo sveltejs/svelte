@@ -1,4 +1,4 @@
-import createBinding from './binding/index.js';
+import addComponentBinding from './addComponentBinding.js';
 import deindent from '../../../../utils/deindent.js';
 
 export default function addComponentAttributes ( generator, node, local ) {
@@ -112,7 +112,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			createBinding( generator, node, attribute, generator.current, local );
+			addComponentBinding( generator, node, attribute, generator.current, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
