@@ -71,8 +71,12 @@ function cleanChildren ( node ) {
 
 			child.data = child.data.replace( /\s{2,}/, '\n' );
 
+			if ( child.data === '\n' ) {
+				node.removeChild( child );
+			}
+
 			// text
-			if ( previous && previous.nodeType === 3 ) {
+			else if ( previous && previous.nodeType === 3 ) {
 				previous.data += child.data;
 				previous.data = previous.data.replace( /\s{2,}/, '\n' );
 
