@@ -96,17 +96,20 @@ describe( 'generate', () => {
 					// Put the constructor on window for testing
 					window.SvelteComponent = SvelteComponent;
 
+					const target = window.document.querySelector( 'main' );
+
 					const warnings = [];
-					window.console.warn = warning => {
+					const warn = console.warn;
+					console.warn = warning => {
 						warnings.push( warning );
 					};
-
-					const target = window.document.querySelector( 'main' );
 
 					const component = new SvelteComponent({
 						target,
 						data: config.data
 					});
+
+					console.warn = warn;
 
 					if ( config.error ) {
 						unintendedError = true;
