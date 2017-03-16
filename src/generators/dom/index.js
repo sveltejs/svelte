@@ -6,7 +6,6 @@ import processCss from '../shared/processCss.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
-import devHelperLookup from './utils/devHelperLookup.js';
 
 class DomGenerator extends Generator {
 	constructor ( parsed, source, name, names, visitors, options ) {
@@ -133,9 +132,10 @@ class DomGenerator extends Generator {
 	}
 
 	helper ( name ) {
-		if ( this.options.dev && devHelperLookup[ name ] ) {
-			name = devHelperLookup[ name ];
+		if ( this.options.dev && `${name}Dev` in shared ) {
+			name = `${name}Dev`;
 		}
+
 		this.uses[ name ] = true;
 
 		if ( !( name in this.aliases ) ) {
@@ -373,7 +373,7 @@ export default function dom ( parsed, source, options, names ) {
 		if ( sharedPath ) {
 			builders.main.addLine( `${name}.prototype.${methodName} = ${generator.helper( methodName )};` );
 		} else {
-			const fn = shared[ options.dev && devHelperLookup[ methodName ] ? devHelperLookup[ methodName ] : methodName ]; // eslint-disable-line import/namespace
+			const fn = shared[ options.dev && `${methodName}Dev` in shared ? `${methodName}Dev` : methodName ]; // eslint-disable-line import/namespace
 			builders.main.addLine( `${name}.prototype.${methodName} = ${fn};` );
 		}
 	});
@@ -385,7 +385,7 @@ export default function dom ( parsed, source, options, names ) {
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
-			this.fire( 'teardown' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
+			this.fire( 'destroy' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
 
 			this._fragment.teardown( detach !== false );
 			this._fragment = null;
