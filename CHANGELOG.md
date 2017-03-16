@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.11.4
+
+* Dev mode warning for bad `component.observe` arguments ([#369](https://github.com/sveltejs/svelte/issues/369))
+* Translate `component.on('teardown', ...)` to `component.on('destroy', ...)` and add dev warning ([#365](https://github.com/sveltejs/svelte/issues/365))
+* Use shared prototype to save bytes ([#378](https://github.com/sveltejs/svelte/pull/378))
+
 ## 1.11.3
 
 * Undo CSS behaviour change in 1.11.2 ([#372](https://github.com/sveltejs/svelte/issues/372))
