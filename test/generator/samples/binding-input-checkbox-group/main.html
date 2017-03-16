@@ -1,0 +1,7 @@
+{{#each values as value}}
+	<label>
+		<input type="checkbox" value="{{value}}" bind:group='selected' /> {{value}}
+	</label>
+{{/each}}
+
+<p>{{selected}}</p>
