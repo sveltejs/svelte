@@ -363,20 +363,20 @@ export default function dom ( parsed, source, options, names ) {
 		}
 	` );
 
-	if ( templateProperties.methods ) {
-		builders.main.addBlock( `${name}.prototype = template.methods;` );
-	}
-
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
-	[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ].forEach( methodName => {
-		if ( sharedPath ) {
-			builders.main.addLine( `${name}.prototype.${methodName} = ${generator.helper( methodName )};` );
-		} else {
-			const fn = shared[ options.dev && `${methodName}Dev` in shared ? `${methodName}Dev` : methodName ]; // eslint-disable-line import/namespace
-			builders.main.addLine( `${name}.prototype.${methodName} = ${fn};` );
+	if ( sharedPath ) {
+		const base = templateProperties.methods ? `{}, template.methods` : `{}`;
+		builders.main.addBlock( `${name}.prototype = Object.assign( ${base}, ${generator.helper( 'proto' )} );` );
+	} else {
+		if ( templateProperties.methods ) {
+			builders.main.addBlock( `${name}.prototype = template.methods;` );
 		}
-	});
+
+		[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ].forEach( methodName => {
+			builders.main.addLine( `${name}.prototype.${methodName} = ${generator.helper( methodName )};` );
+		});
+	}
 
 	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`

@@ -101,3 +101,21 @@ export function _flush () {
 		hook.fn.call( hook.context );
 	}
 }
+
+export var proto = {
+	get: get,
+	fire: fire,
+	observe: observe,
+	on: on,
+	set: set,
+	_flush: _flush
+};
+
+export var protoDev = {
+	get: get,
+	fire: fire,
+	observe: observeDev,
+	on: onDev,
+	set: set,
+	_flush: _flush
+};
