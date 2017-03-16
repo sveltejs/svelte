@@ -55,7 +55,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		setter = deindent`
 			var list = this.${context}.${listName};
 			var index = this.${context}.${indexName};
-			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = ${value};
+			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = value;
 
 			component._set({ ${prop}: component.get( '${prop}' ) });
 		`;
@@ -63,7 +63,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		if ( parts.length > 1 ) {
 			setter = deindent`
 				var ${name} = component.get( '${name}' );
-				${name}.${parts.slice( 1 ).join( '.' )} = ${value};
+				${name}.${parts.slice( 1 ).join( '.' )} = value;
 				component._set({ ${name}: ${name} });
 			`;
 		} else {
