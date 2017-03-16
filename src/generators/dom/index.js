@@ -8,8 +8,8 @@ import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
-	constructor ( parsed, source, name, names, visitors ) {
-		super( parsed, source, name, names, visitors );
+	constructor ( parsed, source, name, names, visitors, options ) {
+		super( parsed, source, name, names, visitors, options );
 		this.renderers = [];
 		this.uses = {};
 
@@ -132,6 +132,10 @@ class DomGenerator extends Generator {
 	}
 
 	helper ( name ) {
+		if ( this.options.dev && `${name}Dev` in shared ) {
+			name = `${name}Dev`;
+		}
+
 		this.uses[ name ] = true;
 
 		if ( !( name in this.aliases ) ) {
@@ -152,7 +156,7 @@ export default function dom ( parsed, source, options, names ) {
 	const format = options.format || 'es';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new DomGenerator( parsed, source, name, names, visitors );
+	const generator = new DomGenerator( parsed, source, name, names, visitors, options );
 
 	const { computations, templateProperties } = generator.parseJs();
 
@@ -359,34 +363,20 @@ export default function dom ( parsed, source, options, names ) {
 		}
 	` );
 
-	if ( templateProperties.methods ) {
-		builders.main.addBlock( `${name}.prototype = template.methods;` );
-	}
-
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
-	builders.main.addBlock( sharedPath ?
-		deindent`
-			${name}.prototype.get = ${generator.helper( 'get' )};
-			${name}.prototype.fire = ${generator.helper( 'fire' )};
-			${name}.prototype.observe = ${generator.helper( 'observe' )};
-			${name}.prototype.on = ${generator.helper( 'on' )};
-			${name}.prototype.set = ${generator.helper( 'set' )};
-			${name}.prototype._flush = ${generator.helper( '_flush' )};
-		` :
-		deindent`
-			${name}.prototype.get = ${shared.get};
+	if ( sharedPath ) {
+		const base = templateProperties.methods ? `{}, template.methods` : `{}`;
+		builders.main.addBlock( `${name}.prototype = Object.assign( ${base}, ${generator.helper( 'proto' )} );` );
+	} else {
+		if ( templateProperties.methods ) {
+			builders.main.addBlock( `${name}.prototype = template.methods;` );
+		}
 
-			${name}.prototype.fire = ${shared.fire};
-
-			${name}.prototype.observe = ${shared.observe};
-
-			${name}.prototype.on = ${shared.on};
-
-			${name}.prototype.set = ${shared.set};
-
-			${name}.prototype._flush = ${shared._flush};
-		` );
+		[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ].forEach( methodName => {
+			builders.main.addLine( `${name}.prototype.${methodName} = ${generator.helper( methodName )};` );
+		});
+	}
 
 	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`
@@ -395,7 +385,7 @@ export default function dom ( parsed, source, options, names ) {
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
-			this.fire( 'teardown' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
+			this.fire( 'destroy' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
 
 			this._fragment.teardown( detach !== false );
 			this._fragment = null;
@@ -420,11 +410,7 @@ export default function dom ( parsed, source, options, names ) {
 	} else {
 		Object.keys( generator.uses ).forEach( key => {
 			const fn = shared[ key ]; // eslint-disable-line import/namespace
-			if ( key !== generator.aliases[ key ] ) {
-				builders.main.addBlock( `var ${generator.aliases[ key ]} = ${fn.toString()}}` );
-			} else {
-				builders.main.addBlock( fn.toString() );
-			}
+			builders.main.addBlock( fn.toString().replace( /^function [^(]*/, 'function ' + generator.aliases[ key ] ) );
 		});
 	}
 

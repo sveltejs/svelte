@@ -98,14 +98,29 @@ describe( 'generate', () => {
 
 					const target = window.document.querySelector( 'main' );
 
+					const warnings = [];
+					const warn = console.warn;
+					console.warn = warning => {
+						warnings.push( warning );
+					};
+
 					const component = new SvelteComponent({
 						target,
 						data: config.data
 					});
 
+					console.warn = warn;
+
 					if ( config.error ) {
 						unintendedError = true;
 						throw new Error( 'Expected a runtime error' );
+					}
+
+					if ( config.warnings ) {
+						assert.deepEqual( warnings, config.warnings );
+					} else if ( warnings.length ) {
+						unintendedError = true;
+						throw new Error( 'Received unexpected warnings' );
 					}
 
 					if ( config.html ) {

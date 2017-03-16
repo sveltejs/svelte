@@ -5,8 +5,8 @@ import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 
 class SsrGenerator extends Generator {
-	constructor ( parsed, source, name, names, visitors ) {
-		super( parsed, source, name, names, visitors );
+	constructor ( parsed, source, name, names, visitors, options ) {
+		super( parsed, source, name, names, visitors, options );
 		this.bindings = [];
 		this.renderCode = '';
 	}
@@ -36,7 +36,7 @@ export default function ssr ( parsed, source, options, names ) {
 	const format = options.format || 'cjs';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new SsrGenerator( parsed, source, name, names, visitors );
+	const generator = new SsrGenerator( parsed, source, name, names, visitors, options );
 
 	const { computations, templateProperties } = generator.parseJs();
 
