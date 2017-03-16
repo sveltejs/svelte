@@ -1,7 +1,15 @@
+const values = [
+	{ name: 'Alpha' },
+	{ name: 'Beta' },
+	{ name: 'Gamma' }
+];
+
 export default {
+	// solo: true,
+
 	data: {
-		values: [ 'Alpha', 'Beta', 'Gamma' ],
-		selected: [ 'Beta' ]
+		values,
+		selected: [ values[1] ]
 	},
 
 	html: `
