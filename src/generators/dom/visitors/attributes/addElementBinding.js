@@ -16,8 +16,9 @@ export default function createBinding ( generator, node, attribute, current, loc
 	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
 
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
+	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, current, attribute, keypath ) : null;
-	const value = getBindingValue( generator, local, node, attribute, isMultipleSelect, bindingGroup );
+	const value = getBindingValue( generator, local, node, attribute, isMultipleSelect, bindingGroup, type );
 	const eventName = getBindingEventName( node );
 
 	let setter = getSetter({ current, name, context: '__svelte', attribute, dependencies, snippet, value });
@@ -26,7 +27,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 	// <select> special case
 	if ( node.name === 'select' ) {
 		if ( !isMultipleSelect ) {
-			setter = `var selectedOption = ${local.name}.selectedOptions[0] || ${local.name}.options[0];\n` + setter;
+			setter = `var selectedOption = ${local.name}.selectedOptions[0] || ${local.name}.options[0];\n${setter}`;
 		}
 
 		const value = generator.current.getUniqueName( 'value' );
@@ -54,27 +55,28 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	// <input type='checkbox|radio' bind:group='selected'> special case
 	else if ( attribute.name === 'group' ) {
-		const type = getStaticAttributeValue( node, 'type' );
-
-		if ( type === 'checkbox' ) {
-			local.init.addLine(
-				`component._bindingGroups[${bindingGroup}].push( ${local.name} );`
-			);
-
-			local.teardown.addBlock(
-				`component._bindingGroups[${bindingGroup}].splice( component._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
-			);
-
-			updateElement = `${local.name}.checked = ~${snippet}.indexOf( ${local.name}.__value );`;
+		if ( type === 'radio' ) {
+			setter = deindent`
+				if ( !${local.name}.checked ) return;
+				${setter}
+				component._bindingGroups[${bindingGroup}].forEach( function ( input ) {
+					input.checked = false;
+				});`;
 		}
 
-		else if ( type === 'radio' ) {
-			throw new Error( 'TODO' );
-		}
+		const condition = type === 'checkbox' ?
+			`~${snippet}.indexOf( ${local.name}.__value )` :
+			`${local.name}.__value === ${snippet}`;
 
-		else {
-			throw new Error( `Unexpected bind:group` ); // TODO catch this in validation with a better error
-		}
+		local.init.addLine(
+			`component._bindingGroups[${bindingGroup}].push( ${local.name} );`
+		);
+
+		local.teardown.addBlock(
+			`component._bindingGroups[${bindingGroup}].splice( component._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
+		);
+
+		updateElement = `${local.name}.checked = ${condition};`;
 	}
 
 	// everything else
@@ -122,7 +124,7 @@ function getBindingEventName ( node ) {
 	return 'change';
 }
 
-function getBindingValue ( generator, local, node, attribute, isMultipleSelect, bindingGroup ) {
+function getBindingValue ( generator, local, node, attribute, isMultipleSelect, bindingGroup, type ) {
 	// <select multiple bind:value='selected>
 	if ( isMultipleSelect ) {
 		return `[].map.call( ${local.name}.selectedOptions, function ( option ) { return option.__value; })`;
@@ -135,7 +137,11 @@ function getBindingValue ( generator, local, node, attribute, isMultipleSelect, 
 
 	// <input type='checkbox' bind:group='foo'>
 	if ( attribute.name === 'group' ) {
-		return `${generator.helper( 'getBindingGroupValue' )}( component._bindingGroups[${bindingGroup}] )`;
+		if ( type === 'checkbox' ) {
+			return `${generator.helper( 'getBindingGroupValue' )}( component._bindingGroups[${bindingGroup}] )`;
+		}
+
+		return `${local.name}.__value`;
 	}
 
 	// everything else
