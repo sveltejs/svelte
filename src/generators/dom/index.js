@@ -343,6 +343,10 @@ export default function dom ( parsed, source, options, names ) {
 		);
 	}
 
+	if ( generator.bindingGroups.length ) {
+		constructorBlock.addLine( `this._bindingGroups = [ ${Array( generator.bindingGroups.length ).fill( '[]' ).join( ', ' )} ];` );
+	}
+
 	constructorBlock.addBlock( deindent`
 		this._observers = {
 			pre: Object.create( null ),
