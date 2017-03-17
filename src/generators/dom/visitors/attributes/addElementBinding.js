@@ -3,13 +3,16 @@ import isReference from '../../../../utils/isReference.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function createBinding ( generator, node, attribute, current, local ) {
-	const { name, parts, keypath } = flattenReference( attribute.value );
+	const { name, parts } = flattenReference( attribute.value );
+	const { snippet, contexts, dependencies } = generator.contextualise( attribute.value );
+
+	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue!' );
 
 	const contextual = name in current.contexts;
 
-	if ( contextual && !~local.allUsedContexts.indexOf( name ) ) {
-		local.allUsedContexts.push( name );
-	}
+	contexts.forEach( context => {
+		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
+	});
 
 	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
 	let setter;
@@ -72,14 +75,14 @@ export default function createBinding ( generator, node, attribute, current, loc
 			component._set({ ${prop}: component.get( '${prop}' ) });
 		`;
 	} else {
-		if ( parts.length > 1 ) {
+		if ( attribute.value.type === 'MemberExpression' ) {
 			setter = deindent`
 				var ${name} = component.get( '${name}' );
-				${name}.${parts.slice( 1 ).join( '.' )} = ${value};
+				${snippet} = ${value};
 				component._set({ ${name}: ${name} });
 			`;
 		} else {
-			setter = `component._set({ ${keypath}: ${value} });`;
+			setter = `component._set({ ${name}: ${value} });`;
 		}
 
 		generator.expectedProperties[ name ] = true;
@@ -107,7 +110,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 				}`;
 
 		updateElement = deindent`
-			var ${value} = ${contextual ? keypath : `root.${keypath}`};
+			var ${value} = ${snippet};
 			for ( var ${i} = 0; ${i} < ${local.name}.options.length; ${i} += 1 ) {
 				var ${option} = ${local.name}.options[${i}];
 
@@ -115,7 +118,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			}
 		`;
 	} else {
-		updateElement = `${local.name}.${attribute.name} = ${contextual ? keypath : `root.${keypath}`};`;
+		updateElement = `${local.name}.${attribute.name} = ${snippet};`;
 	}
 
 	local.init.addBlock( deindent`
