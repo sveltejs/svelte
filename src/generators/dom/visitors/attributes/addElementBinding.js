@@ -1,5 +1,6 @@
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
+import getSetter from './binding/getSetter.js';
 
 export default function createBinding ( generator, node, attribute, current, local ) {
 	const { name } = flattenReference( attribute.value );
@@ -17,30 +18,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 	const value = getBindingValue( local, node, attribute, isMultipleSelect );
 	const eventName = getBindingEventName( node );
 
-	let setter;
-
-	if ( name in current.contexts ) {
-		const prop = dependencies[0];
-		const tail = attribute.value.type === 'MemberExpression' ? getTailSnippet( attribute.value ) : '';
-
-		setter = deindent`
-			var list = this.__svelte.${current.listNames[ name ]};
-			var index = this.__svelte.${current.indexNames[ name ]};
-			list[index]${tail} = ${value};
-
-			component._set({ ${prop}: component.get( '${prop}' ) });
-		`;
-	} else {
-		if ( attribute.value.type === 'MemberExpression' ) {
-			setter = deindent`
-				var ${name} = component.get( '${name}' );
-				${snippet} = ${value};
-				component._set({ ${name}: ${name} });
-			`;
-		} else {
-			setter = `component._set({ ${name}: ${value} });`;
-		}
-	}
+	let setter = getSetter({ current, name, context: '__svelte', attribute, dependencies, snippet, value });
 
 	// special case
 	if ( node.name === 'select' && !isMultipleSelect ) {
