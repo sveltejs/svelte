@@ -12,5 +12,5 @@ export default function flatten ( node ) {
 	if ( !name ) return null;
 
 	parts.unshift( name );
-	return { name, keypath: parts.join( '.' ) };
+	return { name, parts, keypath: parts.join( '.' ) };
 }

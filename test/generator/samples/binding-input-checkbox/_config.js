@@ -2,7 +2,9 @@ export default {
 	data: {
 		foo: true
 	},
+
 	html: `<input type="checkbox">\n<p>true</p>`,
+
 	test ( assert, component, target, window ) {
 		const input = target.querySelector( 'input' );
 		assert.equal( input.checked, true );
