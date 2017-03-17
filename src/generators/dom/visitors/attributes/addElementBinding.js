@@ -1,5 +1,4 @@
 import deindent from '../../../../utils/deindent.js';
-import isReference from '../../../../utils/isReference.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function createBinding ( generator, node, attribute, current, local ) {
@@ -8,8 +7,6 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue!' );
 
-	const contextual = name in current.contexts;
-
 	contexts.forEach( context => {
 		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 	});
@@ -17,59 +14,20 @@ export default function createBinding ( generator, node, attribute, current, loc
 	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
 	let setter;
 
-	let eventName = 'change';
-	if ( node.name === 'input' ) {
-		const typeAttribute = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
-		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
-
-		if ( type !== 'checkbox' && type !== 'radio' ) {
-			eventName = 'input';
-		}
-	}
-
-	else if ( node.name === 'textarea' ) {
-		eventName = 'input';
-	}
-
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO ensure that this is a static attribute
-	let value;
+	const value = getBindingValue( local, node, attribute, isMultipleSelect );
+	const eventName = getBindingEventName( node );
 
-	if ( node.name === 'select' ) {
-		if ( isMultipleSelect ) {
-			value = `[].map.call( ${local.name}.selectedOptions, function ( option ) { return option.__value; })`;
-		} else {
-			value = 'selectedOption && selectedOption.__value';
-		}
-	} else {
-		value = `${local.name}.${attribute.name}`;
-	}
-
-	if ( contextual ) {
+	if ( name in current.contexts ) {
 		// find the top-level property that this is a child of
-		let fragment = current;
-		let prop = name;
-
-		do {
-			if ( fragment.expression && fragment.context === prop ) {
-				if ( !isReference( fragment.expression ) ) {
-					// TODO this should happen in prior validation step
-					throw new Error( `${prop} is read-only, it cannot be bound` );
-				}
-
-				prop = flattenReference( fragment.expression ).name;
-			}
-		} while ( fragment = fragment.parent );
-
-		generator.expectedProperties[ prop ] = true;
+		const prop = dependencies[0];
 
 		const listName = current.listNames[ name ];
 		const indexName = current.indexNames[ name ];
 
-		const context = local.isComponent ? `_context` : `__svelte`;
-
 		setter = deindent`
-			var list = this.${context}.${listName};
-			var index = this.${context}.${indexName};
+			var list = this.__svelte.${listName};
+			var index = this.__svelte.${indexName};
 			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = ${value};
 
 			component._set({ ${prop}: component.get( '${prop}' ) });
@@ -144,4 +102,31 @@ export default function createBinding ( generator, node, attribute, current, loc
 	generator.current.builders.teardown.addLine( deindent`
 		${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
 	` );
+}
+
+function getBindingEventName ( node ) {
+	if ( node.name === 'input' ) {
+		const typeAttribute = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
+		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
+
+		return type === 'checkbox' || type === 'radio' ? 'change' : 'input';
+	}
+
+	if ( node.name === 'textarea' ) {
+		return 'input';
+	}
+
+	return 'change';
+}
+
+function getBindingValue ( local, node, attribute, isMultipleSelect ) {
+	if ( isMultipleSelect ) {
+		return `[].map.call( ${local.name}.selectedOptions, function ( option ) { return option.__value; })`;
+	}
+
+	if ( node.name === 'select' ) {
+		return 'selectedOption && selectedOption.__value';
+	}
+
+	return `${local.name}.${attribute.name}`;
 }
