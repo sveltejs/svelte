@@ -5,12 +5,12 @@ const values = [
 ];
 
 export default {
-	// solo: true,
-
 	data: {
 		values,
 		selected: [ values[1] ]
 	},
+
+	'skip-ssr': true, // values are rendered as [object Object]
 
 	html: `
 		<label>
@@ -38,7 +38,7 @@ export default {
 		inputs[0].checked = true;
 		inputs[0].dispatchEvent( event );
 
-		assert.equal( target.innerHTML, `
+		assert.htmlEqual( target.innerHTML, `
 			<label>
 				<input type="checkbox"> Alpha
 			</label>
@@ -54,12 +54,12 @@ export default {
 			<p>Alpha, Beta</p>
 		` );
 
-		component.set({ selected: [ 'Beta', 'Gamma' ] });
+		component.set({ selected: [ values[1], values[2] ] });
 		assert.equal( inputs[0].checked, false );
 		assert.equal( inputs[1].checked, true );
 		assert.equal( inputs[2].checked, true );
 
-		assert.equal( target.innerHTML, `
+		assert.htmlEqual( target.innerHTML, `
 			<label>
 				<input type="checkbox"> Alpha
 			</label>

@@ -2,6 +2,7 @@ import attributeLookup from './lookup.js';
 import addElementBinding from './addElementBinding';
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
+import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
 
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {
@@ -13,8 +14,12 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			let dynamic = false;
 
-			const isBoundOptionValue = node.name === 'option' && name === 'value'; // TODO check it's actually bound
-			const propertyName = isBoundOptionValue ? '__value' : metadata && metadata.propertyName;
+			const isIndirectlyBoundValue = name === 'value' && (
+				node.name === 'option' || // TODO check it's actually bound
+				node.name === 'input' && /^(checkbox|radio)$/.test( getStaticAttributeValue( node, 'type' ) )
+			);
+
+			const propertyName = isIndirectlyBoundValue ? '__value' : metadata && metadata.propertyName;
 
 			const isXlink = name.slice( 0, 6 ) === 'xlink:';
 
@@ -134,12 +139,11 @@ export default function addElementAttributes ( generator, node, local ) {
 				local.update.addLine( updater );
 			}
 
-			if ( isBoundOptionValue ) {
-				local.init.addLine( `${local.name}.value = ${local.name}.__value` );
+			if ( isIndirectlyBoundValue ) {
+				const updateValue = `${local.name}.value = ${local.name}.__value;`;
 
-				if (dynamic) {
-					local.update.addLine( `${local.name}.value = ${local.name}.__value` );
-				}
+				local.init.addLine( updateValue );
+				if ( dynamic ) local.update.addLine( updateValue );
 			}
 		}
 
