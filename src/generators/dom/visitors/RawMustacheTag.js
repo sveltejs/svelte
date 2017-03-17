@@ -4,7 +4,6 @@ export default {
 	enter ( generator, node ) {
 		const name = generator.current.getUniqueName( 'raw' );
 
-		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );
 
 		// we would have used comments here, but the `insertAdjacentHTML` api only
