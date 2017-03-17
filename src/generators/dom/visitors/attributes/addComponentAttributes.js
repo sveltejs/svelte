@@ -57,8 +57,6 @@ export default function addComponentAttributes ( generator, node, local ) {
 						if ( chunk.type === 'Text' ) {
 							return JSON.stringify( chunk.data );
 						} else {
-							generator.addSourcemapLocations( chunk.expression );
-
 							const { dependencies, string } = generator.contextualise( chunk.expression );
 							dependencies.forEach( dependency => {
 								if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
@@ -84,7 +82,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
-				const { contexts } = generator.contextualise( arg, true, true );
+				const { contexts } = generator.contextualise( arg, true );
 
 				contexts.forEach( context => {
 					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );

@@ -96,7 +96,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					if ( propertyName ) {
 						updater = `${local.name}.${propertyName} = ${last};`;
 					} else {
-						updater = `${generator.helper( method )}( ${local.name}, '${name}', ${last} );`; // TODO use snippet both times – see note below
+						updater = `${generator.helper( method )}( ${local.name}, '${name}', ${last} );`;
 					}
 
 					local.init.addLine( updater );
@@ -117,10 +117,8 @@ export default function addElementAttributes ( generator, node, local ) {
 						if ( chunk.type === 'Text' ) {
 							return JSON.stringify( chunk.data );
 						} else {
-							generator.addSourcemapLocations( chunk.expression );
-
-							const { string } = generator.contextualise( chunk.expression ); // TODO use snippet for sourcemap support – need to add a 'copy' feature to MagicString first
-							return `( ${string} )`;
+							const { snippet } = generator.contextualise( chunk.expression );
+							return `( ${snippet} )`;
 						}
 					}).join( ' + ' )
 				);
