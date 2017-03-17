@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.12.0
+
+* Shorthand attributes — `<Widget :foo/>` is equivalent to `<Widget foo='{{foo}}'/>` ([#384](https://github.com/sveltejs/svelte/pull/384))
+* Support `bind:group` for radio and checkbox inputs ([#311](https://github.com/sveltejs/svelte/issues/311), [#312](https://github.com/sveltejs/svelte/issues/312))
+* Better sourcemap support for two-way bindings
+
 ## 1.11.4
 
 * Dev mode warning for bad `component.observe` arguments ([#369](https://github.com/sveltejs/svelte/issues/369))
