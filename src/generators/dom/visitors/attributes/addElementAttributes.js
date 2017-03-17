@@ -1,5 +1,5 @@
 import attributeLookup from './lookup.js';
-import createBinding from './binding/index.js';
+import addElementBinding from './addElementBinding';
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 
@@ -204,7 +204,7 @@ export default function addElementAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			createBinding( generator, node, attribute, generator.current, local );
+			addElementBinding( generator, node, attribute, generator.current, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
