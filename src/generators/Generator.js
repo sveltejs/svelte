@@ -46,6 +46,8 @@ export default class Generator {
 	}
 
 	contextualise ( expression, isEventHandler ) {
+		this.addSourcemapLocations( expression );
+
 		const usedContexts = [];
 		const dependencies = [];
 
