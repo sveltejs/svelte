@@ -204,7 +204,7 @@ function readTagName ( parser ) {
 function readAttribute ( parser, uniqueNames ) {
 	const start = parser.index;
 
-	const name = parser.readUntil( /(\s|=|\/|>)/ );
+	let name = parser.readUntil( /(\s|=|\/|>)/ );
 	if ( !name ) return null;
 	if ( uniqueNames.has( name ) ) {
 		parser.error( 'Attributes need to be unique', start );
@@ -232,7 +232,15 @@ function readAttribute ( parser, uniqueNames ) {
 		};
 	}
 
-	const value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
+	let value;
+
+	// :foo is shorthand for foo='{{foo}}'
+	if ( /^:\w+$/.test( name ) ) {
+		name = name.slice( 1 );
+		value = getShorthandValue( start + 1, name );
+	} else {
+		value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
+	}
 
 	return {
 		start,
@@ -311,4 +319,20 @@ function readAttributeValue ( parser ) {
 	}
 
 	parser.error( `Unexpected end of input` );
+}
+
+function getShorthandValue ( start, name ) {
+	const end = start + name.length;
+
+	return [{
+		type: 'AttributeShorthand',
+		start,
+		end,
+		expression: {
+			type: 'Identifier',
+			start,
+			end,
+			name
+		}
+	}];
 }
