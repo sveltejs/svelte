@@ -15,7 +15,12 @@
 						"end": 24,
 						"type": "Binding",
 						"name": "value",
-						"value": "name"
+						"value": {
+							"start": 19,
+							"end": 23,
+							"type": "Identifier",
+							"name": "name"
+						}
 					}
 				],
 				"children": []

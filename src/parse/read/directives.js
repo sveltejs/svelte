@@ -1,4 +1,4 @@
-import { parse } from 'acorn';
+import { parse, parseExpressionAt } from 'acorn';
 import spaces from '../../utils/spaces.js';
 
 export function readEventHandlerDirective ( parser, start, name ) {
@@ -66,7 +66,7 @@ export function readEventHandlerDirective ( parser, start, name ) {
 }
 
 export function readBindingDirective ( parser, start, name ) {
-	let value = name; // shorthand – bind:foo equivalent to bind:foo='foo'
+	let value;
 
 	if ( parser.eat( '=' ) ) {
 		const quoteMark = (
@@ -75,12 +75,37 @@ export function readBindingDirective ( parser, start, name ) {
 			null
 		);
 
-		value = parser.read( /([a-zA-Z_$][a-zA-Z0-9_$]*)(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*/ );
-		if ( !value ) parser.error( `Expected valid property name` );
+		const a = parser.index;
+
+		// this is a bit of a hack so that we can give Acorn something parseable
+		let b;
+		if ( quoteMark ) {
+			b = parser.index = parser.template.indexOf( quoteMark, parser.index );
+		} else {
+			parser.readUntil( /[\s\r\n\/>]/ );
+			b = parser.index;
+		}
+
+		const source = spaces( a ) + parser.template.slice( a, b );
+		value = parseExpressionAt( source, a );
+
+		if ( value.type !== 'Identifier' && value.type !== 'MemberExpression' ) {
+			parser.error( `Expected valid property name` );
+		}
+
+		parser.allowWhitespace();
 
 		if ( quoteMark ) {
 			parser.eat( quoteMark, true );
 		}
+	} else {
+		// shorthand – bind:foo equivalent to bind:foo='foo'
+		value = {
+			type: 'Identifier',
+			start: start + 5,
+			end: parser.index,
+			name
+		};
 	}
 
 	return {
