@@ -22,6 +22,8 @@ export default class Generator {
 		this.components = {};
 		this.events = {};
 
+		this.bindingGroups = [];
+
 		// track which properties are needed, so we can provide useful info
 		// in dev mode
 		this.expectedProperties = {};
