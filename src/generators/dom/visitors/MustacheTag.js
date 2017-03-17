@@ -4,7 +4,6 @@ export default {
 	enter ( generator, node ) {
 		const name = generator.current.getUniqueName( 'text' );
 
-		generator.addSourcemapLocations( node.expression );
 		const { snippet } = generator.contextualise( node.expression );
 
 		generator.current.builders.init.addLine( `var last_${name} = ${snippet}` );
