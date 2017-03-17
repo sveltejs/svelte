@@ -4,4 +4,4 @@
 	</label>
 {{/each}}
 
-<p>{{selected.map( function ( value ) { return value.name; }) }}</p>
+<p>{{selected.map( function ( value ) { return value.name; }).join( ', ' ) }}</p>

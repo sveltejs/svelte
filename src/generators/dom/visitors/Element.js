@@ -20,7 +20,8 @@ export default {
 			allUsedContexts: [],
 
 			init: new CodeBuilder(),
-			update: new CodeBuilder()
+			update: new CodeBuilder(),
+			teardown: new CodeBuilder()
 		};
 
 		const isToplevel = generator.current.localElementDepth === 0;
@@ -85,6 +86,7 @@ export default {
 
 		generator.current.builders.init.addBlock( local.init );
 		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
+		if ( !local.teardown.isEmpty() ) generator.current.builders.teardown.addBlock( local.teardown );
 
 		generator.createMountStatement( name );
 

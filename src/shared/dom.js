@@ -53,3 +53,11 @@ export function setAttribute ( node, attribute, value ) {
 export function setXlinkAttribute ( node, attribute, value ) {
 	node.setAttributeNS( 'http://www.w3.org/1999/xlink', attribute, value );
 }
+
+export function getBindingGroupValue ( group ) {
+	var value = [];
+	for ( var i = 0; i < group.length; i += 1 ) {
+		if ( group[i].checked ) value.push( group[i].__value );
+	}
+	return value;
+}
