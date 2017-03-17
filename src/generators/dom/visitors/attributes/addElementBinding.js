@@ -2,33 +2,31 @@ import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function createBinding ( generator, node, attribute, current, local ) {
-	const { name, parts } = flattenReference( attribute.value );
+	const { name } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = generator.contextualise( attribute.value );
 
-	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue!' );
+	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
 
 	contexts.forEach( context => {
 		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 	});
 
 	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
-	let setter;
 
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO ensure that this is a static attribute
 	const value = getBindingValue( local, node, attribute, isMultipleSelect );
 	const eventName = getBindingEventName( node );
 
-	if ( name in current.contexts ) {
-		// find the top-level property that this is a child of
-		const prop = dependencies[0];
+	let setter;
 
-		const listName = current.listNames[ name ];
-		const indexName = current.indexNames[ name ];
+	if ( name in current.contexts ) {
+		const prop = dependencies[0];
+		const tail = attribute.value.type === 'MemberExpression' ? getTailSnippet( attribute.value ) : '';
 
 		setter = deindent`
-			var list = this.__svelte.${listName};
-			var index = this.__svelte.${indexName};
-			list[index]${parts.slice( 1 ).map( part => `.${part}` ).join( '' )} = ${value};
+			var list = this.__svelte.${current.listNames[ name ]};
+			var index = this.__svelte.${current.indexNames[ name ]};
+			list[index]${tail} = ${value};
 
 			component._set({ ${prop}: component.get( '${prop}' ) });
 		`;
@@ -42,8 +40,6 @@ export default function createBinding ( generator, node, attribute, current, loc
 		} else {
 			setter = `component._set({ ${name}: ${value} });`;
 		}
-
-		generator.expectedProperties[ name ] = true;
 	}
 
 	// special case
@@ -129,4 +125,12 @@ function getBindingValue ( local, node, attribute, isMultipleSelect ) {
 	}
 
 	return `${local.name}.${attribute.name}`;
+}
+
+function getTailSnippet ( node ) {
+	const end = node.end;
+	while ( node.type === 'MemberExpression' ) node = node.object;
+	const start = node.end;
+
+	return `[✂${start}-${end}✂]`;
 }
