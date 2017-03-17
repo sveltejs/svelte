@@ -104,11 +104,3 @@ function getBindingValue ( local, node, attribute, isMultipleSelect ) {
 
 	return `${local.name}.${attribute.name}`;
 }
-
-function getTailSnippet ( node ) {
-	const end = node.end;
-	while ( node.type === 'MemberExpression' ) node = node.object;
-	const start = node.end;
-
-	return `[✂${start}-${end}✂]`;
-}
