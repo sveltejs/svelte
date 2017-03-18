@@ -3,6 +3,7 @@ import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import namespaces from '../../utils/namespaces.js';
 import processCss from '../shared/processCss.js';
+import removeObjectKey from '../../utils/removeObjectKey.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
@@ -162,7 +163,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	const generator = new DomGenerator( parsed, source, name, names, visitors, options );
 
-	const { computations, templateProperties } = generator.parseJs();
+	const { computations, defaultExport, templateProperties } = generator.parseJs();
 
 	// Remove these after version 2
 	if ( templateProperties.onrender ) {
@@ -188,7 +189,7 @@ export default function dom ( parsed, source, options, names ) {
 		const ns = templateProperties.namespace.value.value;
 		namespace = namespaces[ ns ] || ns;
 
-		// TODO remove the namespace property from the generated code, it's unused past this point
+		removeObjectKey( generator.code, defaultExport.declaration, 'namespace' );
 	}
 
 	if ( templateProperties.components ) {
