@@ -191,6 +191,17 @@ export default function dom ( parsed, source, options, names ) {
 		// TODO remove the namespace property from the generated code, it's unused past this point
 	}
 
+	if ( templateProperties.components ) {
+		generator.importedComponents = {};
+		templateProperties.components.value.properties.forEach( property => {
+			const key = property.key.name;
+			const value = source.slice( property.value.start, property.value.end );
+			if ( generator.importedNames[ value ] ) {
+				generator.importedComponents[ key ] = value;
+			}
+		});
+	}
+
 	generator.push({
 		name: generator.alias( 'renderMainFragment' ),
 		namespace,
