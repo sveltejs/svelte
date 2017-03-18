@@ -131,12 +131,14 @@ class DomGenerator extends Generator {
 		node.children = [];
 	}
 
-	helper ( name ) {
+	helper ( name, isSharedHelper ) {
 		if ( this.options.dev && `${name}Dev` in shared ) {
 			name = `${name}Dev`;
 		}
 
-		this.uses[ name ] = true;
+		if ( isSharedHelper !== false ) {
+			this.uses[ name ] = true;
+		}
 
 		if ( !( name in this.aliases ) ) {
 			let alias = name;
@@ -188,7 +190,7 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	generator.push({
-		name: 'renderMainFragment',
+		name: generator.helper( 'renderMainFragment', false ),
 		namespace,
 		target: 'target',
 		localElementDepth: 0,
@@ -238,12 +240,12 @@ export default function dom ( parsed, source, options, names ) {
 		});
 
 		builders.main.addBlock( deindent`
-			function applyComputations ( state, newState, oldState, isInitial ) {
+			function ${generator.helper( 'applyComputations', false )} ( state, newState, oldState, isInitial ) {
 				${builder}
 			}
 		` );
 
-		builders._set.addLine( `applyComputations( this._state, newState, oldState, false )` );
+		builders._set.addLine( `${generator.helper( 'applyComputations', false )}( this._state, newState, oldState, false )` );
 	}
 
 	// TODO is the `if` necessary?
@@ -259,13 +261,13 @@ export default function dom ( parsed, source, options, names ) {
 
 	 if ( parsed.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
-			var addedCss = false;
-			function addCss () {
+			var ${generator.helper( 'addedCss', false )} = false;
+			function ${generator.helper( 'addCss', false )} () {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
 				${generator.helper( 'appendNode' )}( style, document.head );
 
-				addedCss = true;
+				${generator.helper( 'addedCss', false )} = true;
 			}
 		` );
 	}
@@ -276,7 +278,7 @@ export default function dom ( parsed, source, options, names ) {
 	builders.init.addLine( `this._torndown = false;` );
 
 	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !addedCss ) addCss();` );
+		builders.init.addLine( `if ( !${generator.helper( 'addedCss', false )} ) ${generator.helper( 'addCss', false )}();` );
 	}
 
 	if ( generator.hasComponents ) {
@@ -286,7 +288,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this._bindings = [];
-			this._fragment = renderMainFragment( this._state, this );
+			this._fragment = ${generator.helper( 'renderMainFragment', false )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
@@ -294,7 +296,7 @@ export default function dom ( parsed, source, options, names ) {
 		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			this._fragment = renderMainFragment( this._state, this );
+			this._fragment = ${generator.helper( 'renderMainFragment', false )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
@@ -327,7 +329,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( templateProperties.computed ) {
 		constructorBlock.addLine(
-			`applyComputations( this._state, this._state, {}, true );`
+			`${generator.helper( 'applyComputations', false )}( this._state, this._state, {}, true );`
 		);
 	}
 
