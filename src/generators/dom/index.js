@@ -138,6 +138,10 @@ class DomGenerator extends Generator {
 
 		this.uses[ name ] = true;
 
+		return this.alias( name );
+	}
+
+	alias ( name ) {
 		if ( !( name in this.aliases ) ) {
 			let alias = name;
 			let i = 1;
@@ -188,7 +192,7 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	generator.push({
-		name: 'renderMainFragment',
+		name: generator.alias( 'renderMainFragment' ),
 		namespace,
 		target: 'target',
 		localElementDepth: 0,
@@ -238,12 +242,12 @@ export default function dom ( parsed, source, options, names ) {
 		});
 
 		builders.main.addBlock( deindent`
-			function applyComputations ( state, newState, oldState, isInitial ) {
+			function ${generator.alias( 'applyComputations' )} ( state, newState, oldState, isInitial ) {
 				${builder}
 			}
 		` );
 
-		builders._set.addLine( `applyComputations( this._state, newState, oldState, false )` );
+		builders._set.addLine( `${generator.alias( 'applyComputations' )}( this._state, newState, oldState, false )` );
 	}
 
 	// TODO is the `if` necessary?
@@ -259,13 +263,13 @@ export default function dom ( parsed, source, options, names ) {
 
 	 if ( parsed.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
-			var addedCss = false;
-			function addCss () {
+			var ${generator.alias( 'addedCss' )} = false;
+			function ${generator.alias( 'addCss' )} () {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
 				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
 				${generator.helper( 'appendNode' )}( style, document.head );
 
-				addedCss = true;
+				${generator.alias( 'addedCss' )} = true;
 			}
 		` );
 	}
@@ -276,7 +280,7 @@ export default function dom ( parsed, source, options, names ) {
 	builders.init.addLine( `this._torndown = false;` );
 
 	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !addedCss ) addCss();` );
+		builders.init.addLine( `if ( !${generator.alias( 'addedCss' )} ) ${generator.alias( 'addCss' )}();` );
 	}
 
 	if ( generator.hasComponents ) {
@@ -286,7 +290,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this._bindings = [];
-			this._fragment = renderMainFragment( this._state, this );
+			this._fragment = ${generator.alias( 'renderMainFragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
@@ -294,7 +298,7 @@ export default function dom ( parsed, source, options, names ) {
 		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			this._fragment = renderMainFragment( this._state, this );
+			this._fragment = ${generator.alias( 'renderMainFragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
@@ -327,7 +331,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	if ( templateProperties.computed ) {
 		constructorBlock.addLine(
-			`applyComputations( this._state, this._state, {}, true );`
+			`${generator.alias( 'applyComputations' )}( this._state, this._state, {}, true );`
 		);
 	}
 
