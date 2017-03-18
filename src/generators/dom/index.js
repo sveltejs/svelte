@@ -18,6 +18,8 @@ class DomGenerator extends Generator {
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
 		this.importedNames = {};
 		this.aliases = {};
+
+		this.importedComponents = {};
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -193,14 +195,25 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( templateProperties.components ) {
-		generator.importedComponents = {};
+		let hasNonImportedComponent = false;
 		templateProperties.components.value.properties.forEach( property => {
 			const key = property.key.name;
 			const value = source.slice( property.value.start, property.value.end );
 			if ( generator.importedNames[ value ] ) {
 				generator.importedComponents[ key ] = value;
+			} else {
+				hasNonImportedComponent = true;
 			}
 		});
+		if ( hasNonImportedComponent ) {
+			// remove the specific components which were imported, as we'll refer to them directly
+			Object.keys( generator.importedComponents ).forEach ( key => {
+				removeObjectKey( generator.code, templateProperties.components.value, key );
+			});
+		} else {
+			// remove the entire components portion of the export
+			removeObjectKey( generator.code, defaultExport.declaration, 'components' );
+		}
 	}
 
 	generator.push({
