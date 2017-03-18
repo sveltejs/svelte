@@ -290,7 +290,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this._bindings = [];
-			this._fragment = ${generator.alas( 'renderMainFragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'renderMainFragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
