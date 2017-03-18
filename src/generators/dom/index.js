@@ -191,7 +191,7 @@ export default function dom ( parsed, source, options, names ) {
 		const ns = templateProperties.namespace.value.value;
 		namespace = namespaces[ ns ] || ns;
 
-		removeObjectKey( generator.code, defaultExport.declaration, 'namespace' );
+		removeObjectKey( generator, defaultExport.declaration, 'namespace' );
 	}
 
 	if ( templateProperties.components ) {
@@ -208,11 +208,11 @@ export default function dom ( parsed, source, options, names ) {
 		if ( hasNonImportedComponent ) {
 			// remove the specific components which were imported, as we'll refer to them directly
 			Object.keys( generator.importedComponents ).forEach ( key => {
-				removeObjectKey( generator.code, templateProperties.components.value, key );
+				removeObjectKey( generator, templateProperties.components.value, key );
 			});
 		} else {
 			// remove the entire components portion of the export
-			removeObjectKey( generator.code, defaultExport.declaration, 'components' );
+			removeObjectKey( generator, defaultExport.declaration, 'components' );
 		}
 	}
 
