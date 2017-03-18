@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.12.1
+
+* Deconflict non-helper functions (`addCss` etc) ([#388](https://github.com/sveltejs/svelte/issues/388))
+* Allow reserved words in tags, e.g. `{{class}}` ([#383](https://github.com/sveltejs/svelte/issues/383))
+
 ## 1.12.0
 
 * Shorthand attributes — `<Widget :foo/>` is equivalent to `<Widget foo='{{foo}}'/>` ([#384](https://github.com/sveltejs/svelte/pull/384))
