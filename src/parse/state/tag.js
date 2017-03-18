@@ -11,6 +11,10 @@ const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
 
 const SELF = ':Self';
 
+const metaTags = {
+	':Window': true
+};
+
 const specials = {
 	script: {
 		read: readScript,
@@ -80,6 +84,22 @@ export default function tag ( parser ) {
 	const isClosingTag = parser.eat( '/' );
 
 	const name = readTagName( parser );
+
+	if ( name in metaTags ) {
+		if ( name in parser.metaTags ) {
+			if ( isClosingTag && parser.current().children.length ) {
+				parser.error( `<${name}> cannot have children`, parser.current().children[0].start );
+			}
+
+			parser.error( `A component can only have one <${name}> tag`, start );
+		}
+
+		parser.metaTags[ name ] = true;
+
+		if ( parser.stack.length > 1 ) {
+			parser.error( `<${name}> tags cannot be inside elements or blocks`, start );
+		}
+	}
 
 	parser.allowWhitespace();
 
@@ -194,6 +214,9 @@ function readTagName ( parser ) {
 	}
 
 	const name = parser.readUntil( /(\s|\/|>)/ );
+
+	if ( name in metaTags ) return name;
+
 	if ( !validTagName.test( name ) ) {
 		parser.error( `Expected valid tag name`, start );
 	}
