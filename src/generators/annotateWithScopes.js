@@ -28,7 +28,7 @@ export default function annotateWithScopes ( expression ) {
 				node._scope = scope = new Scope( scope, true );
 			}
 
-			else if ( /Declaration/.test( node.type ) ) {
+			else if ( /(Function|Class|Variable)Declaration/.test( node.type ) ) {
 				scope.addDeclaration( node );
 			}
 		},
@@ -54,7 +54,7 @@ class Scope {
 		if ( node.kind === 'var' && !this.block && this.parent ) {
 			this.parent.addDeclaration( node );
 		} else if ( node.type === 'VariableDeclaration' ) {
-			node.declarators.forEach( declarator => {
+			node.declarations.forEach( declarator => {
 				extractNames( declarator.id ).forEach( name => {
 					this.declarations[ name ] = true;
 				});
@@ -100,4 +100,3 @@ const extractors = {
 		extractors[ param.left.type ]( names, param.left );
 	}
 };
-
