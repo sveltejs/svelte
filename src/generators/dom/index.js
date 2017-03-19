@@ -3,6 +3,7 @@ import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import namespaces from '../../utils/namespaces.js';
 import processCss from '../shared/processCss.js';
+import removeObjectKey from '../../utils/removeObjectKey.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
@@ -17,6 +18,8 @@ class DomGenerator extends Generator {
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
 		this.importedNames = {};
 		this.aliases = {};
+
+		this.importedComponents = {};
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -162,7 +165,7 @@ export default function dom ( parsed, source, options, names ) {
 
 	const generator = new DomGenerator( parsed, source, name, names, visitors, options );
 
-	const { computations, templateProperties } = generator.parseJs();
+	const { computations, defaultExport, templateProperties } = generator.parseJs();
 
 	// Remove these after version 2
 	if ( templateProperties.onrender ) {
@@ -188,7 +191,29 @@ export default function dom ( parsed, source, options, names ) {
 		const ns = templateProperties.namespace.value.value;
 		namespace = namespaces[ ns ] || ns;
 
-		// TODO remove the namespace property from the generated code, it's unused past this point
+		removeObjectKey( generator, defaultExport.declaration, 'namespace' );
+	}
+
+	if ( templateProperties.components ) {
+		let hasNonImportedComponent = false;
+		templateProperties.components.value.properties.forEach( property => {
+			const key = property.key.name;
+			const value = source.slice( property.value.start, property.value.end );
+			if ( generator.importedNames[ value ] ) {
+				generator.importedComponents[ key ] = value;
+			} else {
+				hasNonImportedComponent = true;
+			}
+		});
+		if ( hasNonImportedComponent ) {
+			// remove the specific components which were imported, as we'll refer to them directly
+			Object.keys( generator.importedComponents ).forEach ( key => {
+				removeObjectKey( generator, templateProperties.components.value, key );
+			});
+		} else {
+			// remove the entire components portion of the export
+			removeObjectKey( generator, defaultExport.declaration, 'components' );
+		}
 	}
 
 	generator.push({
