@@ -106,7 +106,7 @@ export default {
 			componentInitProperties.push(`data: ${name}_initialData`);
 		}
 
-		const expression = node.name === ':Self' ? generator.name : `template.components.${node.name}`;
+		const expression = node.name === ':Self' ? generator.name : generator.importedComponents[ node.name ] || `template.components.${node.name}`;
 
 		local.init.addBlockAtStart( deindent`
 			${statements.join( '\n\n' )}

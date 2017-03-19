@@ -232,6 +232,7 @@ export default class Generator {
 
 		const imports = this.imports;
 		const computations = [];
+		let defaultExport = null;
 		const templateProperties = {};
 
 		if ( js ) {
@@ -251,7 +252,7 @@ export default class Generator {
 				}
 			}
 
-			const defaultExport = js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
+			defaultExport = js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 			if ( defaultExport ) {
 				const finalNode = js.content.body[ js.content.body.length - 1 ];
@@ -319,6 +320,7 @@ export default class Generator {
 
 		return {
 			computations,
+			defaultExport,
 			templateProperties
 		};
 	}
