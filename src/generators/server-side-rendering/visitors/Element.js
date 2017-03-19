@@ -1,8 +1,17 @@
 import Component from './Component.js';
 import isVoidElementName from '../../../utils/isVoidElementName.js';
+import Window from './meta/Window.js';
+
+const meta = {
+	':Window': Window
+};
 
 export default {
 	enter ( generator, node ) {
+		if ( node.name in meta ) {
+			return meta[ node.name ].enter( generator, node );
+		}
+
 		if ( node.name in generator.components || node.name === ':Self' ) {
 			Component.enter( generator, node );
 			return;
@@ -39,6 +48,11 @@ export default {
 	},
 
 	leave ( generator, node ) {
+		if ( node.name in meta ) {
+			if ( meta[ node.name ].leave ) meta[ node.name ].leave( generator, node );
+			return;
+		}
+
 		if ( node.name in generator.components || node.name === ':Self' ) {
 			Component.leave( generator, node );
 			return;
