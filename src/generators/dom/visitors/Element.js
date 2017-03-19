@@ -110,7 +110,8 @@ export default {
 
 	leave ( generator, node ) {
 		if ( node.name in meta ) {
-			return meta[ node.name ].leave( generator, node );
+			if ( meta[ node.name ].leave ) meta[ node.name ].leave( generator, node );
+			return;
 		}
 
 		const isComponent = node.name in generator.components;
