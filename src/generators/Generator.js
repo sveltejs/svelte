@@ -285,18 +285,9 @@ export default class Generator {
 					// export is last property, we can just return it
 					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
 				} else {
-					// we need to avoid a conflict with anything on the top-level scope of the component
-					// however, determining which things these are is tricky, so we instead just avoid conflicts with any identifiers anywhere
-					const identifiers = new Set();
-					walk( js, {
-						enter ( node ) {
-							if ( node.type === 'Identifier' ) {
-								identifiers.add( node.name );
-							}
-						}
-					});
+					const { declarations } = annotateWithScopes( js );
 					let template = 'template';
-					for ( let i = 1; identifiers.has( template ); template = `template$${i++}` );
+					for ( let i = 1; template in declarations; template = `template$${i++}` );
 
 					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
 
