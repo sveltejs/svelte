@@ -1,0 +1,17 @@
+{{compute}}
+<script>
+	import { addCss, addedCss, applyComputations, renderMainFragment } from './module.js';
+
+	export default {
+		data() {
+			return {
+				value: addCss + addedCss + applyComputations + renderMainFragment
+			};
+		},
+		computed: {
+			compute: value => value.toUpperCase()
+		}
+	};
+</script>
+<style>
+</style>
