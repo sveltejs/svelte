@@ -19,6 +19,11 @@ class DomGenerator extends Generator {
 		this.importedNames = {};
 		this.aliases = {};
 
+		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
+		this.builders = {
+			metaBindings: new CodeBuilder()
+		};
+
 		this.importedComponents = {};
 	}
 
@@ -353,6 +358,10 @@ export default function dom ( parsed, source, options, names ) {
 	constructorBlock.addLine(
 		`this._state = ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`};`
 	);
+
+	if ( !generator.builders.metaBindings.isEmpty() ) {
+		constructorBlock.addBlock( generator.builders.metaBindings );
+	}
 
 	if ( templateProperties.computed ) {
 		constructorBlock.addLine(
