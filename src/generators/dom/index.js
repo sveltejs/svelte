@@ -148,20 +148,6 @@ class DomGenerator extends Generator {
 
 		return this.alias( name );
 	}
-
-	alias ( name ) {
-		if ( !( name in this.aliases ) ) {
-			let alias = name;
-			let i = 1;
-			while ( alias in this.importedNames ) {
-				alias = `${name}$${i++}`;
-			}
-
-			this.aliases[ name ] = alias;
-		}
-
-		return this.aliases[ name ];
-	}
 }
 
 export default function dom ( parsed, source, options, names ) {
@@ -184,12 +170,6 @@ export default function dom ( parsed, source, options, names ) {
 		generator.code.overwrite( key.start, key.end, 'ondestroy', true );
 		templateProperties.ondestroy = templateProperties.onteardown;
 	}
-
-	generator.imports.forEach( node => {
-		node.specifiers.forEach( specifier => {
-			generator.importedNames[ specifier.local.name ] = true;
-		});
-	});
 
 	let namespace = null;
 	if ( templateProperties.namespace ) {
@@ -266,7 +246,7 @@ export default function dom ( parsed, source, options, names ) {
 		computations.forEach( ({ key, deps }) => {
 			builder.addBlock( deindent`
 				if ( isInitial || ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
-					state.${key} = newState.${key} = template.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
+					state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
 			` );
 		});
@@ -343,9 +323,9 @@ export default function dom ( parsed, source, options, names ) {
 	if ( templateProperties.oncreate ) {
 		builders.init.addBlock( deindent`
 			if ( options._root ) {
-				options._root._renderHooks.push({ fn: template.oncreate, context: this });
+				options._root._renderHooks.push({ fn: ${generator.alias( 'template' )}.oncreate, context: this });
 			} else {
-				template.oncreate.call( this );
+				${generator.alias( 'template' )}.oncreate.call( this );
 			}
 		` );
 	}
@@ -356,7 +336,7 @@ export default function dom ( parsed, source, options, names ) {
 	if ( generator.usesRefs ) constructorBlock.addLine( `this.refs = {};` );
 
 	constructorBlock.addLine(
-		`this._state = ${templateProperties.data ? `Object.assign( template.data(), options.data )` : `options.data || {}`};`
+		`this._state = ${templateProperties.data ? `Object.assign( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};`
 	);
 
 	if ( !generator.builders.metaBindings.isEmpty() ) {
@@ -408,11 +388,11 @@ export default function dom ( parsed, source, options, names ) {
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
 	if ( sharedPath ) {
-		const base = templateProperties.methods ? `{}, template.methods` : `{}`;
+		const base = templateProperties.methods ? `{}, ${generator.alias( 'template' )}.methods` : `{}`;
 		builders.main.addBlock( `${name}.prototype = Object.assign( ${base}, ${generator.helper( 'proto' )} );` );
 	} else {
 		if ( templateProperties.methods ) {
-			builders.main.addBlock( `${name}.prototype = template.methods;` );
+			builders.main.addBlock( `${name}.prototype = ${generator.alias( 'template' )}.methods;` );
 		}
 
 		[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ].forEach( methodName => {
@@ -427,7 +407,7 @@ export default function dom ( parsed, source, options, names ) {
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
-			this.fire( 'destroy' );${templateProperties.ondestroy ? `\ntemplate.ondestroy.call( this );` : ``}
+			this.fire( 'destroy' );${templateProperties.ondestroy ? `\n${generator.alias( 'template' )}.ondestroy.call( this );` : ``}
 
 			this._fragment.teardown( detach !== false );
 			this._fragment = null;
