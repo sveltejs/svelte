@@ -4,6 +4,6 @@ export default function removeObjectKey ( generator, node, key ) {
 	const index = properties.findIndex( property => property.key.type === 'Identifier' && property.key.name === key );
 	if ( index === -1 ) return;
 	const a = properties[ index ].start;
-	const b = index < properties.length - 1 ? properties[ index + 1 ].start : properties[ index ].end;
+	const b = index < properties.length - 1 ? properties[ index + 1 ].start : node.end - 1;
 	generator.code.remove( a, b );
 }
