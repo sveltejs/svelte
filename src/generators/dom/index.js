@@ -206,8 +206,8 @@ export default function dom ( parsed, source, options, names ) {
 			}
 		});
 		if ( hasNonImportedComponent ) {
-			// remove the specific components which were imported, as we'll refer to them directly
-			Object.keys( generator.importedComponents ).forEach ( key => {
+			// remove the specific components that were imported, as we'll refer to them directly
+			Object.keys( generator.importedComponents ).forEach( key => {
 				removeObjectKey( generator, templateProperties.components.value, key );
 			});
 		} else {
