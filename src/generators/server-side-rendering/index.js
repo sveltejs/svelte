@@ -60,12 +60,12 @@ export default function ssr ( parsed, source, options, names ) {
 	parsed.html.children.forEach( node => generator.visit( node ) );
 
 	builders.render.addLine(
-		templateProperties.data ? `root = Object.assign( template.data(), root || {} );` : `root = root || {};`
+		templateProperties.data ? `root = Object.assign( ${generator.alias( 'template' )}.data(), root || {} );` : `root = root || {};`
 	);
 
 	computations.forEach( ({ key, deps }) => {
 		builders.render.addLine(
-			`root.${key} = template.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
+			`root.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
 		);
 	});
 
@@ -118,7 +118,7 @@ export default function ssr ( parsed, source, options, names ) {
 		` );
 
 		templateProperties.components.value.properties.forEach( prop => {
-			builders.renderCss.addLine( `addComponent( template.components.${prop.key.name} );` );
+			builders.renderCss.addLine( `addComponent( ${generator.alias( 'template' )}.components.${prop.key.name} );` );
 		});
 	}
 
@@ -140,7 +140,7 @@ export default function ssr ( parsed, source, options, names ) {
 		${name}.filename = ${JSON.stringify( options.filename )};
 
 		${name}.data = function () {
-			return ${templateProperties.data ? `template.data()` : `{}`};
+			return ${templateProperties.data ? `${generator.alias( 'template' )}.data()` : `{}`};
 		};
 
 		${name}.render = function ( root, options ) {
