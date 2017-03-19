@@ -35,6 +35,12 @@ export default class Generator {
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
 
+		// allow compiler to deconflict user's `import { get } from 'whatever'` and
+		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
+		this.importedNames = {};
+
+		this.aliases = {};
+
 		this._callbacks = {};
 	}
 
@@ -45,6 +51,20 @@ export default class Generator {
 				this.code.addSourcemapLocation( node.end );
 			}
 		});
+	}
+
+	alias ( name ) {
+		if ( !( name in this.aliases ) ) {
+			let alias = name;
+			let i = 1;
+			while ( alias in this.importedNames ) {
+				alias = `${name}$${i++}`;
+			}
+
+			this.aliases[ name ] = alias;
+		}
+
+		return this.aliases[ name ];
 	}
 
 	contextualise ( expression, isEventHandler ) {
@@ -58,6 +78,8 @@ export default class Generator {
 
 		let scope = annotateWithScopes( expression );
 
+		const self = this;
+
 		walk( expression, {
 			enter ( node, parent, key ) {
 				if ( node._scope ) {
@@ -70,7 +92,7 @@ export default class Generator {
 					if ( scope.has( name ) ) return;
 
 					if ( parent && parent.type === 'CallExpression' && node === parent.callee && helpers[ name ] ) {
-						code.prependRight( node.start, `template.helpers.` );
+						code.prependRight( node.start, `${self.alias( 'template' )}.helpers.` );
 					}
 
 					else if ( name === 'event' && isEventHandler ) {
@@ -249,6 +271,9 @@ export default class Generator {
 
 					imports.push( node );
 					this.code.remove( a, b );
+					node.specifiers.forEach( specifier => {
+						this.importedNames[ specifier.local.name ] = true;
+					});
 				}
 			}
 
@@ -260,21 +285,24 @@ export default class Generator {
 					// export is last property, we can just return it
 					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
 				} else {
-					// TODO ensure `template` isn't already declared
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var template = ` );
+					const { declarations } = annotateWithScopes( js );
+					let template = 'template';
+					for ( let i = 1; template in declarations; template = `template$${i++}` );
+
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
 
 					let i = defaultExport.start;
 					while ( /\s/.test( source[ i - 1 ] ) ) i--;
 
 					const indentation = source.slice( i, defaultExport.start );
-					this.code.appendLeft( finalNode.end, `\n\n${indentation}return template;` );
+					this.code.appendLeft( finalNode.end, `\n\n${indentation}return ${template};` );
 				}
 
 				defaultExport.declaration.properties.forEach( prop => {
 					templateProperties[ prop.key.name ] = prop;
 				});
 
-				this.code.prependRight( js.content.start, 'var template = (function () {' );
+				this.code.prependRight( js.content.start, `var ${this.alias( 'template' )} = (function () {` );
 			} else {
 				this.code.prependRight( js.content.start, '(function () {' );
 			}

@@ -182,7 +182,7 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			if ( name in generator.events ) {
 				local.init.addBlock( deindent`
-					var ${handlerName} = template.events.${name}.call( component, ${local.name}, function ( event ) {
+					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( component, ${local.name}, function ( event ) {
 						${handlerBody}
 					});
 				` );
