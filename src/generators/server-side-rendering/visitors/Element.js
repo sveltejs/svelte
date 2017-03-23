@@ -3,7 +3,7 @@ import isVoidElementName from '../../../utils/isVoidElementName.js';
 
 export default {
 	enter ( generator, node ) {
-		if ( node.name in generator.components || node.name === ':Self' ) {
+		if ( generator.components.has( node.name ) || node.name === ':Self' ) {
 			Component.enter( generator, node );
 			return;
 		}
@@ -39,7 +39,7 @@ export default {
 	},
 
 	leave ( generator, node ) {
-		if ( node.name in generator.components || node.name === ':Self' ) {
+		if ( generator.components.has( node.name ) || node.name === ':Self' ) {
 			Component.leave( generator, node );
 			return;
 		}
