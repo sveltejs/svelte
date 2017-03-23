@@ -7,15 +7,15 @@ export default function annotateWithScopes ( expression ) {
 		enter ( node ) {
 			if ( /Function/.test( node.type ) ) {
 				if ( node.type === 'FunctionDeclaration' ) {
-					scope.declarations[ node.id.name ] = true;
+					scope.declarations.add( node.id.name );
 				} else {
 					node._scope = scope = new Scope( scope, false );
-					if ( node.id ) scope.declarations[ node.id.name ] = true;
+					if ( node.id ) scope.declarations.add( node.id.name );
 				}
 
 				node.params.forEach( param => {
 					extractNames( param ).forEach( name => {
-						scope.declarations[ name ] = true;
+						scope.declarations.add( name );
 					});
 				});
 			}
@@ -47,7 +47,7 @@ class Scope {
 	constructor ( parent, block ) {
 		this.parent = parent;
 		this.block = block;
-		this.declarations = Object.create( null );
+		this.declarations = new Set();
 	}
 
 	addDeclaration ( node ) {
@@ -56,16 +56,16 @@ class Scope {
 		} else if ( node.type === 'VariableDeclaration' ) {
 			node.declarations.forEach( declarator => {
 				extractNames( declarator.id ).forEach( name => {
-					this.declarations[ name ] = true;
+					this.declarations.add( name );
 				});
 			});
 		} else {
-			this.declarations[ node.id.name ] = true;
+			this.declarations.add( node.id.name );
 		}
 	}
 
 	has ( name ) {
-		return name in this.declarations || this.parent && this.parent.has( name );
+		return this.declarations.has( name ) || this.parent && this.parent.has( name );
 	}
 }
 

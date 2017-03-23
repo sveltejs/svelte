@@ -171,8 +171,8 @@ export default function addElementAttributes ( generator, node, local ) {
 			const declarations = usedContexts.map( name => {
 				if ( name === 'root' ) return 'var root = this.__svelte.root;';
 
-				const listName = generator.current.listNames[ name ];
-				const indexName = generator.current.indexNames[ name ];
+				const listName = generator.current.listNames.get( name );
+				const indexName = generator.current.indexNames.get( name );
 
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
@@ -180,7 +180,7 @@ export default function addElementAttributes ( generator, node, local ) {
 			const handlerName = generator.current.getUniqueName( `${name}Handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
-			if ( name in generator.events ) {
+			if ( generator.events.has( name ) ) {
 				local.init.addBlock( deindent`
 					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( component, ${local.name}, function ( event ) {
 						${handlerBody}

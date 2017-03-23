@@ -18,15 +18,15 @@ export default class Generator {
 		this.options = options;
 
 		this.imports = [];
-		this.helpers = {};
-		this.components = {};
-		this.events = {};
+		this.helpers = new Set();
+		this.components = new Set();
+		this.events = new Set();
 
 		this.bindingGroups = [];
 
 		// track which properties are needed, so we can provide useful info
 		// in dev mode
-		this.expectedProperties = {};
+		this.expectedProperties = new Set();
 
 		this.elementDepth = 0;
 
@@ -37,11 +37,11 @@ export default class Generator {
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
-		this.importedNames = {};
+		this.importedNames = new Set();
 
-		this.aliases = {};
+		this.aliases = new Map();
 
-		this._callbacks = {};
+		this._callbacks = new Map();
 	}
 
 	addSourcemapLocations ( node ) {
@@ -54,17 +54,17 @@ export default class Generator {
 	}
 
 	alias ( name ) {
-		if ( !( name in this.aliases ) ) {
+		if ( !( this.aliases.has( name ) ) ) {
 			let alias = name;
 			let i = 1;
 			while ( alias in this.importedNames ) {
 				alias = `${name}$${i++}`;
 			}
 
-			this.aliases[ name ] = alias;
+			this.aliases.set( name, alias );
 		}
 
-		return this.aliases[ name ];
+		return this.aliases.get( name );
 	}
 
 	contextualise ( expression, isEventHandler ) {
@@ -91,7 +91,7 @@ export default class Generator {
 					const { name } = flattenReference( node );
 					if ( scope.has( name ) ) return;
 
-					if ( parent && parent.type === 'CallExpression' && node === parent.callee && helpers[ name ] ) {
+					if ( parent && parent.type === 'CallExpression' && node === parent.callee && helpers.has( name ) ) {
 						code.prependRight( node.start, `${self.alias( 'template' )}.helpers.` );
 					}
 
@@ -99,19 +99,19 @@ export default class Generator {
 						// noop
 					}
 
-					else if ( name in contexts ) {
-						const context = contexts[ name ];
+					else if ( contexts.has( name ) ) {
+						const context = contexts.get( name );
 						if ( context !== name ) {
 							// this is true for 'reserved' names like `root` and `component`
 							code.overwrite( node.start, node.start + name.length, context, true );
 						}
 
-						dependencies.push( ...contextDependencies[ name ] );
+						dependencies.push( ...contextDependencies.get( name ) );
 						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
 					}
 
-					else if ( indexes[ name ] ) {
-						const context = indexes[ name ];
+					else if ( indexes.has( name ) ) {
+						const context = indexes.get( name );
 						if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
 					}
 
@@ -145,7 +145,7 @@ export default class Generator {
 		});
 
 		dependencies.forEach( name => {
-			this.expectedProperties[ name ] = true;
+			this.expectedProperties.add( name );
 		});
 
 		return {
@@ -157,7 +157,7 @@ export default class Generator {
 	}
 
 	fire ( eventName, data ) {
-		const handlers = eventName in this._callbacks && this._callbacks[ eventName ].slice();
+		const handlers = this._callbacks.has( eventName ) && this._callbacks.get( eventName ).slice();
 		if ( !handlers ) return;
 
 		for ( let i = 0; i < handlers.length; i += 1 ) {
@@ -287,7 +287,7 @@ export default class Generator {
 				} else {
 					const { declarations } = annotateWithScopes( js );
 					let template = 'template';
-					for ( let i = 1; template in declarations; template = `template$${i++}` );
+					for ( let i = 1; declarations.has( template ); template = `template$${i++}` );
 
 					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
 
@@ -312,7 +312,7 @@ export default class Generator {
 			[ 'helpers', 'events', 'components' ].forEach( key => {
 				if ( templateProperties[ key ] ) {
 					templateProperties[ key ].value.properties.forEach( prop => {
-						this[ key ][ prop.key.name ] = prop.value;
+						this[ key ].add( prop.key.name );
 					});
 				}
 			});
@@ -354,8 +354,11 @@ export default class Generator {
 	}
 
 	on ( eventName, handler ) {
-		const handlers = this._callbacks[ eventName ] || ( this._callbacks[ eventName ] = [] );
-		handlers.push( handler );
+		if ( this._callbacks.has( eventName ) ) {
+			this._callbacks.get( eventName ).push( handler );
+		} else {
+			this._callbacks.set( eventName, [ handler ] );
+		}
 	}
 
 	pop () {

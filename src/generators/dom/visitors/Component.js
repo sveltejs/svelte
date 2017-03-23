@@ -32,8 +32,8 @@ export default {
 			const initialProps = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `root: root`;
 
-				const listName = generator.current.listNames[ contextName ];
-				const indexName = generator.current.indexNames[ contextName ];
+				const listName = generator.current.listNames.get( contextName );
+				const indexName = generator.current.indexNames.get( contextName );
 
 				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 			}).join( ',\n' );
@@ -41,8 +41,8 @@ export default {
 			const updates = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `${name}._context.root = root;`;
 
-				const listName = generator.current.listNames[ contextName ];
-				const indexName = generator.current.indexNames[ contextName ];
+				const listName = generator.current.listNames.get( contextName );
+				const indexName = generator.current.indexNames.get( contextName );
 
 				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
 			}).join( '\n' );
@@ -106,7 +106,7 @@ export default {
 			componentInitProperties.push(`data: ${name}_initialData`);
 		}
 
-		const expression = node.name === ':Self' ? generator.name : generator.importedComponents[ node.name ] || `${generator.alias( 'template' )}.components.${node.name}`;
+		const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
 
 		local.init.addBlockAtStart( deindent`
 			${statements.join( '\n\n' )}

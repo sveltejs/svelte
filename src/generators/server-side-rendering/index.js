@@ -52,8 +52,8 @@ export default function ssr ( parsed, source, options, names ) {
 
 	// create main render() function
 	generator.push({
-		contexts: {},
-		indexes: {},
+		contexts: new Map(),
+		indexes: new Map(),
 		conditions: []
 	});
 
