@@ -12,9 +12,9 @@ class DomGenerator extends Generator {
 	constructor ( parsed, source, name, names, visitors, options ) {
 		super( parsed, source, name, names, visitors, options );
 		this.renderers = [];
-		this.uses = {};
+		this.uses = new Set();
 
-		this.importedComponents = {};
+		this.importedComponents = new Map();
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -134,7 +134,7 @@ class DomGenerator extends Generator {
 			name = `${name}Dev`;
 		}
 
-		this.uses[ name ] = true;
+		this.uses.add( name );
 
 		return this.alias( name );
 	}
@@ -174,15 +174,15 @@ export default function dom ( parsed, source, options, names ) {
 		templateProperties.components.value.properties.forEach( property => {
 			const key = property.key.name;
 			const value = source.slice( property.value.start, property.value.end );
-			if ( generator.importedNames[ value ] ) {
-				generator.importedComponents[ key ] = value;
+			if ( generator.importedNames.has( value ) ) {
+				generator.importedComponents.set( key, value );
 			} else {
 				hasNonImportedComponent = true;
 			}
 		});
 		if ( hasNonImportedComponent ) {
 			// remove the specific components that were imported, as we'll refer to them directly
-			Object.keys( generator.importedComponents ).forEach( key => {
+			Array.from( generator.importedComponents.keys() ).forEach( key => {
 				removeObjectKey( generator, templateProperties.components.value, key );
 			});
 		} else {
@@ -198,12 +198,12 @@ export default function dom ( parsed, source, options, names ) {
 		localElementDepth: 0,
 		key: null,
 
-		contexts: {},
-		indexes: {},
+		contexts: new Map(),
+		indexes: new Map(),
 
 		params: [ 'root' ],
-		indexNames: {},
-		listNames: {},
+		indexNames: new Map(),
+		listNames: new Map(),
 
 		builders: getBuilders(),
 		getUniqueName: generator.getUniqueNameMaker()
@@ -336,7 +336,7 @@ export default function dom ( parsed, source, options, names ) {
 	}
 
 	if ( options.dev ) {
-		Object.keys( generator.expectedProperties ).forEach( prop => {
+		generator.expectedProperties.forEach( prop => {
 			constructorBlock.addLine(
 				`if ( !( '${prop}' in this._state ) ) throw new Error( "Component was created without expected data property '${prop}'" );`
 			);
@@ -408,17 +408,17 @@ export default function dom ( parsed, source, options, names ) {
 			throw new Error( `Components with shared helpers must be compiled to ES2015 modules (format: 'es')` );
 		}
 
-		const names = Object.keys( generator.uses ).map( name => {
-			return name !== generator.aliases[ name ] ? `${name} as ${generator.aliases[ name ]}` : name;
+		const names = Array.from( generator.uses ).map( name => {
+			return name !== generator.aliases.get( name ) ? `${name} as ${generator.aliases.get( name )}` : name;
 		});
 
 		builders.main.addLineAtStart(
 			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
 		);
 	} else {
-		Object.keys( generator.uses ).forEach( key => {
+		generator.uses.forEach( key => {
 			const fn = shared[ key ]; // eslint-disable-line import/namespace
-			builders.main.addBlock( fn.toString().replace( /^function [^(]*/, 'function ' + generator.aliases[ key ] ) );
+			builders.main.addBlock( fn.toString().replace( /^function [^(]*/, 'function ' + generator.aliases.get( key ) ) );
 		});
 	}
 

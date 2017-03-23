@@ -12,14 +12,14 @@ export default function createBinding ( generator, node, attribute, current, loc
 		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 	});
 
-	const contextual = name in current.contexts;
+	const contextual = current.contexts.has( name );
 
 	let obj;
 	let prop;
 
 	if ( contextual ) {
-		obj = current.listNames[ name ];
-		prop = current.indexNames[ name ];
+		obj = current.listNames.get( name );
+		prop = current.indexNames.get( name );
 	} else if ( attribute.value.type === 'MemberExpression' ) {
 		prop = `'[✂${attribute.value.property.start}-${attribute.value.property.end}✂]}'`;
 		obj = `root.[✂${attribute.value.object.start}-${attribute.value.object.end}✂]}`;

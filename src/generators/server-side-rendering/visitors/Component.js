@@ -45,7 +45,7 @@ export default {
 			})
 			.concat( bindings.map( binding => {
 				const { name, keypath } = flattenReference( binding.value );
-				const value = name in generator.current.contexts ? keypath : `root.${keypath}`;
+				const value = generator.current.contexts.has( name ) ? keypath : `root.${keypath}`;
 				return `${binding.name}: ${value}`;
 			}))
 			.join( ', ' );
