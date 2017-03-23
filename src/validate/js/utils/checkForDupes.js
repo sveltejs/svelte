@@ -1,11 +1,11 @@
 export default function checkForDupes ( validator, properties ) {
-	const seen = Object.create( null );
+	const seen = new Set();
 
 	properties.forEach( prop => {
-		if ( seen[ prop.key.name ] ) {
+		if ( seen.has( prop.key.name ) ) {
 			validator.error( `Duplicate property '${prop.key.name}'`, prop.start );
 		}
 
-		seen[ prop.key.name ] = true;
+		seen.add( prop.key.name );
 	});
 }

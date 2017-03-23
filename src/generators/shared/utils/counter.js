@@ -1,14 +1,17 @@
 export default function counter ( used ) {
-	const counts = {};
+	const counts = new Map();
 
-	used.forEach( name => counts[ name ] = 1 );
+	used.forEach( name => counts.set( name, 1 ) );
 
 	return function ( name ) {
-		if ( name in counts ) {
-			return `${name}${counts[ name ]++}`;
+		if ( counts.has( name ) ) {
+			const count = counts.get( name );
+			const newName = `${name}${count}`;
+			counts.set( name, count + 1 );
+			return newName;
 		}
 
-		counts[ name ] = 1;
+		counts.set( name, 1 );
 		return name;
 	};
 }
