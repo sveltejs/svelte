@@ -2,7 +2,7 @@ import deindent from '../../../utils/deindent.js';
 
 function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
-	const name = `${_name}_${i}`;
+	const name = generator.getUniqueName( `${_name}_${i}` );
 
 	const conditionsAndBlocks = [{
 		condition: generator.contextualise( node.expression ).snippet,
@@ -17,7 +17,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 			...getConditionsAndBlocks( generator, node.else.children[0], _name, i + 1 )
 		);
 	} else {
-		const name = `${_name}_${i + 1}`;
+		const name = generator.getUniqueName( `${_name}_${i + 1}` );
 		conditionsAndBlocks.push({
 			condition: null,
 			block: node.else ? name : null,
@@ -34,8 +34,9 @@ export default {
 	enter ( generator, node ) {
 		const params = generator.current.params.join( ', ' );
 		const name = generator.getUniqueName( `ifBlock` );
-		const getBlock = generator.getUniqueName( `getBlock` );
-		const currentBlock = generator.getUniqueName( `currentBlock` );
+		const getBlock = generator.current.getUniqueName( `getBlock` );
+		const currentBlock = generator.current.getUniqueName( `currentBlock` );
+		const _currentBlock = generator.current.getUniqueName( `_currentBlock` );
 
 		const isToplevel = generator.current.localElementDepth === 0;
 		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
@@ -51,7 +52,7 @@ export default {
 			}
 
 			var ${currentBlock} = ${getBlock}( ${params} );
-			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, component );
+			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
 		` );
 
 		const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
@@ -62,13 +63,13 @@ export default {
 		}
 
 		generator.current.builders.update.addBlock( deindent`
-			var _${currentBlock} = ${currentBlock};
+			var ${_currentBlock} = ${currentBlock};
 			${currentBlock} = ${getBlock}( ${params} );
-			if ( _${currentBlock} === ${currentBlock} && ${name}) {
+			if ( ${_currentBlock} === ${currentBlock} && ${name}) {
 				${name}.update( changed, ${params} );
 			} else {
 				if ( ${name} ) ${name}.teardown( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, component );
+				${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
 				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 			}
 		` );

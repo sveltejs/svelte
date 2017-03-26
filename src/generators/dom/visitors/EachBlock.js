@@ -2,19 +2,16 @@ import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
 import getBuilders from '../utils/getBuilders.js';
 
-const reserved = new Set( [ 'component', 'root' ] );
-
 export default {
 	enter ( generator, node ) {
 		const name = generator.getUniqueName( `eachBlock` );
 		const renderer = generator.getUniqueName( `renderEachBlock` );
-		const elseName = `${name}_else`;
-		const iterations = `${name}_iterations`;
-		const renderElse = `${renderer}_else`;
+		const elseName = generator.getUniqueName( `${name}_else` );
+		const renderElse = generator.getUniqueName( `${renderer}_else` );
 		const i = generator.current.getUniqueName( `i` );
-		const { params } = generator.current;
+		const params = generator.current.params.join( ', ' );
 
-		const listName = `${name}_value`;
+		const listName = generator.current.getUniqueName( `${name}_value` );
 
 		const isToplevel = generator.current.localElementDepth === 0;
 
@@ -22,17 +19,23 @@ export default {
 
 		const { dependencies, snippet } = generator.contextualise( node.expression );
 
-		const anchor = `${name}_anchor`;
+		const anchor = generator.current.getUniqueName( `${name}_anchor` );
 		generator.createAnchor( anchor );
 
-		generator.current.builders.init.addLine( `var ${name}_value = ${snippet};` );
-		generator.current.builders.init.addLine( `var ${iterations} = [];` );
-		if ( node.key ) generator.current.builders.init.addLine( `var ${name}_lookup = Object.create( null );` );
+		const localVars = {};
+
+		localVars.iteration = generator.current.getUniqueName( `${name}_iteration` );
+		localVars.iterations = generator.current.getUniqueName( `${name}_iterations` );
+		localVars._iterations = generator.current.getUniqueName( `_${name}_iterations` );
+		localVars.lookup = generator.current.getUniqueName( `${name}_lookup` );
+		localVars._lookup = generator.current.getUniqueName( `_${name}_lookup` );
+
+		generator.current.builders.init.addLine( `var ${listName} = ${snippet};` );
+		generator.current.builders.init.addLine( `var ${localVars.iterations} = [];` );
+		if ( node.key ) generator.current.builders.init.addLine( `var ${localVars.lookup} = Object.create( null );` );
 		if ( node.else ) generator.current.builders.init.addLine( `var ${elseName} = null;` );
 
 		const initialRender = new CodeBuilder();
-
-		const localVars = {};
 
 		if ( node.key ) {
 			localVars.fragment = generator.current.getUniqueName( 'fragment' );
@@ -40,31 +43,31 @@ export default {
 			localVars.key = generator.current.getUniqueName( 'key' );
 
 			initialRender.addBlock( deindent`
-				var ${localVars.key} = ${name}_value[${i}].${node.key};
-				${name}_iterations[${i}] = ${name}_lookup[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, component${node.key ? `, ${localVars.key}` : `` } );
+				var ${localVars.key} = ${listName}[${i}].${node.key};
+				${localVars.iterations}[${i}] = ${localVars.lookup}[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${generator.current.component}${node.key ? `, ${localVars.key}` : `` } );
 			` );
 		} else {
 			initialRender.addLine(
-				`${name}_iterations[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, component );`
+				`${localVars.iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${generator.current.component} );`
 			);
 		}
 
 		if ( !isToplevel ) {
 			initialRender.addLine(
-				`${name}_iterations[${i}].mount( ${anchor}.parentNode, ${anchor} );`
+				`${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );`
 			);
 		}
 
 		generator.current.builders.init.addBlock( deindent`
-			for ( var ${i} = 0; ${i} < ${name}_value.length; ${i} += 1 ) {
+			for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
 				${initialRender}
 			}
 		` );
 
 		if ( node.else ) {
 			generator.current.builders.init.addBlock( deindent`
-				if ( !${name}_value.length ) {
-					${elseName} = ${renderElse}( ${params}, component );
+				if ( !${listName}.length ) {
+					${elseName} = ${renderElse}( ${params}, ${generator.current.component} );
 					${!isToplevel ? `${elseName}.mount( ${anchor}.parentNode, ${anchor} );` : ''}
 				}
 			` );
@@ -72,8 +75,8 @@ export default {
 
 		if ( isToplevel ) {
 			generator.current.builders.mount.addBlock( deindent`
-				for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-					${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+				for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
+					${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 				}
 			` );
 			if ( node.else ) {
@@ -87,65 +90,65 @@ export default {
 
 		if ( node.key ) {
 			generator.current.builders.update.addBlock( deindent`
-				var ${name}_value = ${snippet};
-				var _${name}_iterations = [];
-				var _${name}_lookup = Object.create( null );
+				var ${listName} = ${snippet};
+				var ${localVars._iterations} = [];
+				var ${localVars._lookup} = Object.create( null );
 
 				var ${localVars.fragment} = document.createDocumentFragment();
 
 				// create new iterations as necessary
-				for ( var ${i} = 0; ${i} < ${name}_value.length; ${i} += 1 ) {
-					var ${localVars.value} = ${name}_value[${i}];
+				for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
+					var ${localVars.value} = ${listName}[${i}];
 					var ${localVars.key} = ${localVars.value}.${node.key};
 
-					if ( ${name}_lookup[ ${localVars.key} ] ) {
-						_${name}_iterations[${i}] = _${name}_lookup[ ${localVars.key} ] = ${name}_lookup[ ${localVars.key} ];
-						_${name}_lookup[ ${localVars.key} ].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
+					if ( ${localVars.lookup}[ ${localVars.key} ] ) {
+						${localVars._iterations}[${i}] = ${localVars._lookup}[ ${localVars.key} ] = ${localVars.lookup}[ ${localVars.key} ];
+						${localVars._lookup}[ ${localVars.key} ].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 					} else {
-						_${name}_iterations[${i}] = _${name}_lookup[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, component${node.key ? `, ${localVars.key}` : `` } );
+						${localVars._iterations}[${i}] = ${localVars._lookup}[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${generator.current.component}${node.key ? `, ${localVars.key}` : `` } );
 					}
 
-					_${name}_iterations[${i}].mount( ${localVars.fragment}, null );
+					${localVars._iterations}[${i}].mount( ${localVars.fragment}, null );
 				}
 
 				// remove old iterations
-				for ( var ${i} = 0; ${i} < ${name}_iterations.length; ${i} += 1 ) {
-					var ${name}_iteration = ${name}_iterations[${i}];
-					if ( !_${name}_lookup[ ${name}_iteration.${localVars.key} ] ) {
-						${name}_iteration.teardown( true );
+				for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
+					var ${localVars.iteration} = ${localVars.iterations}[${i}];
+					if ( !${localVars._lookup}[ ${localVars.iteration}.key ] ) {
+						${localVars.iteration}.teardown( true );
 					}
 				}
 
-				${name}_anchor.parentNode.insertBefore( ${localVars.fragment}, ${name}_anchor );
+				${anchor}.parentNode.insertBefore( ${localVars.fragment}, ${anchor} );
 
-				${name}_iterations = _${name}_iterations;
-				${name}_lookup = _${name}_lookup;
+				${localVars.iterations} = ${localVars._iterations};
+				${localVars.lookup} = ${localVars._lookup};
 			` );
 		} else {
 			generator.current.builders.update.addBlock( deindent`
-				var ${name}_value = ${snippet};
+				var ${listName} = ${snippet};
 
-				for ( var ${i} = 0; ${i} < ${name}_value.length; ${i} += 1 ) {
-					if ( !${iterations}[${i}] ) {
-						${iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, component );
-						${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+				for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
+					if ( !${localVars.iterations}[${i}] ) {
+						${localVars.iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${generator.current.component} );
+						${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 					} else {
-						${iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
+						${localVars.iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 					}
 				}
 
-				teardownEach( ${iterations}, true, ${name}_value.length );
+				teardownEach( ${localVars.iterations}, true, ${listName}.length );
 
-				${iterations}.length = ${listName}.length;
+				${localVars.iterations}.length = ${listName}.length;
 			` );
 		}
 
 		if ( node.else ) {
 			generator.current.builders.update.addBlock( deindent`
-				if ( !${name}_value.length && ${elseName} ) {
+				if ( !${listName}.length && ${elseName} ) {
 					${elseName}.update( changed, ${params} );
-				} else if ( !${name}_value.length ) {
-					${elseName} = ${renderElse}( ${params}, component );
+				} else if ( !${listName}.length ) {
+					${elseName} = ${renderElse}( ${params}, ${generator.current.component} );
 					${elseName}.mount( ${anchor}.parentNode, ${anchor} );
 				} else if ( ${elseName} ) {
 					${elseName}.teardown( true );
@@ -154,7 +157,7 @@ export default {
 		}
 
 		generator.current.builders.teardown.addBlock(
-			`${generator.helper( 'teardownEach' )}( ${iterations}, ${isToplevel ? 'detach' : 'false'} );` );
+			`${generator.helper( 'teardownEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'} );` );
 
 		if ( node.else ) {
 			generator.current.builders.teardown.addBlock( deindent`
@@ -169,20 +172,13 @@ export default {
 		}
 
 		const indexNames = new Map( generator.current.indexNames );
-		const indexName = node.index || `${node.context}__index`;
+		const indexName = node.index || generator.current.getUniqueName( `${node.context}__index` );
 		indexNames.set( node.context, indexName );
 
 		const listNames = new Map( generator.current.listNames );
 		listNames.set( node.context, listName );
 
-		// ensure that contexts like `root` or `component` don't blow up the whole show
-		let context = node.context;
-		let c = 1;
-
-		while ( reserved.has( context ) || ~generator.current.params.indexOf( context ) ) {
-			context = `${node.context}$${c++}`;
-		}
-
+		const context = generator.getUniqueName( node.context );
 		const contexts = new Map( generator.current.contexts );
 		contexts.set( node.context, context );
 
@@ -194,6 +190,8 @@ export default {
 
 		const blockParams = generator.current.params.concat( listName, context, indexName );
 
+		const getUniqueName = generator.getUniqueNameMaker( blockParams );
+
 		generator.push({
 			name: renderer,
 			target: 'target',
@@ -201,6 +199,8 @@ export default {
 			context: node.context,
 			key: node.key,
 			localElementDepth: 0,
+
+			component: getUniqueName( 'component' ),
 
 			contextDependencies,
 			contexts,
@@ -211,7 +211,7 @@ export default {
 			params: blockParams,
 
 			builders: getBuilders(),
-			getUniqueName: generator.getUniqueNameMaker()
+			getUniqueName,
 		});
 	},
 

@@ -6,11 +6,6 @@ export default function validateHtml ( validator, html ) {
 	let elementDepth = 0;
 
 	function visit ( node ) {
-		if ( node.type === 'EachBlock' ) {
-			if ( !~validator.names.indexOf( node.context ) ) validator.names.push( node.context );
-			if ( node.index && !~validator.names.indexOf( node.index ) ) validator.names.push( node.index );
-		}
-
 		if ( node.type === 'Element' ) {
 			if ( elementDepth === 0 && validator.namespace !== namespaces.svg && svg.test( node.name ) ) {
 				validator.warn( `<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`, node.start );

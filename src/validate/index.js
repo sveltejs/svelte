@@ -36,8 +36,6 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 			});
 		},
 
-		names: [],
-
 		namespace: null
 	};
 
@@ -53,8 +51,4 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 	if ( parsed.html ) {
 		validateHtml( validator, parsed.html );
 	}
-
-	return {
-		names: validator.names
-	};
 }

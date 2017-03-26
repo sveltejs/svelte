@@ -4,11 +4,11 @@ export default {
 		generator.createAnchor( anchor );
 
 		generator.current.builders.mount.addLine(
-			`component._yield && component._yield.mount( ${generator.current.target}, ${anchor} );`
+			`${generator.current.component}._yield && ${generator.current.component}._yield.mount( ${generator.current.target}, ${anchor} );`
 		);
 
 		generator.current.builders.teardown.addLine(
-			`component._yield && component._yield.teardown( detach );`
+			`${generator.current.component}._yield && ${generator.current.component}._yield.teardown( detach );`
 		);
 	}
 };
