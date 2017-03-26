@@ -16,15 +16,15 @@ export default {
 		<label>
 			<input type="radio"> Alpha
 		</label>
-		
+
 		<label>
 			<input type="radio"> Beta
 		</label>
-		
+
 		<label>
 			<input type="radio"> Gamma
 		</label>
-		
+
 		<p>Beta</p>`,
 
 	test ( assert, component, target, window ) {
@@ -42,17 +42,21 @@ export default {
 			<label>
 				<input type="radio"> Alpha
 			</label>
-			
+
 			<label>
 				<input type="radio"> Beta
 			</label>
-			
+
 			<label>
 				<input type="radio"> Gamma
 			</label>
-			
+
 			<p>Alpha</p>
 		` );
+
+		assert.equal( inputs[0].checked, true );
+		assert.equal( inputs[1].checked, false );
+		assert.equal( inputs[2].checked, false );
 
 		component.set({ selected: values[2] });
 		assert.equal( inputs[0].checked, false );
@@ -63,15 +67,15 @@ export default {
 			<label>
 				<input type="radio"> Alpha
 			</label>
-			
+
 			<label>
 				<input type="radio"> Beta
 			</label>
-			
+
 			<label>
 				<input type="radio"> Gamma
 			</label>
-			
+
 			<p>Gamma</p>
 		` );
 	}
