@@ -32,6 +32,7 @@ export default function parse ( template, options = {} ) {
 		index: 0,
 		template,
 		stack: [],
+		metaTags: {},
 
 		current () {
 			return this.stack[ this.stack.length - 1 ];

@@ -93,6 +93,8 @@ describe( 'generate', () => {
 
 			return env()
 				.then( window => {
+					global.window = window;
+
 					// Put the constructor on window for testing
 					window.SvelteComponent = SvelteComponent;
 

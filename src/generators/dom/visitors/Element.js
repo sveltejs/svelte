@@ -2,10 +2,20 @@ import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
 import Component from './Component.js';
+import Window from './meta/Window.js';
+
+const meta = {
+	':Window': Window
+};
 
 export default {
 	enter ( generator, node ) {
+		if ( node.name in meta ) {
+			return meta[ node.name ].enter( generator, node );
+		}
+
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
+
 		if ( isComponent ) {
 			return Component.enter( generator, node );
 		}
@@ -100,7 +110,13 @@ export default {
 	},
 
 	leave ( generator, node ) {
+		if ( node.name in meta ) {
+			if ( meta[ node.name ].leave ) meta[ node.name ].leave( generator, node );
+			return;
+		}
+
 		const isComponent = generator.components.has( node.name );
+
 		if ( isComponent ) {
 			return Component.leave( generator, node );
 		}
