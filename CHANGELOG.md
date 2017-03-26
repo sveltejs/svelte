@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.13.0
+
+* Add `<:Window>` meta tag with event listeners, and a handful of bindings ([#371](https://github.com/sveltejs/svelte/issues/371))
+* Don't uncheck radios incorrectly ([#399](https://github.com/sveltejs/svelte/issues/399))
+
 ## 1.12.1
 
 * Deconflict non-helper functions (`addCss` etc) ([#388](https://github.com/sveltejs/svelte/issues/388))
