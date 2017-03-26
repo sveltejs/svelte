@@ -12,7 +12,7 @@ export default {
 			return meta[ node.name ].enter( generator, node );
 		}
 
-		if ( node.name in generator.components || node.name === ':Self' ) {
+		if ( generator.components.has( node.name ) || node.name === ':Self' ) {
 			Component.enter( generator, node );
 			return;
 		}
@@ -53,7 +53,7 @@ export default {
 			return;
 		}
 
-		if ( node.name in generator.components || node.name === ':Self' ) {
+		if ( generator.components.has( node.name ) || node.name === ':Self' ) {
 			Component.leave( generator, node );
 			return;
 		}

@@ -14,7 +14,8 @@ export default {
 			return meta[ node.name ].enter( generator, node );
 		}
 
-		const isComponent = node.name in generator.components || node.name === ':Self';
+		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
+
 		if ( isComponent ) {
 			return Component.enter( generator, node );
 		}
@@ -41,8 +42,8 @@ export default {
 			const initialProps = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `root: root`;
 
-				const listName = generator.current.listNames[ contextName ];
-				const indexName = generator.current.indexNames[ contextName ];
+				const listName = generator.current.listNames.get( contextName );
+				const indexName = generator.current.indexNames.get( contextName );
 
 				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 			}).join( ',\n' );
@@ -50,8 +51,8 @@ export default {
 			const updates = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
-				const listName = generator.current.listNames[ contextName ];
-				const indexName = generator.current.indexNames[ contextName ];
+				const listName = generator.current.listNames.get( contextName );
+				const indexName = generator.current.indexNames.get( contextName );
 
 				return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 			}).join( '\n' );
@@ -114,7 +115,8 @@ export default {
 			return;
 		}
 
-		const isComponent = node.name in generator.components;
+		const isComponent = generator.components.has( node.name );
+
 		if ( isComponent ) {
 			return Component.leave( generator, node );
 		}

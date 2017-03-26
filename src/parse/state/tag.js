@@ -15,35 +15,34 @@ const metaTags = {
 	':Window': true
 };
 
-const specials = {
-	script: {
+const specials = new Map( [
+	[ 'script', {
 		read: readScript,
 		property: 'js'
-	},
-
-	style: {
+	} ],
+	[ 'style', {
 		read: readStyle,
 		property: 'css'
-	}
-};
+	} ]
+] );
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
-const disallowedContents = {
-	li: [ 'li' ],
-	dt: [ 'dt', 'dd' ],
-	dd: [ 'dt', 'dd' ],
-	p: 'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split( ' ' ),
-	rt: [ 'rt', 'rp' ],
-	rp: [ 'rt', 'rp' ],
-	optgroup: [ 'optgroup' ],
-	option: [ 'option', 'optgroup' ],
-	thead: [ 'tbody', 'tfoot' ],
-	tbody: [ 'tbody', 'tfoot' ],
-	tfoot: [ 'tbody' ],
-	tr: [ 'tr', 'tbody' ],
-	td: [ 'td', 'th', 'tr' ],
-	th: [ 'td', 'th', 'tr' ]
-};
+const disallowedContents = new Map( [
+	[ 'li', new Set( [ 'li' ] ) ],
+	[ 'dt', new Set( [ 'dt', 'dd' ] ) ],
+	[ 'dd', new Set( [ 'dt', 'dd' ] ) ],
+	[ 'p', new Set( 'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split( ' ' ) ) ],
+	[ 'rt', new Set( [ 'rt', 'rp' ] ) ],
+	[ 'rp', new Set( [ 'rt', 'rp' ] ) ],
+	[ 'optgroup', new Set( [ 'optgroup' ] ) ],
+	[ 'option', new Set( [ 'option', 'optgroup' ] ) ],
+	[ 'thead', new Set( [ 'tbody', 'tfoot' ] ) ],
+	[ 'tbody', new Set( [ 'tbody', 'tfoot' ] ) ],
+	[ 'tfoot', new Set( [ 'tbody' ] ) ],
+	[ 'tr', new Set( [ 'tr', 'tbody' ] ) ],
+	[ 'td', new Set( [ 'td', 'th', 'tr' ] ) ],
+	[ 'th', new Set( [ 'td', 'th', 'tr' ] ) ],
+] );
 
 function stripWhitespace ( element ) {
 	if ( element.children.length ) {
@@ -127,11 +126,10 @@ export default function tag ( parser ) {
 		parser.stack.pop();
 
 		return null;
-	} else if ( parent.name in disallowedContents ) {
+	} else if ( disallowedContents.has( parent.name ) ) {
 		// can this be a child of the parent element, or does it implicitly
 		// close it, like `<li>one<li>two`?
-		const disallowed = disallowedContents[ parent.name ];
-		if ( ~disallowed.indexOf( name ) ) {
+		if ( disallowedContents.get( parent.name ).has( name ) ) {
 			stripWhitespace( parent );
 
 			parent.end = start;
@@ -151,8 +149,8 @@ export default function tag ( parser ) {
 	parser.allowWhitespace();
 
 	// special cases – top-level <script> and <style>
-	if ( name in specials && parser.stack.length === 1 ) {
-		const special = specials[ name ];
+	if ( specials.has( name ) && parser.stack.length === 1 ) {
+		const special = specials.get( name );
 
 		if ( parser[ special.property ] ) {
 			parser.index = start;

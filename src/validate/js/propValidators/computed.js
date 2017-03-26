@@ -1,10 +1,7 @@
 import checkForDupes from '../utils/checkForDupes.js';
 import checkForComputedKeys from '../utils/checkForComputedKeys.js';
 
-const isFunctionExpression = {
-	FunctionExpression: true,
-	ArrowFunctionExpression: true
-};
+const isFunctionExpression = new Set( [ 'FunctionExpression', 'ArrowFunctionExpression' ] );
 
 export default function computed ( validator, prop ) {
 	if ( prop.value.type !== 'ObjectExpression' ) {
@@ -16,7 +13,7 @@ export default function computed ( validator, prop ) {
 	checkForComputedKeys( validator, prop.value.properties );
 
 	prop.value.properties.forEach( computation => {
-		if ( !isFunctionExpression[ computation.value.type ] ) {
+		if ( !isFunctionExpression.has( computation.value.type ) ) {
 			validator.error( `Computed properties can be function expressions or arrow function expressions`, computation.value.start );
 			return;
 		}
