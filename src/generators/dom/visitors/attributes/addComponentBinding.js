@@ -47,6 +47,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		${generator.current.component}._bindings.push( function () {
 			if ( ${local.name}._torndown ) return;
 			${local.name}.observe( '${attribute.name}', function ( value ) {
+				if ( ${updating} ) return;
 				${updating} = true;
 				${setter}
 				${updating} = false;
@@ -56,7 +57,9 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	local.update.addBlock( deindent`
 		if ( !${updating} && ${dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) {
+			${updating} = true;
 			${local.name}._set({ ${attribute.name}: ${snippet} });
+			${local.name}_updating = false;
 		}
 	` );
 }

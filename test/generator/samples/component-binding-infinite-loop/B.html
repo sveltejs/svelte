@@ -1,0 +1,20 @@
+{{#each list as item}}
+	<p>
+		<C identifier="{{item}}" bind:currentIdentifier>
+			{{item}}
+		</C>
+	</p>
+{{/each}}
+
+<script>
+import C from './C.html';
+
+export default {
+	data: () => ({
+		list: [1, 2, 3, 2, 1]
+	}),
+	components: {
+		C
+	}
+}
+</script>
