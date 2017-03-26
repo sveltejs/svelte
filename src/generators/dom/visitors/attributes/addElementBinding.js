@@ -59,9 +59,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 			setter = deindent`
 				if ( !${local.name}.checked ) return;
 				${setter}
-				component._bindingGroups[${bindingGroup}].forEach( function ( input ) {
-					input.checked = false;
-				});`;
+			`;
 		}
 
 		const condition = type === 'checkbox' ?
