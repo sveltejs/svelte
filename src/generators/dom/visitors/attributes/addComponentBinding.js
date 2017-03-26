@@ -59,7 +59,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		if ( !${updating} && ${dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) {
 			${updating} = true;
 			${local.name}._set({ ${attribute.name}: ${snippet} });
-			${local.name}_updating = false;
+			${updating} = false;
 		}
 	` );
 }
