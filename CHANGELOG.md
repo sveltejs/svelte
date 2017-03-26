@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.13.1
+
+* Prevent infinite loops with pathological component bindings ([#398](https://github.com/sveltejs/svelte/issues/398))
+* More robust deconflicting ([#401](https://github.com/sveltejs/svelte/pull/401))
+
 ## 1.13.0
 
 * Add `<:Window>` meta tag with event listeners, and a handful of bindings ([#371](https://github.com/sveltejs/svelte/issues/371))
