@@ -39,21 +39,23 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	generator.hasComplexBindings = true;
 
-	local.init.addBlock( deindent`
-		var ${local.name}_updating = false;
+	const updating = generator.current.getUniqueName( `${local.name}_updating` );
 
-		component._bindings.push( function () {
+	local.init.addBlock( deindent`
+		var ${updating} = false;
+
+		${generator.current.component}._bindings.push( function () {
 			if ( ${local.name}._torndown ) return;
 			${local.name}.observe( '${attribute.name}', function ( value ) {
-				${local.name}_updating = true;
+				${updating} = true;
 				${setter}
-				${local.name}_updating = false;
+				${updating} = false;
 			});
 		});
 	` );
 
 	local.update.addBlock( deindent`
-		if ( !${local.name}_updating && ${dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) {
+		if ( !${updating} && ${dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) {
 			${local.name}._set({ ${attribute.name}: ${snippet} });
 		}
 	` );

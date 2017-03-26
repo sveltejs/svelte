@@ -10,19 +10,19 @@ export default function getSetter ({ current, name, context, attribute, dependen
 			var index = this.${context}.${current.indexNames.get( name )};
 			list[index]${tail} = ${value};
 
-			component._set({ ${prop}: component.get( '${prop}' ) });
+			${current.component}._set({ ${prop}: ${current.component}.get( '${prop}' ) });
 		`;
 	}
 
 	if ( attribute.value.type === 'MemberExpression' ) {
 		return deindent`
-			var ${name} = component.get( '${name}' );
+			var ${name} = ${current.component}.get( '${name}' );
 			${snippet} = ${value};
-			component._set({ ${name}: ${name} });
+			${current.component}._set({ ${name}: ${name} });
 		`;
 	}
 
-	return `component._set({ ${name}: ${value} });`;
+	return `${current.component}._set({ ${name}: ${value} });`;
 }
 
 function getTailSnippet ( node ) {

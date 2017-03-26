@@ -37,13 +37,13 @@ export function compile ( source, _options ) {
 		return;
 	}
 
-	const { names } = validate( parsed, source, options );
+	validate( parsed, source, options );
 
 	const compiler = options.generate === 'ssr'
 		? generateSSR
 		: generate;
 
-	return compiler( parsed, source, options, names );
+	return compiler( parsed, source, options );
 }
 
 export function create ( source, _options = {} ) {

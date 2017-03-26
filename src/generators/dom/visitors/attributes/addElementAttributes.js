@@ -154,7 +154,7 @@ export default function addElementAttributes ( generator, node, local ) {
 			const flattened = flattenReference( attribute.expression.callee );
 			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
 				// allow event.stopPropagation(), this.select() etc
-				generator.code.prependRight( attribute.expression.start, 'component.' );
+				generator.code.prependRight( attribute.expression.start, `${generator.current.component}.` );
 			}
 
 			const usedContexts = [];
@@ -182,7 +182,7 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			if ( generator.events.has( name ) ) {
 				local.init.addBlock( deindent`
-					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( component, ${local.name}, function ( event ) {
+					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${generator.current.component}, ${local.name}, function ( event ) {
 						${handlerBody}
 					});
 				` );
@@ -213,11 +213,11 @@ export default function addElementAttributes ( generator, node, local ) {
 			generator.usesRefs = true;
 
 			local.init.addLine(
-				`component.refs.${name} = ${local.name};`
+				`${generator.current.component}.refs.${name} = ${local.name};`
 			);
 
 			generator.current.builders.teardown.addLine( deindent`
-				if ( component.refs.${name} === ${local.name} ) component.refs.${name} = null;
+				if ( ${generator.current.component}.refs.${name} === ${local.name} ) ${generator.current.component}.refs.${name} = null;
 			` );
 		}
 

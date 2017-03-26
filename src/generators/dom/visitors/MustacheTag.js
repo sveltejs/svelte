@@ -6,7 +6,7 @@ export default {
 
 		const { snippet } = generator.contextualise( node.expression );
 
-		generator.current.builders.init.addLine( `var last_${name} = ${snippet}` );
+		generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
 		generator.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
 
 		generator.current.builders.update.addBlock( deindent`

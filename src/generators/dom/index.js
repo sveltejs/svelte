@@ -9,8 +9,8 @@ import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
-	constructor ( parsed, source, name, names, visitors, options ) {
-		super( parsed, source, name, names, visitors, options );
+	constructor ( parsed, source, name, visitors, options ) {
+		super( parsed, source, name, visitors, options );
 		this.renderers = [];
 		this.uses = new Set();
 
@@ -58,7 +58,11 @@ class DomGenerator extends Generator {
 
 		const properties = new CodeBuilder();
 
-		if ( fragment.key ) properties.addBlock( `key: key,` );
+		let localKey;
+		if ( fragment.key ) {
+			localKey = fragment.getUniqueName( 'key' );
+			properties.addBlock( `key: ${localKey},` );
+		}
 
 		if ( fragment.builders.mount.isEmpty() ) {
 			properties.addBlock( `mount: ${this.helper( 'noop' )},` );
@@ -93,7 +97,7 @@ class DomGenerator extends Generator {
 		}
 
 		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params.join( ', ' )}, component${fragment.key ? `, key` : ''} ) {
+			function ${fragment.name} ( ${fragment.params.join( ', ' )}, ${fragment.component}${fragment.key ? `, ${localKey}` : ''} ) {
 				${fragment.builders.init}
 
 				return {
@@ -122,7 +126,7 @@ class DomGenerator extends Generator {
 			target: 'target',
 			localElementDepth: 0,
 			builders: getBuilders(),
-			getUniqueName: this.getUniqueNameMaker()
+			getUniqueName: this.getUniqueNameMaker( this.current.params )
 		});
 
 		// walk the children here
@@ -145,11 +149,11 @@ class DomGenerator extends Generator {
 	}
 }
 
-export default function dom ( parsed, source, options, names ) {
+export default function dom ( parsed, source, options ) {
 	const format = options.format || 'es';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new DomGenerator( parsed, source, name, names, visitors, options );
+	const generator = new DomGenerator( parsed, source, name, visitors, options );
 
 	const { computations, defaultExport, templateProperties } = generator.parseJs();
 
@@ -196,12 +200,17 @@ export default function dom ( parsed, source, options, names ) {
 		}
 	}
 
+	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
+	const component = getUniqueName( 'component' );
+
 	generator.push({
 		name: generator.alias( 'renderMainFragment' ),
 		namespace,
 		target: 'target',
 		localElementDepth: 0,
 		key: null,
+
+		component,
 
 		contexts: new Map(),
 		indexes: new Map(),
@@ -211,7 +220,7 @@ export default function dom ( parsed, source, options, names ) {
 		listNames: new Map(),
 
 		builders: getBuilders(),
-		getUniqueName: generator.getUniqueNameMaker()
+		getUniqueName,
 	});
 
 	parsed.html.children.forEach( node => generator.visit( node ) );
@@ -418,16 +427,16 @@ export default function dom ( parsed, source, options, names ) {
 		}
 
 		const names = Array.from( generator.uses ).map( name => {
-			return name !== generator.aliases.get( name ) ? `${name} as ${generator.aliases.get( name )}` : name;
+			return name !== generator.alias( name ) ? `${name} as ${generator.alias( name )}` : name;
 		});
 
 		builders.main.addLineAtStart(
-			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )}`
+			`import { ${names.join( ', ' )} } from ${JSON.stringify( sharedPath )};`
 		);
 	} else {
 		generator.uses.forEach( key => {
 			const fn = shared[ key ]; // eslint-disable-line import/namespace
-			builders.main.addBlock( fn.toString().replace( /^function [^(]*/, 'function ' + generator.aliases.get( key ) ) );
+			builders.main.addBlock( fn.toString().replace( /^function [^(]*/, 'function ' + generator.alias( key ) ) );
 		});
 	}
 
