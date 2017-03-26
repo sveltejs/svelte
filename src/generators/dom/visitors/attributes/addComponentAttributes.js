@@ -78,7 +78,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'EventHandler' ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
-			generator.code.prependRight( attribute.expression.start, 'component.' );
+			generator.code.prependRight( attribute.expression.start, `${generator.current.component}.` );
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
@@ -117,11 +117,11 @@ export default function addComponentAttributes ( generator, node, local ) {
 			generator.usesRefs = true;
 
 			local.init.addLine(
-				`component.refs.${attribute.name} = ${local.name};`
+				`${generator.current.component}.refs.${attribute.name} = ${local.name};`
 			);
 
 			generator.current.builders.teardown.addLine( deindent`
-				if ( component.refs.${attribute.name} === ${local.name} ) component.refs.${attribute.name} = null;
+				if ( ${generator.current.component}.refs.${attribute.name} === ${local.name} ) ${generator.current.component}.refs.${attribute.name} = null;
 			` );
 		}
 

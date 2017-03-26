@@ -30,9 +30,9 @@ export default function createBinding ( generator, node, attribute, current, loc
 			setter = `var selectedOption = ${local.name}.selectedOptions[0] || ${local.name}.options[0];\n${setter}`;
 		}
 
-		const value = generator.current.getUniqueName( 'value' );
-		const i = generator.current.getUniqueName( 'i' );
-		const option = generator.current.getUniqueName( 'option' );
+		const value = current.getUniqueName( 'value' );
+		const i = current.getUniqueName( 'i' );
+		const option = current.getUniqueName( 'option' );
 
 		const ifStatement = isMultipleSelect ?
 			deindent`
@@ -67,11 +67,11 @@ export default function createBinding ( generator, node, attribute, current, loc
 			`${local.name}.__value === ${snippet}`;
 
 		local.init.addLine(
-			`component._bindingGroups[${bindingGroup}].push( ${local.name} );`
+			`${current.component}._bindingGroups[${bindingGroup}].push( ${local.name} );`
 		);
 
 		local.teardown.addBlock(
-			`component._bindingGroups[${bindingGroup}].splice( component._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
+			`${current.component}._bindingGroups[${bindingGroup}].splice( ${current.component}._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
 		);
 
 		updateElement = `${local.name}.checked = ${condition};`;
@@ -82,13 +82,15 @@ export default function createBinding ( generator, node, attribute, current, loc
 		updateElement = `${local.name}.${attribute.name} = ${snippet};`;
 	}
 
+	const updating = generator.current.getUniqueName( `${local.name}_updating` );
+
 	local.init.addBlock( deindent`
-		var ${local.name}_updating = false;
+		var ${updating} = false;
 
 		function ${handler} () {
-			${local.name}_updating = true;
+			${updating} = true;
 			${setter}
-			${local.name}_updating = false;
+			${updating} = false;
 		}
 
 		${generator.helper( 'addEventListener' )}( ${local.name}, '${eventName}', ${handler} );
@@ -97,12 +99,12 @@ export default function createBinding ( generator, node, attribute, current, loc
 	node.initialUpdate = updateElement;
 
 	local.update.addLine( deindent`
-		if ( !${local.name}_updating ) {
+		if ( !${updating} ) {
 			${updateElement}
 		}
 	` );
 
-	generator.current.builders.teardown.addLine( deindent`
+	current.builders.teardown.addLine( deindent`
 		${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
 	` );
 }
@@ -136,7 +138,7 @@ function getBindingValue ( generator, local, node, attribute, isMultipleSelect, 
 	// <input type='checkbox' bind:group='foo'>
 	if ( attribute.name === 'group' ) {
 		if ( type === 'checkbox' ) {
-			return `${generator.helper( 'getBindingGroupValue' )}( component._bindingGroups[${bindingGroup}] )`;
+			return `${generator.helper( 'getBindingGroupValue' )}( ${generator.current.component}._bindingGroups[${bindingGroup}] )`;
 		}
 
 		return `${local.name}.__value`;
