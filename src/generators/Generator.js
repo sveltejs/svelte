@@ -1,19 +1,18 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
 import isReference from '../utils/isReference.js';
-import counter from './shared/utils/counter.js';
 import flattenReference from '../utils/flattenReference.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
+import reservedNames from '../utils/reservedNames.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
 import annotateWithScopes from './annotateWithScopes.js';
 
 export default class Generator {
-	constructor ( parsed, source, name, names, visitors, options ) {
+	constructor ( parsed, source, name, visitors, options ) {
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
-		this.names = names;
 		this.visitors = visitors;
 		this.options = options;
 
@@ -31,15 +30,14 @@ export default class Generator {
 		this.elementDepth = 0;
 
 		this.code = new MagicString( source );
-		this.getUniqueName = counter( names );
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
 		this.importedNames = new Set();
-
-		this.aliases = new Map();
+		this._aliases = new Map();
+		this._usedNames = new Set();
 
 		this._callbacks = new Map();
 	}
@@ -54,17 +52,12 @@ export default class Generator {
 	}
 
 	alias ( name ) {
-		if ( !( this.aliases.has( name ) ) ) {
-			let alias = name;
-			let i = 1;
-			while ( alias in this.importedNames ) {
-				alias = `${name}$${i++}`;
-			}
-
-			this.aliases.set( name, alias );
+		if ( this._aliases.has( name ) ) {
+			return this._aliases.get( name );
 		}
-
-		return this.aliases.get( name );
+		const alias = this.getUniqueName( name );
+		this._aliases.set( name, alias );
+		return alias;
 	}
 
 	contextualise ( expression, isEventHandler ) {
@@ -124,7 +117,7 @@ export default class Generator {
 							}
 						}
 
-						if ( globalWhitelist[ name ] ) {
+						if ( globalWhitelist.has( name ) ) {
 							code.prependRight( node.start, `( '${name}' in root ? root.` );
 							code.appendLeft( node.object ? node.object.end : node.end, ` : ${name} )` );
 						} else {
@@ -244,8 +237,21 @@ export default class Generator {
 		};
 	}
 
-	getUniqueNameMaker () {
-		return counter( this.names );
+	getUniqueName ( name ) {
+		let alias = name;
+		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ); alias = `${name}$${i++}` );
+		this._usedNames.add( alias );
+		return alias;
+	}
+
+	getUniqueNameMaker ( params ) {
+		const localUsedNames = new Set( params );
+		return name => {
+			let alias = name;
+			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}$${i++}` );
+			localUsedNames.add( alias );
+			return alias;
+		};
 	}
 
 	parseJs () {
@@ -272,7 +278,7 @@ export default class Generator {
 					imports.push( node );
 					this.code.remove( a, b );
 					node.specifiers.forEach( specifier => {
-						this.importedNames[ specifier.local.name ] = true;
+						this.importedNames.add( specifier.local.name );
 					});
 				}
 			}

@@ -9,11 +9,12 @@ function capDown ( name ) {
 export default {
 	enter ( generator, node ) {
 		const hasChildren = node.children.length > 0;
-		const name = generator.current.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
+		const { current } = generator;
+		const name = current.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
 
 		const local = {
 			name,
-			namespace: generator.current.namespace,
+			namespace: current.namespace,
 			isComponent: true,
 
 			allUsedContexts: [],
@@ -22,7 +23,7 @@ export default {
 			update: new CodeBuilder()
 		};
 
-		const isToplevel = generator.current.localElementDepth === 0;
+		const isToplevel = current.localElementDepth === 0;
 
 		generator.hasComponents = true;
 
@@ -32,8 +33,8 @@ export default {
 			const initialProps = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `root: root`;
 
-				const listName = generator.current.listNames.get( contextName );
-				const indexName = generator.current.indexNames.get( contextName );
+				const listName = current.listNames.get( contextName );
+				const indexName = current.indexNames.get( contextName );
 
 				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 			}).join( ',\n' );
@@ -41,8 +42,8 @@ export default {
 			const updates = local.allUsedContexts.map( contextName => {
 				if ( contextName === 'root' ) return `${name}._context.root = root;`;
 
-				const listName = generator.current.listNames.get( contextName );
-				const indexName = generator.current.indexNames.get( contextName );
+				const listName = current.listNames.get( contextName );
+				const indexName = current.indexNames.get( contextName );
 
 				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
 			}).join( '\n' );
@@ -57,26 +58,28 @@ export default {
 		}
 
 		const componentInitProperties = [
-			`target: ${!isToplevel ? generator.current.target: 'null'}`,
-			'_root: component._root || component'
+			`target: ${!isToplevel ? current.target: 'null'}`,
+			`_root: ${current.component}._root || ${current.component}`
 		];
 
 		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
 			const yieldName = generator.getUniqueName( `render${name}YieldFragment` );
-			const params = generator.current.params.join( ', ' );
+			const params = current.params.join( ', ' );
 
 			generator.generateBlock( node, yieldName );
 
-			generator.current.builders.init.addLine(
-				`var ${name}_yieldFragment = ${yieldName}( ${params}, component );`
+			const yieldFragment = current.getUniqueName( `${name}_yieldFragment` );
+
+			current.builders.init.addLine(
+				`var ${yieldFragment} = ${yieldName}( ${params}, ${current.component} );`
 			);
 
-			generator.current.builders.update.addLine(
-				`${name}_yieldFragment.update( changed, ${params} );`
+			current.builders.update.addLine(
+				`${yieldFragment}.update( changed, ${params} );`
 			);
 
-			componentInitProperties.push( `_yield: ${name}_yieldFragment`);
+			componentInitProperties.push( `_yield: ${yieldFragment}`);
 		}
 
 		const statements = [];
@@ -85,6 +88,7 @@ export default {
 			const initialProps = local.staticAttributes
 				.concat( local.dynamicAttributes )
 				.map( attribute => `${attribute.name}: ${attribute.value}` );
+			const initialData = current.getUniqueName( `${name}_initialData` );
 
 			if ( initialProps.length ) {
 				statements.push( deindent`
@@ -93,17 +97,17 @@ export default {
 					};
 				` );
 			} else {
-				statements.push( `var ${name}_initialData = {};` );
+				statements.push( `var ${initialData} = {};` );
 			}
 
 			if ( local.bindings.length ) {
 				const bindings = local.bindings.map( binding => {
-					return `if ( ${binding.prop} in ${binding.obj} ) ${name}_initialData.${binding.name} = ${binding.value};`;
+					return `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};`;
 				});
 
 				statements.push( bindings.join( '\n' ) );
 			}
-			componentInitProperties.push(`data: ${name}_initialData`);
+			componentInitProperties.push(`data: ${initialData}`);
 		}
 
 		const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
@@ -116,7 +120,7 @@ export default {
 		` );
 
 		if ( isToplevel ) {
-			generator.current.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
+			current.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
 		}
 
 		if ( local.dynamicAttributes.length ) {
@@ -141,16 +145,16 @@ export default {
 			` );
 		}
 
-		generator.current.builders.teardown.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
+		current.builders.teardown.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
 
-		generator.current.builders.init.addBlock( local.init );
-		if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
+		current.builders.init.addBlock( local.init );
+		if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
 
 		generator.push({
 			namespace: local.namespace,
 			target: name,
-			parent: generator.current,
-			localElementDepth: generator.current.localElementDepth + 1,
+			parent: current,
+			localElementDepth: current.localElementDepth + 1,
 			key: null
 		});
 	},
