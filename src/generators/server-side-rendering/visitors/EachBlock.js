@@ -7,14 +7,14 @@ export default {
 
 		// TODO should this be the generator's job? It's duplicated between
 		// here and the equivalent DOM compiler visitor
-		const contexts = Object.assign( {}, generator.current.contexts );
-		contexts[ node.context ] = node.context;
+		const contexts = new Map( generator.current.contexts );
+		contexts.set( node.context, node.context );
 
-		const indexes = Object.assign( {}, generator.current.indexes );
-		if ( node.index ) indexes[ node.index ] = node.context;
+		const indexes = new Map( generator.current.indexes );
+		if ( node.index ) indexes.set( node.index, node.context );
 
-		const contextDependencies = Object.assign( {}, generator.current.contextDependencies );
-		contextDependencies[ node.context ] = dependencies;
+		const contextDependencies = new Map( generator.current.contextDependencies );
+		contextDependencies.set( node.context, dependencies );
 
 		generator.push({
 			contexts,

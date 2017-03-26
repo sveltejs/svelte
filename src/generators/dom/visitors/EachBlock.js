@@ -2,10 +2,7 @@ import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
 import getBuilders from '../utils/getBuilders.js';
 
-const reserved = {
-	component: true,
-	root: true
-};
+const reserved = new Set( [ 'component', 'root' ] );
 
 export default {
 	enter ( generator, node ) {
@@ -171,28 +168,29 @@ export default {
 			generator.generateBlock( node.else, renderElse );
 		}
 
-		const indexNames = Object.assign( {}, generator.current.indexNames );
-		const indexName = indexNames[ node.context ] = ( node.index || `${node.context}__index` );
+		const indexNames = new Map( generator.current.indexNames );
+		const indexName = node.index || `${node.context}__index`;
+		indexNames.set( node.context, indexName );
 
-		const listNames = Object.assign( {}, generator.current.listNames );
-		listNames[ node.context ] = listName;
+		const listNames = new Map( generator.current.listNames );
+		listNames.set( node.context, listName );
 
 		// ensure that contexts like `root` or `component` don't blow up the whole show
 		let context = node.context;
 		let c = 1;
 
-		while ( context in reserved || ~generator.current.params.indexOf( context ) ) {
+		while ( reserved.has( context ) || ~generator.current.params.indexOf( context ) ) {
 			context = `${node.context}$${c++}`;
 		}
 
-		const contexts = Object.assign( {}, generator.current.contexts );
-		contexts[ node.context ] = context;
+		const contexts = new Map( generator.current.contexts );
+		contexts.set( node.context, context );
 
-		const indexes = Object.assign( {}, generator.current.indexes );
-		if ( node.index ) indexes[ indexName ] = node.context;
+		const indexes = new Map( generator.current.indexes );
+		if ( node.index ) indexes.set( indexName, node.context );
 
-		const contextDependencies = Object.assign( {}, generator.current.contextDependencies );
-		contextDependencies[ node.context ] = dependencies;
+		const contextDependencies = new Map( generator.current.contextDependencies );
+		contextDependencies.set( node.context, dependencies );
 
 		const blockParams = generator.current.params.concat( listName, context, indexName );
 
