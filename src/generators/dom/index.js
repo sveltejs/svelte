@@ -14,11 +14,6 @@ class DomGenerator extends Generator {
 		this.renderers = [];
 		this.uses = new Set();
 
-		// allow compiler to deconflict user's `import { get } from 'whatever'` and
-		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
-		this.importedNames = {};
-		this.aliases = {};
-
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.builders = {
 			metaBindings: new CodeBuilder()
