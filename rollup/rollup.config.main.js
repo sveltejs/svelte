@@ -17,7 +17,12 @@ export default {
 			include: 'src/**',
 			exclude: 'src/shared/**',
 			transforms: {
-				dangerousTaggedTemplateString: true
+				arrow: false,
+				classes: false,
+				conciseMethodProperty: false,
+				templateString: false,
+				letConst: false,
+				numericLiteral: false
 			}
 		})
 	],
