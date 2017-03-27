@@ -21,9 +21,5 @@ export default {
 			}
 		})
 	],
-	external: [ 'magic-string' ],
-	globals: {
-		'magic-string': 'MagicString'
-	},
 	sourceMap: true
 };

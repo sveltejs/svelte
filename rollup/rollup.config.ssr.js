@@ -20,7 +20,7 @@ export default {
 			}
 		})
 	],
-	external: [ path.resolve( 'src/index.js' ), 'fs', 'path', 'magic-string' ],
+	external: [ path.resolve( 'src/index.js' ), 'fs', 'path' ],
 	paths: {
 		[ path.resolve( 'src/index.js' ) ]: '../compiler/svelte.js'
 	},
