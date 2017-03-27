@@ -16,13 +16,8 @@ export default {
 		buble({
 			include: 'src/**',
 			exclude: 'src/shared/**',
-			transforms: {
-				arrow: false,
-				classes: false,
-				conciseMethodProperty: false,
-				templateString: false,
-				letConst: false,
-				numericLiteral: false
+			target: {
+				node: 4
 			}
 		})
 	],
