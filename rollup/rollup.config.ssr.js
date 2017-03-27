@@ -15,8 +15,8 @@ export default {
 		buble({
 			include: 'src/**',
 			exclude: 'src/shared/**',
-			transforms: {
-				dangerousTaggedTemplateString: true
+			target: {
+				node: 4
 			}
 		})
 	],
