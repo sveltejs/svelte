@@ -245,22 +245,23 @@ export default function dom ( parsed, source, options ) {
 
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
+		const differs = generator.helper( 'differs' );
 
 		computations.forEach( ({ key, deps }) => {
 			builder.addBlock( deindent`
-				if ( isInitial || ${deps.map( dep => `( '${dep}' in newState && typeof state.${dep} === 'object' || state.${dep} !== oldState.${dep} )` ).join( ' || ' )} ) {
+				if ( isInitial || ${deps.map( dep => `( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
 				}
 			` );
 		});
 
 		builders.main.addBlock( deindent`
-			function ${generator.alias( 'applyComputations' )} ( state, newState, oldState, isInitial ) {
+			function ${generator.alias( 'recompute' )} ( state, newState, oldState, isInitial ) {
 				${builder}
 			}
 		` );
 
-		builders._set.addLine( `${generator.alias( 'applyComputations' )}( this._state, newState, oldState, false )` );
+		builders._set.addLine( `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )` );
 	}
 
 	// TODO is the `if` necessary?
@@ -348,7 +349,7 @@ export default function dom ( parsed, source, options ) {
 
 	if ( templateProperties.computed ) {
 		constructorBlock.addLine(
-			`${generator.alias( 'applyComputations' )}( this._state, this._state, {}, true );`
+			`${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`
 		);
 	}
 
