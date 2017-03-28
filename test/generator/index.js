@@ -67,7 +67,7 @@ describe( 'generate', () => {
 			// check that no ES2015+ syntax slipped in
 			if ( !config.allowES2015 ) {
 				try {
-					const startIndex = code.indexOf( 'function renderMainFragment' ); // may change!
+					const startIndex = code.indexOf( 'function render_main_fragment' ); // may change!
 					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
 					acorn.parse( es5, { ecmaVersion: 5 });
 				} catch ( err ) {

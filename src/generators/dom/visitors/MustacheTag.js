@@ -10,8 +10,8 @@ export default {
 		generator.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
 
 		generator.current.builders.update.addBlock( deindent`
-			if ( ( __tmp = ${snippet} ) !== last_${name} ) {
-				${name}.data = last_${name} = __tmp;
+			if ( ( ${generator.alias( 'tmp' )} = ${snippet} ) !== last_${name} ) {
+				${name}.data = last_${name} = ${generator.alias( 'tmp' )};
 			}
 		` );
 	}

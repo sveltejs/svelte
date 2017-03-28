@@ -33,13 +33,13 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 export default {
 	enter ( generator, node ) {
 		const params = generator.current.params.join( ', ' );
-		const name = generator.getUniqueName( `ifBlock` );
-		const getBlock = generator.current.getUniqueName( `getBlock` );
-		const currentBlock = generator.current.getUniqueName( `currentBlock` );
-		const _currentBlock = generator.current.getUniqueName( `_currentBlock` );
+		const name = generator.getUniqueName( `if_block` );
+		const getBlock = generator.current.getUniqueName( `get_block` );
+		const currentBlock = generator.current.getUniqueName( `current_block` );
+		const _currentBlock = generator.current.getUniqueName( `_current_block` );
 
 		const isToplevel = generator.current.localElementDepth === 0;
-		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
+		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `render_if_block` ) );
 
 		const anchor = `${name}_anchor`;
 		generator.createAnchor( anchor );
