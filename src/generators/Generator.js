@@ -6,6 +6,7 @@ import globalWhitelist from '../utils/globalWhitelist.js';
 import reservedNames from '../utils/reservedNames.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
+import processCss from './shared/processCss.js';
 import annotateWithScopes from './annotateWithScopes.js';
 
 export default class Generator {
@@ -30,6 +31,7 @@ export default class Generator {
 		this.elementDepth = 0;
 
 		this.code = new MagicString( source );
+		this.css = parsed.css ? processCss( parsed, this.code ) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
 
@@ -233,7 +235,8 @@ export default class Generator {
 
 		return {
 			code: compiled.toString(),
-			map: compiled.generateMap({ includeContent: true, file: options.outputFilename })
+			map: compiled.generateMap({ includeContent: true, file: options.outputFilename }),
+			css: this.css
 		};
 	}
 
