@@ -2,7 +2,7 @@ import assert from 'assert';
 import * as fs from 'fs';
 import { svelte, exists } from '../helpers.js';
 
-describe.only( 'css', () => {
+describe( 'css', () => {
 	fs.readdirSync( 'test/css/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
