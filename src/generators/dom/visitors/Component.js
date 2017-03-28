@@ -64,12 +64,12 @@ export default {
 
 		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
-			const yieldName = generator.getUniqueName( `render${name}YieldFragment` );
+			const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
 			const params = current.params.join( ', ' );
 
 			generator.generateBlock( node, yieldName );
 
-			const yieldFragment = current.getUniqueName( `${name}_yieldFragment` );
+			const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
 
 			current.builders.init.addLine(
 				`var ${yieldFragment} = ${yieldName}( ${params}, ${current.component} );`
@@ -88,11 +88,11 @@ export default {
 			const initialProps = local.staticAttributes
 				.concat( local.dynamicAttributes )
 				.map( attribute => `${attribute.name}: ${attribute.value}` );
-			const initialData = current.getUniqueName( `${name}_initialData` );
+			const initialData = current.getUniqueName( `${name}_initial_data` );
 
 			if ( initialProps.length ) {
 				statements.push( deindent`
-					var ${name}_initialData = {
+					var ${initialData} = {
 						${initialProps.join( ',\n' )}
 					};
 				` );

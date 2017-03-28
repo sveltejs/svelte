@@ -27,8 +27,8 @@ export default {
 		}
 
 		generator.current.builders.update.addBlock( deindent`
-			if ( ( __tmp = ${snippet} ) !== last_${name} ) {
-				last_${name} = __tmp;
+			if ( ( ${generator.alias( 'tmp' )} = ${snippet} ) !== last_${name} ) {
+				last_${name} = ${generator.alias( 'tmp' )};
 				${detachStatement}
 				${mountStatement}
 			}

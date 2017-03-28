@@ -78,7 +78,7 @@ class DomGenerator extends Generator {
 		} else {
 			properties.addBlock( deindent`
 				update: function ( changed, ${fragment.params.join( ', ' )} ) {
-					var __tmp;
+					var ${this.alias( 'tmp' )};
 
 					${fragment.builders.update}
 				},
@@ -203,7 +203,7 @@ export default function dom ( parsed, source, options ) {
 	const component = getUniqueName( 'component' );
 
 	generator.push({
-		name: generator.alias( 'renderMainFragment' ),
+		name: generator.alias( 'render_main_fragment' ),
 		namespace,
 		target: 'target',
 		localElementDepth: 0,
@@ -277,13 +277,13 @@ export default function dom ( parsed, source, options ) {
 
 	if ( generator.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
-			var ${generator.alias( 'addedCss' )} = false;
-			function ${generator.alias( 'addCss' )} () {
+			var ${generator.alias( 'added_css' )} = false;
+			function ${generator.alias( 'add_css' )} () {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
 				style.textContent = ${JSON.stringify( generator.css )};
 				${generator.helper( 'appendNode' )}( style, document.head );
 
-				${generator.alias( 'addedCss' )} = true;
+				${generator.alias( 'added_css' )} = true;
 			}
 		` );
 	}
@@ -294,7 +294,7 @@ export default function dom ( parsed, source, options ) {
 	builders.init.addLine( `this._torndown = false;` );
 
 	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !${generator.alias( 'addedCss' )} ) ${generator.alias( 'addCss' )}();` );
+		builders.init.addLine( `if ( !${generator.alias( 'added_css' )} ) ${generator.alias( 'add_css' )}();` );
 	}
 
 	if ( generator.hasComponents ) {
@@ -304,7 +304,7 @@ export default function dom ( parsed, source, options ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this._bindings = [];
-			this._fragment = ${generator.alias( 'renderMainFragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'render_main_fragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
@@ -312,7 +312,7 @@ export default function dom ( parsed, source, options ) {
 		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			this._fragment = ${generator.alias( 'renderMainFragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'render_main_fragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
