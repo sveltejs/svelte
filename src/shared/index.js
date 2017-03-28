@@ -3,6 +3,10 @@ export * from './methods.js';
 
 export function noop () {}
 
+export function differs ( a, b ) {
+	return ( a !== b ) || ( a && ( typeof a === 'object' ) || ( typeof a === 'function' ) );
+}
+
 export function dispatchObservers ( component, group, newState, oldState ) {
 	for ( var key in group ) {
 		if ( !( key in newState ) ) continue;
