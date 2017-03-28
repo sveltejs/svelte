@@ -1,7 +1,6 @@
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import flattenReference from '../../utils/flattenReference.js';
-import processCss from '../shared/processCss.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 
@@ -93,11 +92,11 @@ export default function ssr ( parsed, source, options ) {
 		`var components = [];`
 	);
 
-	if ( parsed.css ) {
+	if ( generator.css ) {
 		builders.renderCss.addBlock( deindent`
 			components.push({
 				filename: ${name}.filename,
-				css: ${JSON.stringify( processCss( parsed, generator.code ) )},
+				css: ${JSON.stringify( generator.css )},
 				map: null // TODO
 			});
 		` );
