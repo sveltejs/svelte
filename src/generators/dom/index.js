@@ -2,7 +2,6 @@ import deindent from '../../utils/deindent.js';
 import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import namespaces from '../../utils/namespaces.js';
-import processCss from '../shared/processCss.js';
 import removeObjectKey from '../../utils/removeObjectKey.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
@@ -275,12 +274,12 @@ export default function dom ( parsed, source, options ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
-	 if ( parsed.css && options.css !== false ) {
+	if ( generator.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
 			var ${generator.alias( 'addedCss' )} = false;
 			function ${generator.alias( 'addCss' )} () {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
-				style.textContent = ${JSON.stringify( processCss( parsed, generator.code ) )};
+				style.textContent = ${JSON.stringify( generator.css )};
 				${generator.helper( 'appendNode' )}( style, document.head );
 
 				${generator.alias( 'addedCss' )} = true;
