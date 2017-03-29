@@ -105,9 +105,12 @@ export default function addElementAttributes ( generator, node, local ) {
 					}
 
 					local.init.addLine( updater );
+					if ( !generator.current.tmp ) {
+						generator.current.tmp = generator.current.getUniqueName( 'tmp' );
+					}
 					local.update.addBlock( deindent`
-						if ( ( ${generator.alias( 'tmp' )} = ${snippet} ) !== ${last} ) {
-							${last} = ${generator.alias( 'tmp' )};
+						if ( ( ${generator.current.tmp} = ${snippet} ) !== ${last} ) {
+							${last} = ${generator.current.tmp};
 							${updater}
 						}
 					` );
