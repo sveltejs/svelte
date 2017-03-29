@@ -26,9 +26,12 @@ export default {
 			generator.current.builders.init.addLine( mountStatement );
 		}
 
+		if ( !generator.current.tmp ) {
+			generator.current.tmp = generator.current.getUniqueName( 'tmp' );
+		}
 		generator.current.builders.update.addBlock( deindent`
-			if ( ( ${generator.alias( 'tmp' )} = ${snippet} ) !== last_${name} ) {
-				last_${name} = ${generator.alias( 'tmp' )};
+			if ( ( ${generator.current.tmp} = ${snippet} ) !== last_${name} ) {
+				last_${name} = ${generator.current.tmp};
 				${detachStatement}
 				${mountStatement}
 			}

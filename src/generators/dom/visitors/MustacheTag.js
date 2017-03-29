@@ -9,9 +9,12 @@ export default {
 		generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
 		generator.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
 
+		if ( !generator.current.tmp ) {
+			generator.current.tmp = generator.current.getUniqueName( 'tmp' );
+		}
 		generator.current.builders.update.addBlock( deindent`
-			if ( ( ${generator.alias( 'tmp' )} = ${snippet} ) !== last_${name} ) {
-				${name}.data = last_${name} = ${generator.alias( 'tmp' )};
+			if ( ( ${generator.current.tmp} = ${snippet} ) !== last_${name} ) {
+				${name}.data = last_${name} = ${generator.current.tmp};
 			}
 		` );
 	}
