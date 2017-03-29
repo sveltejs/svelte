@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.13.2
+
+* Fix deep component bindings ([#420](https://github.com/sveltejs/svelte/issues/420))
+* Include `css` property in compiler output ([#409](https://github.com/sveltejs/svelte/issues/409))
+* Treat functions as mutable objects when recomputing ([#413](https://github.com/sveltejs/svelte/issues/413)
+* Include magic-string in bundle ([#410](https://github.com/sveltejs/svelte/issues/410))
+* Disable unneeded Bublé transformations for slimmer output ([#411](https://github.com/sveltejs/svelte/pull/411))
+
 ## 1.13.1
 
 * Prevent infinite loops with pathological component bindings ([#398](https://github.com/sveltejs/svelte/issues/398))
