@@ -21,8 +21,8 @@ export default function createBinding ( generator, node, attribute, current, loc
 		obj = current.listNames.get( name );
 		prop = current.indexNames.get( name );
 	} else if ( attribute.value.type === 'MemberExpression' ) {
-		prop = `'[✂${attribute.value.property.start}-${attribute.value.property.end}✂]}'`;
-		obj = `root.[✂${attribute.value.object.start}-${attribute.value.object.end}✂]}`;
+		prop = `'[✂${attribute.value.property.start}-${attribute.value.property.end}✂]'`;
+		obj = `root.[✂${attribute.value.object.start}-${attribute.value.object.end}✂]`;
 	} else {
 		obj = 'root';
 		prop = `'${name}'`;
