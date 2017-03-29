@@ -16,7 +16,7 @@ export default {
 			<input>
 			<p>blah</p>
 		` );
-		
+
 		component.destroy();
 	}
 };
