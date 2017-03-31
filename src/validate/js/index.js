@@ -63,5 +63,13 @@ export default function validateJs ( validator, js ) {
 
 			validator.defaultExport = node;
 		}
+
+		if ( node.type === 'ImportDeclaration' ) {
+			node.specifiers.forEach( specifier => {
+				if ( specifier.local.name === 'root' ) {
+					validator.error( `Imported identifiers cannot have a name of 'root' due to technical limitations`, specifier.start );
+				}
+			});
+		}
 	});
 }

@@ -1,0 +1,8 @@
+[{
+	"message": "Imported identifiers cannot have a name of 'root' due to technical limitations",
+	"pos": 17,
+	"loc": {
+		"line": 2,
+		"column": 8
+	}
+}]
