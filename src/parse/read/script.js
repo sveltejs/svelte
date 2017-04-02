@@ -7,6 +7,8 @@ export default function readScript ( parser, start, attributes ) {
 	const scriptStart = parser.index;
 	const scriptEnd = parser.template.indexOf( scriptClosingTag, scriptStart );
 
+	if ( scriptEnd === -1 ) parser.error( `<script> must have a closing tag` );
+
 	const source = spaces( scriptStart ) + parser.template.slice( scriptStart, scriptEnd );
 	parser.index = scriptEnd + scriptClosingTag.length;
 
