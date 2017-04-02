@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.13.5
+
+* Read `range` and `number` input values as numbers ([#436](https://github.com/sveltejs/svelte/issues/436))
+* Better error for `bind:value='{{foo}}'` ([#437](https://github.com/sveltejs/svelte/issues/437))
+
 ## 1.13.4
 
 * Prevent unclosed `<script>` tag causing infinite loop ([#435](https://github.com/sveltejs/svelte/pull/435))
