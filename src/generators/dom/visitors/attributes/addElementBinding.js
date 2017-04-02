@@ -144,6 +144,11 @@ function getBindingValue ( generator, local, node, attribute, isMultipleSelect, 
 		return `${local.name}.__value`;
 	}
 
+	// <input type='range|number' bind:value>
+	if ( type === 'range' || type === 'number' ) {
+		return `+${local.name}.${attribute.name}`;
+	}
+
 	// everything else
 	return `${local.name}.${attribute.name}`;
 }
