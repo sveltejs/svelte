@@ -3,7 +3,7 @@ import flattenReference from '../../../../utils/flattenReference.js';
 import getSetter from './binding/getSetter.js';
 
 export default function createBinding ( generator, node, attribute, current, local ) {
-	const { name } = flattenReference( attribute.value );
+	const { name, keypath } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = generator.contextualise( attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
@@ -35,7 +35,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		prop
 	});
 
-	const setter = getSetter({ current, name, context: '_context', attribute, dependencies, snippet, value: 'value' });
+	const setter = getSetter({ current, name, keypath, context: '_context', attribute, dependencies, value: 'value' });
 
 	generator.hasComplexBindings = true;
 

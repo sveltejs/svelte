@@ -1,0 +1,42 @@
+<ComponentSelector :components bind:selectedComponent/>
+<Editor bind:code='selectedComponent.source'/>
+
+<pre>
+{{compiled}}
+</pre>
+
+<script>
+	import Editor from './Editor.html';
+	import ComponentSelector from './ComponentSelector.html';
+
+	export default {
+		components: {
+			ComponentSelector,
+			Editor
+		},
+
+		oncreate () {
+			this.observe( 'components', components => {
+				components.forEach( component => {
+					if ( component === this.get( 'selectedComponent' ) ) return;
+					component.compiled = component.source.toUpperCase();
+				});
+			});
+
+			this.observe( 'selectedComponent', component => {
+				component.compiled = component.source.toUpperCase();
+				this.updateBundle();
+			});
+		},
+
+		methods: {
+			updateBundle () {
+				const components = this.get( 'components' );
+
+				const compiled = components.map( component => component.compiled ).join( '\n' );
+
+				this.set({ compiled });
+			}
+		}
+	}
+</script>

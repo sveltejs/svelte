@@ -21,7 +21,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 	const value = getBindingValue( generator, local, node, attribute, isMultipleSelect, bindingGroup, type );
 	const eventName = getBindingEventName( node );
 
-	let setter = getSetter({ current, name, context: '__svelte', attribute, dependencies, snippet, value });
+	let setter = getSetter({ current, name, keypath, context: '__svelte', attribute, dependencies, value });
 	let updateElement;
 
 	// <select> special case
