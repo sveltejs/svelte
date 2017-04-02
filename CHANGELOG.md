@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.13.4
+
+* Prevent unclosed `<script>` tag causing infinite loop ([#435](https://github.com/sveltejs/svelte/pull/435))
+
 ## 1.13.3
 
 * Correctly handle `{{true}}`, `{{false}}` and `{{null}}` ([#424](https://github.com/sveltejs/svelte/issues/424))
