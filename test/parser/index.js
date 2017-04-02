@@ -1,15 +1,16 @@
 import assert from 'assert';
 import * as fs from 'fs';
-import { svelte, exists } from '../helpers.js';
+import { svelte } from '../helpers.js';
 
 describe( 'parse', () => {
 	fs.readdirSync( 'test/parser/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const solo = exists( `test/parser/samples/${dir}/solo` );
+		// add .solo to a sample directory name to only run that test
+		const solo = /\.solo$/.test( dir );
 
 		if ( solo && process.env.CI ) {
-			throw new Error( 'Forgot to remove `solo: true` from test' );
+			throw new Error( `Forgot to remove '.solo' from test parser/samples/${dir}` );
 		}
 
 		( solo ? it.only : it )( dir, () => {
