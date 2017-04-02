@@ -184,7 +184,7 @@ export default function addElementAttributes ( generator, node, local ) {
 				local.init.addBlock( deindent`
 					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${generator.current.component}, ${local.name}, function ( event ) {
 						${handlerBody}
-					});
+					}.bind( ${local.name} ) );
 				` );
 
 				generator.current.builders.teardown.addLine( deindent`
