@@ -1,10 +1,10 @@
 export function test ({ assert, smc, locateInSource, locateInGenerated }) {
-	const expected = locateInSource( 'foo.bar.baz' );
+	const expected = locateInSource( 'bar.baz' );
 
 	let loc;
 	let actual;
 
-	loc = locateInGenerated( 'foo.bar.baz' );
+	loc = locateInGenerated( 'bar.baz' );
 
 	actual = smc.originalPositionFor({
 		line: loc.line + 1,
@@ -18,7 +18,7 @@ export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 		column: expected.column
 	});
 
-	loc = locateInGenerated( 'foo.bar.baz', loc.character + 1 );
+	loc = locateInGenerated( 'bar.baz', loc.character + 1 );
 
 	actual = smc.originalPositionFor({
 		line: loc.line + 1,

@@ -1,6 +1,6 @@
 import deindent from '../../../../../utils/deindent.js';
 
-export default function getSetter ({ current, name, context, attribute, dependencies, snippet, value }) {
+export default function getSetter ({ current, name, keypath, context, attribute, dependencies, value }) {
 	if ( current.contexts.has( name ) ) {
 		const prop = dependencies[0];
 		const tail = attribute.value.type === 'MemberExpression' ? getTailSnippet( attribute.value ) : '';
@@ -17,7 +17,7 @@ export default function getSetter ({ current, name, context, attribute, dependen
 	if ( attribute.value.type === 'MemberExpression' ) {
 		return deindent`
 			var ${name} = ${current.component}.get( '${name}' );
-			${snippet} = ${value};
+			${keypath} = ${value};
 			${current.component}._set({ ${name}: ${name} });
 		`;
 	}
