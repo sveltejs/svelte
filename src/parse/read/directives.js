@@ -77,6 +77,17 @@ export function readBindingDirective ( parser, start, name ) {
 
 		const a = parser.index;
 
+		if ( parser.eat( '{{' ) ) {
+			let message = 'bound values should not be wrapped';
+			const b = parser.template.indexOf( '}}', a );
+			if ( b !== -1 ) {
+				const value = parser.template.slice( parser.index, b );
+				message += ` — use '${value}', not '{{${value}}}'`;
+			}
+
+			parser.error( message, a );
+		}
+
 		// this is a bit of a hack so that we can give Acorn something parseable
 		let b;
 		if ( quoteMark ) {
