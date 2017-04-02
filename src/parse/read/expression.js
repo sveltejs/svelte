@@ -1,10 +1,10 @@
 import { parseExpressionAt } from 'acorn';
 
-const literals = {
-	true: true,
-	false: false,
-	null: null
-};
+const literals = new Map([
+	[ 'true', true ],
+	[ 'false', false ],
+	[ 'null', null ]
+]);
 
 export default function readExpression ( parser ) {
 	const start = parser.index;
@@ -13,12 +13,12 @@ export default function readExpression ( parser ) {
 	if ( name && /^[a-z]+$/.test( name ) ) {
 		const end = start + name.length;
 
-		if ( name in literals ) {
+		if ( literals.has( name ) ) {
 			return {
 				type: 'Literal',
 				start,
 				end,
-				value: literals[ name ],
+				value: literals.get( name ),
 				raw: name
 			};
 		}
