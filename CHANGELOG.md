@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.13.3
+
+* Correctly handle `{{true}}`, `{{false}}` and `{{null}}` ([#424](https://github.com/sveltejs/svelte/issues/424))
+* Update `<select>` value attributes correctly ([#423](https://github.com/sveltejs/svelte/issues/423))
+* Bind custom event handler callbacks ([#428](https://github.com/sveltejs/svelte/issues/428))
+* Disallow `import root` ([#430](https://github.com/sveltejs/svelte/pull/430))
+* Prevent component bindings mutating the wrong object ([#432](https://github.com/sveltejs/svelte/pull/432))
+
 ## 1.13.2
 
 * Fix deep component bindings ([#420](https://github.com/sveltejs/svelte/issues/420))
