@@ -109,7 +109,7 @@ const lookup = {
 	title: {},
 	type: { appliesTo: [ 'button', 'input', 'command', 'embed', 'object', 'script', 'source', 'style', 'menu' ] },
 	usemap: { propertyName: 'useMap', appliesTo: [ 'img', 'input', 'object' ] },
-	value: { appliesTo: [ 'button', 'option', 'input', 'li', 'meter', 'progress', 'param' ] },
+	value: { appliesTo: [ 'button', 'option', 'input', 'li', 'meter', 'progress', 'param', 'select' ] },
 	width: { appliesTo: [ 'canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video' ] },
 	wrap: { appliesTo: [ 'textarea' ] }
 };
