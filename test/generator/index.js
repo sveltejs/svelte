@@ -30,6 +30,8 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 	return module._compile( code, filename );
 };
 
+const Object_assign = Object.assign;
+
 describe( 'generate', () => {
 	before( setupHtmlEqual );
 
@@ -93,6 +95,10 @@ describe( 'generate', () => {
 
 			return env()
 				.then( window => {
+					Object.assign = () => {
+						throw new Error( 'cannot use Object.assign in generated code, as it is not supported everywhere' );
+					};
+
 					global.window = window;
 
 					// Put the constructor on window for testing
@@ -145,6 +151,9 @@ describe( 'generate', () => {
 						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 						throw err;
 					}
+				})
+				.then( () => {
+					Object.assign = Object_assign;
 				});
 		});
 	}
