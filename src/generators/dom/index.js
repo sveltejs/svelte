@@ -241,7 +241,7 @@ export default function dom ( parsed, source, options ) {
 	}
 
 	builders._set.addLine( 'var oldState = this._state;' );
-	builders._set.addLine( 'this._state = Object.assign( {}, oldState, newState );' );
+	builders._set.addLine( `this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );` );
 
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
@@ -340,7 +340,7 @@ export default function dom ( parsed, source, options ) {
 	if ( generator.usesRefs ) constructorBlock.addLine( `this.refs = {};` );
 
 	constructorBlock.addLine(
-		`this._state = ${templateProperties.data ? `Object.assign( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};`
+		`this._state = ${templateProperties.data ? `${generator.helper( 'assign' )}( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};`
 	);
 
 	if ( !generator.builders.metaBindings.isEmpty() ) {
@@ -393,7 +393,7 @@ export default function dom ( parsed, source, options ) {
 
 	if ( sharedPath ) {
 		const base = templateProperties.methods ? `{}, ${generator.alias( 'template' )}.methods` : `{}`;
-		builders.main.addBlock( `${name}.prototype = Object.assign( ${base}, ${generator.helper( 'proto' )} );` );
+		builders.main.addBlock( `${name}.prototype = ${generator.helper( 'assign' )}( ${base}, ${generator.helper( 'proto' )} );` );
 	} else {
 		if ( templateProperties.methods ) {
 			builders.main.addBlock( `${name}.prototype = ${generator.alias( 'template' )}.methods;` );
