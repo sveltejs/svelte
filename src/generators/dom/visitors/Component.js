@@ -6,6 +6,18 @@ function capDown ( name ) {
 	return `${name[0].toLowerCase()}${name.slice( 1 )}`;
 }
 
+function stringifyProps ( props ) {
+	if ( !props.length ) return '{}';
+
+	const joined = props.join( ', ' );
+	if ( joined.length > 40 ) {
+		// make larger data objects readable
+		return `{\n\t${props.join( ',\n\t' )}\n}`;
+	}
+
+	return `{ ${joined} }`;
+}
+
 export default {
 	enter ( generator, node ) {
 		const hasChildren = node.children.length > 0;
@@ -88,32 +100,28 @@ export default {
 			const initialProps = local.staticAttributes
 				.concat( local.dynamicAttributes )
 				.map( attribute => `${attribute.name}: ${attribute.value}` );
-			const initialData = current.getUniqueName( `${name}_initialData` );
 
-			if ( initialProps.length ) {
-				statements.push( deindent`
-					var ${name}_initialData = {
-						${initialProps.join( ',\n' )}
-					};
-				` );
-			} else {
-				statements.push( `var ${initialData} = {};` );
-			}
+			const initialPropString = stringifyProps( initialProps );
 
 			if ( local.bindings.length ) {
-				const bindings = local.bindings.map( binding => {
-					return `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};`;
+				const initialData = current.getUniqueName( `${name}_initialData` );
+
+				statements.push( `var ${name}_initialData = ${initialPropString};` );
+
+				local.bindings.forEach( binding => {
+					statements.push( `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};` );
 				});
 
-				statements.push( bindings.join( '\n' ) );
+				componentInitProperties.push( `data: ${initialData}` );
+			} else if ( initialProps.length ) {
+				componentInitProperties.push( `data: ${initialPropString}` );
 			}
-			componentInitProperties.push(`data: ${initialData}`);
 		}
 
 		const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
 
 		local.init.addBlockAtStart( deindent`
-			${statements.join( '\n\n' )}
+			${statements.join( '\n' )}
 			var ${name} = new ${expression}({
 				${componentInitProperties.join(',\n')}
 			});
