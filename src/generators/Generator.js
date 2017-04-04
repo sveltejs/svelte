@@ -154,15 +154,6 @@ export default class Generator {
 		};
 	}
 
-	fire ( eventName, data ) {
-		const handlers = this._callbacks.has( eventName ) && this._callbacks.get( eventName ).slice();
-		if ( !handlers ) return;
-
-		for ( let i = 0; i < handlers.length; i += 1 ) {
-			handlers[i].call( this, data );
-		}
-	}
-
 	generate ( result, options, { name, format } ) {
 		if ( this.imports.length ) {
 			const statements = [];
@@ -429,14 +420,6 @@ export default class Generator {
 			namespace,
 			templateProperties
 		};
-	}
-
-	on ( eventName, handler ) {
-		if ( this._callbacks.has( eventName ) ) {
-			this._callbacks.get( eventName ).push( handler );
-		} else {
-			this._callbacks.set( eventName, [ handler ] );
-		}
 	}
 
 	pop () {
