@@ -141,8 +141,12 @@ describe( 'generate', () => {
 						component.destroy();
 						assert.equal( target.innerHTML, '' );
 					}
+
+					Object.assign = Object_assign;
 				})
 				.catch( err => {
+					Object.assign = Object_assign;
+
 					if ( config.error && !unintendedError ) {
 						config.error( assert, err );
 					}
@@ -151,9 +155,6 @@ describe( 'generate', () => {
 						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 						throw err;
 					}
-				})
-				.then( () => {
-					Object.assign = Object_assign;
 				});
 		});
 	}
