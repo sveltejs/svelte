@@ -173,7 +173,7 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			// TODO hoist event handlers? can do `this.__component.method(...)`
 			const declarations = usedContexts.map( name => {
-				if ( name === 'root' ) return 'var root = this.__svelte.root;';
+				if ( name === 'root' ) return 'var root = component.get();';
 
 				const listName = generator.current.listNames.get( name );
 				const indexName = generator.current.indexNames.get( name );
@@ -188,7 +188,7 @@ export default function addElementAttributes ( generator, node, local ) {
 				local.init.addBlock( deindent`
 					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${generator.current.component}, ${local.name}, function ( event ) {
 						${handlerBody}
-					}.bind( ${local.name} ) );
+					});
 				` );
 
 				generator.current.builders.teardown.addLine( deindent`

@@ -21,7 +21,7 @@ function render_main_fragment ( root, component ) {
 		var root = component.get();
 		
 		component.foo( root.bar );
-	}.bind( button ) );
+	});
 	
 	appendNode( createText( "foo" ), button );
 
@@ -109,6 +109,8 @@ function createText( data ) {
 function appendNode( node, target ) {
 	target.appendChild( node );
 }
+
+function noop() {}
 
 function assign( target ) {
 	for ( var i = 1; i < arguments.length; i += 1 ) {
