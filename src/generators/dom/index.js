@@ -393,18 +393,17 @@ export default function dom ( parsed, source, options ) {
 
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
-	if ( sharedPath ) {
-		const base = templateProperties.methods ? `{}, ${generator.alias( 'template' )}.methods` : `{}`;
-		builders.main.addBlock( `${name}.prototype = ${generator.helper( 'assign' )}( ${base}, ${generator.helper( 'proto' )} );` );
-	} else {
-		if ( templateProperties.methods ) {
-			builders.main.addBlock( `${name}.prototype = ${generator.alias( 'template' )}.methods;` );
-		}
+	const prototypeBase = `${name}.prototype` + ( templateProperties.methods ? `, ${generator.alias( 'template' )}.methods` : '' );
+	const proto = sharedPath ? generator.helper( 'proto ' ) : deindent`
+		{
+			${
+				[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ]
+					.map( n => `${n}: ${generator.helper( n )}` )
+					.join( ',\n' )
+			}
+		}`;
 
-		[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ].forEach( methodName => {
-			builders.main.addLine( `${name}.prototype.${methodName} = ${generator.helper( methodName )};` );
-		});
-	}
+	builders.main.addBlock( `${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});` );
 
 	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`
