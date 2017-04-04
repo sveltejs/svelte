@@ -119,8 +119,9 @@ class DomGenerator extends Generator {
 		}
 	}
 
-	generateBlock ( node, name ) {
+	generateBlock ( node, name, type ) {
 		this.push({
+			type,
 			name,
 			target: 'target',
 			localElementDepth: 0,
@@ -203,6 +204,7 @@ export default function dom ( parsed, source, options ) {
 	const component = getUniqueName( 'component' );
 
 	generator.push({
+		type: 'block',
 		name: generator.alias( 'render_main_fragment' ),
 		namespace,
 		target: 'target',

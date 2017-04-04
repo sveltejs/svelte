@@ -168,7 +168,7 @@ export default {
 		}
 
 		if ( node.else ) {
-			generator.generateBlock( node.else, renderElse );
+			generator.generateBlock( node.else, renderElse, 'block' );
 		}
 
 		const indexNames = new Map( generator.current.indexNames );
@@ -193,6 +193,7 @@ export default {
 		const getUniqueName = generator.getUniqueNameMaker( blockParams );
 
 		generator.push({
+			type: 'block',
 			name: renderer,
 			target: 'target',
 			expression: node.expression,

@@ -1,4 +1,5 @@
 import deindent from '../../../utils/deindent.js';
+import findBlock from '../utils/findBlock.js';
 
 export default {
 	enter ( generator, node ) {
@@ -26,12 +27,12 @@ export default {
 			generator.current.builders.init.addLine( mountStatement );
 		}
 
-		if ( !generator.current.tmp ) {
-			generator.current.tmp = generator.current.getUniqueName( 'tmp' );
-		}
+		const fragment = findBlock( generator.current );
+		if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
+
 		generator.current.builders.update.addBlock( deindent`
-			if ( ( ${generator.current.tmp} = ${snippet} ) !== last_${name} ) {
-				last_${name} = ${generator.current.tmp};
+			if ( ( ${fragment.tmp} = ${snippet} ) !== last_${name} ) {
+				last_${name} = ${fragment.tmp};
 				${detachStatement}
 				${mountStatement}
 			}

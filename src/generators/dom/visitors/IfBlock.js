@@ -9,7 +9,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		block: name
 	}];
 
-	generator.generateBlock( node, name );
+	generator.generateBlock( node, name, 'block' );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
@@ -24,7 +24,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		});
 
 		if ( node.else ) {
-			generator.generateBlock( node.else, name );
+			generator.generateBlock( node.else, name, 'block' );
 		}
 	}
 	return conditionsAndBlocks;
