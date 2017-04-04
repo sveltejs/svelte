@@ -2,7 +2,7 @@ import deindent from '../../utils/deindent.js';
 import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import namespaces from '../../utils/namespaces.js';
-import removeObjectKey from '../../utils/removeObjectKey.js';
+import { removeObjectKey } from '../../utils/removeNode.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
@@ -175,7 +175,7 @@ export default function dom ( parsed, source, options ) {
 		const ns = templateProperties.namespace.value.value;
 		namespace = namespaces[ ns ] || ns;
 
-		removeObjectKey( generator, defaultExport.declaration, 'namespace' );
+		removeObjectKey( generator.code, defaultExport.declaration, 'namespace' );
 	}
 
 	if ( templateProperties.components ) {
@@ -192,11 +192,11 @@ export default function dom ( parsed, source, options ) {
 		if ( hasNonImportedComponent ) {
 			// remove the specific components that were imported, as we'll refer to them directly
 			Array.from( generator.importedComponents.keys() ).forEach( key => {
-				removeObjectKey( generator, templateProperties.components.value, key );
+				removeObjectKey( generator.code, templateProperties.components.value, key );
 			});
 		} else {
 			// remove the entire components portion of the export
-			removeObjectKey( generator, defaultExport.declaration, 'components' );
+			removeObjectKey( generator.code, defaultExport.declaration, 'components' );
 		}
 	}
 

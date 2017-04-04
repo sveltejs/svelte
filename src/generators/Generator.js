@@ -4,6 +4,7 @@ import isReference from '../utils/isReference.js';
 import flattenReference from '../utils/flattenReference.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
 import reservedNames from '../utils/reservedNames.js';
+import { removeNode } from '../utils/removeNode.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
 import processCss from './shared/processCss.js';
@@ -268,28 +269,25 @@ export default class Generator {
 
 		if ( js ) {
 			this.addSourcemapLocations( js.content );
+			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
 			// imports need to be hoisted out of the IIFE
-			for ( let i = 0; i < js.content.body.length; i += 1 ) {
-				const node = js.content.body[i];
+			for ( let i = 0; i < body.length; i += 1 ) {
+				const node = body[i];
 				if ( node.type === 'ImportDeclaration' ) {
-					let a = node.start;
-					let b = node.end;
-					while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
-					while ( source[b] === '\n' ) b += 1;
-
+					removeNode( this.code, js.content, node );
 					imports.push( node );
-					this.code.remove( a, b );
+
 					node.specifiers.forEach( specifier => {
 						this.importedNames.add( specifier.local.name );
 					});
 				}
 			}
 
-			defaultExport = js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
+			defaultExport = body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 			if ( defaultExport ) {
-				const finalNode = js.content.body[ js.content.body.length - 1 ];
+				const finalNode = body[ body.length - 1 ];
 				if ( defaultExport === finalNode ) {
 					// export is last property, we can just return it
 					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
