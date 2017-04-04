@@ -151,7 +151,7 @@ export default function dom ( parsed, source, options ) {
 
 	const generator = new DomGenerator( parsed, source, name, visitors, options );
 
-	const { computations, templateProperties, namespace } = generator.parseJs();
+	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
 	// Remove these after version 2
 	if ( templateProperties.onrender ) {
@@ -239,7 +239,7 @@ export default function dom ( parsed, source, options ) {
 		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
 	` );
 
-	if ( parsed.js ) {
+	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
