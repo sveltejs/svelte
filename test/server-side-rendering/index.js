@@ -13,6 +13,10 @@ function tryToReadFile ( file ) {
 	}
 }
 
+function capitalize ( str ) {
+	return str[0].toUpperCase() + str.slice( 1 );
+}
+
 describe( 'ssr', () => {
 	before( () => {
 		require( process.env.COVERAGE ?
@@ -25,8 +29,10 @@ describe( 'ssr', () => {
 	fs.readdirSync( 'test/server-side-rendering/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		// add .solo to a sample directory name to only run that test
-		const solo = /\.solo$/.test( dir );
+		// add .solo to a sample directory name to only run that test, or
+		// .show to always show the output. or both
+		const solo = /\.solo/.test( dir );
+		let show = /\.show/.test( dir );
 
 		if ( solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
@@ -42,22 +48,29 @@ describe( 'ssr', () => {
 			const data = tryToLoadJson( `${dir}/data.json` );
 			let html;
 			let css;
+			let error;
 
 			try {
 				html = component.render( data );
 				css = component.renderCss().css;
-			} catch ( err ) {
+			} catch ( e ) {
+				show = true;
+				error = e;
+			}
+
+			if ( show ) {
 				fs.readdirSync( dir ).forEach( file => {
 					if ( file[0] === '_' ) return;
 					const source = fs.readFileSync( `${dir}/${file}`, 'utf-8' );
-					const { code } = svelte.compile( source, { generate: 'ssr' });
+					const name = capitalize( file.slice( 0, -path.extname( file ).length ) );
+					const { code } = svelte.compile( source, { generate: 'ssr', name });
 					console.group( file );
 					console.log( addLineNumbers( code ) );
 					console.groupEnd();
 				});
-
-				throw err;
 			}
+
+			if ( error ) throw error;
 
 			fs.writeFileSync( `${dir}/_actual.html`, html );
 			if ( css ) fs.writeFileSync( `${dir}/_actual.css`, css );

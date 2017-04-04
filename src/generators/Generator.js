@@ -260,7 +260,7 @@ export default class Generator {
 		};
 	}
 
-	parseJs () {
+	parseJs ( ssr ) {
 		const { source } = this;
 		const { js } = this.parsed;
 
@@ -359,6 +359,27 @@ export default class Generator {
 					// remove the entire components portion of the export
 					removeObjectKey( this.code, defaultExport.declaration, 'components' );
 				}
+			}
+
+			// Remove these after version 2
+			if ( templateProperties.onrender ) {
+				const { key } = templateProperties.onrender;
+				this.code.overwrite( key.start, key.end, 'oncreate', true );
+				templateProperties.oncreate = templateProperties.onrender;
+			}
+
+			if ( templateProperties.onteardown ) {
+				const { key } = templateProperties.onteardown;
+				this.code.overwrite( key.start, key.end, 'ondestroy', true );
+				templateProperties.ondestroy = templateProperties.onteardown;
+			}
+
+			// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
+			if ( ssr ) {
+				if ( templateProperties.oncreate ) removeNode( this.code, defaultExport.declaration, templateProperties.oncreate );
+				if ( templateProperties.ondestroy ) removeNode( this.code, defaultExport.declaration, templateProperties.ondestroy );
+				if ( templateProperties.methods ) removeNode( this.code, defaultExport.declaration, templateProperties.methods );
+				if ( templateProperties.events ) removeNode( this.code, defaultExport.declaration, templateProperties.events );
 			}
 
 			// now that we've analysed the default export, we can determine whether or not we need to keep it
