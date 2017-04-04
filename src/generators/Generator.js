@@ -4,6 +4,8 @@ import isReference from '../utils/isReference.js';
 import flattenReference from '../utils/flattenReference.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
 import reservedNames from '../utils/reservedNames.js';
+import namespaces from '../utils/namespaces.js';
+import { removeNode, removeObjectKey } from '../utils/removeNode.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
 import processCss from './shared/processCss.js';
@@ -21,6 +23,7 @@ export default class Generator {
 		this.helpers = new Set();
 		this.components = new Set();
 		this.events = new Set();
+		this.importedComponents = new Map();
 
 		this.bindingGroups = [];
 
@@ -257,66 +260,41 @@ export default class Generator {
 		};
 	}
 
-	parseJs () {
+	parseJs ( ssr ) {
 		const { source } = this;
 		const { js } = this.parsed;
 
 		const imports = this.imports;
 		const computations = [];
-		let defaultExport = null;
 		const templateProperties = {};
+
+		let namespace = null;
+		let hasJs = !!js;
 
 		if ( js ) {
 			this.addSourcemapLocations( js.content );
+			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
 			// imports need to be hoisted out of the IIFE
-			for ( let i = 0; i < js.content.body.length; i += 1 ) {
-				const node = js.content.body[i];
+			for ( let i = 0; i < body.length; i += 1 ) {
+				const node = body[i];
 				if ( node.type === 'ImportDeclaration' ) {
-					let a = node.start;
-					let b = node.end;
-					while ( /[ \t]/.test( source[ a - 1 ] ) ) a -= 1;
-					while ( source[b] === '\n' ) b += 1;
-
+					removeNode( this.code, js.content, node );
 					imports.push( node );
-					this.code.remove( a, b );
+
 					node.specifiers.forEach( specifier => {
 						this.importedNames.add( specifier.local.name );
 					});
 				}
 			}
 
-			defaultExport = js.content.body.find( node => node.type === 'ExportDefaultDeclaration' );
+			const defaultExport = body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 			if ( defaultExport ) {
-				const finalNode = js.content.body[ js.content.body.length - 1 ];
-				if ( defaultExport === finalNode ) {
-					// export is last property, we can just return it
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
-				} else {
-					const { declarations } = annotateWithScopes( js );
-					let template = 'template';
-					for ( let i = 1; declarations.has( template ); template = `template_${i++}` );
-
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
-
-					let i = defaultExport.start;
-					while ( /\s/.test( source[ i - 1 ] ) ) i--;
-
-					const indentation = source.slice( i, defaultExport.start );
-					this.code.appendLeft( finalNode.end, `\n\n${indentation}return ${template};` );
-				}
-
 				defaultExport.declaration.properties.forEach( prop => {
 					templateProperties[ prop.key.name ] = prop;
 				});
-
-				this.code.prependRight( js.content.start, `var ${this.alias( 'template' )} = (function () {` );
-			} else {
-				this.code.prependRight( js.content.start, '(function () {' );
 			}
-
-			this.code.appendLeft( js.content.end, '}());' );
 
 			[ 'helpers', 'events', 'components' ].forEach( key => {
 				if ( templateProperties[ key ] ) {
@@ -353,11 +331,102 @@ export default class Generator {
 
 				templateProperties.computed.value.properties.forEach( prop => visit( prop.key.name ) );
 			}
+
+			if ( templateProperties.namespace ) {
+				const ns = templateProperties.namespace.value.value;
+				namespace = namespaces[ ns ] || ns;
+
+				removeObjectKey( this.code, defaultExport.declaration, 'namespace' );
+			}
+
+			if ( templateProperties.components ) {
+				let hasNonImportedComponent = false;
+				templateProperties.components.value.properties.forEach( property => {
+					const key = property.key.name;
+					const value = source.slice( property.value.start, property.value.end );
+					if ( this.importedNames.has( value ) ) {
+						this.importedComponents.set( key, value );
+					} else {
+						hasNonImportedComponent = true;
+					}
+				});
+				if ( hasNonImportedComponent ) {
+					// remove the specific components that were imported, as we'll refer to them directly
+					Array.from( this.importedComponents.keys() ).forEach( key => {
+						removeObjectKey( this.code, templateProperties.components.value, key );
+					});
+				} else {
+					// remove the entire components portion of the export
+					removeObjectKey( this.code, defaultExport.declaration, 'components' );
+				}
+			}
+
+			// Remove these after version 2
+			if ( templateProperties.onrender ) {
+				const { key } = templateProperties.onrender;
+				this.code.overwrite( key.start, key.end, 'oncreate', true );
+				templateProperties.oncreate = templateProperties.onrender;
+			}
+
+			if ( templateProperties.onteardown ) {
+				const { key } = templateProperties.onteardown;
+				this.code.overwrite( key.start, key.end, 'ondestroy', true );
+				templateProperties.ondestroy = templateProperties.onteardown;
+			}
+
+			// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
+			if ( ssr ) {
+				if ( templateProperties.oncreate ) removeNode( this.code, defaultExport.declaration, templateProperties.oncreate );
+				if ( templateProperties.ondestroy ) removeNode( this.code, defaultExport.declaration, templateProperties.ondestroy );
+				if ( templateProperties.methods ) removeNode( this.code, defaultExport.declaration, templateProperties.methods );
+				if ( templateProperties.events ) removeNode( this.code, defaultExport.declaration, templateProperties.events );
+			}
+
+			// now that we've analysed the default export, we can determine whether or not we need to keep it
+			let hasDefaultExport = !!defaultExport;
+			if ( defaultExport && defaultExport.declaration.properties.length === 0 ) {
+				hasDefaultExport = false;
+				removeNode( this.code, js.content, defaultExport );
+			}
+
+			// if we do need to keep it, then we need to generate a return statement
+			if ( hasDefaultExport ) {
+				const finalNode = body[ body.length - 1 ];
+				if ( defaultExport === finalNode ) {
+					// export is last property, we can just return it
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
+				} else {
+					const { declarations } = annotateWithScopes( js );
+					let template = 'template';
+					for ( let i = 1; declarations.has( template ); template = `template_${i++}` );
+
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
+
+					let i = defaultExport.start;
+					while ( /\s/.test( source[ i - 1 ] ) ) i--;
+
+					const indentation = source.slice( i, defaultExport.start );
+					this.code.appendLeft( finalNode.end, `\n\n${indentation}return ${template};` );
+				}
+			}
+
+			// user code gets wrapped in an IIFE
+			if ( js.content.body.length ) {
+				const prefix = hasDefaultExport ? `var ${this.alias( 'template' )} = (function () {` : `(function () {`;
+				this.code.prependRight( js.content.start, prefix ).appendLeft( js.content.end, '}());' );
+			}
+
+			// if there's no need to include user code, remove it altogether
+			else {
+				this.code.remove( js.content.start, js.content.end );
+				hasJs = false;
+			}
 		}
 
 		return {
 			computations,
-			defaultExport,
+			hasJs,
+			namespace,
 			templateProperties
 		};
 	}

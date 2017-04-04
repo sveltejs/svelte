@@ -40,7 +40,7 @@ export default function ssr ( parsed, source, options ) {
 
 	const generator = new SsrGenerator( parsed, source, name, visitors, options );
 
-	const { computations, templateProperties } = generator.parseJs();
+	const { computations, hasJs, templateProperties } = generator.parseJs( true );
 
 	const builders = {
 		main: new CodeBuilder(),
@@ -117,7 +117,9 @@ export default function ssr ( parsed, source, options ) {
 		` );
 
 		templateProperties.components.value.properties.forEach( prop => {
-			builders.renderCss.addLine( `addComponent( ${generator.alias( 'template' )}.components.${prop.key.name} );` );
+			const { name } = prop.key;
+			const expression = generator.importedComponents.get( name ) || `${generator.alias( 'template' )}.components.${name}`;
+			builders.renderCss.addLine( `addComponent( ${expression} );` );
 		});
 	}
 
@@ -129,7 +131,7 @@ export default function ssr ( parsed, source, options ) {
 		};
 	` );
 
-	if ( parsed.js ) {
+	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 
