@@ -43,8 +43,6 @@ export default class Generator {
 		this.importedNames = new Set();
 		this._aliases = new Map();
 		this._usedNames = new Set();
-
-		this._callbacks = new Map();
 	}
 
 	addSourcemapLocations ( node ) {
