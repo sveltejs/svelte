@@ -81,10 +81,10 @@ describe( 'ssr', () => {
 	});
 
 	// duplicate client-side tests, as far as possible
-	fs.readdirSync( 'test/generator/samples' ).forEach( dir => {
+	fs.readdirSync( 'test/runtime/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const config = loadConfig( `./generator/samples/${dir}/_config.js` );
+		const config = loadConfig( `./runtime/samples/${dir}/_config.js` );
 
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
@@ -96,7 +96,7 @@ describe( 'ssr', () => {
 			let compiled;
 
 			try {
-				const source = fs.readFileSync( `test/generator/samples/${dir}/main.html`, 'utf-8' );
+				const source = fs.readFileSync( `test/runtime/samples/${dir}/main.html`, 'utf-8' );
 				compiled = svelte.compile( source, { generate: 'ssr' });
 			} catch ( err ) {
 				if ( config.compileError ) {
@@ -107,7 +107,7 @@ describe( 'ssr', () => {
 				}
 			}
 
-			const component = require( `../generator/samples/${dir}/main.html` );
+			const component = require( `../runtime/samples/${dir}/main.html` );
 			let html;
 
 			try {
