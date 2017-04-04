@@ -135,14 +135,14 @@ describe( 'generate', () => {
 						assert.htmlEqual( target.innerHTML, config.html );
 					}
 
+					Object.assign = Object_assign;
+
 					if ( config.test ) {
 						config.test( assert, component, target, window );
 					} else {
 						component.destroy();
 						assert.equal( target.innerHTML, '' );
 					}
-
-					Object.assign = Object_assign;
 				})
 				.catch( err => {
 					Object.assign = Object_assign;
