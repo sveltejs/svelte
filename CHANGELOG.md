@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.13.6
+
+* Use `assign` helper instead of `Object.assign` for better performance and legacy compatibility ([#431](https://github.com/sveltejs/svelte/issues/431))
+* Improved code generation ([#419](https://github.com/sveltejs/svelte/issues/419)), ([#440](https://github.com/sveltejs/svelte/issues/440)), ([#442](https://github.com/sveltejs/svelte/issues/442))
+
 ## 1.13.5
 
 * Read `range` and `number` input values as numbers ([#436](https://github.com/sveltejs/svelte/issues/436))
