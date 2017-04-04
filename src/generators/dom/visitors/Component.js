@@ -67,7 +67,7 @@ export default {
 			const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
 			const params = current.params.join( ', ' );
 
-			generator.generateBlock( node, yieldName );
+			generator.generateBlock( node, yieldName, 'yield' );
 
 			const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
 
@@ -151,6 +151,7 @@ export default {
 		if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
 
 		generator.push({
+			type: 'component',
 			namespace: local.namespace,
 			target: name,
 			parent: current,
