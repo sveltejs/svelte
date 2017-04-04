@@ -3,6 +3,7 @@ import addElementBinding from './addElementBinding';
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
+import findBlock from '../../utils/findBlock.js';
 
 export default function addElementAttributes ( generator, node, local ) {
 	node.attributes.forEach( attribute => {
@@ -105,9 +106,12 @@ export default function addElementAttributes ( generator, node, local ) {
 					}
 
 					local.init.addLine( updater );
+					const fragment = findBlock( generator.current );
+					if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
+
 					local.update.addBlock( deindent`
-						if ( ( __tmp = ${snippet} ) !== ${last} ) {
-							${last} = __tmp;
+						if ( ( ${fragment.tmp} = ${snippet} ) !== ${last} ) {
+							${last} = ${fragment.tmp};
 							${updater}
 						}
 					` );
@@ -177,7 +181,7 @@ export default function addElementAttributes ( generator, node, local ) {
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
-			const handlerName = generator.current.getUniqueName( `${name}Handler` );
+			const handlerName = generator.current.getUniqueName( `${name}_handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( generator.events.has( name ) ) {

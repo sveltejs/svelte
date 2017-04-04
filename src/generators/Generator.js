@@ -242,7 +242,7 @@ export default class Generator {
 
 	getUniqueName ( name ) {
 		let alias = name;
-		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ); alias = `${name}$${i++}` );
+		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ); alias = `${name}_${i++}` );
 		this._usedNames.add( alias );
 		return alias;
 	}
@@ -251,7 +251,7 @@ export default class Generator {
 		const localUsedNames = new Set( params );
 		return name => {
 			let alias = name;
-			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}$${i++}` );
+			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}_${i++}` );
 			localUsedNames.add( alias );
 			return alias;
 		};
@@ -296,7 +296,7 @@ export default class Generator {
 				} else {
 					const { declarations } = annotateWithScopes( js );
 					let template = 'template';
-					for ( let i = 1; declarations.has( template ); template = `template$${i++}` );
+					for ( let i = 1; declarations.has( template ); template = `template_${i++}` );
 
 					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
 

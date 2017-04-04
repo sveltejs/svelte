@@ -101,6 +101,7 @@ export default {
 		generator.createMountStatement( name );
 
 		generator.push({
+			type: 'element',
 			namespace: local.namespace,
 			target: name,
 			parent: generator.current,

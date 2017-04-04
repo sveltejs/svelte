@@ -13,7 +13,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 	});
 
-	const handler = current.getUniqueName( `${local.name}ChangeHandler` );
+	const handler = current.getUniqueName( `${local.name}_change_handler` );
 
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
