@@ -30,6 +30,8 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 	return module._compile( code, filename );
 };
 
+const Object_assign = Object.assign;
+
 describe( 'generate', () => {
 	before( setupHtmlEqual );
 
@@ -67,7 +69,7 @@ describe( 'generate', () => {
 			// check that no ES2015+ syntax slipped in
 			if ( !config.allowES2015 ) {
 				try {
-					const startIndex = code.indexOf( 'function renderMainFragment' ); // may change!
+					const startIndex = code.indexOf( 'function render_main_fragment' ); // may change!
 					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
 					acorn.parse( es5, { ecmaVersion: 5 });
 				} catch ( err ) {
@@ -93,6 +95,10 @@ describe( 'generate', () => {
 
 			return env()
 				.then( window => {
+					Object.assign = () => {
+						throw new Error( 'cannot use Object.assign in generated code, as it is not supported everywhere' );
+					};
+
 					global.window = window;
 
 					// Put the constructor on window for testing
@@ -145,6 +151,9 @@ describe( 'generate', () => {
 						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
 						throw err;
 					}
+				})
+				.then( () => {
+					Object.assign = Object_assign;
 				});
 		});
 	}

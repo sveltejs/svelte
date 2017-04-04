@@ -9,7 +9,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		block: name
 	}];
 
-	generator.generateBlock( node, name );
+	generator.generateBlock( node, name, 'block' );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
@@ -24,7 +24,7 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		});
 
 		if ( node.else ) {
-			generator.generateBlock( node.else, name );
+			generator.generateBlock( node.else, name, 'block' );
 		}
 	}
 	return conditionsAndBlocks;
@@ -33,13 +33,13 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 export default {
 	enter ( generator, node ) {
 		const params = generator.current.params.join( ', ' );
-		const name = generator.getUniqueName( `ifBlock` );
-		const getBlock = generator.current.getUniqueName( `getBlock` );
-		const currentBlock = generator.current.getUniqueName( `currentBlock` );
-		const _currentBlock = generator.current.getUniqueName( `_currentBlock` );
+		const name = generator.getUniqueName( `if_block` );
+		const getBlock = generator.current.getUniqueName( `get_block` );
+		const currentBlock = generator.current.getUniqueName( `current_block` );
+		const _currentBlock = generator.current.getUniqueName( `_current_block` );
 
 		const isToplevel = generator.current.localElementDepth === 0;
-		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `renderIfBlock` ) );
+		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `render_if_block` ) );
 
 		const anchor = `${name}_anchor`;
 		generator.createAnchor( anchor );

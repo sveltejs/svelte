@@ -76,12 +76,12 @@ export default {
 
 		// Component has children, put them in a separate {{yield}} block
 		if ( hasChildren ) {
-			const yieldName = generator.getUniqueName( `render${name}YieldFragment` );
+			const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
 			const params = current.params.join( ', ' );
 
-			generator.generateBlock( node, yieldName );
+			generator.generateBlock( node, yieldName, 'block' );
 
-			const yieldFragment = current.getUniqueName( `${name}_yieldFragment` );
+			const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
 
 			current.builders.init.addLine(
 				`var ${yieldFragment} = ${yieldName}( ${params}, ${current.component} );`
@@ -104,9 +104,9 @@ export default {
 			const initialPropString = stringifyProps( initialProps );
 
 			if ( local.bindings.length ) {
-				const initialData = current.getUniqueName( `${name}_initialData` );
+				const initialData = current.getUniqueName( `${name}_initial_data` );
 
-				statements.push( `var ${name}_initialData = ${initialPropString};` );
+				statements.push( `var ${name}_initial_data = ${initialPropString};` );
 
 				local.bindings.forEach( binding => {
 					statements.push( `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};` );
@@ -159,6 +159,7 @@ export default {
 		if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
 
 		generator.push({
+			type: 'component',
 			namespace: local.namespace,
 			target: name,
 			parent: current,
