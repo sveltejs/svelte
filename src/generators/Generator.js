@@ -4,7 +4,8 @@ import isReference from '../utils/isReference.js';
 import flattenReference from '../utils/flattenReference.js';
 import globalWhitelist from '../utils/globalWhitelist.js';
 import reservedNames from '../utils/reservedNames.js';
-import { removeNode } from '../utils/removeNode.js';
+import namespaces from '../utils/namespaces.js';
+import { removeNode, removeObjectKey } from '../utils/removeNode.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
 import processCss from './shared/processCss.js';
@@ -22,6 +23,7 @@ export default class Generator {
 		this.helpers = new Set();
 		this.components = new Set();
 		this.events = new Set();
+		this.importedComponents = new Map();
 
 		this.bindingGroups = [];
 
@@ -265,6 +267,7 @@ export default class Generator {
 		const imports = this.imports;
 		const computations = [];
 		let defaultExport = null;
+		let namespace = null;
 		const templateProperties = {};
 
 		if ( js ) {
@@ -351,11 +354,40 @@ export default class Generator {
 
 				templateProperties.computed.value.properties.forEach( prop => visit( prop.key.name ) );
 			}
+
+			if ( templateProperties.namespace ) {
+				const ns = templateProperties.namespace.value.value;
+				namespace = namespaces[ ns ] || ns;
+
+				removeObjectKey( this.code, defaultExport.declaration, 'namespace' );
+			}
+
+			if ( templateProperties.components ) {
+				let hasNonImportedComponent = false;
+				templateProperties.components.value.properties.forEach( property => {
+					const key = property.key.name;
+					const value = source.slice( property.value.start, property.value.end );
+					if ( this.importedNames.has( value ) ) {
+						this.importedComponents.set( key, value );
+					} else {
+						hasNonImportedComponent = true;
+					}
+				});
+				if ( hasNonImportedComponent ) {
+					// remove the specific components that were imported, as we'll refer to them directly
+					Array.from( this.importedComponents.keys() ).forEach( key => {
+						removeObjectKey( this.code, templateProperties.components.value, key );
+					});
+				} else {
+					// remove the entire components portion of the export
+					removeObjectKey( this.code, defaultExport.declaration, 'components' );
+				}
+			}
 		}
 
 		return {
 			computations,
-			defaultExport,
+			namespace,
 			templateProperties
 		};
 	}

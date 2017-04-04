@@ -1,7 +1,8 @@
 import assert from 'assert';
 import * as fs from 'fs';
+import * as path from 'path';
 
-import { addLineNumbers, exists, loadConfig, setupHtmlEqual, svelte, tryToLoadJson } from '../helpers.js';
+import { addLineNumbers, loadConfig, setupHtmlEqual, svelte, tryToLoadJson } from '../helpers.js';
 
 function tryToReadFile ( file ) {
 	try {
@@ -24,24 +25,42 @@ describe( 'ssr', () => {
 	fs.readdirSync( 'test/server-side-rendering/samples' ).forEach( dir => {
 		if ( dir[0] === '.' ) return;
 
-		const solo = exists( `test/server-side-rendering/samples/${dir}/solo` );
+		// add .solo to a sample directory name to only run that test
+		const solo = /\.solo$/.test( dir );
 
 		if ( solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
 		}
 
 		( solo ? it.only : it )( dir, () => {
-			const component = require( `./samples/${dir}/main.html` );
+			dir = path.resolve( 'test/server-side-rendering/samples', dir );
+			const component = require( `${dir}/main.html` );
 
-			const expectedHtml = tryToReadFile( `test/server-side-rendering/samples/${dir}/_expected.html` );
-			const expectedCss = tryToReadFile( `test/server-side-rendering/samples/${dir}/_expected.css` ) || '';
+			const expectedHtml = tryToReadFile( `${dir}/_expected.html` );
+			const expectedCss = tryToReadFile( `${dir}/_expected.css` ) || '';
 
-			const data = tryToLoadJson( `test/server-side-rendering/samples/${dir}/data.json` );
-			const html = component.render( data );
-			const { css } = component.renderCss();
+			const data = tryToLoadJson( `${dir}/data.json` );
+			let html;
+			let css;
 
-			fs.writeFileSync( `test/server-side-rendering/samples/${dir}/_actual.html`, html );
-			if ( css ) fs.writeFileSync( `test/server-side-rendering/samples/${dir}/_actual.css`, css );
+			try {
+				html = component.render( data );
+				css = component.renderCss().css;
+			} catch ( err ) {
+				fs.readdirSync( dir ).forEach( file => {
+					if ( file[0] === '_' ) return;
+					const source = fs.readFileSync( `${dir}/${file}`, 'utf-8' );
+					const { code } = svelte.compile( source, { generate: 'ssr' });
+					console.group( file );
+					console.log( addLineNumbers( code ) );
+					console.groupEnd();
+				});
+
+				throw err;
+			}
+
+			fs.writeFileSync( `${dir}/_actual.html`, html );
+			if ( css ) fs.writeFileSync( `${dir}/_actual.css`, css );
 
 			assert.htmlEqual( html, expectedHtml );
 			assert.equal( css.replace( /^\s+/gm, '' ), expectedCss.replace( /^\s+/gm, '' ) );

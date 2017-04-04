@@ -1,8 +1,6 @@
 import deindent from '../../utils/deindent.js';
 import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
-import namespaces from '../../utils/namespaces.js';
-import { removeObjectKey } from '../../utils/removeNode.js';
 import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
@@ -17,8 +15,6 @@ class DomGenerator extends Generator {
 		this.builders = {
 			metaBindings: new CodeBuilder()
 		};
-
-		this.importedComponents = new Map();
 	}
 
 	addElement ( name, renderStatement, needsIdentifier = false ) {
@@ -155,7 +151,7 @@ export default function dom ( parsed, source, options ) {
 
 	const generator = new DomGenerator( parsed, source, name, visitors, options );
 
-	const { computations, defaultExport, templateProperties } = generator.parseJs();
+	const { computations, templateProperties, namespace } = generator.parseJs();
 
 	// Remove these after version 2
 	if ( templateProperties.onrender ) {
@@ -168,36 +164,6 @@ export default function dom ( parsed, source, options ) {
 		const { key } = templateProperties.onteardown;
 		generator.code.overwrite( key.start, key.end, 'ondestroy', true );
 		templateProperties.ondestroy = templateProperties.onteardown;
-	}
-
-	let namespace = null;
-	if ( templateProperties.namespace ) {
-		const ns = templateProperties.namespace.value.value;
-		namespace = namespaces[ ns ] || ns;
-
-		removeObjectKey( generator.code, defaultExport.declaration, 'namespace' );
-	}
-
-	if ( templateProperties.components ) {
-		let hasNonImportedComponent = false;
-		templateProperties.components.value.properties.forEach( property => {
-			const key = property.key.name;
-			const value = source.slice( property.value.start, property.value.end );
-			if ( generator.importedNames.has( value ) ) {
-				generator.importedComponents.set( key, value );
-			} else {
-				hasNonImportedComponent = true;
-			}
-		});
-		if ( hasNonImportedComponent ) {
-			// remove the specific components that were imported, as we'll refer to them directly
-			Array.from( generator.importedComponents.keys() ).forEach( key => {
-				removeObjectKey( generator.code, templateProperties.components.value, key );
-			});
-		} else {
-			// remove the entire components portion of the export
-			removeObjectKey( generator.code, defaultExport.declaration, 'components' );
-		}
 	}
 
 	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
