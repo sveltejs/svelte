@@ -153,19 +153,6 @@ export default function dom ( parsed, source, options ) {
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
-	// Remove these after version 2
-	if ( templateProperties.onrender ) {
-		const { key } = templateProperties.onrender;
-		generator.code.overwrite( key.start, key.end, 'oncreate', true );
-		templateProperties.oncreate = templateProperties.onrender;
-	}
-
-	if ( templateProperties.onteardown ) {
-		const { key } = templateProperties.onteardown;
-		generator.code.overwrite( key.start, key.end, 'ondestroy', true );
-		templateProperties.ondestroy = templateProperties.onteardown;
-	}
-
 	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
 	const component = getUniqueName( 'component' );
 

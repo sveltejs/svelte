@@ -40,7 +40,7 @@ export default function ssr ( parsed, source, options ) {
 
 	const generator = new SsrGenerator( parsed, source, name, visitors, options );
 
-	const { computations, hasJs, templateProperties } = generator.parseJs();
+	const { computations, hasJs, templateProperties } = generator.parseJs( true );
 
 	const builders = {
 		main: new CodeBuilder(),
