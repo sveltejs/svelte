@@ -4,8 +4,8 @@ import getBuilders from '../utils/getBuilders.js';
 
 export default {
 	enter ( generator, node ) {
-		const name = generator.getUniqueName( `eachBlock` );
-		const renderer = generator.getUniqueName( `renderEachBlock` );
+		const name = generator.getUniqueName( `each_block` );
+		const renderer = generator.getUniqueName( `render_each_block` );
 		const elseName = generator.getUniqueName( `${name}_else` );
 		const renderElse = generator.getUniqueName( `${renderer}_else` );
 		const i = generator.current.getUniqueName( `i` );
@@ -168,11 +168,11 @@ export default {
 		}
 
 		if ( node.else ) {
-			generator.generateBlock( node.else, renderElse );
+			generator.generateBlock( node.else, renderElse, 'block' );
 		}
 
 		const indexNames = new Map( generator.current.indexNames );
-		const indexName = node.index || generator.current.getUniqueName( `${node.context}__index` );
+		const indexName = node.index || generator.current.getUniqueName( `${node.context}_index` );
 		indexNames.set( node.context, indexName );
 
 		const listNames = new Map( generator.current.listNames );
@@ -193,6 +193,7 @@ export default {
 		const getUniqueName = generator.getUniqueNameMaker( blockParams );
 
 		generator.push({
+			type: 'block',
 			name: renderer,
 			target: 'target',
 			expression: node.expression,
