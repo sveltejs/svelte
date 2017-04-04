@@ -67,7 +67,7 @@ export default {
 			const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
 			const params = current.params.join( ', ' );
 
-			generator.generateBlock( node, yieldName, 'yield' );
+			generator.generateBlock( node, yieldName, 'block' );
 
 			const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
 
