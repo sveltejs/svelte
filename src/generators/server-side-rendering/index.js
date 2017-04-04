@@ -40,7 +40,7 @@ export default function ssr ( parsed, source, options ) {
 
 	const generator = new SsrGenerator( parsed, source, name, visitors, options );
 
-	const { computations, templateProperties } = generator.parseJs();
+	const { computations, hasJs, templateProperties } = generator.parseJs();
 
 	const builders = {
 		main: new CodeBuilder(),
@@ -131,7 +131,7 @@ export default function ssr ( parsed, source, options ) {
 		};
 	` );
 
-	if ( parsed.js ) {
+	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
 	}
 

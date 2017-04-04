@@ -266,9 +266,10 @@ export default class Generator {
 
 		const imports = this.imports;
 		const computations = [];
-		let defaultExport = null;
-		let namespace = null;
 		const templateProperties = {};
+
+		let namespace = null;
+		let hasJs = !!js;
 
 		if ( js ) {
 			this.addSourcemapLocations( js.content );
@@ -287,37 +288,13 @@ export default class Generator {
 				}
 			}
 
-			defaultExport = body.find( node => node.type === 'ExportDefaultDeclaration' );
+			const defaultExport = body.find( node => node.type === 'ExportDefaultDeclaration' );
 
 			if ( defaultExport ) {
-				const finalNode = body[ body.length - 1 ];
-				if ( defaultExport === finalNode ) {
-					// export is last property, we can just return it
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
-				} else {
-					const { declarations } = annotateWithScopes( js );
-					let template = 'template';
-					for ( let i = 1; declarations.has( template ); template = `template_${i++}` );
-
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
-
-					let i = defaultExport.start;
-					while ( /\s/.test( source[ i - 1 ] ) ) i--;
-
-					const indentation = source.slice( i, defaultExport.start );
-					this.code.appendLeft( finalNode.end, `\n\n${indentation}return ${template};` );
-				}
-
 				defaultExport.declaration.properties.forEach( prop => {
 					templateProperties[ prop.key.name ] = prop;
 				});
-
-				this.code.prependRight( js.content.start, `var ${this.alias( 'template' )} = (function () {` );
-			} else {
-				this.code.prependRight( js.content.start, '(function () {' );
 			}
-
-			this.code.appendLeft( js.content.end, '}());' );
 
 			[ 'helpers', 'events', 'components' ].forEach( key => {
 				if ( templateProperties[ key ] ) {
@@ -383,10 +360,51 @@ export default class Generator {
 					removeObjectKey( this.code, defaultExport.declaration, 'components' );
 				}
 			}
+
+			// now that we've analysed the default export, we can determine whether or not we need to keep it
+			let hasDefaultExport = !!defaultExport;
+			if ( defaultExport && defaultExport.declaration.properties.length === 0 ) {
+				hasDefaultExport = false;
+				removeNode( this.code, js.content, defaultExport );
+			}
+
+			// if we do need to keep it, then we need to generate a return statement
+			if ( hasDefaultExport ) {
+				const finalNode = body[ body.length - 1 ];
+				if ( defaultExport === finalNode ) {
+					// export is last property, we can just return it
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
+				} else {
+					const { declarations } = annotateWithScopes( js );
+					let template = 'template';
+					for ( let i = 1; declarations.has( template ); template = `template_${i++}` );
+
+					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
+
+					let i = defaultExport.start;
+					while ( /\s/.test( source[ i - 1 ] ) ) i--;
+
+					const indentation = source.slice( i, defaultExport.start );
+					this.code.appendLeft( finalNode.end, `\n\n${indentation}return ${template};` );
+				}
+			}
+
+			// user code gets wrapped in an IIFE
+			if ( js.content.body.length ) {
+				const prefix = hasDefaultExport ? `var ${this.alias( 'template' )} = (function () {` : `(function () {`;
+				this.code.prependRight( js.content.start, prefix ).appendLeft( js.content.end, '}());' );
+			}
+
+			// if there's no need to include user code, remove it altogether
+			else {
+				this.code.remove( js.content.start, js.content.end );
+				hasJs = false;
+			}
 		}
 
 		return {
 			computations,
+			hasJs,
 			namespace,
 			templateProperties
 		};
