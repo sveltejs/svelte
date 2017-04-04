@@ -394,7 +394,7 @@ export default function dom ( parsed, source, options ) {
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
 	const prototypeBase = `${name}.prototype` + ( templateProperties.methods ? `, ${generator.alias( 'template' )}.methods` : '' );
-	const proto = sharedPath ? generator.helper( 'proto ' ) : deindent`
+	const proto = sharedPath ? `${generator.helper( 'proto' )} ` : deindent`
 		{
 			${
 				[ 'get', 'fire', 'observe', 'on', 'set', '_flush' ]
