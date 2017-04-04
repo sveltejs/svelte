@@ -117,7 +117,9 @@ export default function ssr ( parsed, source, options ) {
 		` );
 
 		templateProperties.components.value.properties.forEach( prop => {
-			builders.renderCss.addLine( `addComponent( ${generator.alias( 'template' )}.components.${prop.key.name} );` );
+			const { name } = prop.key;
+			const expression = generator.importedComponents.get( name ) || `${generator.alias( 'template' )}.components.${name}`;
+			builders.renderCss.addLine( `addComponent( ${expression} );` );
 		});
 	}
 
