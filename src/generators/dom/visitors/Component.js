@@ -168,13 +168,13 @@ export default {
 			key: null
 		});
 
-		this.elementDepth += 1;
+		generator.elementDepth += 1;
 
 		node.children.forEach( child => {
 			visit( child, generator );
 		});
 
-		this.elementDepth -= 1;
+		generator.elementDepth -= 1;
 
 		generator.pop();
 	}

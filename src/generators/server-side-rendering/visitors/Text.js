@@ -1,5 +1,3 @@
-export default {
-	enter ( generator, node ) {
-		generator.append( node.data.replace( /\${/g, '\\${' ) );
-	}
-};
+export default function visitText ( generator, node ) {
+	generator.append( node.data.replace( /\${/g, '\\${' ) );
+}
