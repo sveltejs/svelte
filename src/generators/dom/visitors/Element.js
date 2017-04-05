@@ -40,30 +40,32 @@ export default {
 
 		if ( local.allUsedContexts.length ) {
 			const initialProps = local.allUsedContexts.map( contextName => {
-				if ( contextName === 'root' ) return `root: root`;
+				if ( contextName === 'root' ) return null;
 
 				const listName = generator.current.listNames.get( contextName );
 				const indexName = generator.current.indexNames.get( contextName );
 
 				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
-			}).join( ',\n' );
+			}).filter( Boolean ).join( ',\n' );
 
 			const updates = local.allUsedContexts.map( contextName => {
-				if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
+				if ( contextName === 'root' ) return null;
 
 				const listName = generator.current.listNames.get( contextName );
 				const indexName = generator.current.indexNames.get( contextName );
 
 				return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
-			}).join( '\n' );
+			}).filter( Boolean ).join( '\n' );
 
-			local.init.addBlock( deindent`
-				${name}.__svelte = {
-					${initialProps}
-				};
-			` );
+			if ( local.allUsedContexts.length > 1 || local.allUsedContexts[0] !== 'root' ) {
+				local.init.addBlock( deindent`
+					${name}.__svelte = {
+						${initialProps}
+					};
+				` );
 
-			local.update.addBlock( updates );
+				local.update.addBlock( updates );
+			}
 		}
 
 		let render;
