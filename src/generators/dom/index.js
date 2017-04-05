@@ -302,7 +302,7 @@ export default function dom ( parsed, source, options ) {
 		constructorBlock.addBlock( generator.builders.metaBindings );
 	}
 
-	if ( templateProperties.computed ) {
+	if ( computations.length ) {
 		constructorBlock.addLine(
 			`${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`
 		);
