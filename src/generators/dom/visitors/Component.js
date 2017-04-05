@@ -1,5 +1,6 @@
 import deindent from '../../../utils/deindent.js';
 import CodeBuilder from '../../../utils/CodeBuilder.js';
+import visit from '../visit.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 function capDown ( name ) {
@@ -166,9 +167,15 @@ export default {
 			localElementDepth: current.localElementDepth + 1,
 			key: null
 		});
-	},
 
-	leave ( generator ) {
+		this.elementDepth += 1;
+
+		node.children.forEach( child => {
+			visit( child, generator );
+		});
+
+		this.elementDepth -= 1;
+
 		generator.pop();
 	}
 };

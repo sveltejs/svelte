@@ -1,12 +1,12 @@
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import flattenReference from '../../utils/flattenReference.js';
-import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
+import visit from './visit.js';
 
 class SsrGenerator extends Generator {
-	constructor ( parsed, source, name, visitors, options ) {
-		super( parsed, source, name, visitors, options );
+	constructor ( parsed, source, name, options ) {
+		super( parsed, source, name, options );
 		this.bindings = [];
 		this.renderCode = '';
 	}
@@ -38,7 +38,7 @@ export default function ssr ( parsed, source, options ) {
 	const format = options.format || 'cjs';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new SsrGenerator( parsed, source, name, visitors, options );
+	const generator = new SsrGenerator( parsed, source, name, options );
 
 	const { computations, hasJs, templateProperties } = generator.parseJs( true );
 
@@ -56,7 +56,9 @@ export default function ssr ( parsed, source, options ) {
 		conditions: []
 	});
 
-	parsed.html.children.forEach( node => generator.visit( node ) );
+	parsed.html.children.forEach( node => {
+		visit( node, generator );
+	});
 
 	builders.render.addLine(
 		templateProperties.data ? `root = Object.assign( ${generator.alias( 'template' )}.data(), root || {} );` : `root = root || {};`
