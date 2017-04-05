@@ -30,52 +30,50 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	return conditionsAndBlocks;
 }
 
-export default {
-	enter ( generator, node ) {
-		const params = generator.current.params.join( ', ' );
-		const name = generator.getUniqueName( `if_block` );
-		const getBlock = generator.current.getUniqueName( `get_block` );
-		const currentBlock = generator.current.getUniqueName( `current_block` );
-		const _currentBlock = generator.current.getUniqueName( `_current_block` );
+export default function visitIfBlock ( generator, node ) {
+	const params = generator.current.params.join( ', ' );
+	const name = generator.getUniqueName( `if_block` );
+	const getBlock = generator.current.getUniqueName( `get_block` );
+	const currentBlock = generator.current.getUniqueName( `current_block` );
+	const _currentBlock = generator.current.getUniqueName( `_current_block` );
 
-		const isToplevel = generator.current.localElementDepth === 0;
-		const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `render_if_block` ) );
+	const isToplevel = generator.current.localElementDepth === 0;
+	const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `render_if_block` ) );
 
-		const anchor = `${name}_anchor`;
-		generator.createAnchor( anchor );
+	const anchor = `${name}_anchor`;
+	generator.createAnchor( anchor );
 
-		generator.current.builders.init.addBlock( deindent`
-			function ${getBlock} ( ${params} ) {
-				${conditionsAndBlocks.map( ({ condition, block }) => {
-					return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
-				} ).join( '\n' )}
-			}
-
-			var ${currentBlock} = ${getBlock}( ${params} );
-			var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
-		` );
-
-		const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
-		if ( isToplevel ) {
-			generator.current.builders.mount.addLine( mountStatement );
-		} else {
-			generator.current.builders.init.addLine( mountStatement );
+	generator.current.builders.init.addBlock( deindent`
+		function ${getBlock} ( ${params} ) {
+			${conditionsAndBlocks.map( ({ condition, block }) => {
+				return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
+			} ).join( '\n' )}
 		}
 
-		generator.current.builders.update.addBlock( deindent`
-			var ${_currentBlock} = ${currentBlock};
-			${currentBlock} = ${getBlock}( ${params} );
-			if ( ${_currentBlock} === ${currentBlock} && ${name}) {
-				${name}.update( changed, ${params} );
-			} else {
-				if ( ${name} ) ${name}.teardown( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
-				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
-			}
-		` );
+		var ${currentBlock} = ${getBlock}( ${params} );
+		var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
+	` );
 
-		generator.current.builders.teardown.addLine(
-			`if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );`
-		);
+	const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
+	if ( isToplevel ) {
+		generator.current.builders.mount.addLine( mountStatement );
+	} else {
+		generator.current.builders.init.addLine( mountStatement );
 	}
-};
+
+	generator.current.builders.update.addBlock( deindent`
+		var ${_currentBlock} = ${currentBlock};
+		${currentBlock} = ${getBlock}( ${params} );
+		if ( ${_currentBlock} === ${currentBlock} && ${name}) {
+			${name}.update( changed, ${params} );
+		} else {
+			if ( ${name} ) ${name}.teardown( true );
+			${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
+			if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
+		}
+	` );
+
+	generator.current.builders.teardown.addLine(
+		`if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );`
+	);
+}
