@@ -1,3 +1,5 @@
+import visit from '../visit.js';
+
 export default {
 	enter ( generator, node ) {
 		const { snippet } = generator.contextualise( node.expression );
@@ -7,11 +9,19 @@ export default {
 		generator.push({
 			conditions: generator.current.conditions.concat( snippet )
 		});
-	},
 
-	leave ( generator, node ) {
+		node.children.forEach( child => {
+			visit( child, generator );
+		});
+
 		generator.append( '` : `' );
-		if ( node.else ) node.else.children.forEach( child => generator.visit( child ) );
+
+		if ( node.else ) {
+			node.else.children.forEach( child => {
+				visit( child, generator );
+			});
+		}
+
 		generator.append( '` }' );
 
 		generator.pop();

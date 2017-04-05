@@ -1,13 +1,13 @@
 import deindent from '../../utils/deindent.js';
 import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
-import visitors from './visitors/index.js';
+import visit from './visit.js';
 import Generator from '../Generator.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
-	constructor ( parsed, source, name, visitors, options ) {
-		super( parsed, source, name, visitors, options );
+	constructor ( parsed, source, name, options ) {
+		super( parsed, source, name, options );
 		this.renderers = [];
 		this.uses = new Set();
 
@@ -126,7 +126,7 @@ class DomGenerator extends Generator {
 		});
 
 		// walk the children here
-		node.children.forEach( node => this.visit( node ) );
+		node.children.forEach( node => visit( node, this ) );
 		this.addRenderer( this.current );
 		this.pop();
 
@@ -149,7 +149,7 @@ export default function dom ( parsed, source, options ) {
 	const format = options.format || 'es';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new DomGenerator( parsed, source, name, visitors, options );
+	const generator = new DomGenerator( parsed, source, name, options );
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
@@ -177,7 +177,9 @@ export default function dom ( parsed, source, options ) {
 		getUniqueName,
 	});
 
-	parsed.html.children.forEach( node => generator.visit( node ) );
+	parsed.html.children.forEach( node => {
+		visit( node, generator );
+	});
 
 	generator.addRenderer( generator.pop() );
 

@@ -12,11 +12,10 @@ import processCss from './shared/processCss.js';
 import annotateWithScopes from './annotateWithScopes.js';
 
 export default class Generator {
-	constructor ( parsed, source, name, visitors, options ) {
+	constructor ( parsed, source, name, options ) {
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
-		this.visitors = visitors;
 		this.options = options;
 
 		this.imports = [];
@@ -433,28 +432,5 @@ export default class Generator {
 		});
 
 		this.current = newFragment;
-	}
-
-	visit ( node ) {
-		const visitor = this.visitors[ node.type ];
-		if ( !visitor ) throw new Error( `Not implemented: ${node.type}` );
-
-		if ( visitor.enter ) visitor.enter( this, node );
-
-		if ( visitor.type === 'Element' ) {
-			this.elementDepth += 1;
-		}
-
-		if ( node.children ) {
-			node.children.forEach( child => {
-				this.visit( child );
-			});
-		}
-
-		if ( visitor.type === 'Element' ) {
-			this.elementDepth -= 1;
-		}
-
-		if ( visitor.leave ) visitor.leave( this, node );
 	}
 }

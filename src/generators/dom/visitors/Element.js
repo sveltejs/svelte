@@ -1,5 +1,6 @@
 import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
+import visit from '../visit.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
 import Component from './Component.js';
 import Window from './meta/Window.js';
@@ -108,18 +109,18 @@ export default {
 			localElementDepth: generator.current.localElementDepth + 1,
 			key: null
 		});
-	},
 
-	leave ( generator, node ) {
+		this.elementDepth += 1;
+
+		node.children.forEach( child => {
+			visit( child, generator );
+		});
+
+		this.elementDepth -= 1;
+
 		if ( node.name in meta ) {
 			if ( meta[ node.name ].leave ) meta[ node.name ].leave( generator, node );
 			return;
-		}
-
-		const isComponent = generator.components.has( node.name );
-
-		if ( isComponent ) {
-			return Component.leave( generator, node );
 		}
 
 		if ( node.initialUpdate ) {

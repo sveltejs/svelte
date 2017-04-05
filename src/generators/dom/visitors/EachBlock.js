@@ -1,6 +1,7 @@
 import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
 import getBuilders from '../utils/getBuilders.js';
+import visit from '../visit.js';
 
 export default {
 	enter ( generator, node ) {
@@ -214,9 +215,11 @@ export default {
 			builders: getBuilders(),
 			getUniqueName,
 		});
-	},
 
-	leave ( generator ) {
+		node.children.forEach( child => {
+			visit( child, generator );
+		});
+
 		generator.addRenderer( generator.current );
 		generator.pop();
 	}

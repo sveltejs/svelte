@@ -1,3 +1,5 @@
+import visit from '../visit.js';
+
 export default {
 	enter ( generator, node ) {
 		const { dependencies, snippet } = generator.contextualise( node.expression );
@@ -21,9 +23,11 @@ export default {
 			indexes,
 			contextDependencies
 		});
-	},
 
-	leave ( generator ) {
+		node.children.forEach( child => {
+			visit( child, generator );
+		});
+
 		const close = `\` ).join( '' )}`;
 		generator.append( close );
 

@@ -1,4 +1,5 @@
 import flattenReference from '../../../utils/flattenReference.js';
+import visit from '../visit.js';
 
 export default {
 	enter ( generator, node ) {
@@ -63,9 +64,15 @@ export default {
 		}
 
 		generator.append( open );
-	},
 
-	leave ( generator, node ) {
+		this.elementDepth += 1;
+
+		node.children.forEach( child => {
+			visit( child, generator );
+		});
+
+		this.elementDepth -= 1;
+
 		const close = node.children.length ? `\` })}` : ')}';
 		generator.append( close );
 	}
