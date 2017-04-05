@@ -1,5 +1,3 @@
-export default {
-	enter ( generator ) {
-		generator.append( `\${options && options.yield ? options.yield() : ''}` );
-	}
-};
+export default function visitYieldTag ( generator ) {
+	generator.append( `\${options && options.yield ? options.yield() : ''}` );
+}

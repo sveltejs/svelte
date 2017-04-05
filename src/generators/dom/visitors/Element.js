@@ -110,13 +110,13 @@ export default {
 			key: null
 		});
 
-		this.elementDepth += 1;
+		generator.elementDepth += 1;
 
 		node.children.forEach( child => {
 			visit( child, generator );
 		});
 
-		this.elementDepth -= 1;
+		generator.elementDepth -= 1;
 
 		if ( node.name in meta ) {
 			if ( meta[ node.name ].leave ) meta[ node.name ].leave( generator, node );
