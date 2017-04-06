@@ -427,10 +427,6 @@ export default class Generator {
 	}
 
 	push ( fragment ) {
-		const newFragment = Object.assign( {}, this.current, fragment, {
-			parent: this.current
-		});
-
-		this.current = newFragment;
+		this.current = fragment;
 	}
 }

@@ -158,7 +158,7 @@ export default function visitComponent ( generator, node ) {
 	current.builders.create.addBlock( local.create );
 	if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
 
-	generator.push({
+	const childFragment = generator.current.child({
 		type: 'component',
 		namespace: local.namespace,
 		target: name,
@@ -166,6 +166,7 @@ export default function visitComponent ( generator, node ) {
 		localElementDepth: current.localElementDepth + 1,
 		key: null
 	});
+	generator.push( childFragment );
 
 	generator.elementDepth += 1;
 
