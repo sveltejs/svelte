@@ -98,7 +98,7 @@ export default function visitElement ( generator, node ) {
 
 	generator.createMountStatement( name );
 
-	generator.push({
+	const childFragment = generator.current.child({
 		type: 'element',
 		namespace: local.namespace,
 		target: name,
@@ -106,6 +106,8 @@ export default function visitElement ( generator, node ) {
 		localElementDepth: generator.current.localElementDepth + 1,
 		key: null
 	});
+
+	generator.push( childFragment );
 
 	generator.elementDepth += 1;
 

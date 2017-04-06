@@ -3,6 +3,7 @@ import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
 import Generator from '../Generator.js';
+import Fragment from './Fragment.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
@@ -116,7 +117,7 @@ class DomGenerator extends Generator {
 	}
 
 	generateBlock ( node, name, type ) {
-		this.push({
+		const childFragment = this.current.child({
 			type,
 			name,
 			target: 'target',
@@ -124,6 +125,8 @@ class DomGenerator extends Generator {
 			builders: getBuilders(),
 			getUniqueName: this.getUniqueNameMaker( this.current.params )
 		});
+
+		this.push( childFragment );
 
 		// walk the children here
 		node.children.forEach( node => visit( node, this ) );
@@ -156,8 +159,9 @@ export default function dom ( parsed, source, options ) {
 	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
 	const component = getUniqueName( 'component' );
 
-	generator.push({
+	const mainFragment = new Fragment({
 		type: 'block',
+		generator,
 		name: generator.alias( 'create_main_fragment' ),
 		namespace,
 		target: 'target',
@@ -174,14 +178,15 @@ export default function dom ( parsed, source, options ) {
 		listNames: new Map(),
 
 		builders: getBuilders(),
-		getUniqueName,
+		getUniqueName
 	});
+	generator.push( mainFragment );
 
 	parsed.html.children.forEach( node => {
 		visit( node, generator );
 	});
 
-	generator.addRenderer( generator.pop() );
+	generator.addRenderer( mainFragment );
 
 	const builders = {
 		main: new CodeBuilder(),

@@ -192,7 +192,7 @@ export default function visitEachBlock ( generator, node ) {
 
 	const getUniqueName = generator.getUniqueNameMaker( blockParams );
 
-	generator.push({
+	const childFragment = generator.current.child({
 		type: 'block',
 		name: renderer,
 		target: 'target',
@@ -212,8 +212,10 @@ export default function visitEachBlock ( generator, node ) {
 		params: blockParams,
 
 		builders: getBuilders(),
-		getUniqueName,
+		getUniqueName
 	});
+
+	generator.push( childFragment );
 
 	node.children.forEach( child => {
 		visit( child, generator );
