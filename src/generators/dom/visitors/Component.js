@@ -19,14 +19,13 @@ function stringifyProps ( props ) {
 	return `{ ${joined} }`;
 }
 
-export default function visitComponent ( generator, node ) {
+export default function visitComponent ( generator, fragment, node ) {
 	const hasChildren = node.children.length > 0;
-	const { current } = generator;
-	const name = current.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
+	const name = fragment.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
 
 	const local = {
 		name,
-		namespace: current.namespace,
+		namespace: fragment.namespace,
 		isComponent: true,
 
 		allUsedContexts: [],
@@ -35,18 +34,18 @@ export default function visitComponent ( generator, node ) {
 		update: new CodeBuilder()
 	};
 
-	const isToplevel = current.localElementDepth === 0;
+	const isToplevel = fragment.localElementDepth === 0;
 
 	generator.hasComponents = true;
 
-	addComponentAttributes( generator, node, local );
+	addComponentAttributes( generator, fragment, node, local );
 
 	if ( local.allUsedContexts.length ) {
 		const initialProps = local.allUsedContexts.map( contextName => {
 			if ( contextName === 'root' ) return `root: root`;
 
-			const listName = current.listNames.get( contextName );
-			const indexName = current.indexNames.get( contextName );
+			const listName = fragment.listNames.get( contextName );
+			const indexName = fragment.indexNames.get( contextName );
 
 			return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 		}).join( ',\n' );
@@ -54,8 +53,8 @@ export default function visitComponent ( generator, node ) {
 		const updates = local.allUsedContexts.map( contextName => {
 			if ( contextName === 'root' ) return `${name}._context.root = root;`;
 
-			const listName = current.listNames.get( contextName );
-			const indexName = current.indexNames.get( contextName );
+			const listName = fragment.listNames.get( contextName );
+			const indexName = fragment.indexNames.get( contextName );
 
 			return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
 		}).join( '\n' );
@@ -70,24 +69,24 @@ export default function visitComponent ( generator, node ) {
 	}
 
 	const componentInitProperties = [
-		`target: ${!isToplevel ? current.target: 'null'}`,
-		`_root: ${current.component}._root || ${current.component}`
+		`target: ${!isToplevel ? fragment.target: 'null'}`,
+		`_root: ${fragment.component}._root || ${fragment.component}`
 	];
 
 	// Component has children, put them in a separate {{yield}} block
 	if ( hasChildren ) {
 		const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
-		const params = current.params.join( ', ' );
+		const params = fragment.params.join( ', ' );
 
 		generator.generateBlock( node, yieldName, 'block' );
 
-		const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
+		const yieldFragment = fragment.getUniqueName( `${name}_yield_fragment` );
 
-		current.builders.create.addLine(
-			`var ${yieldFragment} = ${yieldName}( ${params}, ${current.component} );`
+		fragment.builders.create.addLine(
+			`var ${yieldFragment} = ${yieldName}( ${params}, ${fragment.component} );`
 		);
 
-		current.builders.update.addLine(
+		fragment.builders.update.addLine(
 			`${yieldFragment}.update( changed, ${params} );`
 		);
 
@@ -104,7 +103,7 @@ export default function visitComponent ( generator, node ) {
 		const initialPropString = stringifyProps( initialProps );
 
 		if ( local.bindings.length ) {
-			const initialData = current.getUniqueName( `${name}_initial_data` );
+			const initialData = fragment.getUniqueName( `${name}_initial_data` );
 
 			statements.push( `var ${name}_initial_data = ${initialPropString};` );
 
@@ -128,7 +127,7 @@ export default function visitComponent ( generator, node ) {
 	` );
 
 	if ( isToplevel ) {
-		current.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
+		fragment.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
 	}
 
 	if ( local.dynamicAttributes.length ) {
@@ -153,17 +152,17 @@ export default function visitComponent ( generator, node ) {
 		` );
 	}
 
-	current.builders.destroy.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
+	fragment.builders.destroy.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
 
-	current.builders.create.addBlock( local.create );
-	if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
+	fragment.builders.create.addBlock( local.create );
+	if ( !local.update.isEmpty() ) fragment.builders.update.addBlock( local.update );
 
-	const childFragment = generator.current.child({
+	const childFragment = fragment.child({
 		type: 'component',
 		namespace: local.namespace,
 		target: name,
-		parent: current,
-		localElementDepth: current.localElementDepth + 1,
+		parent: fragment,
+		localElementDepth: fragment.localElementDepth + 1,
 		key: null
 	});
 	generator.push( childFragment );
@@ -171,7 +170,7 @@ export default function visitComponent ( generator, node ) {
 	generator.elementDepth += 1;
 
 	node.children.forEach( child => {
-		visit( child, generator );
+		visit( generator, childFragment, child );
 	});
 
 	generator.elementDepth -= 1;

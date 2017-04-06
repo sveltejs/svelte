@@ -18,23 +18,6 @@ class DomGenerator extends Generator {
 		};
 	}
 
-	addElement ( name, renderStatement, needsIdentifier = false ) {
-		const isToplevel = this.current.localElementDepth === 0;
-		if ( needsIdentifier || isToplevel ) {
-			this.current.builders.create.addLine(
-				`var ${name} = ${renderStatement};`
-			);
-
-			this.createMountStatement( name );
-		} else {
-			this.current.builders.create.addLine( `${this.helper( 'appendNode' )}( ${renderStatement}, ${this.current.target} );` );
-		}
-
-		if ( isToplevel ) {
-			this.current.builders.detach.addLine( `${this.helper( 'detachNode' )}( ${name} );` );
-		}
-	}
-
 	addRenderer ( fragment ) {
 		if ( fragment.autofocus ) {
 			fragment.builders.create.addLine( `${fragment.autofocus}.focus();` );
@@ -101,19 +84,6 @@ class DomGenerator extends Generator {
 				};
 			}
 		` );
-	}
-
-	createAnchor ( name ) {
-		const renderStatement = `${this.helper( 'createComment' )}()`;
-		this.addElement( name, renderStatement, true );
-	}
-
-	createMountStatement ( name ) {
-		if ( this.current.target === 'target' ) {
-			this.current.builders.mount.addLine( `${this.helper( 'insertNode' )}( ${name}, target, anchor );` );
-		} else {
-			this.current.builders.create.addLine( `${this.helper( 'appendNode' )}( ${name}, ${this.current.target} );` );
-		}
 	}
 
 	generateBlock ( node, name, type ) {
@@ -183,7 +153,7 @@ export default function dom ( parsed, source, options ) {
 	generator.push( mainFragment );
 
 	parsed.html.children.forEach( node => {
-		visit( node, generator );
+		visit( generator, mainFragment, node );
 	});
 
 	generator.addRenderer( mainFragment );

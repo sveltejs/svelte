@@ -1,20 +1,21 @@
 import deindent from '../../../utils/deindent.js';
 import findBlock from '../utils/findBlock.js';
 
-export default function visitMustacheTag ( generator, node ) {
-	const name = generator.current.getUniqueName( 'text' );
+export default function visitMustacheTag ( generator, fragment, node ) {
+	const name = fragment.getUniqueName( 'text' );
 
 	const { snippet } = generator.contextualise( node.expression );
 
-	generator.current.builders.create.addLine( `var last_${name} = ${snippet};` );
-	generator.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
+	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
+	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
 
-	const fragment = findBlock( generator.current );
-	if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
+	// TODO this should be unnecessary once we separate fragments from state
+	const parentFragment = findBlock( fragment );
+	if ( !parentFragment.tmp ) parentFragment.tmp = parentFragment.getUniqueName( 'tmp' );
 
-	generator.current.builders.update.addBlock( deindent`
-		if ( ( ${fragment.tmp} = ${snippet} ) !== last_${name} ) {
-			${name}.data = last_${name} = ${fragment.tmp};
+	fragment.builders.update.addBlock( deindent`
+		if ( ( ${parentFragment.tmp} = ${snippet} ) !== last_${name} ) {
+			${name}.data = last_${name} = ${parentFragment.tmp};
 		}
 	` );
 }

@@ -5,7 +5,7 @@ import flattenReference from '../../../../utils/flattenReference.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
 import findBlock from '../../utils/findBlock.js';
 
-export default function addElementAttributes ( generator, node, local ) {
+export default function addElementAttributes ( generator, fragment, node, local ) {
 	node.attributes.forEach( attribute => {
 		const name = attribute.name;
 
@@ -43,7 +43,7 @@ export default function addElementAttributes ( generator, node, local ) {
 
 				// special case – autofocus. has to be handled in a bit of a weird way
 				if ( name === 'autofocus' ) {
-					generator.current.autofocus = local.name;
+					fragment.autofocus = local.name;
 				}
 			}
 
@@ -106,12 +106,14 @@ export default function addElementAttributes ( generator, node, local ) {
 					}
 
 					local.create.addLine( updater );
-					const fragment = findBlock( generator.current );
-					if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
+
+					// TODO unnecessary soon...
+					const parentFragment = findBlock( fragment );
+					if ( !parentFragment.tmp ) parentFragment.tmp = parentFragment.getUniqueName( 'tmp' );
 
 					local.update.addBlock( deindent`
-						if ( ( ${fragment.tmp} = ${snippet} ) !== ${last} ) {
-							${last} = ${fragment.tmp};
+						if ( ( ${parentFragment.tmp} = ${snippet} ) !== ${last} ) {
+							${last} = ${parentFragment.tmp};
 							${updater}
 						}
 					` );
@@ -158,7 +160,7 @@ export default function addElementAttributes ( generator, node, local ) {
 			const flattened = flattenReference( attribute.expression.callee );
 			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
 				// allow event.stopPropagation(), this.select() etc
-				generator.code.prependRight( attribute.expression.start, `${generator.current.component}.` );
+				generator.code.prependRight( attribute.expression.start, `${fragment.component}.` );
 			}
 
 			const usedContexts = [];
@@ -175,23 +177,23 @@ export default function addElementAttributes ( generator, node, local ) {
 			const declarations = usedContexts.map( name => {
 				if ( name === 'root' ) return 'var root = this.__svelte.root;';
 
-				const listName = generator.current.listNames.get( name );
-				const indexName = generator.current.indexNames.get( name );
+				const listName = fragment.listNames.get( name );
+				const indexName = fragment.indexNames.get( name );
 
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
-			const handlerName = generator.current.getUniqueName( `${name}_handler` );
+			const handlerName = fragment.getUniqueName( `${name}_handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( generator.events.has( name ) ) {
 				local.create.addBlock( deindent`
-					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${generator.current.component}, ${local.name}, function ( event ) {
+					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${fragment.component}, ${local.name}, function ( event ) {
 						${handlerBody}
 					}.bind( ${local.name} ) );
 				` );
 
-				generator.current.builders.destroy.addLine( deindent`
+				fragment.builders.destroy.addLine( deindent`
 					${handlerName}.teardown();
 				` );
 			} else {
@@ -203,25 +205,25 @@ export default function addElementAttributes ( generator, node, local ) {
 					${generator.helper( 'addEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 
-				generator.current.builders.destroy.addLine( deindent`
+				fragment.builders.destroy.addLine( deindent`
 					${generator.helper( 'removeEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 			}
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			addElementBinding( generator, node, attribute, generator.current, local );
+			addElementBinding( generator, node, attribute, fragment, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
 			local.create.addLine(
-				`${generator.current.component}.refs.${name} = ${local.name};`
+				`${fragment.component}.refs.${name} = ${local.name};`
 			);
 
-			generator.current.builders.destroy.addLine( deindent`
-				if ( ${generator.current.component}.refs.${name} === ${local.name} ) ${generator.current.component}.refs.${name} = null;
+			fragment.builders.destroy.addLine( deindent`
+				if ( ${fragment.component}.refs.${name} === ${local.name} ) ${fragment.component}.refs.${name} = null;
 			` );
 		}
 
