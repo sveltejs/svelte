@@ -7,5 +7,9 @@ export default {
 		]
 	},
 
-	html: `<div class="foo ">1</div><div class=" bar">2</div><div class="foo bar">3</div><!---->`
+	html: `
+		<div class="foo ">1</div>
+		<div class=" bar">2</div>
+		<div class="foo bar">3</div>
+	`
 };

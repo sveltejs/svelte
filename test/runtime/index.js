@@ -32,7 +32,7 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 
 const Object_assign = Object.assign;
 
-describe( 'generate', () => {
+describe( 'runtime', () => {
 	before( setupHtmlEqual );
 
 	function runTest ( dir, shared ) {
@@ -69,7 +69,8 @@ describe( 'generate', () => {
 			// check that no ES2015+ syntax slipped in
 			if ( !config.allowES2015 ) {
 				try {
-					const startIndex = code.indexOf( 'function render_main_fragment' ); // may change!
+					const startIndex = code.indexOf( 'function create_main_fragment' ); // may change!
+					if ( startIndex === -1 ) throw new Error( 'missing create_main_fragment' );
 					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
 					acorn.parse( es5, { ecmaVersion: 5 });
 				} catch ( err ) {
@@ -117,6 +118,8 @@ describe( 'generate', () => {
 						data: config.data
 					});
 
+					Object.assign = Object_assign;
+
 					console.warn = warn;
 
 					if ( config.error ) {
@@ -141,8 +144,6 @@ describe( 'generate', () => {
 						component.destroy();
 						assert.equal( target.innerHTML, '' );
 					}
-
-					Object.assign = Object_assign;
 				})
 				.catch( err => {
 					Object.assign = Object_assign;
