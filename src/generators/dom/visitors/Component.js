@@ -31,7 +31,7 @@ export default function visitComponent ( generator, node ) {
 
 		allUsedContexts: [],
 
-		init: new CodeBuilder(),
+		create: new CodeBuilder(),
 		update: new CodeBuilder()
 	};
 
@@ -60,7 +60,7 @@ export default function visitComponent ( generator, node ) {
 			return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
 		}).join( '\n' );
 
-		local.init.addBlock( deindent`
+		local.create.addBlock( deindent`
 			${name}._context = {
 				${initialProps}
 			};
@@ -83,7 +83,7 @@ export default function visitComponent ( generator, node ) {
 
 		const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
 
-		current.builders.init.addLine(
+		current.builders.create.addLine(
 			`var ${yieldFragment} = ${yieldName}( ${params}, ${current.component} );`
 		);
 
@@ -120,7 +120,7 @@ export default function visitComponent ( generator, node ) {
 
 	const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
 
-	local.init.addBlockAtStart( deindent`
+	local.create.addBlockAtStart( deindent`
 		${statements.join( '\n' )}
 		var ${name} = new ${expression}({
 			${componentInitProperties.join(',\n')}
@@ -153,9 +153,9 @@ export default function visitComponent ( generator, node ) {
 		` );
 	}
 
-	current.builders.teardown.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
+	current.builders.destroy.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
 
-	current.builders.init.addBlock( local.init );
+	current.builders.create.addBlock( local.create );
 	if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
 
 	generator.push({

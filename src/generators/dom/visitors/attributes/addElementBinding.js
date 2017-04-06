@@ -66,11 +66,11 @@ export default function createBinding ( generator, node, attribute, current, loc
 			`~${snippet}.indexOf( ${local.name}.__value )` :
 			`${local.name}.__value === ${snippet}`;
 
-		local.init.addLine(
+		local.create.addLine(
 			`${current.component}._bindingGroups[${bindingGroup}].push( ${local.name} );`
 		);
 
-		local.teardown.addBlock(
+		local.destroy.addBlock(
 			`${current.component}._bindingGroups[${bindingGroup}].splice( ${current.component}._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
 		);
 
@@ -84,7 +84,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	const updating = generator.current.getUniqueName( `${local.name}_updating` );
 
-	local.init.addBlock( deindent`
+	local.create.addBlock( deindent`
 		var ${updating} = false;
 
 		function ${handler} () {
@@ -104,7 +104,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 		}
 	` );
 
-	current.builders.teardown.addLine( deindent`
+	current.builders.destroy.addLine( deindent`
 		${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
 	` );
 }

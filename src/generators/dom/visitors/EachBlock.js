@@ -30,10 +30,10 @@ export default function visitEachBlock ( generator, node ) {
 	localVars.lookup = generator.current.getUniqueName( `${name}_lookup` );
 	localVars._lookup = generator.current.getUniqueName( `_${name}_lookup` );
 
-	generator.current.builders.init.addLine( `var ${listName} = ${snippet};` );
-	generator.current.builders.init.addLine( `var ${localVars.iterations} = [];` );
-	if ( node.key ) generator.current.builders.init.addLine( `var ${localVars.lookup} = Object.create( null );` );
-	if ( node.else ) generator.current.builders.init.addLine( `var ${elseName} = null;` );
+	generator.current.builders.create.addLine( `var ${listName} = ${snippet};` );
+	generator.current.builders.create.addLine( `var ${localVars.iterations} = [];` );
+	if ( node.key ) generator.current.builders.create.addLine( `var ${localVars.lookup} = Object.create( null );` );
+	if ( node.else ) generator.current.builders.create.addLine( `var ${elseName} = null;` );
 
 	const initialRender = new CodeBuilder();
 
@@ -58,14 +58,14 @@ export default function visitEachBlock ( generator, node ) {
 		);
 	}
 
-	generator.current.builders.init.addBlock( deindent`
+	generator.current.builders.create.addBlock( deindent`
 		for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
 			${initialRender}
 		}
 	` );
 
 	if ( node.else ) {
-		generator.current.builders.init.addBlock( deindent`
+		generator.current.builders.create.addBlock( deindent`
 			if ( !${listName}.length ) {
 				${elseName} = ${renderElse}( ${params}, ${generator.current.component} );
 				${!isToplevel ? `${elseName}.mount( ${anchor}.parentNode, ${anchor} );` : ''}
@@ -115,7 +115,7 @@ export default function visitEachBlock ( generator, node ) {
 			for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
 				var ${localVars.iteration} = ${localVars.iterations}[${i}];
 				if ( !${localVars._lookup}[ ${localVars.iteration}.key ] ) {
-					${localVars.iteration}.teardown( true );
+					${localVars.iteration}.destroy( true );
 				}
 			}
 
@@ -137,7 +137,7 @@ export default function visitEachBlock ( generator, node ) {
 				}
 			}
 
-			teardownEach( ${localVars.iterations}, true, ${listName}.length );
+			destroyEach( ${localVars.iterations}, true, ${listName}.length );
 
 			${localVars.iterations}.length = ${listName}.length;
 		` );
@@ -151,18 +151,18 @@ export default function visitEachBlock ( generator, node ) {
 				${elseName} = ${renderElse}( ${params}, ${generator.current.component} );
 				${elseName}.mount( ${anchor}.parentNode, ${anchor} );
 			} else if ( ${elseName} ) {
-				${elseName}.teardown( true );
+				${elseName}.destroy( true );
 			}
 		` );
 	}
 
-	generator.current.builders.teardown.addBlock(
-		`${generator.helper( 'teardownEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'} );` );
+	generator.current.builders.destroy.addBlock(
+		`${generator.helper( 'destroyEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'} );` );
 
 	if ( node.else ) {
-		generator.current.builders.teardown.addBlock( deindent`
+		generator.current.builders.destroy.addBlock( deindent`
 			if ( ${elseName} ) {
-				${elseName}.teardown( ${isToplevel ? 'detach' : 'false'} );
+				${elseName}.destroy( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 	}

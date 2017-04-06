@@ -6,7 +6,7 @@ export default function visitYieldTag ( generator ) {
 		`${generator.current.component}._yield && ${generator.current.component}._yield.mount( ${generator.current.target}, ${anchor} );`
 	);
 
-	generator.current.builders.teardown.addLine(
-		`${generator.current.component}._yield && ${generator.current.component}._yield.teardown( detach );`
+	generator.current.builders.destroy.addLine(
+		`${generator.current.component}._yield && ${generator.current.component}._yield.destroy( detach );`
 	);
 }

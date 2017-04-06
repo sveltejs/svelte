@@ -27,9 +27,9 @@ export default function visitElement ( generator, node ) {
 
 		allUsedContexts: [],
 
-		init: new CodeBuilder(),
+		create: new CodeBuilder(),
 		update: new CodeBuilder(),
-		teardown: new CodeBuilder()
+		destroy: new CodeBuilder()
 	};
 
 	const isToplevel = generator.current.localElementDepth === 0;
@@ -55,7 +55,7 @@ export default function visitElement ( generator, node ) {
 			return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 		}).join( '\n' );
 
-		local.init.addBlock( deindent`
+		local.create.addBlock( deindent`
 			${name}.__svelte = {
 				${initialProps}
 			};
@@ -80,7 +80,7 @@ export default function visitElement ( generator, node ) {
 		render += `\n${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );`;
 	}
 
-	local.init.addLineAtStart( render );
+	local.create.addLineAtStart( render );
 	if ( isToplevel ) {
 		generator.current.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 	}
@@ -92,9 +92,9 @@ export default function visitElement ( generator, node ) {
 		node.initialUpdate = statement;
 	}
 
-	generator.current.builders.init.addBlock( local.init );
+	generator.current.builders.create.addBlock( local.create );
 	if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
-	if ( !local.teardown.isEmpty() ) generator.current.builders.teardown.addBlock( local.teardown );
+	if ( !local.destroy.isEmpty() ) generator.current.builders.destroy.addBlock( local.destroy );
 
 	generator.createMountStatement( name );
 
@@ -116,7 +116,7 @@ export default function visitElement ( generator, node ) {
 	generator.elementDepth -= 1;
 
 	if ( node.initialUpdate ) {
-		generator.current.builders.init.addBlock( node.initialUpdate );
+		generator.current.builders.create.addBlock( node.initialUpdate );
 	}
 
 	generator.pop();

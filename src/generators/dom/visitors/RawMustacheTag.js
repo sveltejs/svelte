@@ -16,14 +16,14 @@ export default function visitRawMustacheTag ( generator, node ) {
 
 	const isToplevel = generator.current.localElementDepth === 0;
 
-	generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
+	generator.current.builders.create.addLine( `var last_${name} = ${snippet};` );
 	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', last_${name} );`;
 	const detachStatement = `${generator.helper( 'detachBetween' )}( ${before}, ${after} );`;
 
 	if ( isToplevel ) {
 		generator.current.builders.mount.addLine( mountStatement );
 	} else {
-		generator.current.builders.init.addLine( mountStatement );
+		generator.current.builders.create.addLine( mountStatement );
 	}
 
 	const fragment = findBlock( generator.current );
