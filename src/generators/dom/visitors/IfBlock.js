@@ -30,20 +30,20 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 	return conditionsAndBlocks;
 }
 
-export default function visitIfBlock ( generator, node ) {
-	const params = generator.current.params.join( ', ' );
+export default function visitIfBlock ( generator, fragment, node ) {
+	const params = fragment.params.join( ', ' );
 	const name = generator.getUniqueName( `if_block` );
-	const getBlock = generator.current.getUniqueName( `get_block` );
-	const currentBlock = generator.current.getUniqueName( `current_block` );
-	const _currentBlock = generator.current.getUniqueName( `_current_block` );
+	const getBlock = fragment.getUniqueName( `get_block` );
+	const currentBlock = fragment.getUniqueName( `current_block` );
+	const _currentBlock = fragment.getUniqueName( `_current_block` );
 
-	const isToplevel = generator.current.localElementDepth === 0;
+	const isToplevel = fragment.localElementDepth === 0;
 	const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `render_if_block` ) );
 
 	const anchor = `${name}_anchor`;
-	generator.createAnchor( anchor );
+	fragment.createAnchor( anchor );
 
-	generator.current.builders.create.addBlock( deindent`
+	fragment.builders.create.addBlock( deindent`
 		function ${getBlock} ( ${params} ) {
 			${conditionsAndBlocks.map( ({ condition, block }) => {
 				return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
@@ -51,29 +51,29 @@ export default function visitIfBlock ( generator, node ) {
 		}
 
 		var ${currentBlock} = ${getBlock}( ${params} );
-		var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
+		var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${fragment.component} );
 	` );
 
 	const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
 	if ( isToplevel ) {
-		generator.current.builders.mount.addLine( mountStatement );
+		fragment.builders.mount.addLine( mountStatement );
 	} else {
-		generator.current.builders.create.addLine( mountStatement );
+		fragment.builders.create.addLine( mountStatement );
 	}
 
-	generator.current.builders.update.addBlock( deindent`
+	fragment.builders.update.addBlock( deindent`
 		var ${_currentBlock} = ${currentBlock};
 		${currentBlock} = ${getBlock}( ${params} );
 		if ( ${_currentBlock} === ${currentBlock} && ${name}) {
 			${name}.update( changed, ${params} );
 		} else {
 			if ( ${name} ) ${name}.destroy( true );
-			${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
+			${name} = ${currentBlock} && ${currentBlock}( ${params}, ${fragment.component} );
 			if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 		}
 	` );
 
-	generator.current.builders.destroy.addLine(
+	fragment.builders.destroy.addLine(
 		`if ( ${name} ) ${name}.destroy( ${isToplevel ? 'detach' : 'false'} );`
 	);
 }

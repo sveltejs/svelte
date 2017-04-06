@@ -9,20 +9,20 @@ const meta = {
 	':Window': visitWindow
 };
 
-export default function visitElement ( generator, node ) {
+export default function visitElement ( generator, fragment, node ) {
 	if ( node.name in meta ) {
-		return meta[ node.name ]( generator, node );
+		return meta[ node.name ]( generator, fragment, node );
 	}
 
 	if ( generator.components.has( node.name ) || node.name === ':Self' ) {
-		return visitComponent( generator, node );
+		return visitComponent( generator, fragment, node );
 	}
 
-	const name = generator.current.getUniqueName( node.name );
+	const name = fragment.getUniqueName( node.name );
 
 	const local = {
 		name,
-		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : generator.current.namespace,
+		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : fragment.namespace,
 		isComponent: false,
 
 		allUsedContexts: [],
@@ -32,16 +32,16 @@ export default function visitElement ( generator, node ) {
 		destroy: new CodeBuilder()
 	};
 
-	const isToplevel = generator.current.localElementDepth === 0;
+	const isToplevel = fragment.localElementDepth === 0;
 
-	addElementAttributes( generator, node, local );
+	addElementAttributes( generator, fragment, node, local );
 
 	if ( local.allUsedContexts.length ) {
 		const initialProps = local.allUsedContexts.map( contextName => {
 			if ( contextName === 'root' ) return `root: root`;
 
-			const listName = generator.current.listNames.get( contextName );
-			const indexName = generator.current.indexNames.get( contextName );
+			const listName = fragment.listNames.get( contextName );
+			const indexName = fragment.indexNames.get( contextName );
 
 			return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 		}).join( ',\n' );
@@ -49,8 +49,8 @@ export default function visitElement ( generator, node ) {
 		const updates = local.allUsedContexts.map( contextName => {
 			if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
-			const listName = generator.current.listNames.get( contextName );
-			const indexName = generator.current.indexNames.get( contextName );
+			const listName = fragment.listNames.get( contextName );
+			const indexName = fragment.indexNames.get( contextName );
 
 			return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 		}).join( '\n' );
@@ -82,7 +82,7 @@ export default function visitElement ( generator, node ) {
 
 	local.create.addLineAtStart( render );
 	if ( isToplevel ) {
-		generator.current.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
+		fragment.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 	}
 
 	// special case – bound <option> without a value attribute
@@ -92,18 +92,18 @@ export default function visitElement ( generator, node ) {
 		node.initialUpdate = statement;
 	}
 
-	generator.current.builders.create.addBlock( local.create );
-	if ( !local.update.isEmpty() ) generator.current.builders.update.addBlock( local.update );
-	if ( !local.destroy.isEmpty() ) generator.current.builders.destroy.addBlock( local.destroy );
+	fragment.builders.create.addBlock( local.create );
+	if ( !local.update.isEmpty() ) fragment.builders.update.addBlock( local.update );
+	if ( !local.destroy.isEmpty() ) fragment.builders.destroy.addBlock( local.destroy );
 
-	generator.createMountStatement( name );
+	fragment.createMountStatement( name );
 
-	const childFragment = generator.current.child({
+	const childFragment = fragment.child({
 		type: 'element',
 		namespace: local.namespace,
 		target: name,
-		parent: generator.current,
-		localElementDepth: generator.current.localElementDepth + 1,
+		parent: fragment,
+		localElementDepth: fragment.localElementDepth + 1,
 		key: null
 	});
 
@@ -112,13 +112,13 @@ export default function visitElement ( generator, node ) {
 	generator.elementDepth += 1;
 
 	node.children.forEach( child => {
-		visit( child, generator );
+		visit( generator, childFragment, child );
 	});
 
 	generator.elementDepth -= 1;
 
 	if ( node.initialUpdate ) {
-		generator.current.builders.create.addBlock( node.initialUpdate );
+		fragment.builders.create.addBlock( node.initialUpdate );
 	}
 
 	generator.pop();

@@ -1,7 +1,7 @@
 import addComponentBinding from './addComponentBinding.js';
 import deindent from '../../../../utils/deindent.js';
 
-export default function addComponentAttributes ( generator, node, local ) {
+export default function addComponentAttributes ( generator, fragment, node, local ) {
 	local.staticAttributes = [];
 	local.dynamicAttributes = [];
 	local.bindings = [];
@@ -78,7 +78,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'EventHandler' ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
-			generator.code.prependRight( attribute.expression.start, `${generator.current.component}.` );
+			generator.code.prependRight( attribute.expression.start, `${fragment.component}.` );
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
@@ -94,8 +94,8 @@ export default function addComponentAttributes ( generator, node, local ) {
 			const declarations = usedContexts.map( name => {
 				if ( name === 'root' ) return 'var root = this._context.root;';
 
-				const listName = generator.current.listNames.get( name );
-				const indexName = generator.current.indexNames.get( name );
+				const listName = fragment.listNames.get( name );
+				const indexName = fragment.indexNames.get( name );
 
 				return `var ${listName} = this._context.${listName}, ${indexName} = this._context.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
@@ -110,18 +110,18 @@ export default function addComponentAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			addComponentBinding( generator, node, attribute, generator.current, local );
+			addComponentBinding( generator, node, attribute, fragment, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
 			local.create.addLine(
-				`${generator.current.component}.refs.${attribute.name} = ${local.name};`
+				`${fragment.component}.refs.${attribute.name} = ${local.name};`
 			);
 
-			generator.current.builders.destroy.addLine( deindent`
-				if ( ${generator.current.component}.refs.${attribute.name} === ${local.name} ) ${generator.current.component}.refs.${attribute.name} = null;
+			fragment.builders.destroy.addLine( deindent`
+				if ( ${fragment.component}.refs.${attribute.name} === ${local.name} ) ${fragment.component}.refs.${attribute.name} = null;
 			` );
 		}
 
