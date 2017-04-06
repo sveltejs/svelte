@@ -27,14 +27,14 @@ export default function visitWindow ( generator, node ) {
 
 			const handlerName = generator.current.getUniqueName( `onwindow${attribute.name}` );
 
-			generator.current.builders.init.addBlock( deindent`
+			generator.current.builders.create.addBlock( deindent`
 				var ${handlerName} = function ( event ) {
 					[✂${attribute.expression.start}-${attribute.expression.end}✂];
 				};
 				window.addEventListener( '${attribute.name}', ${handlerName} );
 			` );
 
-			generator.current.builders.teardown.addBlock( deindent`
+			generator.current.builders.destroy.addBlock( deindent`
 				window.removeEventListener( '${attribute.name}', ${handlerName} );
 			` );
 		}
@@ -66,7 +66,7 @@ export default function visitWindow ( generator, node ) {
 
 		const props = events[ event ].join( ',\n' );
 
-		generator.current.builders.init.addBlock( deindent`
+		generator.current.builders.create.addBlock( deindent`
 			var ${handlerName} = function ( event ) {
 				component.set({
 					${props}
@@ -75,7 +75,7 @@ export default function visitWindow ( generator, node ) {
 			window.addEventListener( '${event}', ${handlerName} );
 		` );
 
-		generator.current.builders.teardown.addBlock( deindent`
+		generator.current.builders.destroy.addBlock( deindent`
 			window.removeEventListener( '${event}', ${handlerName} );
 		` );
 	});

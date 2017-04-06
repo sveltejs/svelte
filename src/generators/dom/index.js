@@ -20,13 +20,13 @@ class DomGenerator extends Generator {
 	addElement ( name, renderStatement, needsIdentifier = false ) {
 		const isToplevel = this.current.localElementDepth === 0;
 		if ( needsIdentifier || isToplevel ) {
-			this.current.builders.init.addLine(
+			this.current.builders.create.addLine(
 				`var ${name} = ${renderStatement};`
 			);
 
 			this.createMountStatement( name );
 		} else {
-			this.current.builders.init.addLine( `${this.helper( 'appendNode' )}( ${renderStatement}, ${this.current.target} );` );
+			this.current.builders.create.addLine( `${this.helper( 'appendNode' )}( ${renderStatement}, ${this.current.target} );` );
 		}
 
 		if ( isToplevel ) {
@@ -36,7 +36,7 @@ class DomGenerator extends Generator {
 
 	addRenderer ( fragment ) {
 		if ( fragment.autofocus ) {
-			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
+			fragment.builders.create.addLine( `${fragment.autofocus}.focus();` );
 		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached
@@ -44,7 +44,7 @@ class DomGenerator extends Generator {
 		fragment.builders.detachRaw.addBlock( fragment.builders.detach );
 
 		if ( !fragment.builders.detachRaw.isEmpty() ) {
-			fragment.builders.teardown.addBlock( deindent`
+			fragment.builders.destroy.addBlock( deindent`
 				if ( detach ) {
 					${fragment.builders.detachRaw}
 				}
@@ -81,19 +81,19 @@ class DomGenerator extends Generator {
 			` );
 		}
 
-		if ( fragment.builders.teardown.isEmpty() ) {
-			properties.addBlock( `teardown: ${this.helper( 'noop' )},` );
+		if ( fragment.builders.destroy.isEmpty() ) {
+			properties.addBlock( `destroy: ${this.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
-				teardown: function ( detach ) {
-					${fragment.builders.teardown}
+				destroy: function ( detach ) {
+					${fragment.builders.destroy}
 				}
 			` );
 		}
 
 		this.renderers.push( deindent`
 			function ${fragment.name} ( ${fragment.params.join( ', ' )}, ${fragment.component}${fragment.key ? `, ${localKey}` : ''} ) {
-				${fragment.builders.init}
+				${fragment.builders.create}
 
 				return {
 					${properties}
@@ -111,7 +111,7 @@ class DomGenerator extends Generator {
 		if ( this.current.target === 'target' ) {
 			this.current.builders.mount.addLine( `${this.helper( 'insertNode' )}( ${name}, target, anchor );` );
 		} else {
-			this.current.builders.init.addLine( `${this.helper( 'appendNode' )}( ${name}, ${this.current.target} );` );
+			this.current.builders.create.addLine( `${this.helper( 'appendNode' )}( ${name}, ${this.current.target} );` );
 		}
 	}
 
@@ -158,7 +158,7 @@ export default function dom ( parsed, source, options ) {
 
 	generator.push({
 		type: 'block',
-		name: generator.alias( 'render_main_fragment' ),
+		name: generator.alias( 'create_main_fragment' ),
 		namespace,
 		target: 'target',
 		localElementDepth: 0,
@@ -261,7 +261,7 @@ export default function dom ( parsed, source, options ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this._bindings = [];
-			this._fragment = ${generator.alias( 'render_main_fragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
@@ -269,7 +269,7 @@ export default function dom ( parsed, source, options ) {
 		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			this._fragment = ${generator.alias( 'render_main_fragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
@@ -369,7 +369,7 @@ export default function dom ( parsed, source, options ) {
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
 			this.fire( 'destroy' );${templateProperties.ondestroy ? `\n${generator.alias( 'template' )}.ondestroy.call( this );` : ``}
 
-			this._fragment.teardown( detach !== false );
+			this._fragment.destroy( detach !== false );
 			this._fragment = null;
 
 			this._state = {};

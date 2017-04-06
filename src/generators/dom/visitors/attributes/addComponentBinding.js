@@ -41,7 +41,7 @@ export default function createBinding ( generator, node, attribute, current, loc
 
 	const updating = generator.current.getUniqueName( `${local.name}_updating` );
 
-	local.init.addBlock( deindent`
+	local.create.addBlock( deindent`
 		var ${updating} = false;
 
 		${generator.current.component}._bindings.push( function () {

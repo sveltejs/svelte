@@ -32,11 +32,11 @@ export default function addElementAttributes ( generator, node, local ) {
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
 				if ( propertyName ) {
-					local.init.addLine(
+					local.create.addLine(
 						`${local.name}.${propertyName} = true;`
 					);
 				} else {
-					local.init.addLine(
+					local.create.addLine(
 						`${generator.helper( method )}( ${local.name}, '${name}', true );`
 					);
 				}
@@ -49,11 +49,11 @@ export default function addElementAttributes ( generator, node, local ) {
 
 			else if ( attribute.value.length === 0 ) {
 				if ( propertyName ) {
-					local.init.addLine(
+					local.create.addLine(
 						`${local.name}.${propertyName} = '';`
 					);
 				} else {
-					local.init.addLine(
+					local.create.addLine(
 						`${generator.helper( method )}( ${local.name}, '${name}', '' );`
 					);
 				}
@@ -75,7 +75,7 @@ export default function addElementAttributes ( generator, node, local ) {
 						local.namespace = value.data;
 						addAttribute = true;
 					} else if ( propertyName ) {
-						local.init.addLine(
+						local.create.addLine(
 							`${local.name}.${propertyName} = ${result};`
 						);
 					} else {
@@ -83,7 +83,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					}
 
 					if ( addAttribute ) {
-						local.init.addLine(
+						local.create.addLine(
 							`${generator.helper( method )}( ${local.name}, '${name}', ${result} );`
 						);
 					}
@@ -96,7 +96,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					const { snippet } = generator.contextualise( value.expression );
 
 					const last = `last_${local.name}_${name.replace( /-/g, '_')}`;
-					local.init.addLine( `var ${last} = ${snippet};` );
+					local.create.addLine( `var ${last} = ${snippet};` );
 
 					let updater;
 					if ( propertyName ) {
@@ -105,7 +105,7 @@ export default function addElementAttributes ( generator, node, local ) {
 						updater = `${generator.helper( method )}( ${local.name}, '${name}', ${last} );`;
 					}
 
-					local.init.addLine( updater );
+					local.create.addLine( updater );
 					const fragment = findBlock( generator.current );
 					if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
 
@@ -139,14 +139,14 @@ export default function addElementAttributes ( generator, node, local ) {
 					updater = `${generator.helper( method )}( ${local.name}, '${name}', ${value} );`;
 				}
 
-				local.init.addLine( updater );
+				local.create.addLine( updater );
 				local.update.addLine( updater );
 			}
 
 			if ( isIndirectlyBoundValue ) {
 				const updateValue = `${local.name}.value = ${local.name}.__value;`;
 
-				local.init.addLine( updateValue );
+				local.create.addLine( updateValue );
 				if ( dynamic ) local.update.addLine( updateValue );
 			}
 		}
@@ -185,17 +185,17 @@ export default function addElementAttributes ( generator, node, local ) {
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( generator.events.has( name ) ) {
-				local.init.addBlock( deindent`
+				local.create.addBlock( deindent`
 					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${generator.current.component}, ${local.name}, function ( event ) {
 						${handlerBody}
 					}.bind( ${local.name} ) );
 				` );
 
-				generator.current.builders.teardown.addLine( deindent`
+				generator.current.builders.destroy.addLine( deindent`
 					${handlerName}.teardown();
 				` );
 			} else {
-				local.init.addBlock( deindent`
+				local.create.addBlock( deindent`
 					function ${handlerName} ( event ) {
 						${handlerBody}
 					}
@@ -203,7 +203,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					${generator.helper( 'addEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 
-				generator.current.builders.teardown.addLine( deindent`
+				generator.current.builders.destroy.addLine( deindent`
 					${generator.helper( 'removeEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 			}
@@ -216,11 +216,11 @@ export default function addElementAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
-			local.init.addLine(
+			local.create.addLine(
 				`${generator.current.component}.refs.${name} = ${local.name};`
 			);
 
-			generator.current.builders.teardown.addLine( deindent`
+			generator.current.builders.destroy.addLine( deindent`
 				if ( ${generator.current.component}.refs.${name} === ${local.name} ) ${generator.current.component}.refs.${name} = null;
 			` );
 		}

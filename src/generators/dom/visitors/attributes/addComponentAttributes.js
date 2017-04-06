@@ -102,7 +102,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
-			local.init.addBlock( deindent`
+			local.create.addBlock( deindent`
 				${local.name}.on( '${attribute.name}', function ( event ) {
 					${handlerBody}
 				});
@@ -116,11 +116,11 @@ export default function addComponentAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
-			local.init.addLine(
+			local.create.addLine(
 				`${generator.current.component}.refs.${attribute.name} = ${local.name};`
 			);
 
-			generator.current.builders.teardown.addLine( deindent`
+			generator.current.builders.destroy.addLine( deindent`
 				if ( ${generator.current.component}.refs.${attribute.name} === ${local.name} ) ${generator.current.component}.refs.${attribute.name} = null;
 			` );
 		}

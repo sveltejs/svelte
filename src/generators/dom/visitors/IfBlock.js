@@ -43,7 +43,7 @@ export default function visitIfBlock ( generator, node ) {
 	const anchor = `${name}_anchor`;
 	generator.createAnchor( anchor );
 
-	generator.current.builders.init.addBlock( deindent`
+	generator.current.builders.create.addBlock( deindent`
 		function ${getBlock} ( ${params} ) {
 			${conditionsAndBlocks.map( ({ condition, block }) => {
 				return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
@@ -58,7 +58,7 @@ export default function visitIfBlock ( generator, node ) {
 	if ( isToplevel ) {
 		generator.current.builders.mount.addLine( mountStatement );
 	} else {
-		generator.current.builders.init.addLine( mountStatement );
+		generator.current.builders.create.addLine( mountStatement );
 	}
 
 	generator.current.builders.update.addBlock( deindent`
@@ -67,13 +67,13 @@ export default function visitIfBlock ( generator, node ) {
 		if ( ${_currentBlock} === ${currentBlock} && ${name}) {
 			${name}.update( changed, ${params} );
 		} else {
-			if ( ${name} ) ${name}.teardown( true );
+			if ( ${name} ) ${name}.destroy( true );
 			${name} = ${currentBlock} && ${currentBlock}( ${params}, ${generator.current.component} );
 			if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 		}
 	` );
 
-	generator.current.builders.teardown.addLine(
-		`if ( ${name} ) ${name}.teardown( ${isToplevel ? 'detach' : 'false'} );`
+	generator.current.builders.destroy.addLine(
+		`if ( ${name} ) ${name}.destroy( ${isToplevel ? 'detach' : 'false'} );`
 	);
 }

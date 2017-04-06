@@ -6,7 +6,7 @@ export default function visitMustacheTag ( generator, node ) {
 
 	const { snippet } = generator.contextualise( node.expression );
 
-	generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
+	generator.current.builders.create.addLine( `var last_${name} = ${snippet};` );
 	generator.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
 
 	const fragment = findBlock( generator.current );

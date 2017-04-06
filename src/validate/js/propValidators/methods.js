@@ -2,7 +2,7 @@ import checkForDupes from '../utils/checkForDupes.js';
 import checkForComputedKeys from '../utils/checkForComputedKeys.js';
 import usesThisOrArguments from '../utils/usesThisOrArguments.js';
 
-const builtin = new Set( [ 'set', 'get', 'on', 'fire', 'observe', 'teardown' ] );
+const builtin = new Set( [ 'set', 'get', 'on', 'fire', 'observe', 'destroy' ] );
 
 export default function methods ( validator, prop ) {
 	if ( prop.value.type !== 'ObjectExpression' ) {
