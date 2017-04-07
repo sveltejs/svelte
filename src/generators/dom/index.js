@@ -86,26 +86,26 @@ class DomGenerator extends Generator {
 		` );
 	}
 
-	generateBlock ( node, name, type ) {
-		const childFragment = this.current.child({
-			type,
-			name,
-			target: 'target',
-			localElementDepth: 0,
-			builders: getBuilders(),
-			getUniqueName: this.getUniqueNameMaker( this.current.params )
-		});
+	// generateBlock ( node, name, type ) {
+	// 	const childFragment = this.current.child({
+	// 		type,
+	// 		name,
+	// 		target: 'target',
+	// 		localElementDepth: 0,
+	// 		builders: getBuilders(),
+	// 		getUniqueName: this.getUniqueNameMaker( this.current.params )
+	// 	});
 
-		this.push( childFragment );
+	// 	this.push( childFragment );
 
-		// walk the children here
-		node.children.forEach( node => visit( node, this ) );
-		this.addRenderer( this.current );
-		this.pop();
+	// 	// walk the children here
+	// 	node.children.forEach( node => visit( node, this ) );
+	// 	this.addRenderer( this.current );
+	// 	this.pop();
 
-		// unset the children, to avoid them being visited again
-		node.children = [];
-	}
+	// 	// unset the children, to avoid them being visited again
+	// 	node.children = [];
+	// }
 
 	helper ( name ) {
 		if ( this.options.dev && `${name}Dev` in shared ) {

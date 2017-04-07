@@ -167,10 +167,6 @@ export default function visitEachBlock ( generator, fragment, node ) {
 		` );
 	}
 
-	if ( node.else ) {
-		generator.generateBlock( node.else, renderElse, 'block' );
-	}
-
 	const indexNames = new Map( fragment.indexNames );
 	const indexName = node.index || fragment.getUniqueName( `${node.context}_index` );
 	indexNames.set( node.context, indexName );
@@ -223,4 +219,19 @@ export default function visitEachBlock ( generator, fragment, node ) {
 
 	generator.addRenderer( childFragment );
 	generator.pop();
+
+	if ( node.else ) {
+		const childFragment = this.current.child({
+			type: 'block',
+			name: renderElse,
+			target: 'target',
+			localElementDepth: 0,
+			builders: getBuilders(),
+			getUniqueName: this.getUniqueNameMaker( this.current.params )
+		});
+
+		node.else.children.forEach( child => {
+			visit( generator, childFragment, child );
+		});
+	}
 }

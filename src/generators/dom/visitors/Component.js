@@ -78,7 +78,16 @@ export default function visitComponent ( generator, fragment, node ) {
 		const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
 		const params = fragment.params.join( ', ' );
 
-		generator.generateBlock( node, yieldName, 'block' );
+		const childFragment = this.current.child({
+			type: 'component',
+			name: generator.getUniqueName( `render_${name}_yield_fragment` ), // TODO should getUniqueName happen inside Fragment? probably
+			target: 'target',
+			localElementDepth: 0
+		});
+
+		node.children.forEach( child => {
+			visit( generator, childFragment, child );
+		});
 
 		const yieldFragment = fragment.getUniqueName( `${name}_yield_fragment` );
 
@@ -156,24 +165,4 @@ export default function visitComponent ( generator, fragment, node ) {
 
 	fragment.builders.create.addBlock( local.create );
 	if ( !local.update.isEmpty() ) fragment.builders.update.addBlock( local.update );
-
-	const childFragment = fragment.child({
-		type: 'component',
-		namespace: local.namespace,
-		target: name,
-		parent: fragment,
-		localElementDepth: fragment.localElementDepth + 1,
-		key: null
-	});
-	generator.push( childFragment );
-
-	generator.elementDepth += 1;
-
-	node.children.forEach( child => {
-		visit( generator, childFragment, child );
-	});
-
-	generator.elementDepth -= 1;
-
-	generator.pop();
 }

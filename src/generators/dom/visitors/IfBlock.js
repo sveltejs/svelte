@@ -1,6 +1,8 @@
 import deindent from '../../../utils/deindent.js';
+import getBuilders from '../utils/getBuilders.js';
+import visit from '../visit.js';
 
-function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
+function getConditionsAndBlocks ( generator, fragment, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
 	const name = generator.getUniqueName( `${_name}_${i}` );
 
@@ -9,12 +11,12 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		block: name
 	}];
 
-	generator.generateBlock( node, name, 'block' );
+	generateBlock( generator, fragment, node, name, 'block' );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
 		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, node.else.children[0], _name, i + 1 )
+			...getConditionsAndBlocks( generator, fragment, node.else.children[0], _name, i + 1 )
 		);
 	} else {
 		const name = generator.getUniqueName( `${_name}_${i + 1}` );
@@ -24,10 +26,28 @@ function getConditionsAndBlocks ( generator, node, _name, i = 0 ) {
 		});
 
 		if ( node.else ) {
-			generator.generateBlock( node.else, name, 'block' );
+			generateBlock( generator, fragment, node.else, name, 'block' );
 		}
 	}
 	return conditionsAndBlocks;
+}
+
+function generateBlock ( generator, fragment, node, name, type ) {
+	const childFragment = fragment.child({
+		type,
+		isIfBlock: true, 
+		name,
+		target: 'target',
+		builders: getBuilders(),
+		localElementDepth: 0
+	});
+
+	// walk the children here
+	node.children.forEach( node => {
+		visit( generator, childFragment, node );
+	});
+
+	generator.addRenderer( childFragment );
 }
 
 export default function visitIfBlock ( generator, fragment, node ) {
@@ -38,7 +58,7 @@ export default function visitIfBlock ( generator, fragment, node ) {
 	const _currentBlock = fragment.getUniqueName( `_current_block` );
 
 	const isToplevel = fragment.localElementDepth === 0;
-	const conditionsAndBlocks = getConditionsAndBlocks( generator, node, generator.getUniqueName( `render_if_block` ) );
+	const conditionsAndBlocks = getConditionsAndBlocks( generator, fragment, node, generator.getUniqueName( `render_if_block` ) );
 
 	const anchor = `${name}_anchor`;
 	fragment.createAnchor( anchor );
