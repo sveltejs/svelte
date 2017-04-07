@@ -3,7 +3,7 @@ import flattenReference from '../../../../utils/flattenReference.js';
 import getSetter from './binding/getSetter.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
 
-export default function createBinding ( generator, node, attribute, fragment, local ) {
+export default function addElementBinding ( generator, node, attribute, fragment, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = generator.contextualise( attribute.value );
 
@@ -18,7 +18,7 @@ export default function createBinding ( generator, node, attribute, fragment, lo
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, fragment, attribute, keypath ) : null;
-	const value = getBindingValue( generator, local, node, attribute, isMultipleSelect, bindingGroup, type );
+	const value = getBindingValue( generator, fragment, local, node, attribute, isMultipleSelect, bindingGroup, type );
 	const eventName = getBindingEventName( node );
 
 	let setter = getSetter({ fragment, name, keypath, context: '__svelte', attribute, dependencies, value });
@@ -82,7 +82,7 @@ export default function createBinding ( generator, node, attribute, fragment, lo
 		updateElement = `${local.name}.${attribute.name} = ${snippet};`;
 	}
 
-	const updating = generator.fragment.getUniqueName( `${local.name}_updating` );
+	const updating = fragment.getUniqueName( `${local.name}_updating` );
 
 	local.create.addBlock( deindent`
 		var ${updating} = false;
@@ -124,7 +124,7 @@ function getBindingEventName ( node ) {
 	return 'change';
 }
 
-function getBindingValue ( generator, local, node, attribute, isMultipleSelect, bindingGroup, type ) {
+function getBindingValue ( generator, fragment, local, node, attribute, isMultipleSelect, bindingGroup, type ) {
 	// <select multiple bind:value='selected>
 	if ( isMultipleSelect ) {
 		return `[].map.call( ${local.name}.selectedOptions, function ( option ) { return option.__value; })`;
@@ -138,7 +138,7 @@ function getBindingValue ( generator, local, node, attribute, isMultipleSelect, 
 	// <input type='checkbox' bind:group='foo'>
 	if ( attribute.name === 'group' ) {
 		if ( type === 'checkbox' ) {
-			return `${generator.helper( 'getBindingGroupValue' )}( ${generator.fragment.component}._bindingGroups[${bindingGroup}] )`;
+			return `${generator.helper( 'getBindingGroupValue' )}( ${fragment.component}._bindingGroups[${bindingGroup}] )`;
 		}
 
 		return `${local.name}.__value`;

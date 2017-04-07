@@ -1,4 +1,6 @@
 export default {
+	// solo: true,
+
 	data: {
 		depth: 5
 	},
