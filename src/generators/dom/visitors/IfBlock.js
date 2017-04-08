@@ -40,8 +40,7 @@ function generateBlock ( generator, fragment, state, node, name, type ) {
 	});
 
 	const childState = Object.assign( {}, state, {
-		target: 'target',
-		localElementDepth: 0
+		target: null
 	});
 
 	// walk the children here
@@ -59,11 +58,11 @@ export default function visitIfBlock ( generator, fragment, state, node ) {
 	const currentBlock = fragment.getUniqueName( `current_block` );
 	const _currentBlock = fragment.getUniqueName( `_current_block` );
 
-	const isToplevel = state.localElementDepth === 0;
+	const isToplevel = !state.target;
 	const conditionsAndBlocks = getConditionsAndBlocks( generator, fragment, state, node, generator.getUniqueName( `render_if_block` ) );
 
 	const anchor = `${name}_anchor`;
-	fragment.createAnchor( anchor, state.target, state.localElementDepth );
+	fragment.createAnchor( anchor, state.target );
 
 	fragment.builders.create.addBlock( deindent`
 		function ${getBlock} ( ${params} ) {
