@@ -1,6 +1,23 @@
 export default class Fragment {
-	constructor ( options ) {
-		Object.assign( this, options );
+	constructor ({ generator, name, key, expression, context, contextDependencies, component, contexts, indexes, params, indexNames, listNames, builders, getUniqueName }) {
+		this.generator = generator;
+		this.name = name;
+		this.key = key;
+		this.expression = expression;
+		this.context = context;
+
+		this.component = component;
+
+		this.contexts = contexts;
+		this.indexes = indexes;
+		this.contextDependencies = contextDependencies;
+
+		this.params = params;
+		this.indexNames = indexNames;
+		this.listNames = listNames;
+
+		this.builders = builders;
+		this.getUniqueName = getUniqueName;
 	}
 
 	addElement ( name, renderStatement, parentNode, needsIdentifier = false ) {
