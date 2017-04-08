@@ -3,7 +3,6 @@ import addElementBinding from './addElementBinding';
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
-import findBlock from '../../utils/findBlock.js';
 
 export default function addElementAttributes ( generator, fragment, node, local ) {
 	node.attributes.forEach( attribute => {
@@ -107,13 +106,11 @@ export default function addElementAttributes ( generator, fragment, node, local 
 
 					local.create.addLine( updater );
 
-					// TODO unnecessary soon...
-					const parentFragment = findBlock( fragment );
-					if ( !parentFragment.tmp ) parentFragment.tmp = parentFragment.getUniqueName( 'tmp' );
+					if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
 
 					local.update.addBlock( deindent`
-						if ( ( ${parentFragment.tmp} = ${snippet} ) !== ${last} ) {
-							${last} = ${parentFragment.tmp};
+						if ( ( ${fragment.tmp} = ${snippet} ) !== ${last} ) {
+							${last} = ${fragment.tmp};
 							${updater}
 						}
 					` );

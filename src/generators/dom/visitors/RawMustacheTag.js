@@ -1,5 +1,4 @@
 import deindent from '../../../utils/deindent.js';
-import findBlock from '../utils/findBlock.js';
 
 export default function visitRawMustacheTag ( generator, fragment, state, node ) {
 	const name = fragment.getUniqueName( 'raw' );
@@ -26,13 +25,11 @@ export default function visitRawMustacheTag ( generator, fragment, state, node )
 		fragment.builders.create.addLine( mountStatement );
 	}
 
-	// TODO this should be unnecessary once we separate fragments from state
-	const parentFragment = findBlock( fragment );
-	if ( !parentFragment.tmp ) parentFragment.tmp = parentFragment.getUniqueName( 'tmp' );
+	if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
 
 	fragment.builders.update.addBlock( deindent`
-		if ( ( ${parentFragment.tmp} = ${snippet} ) !== last_${name} ) {
-			last_${name} = ${parentFragment.tmp};
+		if ( ( ${fragment.tmp} = ${snippet} ) !== last_${name} ) {
+			last_${name} = ${fragment.tmp};
 			${detachStatement}
 			${mountStatement}
 		}
