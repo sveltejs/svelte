@@ -1,21 +1,21 @@
 import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
-function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0 ) {
+function getConditionsAndBlocks ( generator, block, state, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
 	const name = generator.getUniqueName( `${_name}_${i}` );
 
 	const conditionsAndBlocks = [{
-		condition: generator.contextualise( fragment, node.expression ).snippet,
+		condition: generator.contextualise( block, node.expression ).snippet,
 		block: name
 	}];
 
-	generateBlock( generator, fragment, state, node, name );
+	generateBlock( generator, block, state, node, name );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
 		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, fragment, state, node.else.children[0], _name, i + 1 )
+			...getConditionsAndBlocks( generator, block, state, node.else.children[0], _name, i + 1 )
 		);
 	} else {
 		const name = generator.getUniqueName( `${_name}_${i + 1}` );
@@ -25,14 +25,14 @@ function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0
 		});
 
 		if ( node.else ) {
-			generateBlock( generator, fragment, state, node.else, name );
+			generateBlock( generator, block, state, node.else, name );
 		}
 	}
 	return conditionsAndBlocks;
 }
 
-function generateBlock ( generator, fragment, state, node, name ) {
-	const childFragment = fragment.child({
+function generateBlock ( generator, block, state, node, name ) {
+	const childBlock = block.child({
 		name
 	});
 
@@ -42,10 +42,10 @@ function generateBlock ( generator, fragment, state, node, name ) {
 
 	// walk the children here
 	node.children.forEach( node => {
-		visit( generator, childFragment, childState, node );
+		visit( generator, childBlock, childState, node );
 	});
 
-	generator.addBlock( childFragment );
+	generator.addBlock( childBlock );
 }
 
 export default function visitIfBlock ( generator, fragment, state, node ) {

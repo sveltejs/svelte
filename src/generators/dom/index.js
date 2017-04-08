@@ -2,7 +2,7 @@ import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
 import Generator from '../Generator.js';
-import Fragment from './Fragment.js';
+import Block from './Block.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
@@ -17,8 +17,8 @@ class DomGenerator extends Generator {
 		};
 	}
 
-	addBlock ( fragment ) {
-		this.blocks.push( fragment );
+	addBlock ( block ) {
+		this.blocks.push( block );
 	}
 
 	helper ( name ) {
@@ -43,7 +43,7 @@ export default function dom ( parsed, source, options ) {
 	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
 	const component = getUniqueName( 'component' );
 
-	const mainFragment = new Fragment({
+	const mainBlock = new Block({
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
 		key: null,
@@ -67,10 +67,10 @@ export default function dom ( parsed, source, options ) {
 	};
 
 	parsed.html.children.forEach( node => {
-		visit( generator, mainFragment, state, node );
+		visit( generator, mainBlock, state, node );
 	});
 
-	generator.addBlock( mainFragment );
+	generator.addBlock( mainBlock );
 
 	const builders = {
 		main: new CodeBuilder(),
