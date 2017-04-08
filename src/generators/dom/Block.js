@@ -2,14 +2,12 @@ import CodeBuilder from '../../utils/CodeBuilder.js';
 import deindent from '../../utils/deindent.js';
 
 export default class Block {
-	constructor ({ generator, name, key, expression, context, contextDependencies, component, contexts, indexes, params, indexNames, listNames, getUniqueName }) {
+	constructor ({ generator, name, key, expression, context, contextDependencies, contexts, indexes, params, indexNames, listNames }) {
 		this.generator = generator;
 		this.name = name;
 		this.key = key;
 		this.expression = expression;
 		this.context = context;
-
-		this.component = component;
 
 		this.contexts = contexts;
 		this.indexes = indexes;
@@ -27,7 +25,11 @@ export default class Block {
 			detachRaw: new CodeBuilder(),
 			destroy: new CodeBuilder()
 		};
-		this.getUniqueName = getUniqueName;
+
+		this.getUniqueName = generator.getUniqueNameMaker( params );
+
+		// unique names
+		this.component = this.getUniqueName( 'component' );
 	}
 
 	addElement ( name, renderStatement, parentNode, needsIdentifier = false ) {

@@ -39,7 +39,6 @@ function generateBlock ( generator, block, state, node, name ) {
 		parentNode: null
 	});
 
-	// walk the children here
 	node.children.forEach( node => {
 		visit( generator, childBlock, childState, node );
 	});
@@ -55,7 +54,7 @@ export default function visitIfBlock ( generator, fragment, state, node ) {
 	const _currentBlock = fragment.getUniqueName( `_current_block` );
 
 	const isToplevel = !state.parentNode;
-	const conditionsAndBlocks = getConditionsAndBlocks( generator, fragment, state, node, generator.getUniqueName( `render_if_block` ) );
+	const conditionsAndBlocks = getConditionsAndBlocks( generator, fragment, state, node, generator.getUniqueName( `create_if_block` ) );
 
 	const anchor = `${name}_anchor`;
 	fragment.createAnchor( anchor, state.parentNode );
