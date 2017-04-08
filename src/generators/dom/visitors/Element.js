@@ -76,7 +76,7 @@ export default function visitElement ( generator, fragment, state, node ) {
 		render = `var ${name} = ${generator.helper( 'createElement' )}( '${node.name}' );`;
 	}
 
-	if ( generator.cssId && !state.elementDepth ) {
+	if ( generator.cssId && state.isTopLevel ) {
 		render += `\n${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );`;
 	}
 
@@ -99,7 +99,7 @@ export default function visitElement ( generator, fragment, state, node ) {
 	fragment.createMountStatement( name, state.target );
 
 	const childState = Object.assign( {}, state, {
-		elementDepth: state.elementDepth + 1,
+		isTopLevel: false,
 		target: name,
 		namespace: local.namespace
 	});

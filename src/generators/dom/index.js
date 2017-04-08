@@ -129,7 +129,8 @@ export default function dom ( parsed, source, options ) {
 
 	const state = {
 		namespace,
-		target: null
+		target: null,
+		isTopLevel: true
 	};
 
 	parsed.html.children.forEach( node => {
