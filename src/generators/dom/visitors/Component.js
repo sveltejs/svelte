@@ -1,5 +1,6 @@
 import deindent from '../../../utils/deindent.js';
 import CodeBuilder from '../../../utils/CodeBuilder.js';
+import getBuilders from '../utils/getBuilders.js';
 import visit from '../visit.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
@@ -75,14 +76,14 @@ export default function visitComponent ( generator, fragment, node ) {
 
 	// Component has children, put them in a separate {{yield}} block
 	if ( hasChildren ) {
-		const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
 		const params = fragment.params.join( ', ' );
 
-		const childFragment = this.current.child({
+		const childFragment = fragment.child({
 			type: 'component',
 			name: generator.getUniqueName( `render_${name}_yield_fragment` ), // TODO should getUniqueName happen inside Fragment? probably
 			target: 'target',
-			localElementDepth: 0
+			localElementDepth: 0,
+			builders: getBuilders()
 		});
 
 		node.children.forEach( child => {
@@ -92,7 +93,7 @@ export default function visitComponent ( generator, fragment, node ) {
 		const yieldFragment = fragment.getUniqueName( `${name}_yield_fragment` );
 
 		fragment.builders.create.addLine(
-			`var ${yieldFragment} = ${yieldName}( ${params}, ${fragment.component} );`
+			`var ${yieldFragment} = ${childFragment.name}( ${params}, ${fragment.component} );`
 		);
 
 		fragment.builders.update.addLine(
@@ -100,6 +101,8 @@ export default function visitComponent ( generator, fragment, node ) {
 		);
 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);
+
+		generator.addRenderer( childFragment );
 	}
 
 	const statements = [];
