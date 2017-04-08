@@ -107,8 +107,6 @@ export default function visitElement ( generator, fragment, node ) {
 		key: null
 	});
 
-	generator.push( childFragment );
-
 	generator.elementDepth += 1;
 
 	node.children.forEach( child => {
@@ -120,6 +118,4 @@ export default function visitElement ( generator, fragment, node ) {
 	if ( node.initialUpdate ) {
 		fragment.builders.create.addBlock( node.initialUpdate );
 	}
-
-	generator.pop();
 }

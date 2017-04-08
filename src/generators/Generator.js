@@ -418,15 +418,4 @@ export default class Generator {
 			templateProperties
 		};
 	}
-
-	pop () {
-		const tail = this.current;
-		this.current = tail.parent;
-
-		return tail;
-	}
-
-	push ( fragment ) {
-		this.current = fragment;
-	}
 }
