@@ -3,15 +3,35 @@ export default {
 		animals: [ 'alpaca', 'baboon', 'capybara' ],
 		foo: 'something else'
 	},
-	html: 'before\n<p>alpaca</p><p>baboon</p><p>capybara</p>\nafter',
+
+	html: `
+		before
+		<p>alpaca</p>
+		<p>baboon</p>
+		<p>capybara</p>
+		after
+	`,
+
 	test ( assert, component, target ) {
 		component.set({ animals: [] });
-		assert.htmlEqual( target.innerHTML, 'before\n<p>no animals, but rather something else</p>\nafter' );
+		assert.htmlEqual( target.innerHTML, `
+			before
+			<p>no animals, but rather something else</p>
+			after
+		` );
 
 		component.set({ foo: 'something other' });
-		assert.htmlEqual( target.innerHTML, 'before\n<p>no animals, but rather something other</p>\nafter' );
-		
+		assert.htmlEqual( target.innerHTML, `
+			before
+			<p>no animals, but rather something other</p>
+			after
+		` );
+
 		component.set({ animals: ['wombat'] });
-		assert.htmlEqual( target.innerHTML, 'before\n<p>wombat</p>\nafter' );
+		assert.htmlEqual( target.innerHTML, `
+			before
+			<p>wombat</p>
+			after
+		` );
 	}
 };

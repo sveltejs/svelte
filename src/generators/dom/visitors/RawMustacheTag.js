@@ -4,7 +4,7 @@ import findBlock from '../utils/findBlock.js';
 export default function visitRawMustacheTag ( generator, fragment, node ) {
 	const name = fragment.getUniqueName( 'raw' );
 
-	const { snippet } = generator.contextualise( node.expression );
+	const { snippet } = generator.contextualise( fragment, node.expression );
 
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.

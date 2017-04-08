@@ -93,7 +93,7 @@ export default function addElementAttributes ( generator, fragment, node, local 
 					dynamic = true;
 
 					// dynamic – but potentially non-string – attributes
-					const { snippet } = generator.contextualise( value.expression );
+					const { snippet } = generator.contextualise( fragment, value.expression );
 
 					const last = `last_${local.name}_${name.replace( /-/g, '_')}`;
 					local.create.addLine( `var ${last} = ${snippet};` );
@@ -128,7 +128,7 @@ export default function addElementAttributes ( generator, fragment, node, local 
 						if ( chunk.type === 'Text' ) {
 							return JSON.stringify( chunk.data );
 						} else {
-							const { snippet } = generator.contextualise( chunk.expression );
+							const { snippet } = generator.contextualise( fragment, chunk.expression );
 							return `( ${snippet} )`;
 						}
 					}).join( ' + ' )
@@ -165,7 +165,7 @@ export default function addElementAttributes ( generator, fragment, node, local 
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
-				const { contexts } = generator.contextualise( arg, true );
+				const { contexts } = generator.contextualise( fragment, arg, true );
 
 				contexts.forEach( context => {
 					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
