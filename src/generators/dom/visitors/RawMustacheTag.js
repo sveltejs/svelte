@@ -25,11 +25,9 @@ export default function visitRawMustacheTag ( generator, block, state, node ) {
 		block.builders.create.addLine( mountStatement );
 	}
 
-	if ( !block.tmp ) block.tmp = block.getUniqueName( 'tmp' );
-
 	block.builders.update.addBlock( deindent`
-		if ( ( ${block.tmp} = ${snippet} ) !== last_${name} ) {
-			last_${name} = ${block.tmp};
+		if ( ( ${block.tmp()} = ${snippet} ) !== last_${name} ) {
+			last_${name} = ${block.tmp()};
 			${detachStatement}
 			${mountStatement}
 		}

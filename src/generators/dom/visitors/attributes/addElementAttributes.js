@@ -106,11 +106,9 @@ export default function addElementAttributes ( generator, block, node, local ) {
 
 					local.create.addLine( updater );
 
-					if ( !block.tmp ) block.tmp = block.getUniqueName( 'tmp' );
-
 					local.update.addBlock( deindent`
-						if ( ( ${block.tmp} = ${snippet} ) !== ${last} ) {
-							${last} = ${block.tmp};
+						if ( ( ${block.tmp()} = ${snippet} ) !== ${last} ) {
+							${last} = ${block.tmp()};
 							${updater}
 						}
 					` );
