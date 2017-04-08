@@ -214,7 +214,7 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 		visit( generator, childFragment, childState, child );
 	});
 
-	generator.addRenderer( childFragment );
+	generator.addBlock( childFragment );
 
 	if ( node.else ) {
 		const childFragment = fragment.child({
@@ -226,6 +226,6 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 			visit( generator, childFragment, childState, child );
 		});
 
-		generator.addRenderer( childFragment );
+		generator.addBlock( childFragment );
 	}
 }

@@ -8,7 +8,7 @@ import * as shared from '../../shared/index.js';
 class DomGenerator extends Generator {
 	constructor ( parsed, source, name, options ) {
 		super( parsed, source, name, options );
-		this.renderers = [];
+		this.blocks = [];
 		this.uses = new Set();
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
@@ -17,72 +17,8 @@ class DomGenerator extends Generator {
 		};
 	}
 
-	addRenderer ( fragment ) {
-		if ( fragment.autofocus ) {
-			fragment.builders.create.addLine( `${fragment.autofocus}.focus();` );
-		}
-
-		// minor hack – we need to ensure that any {{{triples}}} are detached
-		// first, so we append normal detach statements to detachRaw
-		fragment.builders.detachRaw.addBlock( fragment.builders.detach );
-
-		if ( !fragment.builders.detachRaw.isEmpty() ) {
-			fragment.builders.destroy.addBlock( deindent`
-				if ( detach ) {
-					${fragment.builders.detachRaw}
-				}
-			` );
-		}
-
-		const properties = new CodeBuilder();
-
-		let localKey;
-		if ( fragment.key ) {
-			localKey = fragment.getUniqueName( 'key' );
-			properties.addBlock( `key: ${localKey},` );
-		}
-
-		if ( fragment.builders.mount.isEmpty() ) {
-			properties.addBlock( `mount: ${this.helper( 'noop' )},` );
-		} else {
-			properties.addBlock( deindent`
-				mount: function ( target, anchor ) {
-					${fragment.builders.mount}
-				},
-			` );
-		}
-
-		if ( fragment.builders.update.isEmpty() ) {
-			properties.addBlock( `update: ${this.helper( 'noop' )},` );
-		} else {
-			properties.addBlock( deindent`
-				update: function ( changed, ${fragment.params.join( ', ' )} ) {
-					${fragment.tmp ? `var ${fragment.tmp};` : ''}
-
-					${fragment.builders.update}
-				},
-			` );
-		}
-
-		if ( fragment.builders.destroy.isEmpty() ) {
-			properties.addBlock( `destroy: ${this.helper( 'noop' )},` );
-		} else {
-			properties.addBlock( deindent`
-				destroy: function ( detach ) {
-					${fragment.builders.destroy}
-				}
-			` );
-		}
-
-		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params.join( ', ' )}, ${fragment.component}${fragment.key ? `, ${localKey}` : ''} ) {
-				${fragment.builders.create}
-
-				return {
-					${properties}
-				};
-			}
-		` );
+	addBlock ( fragment ) {
+		this.blocks.push( fragment );
 	}
 
 	helper ( name ) {
@@ -134,7 +70,7 @@ export default function dom ( parsed, source, options ) {
 		visit( generator, mainFragment, state, node );
 	});
 
-	generator.addRenderer( mainFragment );
+	generator.addBlock( mainFragment );
 
 	const builders = {
 		main: new CodeBuilder(),
@@ -198,8 +134,8 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	let i = generator.renderers.length;
-	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
+	let i = generator.blocks.length;
+	while ( i-- ) builders.main.addBlock( generator.blocks[i].render() );
 
 	builders.init.addLine( `this._torndown = false;` );
 

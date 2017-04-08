@@ -1,4 +1,5 @@
 import CodeBuilder from '../../utils/CodeBuilder.js';
+import deindent from '../../utils/deindent.js';
 
 export default class Fragment {
 	constructor ({ generator, name, key, expression, context, contextDependencies, component, contexts, indexes, params, indexNames, listNames, getUniqueName }) {
@@ -61,5 +62,73 @@ export default class Fragment {
 		} else {
 			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
 		}
+	}
+
+	render () {
+		if ( this.autofocus ) {
+			this.builders.create.addLine( `${this.autofocus}.focus();` );
+		}
+
+		// minor hack – we need to ensure that any {{{triples}}} are detached
+		// first, so we append normal detach statements to detachRaw
+		this.builders.detachRaw.addBlock( this.builders.detach );
+
+		if ( !this.builders.detachRaw.isEmpty() ) {
+			this.builders.destroy.addBlock( deindent`
+				if ( detach ) {
+					${this.builders.detachRaw}
+				}
+			` );
+		}
+
+		const properties = new CodeBuilder();
+
+		let localKey;
+		if ( this.key ) {
+			localKey = this.getUniqueName( 'key' );
+			properties.addBlock( `key: ${localKey},` );
+		}
+
+		if ( this.builders.mount.isEmpty() ) {
+			properties.addBlock( `mount: ${this.generator.helper( 'noop' )},` );
+		} else {
+			properties.addBlock( deindent`
+				mount: function ( target, anchor ) {
+					${this.builders.mount}
+				},
+			` );
+		}
+
+		if ( this.builders.update.isEmpty() ) {
+			properties.addBlock( `update: ${this.generator.helper( 'noop' )},` );
+		} else {
+			properties.addBlock( deindent`
+				update: function ( changed, ${this.params.join( ', ' )} ) {
+					${this.tmp ? `var ${this.tmp};` : ''}
+
+					${this.builders.update}
+				},
+			` );
+		}
+
+		if ( this.builders.destroy.isEmpty() ) {
+			properties.addBlock( `destroy: ${this.generator.helper( 'noop' )},` );
+		} else {
+			properties.addBlock( deindent`
+				destroy: function ( detach ) {
+					${this.builders.destroy}
+				}
+			` );
+		}
+
+		return deindent`
+			function ${this.name} ( ${this.params.join( ', ' )}, ${this.component}${this.key ? `, ${localKey}` : ''} ) {
+				${this.builders.create}
+
+				return {
+					${properties}
+				};
+			}
+		`;
 	}
 }
