@@ -4,7 +4,7 @@ import findBlock from '../utils/findBlock.js';
 export default function visitMustacheTag ( generator, fragment, node ) {
 	const name = fragment.getUniqueName( 'text' );
 
-	const { snippet } = generator.contextualise( node.expression );
+	const { snippet } = generator.contextualise( fragment, node.expression );
 
 	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
 	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );

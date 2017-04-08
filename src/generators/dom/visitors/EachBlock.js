@@ -17,7 +17,7 @@ export default function visitEachBlock ( generator, fragment, node ) {
 
 	generator.addSourcemapLocations( node.expression );
 
-	const { dependencies, snippet } = generator.contextualise( node.expression );
+	const { dependencies, snippet } = generator.contextualise( fragment, node.expression );
 
 	const anchor = fragment.getUniqueName( `${name}_anchor` );
 	fragment.createAnchor( anchor );
@@ -221,17 +221,19 @@ export default function visitEachBlock ( generator, fragment, node ) {
 	generator.pop();
 
 	if ( node.else ) {
-		const childFragment = this.current.child({
+		const childFragment = fragment.child({
 			type: 'block',
 			name: renderElse,
 			target: 'target',
 			localElementDepth: 0,
 			builders: getBuilders(),
-			getUniqueName: this.getUniqueNameMaker( this.current.params )
+			getUniqueName: generator.getUniqueNameMaker( fragment.params )
 		});
 
 		node.else.children.forEach( child => {
 			visit( generator, childFragment, child );
 		});
+
+		generator.addRenderer( childFragment );
 	}
 }

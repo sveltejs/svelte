@@ -7,7 +7,7 @@ function getConditionsAndBlocks ( generator, fragment, node, _name, i = 0 ) {
 	const name = generator.getUniqueName( `${_name}_${i}` );
 
 	const conditionsAndBlocks = [{
-		condition: generator.contextualise( node.expression ).snippet,
+		condition: generator.contextualise( fragment, node.expression ).snippet,
 		block: name
 	}];
 
@@ -35,7 +35,7 @@ function getConditionsAndBlocks ( generator, fragment, node, _name, i = 0 ) {
 function generateBlock ( generator, fragment, node, name, type ) {
 	const childFragment = fragment.child({
 		type,
-		isIfBlock: true, 
+		isIfBlock: true,
 		name,
 		target: 'target',
 		builders: getBuilders(),

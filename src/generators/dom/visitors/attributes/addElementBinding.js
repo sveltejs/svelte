@@ -5,7 +5,7 @@ import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
 
 export default function addElementBinding ( generator, node, attribute, fragment, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
-	const { snippet, contexts, dependencies } = generator.contextualise( attribute.value );
+	const { snippet, contexts, dependencies } = generator.contextualise( fragment, attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
 

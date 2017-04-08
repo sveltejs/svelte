@@ -37,7 +37,7 @@ export default function addComponentAttributes ( generator, fragment, node, loca
 
 				else {
 					// simple dynamic attributes
-					const { dependencies, string } = generator.contextualise( value.expression );
+					const { dependencies, string } = generator.contextualise( fragment, value.expression );
 
 					// TODO only update attributes that have changed
 					local.dynamicAttributes.push({
@@ -57,7 +57,7 @@ export default function addComponentAttributes ( generator, fragment, node, loca
 						if ( chunk.type === 'Text' ) {
 							return JSON.stringify( chunk.data );
 						} else {
-							const { dependencies, string } = generator.contextualise( chunk.expression );
+							const { dependencies, string } = generator.contextualise( fragment, chunk.expression );
 							dependencies.forEach( dependency => {
 								if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
 							});
@@ -82,7 +82,7 @@ export default function addComponentAttributes ( generator, fragment, node, loca
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
-				const { contexts } = generator.contextualise( arg, true );
+				const { contexts } = generator.contextualise( fragment, arg, true );
 
 				contexts.forEach( context => {
 					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );

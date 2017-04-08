@@ -1,27 +1,25 @@
 import visit from '../visit.js';
 
-export default function visitIfBlock ( generator, node ) {
-	const { snippet } = generator.contextualise( node.expression );
+export default function visitIfBlock ( generator, fragment, node ) {
+	const { snippet } = generator.contextualise( fragment, node.expression );
 
 	generator.append( '${ ' + snippet + ' ? `' );
 
-	generator.push({
-		conditions: generator.current.conditions.concat( snippet )
+	const childFragment = fragment.child({
+		conditions: fragment.conditions.concat( snippet )
 	});
 
 	node.children.forEach( child => {
-		visit( child, generator );
+		visit( generator, childFragment, child );
 	});
 
 	generator.append( '` : `' );
 
 	if ( node.else ) {
 		node.else.children.forEach( child => {
-			visit( child, generator );
+			visit( generator, childFragment, child );
 		});
 	}
 
 	generator.append( '` }' );
-
-	generator.pop();
 }

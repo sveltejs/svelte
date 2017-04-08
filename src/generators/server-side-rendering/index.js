@@ -2,6 +2,7 @@ import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import flattenReference from '../../utils/flattenReference.js';
 import Generator from '../Generator.js';
+import Fragment from './Fragment.js';
 import visit from './visit.js';
 
 class SsrGenerator extends Generator {
@@ -50,14 +51,15 @@ export default function ssr ( parsed, source, options ) {
 	};
 
 	// create main render() function
-	generator.push({
+	const mainFragment = new Fragment({
+		generator,
 		contexts: new Map(),
 		indexes: new Map(),
 		conditions: []
 	});
 
 	parsed.html.children.forEach( node => {
-		visit( node, generator );
+		visit( generator, mainFragment, node );
 	});
 
 	builders.render.addLine(
