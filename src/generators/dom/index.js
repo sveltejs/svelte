@@ -129,7 +129,7 @@ export default function dom ( parsed, source, options ) {
 
 	const state = {
 		namespace,
-		target: null,
+		parentNode: null,
 		isTopLevel: true
 	};
 

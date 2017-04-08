@@ -13,14 +13,14 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 
 	const listName = fragment.getUniqueName( `${name}_value` );
 
-	const isToplevel = !state.target;
+	const isToplevel = !state.parentNode;
 
 	generator.addSourcemapLocations( node.expression );
 
 	const { dependencies, snippet } = generator.contextualise( fragment, node.expression );
 
 	const anchor = fragment.getUniqueName( `${name}_anchor` );
-	fragment.createAnchor( anchor, state.target );
+	fragment.createAnchor( anchor, state.parentNode );
 
 	const localVars = {};
 
@@ -210,7 +210,7 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 	});
 
 	const childState = Object.assign( {}, state, {
-		target: null
+		parentNode: null
 	});
 
 	node.children.forEach( child => {
