@@ -12,7 +12,7 @@ export function fire ( eventName, data ) {
 }
 
 export function observe ( key, callback, options ) {
-	var group = ( options && options.defer ) ? this._observers.pre : this._observers.post;
+	var group = ( options && options.defer ) ? this._observers.post : this._observers.pre;
 
 	( group[ key ] || ( group[ key ] = [] ) ).push( callback );
 
