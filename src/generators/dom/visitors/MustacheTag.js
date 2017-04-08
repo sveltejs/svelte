@@ -1,18 +1,18 @@
 import deindent from '../../../utils/deindent.js';
 
-export default function visitMustacheTag ( generator, fragment, state, node ) {
-	const name = fragment.getUniqueName( 'text' );
+export default function visitMustacheTag ( generator, block, state, node ) {
+	const name = block.getUniqueName( 'text' );
 
-	const { snippet } = generator.contextualise( fragment, node.expression );
+	const { snippet } = generator.contextualise( block, node.expression );
 
-	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
-	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.parentNode, true );
+	block.builders.create.addLine( `var last_${name} = ${snippet};` );
+	block.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.parentNode, true );
 
-	if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
+	if ( !block.tmp ) block.tmp = block.getUniqueName( 'tmp' );
 
-	fragment.builders.update.addBlock( deindent`
-		if ( ( ${fragment.tmp} = ${snippet} ) !== last_${name} ) {
-			${name}.data = last_${name} = ${fragment.tmp};
+	block.builders.update.addBlock( deindent`
+		if ( ( ${block.tmp} = ${snippet} ) !== last_${name} ) {
+			${name}.data = last_${name} = ${block.tmp};
 		}
 	` );
 }
