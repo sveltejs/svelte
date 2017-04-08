@@ -14,8 +14,6 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 	const isToplevel = !state.parentNode;
 
-	generator.addSourcemapLocations( node.expression );
-
 	const { dependencies, snippet } = generator.contextualise( block, node.expression );
 
 	const anchor = block.getUniqueName( `${name}_anchor` );

@@ -2,7 +2,6 @@ import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
 function getConditionsAndBlocks ( generator, block, state, node, _name, i = 0 ) {
-	generator.addSourcemapLocations( node.expression );
 	const name = generator.getUniqueName( `${_name}_${i}` );
 
 	const conditionsAndBlocks = [{
