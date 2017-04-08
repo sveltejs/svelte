@@ -189,7 +189,6 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 	const getUniqueName = generator.getUniqueNameMaker( blockParams );
 
 	const childFragment = fragment.child({
-		type: 'block',
 		name: renderer,
 		expression: node.expression,
 		context: node.context,
@@ -221,7 +220,6 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 
 	if ( node.else ) {
 		const childFragment = fragment.child({
-			type: 'block',
 			name: renderElse,
 			builders: getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker( fragment.params )

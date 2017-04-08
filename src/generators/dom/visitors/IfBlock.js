@@ -11,7 +11,7 @@ function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0
 		block: name
 	}];
 
-	generateBlock( generator, fragment, state, node, name, 'block' );
+	generateBlock( generator, fragment, state, node, name );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
@@ -26,15 +26,14 @@ function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0
 		});
 
 		if ( node.else ) {
-			generateBlock( generator, fragment, state, node.else, name, 'block' );
+			generateBlock( generator, fragment, state, node.else, name );
 		}
 	}
 	return conditionsAndBlocks;
 }
 
-function generateBlock ( generator, fragment, state, node, name, type ) {
+function generateBlock ( generator, fragment, state, node, name ) {
 	const childFragment = fragment.child({
-		type,
 		name,
 		builders: getBuilders()
 	});
