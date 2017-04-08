@@ -1,6 +1,5 @@
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
-import flattenReference from '../../utils/flattenReference.js';
 import Generator from '../Generator.js';
 import Fragment from './Fragment.js';
 import visit from './visit.js';
@@ -10,24 +9,6 @@ class SsrGenerator extends Generator {
 		super( parsed, source, name, options );
 		this.bindings = [];
 		this.renderCode = '';
-	}
-
-	addBinding ( binding, name ) {
-		const conditions = [ `!( '${binding.name}' in root )`].concat( // TODO handle contextual bindings...
-			this.current.conditions.map( c => `(${c})` )
-		);
-
-		const { keypath } = flattenReference( binding.value );
-
-		this.bindings.push( deindent`
-			if ( ${conditions.join( '&&' )} ) {
-				tmp = ${name}.data();
-				if ( '${keypath}' in tmp ) {
-					root.${binding.name} = tmp.${keypath};
-					settled = false;
-				}
-			}
-		` );
 	}
 
 	append ( code ) {

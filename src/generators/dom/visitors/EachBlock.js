@@ -211,14 +211,11 @@ export default function visitEachBlock ( generator, fragment, node ) {
 		getUniqueName
 	});
 
-	generator.push( childFragment );
-
 	node.children.forEach( child => {
 		visit( generator, childFragment, child );
 	});
 
 	generator.addRenderer( childFragment );
-	generator.pop();
 
 	if ( node.else ) {
 		const childFragment = fragment.child({
