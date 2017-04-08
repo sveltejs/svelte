@@ -32,7 +32,7 @@ export default function visitElement ( generator, fragment, state, node ) {
 		destroy: new CodeBuilder()
 	};
 
-	const isToplevel = !state.target;
+	const isToplevel = !state.parentNode;
 
 	addElementAttributes( generator, fragment, node, local );
 
@@ -96,11 +96,11 @@ export default function visitElement ( generator, fragment, state, node ) {
 	if ( !local.update.isEmpty() ) fragment.builders.update.addBlock( local.update );
 	if ( !local.destroy.isEmpty() ) fragment.builders.destroy.addBlock( local.destroy );
 
-	fragment.createMountStatement( name, state.target );
+	fragment.createMountStatement( name, state.parentNode );
 
 	const childState = Object.assign( {}, state, {
 		isTopLevel: false,
-		target: name,
+		parentNode: name,
 		namespace: local.namespace
 	});
 

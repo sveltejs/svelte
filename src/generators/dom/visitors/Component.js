@@ -35,7 +35,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 		update: new CodeBuilder()
 	};
 
-	const isToplevel = !state.target;
+	const isToplevel = !state.parentNode;
 
 	generator.hasComponents = true;
 
@@ -70,7 +70,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 	}
 
 	const componentInitProperties = [
-		`target: ${!isToplevel ? state.target: 'null'}`,
+		`target: ${!isToplevel ? state.parentNode: 'null'}`,
 		`_root: ${fragment.component}._root || ${fragment.component}`
 	];
 
@@ -85,7 +85,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 		});
 
 		const childState = Object.assign( {}, state, {
-			target: null
+			parentNode: null
 		});
 
 		node.children.forEach( child => {

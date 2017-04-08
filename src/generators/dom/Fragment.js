@@ -3,16 +3,16 @@ export default class Fragment {
 		Object.assign( this, options );
 	}
 
-	addElement ( name, renderStatement, target, needsIdentifier = false ) {
-		const isToplevel = !target;
+	addElement ( name, renderStatement, parentNode, needsIdentifier = false ) {
+		const isToplevel = !parentNode;
 		if ( needsIdentifier || isToplevel ) {
 			this.builders.create.addLine(
 				`var ${name} = ${renderStatement};`
 			);
 
-			this.createMountStatement( name, target );
+			this.createMountStatement( name, parentNode );
 		} else {
-			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${target} );` );
+			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${parentNode} );` );
 		}
 
 		if ( isToplevel ) {
@@ -24,14 +24,14 @@ export default class Fragment {
 		return new Fragment( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
-	createAnchor ( name, target ) {
+	createAnchor ( name, parentNode ) {
 		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
-		this.addElement( name, renderStatement, target, true );
+		this.addElement( name, renderStatement, parentNode, true );
 	}
 
-	createMountStatement ( name, target ) {
-		if ( target ) {
-			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${target} );` );
+	createMountStatement ( name, parentNode ) {
+		if ( parentNode ) {
+			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
 		} else {
 			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
 		}
