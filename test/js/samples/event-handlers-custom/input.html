@@ -1,0 +1,16 @@
+<button on:foo='foo( bar )'>foo</button>
+
+<script>
+	export default {
+		methods: {
+			foo ( bar ) {
+				console.log( bar );
+			}
+		},
+		events: {
+			foo ( node, callback ) {
+				// code goes here
+			}
+		}
+	};
+</script>
