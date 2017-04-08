@@ -138,6 +138,8 @@ describe( 'runtime', () => {
 						assert.htmlEqual( target.innerHTML, config.html );
 					}
 
+					Object.assign = Object_assign;
+
 					if ( config.test ) {
 						config.test( assert, component, target, window );
 					} else {
