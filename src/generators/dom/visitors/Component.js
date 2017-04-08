@@ -79,7 +79,6 @@ export default function visitComponent ( generator, fragment, state, node ) {
 		const params = fragment.params.join( ', ' );
 
 		const childFragment = fragment.child({
-			type: 'component',
 			name: generator.getUniqueName( `render_${name}_yield_fragment` ), // TODO should getUniqueName happen inside Fragment? probably
 			builders: getBuilders()
 		});

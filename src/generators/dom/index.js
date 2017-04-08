@@ -109,7 +109,6 @@ export default function dom ( parsed, source, options ) {
 	const component = getUniqueName( 'component' );
 
 	const mainFragment = new Fragment({
-		type: 'block',
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
 		key: null,
