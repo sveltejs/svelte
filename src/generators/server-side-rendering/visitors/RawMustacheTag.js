@@ -1,4 +1,4 @@
-export default function visitRawMustacheTag ( generator, fragment, node ) {
-	const { snippet } = generator.contextualise( fragment, node.expression );
+export default function visitRawMustacheTag ( generator, block, node ) {
+	const { snippet } = generator.contextualise( block, node.expression );
 	generator.append( '${' + snippet + '}' );
 }
