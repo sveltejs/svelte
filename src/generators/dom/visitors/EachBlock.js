@@ -4,7 +4,7 @@ import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, block, state, node ) {
 	const name = generator.getUniqueName( `each_block` );
-	const renderer = generator.getUniqueName( `render_each_block` );
+	const renderer = generator.getUniqueName( `create_each_block` );
 	const elseName = generator.getUniqueName( `${name}_else` );
 	const renderElse = generator.getUniqueName( `${renderer}_else` );
 	const i = block.getUniqueName( `i` );
@@ -181,17 +181,11 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	const contextDependencies = new Map( block.contextDependencies );
 	contextDependencies.set( node.context, dependencies );
 
-	const blockParams = block.params.concat( listName, context, indexName );
-
-	const getUniqueName = generator.getUniqueNameMaker( blockParams );
-
 	const childBlock = block.child({
 		name: renderer,
 		expression: node.expression,
 		context: node.context,
 		key: node.key,
-
-		component: getUniqueName( 'component' ),
 
 		contextDependencies,
 		contexts,
@@ -199,9 +193,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 		indexNames,
 		listNames,
-		params: blockParams,
-
-		getUniqueName
+		params: block.params.concat( listName, context, indexName )
 	});
 
 	const childState = Object.assign( {}, state, {
@@ -216,8 +208,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 	if ( node.else ) {
 		const childBlock = block.child({
-			name: renderElse,
-			getUniqueName: generator.getUniqueNameMaker( block.params )
+			name: renderElse
 		});
 
 		node.else.children.forEach( child => {

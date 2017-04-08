@@ -78,7 +78,7 @@ export default function visitComponent ( generator, block, state, node ) {
 		const params = block.params.join( ', ' );
 
 		const childBlock = block.child({
-			name: generator.getUniqueName( `render_${name}_yield_fragment` ) // TODO should getUniqueName happen inside Fragment? probably
+			name: generator.getUniqueName( `create_${name}_yield_fragment` ) // TODO should getUniqueName happen inside Fragment? probably
 		});
 
 		const childState = Object.assign( {}, state, {
