@@ -3,9 +3,9 @@ import flattenReference from '../../../../utils/flattenReference.js';
 import getSetter from './binding/getSetter.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
 
-export default function addElementBinding ( generator, node, attribute, fragment, local ) {
+export default function addElementBinding ( generator, node, attribute, block, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
-	const { snippet, contexts, dependencies } = generator.contextualise( fragment, attribute.value );
+	const { snippet, contexts, dependencies } = generator.contextualise( block, attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
 
@@ -13,15 +13,15 @@ export default function addElementBinding ( generator, node, attribute, fragment
 		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 	});
 
-	const handler = fragment.getUniqueName( `${local.name}_change_handler` );
+	const handler = block.getUniqueName( `${local.name}_change_handler` );
 
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
-	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, fragment, attribute, keypath ) : null;
-	const value = getBindingValue( generator, fragment, local, node, attribute, isMultipleSelect, bindingGroup, type );
+	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
+	const value = getBindingValue( generator, block, local, node, attribute, isMultipleSelect, bindingGroup, type );
 	const eventName = getBindingEventName( node );
 
-	let setter = getSetter({ fragment, name, keypath, context: '__svelte', attribute, dependencies, value });
+	let setter = getSetter({ block, name, keypath, context: '__svelte', attribute, dependencies, value });
 	let updateElement;
 
 	// <select> special case
@@ -30,9 +30,9 @@ export default function addElementBinding ( generator, node, attribute, fragment
 			setter = `var selectedOption = ${local.name}.selectedOptions[0] || ${local.name}.options[0];\n${setter}`;
 		}
 
-		const value = fragment.getUniqueName( 'value' );
-		const i = fragment.getUniqueName( 'i' );
-		const option = fragment.getUniqueName( 'option' );
+		const value = block.getUniqueName( 'value' );
+		const i = block.getUniqueName( 'i' );
+		const option = block.getUniqueName( 'option' );
 
 		const ifStatement = isMultipleSelect ?
 			deindent`
@@ -67,11 +67,11 @@ export default function addElementBinding ( generator, node, attribute, fragment
 			`${local.name}.__value === ${snippet}`;
 
 		local.create.addLine(
-			`${fragment.component}._bindingGroups[${bindingGroup}].push( ${local.name} );`
+			`${block.component}._bindingGroups[${bindingGroup}].push( ${local.name} );`
 		);
 
 		local.destroy.addBlock(
-			`${fragment.component}._bindingGroups[${bindingGroup}].splice( ${fragment.component}._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
+			`${block.component}._bindingGroups[${bindingGroup}].splice( ${block.component}._bindingGroups[${bindingGroup}].indexOf( ${local.name} ), 1 );`
 		);
 
 		updateElement = `${local.name}.checked = ${condition};`;
@@ -82,7 +82,7 @@ export default function addElementBinding ( generator, node, attribute, fragment
 		updateElement = `${local.name}.${attribute.name} = ${snippet};`;
 	}
 
-	const updating = fragment.getUniqueName( `${local.name}_updating` );
+	const updating = block.getUniqueName( `${local.name}_updating` );
 
 	local.create.addBlock( deindent`
 		var ${updating} = false;
@@ -104,7 +104,7 @@ export default function addElementBinding ( generator, node, attribute, fragment
 		}
 	` );
 
-	fragment.builders.destroy.addLine( deindent`
+	block.builders.destroy.addLine( deindent`
 		${generator.helper( 'removeEventListener' )}( ${local.name}, '${eventName}', ${handler} );
 	` );
 }
@@ -124,7 +124,7 @@ function getBindingEventName ( node ) {
 	return 'change';
 }
 
-function getBindingValue ( generator, fragment, local, node, attribute, isMultipleSelect, bindingGroup, type ) {
+function getBindingValue ( generator, block, local, node, attribute, isMultipleSelect, bindingGroup, type ) {
 	// <select multiple bind:value='selected>
 	if ( isMultipleSelect ) {
 		return `[].map.call( ${local.name}.selectedOptions, function ( option ) { return option.__value; })`;
@@ -138,7 +138,7 @@ function getBindingValue ( generator, fragment, local, node, attribute, isMultip
 	// <input type='checkbox' bind:group='foo'>
 	if ( attribute.name === 'group' ) {
 		if ( type === 'checkbox' ) {
-			return `${generator.helper( 'getBindingGroupValue' )}( ${fragment.component}._bindingGroups[${bindingGroup}] )`;
+			return `${generator.helper( 'getBindingGroupValue' )}( ${block.component}._bindingGroups[${bindingGroup}] )`;
 		}
 
 		return `${local.name}.__value`;
@@ -153,7 +153,7 @@ function getBindingValue ( generator, fragment, local, node, attribute, isMultip
 	return `${local.name}.${attribute.name}`;
 }
 
-function getBindingGroup ( generator, fragment, attribute, keypath ) {
+function getBindingGroup ( generator, keypath ) {
 	// TODO handle contextual bindings — `keypath` should include unique ID of
 	// each block that provides context
 	let index = generator.bindingGroups.indexOf( keypath );

@@ -9,16 +9,16 @@ const meta = {
 	':Window': visitWindow
 };
 
-export default function visitElement ( generator, fragment, state, node ) {
+export default function visitElement ( generator, block, state, node ) {
 	if ( node.name in meta ) {
-		return meta[ node.name ]( generator, fragment, node );
+		return meta[ node.name ]( generator, block, node );
 	}
 
 	if ( generator.components.has( node.name ) || node.name === ':Self' ) {
-		return visitComponent( generator, fragment, state, node );
+		return visitComponent( generator, block, state, node );
 	}
 
-	const name = fragment.getUniqueName( node.name );
+	const name = block.getUniqueName( node.name );
 
 	const local = {
 		name,
@@ -34,14 +34,14 @@ export default function visitElement ( generator, fragment, state, node ) {
 
 	const isToplevel = !state.parentNode;
 
-	addElementAttributes( generator, fragment, node, local );
+	addElementAttributes( generator, block, node, local );
 
 	if ( local.allUsedContexts.length ) {
 		const initialProps = local.allUsedContexts.map( contextName => {
 			if ( contextName === 'root' ) return `root: root`;
 
-			const listName = fragment.listNames.get( contextName );
-			const indexName = fragment.indexNames.get( contextName );
+			const listName = block.listNames.get( contextName );
+			const indexName = block.indexNames.get( contextName );
 
 			return `${listName}: ${listName},\n${indexName}: ${indexName}`;
 		}).join( ',\n' );
@@ -49,8 +49,8 @@ export default function visitElement ( generator, fragment, state, node ) {
 		const updates = local.allUsedContexts.map( contextName => {
 			if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
 
-			const listName = fragment.listNames.get( contextName );
-			const indexName = fragment.indexNames.get( contextName );
+			const listName = block.listNames.get( contextName );
+			const indexName = block.indexNames.get( contextName );
 
 			return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 		}).join( '\n' );
@@ -82,7 +82,7 @@ export default function visitElement ( generator, fragment, state, node ) {
 
 	local.create.addLineAtStart( render );
 	if ( isToplevel ) {
-		fragment.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
+		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 	}
 
 	// special case – bound <option> without a value attribute
@@ -92,11 +92,11 @@ export default function visitElement ( generator, fragment, state, node ) {
 		node.initialUpdate = statement;
 	}
 
-	fragment.builders.create.addBlock( local.create );
-	if ( !local.update.isEmpty() ) fragment.builders.update.addBlock( local.update );
-	if ( !local.destroy.isEmpty() ) fragment.builders.destroy.addBlock( local.destroy );
+	block.builders.create.addBlock( local.create );
+	if ( !local.update.isEmpty() ) block.builders.update.addBlock( local.update );
+	if ( !local.destroy.isEmpty() ) block.builders.destroy.addBlock( local.destroy );
 
-	fragment.createMountStatement( name, state.parentNode );
+	block.createMountStatement( name, state.parentNode );
 
 	const childState = Object.assign( {}, state, {
 		isTopLevel: false,
@@ -105,10 +105,10 @@ export default function visitElement ( generator, fragment, state, node ) {
 	});
 
 	node.children.forEach( child => {
-		visit( generator, fragment, childState, child );
+		visit( generator, block, childState, child );
 	});
 
 	if ( node.initialUpdate ) {
-		fragment.builders.create.addBlock( node.initialUpdate );
+		block.builders.create.addBlock( node.initialUpdate );
 	}
 }

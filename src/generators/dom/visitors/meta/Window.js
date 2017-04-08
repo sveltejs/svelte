@@ -11,7 +11,7 @@ const associatedEvents = {
 	scrollY: 'scroll'
 };
 
-export default function visitWindow ( generator, fragment, node ) {
+export default function visitWindow ( generator, block, node ) {
 	const events = {};
 
 	node.attributes.forEach( attribute => {
@@ -25,16 +25,16 @@ export default function visitWindow ( generator, fragment, node ) {
 				generator.code.prependRight( attribute.expression.start, 'component.' );
 			}
 
-			const handlerName = fragment.getUniqueName( `onwindow${attribute.name}` );
+			const handlerName = block.getUniqueName( `onwindow${attribute.name}` );
 
-			fragment.builders.create.addBlock( deindent`
+			block.builders.create.addBlock( deindent`
 				var ${handlerName} = function ( event ) {
 					[✂${attribute.expression.start}-${attribute.expression.end}✂];
 				};
 				window.addEventListener( '${attribute.name}', ${handlerName} );
 			` );
 
-			fragment.builders.destroy.addBlock( deindent`
+			block.builders.destroy.addBlock( deindent`
 				window.removeEventListener( '${attribute.name}', ${handlerName} );
 			` );
 		}
@@ -62,11 +62,11 @@ export default function visitWindow ( generator, fragment, node ) {
 	});
 
 	Object.keys( events ).forEach( event => {
-		const handlerName = fragment.getUniqueName( `onwindow${event}` );
+		const handlerName = block.getUniqueName( `onwindow${event}` );
 
 		const props = events[ event ].join( ',\n' );
 
-		fragment.builders.create.addBlock( deindent`
+		block.builders.create.addBlock( deindent`
 			var ${handlerName} = function ( event ) {
 				component.set({
 					${props}
@@ -75,7 +75,7 @@ export default function visitWindow ( generator, fragment, node ) {
 			window.addEventListener( '${event}', ${handlerName} );
 		` );
 
-		fragment.builders.destroy.addBlock( deindent`
+		block.builders.destroy.addBlock( deindent`
 			window.removeEventListener( '${event}', ${handlerName} );
 		` );
 	});
