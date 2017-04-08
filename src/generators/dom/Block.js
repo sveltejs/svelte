@@ -104,17 +104,16 @@ export default class Block {
 		if ( this.builders.update.isEmpty() ) {
 			properties.addBlock( `update: ${this.generator.helper( 'noop' )},` );
 		} else {
+			if ( this._tmp ) this.builders.update.addBlockAtStart( `var ${this._tmp};` );
 			properties.addBlock( deindent`
 				update: function ( changed, ${this.params.join( ', ' )} ) {
-					${this.tmp ? `var ${this.tmp};` : ''}
-
 					${this.builders.update}
 				},
 			` );
 		}
 
 		if ( this.builders.destroy.isEmpty() ) {
-			properties.addBlock( `destroy: ${this.generator.helper( 'noop' )},` );
+			properties.addBlock( `destroy: ${this.generator.helper( 'noop' )}` );
 		} else {
 			properties.addBlock( deindent`
 				destroy: function ( detach ) {
@@ -132,5 +131,10 @@ export default class Block {
 				};
 			}
 		`;
+	}
+
+	tmp () {
+		if ( !this._tmp ) this._tmp = this.getUniqueName( 'tmp' );
+		return this._tmp;
 	}
 }
