@@ -45,7 +45,7 @@ function generateBlock ( generator, fragment, state, node, name ) {
 		visit( generator, childFragment, childState, node );
 	});
 
-	generator.addRenderer( childFragment );
+	generator.addBlock( childFragment );
 }
 
 export default function visitIfBlock ( generator, fragment, state, node ) {

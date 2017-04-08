@@ -101,7 +101,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);
 
-		generator.addRenderer( childFragment );
+		generator.addBlock( childFragment );
 	}
 
 	const statements = [];
