@@ -1,11 +1,11 @@
 import flattenReference from '../../../utils/flattenReference.js';
 import visit from '../visit.js';
 
-export default function visitComponent ( generator, fragment, node ) {
+export default function visitComponent ( generator, block, node ) {
 	function stringify ( chunk ) {
 		if ( chunk.type === 'Text' ) return chunk.data;
 		if ( chunk.type === 'MustacheTag' ) {
-			const { snippet } = generator.contextualise( fragment, chunk.expression );
+			const { snippet } = generator.contextualise( block, chunk.expression );
 			return '${__escape( ' + snippet + ')}';
 		}
 	}
@@ -34,7 +34,7 @@ export default function visitComponent ( generator, fragment, node ) {
 				if ( chunk.type === 'Text' ) {
 					value = isNaN( chunk.data ) ? JSON.stringify( chunk.data ) : chunk.data;
 				} else {
-					const { snippet } = generator.contextualise( fragment, chunk.expression );
+					const { snippet } = generator.contextualise( block, chunk.expression );
 					value = snippet;
 				}
 			} else {
@@ -45,7 +45,7 @@ export default function visitComponent ( generator, fragment, node ) {
 		})
 		.concat( bindings.map( binding => {
 			const { name, keypath } = flattenReference( binding.value );
-			const value = fragment.contexts.has( name ) ? keypath : `root.${keypath}`;
+			const value = block.contexts.has( name ) ? keypath : `root.${keypath}`;
 			return `${binding.name}: ${value}`;
 		}))
 		.join( ', ' );
@@ -53,7 +53,7 @@ export default function visitComponent ( generator, fragment, node ) {
 	const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
 
 	bindings.forEach( binding => {
-		fragment.addBinding( binding, expression );
+		block.addBinding( binding, expression );
 	});
 
 	let open = `\${${expression}.render({${props}}`;
@@ -67,7 +67,7 @@ export default function visitComponent ( generator, fragment, node ) {
 	generator.elementDepth += 1;
 
 	node.children.forEach( child => {
-		visit( generator, fragment, child );
+		visit( generator, block, child );
 	});
 
 	generator.elementDepth -= 1;

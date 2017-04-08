@@ -1,7 +1,7 @@
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import Generator from '../Generator.js';
-import Fragment from './Fragment.js';
+import Block from './Block.js';
 import visit from './visit.js';
 
 class SsrGenerator extends Generator {
@@ -32,7 +32,7 @@ export default function ssr ( parsed, source, options ) {
 	};
 
 	// create main render() function
-	const mainFragment = new Fragment({
+	const mainBlock = new Block({
 		generator,
 		contexts: new Map(),
 		indexes: new Map(),
@@ -40,7 +40,7 @@ export default function ssr ( parsed, source, options ) {
 	});
 
 	parsed.html.children.forEach( node => {
-		visit( generator, mainFragment, node );
+		visit( generator, mainBlock, node );
 	});
 
 	builders.render.addLine(

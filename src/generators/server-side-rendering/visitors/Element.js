@@ -7,13 +7,13 @@ const meta = {
 	':Window': visitWindow
 };
 
-export default function visitElement ( generator, fragment, node ) {
+export default function visitElement ( generator, block, node ) {
 	if ( node.name in meta ) {
-		return meta[ node.name ]( generator, fragment, node );
+		return meta[ node.name ]( generator, block, node );
 	}
 
 	if ( generator.components.has( node.name ) || node.name === ':Self' ) {
-		visitComponent( generator, fragment, node );
+		visitComponent( generator, block, node );
 		return;
 	}
 
@@ -30,7 +30,7 @@ export default function visitElement ( generator, fragment, node ) {
 					return chunk.data;
 				}
 
-				const { snippet } = generator.contextualise( fragment, chunk.expression );
+				const { snippet } = generator.contextualise( block, chunk.expression );
 				return '${' + snippet + '}';
 			}).join( '' ) + `"`;
 		}
@@ -49,7 +49,7 @@ export default function visitElement ( generator, fragment, node ) {
 	generator.elementDepth += 1;
 
 	node.children.forEach( child => {
-		visit( generator, fragment, child );
+		visit( generator, block, child );
 	});
 
 	generator.elementDepth -= 1;

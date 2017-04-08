@@ -1,7 +1,7 @@
 import deindent from '../../utils/deindent.js';
 import flattenReference from '../../utils/flattenReference.js';
 
-export default class Fragment {
+export default class Block {
 	constructor ( options ) {
 		Object.assign( this, options );
 	}
@@ -25,6 +25,6 @@ export default class Fragment {
 	}
 
 	child ( options ) {
-		return new Fragment( Object.assign( {}, this, options, { parent: this } ) );
+		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
 }

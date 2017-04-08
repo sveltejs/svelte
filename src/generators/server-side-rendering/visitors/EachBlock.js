@@ -1,30 +1,30 @@
 import visit from '../visit.js';
 
-export default function visitEachBlock ( generator, fragment, node ) {
-	const { dependencies, snippet } = generator.contextualise( fragment, node.expression );
+export default function visitEachBlock ( generator, block, node ) {
+	const { dependencies, snippet } = generator.contextualise( block, node.expression );
 
 	const open = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \``;
 	generator.append( open );
 
 	// TODO should this be the generator's job? It's duplicated between
 	// here and the equivalent DOM compiler visitor
-	const contexts = new Map( fragment.contexts );
+	const contexts = new Map( block.contexts );
 	contexts.set( node.context, node.context );
 
-	const indexes = new Map( fragment.indexes );
+	const indexes = new Map( block.indexes );
 	if ( node.index ) indexes.set( node.index, node.context );
 
-	const contextDependencies = new Map( fragment.contextDependencies );
+	const contextDependencies = new Map( block.contextDependencies );
 	contextDependencies.set( node.context, dependencies );
 
-	const childFragment = fragment.child({
+	const childBlock = block.child({
 		contexts,
 		indexes,
 		contextDependencies
 	});
 
 	node.children.forEach( child => {
-		visit( generator, childFragment, child );
+		visit( generator, childBlock, child );
 	});
 
 	const close = `\` ).join( '' )}`;
