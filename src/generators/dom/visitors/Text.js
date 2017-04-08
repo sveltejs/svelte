@@ -1,8 +1,8 @@
-export default function visitText ( generator, fragment, node ) {
-	if ( fragment.namespace && !/\S/.test( node.data ) ) {
+export default function visitText ( generator, fragment, state, node ) {
+	if ( state.namespace && !/\S/.test( node.data ) ) {
 		return;
 	}
 
 	const name = fragment.getUniqueName( `text` );
-	fragment.addElement( name, `${generator.helper( 'createText' )}( ${JSON.stringify( node.data )} )`, false );
+	fragment.addElement( name, `${generator.helper( 'createText' )}( ${JSON.stringify( node.data )} )`, state.target, state.localElementDepth, false );
 }

@@ -9,20 +9,20 @@ const meta = {
 	':Window': visitWindow
 };
 
-export default function visitElement ( generator, fragment, node ) {
+export default function visitElement ( generator, fragment, state, node ) {
 	if ( node.name in meta ) {
 		return meta[ node.name ]( generator, fragment, node );
 	}
 
 	if ( generator.components.has( node.name ) || node.name === ':Self' ) {
-		return visitComponent( generator, fragment, node );
+		return visitComponent( generator, fragment, state, node );
 	}
 
 	const name = fragment.getUniqueName( node.name );
 
 	const local = {
 		name,
-		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : fragment.namespace,
+		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace,
 		isComponent: false,
 
 		allUsedContexts: [],
@@ -32,7 +32,7 @@ export default function visitElement ( generator, fragment, node ) {
 		destroy: new CodeBuilder()
 	};
 
-	const isToplevel = fragment.localElementDepth === 0;
+	const isToplevel = state.localElementDepth === 0;
 
 	addElementAttributes( generator, fragment, node, local );
 
@@ -76,7 +76,7 @@ export default function visitElement ( generator, fragment, node ) {
 		render = `var ${name} = ${generator.helper( 'createElement' )}( '${node.name}' );`;
 	}
 
-	if ( generator.cssId && !generator.elementDepth ) {
+	if ( generator.cssId && !state.elementDepth ) {
 		render += `\n${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );`;
 	}
 
@@ -96,24 +96,18 @@ export default function visitElement ( generator, fragment, node ) {
 	if ( !local.update.isEmpty() ) fragment.builders.update.addBlock( local.update );
 	if ( !local.destroy.isEmpty() ) fragment.builders.destroy.addBlock( local.destroy );
 
-	fragment.createMountStatement( name );
+	fragment.createMountStatement( name, state.target );
 
-	const childFragment = fragment.child({
-		type: 'element',
-		namespace: local.namespace,
+	const childState = Object.assign( {}, state, {
+		elementDepth: state.elementDepth + 1,
+		localElementDepth: state.localElementDepth + 1,
 		target: name,
-		parent: fragment,
-		localElementDepth: fragment.localElementDepth + 1,
-		key: null
+		namespace: local.namespace
 	});
-
-	generator.elementDepth += 1;
 
 	node.children.forEach( child => {
-		visit( generator, childFragment, child );
+		visit( generator, fragment, childState, child );
 	});
-
-	generator.elementDepth -= 1;
 
 	if ( node.initialUpdate ) {
 		fragment.builders.create.addBlock( node.initialUpdate );

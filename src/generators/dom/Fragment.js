@@ -3,16 +3,16 @@ export default class Fragment {
 		Object.assign( this, options );
 	}
 
-	addElement ( name, renderStatement, needsIdentifier = false ) {
-		const isToplevel = this.localElementDepth === 0;
+	addElement ( name, renderStatement, target, localElementDepth, needsIdentifier = false ) {
+		const isToplevel = localElementDepth === 0;
 		if ( needsIdentifier || isToplevel ) {
 			this.builders.create.addLine(
 				`var ${name} = ${renderStatement};`
 			);
 
-			this.createMountStatement( name );
+			this.createMountStatement( name, target );
 		} else {
-			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${this.target} );` );
+			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${target} );` );
 		}
 
 		if ( isToplevel ) {
@@ -24,16 +24,16 @@ export default class Fragment {
 		return new Fragment( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
-	createAnchor ( name ) {
+	createAnchor ( name, target, localElementDepth ) {
 		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
-		this.addElement( name, renderStatement, true );
+		this.addElement( name, renderStatement, target, localElementDepth, true );
 	}
 
-	createMountStatement ( name ) {
-		if ( this.target === 'target' ) {
+	createMountStatement ( name, target ) {
+		if ( target === 'target' ) {
 			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
 		} else {
-			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${this.target} );` );
+			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${target} );` );
 		}
 	}
 }

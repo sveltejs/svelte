@@ -1,7 +1,7 @@
 import deindent from '../../../utils/deindent.js';
 import findBlock from '../utils/findBlock.js';
 
-export default function visitRawMustacheTag ( generator, fragment, node ) {
+export default function visitRawMustacheTag ( generator, fragment, state, node ) {
 	const name = fragment.getUniqueName( 'raw' );
 
 	const { snippet } = generator.contextualise( fragment, node.expression );
@@ -9,12 +9,12 @@ export default function visitRawMustacheTag ( generator, fragment, node ) {
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.
 	const before = `${name}_before`;
-	fragment.addElement( before, `${generator.helper( 'createElement' )}( 'noscript' )`, true );
+	fragment.addElement( before, `${generator.helper( 'createElement' )}( 'noscript' )`, state.target, state.localElementDepth, true );
 
 	const after = `${name}_after`;
-	fragment.addElement( after, `${generator.helper( 'createElement' )}( 'noscript' )`, true );
+	fragment.addElement( after, `${generator.helper( 'createElement' )}( 'noscript' )`, state.target, state.localElementDepth, true );
 
-	const isToplevel = fragment.localElementDepth === 0;
+	const isToplevel = state.localElementDepth === 0;
 
 	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
 	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', last_${name} );`;

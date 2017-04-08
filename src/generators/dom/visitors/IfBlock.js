@@ -2,7 +2,7 @@ import deindent from '../../../utils/deindent.js';
 import getBuilders from '../utils/getBuilders.js';
 import visit from '../visit.js';
 
-function getConditionsAndBlocks ( generator, fragment, node, _name, i = 0 ) {
+function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0 ) {
 	generator.addSourcemapLocations( node.expression );
 	const name = generator.getUniqueName( `${_name}_${i}` );
 
@@ -11,12 +11,12 @@ function getConditionsAndBlocks ( generator, fragment, node, _name, i = 0 ) {
 		block: name
 	}];
 
-	generateBlock( generator, fragment, node, name, 'block' );
+	generateBlock( generator, fragment, state, node, name, 'block' );
 
 	if ( node.else && node.else.children.length === 1 &&
 		node.else.children[0].type === 'IfBlock' ) {
 		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, fragment, node.else.children[0], _name, i + 1 )
+			...getConditionsAndBlocks( generator, fragment, state, node.else.children[0], _name, i + 1 )
 		);
 	} else {
 		const name = generator.getUniqueName( `${_name}_${i + 1}` );
@@ -26,42 +26,44 @@ function getConditionsAndBlocks ( generator, fragment, node, _name, i = 0 ) {
 		});
 
 		if ( node.else ) {
-			generateBlock( generator, fragment, node.else, name, 'block' );
+			generateBlock( generator, fragment, state, node.else, name, 'block' );
 		}
 	}
 	return conditionsAndBlocks;
 }
 
-function generateBlock ( generator, fragment, node, name, type ) {
+function generateBlock ( generator, fragment, state, node, name, type ) {
 	const childFragment = fragment.child({
 		type,
-		isIfBlock: true,
 		name,
+		builders: getBuilders()
+	});
+
+	const childState = Object.assign( {}, state, {
 		target: 'target',
-		builders: getBuilders(),
 		localElementDepth: 0
 	});
 
 	// walk the children here
 	node.children.forEach( node => {
-		visit( generator, childFragment, node );
+		visit( generator, childFragment, childState, node );
 	});
 
 	generator.addRenderer( childFragment );
 }
 
-export default function visitIfBlock ( generator, fragment, node ) {
+export default function visitIfBlock ( generator, fragment, state, node ) {
 	const params = fragment.params.join( ', ' );
 	const name = generator.getUniqueName( `if_block` );
 	const getBlock = fragment.getUniqueName( `get_block` );
 	const currentBlock = fragment.getUniqueName( `current_block` );
 	const _currentBlock = fragment.getUniqueName( `_current_block` );
 
-	const isToplevel = fragment.localElementDepth === 0;
-	const conditionsAndBlocks = getConditionsAndBlocks( generator, fragment, node, generator.getUniqueName( `render_if_block` ) );
+	const isToplevel = state.localElementDepth === 0;
+	const conditionsAndBlocks = getConditionsAndBlocks( generator, fragment, state, node, generator.getUniqueName( `render_if_block` ) );
 
 	const anchor = `${name}_anchor`;
-	fragment.createAnchor( anchor );
+	fragment.createAnchor( anchor, state.target, state.localElementDepth );
 
 	fragment.builders.create.addBlock( deindent`
 		function ${getBlock} ( ${params} ) {

@@ -3,7 +3,7 @@ import deindent from '../../../utils/deindent.js';
 import getBuilders from '../utils/getBuilders.js';
 import visit from '../visit.js';
 
-export default function visitEachBlock ( generator, fragment, node ) {
+export default function visitEachBlock ( generator, fragment, state, node ) {
 	const name = generator.getUniqueName( `each_block` );
 	const renderer = generator.getUniqueName( `render_each_block` );
 	const elseName = generator.getUniqueName( `${name}_else` );
@@ -13,14 +13,14 @@ export default function visitEachBlock ( generator, fragment, node ) {
 
 	const listName = fragment.getUniqueName( `${name}_value` );
 
-	const isToplevel = fragment.localElementDepth === 0;
+	const isToplevel = state.localElementDepth === 0;
 
 	generator.addSourcemapLocations( node.expression );
 
 	const { dependencies, snippet } = generator.contextualise( fragment, node.expression );
 
 	const anchor = fragment.getUniqueName( `${name}_anchor` );
-	fragment.createAnchor( anchor );
+	fragment.createAnchor( anchor, state.target, state.localElementDepth );
 
 	const localVars = {};
 
@@ -191,11 +191,9 @@ export default function visitEachBlock ( generator, fragment, node ) {
 	const childFragment = fragment.child({
 		type: 'block',
 		name: renderer,
-		target: 'target',
 		expression: node.expression,
 		context: node.context,
 		key: node.key,
-		localElementDepth: 0,
 
 		component: getUniqueName( 'component' ),
 
@@ -211,8 +209,13 @@ export default function visitEachBlock ( generator, fragment, node ) {
 		getUniqueName
 	});
 
+	const childState = Object.assign( {}, state, {
+		target: 'target',
+		localElementDepth: 0
+	});
+
 	node.children.forEach( child => {
-		visit( generator, childFragment, child );
+		visit( generator, childFragment, childState, child );
 	});
 
 	generator.addRenderer( childFragment );
@@ -221,14 +224,12 @@ export default function visitEachBlock ( generator, fragment, node ) {
 		const childFragment = fragment.child({
 			type: 'block',
 			name: renderElse,
-			target: 'target',
-			localElementDepth: 0,
 			builders: getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker( fragment.params )
 		});
 
 		node.else.children.forEach( child => {
-			visit( generator, childFragment, child );
+			visit( generator, childFragment, childState, child );
 		});
 
 		generator.addRenderer( childFragment );

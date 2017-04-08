@@ -30,8 +30,6 @@ export default class Generator {
 		// in dev mode
 		this.expectedProperties = new Set();
 
-		this.elementDepth = 0;
-
 		this.code = new MagicString( source );
 		this.css = parsed.css ? processCss( parsed, this.code ) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
