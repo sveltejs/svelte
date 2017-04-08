@@ -1,5 +1,4 @@
 import deindent from '../../utils/deindent.js';
-import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
 import Generator from '../Generator.js';
@@ -122,7 +121,6 @@ export default function dom ( parsed, source, options ) {
 		indexNames: new Map(),
 		listNames: new Map(),
 
-		builders: getBuilders(),
 		getUniqueName
 	});
 
