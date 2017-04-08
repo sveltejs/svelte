@@ -1,7 +1,7 @@
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import deindent from '../../utils/deindent.js';
 
-export default class Fragment {
+export default class Block {
 	constructor ({ generator, name, key, expression, context, contextDependencies, component, contexts, indexes, params, indexNames, listNames, getUniqueName }) {
 		this.generator = generator;
 		this.name = name;
@@ -48,7 +48,7 @@ export default class Fragment {
 	}
 
 	child ( options ) {
-		return new Fragment( Object.assign( {}, this, options, { parent: this } ) );
+		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
 	createAnchor ( name, parentNode ) {
