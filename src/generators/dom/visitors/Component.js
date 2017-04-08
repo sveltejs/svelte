@@ -35,7 +35,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 		update: new CodeBuilder()
 	};
 
-	const isToplevel = state.localElementDepth === 0;
+	const isToplevel = !state.target;
 
 	generator.hasComponents = true;
 
@@ -85,8 +85,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 		});
 
 		const childState = Object.assign( {}, state, {
-			target: 'target',
-			localElementDepth: 0
+			target: null
 		});
 
 		node.children.forEach( child => {

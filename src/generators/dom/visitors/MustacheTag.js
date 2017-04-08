@@ -7,7 +7,7 @@ export default function visitMustacheTag ( generator, fragment, state, node ) {
 	const { snippet } = generator.contextualise( fragment, node.expression );
 
 	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
-	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.target, state.localElementDepth, true );
+	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.target, true );
 
 	// TODO this should be unnecessary once we separate fragments from state
 	const parentFragment = findBlock( fragment );

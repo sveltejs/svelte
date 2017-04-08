@@ -32,7 +32,7 @@ export default function visitElement ( generator, fragment, state, node ) {
 		destroy: new CodeBuilder()
 	};
 
-	const isToplevel = state.localElementDepth === 0;
+	const isToplevel = !state.target;
 
 	addElementAttributes( generator, fragment, node, local );
 
@@ -100,7 +100,6 @@ export default function visitElement ( generator, fragment, state, node ) {
 
 	const childState = Object.assign( {}, state, {
 		elementDepth: state.elementDepth + 1,
-		localElementDepth: state.localElementDepth + 1,
 		target: name,
 		namespace: local.namespace
 	});

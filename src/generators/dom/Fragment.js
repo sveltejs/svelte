@@ -3,8 +3,8 @@ export default class Fragment {
 		Object.assign( this, options );
 	}
 
-	addElement ( name, renderStatement, target, localElementDepth, needsIdentifier = false ) {
-		const isToplevel = localElementDepth === 0;
+	addElement ( name, renderStatement, target, needsIdentifier = false ) {
+		const isToplevel = !target;
 		if ( needsIdentifier || isToplevel ) {
 			this.builders.create.addLine(
 				`var ${name} = ${renderStatement};`
@@ -24,16 +24,16 @@ export default class Fragment {
 		return new Fragment( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
-	createAnchor ( name, target, localElementDepth ) {
+	createAnchor ( name, target ) {
 		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
-		this.addElement( name, renderStatement, target, localElementDepth, true );
+		this.addElement( name, renderStatement, target, true );
 	}
 
 	createMountStatement ( name, target ) {
-		if ( target === 'target' ) {
-			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
-		} else {
+		if ( target ) {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${target} );` );
+		} else {
+			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
 		}
 	}
 }

@@ -9,12 +9,12 @@ export default function visitRawMustacheTag ( generator, fragment, state, node )
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.
 	const before = `${name}_before`;
-	fragment.addElement( before, `${generator.helper( 'createElement' )}( 'noscript' )`, state.target, state.localElementDepth, true );
+	fragment.addElement( before, `${generator.helper( 'createElement' )}( 'noscript' )`, state.target, true );
 
 	const after = `${name}_after`;
-	fragment.addElement( after, `${generator.helper( 'createElement' )}( 'noscript' )`, state.target, state.localElementDepth, true );
+	fragment.addElement( after, `${generator.helper( 'createElement' )}( 'noscript' )`, state.target, true );
 
-	const isToplevel = state.localElementDepth === 0;
+	const isToplevel = !state.target;
 
 	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
 	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', last_${name} );`;
