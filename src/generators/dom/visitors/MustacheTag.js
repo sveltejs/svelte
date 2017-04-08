@@ -1,13 +1,13 @@
 import deindent from '../../../utils/deindent.js';
 import findBlock from '../utils/findBlock.js';
 
-export default function visitMustacheTag ( generator, fragment, node ) {
+export default function visitMustacheTag ( generator, fragment, state, node ) {
 	const name = fragment.getUniqueName( 'text' );
 
 	const { snippet } = generator.contextualise( fragment, node.expression );
 
 	fragment.builders.create.addLine( `var last_${name} = ${snippet};` );
-	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
+	fragment.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.target, state.localElementDepth, true );
 
 	// TODO this should be unnecessary once we separate fragments from state
 	const parentFragment = findBlock( fragment );

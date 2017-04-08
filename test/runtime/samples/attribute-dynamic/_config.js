@@ -1,5 +1,6 @@
 export default {
 	html: `<div style="color: red;">red</div>`,
+
 	test ( assert, component, target ) {
 		const div = target.querySelector( 'div' );
 

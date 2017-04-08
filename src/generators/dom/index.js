@@ -112,9 +112,6 @@ export default function dom ( parsed, source, options ) {
 		type: 'block',
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
-		namespace,
-		target: 'target',
-		localElementDepth: 0,
 		key: null,
 
 		component,
@@ -130,8 +127,14 @@ export default function dom ( parsed, source, options ) {
 		getUniqueName
 	});
 
+	const state = {
+		namespace,
+		target: 'target',
+		localElementDepth: 0
+	};
+
 	parsed.html.children.forEach( node => {
-		visit( generator, mainFragment, node );
+		visit( generator, mainFragment, state, node );
 	});
 
 	generator.addRenderer( mainFragment );

@@ -20,13 +20,13 @@ function stringifyProps ( props ) {
 	return `{ ${joined} }`;
 }
 
-export default function visitComponent ( generator, fragment, node ) {
+export default function visitComponent ( generator, fragment, state, node ) {
 	const hasChildren = node.children.length > 0;
 	const name = fragment.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
 
 	const local = {
 		name,
-		namespace: fragment.namespace,
+		namespace: state.namespace,
 		isComponent: true,
 
 		allUsedContexts: [],
@@ -35,7 +35,7 @@ export default function visitComponent ( generator, fragment, node ) {
 		update: new CodeBuilder()
 	};
 
-	const isToplevel = fragment.localElementDepth === 0;
+	const isToplevel = state.localElementDepth === 0;
 
 	generator.hasComponents = true;
 
@@ -70,7 +70,7 @@ export default function visitComponent ( generator, fragment, node ) {
 	}
 
 	const componentInitProperties = [
-		`target: ${!isToplevel ? fragment.target: 'null'}`,
+		`target: ${!isToplevel ? state.target: 'null'}`,
 		`_root: ${fragment.component}._root || ${fragment.component}`
 	];
 
@@ -81,13 +81,16 @@ export default function visitComponent ( generator, fragment, node ) {
 		const childFragment = fragment.child({
 			type: 'component',
 			name: generator.getUniqueName( `render_${name}_yield_fragment` ), // TODO should getUniqueName happen inside Fragment? probably
-			target: 'target',
-			localElementDepth: 0,
 			builders: getBuilders()
 		});
 
+		const childState = Object.assign( {}, state, {
+			target: 'target',
+			localElementDepth: 0
+		});
+
 		node.children.forEach( child => {
-			visit( generator, childFragment, child );
+			visit( generator, childFragment, childState, child );
 		});
 
 		const yieldFragment = fragment.getUniqueName( `${name}_yield_fragment` );
