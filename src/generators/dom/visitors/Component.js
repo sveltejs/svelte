@@ -1,6 +1,5 @@
 import deindent from '../../../utils/deindent.js';
 import CodeBuilder from '../../../utils/CodeBuilder.js';
-import getBuilders from '../utils/getBuilders.js';
 import visit from '../visit.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
@@ -79,8 +78,7 @@ export default function visitComponent ( generator, fragment, state, node ) {
 		const params = fragment.params.join( ', ' );
 
 		const childFragment = fragment.child({
-			name: generator.getUniqueName( `render_${name}_yield_fragment` ), // TODO should getUniqueName happen inside Fragment? probably
-			builders: getBuilders()
+			name: generator.getUniqueName( `render_${name}_yield_fragment` ) // TODO should getUniqueName happen inside Fragment? probably
 		});
 
 		const childState = Object.assign( {}, state, {

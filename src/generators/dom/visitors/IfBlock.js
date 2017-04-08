@@ -1,5 +1,4 @@
 import deindent from '../../../utils/deindent.js';
-import getBuilders from '../utils/getBuilders.js';
 import visit from '../visit.js';
 
 function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0 ) {
@@ -34,8 +33,7 @@ function getConditionsAndBlocks ( generator, fragment, state, node, _name, i = 0
 
 function generateBlock ( generator, fragment, state, node, name ) {
 	const childFragment = fragment.child({
-		name,
-		builders: getBuilders()
+		name
 	});
 
 	const childState = Object.assign( {}, state, {

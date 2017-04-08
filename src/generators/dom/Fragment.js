@@ -1,5 +1,7 @@
+import CodeBuilder from '../../utils/CodeBuilder.js';
+
 export default class Fragment {
-	constructor ({ generator, name, key, expression, context, contextDependencies, component, contexts, indexes, params, indexNames, listNames, builders, getUniqueName }) {
+	constructor ({ generator, name, key, expression, context, contextDependencies, component, contexts, indexes, params, indexNames, listNames, getUniqueName }) {
 		this.generator = generator;
 		this.name = name;
 		this.key = key;
@@ -16,7 +18,14 @@ export default class Fragment {
 		this.indexNames = indexNames;
 		this.listNames = listNames;
 
-		this.builders = builders;
+		this.builders = {
+			create: new CodeBuilder(),
+			mount: new CodeBuilder(),
+			update: new CodeBuilder(),
+			detach: new CodeBuilder(),
+			detachRaw: new CodeBuilder(),
+			destroy: new CodeBuilder()
+		};
 		this.getUniqueName = getUniqueName;
 	}
 

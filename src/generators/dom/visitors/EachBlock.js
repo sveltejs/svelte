@@ -1,6 +1,5 @@
 import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
-import getBuilders from '../utils/getBuilders.js';
 import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, fragment, state, node ) {
@@ -204,7 +203,6 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 		listNames,
 		params: blockParams,
 
-		builders: getBuilders(),
 		getUniqueName
 	});
 
@@ -221,7 +219,6 @@ export default function visitEachBlock ( generator, fragment, state, node ) {
 	if ( node.else ) {
 		const childFragment = fragment.child({
 			name: renderElse,
-			builders: getBuilders(),
 			getUniqueName: generator.getUniqueNameMaker( fragment.params )
 		});
 
