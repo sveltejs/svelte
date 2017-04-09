@@ -1,8 +1,8 @@
 import attributeLookup from './lookup.js';
 import addElementBinding from './addElementBinding';
-import deindent from '../../../../utils/deindent.js';
-import flattenReference from '../../../../utils/flattenReference.js';
-import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
+import deindent from '../../../../../utils/deindent.js';
+import flattenReference from '../../../../../utils/flattenReference.js';
+import getStaticAttributeValue from './getStaticAttributeValue.js';
 
 export default function addElementAttributes ( generator, block, state, node, local ) {
 	node.attributes.forEach( attribute => {
@@ -31,11 +31,11 @@ export default function addElementAttributes ( generator, block, state, node, lo
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
 				if ( propertyName ) {
-					local.create.addLine(
+					block.builders.create.addLine(
 						`${state.parentNode}.${propertyName} = true;`
 					);
 				} else {
-					local.create.addLine(
+					block.builders.create.addLine(
 						`${generator.helper( method )}( ${state.parentNode}, '${name}', true );`
 					);
 				}
@@ -48,11 +48,11 @@ export default function addElementAttributes ( generator, block, state, node, lo
 
 			else if ( attribute.value.length === 0 ) {
 				if ( propertyName ) {
-					local.create.addLine(
+					block.builders.create.addLine(
 						`${state.parentNode}.${propertyName} = '';`
 					);
 				} else {
-					local.create.addLine(
+					block.builders.create.addLine(
 						`${generator.helper( method )}( ${state.parentNode}, '${name}', '' );`
 					);
 				}
@@ -74,7 +74,7 @@ export default function addElementAttributes ( generator, block, state, node, lo
 						state.namespace = value.data;
 						addAttribute = true;
 					} else if ( propertyName ) {
-						local.create.addLine(
+						block.builders.create.addLine(
 							`${state.parentNode}.${propertyName} = ${result};`
 						);
 					} else {
@@ -82,7 +82,7 @@ export default function addElementAttributes ( generator, block, state, node, lo
 					}
 
 					if ( addAttribute ) {
-						local.create.addLine(
+						block.builders.create.addLine(
 							`${generator.helper( method )}( ${state.parentNode}, '${name}', ${result} );`
 						);
 					}
@@ -95,7 +95,7 @@ export default function addElementAttributes ( generator, block, state, node, lo
 					const { snippet } = generator.contextualise( block, value.expression );
 
 					const last = `last_${state.parentNode}_${name.replace( /-/g, '_')}`;
-					local.create.addLine( `var ${last} = ${snippet};` );
+					block.builders.create.addLine( `var ${last} = ${snippet};` );
 
 					let updater;
 					if ( propertyName ) {
@@ -104,9 +104,9 @@ export default function addElementAttributes ( generator, block, state, node, lo
 						updater = `${generator.helper( method )}( ${state.parentNode}, '${name}', ${last} );`;
 					}
 
-					local.create.addLine( updater );
+					block.builders.create.addLine( updater );
 
-					local.update.addBlock( deindent`
+					block.builders.update.addBlock( deindent`
 						if ( ( ${block.tmp()} = ${snippet} ) !== ${last} ) {
 							${last} = ${block.tmp()};
 							${updater}
@@ -136,15 +136,15 @@ export default function addElementAttributes ( generator, block, state, node, lo
 					updater = `${generator.helper( method )}( ${state.parentNode}, '${name}', ${value} );`;
 				}
 
-				local.create.addLine( updater );
-				local.update.addLine( updater );
+				block.builders.create.addLine( updater );
+				block.builders.update.addLine( updater );
 			}
 
 			if ( isIndirectlyBoundValue ) {
 				const updateValue = `${state.parentNode}.value = ${state.parentNode}.__value;`;
 
-				local.create.addLine( updateValue );
-				if ( dynamic ) local.update.addLine( updateValue );
+				block.builders.create.addLine( updateValue );
+				if ( dynamic ) block.builders.update.addLine( updateValue );
 			}
 		}
 
@@ -182,7 +182,7 @@ export default function addElementAttributes ( generator, block, state, node, lo
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( generator.events.has( name ) ) {
-				local.create.addBlock( deindent`
+				block.builders.create.addBlock( deindent`
 					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${block.component}, ${state.parentNode}, function ( event ) {
 						${handlerBody}
 					}.bind( ${state.parentNode} ) );
@@ -192,7 +192,7 @@ export default function addElementAttributes ( generator, block, state, node, lo
 					${handlerName}.teardown();
 				` );
 			} else {
-				local.create.addBlock( deindent`
+				block.builders.create.addBlock( deindent`
 					function ${handlerName} ( event ) {
 						${handlerBody}
 					}
@@ -213,7 +213,7 @@ export default function addElementAttributes ( generator, block, state, node, lo
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
-			local.create.addLine(
+			block.builders.create.addLine(
 				`${block.component}.refs.${name} = ${state.parentNode};`
 			);
 

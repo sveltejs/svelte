@@ -1,7 +1,7 @@
-import deindent from '../../../../utils/deindent.js';
-import flattenReference from '../../../../utils/flattenReference.js';
-import getSetter from './binding/getSetter.js';
-import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
+import deindent from '../../../../../utils/deindent.js';
+import flattenReference from '../../../../../utils/flattenReference.js';
+import getSetter from '../../shared/binding/getSetter.js';
+import getStaticAttributeValue from './getStaticAttributeValue.js';
 
 export default function addElementBinding ( generator, node, block, state, attribute, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
@@ -66,11 +66,11 @@ export default function addElementBinding ( generator, node, block, state, attri
 			`~${snippet}.indexOf( ${state.parentNode}.__value )` :
 			`${state.parentNode}.__value === ${snippet}`;
 
-		local.create.addLine(
+		block.builders.create.addLine(
 			`${block.component}._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
 		);
 
-		local.destroy.addBlock(
+		block.builders.destroy.addBlock(
 			`${block.component}._bindingGroups[${bindingGroup}].splice( ${block.component}._bindingGroups[${bindingGroup}].indexOf( ${state.parentNode} ), 1 );`
 		);
 
@@ -84,7 +84,7 @@ export default function addElementBinding ( generator, node, block, state, attri
 
 	const updating = block.getUniqueName( `${state.parentNode}_updating` );
 
-	local.create.addBlock( deindent`
+	block.builders.create.addBlock( deindent`
 		var ${updating} = false;
 
 		function ${handler} () {
@@ -98,7 +98,7 @@ export default function addElementBinding ( generator, node, block, state, attri
 
 	node.initialUpdate = updateElement;
 
-	local.update.addLine( deindent`
+	block.builders.update.addLine( deindent`
 		if ( !${updating} ) {
 			${updateElement}
 		}

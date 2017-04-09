@@ -1,6 +1,6 @@
-import deindent from '../../../utils/deindent.js';
-import CodeBuilder from '../../../utils/CodeBuilder.js';
-import visit from '../visit.js';
+import deindent from '../../../../utils/deindent.js';
+import CodeBuilder from '../../../../utils/CodeBuilder.js';
+import visit from '../../visit.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 function capDown ( name ) {

@@ -1,5 +1,5 @@
-import flattenReference from '../../../../utils/flattenReference.js';
-import deindent from '../../../../utils/deindent.js';
+import flattenReference from '../../../../../utils/flattenReference.js';
+import deindent from '../../../../../utils/deindent.js';
 
 const associatedEvents = {
 	innerWidth: 'resize',

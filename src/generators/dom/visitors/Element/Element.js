@@ -1,8 +1,7 @@
-import CodeBuilder from '../../../utils/CodeBuilder.js';
-import deindent from '../../../utils/deindent.js';
-import visit from '../visit.js';
+import deindent from '../../../../utils/deindent.js';
+import visit from '../../visit.js';
 import addElementAttributes from './attributes/addElementAttributes.js';
-import visitComponent from './Component.js';
+import visitComponent from '../Component/Component.js';
 import visitWindow from './meta/Window.js';
 
 const meta = {
@@ -26,15 +25,20 @@ export default function visitElement ( generator, block, state, node ) {
 		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace
 	});
 
+	block.builders.create.addLine( `var ${name} = ${getRenderStatement( generator, childState.namespace, node.name )};` );
+
+	if ( !state.parentNode ) {
+		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
+	}
+
+	// add CSS encapsulation attribute
+	if ( generator.cssId && state.isTopLevel ) {
+		block.builders.create.addLine( `${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );` );
+	}
+
 	const local = {
-		allUsedContexts: [],
-
-		create: new CodeBuilder(),
-		update: new CodeBuilder(),
-		destroy: new CodeBuilder()
+		allUsedContexts: []
 	};
-
-	const isToplevel = !state.parentNode;
 
 	addElementAttributes( generator, block, childState, node, local );
 
@@ -57,46 +61,21 @@ export default function visitElement ( generator, block, state, node ) {
 			return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
 		}).join( '\n' );
 
-		local.create.addBlock( deindent`
+		block.builders.create.addBlock( deindent`
 			${name}.__svelte = {
 				${initialProps}
 			};
 		` );
 
-		local.update.addBlock( updates );
-	}
-
-	let render;
-
-	if ( childState.namespace ) {
-		if ( childState.namespace === 'http://www.w3.org/2000/svg' ) {
-			render = `var ${name} = ${generator.helper( 'createSvgElement' )}( '${node.name}' )`;
-		} else {
-			render = `var ${name} = document.createElementNS( '${childState.namespace}', '${node.name}' );`;
-		}
-	} else {
-		render = `var ${name} = ${generator.helper( 'createElement' )}( '${node.name}' );`;
-	}
-
-	if ( generator.cssId && state.isTopLevel ) {
-		render += `\n${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );`;
-	}
-
-	local.create.addLineAtStart( render );
-	if ( isToplevel ) {
-		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
+		block.builders.update.addBlock( updates );
 	}
 
 	// special case – bound <option> without a value attribute
 	if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
 		const statement = `${name}.__value = ${name}.textContent;`;
-		local.update.addLine( statement );
+		block.builders.update.addLine( statement );
 		node.initialUpdate = statement;
 	}
-
-	block.builders.create.addBlock( local.create );
-	if ( !local.update.isEmpty() ) block.builders.update.addBlock( local.update );
-	if ( !local.destroy.isEmpty() ) block.builders.destroy.addBlock( local.destroy );
 
 	block.createMountStatement( name, state.parentNode );
 
@@ -107,4 +86,16 @@ export default function visitElement ( generator, block, state, node ) {
 	if ( node.initialUpdate ) {
 		block.builders.create.addBlock( node.initialUpdate );
 	}
+}
+
+function getRenderStatement ( generator, namespace, name ) {
+	if ( namespace ) {
+		if ( namespace === 'http://www.w3.org/2000/svg' ) {
+			return `${generator.helper( 'createSvgElement' )}( '${name}' )`;
+		}
+
+		return `document.createElementNS( '${namespace}', '${name}' )`;
+	}
+
+	return `${generator.helper( 'createElement' )}( '${name}' )`;
 }
