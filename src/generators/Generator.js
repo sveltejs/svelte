@@ -60,14 +60,14 @@ export default class Generator {
 		return alias;
 	}
 
-	contextualise ( fragment, expression, isEventHandler ) {
+	contextualise ( block, expression, isEventHandler ) {
 		this.addSourcemapLocations( expression );
 
 		const usedContexts = [];
 		const dependencies = [];
 
 		const { code, helpers } = this;
-		const { contextDependencies, contexts, indexes } = fragment;
+		const { contextDependencies, contexts, indexes } = block;
 
 		let scope = annotateWithScopes( expression );
 
