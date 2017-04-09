@@ -20,11 +20,13 @@ export default function visitElement ( generator, block, state, node ) {
 
 	const name = block.getUniqueName( node.name );
 
-	const local = {
-		name,
-		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace,
-		isComponent: false,
+	const childState = Object.assign( {}, state, {
+		isTopLevel: false,
+		parentNode: name,
+		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace
+	});
 
+	const local = {
 		allUsedContexts: [],
 
 		create: new CodeBuilder(),
@@ -34,7 +36,7 @@ export default function visitElement ( generator, block, state, node ) {
 
 	const isToplevel = !state.parentNode;
 
-	addElementAttributes( generator, block, node, local );
+	addElementAttributes( generator, block, childState, node, local );
 
 	if ( local.allUsedContexts.length ) {
 		const initialProps = local.allUsedContexts.map( contextName => {
@@ -66,11 +68,11 @@ export default function visitElement ( generator, block, state, node ) {
 
 	let render;
 
-	if ( local.namespace ) {
-		if ( local.namespace === 'http://www.w3.org/2000/svg' ) {
+	if ( childState.namespace ) {
+		if ( childState.namespace === 'http://www.w3.org/2000/svg' ) {
 			render = `var ${name} = ${generator.helper( 'createSvgElement' )}( '${node.name}' )`;
 		} else {
-			render = `var ${name} = document.createElementNS( '${local.namespace}', '${node.name}' );`;
+			render = `var ${name} = document.createElementNS( '${childState.namespace}', '${node.name}' );`;
 		}
 	} else {
 		render = `var ${name} = ${generator.helper( 'createElement' )}( '${node.name}' );`;
@@ -97,12 +99,6 @@ export default function visitElement ( generator, block, state, node ) {
 	if ( !local.destroy.isEmpty() ) block.builders.destroy.addBlock( local.destroy );
 
 	block.createMountStatement( name, state.parentNode );
-
-	const childState = Object.assign( {}, state, {
-		isTopLevel: false,
-		parentNode: name,
-		namespace: local.namespace
-	});
 
 	node.children.forEach( child => {
 		visit( generator, block, childState, child );

@@ -4,12 +4,12 @@ import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
 
-export default function addElementAttributes ( generator, block, node, local ) {
+export default function addElementAttributes ( generator, block, state, node, local ) {
 	node.attributes.forEach( attribute => {
 		const name = attribute.name;
 
 		if ( attribute.type === 'Attribute' ) {
-			let metadata = local.namespace ? null : attributeLookup[ name ];
+			let metadata = state.namespace ? null : attributeLookup[ name ];
 			if ( metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf( node.name ) ) metadata = null;
 
 			let dynamic = false;
@@ -32,28 +32,28 @@ export default function addElementAttributes ( generator, block, node, local ) {
 				// attributes without values, e.g. <textarea readonly>
 				if ( propertyName ) {
 					local.create.addLine(
-						`${local.name}.${propertyName} = true;`
+						`${state.parentNode}.${propertyName} = true;`
 					);
 				} else {
 					local.create.addLine(
-						`${generator.helper( method )}( ${local.name}, '${name}', true );`
+						`${generator.helper( method )}( ${state.parentNode}, '${name}', true );`
 					);
 				}
 
 				// special case – autofocus. has to be handled in a bit of a weird way
 				if ( name === 'autofocus' ) {
-					block.autofocus = local.name;
+					block.autofocus = state.parentNode;
 				}
 			}
 
 			else if ( attribute.value.length === 0 ) {
 				if ( propertyName ) {
 					local.create.addLine(
-						`${local.name}.${propertyName} = '';`
+						`${state.parentNode}.${propertyName} = '';`
 					);
 				} else {
 					local.create.addLine(
-						`${generator.helper( method )}( ${local.name}, '${name}', '' );`
+						`${generator.helper( method )}( ${state.parentNode}, '${name}', '' );`
 					);
 				}
 			}
@@ -71,11 +71,11 @@ export default function addElementAttributes ( generator, block, node, local ) {
 					if ( name === 'xmlns' ) {
 						// special case
 						// TODO this attribute must be static – enforce at compile time
-						local.namespace = value.data;
+						state.namespace = value.data;
 						addAttribute = true;
 					} else if ( propertyName ) {
 						local.create.addLine(
-							`${local.name}.${propertyName} = ${result};`
+							`${state.parentNode}.${propertyName} = ${result};`
 						);
 					} else {
 						addAttribute = true;
@@ -83,7 +83,7 @@ export default function addElementAttributes ( generator, block, node, local ) {
 
 					if ( addAttribute ) {
 						local.create.addLine(
-							`${generator.helper( method )}( ${local.name}, '${name}', ${result} );`
+							`${generator.helper( method )}( ${state.parentNode}, '${name}', ${result} );`
 						);
 					}
 				}
@@ -94,14 +94,14 @@ export default function addElementAttributes ( generator, block, node, local ) {
 					// dynamic – but potentially non-string – attributes
 					const { snippet } = generator.contextualise( block, value.expression );
 
-					const last = `last_${local.name}_${name.replace( /-/g, '_')}`;
+					const last = `last_${state.parentNode}_${name.replace( /-/g, '_')}`;
 					local.create.addLine( `var ${last} = ${snippet};` );
 
 					let updater;
 					if ( propertyName ) {
-						updater = `${local.name}.${propertyName} = ${last};`;
+						updater = `${state.parentNode}.${propertyName} = ${last};`;
 					} else {
-						updater = `${generator.helper( method )}( ${local.name}, '${name}', ${last} );`;
+						updater = `${generator.helper( method )}( ${state.parentNode}, '${name}', ${last} );`;
 					}
 
 					local.create.addLine( updater );
@@ -131,9 +131,9 @@ export default function addElementAttributes ( generator, block, node, local ) {
 
 				let updater;
 				if (propertyName) {
-					updater = `${local.name}.${propertyName} = ${value};`;
+					updater = `${state.parentNode}.${propertyName} = ${value};`;
 				} else {
-					updater = `${generator.helper( method )}( ${local.name}, '${name}', ${value} );`;
+					updater = `${generator.helper( method )}( ${state.parentNode}, '${name}', ${value} );`;
 				}
 
 				local.create.addLine( updater );
@@ -141,7 +141,7 @@ export default function addElementAttributes ( generator, block, node, local ) {
 			}
 
 			if ( isIndirectlyBoundValue ) {
-				const updateValue = `${local.name}.value = ${local.name}.__value;`;
+				const updateValue = `${state.parentNode}.value = ${state.parentNode}.__value;`;
 
 				local.create.addLine( updateValue );
 				if ( dynamic ) local.update.addLine( updateValue );
@@ -183,9 +183,9 @@ export default function addElementAttributes ( generator, block, node, local ) {
 
 			if ( generator.events.has( name ) ) {
 				local.create.addBlock( deindent`
-					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${block.component}, ${local.name}, function ( event ) {
+					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${block.component}, ${state.parentNode}, function ( event ) {
 						${handlerBody}
-					}.bind( ${local.name} ) );
+					}.bind( ${state.parentNode} ) );
 				` );
 
 				block.builders.destroy.addLine( deindent`
@@ -197,28 +197,28 @@ export default function addElementAttributes ( generator, block, node, local ) {
 						${handlerBody}
 					}
 
-					${generator.helper( 'addEventListener' )}( ${local.name}, '${name}', ${handlerName} );
+					${generator.helper( 'addEventListener' )}( ${state.parentNode}, '${name}', ${handlerName} );
 				` );
 
 				block.builders.destroy.addLine( deindent`
-					${generator.helper( 'removeEventListener' )}( ${local.name}, '${name}', ${handlerName} );
+					${generator.helper( 'removeEventListener' )}( ${state.parentNode}, '${name}', ${handlerName} );
 				` );
 			}
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			addElementBinding( generator, node, attribute, block, local );
+			addElementBinding( generator, node, block, state, attribute, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
 			local.create.addLine(
-				`${block.component}.refs.${name} = ${local.name};`
+				`${block.component}.refs.${name} = ${state.parentNode};`
 			);
 
 			block.builders.destroy.addLine( deindent`
-				if ( ${block.component}.refs.${name} === ${local.name} ) ${block.component}.refs.${name} = null;
+				if ( ${block.component}.refs.${name} === ${state.parentNode} ) ${block.component}.refs.${name} = null;
 			` );
 		}
 
