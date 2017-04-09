@@ -39,7 +39,7 @@ export default class Block {
 				`var ${name} = ${renderStatement};`
 			);
 
-			this.createMountStatement( name, parentNode );
+			this.mount( name, parentNode );
 		} else {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${parentNode} );` );
 		}
@@ -58,7 +58,7 @@ export default class Block {
 		this.addElement( name, renderStatement, parentNode, true );
 	}
 
-	createMountStatement ( name, parentNode ) {
+	mount ( name, parentNode ) {
 		if ( parentNode ) {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
 		} else {

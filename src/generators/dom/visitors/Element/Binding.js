@@ -1,16 +1,16 @@
-import deindent from '../../../../../utils/deindent.js';
-import flattenReference from '../../../../../utils/flattenReference.js';
-import getSetter from '../../shared/binding/getSetter.js';
+import deindent from '../../../../utils/deindent.js';
+import flattenReference from '../../../../utils/flattenReference.js';
+import getSetter from '../shared/binding/getSetter.js';
 import getStaticAttributeValue from './getStaticAttributeValue.js';
 
-export default function addElementBinding ( generator, node, block, state, attribute, local ) {
+export default function visitBinding ( generator, block, state, node, attribute ) {
 	const { name, keypath } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = generator.contextualise( block, attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
 
 	contexts.forEach( context => {
-		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
+		if ( !~state.allUsedContexts.indexOf( context ) ) state.allUsedContexts.push( context );
 	});
 
 	const handler = block.getUniqueName( `${state.parentNode}_change_handler` );
@@ -18,7 +18,7 @@ export default function addElementBinding ( generator, node, block, state, attri
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
-	const value = getBindingValue( generator, block, state, local, node, attribute, isMultipleSelect, bindingGroup, type );
+	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
 	const eventName = getBindingEventName( node );
 
 	let setter = getSetter({ block, name, keypath, context: '__svelte', attribute, dependencies, value });
@@ -124,7 +124,7 @@ function getBindingEventName ( node ) {
 	return 'change';
 }
 
-function getBindingValue ( generator, block, state, local, node, attribute, isMultipleSelect, bindingGroup, type ) {
+function getBindingValue ( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type ) {
 	// <select multiple bind:value='selected>
 	if ( isMultipleSelect ) {
 		return `[].map.call( ${state.parentNode}.selectedOptions, function ( option ) { return option.__value; })`;
