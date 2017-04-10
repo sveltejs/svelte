@@ -3,9 +3,8 @@ import addElementBinding from './addElementBinding';
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 import getStaticAttributeValue from './binding/getStaticAttributeValue.js';
-import findBlock from '../../utils/findBlock.js';
 
-export default function addElementAttributes ( generator, node, local ) {
+export default function addElementAttributes ( generator, block, node, local ) {
 	node.attributes.forEach( attribute => {
 		const name = attribute.name;
 
@@ -32,28 +31,28 @@ export default function addElementAttributes ( generator, node, local ) {
 			if ( attribute.value === true ) {
 				// attributes without values, e.g. <textarea readonly>
 				if ( propertyName ) {
-					local.init.addLine(
+					local.create.addLine(
 						`${local.name}.${propertyName} = true;`
 					);
 				} else {
-					local.init.addLine(
+					local.create.addLine(
 						`${generator.helper( method )}( ${local.name}, '${name}', true );`
 					);
 				}
 
 				// special case – autofocus. has to be handled in a bit of a weird way
 				if ( name === 'autofocus' ) {
-					generator.current.autofocus = local.name;
+					block.autofocus = local.name;
 				}
 			}
 
 			else if ( attribute.value.length === 0 ) {
 				if ( propertyName ) {
-					local.init.addLine(
+					local.create.addLine(
 						`${local.name}.${propertyName} = '';`
 					);
 				} else {
-					local.init.addLine(
+					local.create.addLine(
 						`${generator.helper( method )}( ${local.name}, '${name}', '' );`
 					);
 				}
@@ -75,7 +74,7 @@ export default function addElementAttributes ( generator, node, local ) {
 						local.namespace = value.data;
 						addAttribute = true;
 					} else if ( propertyName ) {
-						local.init.addLine(
+						local.create.addLine(
 							`${local.name}.${propertyName} = ${result};`
 						);
 					} else {
@@ -83,7 +82,7 @@ export default function addElementAttributes ( generator, node, local ) {
 					}
 
 					if ( addAttribute ) {
-						local.init.addLine(
+						local.create.addLine(
 							`${generator.helper( method )}( ${local.name}, '${name}', ${result} );`
 						);
 					}
@@ -93,10 +92,10 @@ export default function addElementAttributes ( generator, node, local ) {
 					dynamic = true;
 
 					// dynamic – but potentially non-string – attributes
-					const { snippet } = generator.contextualise( value.expression );
+					const { snippet } = generator.contextualise( block, value.expression );
 
 					const last = `last_${local.name}_${name.replace( /-/g, '_')}`;
-					local.init.addLine( `var ${last} = ${snippet};` );
+					local.create.addLine( `var ${last} = ${snippet};` );
 
 					let updater;
 					if ( propertyName ) {
@@ -105,13 +104,11 @@ export default function addElementAttributes ( generator, node, local ) {
 						updater = `${generator.helper( method )}( ${local.name}, '${name}', ${last} );`;
 					}
 
-					local.init.addLine( updater );
-					const fragment = findBlock( generator.current );
-					if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
+					local.create.addLine( updater );
 
 					local.update.addBlock( deindent`
-						if ( ( ${fragment.tmp} = ${snippet} ) !== ${last} ) {
-							${last} = ${fragment.tmp};
+						if ( ( ${block.tmp()} = ${snippet} ) !== ${last} ) {
+							${last} = ${block.tmp()};
 							${updater}
 						}
 					` );
@@ -126,7 +123,7 @@ export default function addElementAttributes ( generator, node, local ) {
 						if ( chunk.type === 'Text' ) {
 							return JSON.stringify( chunk.data );
 						} else {
-							const { snippet } = generator.contextualise( chunk.expression );
+							const { snippet } = generator.contextualise( block, chunk.expression );
 							return `( ${snippet} )`;
 						}
 					}).join( ' + ' )
@@ -139,14 +136,14 @@ export default function addElementAttributes ( generator, node, local ) {
 					updater = `${generator.helper( method )}( ${local.name}, '${name}', ${value} );`;
 				}
 
-				local.init.addLine( updater );
+				local.create.addLine( updater );
 				local.update.addLine( updater );
 			}
 
 			if ( isIndirectlyBoundValue ) {
 				const updateValue = `${local.name}.value = ${local.name}.__value;`;
 
-				local.init.addLine( updateValue );
+				local.create.addLine( updateValue );
 				if ( dynamic ) local.update.addLine( updateValue );
 			}
 		}
@@ -158,12 +155,12 @@ export default function addElementAttributes ( generator, node, local ) {
 			const flattened = flattenReference( attribute.expression.callee );
 			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
 				// allow event.stopPropagation(), this.select() etc
-				generator.code.prependRight( attribute.expression.start, `${generator.current.component}.` );
+				generator.code.prependRight( attribute.expression.start, `${block.component}.` );
 			}
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
-				const { contexts } = generator.contextualise( arg, true );
+				const { contexts } = generator.contextualise( block, arg, true );
 
 				contexts.forEach( context => {
 					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
@@ -175,27 +172,27 @@ export default function addElementAttributes ( generator, node, local ) {
 			const declarations = usedContexts.map( name => {
 				if ( name === 'root' ) return 'var root = this.__svelte.root;';
 
-				const listName = generator.current.listNames.get( name );
-				const indexName = generator.current.indexNames.get( name );
+				const listName = block.listNames.get( name );
+				const indexName = block.indexNames.get( name );
 
 				return `var ${listName} = this.__svelte.${listName}, ${indexName} = this.__svelte.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
-			const handlerName = generator.current.getUniqueName( `${name}_handler` );
+			const handlerName = block.getUniqueName( `${name}_handler` );
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			if ( generator.events.has( name ) ) {
-				local.init.addBlock( deindent`
-					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${generator.current.component}, ${local.name}, function ( event ) {
+				local.create.addBlock( deindent`
+					var ${handlerName} = ${generator.alias( 'template' )}.events.${name}.call( ${block.component}, ${local.name}, function ( event ) {
 						${handlerBody}
 					}.bind( ${local.name} ) );
 				` );
 
-				generator.current.builders.teardown.addLine( deindent`
+				block.builders.destroy.addLine( deindent`
 					${handlerName}.teardown();
 				` );
 			} else {
-				local.init.addBlock( deindent`
+				local.create.addBlock( deindent`
 					function ${handlerName} ( event ) {
 						${handlerBody}
 					}
@@ -203,25 +200,25 @@ export default function addElementAttributes ( generator, node, local ) {
 					${generator.helper( 'addEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 
-				generator.current.builders.teardown.addLine( deindent`
+				block.builders.destroy.addLine( deindent`
 					${generator.helper( 'removeEventListener' )}( ${local.name}, '${name}', ${handlerName} );
 				` );
 			}
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			addElementBinding( generator, node, attribute, generator.current, local );
+			addElementBinding( generator, node, attribute, block, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
-			local.init.addLine(
-				`${generator.current.component}.refs.${name} = ${local.name};`
+			local.create.addLine(
+				`${block.component}.refs.${name} = ${local.name};`
 			);
 
-			generator.current.builders.teardown.addLine( deindent`
-				if ( ${generator.current.component}.refs.${name} === ${local.name} ) ${generator.current.component}.refs.${name} = null;
+			block.builders.destroy.addLine( deindent`
+				if ( ${block.component}.refs.${name} === ${local.name} ) ${block.component}.refs.${name} = null;
 			` );
 		}
 

@@ -1,5 +1,6 @@
 import deindent from '../../../utils/deindent.js';
 import CodeBuilder from '../../../utils/CodeBuilder.js';
+import visit from '../visit.js';
 import addComponentAttributes from './attributes/addComponentAttributes.js';
 
 function capDown ( name ) {
@@ -18,157 +19,152 @@ function stringifyProps ( props ) {
 	return `{ ${joined} }`;
 }
 
-export default {
-	enter ( generator, node ) {
-		const hasChildren = node.children.length > 0;
-		const { current } = generator;
-		const name = current.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
+export default function visitComponent ( generator, block, state, node ) {
+	const hasChildren = node.children.length > 0;
+	const name = block.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
 
-		const local = {
-			name,
-			namespace: current.namespace,
-			isComponent: true,
+	const local = {
+		name,
+		namespace: state.namespace,
+		isComponent: true,
 
-			allUsedContexts: [],
+		allUsedContexts: [],
 
-			init: new CodeBuilder(),
-			update: new CodeBuilder()
-		};
+		create: new CodeBuilder(),
+		update: new CodeBuilder()
+	};
 
-		const isToplevel = current.localElementDepth === 0;
+	const isToplevel = !state.parentNode;
 
-		generator.hasComponents = true;
+	generator.hasComponents = true;
 
-		addComponentAttributes( generator, node, local );
+	addComponentAttributes( generator, block, node, local );
 
-		if ( local.allUsedContexts.length ) {
-			const initialProps = local.allUsedContexts.map( contextName => {
-				if ( contextName === 'root' ) return `root: root`;
+	if ( local.allUsedContexts.length ) {
+		const initialProps = local.allUsedContexts.map( contextName => {
+			if ( contextName === 'root' ) return `root: root`;
 
-				const listName = current.listNames.get( contextName );
-				const indexName = current.indexNames.get( contextName );
+			const listName = block.listNames.get( contextName );
+			const indexName = block.indexNames.get( contextName );
 
-				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
-			}).join( ',\n' );
+			return `${listName}: ${listName},\n${indexName}: ${indexName}`;
+		}).join( ',\n' );
 
-			const updates = local.allUsedContexts.map( contextName => {
-				if ( contextName === 'root' ) return `${name}._context.root = root;`;
+		const updates = local.allUsedContexts.map( contextName => {
+			if ( contextName === 'root' ) return `${name}._context.root = root;`;
 
-				const listName = current.listNames.get( contextName );
-				const indexName = current.indexNames.get( contextName );
+			const listName = block.listNames.get( contextName );
+			const indexName = block.indexNames.get( contextName );
 
-				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
-			}).join( '\n' );
+			return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
+		}).join( '\n' );
 
-			local.init.addBlock( deindent`
-				${name}._context = {
-					${initialProps}
-				};
-			` );
-
-			local.update.addBlock( updates );
-		}
-
-		const componentInitProperties = [
-			`target: ${!isToplevel ? current.target: 'null'}`,
-			`_root: ${current.component}._root || ${current.component}`
-		];
-
-		// Component has children, put them in a separate {{yield}} block
-		if ( hasChildren ) {
-			const yieldName = generator.getUniqueName( `render_${name}_yield_fragment` );
-			const params = current.params.join( ', ' );
-
-			generator.generateBlock( node, yieldName, 'block' );
-
-			const yieldFragment = current.getUniqueName( `${name}_yield_fragment` );
-
-			current.builders.init.addLine(
-				`var ${yieldFragment} = ${yieldName}( ${params}, ${current.component} );`
-			);
-
-			current.builders.update.addLine(
-				`${yieldFragment}.update( changed, ${params} );`
-			);
-
-			componentInitProperties.push( `_yield: ${yieldFragment}`);
-		}
-
-		const statements = [];
-
-		if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
-			const initialProps = local.staticAttributes
-				.concat( local.dynamicAttributes )
-				.map( attribute => `${attribute.name}: ${attribute.value}` );
-
-			const initialPropString = stringifyProps( initialProps );
-
-			if ( local.bindings.length ) {
-				const initialData = current.getUniqueName( `${name}_initial_data` );
-
-				statements.push( `var ${name}_initial_data = ${initialPropString};` );
-
-				local.bindings.forEach( binding => {
-					statements.push( `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};` );
-				});
-
-				componentInitProperties.push( `data: ${initialData}` );
-			} else if ( initialProps.length ) {
-				componentInitProperties.push( `data: ${initialPropString}` );
-			}
-		}
-
-		const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
-
-		local.init.addBlockAtStart( deindent`
-			${statements.join( '\n' )}
-			var ${name} = new ${expression}({
-				${componentInitProperties.join(',\n')}
-			});
+		local.create.addBlock( deindent`
+			${name}._context = {
+				${initialProps}
+			};
 		` );
 
-		if ( isToplevel ) {
-			current.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
-		}
+		local.update.addBlock( updates );
+	}
 
-		if ( local.dynamicAttributes.length ) {
-			const updates = local.dynamicAttributes.map( attribute => {
-				if ( attribute.dependencies.length ) {
-					return deindent`
-						if ( ${attribute.dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) ${name}_changes.${attribute.name} = ${attribute.value};
-					`;
-				}
+	const componentInitProperties = [
+		`target: ${!isToplevel ? state.parentNode: 'null'}`,
+		`_root: ${block.component}._root || ${block.component}`
+	];
 
-				// TODO this is an odd situation to encounter – I *think* it should only happen with
-				// each block indices, in which case it may be possible to optimise this
-				return `${name}_changes.${attribute.name} = ${attribute.value};`;
+	// Component has children, put them in a separate {{yield}} block
+	if ( hasChildren ) {
+		const params = block.params.join( ', ' );
+
+		const childBlock = block.child({
+			name: generator.getUniqueName( `create_${name}_yield_fragment` ) // TODO should getUniqueName happen inside Fragment? probably
+		});
+
+		const childState = Object.assign( {}, state, {
+			parentNode: null
+		});
+
+		node.children.forEach( child => {
+			visit( generator, childBlock, childState, child );
+		});
+
+		const yieldFragment = block.getUniqueName( `${name}_yield_fragment` );
+
+		block.builders.create.addLine(
+			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
+		);
+
+		block.builders.update.addLine(
+			`${yieldFragment}.update( changed, ${params} );`
+		);
+
+		componentInitProperties.push( `_yield: ${yieldFragment}`);
+
+		generator.addBlock( childBlock );
+	}
+
+	const statements = [];
+
+	if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
+		const initialProps = local.staticAttributes
+			.concat( local.dynamicAttributes )
+			.map( attribute => `${attribute.name}: ${attribute.value}` );
+
+		const initialPropString = stringifyProps( initialProps );
+
+		if ( local.bindings.length ) {
+			const initialData = block.getUniqueName( `${name}_initial_data` );
+
+			statements.push( `var ${name}_initial_data = ${initialPropString};` );
+
+			local.bindings.forEach( binding => {
+				statements.push( `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};` );
 			});
 
-			local.update.addBlock( deindent`
-				var ${name}_changes = {};
-
-				${updates.join( '\n' )}
-
-				if ( Object.keys( ${name}_changes ).length ) ${name}.set( ${name}_changes );
-			` );
+			componentInitProperties.push( `data: ${initialData}` );
+		} else if ( initialProps.length ) {
+			componentInitProperties.push( `data: ${initialPropString}` );
 		}
-
-		current.builders.teardown.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
-
-		current.builders.init.addBlock( local.init );
-		if ( !local.update.isEmpty() ) current.builders.update.addBlock( local.update );
-
-		generator.push({
-			type: 'component',
-			namespace: local.namespace,
-			target: name,
-			parent: current,
-			localElementDepth: current.localElementDepth + 1,
-			key: null
-		});
-	},
-
-	leave ( generator ) {
-		generator.pop();
 	}
-};
+
+	const expression = node.name === ':Self' ? generator.name : generator.importedComponents.get( node.name ) || `${generator.alias( 'template' )}.components.${node.name}`;
+
+	local.create.addBlockAtStart( deindent`
+		${statements.join( '\n' )}
+		var ${name} = new ${expression}({
+			${componentInitProperties.join(',\n')}
+		});
+	` );
+
+	if ( isToplevel ) {
+		block.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
+	}
+
+	if ( local.dynamicAttributes.length ) {
+		const updates = local.dynamicAttributes.map( attribute => {
+			if ( attribute.dependencies.length ) {
+				return deindent`
+					if ( ${attribute.dependencies.map( dependency => `'${dependency}' in changed` ).join( '||' )} ) ${name}_changes.${attribute.name} = ${attribute.value};
+				`;
+			}
+
+			// TODO this is an odd situation to encounter – I *think* it should only happen with
+			// each block indices, in which case it may be possible to optimise this
+			return `${name}_changes.${attribute.name} = ${attribute.value};`;
+		});
+
+		local.update.addBlock( deindent`
+			var ${name}_changes = {};
+
+			${updates.join( '\n' )}
+
+			if ( Object.keys( ${name}_changes ).length ) ${name}.set( ${name}_changes );
+		` );
+	}
+
+	block.builders.destroy.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
+
+	block.builders.create.addBlock( local.create );
+	if ( !local.update.isEmpty() ) block.builders.update.addBlock( local.update );
+}

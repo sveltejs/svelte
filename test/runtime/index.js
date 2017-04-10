@@ -32,13 +32,13 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 
 const Object_assign = Object.assign;
 
-describe( 'generate', () => {
+describe( 'runtime', () => {
 	before( setupHtmlEqual );
 
 	function runTest ( dir, shared ) {
 		if ( dir[0] === '.' ) return;
 
-		const config = loadConfig( `./generator/samples/${dir}/_config.js` );
+		const config = loadConfig( `./runtime/samples/${dir}/_config.js` );
 
 		if ( config.solo && process.env.CI ) {
 			throw new Error( 'Forgot to remove `solo: true` from test' );
@@ -53,7 +53,7 @@ describe( 'generate', () => {
 			compileOptions.dev = config.dev;
 
 			try {
-				const source = fs.readFileSync( `test/generator/samples/${dir}/main.html`, 'utf-8' );
+				const source = fs.readFileSync( `test/runtime/samples/${dir}/main.html`, 'utf-8' );
 				compiled = svelte.compile( source, compileOptions );
 			} catch ( err ) {
 				if ( config.compileError ) {
@@ -69,7 +69,8 @@ describe( 'generate', () => {
 			// check that no ES2015+ syntax slipped in
 			if ( !config.allowES2015 ) {
 				try {
-					const startIndex = code.indexOf( 'function render_main_fragment' ); // may change!
+					const startIndex = code.indexOf( 'function create_main_fragment' ); // may change!
+					if ( startIndex === -1 ) throw new Error( 'missing create_main_fragment' );
 					const es5 = spaces( startIndex ) + code.slice( startIndex ).replace( /export default .+/, '' );
 					acorn.parse( es5, { ecmaVersion: 5 });
 				} catch ( err ) {
@@ -117,6 +118,8 @@ describe( 'generate', () => {
 						data: config.data
 					});
 
+					Object.assign = Object_assign;
+
 					console.warn = warn;
 
 					if ( config.error ) {
@@ -160,13 +163,13 @@ describe( 'generate', () => {
 	}
 
 	describe( 'inline helpers', () => {
-		fs.readdirSync( 'test/generator/samples' ).forEach( dir => {
+		fs.readdirSync( 'test/runtime/samples' ).forEach( dir => {
 			runTest( dir, null );
 		});
 	});
 
 	describe( 'shared helpers', () => {
-		fs.readdirSync( 'test/generator/samples' ).forEach( dir => {
+		fs.readdirSync( 'test/runtime/samples' ).forEach( dir => {
 			runTest( dir, path.resolve( 'shared.js' ) );
 		});
 	});

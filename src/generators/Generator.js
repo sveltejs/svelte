@@ -12,11 +12,10 @@ import processCss from './shared/processCss.js';
 import annotateWithScopes from './annotateWithScopes.js';
 
 export default class Generator {
-	constructor ( parsed, source, name, visitors, options ) {
+	constructor ( parsed, source, name, options ) {
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
-		this.visitors = visitors;
 		this.options = options;
 
 		this.imports = [];
@@ -31,8 +30,6 @@ export default class Generator {
 		// in dev mode
 		this.expectedProperties = new Set();
 
-		this.elementDepth = 0;
-
 		this.code = new MagicString( source );
 		this.css = parsed.css ? processCss( parsed, this.code ) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
@@ -43,8 +40,6 @@ export default class Generator {
 		this.importedNames = new Set();
 		this._aliases = new Map();
 		this._usedNames = new Set();
-
-		this._callbacks = new Map();
 	}
 
 	addSourcemapLocations ( node ) {
@@ -65,14 +60,14 @@ export default class Generator {
 		return alias;
 	}
 
-	contextualise ( expression, isEventHandler ) {
+	contextualise ( fragment, expression, isEventHandler ) {
 		this.addSourcemapLocations( expression );
 
 		const usedContexts = [];
 		const dependencies = [];
 
 		const { code, helpers } = this;
-		const { contextDependencies, contexts, indexes } = this.current;
+		const { contextDependencies, contexts, indexes } = fragment;
 
 		let scope = annotateWithScopes( expression );
 
@@ -152,15 +147,6 @@ export default class Generator {
 			snippet: `[✂${expression.start}-${expression.end}✂]`,
 			string: this.code.slice( expression.start, expression.end )
 		};
-	}
-
-	fire ( eventName, data ) {
-		const handlers = this._callbacks.has( eventName ) && this._callbacks.get( eventName ).slice();
-		if ( !handlers ) return;
-
-		for ( let i = 0; i < handlers.length; i += 1 ) {
-			handlers[i].call( this, data );
-		}
 	}
 
 	generate ( result, options, { name, format } ) {
@@ -429,51 +415,5 @@ export default class Generator {
 			namespace,
 			templateProperties
 		};
-	}
-
-	on ( eventName, handler ) {
-		if ( this._callbacks.has( eventName ) ) {
-			this._callbacks.get( eventName ).push( handler );
-		} else {
-			this._callbacks.set( eventName, [ handler ] );
-		}
-	}
-
-	pop () {
-		const tail = this.current;
-		this.current = tail.parent;
-
-		return tail;
-	}
-
-	push ( fragment ) {
-		const newFragment = Object.assign( {}, this.current, fragment, {
-			parent: this.current
-		});
-
-		this.current = newFragment;
-	}
-
-	visit ( node ) {
-		const visitor = this.visitors[ node.type ];
-		if ( !visitor ) throw new Error( `Not implemented: ${node.type}` );
-
-		if ( visitor.enter ) visitor.enter( this, node );
-
-		if ( visitor.type === 'Element' ) {
-			this.elementDepth += 1;
-		}
-
-		if ( node.children ) {
-			node.children.forEach( child => {
-				this.visit( child );
-			});
-		}
-
-		if ( visitor.type === 'Element' ) {
-			this.elementDepth -= 1;
-		}
-
-		if ( visitor.leave ) visitor.leave( this, node );
 	}
 }

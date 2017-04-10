@@ -1,32 +1,14 @@
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
-import flattenReference from '../../utils/flattenReference.js';
-import visitors from './visitors/index.js';
 import Generator from '../Generator.js';
+import Block from './Block.js';
+import visit from './visit.js';
 
 class SsrGenerator extends Generator {
-	constructor ( parsed, source, name, visitors, options ) {
-		super( parsed, source, name, visitors, options );
+	constructor ( parsed, source, name, options ) {
+		super( parsed, source, name, options );
 		this.bindings = [];
 		this.renderCode = '';
-	}
-
-	addBinding ( binding, name ) {
-		const conditions = [ `!( '${binding.name}' in root )`].concat( // TODO handle contextual bindings...
-			this.current.conditions.map( c => `(${c})` )
-		);
-
-		const { keypath } = flattenReference( binding.value );
-
-		this.bindings.push( deindent`
-			if ( ${conditions.join( '&&' )} ) {
-				tmp = ${name}.data();
-				if ( '${keypath}' in tmp ) {
-					root.${binding.name} = tmp.${keypath};
-					settled = false;
-				}
-			}
-		` );
 	}
 
 	append ( code ) {
@@ -38,7 +20,7 @@ export default function ssr ( parsed, source, options ) {
 	const format = options.format || 'cjs';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new SsrGenerator( parsed, source, name, visitors, options );
+	const generator = new SsrGenerator( parsed, source, name, options );
 
 	const { computations, hasJs, templateProperties } = generator.parseJs( true );
 
@@ -50,13 +32,16 @@ export default function ssr ( parsed, source, options ) {
 	};
 
 	// create main render() function
-	generator.push({
+	const mainBlock = new Block({
+		generator,
 		contexts: new Map(),
 		indexes: new Map(),
 		conditions: []
 	});
 
-	parsed.html.children.forEach( node => generator.visit( node ) );
+	parsed.html.children.forEach( node => {
+		visit( generator, mainBlock, node );
+	});
 
 	builders.render.addLine(
 		templateProperties.data ? `root = Object.assign( ${generator.alias( 'template' )}.data(), root || {} );` : `root = root || {};`

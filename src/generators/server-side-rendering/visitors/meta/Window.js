@@ -1,9 +1,3 @@
-export default {
-	enter () {
-		// noop
-	},
-
-	leave () {
-		// noop
-	}
-};
+export default function visitWindow () {
+	// noop
+}

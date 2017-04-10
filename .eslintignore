@@ -1,3 +1,5 @@
 src/shared
 shared.js
 test/test.js
+**/_actual.js
+**/expected.js

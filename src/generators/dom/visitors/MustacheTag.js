@@ -1,22 +1,16 @@
 import deindent from '../../../utils/deindent.js';
-import findBlock from '../utils/findBlock.js';
 
-export default {
-	enter ( generator, node ) {
-		const name = generator.current.getUniqueName( 'text' );
+export default function visitMustacheTag ( generator, block, state, node ) {
+	const name = block.getUniqueName( 'text' );
 
-		const { snippet } = generator.contextualise( node.expression );
+	const { snippet } = generator.contextualise( block, node.expression );
 
-		generator.current.builders.init.addLine( `var last_${name} = ${snippet};` );
-		generator.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, true );
+	block.builders.create.addLine( `var last_${name} = ${snippet};` );
+	block.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.parentNode, true );
 
-		const fragment = findBlock( generator.current );
-		if ( !fragment.tmp ) fragment.tmp = fragment.getUniqueName( 'tmp' );
-
-		generator.current.builders.update.addBlock( deindent`
-			if ( ( ${fragment.tmp} = ${snippet} ) !== last_${name} ) {
-				${name}.data = last_${name} = ${fragment.tmp};
-			}
-		` );
-	}
-};
+	block.builders.update.addBlock( deindent`
+		if ( ( ${block.tmp()} = ${snippet} ) !== last_${name} ) {
+			${name}.data = last_${name} = ${block.tmp()};
+		}
+	` );
+}

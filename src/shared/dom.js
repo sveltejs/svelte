@@ -16,9 +16,9 @@ export function detachBetween ( before, after ) {
 	}
 }
 
-export function teardownEach ( iterations, detach, start ) {
+export function destroyEach ( iterations, detach, start ) {
 	for ( var i = ( start || 0 ); i < iterations.length; i += 1 ) {
-		iterations[i].teardown( detach );
+		iterations[i].destroy( detach );
 	}
 }
 
