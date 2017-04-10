@@ -42,18 +42,21 @@ export default function visitWindow ( generator, block, node ) {
 		}
 
 		if ( attribute.type === 'Binding' ) {
-			const associatedEvent = associatedEvents[ attribute.name ];
-
-			if ( !associatedEvent ) {
-				throw new Error( `Cannot bind to ${attribute.name} on <:Window>` );
-			}
-
 			if ( attribute.value.type !== 'Identifier' ) {
 				const { parts, keypath } = flattenReference( attribute.value );
 				throw new Error( `Bindings on <:Window/> must be to top-level properties, e.g. '${parts.pop()}' rather than '${keypath}'` );
 			}
 
 			bindings[ attribute.name ] = attribute.value.name;
+
+			// bind:online is a special case, we need to listen for two separate events
+			if ( attribute.name === 'online' ) return;
+
+			const associatedEvent = associatedEvents[ attribute.name ];
+
+			if ( !associatedEvent ) {
+				throw new Error( `Cannot bind to ${attribute.name} on <:Window>` );
+			}
 
 			if ( !events[ associatedEvent ] ) events[ associatedEvent ] = [];
 			events[ associatedEvent ].push( `${attribute.value.name}: this.${attribute.name}` );
@@ -88,7 +91,7 @@ export default function visitWindow ( generator, block, node ) {
 		}
 
 		block.builders.create.addBlock( deindent`
-			var ${handlerName} = function ( event ) {
+			function ${handlerName} ( event ) {
 				${handlerBody}
 			};
 			window.addEventListener( '${event}', ${handlerName} );
@@ -122,6 +125,28 @@ export default function visitWindow ( generator, block, node ) {
 				if ( ${lock} ) return;
 				window.scrollTo( ${isX ? 'x, window.scrollY' : 'window.scrollX, y' } );
 			});
+		` );
+	}
+
+	// another special case. (I'm starting to think these are all special cases.)
+	if ( bindings.online ) {
+		const handlerName = block.getUniqueName( `onlinestatuschanged` );
+		block.builders.create.addBlock( deindent`
+			function ${handlerName} ( event ) {
+				component.set({ ${bindings.online}: navigator.onLine });
+			};
+			window.addEventListener( 'online', ${handlerName} );
+			window.addEventListener( 'offline', ${handlerName} );
+		` );
+
+		// add initial value
+		generator.builders.metaBindings.addLine(
+			`this._state.${bindings.online} = navigator.onLine;`
+		);
+
+		block.builders.destroy.addBlock( deindent`
+			window.removeEventListener( 'online', ${handlerName} );
+			window.removeEventListener( 'offline', ${handlerName} );
 		` );
 	}
 }
