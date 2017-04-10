@@ -1,32 +1,32 @@
-export default {
-	enter ( generator, node ) {
-		const { dependencies, snippet } = generator.contextualise( node.expression );
+import visit from '../visit.js';
 
-		const open = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \``;
-		generator.append( open );
+export default function visitEachBlock ( generator, block, node ) {
+	const { dependencies, snippet } = generator.contextualise( block, node.expression );
 
-		// TODO should this be the generator's job? It's duplicated between
-		// here and the equivalent DOM compiler visitor
-		const contexts = new Map( generator.current.contexts );
-		contexts.set( node.context, node.context );
+	const open = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \``;
+	generator.append( open );
 
-		const indexes = new Map( generator.current.indexes );
-		if ( node.index ) indexes.set( node.index, node.context );
+	// TODO should this be the generator's job? It's duplicated between
+	// here and the equivalent DOM compiler visitor
+	const contexts = new Map( block.contexts );
+	contexts.set( node.context, node.context );
 
-		const contextDependencies = new Map( generator.current.contextDependencies );
-		contextDependencies.set( node.context, dependencies );
+	const indexes = new Map( block.indexes );
+	if ( node.index ) indexes.set( node.index, node.context );
 
-		generator.push({
-			contexts,
-			indexes,
-			contextDependencies
-		});
-	},
+	const contextDependencies = new Map( block.contextDependencies );
+	contextDependencies.set( node.context, dependencies );
 
-	leave ( generator ) {
-		const close = `\` ).join( '' )}`;
-		generator.append( close );
+	const childBlock = block.child({
+		contexts,
+		indexes,
+		contextDependencies
+	});
 
-		generator.pop();
-	}
-};
+	node.children.forEach( child => {
+		visit( generator, childBlock, child );
+	});
+
+	const close = `\` ).join( '' )}`;
+	generator.append( close );
+}

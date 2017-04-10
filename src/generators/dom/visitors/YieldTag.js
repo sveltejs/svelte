@@ -1,14 +1,12 @@
-export default {
-	enter ( generator ) {
-		const anchor = `yield_anchor`;
-		generator.createAnchor( anchor );
+export default function visitYieldTag ( generator, block, state ) {
+	const anchor = `yield_anchor`;
+	block.createAnchor( anchor, state.parentNode );
 
-		generator.current.builders.mount.addLine(
-			`${generator.current.component}._yield && ${generator.current.component}._yield.mount( ${generator.current.target}, ${anchor} );`
-		);
+	block.builders.mount.addLine(
+		`${block.component}._yield && ${block.component}._yield.mount( ${state.parentNode || 'target'}, ${anchor} );`
+	);
 
-		generator.current.builders.teardown.addLine(
-			`${generator.current.component}._yield && ${generator.current.component}._yield.teardown( detach );`
-		);
-	}
-};
+	block.builders.destroy.addLine(
+		`${block.component}._yield && ${block.component}._yield.destroy( detach );`
+	);
+}

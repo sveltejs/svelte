@@ -1,7 +1,7 @@
 import addComponentBinding from './addComponentBinding.js';
 import deindent from '../../../../utils/deindent.js';
 
-export default function addComponentAttributes ( generator, node, local ) {
+export default function addComponentAttributes ( generator, block, node, local ) {
 	local.staticAttributes = [];
 	local.dynamicAttributes = [];
 	local.bindings = [];
@@ -37,7 +37,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 
 				else {
 					// simple dynamic attributes
-					const { dependencies, string } = generator.contextualise( value.expression );
+					const { dependencies, string } = generator.contextualise( block, value.expression );
 
 					// TODO only update attributes that have changed
 					local.dynamicAttributes.push({
@@ -57,7 +57,7 @@ export default function addComponentAttributes ( generator, node, local ) {
 						if ( chunk.type === 'Text' ) {
 							return JSON.stringify( chunk.data );
 						} else {
-							const { dependencies, string } = generator.contextualise( chunk.expression );
+							const { dependencies, string } = generator.contextualise( block, chunk.expression );
 							dependencies.forEach( dependency => {
 								if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
 							});
@@ -78,11 +78,11 @@ export default function addComponentAttributes ( generator, node, local ) {
 		else if ( attribute.type === 'EventHandler' ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
-			generator.code.prependRight( attribute.expression.start, `${generator.current.component}.` );
+			generator.code.prependRight( attribute.expression.start, `${block.component}.` );
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
-				const { contexts } = generator.contextualise( arg, true );
+				const { contexts } = generator.contextualise( block, arg, true );
 
 				contexts.forEach( context => {
 					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
@@ -94,15 +94,15 @@ export default function addComponentAttributes ( generator, node, local ) {
 			const declarations = usedContexts.map( name => {
 				if ( name === 'root' ) return 'var root = this._context.root;';
 
-				const listName = generator.current.listNames.get( name );
-				const indexName = generator.current.indexNames.get( name );
+				const listName = block.listNames.get( name );
+				const indexName = block.indexNames.get( name );
 
 				return `var ${listName} = this._context.${listName}, ${indexName} = this._context.${indexName}, ${name} = ${listName}[${indexName}]`;
 			});
 
 			const handlerBody = ( declarations.length ? declarations.join( '\n' ) + '\n\n' : '' ) + `[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
-			local.init.addBlock( deindent`
+			local.create.addBlock( deindent`
 				${local.name}.on( '${attribute.name}', function ( event ) {
 					${handlerBody}
 				});
@@ -110,18 +110,18 @@ export default function addComponentAttributes ( generator, node, local ) {
 		}
 
 		else if ( attribute.type === 'Binding' ) {
-			addComponentBinding( generator, node, attribute, generator.current, local );
+			addComponentBinding( generator, node, attribute, block, local );
 		}
 
 		else if ( attribute.type === 'Ref' ) {
 			generator.usesRefs = true;
 
-			local.init.addLine(
-				`${generator.current.component}.refs.${attribute.name} = ${local.name};`
+			local.create.addLine(
+				`${block.component}.refs.${attribute.name} = ${local.name};`
 			);
 
-			generator.current.builders.teardown.addLine( deindent`
-				if ( ${generator.current.component}.refs.${attribute.name} === ${local.name} ) ${generator.current.component}.refs.${attribute.name} = null;
+			block.builders.destroy.addLine( deindent`
+				if ( ${block.component}.refs.${attribute.name} === ${local.name} ) ${block.component}.refs.${attribute.name} = null;
 			` );
 		}
 

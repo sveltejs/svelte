@@ -1,14 +1,14 @@
 import deindent from '../../utils/deindent.js';
-import getBuilders from './utils/getBuilders.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
-import visitors from './visitors/index.js';
+import visit from './visit.js';
 import Generator from '../Generator.js';
+import Block from './Block.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
-	constructor ( parsed, source, name, visitors, options ) {
-		super( parsed, source, name, visitors, options );
-		this.renderers = [];
+	constructor ( parsed, source, name, options ) {
+		super( parsed, source, name, options );
+		this.blocks = [];
 		this.uses = new Set();
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
@@ -17,121 +17,8 @@ class DomGenerator extends Generator {
 		};
 	}
 
-	addElement ( name, renderStatement, needsIdentifier = false ) {
-		const isToplevel = this.current.localElementDepth === 0;
-		if ( needsIdentifier || isToplevel ) {
-			this.current.builders.init.addLine(
-				`var ${name} = ${renderStatement};`
-			);
-
-			this.createMountStatement( name );
-		} else {
-			this.current.builders.init.addLine( `${this.helper( 'appendNode' )}( ${renderStatement}, ${this.current.target} );` );
-		}
-
-		if ( isToplevel ) {
-			this.current.builders.detach.addLine( `${this.helper( 'detachNode' )}( ${name} );` );
-		}
-	}
-
-	addRenderer ( fragment ) {
-		if ( fragment.autofocus ) {
-			fragment.builders.init.addLine( `${fragment.autofocus}.focus();` );
-		}
-
-		// minor hack – we need to ensure that any {{{triples}}} are detached
-		// first, so we append normal detach statements to detachRaw
-		fragment.builders.detachRaw.addBlock( fragment.builders.detach );
-
-		if ( !fragment.builders.detachRaw.isEmpty() ) {
-			fragment.builders.teardown.addBlock( deindent`
-				if ( detach ) {
-					${fragment.builders.detachRaw}
-				}
-			` );
-		}
-
-		const properties = new CodeBuilder();
-
-		let localKey;
-		if ( fragment.key ) {
-			localKey = fragment.getUniqueName( 'key' );
-			properties.addBlock( `key: ${localKey},` );
-		}
-
-		if ( fragment.builders.mount.isEmpty() ) {
-			properties.addBlock( `mount: ${this.helper( 'noop' )},` );
-		} else {
-			properties.addBlock( deindent`
-				mount: function ( target, anchor ) {
-					${fragment.builders.mount}
-				},
-			` );
-		}
-
-		if ( fragment.builders.update.isEmpty() ) {
-			properties.addBlock( `update: ${this.helper( 'noop' )},` );
-		} else {
-			properties.addBlock( deindent`
-				update: function ( changed, ${fragment.params.join( ', ' )} ) {
-					${fragment.tmp ? `var ${fragment.tmp};` : ''}
-
-					${fragment.builders.update}
-				},
-			` );
-		}
-
-		if ( fragment.builders.teardown.isEmpty() ) {
-			properties.addBlock( `teardown: ${this.helper( 'noop' )},` );
-		} else {
-			properties.addBlock( deindent`
-				teardown: function ( detach ) {
-					${fragment.builders.teardown}
-				}
-			` );
-		}
-
-		this.renderers.push( deindent`
-			function ${fragment.name} ( ${fragment.params.join( ', ' )}, ${fragment.component}${fragment.key ? `, ${localKey}` : ''} ) {
-				${fragment.builders.init}
-
-				return {
-					${properties}
-				};
-			}
-		` );
-	}
-
-	createAnchor ( name ) {
-		const renderStatement = `${this.helper( 'createComment' )}()`;
-		this.addElement( name, renderStatement, true );
-	}
-
-	createMountStatement ( name ) {
-		if ( this.current.target === 'target' ) {
-			this.current.builders.mount.addLine( `${this.helper( 'insertNode' )}( ${name}, target, anchor );` );
-		} else {
-			this.current.builders.init.addLine( `${this.helper( 'appendNode' )}( ${name}, ${this.current.target} );` );
-		}
-	}
-
-	generateBlock ( node, name, type ) {
-		this.push({
-			type,
-			name,
-			target: 'target',
-			localElementDepth: 0,
-			builders: getBuilders(),
-			getUniqueName: this.getUniqueNameMaker( this.current.params )
-		});
-
-		// walk the children here
-		node.children.forEach( node => this.visit( node ) );
-		this.addRenderer( this.current );
-		this.pop();
-
-		// unset the children, to avoid them being visited again
-		node.children = [];
+	addBlock ( block ) {
+		this.blocks.push( block );
 	}
 
 	helper ( name ) {
@@ -149,19 +36,16 @@ export default function dom ( parsed, source, options ) {
 	const format = options.format || 'es';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new DomGenerator( parsed, source, name, visitors, options );
+	const generator = new DomGenerator( parsed, source, name, options );
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
 	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
 	const component = getUniqueName( 'component' );
 
-	generator.push({
-		type: 'block',
-		name: generator.alias( 'render_main_fragment' ),
-		namespace,
-		target: 'target',
-		localElementDepth: 0,
+	const mainBlock = new Block({
+		generator,
+		name: generator.alias( 'create_main_fragment' ),
 		key: null,
 
 		component,
@@ -173,13 +57,20 @@ export default function dom ( parsed, source, options ) {
 		indexNames: new Map(),
 		listNames: new Map(),
 
-		builders: getBuilders(),
-		getUniqueName,
+		getUniqueName
 	});
 
-	parsed.html.children.forEach( node => generator.visit( node ) );
+	const state = {
+		namespace,
+		parentNode: null,
+		isTopLevel: true
+	};
 
-	generator.addRenderer( generator.pop() );
+	parsed.html.children.forEach( node => {
+		visit( generator, mainBlock, state, node );
+	});
+
+	generator.addBlock( mainBlock );
 
 	const builders = {
 		main: new CodeBuilder(),
@@ -243,8 +134,8 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	let i = generator.renderers.length;
-	while ( i-- ) builders.main.addBlock( generator.renderers[i] );
+	let i = generator.blocks.length;
+	while ( i-- ) builders.main.addBlock( generator.blocks[i].render() );
 
 	builders.init.addLine( `this._torndown = false;` );
 
@@ -259,7 +150,7 @@ export default function dom ( parsed, source, options ) {
 	if ( generator.hasComplexBindings ) {
 		builders.init.addBlock( deindent`
 			this._bindings = [];
-			this._fragment = ${generator.alias( 'render_main_fragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
@@ -267,7 +158,7 @@ export default function dom ( parsed, source, options ) {
 		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
-			this._fragment = ${generator.alias( 'render_main_fragment' )}( this._state, this );
+			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
 			if ( options.target ) this._fragment.mount( options.target, null );
 		` );
 	}
@@ -367,7 +258,7 @@ export default function dom ( parsed, source, options ) {
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
 			this.fire( 'destroy' );${templateProperties.ondestroy ? `\n${generator.alias( 'template' )}.ondestroy.call( this );` : ``}
 
-			this._fragment.teardown( detach !== false );
+			this._fragment.destroy( detach !== false );
 			this._fragment = null;
 
 			this._state = {};

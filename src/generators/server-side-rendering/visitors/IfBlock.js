@@ -1,19 +1,25 @@
-export default {
-	enter ( generator, node ) {
-		const { snippet } = generator.contextualise( node.expression );
+import visit from '../visit.js';
 
-		generator.append( '${ ' + snippet + ' ? `' );
+export default function visitIfBlock ( generator, block, node ) {
+	const { snippet } = generator.contextualise( block, node.expression );
 
-		generator.push({
-			conditions: generator.current.conditions.concat( snippet )
+	generator.append( '${ ' + snippet + ' ? `' );
+
+	const childBlock = block.child({
+		conditions: block.conditions.concat( snippet )
+	});
+
+	node.children.forEach( child => {
+		visit( generator, childBlock, child );
+	});
+
+	generator.append( '` : `' );
+
+	if ( node.else ) {
+		node.else.children.forEach( child => {
+			visit( generator, childBlock, child );
 		});
-	},
-
-	leave ( generator, node ) {
-		generator.append( '` : `' );
-		if ( node.else ) node.else.children.forEach( child => generator.visit( child ) );
-		generator.append( '` }' );
-
-		generator.pop();
 	}
-};
+
+	generator.append( '` }' );
+}

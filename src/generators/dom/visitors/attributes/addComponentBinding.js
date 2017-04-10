@@ -2,9 +2,9 @@ import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 import getSetter from './binding/getSetter.js';
 
-export default function createBinding ( generator, node, attribute, current, local ) {
+export default function addComponentBinding ( generator, node, attribute, block, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
-	const { snippet, contexts, dependencies } = generator.contextualise( attribute.value );
+	const { snippet, contexts, dependencies } = generator.contextualise( block, attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
 
@@ -12,14 +12,14 @@ export default function createBinding ( generator, node, attribute, current, loc
 		if ( !~local.allUsedContexts.indexOf( context ) ) local.allUsedContexts.push( context );
 	});
 
-	const contextual = current.contexts.has( name );
+	const contextual = block.contexts.has( name );
 
 	let obj;
 	let prop;
 
 	if ( contextual ) {
-		obj = current.listNames.get( name );
-		prop = current.indexNames.get( name );
+		obj = block.listNames.get( name );
+		prop = block.indexNames.get( name );
 	} else if ( attribute.value.type === 'MemberExpression' ) {
 		prop = `'[✂${attribute.value.property.start}-${attribute.value.property.end}✂]'`;
 		obj = `[✂${attribute.value.object.start}-${attribute.value.object.end}✂]`;
@@ -35,16 +35,16 @@ export default function createBinding ( generator, node, attribute, current, loc
 		prop
 	});
 
-	const setter = getSetter({ current, name, keypath, context: '_context', attribute, dependencies, value: 'value' });
+	const setter = getSetter({ block, name, keypath, context: '_context', attribute, dependencies, value: 'value' });
 
 	generator.hasComplexBindings = true;
 
-	const updating = generator.current.getUniqueName( `${local.name}_updating` );
+	const updating = block.getUniqueName( `${local.name}_updating` );
 
-	local.init.addBlock( deindent`
+	local.create.addBlock( deindent`
 		var ${updating} = false;
 
-		${generator.current.component}._bindings.push( function () {
+		${block.component}._bindings.push( function () {
 			if ( ${local.name}._torndown ) return;
 			${local.name}.observe( '${attribute.name}', function ( value ) {
 				if ( ${updating} ) return;
