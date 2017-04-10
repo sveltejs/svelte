@@ -1,3 +1,4 @@
+import checkForAccessors from '../utils/checkForAccessors.js';
 import checkForDupes from '../utils/checkForDupes.js';
 import checkForComputedKeys from '../utils/checkForComputedKeys.js';
 import usesThisOrArguments from '../utils/usesThisOrArguments.js';
@@ -10,6 +11,7 @@ export default function methods ( validator, prop ) {
 		return;
 	}
 
+	checkForAccessors( validator, prop.value.properties, 'Methods' );
 	checkForDupes( validator, prop.value.properties );
 	checkForComputedKeys( validator, prop.value.properties );
 
