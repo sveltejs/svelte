@@ -1,0 +1,74 @@
+import { assign, differs, dispatchObservers, noop, proto } from "svelte/shared.js";
+
+function recompute ( state, newState, oldState, isInitial ) {
+	if ( isInitial || ( 'x' in newState && differs( state.x, oldState.x ) ) ) {
+		state.a = newState.a = template.computed.a( state.x );
+		state.b = newState.b = template.computed.b( state.x );
+	}
+}
+
+var template = (function () {
+	return {
+		computed: {
+			a: x => x * 2,
+			b: x => x * 3
+		}
+	};
+}());
+
+function create_main_fragment ( root, component ) {
+	
+
+	return {
+		mount: noop,
+		
+		update: noop,
+		
+		destroy: noop
+	};
+}
+
+function SvelteComponent ( options ) {
+	options = options || {};
+	this._state = options.data || {};
+	recompute( this._state, this._state, {}, true );
+	
+	this._observers = {
+		pre: Object.create( null ),
+		post: Object.create( null )
+	};
+	
+	this._handlers = Object.create( null );
+	
+	this._root = options._root;
+	this._yield = options._yield;
+	
+	this._torndown = false;
+	
+	this._fragment = create_main_fragment( this._state, this );
+	if ( options.target ) this._fragment.mount( options.target, null );
+}
+
+assign( SvelteComponent.prototype, proto );
+
+SvelteComponent.prototype._set = function _set ( newState ) {
+	var oldState = this._state;
+	this._state = assign( {}, oldState, newState );
+	recompute( this._state, newState, oldState, false )
+	
+	dispatchObservers( this, this._observers.pre, newState, oldState );
+	if ( this._fragment ) this._fragment.update( newState, this._state );
+	dispatchObservers( this, this._observers.post, newState, oldState );
+};
+
+SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
+	this.fire( 'destroy' );
+
+	this._fragment.destroy( detach !== false );
+	this._fragment = null;
+
+	this._state = {};
+	this._torndown = true;
+};
+
+export default SvelteComponent;
