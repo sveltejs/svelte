@@ -82,7 +82,7 @@ export default function addComponentAttributes ( generator, block, node, local )
 
 			const usedContexts = [];
 			attribute.expression.arguments.forEach( arg => {
-				const { contexts } = generator.contextualise( block, arg, true );
+				const { contexts } = generator.contextualise( block, arg, null, true );
 
 				contexts.forEach( context => {
 					if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );

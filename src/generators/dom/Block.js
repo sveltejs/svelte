@@ -53,6 +53,10 @@ export default class Block {
 		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
+	contextualise ( expression, context, isEventHandler ) {
+		return this.generator.contextualise( this, expression, context, isEventHandler );
+	}
+
 	createAnchor ( name, parentNode ) {
 		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
 		this.addElement( name, renderStatement, parentNode, true );
