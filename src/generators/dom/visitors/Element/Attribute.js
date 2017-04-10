@@ -46,9 +46,38 @@ export default function visitAttribute ( generator, block, state, node, attribut
 		const last = `last_${state.parentNode}_${name.replace( /-/g, '_')}`;
 		block.builders.create.addLine( `var ${last} = ${value};` );
 
-		const updater = propertyName ?
-			`${state.parentNode}.${propertyName} = ${last};` :
-			`${generator.helper( method )}( ${state.parentNode}, '${name}', ${last} );`;
+		const isSelectValueAttribute = name === 'value' && state.parentNodeName === 'select';
+
+		let updater;
+
+		if ( isSelectValueAttribute ) {
+			// annoying special case
+			const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
+			const i = block.getUniqueName( 'i' );
+			const option = block.getUniqueName( 'option' );
+
+			const ifStatement = isMultipleSelect ?
+				deindent`
+					${option}.selected = ~${last}.indexOf( ${option}.__value );` :
+				deindent`
+					if ( ${option}.__value === ${last} ) {
+						${option}.selected = true;
+						break;
+					}`;
+
+			updater = deindent`
+				var ${last} = ${last};
+				for ( var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1 ) {
+					var ${option} = ${state.parentNode}.options[${i}];
+
+					${ifStatement}
+				}
+			`;
+		} else if ( propertyName ) {
+			updater = `${state.parentNode}.${propertyName} = ${last};`;
+		} else {
+			updater = `${generator.helper( method )}( ${state.parentNode}, '${name}', ${last} );`;
+		}
 
 		block.builders.create.addLine( updater );
 		block.builders.update.addBlock( deindent`
