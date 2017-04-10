@@ -39,6 +39,7 @@ export default function visitElement ( generator, block, state, node ) {
 	const childState = Object.assign( {}, state, {
 		isTopLevel: false,
 		parentNode: name,
+		parentNodeName: node.name,
 		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace,
 		allUsedContexts: []
 	});
@@ -55,9 +56,18 @@ export default function visitElement ( generator, block, state, node ) {
 		block.builders.create.addLine( `${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );` );
 	}
 
+	let selectValueAttribute;
+
 	node.attributes
 		.sort( ( a, b ) => order[ a.type ] - order[ b.type ] )
 		.forEach( attribute => {
+			// <select> value attributes are an annoying special case — it must be handled
+			// *after* its children have been updated
+			if ( attribute.type === 'Attribute' && attribute.name === 'value' && node.name === 'select' ) {
+				selectValueAttribute = attribute;
+				return;
+			}
+
 			visitors[ attribute.type ]( generator, block, childState, node, attribute );
 		});
 
@@ -106,6 +116,10 @@ export default function visitElement ( generator, block, state, node ) {
 	node.children.forEach( child => {
 		visit( generator, block, childState, child );
 	});
+
+	if ( selectValueAttribute ) {
+		visitAttribute( generator, block, childState, node, selectValueAttribute );
+	}
 }
 
 function getRenderStatement ( generator, namespace, name ) {
