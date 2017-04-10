@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 1.13.7
+
+* Fix observers — `defer: true` now triggers callback after DOM is updated ([#441](https://github.com/sveltejs/svelte/issues/441))
+* Handle empty `computed` property ([#452](https://github.com/sveltejs/svelte/issues/452))
+* Correctly bind one-way `<select>` value attributes with objects ([#423](https://github.com/sveltejs/svelte/issues/423))
+* Hoist event handlers inside each blocks, where possible ([#456](https://github.com/sveltejs/svelte/pull/456))
+* Don't bind event handler callbacks ([#433](https://github.com/sveltejs/svelte/issues/433))
+* Internal refactoring and neater code generation ([#453](https://github.com/sveltejs/svelte/pull/453))
+
 ## 1.13.6
 
 * Use `assign` helper instead of `Object.assign` for better performance and legacy compatibility ([#431](https://github.com/sveltejs/svelte/issues/431))
