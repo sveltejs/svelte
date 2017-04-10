@@ -1,0 +1,8 @@
+[{
+	"message": "Methods cannot use getters and setters",
+	"loc": {
+		"line": 4,
+		"column": 3
+	},
+	"pos": 43
+}]
