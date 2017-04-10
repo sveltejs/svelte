@@ -12,6 +12,14 @@ const associatedEvents = {
 	scrollY: 'scroll'
 };
 
+const readonly = new Set([
+	'innerWidth',
+	'innerHeight',
+	'outerWidth',
+	'outerHeight',
+	'online'
+]);
+
 export default function visitWindow ( generator, block, node ) {
 	const events = {};
 	const bindings = {};
@@ -47,6 +55,11 @@ export default function visitWindow ( generator, block, node ) {
 				throw new Error( `Bindings on <:Window/> must be to top-level properties, e.g. '${parts.pop()}' rather than '${keypath}'` );
 			}
 
+			// in dev mode, throw if read-only values are written to
+			if ( readonly.has( attribute.name ) ) {
+				generator.readonly.add( attribute.value.name );
+			}
+
 			bindings[ attribute.name ] = attribute.value.name;
 
 			// bind:online is a special case, we need to listen for two separate events
@@ -80,11 +93,15 @@ export default function visitWindow ( generator, block, node ) {
 			handlerBody.addLine( `${lock} = true;` );
 		}
 
+		if ( generator.options.dev ) handlerBody.addLine( `component._updatingReadonlyProperty = true;` );
+
 		handlerBody.addBlock( deindent`
 			component.set({
 				${props}
 			});
 		` );
+
+		if ( generator.options.dev ) handlerBody.addLine( `component._updatingReadonlyProperty = false;` );
 
 		if ( event === 'scroll' ) {
 			handlerBody.addLine( `${lock} = false;` );

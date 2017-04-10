@@ -11,6 +11,8 @@ class DomGenerator extends Generator {
 		this.blocks = [];
 		this.uses = new Set();
 
+		this.readonly = new Set();
+
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.builders = {
 			metaBindings: new CodeBuilder()
@@ -94,6 +96,13 @@ export default function dom ( parsed, source, options ) {
 		const differs = generator.helper( 'differs' );
 
 		computations.forEach( ({ key, deps }) => {
+			if ( generator.readonly.has( key ) ) {
+				// <:Window> bindings
+				throw new Error( `Cannot have a computed value '${key}' that clashes with a read-only property` );
+			}
+
+			generator.readonly.add( key );
+
 			builder.addBlock( deindent`
 				if ( isInitial || ${deps.map( dep => `( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )` ).join( ' || ' )} ) {
 					state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
@@ -106,7 +115,15 @@ export default function dom ( parsed, source, options ) {
 				${builder}
 			}
 		` );
+	}
 
+	if ( options.dev ) {
+		Array.from( generator.readonly ).forEach( prop => {
+			builders._set.addLine( `if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );` );
+		});
+	}
+
+	if ( computations.length ) {
 		builders._set.addLine( `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )` );
 	}
 
