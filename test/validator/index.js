@@ -69,4 +69,19 @@ describe( 'validate', () => {
 			});
 		}, /options\.name must be a valid identifier/ );
 	});
+
+	it( 'warns if options.name is not capitalised', () => {
+		const warnings = [];
+		svelte.compile( '<div></div>', {
+			name: 'lowercase',
+			onwarn ( warning ) {
+				warnings.push({
+					message: warning.message,
+					pos: warning.pos,
+					loc: warning.loc
+				});
+			}
+		});
+		assert.deepEqual( warnings, [ { message: 'options.name should be capitalised', pos: undefined, loc: undefined } ] );
+	});
 });
