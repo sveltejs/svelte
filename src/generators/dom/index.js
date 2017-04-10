@@ -271,7 +271,7 @@ export default function dom ( parsed, source, options ) {
 			throw new Error( `Components with shared helpers must be compiled to ES2015 modules (format: 'es')` );
 		}
 
-		const names = Array.from( generator.uses ).map( name => {
+		const names = Array.from( generator.uses ).sort().map( name => {
 			return name !== generator.alias( name ) ? `${name} as ${generator.alias( name )}` : name;
 		});
 

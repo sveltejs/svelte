@@ -39,7 +39,7 @@ export default class Block {
 				`var ${name} = ${renderStatement};`
 			);
 
-			this.createMountStatement( name, parentNode );
+			this.mount( name, parentNode );
 		} else {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${parentNode} );` );
 		}
@@ -53,12 +53,16 @@ export default class Block {
 		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
+	contextualise ( expression, context, isEventHandler ) {
+		return this.generator.contextualise( this, expression, context, isEventHandler );
+	}
+
 	createAnchor ( name, parentNode ) {
 		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
 		this.addElement( name, renderStatement, parentNode, true );
 	}
 
-	createMountStatement ( name, parentNode ) {
+	mount ( name, parentNode ) {
 		if ( parentNode ) {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
 		} else {

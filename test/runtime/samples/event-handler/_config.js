@@ -1,13 +1,21 @@
 export default {
-	html: '<button>toggle</button>\n\n<!---->',
+	html: `
+		<button>toggle</button>
+	`,
+
 	test ( assert, component, target, window ) {
 		const button = target.querySelector( 'button' );
 		const event = new window.MouseEvent( 'click' );
 
 		button.dispatchEvent( event );
-		assert.equal( target.innerHTML, '<button>toggle</button>\n\n<p>hello!</p><!---->' );
+		assert.htmlEqual( target.innerHTML, `
+			<button>toggle</button>
+			<p>hello!</p>
+		` );
 
 		button.dispatchEvent( event );
-		assert.equal( target.innerHTML, '<button>toggle</button>\n\n<!---->' );
+		assert.htmlEqual( target.innerHTML, `
+			<button>toggle</button>
+		` );
 	}
 };
