@@ -94,11 +94,10 @@ export default function dom ( parsed, source, options ) {
 		const differs = generator.helper( 'differs' );
 
 		computations.forEach( ({ key, deps }) => {
-			builder.addBlock( deindent`
-				if ( isInitial || ${deps.map( dep => `( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )` ).join( ' || ' )} ) {
-					state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );
-				}
-			` );
+			const condition = `isInitial || ${deps.map( dep => `( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )` ).join( ' || ' )}`;
+			const statement = `state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );`
+
+			builder.addConditionalLine( condition, statement );
 		});
 
 		builders.main.addBlock( deindent`
