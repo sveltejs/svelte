@@ -18,11 +18,17 @@ describe( 'js', () => {
 			dir = path.resolve( 'test/js/samples', dir );
 			const input = fs.readFileSync( `${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
-			const actual = svelte.compile( input ).code;
+			const actual = svelte.compile( input, {
+				shared: true
+			}).code;
+
 			fs.writeFileSync( `${dir}/_actual.js`, actual );
 			const expected = fs.readFileSync( `${dir}/expected.js`, 'utf-8' );
 
-			assert.equal( actual.trim(), expected.trim() );
+			assert.equal(
+				actual.trim().replace( /^\s+$/gm, '' ),
+				expected.trim().replace( /^\s+$/gm, '' )
+			);
 		});
 	});
 });

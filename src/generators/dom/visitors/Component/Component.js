@@ -1,7 +1,10 @@
-import deindent from '../../../utils/deindent.js';
-import CodeBuilder from '../../../utils/CodeBuilder.js';
-import visit from '../visit.js';
-import addComponentAttributes from './attributes/addComponentAttributes.js';
+import deindent from '../../../../utils/deindent.js';
+import CodeBuilder from '../../../../utils/CodeBuilder.js';
+import visit from '../../visit.js';
+import visitAttribute from './Attribute.js';
+import visitEventHandler from './EventHandler.js';
+import visitBinding from './Binding.js';
+import visitRef from './Ref.js';
 
 function capDown ( name ) {
 	return `${name[0].toLowerCase()}${name.slice( 1 )}`;
@@ -19,9 +22,27 @@ function stringifyProps ( props ) {
 	return `{ ${joined} }`;
 }
 
+const order = {
+	Attribute: 1,
+	EventHandler: 2,
+	Binding: 3,
+	Ref: 4
+};
+
+const visitors = {
+	Attribute: visitAttribute,
+	EventHandler: visitEventHandler,
+	Binding: visitBinding,
+	Ref: visitRef
+};
+
 export default function visitComponent ( generator, block, state, node ) {
 	const hasChildren = node.children.length > 0;
 	const name = block.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
+
+	const childState = Object.assign( {}, state, {
+		parentNode: null
+	});
 
 	const local = {
 		name,
@@ -29,6 +50,9 @@ export default function visitComponent ( generator, block, state, node ) {
 		isComponent: true,
 
 		allUsedContexts: [],
+		staticAttributes: [],
+		dynamicAttributes: [],
+		bindings: [],
 
 		create: new CodeBuilder(),
 		update: new CodeBuilder()
@@ -38,7 +62,11 @@ export default function visitComponent ( generator, block, state, node ) {
 
 	generator.hasComponents = true;
 
-	addComponentAttributes( generator, block, node, local );
+	node.attributes
+		.sort( ( a, b ) => order[ a.type ] - order[ b.type ] )
+		.forEach( attribute => {
+			visitors[ attribute.type ]( generator, block, childState, node, attribute, local );
+		});
 
 	if ( local.allUsedContexts.length ) {
 		const initialProps = local.allUsedContexts.map( contextName => {
@@ -79,10 +107,6 @@ export default function visitComponent ( generator, block, state, node ) {
 
 		const childBlock = block.child({
 			name: generator.getUniqueName( `create_${name}_yield_fragment` ) // TODO should getUniqueName happen inside Fragment? probably
-		});
-
-		const childState = Object.assign( {}, state, {
-			parentNode: null
 		});
 
 		node.children.forEach( child => {
