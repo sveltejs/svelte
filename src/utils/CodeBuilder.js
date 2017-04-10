@@ -7,9 +7,31 @@ export default class CodeBuilder {
 
 		this.first = null;
 		this.last = null;
+
+		this.lastCondition = null;
+	}
+
+	addConditionalLine ( condition, line ) {
+		if ( condition === this.lastCondition ) {
+			this.result += `\n\t${line}`;
+		} else {
+			if ( this.lastCondition ) {
+				this.result += `\n}`;
+			}
+
+			this.result += `if ( ${condition} ) {\n\t${line}`;
+			this.lastCondition = condition;
+		}
+
+		this.last = BLOCK;
 	}
 
 	addLine ( line ) {
+		if ( this.lastCondition ) {
+			this.result += `\n}`;
+			this.lastCondition = null;
+		}
+
 		if ( this.last === BLOCK ) {
 			this.result += `\n\n${line}`;
 		} else if ( this.last === LINE ) {
@@ -36,6 +58,11 @@ export default class CodeBuilder {
 	}
 
 	addBlock ( block ) {
+		if ( this.lastCondition ) {
+			this.result += `\n}`;
+			this.lastCondition = null;
+		}
+
 		if ( this.result ) {
 			this.result += `\n\n${block}`;
 		} else {
@@ -62,6 +89,6 @@ export default class CodeBuilder {
 	}
 
 	toString () {
-		return this.result.trim();
+		return this.result.trim() + ( this.lastCondition ? `\n}` : `` );
 	}
 }
