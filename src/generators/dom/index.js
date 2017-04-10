@@ -95,7 +95,7 @@ export default function dom ( parsed, source, options ) {
 
 		computations.forEach( ({ key, deps }) => {
 			const condition = `isInitial || ${deps.map( dep => `( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )` ).join( ' || ' )}`;
-			const statement = `state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );`
+			const statement = `state.${key} = newState.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );`;
 
 			builder.addConditionalLine( condition, statement );
 		});
