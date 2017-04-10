@@ -1,8 +1,8 @@
-import deindent from '../../../../../utils/deindent.js';
-import flattenReference from '../../../../../utils/flattenReference.js';
-import getSetter from '../../shared/binding/getSetter.js';
+import deindent from '../../../../utils/deindent.js';
+import flattenReference from '../../../../utils/flattenReference.js';
+import getSetter from '../shared/binding/getSetter.js';
 
-export default function addComponentBinding ( generator, node, attribute, block, local ) {
+export default function visitBinding ( generator, block, state, node, attribute, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = generator.contextualise( block, attribute.value );
 
