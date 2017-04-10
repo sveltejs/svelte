@@ -11,8 +11,7 @@ export default function components ( validator, prop ) {
 	checkForComputedKeys( validator, prop.value.properties );
 
 	prop.value.properties.forEach( component => {
-		const char = component.key.name[0];
-		if ( char === char.toLowerCase() ) {
+		if ( !/^[A-Z]/.test( component.key.name ) ) {
 			validator.warn( `Component names should be capitalised`, component.start );
 		}
 	});
