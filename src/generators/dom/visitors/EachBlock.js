@@ -134,7 +134,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 				}
 			}
 
-			destroyEach( ${localVars.iterations}, true, ${listName}.length );
+			${generator.helper( 'destroyEach' )}( ${localVars.iterations}, true, ${listName}.length );
 
 			${localVars.iterations}.length = ${listName}.length;
 		` );
@@ -154,7 +154,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	}
 
 	block.builders.destroy.addBlock(
-		`${generator.helper( 'destroyEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'} );` );
+		`${generator.helper( 'destroyEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
 
 	if ( node.else ) {
 		block.builders.destroy.addBlock( deindent`
@@ -197,7 +197,8 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	});
 
 	const childState = Object.assign( {}, state, {
-		parentNode: null
+		parentNode: null,
+		inEachBlock: true
 	});
 
 	node.children.forEach( child => {

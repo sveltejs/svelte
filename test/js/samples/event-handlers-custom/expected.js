@@ -1,4 +1,4 @@
-import { createElement, detachNode, insertNode, createText, appendNode, assign, dispatchObservers, noop, proto } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -7,7 +7,6 @@ var template = (function () {
 				console.log( bar );
 			}
 		},
-
 		events: {
 			foo ( node, callback ) {
 				// code goes here
@@ -21,7 +20,6 @@ function create_main_fragment ( root, component ) {
 
 	var foo_handler = template.events.foo.call( component, button, function ( event ) {
 		var root = component.get();
-
 		component.foo( root.bar );
 	});
 

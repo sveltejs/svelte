@@ -72,32 +72,35 @@ export default function visitElement ( generator, block, state, node ) {
 		block.builders.create.addBlock( node.initialUpdate );
 	}
 
-	if ( childState.allUsedContexts.length ) {
-		const initialProps = childState.allUsedContexts.map( contextName => {
-			if ( contextName === 'root' ) return `root: root`;
+	if ( childState.allUsedContexts.length || childState.usesComponent ) {
+		const initialProps = [];
+		const updates = [];
+
+		if ( childState.usesComponent ) {
+			initialProps.push( `component: ${block.component}` );
+		}
+
+		childState.allUsedContexts.forEach( contextName => {
+			if ( contextName === 'root' ) return;
 
 			const listName = block.listNames.get( contextName );
 			const indexName = block.indexNames.get( contextName );
 
-			return `${listName}: ${listName},\n${indexName}: ${indexName}`;
-		}).join( ',\n' );
+			initialProps.push( `${listName}: ${listName},\n${indexName}: ${indexName}` );
+			updates.push( `${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};` );
+		});
 
-		const updates = childState.allUsedContexts.map( contextName => {
-			if ( contextName === 'root' ) return `${name}.__svelte.root = root;`;
+		if ( initialProps.length ) {
+			block.builders.create.addBlock( deindent`
+				${name}._svelte = {
+					${initialProps.join( ',\n' )}
+				};
+			` );
+		}
 
-			const listName = block.listNames.get( contextName );
-			const indexName = block.indexNames.get( contextName );
-
-			return `${name}.__svelte.${listName} = ${listName};\n${name}.__svelte.${indexName} = ${indexName};`;
-		}).join( '\n' );
-
-		block.builders.create.addBlock( deindent`
-			${name}.__svelte = {
-				${initialProps}
-			};
-		` );
-
-		block.builders.update.addBlock( updates );
+		if ( updates.length ) {
+			block.builders.update.addBlock( updates.join( '\n' ) );
+		}
 	}
 
 	node.children.forEach( child => {

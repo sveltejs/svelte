@@ -60,7 +60,7 @@ export default class Generator {
 		return alias;
 	}
 
-	contextualise ( block, expression, isEventHandler ) {
+	contextualise ( block, expression, context, isEventHandler ) {
 		this.addSourcemapLocations( expression );
 
 		const usedContexts = [];
@@ -70,17 +70,24 @@ export default class Generator {
 		const { contextDependencies, contexts, indexes } = block;
 
 		let scope = annotateWithScopes( expression );
+		let lexicalDepth = 0;
 
 		const self = this;
 
 		walk( expression, {
 			enter ( node, parent, key ) {
+				if ( /^Function/.test( node.type ) ) lexicalDepth += 1;
+
 				if ( node._scope ) {
 					scope = node._scope;
 					return;
 				}
 
-				if ( isReference( node, parent ) ) {
+				if ( node.type === 'ThisExpression' ) {
+					if ( lexicalDepth === 0 && context ) code.overwrite( node.start, node.end, context, true );
+				}
+
+				else if ( isReference( node, parent ) ) {
 					const { name } = flattenReference( node );
 					if ( scope.has( name ) ) return;
 
@@ -93,10 +100,10 @@ export default class Generator {
 					}
 
 					else if ( contexts.has( name ) ) {
-						const context = contexts.get( name );
-						if ( context !== name ) {
+						const contextName = contexts.get( name );
+						if ( contextName !== name ) {
 							// this is true for 'reserved' names like `root` and `component`
-							code.overwrite( node.start, node.start + name.length, context, true );
+							code.overwrite( node.start, node.start + name.length, contextName, true );
 						}
 
 						dependencies.push( ...contextDependencies.get( name ) );
@@ -133,6 +140,7 @@ export default class Generator {
 			},
 
 			leave ( node ) {
+				if ( /^Function/.test( node.type ) ) lexicalDepth -= 1;
 				if ( node._scope ) scope = scope.parent;
 			}
 		});
