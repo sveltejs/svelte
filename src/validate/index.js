@@ -44,6 +44,15 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 		onerror( error );
 	}
 
+	if ( name && !/^[A-Z]/.test( name ) ) {
+		const message = `options.name should be capitalised`;
+		onwarn({
+			message,
+			filename,
+			toString: () => message
+		});
+	}
+
 	if ( parsed.js ) {
 		validateJs( validator, parsed.js );
 	}
