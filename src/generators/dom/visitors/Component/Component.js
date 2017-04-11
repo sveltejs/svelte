@@ -140,7 +140,7 @@ export default function visitComponent ( generator, block, state, node ) {
 		if ( local.bindings.length ) {
 			const initialData = block.getUniqueName( `${name}_initial_data` );
 
-			statements.push( `var ${name}_initial_data = ${initialPropString};` );
+			statements.push( `var ${initialData} = ${initialPropString};` );
 
 			local.bindings.forEach( binding => {
 				statements.push( `if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};` );

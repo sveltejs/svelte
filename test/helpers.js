@@ -10,9 +10,18 @@ sourceMapSupport.install();
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
-export const svelte = process.env.COVERAGE ?
-	require( '../src/index.js' ) :
-	require( '../compiler/svelte.js' );
+export function loadSvelte ( test ) {
+	if ( test ) global.__svelte_test = true;
+
+	const resolved = process.env.COVERAGE ?
+		require.resolve( '../src/index.js' ) :
+		require.resolve( '../compiler/svelte.js' );
+
+	delete require.cache[ resolved ];
+	return require( resolved );
+}
+
+export const svelte = loadSvelte();
 
 export function exists ( path ) {
 	try {
