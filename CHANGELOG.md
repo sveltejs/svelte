@@ -1,5 +1,17 @@
 # Svelte changelog
 
+## 1.14.0
+
+* Better guard against naming conflicts ([#465](https://github.com/sveltejs/svelte/issues/465))
+* Better error if getters and setters are used with `methods` ([#425](https://github.com/sveltejs/svelte/issues/425))
+* Don't create whitespace nodes inside elements that can't use them ([#189](https://github.com/sveltejs/svelte/issues/189))
+* Collapse consecutive `if` statements with the same condition ([#450](https://github.com/sveltejs/svelte/issues/450))
+* Window `scroll` bindings are bidirectional ([#404](https://github.com/sveltejs/svelte/issues/404))
+* Add `bind:online` to window ([#404](https://github.com/sveltejs/svelte/issues/404))
+* In dev mode, throw if read-only properties are set ([#404](https://github.com/sveltejs/svelte/issues/404))
+* Prevent conflicts with component name ([#464](https://github.com/sveltejs/svelte/pull/464))
+* Ensure event handler names are deconflicted ([#466https://github.com/sveltejs/svelte/issues/466
+
 ## 1.13.7
 
 * Fix observers — `defer: true` now triggers callback after DOM is updated ([#441](https://github.com/sveltejs/svelte/issues/441))
