@@ -32,7 +32,7 @@ export default function visitEventHandler ( generator, block, state, node, attri
 	const declarations = usedContexts.map( name => {
 		if ( name === 'root' ) {
 			if ( shouldHoist ) state.usesComponent = true;
-			return 'var root = component.get();';
+			return `var root = ${block.component}.get();`;
 		}
 
 		const listName = block.listNames.get( name );
@@ -52,7 +52,7 @@ export default function visitEventHandler ( generator, block, state, node, attri
 
 	if ( state.usesComponent ) {
 		// TODO the element needs to know to create `thing._svelte = { component: component }`
-		handlerBody.addLine( `var component = this._svelte.component;` );
+		handlerBody.addLine( `var ${block.component} = this._svelte.component;` );
 	}
 
 	declarations.forEach( declaration => {
