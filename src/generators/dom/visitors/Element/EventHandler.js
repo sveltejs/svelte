@@ -45,7 +45,7 @@ export default function visitEventHandler ( generator, block, state, node, attri
 	// get a name for the event handler that is globally unique
 	// if hoisted, locally unique otherwise
 	const handlerName = shouldHoist ?
-		generator.alias( `${name}_handler` ) :
+		generator.getUniqueName( `${name}_handler` ) :
 		block.getUniqueName( `${name}_handler` );
 
 	// create the handler body
