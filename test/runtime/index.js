@@ -5,7 +5,9 @@ import * as fs from 'fs';
 import * as acorn from 'acorn';
 import * as babel from 'babel-core';
 
-import { addLineNumbers, loadConfig, svelte, env, setupHtmlEqual } from '../helpers.js';
+import { addLineNumbers, loadConfig, loadSvelte, env, setupHtmlEqual } from '../helpers.js';
+
+let svelte;
 
 let showCompiledCode = false;
 let compileOptions = null;
@@ -33,7 +35,10 @@ require.extensions[ '.html' ] = function ( module, filename ) {
 const Object_assign = Object.assign;
 
 describe( 'runtime', () => {
-	before( setupHtmlEqual );
+	before( () => {
+		svelte = loadSvelte( true );
+		return setupHtmlEqual();
+	});
 
 	function runTest ( dir, shared ) {
 		if ( dir[0] === '.' ) return;

@@ -32,7 +32,7 @@ export default function visitWindow ( generator, block, node ) {
 			const flattened = flattenReference( attribute.expression.callee );
 			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
 				// allow event.stopPropagation(), this.select() etc
-				generator.code.prependRight( attribute.expression.start, 'component.' );
+				generator.code.prependRight( attribute.expression.start, `${block.component}.` );
 			}
 
 			const handlerName = block.getUniqueName( `onwindow${attribute.name}` );
@@ -96,7 +96,7 @@ export default function visitWindow ( generator, block, node ) {
 		if ( generator.options.dev ) handlerBody.addLine( `component._updatingReadonlyProperty = true;` );
 
 		handlerBody.addBlock( deindent`
-			component.set({
+			${block.component}.set({
 				${props}
 			});
 		` );
@@ -126,19 +126,19 @@ export default function visitWindow ( generator, block, node ) {
 		block.builders.create.addBlock( deindent`
 			function ${observerCallback} () {
 				if ( ${lock} ) return;
-				var x = ${bindings.scrollX ? `component.get( '${bindings.scrollX}' )` : `window.scrollX`};
-				var y = ${bindings.scrollY ? `component.get( '${bindings.scrollY}' )` : `window.scrollY`};
+				var x = ${bindings.scrollX ? `${block.component}.get( '${bindings.scrollX}' )` : `window.scrollX`};
+				var y = ${bindings.scrollY ? `${block.component}.get( '${bindings.scrollY}' )` : `window.scrollY`};
 				window.scrollTo( x, y );
 			};
 		` );
 
-		if ( bindings.scrollX ) block.builders.create.addLine( `component.observe( '${bindings.scrollX}', ${observerCallback} );` );
-		if ( bindings.scrollY ) block.builders.create.addLine( `component.observe( '${bindings.scrollY}', ${observerCallback} );` );
+		if ( bindings.scrollX ) block.builders.create.addLine( `${block.component}.observe( '${bindings.scrollX}', ${observerCallback} );` );
+		if ( bindings.scrollY ) block.builders.create.addLine( `${block.component}.observe( '${bindings.scrollY}', ${observerCallback} );` );
 	} else if ( bindings.scrollX || bindings.scrollY ) {
 		const isX = !!bindings.scrollX;
 
 		block.builders.create.addBlock( deindent`
-			component.observe( '${bindings.scrollX || bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
+			${block.component}.observe( '${bindings.scrollX || bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
 				if ( ${lock} ) return;
 				window.scrollTo( ${isX ? 'x, window.scrollY' : 'window.scrollX, y' } );
 			});
@@ -150,7 +150,7 @@ export default function visitWindow ( generator, block, node ) {
 		const handlerName = block.getUniqueName( `onlinestatuschanged` );
 		block.builders.create.addBlock( deindent`
 			function ${handlerName} ( event ) {
-				component.set({ ${bindings.online}: navigator.onLine });
+				${block.component}.set({ ${bindings.online}: navigator.onLine });
 			};
 			window.addEventListener( 'online', ${handlerName} );
 			window.addEventListener( 'offline', ${handlerName} );
