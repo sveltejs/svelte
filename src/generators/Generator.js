@@ -11,6 +11,8 @@ import getOutro from './shared/utils/getOutro.js';
 import processCss from './shared/processCss.js';
 import annotateWithScopes from './annotateWithScopes.js';
 
+const test = typeof global !== 'undefined' && global.__svelte_test;
+
 export default class Generator {
 	constructor ( parsed, source, name, options ) {
 		this.parsed = parsed;
@@ -238,6 +240,7 @@ export default class Generator {
 	}
 
 	getUniqueName ( name ) {
+		if ( test ) name = `${name}$`;
 		let alias = name;
 		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ); alias = `${name}_${i++}` );
 		this._usedNames.add( alias );
@@ -247,6 +250,7 @@ export default class Generator {
 	getUniqueNameMaker ( params ) {
 		const localUsedNames = new Set( params );
 		return name => {
+			if ( test ) name = `${name}$`;
 			let alias = name;
 			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}_${i++}` );
 			localUsedNames.add( alias );

@@ -22,7 +22,7 @@ export default function visitWindow ( generator, block, node ) {
 			const flattened = flattenReference( attribute.expression.callee );
 			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
 				// allow event.stopPropagation(), this.select() etc
-				generator.code.prependRight( attribute.expression.start, 'component.' );
+				generator.code.prependRight( attribute.expression.start, `${block.component}.` );
 			}
 
 			const handlerName = block.getUniqueName( `onwindow${attribute.name}` );
@@ -68,7 +68,7 @@ export default function visitWindow ( generator, block, node ) {
 
 		block.builders.create.addBlock( deindent`
 			var ${handlerName} = function ( event ) {
-				component.set({
+				${block.component}.set({
 					${props}
 				});
 			};
