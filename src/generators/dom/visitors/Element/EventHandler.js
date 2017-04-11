@@ -37,8 +37,9 @@ export default function visitEventHandler ( generator, block, state, node, attri
 
 		const listName = block.listNames.get( name );
 		const indexName = block.indexNames.get( name );
+		const contextName = block.contexts.get( name );
 
-		return `var ${listName} = ${_this}._svelte.${listName}, ${indexName} = ${_this}._svelte.${indexName}, ${name} = ${listName}[${indexName}];`;
+		return `var ${listName} = ${_this}._svelte.${listName}, ${indexName} = ${_this}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
 	});
 
 	// get a name for the event handler that is globally unique
