@@ -36,9 +36,13 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 			});
 		},
 
+		source,
+
 		namespace: null,
 		defaultExport: null,
-		properties: {}
+		properties: {},
+		methods: {},
+		helpers: {}
 	};
 
 	if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {

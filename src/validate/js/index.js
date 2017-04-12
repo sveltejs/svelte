@@ -72,4 +72,12 @@ export default function validateJs ( validator, js ) {
 			});
 		}
 	});
+
+	[ 'methods', 'helpers' ].forEach( key => {
+		if ( validator.properties[ key ] ) {
+			validator.properties[ key ].value.properties.forEach( prop => {
+				validator[ key ][ prop.key.name ] = prop.value;
+			});
+		}
+	});
 }
