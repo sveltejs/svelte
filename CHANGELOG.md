@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.14.1
+
+* Replace bad characters when creating variable names based on attributes ([#470](https://github.com/sveltejs/svelte/issues/470))
+
 ## 1.14.0
 
 * Better guard against naming conflicts ([#465](https://github.com/sveltejs/svelte/issues/465))
