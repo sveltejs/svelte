@@ -18,7 +18,7 @@ export default function validateHtml ( validator, html ) {
 			node.children.forEach( visit );
 		}
 
-		if (node.else ) {
+		if ( node.else ) {
 			visit( node.else );
 		}
 
