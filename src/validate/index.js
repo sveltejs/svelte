@@ -18,7 +18,7 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 
 			error.toString = () => `${error.message} (${error.loc.line}:${error.loc.column})\n${error.frame}`;
 
-			onerror( error );
+			throw error;
 		},
 
 		warn: ( message, pos ) => {
@@ -45,25 +45,33 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 		helpers: {}
 	};
 
-	if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {
-		const error = new Error( `options.name must be a valid identifier` );
-		onerror( error );
-	}
+	try {
+		if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {
+			const error = new Error( `options.name must be a valid identifier` );
+			throw error;
+		}
 
-	if ( name && !/^[A-Z]/.test( name ) ) {
-		const message = `options.name should be capitalised`;
-		onwarn({
-			message,
-			filename,
-			toString: () => message
-		});
-	}
+		if ( name && !/^[A-Z]/.test( name ) ) {
+			const message = `options.name should be capitalised`;
+			onwarn({
+				message,
+				filename,
+				toString: () => message
+			});
+		}
 
-	if ( parsed.js ) {
-		validateJs( validator, parsed.js );
-	}
+		if ( parsed.js ) {
+			validateJs( validator, parsed.js );
+		}
 
-	if ( parsed.html ) {
-		validateHtml( validator, parsed.html );
+		if ( parsed.html ) {
+			validateHtml( validator, parsed.html );
+		}
+	} catch ( err ) {
+		if ( onerror ) {
+			onerror( err );
+		} else {
+			throw err;
+		}
 	}
 }

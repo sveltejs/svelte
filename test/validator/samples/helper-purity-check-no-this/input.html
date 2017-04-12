@@ -1,0 +1,11 @@
+{{foo()}}
+
+<script>
+	export default {
+		helpers: {
+			foo () {
+				return this.get( 'bar' );
+			}
+		}
+	}
+</script>
