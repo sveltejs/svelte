@@ -148,7 +148,9 @@ export default class Generator {
 		});
 
 		dependencies.forEach( name => {
-			this.expectedProperties.add( name );
+			if ( !globalWhitelist.has( name ) ) {
+				this.expectedProperties.add( name );
+			}
 		});
 
 		return {
