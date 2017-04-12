@@ -1,10 +1,10 @@
-<button on:click='foo()'>foo</button>
+{{foo()}}
 
 <script>
 	export default {
 		helpers: {
 			foo () {
-				this.set({ foo: true });
+				return this.get( 'bar' );
 			}
 		}
 	}

@@ -1,8 +1,8 @@
 [{
 	"message": "Helpers should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?",
-	"pos": 74,
+	"pos": 95,
 	"loc": {
 		"line": 7,
-		"column": 11
+		"column": 4
 	}
 }]
