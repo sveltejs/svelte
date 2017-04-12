@@ -1,7 +1,8 @@
 export default {
 	dev: true,
 
-	error ( assert, err ) {
-		assert.equal( err.message, `Component was created without expected data property 'foo'` );
-	}
+	warnings: [
+		`Component was created without expected data property 'foo'`,
+		`Component was created without expected data property 'bar'`
+	]
 };
