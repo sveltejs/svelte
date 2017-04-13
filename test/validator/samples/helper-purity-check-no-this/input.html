@@ -1,0 +1,11 @@
+<button on:click='foo()'>foo</button>
+
+<script>
+	export default {
+		helpers: {
+			foo () {
+				this.set({ foo: true });
+			}
+		}
+	}
+</script>

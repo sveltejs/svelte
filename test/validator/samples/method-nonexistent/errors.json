@@ -1,0 +1,8 @@
+[{
+	"message": "'foo' is an invalid callee (should be one of this.*, event.*, set, fire or bar)",
+	"pos": 18,
+	"loc": {
+		"line": 1,
+		"column": 18
+	}
+}]
