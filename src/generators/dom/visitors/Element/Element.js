@@ -63,7 +63,7 @@ export default function visitElement ( generator, block, state, node ) {
 		.forEach( attribute => {
 			// <select> value attributes are an annoying special case — it must be handled
 			// *after* its children have been updated
-			if ( attribute.type === 'Attribute' && attribute.name === 'value' && node.name === 'select' ) {
+			if ( ( attribute.type === 'Attribute' || attribute.type === 'Binding' ) && attribute.name === 'value' && node.name === 'select' ) {
 				selectValueAttribute = attribute;
 				return;
 			}
@@ -74,12 +74,7 @@ export default function visitElement ( generator, block, state, node ) {
 	// special case – bound <option> without a value attribute
 	if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
 		const statement = `${name}.__value = ${name}.textContent;`;
-		block.builders.update.addLine( statement );
-		node.initialUpdate = statement;
-	}
-
-	if ( node.initialUpdate ) {
-		block.builders.create.addBlock( node.initialUpdate );
+		node.initialUpdate = node.lateUpdate = statement;
 	}
 
 	if ( childState.allUsedContexts.length || childState.usesComponent ) {
@@ -117,8 +112,17 @@ export default function visitElement ( generator, block, state, node ) {
 		visit( generator, block, childState, child );
 	});
 
+	if ( node.initialUpdate ) {
+		block.builders.create.addBlock( node.initialUpdate );
+	}
+
+	if ( node.lateUpdate ) {
+		block.builders.update.addLine( node.lateUpdate );
+	}
+
 	if ( selectValueAttribute ) {
-		visitAttribute( generator, block, childState, node, selectValueAttribute );
+		const visitor = selectValueAttribute.type === 'Attribute' ? visitAttribute : visitBinding;
+		visitor( generator, block, childState, node, selectValueAttribute );
 	}
 }
 
