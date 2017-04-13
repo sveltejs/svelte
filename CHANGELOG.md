@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.15.0
+
+* Dev mode — downgrade 'missing data' to a warning, and ignore whitelisted globals ([#475](https://github.com/sveltejs/svelte/issues/475))
+* Fix `<select>` value binding when options are updated late ([#476](https://github.com/sveltejs/svelte/issues/476))
+* Throw at compile time if event handler references invalid callee ([#473](https://github.com/sveltejs/svelte/pull/473))
+* Check for helper function purity ([#473](https://github.com/sveltejs/svelte/pull/473))
+* Validate `namespace` option ([#473](https://github.com/sveltejs/svelte/pull/473))
+
 ## 1.14.1
 
 * Replace bad characters when creating variable names based on attributes ([#470](https://github.com/sveltejs/svelte/issues/470))
