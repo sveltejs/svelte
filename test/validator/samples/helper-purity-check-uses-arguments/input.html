@@ -1,0 +1,13 @@
+{{sum(1, 2, 3)}}
+
+<script>
+	export default {
+		helpers: {
+			sum () {
+				var total = '';
+				for ( var i = 0; i < arguments.length; i += 1 ) total += arguments[i];
+				return total;
+			}
+		}
+	}
+</script>
