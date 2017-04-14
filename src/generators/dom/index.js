@@ -1,3 +1,8 @@
+import MagicString from 'magic-string';
+import { parse } from 'acorn';
+import annotateWithScopes from '../../utils/annotateWithScopes.js';
+import isReference from '../../utils/isReference.js';
+import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
@@ -296,8 +301,36 @@ export default function dom ( parsed, source, options ) {
 		);
 	} else {
 		generator.uses.forEach( key => {
-			const fn = shared[ key ]; // eslint-disable-line import/namespace
-			builders.main.addBlock( fn.toString().replace( /^function [^(]*/, 'function ' + generator.alias( key ) ) );
+			const str = shared[ key ].toString(); // eslint-disable-line import/namespace
+			const code = new MagicString( str );
+			const fn = parse( str ).body[0];
+
+			let scope = annotateWithScopes( fn );
+
+			walk( fn, {
+				enter ( node, parent ) {
+					if ( node._scope ) scope = node._scope;
+
+					if ( node.type === 'Identifier' && isReference( node, parent ) && !scope.has( node.name ) ) {
+						if ( node.name in shared ) {
+							// this helper function depends on another one
+							generator.uses.add( node.name );
+
+							const alias = generator.alias( node.name );
+							if ( alias !== node.name ) code.overwrite( node.start, node.end, alias );
+						}
+					}
+				},
+
+				leave ( node ) {
+					if ( node._scope ) scope = scope.parent;
+				}
+			});
+
+			const alias = generator.alias( fn.id.name );
+			if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
+
+			builders.main.addBlock( code.toString() );
 		});
 	}
 
