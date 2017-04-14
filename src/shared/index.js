@@ -23,18 +23,18 @@ export function dispatchObservers ( component, group, newState, oldState ) {
 		var newValue = newState[ key ];
 		var oldValue = oldState[ key ];
 
-		if ( newValue === oldValue && typeof newValue !== 'object' ) continue;
+		if ( differs( newValue, oldValue ) ) {
+			var callbacks = group[ key ];
+			if ( !callbacks ) continue;
 
-		var callbacks = group[ key ];
-		if ( !callbacks ) continue;
+			for ( var i = 0; i < callbacks.length; i += 1 ) {
+				var callback = callbacks[i];
+				if ( callback.__calling ) continue;
 
-		for ( var i = 0; i < callbacks.length; i += 1 ) {
-			var callback = callbacks[i];
-			if ( callback.__calling ) continue;
-
-			callback.__calling = true;
-			callback.call( component, newValue, oldValue );
-			callback.__calling = false;
+				callback.__calling = true;
+				callback.call( component, newValue, oldValue );
+				callback.__calling = false;
+			}
 		}
 	}
 }
