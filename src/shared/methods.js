@@ -39,22 +39,7 @@ export function observeDev ( key, callback, options ) {
 		throw new Error( message );
 	}
 
-	var group = ( options && options.defer ) ? this._observers.pre : this._observers.post;
-
-	( group[ key ] || ( group[ key ] = [] ) ).push( callback );
-
-	if ( !options || options.init !== false ) {
-		callback.__calling = true;
-		callback.call( this, this._state[ key ] );
-		callback.__calling = false;
-	}
-
-	return {
-		cancel: function () {
-			var index = group[ key ].indexOf( callback );
-			if ( ~index ) group[ key ].splice( index, 1 );
-		}
-	};
+	return observe.call( this, key, callback, options );
 }
 
 export function on ( eventName, handler ) {
@@ -77,15 +62,7 @@ export function onDev ( eventName, handler ) {
 		return this.on( 'destroy', handler );
 	}
 
-	var handlers = this._handlers[ eventName ] || ( this._handlers[ eventName ] = [] );
-	handlers.push( handler );
-
-	return {
-		cancel: function () {
-			var index = handlers.indexOf( handler );
-			if ( ~index ) handlers.splice( index, 1 );
-		}
-	};
+	return on.call( this, eventName, handler );
 }
 
 export function set ( newState ) {
