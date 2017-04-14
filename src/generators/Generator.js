@@ -9,7 +9,7 @@ import { removeNode, removeObjectKey } from '../utils/removeNode.js';
 import getIntro from './shared/utils/getIntro.js';
 import getOutro from './shared/utils/getOutro.js';
 import processCss from './shared/processCss.js';
-import annotateWithScopes from './annotateWithScopes.js';
+import annotateWithScopes from '../utils/annotateWithScopes.js';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
