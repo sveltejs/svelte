@@ -13,8 +13,8 @@ const meta = {
 
 const order = {
 	Attribute: 1,
-	EventHandler: 2,
-	Binding: 3,
+	Binding: 2,
+	EventHandler: 3,
 	Ref: 4
 };
 
