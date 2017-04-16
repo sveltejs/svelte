@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.15.1
+
+* Clone data before merging it with state ([#479](https://github.com/sveltejs/svelte/issues/479))
+* Apply binding event handlers before user event handlers ([#486](https://github.com/sveltejs/svelte/issues/486))
+
 ## 1.15.0
 
 * Dev mode — downgrade 'missing data' to a warning, and ignore whitelisted globals ([#475](https://github.com/sveltejs/svelte/issues/475))
