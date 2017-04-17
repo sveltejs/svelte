@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.16.0
+
+* Better code generation ([#489](https://github.com/sveltejs/svelte/pull/489)), ([#490](https://github.com/sveltejs/svelte/pull/490)), ([#491](https://github.com/sveltejs/svelte/pull/491))
+* Prevent binding blowback on initial render ([#488](https://github.com/sveltejs/svelte/pull/488))
+
 ## 1.15.1
 
 * Clone data before merging it with state ([#479](https://github.com/sveltejs/svelte/issues/479))
