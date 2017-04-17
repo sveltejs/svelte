@@ -28,12 +28,12 @@ export default function visitAttribute ( generator, block, state, node, attribut
 
 		else {
 			// simple dynamic attributes
-			const { dependencies, string } = generator.contextualise( block, value.expression );
+			const { dependencies, snippet } = block.contextualise( value.expression );
 
 			// TODO only update attributes that have changed
 			local.dynamicAttributes.push({
 				name: attribute.name,
-				value: string,
+				value: snippet,
 				dependencies
 			});
 		}
@@ -48,12 +48,12 @@ export default function visitAttribute ( generator, block, state, node, attribut
 				if ( chunk.type === 'Text' ) {
 					return JSON.stringify( chunk.data );
 				} else {
-					const { dependencies, string } = generator.contextualise( block, chunk.expression );
+					const { dependencies, snippet } = block.contextualise( chunk.expression );
 					dependencies.forEach( dependency => {
 						if ( !~allDependencies.indexOf( dependency ) ) allDependencies.push( dependency );
 					});
 
-					return `( ${string} )`;
+					return `( ${snippet} )`;
 				}
 			}).join( ' + ' )
 		);

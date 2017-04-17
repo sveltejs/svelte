@@ -2,20 +2,23 @@ import CodeBuilder from '../../utils/CodeBuilder.js';
 import deindent from '../../utils/deindent.js';
 
 export default class Block {
-	constructor ({ generator, name, key, expression, context, contextDependencies, contexts, indexes, params, indexNames, listNames }) {
-		this.generator = generator;
-		this.name = name;
-		this.key = key;
-		this.expression = expression;
-		this.context = context;
+	constructor ( options ) {
+		this.generator = options.generator;
+		this.name = options.name;
+		this.key = options.key;
+		this.expression = options.expression;
+		this.context = options.context;
 
-		this.contexts = contexts;
-		this.indexes = indexes;
-		this.contextDependencies = contextDependencies;
+		this.contexts = options.contexts;
+		this.indexes = options.indexes;
+		this.contextDependencies = options.contextDependencies;
+		this.dependencies = new Set();
 
-		this.params = params;
-		this.indexNames = indexNames;
-		this.listNames = listNames;
+		this.params = options.params;
+		this.indexNames = options.indexNames;
+		this.listNames = options.listNames;
+
+		this.listName = options.listName;
 
 		this.builders = {
 			create: new CodeBuilder(),
@@ -26,10 +29,17 @@ export default class Block {
 			destroy: new CodeBuilder()
 		};
 
-		this.getUniqueName = generator.getUniqueNameMaker( params );
+		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
 
 		// unique names
 		this.component = this.getUniqueName( 'component' );
+		this.target = this.getUniqueName( 'target' );
+	}
+
+	addDependencies ( dependencies ) {
+		dependencies.forEach( dependency => {
+			this.dependencies.add( dependency );
+		});
 	}
 
 	addElement ( name, renderStatement, parentNode, needsIdentifier = false ) {
@@ -66,7 +76,7 @@ export default class Block {
 		if ( parentNode ) {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
 		} else {
-			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
+			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, ${this.target}, anchor );` );
 		}
 	}
 
@@ -99,7 +109,7 @@ export default class Block {
 			properties.addBlock( `mount: ${this.generator.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
-				mount: function ( target, anchor ) {
+				mount: function ( ${this.target}, anchor ) {
 					${this.builders.mount}
 				},
 			` );

@@ -6,10 +6,6 @@ import visitEventHandler from './EventHandler.js';
 import visitBinding from './Binding.js';
 import visitRef from './Ref.js';
 
-function capDown ( name ) {
-	return `${name[0].toLowerCase()}${name.slice( 1 )}`;
-}
-
 function stringifyProps ( props ) {
 	if ( !props.length ) return '{}';
 
@@ -38,7 +34,7 @@ const visitors = {
 
 export default function visitComponent ( generator, block, state, node ) {
 	const hasChildren = node.children.length > 0;
-	const name = block.getUniqueName( capDown( node.name === ':Self' ? generator.name : node.name ) );
+	const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
 
 	const childState = Object.assign( {}, state, {
 		parentNode: null
@@ -105,9 +101,7 @@ export default function visitComponent ( generator, block, state, node ) {
 	if ( hasChildren ) {
 		const params = block.params.join( ', ' );
 
-		const childBlock = block.child({
-			name: generator.getUniqueName( `create_${name}_yield_fragment` ) // TODO should getUniqueName happen inside Fragment? probably
-		});
+		const childBlock = node._block;
 
 		node.children.forEach( child => {
 			visit( generator, childBlock, childState, child );
@@ -162,7 +156,7 @@ export default function visitComponent ( generator, block, state, node ) {
 	` );
 
 	if ( isToplevel ) {
-		block.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
+		block.builders.mount.addLine( `${name}._fragment.mount( ${block.target}, anchor );` );
 	}
 
 	if ( local.dynamicAttributes.length ) {

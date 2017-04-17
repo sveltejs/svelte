@@ -7,7 +7,7 @@ export default function visitEventHandler ( generator, block, state, node, attri
 
 	const usedContexts = [];
 	attribute.expression.arguments.forEach( arg => {
-		const { contexts } = generator.contextualise( block, arg, null, true );
+		const { contexts } = block.contextualise( arg, null, true );
 
 		contexts.forEach( context => {
 			if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
@@ -31,5 +31,5 @@ export default function visitEventHandler ( generator, block, state, node, attri
 		${local.name}.on( '${attribute.name}', function ( event ) {
 			${handlerBody}
 		});
-	` );	
+	` );
 }

@@ -3,198 +3,79 @@ import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, block, state, node ) {
-	const name = generator.getUniqueName( `each_block` );
-	const renderer = generator.getUniqueName( `create_each_block` );
-	const elseName = generator.getUniqueName( `${name}_else` );
-	const renderElse = generator.getUniqueName( `${renderer}_else` );
+	const each_block = generator.getUniqueName( `each_block` );
+	const create_each_block = node._block.name;
+	const each_block_value = node._block.listName;
+	const iterations = block.getUniqueName( `${each_block}_iterations` );
 	const i = block.getUniqueName( `i` );
 	const params = block.params.join( ', ' );
+	const anchor = block.getUniqueName( `${each_block}_anchor` );
 
-	const listName = block.getUniqueName( `${name}_value` );
+	const vars = { each_block, create_each_block, each_block_value, iterations, i, params, anchor };
+
+	const { snippet } = block.contextualise( node.expression );
+
+	block.createAnchor( anchor, state.parentNode );
+	block.builders.create.addLine( `var ${each_block_value} = ${snippet};` );
+	block.builders.create.addLine( `var ${iterations} = [];` );
+
+	if ( node.key ) {
+		keyed( generator, block, state, node, snippet, vars );
+	} else {
+		unkeyed( generator, block, state, node, snippet, vars );
+	}
 
 	const isToplevel = !state.parentNode;
 
-	const { dependencies, snippet } = generator.contextualise( block, node.expression );
-
-	const anchor = block.getUniqueName( `${name}_anchor` );
-	block.createAnchor( anchor, state.parentNode );
-
-	const localVars = {};
-
-	localVars.iteration = block.getUniqueName( `${name}_iteration` );
-	localVars.iterations = block.getUniqueName( `${name}_iterations` );
-	localVars._iterations = block.getUniqueName( `_${name}_iterations` );
-	localVars.lookup = block.getUniqueName( `${name}_lookup` );
-	localVars._lookup = block.getUniqueName( `_${name}_lookup` );
-
-	block.builders.create.addLine( `var ${listName} = ${snippet};` );
-	block.builders.create.addLine( `var ${localVars.iterations} = [];` );
-	if ( node.key ) block.builders.create.addLine( `var ${localVars.lookup} = Object.create( null );` );
-	if ( node.else ) block.builders.create.addLine( `var ${elseName} = null;` );
-
-	const initialRender = new CodeBuilder();
-
-	if ( node.key ) {
-		localVars.fragment = block.getUniqueName( 'fragment' );
-		localVars.value = block.getUniqueName( 'value' );
-		localVars.key = block.getUniqueName( 'key' );
-
-		initialRender.addBlock( deindent`
-			var ${localVars.key} = ${listName}[${i}].${node.key};
-			${localVars.iterations}[${i}] = ${localVars.lookup}[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${localVars.key}` : `` } );
-		` );
-	} else {
-		initialRender.addLine(
-			`${localVars.iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );`
-		);
-	}
-
-	if ( !isToplevel ) {
-		initialRender.addLine(
-			`${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );`
-		);
-	}
-
-	block.builders.create.addBlock( deindent`
-		for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
-			${initialRender}
-		}
-	` );
-
-	if ( node.else ) {
-		block.builders.create.addBlock( deindent`
-			if ( !${listName}.length ) {
-				${elseName} = ${renderElse}( ${params}, ${block.component} );
-				${!isToplevel ? `${elseName}.mount( ${anchor}.parentNode, ${anchor} );` : ''}
-			}
-		` );
-	}
-
 	if ( isToplevel ) {
 		block.builders.mount.addBlock( deindent`
-			for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
-				${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
-			}
-		` );
-		if ( node.else ) {
-			block.builders.mount.addBlock( deindent`
-				if ( ${elseName} ) {
-					${elseName}.mount( ${anchor}.parentNode, ${anchor} );
-				}
-			` );
-		}
-	}
-
-	if ( node.key ) {
-		block.builders.update.addBlock( deindent`
-			var ${listName} = ${snippet};
-			var ${localVars._iterations} = [];
-			var ${localVars._lookup} = Object.create( null );
-
-			var ${localVars.fragment} = document.createDocumentFragment();
-
-			// create new iterations as necessary
-			for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
-				var ${localVars.value} = ${listName}[${i}];
-				var ${localVars.key} = ${localVars.value}.${node.key};
-
-				if ( ${localVars.lookup}[ ${localVars.key} ] ) {
-					${localVars._iterations}[${i}] = ${localVars._lookup}[ ${localVars.key} ] = ${localVars.lookup}[ ${localVars.key} ];
-					${localVars._lookup}[ ${localVars.key} ].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
-				} else {
-					${localVars._iterations}[${i}] = ${localVars._lookup}[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${localVars.key}` : `` } );
-				}
-
-				${localVars._iterations}[${i}].mount( ${localVars.fragment}, null );
-			}
-
-			// remove old iterations
-			for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
-				var ${localVars.iteration} = ${localVars.iterations}[${i}];
-				if ( !${localVars._lookup}[ ${localVars.iteration}.key ] ) {
-					${localVars.iteration}.destroy( true );
-				}
-			}
-
-			${anchor}.parentNode.insertBefore( ${localVars.fragment}, ${anchor} );
-
-			${localVars.iterations} = ${localVars._iterations};
-			${localVars.lookup} = ${localVars._lookup};
-		` );
-	} else {
-		block.builders.update.addBlock( deindent`
-			var ${listName} = ${snippet};
-
-			for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
-				if ( !${localVars.iterations}[${i}] ) {
-					${localVars.iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );
-					${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
-				} else {
-					${localVars.iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
-				}
-			}
-
-			${generator.helper( 'destroyEach' )}( ${localVars.iterations}, true, ${listName}.length );
-
-			${localVars.iterations}.length = ${listName}.length;
-		` );
-	}
-
-	if ( node.else ) {
-		block.builders.update.addBlock( deindent`
-			if ( !${listName}.length && ${elseName} ) {
-				${elseName}.update( changed, ${params} );
-			} else if ( !${listName}.length ) {
-				${elseName} = ${renderElse}( ${params}, ${block.component} );
-				${elseName}.mount( ${anchor}.parentNode, ${anchor} );
-			} else if ( ${elseName} ) {
-				${elseName}.destroy( true );
+			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${iterations}[${i}].mount( ${block.target}, ${anchor} );
 			}
 		` );
 	}
 
 	block.builders.destroy.addBlock(
-		`${generator.helper( 'destroyEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
+		`${generator.helper( 'destroyEach' )}( ${iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
 
 	if ( node.else ) {
+		const each_block_else = generator.getUniqueName( `${each_block}_else` );
+
+		block.builders.create.addLine( `var ${each_block_else} = null;` );
+
+		// TODO neaten this up... will end up with an empty line in the block
+		block.builders.create.addBlock( deindent`
+			if ( !${each_block_value}.length ) {
+				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+				${!isToplevel ? `${each_block_else}.mount( ${state.parentNode}, ${anchor} );` : ''}
+			}
+		` );
+
+		block.builders.mount.addBlock( deindent`
+			if ( ${each_block_else} ) {
+				${each_block_else}.mount( ${state.parentNode || block.target}, ${anchor} );
+			}
+		` );
+
+		block.builders.update.addBlock( deindent`
+			if ( !${each_block_value}.length && ${each_block_else} ) {
+				${each_block_else}.update( changed, ${params} );
+			} else if ( !${each_block_value}.length ) {
+				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+				${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+			} else if ( ${each_block_else} ) {
+				${each_block_else}.destroy( true );
+			}
+		` );
+
 		block.builders.destroy.addBlock( deindent`
-			if ( ${elseName} ) {
-				${elseName}.destroy( ${isToplevel ? 'detach' : 'false'} );
+			if ( ${each_block_else} ) {
+				${each_block_else}.destroy( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 	}
 
-	const indexNames = new Map( block.indexNames );
-	const indexName = node.index || block.getUniqueName( `${node.context}_index` );
-	indexNames.set( node.context, indexName );
-
-	const listNames = new Map( block.listNames );
-	listNames.set( node.context, listName );
-
-	const context = generator.getUniqueName( node.context );
-	const contexts = new Map( block.contexts );
-	contexts.set( node.context, context );
-
-	const indexes = new Map( block.indexes );
-	if ( node.index ) indexes.set( indexName, node.context );
-
-	const contextDependencies = new Map( block.contextDependencies );
-	contextDependencies.set( node.context, dependencies );
-
-	const childBlock = block.child({
-		name: renderer,
-		expression: node.expression,
-		context: node.context,
-		key: node.key,
-
-		contextDependencies,
-		contexts,
-		indexes,
-
-		indexNames,
-		listNames,
-		params: block.params.concat( listName, context, indexName )
-	});
+	const childBlock = node._block;
 
 	const childState = Object.assign( {}, state, {
 		parentNode: null,
@@ -208,14 +89,128 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	generator.addBlock( childBlock );
 
 	if ( node.else ) {
-		const childBlock = block.child({
-			name: renderElse
-		});
-
 		node.else.children.forEach( child => {
-			visit( generator, childBlock, childState, child );
+			visit( generator, node.else._block, childState, child );
 		});
 
-		generator.addBlock( childBlock );
+		generator.addBlock( node.else._block );
+	}
+}
+
+function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, iterations, i, params, anchor } ) {
+	const fragment = block.getUniqueName( 'fragment' );
+	const value = block.getUniqueName( 'value' );
+	const key = block.getUniqueName( 'key' );
+	const lookup = block.getUniqueName( `${each_block}_lookup` );
+	const _lookup = block.getUniqueName( `_${each_block}_lookup` );
+	const iteration = block.getUniqueName( `${each_block}_iteration` );
+	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
+
+	block.builders.create.addLine( `var ${lookup} = Object.create( null );` );
+
+	const create = new CodeBuilder();
+
+	create.addBlock( deindent`
+		var ${key} = ${each_block_value}[${i}].${node.key};
+		${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
+	` );
+
+	if ( state.parentNode ) {
+		create.addLine(
+			`${iterations}[${i}].mount( ${state.parentNode}, ${anchor} );`
+		);
+	}
+
+	block.builders.create.addBlock( deindent`
+		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+			${create}
+		}
+	` );
+
+	block.builders.update.addBlock( deindent`
+		var ${each_block_value} = ${snippet};
+		var ${_iterations} = [];
+		var ${_lookup} = Object.create( null );
+
+		var ${fragment} = document.createDocumentFragment();
+
+		// create new iterations as necessary
+		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+			var ${value} = ${each_block_value}[${i}];
+			var ${key} = ${value}.${node.key};
+
+			if ( ${lookup}[ ${key} ] ) {
+				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
+				${_lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+			} else {
+				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
+			}
+
+			${_iterations}[${i}].mount( ${fragment}, null );
+		}
+
+		// remove old iterations
+		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			var ${iteration} = ${iterations}[${i}];
+			if ( !${_lookup}[ ${iteration}.key ] ) {
+				${iteration}.destroy( true );
+			}
+		}
+
+		${anchor}.parentNode.insertBefore( ${fragment}, ${anchor} );
+
+		${iterations} = ${_iterations};
+		${lookup} = ${_lookup};
+	` );
+}
+
+function unkeyed ( generator, block, state, node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor } ) {
+	const create = new CodeBuilder();
+
+	create.addLine(
+		`${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );`
+	);
+
+	if ( state.parentNode ) {
+		create.addLine(
+			`${iterations}[${i}].mount( ${state.parentNode}, ${anchor} );`
+		);
+	}
+
+	block.builders.create.addBlock( deindent`
+		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+			${create}
+		}
+	` );
+
+	const { dependencies } = block.contextualise( node.expression );
+	const allDependencies = new Set( block.dependencies );
+	dependencies.forEach( dependency => {
+		allDependencies.add( dependency );
+	});
+
+	const condition = Array.from( allDependencies )
+		.map( dependency => `'${dependency}' in changed` )
+		.join( ' || ' );
+
+	if ( condition !== '' ) {
+		block.builders.update.addBlock( deindent`
+			var ${each_block_value} = ${snippet};
+
+			if ( ${condition} ) {
+				for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+					if ( !${iterations}[${i}] ) {
+						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+						${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+					} else {
+						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					}
+				}
+
+				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );
+
+				${iterations}.length = ${each_block_value}.length;
+			}
+		` );
 	}
 }
