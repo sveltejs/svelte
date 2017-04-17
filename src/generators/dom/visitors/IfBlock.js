@@ -11,7 +11,7 @@ function getConditionsAndBlocks ( generator, block, state, node ) {
 		block: node._block.name
 	}];
 
-	generateBlock( generator, block, state, node );
+	visitChildren( generator, block, state, node );
 
 	if ( isElseIf( node.else ) ) {
 		conditionsAndBlocks.push(
@@ -24,25 +24,21 @@ function getConditionsAndBlocks ( generator, block, state, node ) {
 		});
 
 		if ( node.else ) {
-			generateBlock( generator, block, state, node.else );
+			visitChildren( generator, block, state, node.else );
 		}
 	}
 
 	return conditionsAndBlocks;
 }
 
-function generateBlock ( generator, block, state, node ) {
-	const childBlock = node._block;
-
+function visitChildren ( generator, block, state, node ) {
 	const childState = Object.assign( {}, state, {
 		parentNode: null
 	});
 
-	node.children.forEach( node => {
-		visit( generator, childBlock, childState, node );
+	node.children.forEach( child => {
+		visit( generator, node._block, childState, child );
 	});
-
-	generator.addBlock( childBlock );
 }
 
 export default function visitIfBlock ( generator, block, state, node ) {

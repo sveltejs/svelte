@@ -19,6 +19,7 @@ const preprocessors = {
 				name: generator.getUniqueName( `create_if_block` )
 			});
 
+			generator.blocks.push( node._block );
 			preprocessChildren( generator, node._block, node.children );
 			block.addDependencies( node._block.dependencies );
 
@@ -29,6 +30,7 @@ const preprocessors = {
 					name: generator.getUniqueName( `create_if_block` )
 				});
 
+				generator.blocks.push( node.else._block );
 				preprocessChildren( generator, node.else._block, node.else.children );
 				block.addDependencies( node.else._block.dependencies );
 			}
@@ -77,6 +79,7 @@ const preprocessors = {
 			params: block.params.concat( listName, context, indexName )
 		});
 
+		generator.blocks.push( node._block );
 		preprocessChildren( generator, node._block, node.children );
 		block.addDependencies( node._block.dependencies );
 
@@ -85,6 +88,7 @@ const preprocessors = {
 				name: generator.getUniqueName( `${node._block.name}_else` )
 			});
 
+			generator.blocks.push( node.else._block );
 			preprocessChildren( generator, node.else._block, node.else.children );
 		}
 	},
@@ -115,6 +119,7 @@ const preprocessors = {
 				name: generator.getUniqueName( `create_${name}_yield_fragment` )
 			});
 
+			generator.blocks.push( node._block );
 			preprocessChildren( generator, node._block, node.children );
 		}
 
@@ -149,6 +154,7 @@ export default function preprocess ( generator, children ) {
 		dependencies: new Set()
 	});
 
+	generator.blocks.push( block );
 	preprocessChildren( generator, block, children );
 
 	return block;

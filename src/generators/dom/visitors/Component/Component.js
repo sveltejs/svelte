@@ -118,8 +118,6 @@ export default function visitComponent ( generator, block, state, node ) {
 		);
 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);
-
-		generator.addBlock( childBlock );
 	}
 
 	const statements = [];

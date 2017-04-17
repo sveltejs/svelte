@@ -75,7 +75,7 @@ export default function visitEventHandler ( generator, block, state, node, attri
 		`;
 
 	if ( shouldHoist ) {
-		generator.addBlock({
+		generator.blocks.push({
 			render: () => handler
 		});
 	} else {

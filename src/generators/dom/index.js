@@ -24,10 +24,6 @@ class DomGenerator extends Generator {
 		};
 	}
 
-	addBlock ( block ) {
-		this.blocks.push( block );
-	}
-
 	helper ( name ) {
 		if ( this.options.dev && `${name}Dev` in shared ) {
 			name = `${name}Dev`;
@@ -59,8 +55,6 @@ export default function dom ( parsed, source, options ) {
 		visit( generator, block, state, node );
 	});
 
-	generator.addBlock( block );
-
 	const builders = {
 		main: new CodeBuilder(),
 		init: new CodeBuilder(),
@@ -68,7 +62,7 @@ export default function dom ( parsed, source, options ) {
 	};
 
 	if ( options.dev ) {
-		builders._set.addBlock ( deindent`
+		builders._set.addBlock( deindent`
 			if ( typeof newState !== 'object' ) {
 				throw new Error( 'Component .set was called without an object of data key-values to update.' );
 			}
@@ -137,8 +131,9 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	let i = generator.blocks.length;
-	while ( i-- ) builders.main.addBlock( generator.blocks[i].render() );
+	generator.blocks.forEach( block => {
+		builders.main.addBlock( block.render() );
+	});
 
 	builders.init.addLine( `this._torndown = false;` );
 
