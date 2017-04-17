@@ -17,13 +17,11 @@ var template = (function () {
 }());
 
 function create_main_fragment ( root, component ) {
-	
+
 
 	return {
 		mount: noop,
-		
-		update: noop,
-		
+
 		destroy: noop
 	};
 }
@@ -32,19 +30,19 @@ function SvelteComponent ( options ) {
 	options = options || {};
 	this._state = options.data || {};
 	recompute( this._state, this._state, {}, true );
-	
+
 	this._observers = {
 		pre: Object.create( null ),
 		post: Object.create( null )
 	};
-	
+
 	this._handlers = Object.create( null );
-	
+
 	this._root = options._root;
 	this._yield = options._yield;
-	
+
 	this._torndown = false;
-	
+
 	this._fragment = create_main_fragment( this._state, this );
 	if ( options.target ) this._fragment.mount( options.target, null );
 }
@@ -55,9 +53,7 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	recompute( this._state, newState, oldState, false )
-	
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	if ( this._fragment ) this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 

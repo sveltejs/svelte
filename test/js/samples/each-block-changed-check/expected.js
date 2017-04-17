@@ -23,11 +23,11 @@ function create_main_fragment ( root, component ) {
 
 			if ( 'comments' in changed || 'elapsed' in changed || 'time' in changed ) {
 				for ( var i = 0; i < each_block_value.length; i += 1 ) {
-					if ( !each_block_iterations[i] ) {
+					if ( each_block_iterations[i] ) {
+						each_block_iterations[i].update( changed, root, each_block_value, each_block_value[i], i );
+					} else {
 						each_block_iterations[i] = create_each_block( root, each_block_value, each_block_value[i], i, component );
 						each_block_iterations[i].mount( each_block_anchor.parentNode, each_block_anchor );
-					} else {
-						each_block_iterations[i].update( changed, root, each_block_value, each_block_value[i], i );
 					}
 				}
 
@@ -127,7 +127,6 @@ assign( SvelteComponent.prototype, proto );
 SvelteComponent.prototype._set = function _set ( newState ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
-
 	dispatchObservers( this, this._observers.pre, newState, oldState );
 	if ( this._fragment ) this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );

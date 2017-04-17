@@ -125,6 +125,13 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		}
 	` );
 
+	const consequent = node._block.hasUpdateMethod ?
+		deindent`
+			${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
+			${_lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+		` :
+		`${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];`;
+
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
 		var ${_iterations} = [];
@@ -138,8 +145,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			var ${key} = ${value}.${node.key};
 
 			if ( ${lookup}[ ${key} ] ) {
-				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
-				${_lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+				${consequent}
 			} else {
 				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
 			}
@@ -192,17 +198,28 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 		.join( ' || ' );
 
 	if ( condition !== '' ) {
+		const forLoopBody = node._block.hasUpdateMethod ?
+			deindent`
+				if ( ${iterations}[${i}] ) {
+					${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+				} else {
+					${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+					${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+				}
+			` :
+			deindent`
+				${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+				${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+			`;
+
+		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;
+
 		block.builders.update.addBlock( deindent`
 			var ${each_block_value} = ${snippet};
 
 			if ( ${condition} ) {
-				for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-					if ( !${iterations}[${i}] ) {
-						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-						${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
-					} else {
-						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
-					}
+				for ( var ${i} = ${start}; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+					${forLoopBody}
 				}
 
 				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );

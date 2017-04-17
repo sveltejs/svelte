@@ -6,22 +6,29 @@ function isElseIf ( node ) {
 
 const preprocessors = {
 	MustacheTag: ( generator, block, node ) => {
-		const { dependencies } = block.contextualise( node.expression );
+		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 	},
 
 	IfBlock: ( generator, block, node ) => {
+		const blocks = [];
+		let dynamic = false;
+
 		function attachBlocks ( node ) {
-			const { dependencies } = block.contextualise( node.expression );
+			const dependencies = block.findDependencies( node.expression );
 			block.addDependencies( dependencies );
 
 			node._block = block.child({
 				name: generator.getUniqueName( `create_if_block` )
 			});
 
-			generator.blocks.push( node._block );
+			blocks.push( node._block );
 			preprocessChildren( generator, node._block, node.children );
-			block.addDependencies( node._block.dependencies );
+
+			if ( node._block.dependencies.size > 0 ) {
+				dynamic = true;
+				block.addDependencies( node._block.dependencies );
+			}
 
 			if ( isElseIf( node.else ) ) {
 				attachBlocks( node.else.children[0] );
@@ -30,17 +37,27 @@ const preprocessors = {
 					name: generator.getUniqueName( `create_if_block` )
 				});
 
-				generator.blocks.push( node.else._block );
+				blocks.push( node.else._block );
 				preprocessChildren( generator, node.else._block, node.else.children );
-				block.addDependencies( node.else._block.dependencies );
+
+				if ( node.else._block.dependencies.size > 0 ) {
+					dynamic = true;
+					block.addDependencies( node.else._block.dependencies );
+				}
 			}
 		}
 
 		attachBlocks( node );
+
+		blocks.forEach( block => {
+			block.hasUpdateMethod = dynamic;
+		});
+
+		generator.blocks.push( ...blocks );
 	},
 
 	EachBlock: ( generator, block, node ) => {
-		const { dependencies } = block.contextualise( node.expression );
+		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
 		const indexNames = new Map( block.indexNames );
@@ -82,6 +99,7 @@ const preprocessors = {
 		generator.blocks.push( node._block );
 		preprocessChildren( generator, node._block, node.children );
 		block.addDependencies( node._block.dependencies );
+		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
 		if ( node.else ) {
 			node.else._block = block.child({
@@ -90,6 +108,7 @@ const preprocessors = {
 
 			generator.blocks.push( node.else._block );
 			preprocessChildren( generator, node.else._block, node.else.children );
+			node.else._block.hasUpdateMethod = node.else._block.dependencies.size > 0;
 		}
 	},
 
@@ -98,16 +117,24 @@ const preprocessors = {
 			if ( attribute.type === 'Attribute' && attribute.value !== true ) {
 				attribute.value.forEach( chunk => {
 					if ( chunk.type !== 'Text' ) {
-						const { dependencies } = block.contextualise( chunk.expression );
+						const dependencies = block.findDependencies( chunk.expression );
 						block.addDependencies( dependencies );
 					}
 				});
 			}
 
 			else if ( attribute.type === 'Binding' ) {
-				const { dependencies } = block.contextualise( attribute.value );
+				const dependencies = block.findDependencies( attribute.value );
 				block.addDependencies( dependencies );
 			}
+
+			// else if ( attribute.type === 'EventHandler' ) {
+			// 	// TODO is this necessary?
+			// 	attribute.expression.arguments.forEach( arg => {
+			// 		const dependencies = block.findDependencies( arg );
+			// 		block.addDependencies( dependencies );
+			// 	});
+			// }
 		});
 
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
@@ -121,6 +148,8 @@ const preprocessors = {
 
 			generator.blocks.push( node._block );
 			preprocessChildren( generator, node._block, node.children );
+			block.addDependencies( node._block.dependencies );
+			node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 		}
 
 		else {
@@ -156,6 +185,7 @@ export default function preprocess ( generator, children ) {
 
 	generator.blocks.push( block );
 	preprocessChildren( generator, block, children );
+	block.hasUpdateMethod = block.dependencies.size > 0;
 
 	return block;
 }
