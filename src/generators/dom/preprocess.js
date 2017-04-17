@@ -106,7 +106,21 @@ const preprocessors = {
 			}
 		});
 
-		preprocessChildren( generator, block, node.children );
+		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
+
+		if ( isComponent ) {
+			const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
+
+			node._block = block.child({
+				name: generator.getUniqueName( `create_${name}_yield_fragment` )
+			});
+
+			preprocessChildren( generator, node._block, node.children );
+		}
+
+		else {
+			preprocessChildren( generator, block, node.children );
+		}
 	}
 };
 
