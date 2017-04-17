@@ -66,10 +66,9 @@ export default class Generator {
 		this.addSourcemapLocations( expression );
 
 		const usedContexts = [];
-		const dependencies = [];
 
 		const { code, helpers } = this;
-		const { contextDependencies, contexts, indexes } = block;
+		const { contexts, indexes } = block;
 
 		let scope = annotateWithScopes( expression ); // TODO this already happens in findDependencies
 		let lexicalDepth = 0;
@@ -108,7 +107,6 @@ export default class Generator {
 							code.overwrite( node.start, node.start + name.length, contextName, true );
 						}
 
-						dependencies.push( ...contextDependencies.get( name ) );
 						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
 					}
 
@@ -133,7 +131,6 @@ export default class Generator {
 							code.prependRight( node.start, `root.` );
 						}
 
-						dependencies.push( name );
 						if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 					}
 
@@ -147,22 +144,17 @@ export default class Generator {
 			}
 		});
 
-		dependencies.forEach( name => {
-			if ( !globalWhitelist.has( name ) ) {
-				this.expectedProperties.add( name );
-			}
-		});
-
 		return {
-			dependencies,
+			dependencies: expression._dependencies, // TODO probably a better way to do this
 			contexts: usedContexts,
 			snippet: `[✂${expression.start}-${expression.end}✂]`
 		};
 	}
 
 	findDependencies ( block, expression, isEventHandler ) {
-		const dependencies = [];
+		if ( expression._dependencies ) return expression._dependencies;
 
+		const dependencies = [];
 		const { contextDependencies, contexts } = block;
 
 		let scope = annotateWithScopes( expression );
@@ -195,7 +187,13 @@ export default class Generator {
 			}
 		});
 
-		return dependencies;
+		dependencies.forEach( name => {
+			if ( !globalWhitelist.has( name ) ) {
+				this.expectedProperties.add( name );
+			}
+		});
+
+		return ( expression._dependencies = dependencies );
 	}
 
 	generate ( result, options, { name, format } ) {
