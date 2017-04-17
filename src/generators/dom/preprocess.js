@@ -7,37 +7,39 @@ function isElseIf ( node ) {
 const preprocessors = {
 	MustacheTag: ( generator, block, node ) => {
 		const { dependencies } = block.contextualise( node.expression );
-		dependencies.forEach( dependency => {
-			block.dependencies.add( dependency );
-		});
+		block.addDependencies( dependencies );
 	},
 
 	IfBlock: ( generator, block, node ) => {
 		function attachBlocks ( node ) {
 			const { dependencies } = block.contextualise( node.expression );
+			block.addDependencies( dependencies );
 
 			node._block = block.child({
 				name: generator.getUniqueName( `create_if_block` )
 			});
 
 			preprocessChildren( generator, node._block, node.children );
+			block.addDependencies( node._block.dependencies );
 
 			if ( isElseIf( node.else ) ) {
-				attachBlocks( node.else );
+				attachBlocks( node.else.children[0] );
 			} else if ( node.else ) {
 				node.else._block = block.child({
 					name: generator.getUniqueName( `create_if_block` )
 				});
 
 				preprocessChildren( generator, node.else._block, node.else.children );
+				block.addDependencies( node.else._block.dependencies );
 			}
 		}
 
-		attachBlocks ( node );
+		attachBlocks( node );
 	},
 
 	EachBlock: ( generator, block, node ) => {
 		const { dependencies } = block.contextualise( node.expression );
+		block.addDependencies( dependencies );
 
 		const indexNames = new Map( block.indexNames );
 		const indexName = node.index || block.getUniqueName( `${node.context}_index` );
@@ -67,12 +69,16 @@ const preprocessors = {
 			contexts,
 			indexes,
 
+			listName,
+			indexName,
+
 			indexNames,
 			listNames,
 			params: block.params.concat( listName, context, indexName )
 		});
 
 		preprocessChildren( generator, node._block, node.children );
+		block.addDependencies( node._block.dependencies );
 	},
 
 	Element: ( generator, block, node ) => {

@@ -5,39 +5,34 @@ function isElseIf ( node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
 }
 
-function getConditionsAndBlocks ( generator, block, state, node, _name, i = 0 ) {
-	const name = generator.getUniqueName( `${_name}_${i}` );
-
+function getConditionsAndBlocks ( generator, block, state, node ) {
 	const conditionsAndBlocks = [{
 		condition: block.contextualise( node.expression ).snippet,
-		block: name
+		block: node._block.name
 	}];
 
-	generateBlock( generator, block, state, node, name );
+	generateBlock( generator, block, state, node );
 
 	if ( isElseIf( node.else ) ) {
 		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, block, state, node.else.children[0], _name, i + 1 )
+			...getConditionsAndBlocks( generator, block, state, node.else.children[0] )
 		);
 	} else {
-		const name = generator.getUniqueName( `${_name}_${i + 1}` );
 		conditionsAndBlocks.push({
 			condition: null,
-			block: node.else ? name : null,
+			block: node.else ? node.else._block.name : null,
 		});
 
 		if ( node.else ) {
-			generateBlock( generator, block, state, node.else, name );
+			generateBlock( generator, block, state, node.else );
 		}
 	}
 
 	return conditionsAndBlocks;
 }
 
-function generateBlock ( generator, block, state, node, name ) {
-	const childBlock = block.child({
-		name
-	});
+function generateBlock ( generator, block, state, node ) {
+	const childBlock = node._block;
 
 	const childState = Object.assign( {}, state, {
 		parentNode: null

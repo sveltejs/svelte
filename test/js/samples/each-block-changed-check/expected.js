@@ -14,14 +14,14 @@ function create_main_fragment ( root, component ) {
 			insertNode( each_block_anchor, target, anchor );
 
 			for ( var i = 0; i < each_block_iterations.length; i += 1 ) {
-				each_block_iterations[i].mount( each_block_anchor.parentNode, each_block_anchor );
+				each_block_iterations[i].mount( target, each_block_anchor );
 			}
 		},
 
 		update: function ( changed, root ) {
-			if ( 'comments' in changed || 'time' in changed ) {
-				var each_block_value = root.comments;
+			var each_block_value = root.comments;
 
+			if ( 'comments' in changed || 'elapsed' in changed || 'time' in changed ) {
 				for ( var i = 0; i < each_block_value.length; i += 1 ) {
 					if ( !each_block_iterations[i] ) {
 						each_block_iterations[i] = create_each_block( root, each_block_value, each_block_value[i], i, component );
