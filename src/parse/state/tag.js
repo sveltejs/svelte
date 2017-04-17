@@ -2,7 +2,7 @@ import readExpression from '../read/expression.js';
 import readScript from '../read/script.js';
 import readStyle from '../read/style.js';
 import { readEventHandlerDirective, readBindingDirective } from '../read/directives.js';
-import { trimStart, trimEnd } from '../utils/trim.js';
+import { trimStart, trimEnd } from '../../utils/trim.js';
 import { decodeCharacterReferences } from '../utils/html.js';
 import isVoidElementName from '../../utils/isVoidElementName.js';
 

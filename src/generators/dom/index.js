@@ -43,7 +43,7 @@ export default function dom ( parsed, source, options ) {
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
-	const block = preprocess( generator, parsed.html.children );
+	const block = preprocess( generator, parsed.html );
 
 	const state = {
 		namespace,

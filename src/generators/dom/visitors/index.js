@@ -1,4 +1,3 @@
-import Comment from './Comment.js';
 import EachBlock from './EachBlock.js';
 import Element from './Element/Element.js';
 import IfBlock from './IfBlock.js';
@@ -8,7 +7,6 @@ import Text from './Text.js';
 import YieldTag from './YieldTag.js';
 
 export default {
-	Comment,
 	EachBlock,
 	Element,
 	IfBlock,
