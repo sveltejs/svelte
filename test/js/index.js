@@ -18,9 +18,16 @@ describe( 'js', () => {
 			dir = path.resolve( 'test/js/samples', dir );
 			const input = fs.readFileSync( `${dir}/input.html`, 'utf-8' ).replace( /\s+$/, '' );
 
-			const actual = svelte.compile( input, {
-				shared: true
-			}).code;
+			let actual;
+
+			try {
+				actual = svelte.compile( input, {
+					shared: true
+				}).code;
+			} catch ( err ) {
+				console.log( err.frame );
+				throw err;
+			}
 
 			fs.writeFileSync( `${dir}/_actual.js`, actual );
 			const expected = fs.readFileSync( `${dir}/expected.js`, 'utf-8' );

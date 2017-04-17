@@ -30,7 +30,7 @@ export default function visitElement ( generator, block, node ) {
 					return chunk.data;
 				}
 
-				const { snippet } = generator.contextualise( block, chunk.expression );
+				const { snippet } = block.contextualise( chunk.expression );
 				return '${' + snippet + '}';
 			}).join( '' ) + `"`;
 		}

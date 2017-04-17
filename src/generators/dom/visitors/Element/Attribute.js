@@ -27,7 +27,7 @@ export default function visitAttribute ( generator, block, state, node, attribut
 
 		if ( attribute.value.length === 1 ) {
 			// single {{tag}} — may be a non-string
-			const { snippet } = generator.contextualise( block, attribute.value[0].expression );
+			const { snippet } = block.contextualise( attribute.value[0].expression );
 			value = snippet;
 		} else {
 			// '{{foo}} {{bar}}' — treat as string concatenation
@@ -36,7 +36,7 @@ export default function visitAttribute ( generator, block, state, node, attribut
 					if ( chunk.type === 'Text' ) {
 						return JSON.stringify( chunk.data );
 					} else {
-						const { snippet } = generator.contextualise( block, chunk.expression );
+						const { snippet } = block.contextualise( chunk.expression );
 						return `( ${snippet} )`;
 					}
 				}).join( ' + ' )

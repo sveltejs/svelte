@@ -7,7 +7,7 @@ import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
 import Generator from '../Generator.js';
-import Block from './Block.js';
+import preprocess from './preprocess.js';
 import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
@@ -47,25 +47,7 @@ export default function dom ( parsed, source, options ) {
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
-	const getUniqueName = generator.getUniqueNameMaker( [ 'root' ] );
-	const component = getUniqueName( 'component' );
-
-	const mainBlock = new Block({
-		generator,
-		name: generator.alias( 'create_main_fragment' ),
-		key: null,
-
-		component,
-
-		contexts: new Map(),
-		indexes: new Map(),
-
-		params: [ 'root' ],
-		indexNames: new Map(),
-		listNames: new Map(),
-
-		getUniqueName
-	});
+	const block = preprocess( generator, parsed.html.children );
 
 	const state = {
 		namespace,
@@ -74,10 +56,10 @@ export default function dom ( parsed, source, options ) {
 	};
 
 	parsed.html.children.forEach( node => {
-		visit( generator, mainBlock, state, node );
+		visit( generator, block, state, node );
 	});
 
-	generator.addBlock( mainBlock );
+	generator.addBlock( block );
 
 	const builders = {
 		main: new CodeBuilder(),
