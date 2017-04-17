@@ -47,8 +47,7 @@ export default function visitIfBlock ( generator, block, state, node ) {
 	const params = block.params.join( ', ' );
 	const name = generator.getUniqueName( `if_block` );
 	const getBlock = block.getUniqueName( `get_block` );
-	const currentBlock = block.getUniqueName( `current_block` );
-	const _currentBlock = block.getUniqueName( `_current_block` );
+	const current_block = block.getUniqueName( `current_block` );
 
 	const branches = getBranches( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
 	const dynamic = branches.some( branch => branch.dynamic );
@@ -63,8 +62,8 @@ export default function visitIfBlock ( generator, block, state, node ) {
 			} ).join( '\n' )}
 		}
 
-		var ${currentBlock} = ${getBlock}( ${params} );
-		var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${block.component} );
+		var ${current_block} = ${getBlock}( ${params} );
+		var ${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
 	` );
 
 	const isToplevel = !state.parentNode;
@@ -75,26 +74,21 @@ export default function visitIfBlock ( generator, block, state, node ) {
 		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
 	}
 
-	block.builders.update.addBlock( deindent`
-		var ${_currentBlock} = ${currentBlock};
-		${currentBlock} = ${getBlock}( ${params} );
-	` );
-
 	if ( dynamic ) {
 		block.builders.update.addBlock( deindent`
-			if ( ${_currentBlock} === ${currentBlock} && ${name} ) {
+			if ( ${current_block} === ( ${current_block} = ${getBlock}( ${params} ) ) && ${name} ) {
 				${name}.update( changed, ${params} );
 			} else {
 				if ( ${name} ) ${name}.destroy( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, ${block.component} );
+				${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
 				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 			}
 		` );
 	} else {
 		block.builders.update.addBlock( deindent`
-			if ( ${_currentBlock} !== ${currentBlock} ) {
+			if ( ${current_block} !== ( ${current_block} = ${getBlock}( ${params} ) ) ) {
 				if ( ${name} ) ${name}.destroy( true );
-				${name} = ${currentBlock} && ${currentBlock}( ${params}, ${block.component} );
+				${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
 				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
 			}
 		` );

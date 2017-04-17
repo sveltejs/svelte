@@ -18,10 +18,7 @@ function create_main_fragment ( root, component ) {
 		},
 
 		update: function ( changed, root ) {
-			var _current_block = current_block;
-			current_block = get_block( root );
-
-			if ( _current_block !== current_block ) {
+			if ( current_block !== ( current_block = get_block( root ) ) ) {
 				if ( if_block ) if_block.destroy( true );
 				if_block = current_block && current_block( root, component );
 				if ( if_block ) if_block.mount( if_block_anchor.parentNode, if_block_anchor );
