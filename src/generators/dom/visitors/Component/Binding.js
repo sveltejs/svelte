@@ -1,6 +1,6 @@
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference.js';
-import getSetter from '../shared/binding/getSetter.js';
+import getSetter, { getTailSnippet } from '../shared/binding/getSetter.js';
 
 export default function visitBinding ( generator, block, state, node, attribute, local ) {
 	const { name, keypath } = flattenReference( attribute.value );
@@ -41,6 +41,8 @@ export default function visitBinding ( generator, block, state, node, attribute,
 
 	const updating = block.getUniqueName( `${local.name}_updating` );
 
+	const initialValue = getInitialValue({ block, local, attribute, name });
+
 	local.create.addBlock( deindent`
 		var ${updating} = false;
 
@@ -51,7 +53,7 @@ export default function visitBinding ( generator, block, state, node, attribute,
 				${updating} = true;
 				${setter}
 				${updating} = false;
-			});
+			}, { init: ${generator.helper( 'differs' )}( ${local.name}.get( '${attribute.name}' ), ${initialValue} ) });
 		});
 	` );
 
@@ -62,4 +64,19 @@ export default function visitBinding ( generator, block, state, node, attribute,
 			${updating} = false;
 		}
 	` );
+}
+
+function getInitialValue ({ block, local, attribute, name }) {
+	const tail = attribute.value.type === 'MemberExpression' ? getTailSnippet( attribute.value ) : '';
+
+	if ( block.contexts.has( name ) ) {
+		// const prop = dependencies[0];
+
+		const list = `${local.name}._context.${block.listNames.get( name )}`;
+		const index = `${local.name}._context.${block.indexNames.get( name )}`;
+
+		return `${list}[${index}]${tail}`;
+	}
+
+	return `${block.component}.get( '${name}' )${tail}`;
 }
