@@ -162,7 +162,7 @@ export default function visitComponent ( generator, block, state, node ) {
 	` );
 
 	if ( isToplevel ) {
-		block.builders.mount.addLine( `${name}._fragment.mount( target, anchor );` );
+		block.builders.mount.addLine( `${name}._fragment.mount( ${block.target}, anchor );` );
 	}
 
 	if ( local.dynamicAttributes.length ) {

@@ -30,6 +30,7 @@ export default class Block {
 
 		// unique names
 		this.component = this.getUniqueName( 'component' );
+		this.target = this.getUniqueName( 'target' );
 	}
 
 	addElement ( name, renderStatement, parentNode, needsIdentifier = false ) {
@@ -66,7 +67,7 @@ export default class Block {
 		if ( parentNode ) {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
 		} else {
-			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, target, anchor );` );
+			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, ${this.target}, anchor );` );
 		}
 	}
 
@@ -99,7 +100,7 @@ export default class Block {
 			properties.addBlock( `mount: ${this.generator.helper( 'noop' )},` );
 		} else {
 			properties.addBlock( deindent`
-				mount: function ( target, anchor ) {
+				mount: function ( ${this.target}, anchor ) {
 					${this.builders.mount}
 				},
 			` );

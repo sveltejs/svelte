@@ -28,10 +28,6 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	block.builders.create.addLine( `var ${vars.iterations} = [];` );
 
 	if ( node.key ) {
-		vars.lookup = block.getUniqueName( `${vars.each_block}_lookup` );
-		vars._lookup = block.getUniqueName( `_${vars.each_block}_lookup` );
-
-		block.builders.create.addLine( `var ${vars.lookup} = Object.create( null );` );
 		keyed( generator, block, state, node, vars, snippet );
 	} else {
 		unkeyed( generator, block, state, node, vars, snippet );
@@ -40,7 +36,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	if ( isToplevel ) {
 		block.builders.mount.addBlock( deindent`
 			for ( var ${vars.i} = 0; ${vars.i} < ${vars.iterations}.length; ${vars.i} += 1 ) {
-				${vars.iterations}[${vars.i}].mount( ${vars.anchor}.parentNode, ${vars.anchor} );
+				${vars.iterations}[${vars.i}].mount( ${block.target}, ${vars.anchor} );
 			}
 		` );
 	}
@@ -51,16 +47,17 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	if ( node.else ) {
 		block.builders.create.addLine( `var ${vars.each_block_else} = null;` );
 
+		// TODO neaten this up... will end up with an empty line in the block
 		block.builders.create.addBlock( deindent`
 			if ( !${vars.listName}.length ) {
 				${vars.each_block_else} = ${vars.create_each_block_else}( ${vars.params}, ${block.component} );
-				${!isToplevel ? `${vars.each_block_else}.mount( ${vars.anchor}.parentNode, ${vars.anchor} );` : ''}
+				${!isToplevel ? `${vars.each_block_else}.mount( ${state.parentNode}, ${vars.anchor} );` : ''}
 			}
 		` );
 
 		block.builders.mount.addBlock( deindent`
 			if ( ${vars.each_block_else} ) {
-				${vars.each_block_else}.mount( ${vars.anchor}.parentNode, ${vars.anchor} );
+				${vars.each_block_else}.mount( ${state.parentNode || block.target}, ${vars.anchor} );
 			}
 		` );
 
@@ -142,17 +139,21 @@ function keyed ( generator, block, state, node, vars, snippet ) {
 	const fragment = block.getUniqueName( 'fragment' );
 	const value = block.getUniqueName( 'value' );
 	const key = block.getUniqueName( 'key' );
+	const lookup = block.getUniqueName( `${vars.each_block}_lookup` );
+	const _lookup = block.getUniqueName( `_${vars.each_block}_lookup` );
+
+	block.builders.create.addLine( `var ${lookup} = Object.create( null );` );
 
 	const create = new CodeBuilder();
 
 	create.addBlock( deindent`
 		var ${key} = ${vars.listName}[${vars.i}].${node.key};
-		${vars.iterations}[${vars.i}] = ${vars.lookup}[ ${key} ] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component}${node.key ? `, ${key}` : `` } );
+		${vars.iterations}[${vars.i}] = ${lookup}[ ${key} ] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component}${node.key ? `, ${key}` : `` } );
 	` );
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${vars.iterations}[${vars.i}].mount( ${vars.anchor}.parentNode, ${vars.anchor} );`
+			`${vars.iterations}[${vars.i}].mount( ${state.parentNode}, ${vars.anchor} );`
 		);
 	}
 
@@ -165,7 +166,7 @@ function keyed ( generator, block, state, node, vars, snippet ) {
 	block.builders.update.addBlock( deindent`
 		var ${vars.listName} = ${snippet};
 		var ${vars._iterations} = [];
-		var ${vars._lookup} = Object.create( null );
+		var ${_lookup} = Object.create( null );
 
 		var ${fragment} = document.createDocumentFragment();
 
@@ -174,11 +175,11 @@ function keyed ( generator, block, state, node, vars, snippet ) {
 			var ${value} = ${vars.listName}[${vars.i}];
 			var ${key} = ${value}.${node.key};
 
-			if ( ${vars.lookup}[ ${key} ] ) {
-				${vars._iterations}[${vars.i}] = ${vars._lookup}[ ${key} ] = ${vars.lookup}[ ${key} ];
-				${vars._lookup}[ ${key} ].update( changed, ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i} );
+			if ( ${lookup}[ ${key} ] ) {
+				${vars._iterations}[${vars.i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
+				${_lookup}[ ${key} ].update( changed, ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i} );
 			} else {
-				${vars._iterations}[${vars.i}] = ${vars._lookup}[ ${key} ] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component}${node.key ? `, ${key}` : `` } );
+				${vars._iterations}[${vars.i}] = ${_lookup}[ ${key} ] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component}${node.key ? `, ${key}` : `` } );
 			}
 
 			${vars._iterations}[${vars.i}].mount( ${fragment}, null );
@@ -187,7 +188,7 @@ function keyed ( generator, block, state, node, vars, snippet ) {
 		// remove old iterations
 		for ( var ${vars.i} = 0; ${vars.i} < ${vars.iterations}.length; ${vars.i} += 1 ) {
 			var ${vars.iteration} = ${vars.iterations}[${vars.i}];
-			if ( !${vars._lookup}[ ${vars.iteration}.key ] ) {
+			if ( !${_lookup}[ ${vars.iteration}.key ] ) {
 				${vars.iteration}.destroy( true );
 			}
 		}
@@ -195,7 +196,7 @@ function keyed ( generator, block, state, node, vars, snippet ) {
 		${vars.anchor}.parentNode.insertBefore( ${fragment}, ${vars.anchor} );
 
 		${vars.iterations} = ${vars._iterations};
-		${vars.lookup} = ${vars._lookup};
+		${lookup} = ${_lookup};
 	` );
 }
 
@@ -208,7 +209,7 @@ function unkeyed ( generator, block, state, node, vars, snippet ) {
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${vars.iterations}[${vars.i}].mount( ${vars.anchor}.parentNode, ${vars.anchor} );`
+			`${vars.iterations}[${vars.i}].mount( ${state.parentNode}, ${vars.anchor} );`
 		);
 	}
 
