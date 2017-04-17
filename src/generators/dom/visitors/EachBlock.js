@@ -3,55 +3,57 @@ import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, block, state, node ) {
-	const name = generator.getUniqueName( `each_block` );
-	const renderer = generator.getUniqueName( `create_each_block` );
-	const elseName = generator.getUniqueName( `${name}_else` );
-	const renderElse = generator.getUniqueName( `${renderer}_else` );
+	const each_block = generator.getUniqueName( `each_block` );
+	const each_block_else = generator.getUniqueName( `${each_block}_else` );
+
+	const create_each_block = generator.getUniqueName( `create_each_block` );
+	const create_each_block_else = generator.getUniqueName( `${create_each_block}_else` );
+
 	const i = block.getUniqueName( `i` );
 	const params = block.params.join( ', ' );
 
-	const listName = block.getUniqueName( `${name}_value` );
+	const listName = block.getUniqueName( `${each_block}_value` );
 
 	const isToplevel = !state.parentNode;
 
 	const { dependencies, snippet } = generator.contextualise( block, node.expression );
 
-	const anchor = block.getUniqueName( `${name}_anchor` );
+	const anchor = block.getUniqueName( `${each_block}_anchor` );
 	block.createAnchor( anchor, state.parentNode );
 
-	const localVars = {};
-
-	localVars.iteration = block.getUniqueName( `${name}_iteration` );
-	localVars.iterations = block.getUniqueName( `${name}_iterations` );
-	localVars._iterations = block.getUniqueName( `_${name}_iterations` );
-	localVars.lookup = block.getUniqueName( `${name}_lookup` );
-	localVars._lookup = block.getUniqueName( `_${name}_lookup` );
+	const vars = {
+		iteration: block.getUniqueName( `${each_block}_iteration` ),
+		iterations: block.getUniqueName( `${each_block}_iterations` ),
+		_iteration: block.getUniqueName( `_${each_block}_iteration` ),
+		lookup: block.getUniqueName( `${each_block}_lookup` ),
+		_lookup: block.getUniqueName( `_${each_block}_lookup` )
+	};
 
 	block.builders.create.addLine( `var ${listName} = ${snippet};` );
-	block.builders.create.addLine( `var ${localVars.iterations} = [];` );
-	if ( node.key ) block.builders.create.addLine( `var ${localVars.lookup} = Object.create( null );` );
-	if ( node.else ) block.builders.create.addLine( `var ${elseName} = null;` );
+	block.builders.create.addLine( `var ${vars.iterations} = [];` );
+	if ( node.key ) block.builders.create.addLine( `var ${vars.lookup} = Object.create( null );` );
+	if ( node.else ) block.builders.create.addLine( `var ${each_block_else} = null;` );
 
 	const initialRender = new CodeBuilder();
 
 	if ( node.key ) {
-		localVars.fragment = block.getUniqueName( 'fragment' );
-		localVars.value = block.getUniqueName( 'value' );
-		localVars.key = block.getUniqueName( 'key' );
+		vars.fragment = block.getUniqueName( 'fragment' );
+		vars.value = block.getUniqueName( 'value' );
+		vars.key = block.getUniqueName( 'key' );
 
 		initialRender.addBlock( deindent`
-			var ${localVars.key} = ${listName}[${i}].${node.key};
-			${localVars.iterations}[${i}] = ${localVars.lookup}[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${localVars.key}` : `` } );
+			var ${vars.key} = ${listName}[${i}].${node.key};
+			${vars.iterations}[${i}] = ${vars.lookup}[ ${vars.key} ] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${vars.key}` : `` } );
 		` );
 	} else {
 		initialRender.addLine(
-			`${localVars.iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );`
+			`${vars.iterations}[${i}] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );`
 		);
 	}
 
 	if ( !isToplevel ) {
 		initialRender.addLine(
-			`${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );`
+			`${vars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );`
 		);
 	}
 
@@ -64,22 +66,22 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	if ( node.else ) {
 		block.builders.create.addBlock( deindent`
 			if ( !${listName}.length ) {
-				${elseName} = ${renderElse}( ${params}, ${block.component} );
-				${!isToplevel ? `${elseName}.mount( ${anchor}.parentNode, ${anchor} );` : ''}
+				${each_block_else} = ${create_each_block_else}( ${params}, ${block.component} );
+				${!isToplevel ? `${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );` : ''}
 			}
 		` );
 	}
 
 	if ( isToplevel ) {
 		block.builders.mount.addBlock( deindent`
-			for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
-				${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+			for ( var ${i} = 0; ${i} < ${vars.iterations}.length; ${i} += 1 ) {
+				${vars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 			}
 		` );
 		if ( node.else ) {
 			block.builders.mount.addBlock( deindent`
-				if ( ${elseName} ) {
-					${elseName}.mount( ${anchor}.parentNode, ${anchor} );
+				if ( ${each_block_else} ) {
+					${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
 				}
 			` );
 		}
@@ -88,78 +90,78 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	if ( node.key ) {
 		block.builders.update.addBlock( deindent`
 			var ${listName} = ${snippet};
-			var ${localVars._iterations} = [];
-			var ${localVars._lookup} = Object.create( null );
+			var ${vars._iterations} = [];
+			var ${vars._lookup} = Object.create( null );
 
-			var ${localVars.fragment} = document.createDocumentFragment();
+			var ${vars.fragment} = document.createDocumentFragment();
 
 			// create new iterations as necessary
 			for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
-				var ${localVars.value} = ${listName}[${i}];
-				var ${localVars.key} = ${localVars.value}.${node.key};
+				var ${vars.value} = ${listName}[${i}];
+				var ${vars.key} = ${vars.value}.${node.key};
 
-				if ( ${localVars.lookup}[ ${localVars.key} ] ) {
-					${localVars._iterations}[${i}] = ${localVars._lookup}[ ${localVars.key} ] = ${localVars.lookup}[ ${localVars.key} ];
-					${localVars._lookup}[ ${localVars.key} ].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
+				if ( ${vars.lookup}[ ${vars.key} ] ) {
+					${vars._iterations}[${i}] = ${vars._lookup}[ ${vars.key} ] = ${vars.lookup}[ ${vars.key} ];
+					${vars._lookup}[ ${vars.key} ].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 				} else {
-					${localVars._iterations}[${i}] = ${localVars._lookup}[ ${localVars.key} ] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${localVars.key}` : `` } );
+					${vars._iterations}[${i}] = ${vars._lookup}[ ${vars.key} ] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${vars.key}` : `` } );
 				}
 
-				${localVars._iterations}[${i}].mount( ${localVars.fragment}, null );
+				${vars._iterations}[${i}].mount( ${vars.fragment}, null );
 			}
 
 			// remove old iterations
-			for ( var ${i} = 0; ${i} < ${localVars.iterations}.length; ${i} += 1 ) {
-				var ${localVars.iteration} = ${localVars.iterations}[${i}];
-				if ( !${localVars._lookup}[ ${localVars.iteration}.key ] ) {
-					${localVars.iteration}.destroy( true );
+			for ( var ${i} = 0; ${i} < ${vars.iterations}.length; ${i} += 1 ) {
+				var ${vars.iteration} = ${vars.iterations}[${i}];
+				if ( !${vars._lookup}[ ${vars.iteration}.key ] ) {
+					${vars.iteration}.destroy( true );
 				}
 			}
 
-			${anchor}.parentNode.insertBefore( ${localVars.fragment}, ${anchor} );
+			${anchor}.parentNode.insertBefore( ${vars.fragment}, ${anchor} );
 
-			${localVars.iterations} = ${localVars._iterations};
-			${localVars.lookup} = ${localVars._lookup};
+			${vars.iterations} = ${vars._iterations};
+			${vars.lookup} = ${vars._lookup};
 		` );
 	} else {
 		block.builders.update.addBlock( deindent`
 			var ${listName} = ${snippet};
 
 			for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
-				if ( !${localVars.iterations}[${i}] ) {
-					${localVars.iterations}[${i}] = ${renderer}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );
-					${localVars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+				if ( !${vars.iterations}[${i}] ) {
+					${vars.iterations}[${i}] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );
+					${vars.iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 				} else {
-					${localVars.iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
+					${vars.iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 				}
 			}
 
-			${generator.helper( 'destroyEach' )}( ${localVars.iterations}, true, ${listName}.length );
+			${generator.helper( 'destroyEach' )}( ${vars.iterations}, true, ${listName}.length );
 
-			${localVars.iterations}.length = ${listName}.length;
+			${vars.iterations}.length = ${listName}.length;
 		` );
 	}
 
 	if ( node.else ) {
 		block.builders.update.addBlock( deindent`
-			if ( !${listName}.length && ${elseName} ) {
-				${elseName}.update( changed, ${params} );
+			if ( !${listName}.length && ${each_block_else} ) {
+				${each_block_else}.update( changed, ${params} );
 			} else if ( !${listName}.length ) {
-				${elseName} = ${renderElse}( ${params}, ${block.component} );
-				${elseName}.mount( ${anchor}.parentNode, ${anchor} );
-			} else if ( ${elseName} ) {
-				${elseName}.destroy( true );
+				${each_block_else} = ${create_each_block_else}( ${params}, ${block.component} );
+				${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+			} else if ( ${each_block_else} ) {
+				${each_block_else}.destroy( true );
 			}
 		` );
 	}
 
 	block.builders.destroy.addBlock(
-		`${generator.helper( 'destroyEach' )}( ${localVars.iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
+		`${generator.helper( 'destroyEach' )}( ${vars.iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
 
 	if ( node.else ) {
 		block.builders.destroy.addBlock( deindent`
-			if ( ${elseName} ) {
-				${elseName}.destroy( ${isToplevel ? 'detach' : 'false'} );
+			if ( ${each_block_else} ) {
+				${each_block_else}.destroy( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 	}
@@ -182,7 +184,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	contextDependencies.set( node.context, dependencies );
 
 	const childBlock = block.child({
-		name: renderer,
+		name: create_each_block,
 		expression: node.expression,
 		context: node.context,
 		key: node.key,
@@ -209,7 +211,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 	if ( node.else ) {
 		const childBlock = block.child({
-			name: renderElse
+			name: create_each_block_else
 		});
 
 		node.else.children.forEach( child => {
