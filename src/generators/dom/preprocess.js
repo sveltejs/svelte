@@ -82,7 +82,22 @@ const preprocessors = {
 	},
 
 	Element: ( generator, block, node ) => {
-		// TODO attributes and bindings (and refs?)...
+		node.attributes.forEach( attribute => {
+			if ( attribute.type === 'Attribute' && attribute.value !== true ) {
+				attribute.value.forEach( chunk => {
+					if ( chunk.type !== 'Text' ) {
+						const { dependencies } = block.contextualise( chunk.expression );
+						block.addDependencies( dependencies );
+					}
+				});
+			}
+
+			else if ( attribute.type === 'Binding' ) {
+				const { dependencies } = block.contextualise( attribute.value );
+				block.addDependencies( dependencies );
+			}
+		});
+
 		preprocessChildren( generator, block, node.children );
 	}
 };
