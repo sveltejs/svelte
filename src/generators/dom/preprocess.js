@@ -79,6 +79,14 @@ const preprocessors = {
 
 		preprocessChildren( generator, node._block, node.children );
 		block.addDependencies( node._block.dependencies );
+
+		if ( node.else ) {
+			node.else._block = block.child({
+				name: generator.getUniqueName( `${node._block.name}_else` )
+			});
+
+			preprocessChildren( generator, node.else._block, node.else.children );
+		}
 	},
 
 	Element: ( generator, block, node ) => {

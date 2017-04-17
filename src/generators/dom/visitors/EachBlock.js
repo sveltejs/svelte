@@ -4,9 +4,7 @@ import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, block, state, node ) {
 	const each_block = generator.getUniqueName( `each_block` );
-	const each_block_else = generator.getUniqueName( `${each_block}_else` );
 	const create_each_block = node._block.name;
-	const create_each_block_else = generator.getUniqueName( `${create_each_block}_else` );
 	const each_block_value = node._block.listName;
 	const iterations = block.getUniqueName( `${each_block}_iterations` );
 	const i = block.getUniqueName( `i` );
@@ -41,12 +39,14 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		`${generator.helper( 'destroyEach' )}( ${iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
 
 	if ( node.else ) {
+		const each_block_else = generator.getUniqueName( `${each_block}_else` );
+
 		block.builders.create.addLine( `var ${each_block_else} = null;` );
 
 		// TODO neaten this up... will end up with an empty line in the block
 		block.builders.create.addBlock( deindent`
 			if ( !${each_block_value}.length ) {
-				${each_block_else} = ${create_each_block_else}( ${params}, ${block.component} );
+				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
 				${!isToplevel ? `${each_block_else}.mount( ${state.parentNode}, ${anchor} );` : ''}
 			}
 		` );
@@ -61,7 +61,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 			if ( !${each_block_value}.length && ${each_block_else} ) {
 				${each_block_else}.update( changed, ${params} );
 			} else if ( !${each_block_value}.length ) {
-				${each_block_else} = ${create_each_block_else}( ${params}, ${block.component} );
+				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
 				${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
 			} else if ( ${each_block_else} ) {
 				${each_block_else}.destroy( true );
@@ -89,15 +89,11 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	generator.addBlock( childBlock );
 
 	if ( node.else ) {
-		const childBlock = block.child({
-			name: create_each_block_else
-		});
-
 		node.else.children.forEach( child => {
-			visit( generator, childBlock, childState, child );
+			visit( generator, node.else._block, childState, child );
 		});
 
-		generator.addBlock( childBlock );
+		generator.addBlock( node.else._block );
 	}
 }
 
