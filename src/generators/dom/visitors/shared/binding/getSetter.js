@@ -25,7 +25,7 @@ export default function getSetter ({ block, name, keypath, context, attribute, d
 	return `${block.component}._set({ ${name}: ${value} });`;
 }
 
-export function getTailSnippet ( node ) {
+function getTailSnippet ( node ) {
 	const end = node.end;
 	while ( node.type === 'MemberExpression' ) node = node.object;
 	const start = node.end;
