@@ -131,21 +131,23 @@ const preprocessors = {
 
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
 
-		if ( isComponent ) {
-			const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
+		if ( node.children.length ) {
+			if ( isComponent ) {
+				const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
 
-			node._block = block.child({
-				name: generator.getUniqueName( `create_${name}_yield_fragment` )
-			});
+				node._block = block.child({
+					name: generator.getUniqueName( `create_${name}_yield_fragment` )
+				});
 
-			generator.blocks.push( node._block );
-			preprocessChildren( generator, node._block, node.children );
-			block.addDependencies( node._block.dependencies );
-			node._block.hasUpdateMethod = node._block.dependencies.size > 0;
-		}
+				generator.blocks.push( node._block );
+				preprocessChildren( generator, node._block, node.children );
+				block.addDependencies( node._block.dependencies );
+				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
+			}
 
-		else {
-			preprocessChildren( generator, block, node.children );
+			else {
+				preprocessChildren( generator, block, node.children );
+			}
 		}
 	}
 };
