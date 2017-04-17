@@ -3,78 +3,74 @@ import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, block, state, node ) {
-	const vars = {};
+	const each_block = generator.getUniqueName( `each_block` );
+	const each_block_else = generator.getUniqueName( `${each_block}_else` );
+	const create_each_block = generator.getUniqueName( `create_each_block` );
+	const create_each_block_else = generator.getUniqueName( `${create_each_block}_else` );
+	const listName = block.getUniqueName( `${each_block}_value` );
+	const iterations = block.getUniqueName( `${each_block}_iterations` );
+	const i = block.getUniqueName( `i` );
+	const params = block.params.join( ', ' );
+	const anchor = block.getUniqueName( `${each_block}_anchor` );
 
-	vars.each_block = generator.getUniqueName( `each_block` );
-	vars.each_block_else = generator.getUniqueName( `${vars.each_block}_else` );
-	vars.create_each_block = generator.getUniqueName( `create_each_block` );
-	vars.create_each_block_else = generator.getUniqueName( `${vars.create_each_block}_else` );
-	vars.listName = block.getUniqueName( `${vars.each_block}_value` );
-	vars.i = block.getUniqueName( `i` );
-	vars.params = block.params.join( ', ' );
-
-	const isToplevel = !state.parentNode;
+	const vars = { each_block, create_each_block, listName, iterations, i, params, anchor };
 
 	const { dependencies, snippet } = generator.contextualise( block, node.expression );
 
-	vars.anchor = block.getUniqueName( `${vars.each_block}_anchor` );
-	block.createAnchor( vars.anchor, state.parentNode );
-
-	vars.iteration = block.getUniqueName( `${vars.each_block}_iteration` );
-	vars.iterations = block.getUniqueName( `${vars.each_block}_iterations` );
-	vars._iterations = block.getUniqueName( `_${vars.each_block}_iterations` );
-
-	block.builders.create.addLine( `var ${vars.listName} = ${snippet};` );
-	block.builders.create.addLine( `var ${vars.iterations} = [];` );
+	block.createAnchor( anchor, state.parentNode );
+	block.builders.create.addLine( `var ${listName} = ${snippet};` );
+	block.builders.create.addLine( `var ${iterations} = [];` );
 
 	if ( node.key ) {
-		keyed( generator, block, state, node, vars, snippet );
+		keyed( generator, block, state, node, snippet, vars );
 	} else {
-		unkeyed( generator, block, state, node, vars, snippet );
+		unkeyed( generator, block, state, node, snippet, vars );
 	}
+
+	const isToplevel = !state.parentNode;
 
 	if ( isToplevel ) {
 		block.builders.mount.addBlock( deindent`
-			for ( var ${vars.i} = 0; ${vars.i} < ${vars.iterations}.length; ${vars.i} += 1 ) {
-				${vars.iterations}[${vars.i}].mount( ${block.target}, ${vars.anchor} );
+			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${iterations}[${i}].mount( ${block.target}, ${anchor} );
 			}
 		` );
 	}
 
 	block.builders.destroy.addBlock(
-		`${generator.helper( 'destroyEach' )}( ${vars.iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
+		`${generator.helper( 'destroyEach' )}( ${iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
 
 	if ( node.else ) {
-		block.builders.create.addLine( `var ${vars.each_block_else} = null;` );
+		block.builders.create.addLine( `var ${each_block_else} = null;` );
 
 		// TODO neaten this up... will end up with an empty line in the block
 		block.builders.create.addBlock( deindent`
-			if ( !${vars.listName}.length ) {
-				${vars.each_block_else} = ${vars.create_each_block_else}( ${vars.params}, ${block.component} );
-				${!isToplevel ? `${vars.each_block_else}.mount( ${state.parentNode}, ${vars.anchor} );` : ''}
+			if ( !${listName}.length ) {
+				${each_block_else} = ${create_each_block_else}( ${params}, ${block.component} );
+				${!isToplevel ? `${each_block_else}.mount( ${state.parentNode}, ${anchor} );` : ''}
 			}
 		` );
 
 		block.builders.mount.addBlock( deindent`
-			if ( ${vars.each_block_else} ) {
-				${vars.each_block_else}.mount( ${state.parentNode || block.target}, ${vars.anchor} );
+			if ( ${each_block_else} ) {
+				${each_block_else}.mount( ${state.parentNode || block.target}, ${anchor} );
 			}
 		` );
 
 		block.builders.update.addBlock( deindent`
-			if ( !${vars.listName}.length && ${vars.each_block_else} ) {
-				${vars.each_block_else}.update( changed, ${vars.params} );
-			} else if ( !${vars.listName}.length ) {
-				${vars.each_block_else} = ${vars.create_each_block_else}( ${vars.params}, ${block.component} );
-				${vars.each_block_else}.mount( ${vars.anchor}.parentNode, ${vars.anchor} );
-			} else if ( ${vars.each_block_else} ) {
-				${vars.each_block_else}.destroy( true );
+			if ( !${listName}.length && ${each_block_else} ) {
+				${each_block_else}.update( changed, ${params} );
+			} else if ( !${listName}.length ) {
+				${each_block_else} = ${create_each_block_else}( ${params}, ${block.component} );
+				${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+			} else if ( ${each_block_else} ) {
+				${each_block_else}.destroy( true );
 			}
 		` );
 
 		block.builders.destroy.addBlock( deindent`
-			if ( ${vars.each_block_else} ) {
-				${vars.each_block_else}.destroy( ${isToplevel ? 'detach' : 'false'} );
+			if ( ${each_block_else} ) {
+				${each_block_else}.destroy( ${isToplevel ? 'detach' : 'false'} );
 			}
 		` );
 	}
@@ -84,7 +80,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	indexNames.set( node.context, indexName );
 
 	const listNames = new Map( block.listNames );
-	listNames.set( node.context, vars.listName );
+	listNames.set( node.context, listName );
 
 	const context = generator.getUniqueName( node.context );
 	const contexts = new Map( block.contexts );
@@ -108,7 +104,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 		indexNames,
 		listNames,
-		params: block.params.concat( vars.listName, context, indexName )
+		params: block.params.concat( listName, context, indexName )
 	});
 
 	const childState = Object.assign( {}, state, {
@@ -124,7 +120,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 	if ( node.else ) {
 		const childBlock = block.child({
-			name: vars.create_each_block_else
+			name: create_each_block_else
 		});
 
 		node.else.children.forEach( child => {
@@ -135,104 +131,106 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	}
 }
 
-function keyed ( generator, block, state, node, vars, snippet ) {
+function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, listName, iterations, i, params, anchor } ) {
 	const fragment = block.getUniqueName( 'fragment' );
 	const value = block.getUniqueName( 'value' );
 	const key = block.getUniqueName( 'key' );
-	const lookup = block.getUniqueName( `${vars.each_block}_lookup` );
-	const _lookup = block.getUniqueName( `_${vars.each_block}_lookup` );
+	const lookup = block.getUniqueName( `${each_block}_lookup` );
+	const _lookup = block.getUniqueName( `_${each_block}_lookup` );
+	const iteration = block.getUniqueName( `${each_block}_iteration` );
+	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
 
 	block.builders.create.addLine( `var ${lookup} = Object.create( null );` );
 
 	const create = new CodeBuilder();
 
 	create.addBlock( deindent`
-		var ${key} = ${vars.listName}[${vars.i}].${node.key};
-		${vars.iterations}[${vars.i}] = ${lookup}[ ${key} ] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component}${node.key ? `, ${key}` : `` } );
+		var ${key} = ${listName}[${i}].${node.key};
+		${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
 	` );
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${vars.iterations}[${vars.i}].mount( ${state.parentNode}, ${vars.anchor} );`
+			`${iterations}[${i}].mount( ${state.parentNode}, ${anchor} );`
 		);
 	}
 
 	block.builders.create.addBlock( deindent`
-		for ( var ${vars.i} = 0; ${vars.i} < ${vars.listName}.length; ${vars.i} += 1 ) {
+		for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
 			${create}
 		}
 	` );
 
 	block.builders.update.addBlock( deindent`
-		var ${vars.listName} = ${snippet};
-		var ${vars._iterations} = [];
+		var ${listName} = ${snippet};
+		var ${_iterations} = [];
 		var ${_lookup} = Object.create( null );
 
 		var ${fragment} = document.createDocumentFragment();
 
 		// create new iterations as necessary
-		for ( var ${vars.i} = 0; ${vars.i} < ${vars.listName}.length; ${vars.i} += 1 ) {
-			var ${value} = ${vars.listName}[${vars.i}];
+		for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
+			var ${value} = ${listName}[${i}];
 			var ${key} = ${value}.${node.key};
 
 			if ( ${lookup}[ ${key} ] ) {
-				${vars._iterations}[${vars.i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
-				${_lookup}[ ${key} ].update( changed, ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i} );
+				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
+				${_lookup}[ ${key} ].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 			} else {
-				${vars._iterations}[${vars.i}] = ${_lookup}[ ${key} ] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component}${node.key ? `, ${key}` : `` } );
+				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
 			}
 
-			${vars._iterations}[${vars.i}].mount( ${fragment}, null );
+			${_iterations}[${i}].mount( ${fragment}, null );
 		}
 
 		// remove old iterations
-		for ( var ${vars.i} = 0; ${vars.i} < ${vars.iterations}.length; ${vars.i} += 1 ) {
-			var ${vars.iteration} = ${vars.iterations}[${vars.i}];
-			if ( !${_lookup}[ ${vars.iteration}.key ] ) {
-				${vars.iteration}.destroy( true );
+		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			var ${iteration} = ${iterations}[${i}];
+			if ( !${_lookup}[ ${iteration}.key ] ) {
+				${iteration}.destroy( true );
 			}
 		}
 
-		${vars.anchor}.parentNode.insertBefore( ${fragment}, ${vars.anchor} );
+		${anchor}.parentNode.insertBefore( ${fragment}, ${anchor} );
 
-		${vars.iterations} = ${vars._iterations};
+		${iterations} = ${_iterations};
 		${lookup} = ${_lookup};
 	` );
 }
 
-function unkeyed ( generator, block, state, node, vars, snippet ) {
+function unkeyed ( generator, block, state, node, snippet, { create_each_block, listName, iterations, i, params, anchor } ) {
 	const create = new CodeBuilder();
 
 	create.addLine(
-		`${vars.iterations}[${vars.i}] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component} );`
+		`${iterations}[${i}] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );`
 	);
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${vars.iterations}[${vars.i}].mount( ${state.parentNode}, ${vars.anchor} );`
+			`${iterations}[${i}].mount( ${state.parentNode}, ${anchor} );`
 		);
 	}
 
 	block.builders.create.addBlock( deindent`
-		for ( var ${vars.i} = 0; ${vars.i} < ${vars.listName}.length; ${vars.i} += 1 ) {
+		for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
 			${create}
 		}
 	` );
 
 	block.builders.update.addBlock( deindent`
-		var ${vars.listName} = ${snippet};
+		var ${listName} = ${snippet};
 
-		for ( var ${vars.i} = 0; ${vars.i} < ${vars.listName}.length; ${vars.i} += 1 ) {
-			if ( !${vars.iterations}[${vars.i}] ) {
-				${vars.iterations}[${vars.i}] = ${vars.create_each_block}( ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i}, ${block.component} );
-				${vars.iterations}[${vars.i}].mount( ${vars.anchor}.parentNode, ${vars.anchor} );
+		for ( var ${i} = 0; ${i} < ${listName}.length; ${i} += 1 ) {
+			if ( !${iterations}[${i}] ) {
+				${iterations}[${i}] = ${create_each_block}( ${params}, ${listName}, ${listName}[${i}], ${i}, ${block.component} );
+				${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
 			} else {
-				${vars.iterations}[${vars.i}].update( changed, ${vars.params}, ${vars.listName}, ${vars.listName}[${vars.i}], ${vars.i} );
+				${iterations}[${i}].update( changed, ${params}, ${listName}, ${listName}[${i}], ${i} );
 			}
 		}
 
-		${generator.helper( 'destroyEach' )}( ${vars.iterations}, true, ${vars.listName}.length );
+		${generator.helper( 'destroyEach' )}( ${iterations}, true, ${listName}.length );
 
-		${vars.iterations}.length = ${vars.listName}.length;
+		${iterations}.length = ${listName}.length;
 	` );
 }
