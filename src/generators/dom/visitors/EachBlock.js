@@ -188,7 +188,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 	` );
 
 	const dependencies = block.findDependencies( node.expression );
-	const allDependencies = new Set( block.dependencies );
+	const allDependencies = new Set( node._block.dependencies );
 	dependencies.forEach( dependency => {
 		allDependencies.add( dependency );
 	});
