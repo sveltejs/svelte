@@ -29,6 +29,7 @@ export default class Block {
 			destroy: new CodeBuilder()
 		};
 
+		this.aliases = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
 
 		// unique names
@@ -59,6 +60,14 @@ export default class Block {
 		if ( isToplevel ) {
 			this.builders.detach.addLine( `${this.generator.helper( 'detachNode' )}( ${name} );` );
 		}
+	}
+
+	alias ( name ) {
+		if ( !this.aliases.has( name ) ) {
+			this.aliases.set( name, this.getUniqueName( name ) );
+		}
+
+		return this.aliases.get( name );
 	}
 
 	child ( options ) {
