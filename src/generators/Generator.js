@@ -151,13 +151,11 @@ export default class Generator {
 		};
 	}
 
-	findDependencies ( block, expression, isEventHandler ) {
+	findDependencies ( contextDependencies, expression ) {
 		if ( expression._dependencies ) return expression._dependencies;
 
-		const dependencies = [];
-		const { contextDependencies, contexts } = block;
-
 		let scope = annotateWithScopes( expression );
+		const dependencies = [];
 
 		walk( expression, {
 			enter ( node, parent ) {
@@ -170,9 +168,7 @@ export default class Generator {
 					const { name } = flattenReference( node );
 					if ( scope.has( name ) ) return;
 
-					if ( name === 'event' && isEventHandler ) {
-						// noop
-					} else if ( contexts.has( name ) ) {
+					if ( contextDependencies.has( name ) ) {
 						dependencies.push( ...contextDependencies.get( name ) );
 					} else {
 						dependencies.push( name );

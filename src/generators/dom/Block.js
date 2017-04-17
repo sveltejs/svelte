@@ -74,8 +74,8 @@ export default class Block {
 		this.addElement( name, renderStatement, parentNode, true );
 	}
 
-	findDependencies ( expression, isEventHandler ) {
-		return this.generator.findDependencies( this, expression, isEventHandler );
+	findDependencies ( expression ) {
+		return this.generator.findDependencies( this.contextDependencies, expression );
 	}
 
 	mount ( name, parentNode ) {

@@ -127,14 +127,6 @@ const preprocessors = {
 				const dependencies = block.findDependencies( attribute.value );
 				block.addDependencies( dependencies );
 			}
-
-			// else if ( attribute.type === 'EventHandler' ) {
-			// 	// TODO is this necessary?
-			// 	attribute.expression.arguments.forEach( arg => {
-			// 		const dependencies = block.findDependencies( arg );
-			// 		block.addDependencies( dependencies );
-			// 	});
-			// }
 		});
 
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
@@ -175,6 +167,7 @@ export default function preprocess ( generator, children ) {
 
 		contexts: new Map(),
 		indexes: new Map(),
+		contextDependencies: new Map(),
 
 		params: [ 'root' ],
 		indexNames: new Map(),
