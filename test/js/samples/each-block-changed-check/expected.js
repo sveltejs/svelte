@@ -23,11 +23,11 @@ function create_main_fragment ( root, component ) {
 
 			if ( 'comments' in changed || 'elapsed' in changed || 'time' in changed ) {
 				for ( var i = 0; i < each_block_value.length; i += 1 ) {
-					if ( !each_block_iterations[i] ) {
+					if ( each_block_iterations[i] ) {
+						each_block_iterations[i].update( changed, root, each_block_value, each_block_value[i], i );
+					} else {
 						each_block_iterations[i] = create_each_block( root, each_block_value, each_block_value[i], i, component );
 						each_block_iterations[i].mount( each_block_anchor.parentNode, each_block_anchor );
-					} else {
-						each_block_iterations[i].update( changed, root, each_block_value, each_block_value[i], i );
 					}
 				}
 
@@ -53,12 +53,12 @@ function create_each_block ( root, each_block_value, comment, comment_index, com
 	var span = createElement( 'span' );
 	appendNode( span, div );
 	span.className = "meta";
-	var last_text = comment.author;
-	var text = createText( last_text );
+	var text_value = comment.author;
+	var text = createText( text_value );
 	appendNode( text, span );
 	appendNode( createText( " wrote " ), span );
-	var last_text_2 = root.elapsed(comment.time, root.time);
-	var text_2 = createText( last_text_2 );
+	var text_2_value = root.elapsed(comment.time, root.time);
+	var text_2 = createText( text_2_value );
 	appendNode( text_2, span );
 	appendNode( createText( " ago:" ), span );
 	appendNode( createText( "\n\n\t\t" ), div );
@@ -66,8 +66,8 @@ function create_each_block ( root, each_block_value, comment, comment_index, com
 	appendNode( raw_before, div );
 	var raw_after = createElement( 'noscript' );
 	appendNode( raw_after, div );
-	var last_raw = comment.html;
-	raw_before.insertAdjacentHTML( 'afterend', last_raw );
+	var raw_value = comment.html;
+	raw_before.insertAdjacentHTML( 'afterend', raw_value );
 
 	return {
 		mount: function ( target, anchor ) {
@@ -75,20 +75,17 @@ function create_each_block ( root, each_block_value, comment, comment_index, com
 		},
 
 		update: function ( changed, root, each_block_value, comment, comment_index ) {
-			var tmp;
-
-			if ( ( tmp = comment.author ) !== last_text ) {
-				text.data = last_text = tmp;
+			if ( text_value !== ( text_value = comment.author ) ) {
+				text.data = text_value;
 			}
 
-			if ( ( tmp = root.elapsed(comment.time, root.time) ) !== last_text_2 ) {
-				text_2.data = last_text_2 = tmp;
+			if ( text_2_value !== ( text_2_value = root.elapsed(comment.time, root.time) ) ) {
+				text_2.data = text_2_value;
 			}
 
-			if ( ( tmp = comment.html ) !== last_raw ) {
-				last_raw = tmp;
+			if ( raw_value !== ( raw_value = comment.html ) ) {
 				detachBetween( raw_before, raw_after );
-				raw_before.insertAdjacentHTML( 'afterend', last_raw );
+				raw_before.insertAdjacentHTML( 'afterend', raw_value );
 			}
 		},
 
@@ -127,7 +124,6 @@ assign( SvelteComponent.prototype, proto );
 SvelteComponent.prototype._set = function _set ( newState ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
-
 	dispatchObservers( this, this._observers.pre, newState, oldState );
 	if ( this._fragment ) this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );

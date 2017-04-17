@@ -43,7 +43,7 @@ export default function visitAttribute ( generator, block, state, node, attribut
 			);
 		}
 
-		const last = `last_${state.parentNode}_${name.replace( /[^a-zA-Z_$]/g, '_')}`;
+		const last = block.getUniqueName( `${state.parentNode}_${name.replace( /[^a-zA-Z_$]/g, '_')}_value` );
 		block.builders.create.addLine( `var ${last} = ${value};` );
 
 		const isSelectValueAttribute = name === 'value' && state.parentNodeName === 'select';
@@ -81,8 +81,7 @@ export default function visitAttribute ( generator, block, state, node, attribut
 
 		block.builders.create.addLine( updater );
 		block.builders.update.addBlock( deindent`
-			if ( ( ${block.tmp()} = ${value} ) !== ${last} ) {
-				${last} = ${block.tmp()};
+			if ( ${last} !== ( ${last} = ${value} ) ) {
 				${updater}
 			}
 		` );
