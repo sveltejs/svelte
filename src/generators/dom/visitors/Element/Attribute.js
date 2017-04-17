@@ -81,8 +81,7 @@ export default function visitAttribute ( generator, block, state, node, attribut
 
 		block.builders.create.addLine( updater );
 		block.builders.update.addBlock( deindent`
-			if ( ( ${block.tmp()} = ${value} ) !== ${last} ) {
-				${last} = ${block.tmp()};
+			if ( ${last} !== ( ${last} = ${value} ) ) {
 				${updater}
 			}
 		` );

@@ -154,9 +154,4 @@ export default class Block {
 			}
 		`;
 	}
-
-	tmp () {
-		if ( !this._tmp ) this._tmp = this.getUniqueName( 'tmp' );
-		return this._tmp;
-	}
 }

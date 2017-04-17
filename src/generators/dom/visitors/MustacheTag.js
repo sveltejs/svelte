@@ -9,8 +9,8 @@ export default function visitMustacheTag ( generator, block, state, node ) {
 	block.addElement( name, `${generator.helper( 'createText' )}( last_${name} )`, state.parentNode, true );
 
 	block.builders.update.addBlock( deindent`
-		if ( ( ${block.tmp()} = ${snippet} ) !== last_${name} ) {
-			${name}.data = last_${name} = ${block.tmp()};
+		if ( last_${name} !== ( last_${name} = ${snippet} ) ) {
+			${name}.data = last_${name};
 		}
 	` );
 }
