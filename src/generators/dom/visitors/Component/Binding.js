@@ -35,7 +35,7 @@ export default function visitBinding ( generator, block, state, node, attribute,
 		prop
 	});
 
-	const setter = getSetter({ generator, block, name, keypath, context: '_context', attribute, dependencies, value: 'value' });
+	const setter = getSetter({ block, name, keypath, context: '_context', attribute, dependencies, value: 'value' });
 
 	generator.hasComplexBindings = true;
 
