@@ -51,7 +51,7 @@ export default function visitBinding ( generator, block, state, node, attribute,
 				${updating} = true;
 				${setter}
 				${updating} = false;
-			});
+			}, { init: ${generator.helper( 'differs' )}( ${local.name}.get( '${attribute.name}' ), ${snippet} ) });
 		});
 	` );
 

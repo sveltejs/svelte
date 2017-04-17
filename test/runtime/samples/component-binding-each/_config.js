@@ -16,7 +16,7 @@ export default {
 			<input><input><input>
 			<p>blah, bar, baz</p>
 		` );
-		
+
 		component.destroy();
 	}
 };

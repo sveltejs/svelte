@@ -1,0 +1,22 @@
+{{#if x}}
+	<Widget bind:foo='bar.baz'/>
+{{/if}}
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data: function () {
+			return {
+				x: false,
+				bar: {
+					baz: 42
+				}
+			};
+		},
+
+		components: {
+			Widget
+		}
+	};
+</script>
