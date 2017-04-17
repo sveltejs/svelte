@@ -34,6 +34,8 @@ export default class Block {
 		// unique names
 		this.component = this.getUniqueName( 'component' );
 		this.target = this.getUniqueName( 'target' );
+
+		this.hasUpdateMethod = false; // determined later
 	}
 
 	addDependencies ( dependencies ) {
@@ -70,6 +72,10 @@ export default class Block {
 	createAnchor ( name, parentNode ) {
 		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
 		this.addElement( name, renderStatement, parentNode, true );
+	}
+
+	findDependencies ( expression, isEventHandler ) {
+		return this.generator.findDependencies( this, expression, isEventHandler );
 	}
 
 	mount ( name, parentNode ) {
@@ -115,15 +121,17 @@ export default class Block {
 			` );
 		}
 
-		if ( this.builders.update.isEmpty() ) {
-			properties.addBlock( `update: ${this.generator.helper( 'noop' )},` );
-		} else {
-			if ( this._tmp ) this.builders.update.addBlockAtStart( `var ${this._tmp};` );
-			properties.addBlock( deindent`
-				update: function ( changed, ${this.params.join( ', ' )} ) {
-					${this.builders.update}
-				},
-			` );
+		if ( this.hasUpdateMethod ) {
+			if ( this.builders.update.isEmpty() ) {
+				properties.addBlock( `update: ${this.generator.helper( 'noop' )},` );
+			} else {
+				if ( this._tmp ) this.builders.update.addBlockAtStart( `var ${this._tmp};` );
+				properties.addBlock( deindent`
+					update: function ( changed, ${this.params.join( ', ' )} ) {
+						${this.builders.update}
+					},
+				` );
+			}
 		}
 
 		if ( this.builders.destroy.isEmpty() ) {

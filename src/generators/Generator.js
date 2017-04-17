@@ -73,7 +73,7 @@ export default class Generator {
 		const { code, helpers } = this;
 		const { contextDependencies, contexts, indexes } = block;
 
-		let scope = annotateWithScopes( expression );
+		let scope = annotateWithScopes( expression ); // TODO this already happens in findDependencies
 		let lexicalDepth = 0;
 
 		const self = this;
@@ -162,6 +162,44 @@ export default class Generator {
 		};
 
 		return expression._contextualised;
+	}
+
+	findDependencies ( block, expression, isEventHandler ) {
+		const dependencies = [];
+
+		const { contextDependencies, contexts } = block;
+
+		let scope = annotateWithScopes( expression );
+
+		walk( expression, {
+			enter ( node, parent ) {
+				if ( node._scope ) {
+					scope = node._scope;
+					return;
+				}
+
+				if ( isReference( node, parent ) ) {
+					const { name } = flattenReference( node );
+					if ( scope.has( name ) ) return;
+
+					if ( name === 'event' && isEventHandler ) {
+						// noop
+					} else if ( contexts.has( name ) ) {
+						dependencies.push( ...contextDependencies.get( name ) );
+					} else {
+						dependencies.push( name );
+					}
+
+					this.skip();
+				}
+			},
+
+			leave ( node ) {
+				if ( node._scope ) scope = scope.parent;
+			}
+		});
+
+		return dependencies;
 	}
 
 	generate ( result, options, { name, format } ) {

@@ -107,12 +107,9 @@ export default function dom ( parsed, source, options ) {
 		builders._set.addLine( `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )` );
 	}
 
-	// TODO is the `if` necessary?
-	builders._set.addBlock( deindent`
-		${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );
-		if ( this._fragment ) this._fragment.update( newState, this._state );
-		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
-	` );
+	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );` );
+	if ( block.hasUpdateMethod ) builders._set.addLine( `if ( this._fragment ) this._fragment.update( newState, this._state );` ); // TODO is the condition necessary?
+	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );` );
 
 	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
