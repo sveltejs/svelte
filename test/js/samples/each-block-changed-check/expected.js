@@ -75,18 +75,15 @@ function create_each_block ( root, each_block_value, comment, comment_index, com
 		},
 
 		update: function ( changed, root, each_block_value, comment, comment_index ) {
-			var tmp;
-
-			if ( ( tmp = comment.author ) !== last_text ) {
-				text.data = last_text = tmp;
+			if ( last_text !== ( last_text = comment.author ) ) {
+				text.data = last_text;
 			}
 
-			if ( ( tmp = root.elapsed(comment.time, root.time) ) !== last_text_2 ) {
-				text_2.data = last_text_2 = tmp;
+			if ( last_text_2 !== ( last_text_2 = root.elapsed(comment.time, root.time) ) ) {
+				text_2.data = last_text_2;
 			}
 
-			if ( ( tmp = comment.html ) !== last_raw ) {
-				last_raw = tmp;
+			if ( last_raw !== ( last_raw = comment.html ) ) {
 				detachBetween( raw_before, raw_after );
 				raw_before.insertAdjacentHTML( 'afterend', last_raw );
 			}
