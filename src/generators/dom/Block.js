@@ -2,7 +2,20 @@ import CodeBuilder from '../../utils/CodeBuilder.js';
 import deindent from '../../utils/deindent.js';
 
 export default class Block {
-	constructor ({ generator, name, key, expression, context, contextDependencies, contexts, indexes, params, indexNames, listNames }) {
+	constructor ({
+		generator,
+		name,
+		key,
+		expression,
+		context,
+		contextDependencies,
+		dependencies,
+		contexts,
+		indexes,
+		params,
+		indexNames,
+		listNames
+	}) {
 		this.generator = generator;
 		this.name = name;
 		this.key = key;
@@ -12,6 +25,7 @@ export default class Block {
 		this.contexts = contexts;
 		this.indexes = indexes;
 		this.contextDependencies = contextDependencies;
+		this.dependencies = dependencies;
 
 		this.params = params;
 		this.indexNames = indexNames;

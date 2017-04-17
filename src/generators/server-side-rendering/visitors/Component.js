@@ -5,7 +5,7 @@ export default function visitComponent ( generator, block, node ) {
 	function stringify ( chunk ) {
 		if ( chunk.type === 'Text' ) return chunk.data;
 		if ( chunk.type === 'MustacheTag' ) {
-			const { snippet } = generator.contextualise( block, chunk.expression );
+			const { snippet } = block.contextualise( chunk.expression );
 			return '${__escape( ' + snippet + ')}';
 		}
 	}
@@ -34,7 +34,7 @@ export default function visitComponent ( generator, block, node ) {
 				if ( chunk.type === 'Text' ) {
 					value = isNaN( chunk.data ) ? JSON.stringify( chunk.data ) : chunk.data;
 				} else {
-					const { snippet } = generator.contextualise( block, chunk.expression );
+					const { snippet } = block.contextualise( chunk.expression );
 					value = snippet;
 				}
 			} else {

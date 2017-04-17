@@ -27,4 +27,8 @@ export default class Block {
 	child ( options ) {
 		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
+
+	contextualise ( expression, context, isEventHandler ) {
+		return this.generator.contextualise( this, expression, context, isEventHandler );
+	}
 }

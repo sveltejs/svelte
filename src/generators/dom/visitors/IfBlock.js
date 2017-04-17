@@ -1,18 +1,21 @@
 import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
+function isElseIf ( node ) {
+	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
+}
+
 function getConditionsAndBlocks ( generator, block, state, node, _name, i = 0 ) {
 	const name = generator.getUniqueName( `${_name}_${i}` );
 
 	const conditionsAndBlocks = [{
-		condition: generator.contextualise( block, node.expression ).snippet,
+		condition: block.contextualise( node.expression ).snippet,
 		block: name
 	}];
 
 	generateBlock( generator, block, state, node, name );
 
-	if ( node.else && node.else.children.length === 1 &&
-		node.else.children[0].type === 'IfBlock' ) {
+	if ( isElseIf( node.else ) ) {
 		conditionsAndBlocks.push(
 			...getConditionsAndBlocks( generator, block, state, node.else.children[0], _name, i + 1 )
 		);
@@ -27,6 +30,7 @@ function getConditionsAndBlocks ( generator, block, state, node, _name, i = 0 ) 
 			generateBlock( generator, block, state, node.else, name );
 		}
 	}
+
 	return conditionsAndBlocks;
 }
 
@@ -53,7 +57,6 @@ export default function visitIfBlock ( generator, block, state, node ) {
 	const currentBlock = block.getUniqueName( `current_block` );
 	const _currentBlock = block.getUniqueName( `_current_block` );
 
-	const isToplevel = !state.parentNode;
 	const conditionsAndBlocks = getConditionsAndBlocks( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
 
 	const anchor = `${name}_anchor`;
@@ -70,11 +73,12 @@ export default function visitIfBlock ( generator, block, state, node ) {
 		var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${block.component} );
 	` );
 
-	const mountStatement = `if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );`;
+	const isToplevel = !state.parentNode;
+
 	if ( isToplevel ) {
-		block.builders.mount.addLine( mountStatement );
+		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, ${anchor} );` );
 	} else {
-		block.builders.create.addLine( mountStatement );
+		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
 	}
 
 	block.builders.update.addBlock( deindent`

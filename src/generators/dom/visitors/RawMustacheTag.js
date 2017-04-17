@@ -3,7 +3,7 @@ import deindent from '../../../utils/deindent.js';
 export default function visitRawMustacheTag ( generator, block, state, node ) {
 	const name = block.getUniqueName( 'raw' );
 
-	const { snippet } = generator.contextualise( block, node.expression );
+	const { snippet } = block.contextualise( node.expression );
 
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.

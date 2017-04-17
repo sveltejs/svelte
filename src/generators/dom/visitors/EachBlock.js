@@ -5,7 +5,7 @@ import visit from '../visit.js';
 export default function visitEachBlock ( generator, block, state, node ) {
 	const each_block = generator.getUniqueName( `each_block` );
 	const each_block_else = generator.getUniqueName( `${each_block}_else` );
-	const create_each_block = generator.getUniqueName( `create_each_block` );
+	const create_each_block = node._block.name;
 	const create_each_block_else = generator.getUniqueName( `${create_each_block}_else` );
 	const listName = block.getUniqueName( `${each_block}_value` );
 	const iterations = block.getUniqueName( `${each_block}_iterations` );
@@ -15,7 +15,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 	const vars = { each_block, create_each_block, listName, iterations, i, params, anchor };
 
-	const { dependencies, snippet } = generator.contextualise( block, node.expression );
+	const { dependencies, snippet } = block.contextualise( node.expression );
 
 	block.createAnchor( anchor, state.parentNode );
 	block.builders.create.addLine( `var ${listName} = ${snippet};` );
@@ -75,37 +75,38 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		` );
 	}
 
-	const indexNames = new Map( block.indexNames );
-	const indexName = node.index || block.getUniqueName( `${node.context}_index` );
-	indexNames.set( node.context, indexName );
+	// const indexNames = new Map( block.indexNames );
+	// const indexName = node.index || block.getUniqueName( `${node.context}_index` );
+	// indexNames.set( node.context, indexName );
 
-	const listNames = new Map( block.listNames );
-	listNames.set( node.context, listName );
+	// const listNames = new Map( block.listNames );
+	// listNames.set( node.context, listName );
 
-	const context = generator.getUniqueName( node.context );
-	const contexts = new Map( block.contexts );
-	contexts.set( node.context, context );
+	// const context = generator.getUniqueName( node.context );
+	// const contexts = new Map( block.contexts );
+	// contexts.set( node.context, context );
 
-	const indexes = new Map( block.indexes );
-	if ( node.index ) indexes.set( indexName, node.context );
+	// const indexes = new Map( block.indexes );
+	// if ( node.index ) indexes.set( indexName, node.context );
 
-	const contextDependencies = new Map( block.contextDependencies );
-	contextDependencies.set( node.context, dependencies );
+	// const contextDependencies = new Map( block.contextDependencies );
+	// contextDependencies.set( node.context, dependencies );
 
-	const childBlock = block.child({
-		name: vars.create_each_block,
-		expression: node.expression,
-		context: node.context,
-		key: node.key,
+	// const childBlock = block.child({
+	// 	name: vars.create_each_block,
+	// 	expression: node.expression,
+	// 	context: node.context,
+	// 	key: node.key,
 
-		contextDependencies,
-		contexts,
-		indexes,
+	// 	contextDependencies,
+	// 	contexts,
+	// 	indexes,
 
-		indexNames,
-		listNames,
-		params: block.params.concat( listName, context, indexName )
-	});
+	// 	indexNames,
+	// 	listNames,
+	// 	params: block.params.concat( listName, context, indexName )
+	// });
+	const childBlock = node._block;
 
 	const childState = Object.assign( {}, state, {
 		parentNode: null,

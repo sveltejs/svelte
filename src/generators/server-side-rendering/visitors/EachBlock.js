@@ -1,7 +1,7 @@
 import visit from '../visit.js';
 
 export default function visitEachBlock ( generator, block, node ) {
-	const { dependencies, snippet } = generator.contextualise( block, node.expression );
+	const { dependencies, snippet } = block.contextualise( node.expression );
 
 	const open = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \``;
 	generator.append( open );
