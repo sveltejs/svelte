@@ -1,7 +1,7 @@
 import { locate } from 'locate-character';
 import fragment from './state/fragment.js';
-import { whitespace } from './patterns.js';
-import { trimStart, trimEnd } from './utils/trim.js';
+import { whitespace } from '../utils/patterns.js';
+import { trimStart, trimEnd } from '../utils/trim.js';
 import getCodeFrame from '../utils/getCodeFrame.js';
 import hash from './utils/hash.js';
 
