@@ -111,7 +111,7 @@ function preprocessChildren ( generator, block, children ) {
 	});
 }
 
-export default function preprocess ( generator, children, namespace ) {
+export default function preprocess ( generator, children ) {
 	const block = new Block({
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
@@ -127,13 +127,7 @@ export default function preprocess ( generator, children, namespace ) {
 		dependencies: new Set()
 	});
 
-	const state = {
-		namespace,
-		parentNode: null,
-		isTopLevel: true
-	};
-
 	preprocessChildren( generator, block, children );
 
-	return { block, state };
+	return block;
 }
