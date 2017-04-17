@@ -63,6 +63,8 @@ export default class Generator {
 	}
 
 	contextualise ( block, expression, context, isEventHandler ) {
+		if ( expression._contextualised ) return expression._contextualised;
+
 		this.addSourcemapLocations( expression );
 
 		const usedContexts = [];
@@ -153,12 +155,13 @@ export default class Generator {
 			}
 		});
 
-		return {
+		expression._contextualised = {
 			dependencies,
 			contexts: usedContexts,
-			snippet: `[✂${expression.start}-${expression.end}✂]`,
-			string: this.code.slice( expression.start, expression.end )
+			snippet: `[✂${expression.start}-${expression.end}✂]`
 		};
+
+		return expression._contextualised;
 	}
 
 	generate ( result, options, { name, format } ) {
