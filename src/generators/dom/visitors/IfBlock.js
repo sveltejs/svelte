@@ -5,67 +5,65 @@ function isElseIf ( node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
 }
 
-function getConditionsAndBlocks ( generator, block, state, node ) {
-	const conditionsAndBlocks = [{
+function getBranches ( generator, block, state, node ) {
+	const branches = [{
 		condition: block.contextualise( node.expression ).snippet,
-		block: node._block.name
+		block: node._block.name,
+		dynamic: node._block.dependencies.size > 0
 	}];
 
-	generateBlock( generator, block, state, node );
+	visitChildren( generator, block, state, node );
 
 	if ( isElseIf( node.else ) ) {
-		conditionsAndBlocks.push(
-			...getConditionsAndBlocks( generator, block, state, node.else.children[0] )
+		branches.push(
+			...getBranches( generator, block, state, node.else.children[0] )
 		);
 	} else {
-		conditionsAndBlocks.push({
+		branches.push({
 			condition: null,
 			block: node.else ? node.else._block.name : null,
+			dynamic: node.else ? node.else._block.dependencies.size > 0 : false
 		});
 
 		if ( node.else ) {
-			generateBlock( generator, block, state, node.else );
+			visitChildren( generator, block, state, node.else );
 		}
 	}
 
-	return conditionsAndBlocks;
+	return branches;
 }
 
-function generateBlock ( generator, block, state, node ) {
-	const childBlock = node._block;
-
+function visitChildren ( generator, block, state, node ) {
 	const childState = Object.assign( {}, state, {
 		parentNode: null
 	});
 
-	node.children.forEach( node => {
-		visit( generator, childBlock, childState, node );
+	node.children.forEach( child => {
+		visit( generator, node._block, childState, child );
 	});
-
-	generator.addBlock( childBlock );
 }
 
 export default function visitIfBlock ( generator, block, state, node ) {
 	const params = block.params.join( ', ' );
 	const name = generator.getUniqueName( `if_block` );
 	const getBlock = block.getUniqueName( `get_block` );
-	const currentBlock = block.getUniqueName( `current_block` );
-	const _currentBlock = block.getUniqueName( `_current_block` );
+	const current_block = block.getUniqueName( `current_block` );
 
-	const conditionsAndBlocks = getConditionsAndBlocks( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
+	const branches = getBranches( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
+	const dynamic = branches.some( branch => branch.dynamic );
 
 	const anchor = `${name}_anchor`;
 	block.createAnchor( anchor, state.parentNode );
 
 	block.builders.create.addBlock( deindent`
 		function ${getBlock} ( ${params} ) {
-			${conditionsAndBlocks.map( ({ condition, block }) => {
+			${branches.map( ({ condition, block }) => {
 				return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
 			} ).join( '\n' )}
 		}
 
-		var ${currentBlock} = ${getBlock}( ${params} );
-		var ${name} = ${currentBlock} && ${currentBlock}( ${params}, ${block.component} );
+		var ${current_block} = ${getBlock}( ${params} );
+		var ${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
 	` );
 
 	const isToplevel = !state.parentNode;
@@ -76,17 +74,25 @@ export default function visitIfBlock ( generator, block, state, node ) {
 		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
 	}
 
-	block.builders.update.addBlock( deindent`
-		var ${_currentBlock} = ${currentBlock};
-		${currentBlock} = ${getBlock}( ${params} );
-		if ( ${_currentBlock} === ${currentBlock} && ${name}) {
-			${name}.update( changed, ${params} );
-		} else {
-			if ( ${name} ) ${name}.destroy( true );
-			${name} = ${currentBlock} && ${currentBlock}( ${params}, ${block.component} );
-			if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
-		}
-	` );
+	if ( dynamic ) {
+		block.builders.update.addBlock( deindent`
+			if ( ${current_block} === ( ${current_block} = ${getBlock}( ${params} ) ) && ${name} ) {
+				${name}.update( changed, ${params} );
+			} else {
+				if ( ${name} ) ${name}.destroy( true );
+				${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
+				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
+			}
+		` );
+	} else {
+		block.builders.update.addBlock( deindent`
+			if ( ${current_block} !== ( ${current_block} = ${getBlock}( ${params} ) ) ) {
+				if ( ${name} ) ${name}.destroy( true );
+				${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
+				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
+			}
+		` );
+	}
 
 	block.builders.destroy.addLine(
 		`if ( ${name} ) ${name}.destroy( ${isToplevel ? 'detach' : 'false'} );`

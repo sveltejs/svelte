@@ -24,10 +24,6 @@ class DomGenerator extends Generator {
 		};
 	}
 
-	addBlock ( block ) {
-		this.blocks.push( block );
-	}
-
 	helper ( name ) {
 		if ( this.options.dev && `${name}Dev` in shared ) {
 			name = `${name}Dev`;
@@ -59,8 +55,6 @@ export default function dom ( parsed, source, options ) {
 		visit( generator, block, state, node );
 	});
 
-	generator.addBlock( block );
-
 	const builders = {
 		main: new CodeBuilder(),
 		init: new CodeBuilder(),
@@ -68,7 +62,7 @@ export default function dom ( parsed, source, options ) {
 	};
 
 	if ( options.dev ) {
-		builders._set.addBlock ( deindent`
+		builders._set.addBlock( deindent`
 			if ( typeof newState !== 'object' ) {
 				throw new Error( 'Component .set was called without an object of data key-values to update.' );
 			}
@@ -113,12 +107,9 @@ export default function dom ( parsed, source, options ) {
 		builders._set.addLine( `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )` );
 	}
 
-	// TODO is the `if` necessary?
-	builders._set.addBlock( deindent`
-		${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );
-		if ( this._fragment ) this._fragment.update( newState, this._state );
-		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
-	` );
+	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );` );
+	if ( block.hasUpdateMethod ) builders._set.addLine( `if ( this._fragment ) this._fragment.update( newState, this._state );` ); // TODO is the condition necessary?
+	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );` );
 
 	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
@@ -137,8 +128,9 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	let i = generator.blocks.length;
-	while ( i-- ) builders.main.addBlock( generator.blocks[i].render() );
+	generator.blocks.forEach( block => {
+		builders.main.addBlock( block.render() );
+	});
 
 	builders.init.addLine( `this._torndown = false;` );
 

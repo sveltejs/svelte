@@ -63,17 +63,14 @@ export default class Generator {
 	}
 
 	contextualise ( block, expression, context, isEventHandler ) {
-		if ( expression._contextualised ) return expression._contextualised;
-
 		this.addSourcemapLocations( expression );
 
 		const usedContexts = [];
-		const dependencies = [];
 
 		const { code, helpers } = this;
-		const { contextDependencies, contexts, indexes } = block;
+		const { contexts, indexes } = block;
 
-		let scope = annotateWithScopes( expression );
+		let scope = annotateWithScopes( expression ); // TODO this already happens in findDependencies
 		let lexicalDepth = 0;
 
 		const self = this;
@@ -110,7 +107,6 @@ export default class Generator {
 							code.overwrite( node.start, node.start + name.length, contextName, true );
 						}
 
-						dependencies.push( ...contextDependencies.get( name ) );
 						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
 					}
 
@@ -135,7 +131,6 @@ export default class Generator {
 							code.prependRight( node.start, `root.` );
 						}
 
-						dependencies.push( name );
 						if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
 					}
 
@@ -149,19 +144,52 @@ export default class Generator {
 			}
 		});
 
+		return {
+			dependencies: expression._dependencies, // TODO probably a better way to do this
+			contexts: usedContexts,
+			snippet: `[✂${expression.start}-${expression.end}✂]`
+		};
+	}
+
+	findDependencies ( contextDependencies, expression ) {
+		if ( expression._dependencies ) return expression._dependencies;
+
+		let scope = annotateWithScopes( expression );
+		const dependencies = [];
+
+		walk( expression, {
+			enter ( node, parent ) {
+				if ( node._scope ) {
+					scope = node._scope;
+					return;
+				}
+
+				if ( isReference( node, parent ) ) {
+					const { name } = flattenReference( node );
+					if ( scope.has( name ) ) return;
+
+					if ( contextDependencies.has( name ) ) {
+						dependencies.push( ...contextDependencies.get( name ) );
+					} else {
+						dependencies.push( name );
+					}
+
+					this.skip();
+				}
+			},
+
+			leave ( node ) {
+				if ( node._scope ) scope = scope.parent;
+			}
+		});
+
 		dependencies.forEach( name => {
 			if ( !globalWhitelist.has( name ) ) {
 				this.expectedProperties.add( name );
 			}
 		});
 
-		expression._contextualised = {
-			dependencies,
-			contexts: usedContexts,
-			snippet: `[✂${expression.start}-${expression.end}✂]`
-		};
-
-		return expression._contextualised;
+		return ( expression._dependencies = dependencies );
 	}
 
 	generate ( result, options, { name, format } ) {
