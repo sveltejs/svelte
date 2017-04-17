@@ -44,16 +44,73 @@ function visitChildren ( generator, block, state, node ) {
 }
 
 export default function visitIfBlock ( generator, block, state, node ) {
-	const params = block.params.join( ', ' );
 	const name = generator.getUniqueName( `if_block` );
-	const getBlock = block.getUniqueName( `get_block` );
-	const current_block = block.getUniqueName( `current_block` );
+	const anchor = generator.getUniqueName( `${name}_anchor` );
+	const params = block.params.join( ', ' );
+
+	const vars = { name, anchor, params };
+
+	block.createAnchor( anchor, state.parentNode );
 
 	const branches = getBranches( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
 	const dynamic = branches.some( branch => branch.dynamic );
 
-	const anchor = `${name}_anchor`;
-	block.createAnchor( anchor, state.parentNode );
+	if ( node.else ) {
+		compound( generator, block, state, node, branches, dynamic, vars );
+	} else {
+		simple( generator, block, state, node, branches[0], dynamic, vars );
+	}
+
+	block.builders.destroy.addLine(
+		`if ( ${name} ) ${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+	);
+}
+
+function simple ( generator, block, state, node, branch, dynamic, { name, anchor, params } ) {
+	block.builders.create.addBlock( deindent`
+		var ${name} = ${branch.condition} && ${branch.block}( ${params}, ${block.component} );
+	` );
+
+	const isToplevel = !state.parentNode;
+
+	if ( isToplevel ) {
+		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, ${anchor} );` );
+	} else {
+		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
+	}
+
+	if ( dynamic ) {
+		block.builders.update.addBlock( deindent`
+			if ( ${branch.condition} ) {
+				if ( ${name} ) {
+					${name}.update( changed, ${params} );
+				} else {
+					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.mount( ${anchor}.parentNode, ${anchor} );
+				}
+			} else if ( ${name} ) {
+				${name}.destroy( true );
+				${name} = null;
+			}
+		` );
+	} else {
+		block.builders.update.addBlock( deindent`
+			if ( ${branch.condition} ) {
+				if ( !${name} ) {
+					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.mount( ${anchor}.parentNode, ${anchor} );
+				}
+			} else if ( ${name} ) {
+				${name}.destroy( true );
+				${name} = null;
+			}
+		` );
+	}
+}
+
+function compound ( generator, block, state, node, branches, dynamic, { name, anchor, params } ) {
+	const getBlock = block.getUniqueName( `get_block` );
+	const current_block = block.getUniqueName( `current_block` );
 
 	block.builders.create.addBlock( deindent`
 		function ${getBlock} ( ${params} ) {
@@ -93,8 +150,4 @@ export default function visitIfBlock ( generator, block, state, node ) {
 			}
 		` );
 	}
-
-	block.builders.destroy.addLine(
-		`if ( ${name} ) ${name}.destroy( ${isToplevel ? 'detach' : 'false'} );`
-	);
 }

@@ -1,4 +1,5 @@
 import Block from './Block.js';
+import { trimStart, trimEnd } from '../../utils/trim.js';
 
 function isElseIf ( node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
@@ -23,7 +24,7 @@ const preprocessors = {
 			});
 
 			blocks.push( node._block );
-			preprocessChildren( generator, node._block, node.children );
+			preprocessChildren( generator, node._block, node );
 
 			if ( node._block.dependencies.size > 0 ) {
 				dynamic = true;
@@ -38,7 +39,7 @@ const preprocessors = {
 				});
 
 				blocks.push( node.else._block );
-				preprocessChildren( generator, node.else._block, node.else.children );
+				preprocessChildren( generator, node.else._block, node.else );
 
 				if ( node.else._block.dependencies.size > 0 ) {
 					dynamic = true;
@@ -97,7 +98,7 @@ const preprocessors = {
 		});
 
 		generator.blocks.push( node._block );
-		preprocessChildren( generator, node._block, node.children );
+		preprocessChildren( generator, node._block, node );
 		block.addDependencies( node._block.dependencies );
 		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
@@ -107,7 +108,7 @@ const preprocessors = {
 			});
 
 			generator.blocks.push( node.else._block );
-			preprocessChildren( generator, node.else._block, node.else.children );
+			preprocessChildren( generator, node.else._block, node.else );
 			node.else._block.hasUpdateMethod = node.else._block.dependencies.size > 0;
 		}
 	},
@@ -131,35 +132,56 @@ const preprocessors = {
 
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
 
-		if ( isComponent ) {
-			const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
+		if ( node.children.length ) {
+			if ( isComponent ) {
+				const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
 
-			node._block = block.child({
-				name: generator.getUniqueName( `create_${name}_yield_fragment` )
-			});
+				node._block = block.child({
+					name: generator.getUniqueName( `create_${name}_yield_fragment` )
+				});
 
-			generator.blocks.push( node._block );
-			preprocessChildren( generator, node._block, node.children );
-			block.addDependencies( node._block.dependencies );
-			node._block.hasUpdateMethod = node._block.dependencies.size > 0;
-		}
+				generator.blocks.push( node._block );
+				preprocessChildren( generator, node._block, node );
+				block.addDependencies( node._block.dependencies );
+				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
+			}
 
-		else {
-			preprocessChildren( generator, block, node.children );
+			else {
+				preprocessChildren( generator, block, node );
+			}
 		}
 	}
 };
 
 preprocessors.RawMustacheTag = preprocessors.MustacheTag;
 
-function preprocessChildren ( generator, block, children ) {
-	children.forEach( child => {
+function preprocessChildren ( generator, block, node ) {
+	// glue text nodes together
+	const cleaned = [];
+	let lastChild;
+
+	node.children.forEach( child => {
+		if ( child.type === 'Comment' ) return;
+
+		if ( child.type === 'Text' && lastChild && lastChild.type === 'Text' ) {
+			lastChild.data += child.data;
+			lastChild.end = child.end;
+		} else {
+			cleaned.push( child );
+		}
+
+		lastChild = child;
+	});
+
+	node.children = cleaned;
+
+	cleaned.forEach( child => {
 		const preprocess = preprocessors[ child.type ];
 		if ( preprocess ) preprocess( generator, block, child );
 	});
 }
 
-export default function preprocess ( generator, children ) {
+export default function preprocess ( generator, node ) {
 	const block = new Block({
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
@@ -177,8 +199,21 @@ export default function preprocess ( generator, children ) {
 	});
 
 	generator.blocks.push( block );
-	preprocessChildren( generator, block, children );
+	preprocessChildren( generator, block, node );
 	block.hasUpdateMethod = block.dependencies.size > 0;
+
+	// trim leading and trailing whitespace from the top level
+	const firstChild = node.children[0];
+	if ( firstChild && firstChild.type === 'Text' ) {
+		firstChild.data = trimStart( firstChild.data );
+		if ( !firstChild.data ) node.children.shift();
+	}
+
+	const lastChild = node.children[ node.children.length - 1 ];
+	if ( lastChild && lastChild.type === 'Text' ) {
+		lastChild.data = trimEnd( lastChild.data );
+		if ( !lastChild.data ) node.children.pop();
+	}
 
 	return block;
 }

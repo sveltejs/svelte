@@ -16,7 +16,7 @@ export default class CodeBuilder {
 			this.result += `\n\t${line}`;
 		} else {
 			if ( this.lastCondition ) {
-				this.result += `\n}`;
+				this.result += `\n}\n\n`;
 			}
 
 			this.result += `if ( ${condition} ) {\n\t${line}`;
