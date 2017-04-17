@@ -75,25 +75,23 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		` );
 	}
 
-	const childBlock = node._block;
-
 	const childState = Object.assign( {}, state, {
 		parentNode: null,
 		inEachBlock: true
 	});
 
 	node.children.forEach( child => {
-		visit( generator, childBlock, childState, child );
+		visit( generator, node._block, childState, child );
 	});
 
-	generator.addBlock( childBlock );
-
 	if ( node.else ) {
+		const childState = Object.assign( {}, state, {
+			parentNode: null
+		});
+
 		node.else.children.forEach( child => {
 			visit( generator, node.else._block, childState, child );
 		});
-
-		generator.addBlock( node.else._block );
 	}
 }
 
