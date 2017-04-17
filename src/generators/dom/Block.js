@@ -75,7 +75,7 @@ export default class Block {
 	}
 
 	findDependencies ( expression ) {
-		return this.generator.findDependencies( this.contextDependencies, expression );
+		return this.generator.findDependencies( this.contextDependencies, this.indexes, expression );
 	}
 
 	mount ( name, parentNode ) {

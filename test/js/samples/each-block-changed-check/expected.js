@@ -62,19 +62,25 @@ function create_main_fragment ( root, component ) {
 	};
 }
 
-function create_each_block ( root, each_block_value, comment, comment_index, component ) {
+function create_each_block ( root, each_block_value, comment, i, component ) {
 	var div = createElement( 'div' );
 	div.className = "comment";
+	var strong = createElement( 'strong' );
+	appendNode( strong, div );
+	var text_value = i;
+	var text = createText( text_value );
+	appendNode( text, strong );
+	appendNode( createText( "\n\n\t\t" ), div );
 	var span = createElement( 'span' );
 	appendNode( span, div );
 	span.className = "meta";
-	var text_value = comment.author;
-	var text = createText( text_value );
-	appendNode( text, span );
-	appendNode( createText( " wrote " ), span );
-	var text_2_value = root.elapsed(comment.time, root.time);
+	var text_2_value = comment.author;
 	var text_2 = createText( text_2_value );
 	appendNode( text_2, span );
+	appendNode( createText( " wrote " ), span );
+	var text_4_value = root.elapsed(comment.time, root.time);
+	var text_4 = createText( text_4_value );
+	appendNode( text_4, span );
 	appendNode( createText( " ago:" ), span );
 	appendNode( createText( "\n\n\t\t" ), div );
 	var raw_before = createElement( 'noscript' );
@@ -89,13 +95,17 @@ function create_each_block ( root, each_block_value, comment, comment_index, com
 			insertNode( div, target, anchor );
 		},
 
-		update: function ( changed, root, each_block_value, comment, comment_index ) {
-			if ( text_value !== ( text_value = comment.author ) ) {
+		update: function ( changed, root, each_block_value, comment, i ) {
+			if ( text_value !== ( text_value = i ) ) {
 				text.data = text_value;
 			}
 
-			if ( text_2_value !== ( text_2_value = root.elapsed(comment.time, root.time) ) ) {
+			if ( text_2_value !== ( text_2_value = comment.author ) ) {
 				text_2.data = text_2_value;
+			}
+
+			if ( text_4_value !== ( text_4_value = root.elapsed(comment.time, root.time) ) ) {
+				text_4.data = text_4_value;
 			}
 
 			if ( raw_value !== ( raw_value = comment.html ) ) {

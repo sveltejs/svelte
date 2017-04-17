@@ -1,5 +1,7 @@
-{{#each comments as comment}}
+{{#each comments as comment, i}}
 	<div class='comment'>
+		<strong>{{i}}</strong>
+
 		<span class='meta'>
 			{{comment.author}} wrote {{elapsed(comment.time, time)}} ago:
 		</span>

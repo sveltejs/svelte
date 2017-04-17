@@ -151,7 +151,7 @@ export default class Generator {
 		};
 	}
 
-	findDependencies ( contextDependencies, expression ) {
+	findDependencies ( contextDependencies, indexes, expression ) {
 		if ( expression._dependencies ) return expression._dependencies;
 
 		let scope = annotateWithScopes( expression );
@@ -170,7 +170,7 @@ export default class Generator {
 
 					if ( contextDependencies.has( name ) ) {
 						dependencies.push( ...contextDependencies.get( name ) );
-					} else {
+					} else if ( !indexes.has( name ) ) {
 						dependencies.push( name );
 					}
 
