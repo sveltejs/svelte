@@ -40,7 +40,7 @@ export default class Generator {
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.js'`;
 		this.importedNames = new Set();
-		this._aliases = new Map();
+		this.aliases = new Map();
 		this._usedNames = new Set( [ name ] );
 	}
 
@@ -54,12 +54,11 @@ export default class Generator {
 	}
 
 	alias ( name ) {
-		if ( this._aliases.has( name ) ) {
-			return this._aliases.get( name );
+		if ( !this.aliases.has( name ) ) {
+			this.aliases.set( name, this.getUniqueName( name ) );
 		}
-		const alias = this.getUniqueName( name );
-		this._aliases.set( name, alias );
-		return alias;
+
+		return this.aliases.get( name );
 	}
 
 	contextualise ( block, expression, context, isEventHandler ) {
@@ -151,7 +150,7 @@ export default class Generator {
 		};
 	}
 
-	findDependencies ( contextDependencies, expression ) {
+	findDependencies ( contextDependencies, indexes, expression ) {
 		if ( expression._dependencies ) return expression._dependencies;
 
 		let scope = annotateWithScopes( expression );
@@ -170,7 +169,7 @@ export default class Generator {
 
 					if ( contextDependencies.has( name ) ) {
 						dependencies.push( ...contextDependencies.get( name ) );
-					} else {
+					} else if ( !indexes.has( name ) ) {
 						dependencies.push( name );
 					}
 

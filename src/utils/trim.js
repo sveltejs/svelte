@@ -1,4 +1,4 @@
-import { whitespace } from '../patterns.js';
+import { whitespace } from './patterns.js';
 
 export function trimStart ( str ) {
 	let i = 0;

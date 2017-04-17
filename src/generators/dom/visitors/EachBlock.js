@@ -7,7 +7,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	const create_each_block = node._block.name;
 	const each_block_value = node._block.listName;
 	const iterations = block.getUniqueName( `${each_block}_iterations` );
-	const i = block.getUniqueName( `i` );
+	const i = block.alias( `i` );
 	const params = block.params.join( ', ' );
 	const anchor = block.getUniqueName( `${each_block}_anchor` );
 
@@ -188,7 +188,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 	` );
 
 	const dependencies = block.findDependencies( node.expression );
-	const allDependencies = new Set( block.dependencies );
+	const allDependencies = new Set( node._block.dependencies );
 	dependencies.forEach( dependency => {
 		allDependencies.add( dependency );
 	});

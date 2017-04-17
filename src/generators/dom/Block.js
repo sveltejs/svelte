@@ -29,6 +29,7 @@ export default class Block {
 			destroy: new CodeBuilder()
 		};
 
+		this.aliases = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
 
 		// unique names
@@ -61,6 +62,14 @@ export default class Block {
 		}
 	}
 
+	alias ( name ) {
+		if ( !this.aliases.has( name ) ) {
+			this.aliases.set( name, this.getUniqueName( name ) );
+		}
+
+		return this.aliases.get( name );
+	}
+
 	child ( options ) {
 		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
@@ -75,7 +84,7 @@ export default class Block {
 	}
 
 	findDependencies ( expression ) {
-		return this.generator.findDependencies( this.contextDependencies, expression );
+		return this.generator.findDependencies( this.contextDependencies, this.indexes, expression );
 	}
 
 	mount ( name, parentNode ) {
