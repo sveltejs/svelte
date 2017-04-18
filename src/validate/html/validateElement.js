@@ -35,6 +35,12 @@ export default function validateElement ( validator, node ) {
 				}
 			}
 
+			else if ( name === 'currentTime' || name === 'duration' ) {
+				if ( node.name !== 'audio' && node.name !== 'video' ) {
+					validator.error( `'${name}' binding can only be used with <audio> or <video>` );
+				}
+			}
+
 			else {
 				validator.error( `'${attribute.name}' is not a valid binding`, attribute.start );
 			}
