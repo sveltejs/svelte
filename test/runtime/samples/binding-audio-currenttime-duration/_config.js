@@ -1,4 +1,9 @@
 export default {
+	// not sure if we can really test this in JSDOM. Refer to
+	// https://svelte.technology/repl?example=media-elements
+	// instead
+	skip: true,
+
 	test ( assert, component, target, window ) {
 		assert.equal( component.get( 't' ), 0 );
 		assert.equal( component.get( 'd' ), 0 );
