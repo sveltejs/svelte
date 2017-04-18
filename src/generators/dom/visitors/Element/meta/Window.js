@@ -29,6 +29,13 @@ export default function visitWindow ( generator, block, node ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
 
+			let usesState = false;
+
+			attribute.expression.arguments.forEach( arg => {
+				const { contexts } = block.contextualise( arg, null, true );
+				if ( contexts.length ) usesState = true;
+			});
+
 			const flattened = flattenReference( attribute.expression.callee );
 			if ( flattened.name !== 'event' && flattened.name !== 'this' ) {
 				// allow event.stopPropagation(), this.select() etc
@@ -36,10 +43,12 @@ export default function visitWindow ( generator, block, node ) {
 			}
 
 			const handlerName = block.getUniqueName( `onwindow${attribute.name}` );
+			const handlerBody = ( usesState ? `var root = ${block.component}.get();\n` : '' ) +
+				`[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			block.builders.create.addBlock( deindent`
-				var ${handlerName} = function ( event ) {
-					[✂${attribute.expression.start}-${attribute.expression.end}✂];
+				function ${handlerName} ( event ) {
+					${handlerBody}
 				};
 				window.addEventListener( '${attribute.name}', ${handlerName} );
 			` );
