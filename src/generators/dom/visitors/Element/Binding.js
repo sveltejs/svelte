@@ -99,7 +99,12 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		}
 
 		else if ( attribute.name === 'paused' ) {
-			updateElement = `${state.parentNode}[ ${snippet} ? 'pause' : 'play' ]();`;
+			// this is necessary to prevent the audio restarting by itself
+			const last = block.getUniqueName( `${state.parentNode}_paused_value` );
+			block.builders.create.addLine( `var ${last} = true;` );
+
+			updateCondition += ` && ${last} !== ( ${last} = ${snippet} )`;
+			updateElement = `${state.parentNode}[ ${last} ? 'pause' : 'play' ]();`;
 		}
 	}
 
