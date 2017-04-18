@@ -156,6 +156,8 @@ export default class Generator {
 		let scope = annotateWithScopes( expression );
 		const dependencies = [];
 
+		const generator = this; // can't use arrow functions, because of this.skip()
+
 		walk( expression, {
 			enter ( node, parent ) {
 				if ( node._scope ) {
@@ -165,7 +167,7 @@ export default class Generator {
 
 				if ( isReference( node, parent ) ) {
 					const { name } = flattenReference( node );
-					if ( scope.has( name ) ) return;
+					if ( scope.has( name ) || generator.helpers.has( name ) ) return;
 
 					if ( contextDependencies.has( name ) ) {
 						dependencies.push( ...contextDependencies.get( name ) );
