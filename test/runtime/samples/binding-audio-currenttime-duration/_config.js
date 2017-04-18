@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	test ( assert, component, target, window ) {
 		assert.equal( component.get( 't' ), 0 );
 		assert.equal( component.get( 'd' ), 0 );
