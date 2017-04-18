@@ -19,7 +19,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
-	const eventName = getBindingEventName( node );
+	const eventName = getBindingEventName( node, attribute );
 
 	let setter = getSetter({ block, name, keypath, context: '_svelte', attribute, dependencies, value });
 	let updateElement;
@@ -77,6 +77,19 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	}
 
+	// <audio bind:currentTime> special case
+	else if ( attribute.name === 'currentTime' ) {
+		generator.hasComplexBindings = true;
+		block.builders.create.addBlock( `${block.component}._bindings.push( ${handler} );` );
+
+		setter = deindent`
+			if ( ${state.parentNode}.playing ) requestAnimationFrame( ${handler} );
+			${setter}
+		`;
+
+		updateElement = `${state.parentNode}.currentTime = ${snippet};`;
+	}
+
 	// everything else
 	else {
 		updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
@@ -96,7 +109,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		${generator.helper( 'addEventListener' )}( ${state.parentNode}, '${eventName}', ${handler} );
 	` );
 
-	node.initialUpdate = updateElement;
+	if ( node.name !== 'audio' && node.name !== 'video' ) node.initialUpdate = updateElement;
 
 	block.builders.update.addLine( deindent`
 		if ( !${updating} ) {
@@ -109,7 +122,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	` );
 }
 
-function getBindingEventName ( node ) {
+function getBindingEventName ( node, attribute ) {
 	if ( node.name === 'input' ) {
 		const typeAttribute = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
 		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
@@ -119,6 +132,11 @@ function getBindingEventName ( node ) {
 
 	if ( node.name === 'textarea' ) {
 		return 'input';
+	}
+
+	// <audio bind:currentTime>
+	if ( attribute.name === 'currentTime' ) {
+		return 'timeupdate';
 	}
 
 	return 'change';
