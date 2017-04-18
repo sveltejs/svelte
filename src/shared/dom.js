@@ -39,15 +39,15 @@ export function createComment () {
 }
 
 export function addEventListener ( node, event, handler ) {
-	node.addEventListener ( event, handler, false );
+	node.addEventListener( event, handler, false );
 }
 
 export function removeEventListener ( node, event, handler ) {
-	node.removeEventListener ( event, handler, false );
+	node.removeEventListener( event, handler, false );
 }
 
 export function setAttribute ( node, attribute, value ) {
-	node.setAttribute ( attribute, value );
+	node.setAttribute( attribute, value );
 }
 
 export function setXlinkAttribute ( node, attribute, value ) {
