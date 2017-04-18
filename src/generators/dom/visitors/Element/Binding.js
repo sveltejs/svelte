@@ -83,8 +83,11 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		block.builders.create.addBlock( `${block.component}._bindings.push( ${handler} );` );
 
 		if ( attribute.name === 'currentTime' ) {
+			const frame = block.getUniqueName( `${state.parentNode}_animationframe` );
+			block.builders.create.addLine( `var ${frame};` );
 			setter = deindent`
-				if ( !${state.parentNode}.paused ) requestAnimationFrame( ${handler} );
+				cancelAnimationFrame( ${frame} );
+				if ( !${state.parentNode}.paused ) ${frame} = requestAnimationFrame( ${handler} );
 				${setter}
 			`;
 
@@ -96,7 +99,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		}
 
 		else if ( attribute.name === 'paused' ) {
-			updateElement = `${state.parentNode}[ ${snippet} ? 'pause' : 'play' ]()`;
+			updateElement = `${state.parentNode}[ ${snippet} ? 'pause' : 'play' ]();`;
 		}
 	}
 
