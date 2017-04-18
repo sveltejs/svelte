@@ -13,16 +13,17 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		if ( !~state.allUsedContexts.indexOf( context ) ) state.allUsedContexts.push( context );
 	});
 
-	const handler = block.getUniqueName( `${state.parentNode}_change_handler` );
-
+	const eventName = getBindingEventName( node, attribute );
+	const handler = block.getUniqueName( `${state.parentNode}_${eventName}_handler` );
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
-	const eventName = getBindingEventName( node, attribute );
 
 	let setter = getSetter({ block, name, keypath, context: '_svelte', attribute, dependencies, value });
-	let updateElement;
+	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
+	const lock = block.getUniqueName( `${state.parentNode}_${attribute.name}_updating` );
+	let updateCondition = `!${lock}`;
 
 	// <select> special case
 	if ( node.name === 'select' ) {
@@ -77,33 +78,35 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	}
 
-	// <audio bind:currentTime> special case
-	else if ( attribute.name === 'currentTime' ) {
+	else if ( node.name === 'audio' || node.name === 'video' ) {
 		generator.hasComplexBindings = true;
 		block.builders.create.addBlock( `${block.component}._bindings.push( ${handler} );` );
 
-		setter = deindent`
-			if ( ${state.parentNode}.playing ) requestAnimationFrame( ${handler} );
-			${setter}
-		`;
+		if ( attribute.name === 'currentTime' ) {
+			setter = deindent`
+				if ( !${state.parentNode}.paused ) requestAnimationFrame( ${handler} );
+				${setter}
+			`;
 
-		updateElement = `${state.parentNode}.currentTime = ${snippet};`;
+			updateCondition += ` && !isNaN( ${snippet} )`;
+		}
+
+		else if ( attribute.name === 'duration' ) {
+			updateCondition = null;
+		}
+
+		else if ( attribute.name === 'paused' ) {
+			updateElement = `${state.parentNode}[ ${snippet} ? 'pause' : 'play' ]()`;
+		}
 	}
-
-	// everything else
-	else {
-		updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
-	}
-
-	const updating = block.getUniqueName( `${state.parentNode}_updating` );
 
 	block.builders.create.addBlock( deindent`
-		var ${updating} = false;
+		var ${lock} = false;
 
 		function ${handler} () {
-			${updating} = true;
+			${lock} = true;
 			${setter}
-			${updating} = false;
+			${lock} = false;
 		}
 
 		${generator.helper( 'addEventListener' )}( ${state.parentNode}, '${eventName}', ${handler} );
@@ -111,15 +114,23 @@ export default function visitBinding ( generator, block, state, node, attribute 
 
 	if ( node.name !== 'audio' && node.name !== 'video' ) node.initialUpdate = updateElement;
 
-	block.builders.update.addLine( deindent`
-		if ( !${updating} ) {
-			${updateElement}
-		}
-	` );
+	if ( updateCondition !== null ) {
+		// audio/video duration is read-only, it never updates
+		block.builders.update.addBlock( deindent`
+			if ( ${updateCondition} ) {
+				${updateElement}
+			}
+		` );
+	}
 
 	block.builders.destroy.addLine( deindent`
 		${generator.helper( 'removeEventListener' )}( ${state.parentNode}, '${eventName}', ${handler} );
 	` );
+
+	if ( attribute.name === 'paused' ) {
+		block.builders.create.addLine( `${generator.helper( 'addEventListener' )}( ${state.parentNode}, 'play', ${handler} );` );
+		block.builders.destroy.addLine( `${generator.helper( 'removeEventListener' )}( ${state.parentNode}, 'play', ${handler} );` );
+	}
 }
 
 function getBindingEventName ( node, attribute ) {
@@ -130,14 +141,10 @@ function getBindingEventName ( node, attribute ) {
 		return type === 'checkbox' || type === 'radio' ? 'change' : 'input';
 	}
 
-	if ( node.name === 'textarea' ) {
-		return 'input';
-	}
-
-	// <audio bind:currentTime>
-	if ( attribute.name === 'currentTime' ) {
-		return 'timeupdate';
-	}
+	if ( node.name === 'textarea' ) return 'input';
+	if ( attribute.name === 'currentTime' ) return 'timeupdate';
+	if ( attribute.name === 'duration' ) return 'durationchange';
+	if ( attribute.name === 'paused' ) return 'pause';
 
 	return 'change';
 }

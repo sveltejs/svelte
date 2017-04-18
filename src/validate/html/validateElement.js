@@ -35,7 +35,7 @@ export default function validateElement ( validator, node ) {
 				}
 			}
 
-			else if ( name === 'currentTime' || name === 'duration' ) {
+			else if ( name === 'currentTime' || name === 'duration' || name === 'paused' ) {
 				if ( node.name !== 'audio' && node.name !== 'video' ) {
 					validator.error( `'${name}' binding can only be used with <audio> or <video>` );
 				}
