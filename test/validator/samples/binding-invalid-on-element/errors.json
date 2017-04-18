@@ -1,0 +1,8 @@
+[{
+	"message": "'value' is not a valid binding on <div> elements",
+	"pos": 5,
+	"loc": {
+		"line": 1,
+		"column": 5
+	}
+}]
