@@ -1,0 +1,8 @@
+[{
+	"message": "'whatever' is not a valid binding",
+	"pos": 5,
+	"loc": {
+		"line": 1,
+		"column": 5
+	}
+}]
