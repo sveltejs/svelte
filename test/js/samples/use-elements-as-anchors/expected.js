@@ -2,13 +2,12 @@ import { appendNode, assign, createComment, createElement, createText, detachNod
 
 function create_main_fragment ( state, component ) {
 	var div = createElement( 'div' );
-	var if_block_anchor = createComment();
-	appendNode( if_block_anchor, div );
 
 	var if_block = state.a && create_if_block( state, component );
 
 	if ( if_block ) if_block.mount( div, null );
-	appendNode( createText( "\n\n\t" ), div );
+	var text = createText( "\n\n\t" );
+	appendNode( text, div );
 	var p = createElement( 'p' );
 	appendNode( p, div );
 	appendNode( createText( "this can be used as an anchor" ), p );
@@ -17,15 +16,14 @@ function create_main_fragment ( state, component ) {
 	var if_block_1 = state.b && create_if_block_1( state, component );
 
 	if ( if_block_1 ) if_block_1.mount( div, null );
-	var if_block_1_anchor = createComment();
-	appendNode( if_block_1_anchor, div );
-
-	appendNode( createText( "\n\n\t" ), div );
+	var text_3 = createText( "\n\n\t" );
+	appendNode( text_3, div );
 
 	var if_block_2 = state.c && create_if_block_2( state, component );
 
 	if ( if_block_2 ) if_block_2.mount( div, null );
-	appendNode( createText( "\n\n\t" ), div );
+	var text_4 = createText( "\n\n\t" );
+	appendNode( text_4, div );
 	var p_1 = createElement( 'p' );
 	appendNode( p_1, div );
 	appendNode( createText( "so can this" ), p_1 );
@@ -34,7 +32,8 @@ function create_main_fragment ( state, component ) {
 	var if_block_3 = state.d && create_if_block_3( state, component );
 
 	if ( if_block_3 ) if_block_3.mount( div, null );
-	appendNode( createText( "\n\n\t" ), div );
+	var text_7 = createText( "\n\n\t" );
+	appendNode( text_7, div );
 	var text_8 = createText( "\n\n" );
 	var if_block_4_anchor = createComment();
 
@@ -45,14 +44,14 @@ function create_main_fragment ( state, component ) {
 			insertNode( div, target, anchor );
 			insertNode( text_8, target, anchor );
 			insertNode( if_block_4_anchor, target, anchor );
-			if ( if_block_4 ) if_block_4.mount( target, if_block_4_anchor );
+			if ( if_block_4 ) if_block_4.mount( target, null );
 		},
 
 		update: function ( changed, state ) {
 			if ( state.a ) {
 				if ( !if_block ) {
 					if_block = create_if_block( state, component );
-					if_block.mount( if_block_anchor.parentNode, p );
+					if_block.mount( div, text );
 				}
 			} else if ( if_block ) {
 				if_block.destroy( true );
@@ -62,7 +61,7 @@ function create_main_fragment ( state, component ) {
 			if ( state.b ) {
 				if ( !if_block_1 ) {
 					if_block_1 = create_if_block_1( state, component );
-					if_block_1.mount( if_block_1_anchor.parentNode, if_block_1_anchor );
+					if_block_1.mount( div, text_3 );
 				}
 			} else if ( if_block_1 ) {
 				if_block_1.destroy( true );
@@ -72,7 +71,7 @@ function create_main_fragment ( state, component ) {
 			if ( state.c ) {
 				if ( !if_block_2 ) {
 					if_block_2 = create_if_block_2( state, component );
-					if_block_2.mount( if_block_2_anchor.parentNode, p_2 );
+					if_block_2.mount( div, text_4 );
 				}
 			} else if ( if_block_2 ) {
 				if_block_2.destroy( true );
@@ -82,7 +81,7 @@ function create_main_fragment ( state, component ) {
 			if ( state.d ) {
 				if ( !if_block_3 ) {
 					if_block_3 = create_if_block_3( state, component );
-					if_block_3.mount( if_block_3_anchor.parentNode, null );
+					if_block_3.mount( div, text_7 );
 				}
 			} else if ( if_block_3 ) {
 				if_block_3.destroy( true );

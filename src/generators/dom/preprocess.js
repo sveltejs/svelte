@@ -223,7 +223,7 @@ const preprocessors = {
 	}
 };
 
-function preprocessChildren ( generator, block, state, node ) {
+function preprocessChildren ( generator, block, state, node, isTopLevel ) {
 	// glue text nodes together
 	const cleaned = [];
 	let lastChild;
@@ -238,16 +238,43 @@ function preprocessChildren ( generator, block, state, node ) {
 			cleaned.push( child );
 		}
 
-		if ( lastChild ) lastChild.next = child;
 		lastChild = child;
 	});
 
-	node.children = cleaned;
+	if ( isTopLevel ) {
+		// trim leading and trailing whitespace from the top level
+		const firstChild = cleaned[0];
+		if ( firstChild && firstChild.type === 'Text' ) {
+			firstChild.data = trimStart( firstChild.data );
+			if ( !firstChild.data ) cleaned.shift();
+		}
+
+		const lastChild = cleaned[ cleaned.length - 1 ];
+		if ( lastChild && lastChild.type === 'Text' ) {
+			lastChild.data = trimEnd( lastChild.data );
+			if ( !lastChild.data ) cleaned.pop();
+		}
+	}
+
+	lastChild = null;
 
 	cleaned.forEach( child => {
 		const preprocess = preprocessors[ child.type ];
 		if ( preprocess ) preprocess( generator, block, state, child );
+
+		if ( lastChild ) {
+			lastChild.next = child;
+			lastChild.needsAnchor = !child._state.name;
+		}
+
+		lastChild = child;
 	});
+
+	if ( lastChild ) {
+		lastChild.needsAnchor = !state.parentNode;
+	}
+
+	node.children = cleaned;
 }
 
 export default function preprocess ( generator, state, node ) {
@@ -268,21 +295,8 @@ export default function preprocess ( generator, state, node ) {
 	});
 
 	generator.blocks.push( block );
-	preprocessChildren( generator, block, state, node );
+	preprocessChildren( generator, block, state, node, true );
 	block.hasUpdateMethod = block.dependencies.size > 0;
-
-	// trim leading and trailing whitespace from the top level
-	const firstChild = node.children[0];
-	if ( firstChild && firstChild.type === 'Text' ) {
-		firstChild.data = trimStart( firstChild.data );
-		if ( !firstChild.data ) node.children.shift();
-	}
-
-	const lastChild = node.children[ node.children.length - 1 ];
-	if ( lastChild && lastChild.type === 'Text' ) {
-		lastChild.data = trimEnd( lastChild.data );
-		if ( !lastChild.data ) node.children.pop();
-	}
 
 	return block;
 }
