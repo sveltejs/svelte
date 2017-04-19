@@ -45,7 +45,7 @@ export default function visitComponent ( generator, block, node ) {
 		})
 		.concat( bindings.map( binding => {
 			const { name, keypath } = flattenReference( binding.value );
-			const value = block.contexts.has( name ) ? keypath : `root.${keypath}`;
+			const value = block.contexts.has( name ) ? keypath : `state.${keypath}`;
 			return `${binding.name}: ${value}`;
 		}))
 		.join( ', ' );

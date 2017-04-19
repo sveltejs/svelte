@@ -43,7 +43,7 @@ export default function visitWindow ( generator, block, node ) {
 			}
 
 			const handlerName = block.getUniqueName( `onwindow${attribute.name}` );
-			const handlerBody = ( usesState ? `var root = ${block.component}.get();\n` : '' ) +
+			const handlerBody = ( usesState ? `var state = ${block.component}.get();\n` : '' ) +
 				`[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
 
 			block.builders.create.addBlock( deindent`

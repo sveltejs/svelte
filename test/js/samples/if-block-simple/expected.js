@@ -1,9 +1,9 @@
 import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
-function create_main_fragment ( root, component ) {
+function create_main_fragment ( state, component ) {
 	var if_block_anchor = createComment();
 
-	var if_block = root.foo && create_if_block( root, component );
+	var if_block = state.foo && create_if_block( state, component );
 
 	return {
 		mount: function ( target, anchor ) {
@@ -11,10 +11,10 @@ function create_main_fragment ( root, component ) {
 			if ( if_block ) if_block.mount( target, if_block_anchor );
 		},
 
-		update: function ( changed, root ) {
-			if ( root.foo ) {
+		update: function ( changed, state ) {
+			if ( state.foo ) {
 				if ( !if_block ) {
-					if_block = create_if_block( root, component );
+					if_block = create_if_block( state, component );
 					if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 				}
 			} else if ( if_block ) {
@@ -33,7 +33,7 @@ function create_main_fragment ( root, component ) {
 	};
 }
 
-function create_if_block ( root, component ) {
+function create_if_block ( state, component ) {
 	var p = createElement( 'p' );
 	appendNode( createText( "foo!" ), p );
 

@@ -11,6 +11,10 @@ export default function components ( validator, prop ) {
 	checkForComputedKeys( validator, prop.value.properties );
 
 	prop.value.properties.forEach( component => {
+		if ( component.key.name === 'state' ) {
+			validator.error( `Component constructors cannot be called 'state' due to technical limitations`, component.start );
+		}
+
 		if ( !/^[A-Z]/.test( component.key.name ) ) {
 			validator.warn( `Component names should be capitalised`, component.start );
 		}

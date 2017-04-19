@@ -86,7 +86,7 @@ export default function visitElement ( generator, block, state, node ) {
 		}
 
 		childState.allUsedContexts.forEach( contextName => {
-			if ( contextName === 'root' ) return;
+			if ( contextName === 'state' ) return;
 
 			const listName = block.listNames.get( contextName );
 			const indexName = block.indexNames.get( contextName );

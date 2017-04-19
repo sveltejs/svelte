@@ -1,15 +1,15 @@
 import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
-function create_main_fragment ( root, component ) {
+function create_main_fragment ( state, component ) {
 	var if_block_anchor = createComment();
 
-	function get_block ( root ) {
-		if ( root.foo ) return create_if_block;
+	function get_block ( state ) {
+		if ( state.foo ) return create_if_block;
 		return create_if_block_1;
 	}
 
-	var current_block = get_block( root );
-	var if_block = current_block && current_block( root, component );
+	var current_block = get_block( state );
+	var if_block = current_block && current_block( state, component );
 
 	return {
 		mount: function ( target, anchor ) {
@@ -17,10 +17,10 @@ function create_main_fragment ( root, component ) {
 			if ( if_block ) if_block.mount( target, if_block_anchor );
 		},
 
-		update: function ( changed, root ) {
-			if ( current_block !== ( current_block = get_block( root ) ) ) {
+		update: function ( changed, state ) {
+			if ( current_block !== ( current_block = get_block( state ) ) ) {
 				if ( if_block ) if_block.destroy( true );
-				if_block = current_block && current_block( root, component );
+				if_block = current_block && current_block( state, component );
 				if ( if_block ) if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 			}
 		},
@@ -35,7 +35,7 @@ function create_main_fragment ( root, component ) {
 	};
 }
 
-function create_if_block ( root, component ) {
+function create_if_block ( state, component ) {
 	var p = createElement( 'p' );
 	appendNode( createText( "foo!" ), p );
 
@@ -52,7 +52,7 @@ function create_if_block ( root, component ) {
 	};
 }
 
-function create_if_block_1 ( root, component ) {
+function create_if_block_1 ( state, component ) {
 	var p = createElement( 'p' );
 	appendNode( createText( "not foo!" ), p );
 

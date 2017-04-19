@@ -102,7 +102,7 @@ export default class Generator {
 					else if ( contexts.has( name ) ) {
 						const contextName = contexts.get( name );
 						if ( contextName !== name ) {
-							// this is true for 'reserved' names like `root` and `component`
+							// this is true for 'reserved' names like `state` and `component`
 							code.overwrite( node.start, node.start + name.length, contextName, true );
 						}
 
@@ -124,13 +124,13 @@ export default class Generator {
 						}
 
 						if ( globalWhitelist.has( name ) ) {
-							code.prependRight( node.start, `( '${name}' in root ? root.` );
+							code.prependRight( node.start, `( '${name}' in state ? state.` );
 							code.appendLeft( node.object ? node.object.end : node.end, ` : ${name} )` );
 						} else {
-							code.prependRight( node.start, `root.` );
+							code.prependRight( node.start, `state.` );
 						}
 
-						if ( !~usedContexts.indexOf( 'root' ) ) usedContexts.push( 'root' );
+						if ( !~usedContexts.indexOf( 'state' ) ) usedContexts.push( 'state' );
 					}
 
 					this.skip();
