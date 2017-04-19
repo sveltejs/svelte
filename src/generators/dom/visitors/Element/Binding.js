@@ -4,7 +4,7 @@ import getSetter from '../shared/binding/getSetter.js';
 import getStaticAttributeValue from './getStaticAttributeValue.js';
 
 export default function visitBinding ( generator, block, state, node, attribute ) {
-	const { name, keypath, parts } = flattenReference( attribute.value );
+	const { name, parts } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
