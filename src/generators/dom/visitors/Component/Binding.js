@@ -3,7 +3,7 @@ import flattenReference from '../../../../utils/flattenReference.js';
 import getSetter from '../shared/binding/getSetter.js';
 
 export default function visitBinding ( generator, block, state, node, attribute, local ) {
-	const { name, keypath } = flattenReference( attribute.value );
+	const { name } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
@@ -35,7 +35,7 @@ export default function visitBinding ( generator, block, state, node, attribute,
 		prop
 	});
 
-	const setter = getSetter({ block, name, keypath, context: '_context', attribute, dependencies, value: 'value' });
+	const setter = getSetter({ block, name, context: '_context', attribute, dependencies, value: 'value' });
 
 	generator.hasComplexBindings = true;
 

@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	data: {
 		component: {
 			name: 'world'
@@ -21,14 +19,15 @@ export default {
 		input.value = 'everybody';
 		input.dispatchEvent( event );
 
-		assert.equal( target.innerHTML, `
+		assert.equal( input.value, 'everybody' );
+		assert.htmlEqual( target.innerHTML, `
 			<h1>Hello everybody!</h1>
 			<input>
 		` );
 
-		component.set({ name: 'goodbye' });
+		component.set({ component: { name: 'goodbye' } });
 		assert.equal( input.value, 'goodbye' );
-		assert.equal( target.innerHTML, `
+		assert.htmlEqual( target.innerHTML, `
 			<h1>Hello goodbye!</h1>
 			<input>
 		` );
