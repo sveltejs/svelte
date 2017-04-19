@@ -57,7 +57,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 			}
 		` );
 
-		if ( node.else.hasUpdateMethod ) {
+		if ( node.else._block.hasUpdateMethod ) {
 			block.builders.update.addBlock( deindent`
 				if ( !${each_block_value}.length && ${each_block_else} ) {
 					${each_block_else}.update( changed, ${params} );
