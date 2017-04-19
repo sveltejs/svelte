@@ -22,7 +22,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 
 	let setter = getSetter({ block, name, context: '_svelte', attribute, dependencies, value });
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
-	const lock = block.getUniqueName( `${state.parentNode}_${attribute.name}_updating` );
+	const lock = block.alias( `${state.parentNode}_updating` );
 	let updateCondition = `!${lock}`;
 
 	// <select> special case
@@ -103,7 +103,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 			const last = block.getUniqueName( `${state.parentNode}_paused_value` );
 			block.builders.create.addLine( `var ${last} = true;` );
 
-			updateCondition += ` && ${last} !== ( ${last} = ${snippet} )`;
+			updateCondition = `${last} !== ( ${last} = ${snippet} )`;
 			updateElement = `${state.parentNode}[ ${last} ? 'pause' : 'play' ]();`;
 		}
 	}
