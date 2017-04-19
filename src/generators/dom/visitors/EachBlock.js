@@ -57,16 +57,28 @@ export default function visitEachBlock ( generator, block, state, node ) {
 			}
 		` );
 
-		block.builders.update.addBlock( deindent`
-			if ( !${each_block_value}.length && ${each_block_else} ) {
-				${each_block_else}.update( changed, ${params} );
-			} else if ( !${each_block_value}.length ) {
-				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-				${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
-			} else if ( ${each_block_else} ) {
-				${each_block_else}.destroy( true );
-			}
-		` );
+		if ( node.else.hasUpdateMethod ) {
+			block.builders.update.addBlock( deindent`
+				if ( !${each_block_value}.length && ${each_block_else} ) {
+					${each_block_else}.update( changed, ${params} );
+				} else if ( !${each_block_value}.length ) {
+					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+					${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+				} else if ( ${each_block_else} ) {
+					${each_block_else}.destroy( true );
+				}
+			` );
+		} else {
+			block.builders.update.addBlock( deindent`
+				if ( ${each_block_value}.length ) {
+					if ( ${each_block_else} ) ${each_block_else}.destroy( true );
+				} else if ( !${each_block_else} ) {
+					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+					${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+				}
+			` );
+		}
+
 
 		block.builders.destroy.addBlock( deindent`
 			if ( ${each_block_else} ) {
