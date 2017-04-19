@@ -35,7 +35,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	}
 
 	if ( node.needsAnchor ) {
-		block.createAnchor( anchor, state.parentNode );
+		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
 	} else if ( node.next ) {
 		node.next.usedAsAnchor = true;
 	}
