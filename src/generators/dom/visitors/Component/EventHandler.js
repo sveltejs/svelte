@@ -17,7 +17,7 @@ export default function visitEventHandler ( generator, block, state, node, attri
 
 	// TODO hoist event handlers? can do `this.__component.method(...)`
 	const declarations = usedContexts.map( name => {
-		if ( name === 'root' ) return 'var root = this._context.root;';
+		if ( name === 'state' ) return 'var state = this._context.state;';
 
 		const listName = block.listNames.get( name );
 		const indexName = block.indexNames.get( name );

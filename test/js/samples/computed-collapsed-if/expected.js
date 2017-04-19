@@ -16,7 +16,7 @@ var template = (function () {
 	};
 }());
 
-function create_main_fragment ( root, component ) {
+function create_main_fragment ( state, component ) {
 
 
 	return {
