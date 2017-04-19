@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 1.17.0
+
+* Add `currentTime`, `duration` and `paused` bindings for media elements ([#406](https://github.com/sveltejs/svelte/issues/406))
+* Don't treat helpers as dependencies ([#492](https://github.com/sveltejs/svelte/issues/492))
+* Allow `<:Window>` event handlers to access component state ([#497](https://github.com/sveltejs/svelte/pull/497))
+* Allow two-way binding to properties named 'component' ([#495](https://github.com/sveltejs/svelte/issues/495))
+* Group checkbox bindings correctly, to avoid erroneously unchecking siblings ([#498](https://github.com/sveltejs/svelte/issues/498))
+* Validate two-way bindings ([#494](https://github.com/sveltejs/svelte/pull/494))
+* Allow dynamic each-block to have static else-block ([#501](https://github.com/sveltejs/svelte/pull/501))
+* Initialise `<select>` value correctly ([#502](https://github.com/sveltejs/svelte/pull/502))
+
 ## 1.16.0
 
 * Better code generation ([#489](https://github.com/sveltejs/svelte/pull/489)), ([#490](https://github.com/sveltejs/svelte/pull/490)), ([#491](https://github.com/sveltejs/svelte/pull/491))
