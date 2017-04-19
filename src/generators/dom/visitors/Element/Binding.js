@@ -4,7 +4,7 @@ import getSetter from '../shared/binding/getSetter.js';
 import getStaticAttributeValue from './getStaticAttributeValue.js';
 
 export default function visitBinding ( generator, block, state, node, attribute ) {
-	const { name, keypath, parts } = flattenReference( attribute.value );
+	const { name, parts } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
@@ -25,6 +25,8 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	const lock = block.alias( `${state.parentNode}_updating` );
 	let updateCondition = `!${lock}`;
 
+	block.addVariable( lock, 'false' );
+
 	// <select> special case
 	if ( node.name === 'select' ) {
 		if ( !isMultipleSelect ) {
@@ -32,7 +34,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		}
 
 		const value = block.getUniqueName( 'value' );
-		const i = block.getUniqueName( 'i' );
+		const i = block.alias( 'i' );
 		const option = block.getUniqueName( 'option' );
 
 		const ifStatement = isMultipleSelect ?
@@ -84,7 +86,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 
 		if ( attribute.name === 'currentTime' ) {
 			const frame = block.getUniqueName( `${state.parentNode}_animationframe` );
-			block.builders.create.addLine( `var ${frame};` );
+			block.addVariable( frame );
 			setter = deindent`
 				cancelAnimationFrame( ${frame} );
 				if ( !${state.parentNode}.paused ) ${frame} = requestAnimationFrame( ${handler} );
@@ -101,7 +103,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		else if ( attribute.name === 'paused' ) {
 			// this is necessary to prevent the audio restarting by itself
 			const last = block.getUniqueName( `${state.parentNode}_paused_value` );
-			block.builders.create.addLine( `var ${last} = true;` );
+			block.addVariable( last, 'true' );
 
 			updateCondition = `${last} !== ( ${last} = ${snippet} )`;
 			updateElement = `${state.parentNode}[ ${last} ? 'pause' : 'play' ]();`;
@@ -109,8 +111,6 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	}
 
 	block.builders.create.addBlock( deindent`
-		var ${lock} = false;
-
 		function ${handler} () {
 			${lock} = true;
 			${setter}
