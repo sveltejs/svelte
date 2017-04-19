@@ -1,7 +1,6 @@
-import { appendNode, assign, createComment, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
-	var each_block_anchor = createComment();
 	var each_block_value = state.comments;
 	var each_block_iterations = [];
 
@@ -17,10 +16,8 @@ function create_main_fragment ( state, component ) {
 
 	return {
 		mount: function ( target, anchor ) {
-			insertNode( each_block_anchor, target, anchor );
-
 			for ( var i = 0; i < each_block_iterations.length; i += 1 ) {
-				each_block_iterations[i].mount( target, each_block_anchor );
+				each_block_iterations[i].mount( target, null );
 			}
 
 			insertNode( text, target, anchor );
@@ -36,7 +33,7 @@ function create_main_fragment ( state, component ) {
 						each_block_iterations[i].update( changed, state, each_block_value, each_block_value[i], i );
 					} else {
 						each_block_iterations[i] = create_each_block( state, each_block_value, each_block_value[i], i, component );
-						each_block_iterations[i].mount( each_block_anchor.parentNode, each_block_anchor );
+						each_block_iterations[i].mount( text.parentNode, text );
 					}
 				}
 
@@ -54,7 +51,6 @@ function create_main_fragment ( state, component ) {
 			destroyEach( each_block_iterations, detach, 0 );
 
 			if ( detach ) {
-				detachNode( each_block_anchor );
 				detachNode( text );
 				detachNode( p );
 			}
