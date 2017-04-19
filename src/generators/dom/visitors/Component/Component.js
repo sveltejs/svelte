@@ -66,7 +66,7 @@ export default function visitComponent ( generator, block, state, node ) {
 
 	if ( local.allUsedContexts.length ) {
 		const initialProps = local.allUsedContexts.map( contextName => {
-			if ( contextName === 'root' ) return `root: root`;
+			if ( contextName === 'state' ) return `state: state`;
 
 			const listName = block.listNames.get( contextName );
 			const indexName = block.indexNames.get( contextName );
@@ -75,7 +75,7 @@ export default function visitComponent ( generator, block, state, node ) {
 		}).join( ',\n' );
 
 		const updates = local.allUsedContexts.map( contextName => {
-			if ( contextName === 'root' ) return `${name}._context.root = root;`;
+			if ( contextName === 'state' ) return `${name}._context.state = state;`;
 
 			const listName = block.listNames.get( contextName );
 			const indexName = block.indexNames.get( contextName );

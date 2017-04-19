@@ -15,12 +15,12 @@ var template = (function () {
 	};
 }());
 
-function create_main_fragment ( root, component ) {
+function create_main_fragment ( state, component ) {
 	var button = createElement( 'button' );
 
 	var foo_handler = template.events.foo.call( component, button, function ( event ) {
-		var root = component.get();
-		component.foo( root.bar );
+		var state = component.get();
+		component.foo( state.bar );
 	});
 
 	appendNode( createText( "foo" ), button );

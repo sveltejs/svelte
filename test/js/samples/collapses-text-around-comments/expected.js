@@ -17,10 +17,10 @@ function add_css () {
 	added_css = true;
 }
 
-function create_main_fragment ( root, component ) {
+function create_main_fragment ( state, component ) {
 	var p = createElement( 'p' );
 	setAttribute( p, 'svelte-3842350206', '' );
-	var text_value = root.foo;
+	var text_value = state.foo;
 	var text = createText( text_value );
 	appendNode( text, p );
 
@@ -29,8 +29,8 @@ function create_main_fragment ( root, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		update: function ( changed, root ) {
-			if ( text_value !== ( text_value = root.foo ) ) {
+		update: function ( changed, state ) {
+			if ( text_value !== ( text_value = state.foo ) ) {
 				text.data = text_value;
 			}
 		},

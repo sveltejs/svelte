@@ -30,9 +30,9 @@ export default function visitEventHandler ( generator, block, state, node, attri
 
 	const _this = context || 'this';
 	const declarations = usedContexts.map( name => {
-		if ( name === 'root' ) {
+		if ( name === 'state' ) {
 			if ( shouldHoist ) state.usesComponent = true;
-			return `var root = ${block.component}.get();`;
+			return `var state = ${block.component}.get();`;
 		}
 
 		const listName = block.listNames.get( name );

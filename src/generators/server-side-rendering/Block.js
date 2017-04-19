@@ -7,7 +7,7 @@ export default class Block {
 	}
 
 	addBinding ( binding, name ) {
-		const conditions = [ `!( '${binding.name}' in root )`].concat( // TODO handle contextual bindings...
+		const conditions = [ `!( '${binding.name}' in state )`].concat( // TODO handle contextual bindings...
 			this.conditions.map( c => `(${c})` )
 		);
 
@@ -17,7 +17,7 @@ export default class Block {
 			if ( ${conditions.join( '&&' )} ) {
 				tmp = ${name}.data();
 				if ( '${keypath}' in tmp ) {
-					root.${binding.name} = tmp.${keypath};
+					state.${binding.name} = tmp.${keypath};
 					settled = false;
 				}
 			}

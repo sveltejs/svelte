@@ -24,7 +24,7 @@ export default function visitBinding ( generator, block, state, node, attribute,
 		prop = `'[✂${attribute.value.property.start}-${attribute.value.property.end}✂]'`;
 		obj = `[✂${attribute.value.object.start}-${attribute.value.object.end}✂]`;
 	} else {
-		obj = 'root';
+		obj = 'state';
 		prop = `'${name}'`;
 	}
 
