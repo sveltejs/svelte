@@ -23,5 +23,10 @@ export default {
 		assert.htmlEqual( target.innerHTML, `
 			<p>wombat</p>
 		` );
+
+		component.set({ animals: ['dinosaur'] });
+		assert.htmlEqual( target.innerHTML, `
+			<p>dinosaur</p>
+		` );
 	}
 };
