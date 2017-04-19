@@ -112,10 +112,6 @@ export default function visitElement ( generator, block, state, node ) {
 		visit( generator, block, childState, child );
 	});
 
-	if ( node.initialUpdate ) {
-		block.builders.create.addBlock( node.initialUpdate );
-	}
-
 	if ( node.lateUpdate ) {
 		block.builders.update.addLine( node.lateUpdate );
 	}
@@ -123,6 +119,10 @@ export default function visitElement ( generator, block, state, node ) {
 	if ( selectValueAttribute ) {
 		const visitor = selectValueAttribute.type === 'Attribute' ? visitAttribute : visitBinding;
 		visitor( generator, block, childState, node, selectValueAttribute );
+	}
+
+	if ( node.initialUpdate ) {
+		block.builders.create.addBlock( node.initialUpdate );
 	}
 }
 
