@@ -107,7 +107,10 @@ describe( 'ssr', () => {
 				}
 			}
 
-			const component = require( `../runtime/samples/${dir}/main.html` );
+			const resolved = require.resolve( `../runtime/samples/${dir}/main.html` );
+			delete require.cache[ resolved ];
+
+			const component = require( resolved );
 			let html;
 
 			try {
