@@ -1,9 +1,10 @@
 import deindent from '../../../../../utils/deindent.js';
 
-export default function getSetter ({ block, name, keypath, context, attribute, dependencies, value }) {
+export default function getSetter ({ block, name, context, attribute, dependencies, value }) {
+	const tail = attribute.value.type === 'MemberExpression' ? getTailSnippet( attribute.value ) : '';
+
 	if ( block.contexts.has( name ) ) {
 		const prop = dependencies[0];
-		const tail = attribute.value.type === 'MemberExpression' ? getTailSnippet( attribute.value ) : '';
 
 		return deindent`
 			var list = this.${context}.${block.listNames.get( name )};
@@ -15,10 +16,12 @@ export default function getSetter ({ block, name, keypath, context, attribute, d
 	}
 
 	if ( attribute.value.type === 'MemberExpression' ) {
+		const alias = block.alias( name );
+
 		return deindent`
-			var ${name} = ${block.component}.get( '${name}' );
-			${keypath} = ${value};
-			${block.component}._set({ ${name}: ${name} });
+			var ${alias} = ${block.component}.get( '${name}' );
+			${alias}${tail} = ${value};
+			${block.component}._set({ ${name}: ${alias} });
 		`;
 	}
 
