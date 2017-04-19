@@ -47,7 +47,7 @@ export default function visitIfBlock ( generator, block, state, node ) {
 	const vars = { name, anchor, params };
 
 	if ( node.needsAnchor ) {
-		block.createAnchor( anchor, state.parentNode );
+		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
 	} else if ( node.next ) {
 		node.next.usedAsAnchor = true;
 	}
