@@ -79,7 +79,7 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 	var text_2 = createText( text_2_value = comment.author );
 	appendNode( text_2, span );
 	appendNode( createText( " wrote " ), span );
-	var text_4 = createText( text_4_value = state.elapsed(comment.time, root.time) );
+	var text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
 	appendNode( text_4, span );
 	appendNode( createText( " ago:" ), span );
 	appendNode( createText( "\n\n\t\t" ), div );
