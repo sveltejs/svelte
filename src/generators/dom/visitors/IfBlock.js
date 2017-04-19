@@ -34,12 +34,8 @@ function getBranches ( generator, block, state, node ) {
 }
 
 function visitChildren ( generator, block, state, node ) {
-	const childState = Object.assign( {}, state, {
-		parentNode: null
-	});
-
 	node.children.forEach( child => {
-		visit( generator, node._block, childState, child );
+		visit( generator, node._block, node._state, child );
 	});
 }
 
@@ -76,7 +72,7 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 	if ( isToplevel ) {
 		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, ${anchor} );` );
 	} else {
-		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
+		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, null );` );
 	}
 
 	if ( dynamic ) {
@@ -128,7 +124,7 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 	if ( isToplevel ) {
 		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, ${anchor} );` );
 	} else {
-		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
+		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, null );` );
 	}
 
 	if ( dynamic ) {

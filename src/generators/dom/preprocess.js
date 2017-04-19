@@ -1,17 +1,62 @@
 import Block from './Block.js';
 import { trimStart, trimEnd } from '../../utils/trim.js';
+import { assign } from '../../shared/index.js';
 
 function isElseIf ( node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
 }
 
+function getChildState ( parent, child ) {
+	return assign( {}, parent, { name: null, parentNode: null }, child || {} );
+}
+
+// Whitespace inside one of these elements will not result in
+// a whitespace node being created in any circumstances. (This
+// list is almost certainly very incomplete)
+const elementsWithoutText = new Set([
+	'audio',
+	'datalist',
+	'dl',
+	'ol',
+	'optgroup',
+	'select',
+	'ul',
+	'video'
+]);
+
 const preprocessors = {
-	MustacheTag: ( generator, block, node ) => {
+	MustacheTag: ( generator, block, state, node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
+
+		node._state = getChildState( state, {
+			name: block.getUniqueName( 'text' )
+		});
 	},
 
-	IfBlock: ( generator, block, node ) => {
+	RawMustacheTag: ( generator, block, state, node ) => {
+		const dependencies = block.findDependencies( node.expression );
+		block.addDependencies( dependencies );
+
+		const basename = block.getUniqueName( 'raw' );
+		const name = block.getUniqueName( `${basename}_before` );
+
+		node._state = getChildState( state, { basename, name });
+	},
+
+	Text: ( generator, block, state, node ) => {
+		node._state = getChildState( state );
+
+		if ( !/\S/.test( node.data ) ) {
+			if ( state.namespace ) return;
+			if ( elementsWithoutText.has( state.parentNodeName ) ) return;
+		}
+
+		node._state.shouldCreate = true;
+		node._state.name = block.getUniqueName( `text` );
+	},
+
+	IfBlock: ( generator, block, state, node ) => {
 		const blocks = [];
 		let dynamic = false;
 
@@ -23,8 +68,10 @@ const preprocessors = {
 				name: generator.getUniqueName( `create_if_block` )
 			});
 
+			node._state = getChildState( state );
+
 			blocks.push( node._block );
-			preprocessChildren( generator, node._block, node );
+			preprocessChildren( generator, node._block, node._state, node );
 
 			if ( node._block.dependencies.size > 0 ) {
 				dynamic = true;
@@ -38,8 +85,10 @@ const preprocessors = {
 					name: generator.getUniqueName( `create_if_block` )
 				});
 
+				node.else._state = getChildState( state );
+
 				blocks.push( node.else._block );
-				preprocessChildren( generator, node.else._block, node.else );
+				preprocessChildren( generator, node.else._block, node.else._state, node.else );
 
 				if ( node.else._block.dependencies.size > 0 ) {
 					dynamic = true;
@@ -57,7 +106,7 @@ const preprocessors = {
 		generator.blocks.push( ...blocks );
 	},
 
-	EachBlock: ( generator, block, node ) => {
+	EachBlock: ( generator, block, state, node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -97,8 +146,12 @@ const preprocessors = {
 			params: block.params.concat( listName, context, indexName )
 		});
 
+		node._state = getChildState( state, {
+			inEachBlock: true
+		});
+
 		generator.blocks.push( node._block );
-		preprocessChildren( generator, node._block, node );
+		preprocessChildren( generator, node._block, node._state, node );
 		block.addDependencies( node._block.dependencies );
 		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
@@ -107,13 +160,32 @@ const preprocessors = {
 				name: generator.getUniqueName( `${node._block.name}_else` )
 			});
 
+			node.else._state = getChildState( state );
+
 			generator.blocks.push( node.else._block );
-			preprocessChildren( generator, node.else._block, node.else );
+			preprocessChildren( generator, node.else._block, node.else._state, node.else );
 			node.else._block.hasUpdateMethod = node.else._block.dependencies.size > 0;
 		}
 	},
 
-	Element: ( generator, block, node ) => {
+	Element: ( generator, block, state, node ) => {
+		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
+
+		if ( isComponent ) {
+			node._state = getChildState( state );
+		} else {
+			const name = block.getUniqueName( node.name );
+
+			node._state = getChildState( state, {
+				isTopLevel: false,
+				name,
+				parentNode: name,
+				parentNodeName: node.name,
+				namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace,
+				allUsedContexts: []
+			});
+		}
+
 		node.attributes.forEach( attribute => {
 			if ( attribute.type === 'Attribute' && attribute.value !== true ) {
 				attribute.value.forEach( chunk => {
@@ -130,8 +202,6 @@ const preprocessors = {
 			}
 		});
 
-		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
-
 		if ( node.children.length ) {
 			if ( isComponent ) {
 				const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
@@ -141,21 +211,19 @@ const preprocessors = {
 				});
 
 				generator.blocks.push( node._block );
-				preprocessChildren( generator, node._block, node );
+				preprocessChildren( generator, node._block, node._state, node );
 				block.addDependencies( node._block.dependencies );
 				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 			}
 
 			else {
-				preprocessChildren( generator, block, node );
+				preprocessChildren( generator, block, node._state, node );
 			}
 		}
 	}
 };
 
-preprocessors.RawMustacheTag = preprocessors.MustacheTag;
-
-function preprocessChildren ( generator, block, node ) {
+function preprocessChildren ( generator, block, state, node ) {
 	// glue text nodes together
 	const cleaned = [];
 	let lastChild;
@@ -170,6 +238,7 @@ function preprocessChildren ( generator, block, node ) {
 			cleaned.push( child );
 		}
 
+		if ( lastChild ) lastChild.next = child;
 		lastChild = child;
 	});
 
@@ -177,11 +246,11 @@ function preprocessChildren ( generator, block, node ) {
 
 	cleaned.forEach( child => {
 		const preprocess = preprocessors[ child.type ];
-		if ( preprocess ) preprocess( generator, block, child );
+		if ( preprocess ) preprocess( generator, block, state, child );
 	});
 }
 
-export default function preprocess ( generator, node ) {
+export default function preprocess ( generator, state, node ) {
 	const block = new Block({
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
@@ -199,7 +268,7 @@ export default function preprocess ( generator, node ) {
 	});
 
 	generator.blocks.push( block );
-	preprocessChildren( generator, block, node );
+	preprocessChildren( generator, block, state, node );
 	block.hasUpdateMethod = block.dependencies.size > 0;
 
 	// trim leading and trailing whitespace from the top level

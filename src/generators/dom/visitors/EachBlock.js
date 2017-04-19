@@ -87,22 +87,13 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		` );
 	}
 
-	const childState = Object.assign( {}, state, {
-		parentNode: null,
-		inEachBlock: true
-	});
-
 	node.children.forEach( child => {
-		visit( generator, node._block, childState, child );
+		visit( generator, node._block, node._state, child );
 	});
 
 	if ( node.else ) {
-		const childState = Object.assign( {}, state, {
-			parentNode: null
-		});
-
 		node.else.children.forEach( child => {
-			visit( generator, node.else._block, childState, child );
+			visit( generator, node.else._block, node.else._state, child );
 		});
 	}
 }
