@@ -191,7 +191,7 @@ export default function preprocess ( generator, node ) {
 		indexes: new Map(),
 		contextDependencies: new Map(),
 
-		params: [ 'root' ],
+		params: [ 'state' ],
 		indexNames: new Map(),
 		listNames: new Map(),
 

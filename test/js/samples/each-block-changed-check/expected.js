@@ -1,19 +1,19 @@
 import { appendNode, assign, createComment, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
-function create_main_fragment ( root, component ) {
+function create_main_fragment ( state, component ) {
 	var text_1_value;
 
 	var each_block_anchor = createComment();
-	var each_block_value = root.comments;
+	var each_block_value = state.comments;
 	var each_block_iterations = [];
 
 	for ( var i = 0; i < each_block_value.length; i += 1 ) {
-		each_block_iterations[i] = create_each_block( root, each_block_value, each_block_value[i], i, component );
+		each_block_iterations[i] = create_each_block( state, each_block_value, each_block_value[i], i, component );
 	}
 
 	var text = createText( "\n\n" );
 	var p = createElement( 'p' );
-	var text_1 = createText( text_1_value = root.foo );
+	var text_1 = createText( text_1_value = state.foo );
 	appendNode( text_1, p );
 
 	return {
@@ -28,15 +28,15 @@ function create_main_fragment ( root, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		update: function ( changed, root ) {
-			var each_block_value = root.comments;
+		update: function ( changed, state ) {
+			var each_block_value = state.comments;
 
 			if ( 'comments' in changed || 'elapsed' in changed || 'time' in changed ) {
 				for ( var i = 0; i < each_block_value.length; i += 1 ) {
 					if ( each_block_iterations[i] ) {
-						each_block_iterations[i].update( changed, root, each_block_value, each_block_value[i], i );
+						each_block_iterations[i].update( changed, state, each_block_value, each_block_value[i], i );
 					} else {
-						each_block_iterations[i] = create_each_block( root, each_block_value, each_block_value[i], i, component );
+						each_block_iterations[i] = create_each_block( state, each_block_value, each_block_value[i], i, component );
 						each_block_iterations[i].mount( each_block_anchor.parentNode, each_block_anchor );
 					}
 				}
@@ -46,7 +46,7 @@ function create_main_fragment ( root, component ) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( text_1_value !== ( text_1_value = root.foo ) ) {
+			if ( text_1_value !== ( text_1_value = state.foo ) ) {
 				text_1.data = text_1_value;
 			}
 		},
@@ -63,7 +63,7 @@ function create_main_fragment ( root, component ) {
 	};
 }
 
-function create_each_block ( root, each_block_value, comment, i, component ) {
+function create_each_block ( state, each_block_value, comment, i, component ) {
 	var text_value, text_2_value, text_4_value;
 
 	var div = createElement( 'div' );
@@ -79,7 +79,7 @@ function create_each_block ( root, each_block_value, comment, i, component ) {
 	var text_2 = createText( text_2_value = comment.author );
 	appendNode( text_2, span );
 	appendNode( createText( " wrote " ), span );
-	var text_4 = createText( text_4_value = root.elapsed(comment.time, root.time) );
+	var text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
 	appendNode( text_4, span );
 	appendNode( createText( " ago:" ), span );
 	appendNode( createText( "\n\n\t\t" ), div );
@@ -95,7 +95,7 @@ function create_each_block ( root, each_block_value, comment, i, component ) {
 			insertNode( div, target, anchor );
 		},
 
-		update: function ( changed, root, each_block_value, comment, i ) {
+		update: function ( changed, state, each_block_value, comment, i ) {
 			if ( text_value !== ( text_value = i ) ) {
 				text.data = text_value;
 			}
@@ -104,7 +104,7 @@ function create_each_block ( root, each_block_value, comment, i, component ) {
 				text_2.data = text_2_value;
 			}
 
-			if ( text_4_value !== ( text_4_value = root.elapsed(comment.time, root.time) ) ) {
+			if ( text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
 				text_4.data = text_4_value;
 			}
 

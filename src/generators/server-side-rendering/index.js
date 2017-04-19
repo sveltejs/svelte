@@ -44,12 +44,12 @@ export default function ssr ( parsed, source, options ) {
 	});
 
 	builders.render.addLine(
-		templateProperties.data ? `root = Object.assign( ${generator.alias( 'template' )}.data(), root || {} );` : `root = root || {};`
+		templateProperties.data ? `state = Object.assign( ${generator.alias( 'template' )}.data(), state || {} );` : `state = state || {};`
 	);
 
 	computations.forEach( ({ key, deps }) => {
 		builders.render.addLine(
-			`root.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `root.${dep}` ).join( ', ' )} );`
+			`state.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );`
 		);
 	});
 
@@ -129,7 +129,7 @@ export default function ssr ( parsed, source, options ) {
 			return ${templateProperties.data ? `${generator.alias( 'template' )}.data()` : `{}`};
 		};
 
-		${name}.render = function ( root, options ) {
+		${name}.render = function ( state, options ) {
 			${builders.render}
 		};
 
