@@ -120,6 +120,12 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		${generator.helper( 'addEventListener' )}( ${state.parentNode}, '${eventName}', ${handler} );
 	` );
 
+	if ( node.name === 'select' ) {
+		block.builders.create.addBlock( deindent`
+			${updateElement}
+		` );
+	}
+
 	if ( node.name !== 'audio' && node.name !== 'video' ) node.initialUpdate = updateElement;
 
 	if ( updateCondition !== null ) {
