@@ -40,10 +40,9 @@ export default function visitBinding ( generator, block, state, node, attribute,
 	generator.hasComplexBindings = true;
 
 	const updating = block.getUniqueName( `${local.name}_updating` );
+	block.addVariable( updating, 'false' );
 
 	local.create.addBlock( deindent`
-		var ${updating} = false;
-
 		${block.component}._bindings.push( function () {
 			if ( ${local.name}._torndown ) return;
 			${local.name}.observe( '${attribute.name}', function ( value ) {
