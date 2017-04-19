@@ -44,7 +44,7 @@ export default function visitAttribute ( generator, block, state, node, attribut
 		}
 
 		const last = block.getUniqueName( `${state.parentNode}_${name.replace( /[^a-zA-Z_$]/g, '_')}_value` );
-		block.builders.create.addLine( `var ${last} = ${value};` );
+		block.addVariable( last );
 
 		const isSelectValueAttribute = name === 'value' && state.parentNodeName === 'select';
 
@@ -66,20 +66,25 @@ export default function visitAttribute ( generator, block, state, node, attribut
 					}`;
 
 			updater = deindent`
-				var ${last} = ${last};
 				for ( var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1 ) {
 					var ${option} = ${state.parentNode}.options[${i}];
 
 					${ifStatement}
 				}
 			`;
+
+			block.builders.create.addLine( deindent`
+				${last} = ${value}
+				${updater}
+			` );
 		} else if ( propertyName ) {
+			block.builders.create.addLine( `${state.parentNode}.${propertyName} = ${last} = ${value};` );
 			updater = `${state.parentNode}.${propertyName} = ${last};`;
 		} else {
+			block.builders.create.addLine( `${generator.helper( method )}( ${state.parentNode}, '${name}', ${last} = ${value} );` );
 			updater = `${generator.helper( method )}( ${state.parentNode}, '${name}', ${last} );`;
 		}
 
-		block.builders.create.addLine( updater );
 		block.builders.update.addBlock( deindent`
 			if ( ${last} !== ( ${last} = ${value} ) ) {
 				${updater}
