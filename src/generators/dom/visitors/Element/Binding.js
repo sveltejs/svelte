@@ -4,7 +4,7 @@ import getSetter from '../shared/binding/getSetter.js';
 import getStaticAttributeValue from './getStaticAttributeValue.js';
 
 export default function visitBinding ( generator, block, state, node, attribute ) {
-	const { name, keypath } = flattenReference( attribute.value );
+	const { name, keypath, parts } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
@@ -17,7 +17,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	const handler = block.getUniqueName( `${state.parentNode}_${eventName}_handler` );
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
-	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
+	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, parts.join( '.' ) ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
 
 	let setter = getSetter({ block, name, context: '_svelte', attribute, dependencies, value });
