@@ -1,7 +1,7 @@
 import deindent from '../../../utils/deindent.js';
 
 export default function visitMustacheTag ( generator, block, state, node ) {
-	const name = block.getUniqueName( 'text' );
+	const name = node._state.name;
 	const value = block.getUniqueName( `${name}_value` );
 
 	const { snippet } = block.contextualise( node.expression );

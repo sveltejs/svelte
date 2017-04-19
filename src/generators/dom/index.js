@@ -43,13 +43,13 @@ export default function dom ( parsed, source, options ) {
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
-	const block = preprocess( generator, parsed.html );
-
 	const state = {
 		namespace,
 		parentNode: null,
 		isTopLevel: true
 	};
+
+	const block = preprocess( generator, state, parsed.html );
 
 	parsed.html.children.forEach( node => {
 		visit( generator, block, state, node );

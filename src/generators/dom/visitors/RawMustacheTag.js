@@ -1,9 +1,9 @@
 import deindent from '../../../utils/deindent.js';
 
 export default function visitRawMustacheTag ( generator, block, state, node ) {
-	const name = block.getUniqueName( 'raw' );
+	const name = node._state.basename;
+	const before = node._state.name;
 	const value = block.getUniqueName( `${name}_value` );
-	const before = block.getUniqueName( `${name}_before` );
 	const after = block.getUniqueName( `${name}_after` );
 
 	const { snippet } = block.contextualise( node.expression );
