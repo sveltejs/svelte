@@ -6,8 +6,8 @@ export default function visitMustacheTag ( generator, block, state, node ) {
 
 	const { snippet } = block.contextualise( node.expression );
 
-	block.builders.create.addLine( `var ${value} = ${snippet};` );
-	block.addElement( name, `${generator.helper( 'createText' )}( ${value} )`, state.parentNode, true );
+	block.addVariable( value );
+	block.addElement( name, `${generator.helper( 'createText' )}( ${value} = ${snippet} )`, state.parentNode, true );
 
 	block.builders.update.addBlock( deindent`
 		if ( ${value} !== ( ${value} = ${snippet} ) ) {

@@ -18,10 +18,11 @@ function add_css () {
 }
 
 function create_main_fragment ( state, component ) {
+	var text_value;
+
 	var p = createElement( 'p' );
 	setAttribute( p, 'svelte-3842350206', '' );
-	var text_value = state.foo;
-	var text = createText( text_value );
+	var text = createText( text_value = state.foo );
 	appendNode( text, p );
 
 	return {

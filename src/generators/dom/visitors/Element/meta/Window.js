@@ -98,7 +98,7 @@ export default function visitWindow ( generator, block, node ) {
 
 		const handlerBody = new CodeBuilder();
 		if ( event === 'scroll' ) { // TODO other bidirectional bindings...
-			block.builders.create.addLine( `var ${lock} = false;` );
+			block.addVariable( lock, 'false' );
 			handlerBody.addLine( `${lock} = true;` );
 		}
 
