@@ -20,7 +20,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
 
-	let setter = getSetter({ block, name, keypath, context: '_svelte', attribute, dependencies, value });
+	let setter = getSetter({ block, name, context: '_svelte', attribute, dependencies, value });
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
 	const lock = block.getUniqueName( `${state.parentNode}_${attribute.name}_updating` );
 	let updateCondition = `!${lock}`;
