@@ -13,16 +13,17 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		if ( !~state.allUsedContexts.indexOf( context ) ) state.allUsedContexts.push( context );
 	});
 
-	const handler = block.getUniqueName( `${state.parentNode}_change_handler` );
-
+	const eventName = getBindingEventName( node, attribute );
+	const handler = block.getUniqueName( `${state.parentNode}_${eventName}_handler` );
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, keypath ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
-	const eventName = getBindingEventName( node );
 
 	let setter = getSetter({ block, name, keypath, context: '_svelte', attribute, dependencies, value });
-	let updateElement;
+	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
+	const lock = block.getUniqueName( `${state.parentNode}_${attribute.name}_updating` );
+	let updateCondition = `!${lock}`;
 
 	// <select> special case
 	if ( node.name === 'select' ) {
@@ -77,39 +78,70 @@ export default function visitBinding ( generator, block, state, node, attribute 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	}
 
-	// everything else
-	else {
-		updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
+	else if ( node.name === 'audio' || node.name === 'video' ) {
+		generator.hasComplexBindings = true;
+		block.builders.create.addBlock( `${block.component}._bindings.push( ${handler} );` );
+
+		if ( attribute.name === 'currentTime' ) {
+			const frame = block.getUniqueName( `${state.parentNode}_animationframe` );
+			block.builders.create.addLine( `var ${frame};` );
+			setter = deindent`
+				cancelAnimationFrame( ${frame} );
+				if ( !${state.parentNode}.paused ) ${frame} = requestAnimationFrame( ${handler} );
+				${setter}
+			`;
+
+			updateCondition += ` && !isNaN( ${snippet} )`;
+		}
+
+		else if ( attribute.name === 'duration' ) {
+			updateCondition = null;
+		}
+
+		else if ( attribute.name === 'paused' ) {
+			// this is necessary to prevent the audio restarting by itself
+			const last = block.getUniqueName( `${state.parentNode}_paused_value` );
+			block.builders.create.addLine( `var ${last} = true;` );
+
+			updateCondition += ` && ${last} !== ( ${last} = ${snippet} )`;
+			updateElement = `${state.parentNode}[ ${last} ? 'pause' : 'play' ]();`;
+		}
 	}
 
-	const updating = block.getUniqueName( `${state.parentNode}_updating` );
-
 	block.builders.create.addBlock( deindent`
-		var ${updating} = false;
+		var ${lock} = false;
 
 		function ${handler} () {
-			${updating} = true;
+			${lock} = true;
 			${setter}
-			${updating} = false;
+			${lock} = false;
 		}
 
 		${generator.helper( 'addEventListener' )}( ${state.parentNode}, '${eventName}', ${handler} );
 	` );
 
-	node.initialUpdate = updateElement;
+	if ( node.name !== 'audio' && node.name !== 'video' ) node.initialUpdate = updateElement;
 
-	block.builders.update.addLine( deindent`
-		if ( !${updating} ) {
-			${updateElement}
-		}
-	` );
+	if ( updateCondition !== null ) {
+		// audio/video duration is read-only, it never updates
+		block.builders.update.addBlock( deindent`
+			if ( ${updateCondition} ) {
+				${updateElement}
+			}
+		` );
+	}
 
 	block.builders.destroy.addLine( deindent`
 		${generator.helper( 'removeEventListener' )}( ${state.parentNode}, '${eventName}', ${handler} );
 	` );
+
+	if ( attribute.name === 'paused' ) {
+		block.builders.create.addLine( `${generator.helper( 'addEventListener' )}( ${state.parentNode}, 'play', ${handler} );` );
+		block.builders.destroy.addLine( `${generator.helper( 'removeEventListener' )}( ${state.parentNode}, 'play', ${handler} );` );
+	}
 }
 
-function getBindingEventName ( node ) {
+function getBindingEventName ( node, attribute ) {
 	if ( node.name === 'input' ) {
 		const typeAttribute = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
 		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
@@ -117,9 +149,10 @@ function getBindingEventName ( node ) {
 		return type === 'checkbox' || type === 'radio' ? 'change' : 'input';
 	}
 
-	if ( node.name === 'textarea' ) {
-		return 'input';
-	}
+	if ( node.name === 'textarea' ) return 'input';
+	if ( attribute.name === 'currentTime' ) return 'timeupdate';
+	if ( attribute.name === 'duration' ) return 'durationchange';
+	if ( attribute.name === 'paused' ) return 'pause';
 
 	return 'change';
 }
