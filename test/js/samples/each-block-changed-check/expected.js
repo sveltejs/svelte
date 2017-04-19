@@ -1,6 +1,8 @@
 import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
+	var text_1_value;
+
 	var each_block_value = state.comments;
 	var each_block_iterations = [];
 
@@ -10,8 +12,7 @@ function create_main_fragment ( state, component ) {
 
 	var text = createText( "\n\n" );
 	var p = createElement( 'p' );
-	var text_1_value = state.foo;
-	var text_1 = createText( text_1_value );
+	var text_1 = createText( text_1_value = state.foo );
 	appendNode( text_1, p );
 
 	return {
@@ -59,23 +60,22 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_each_block ( state, each_block_value, comment, i, component ) {
+	var text_value, text_2_value, text_4_value;
+
 	var div = createElement( 'div' );
 	div.className = "comment";
 	var strong = createElement( 'strong' );
 	appendNode( strong, div );
-	var text_value = i;
-	var text = createText( text_value );
+	var text = createText( text_value = i );
 	appendNode( text, strong );
 	appendNode( createText( "\n\n\t\t" ), div );
 	var span = createElement( 'span' );
 	appendNode( span, div );
 	span.className = "meta";
-	var text_2_value = comment.author;
-	var text_2 = createText( text_2_value );
+	var text_2 = createText( text_2_value = comment.author );
 	appendNode( text_2, span );
 	appendNode( createText( " wrote " ), span );
-	var text_4_value = state.elapsed(comment.time, state.time);
-	var text_4 = createText( text_4_value );
+	var text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
 	appendNode( text_4, span );
 	appendNode( createText( " ago:" ), span );
 	appendNode( createText( "\n\n\t\t" ), div );

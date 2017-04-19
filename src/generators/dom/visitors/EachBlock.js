@@ -73,12 +73,16 @@ export default function visitEachBlock ( generator, block, state, node ) {
 					${each_block_else}.mount( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
 					${each_block_else}.destroy( true );
+					${each_block_else} = null;
 				}
 			` );
 		} else {
 			block.builders.update.addBlock( deindent`
 				if ( ${each_block_value}.length ) {
-					if ( ${each_block_else} ) ${each_block_else}.destroy( true );
+					if ( ${each_block_else} ) {
+						${each_block_else}.destroy( true );
+						${each_block_else} = null;
+					}
 				} else if ( !${each_block_else} ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
 					${each_block_else}.mount( ${parentNode}, ${anchor} );

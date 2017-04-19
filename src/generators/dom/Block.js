@@ -30,6 +30,7 @@ export default class Block {
 		};
 
 		this.aliases = new Map();
+		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
 
 		// unique names
@@ -62,6 +63,14 @@ export default class Block {
 		}
 	}
 
+	addVariable ( name, init ) {
+		if ( this.variables.has( name ) && this.variables.get( name ) !== init ) {
+			throw new Error( `Variable '${name}' already initialised with a different value` );
+		}
+
+		this.variables.set( name, init );
+	}
+
 	alias ( name ) {
 		if ( !this.aliases.has( name ) ) {
 			this.aliases.set( name, this.getUniqueName( name ) );
@@ -91,6 +100,17 @@ export default class Block {
 	}
 
 	render () {
+		if ( this.variables.size ) {
+			const variables = Array.from( this.variables.keys() )
+				.map( key => {
+					const init = this.variables.get( key );
+					return init !== undefined ? `${key} = ${init}` : key;
+				})
+				.join( ', ' );
+
+			this.builders.create.addBlockAtStart( `var ${variables};` );
+		}
+
 		if ( this.autofocus ) {
 			this.builders.create.addLine( `${this.autofocus}.focus();` );
 		}
@@ -129,7 +149,6 @@ export default class Block {
 			if ( this.builders.update.isEmpty() ) {
 				properties.addBlock( `update: ${this.generator.helper( 'noop' )},` );
 			} else {
-				if ( this._tmp ) this.builders.update.addBlockAtStart( `var ${this._tmp};` );
 				properties.addBlock( deindent`
 					update: function ( changed, ${this.params.join( ', ' )} ) {
 						${this.builders.update}
