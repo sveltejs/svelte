@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.17.1
+
+* Fixes for static each-else and yield blocks ([#509](https://github.com/sveltejs/svelte/issues/509)), ([#514](https://github.com/sveltejs/svelte/issues/514))
+* Code generation tweaks ([#504](https://github.com/sveltejs/svelte/issues/504)), ([#507](https://github.com/sveltejs/svelte/issues/507))
+
 ## 1.17.0
 
 * Add `currentTime`, `duration` and `paused` bindings for media elements ([#406](https://github.com/sveltejs/svelte/issues/406))
