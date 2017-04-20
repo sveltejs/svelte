@@ -34,7 +34,7 @@ export default function visitElement ( generator, block, state, node ) {
 		return visitComponent( generator, block, state, node );
 	}
 
-	const name = block.getUniqueName( node.name );
+	const name = block.getUniqueName( node.name.replace( /[^a-zA-Z_$]/g, '_' ) );
 
 	const childState = Object.assign( {}, state, {
 		isTopLevel: false,
