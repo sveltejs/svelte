@@ -2,7 +2,7 @@
 
 ## 1.17.2
 
-* Replace bad characters when creating variable names based on attributes ([#470](https://github.com/sveltejs/svelte/issues/470))
+* Replace bad characters when creating variable names based on element names ([#516](https://github.com/sveltejs/svelte/issues/516))
 
 ## 1.17.1
 
