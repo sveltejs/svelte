@@ -1,0 +1,15 @@
+<select bind:value="selected" on:change="updateLastChangedTo(selected)">
+    {{#each options as option}}
+    <option value="{{option.id}}">{{option.id}}</option>
+    {{/each}}
+</select>
+
+<script>
+export default {
+    methods: {
+        updateLastChangedTo(result) {
+            this.set({ lastChangedTo: result })
+        }
+    }
+}
+</script>
