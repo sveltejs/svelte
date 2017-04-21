@@ -3,8 +3,29 @@ node_js:
   - "4"
   - "6"
   - "node"
+addons:
+  firefox: "latest"
 env:
   global:
     - BUILD_TIMEOUT=10000
+cache:
+  directories:
+  - $HOME/.yarn-cache
+before_install:
+  - sudo apt-key adv --keyserver pgp.mit.edu --recv D101F7899D41F3C3
+  - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+  - sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+  - sudo apt-get update -qq
+  - sudo apt-get install -y -qq yarn google-chrome-stable
+  - wget https://github.com/mozilla/geckodriver/releases/download/v0.14.0/geckodriver-v0.14.0-linux64.tar.gz
+  - mkdir geckodriver
+  - tar -xzf geckodriver-v0.14.0-linux64.tar.gz -C geckodriver
+  - wget https://chromedriver.storage.googleapis.com/2.29/chromedriver_linux64.zip
+  - unzip chromedriver_linux64.zip -d chromedriver
+  - export PATH=$PATH:$PWD/geckodriver:$PWD/chromedriver
+  - "export DISPLAY=:99.0"
 install: npm install
-after_success: npm run codecov
+after_success: 
+  - npm run codecov
+  - npm run benchmark

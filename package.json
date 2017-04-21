@@ -16,6 +16,7 @@
     "codecov": "codecov",
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
+    "benchmark": "./scripts/benchmark.sh",
     "build": "npm run build:main && npm run build:shared && npm run build:ssr",
     "build:main": "rollup -c rollup/rollup.config.main.js",
     "build:shared": "rollup -c rollup/rollup.config.shared.js",
