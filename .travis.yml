@@ -3,6 +3,8 @@ node_js:
   - "4"
   - "6"
   - "node"
+dist: trusty
+sudo: required
 addons:
   firefox: "latest"
 env:
