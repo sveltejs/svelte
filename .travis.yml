@@ -27,7 +27,8 @@ before_install:
   - unzip chromedriver_linux64.zip -d chromedriver
   - export PATH=$PATH:$PWD/geckodriver:$PWD/chromedriver
   - "export DISPLAY=:99.0"
-install: npm install
+install: yarn
 after_success: 
-  - npm run codecov
+  - npm run lint
+  - npm run test
   - npm run benchmark
