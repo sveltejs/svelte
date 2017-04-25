@@ -174,7 +174,7 @@ const preprocessors = {
 		if ( isComponent ) {
 			node._state = getChildState( state );
 		} else {
-			const name = block.getUniqueName( node.name );
+			const name = block.getUniqueName( node.name.replace( /[^a-zA-Z0-9_$]/g, '_' ) );
 
 			node._state = getChildState( state, {
 				isTopLevel: false,
