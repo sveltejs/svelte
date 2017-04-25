@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 1.17.2
+
+* Replace bad characters when creating variable names based on element names ([#516](https://github.com/sveltejs/svelte/issues/516))
+
+## 1.17.1
+
+* Fixes for static each-else and yield blocks ([#509](https://github.com/sveltejs/svelte/issues/509)), ([#514](https://github.com/sveltejs/svelte/issues/514))
+* Code generation tweaks ([#504](https://github.com/sveltejs/svelte/issues/504)), ([#507](https://github.com/sveltejs/svelte/issues/507))
+
 ## 1.17.0
 
 * Add `currentTime`, `duration` and `paused` bindings for media elements ([#406](https://github.com/sveltejs/svelte/issues/406))
@@ -43,7 +52,7 @@
 * Add `bind:online` to window ([#404](https://github.com/sveltejs/svelte/issues/404))
 * In dev mode, throw if read-only properties are set ([#404](https://github.com/sveltejs/svelte/issues/404))
 * Prevent conflicts with component name ([#464](https://github.com/sveltejs/svelte/pull/464))
-* Ensure event handler names are deconflicted ([#466https://github.com/sveltejs/svelte/issues/466
+* Ensure event handler names are deconflicted ([#466](https://github.com/sveltejs/svelte/issues/466))
 
 ## 1.13.7
 
@@ -279,7 +288,7 @@
 
 ## 1.2.4
 
-* SSR compiler: Implement `{{{tripes}}}` ([#197](https://github.com/sveltejs/svelte/issues/197))
+* SSR compiler: Implement `{{{triples}}}` ([#197](https://github.com/sveltejs/svelte/issues/197))
 * SSR compiler: Escape HTML in tags ([#197](https://github.com/sveltejs/svelte/issues/197))
 
 ## 1.2.3
