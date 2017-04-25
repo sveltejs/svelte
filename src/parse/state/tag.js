@@ -1,7 +1,7 @@
 import readExpression from '../read/expression.js';
 import readScript from '../read/script.js';
 import readStyle from '../read/style.js';
-import { readEventHandlerDirective, readBindingDirective } from '../read/directives.js';
+import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives.js';
 import { trimStart, trimEnd } from '../../utils/trim.js';
 import { decodeCharacterReferences } from '../utils/html.js';
 import isVoidElementName from '../../utils/isVoidElementName.js';
@@ -251,6 +251,12 @@ function readAttribute ( parser, uniqueNames ) {
 			type: 'Ref',
 			name: name.slice( 4 )
 		};
+	}
+
+	const match = /^(in|out|transition):/.exec( name );
+	if ( match ) {
+		parser.eat( '=', true );
+		return readTransitionDirective( parser, start, name.slice( match[0].length ), match[1] );
 	}
 
 	let value;
