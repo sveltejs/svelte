@@ -56,20 +56,19 @@ export default function visitElement ( generator, block, state, node ) {
 		block.builders.create.addLine( `${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );` );
 	}
 
-	let selectValueAttribute;
+	function visitAttributes () {
+		node.attributes
+			.sort( ( a, b ) => order[ a.type ] - order[ b.type ] )
+			.forEach( attribute => {
+				visitors[ attribute.type ]( generator, block, childState, node, attribute );
+			});
+	}
 
-	node.attributes
-		.sort( ( a, b ) => order[ a.type ] - order[ b.type ] )
-		.forEach( attribute => {
-			// <select> value attributes are an annoying special case — it must be handled
-			// *after* its children have been updated
-			if ( ( attribute.type === 'Attribute' || attribute.type === 'Binding' ) && attribute.name === 'value' && node.name === 'select' ) {
-				selectValueAttribute = attribute;
-				return;
-			}
-
-			visitors[ attribute.type ]( generator, block, childState, node, attribute );
-		});
+	if ( node.name !== 'select' ) {
+		// <select> value attributes are an annoying special case — it must be handled
+		// *after* its children have been updated
+		visitAttributes();
+	}
 
 	// special case – bound <option> without a value attribute
 	if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
@@ -116,9 +115,8 @@ export default function visitElement ( generator, block, state, node ) {
 		block.builders.update.addLine( node.lateUpdate );
 	}
 
-	if ( selectValueAttribute ) {
-		const visitor = selectValueAttribute.type === 'Attribute' ? visitAttribute : visitBinding;
-		visitor( generator, block, childState, node, selectValueAttribute );
+	if ( node.name === 'select' ) {
+		visitAttributes();
 	}
 
 	if ( node.initialUpdate ) {
