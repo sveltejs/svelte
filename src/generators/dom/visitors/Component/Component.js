@@ -111,9 +111,11 @@ export default function visitComponent ( generator, block, state, node ) {
 			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
 		);
 
-		block.builders.update.addLine(
-			`${yieldFragment}.update( changed, ${params} );`
-		);
+		if ( childBlock.hasUpdateMethod ) {
+			block.builders.update.addLine(
+				`${yieldFragment}.update( changed, ${params} );`
+			);
+		}
 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);
 	}
