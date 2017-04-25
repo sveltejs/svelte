@@ -264,7 +264,7 @@ function preprocessChildren ( generator, block, state, node, isTopLevel ) {
 
 		if ( lastChild ) {
 			lastChild.next = child;
-			lastChild.needsAnchor = !child._state.name;
+			lastChild.needsAnchor = !child._state || !child._state.name;
 		}
 
 		lastChild = child;
