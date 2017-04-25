@@ -1,5 +1,5 @@
 [{
-	"message": "'foo' is an invalid callee (should be one of this.*, event.*, set, fire or bar). 'foo' exists on 'helpers', did you put it in the wrong place?",
+	"message": "'foo' is an invalid callee (should be one of this.*, event.*, set, fire, destroy or bar). 'foo' exists on 'helpers', did you put it in the wrong place?",
 	"pos": 18,
 	"loc": {
 		"line": 1,

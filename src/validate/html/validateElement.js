@@ -1,5 +1,11 @@
 import flattenReference from '../../utils/flattenReference.js';
 
+const validBuiltins = new Set([
+	'set',
+	'fire',
+	'destroy'
+]);
+
 export default function validateElement ( validator, node ) {
 	const isComponent = node.name === ':Self' || validator.components.has( node.name );
 
@@ -56,10 +62,15 @@ export default function validateElement ( validator, node ) {
 			const { name } = flattenReference( callee );
 
 			if ( name === 'this' || name === 'event' ) return;
-			if ( callee.type === 'Identifier' && callee.name === 'set' || callee.name === 'fire' || validator.methods.has( callee.name ) ) return;
+			if ( callee.type === 'Identifier' && validBuiltins.has( callee.name ) || validator.methods.has( callee.name ) ) return;
 
-			const validCallees = list( [ 'this.*', 'event.*', 'set', 'fire' ].concat( Array.from( validator.methods.keys() ) ) );
-			let message = `'${validator.source.slice( callee.start, callee.end )}' is an invalid callee (should be one of ${validCallees})`;
+			const validCallees = [ 'this.*', 'event.*' ]
+				.concat(
+					Array.from( validBuiltins ),
+					Array.from( validator.methods.keys() )
+				);
+
+			let message = `'${validator.source.slice( callee.start, callee.end )}' is an invalid callee (should be one of ${list( validCallees )})`;
 
 			if ( callee.type === 'Identifier' && validator.helpers.has( callee.name ) ) {
 				message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
