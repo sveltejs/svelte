@@ -34,23 +34,23 @@ function getBranches ( generator, block, state, node ) {
 }
 
 function visitChildren ( generator, block, state, node ) {
-	const childState = Object.assign( {}, state, {
-		parentNode: null
-	});
-
 	node.children.forEach( child => {
-		visit( generator, node._block, childState, child );
+		visit( generator, node._block, node._state, child );
 	});
 }
 
 export default function visitIfBlock ( generator, block, state, node ) {
 	const name = generator.getUniqueName( `if_block` );
-	const anchor = generator.getUniqueName( `${name}_anchor` );
+	const anchor = node.needsAnchor ? block.getUniqueName( `${name}_anchor` ) : ( node.next && node.next._state.name ) || 'null';
 	const params = block.params.join( ', ' );
 
 	const vars = { name, anchor, params };
 
-	block.createAnchor( anchor, state.parentNode );
+	if ( node.needsAnchor ) {
+		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
+	} else if ( node.next ) {
+		node.next.usedAsAnchor = true;
+	}
 
 	const branches = getBranches( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
 	const dynamic = branches.some( branch => branch.dynamic );
@@ -74,10 +74,12 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 	const isToplevel = !state.parentNode;
 
 	if ( isToplevel ) {
-		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, ${anchor} );` );
+		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, null );` );
 	} else {
-		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
+		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, null );` );
 	}
+
+	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	if ( dynamic ) {
 		block.builders.update.addBlock( deindent`
@@ -86,7 +88,7 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 					${name}.update( changed, ${params} );
 				} else {
 					${name} = ${branch.block}( ${params}, ${block.component} );
-					${name}.mount( ${anchor}.parentNode, ${anchor} );
+					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			} else if ( ${name} ) {
 				${name}.destroy( true );
@@ -98,7 +100,7 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 			if ( ${branch.condition} ) {
 				if ( !${name} ) {
 					${name} = ${branch.block}( ${params}, ${block.component} );
-					${name}.mount( ${anchor}.parentNode, ${anchor} );
+					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			} else if ( ${name} ) {
 				${name}.destroy( true );
@@ -126,10 +128,12 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 	const isToplevel = !state.parentNode;
 
 	if ( isToplevel ) {
-		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, ${anchor} );` );
+		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, null );` );
 	} else {
-		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, ${anchor} );` );
+		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, null );` );
 	}
+
+	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	if ( dynamic ) {
 		block.builders.update.addBlock( deindent`
@@ -138,7 +142,7 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 			} else {
 				if ( ${name} ) ${name}.destroy( true );
 				${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
-				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
+				if ( ${name} ) ${name}.mount( ${parentNode}, ${anchor} );
 			}
 		` );
 	} else {
@@ -146,7 +150,7 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 			if ( ${current_block} !== ( ${current_block} = ${getBlock}( ${params} ) ) ) {
 				if ( ${name} ) ${name}.destroy( true );
 				${name} = ${current_block} && ${current_block}( ${params}, ${block.component} );
-				if ( ${name} ) ${name}.mount( ${anchor}.parentNode, ${anchor} );
+				if ( ${name} ) ${name}.mount( ${parentNode}, ${anchor} );
 			}
 		` );
 	}

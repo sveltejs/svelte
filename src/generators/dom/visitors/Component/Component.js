@@ -36,9 +36,7 @@ export default function visitComponent ( generator, block, state, node ) {
 	const hasChildren = node.children.length > 0;
 	const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
 
-	const childState = Object.assign( {}, state, {
-		parentNode: null
-	});
+	const childState = node._state;
 
 	const local = {
 		name,

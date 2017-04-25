@@ -87,11 +87,6 @@ export default class Block {
 		return this.generator.contextualise( this, expression, context, isEventHandler );
 	}
 
-	createAnchor ( name, parentNode ) {
-		const renderStatement = `${this.generator.helper( 'createComment' )}()`;
-		this.addElement( name, renderStatement, parentNode, true );
-	}
-
 	findDependencies ( expression ) {
 		return this.generator.findDependencies( this.contextDependencies, this.indexes, expression );
 	}

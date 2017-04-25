@@ -9,13 +9,12 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	const iterations = block.getUniqueName( `${each_block}_iterations` );
 	const i = block.alias( `i` );
 	const params = block.params.join( ', ' );
-	const anchor = block.getUniqueName( `${each_block}_anchor` );
+	const anchor = node.needsAnchor ? block.getUniqueName( `${each_block}_anchor` ) : ( node.next && node.next._state.name ) || 'null';
 
 	const vars = { each_block, create_each_block, each_block_value, iterations, i, params, anchor };
 
 	const { snippet } = block.contextualise( node.expression );
 
-	block.createAnchor( anchor, state.parentNode );
 	block.builders.create.addLine( `var ${each_block_value} = ${snippet};` );
 	block.builders.create.addLine( `var ${iterations} = [];` );
 
@@ -30,9 +29,15 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	if ( isToplevel ) {
 		block.builders.mount.addBlock( deindent`
 			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].mount( ${block.target}, ${anchor} );
+				${iterations}[${i}].mount( ${block.target}, null );
 			}
 		` );
+	}
+
+	if ( node.needsAnchor ) {
+		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
+	} else if ( node.next ) {
+		node.next.usedAsAnchor = true;
 	}
 
 	block.builders.destroy.addBlock(
@@ -47,15 +52,17 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		block.builders.create.addBlock( deindent`
 			if ( !${each_block_value}.length ) {
 				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-				${!isToplevel ? `${each_block_else}.mount( ${state.parentNode}, ${anchor} );` : ''}
+				${!isToplevel ? `${each_block_else}.mount( ${state.parentNode}, null );` : ''}
 			}
 		` );
 
 		block.builders.mount.addBlock( deindent`
 			if ( ${each_block_else} ) {
-				${each_block_else}.mount( ${state.parentNode || block.target}, ${anchor} );
+				${each_block_else}.mount( ${state.parentNode || block.target}, null );
 			}
 		` );
+
+		const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 		if ( node.else._block.hasUpdateMethod ) {
 			block.builders.update.addBlock( deindent`
@@ -63,7 +70,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 					${each_block_else}.update( changed, ${params} );
 				} else if ( !${each_block_value}.length ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-					${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+					${each_block_else}.mount( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
 					${each_block_else}.destroy( true );
 					${each_block_else} = null;
@@ -78,7 +85,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 					}
 				} else if ( !${each_block_else} ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-					${each_block_else}.mount( ${anchor}.parentNode, ${anchor} );
+					${each_block_else}.mount( ${parentNode}, ${anchor} );
 				}
 			` );
 		}
@@ -91,22 +98,13 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		` );
 	}
 
-	const childState = Object.assign( {}, state, {
-		parentNode: null,
-		inEachBlock: true
-	});
-
 	node.children.forEach( child => {
-		visit( generator, node._block, childState, child );
+		visit( generator, node._block, node._state, child );
 	});
 
 	if ( node.else ) {
-		const childState = Object.assign( {}, state, {
-			parentNode: null
-		});
-
 		node.else.children.forEach( child => {
-			visit( generator, node.else._block, childState, child );
+			visit( generator, node.else._block, node.else._state, child );
 		});
 	}
 }
@@ -131,7 +129,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${iterations}[${i}].mount( ${state.parentNode}, ${anchor} );`
+			`${iterations}[${i}].mount( ${state.parentNode}, null );`
 		);
 	}
 
@@ -147,6 +145,8 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			${_lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
 		` :
 		`${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];`;
+
+	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
@@ -177,7 +177,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			}
 		}
 
-		${anchor}.parentNode.insertBefore( ${fragment}, ${anchor} );
+		${parentNode}.insertBefore( ${fragment}, ${anchor} );
 
 		${iterations} = ${_iterations};
 		${lookup} = ${_lookup};
@@ -193,7 +193,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${iterations}[${i}].mount( ${state.parentNode}, ${anchor} );`
+			`${iterations}[${i}].mount( ${state.parentNode}, null );`
 		);
 	}
 
@@ -213,6 +213,8 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 		.map( dependency => `'${dependency}' in changed` )
 		.join( ' || ' );
 
+	const parentNode = state.parentNode || `${anchor}.parentNode`;
+
 	if ( condition !== '' ) {
 		const forLoopBody = node._block.hasUpdateMethod ?
 			deindent`
@@ -220,12 +222,12 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 					${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
 				} else {
 					${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-					${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+					${iterations}[${i}].mount( ${parentNode}, ${anchor} );
 				}
 			` :
 			deindent`
 				${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-				${iterations}[${i}].mount( ${anchor}.parentNode, ${anchor} );
+				${iterations}[${i}].mount( ${parentNode}, ${anchor} );
 			`;
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;
