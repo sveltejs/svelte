@@ -34,15 +34,8 @@ export default function visitElement ( generator, block, state, node ) {
 		return visitComponent( generator, block, state, node );
 	}
 
-	const name = block.getUniqueName( node.name.replace( /[^a-zA-Z_$]/g, '_' ) );
-
-	const childState = Object.assign( {}, state, {
-		isTopLevel: false,
-		parentNode: name,
-		parentNodeName: node.name,
-		namespace: node.name === 'svg' ? 'http://www.w3.org/2000/svg' : state.namespace,
-		allUsedContexts: []
-	});
+	const childState = node._state;
+	const name = childState.parentNode;
 
 	block.builders.create.addLine( `var ${name} = ${getRenderStatement( generator, childState.namespace, node.name )};` );
 	block.mount( name, state.parentNode );

@@ -8,7 +8,7 @@ function create_main_fragment ( state, component ) {
 	return {
 		mount: function ( target, anchor ) {
 			insertNode( if_block_anchor, target, anchor );
-			if ( if_block ) if_block.mount( target, if_block_anchor );
+			if ( if_block ) if_block.mount( target, null );
 		},
 
 		update: function ( changed, state ) {

@@ -2,11 +2,26 @@ export default {
 	data: {
 		visible: true
 	},
-	html: 'before\n<p>Widget</p><!---->\nafter',
+
+	html: `
+		before
+		<p>Widget</p>
+		after
+	`,
+
 	test ( assert, component, target ) {
 		component.set({ visible: false });
-		assert.equal( target.innerHTML, 'before\n<!---->\nafter' );
+		assert.htmlEqual( target.innerHTML, `
+			before
+
+			after
+		` );
+
 		component.set({ visible: true });
-		assert.equal( target.innerHTML, 'before\n<p>Widget</p><!---->\nafter' );
+		assert.htmlEqual( target.innerHTML, `
+			before
+			<p>Widget</p>
+			after
+		` );
 	}
 };
