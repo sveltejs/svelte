@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.18.0
+
+* Visit `<select>` attributes after children, to ensure options are in the right state ([#521](https://github.com/sveltejs/svelte/pull/521))
+* Use sibling elements as anchors rather than creating comment nodes wherever possible ([#3](https://github.com/sveltejs/svelte/issues/3))
+
 ## 1.17.2
 
 * Replace bad characters when creating variable names based on element names ([#516](https://github.com/sveltejs/svelte/issues/516))
