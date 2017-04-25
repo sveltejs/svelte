@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.18.1
+
+* Allow `destroy()` in event handlers ([#523](https://github.com/sveltejs/svelte/issues/523))
+* Fix bug with `{{yield}}` blocks following elements ([#524](https://github.com/sveltejs/svelte/issues/524))
+
 ## 1.18.0
 
 * Visit `<select>` attributes after children, to ensure options are in the right state ([#521](https://github.com/sveltejs/svelte/pull/521))
