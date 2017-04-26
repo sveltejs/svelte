@@ -9,7 +9,8 @@ function getBranches ( generator, block, state, node ) {
 	const branches = [{
 		condition: block.contextualise( node.expression ).snippet,
 		block: node._block.name,
-		dynamic: node._block.dependencies.size > 0
+		dynamic: node._block.dependencies.size > 0,
+		hasOutroTransitions: node._block.hasOutroTransitions
 	}];
 
 	visitChildren( generator, block, state, node );
@@ -22,7 +23,8 @@ function getBranches ( generator, block, state, node ) {
 		branches.push({
 			condition: null,
 			block: node.else ? node.else._block.name : null,
-			dynamic: node.else ? node.else._block.dependencies.size > 0 : false
+			dynamic: node.else ? node.else._block.dependencies.size > 0 : false,
+			hasOutroTransitions: node.else ? node.else._block.hasOutroTransitions : false
 		});
 
 		if ( node.else ) {
@@ -81,6 +83,17 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
+	const remove = branch.hasOutroTransitions ?
+		deindent`
+			${name}.outro( function () {
+				${name} = null;
+			});
+		` :
+		deindent`
+			${name}.destroy( true );
+			${name} = null;
+		`;
+
 	if ( dynamic ) {
 		block.builders.update.addBlock( deindent`
 			if ( ${branch.condition} ) {
@@ -91,8 +104,7 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			} else if ( ${name} ) {
-				${name}.destroy( true );
-				${name} = null;
+				${remove}
 			}
 		` );
 	} else {
@@ -103,8 +115,7 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			} else if ( ${name} ) {
-				${name}.destroy( true );
-				${name} = null;
+				${remove}
 			}
 		` );
 	}
@@ -134,6 +145,10 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 	}
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
+
+	if ( block.hasOutroTransitions ) {
+		throw new Error( 'TODO compound if-blocks with outro transitions are not yet supported' );
+	}
 
 	if ( dynamic ) {
 		block.builders.update.addBlock( deindent`

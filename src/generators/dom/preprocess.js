@@ -200,6 +200,14 @@ const preprocessors = {
 				const dependencies = block.findDependencies( attribute.value );
 				block.addDependencies( dependencies );
 			}
+
+			else if ( attribute.type === 'Transition' ) {
+				if ( attribute.intro ) generator.hasIntroTransitions = block.hasIntroTransitions = true;
+				if ( attribute.outro ) {
+					generator.hasOutroTransitions = block.hasOutroTransitions = true;
+					block.outros += 1;
+				}
+			}
 		});
 
 		if ( node.children.length ) {

@@ -24,10 +24,15 @@ export default class Block {
 			create: new CodeBuilder(),
 			mount: new CodeBuilder(),
 			update: new CodeBuilder(),
+			outro: new CodeBuilder(),
 			detach: new CodeBuilder(),
 			detachRaw: new CodeBuilder(),
 			destroy: new CodeBuilder()
 		};
+
+		this.hasIntroTransitions = false;
+		this.hasOutroTransitions = false;
+		this.outros = 0;
 
 		this.aliases = new Map();
 		this.variables = new Map();
@@ -100,6 +105,12 @@ export default class Block {
 	}
 
 	render () {
+		let outroing;
+		if ( this.hasOutroTransitions ) {
+			outroing = this.getUniqueName( 'outroing' );
+			this.addVariable( outroing );
+		}
+
 		if ( this.variables.size ) {
 			const variables = Array.from( this.variables.keys() )
 				.map( key => {
@@ -135,11 +146,6 @@ export default class Block {
 			properties.addBlock( `key: ${localKey},` );
 		}
 
-		if ( this.outros.length ) {
-			// TODO
-			properties.addLine( `outro: null,` );
-		}
-
 		if ( this.builders.mount.isEmpty() ) {
 			properties.addBlock( `mount: ${this.generator.helper( 'noop' )},` );
 		} else {
@@ -157,6 +163,23 @@ export default class Block {
 				properties.addBlock( deindent`
 					update: function ( changed, ${this.params.join( ', ' )} ) {
 						${this.builders.update}
+					},
+				` );
+			}
+		}
+
+		if ( this.hasOutroTransitions ) {
+			if ( this.builders.outro.isEmpty() ) {
+				properties.addBlock( `outro: ${this.generator.helper( 'noop' )},` );
+			} else {
+				properties.addBlock( deindent`
+					outro: function ( ${this.alias( 'outrocallback' )} ) {
+						if ( ${outroing} ) return;
+						${outroing} = true;
+
+						var ${this.alias( 'outros' )} = ${this.outros};
+
+						${this.builders.outro}
 					},
 				` );
 			}

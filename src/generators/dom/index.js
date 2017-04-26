@@ -169,7 +169,7 @@ export default function dom ( parsed, source, options ) {
 	if ( templateProperties.oncreate ) {
 		builders.init.addBlock( deindent`
 			if ( options._root ) {
-				options._root._renderHooks.push({ fn: ${generator.alias( 'template' )}.oncreate, context: this });
+				options._root._renderHooks.push( ${generator.alias( 'template' )}.oncreate.bind( this ) );
 			} else {
 				${generator.alias( 'template' )}.oncreate.call( this );
 			}
