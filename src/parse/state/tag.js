@@ -255,7 +255,6 @@ function readAttribute ( parser, uniqueNames ) {
 
 	const match = /^(in|out|transition):/.exec( name );
 	if ( match ) {
-		parser.eat( '=', true );
 		return readTransitionDirective( parser, start, name.slice( match[0].length ), match[1] );
 	}
 

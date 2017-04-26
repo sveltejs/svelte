@@ -5,11 +5,11 @@ export default function visitTransition ( generator, block, state, node, attribu
 
 	block.addVariable( name );
 
+	const snippet = attribute.expression ? block.contextualise( attribute.expression ).snippet : '{}';
+	const fn = `${generator.alias( 'template' )}.transitions.${attribute.name}`; // TODO add built-in transitions?
+
 	if ( attribute.intro ) {
 		generator.hasIntroTransitions = true;
-
-		const { snippet } = block.contextualise( attribute.expression );
-		const fn = `${generator.alias( 'template' )}.transitions.${attribute.name}`; // TODO add built-in transitions?
 
 		block.builders.create.addBlock( deindent`
 			${block.component}._renderHooks.push({
@@ -22,9 +22,9 @@ export default function visitTransition ( generator, block, state, node, attribu
 		` );
 	}
 
-	( attribute.intro ? block.intros : block.outros ).push({
-		node: state.name,
-		transition: attribute.name,
-		params: block.contextualise( attribute.expression ).snippet
-	});
+	if ( attribute.outro ) {
+		generator.hasOutroTransitions = true;
+
+		throw new Error( 'TODO' );
+	}
 }
