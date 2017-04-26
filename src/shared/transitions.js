@@ -4,8 +4,8 @@ export function linear ( t ) {
 	return t;
 }
 
-export function wrapTransition ( node, fn, params, isIntro ) {
-	var obj = fn( node, params, isIntro );
+export function wrapTransition ( node, fn, params, intro, outgroup, callback ) {
+	var obj = fn( node, params, intro );
 
 	var start = window.performance.now() + ( obj.delay || 0 );
 	var duration = obj.duration || 300;
@@ -14,16 +14,18 @@ export function wrapTransition ( node, fn, params, isIntro ) {
 
 	if ( obj.tick ) {
 		// JS transition
-		if ( isIntro ) obj.tick( 0 );
+		if ( intro ) obj.tick( 0 );
 
 		return {
 			start: start,
 			end: end,
 			update: function ( now ) {
-				obj.tick( ease( ( now - start ) / duration ) );
+				const p = intro ? now - start : end - now;
+				obj.tick( ease( p / duration ) );
 			},
 			done: function () {
-				obj.tick( isIntro ? 1 : 0 );
+				obj.tick( intro ? 1 : 0 );
+				callback();
 			},
 			abort: noop
 		};
@@ -39,7 +41,7 @@ export function wrapTransition ( node, fn, params, isIntro ) {
 			init: function () {
 				for ( var key in obj.styles ) {
 					inlineStyles[ key ] = node.style[ key ];
-					node.style[ key ] = isIntro ? obj.styles[ key ] : computedStyles[ key ];
+					node.style[ key ] = intro ? obj.styles[ key ] : computedStyles[ key ];
 				}
 			},
 			update: function ( now ) {
@@ -52,7 +54,7 @@ export function wrapTransition ( node, fn, params, isIntro ) {
 					// TODO use a keyframe animation for custom easing functions
 
 					for ( var key in obj.styles ) {
-						node.style[ key ] = isIntro ? computedStyles[ key ] : obj.styles[ key ];
+						node.style[ key ] = intro ? computedStyles[ key ] : obj.styles[ key ];
 					}
 
 					started = true;
@@ -60,11 +62,12 @@ export function wrapTransition ( node, fn, params, isIntro ) {
 			},
 			done: function () {
 				// TODO what if one of these styles was dynamic?
-				if ( isIntro ) {
+				if ( intro ) {
 					for ( var key in obj.styles ) {
 						node.style[ key ] = inlineStyles[ key ];
 					}
 				}
+				callback();
 			},
 			abort: function () {
 				node.style.cssText = getComputedStyle( node ).cssText;

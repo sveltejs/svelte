@@ -106,8 +106,7 @@ export function _flush () {
 	if ( !this._renderHooks ) return;
 
 	while ( this._renderHooks.length ) {
-		var hook = this._renderHooks.pop();
-		hook.fn.call( hook.context );
+		this._renderHooks.pop()();
 	}
 }
 
