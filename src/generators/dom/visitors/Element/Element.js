@@ -6,6 +6,7 @@ import visitAttribute from './Attribute.js';
 import visitEventHandler from './EventHandler.js';
 import visitBinding from './Binding.js';
 import visitRef from './Ref.js';
+import visitTransition from './Transition.js';
 
 const meta = {
 	':Window': visitWindow
@@ -15,14 +16,16 @@ const order = {
 	Attribute: 1,
 	Binding: 2,
 	EventHandler: 3,
-	Ref: 4
+	Ref: 4,
+	Transition: 5
 };
 
 const visitors = {
 	Attribute: visitAttribute,
 	EventHandler: visitEventHandler,
 	Binding: visitBinding,
-	Ref: visitRef
+	Ref: visitRef,
+	Transition: visitTransition
 };
 
 export default function visitElement ( generator, block, state, node ) {

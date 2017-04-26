@@ -33,6 +33,9 @@ export default class Block {
 		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
 
+		this.intros = [];
+		this.outros = [];
+
 		// unique names
 		this.component = this.getUniqueName( 'component' );
 		this.target = this.getUniqueName( 'target' );
@@ -133,6 +136,17 @@ export default class Block {
 		if ( this.key ) {
 			localKey = this.getUniqueName( 'key' );
 			properties.addBlock( `key: ${localKey},` );
+		}
+
+		if ( this.intros.length ) {
+			properties.addBlock( `intro: ${this.generator.helper( 'transition' )}([
+				// TODO
+			]),` );
+		}
+
+		if ( this.outros.length ) {
+			// TODO
+			properties.addLine( `outro: null,` );
 		}
 
 		if ( this.builders.mount.isEmpty() ) {
