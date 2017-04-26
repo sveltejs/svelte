@@ -131,7 +131,7 @@ function SvelteComponent ( options ) {
 
 	this._handlers = Object.create( null );
 
-	this._root = options._root;
+	this._root = options._root || this;
 	this._yield = options._yield;
 
 	this._torndown = false;
