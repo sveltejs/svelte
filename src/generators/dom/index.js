@@ -1,10 +1,11 @@
 import MagicString from 'magic-string';
-import { parse } from 'acorn';
+import { parseExpressionAt } from 'acorn';
 import annotateWithScopes from '../../utils/annotateWithScopes.js';
 import isReference from '../../utils/isReference.js';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
+import toSource from '../../utils/toSource.js';
 import visit from './visit.js';
 import Generator from '../Generator.js';
 import preprocess from './preprocess.js';
@@ -138,7 +139,7 @@ export default function dom ( parsed, source, options ) {
 		builders.init.addLine( `if ( !${generator.alias( 'added_css' )} ) ${generator.alias( 'add_css' )}();` );
 	}
 
-	if ( generator.hasComponents ) {
+	if ( generator.hasComponents || generator.hasIntroTransitions ) {
 		builders.init.addLine( `this._renderHooks = [];` );
 	}
 
@@ -218,7 +219,7 @@ export default function dom ( parsed, source, options ) {
 
 		this._handlers = Object.create( null );
 
-		this._root = options._root;
+		this._root = options._root || this;
 		this._yield = options._yield;
 
 		${builders.init}
@@ -275,9 +276,10 @@ export default function dom ( parsed, source, options ) {
 		);
 	} else {
 		generator.uses.forEach( key => {
-			const str = shared[ key ].toString(); // eslint-disable-line import/namespace
+			const value = shared[ key ]; // eslint-disable-line import/namespace
+			const str = toSource( value );
 			const code = new MagicString( str );
-			const fn = parse( str ).body[0];
+			const fn = parseExpressionAt( str, 0 );
 
 			let scope = annotateWithScopes( fn );
 
@@ -301,11 +303,22 @@ export default function dom ( parsed, source, options ) {
 				}
 			});
 
-			const alias = generator.alias( fn.id.name );
-			if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
+			if ( typeof value === 'function' ) { // exclude transitionManager — special case
+				const alias = generator.alias( fn.id.name );
+				if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
 
-			builders.main.addBlock( code.toString() );
+				builders.main.addBlock( code.toString() );
+			}
 		});
+
+		if ( generator.hasIntroTransitions || generator.hasOutroTransitions ) {
+			const global = `_svelteTransitionManager`;
+			const transitionManager = toSource( shared.transitionManager );
+
+			builders.main.addBlock(
+				`var ${generator.alias( 'transitionManager' )} = window.${global} || ( window.${global} = ${transitionManager});`
+			);
+		}
 	}
 
 	return generator.generate( builders.main.toString(), options, { name, format } );

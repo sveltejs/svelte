@@ -25,7 +25,7 @@ export default function validateElement ( validator, node ) {
 				}
 
 				if ( getType( validator, node ) !== 'checkbox' ) {
-					validator.error( `'checked' binding can only be used with <input type="checkbox">` );
+					validator.error( `'checked' binding can only be used with <input type="checkbox">`, attribute.start );
 				}
 			}
 

@@ -24,6 +24,7 @@ export default class Generator {
 		this.helpers = new Set();
 		this.components = new Set();
 		this.events = new Set();
+		this.transitions = new Set();
 		this.importedComponents = new Map();
 
 		this.bindingGroups = [];
@@ -328,7 +329,7 @@ export default class Generator {
 				});
 			}
 
-			[ 'helpers', 'events', 'components' ].forEach( key => {
+			[ 'helpers', 'events', 'components', 'transitions' ].forEach( key => {
 				if ( templateProperties[ key ] ) {
 					templateProperties[ key ].value.properties.forEach( prop => {
 						this[ key ].add( prop.key.name );
