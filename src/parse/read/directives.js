@@ -131,18 +131,22 @@ export function readBindingDirective ( parser, start, name ) {
 }
 
 export function readTransitionDirective ( parser, start, name, type ) {
-	const quoteMark = (
-		parser.eat( `'` ) ? `'` :
-		parser.eat( `"` ) ? `"` :
-		null
-	);
+	let expression = null;
 
-	const expressionStart = parser.index;
+	if ( parser.eat( '=' ) ) {
+		const quoteMark = (
+			parser.eat( `'` ) ? `'` :
+			parser.eat( `"` ) ? `"` :
+			null
+		);
 
-	const expression = readExpression( parser, expressionStart, quoteMark );
+		const expressionStart = parser.index;
 
-	if ( expression.type !== 'ObjectExpression' ) {
-		parser.error( `Expected object expression`, expressionStart );
+		expression = readExpression( parser, expressionStart, quoteMark );
+
+		if ( expression.type !== 'ObjectExpression' ) {
+			parser.error( `Expected object expression`, expressionStart );
+		}
 	}
 
 	return {

@@ -33,9 +33,6 @@ export default class Block {
 		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
 
-		this.intros = [];
-		this.outros = [];
-
 		// unique names
 		this.component = this.getUniqueName( 'component' );
 		this.target = this.getUniqueName( 'target' );
