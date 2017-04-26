@@ -138,12 +138,6 @@ export default class Block {
 			properties.addBlock( `key: ${localKey},` );
 		}
 
-		if ( this.intros.length ) {
-			properties.addBlock( `intro: ${this.generator.helper( 'transition' )}([
-				// TODO
-			]),` );
-		}
-
 		if ( this.outros.length ) {
 			// TODO
 			properties.addLine( `outro: null,` );

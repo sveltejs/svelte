@@ -20,6 +20,7 @@
     "build:main": "rollup -c rollup/rollup.config.main.js",
     "build:shared": "rollup -c rollup/rollup.config.shared.js",
     "build:ssr": "rollup -c rollup/rollup.config.ssr.js",
+    "dev": "rollup -c rollup/rollup.config.main.js -w",
     "pretest": "npm run build",
     "prepublish": "npm run lint && npm run build"
   },
@@ -72,6 +73,7 @@
     "rollup-plugin-commonjs": "^7.0.0",
     "rollup-plugin-json": "^2.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-watch": "^3.2.2",
     "source-map": "^0.5.6",
     "source-map-support": "^0.4.8"
   },
