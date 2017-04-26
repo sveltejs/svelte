@@ -9,6 +9,7 @@ import methods from './methods.js';
 import components from './components.js';
 import events from './events.js';
 import namespace from './namespace.js';
+import transitions from './transitions.js';
 
 export default {
 	data,
@@ -21,5 +22,6 @@ export default {
 	methods,
 	components,
 	events,
-	namespace
+	namespace,
+	transitions
 };
