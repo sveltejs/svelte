@@ -62,7 +62,7 @@ export default function visitElement ( generator, block, state, node ) {
 				visitors[ attribute.type ]( generator, block, childState, node, attribute );
 			});
 
-		addTransitions( generator, block, childState, node, intro, outro );
+		if ( intro || outro ) addTransitions( generator, block, childState, node, intro, outro );
 
 		if ( !outro && !state.parentNode ) {
 			// TODO this probably doesn't belong here. We eventually need to consider

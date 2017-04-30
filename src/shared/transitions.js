@@ -4,12 +4,10 @@ export function linear ( t ) {
 	return t;
 }
 
-export function wrapTransition ( node, fn, params, intro, outgroup, callback ) {
+export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	var obj = fn( node, params, intro );
 
-	var start = window.performance.now() + ( obj.delay || 0 );
 	var duration = obj.duration || 300;
-	var end = start + duration;
 	var ease = obj.easing || linear;
 
 	if ( obj.tick ) {
@@ -17,19 +15,40 @@ export function wrapTransition ( node, fn, params, intro, outgroup, callback ) {
 		if ( intro ) obj.tick( 0 );
 
 		return {
-			start: start,
-			end: end,
+			start: null,
+			end: null,
+			a: null,
+			d: null,
+			running: false,
+			t: intro ? 0 : 1,
+			callback: null,
 			update: function ( now ) {
-				const p = intro ? now - start : end - now;
-				obj.tick( ease( p / duration ) );
+				const p = now - this.start;
+				this.t = this.a + this.d * ease( p / this.duration );
+				obj.tick( this.t );
 			},
 			done: function () {
 				obj.tick( intro ? 1 : 0 );
-				callback();
+				this.callback();
+				this.running = false;
 			},
 			abort: function () {
 				if ( !intro ) obj.tick( 1 ); // reset styles for intro
-				this.aborted = true;
+				this.running = false;
+			},
+			run: function ( a, b, callback ) {
+				this.a = a;
+				this.d = b - a;
+				this.start = window.performance.now() + ( obj.delay || 0 );
+				this.duration = duration * Math.abs( b - a );
+				this.end = this.start + this.duration;
+
+				this.callback = callback;
+
+				if ( !this.running ) {
+					this.running = true;
+					transitionManager.add( this );
+				}
 			}
 		};
 	} else {
@@ -75,6 +94,9 @@ export function wrapTransition ( node, fn, params, intro, outgroup, callback ) {
 			abort: function () {
 				node.style.cssText = getComputedStyle( node ).cssText;
 				this.aborted = true;
+			},
+			run: function ( a, b, callback ) {
+				// TODO...
 			}
 		};
 	}
@@ -110,11 +132,17 @@ export var transitionManager = {
 		while ( i-- ) {
 			var transition = transitionManager.transitions[i];
 
-			if ( now < transition.end && !transition.aborted ) {
-				if ( now > transition.start ) transition.update( now );
+			if ( transition.running ) {
+				if ( now >= transition.end ) {
+					transition.done();
+				} else if ( now > transition.start ) {
+					transition.update( now );
+				}
+			}
+
+			if ( transition.running ) {
 				transitionManager.running = true;
 			} else {
-				if ( !transition.aborted ) transition.done();
 				transitionManager.transitions.splice( i, 1 );
 			}
 		}

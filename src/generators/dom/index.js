@@ -159,7 +159,7 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	if ( generator.hasComponents ) {
+	if ( generator.hasComponents || generator.hasIntroTransitions ) {
 		const statement = `this._flush();`;
 
 		builders.init.addBlock( statement );
