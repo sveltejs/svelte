@@ -3,7 +3,7 @@ import { appendNode, assign, createComment, createElement, createText, detachNod
 function create_main_fragment ( state, component ) {
 	var if_block_anchor = createComment();
 
-	var if_block = state.foo && create_if_block( state, component );
+	var if_block = (state.foo) && create_if_block( state, component );
 
 	return {
 		mount: function ( target, anchor ) {
