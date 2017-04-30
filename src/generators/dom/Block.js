@@ -24,6 +24,7 @@ export default class Block {
 			create: new CodeBuilder(),
 			mount: new CodeBuilder(),
 			update: new CodeBuilder(),
+			intro: new CodeBuilder(),
 			outro: new CodeBuilder(),
 			detach: new CodeBuilder(),
 			detachRaw: new CodeBuilder(),
@@ -105,6 +106,12 @@ export default class Block {
 	}
 
 	render () {
+		let introing;
+		if ( this.hasIntroTransitions ) {
+			introing = this.getUniqueName( 'introing' );
+			this.addVariable( introing );
+		}
+
 		let outroing;
 		if ( this.hasOutroTransitions ) {
 			outroing = this.getUniqueName( 'outroing' );
@@ -168,6 +175,24 @@ export default class Block {
 			}
 		}
 
+		if ( this.hasIntroTransitions ) {
+			if ( this.builders.outro.isEmpty() ) {
+				properties.addBlock( `intro: ${this.generator.helper( 'noop' )},` );
+			} else {
+				properties.addBlock( deindent`
+					intro: function ( ${this.target}, anchor ) {
+						if ( ${introing} ) return;
+						${introing} = true;
+						${this.hasOutroTransitions && `${outroing} = false;`}
+
+						${this.builders.intro}
+
+						this.mount( ${this.target}, anchor );
+					},
+				` );
+			}
+		}
+
 		if ( this.hasOutroTransitions ) {
 			if ( this.builders.outro.isEmpty() ) {
 				properties.addBlock( `outro: ${this.generator.helper( 'noop' )},` );
@@ -176,6 +201,7 @@ export default class Block {
 					outro: function ( ${this.alias( 'outrocallback' )} ) {
 						if ( ${outroing} ) return;
 						${outroing} = true;
+						${this.hasIntroTransitions && `${introing} = false;`}
 
 						var ${this.alias( 'outros' )} = ${this.outros};
 
