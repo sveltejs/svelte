@@ -31,23 +31,18 @@ export default function addTransitions ( generator, block, state, node, intro, o
 	}
 
 	else {
-		const introName = intro && block.getUniqueName( `${state.name}_intro` );
-		const outroName = outro && block.getUniqueName( `${state.name}_outro` );
-
 		if ( intro ) {
-			block.addVariable( introName );
+			const name = block.getUniqueName( `${state.name}_intro` );
 			const snippet = intro.expression ? block.contextualise( intro.expression ).snippet : '{}';
+
+			block.addVariable( name );
 
 			const fn = `${generator.alias( 'template' )}.transitions.${intro.name}`; // TODO add built-in transitions?
 
-			if ( outro ) {
-				block.builders.intro.addBlock( `if ( ${outroName} ) ${outroName}.abort();` );
-			}
-
 			block.builders.intro.addBlock( deindent`
 				${block.component}._renderHooks.push( function () {
-					${introName} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, true, null );
-					${introName}.run( 0, 1, function () {
+					${name} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, true, null );
+					${name}.run( 0, 1, function () {
 						${block.component}.fire( 'intro.end', { node: ${state.name} });
 					});
 				});
@@ -55,18 +50,16 @@ export default function addTransitions ( generator, block, state, node, intro, o
 		}
 
 		if ( outro ) {
-			block.addVariable( outroName );
+			const name = block.getUniqueName( `${state.name}_intro` );
 			const snippet = outro.expression ? block.contextualise( outro.expression ).snippet : '{}';
+
+			block.addVariable( name );
 
 			const fn = `${generator.alias( 'template' )}.transitions.${outro.name}`;
 
-			if ( intro ) {
-				block.builders.outro.addBlock( `${introName}.abort();` );
-			}
-
 			block.builders.outro.addBlock( deindent`
-				${outroName} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, false, null );
-				${outroName}.run( 1, 0, function () {
+				${name} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, false, null );
+				${name}.run( 1, 0, function () {
 					detachNode( ${state.name} );
 					${block.component}.fire( 'outro.end', { node: ${state.name} });
 					if ( --${block.alias( 'outros' )} === 0 ) ${block.alias( 'outrocallback' )}();

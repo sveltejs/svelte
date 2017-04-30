@@ -60,13 +60,13 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	}
 
 	// CSS transition
-	var started = false;
 	var id = null;
 	var style = document.createElement( 'style' );
 
 	var cleanup = function () {
+		if ( !transition.running ) return;
 		document.head.removeChild( style );
-		transition.running = started = false;
+		transition.running = false;
 	};
 
 	return assign( transition, {
@@ -82,14 +82,10 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 
 			keyframes += '100% {' + obj.styles( this.b ) + '}\n}';
 
-			style.textContent = keyframes;
+			style.textContent += keyframes;
 			document.head.appendChild( style );
 
-			node.style.animationName = id;
-			node.style.animationDuration = ( this.duration / 1e3 ) + 's';
-			node.style.animationTimingFunction = 'linear';
-			node.style.animationIterationCount = 1;
-			node.style.animationFillMode = 'forwards';
+			node.style.animation += ( node.style.animation ? ', ' : '' ) + id + ' ' + this.duration + 'ms linear 1 forwards';
 		},
 		update: function ( now ) {
 			const p = now - this.start;
