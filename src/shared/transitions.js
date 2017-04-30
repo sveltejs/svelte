@@ -1,4 +1,4 @@
-import { noop } from './utils.js';
+import { assign, noop } from './utils.js';
 
 export function linear ( t ) {
 	return t;
@@ -10,18 +10,39 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	var duration = obj.duration || 300;
 	var ease = obj.easing || linear;
 
+	var transition = {
+		start: null,
+		end: null,
+		a: null,
+		b: null,
+		d: null,
+		running: false,
+		t: intro ? 0 : 1,
+		callback: null,
+		run: function ( a, b, callback ) {
+			this.a = a;
+			this.b = b;
+			this.d = b - a;
+			this.start = window.performance.now() + ( obj.delay || 0 );
+			this.duration = duration * Math.abs( b - a );
+			this.end = this.start + this.duration;
+
+			this.callback = callback;
+
+			if ( !obj.tick ) this.generateKeyframes();
+
+			if ( !this.running ) {
+				this.running = true;
+				transitionManager.add( this );
+			}
+		}
+	}
+
 	if ( obj.tick ) {
 		// JS transition
 		if ( intro ) obj.tick( 0 );
 
-		return {
-			start: null,
-			end: null,
-			a: null,
-			d: null,
-			running: false,
-			t: intro ? 0 : 1,
-			callback: null,
+		return assign( transition, {
 			update: function ( now ) {
 				const p = now - this.start;
 				this.t = this.a + this.d * ease( p / this.duration );
@@ -30,76 +51,58 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 			done: function () {
 				obj.tick( intro ? 1 : 0 );
 				this.callback();
-				this.running = false;
 			},
 			abort: function () {
 				if ( !intro ) obj.tick( 1 ); // reset styles for intro
 				this.running = false;
-			},
-			run: function ( a, b, callback ) {
-				this.a = a;
-				this.d = b - a;
-				this.start = window.performance.now() + ( obj.delay || 0 );
-				this.duration = duration * Math.abs( b - a );
-				this.end = this.start + this.duration;
-
-				this.callback = callback;
-
-				if ( !this.running ) {
-					this.running = true;
-					transitionManager.add( this );
-				}
 			}
-		};
-	} else {
-		// CSS transition
-		var started = false;
-		var inlineStyles = {};
-		var computedStyles = getComputedStyle( node );
-
-		return {
-			start: start,
-			end: end,
-			init: function () {
-				for ( var key in obj.styles ) {
-					inlineStyles[ key ] = node.style[ key ];
-					node.style[ key ] = intro ? obj.styles[ key ] : computedStyles[ key ];
-				}
-			},
-			update: function ( now ) {
-				if ( !started ) {
-					var keys = Object.keys( obj.styles );
-					div.style.transition = keys.map( function ( key ) {
-						return key + ' ' + d;
-					}).join( ', ' );
-
-					// TODO use a keyframe animation for custom easing functions
-
-					for ( var key in obj.styles ) {
-						node.style[ key ] = intro ? computedStyles[ key ] : obj.styles[ key ];
-					}
-
-					started = true;
-				}
-			},
-			done: function () {
-				// TODO what if one of these styles was dynamic?
-				if ( intro ) {
-					for ( var key in obj.styles ) {
-						node.style[ key ] = inlineStyles[ key ];
-					}
-				}
-				callback();
-			},
-			abort: function () {
-				node.style.cssText = getComputedStyle( node ).cssText;
-				this.aborted = true;
-			},
-			run: function ( a, b, callback ) {
-				// TODO...
-			}
-		};
+		});
 	}
+
+	// CSS transition
+	var started = false;
+	var id = null;
+	var style = document.createElement( 'style' );
+
+	var cleanup = function () {
+		document.head.removeChild( style );
+		transition.running = started = false;
+	};
+
+	return assign( transition, {
+		generateKeyframes: function () {
+			id = 'svelte_' + ~~( Math.random() * 1e9 ); // TODO make this more robust
+			var keyframes = '@keyframes ' + id + '{\n';
+
+			for ( var p = 0; p <= 1; p += 166.666 / this.duration ) {
+				var t = this.a + this.d * ease( p );
+				var styles = obj.styles( ease( t ) );
+				keyframes += ( p * 100 ) + '%{' + styles + '}\n';
+			}
+
+			keyframes += '100% {' + obj.styles( this.b ) + '}\n}';
+
+			style.textContent = keyframes;
+			document.head.appendChild( style );
+
+			node.style.animationName = id;
+			node.style.animationDuration = ( this.duration / 1e3 ) + 's';
+			node.style.animationTimingFunction = 'linear';
+			node.style.animationIterationCount = 1;
+			node.style.animationFillMode = 'forwards';
+		},
+		update: function ( now ) {
+			const p = now - this.start;
+			this.t = this.a + this.d * ease( p / this.duration );
+		},
+		done: function () {
+			this.callback();
+			cleanup();
+		},
+		abort: function () {
+			cleanup();
+		}
+	});
 }
 
 export var transitionManager = {
@@ -134,13 +137,12 @@ export var transitionManager = {
 
 			if ( transition.running ) {
 				if ( now >= transition.end ) {
+					transition.running = false;
 					transition.done();
 				} else if ( now > transition.start ) {
 					transition.update( now );
 				}
-			}
 
-			if ( transition.running ) {
 				transitionManager.running = true;
 			} else {
 				transitionManager.transitions.splice( i, 1 );
