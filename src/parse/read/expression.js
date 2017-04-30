@@ -34,7 +34,7 @@ export default function readExpression ( parser ) {
 	parser.index = start;
 
 	try {
-		const node = parseExpressionAt( parser.template, parser.index );
+		const node = parseExpressionAt( parser.template, parser.index, { preserveParens: true } );
 		parser.index = node.end;
 
 		return node;
