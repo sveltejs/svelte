@@ -68,7 +68,7 @@ export default function visitIfBlock ( generator, block, state, node ) {
 
 function simple ( generator, block, state, node, branch, dynamic, { name, anchor, params } ) {
 	block.builders.create.addBlock( deindent`
-		var ${name} = ${branch.condition} && ${branch.block}( ${params}, ${block.component} );
+		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, ${block.component} );
 	` );
 
 	const isToplevel = !state.parentNode;

@@ -3,7 +3,7 @@ import { appendNode, assign, createComment, createElement, createText, detachNod
 function create_main_fragment ( state, component ) {
 	var div = createElement( 'div' );
 
-	var if_block = state.a && create_if_block( state, component );
+	var if_block = (state.a) && create_if_block( state, component );
 
 	if ( if_block ) if_block.mount( div, null );
 	var text = createText( "\n\n\t" );
@@ -13,13 +13,13 @@ function create_main_fragment ( state, component ) {
 	appendNode( createText( "this can be used as an anchor" ), p );
 	appendNode( createText( "\n\n\t" ), div );
 
-	var if_block_1 = state.b && create_if_block_1( state, component );
+	var if_block_1 = (state.b) && create_if_block_1( state, component );
 
 	if ( if_block_1 ) if_block_1.mount( div, null );
 	var text_3 = createText( "\n\n\t" );
 	appendNode( text_3, div );
 
-	var if_block_2 = state.c && create_if_block_2( state, component );
+	var if_block_2 = (state.c) && create_if_block_2( state, component );
 
 	if ( if_block_2 ) if_block_2.mount( div, null );
 	var text_4 = createText( "\n\n\t" );
@@ -29,7 +29,7 @@ function create_main_fragment ( state, component ) {
 	appendNode( createText( "so can this" ), p_1 );
 	appendNode( createText( "\n\n\t" ), div );
 
-	var if_block_3 = state.d && create_if_block_3( state, component );
+	var if_block_3 = (state.d) && create_if_block_3( state, component );
 
 	if ( if_block_3 ) if_block_3.mount( div, null );
 	var text_7 = createText( "\n\n\t" );
@@ -37,7 +37,7 @@ function create_main_fragment ( state, component ) {
 	var text_8 = createText( "\n\n" );
 	var if_block_4_anchor = createComment();
 
-	var if_block_4 = state.e && create_if_block_4( state, component );
+	var if_block_4 = (state.e) && create_if_block_4( state, component );
 
 	return {
 		mount: function ( target, anchor ) {
