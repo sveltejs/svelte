@@ -21,6 +21,7 @@
     "build:shared": "rollup -c rollup/rollup.config.shared.js",
     "build:ssr": "rollup -c rollup/rollup.config.ssr.js",
     "dev": "rollup -c rollup/rollup.config.main.js -w",
+    "dev:shared": "rollup -c rollup/rollup.config.shared.js -w",
     "pretest": "npm run build",
     "prepublish": "npm run lint && npm run build"
   },
