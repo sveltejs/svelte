@@ -27,7 +27,10 @@ export function wrapTransition ( node, fn, params, intro, outgroup, callback ) {
 				obj.tick( intro ? 1 : 0 );
 				callback();
 			},
-			abort: noop
+			abort: function () {
+				if ( !intro ) obj.tick( 1 ); // reset styles for intro
+				this.aborted = true;
+			}
 		};
 	} else {
 		// CSS transition
@@ -71,6 +74,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup, callback ) {
 			},
 			abort: function () {
 				node.style.cssText = getComputedStyle( node ).cssText;
+				this.aborted = true;
 			}
 		};
 	}
@@ -105,12 +109,13 @@ export var transitionManager = {
 
 		while ( i-- ) {
 			var transition = transitionManager.transitions[i];
-			if ( now >= transition.end ) {
-				transition.done();
-				transitionManager.transitions.splice( i, 1 );
-			} else {
+
+			if ( now < transition.end && !transition.aborted ) {
 				if ( now > transition.start ) transition.update( now );
 				transitionManager.running = true;
+			} else {
+				if ( !transition.aborted ) transition.done();
+				transitionManager.transitions.splice( i, 1 );
 			}
 		}
 

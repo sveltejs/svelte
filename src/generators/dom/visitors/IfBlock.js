@@ -10,6 +10,7 @@ function getBranches ( generator, block, state, node ) {
 		condition: block.contextualise( node.expression ).snippet,
 		block: node._block.name,
 		dynamic: node._block.dependencies.size > 0,
+		hasIntroTransitions: node._block.hasIntroTransitions,
 		hasOutroTransitions: node._block.hasOutroTransitions
 	}];
 
@@ -24,6 +25,7 @@ function getBranches ( generator, block, state, node ) {
 			condition: null,
 			block: node.else ? node.else._block.name : null,
 			dynamic: node.else ? node.else._block.dependencies.size > 0 : false,
+			hasIntroTransitions: node.else ? node.else._block.hasIntroTransitions : false,
 			hasOutroTransitions: node.else ? node.else._block.hasOutroTransitions : false
 		});
 
@@ -74,16 +76,17 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 	` );
 
 	const isToplevel = !state.parentNode;
+	const mountOrIntro = branch.hasIntroTransitions ? 'intro' : 'mount';
 
 	if ( isToplevel ) {
-		block.builders.mount.addLine( `if ( ${name} ) ${name}.mount( ${block.target}, null );` );
+		block.builders.mount.addLine( `if ( ${name} ) ${name}.${mountOrIntro}( ${block.target}, null );` );
 	} else {
-		block.builders.create.addLine( `if ( ${name} ) ${name}.mount( ${state.parentNode}, null );` );
+		block.builders.create.addLine( `if ( ${name} ) ${name}.${mountOrIntro}( ${state.parentNode}, null );` );
 	}
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
-	const remove = branch.hasOutroTransitions ?
+	const exit = branch.hasOutroTransitions ?
 		deindent`
 			${name}.outro( function () {
 				${name} = null;
@@ -95,6 +98,10 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 		`;
 
 	if ( dynamic ) {
+		if ( branch.hasIntroTransitions ) {
+			throw new Error( 'TODO simple dynamic if-block with intro transitions' );
+		}
+
 		block.builders.update.addBlock( deindent`
 			if ( ${branch.condition} ) {
 				if ( ${name} ) {
@@ -104,18 +111,27 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			} else if ( ${name} ) {
-				${remove}
+				${exit}
 			}
 		` );
 	} else {
-		block.builders.update.addBlock( deindent`
-			if ( ${branch.condition} ) {
+		const enter = branch.hasIntroTransitions ?
+			deindent`
+				if ( !${name} ) ${name} = ${branch.block}( ${params}, ${block.component} );
+				${name}.intro( ${parentNode}, ${anchor} );
+			` :
+			deindent`
 				if ( !${name} ) {
 					${name} = ${branch.block}( ${params}, ${block.component} );
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
+			`;
+
+		block.builders.update.addBlock( deindent`
+			if ( ${branch.condition} ) {
+				${enter}
 			} else if ( ${name} ) {
-				${remove}
+				${exit}
 			}
 		` );
 	}

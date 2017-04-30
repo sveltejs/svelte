@@ -17,7 +17,11 @@ export default function addTransitions ( generator, block, state, node, intro, o
 
 		const fn = `${generator.alias( 'template' )}.transitions.${intro.name}`; // TODO add built-in transitions?
 
-		block.builders.create.addBlock( deindent`
+		if ( outro ) {
+			block.builders.intro.addBlock( `if ( ${outroName} ) ${outroName}.abort();` );
+		}
+
+		block.builders.intro.addBlock( deindent`
 			${block.component}._renderHooks.push( function () {
 				${introName} = ${wrapTransition}( ${state.name}, ${fn}, ${introSnippet}, true, null, function () {
 					${block.component}.fire( 'intro.end', { node: ${state.name} });
