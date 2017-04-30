@@ -89,6 +89,7 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 	const exit = branch.hasOutroTransitions ?
 		deindent`
 			${name}.outro( function () {
+				${name}.destroy( true );
 				${name} = null;
 			});
 		` :

@@ -64,17 +64,16 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	var style = document.createElement( 'style' );
 
 	var cleanup = function () {
-		if ( !transition.running ) return;
 		document.head.removeChild( style );
 		transition.running = false;
 	};
 
 	return assign( transition, {
 		generateKeyframes: function () {
-			id = 'svelte_' + ~~( Math.random() * 1e9 ); // TODO make this more robust
+			id = '__svelte' + ~~( Math.random() * 1e9 ); // TODO make this more robust
 			var keyframes = '@keyframes ' + id + '{\n';
 
-			for ( var p = 0; p <= 1; p += 166.666 / this.duration ) {
+			for ( var p = 0; p <= 1; p += 16.666 / this.duration ) {
 				var t = this.a + this.d * ease( p );
 				var styles = obj.styles( ease( t ) );
 				keyframes += ( p * 100 ) + '%{' + styles + '}\n';
@@ -85,7 +84,14 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 			style.textContent += keyframes;
 			document.head.appendChild( style );
 
-			node.style.animation += ( node.style.animation ? ', ' : '' ) + id + ' ' + this.duration + 'ms linear 1 forwards';
+			var d = this.d;
+			node.style.animation = node.style.animation.split( ',' )
+				.filter( function ( anim ) {
+					// when introing, discard old animations if there are any
+					return anim && ( d < 0 || !/__svelte/.test( anim ) );
+				})
+				.concat( id + ' ' + this.duration + 'ms linear 1 forwards' )
+				.join( ', ' );
 		},
 		update: function ( now ) {
 			const p = now - this.start;
