@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.18.2
+
+* Parenthesize if-block conditions ([#532](https://github.com/sveltejs/svelte/issues/532))
+* Fix parsing of parenthesized expressions ([#534](https://github.com/sveltejs/svelte/issues/534))
+* Fix error on `bind:checked` that doesn't belong to a checkbox input ([#529](https://github.com/sveltejs/svelte/pull/529))
+
 ## 1.18.1
 
 * Allow `destroy()` in event handlers ([#523](https://github.com/sveltejs/svelte/issues/523))
