@@ -1,39 +1,29 @@
 export default {
-	test ( assert, component, target, window ) {
+	test ( assert, component, target, window, raf ) {
 		global.count = 0;
-		let now = 0;
-		let callback;
-
-		window.performance = { now: () => now };
-		global.requestAnimationFrame = cb => callback = cb;
 
 		component.set({ visible: true });
 		assert.equal( global.count, 1 );
 		const div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
-		now = 300;
-		callback();
+		raf.tick( 300 );
 		assert.equal( div.foo, 0.75 );
 
 		component.set({ visible: false });
 		assert.equal( global.count, 1 );
 
-		now = 500;
-		callback();
+		raf.tick( 500 );
 		assert.equal( div.foo, 0.25 );
 
 		component.set({ visible: true });
-		now = 700;
-		callback();
+		raf.tick( 700 );
 		assert.equal( div.foo, 0.75 );
 
-		now = 800;
-		callback();
+		raf.tick( 800 );
 		assert.equal( div.foo, 1 );
 
-		now = 900;
-		callback();
+		raf.tick( 900 );
 
 		component.destroy();
 	}
