@@ -39,7 +39,6 @@ function create_main_fragment ( state, component ) {
 				}
 
 				destroyEach( each_block_iterations, true, each_block_value.length );
-
 				each_block_iterations.length = each_block_value.length;
 			}
 

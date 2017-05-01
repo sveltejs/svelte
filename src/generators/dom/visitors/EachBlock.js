@@ -115,7 +115,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	const value = block.getUniqueName( 'value' );
 	const key = block.getUniqueName( 'key' );
 	const lookup = block.getUniqueName( `${each_block}_lookup` );
-	const _lookup = block.getUniqueName( `_${each_block}_lookup` );
+	const keys = block.getUniqueName( `${each_block}_keys` );
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
 	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
 
@@ -142,19 +142,40 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 	const consequent = node._block.hasUpdateMethod ?
 		deindent`
-			${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];
-			${_lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+			${_iterations}[${i}] = ${lookup}[ ${key} ] = ${lookup}[ ${key} ];
+			${lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
 		` :
-		`${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${lookup}[ ${key} ];`;
+		`${_iterations}[${i}] = ${lookup}[ ${key} ] = ${lookup}[ ${key} ];`;
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const hasIntros = node._block.hasIntroMethod;
 
+	const destroy = node._block.hasOutroMethod ?
+		deindent`
+			function outro ( key ) {
+				${lookup}[ key ].outro( function () {
+					${lookup}[ key ].destroy( true );
+					${lookup}[ key ] = null;
+				});
+			}
+
+			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${key} = ${iterations}[${i}].key;
+				if ( !${keys}[ ${key} ] ) outro( ${key} );
+			}
+		` :
+		deindent`
+			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				var ${iteration} = ${iterations}[${i}];
+				if ( !${keys}[ ${iteration}.key ] ) ${iteration}.destroy( true );
+			}
+		`;
+
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
 		var ${_iterations} = [];
-		var ${_lookup} = Object.create( null );
+		var ${keys} = Object.create( null );
 
 		var ${fragment} = document.createDocumentFragment();
 
@@ -162,12 +183,13 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${value} = ${each_block_value}[${i}];
 			var ${key} = ${value}.${node.key};
+			${keys}[ ${key} ] = true;
 
 			if ( ${lookup}[ ${key} ] ) {
 				${consequent}
 				${hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
 			} else {
-				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+				${_iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 				${hasIntros && `${_iterations}[${i}].intro( ${fragment}, null );`}
 			}
 
@@ -175,17 +197,11 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		}
 
 		// remove old iterations
-		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-			var ${iteration} = ${iterations}[${i}];
-			if ( !${_lookup}[ ${iteration}.key ] ) {
-				${iteration}.destroy( true );
-			}
-		}
+		${destroy}
 
 		${parentNode}.insertBefore( ${fragment}, ${anchor} );
 
 		${iterations} = ${_iterations};
-		${lookup} = ${_lookup};
 	` );
 }
 
