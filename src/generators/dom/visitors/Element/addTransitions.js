@@ -22,7 +22,6 @@ export default function addTransitions ( generator, block, state, node, intro, o
 
 		block.builders.outro.addBlock( deindent`
 			${name}.run( ${name}.t, 0, function () {
-				${generator.helper( 'detachNode' )}( ${state.name} );
 				${block.component}.fire( 'outro.end', { node: ${state.name} });
 				if ( --${block.alias( 'outros' )} === 0 ) ${block.alias( 'outrocallback' )}();
 				${name} = null;
@@ -60,10 +59,11 @@ export default function addTransitions ( generator, block, state, node, intro, o
 
 			const fn = `${generator.alias( 'template' )}.transitions.${outro.name}`;
 
+			// TODO hide elements that have outro'd (unless they belong to a still-outroing
+			// group) prior to their removal from the DOM
 			block.builders.outro.addBlock( deindent`
 				${outroName} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, false, null );
 				${outroName}.run( 1, 0, function () {
-					${generator.helper( 'detachNode' )}( ${state.name} );
 					${block.component}.fire( 'outro.end', { node: ${state.name} });
 					if ( --${block.alias( 'outros' )} === 0 ) ${block.alias( 'outrocallback' )}();
 				});

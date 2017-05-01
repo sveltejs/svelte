@@ -86,6 +86,39 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
+	const enter = dynamic ?
+		( branch.hasIntroTransitions ?
+			deindent`
+				if ( ${name} ) {
+					${name}.update( changed, ${params} );
+				} else {
+					${name} = ${branch.block}( ${params}, ${block.component} );
+				}
+
+				${name}.intro( ${parentNode}, ${anchor} );
+			` :
+			deindent`
+				if ( ${name} ) {
+					${name}.update( changed, ${params} );
+				} else {
+					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.mount( ${parentNode}, ${anchor} );
+				}
+			` ) :
+		( branch.hasIntroTransitions ?
+			deindent`
+				if ( !${name} ) ${name} = ${branch.block}( ${params}, ${block.component} );
+				${name}.intro( ${parentNode}, ${anchor} );
+			` :
+			deindent`
+				if ( !${name} ) {
+					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.mount( ${parentNode}, ${anchor} );
+				}
+			` );
+
+	// no `update()` here — we don't want to update outroing nodes,
+	// as that will typically result in glitching
 	const exit = branch.hasOutroTransitions ?
 		deindent`
 			${name}.outro( function () {
@@ -98,44 +131,13 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 			${name} = null;
 		`;
 
-	if ( dynamic ) {
-		if ( branch.hasIntroTransitions ) {
-			throw new Error( 'TODO simple dynamic if-block with intro transitions' );
+	block.builders.update.addBlock( deindent`
+		if ( ${branch.condition} ) {
+			${enter}
+		} else if ( ${name} ) {
+			${exit}
 		}
-
-		block.builders.update.addBlock( deindent`
-			if ( ${branch.condition} ) {
-				if ( ${name} ) {
-					${name}.update( changed, ${params} );
-				} else {
-					${name} = ${branch.block}( ${params}, ${block.component} );
-					${name}.mount( ${parentNode}, ${anchor} );
-				}
-			} else if ( ${name} ) {
-				${exit}
-			}
-		` );
-	} else {
-		const enter = branch.hasIntroTransitions ?
-			deindent`
-				if ( !${name} ) ${name} = ${branch.block}( ${params}, ${block.component} );
-				${name}.intro( ${parentNode}, ${anchor} );
-			` :
-			deindent`
-				if ( !${name} ) {
-					${name} = ${branch.block}( ${params}, ${block.component} );
-					${name}.mount( ${parentNode}, ${anchor} );
-				}
-			`;
-
-		block.builders.update.addBlock( deindent`
-			if ( ${branch.condition} ) {
-				${enter}
-			} else if ( ${name} ) {
-				${exit}
-			}
-		` );
-	}
+	` );
 }
 
 function compound ( generator, block, state, node, branches, dynamic, { name, anchor, params } ) {
