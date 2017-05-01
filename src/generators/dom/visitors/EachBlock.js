@@ -125,7 +125,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 	create.addBlock( deindent`
 		var ${key} = ${each_block_value}[${i}].${node.key};
-		${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
+		${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 	` );
 
 	if ( state.parentNode ) {
@@ -164,7 +164,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			if ( ${lookup}[ ${key} ] ) {
 				${consequent}
 			} else {
-				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
+				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 			}
 
 			${_iterations}[${i}].${mountOrIntro}( ${fragment}, null );
