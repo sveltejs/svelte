@@ -18,6 +18,9 @@ export default {
 		callback();
 		assert.equal( window.getComputedStyle( div ).opacity, 1 );
 
+		now = 500;
+		callback();
+
 		component.destroy();
 	}
 };
