@@ -149,6 +149,8 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
+	const hasIntros = node._block.hasIntroMethod;
+
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
 		var ${_iterations} = [];
@@ -163,11 +165,13 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 			if ( ${lookup}[ ${key} ] ) {
 				${consequent}
+				${hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
 			} else {
 				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+				${hasIntros && `${_iterations}[${i}].intro( ${fragment}, null );`}
 			}
 
-			${_iterations}[${i}].${mountOrIntro}( ${fragment}, null );
+			${!hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
 		}
 
 		// remove old iterations
