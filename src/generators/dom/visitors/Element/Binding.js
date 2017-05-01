@@ -30,7 +30,7 @@ export default function visitBinding ( generator, block, state, node, attribute 
 	// <select> special case
 	if ( node.name === 'select' ) {
 		if ( !isMultipleSelect ) {
-			setter = `var selectedOption = ${state.parentNode}.selectedOptions[0] || ${state.parentNode}.options[0];\n${setter}`;
+			setter = `var selectedOption = ${state.parentNode}.querySelector(':checked') || ${state.parentNode}.options[0];\n${setter}`;
 		}
 
 		const value = block.getUniqueName( 'value' );
@@ -160,7 +160,7 @@ function getBindingEventName ( node, attribute ) {
 function getBindingValue ( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type ) {
 	// <select multiple bind:value='selected>
 	if ( isMultipleSelect ) {
-		return `[].map.call( ${state.parentNode}.selectedOptions, function ( option ) { return option.__value; })`;
+		return `[].map.call( ${state.parentNode}.querySelectorAll(':checked'), function ( option ) { return option.__value; })`;
 	}
 
 	// <select bind:value='selected>
