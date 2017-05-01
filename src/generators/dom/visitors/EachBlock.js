@@ -237,6 +237,24 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;
 
+		const destroy = node._block.hasOutroMethod ?
+			deindent`
+				function outro ( i ) {
+					if ( ${iterations}[i] ) {
+						${iterations}[i].outro( function () {
+							${iterations}[i].destroy( true );
+							${iterations}[i] = null;
+						});
+					}
+				}
+
+				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) outro( ${i} );
+			` :
+			deindent`
+				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );
+				${iterations}.length = ${each_block_value}.length;
+			`;
+
 		block.builders.update.addBlock( deindent`
 			var ${each_block_value} = ${snippet};
 
@@ -245,9 +263,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 					${forLoopBody}
 				}
 
-				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );
-
-				${iterations}.length = ${each_block_value}.length;
+				${destroy}
 			}
 		` );
 	}
