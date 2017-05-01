@@ -90,17 +90,19 @@ describe( 'runtime', () => {
 
 			let SvelteComponent;
 
-			try {
-				SvelteComponent = require( `./samples/${dir}/main.html` ).default;
-			} catch ( err ) {
-				if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
-				throw err;
-			}
-
 			let unintendedError = null;
 
 			return env()
 				.then( window => {
+					global.window = window;
+
+					try {
+						SvelteComponent = require( `./samples/${dir}/main.html` ).default;
+					} catch ( err ) {
+						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
+						throw err;
+					}
+
 					Object.assign = () => {
 						throw new Error( 'cannot use Object.assign in generated code, as it is not supported everywhere' );
 					};

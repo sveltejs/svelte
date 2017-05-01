@@ -44,7 +44,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 
 		return assign( transition, {
 			update: function ( now ) {
-				const p = now - this.start;
+				var p = now - this.start;
 				this.t = this.a + this.d * ease( p / this.duration );
 				obj.tick( this.t );
 			},
@@ -94,7 +94,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 				.join( ', ' );
 		},
 		update: function ( now ) {
-			const p = now - this.start;
+			var p = now - this.start;
 			this.t = this.a + this.d * ease( p / this.duration );
 		},
 		done: function () {
