@@ -176,7 +176,7 @@ export default class Block {
 		}
 
 		if ( this.hasIntroTransitions ) {
-			if ( this.builders.outro.isEmpty() ) {
+			if ( this.builders.intro.isEmpty() ) {
 				properties.addBlock( `intro: ${this.generator.helper( 'noop' )},` );
 			} else {
 				properties.addBlock( deindent`

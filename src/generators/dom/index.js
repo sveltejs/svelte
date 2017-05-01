@@ -303,22 +303,19 @@ export default function dom ( parsed, source, options ) {
 				}
 			});
 
-			if ( typeof value === 'function' ) { // exclude transitionManager — special case
+			if ( key === 'transitionManager' ) { // special case
+				const global = `_svelteTransitionManager`;
+
+				builders.main.addBlock(
+					`var ${generator.alias( 'transitionManager' )} = window.${global} || ( window.${global} = ${code});`
+				);
+			} else {
 				const alias = generator.alias( fn.id.name );
 				if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
 
 				builders.main.addBlock( code.toString() );
 			}
 		});
-
-		if ( generator.hasIntroTransitions || generator.hasOutroTransitions ) {
-			const global = `_svelteTransitionManager`;
-			const transitionManager = toSource( shared.transitionManager );
-
-			builders.main.addBlock(
-				`var ${generator.alias( 'transitionManager' )} = window.${global} || ( window.${global} = ${transitionManager});`
-			);
-		}
 	}
 
 	return generator.generate( builders.main.toString(), options, { name, format } );

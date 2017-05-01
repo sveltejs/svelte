@@ -4,7 +4,7 @@ export default {
 		let callback;
 
 		window.performance = { now: () => now };
-		window.requestAnimationFrame = cb => callback = cb;
+		global.requestAnimationFrame = cb => callback = cb;
 
 		component.set({ visible: true });
 		const div = target.querySelector( 'div' );
