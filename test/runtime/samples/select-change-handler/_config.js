@@ -1,6 +1,4 @@
 export default {
-	skip: true, // JSDOM
-
 	data: {
 		options: [ { id: 'a' }, { id: 'b' }, { id: 'c' } ],
 		selected: 'b'
