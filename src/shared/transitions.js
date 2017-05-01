@@ -75,7 +75,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 
 			for ( var p = 0; p <= 1; p += 16.666 / this.duration ) {
 				var t = this.a + this.d * ease( p );
-				var styles = obj.styles( ease( t ) );
+				var styles = obj.styles( t );
 				keyframes += ( p * 100 ) + '%{' + styles + '}\n';
 			}
 
