@@ -1,61 +1,45 @@
 export default {
-	test ( assert, component, target, window ) {
-		let now = 0;
-		let callback;
-
-		window.performance = { now: () => now };
-		global.requestAnimationFrame = cb => callback = cb;
-
+	test ( assert, component, target, window, raf ) {
 		component.set({ visible: true });
 		let div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
-		now = 200;
-		callback();
+		raf.tick( 200 );
 		assert.equal( div.foo, 0.5 );
 
-		now = 400;
-		callback();
+		raf.tick( 400 );
 		assert.equal( div.foo, 1 );
 
-		now = 500;
-		callback();
+		raf.tick( 500 );
 		assert.equal( div.foo, 1 );
 
 		component.set({ visible: false });
-		now = 600;
-		callback();
+		raf.tick( 600 );
 		assert.equal( div.foo, 1 );
 		assert.equal( div.bar, 0.75 );
 
-		now = 900;
-		callback();
+		raf.tick( 900 );
 		assert.equal( div.foo, 1 );
 		assert.equal( div.bar, 0 );
 
 		// test outro before intro complete
-		now = 1000;
+		raf.tick( 1000 );
 		component.set({ visible: true });
 		div = target.querySelector( 'div' );
-		callback();
 
-		now = 1200;
-		callback();
+		raf.tick( 1200 );
 		assert.equal( div.foo, 0.5 );
 
 		component.set({ visible: false });
-		now = 1300;
-		callback();
+		raf.tick( 1300 );
 		assert.equal( div.foo, 0.75 );
 		assert.equal( div.bar, 0.75 );
 
-		now = 1400;
-		callback();
+		raf.tick( 1400 );
 		assert.equal( div.foo, 1 );
 		assert.equal( div.bar, 0.5 );
 
-		now = 2000;
-		callback();
+		raf.tick( 2000 );
 
 		component.destroy();
 	}

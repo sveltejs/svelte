@@ -3,21 +3,15 @@ export default {
 		name: 'world'
 	},
 
-	test ( assert, component, target, window ) {
+	test ( assert, component, target, window, raf ) {
 		global.count = 0;
-		let now = 0;
-		let callback;
-
-		window.performance = { now: () => now };
-		global.requestAnimationFrame = cb => callback = cb;
 
 		component.set({ visible: true });
 		assert.equal( global.count, 1 );
 		const div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
-		now = 300;
-		callback();
+		raf.tick( 300 );
 		component.set({ name: 'everybody' });
 		assert.equal( div.foo, 0.75 );
 		assert.htmlEqual( div.innerHTML, 'hello everybody!' );
@@ -25,22 +19,18 @@ export default {
 		component.set({ visible: false, name: 'again' });
 		assert.htmlEqual( div.innerHTML, 'hello everybody!' );
 
-		now = 500;
-		callback();
+		raf.tick( 500 );
 		assert.equal( div.foo, 0.25 );
 
 		component.set({ visible: true });
-		now = 700;
-		callback();
+		raf.tick( 700 );
 		assert.equal( div.foo, 0.75 );
 		assert.htmlEqual( div.innerHTML, 'hello again!' );
 
-		now = 800;
-		callback();
+		raf.tick( 800 );
 		assert.equal( div.foo, 1 );
 
-		now = 900;
-		callback();
+		raf.tick( 900 );
 
 		component.destroy();
 	}

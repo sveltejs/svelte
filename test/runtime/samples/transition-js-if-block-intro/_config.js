@@ -1,25 +1,16 @@
 export default {
-	test ( assert, component, target, window ) {
-		let now = 0;
-		let callback;
-
-		window.performance = { now: () => now };
-		global.requestAnimationFrame = cb => callback = cb;
-
+	test ( assert, component, target, window, raf ) {
 		component.set({ visible: true });
 		const div = target.querySelector( 'div' );
 		assert.equal( window.getComputedStyle( div ).opacity, 0 );
 
-		now = 200;
-		callback();
+		raf.tick( 200 );
 		assert.equal( window.getComputedStyle( div ).opacity, 0.5 );
 
-		now = 400;
-		callback();
+		raf.tick( 400 );
 		assert.equal( window.getComputedStyle( div ).opacity, 1 );
 
-		now = 500;
-		callback();
+		raf.tick( 500 );
 
 		component.destroy();
 	}
