@@ -31,6 +31,8 @@ export default class Block {
 			destroy: new CodeBuilder()
 		};
 
+		this.hasIntroMethod = false; // a block could have an intro method but not intro transitions, e.g. if a sibling block has intros
+		this.hasOutroMethod = false;
 		this.hasIntroTransitions = false;
 		this.hasOutroTransitions = false;
 		this.outros = 0;
@@ -175,9 +177,13 @@ export default class Block {
 			}
 		}
 
-		if ( this.hasIntroTransitions ) {
+		if ( this.hasIntroMethod ) {
 			if ( this.builders.intro.isEmpty() ) {
-				properties.addBlock( `intro: ${this.generator.helper( 'noop' )},` );
+				properties.addBlock( deindent`
+					intro: function ( ${this.target}, anchor ) {
+						this.mount( ${this.target}, anchor );
+					},
+				` );
 			} else {
 				properties.addBlock( deindent`
 					intro: function ( ${this.target}, anchor ) {
@@ -193,9 +199,13 @@ export default class Block {
 			}
 		}
 
-		if ( this.hasOutroTransitions ) {
+		if ( this.hasOutroMethod ) {
 			if ( this.builders.outro.isEmpty() ) {
-				properties.addBlock( `outro: ${this.generator.helper( 'noop' )},` );
+				properties.addBlock( deindent`
+					outro: function ( outrocallback ) {
+						outrocallback();
+					},
+				` );
 			} else {
 				properties.addBlock( deindent`
 					outro: function ( ${this.alias( 'outrocallback' )} ) {
