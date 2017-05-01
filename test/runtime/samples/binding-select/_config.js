@@ -1,6 +1,4 @@
 export default {
-	skip: true, // selectedOptions doesn't work in JSDOM???
-
 	html: `
 		<p>selected: one</p>
 
@@ -12,6 +10,10 @@ export default {
 
 		<p>selected: one</p>
 	`,
+
+	data: {
+		selected: 'one'
+	},
 
 	test ( assert, component, target, window ) {
 		const select = target.querySelector( 'select' );
