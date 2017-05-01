@@ -4,13 +4,42 @@ export function linear ( t ) {
 	return t;
 }
 
+function generateKeyframes ( a, b, delta, duration, ease, fn, node, style ) {
+	var id = '__svelte' + ~~( Math.random() * 1e9 ); // TODO make this more robust
+	var keyframes = '@keyframes ' + id + '{\n';
+
+	for ( var p = 0; p <= 1; p += 16.666 / duration ) {
+		var t = a + delta * ease( p );
+		keyframes += ( p * 100 ) + '%{' + fn( t ) + '}\n';
+	}
+
+	keyframes += '100% {' + fn( b ) + '}\n}';
+	style.textContent += keyframes;
+
+	document.head.appendChild( style );
+
+	node.style.animation = node.style.animation.split( ',' )
+		.filter( function ( anim ) {
+			// when introing, discard old animations if there are any
+			return anim && ( delta < 0 || !/__svelte/.test( anim ) );
+		})
+		.concat( id + ' ' + duration + 'ms linear 1 forwards' )
+		.join( ', ' );
+}
+
 export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	var obj = fn( node, params, intro );
-
 	var duration = obj.duration || 300;
 	var ease = obj.easing || linear;
 
-	var transition = {
+	// TODO share <style> tag between all transitions?
+	if ( obj.styles ) {
+		var style = document.createElement( 'style' );
+	}
+
+	if ( intro && obj.tick ) obj.tick( 0 );
+
+	return {
 		start: null,
 		end: null,
 		a: null,
@@ -22,89 +51,39 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 		run: function ( a, b, callback ) {
 			this.a = a;
 			this.b = b;
-			this.d = b - a;
+			this.delta = b - a;
 			this.start = window.performance.now() + ( obj.delay || 0 );
 			this.duration = duration * Math.abs( b - a );
 			this.end = this.start + this.duration;
 
 			this.callback = callback;
 
-			if ( !obj.tick ) this.generateKeyframes();
+			if ( obj.styles ) {
+				generateKeyframes( this.a, this.b, this.delta, this.duration, ease, obj.styles, node, style );
+			}
 
 			if ( !this.running ) {
 				this.running = true;
 				transitionManager.add( this );
 			}
-		}
-	}
-
-	if ( obj.tick ) {
-		// JS transition
-		if ( intro ) obj.tick( 0 );
-
-		return assign( transition, {
-			update: function ( now ) {
-				var p = now - this.start;
-				this.t = this.a + this.d * ease( p / this.duration );
-				obj.tick( this.t );
-			},
-			done: function () {
-				obj.tick( intro ? 1 : 0 );
-				this.callback();
-			},
-			abort: function () {
-				if ( !intro ) obj.tick( 1 ); // reset styles for intro
-				this.running = false;
-			}
-		});
-	}
-
-	// CSS transition
-	var id = null;
-	var style = document.createElement( 'style' );
-
-	var cleanup = function () {
-		document.head.removeChild( style );
-		transition.running = false;
-	};
-
-	return assign( transition, {
-		generateKeyframes: function () {
-			id = '__svelte' + ~~( Math.random() * 1e9 ); // TODO make this more robust
-			var keyframes = '@keyframes ' + id + '{\n';
-
-			for ( var p = 0; p <= 1; p += 16.666 / this.duration ) {
-				var t = this.a + this.d * ease( p );
-				var styles = obj.styles( t );
-				keyframes += ( p * 100 ) + '%{' + styles + '}\n';
-			}
-
-			keyframes += '100% {' + obj.styles( this.b ) + '}\n}';
-
-			style.textContent += keyframes;
-			document.head.appendChild( style );
-
-			var d = this.d;
-			node.style.animation = node.style.animation.split( ',' )
-				.filter( function ( anim ) {
-					// when introing, discard old animations if there are any
-					return anim && ( d < 0 || !/__svelte/.test( anim ) );
-				})
-				.concat( id + ' ' + this.duration + 'ms linear 1 forwards' )
-				.join( ', ' );
 		},
 		update: function ( now ) {
 			var p = now - this.start;
-			this.t = this.a + this.d * ease( p / this.duration );
+			this.t = this.a + this.delta * ease( p / this.duration );
+			if ( obj.tick ) obj.tick( this.t );
 		},
 		done: function () {
+			if ( obj.tick ) obj.tick( intro ? 1 : 0 );
+			if ( obj.styles ) document.head.removeChild( style );
 			this.callback();
-			cleanup();
+			this.running = false;
 		},
 		abort: function () {
-			cleanup();
+			if ( !intro && obj.tick ) obj.tick( 1 ); // reset styles for intro
+			if ( obj.styles ) document.head.removeChild( style );
+			this.running = false;
 		}
-	});
+	};
 }
 
 export var transitionManager = {
