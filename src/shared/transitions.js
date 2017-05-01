@@ -120,14 +120,6 @@ export var transitionManager = {
 		}
 	},
 
-	remove: function ( transitions ) {
-		var i = transitions.length;
-		while ( i-- ) {
-			var index = this.transitions.indexOf( transitions[i] );
-			if ( ~index ) this.transitions.splice( index, 1 );
-		}
-	},
-
 	next: function () {
 		transitionManager.running = false;
 
