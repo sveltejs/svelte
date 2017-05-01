@@ -80,8 +80,8 @@ const preprocessors = {
 				block.addDependencies( node._block.dependencies );
 			}
 
-			if ( node._block.hasIntroTransitions ) hasIntros = true;
-			if ( node._block.hasOutroTransitions ) hasOutros = true;
+			if ( node._block.hasIntroMethod ) hasIntros = true;
+			if ( node._block.hasOutroMethod ) hasOutros = true;
 
 			if ( isElseIf( node.else ) ) {
 				attachBlocks( node.else.children[0] );
@@ -209,9 +209,9 @@ const preprocessors = {
 			}
 
 			else if ( attribute.type === 'Transition' ) {
-				if ( attribute.intro ) generator.hasIntroTransitions = block.hasIntroTransitions = true;
+				if ( attribute.intro ) generator.hasIntroTransitions = block.hasIntroMethod = true;
 				if ( attribute.outro ) {
-					generator.hasOutroTransitions = block.hasOutroTransitions = true;
+					generator.hasOutroTransitions = block.hasOutroMethod = true;
 					block.outros += 1;
 				}
 			}
