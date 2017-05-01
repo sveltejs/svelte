@@ -11,7 +11,8 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	const params = block.params.join( ', ' );
 	const anchor = node.needsAnchor ? block.getUniqueName( `${each_block}_anchor` ) : ( node.next && node.next._state.name ) || 'null';
 
-	const vars = { each_block, create_each_block, each_block_value, iterations, i, params, anchor };
+	const mountOrIntro = node._block.hasIntroMethod ? 'intro' : 'mount';
+	const vars = { each_block, create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro };
 
 	const { snippet } = block.contextualise( node.expression );
 
@@ -29,7 +30,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	if ( isToplevel ) {
 		block.builders.mount.addBlock( deindent`
 			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].mount( ${block.target}, null );
+				${iterations}[${i}].${mountOrIntro}( ${block.target}, null );
 			}
 		` );
 	}
@@ -52,13 +53,13 @@ export default function visitEachBlock ( generator, block, state, node ) {
 		block.builders.create.addBlock( deindent`
 			if ( !${each_block_value}.length ) {
 				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-				${!isToplevel ? `${each_block_else}.mount( ${state.parentNode}, null );` : ''}
+				${!isToplevel ? `${each_block_else}.${mountOrIntro}( ${state.parentNode}, null );` : ''}
 			}
 		` );
 
 		block.builders.mount.addBlock( deindent`
 			if ( ${each_block_else} ) {
-				${each_block_else}.mount( ${state.parentNode || block.target}, null );
+				${each_block_else}.${mountOrIntro}( ${state.parentNode || block.target}, null );
 			}
 		` );
 
@@ -70,7 +71,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 					${each_block_else}.update( changed, ${params} );
 				} else if ( !${each_block_value}.length ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-					${each_block_else}.mount( ${parentNode}, ${anchor} );
+					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
 					${each_block_else}.destroy( true );
 					${each_block_else} = null;
@@ -85,7 +86,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 					}
 				} else if ( !${each_block_else} ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
-					${each_block_else}.mount( ${parentNode}, ${anchor} );
+					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
 			` );
 		}
@@ -109,7 +110,7 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	}
 }
 
-function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, iterations, i, params, anchor } ) {
+function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
 	const fragment = block.getUniqueName( 'fragment' );
 	const value = block.getUniqueName( 'value' );
 	const key = block.getUniqueName( 'key' );
@@ -129,7 +130,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${iterations}[${i}].mount( ${state.parentNode}, null );`
+			`${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`
 		);
 	}
 
@@ -166,7 +167,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 				${_iterations}[${i}] = ${_lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}${node.key ? `, ${key}` : `` } );
 			}
 
-			${_iterations}[${i}].mount( ${fragment}, null );
+			${_iterations}[${i}].${mountOrIntro}( ${fragment}, null );
 		}
 
 		// remove old iterations
@@ -184,7 +185,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	` );
 }
 
-function unkeyed ( generator, block, state, node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor } ) {
+function unkeyed ( generator, block, state, node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
 	const create = new CodeBuilder();
 
 	create.addLine(
@@ -193,7 +194,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 	if ( state.parentNode ) {
 		create.addLine(
-			`${iterations}[${i}].mount( ${state.parentNode}, null );`
+			`${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`
 		);
 	}
 
@@ -222,12 +223,12 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 					${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
 				} else {
 					${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-					${iterations}[${i}].mount( ${parentNode}, ${anchor} );
+					${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
 			` :
 			deindent`
 				${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-				${iterations}[${i}].mount( ${parentNode}, ${anchor} );
+				${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
 			`;
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;

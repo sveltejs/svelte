@@ -33,8 +33,6 @@ export default class Block {
 
 		this.hasIntroMethod = false; // a block could have an intro method but not intro transitions, e.g. if a sibling block has intros
 		this.hasOutroMethod = false;
-		this.hasIntroTransitions = false;
-		this.hasOutroTransitions = false;
 		this.outros = 0;
 
 		this.aliases = new Map();
@@ -109,13 +107,15 @@ export default class Block {
 
 	render () {
 		let introing;
-		if ( this.hasIntroTransitions ) {
+		const hasIntros = !this.builders.intro.isEmpty();
+		if ( hasIntros ) {
 			introing = this.getUniqueName( 'introing' );
 			this.addVariable( introing );
 		}
 
 		let outroing;
-		if ( this.hasOutroTransitions ) {
+		const hasOutros = !this.builders.outro.isEmpty();
+		if ( hasOutros ) {
 			outroing = this.getUniqueName( 'outroing' );
 			this.addVariable( outroing );
 		}
@@ -178,21 +178,21 @@ export default class Block {
 		}
 
 		if ( this.hasIntroMethod ) {
-			if ( this.builders.intro.isEmpty() ) {
+			if ( hasIntros ) {
 				properties.addBlock( deindent`
 					intro: function ( ${this.target}, anchor ) {
+						if ( ${introing} ) return;
+						${introing} = true;
+						${hasOutros && `${outroing} = false;`}
+
+						${this.builders.intro}
+
 						this.mount( ${this.target}, anchor );
 					},
 				` );
 			} else {
 				properties.addBlock( deindent`
 					intro: function ( ${this.target}, anchor ) {
-						if ( ${introing} ) return;
-						${introing} = true;
-						${this.hasOutroTransitions && `${outroing} = false;`}
-
-						${this.builders.intro}
-
 						this.mount( ${this.target}, anchor );
 					},
 				` );
@@ -200,22 +200,22 @@ export default class Block {
 		}
 
 		if ( this.hasOutroMethod ) {
-			if ( this.builders.outro.isEmpty() ) {
-				properties.addBlock( deindent`
-					outro: function ( outrocallback ) {
-						outrocallback();
-					},
-				` );
-			} else {
+			if ( hasOutros ) {
 				properties.addBlock( deindent`
 					outro: function ( ${this.alias( 'outrocallback' )} ) {
 						if ( ${outroing} ) return;
 						${outroing} = true;
-						${this.hasIntroTransitions && `${introing} = false;`}
+						${hasIntros && `${introing} = false;`}
 
 						var ${this.alias( 'outros' )} = ${this.outros};
 
 						${this.builders.outro}
+					},
+				` );
+			} else {
+				properties.addBlock( deindent`
+					outro: function ( outrocallback ) {
+						outrocallback();
 					},
 				` );
 			}
