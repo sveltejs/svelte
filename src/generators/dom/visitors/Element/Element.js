@@ -63,13 +63,12 @@ export default function visitElement ( generator, block, state, node ) {
 			});
 
 		if ( intro || outro ) addTransitions( generator, block, childState, node, intro, outro );
+	}
 
-		if ( !outro && !state.parentNode ) {
-			// TODO this probably doesn't belong here. We eventually need to consider
-			// what happens to elements that belong to the same outgroup as an
-			// outroing element...
-			block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
-		}
+	if ( !state.parentNode ) {
+		// TODO we eventually need to consider what happens to elements
+		// that belong to the same outgroup as an outroing element...
+		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 	}
 
 	if ( node.name !== 'select' ) {
