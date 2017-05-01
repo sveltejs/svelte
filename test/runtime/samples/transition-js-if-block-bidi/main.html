@@ -1,0 +1,19 @@
+{{#if visible}}
+	<div transition:foo>foo bidi</div>
+{{/if}}
+
+<script>
+	export default {
+		transitions: {
+			foo: function ( node, params ) {
+				global.count += 1;
+				return {
+					duration: 400,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

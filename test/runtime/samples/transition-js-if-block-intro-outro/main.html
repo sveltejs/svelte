@@ -1,0 +1,27 @@
+{{#if visible}}
+	<div in:foo out:bar>foo then bar</div>
+{{/if}}
+
+<script>
+	export default {
+		transitions: {
+			foo: function ( node, params ) {
+				return {
+					duration: 400,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			},
+
+			bar: function ( node, params ) {
+				return {
+					duration: 400,
+					tick: t => {
+						node.bar = t;
+					}
+				};
+			}
+		}
+	};
+</script>
