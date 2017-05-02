@@ -6,9 +6,9 @@ import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
+import { nameMap, sharedMap } from './sharedNames.js';
 import Generator from '../Generator.js';
 import preprocess from './preprocess.js';
-import * as shared from '../../shared/index.js';
 
 class DomGenerator extends Generator {
 	constructor ( parsed, source, name, options ) {
@@ -25,7 +25,7 @@ class DomGenerator extends Generator {
 	}
 
 	helper ( name ) {
-		if ( this.options.dev && `${name}Dev` in shared ) {
+		if ( this.options.dev && sharedMap.has( `${name}Dev` ) ) {
 			name = `${name}Dev`;
 		}
 
@@ -275,7 +275,7 @@ export default function dom ( parsed, source, options ) {
 		);
 	} else {
 		generator.uses.forEach( key => {
-			const str = shared[ key ].toString(); // eslint-disable-line import/namespace
+			const str = sharedMap.get( key );
 			const code = new MagicString( str );
 			const fn = parse( str ).body[0];
 
@@ -286,11 +286,12 @@ export default function dom ( parsed, source, options ) {
 					if ( node._scope ) scope = node._scope;
 
 					if ( node.type === 'Identifier' && isReference( node, parent ) && !scope.has( node.name ) ) {
-						if ( node.name in shared ) {
+						if ( nameMap.has( node.name ) ) {
 							// this helper function depends on another one
-							generator.uses.add( node.name );
+							const dependency = nameMap.get( node.name );
+							generator.uses.add( dependency );
 
-							const alias = generator.alias( node.name );
+							const alias = generator.alias( dependency );
 							if ( alias !== node.name ) code.overwrite( node.start, node.end, alias );
 						}
 					}
@@ -301,7 +302,7 @@ export default function dom ( parsed, source, options ) {
 				}
 			});
 
-			const alias = generator.alias( fn.id.name );
+			const alias = generator.alias( key );
 			if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
 
 			builders.main.addBlock( code.toString() );
