@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.19.0
+
+* Experimental support for transitions ([#7](https://github.com/sveltejs/svelte/issues/7))
+* Use `querySelector(':checked')` instead of `selectedOptions` ([#539](https://github.com/sveltejs/svelte/issues/539))
+* Stringify helpers before bundling them, to avoid renaming errors ([#538](https://github.com/sveltejs/svelte/issues/538))
+
 ## 1.18.2
 
 * Parenthesize if-block conditions ([#532](https://github.com/sveltejs/svelte/issues/532))
