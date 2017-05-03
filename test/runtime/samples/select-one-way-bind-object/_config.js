@@ -1,8 +1,6 @@
 const items = [ {}, {} ];
 
 export default {
-	skip: true, // JSDOM quirks
-
 	'skip-ssr': true,
 
 	data: {
