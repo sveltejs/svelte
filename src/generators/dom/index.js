@@ -129,35 +129,17 @@ export default function dom ( parsed, source, options ) {
 		builders.main.addBlock( block.render() );
 	});
 
-	builders.init.addLine( `this._torndown = false;` );
+	builders.init.addBlock( deindent`
+		this._torndown = false;
+		${parsed.css && options.css !== false && `if ( !document.getElementById( ${JSON.stringify( generator.cssId + '-style' )} ) ) ${generator.alias( 'add_css' )}();`}
+		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._renderHooks = [];`}
+		${generator.hasComplexBindings && `this._bindings = [];`}
 
-	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !document.getElementById( ${JSON.stringify( generator.cssId + '-style' )} ) ) ${generator.alias( 'add_css' )}();` );
-	}
-
-	if ( generator.hasComponents || generator.hasIntroTransitions ) {
-		builders.init.addLine( `this._renderHooks = [];` );
-	}
-
-	if ( generator.hasComplexBindings ) {
-		builders.init.addBlock( deindent`
-			this._bindings = [];
-			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
-			if ( options.target ) this._fragment.mount( options.target, null );
-			while ( this._bindings.length ) this._bindings.pop()();
-		` );
-	} else {
-		builders.init.addBlock( deindent`
-			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
-			if ( options.target ) this._fragment.mount( options.target, null );
-		` );
-	}
-
-	if ( generator.hasComponents || generator.hasIntroTransitions ) {
-		const statement = `this._flush();`;
-
-		builders.init.addBlock( statement );
-	}
+		this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
+		if ( options.target ) this._fragment.mount( options.target, null );
+		${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
+		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}
+	` );
 
 	if ( templateProperties.oncreate ) {
 		builders.init.addBlock( deindent`
@@ -218,12 +200,6 @@ export default function dom ( parsed, source, options ) {
 		${builders.init}
 	` );
 
-	builders.main.addBlock( deindent`
-		function ${name} ( options ) {
-			${constructorBlock}
-		}
-	` );
-
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
 	const prototypeBase = `${name}.prototype` + ( templateProperties.methods ? `, ${generator.alias( 'template' )}.methods` : '' );
@@ -236,10 +212,14 @@ export default function dom ( parsed, source, options ) {
 			}
 		}`;
 
-	builders.main.addBlock( `${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});` );
-
 	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`
+		function ${name} ( options ) {
+			${constructorBlock}
+		}
+
+		${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});
+
 		${name}.prototype._set = function _set ( newState ) {
 			${builders._set}
 		};
