@@ -1,6 +1,4 @@
 export default {
-	skip: true, // selectedOptions doesn't work in JSDOM???
-
 	html: `
 		<p>selected: b</p>
 
