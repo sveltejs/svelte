@@ -61,17 +61,6 @@ export default function dom ( parsed, source, options ) {
 		_set: new CodeBuilder()
 	};
 
-	if ( options.dev ) {
-		builders._set.addBlock( deindent`
-			if ( typeof newState !== 'object' ) {
-				throw new Error( 'Component .set was called without an object of data key-values to update.' );
-			}
-		`);
-	}
-
-	builders._set.addLine( 'var oldState = this._state;' );
-	builders._set.addLine( `this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );` );
-
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
 		const differs = generator.helper( 'differs' );
@@ -98,18 +87,28 @@ export default function dom ( parsed, source, options ) {
 	}
 
 	if ( options.dev ) {
+		builders._set.addBlock( deindent`
+			if ( typeof newState !== 'object' ) {
+				throw new Error( 'Component .set was called without an object of data key-values to update.' );
+			}
+		`);
+
 		Array.from( generator.readonly ).forEach( prop => {
 			builders._set.addLine( `if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );` );
 		});
 	}
 
-	if ( computations.length ) {
-		builders._set.addLine( `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )` );
-	}
-
-	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );` );
-	if ( block.hasUpdateMethod ) builders._set.addLine( `if ( this._fragment ) this._fragment.update( newState, this._state );` ); // TODO is the condition necessary?
-	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );` );
+	// TODO is the `if ( this._fragment )` condition necessary?
+	builders._set.addBlock( deindent`
+		var oldState = this._state;
+		this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );
+		${computations.length && `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )`}
+		${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );
+		${block.hasUpdateMethod && `if ( this._fragment ) this._fragment.update( newState, this._state );`}
+		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
+		${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
+		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}
+	` );
 
 	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
@@ -147,8 +146,6 @@ export default function dom ( parsed, source, options ) {
 			if ( options.target ) this._fragment.mount( options.target, null );
 			while ( this._bindings.length ) this._bindings.pop()();
 		` );
-
-		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
 	} else {
 		builders.init.addBlock( deindent`
 			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
@@ -160,7 +157,6 @@ export default function dom ( parsed, source, options ) {
 		const statement = `this._flush();`;
 
 		builders.init.addBlock( statement );
-		builders._set.addBlock( statement );
 	}
 
 	if ( templateProperties.oncreate ) {
