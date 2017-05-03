@@ -1,15 +1,7 @@
+import { assign } from './utils.js';
 export * from './dom.js';
-
-export function noop () {}
-
-export function assign ( target ) {
-	for ( var i = 1; i < arguments.length; i += 1 ) {
-		var source = arguments[i];
-		for ( var k in source ) target[k] = source[k];
-	}
-
-	return target;
-}
+export * from './transitions.js';
+export * from './utils.js';
 
 export function differs ( a, b ) {
 	return ( a !== b ) || ( a && ( typeof a === 'object' ) || ( typeof a === 'function' ) );
@@ -107,15 +99,14 @@ export function onDev ( eventName, handler ) {
 
 export function set ( newState ) {
 	this._set( assign( {}, newState ) );
-	( this._root || this )._flush();
+	this._root._flush();
 }
 
 export function _flush () {
 	if ( !this._renderHooks ) return;
 
 	while ( this._renderHooks.length ) {
-		var hook = this._renderHooks.pop();
-		hook.fn.call( hook.context );
+		this._renderHooks.pop()();
 	}
 }
 

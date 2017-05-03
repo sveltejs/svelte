@@ -1,0 +1,65 @@
+{
+	"hash": 3160753914,
+	"html": {
+		"start": 0,
+		"end": 43,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 43,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 28,
+						"type": "Transition",
+						"name": "style",
+						"intro": true,
+						"outro": false,
+						"expression": {
+								"start": 15,
+							"end": 27,
+							"type": "ObjectExpression",
+							"properties": [
+								{
+									"start": 16,
+									"end": 26,
+									"type": "Property",
+									"method": false,
+									"computed": false,
+									"shorthand": false,
+									"kind": "init",
+									"key": {
+										"type": "Identifier",
+										"start": 16,
+										"end": 23,
+										"name": "opacity"
+									},
+									"value": {
+										"start": 25,
+										"end": 26,
+										"type": "Literal",
+										"value": 0,
+										"raw": "0"
+									}
+								}
+							]
+						}
+					}
+				],
+				"children": [
+					{
+						"start": 29,
+						"end": 37,
+						"type": "Text",
+						"data": "fades in"
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

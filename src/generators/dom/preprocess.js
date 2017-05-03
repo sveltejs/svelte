@@ -59,6 +59,8 @@ const preprocessors = {
 	IfBlock: ( generator, block, state, node ) => {
 		const blocks = [];
 		let dynamic = false;
+		let hasIntros = false;
+		let hasOutros = false;
 
 		function attachBlocks ( node ) {
 			const dependencies = block.findDependencies( node.expression );
@@ -77,6 +79,9 @@ const preprocessors = {
 				dynamic = true;
 				block.addDependencies( node._block.dependencies );
 			}
+
+			if ( node._block.hasIntroMethod ) hasIntros = true;
+			if ( node._block.hasOutroMethod ) hasOutros = true;
 
 			if ( isElseIf( node.else ) ) {
 				attachBlocks( node.else.children[0] );
@@ -101,6 +106,8 @@ const preprocessors = {
 
 		blocks.forEach( block => {
 			block.hasUpdateMethod = dynamic;
+			block.hasIntroMethod = hasIntros;
+			block.hasOutroMethod = hasOutros;
 		});
 
 		generator.blocks.push( ...blocks );
@@ -199,6 +206,14 @@ const preprocessors = {
 			else if ( attribute.type === 'Binding' ) {
 				const dependencies = block.findDependencies( attribute.value );
 				block.addDependencies( dependencies );
+			}
+
+			else if ( attribute.type === 'Transition' ) {
+				if ( attribute.intro ) generator.hasIntroTransitions = block.hasIntroMethod = true;
+				if ( attribute.outro ) {
+					generator.hasOutroTransitions = block.hasOutroMethod = true;
+					block.outros += 1;
+				}
 			}
 		});
 

@@ -17,11 +17,13 @@
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
     "build": "npm run build:main && npm run build:shared && npm run build:ssr",
-    "build:main": "rollup -c rollup/rollup.config.main.js",
+    "build:main": "node src/shared/_build.js && rollup -c rollup/rollup.config.main.js",
     "build:shared": "rollup -c rollup/rollup.config.shared.js",
     "build:ssr": "rollup -c rollup/rollup.config.ssr.js",
+    "dev": "node src/shared/_build.js && rollup -c rollup/rollup.config.main.js -w",
+    "dev:shared": "rollup -c rollup/rollup.config.shared.js -w",
     "pretest": "npm run build",
-    "prepublish": "npm run lint && npm run build"
+    "prepublish": "npm run build && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -72,6 +74,7 @@
     "rollup-plugin-commonjs": "^7.0.0",
     "rollup-plugin-json": "^2.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-watch": "^3.2.2",
     "source-map": "^0.5.6",
     "source-map-support": "^0.4.8"
   },

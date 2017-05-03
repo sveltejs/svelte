@@ -1,19 +1,11 @@
-import { parse, parseExpressionAt } from 'acorn';
+import { parseExpressionAt } from 'acorn';
 import spaces from '../../utils/spaces.js';
 
-export function readEventHandlerDirective ( parser, start, name ) {
-	const quoteMark = (
-		parser.eat( `'` ) ? `'` :
-		parser.eat( `"` ) ? `"` :
-		null
-	);
-
-	const expressionStart = parser.index;
-
+function readExpression ( parser, start, quoteMark ) {
 	let str = '';
 	let escaped = false;
 
-	for ( let i = expressionStart; i < parser.template.length; i += 1 ) {
+	for ( let i = start; i < parser.template.length; i += 1 ) {
 		const char = parser.template[i];
 
 		if ( quoteMark ) {
@@ -21,7 +13,6 @@ export function readEventHandlerDirective ( parser, start, name ) {
 				if ( escaped ) {
 					str += quoteMark;
 				} else {
-					parser.index = i + 1;
 					break;
 				}
 			} else if ( escaped ) {
@@ -35,7 +26,6 @@ export function readEventHandlerDirective ( parser, start, name ) {
 		}
 
 		else if ( /\s/.test( char ) ) {
-			parser.index = i;
 			break;
 		}
 
@@ -44,13 +34,25 @@ export function readEventHandlerDirective ( parser, start, name ) {
 		}
 	}
 
-	const ast = parse( spaces( expressionStart ) + str );
+	const expression = parseExpressionAt( spaces( start ) + str, start );
+	parser.index = expression.end;
 
-	if ( ast.body.length > 1 ) {
-		parser.error( `Event handler should be a single call expression`, ast.body[1].start );
-	}
+	parser.allowWhitespace();
+	if ( quoteMark ) parser.eat( quoteMark, true );
 
-	const expression = ast.body[0].expression;
+	return expression;
+}
+
+export function readEventHandlerDirective ( parser, start, name ) {
+	const quoteMark = (
+		parser.eat( `'` ) ? `'` :
+		parser.eat( `"` ) ? `"` :
+		null
+	);
+
+	const expressionStart = parser.index;
+
+	const expression = readExpression( parser, expressionStart, quoteMark );
 
 	if ( expression.type !== 'CallExpression' ) {
 		parser.error( `Expected call expression`, expressionStart );
@@ -125,5 +127,35 @@ export function readBindingDirective ( parser, start, name ) {
 		type: 'Binding',
 		name,
 		value
+	};
+}
+
+export function readTransitionDirective ( parser, start, name, type ) {
+	let expression = null;
+
+	if ( parser.eat( '=' ) ) {
+		const quoteMark = (
+			parser.eat( `'` ) ? `'` :
+			parser.eat( `"` ) ? `"` :
+			null
+		);
+
+		const expressionStart = parser.index;
+
+		expression = readExpression( parser, expressionStart, quoteMark );
+
+		if ( expression.type !== 'ObjectExpression' ) {
+			parser.error( `Expected object expression`, expressionStart );
+		}
+	}
+
+	return {
+		start,
+		end: parser.index,
+		type: 'Transition',
+		name,
+		intro: type === 'in' || type === 'transition',
+		outro: type === 'out' || type === 'transition',
+		expression
 	};
 }

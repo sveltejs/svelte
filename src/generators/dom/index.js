@@ -1,12 +1,12 @@
 import MagicString from 'magic-string';
-import { parse } from 'acorn';
+import { parseExpressionAt } from 'acorn';
 import annotateWithScopes from '../../utils/annotateWithScopes.js';
 import isReference from '../../utils/isReference.js';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
-import { nameMap, sharedMap } from './sharedNames.js';
+import shared from './shared.js';
 import Generator from '../Generator.js';
 import preprocess from './preprocess.js';
 
@@ -25,7 +25,7 @@ class DomGenerator extends Generator {
 	}
 
 	helper ( name ) {
-		if ( this.options.dev && sharedMap.has( `${name}Dev` ) ) {
+		if ( this.options.dev && `${name}Dev` in shared ) {
 			name = `${name}Dev`;
 		}
 
@@ -138,7 +138,7 @@ export default function dom ( parsed, source, options ) {
 		builders.init.addLine( `if ( !${generator.alias( 'added_css' )} ) ${generator.alias( 'add_css' )}();` );
 	}
 
-	if ( generator.hasComponents ) {
+	if ( generator.hasComponents || generator.hasIntroTransitions ) {
 		builders.init.addLine( `this._renderHooks = [];` );
 	}
 
@@ -158,7 +158,7 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	if ( generator.hasComponents ) {
+	if ( generator.hasComponents || generator.hasIntroTransitions ) {
 		const statement = `this._flush();`;
 
 		builders.init.addBlock( statement );
@@ -168,7 +168,7 @@ export default function dom ( parsed, source, options ) {
 	if ( templateProperties.oncreate ) {
 		builders.init.addBlock( deindent`
 			if ( options._root ) {
-				options._root._renderHooks.push({ fn: ${generator.alias( 'template' )}.oncreate, context: this });
+				options._root._renderHooks.push( ${generator.alias( 'template' )}.oncreate.bind( this ) );
 			} else {
 				${generator.alias( 'template' )}.oncreate.call( this );
 			}
@@ -218,7 +218,7 @@ export default function dom ( parsed, source, options ) {
 
 		this._handlers = Object.create( null );
 
-		this._root = options._root;
+		this._root = options._root || this;
 		this._yield = options._yield;
 
 		${builders.init}
@@ -275,20 +275,20 @@ export default function dom ( parsed, source, options ) {
 		);
 	} else {
 		generator.uses.forEach( key => {
-			const str = sharedMap.get( key );
+			const str = shared[ key ];
 			const code = new MagicString( str );
-			const fn = parse( str ).body[0];
+			const expression = parseExpressionAt( str, 0 );
 
-			let scope = annotateWithScopes( fn );
+			let scope = annotateWithScopes( expression );
 
-			walk( fn, {
+			walk( expression, {
 				enter ( node, parent ) {
 					if ( node._scope ) scope = node._scope;
 
 					if ( node.type === 'Identifier' && isReference( node, parent ) && !scope.has( node.name ) ) {
-						if ( nameMap.has( node.name ) ) {
+						if ( node.name in shared ) {
 							// this helper function depends on another one
-							const dependency = nameMap.get( node.name );
+							const dependency = node.name;
 							generator.uses.add( dependency );
 
 							const alias = generator.alias( dependency );
@@ -302,10 +302,18 @@ export default function dom ( parsed, source, options ) {
 				}
 			});
 
-			const alias = generator.alias( key );
-			if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
+			if ( key === 'transitionManager' ) { // special case
+				const global = `_svelteTransitionManager`;
 
-			builders.main.addBlock( code.toString() );
+				builders.main.addBlock(
+					`var ${generator.alias( 'transitionManager' )} = window.${global} || ( window.${global} = ${code});`
+				);
+			} else {
+				const alias = generator.alias( expression.id.name );
+				if ( alias !== expression.id.name ) code.overwrite( expression.id.start, expression.id.end, alias );
+
+				builders.main.addBlock( code.toString() );
+			}
 		});
 	}
 
