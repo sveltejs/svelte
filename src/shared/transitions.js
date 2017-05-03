@@ -4,7 +4,7 @@ export function linear ( t ) {
 	return t;
 }
 
-function generateKeyframes ( a, b, delta, duration, ease, fn, node, style ) {
+export function generateKeyframes ( a, b, delta, duration, ease, fn, node, style ) {
 	var id = '__svelte' + ~~( Math.random() * 1e9 ); // TODO make this more robust
 	var keyframes = '@keyframes ' + id + '{\n';
 
