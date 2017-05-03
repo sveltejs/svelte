@@ -10,7 +10,7 @@ var template = (function () {
 
 function add_css () {
 	var style = createElement( 'style' );
-	setAttribute( style, "svelte-3842350206", '' );
+	style.id = "svelte-3842350206-style";
 	style.textContent = "\n\tp[svelte-3842350206], [svelte-3842350206] p {\n\t\tcolor: red;\n\t}\n";
 	appendNode( style, document.head );
 }
@@ -57,7 +57,7 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	if ( !document.querySelector( 'style[svelte-3842350206]' ) ) add_css();
+	if ( !document.getElementById( "svelte-3842350206-style" ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
 	if ( options.target ) this._fragment.mount( options.target, null );
