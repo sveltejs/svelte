@@ -6,6 +6,7 @@ import visitAttribute from './Attribute.js';
 import visitEventHandler from './EventHandler.js';
 import visitBinding from './Binding.js';
 import visitRef from './Ref.js';
+import addTransitions from './addTransitions.js';
 
 const meta = {
 	':Window': visitWindow
@@ -40,21 +41,34 @@ export default function visitElement ( generator, block, state, node ) {
 	block.builders.create.addLine( `var ${name} = ${getRenderStatement( generator, childState.namespace, node.name )};` );
 	block.mount( name, state.parentNode );
 
-	if ( !state.parentNode ) {
-		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
-	}
-
 	// add CSS encapsulation attribute
 	if ( generator.cssId && state.isTopLevel ) {
 		block.builders.create.addLine( `${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );` );
 	}
 
 	function visitAttributes () {
+		let intro;
+		let outro;
+
 		node.attributes
 			.sort( ( a, b ) => order[ a.type ] - order[ b.type ] )
 			.forEach( attribute => {
+				if ( attribute.type === 'Transition' ) {
+					if ( attribute.intro ) intro = attribute;
+					if ( attribute.outro ) outro = attribute;
+					return;
+				}
+
 				visitors[ attribute.type ]( generator, block, childState, node, attribute );
 			});
+
+		if ( intro || outro ) addTransitions( generator, block, childState, node, intro, outro );
+	}
+
+	if ( !state.parentNode ) {
+		// TODO we eventually need to consider what happens to elements
+		// that belong to the same outgroup as an outroing element...
+		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 	}
 
 	if ( node.name !== 'select' ) {

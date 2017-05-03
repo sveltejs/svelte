@@ -39,7 +39,6 @@ function create_main_fragment ( state, component ) {
 				}
 
 				destroyEach( each_block_iterations, true, each_block_value.length );
-
 				each_block_iterations.length = each_block_value.length;
 			}
 
@@ -131,7 +130,7 @@ function SvelteComponent ( options ) {
 
 	this._handlers = Object.create( null );
 
-	this._root = options._root;
+	this._root = options._root || this;
 	this._yield = options._yield;
 
 	this._torndown = false;

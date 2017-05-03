@@ -92,7 +92,7 @@ export default function visitComponent ( generator, block, state, node ) {
 
 	const componentInitProperties = [
 		`target: ${!isToplevel ? state.parentNode: 'null'}`,
-		`_root: ${block.component}._root || ${block.component}`
+		`_root: ${block.component}._root`
 	];
 
 	// Component has children, put them in a separate {{yield}} block

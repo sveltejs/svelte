@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as acorn from 'acorn';
 import * as babel from 'babel-core';
+import { transitionManager } from '../../shared.js';
 
 import { addLineNumbers, loadConfig, loadSvelte, env, setupHtmlEqual } from '../helpers.js';
 
@@ -90,17 +91,42 @@ describe( 'runtime', () => {
 
 			let SvelteComponent;
 
-			try {
-				SvelteComponent = require( `./samples/${dir}/main.html` ).default;
-			} catch ( err ) {
-				if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
-				throw err;
-			}
-
 			let unintendedError = null;
 
 			return env()
 				.then( window => {
+					// set of hacks to support transition tests
+					transitionManager.running = false;
+					transitionManager.transitions = [];
+
+					const raf = {
+						time: 0,
+						callback: null,
+						tick: now => {
+							raf.time = now;
+							if ( raf.callback ) raf.callback();
+						}
+					};
+					window.performance = { now: () => raf.time };
+					global.requestAnimationFrame = cb => {
+						let called = false;
+						raf.callback = () => {
+							if ( !called ) {
+								called = true;
+								cb();
+							}
+						};
+					};
+
+					global.window = window;
+
+					try {
+						SvelteComponent = require( `./samples/${dir}/main.html` ).default;
+					} catch ( err ) {
+						if ( !config.show ) console.log( addLineNumbers( code ) ); // eslint-disable-line no-console
+						throw err;
+					}
+
 					Object.assign = () => {
 						throw new Error( 'cannot use Object.assign in generated code, as it is not supported everywhere' );
 					};
@@ -146,7 +172,7 @@ describe( 'runtime', () => {
 					Object.assign = Object_assign;
 
 					if ( config.test ) {
-						config.test( assert, component, target, window );
+						config.test( assert, component, target, window, raf );
 					} else {
 						component.destroy();
 						assert.equal( target.innerHTML, '' );
@@ -173,9 +199,10 @@ describe( 'runtime', () => {
 		});
 	});
 
+	const shared = path.resolve( 'shared.js' );
 	describe( 'shared helpers', () => {
 		fs.readdirSync( 'test/runtime/samples' ).forEach( dir => {
-			runTest( dir, path.resolve( 'shared.js' ) );
+			runTest( dir, shared );
 		});
 	});
 

@@ -9,13 +9,24 @@ export default function deindent ( strings, ...values ) {
 	let trailingIndentation = getTrailingIndentation( result );
 
 	for ( let i = 1; i < strings.length; i += 1 ) {
-		const value  = String( values[ i - 1 ] ).replace( /\n/g, `\n${trailingIndentation}` );
-		result += value + strings[i].replace( pattern, '' );
+		const expression = values[ i - 1 ];
+		const string = strings[i].replace( pattern, '' );
+
+		if ( expression || expression === '' ) {
+			const value = String( expression ).replace( /\n/g, `\n${trailingIndentation}` );
+			result += value + string;
+		}
+
+		else {
+			let c = result.length;
+			while ( /\s/.test( result[ c - 1 ] ) ) c -= 1;
+			result = result.slice( 0, c ) + string;
+		}
 
 		trailingIndentation = getTrailingIndentation( result );
 	}
 
-	return result.trim();
+	return result.trim().replace( /\t+$/gm, '' );
 }
 
 function getTrailingIndentation ( str ) {
