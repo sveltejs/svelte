@@ -9,8 +9,12 @@ export default function deindent ( strings, ...values ) {
 	let trailingIndentation = getTrailingIndentation( result );
 
 	for ( let i = 1; i < strings.length; i += 1 ) {
-		const expression = values[ i - 1 ];
+		let expression = values[ i - 1 ];
 		const string = strings[i].replace( pattern, '' );
+
+		if ( Array.isArray( expression ) ) {
+			expression = expression.length ? expression.join( '\n' ) : null;
+		}
 
 		if ( expression || expression === '' ) {
 			const value = String( expression ).replace( /\n/g, `\n${trailingIndentation}` );

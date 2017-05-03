@@ -151,55 +151,6 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	const constructorBlock = new CodeBuilder();
-
-	constructorBlock.addLine( `options = options || {};` );
-	if ( generator.usesRefs ) constructorBlock.addLine( `this.refs = {};` );
-
-	constructorBlock.addLine(
-		`this._state = ${templateProperties.data ? `${generator.helper( 'assign' )}( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};`
-	);
-
-	if ( !generator.builders.metaBindings.isEmpty() ) {
-		constructorBlock.addBlock( generator.builders.metaBindings );
-	}
-
-	if ( computations.length ) {
-		constructorBlock.addLine(
-			`${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`
-		);
-	}
-
-	if ( options.dev ) {
-		generator.expectedProperties.forEach( prop => {
-			constructorBlock.addLine(
-				`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
-			);
-		});
-
-		constructorBlock.addBlock(
-			`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`
-		);
-	}
-
-	if ( generator.bindingGroups.length ) {
-		constructorBlock.addLine( `this._bindingGroups = [ ${Array( generator.bindingGroups.length ).fill( '[]' ).join( ', ' )} ];` );
-	}
-
-	constructorBlock.addBlock( deindent`
-		this._observers = {
-			pre: Object.create( null ),
-			post: Object.create( null )
-		};
-
-		this._handlers = Object.create( null );
-
-		this._root = options._root || this;
-		this._yield = options._yield;
-
-		${builders.init}
-	` );
-
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
 	const prototypeBase = `${name}.prototype` + ( templateProperties.methods ? `, ${generator.alias( 'template' )}.methods` : '' );
@@ -215,7 +166,26 @@ export default function dom ( parsed, source, options ) {
 	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`
 		function ${name} ( options ) {
-			${constructorBlock}
+			options = options || {};
+			${options.dev && `if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
+			${generator.usesRefs && `this.refs = {};`}
+			this._state = ${templateProperties.data ? `${generator.helper( 'assign' )}( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};
+			${generator.builders.metaBindings}
+			${computations.length && `${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`}
+			${options.dev && Array.from( generator.expectedProperties ).map( prop => `if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`)}
+			${generator.bindingGroups.length && `this._bindingGroups = [ ${Array( generator.bindingGroups.length ).fill( '[]' ).join( ', ' )} ];`}
+
+			this._observers = {
+				pre: Object.create( null ),
+				post: Object.create( null )
+			};
+
+			this._handlers = Object.create( null );
+
+			this._root = options._root || this;
+			this._yield = options._yield;
+
+			${builders.init}
 		}
 
 		${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});
