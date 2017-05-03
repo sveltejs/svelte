@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.19.1
+
+* Export `generateKeyframes`, so that CSS transitions work
+
 ## 1.19.0
 
 * Experimental support for transitions ([#7](https://github.com/sveltejs/svelte/issues/7))
