@@ -117,13 +117,11 @@ export default function dom ( parsed, source, options ) {
 
 	if ( generator.css && options.css !== false ) {
 		builders.main.addBlock( deindent`
-			var ${generator.alias( 'added_css' )} = false;
 			function ${generator.alias( 'add_css' )} () {
 				var style = ${generator.helper( 'createElement' )}( 'style' );
+				${generator.helper( 'setAttribute' )}( style, ${JSON.stringify( generator.cssId )}, '' );
 				style.textContent = ${JSON.stringify( generator.css )};
 				${generator.helper( 'appendNode' )}( style, document.head );
-
-				${generator.alias( 'added_css' )} = true;
 			}
 		` );
 	}
@@ -135,7 +133,7 @@ export default function dom ( parsed, source, options ) {
 	builders.init.addLine( `this._torndown = false;` );
 
 	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !${generator.alias( 'added_css' )} ) ${generator.alias( 'add_css' )}();` );
+		builders.init.addLine( `if ( !document.querySelector( 'style[${generator.cssId}]' ) ) ${generator.alias( 'add_css' )}();` );
 	}
 
 	if ( generator.hasComponents || generator.hasIntroTransitions ) {
