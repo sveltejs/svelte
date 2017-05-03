@@ -16,7 +16,7 @@ fs.readdirSync( __dirname ).forEach( file => {
 	ast.body.forEach( node => {
 		if ( node.type !== 'ExportNamedDeclaration' ) return;
 
-		const { declaration } = node;
+		const declaration = node.declaration;
 		if ( !declaration ) return;
 
 		const name = declaration.type === 'VariableDeclaration' ?
@@ -27,8 +27,7 @@ fs.readdirSync( __dirname ).forEach( file => {
 			declaration.declarations[0].init :
 			declaration;
 
-		const { start, end } = value;
-		declarations[ name ] = source.slice( start, end );
+		declarations[ name ] = source.slice( value.start, value.end );
 	});
 });
 
