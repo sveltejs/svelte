@@ -6,7 +6,7 @@ import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
 import CodeBuilder from '../../utils/CodeBuilder.js';
 import visit from './visit.js';
-import { nameMap, sharedMap } from './sharedNames.js';
+import shared from './shared.js';
 import Generator from '../Generator.js';
 import preprocess from './preprocess.js';
 
@@ -25,7 +25,7 @@ class DomGenerator extends Generator {
 	}
 
 	helper ( name ) {
-		if ( this.options.dev && sharedMap.has( `${name}Dev` ) ) {
+		if ( this.options.dev && `${name}Dev` in shared ) {
 			name = `${name}Dev`;
 		}
 
@@ -275,20 +275,20 @@ export default function dom ( parsed, source, options ) {
 		);
 	} else {
 		generator.uses.forEach( key => {
-			const str = sharedMap.get( key );
+			const str = shared[ key ];
 			const code = new MagicString( str );
-			const fn = parseExpressionAt( str, 0 );
+			const expression = parseExpressionAt( str, 0 );
 
-			let scope = annotateWithScopes( fn );
+			let scope = annotateWithScopes( expression );
 
-			walk( fn, {
+			walk( expression, {
 				enter ( node, parent ) {
 					if ( node._scope ) scope = node._scope;
 
 					if ( node.type === 'Identifier' && isReference( node, parent ) && !scope.has( node.name ) ) {
-						if ( nameMap.has( node.name ) ) {
+						if ( node.name in shared ) {
 							// this helper function depends on another one
-							const dependency = nameMap.get( node.name );
+							const dependency = node.name;
 							generator.uses.add( dependency );
 
 							const alias = generator.alias( dependency );
@@ -309,8 +309,8 @@ export default function dom ( parsed, source, options ) {
 					`var ${generator.alias( 'transitionManager' )} = window.${global} || ( window.${global} = ${code});`
 				);
 			} else {
-				const alias = generator.alias( fn.id.name );
-				if ( alias !== fn.id.name ) code.overwrite( fn.id.start, fn.id.end, alias );
+				const alias = generator.alias( expression.id.name );
+				if ( alias !== expression.id.name ) code.overwrite( expression.id.start, expression.id.end, alias );
 
 				builders.main.addBlock( code.toString() );
 			}
