@@ -33,7 +33,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	var ease = obj.easing || linear;
 
 	// TODO share <style> tag between all transitions?
-	if ( obj.styles ) {
+	if ( obj.css ) {
 		var style = document.createElement( 'style' );
 	}
 
@@ -58,8 +58,8 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 
 			this.callback = callback;
 
-			if ( obj.styles ) {
-				generateKeyframes( this.a, this.b, this.delta, this.duration, ease, obj.styles, node, style );
+			if ( obj.css ) {
+				generateKeyframes( this.a, this.b, this.delta, this.duration, ease, obj.css, node, style );
 			}
 
 			if ( !this.running ) {
@@ -74,13 +74,13 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 		},
 		done: function () {
 			if ( obj.tick ) obj.tick( intro ? 1 : 0 );
-			if ( obj.styles ) document.head.removeChild( style );
+			if ( obj.css ) document.head.removeChild( style );
 			this.callback();
 			this.running = false;
 		},
 		abort: function () {
-			if ( !intro && obj.tick ) obj.tick( 1 ); // reset styles for intro
-			if ( obj.styles ) document.head.removeChild( style );
+			if ( !intro && obj.tick ) obj.tick( 1 ); // reset css for intro
+			if ( obj.css ) document.head.removeChild( style );
 			this.running = false;
 		}
 	};
