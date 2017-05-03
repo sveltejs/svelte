@@ -23,7 +23,7 @@
     "dev": "node src/shared/_build.js && rollup -c rollup/rollup.config.main.js -w",
     "dev:shared": "rollup -c rollup/rollup.config.shared.js -w",
     "pretest": "npm run build",
-    "prepublish": "npm run lint && npm run build"
+    "prepublish": "npm run build && npm run lint"
   },
   "repository": {
     "type": "git",
