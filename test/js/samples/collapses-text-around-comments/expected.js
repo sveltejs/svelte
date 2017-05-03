@@ -8,13 +8,11 @@ var template = (function () {
 	};
 }());
 
-var added_css = false;
 function add_css () {
 	var style = createElement( 'style' );
+	style.id = "svelte-3842350206-style";
 	style.textContent = "\n\tp[svelte-3842350206], [svelte-3842350206] p {\n\t\tcolor: red;\n\t}\n";
 	appendNode( style, document.head );
-
-	added_css = true;
 }
 
 function create_main_fragment ( state, component ) {
@@ -59,7 +57,7 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	if ( !added_css ) add_css();
+	if ( !document.getElementById( "svelte-3842350206-style" ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
 	if ( options.target ) this._fragment.mount( options.target, null );
