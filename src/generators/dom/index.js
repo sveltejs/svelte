@@ -19,9 +19,7 @@ class DomGenerator extends Generator {
 		this.readonly = new Set();
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
-		this.builders = {
-			metaBindings: new CodeBuilder()
-		};
+		this.metaBindings = [];
 	}
 
 	helper ( name ) {
@@ -91,11 +89,13 @@ export default function dom ( parsed, source, options ) {
 			if ( typeof newState !== 'object' ) {
 				throw new Error( 'Component .set was called without an object of data key-values to update.' );
 			}
-		`);
 
-		Array.from( generator.readonly ).forEach( prop => {
-			builders._set.addLine( `if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );` );
-		});
+			${
+				Array.from( generator.readonly ).map( prop =>
+					`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
+				)
+			}
+		`);
 	}
 
 	// TODO is the `if ( this._fragment )` condition necessary?
@@ -170,7 +170,7 @@ export default function dom ( parsed, source, options ) {
 			${options.dev && `if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
 			${generator.usesRefs && `this.refs = {};`}
 			this._state = ${templateProperties.data ? `${generator.helper( 'assign' )}( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};
-			${generator.builders.metaBindings}
+			${generator.metaBindings}
 			${computations.length && `${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`}
 			${options.dev && Array.from( generator.expectedProperties ).map( prop => `if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`)}
 			${generator.bindingGroups.length && `this._bindingGroups = [ ${Array( generator.bindingGroups.length ).fill( '[]' ).join( ', ' )} ];`}
