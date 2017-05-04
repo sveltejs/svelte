@@ -56,19 +56,16 @@ export function create ( source, _options = {} ) {
 		return;
 	}
 
-	let result;
 	try {
-		result = (new Function( 'return ' + compiled.code ))();
+		return (new Function( 'return ' + compiled.code ))();
 	} catch ( err ) {
 		if ( _options.onerror ) {
 			_options.onerror( err );
+			return;
 		} else {
 			throw err;
 		}
-		return;
 	}
-
-	return result;
 }
 
 export { parse, validate, version as VERSION };
