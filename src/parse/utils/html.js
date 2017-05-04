@@ -1,6 +1,6 @@
 import htmlEntities from './entities.js';
 
-const controlCharacters = [ 8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352, 8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732, 8482, 353, 8250, 339, 157, 382, 376 ];
+const windows1252 = [ 8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352, 8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732, 8482, 353, 8250, 339, 157, 382, 376 ];
 const entityPattern = new RegExp( `&(#?(?:x[\\w\\d]+|\\d+|${Object.keys( htmlEntities ).join( '|' )}));?`, 'g' );
 
 export function decodeCharacterReferences ( html ) {
@@ -23,7 +23,8 @@ export function decodeCharacterReferences ( html ) {
 		return String.fromCodePoint( validateCode( code ) );
 	});
 }
-const invalid = 65533;
+
+const NUL = 0;
 
 // some code points are verboten. If we were inserting HTML, the browser would replace the illegal
 // code points with alternatives in some cases - since we're bypassing that mechanism, we need
@@ -31,10 +32,6 @@ const invalid = 65533;
 //
 // Source: http://en.wikipedia.org/wiki/Character_encodings_in_HTML#Illegal_characters
 function validateCode ( code ) {
-	if ( !code ) {
-		return invalid;
-	}
-
 	// line feed becomes generic whitespace
 	if ( code === 10 ) {
 		return 32;
@@ -48,7 +45,7 @@ function validateCode ( code ) {
 	// code points 128-159 are dealt with leniently by browsers, but they're incorrect. We need
 	// to correct the mistake or we'll end up with missing € signs and so on
 	if ( code <= 159 ) {
-		return controlCharacters[ code - 128 ];
+		return windows1252[ code - 128 ];
 	}
 
 	// basic multilingual plane
@@ -58,7 +55,7 @@ function validateCode ( code ) {
 
 	// UTF-16 surrogate halves
 	if ( code <= 57343 ) {
-		return invalid;
+		return NUL;
 	}
 
 	// rest of the basic multilingual plane
@@ -76,5 +73,5 @@ function validateCode ( code ) {
 		return code;
 	}
 
-	return invalid;
+	return NUL;
 }
