@@ -83,7 +83,8 @@
       "src/**/*.js"
     ],
     "exclude": [
-      "src/**/__test__.js"
+      "src/**/__test__.js",
+      "src/shared/**"
     ]
   },
   "babel": {
