@@ -60,11 +60,6 @@ export default function visitWindow ( generator, block, node ) {
 		}
 
 		if ( attribute.type === 'Binding' ) {
-			if ( attribute.value.type !== 'Identifier' ) {
-				const { parts, keypath } = flattenReference( attribute.value );
-				throw new Error( `Bindings on <:Window/> must be to top-level properties, e.g. '${parts.pop()}' rather than '${keypath}'` );
-			}
-
 			// in dev mode, throw if read-only values are written to
 			if ( readonly.has( attribute.name ) ) {
 				generator.readonly.add( attribute.value.name );
