@@ -183,7 +183,8 @@ export default function dom ( parsed, source, options ) {
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
-			this.fire( 'destroy' );${templateProperties.ondestroy ? `\n${generator.alias( 'template' )}.ondestroy.call( this );` : ``}
+			this.fire( 'destroy' );
+			${templateProperties.ondestroy && `${generator.alias( 'template' )}.ondestroy.call( this );`}
 
 			this._fragment.destroy( detach !== false );
 			this._fragment = null;
