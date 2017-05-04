@@ -80,7 +80,8 @@
   },
   "nyc": {
     "include": [
-      "src/**/*.js"
+      "src/**/*.js",
+      "shared.js"
     ],
     "exclude": [
       "src/**/__test__.js",
