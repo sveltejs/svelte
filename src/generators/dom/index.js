@@ -55,7 +55,6 @@ export default function dom ( parsed, source, options ) {
 
 	const builders = {
 		main: new CodeBuilder(),
-		init: new CodeBuilder(),
 		_set: new CodeBuilder()
 	};
 
@@ -84,22 +83,18 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	if ( options.dev ) {
-		builders._set.addBlock( deindent`
+	// TODO is the `if ( this._fragment )` condition necessary?
+	builders._set.addBlock( deindent`
+		${options.dev && deindent`
 			if ( typeof newState !== 'object' ) {
 				throw new Error( 'Component .set was called without an object of data key-values to update.' );
 			}
 
-			${
-				Array.from( generator.readonly ).map( prop =>
-					`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
-				)
-			}
-		`);
-	}
+			${Array.from( generator.readonly ).map( prop =>
+				`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
+			)}
+		`}
 
-	// TODO is the `if ( this._fragment )` condition necessary?
-	builders._set.addBlock( deindent`
 		var oldState = this._state;
 		this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );
 		${computations.length && `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )`}
@@ -128,28 +123,6 @@ export default function dom ( parsed, source, options ) {
 	generator.blocks.forEach( block => {
 		builders.main.addBlock( block.render() );
 	});
-
-	builders.init.addBlock( deindent`
-		this._torndown = false;
-		${parsed.css && options.css !== false && `if ( !document.getElementById( ${JSON.stringify( generator.cssId + '-style' )} ) ) ${generator.alias( 'add_css' )}();`}
-		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._renderHooks = [];`}
-		${generator.hasComplexBindings && `this._bindings = [];`}
-
-		this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
-		if ( options.target ) this._fragment.mount( options.target, null );
-		${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
-		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}
-	` );
-
-	if ( templateProperties.oncreate ) {
-		builders.init.addBlock( deindent`
-			if ( options._root ) {
-				options._root._renderHooks.push( ${generator.alias( 'template' )}.oncreate.bind( this ) );
-			} else {
-				${generator.alias( 'template' )}.oncreate.call( this );
-			}
-		` );
-	}
 
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
@@ -185,7 +158,23 @@ export default function dom ( parsed, source, options ) {
 			this._root = options._root || this;
 			this._yield = options._yield;
 
-			${builders.init}
+			this._torndown = false;
+			${parsed.css && options.css !== false && `if ( !document.getElementById( ${JSON.stringify( generator.cssId + '-style' )} ) ) ${generator.alias( 'add_css' )}();`}
+			${( generator.hasComponents || generator.hasIntroTransitions ) && `this._renderHooks = [];`}
+			${generator.hasComplexBindings && `this._bindings = [];`}
+
+			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
+			if ( options.target ) this._fragment.mount( options.target, null );
+			${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
+			${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}
+
+			${templateProperties.oncreate && deindent`
+				if ( options._root ) {
+					options._root._renderHooks.push( ${generator.alias( 'template' )}.oncreate.bind( this ) );
+				} else {
+					${generator.alias( 'template' )}.oncreate.call( this );
+				}
+			`}
 		}
 
 		${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});
