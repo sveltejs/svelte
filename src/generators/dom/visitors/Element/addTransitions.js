@@ -40,7 +40,10 @@ export default function addTransitions ( generator, block, state, node, intro, o
 			const fn = `${generator.alias( 'template' )}.transitions.${intro.name}`; // TODO add built-in transitions?
 
 			if ( outro ) {
-				block.builders.intro.addBlock( `if ( ${outroName} ) ${outroName}.abort();` );
+				block.builders.intro.addBlock( deindent`
+					if ( ${introName} ) ${introName}.abort();
+					if ( ${outroName} ) ${outroName}.abort();
+				` );
 			}
 
 			block.builders.intro.addBlock( deindent`

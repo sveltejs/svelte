@@ -79,7 +79,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 			this.running = false;
 		},
 		abort: function () {
-			if ( !intro && obj.tick ) obj.tick( 1 ); // reset css for intro
+			if ( obj.tick ) obj.tick( 1 );
 			if ( obj.css ) document.head.removeChild( style );
 			this.running = false;
 		}
