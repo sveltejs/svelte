@@ -1,0 +1,8 @@
+[{
+	"message": "An element can only have one 'out' directive",
+	"loc": {
+		"line": 1,
+		"column": 13
+	},
+	"pos": 13
+}]
