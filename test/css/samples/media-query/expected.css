@@ -1,0 +1,6 @@
+
+	@media (min-width: 400px) {
+		[svelte-2352010302].large-screen, [svelte-2352010302] .large-screen {
+			display: block;
+		}
+	}
