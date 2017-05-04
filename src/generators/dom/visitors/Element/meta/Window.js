@@ -84,7 +84,7 @@ export default function visitWindow ( generator, block, node ) {
 			events[ associatedEvent ].push( `${attribute.value.name}: this.${attribute.name}` );
 
 			// add initial value
-			generator.builders.metaBindings.addLine(
+			generator.metaBindings.push(
 				`this._state.${attribute.value.name} = window.${attribute.name};`
 			);
 		}
@@ -166,7 +166,7 @@ export default function visitWindow ( generator, block, node ) {
 		` );
 
 		// add initial value
-		generator.builders.metaBindings.addLine(
+		generator.metaBindings.push(
 			`this._state.${bindings.online} = navigator.onLine;`
 		);
 
