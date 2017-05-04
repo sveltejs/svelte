@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	data: {
 		visible: false,
 		things: [ 'a', 'b', 'c' ]
