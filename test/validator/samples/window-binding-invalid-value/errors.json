@@ -1,0 +1,8 @@
+[{
+	"message": "Bindings on <:Window/> must be to top-level properties, e.g. 'baz' rather than 'foo.bar.baz'",
+	"loc": {
+		"line": 1,
+		"column": 26
+	},
+	"pos": 26
+}]

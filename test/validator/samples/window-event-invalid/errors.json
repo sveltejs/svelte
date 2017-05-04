@@ -1,0 +1,8 @@
+[{
+	"message": "'resize' is an invalid callee (should be one of this.*, event.*, set, fire or destroy)",
+	"loc": {
+		"line": 1,
+		"column": 20
+	},
+	"pos": 20
+}]
