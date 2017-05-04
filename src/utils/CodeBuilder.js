@@ -2,11 +2,12 @@ const LINE = {};
 const BLOCK = {};
 
 export default class CodeBuilder {
-	constructor () {
-		this.result = '';
+	constructor ( str = '' ) {
+		this.result = str;
 
-		this.first = null;
-		this.last = null;
+		const initial = str ? ( /\n/.test( str ) ? BLOCK : LINE ) : null;
+		this.first = initial;
+		this.last = initial;
 
 		this.lastCondition = null;
 	}
