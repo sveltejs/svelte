@@ -215,6 +215,7 @@ function compoundWithOutros ( generator, block, state, node, branches, dynamic, 
 	const if_current_block_index = hasElse ? '' : `if ( ~${current_block_index} ) `;
 
 	block.addVariable( current_block_index );
+	block.addVariable( name );
 
 	block.builders.create.addBlock( deindent`
 		var ${if_block_creators} = [
@@ -233,12 +234,12 @@ function compoundWithOutros ( generator, block, state, node, branches, dynamic, 
 	if ( hasElse ) {
 		block.builders.create.addBlock( deindent`
 			${current_block_index} = ${get_block}( ${params} );
-			${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
 		` );
 	} else {
 		block.builders.create.addBlock( deindent`
 			if ( ~( ${current_block_index} = ${get_block}( ${params} ) ) ) {
-				${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+				${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
 			}
 		` );
 	}
@@ -253,37 +254,35 @@ function compoundWithOutros ( generator, block, state, node, branches, dynamic, 
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
-	const changeBlock = deindent`
-		var ${name} = ${if_blocks}[ ${previous_block_index} ];
-		if ( ${name} ) {
-			${name}.outro( function () {
-				${if_blocks}[ ${previous_block_index} ].destroy( true );
-				${if_blocks}[ ${previous_block_index} ] = null;
-			});
-		}
+	const destroyOldBlock = deindent`
+		${name}.outro( function () {
+			${if_blocks}[ ${previous_block_index} ].destroy( true );
+			${if_blocks}[ ${previous_block_index} ] = null;
+		});
 	`;
 
-	if ( hasElse ) {
-		block.builders.create.addBlock( deindent`
-			${name} = ${if_blocks}[ ${current_block_index} ];
-			if ( !${name} ) {
-				${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+	const createNewBlock = deindent`
+		${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+		${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
+	`;
+
+	const changeBlock = hasElse ?
+		deindent`
+			${destroyOldBlock}
+
+			${createNewBlock}
+		` :
+		deindent`
+			if ( ${name} ) {
+				${destroyOldBlock}
 			}
 
-			${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
-		` );
-	} else {
-		block.builders.create.addBlock( deindent`
 			if ( ~${current_block_index} ) {
-				${name} = ${if_blocks}[ ${current_block_index} ];
-				if ( !${name} ) {
-					${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
-				}
-
-				${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
+				${createNewBlock}
+			} else {
+				${name} = null;
 			}
-		` );
-	}
+		`;
 
 	if ( dynamic ) {
 		block.builders.update.addBlock( deindent`

@@ -1,0 +1,20 @@
+{{#if x}}
+	<div ref:yes out:foo>yes</div>
+{{elseif y}}
+	<div ref:no out:foo>no</div>
+{{/if}}
+
+<script>
+	export default {
+		transitions: {
+			foo: function ( node, params ) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

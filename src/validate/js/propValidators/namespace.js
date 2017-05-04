@@ -1,7 +1,6 @@
 import * as namespaces from '../../../utils/namespaces.js';
-import FuzzySet from '../utils/FuzzySet.js';
+import fuzzymatch from '../../utils/fuzzymatch.js';
 
-const fuzzySet = new FuzzySet( namespaces.validNamespaces );
 const valid = new Set( namespaces.validNamespaces );
 
 export default function namespace ( validator, prop ) {
@@ -12,9 +11,9 @@ export default function namespace ( validator, prop ) {
 	}
 
 	if ( !valid.has( ns ) ) {
-		const matches = fuzzySet.get( ns );
-		if ( matches && matches[0] && matches[0][0] > 0.7 ) {
-			validator.error( `Invalid namespace '${ns}' (did you mean '${matches[0][1]}'?)`, prop.start );
+		const match = fuzzymatch( ns, namespaces.validNamespaces );
+		if ( match ) {
+			validator.error( `Invalid namespace '${ns}' (did you mean '${match}'?)`, prop.start );
 		} else {
 			validator.error( `Invalid namespace '${ns}'`, prop.start );
 		}

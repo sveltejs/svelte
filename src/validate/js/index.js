@@ -1,12 +1,10 @@
 import propValidators from './propValidators/index.js';
-import FuzzySet from './utils/FuzzySet.js';
+import fuzzymatch from '../utils/fuzzymatch.js';
 import checkForDupes from './utils/checkForDupes.js';
 import checkForComputedKeys from './utils/checkForComputedKeys.js';
 import namespaces from '../../utils/namespaces.js';
 
 const validPropList = Object.keys( propValidators );
-
-const fuzzySet = new FuzzySet( validPropList );
 
 export default function validateJs ( validator, js ) {
 	js.content.body.forEach( node => {
@@ -45,9 +43,9 @@ export default function validateJs ( validator, js ) {
 				if ( propValidator ) {
 					propValidator( validator, prop );
 				} else {
-					const matches = fuzzySet.get( prop.key.name );
-					if ( matches && matches[0] && matches[0][0] > 0.7 ) {
-						validator.error( `Unexpected property '${prop.key.name}' (did you mean '${matches[0][1]}'?)`, prop.start );
+					const match = fuzzymatch( prop.key.name, validPropList );
+					if ( match ) {
+						validator.error( `Unexpected property '${prop.key.name}' (did you mean '${match}'?)`, prop.start );
 					} else if ( /FunctionExpression/.test( prop.value.type ) ) {
 						validator.error( `Unexpected property '${prop.key.name}' (did you mean to include it in 'methods'?)`, prop.start );
 					} else {
