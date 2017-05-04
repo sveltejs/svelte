@@ -9,24 +9,24 @@ function create_main_fragment ( state, component ) {
 	}
 
 	var current_block = get_block( state );
-	var if_block = current_block && current_block( state, component );
+	var if_block = current_block( state, component );
 
 	return {
 		mount: function ( target, anchor ) {
 			insertNode( if_block_anchor, target, anchor );
-			if ( if_block ) if_block.mount( target, null );
+			if_block.mount( target, null );
 		},
 
 		update: function ( changed, state ) {
 			if ( current_block !== ( current_block = get_block( state ) ) ) {
-				if ( if_block ) if_block.destroy( true );
-				if_block = current_block && current_block( state, component );
-				if ( if_block ) if_block.mount( if_block_anchor.parentNode, if_block_anchor );
+				if_block.destroy( true );
+				if_block = current_block( state, component );
+				if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 			}
 		},
 
 		destroy: function ( detach ) {
-			if ( if_block ) if_block.destroy( detach );
+			if_block.destroy( detach );
 
 			if ( detach ) {
 				detachNode( if_block_anchor );
