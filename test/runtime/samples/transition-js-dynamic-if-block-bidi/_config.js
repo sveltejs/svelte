@@ -11,7 +11,7 @@ export default {
 		const div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
-		raf.tick( 300 );
+		raf.tick( 75 );
 		component.set({ name: 'everybody' });
 		assert.equal( div.foo, 0.75 );
 		assert.htmlEqual( div.innerHTML, 'hello everybody!' );
@@ -19,18 +19,18 @@ export default {
 		component.set({ visible: false, name: 'again' });
 		assert.htmlEqual( div.innerHTML, 'hello everybody!' );
 
-		raf.tick( 500 );
+		raf.tick( 125 );
 		assert.equal( div.foo, 0.25 );
 
 		component.set({ visible: true });
-		raf.tick( 700 );
+		raf.tick( 175 );
 		assert.equal( div.foo, 0.75 );
 		assert.htmlEqual( div.innerHTML, 'hello again!' );
 
-		raf.tick( 800 );
+		raf.tick( 200 );
 		assert.equal( div.foo, 1 );
 
-		raf.tick( 900 );
+		raf.tick( 225 );
 
 		component.destroy();
 	}
