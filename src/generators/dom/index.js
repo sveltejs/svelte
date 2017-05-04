@@ -83,7 +83,6 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	// TODO is the `if ( this._fragment )` condition necessary?
 	builders._set.addBlock( deindent`
 		${options.dev && deindent`
 			if ( typeof newState !== 'object' ) {
@@ -99,7 +98,7 @@ export default function dom ( parsed, source, options ) {
 		this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );
 		${computations.length && `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )`}
 		${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );
-		${block.hasUpdateMethod && `if ( this._fragment ) this._fragment.update( newState, this._state );`}
+		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
 		${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
 		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}

@@ -226,7 +226,7 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	if ( this._fragment ) this._fragment.update( newState, this._state );
+	this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 
