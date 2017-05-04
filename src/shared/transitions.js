@@ -28,7 +28,7 @@ export function generateKeyframes ( a, b, delta, duration, ease, fn, node, style
 }
 
 export function wrapTransition ( node, fn, params, intro, outgroup ) {
-	var obj = fn( node, params, intro );
+	var obj = fn( node, params );
 	var duration = obj.duration || 300;
 	var ease = obj.easing || linear;
 
@@ -40,26 +40,20 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	if ( intro && obj.tick ) obj.tick( 0 );
 
 	return {
-		start: null,
-		end: null,
-		a: null,
-		b: null,
-		d: null,
 		running: false,
 		t: intro ? 0 : 1,
-		callback: null,
-		run: function ( a, b, callback ) {
-			this.a = a;
-			this.b = b;
-			this.delta = b - a;
-			this.start = window.performance.now() + ( obj.delay || 0 );
-			this.duration = duration * Math.abs( b - a );
-			this.end = this.start + this.duration;
+		pending: null,
+		run: function ( intro, callback ) {
+			var program = {
+				intro: intro,
+				start: window.performance.now() + ( obj.delay || 0 ),
+				callback: callback
+			};
 
-			this.callback = callback;
-
-			if ( obj.css ) {
-				generateKeyframes( this.a, this.b, this.delta, this.duration, ease, obj.css, node, style );
+			if ( obj.delay ) {
+				this.pending = program;
+			} else {
+				this.start( program );
 			}
 
 			if ( !this.running ) {
@@ -67,21 +61,41 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 				transitionManager.add( this );
 			}
 		},
+		start: function ( program ) {
+			program.a = this.t;
+			program.b = program.intro ? 1 : 0;
+			program.delta = program.b - program.a;
+			program.duration = duration * Math.abs( program.b - program.a );
+			program.end = program.start + program.duration;
+
+			if ( obj.css ) {
+				generateKeyframes( program.a, program.b, program.delta, program.duration, ease, obj.css, node, style );
+			}
+
+			this.program = program;
+			this.pending = null;
+		},
 		update: function ( now ) {
-			var p = now - this.start;
-			this.t = this.a + this.delta * ease( p / this.duration );
+			var program = this.program;
+			if ( !program ) return;
+
+			var p = now - program.start;
+			this.t = program.a + program.delta * ease( p / program.duration );
 			if ( obj.tick ) obj.tick( this.t );
 		},
 		done: function () {
-			if ( obj.tick ) obj.tick( intro ? 1 : 0 );
+			this.t = this.program.b;
+			if ( obj.tick ) obj.tick( this.t );
 			if ( obj.css ) document.head.removeChild( style );
-			this.callback();
-			this.running = false;
+			this.program.callback();
+			this.program = null;
+			this.running = !!this.pending;
 		},
 		abort: function () {
 			if ( obj.tick ) obj.tick( 1 );
 			if ( obj.css ) document.head.removeChild( style );
-			this.running = false;
+			this.program = null;
+			this.running = !!this.pending;
 		}
 	};
 }
@@ -108,16 +122,18 @@ export var transitionManager = {
 		while ( i-- ) {
 			var transition = transitionManager.transitions[i];
 
-			if ( transition.running ) {
-				if ( now >= transition.end ) {
-					transition.running = false;
-					transition.done();
-				} else if ( now > transition.start ) {
-					transition.update( now );
-				}
+			if ( transition.program && now >= transition.program.end ) {
+				transition.done();
+			}
 
+			if ( transition.pending && now >= transition.pending.start ) {
+				transition.start( transition.pending );
+			}
+
+			if ( transition.running ) {
+				transition.update( now );
 				transitionManager.running = true;
-			} else {
+			} else if ( !transition.pending ) {
 				transitionManager.transitions.splice( i, 1 );
 			}
 		}
