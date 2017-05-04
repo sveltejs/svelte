@@ -1,6 +1,5 @@
 import flattenReference from '../../../../../utils/flattenReference.js';
 import deindent from '../../../../../utils/deindent.js';
-import CodeBuilder from '../../../../../utils/CodeBuilder.js';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -43,8 +42,10 @@ export default function visitWindow ( generator, block, node ) {
 			}
 
 			const handlerName = block.getUniqueName( `onwindow${attribute.name}` );
-			const handlerBody = ( usesState ? `var state = ${block.component}.get();\n` : '' ) +
-				`[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
+			const handlerBody = deindent`
+				${usesState && `var state = ${block.component}.get();`}
+				[✂${attribute.expression.start}-${attribute.expression.end}✂];
+			`;
 
 			block.builders.create.addBlock( deindent`
 				function ${handlerName} ( event ) {
@@ -84,7 +85,7 @@ export default function visitWindow ( generator, block, node ) {
 			events[ associatedEvent ].push( `${attribute.value.name}: this.${attribute.name}` );
 
 			// add initial value
-			generator.builders.metaBindings.addLine(
+			generator.metaBindings.push(
 				`this._state.${attribute.value.name} = window.${attribute.name};`
 			);
 		}
@@ -96,25 +97,21 @@ export default function visitWindow ( generator, block, node ) {
 		const handlerName = block.getUniqueName( `onwindow${event}` );
 		const props = events[ event ].join( ',\n' );
 
-		const handlerBody = new CodeBuilder();
 		if ( event === 'scroll' ) { // TODO other bidirectional bindings...
 			block.addVariable( lock, 'false' );
-			handlerBody.addLine( `${lock} = true;` );
 		}
 
-		if ( generator.options.dev ) handlerBody.addLine( `component._updatingReadonlyProperty = true;` );
+		const handlerBody = deindent`
+			${event === 'scroll' && `${lock} = true;`}
+			${generator.options.dev && `component._updatingReadonlyProperty = true;`}
 
-		handlerBody.addBlock( deindent`
 			${block.component}.set({
 				${props}
 			});
-		` );
 
-		if ( generator.options.dev ) handlerBody.addLine( `component._updatingReadonlyProperty = false;` );
-
-		if ( event === 'scroll' ) {
-			handlerBody.addLine( `${lock} = false;` );
-		}
+			${generator.options.dev && `component._updatingReadonlyProperty = false;`}
+			${event === 'scroll' && `${lock} = false;`}
+		`;
 
 		block.builders.create.addBlock( deindent`
 			function ${handlerName} ( event ) {
@@ -166,7 +163,7 @@ export default function visitWindow ( generator, block, node ) {
 		` );
 
 		// add initial value
-		generator.builders.metaBindings.addLine(
+		generator.metaBindings.push(
 			`this._state.${bindings.online} = navigator.onLine;`
 		);
 

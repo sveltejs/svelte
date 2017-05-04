@@ -19,9 +19,7 @@ class DomGenerator extends Generator {
 		this.readonly = new Set();
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
-		this.builders = {
-			metaBindings: new CodeBuilder()
-		};
+		this.metaBindings = [];
 	}
 
 	helper ( name ) {
@@ -57,20 +55,8 @@ export default function dom ( parsed, source, options ) {
 
 	const builders = {
 		main: new CodeBuilder(),
-		init: new CodeBuilder(),
 		_set: new CodeBuilder()
 	};
-
-	if ( options.dev ) {
-		builders._set.addBlock( deindent`
-			if ( typeof newState !== 'object' ) {
-				throw new Error( 'Component .set was called without an object of data key-values to update.' );
-			}
-		`);
-	}
-
-	builders._set.addLine( 'var oldState = this._state;' );
-	builders._set.addLine( `this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );` );
 
 	if ( computations.length ) {
 		const builder = new CodeBuilder();
@@ -97,19 +83,26 @@ export default function dom ( parsed, source, options ) {
 		` );
 	}
 
-	if ( options.dev ) {
-		Array.from( generator.readonly ).forEach( prop => {
-			builders._set.addLine( `if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );` );
-		});
-	}
+	builders._set.addBlock( deindent`
+		${options.dev && deindent`
+			if ( typeof newState !== 'object' ) {
+				throw new Error( 'Component .set was called without an object of data key-values to update.' );
+			}
 
-	if ( computations.length ) {
-		builders._set.addLine( `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )` );
-	}
+			${Array.from( generator.readonly ).map( prop =>
+				`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
+			)}
+		`}
 
-	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );` );
-	if ( block.hasUpdateMethod ) builders._set.addLine( `if ( this._fragment ) this._fragment.update( newState, this._state );` ); // TODO is the condition necessary?
-	builders._set.addLine( `${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );` );
+		var oldState = this._state;
+		this._state = ${generator.helper( 'assign' )}( {}, oldState, newState );
+		${computations.length && `${generator.alias( 'recompute' )}( this._state, newState, oldState, false )`}
+		${generator.helper( 'dispatchObservers' )}( this, this._observers.pre, newState, oldState );
+		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
+		${generator.helper( 'dispatchObservers' )}( this, this._observers.post, newState, oldState );
+		${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
+		${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}
+	` );
 
 	if ( hasJs ) {
 		builders.main.addBlock( `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]` );
@@ -130,104 +123,6 @@ export default function dom ( parsed, source, options ) {
 		builders.main.addBlock( block.render() );
 	});
 
-	builders.init.addLine( `this._torndown = false;` );
-
-	if ( parsed.css && options.css !== false ) {
-		builders.init.addLine( `if ( !document.getElementById( ${JSON.stringify( generator.cssId + '-style' )} ) ) ${generator.alias( 'add_css' )}();` );
-	}
-
-	if ( generator.hasComponents || generator.hasIntroTransitions ) {
-		builders.init.addLine( `this._renderHooks = [];` );
-	}
-
-	if ( generator.hasComplexBindings ) {
-		builders.init.addBlock( deindent`
-			this._bindings = [];
-			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
-			if ( options.target ) this._fragment.mount( options.target, null );
-			while ( this._bindings.length ) this._bindings.pop()();
-		` );
-
-		builders._set.addLine( `while ( this._bindings.length ) this._bindings.pop()();` );
-	} else {
-		builders.init.addBlock( deindent`
-			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
-			if ( options.target ) this._fragment.mount( options.target, null );
-		` );
-	}
-
-	if ( generator.hasComponents || generator.hasIntroTransitions ) {
-		const statement = `this._flush();`;
-
-		builders.init.addBlock( statement );
-		builders._set.addBlock( statement );
-	}
-
-	if ( templateProperties.oncreate ) {
-		builders.init.addBlock( deindent`
-			if ( options._root ) {
-				options._root._renderHooks.push( ${generator.alias( 'template' )}.oncreate.bind( this ) );
-			} else {
-				${generator.alias( 'template' )}.oncreate.call( this );
-			}
-		` );
-	}
-
-	const constructorBlock = new CodeBuilder();
-
-	constructorBlock.addLine( `options = options || {};` );
-	if ( generator.usesRefs ) constructorBlock.addLine( `this.refs = {};` );
-
-	constructorBlock.addLine(
-		`this._state = ${templateProperties.data ? `${generator.helper( 'assign' )}( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};`
-	);
-
-	if ( !generator.builders.metaBindings.isEmpty() ) {
-		constructorBlock.addBlock( generator.builders.metaBindings );
-	}
-
-	if ( computations.length ) {
-		constructorBlock.addLine(
-			`${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`
-		);
-	}
-
-	if ( options.dev ) {
-		generator.expectedProperties.forEach( prop => {
-			constructorBlock.addLine(
-				`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
-			);
-		});
-
-		constructorBlock.addBlock(
-			`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`
-		);
-	}
-
-	if ( generator.bindingGroups.length ) {
-		constructorBlock.addLine( `this._bindingGroups = [ ${Array( generator.bindingGroups.length ).fill( '[]' ).join( ', ' )} ];` );
-	}
-
-	constructorBlock.addBlock( deindent`
-		this._observers = {
-			pre: Object.create( null ),
-			post: Object.create( null )
-		};
-
-		this._handlers = Object.create( null );
-
-		this._root = options._root || this;
-		this._yield = options._yield;
-
-		${builders.init}
-	` );
-
-	builders.main.addBlock( deindent`
-		function ${name} ( options ) {
-			${constructorBlock}
-		}
-	` );
-
 	const sharedPath = options.shared === true ? 'svelte/shared.js' : options.shared;
 
 	const prototypeBase = `${name}.prototype` + ( templateProperties.methods ? `, ${generator.alias( 'template' )}.methods` : '' );
@@ -240,10 +135,49 @@ export default function dom ( parsed, source, options ) {
 			}
 		}`;
 
-	builders.main.addBlock( `${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});` );
-
 	// TODO deprecate component.teardown()
 	builders.main.addBlock( deindent`
+		function ${name} ( options ) {
+			options = options || {};
+			${options.dev && `if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
+			${generator.usesRefs && `this.refs = {};`}
+			this._state = ${templateProperties.data ? `${generator.helper( 'assign' )}( ${generator.alias( 'template' )}.data(), options.data )` : `options.data || {}`};
+			${generator.metaBindings}
+			${computations.length && `${generator.alias( 'recompute' )}( this._state, this._state, {}, true );`}
+			${options.dev && Array.from( generator.expectedProperties ).map( prop => `if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`)}
+			${generator.bindingGroups.length && `this._bindingGroups = [ ${Array( generator.bindingGroups.length ).fill( '[]' ).join( ', ' )} ];`}
+
+			this._observers = {
+				pre: Object.create( null ),
+				post: Object.create( null )
+			};
+
+			this._handlers = Object.create( null );
+
+			this._root = options._root || this;
+			this._yield = options._yield;
+
+			this._torndown = false;
+			${parsed.css && options.css !== false && `if ( !document.getElementById( ${JSON.stringify( generator.cssId + '-style' )} ) ) ${generator.alias( 'add_css' )}();`}
+			${( generator.hasComponents || generator.hasIntroTransitions ) && `this._renderHooks = [];`}
+			${generator.hasComplexBindings && `this._bindings = [];`}
+
+			this._fragment = ${generator.alias( 'create_main_fragment' )}( this._state, this );
+			if ( options.target ) this._fragment.mount( options.target, null );
+			${generator.hasComplexBindings && `while ( this._bindings.length ) this._bindings.pop()();`}
+			${( generator.hasComponents || generator.hasIntroTransitions ) && `this._flush();`}
+
+			${templateProperties.oncreate && deindent`
+				if ( options._root ) {
+					options._root._renderHooks.push( ${generator.alias( 'template' )}.oncreate.bind( this ) );
+				} else {
+					${generator.alias( 'template' )}.oncreate.call( this );
+				}
+			`}
+		}
+
+		${generator.helper( 'assign' )}( ${prototypeBase}, ${proto});
+
 		${name}.prototype._set = function _set ( newState ) {
 			${builders._set}
 		};
