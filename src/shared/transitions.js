@@ -40,13 +40,14 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	if ( intro && obj.tick ) obj.tick( 0 );
 
 	return {
-		running: false,
 		t: intro ? 0 : 1,
+		running: false,
+		program: null,
 		pending: null,
 		run: function ( intro, callback ) {
 			var program = {
-				intro: intro,
 				start: window.performance.now() + ( obj.delay || 0 ),
+				intro: intro,
 				callback: callback
 			};
 
@@ -94,8 +95,8 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 		abort: function () {
 			if ( obj.tick ) obj.tick( 1 );
 			if ( obj.css ) document.head.removeChild( style );
-			this.program = null;
-			this.running = !!this.pending;
+			this.program = this.pending = null;
+			this.running = false;
 		}
 	};
 }
