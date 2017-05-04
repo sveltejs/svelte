@@ -1,5 +1,4 @@
 import deindent from '../../../../utils/deindent.js';
-import CodeBuilder from '../../../../utils/CodeBuilder.js';
 import flattenReference from '../../../../utils/flattenReference.js';
 
 export default function visitEventHandler ( generator, block, state, node, attribute ) {
@@ -49,18 +48,11 @@ export default function visitEventHandler ( generator, block, state, node, attri
 		block.getUniqueName( `${name}_handler` );
 
 	// create the handler body
-	const handlerBody = new CodeBuilder();
-
-	if ( state.usesComponent ) {
-		// TODO the element needs to know to create `thing._svelte = { component: component }`
-		handlerBody.addLine( `var ${block.component} = this._svelte.component;` );
-	}
-
-	declarations.forEach( declaration => {
-		handlerBody.addLine( declaration );
-	});
-
-	handlerBody.addLine( `[✂${attribute.expression.start}-${attribute.expression.end}✂];` );
+	const handlerBody = deindent`
+		${state.usesComponent && `var ${block.component} = this._svelte.component;`}
+		${declarations}
+		[✂${attribute.expression.start}-${attribute.expression.end}✂];
+	`;
 
 	const handler = isCustomEvent ?
 		deindent`

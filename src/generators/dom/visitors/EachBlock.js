@@ -1,4 +1,3 @@
-import CodeBuilder from '../../../utils/CodeBuilder.js';
 import deindent from '../../../utils/deindent.js';
 import visit from '../visit.js';
 
@@ -119,24 +118,13 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
 	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
 
-	block.builders.create.addLine( `var ${lookup} = Object.create( null );` );
-
-	const create = new CodeBuilder();
-
-	create.addBlock( deindent`
-		var ${key} = ${each_block_value}[${i}].${node.key};
-		${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-	` );
-
-	if ( state.parentNode ) {
-		create.addLine(
-			`${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`
-		);
-	}
-
 	block.builders.create.addBlock( deindent`
+		var ${lookup} = Object.create( null );
+
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			${create}
+			var ${key} = ${each_block_value}[${i}].${node.key};
+			${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+			${state.parentNode && `${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`}
 		}
 	` );
 
@@ -206,21 +194,10 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 }
 
 function unkeyed ( generator, block, state, node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
-	const create = new CodeBuilder();
-
-	create.addLine(
-		`${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );`
-	);
-
-	if ( state.parentNode ) {
-		create.addLine(
-			`${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`
-		);
-	}
-
 	block.builders.create.addBlock( deindent`
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			${create}
+			${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+			${state.parentNode && `${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`}
 		}
 	` );
 
