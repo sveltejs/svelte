@@ -86,6 +86,7 @@ function cleanChildren ( node ) {
 				previous.data = previous.data.replace( /\s{2,}/, '\n' );
 
 				node.removeChild( child );
+				child = previous;
 			}
 		}
 
