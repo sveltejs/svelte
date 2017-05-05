@@ -5,9 +5,12 @@ export default class Block {
 	constructor ( options ) {
 		this.generator = options.generator;
 		this.name = options.name;
-		this.key = options.key;
 		this.expression = options.expression;
 		this.context = options.context;
+
+		// for keyed each blocks
+		this.key = options.key;
+		this.first = null;
 
 		this.contexts = options.contexts;
 		this.indexes = options.indexes;
@@ -153,6 +156,10 @@ export default class Block {
 		if ( this.key ) {
 			localKey = this.getUniqueName( 'key' );
 			properties.addBlock( `key: ${localKey},` );
+		}
+
+		if ( this.first ) {
+			properties.addBlock( `first: ${this.first},` );
 		}
 
 		if ( this.builders.mount.isEmpty() ) {
