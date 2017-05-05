@@ -110,8 +110,6 @@ export default function visitEachBlock ( generator, block, state, node ) {
 }
 
 function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
-	const fragment = block.getUniqueName( 'fragment' );
-	const value = block.getUniqueName( 'value' );
 	const key = block.getUniqueName( 'key' );
 	const lookup = block.getUniqueName( `${each_block}_lookup` );
 	const keys = block.getUniqueName( `${each_block}_keys` );
@@ -135,66 +133,72 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		}
 	` );
 
-	const consequent = node._block.hasUpdateMethod ?
-		deindent`
-			${_iterations}[${i}] = ${lookup}[ ${key} ] = ${lookup}[ ${key} ];
-			${lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
-		` :
-		`${_iterations}[${i}] = ${lookup}[ ${key} ] = ${lookup}[ ${key} ];`;
-
+	const dynamic = node._block.hasUpdateMethod;
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
-	const hasIntros = node._block.hasIntroMethod;
-
-	const destroy = node._block.hasOutroMethod ?
-		deindent`
-			function outro ( key ) {
+	let destroy;
+	if ( node._block.hasOutroMethod ) {
+		const outro = block.getUniqueName( `${each_block}_outro` );
+		block.builders.create.addBlock( deindent`
+			function ${outro} ( key ) {
 				${lookup}[ key ].outro( function () {
 					${lookup}[ key ].destroy( true );
 					${lookup}[ key ] = null;
 				});
 			}
+		` );
 
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${key} = ${iterations}[${i}].key;
-				if ( !${keys}[ ${key} ] ) outro( ${key} );
-			}
-		` :
-		deindent`
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				var ${iteration} = ${iterations}[${i}];
-				if ( !${keys}[ ${iteration}.key ] ) ${iteration}.destroy( true );
-			}
-		`;
+		destroy = `${outro}( ${key} );`;
+	} else {
+		destroy = `${iteration}.destroy( true );`;
+	}
 
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
-		var ${_iterations} = [];
+		var ${_iterations} = Array( ${each_block_value}.length );
 		var ${keys} = Object.create( null );
 
-		var ${fragment} = document.createDocumentFragment();
+		var index_by_key = Object.create( null );
+		var key_by_index = Array( ${each_block_value}.length );
 
-		// create new iterations as necessary
-		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			var ${value} = ${each_block_value}[${i}];
-			var ${key} = ${value}.${node.key};
-			${keys}[ ${key} ] = true;
+		var new_iterations = [];
+
+		for ( ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+			var ${key} = ${each_block_value}[${i}].${node.key};
+			index_by_key[${key}] = ${i};
+			key_by_index[${i}] = ${key};
 
 			if ( ${lookup}[ ${key} ] ) {
-				${consequent}
-				${hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
+				// TODO this is an empty branch for non-dynamic blocks
+				${dynamic && `${lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );`}
 			} else {
-				${_iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-				${hasIntros && `${_iterations}[${i}].intro( ${fragment}, null );`}
+				${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+				new_iterations.push( ${lookup}[ ${key} ] );
 			}
 
-			${!hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
+			${_iterations}[${i}] = ${lookup}[ ${key} ];
 		}
 
-		// remove old iterations
-		${destroy}
+		// TODO group consecutive runs into fragments?
+		${i} = new_iterations.length;
+		while ( ${i}-- ) {
+			${iteration} = new_iterations[${i}];
+			var index = index_by_key[${iteration}.key];
+			var next_sibling_key = key_by_index[index + 1];
+			${iteration}.${mountOrIntro}( ${parentNode}, next_sibling_key === undefined ? ${anchor} : ${lookup}[next_sibling_key].first );
+		}
 
-		${parentNode}.insertBefore( ${fragment}, ${anchor} );
+		for ( ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			var ${iteration} = ${iterations}[${i}];
+			var index = index_by_key[${iteration}.key];
+
+			if ( index === undefined ) {
+				${destroy}
+			} else {
+				var next_sibling_key = key_by_index[index + 1];
+				${iteration}.mount( ${parentNode}, next_sibling_key === undefined ? ${anchor} : ${lookup}[next_sibling_key].first );
+			}
+		}
 
 		${iterations} = ${_iterations};
 	` );
