@@ -126,10 +126,16 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	block.builders.create.addBlock( deindent`
 		var ${lookup} = Object.create( null );
 
+		var last;
+
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
 			${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 			${state.parentNode && `${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`}
+
+			if ( last ) last.next = ${lookup}[ ${key} ];
+			${lookup}[ ${key} ].last = last;
+			last = ${lookup}[${key}];
 		}
 	` );
 
@@ -155,48 +161,78 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
+
+		if ( ${each_block_value}.length === 0 ) {
+			// special case
+			for ( ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${iterations}[${i}].destroy( true );
+			}
+			${iterations} = [];
+			return;
+		}
+
 		var ${_iterations} = Array( ${each_block_value}.length );
-		var ${keys} = Object.create( null );
 
-		var index_by_key = Object.create( null );
-		var key_by_index = Array( ${each_block_value}.length );
+		var expected = ${iterations}[0];
+		var last;
 
-		var new_iterations = [];
+		var discard_pile = [];
 
 		for ( ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
-			index_by_key[${key}] = ${i};
-			key_by_index[${i}] = ${key};
 
-			if ( ${lookup}[ ${key} ] ) {
-				// TODO this is an empty branch for non-dynamic blocks
-				${dynamic && `${lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );`}
+			if ( expected ) {
+				if ( ${key} === expected.key ) {
+					expected = expected.next;
+				} else {
+					if ( ${key} in ${lookup} ) {
+						// probably a deletion
+						do {
+							expected.discard = true;
+							discard_pile.push( expected );
+							expected = expected.next;
+						} while ( expected && expected.key !== ${key} );
+
+						expected = expected && expected.next;
+						${lookup}[${key}].discard = false;
+						${lookup}[${key}].next = expected;
+
+						${lookup}[${key}].mount( ${parentNode}, expected ? expected.first : null );
+					} else {
+						// key is being inserted
+						${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+						${lookup}[${key}].${mountOrIntro}( ${parentNode}, expected.first );
+					}
+				}
 			} else {
-				${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-				new_iterations.push( ${lookup}[ ${key} ] );
+				// we're appending from this point forward
+				if ( ${lookup}[${key}] ) {
+					${lookup}[${key}].discard = false;
+					${lookup}[${key}].next = null;
+					${lookup}[${key}].mount( ${parentNode}, null );
+				} else {
+					${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+					${lookup}[${key}].${mountOrIntro}( ${parentNode}, null );
+				}
 			}
+
+			if ( last ) last.next = ${lookup}[${key}];
+			${lookup}[${key}].last = last;
+			last = ${lookup}[${key}];
 
 			${_iterations}[${i}] = ${lookup}[ ${key} ];
 		}
 
-		// TODO group consecutive runs into fragments?
-		${i} = new_iterations.length;
-		while ( ${i}-- ) {
-			${iteration} = new_iterations[${i}];
-			var index = index_by_key[${iteration}.key];
-			var next_sibling_key = key_by_index[index + 1];
-			${iteration}.${mountOrIntro}( ${parentNode}, next_sibling_key === undefined ? ${anchor} : ${lookup}[next_sibling_key].first );
+		last.next = null;
+
+		while ( expected ) {
+			expected.destroy( true );
+			expected = expected.next;
 		}
 
-		for ( ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-			var ${iteration} = ${iterations}[${i}];
-			var index = index_by_key[${iteration}.key];
-
-			if ( index === undefined ) {
-				${destroy}
-			} else {
-				var next_sibling_key = key_by_index[index + 1];
-				${iteration}.mount( ${parentNode}, next_sibling_key === undefined ? ${anchor} : ${lookup}[next_sibling_key].first );
+		for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
+			if ( discard_pile[${i}].discard ) {
+				discard_pile[${i}].destroy( true );
 			}
 		}
 
