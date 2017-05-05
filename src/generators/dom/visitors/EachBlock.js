@@ -118,6 +118,13 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
 	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
 
+	if ( node.children[0] && node.children[0].type === 'Element' ) { // TODO or text/tag/raw
+		node._block.first = node.children[0]._state.parentNode; // TODO this is highly confusing
+	} else {
+		node._block.first = node._block.getUniqueName( 'first' );
+		node._block.addElement( node._block.first, `${generator.helper( 'createComment' )}()`, null, true );
+	}
+
 	block.builders.create.addBlock( deindent`
 		var ${lookup} = Object.create( null );
 
