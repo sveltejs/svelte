@@ -1,10 +1,10 @@
 import nodeResolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
-import buble from 'rollup-plugin-buble';
+import typescript from 'rollup-plugin-typescript';
 
 export default {
-	entry: 'src/index.js',
+	entry: 'src/index.ts',
 	moduleName: 'svelte',
 	targets: [
 		{ dest: 'compiler/svelte.js', format: 'umd' }
@@ -13,12 +13,10 @@ export default {
 		nodeResolve({ jsnext: true, module: true }),
 		commonjs(),
 		json(),
-		buble({
+		typescript({
 			include: 'src/**',
 			exclude: 'src/shared/**',
-			target: {
-				node: 4
-			}
+			typescript: require( 'typescript' )
 		})
 	],
 	sourceMap: true
