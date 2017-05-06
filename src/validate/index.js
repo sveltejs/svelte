@@ -43,7 +43,8 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 		properties: {},
 		components: new Map(),
 		methods: new Map(),
-		helpers: new Map()
+		helpers: new Map(),
+		transitions: new Map()
 	};
 
 	try {

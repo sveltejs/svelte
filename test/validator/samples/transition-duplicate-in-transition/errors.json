@@ -1,0 +1,8 @@
+[{
+	"message": "An element cannot have both an 'in' directive and a 'transition' directive",
+	"loc": {
+		"line": 1,
+		"column": 12
+	},
+	"pos": 12
+}]

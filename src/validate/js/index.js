@@ -63,7 +63,7 @@ export default function validateJs ( validator, js ) {
 		}
 	});
 
-	[ 'components', 'methods', 'helpers' ].forEach( key => {
+	[ 'components', 'methods', 'helpers', 'transitions' ].forEach( key => {
 		if ( validator.properties[ key ] ) {
 			validator.properties[ key ].value.properties.forEach( prop => {
 				validator[ key ].set( prop.key.name, prop.value );
