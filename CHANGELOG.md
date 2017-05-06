@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.20.2
+
+* Fix destruction of compound if-blocks with outros ([#572](https://github.com/sveltejs/svelte/pull/572))
+
 ## 1.20.1
 
 * Fix insertion order of `if` blocks and their anchors ([#569](https://github.com/sveltejs/svelte/issues/569))
