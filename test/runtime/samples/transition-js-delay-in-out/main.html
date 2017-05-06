@@ -1,16 +1,26 @@
 {{#if visible}}
-	<div transition:foo>hello {{name}}!</div>
+	<div in:foo out:bar>delayed</div>
 {{/if}}
 
 <script>
 	export default {
 		transitions: {
 			foo: function ( node, params ) {
-				global.count += 1;
 				return {
+					delay: 50,
 					duration: 100,
 					tick: t => {
 						node.foo = t;
+					}
+				};
+			},
+
+			bar: function ( node, params ) {
+				return {
+					delay: 50,
+					duration: 100,
+					tick: t => {
+						node.bar = t;
 					}
 				};
 			}

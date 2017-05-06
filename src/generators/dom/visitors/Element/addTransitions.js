@@ -14,14 +14,14 @@ export default function addTransitions ( generator, block, state, node, intro, o
 		block.builders.intro.addBlock( deindent`
 			${block.component}._renderHooks.push( function () {
 				if ( !${name} ) ${name} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, true, null );
-				${name}.run( ${name}.t, 1, function () {
+				${name}.run( true, function () {
 					${block.component}.fire( 'intro.end', { node: ${state.name} });
 				});
 			});
 		` );
 
 		block.builders.outro.addBlock( deindent`
-			${name}.run( ${name}.t, 0, function () {
+			${name}.run( false, function () {
 				${block.component}.fire( 'outro.end', { node: ${state.name} });
 				if ( --${block.alias( 'outros' )} === 0 ) ${block.alias( 'outrocallback' )}();
 				${name} = null;
@@ -49,7 +49,7 @@ export default function addTransitions ( generator, block, state, node, intro, o
 			block.builders.intro.addBlock( deindent`
 				${block.component}._renderHooks.push( function () {
 					${introName} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, true, null );
-					${introName}.run( 0, 1, function () {
+					${introName}.run( true, function () {
 						${block.component}.fire( 'intro.end', { node: ${state.name} });
 					});
 				});
@@ -66,7 +66,7 @@ export default function addTransitions ( generator, block, state, node, intro, o
 			// group) prior to their removal from the DOM
 			block.builders.outro.addBlock( deindent`
 				${outroName} = ${wrapTransition}( ${state.name}, ${fn}, ${snippet}, false, null );
-				${outroName}.run( 1, 0, function () {
+				${outroName}.run( false, function () {
 					${block.component}.fire( 'outro.end', { node: ${state.name} });
 					if ( --${block.alias( 'outros' )} === 0 ) ${block.alias( 'outrocallback' )}();
 				});
