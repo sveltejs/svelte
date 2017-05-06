@@ -1,5 +1,20 @@
 # Svelte changelog
 
+## 1.20.0
+
+* Faster, better updates of keyed each blocks ([#373](https://github.com/sveltejs/svelte/issues/373), [#543](https://github.com/sveltejs/svelte/issues/543))
+* Use element IDs to robustly track dynamically injected `<style>` tags ([#554](https://github.com/sveltejs/svelte/issues/554))
+* Abort outros before corresponding intros ([#546](https://github.com/sveltejs/svelte/issues/546))
+* Generate less code for `if` blocks with `else` blocks ([#540](https://github.com/sveltejs/svelte/issues/540))
+* Ensure `{{yield}}` block content is injected into the right place ([#561](https://github.com/sveltejs/svelte/issues/561))
+* Simpler, more readable codegen code ([#559](https://github.com/sveltejs/svelte/pull/559))
+* Validate transition directives ([#564](https://github.com/sveltejs/svelte/issues/564))
+* Apply delays to bidirectional transitions ([#562](https://github.com/sveltejs/svelte/issues/562))
+* Handle all valid HTML entities ([#565](https://github.com/sveltejs/svelte/pull/565))
+* Fix outros on compound `if` blocks ([#565](https://github.com/sveltejs/svelte/pull/565))
+* Validation for `<:Window>` tags ([#565](https://github.com/sveltejs/svelte/pull/565))
+* Increased test coverage ([#565](https://github.com/sveltejs/svelte/pull/565))
+
 ## 1.19.1
 
 * Export `generateKeyframes`, so that CSS transitions work
