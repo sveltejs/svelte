@@ -3,6 +3,10 @@ import validateEventHandler from './validateEventHandler.js';
 export default function validateElement ( validator, node ) {
 	const isComponent = node.name === ':Self' || validator.components.has( node.name );
 
+	let hasIntro;
+	let hasOutro;
+	let hasTransition;
+
 	node.attributes.forEach( attribute => {
 		if ( !isComponent && attribute.type === 'Binding' ) {
 			const { name } = attribute;
@@ -46,8 +50,30 @@ export default function validateElement ( validator, node ) {
 			}
 		}
 
-		if ( attribute.type === 'EventHandler' ) {
+		else if ( attribute.type === 'EventHandler' ) {
 			validateEventHandler( validator, attribute );
+		}
+
+		else if ( attribute.type === 'Transition' ) {
+			const bidi = attribute.intro && attribute.outro;
+
+			if ( hasTransition ) {
+				if ( bidi ) validator.error( `An element can only have one 'transition' directive`, attribute.start );
+				validator.error( `An element cannot have both a 'transition' directive and an '${attribute.intro ? 'in' : 'out'}' directive`, attribute.start );
+			}
+
+			if ( ( hasIntro && attribute.intro ) || ( hasOutro && attribute.outro ) ) {
+				if ( bidi ) validator.error( `An element cannot have both an '${hasIntro ? 'in' : 'out'}' directive and a 'transition' directive`, attribute.start );
+				validator.error( `An element can only have one '${hasIntro ? 'in' : 'out'}' directive`, attribute.start );
+			}
+
+			if ( attribute.intro ) hasIntro = true;
+			if ( attribute.outro ) hasOutro = true;
+			if ( bidi ) hasTransition = true;
+
+			if ( !validator.transitions.has( attribute.name ) ) {
+				validator.error( `Missing transition '${attribute.name}'`, attribute.start );
+			}
 		}
 	});
 }
