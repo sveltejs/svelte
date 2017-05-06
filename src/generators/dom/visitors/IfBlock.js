@@ -77,13 +77,9 @@ export default function visitIfBlock ( generator, block, state, node ) {
 	} else if ( node.next ) {
 		node.next.usedAsAnchor = true;
 	}
-
-	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
-	);
 }
 
-function simple ( generator, block, state, node, branch, dynamic, { name, anchor, params } ) {
+function simple ( generator, block, state, node, branch, dynamic, { name, anchor, params, if_name } ) {
 	block.builders.create.addBlock( deindent`
 		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, ${block.component} );
 	` );
@@ -151,6 +147,10 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 			${exit}
 		}
 	` );
+
+	block.builders.destroy.addLine(
+		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+	);
 }
 
 function compound ( generator, block, state, node, branches, dynamic, { name, anchor, params, hasElse, if_name } ) {
@@ -201,6 +201,10 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 			}
 		` );
 	}
+
+	block.builders.destroy.addLine(
+		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+	);
 }
 
 // if any of the siblings have outros, we need to keep references to the blocks
@@ -304,4 +308,8 @@ function compoundWithOutros ( generator, block, state, node, branches, dynamic, 
 			}
 		` );
 	}
+
+	block.builders.destroy.addLine(
+		`${if_current_block_index}${if_blocks}[ ${current_block_index} ].destroy( ${state.parentNode ? 'false' : 'detach'} );`
+	);
 }
