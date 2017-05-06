@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.20.1
+
+* Fix insertion order of `if` blocks and their anchors ([#569](https://github.com/sveltejs/svelte/issues/569))
+
 ## 1.20.0
 
 * Faster, better updates of keyed each blocks ([#373](https://github.com/sveltejs/svelte/issues/373), [#543](https://github.com/sveltejs/svelte/issues/543))
