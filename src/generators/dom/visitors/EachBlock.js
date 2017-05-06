@@ -16,7 +16,6 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	const { snippet } = block.contextualise( node.expression );
 
 	block.builders.create.addLine( `var ${each_block_value} = ${snippet};` );
-	block.builders.create.addLine( `var ${iterations} = [];` );
 
 	if ( node.key ) {
 		keyed( generator, block, state, node, snippet, vars );
@@ -26,22 +25,11 @@ export default function visitEachBlock ( generator, block, state, node ) {
 
 	const isToplevel = !state.parentNode;
 
-	if ( isToplevel ) {
-		block.builders.mount.addBlock( deindent`
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].${mountOrIntro}( ${block.target}, null );
-			}
-		` );
-	}
-
 	if ( node.needsAnchor ) {
 		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
 	} else if ( node.next ) {
 		node.next.usedAsAnchor = true;
 	}
-
-	block.builders.destroy.addBlock(
-		`${generator.helper( 'destroyEach' )}( ${iterations}, ${isToplevel ? 'detach' : 'false'}, 0 );` );
 
 	if ( node.else ) {
 		const each_block_else = generator.getUniqueName( `${each_block}_else` );
@@ -109,97 +97,197 @@ export default function visitEachBlock ( generator, block, state, node ) {
 	}
 }
 
-function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
-	const fragment = block.getUniqueName( 'fragment' );
-	const value = block.getUniqueName( 'value' );
+function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, i, params, anchor, mountOrIntro } ) {
 	const key = block.getUniqueName( 'key' );
 	const lookup = block.getUniqueName( `${each_block}_lookup` );
-	const keys = block.getUniqueName( `${each_block}_keys` );
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
-	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
+	const head = block.getUniqueName( `${each_block}_head` );
+	const last = block.getUniqueName( `${each_block}_last` );
+	const expected = block.getUniqueName( `${each_block}_expected` );
+
+	if ( node.children[0] && node.children[0].type === 'Element' ) { // TODO or text/tag/raw
+		node._block.first = node.children[0]._state.parentNode; // TODO this is highly confusing
+	} else {
+		node._block.first = node._block.getUniqueName( 'first' );
+		node._block.addElement( node._block.first, `${generator.helper( 'createComment' )}()`, null, true );
+	}
 
 	block.builders.create.addBlock( deindent`
 		var ${lookup} = Object.create( null );
 
+		var ${head};
+		var ${last};
+
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
-			${iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-			${state.parentNode && `${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`}
+			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+			${state.parentNode && `${iteration}.${mountOrIntro}( ${state.parentNode}, null );`}
+
+			if ( ${last} ) ${last}.next = ${iteration};
+			${iteration}.last = ${last};
+			${last} = ${iteration};
+
+			if ( ${i} === 0 ) ${head} = ${iteration};
 		}
 	` );
 
-	const consequent = node._block.hasUpdateMethod ?
-		deindent`
-			${_iterations}[${i}] = ${lookup}[ ${key} ] = ${lookup}[ ${key} ];
-			${lookup}[ ${key} ].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
-		` :
-		`${_iterations}[${i}] = ${lookup}[ ${key} ] = ${lookup}[ ${key} ];`;
+	if ( !state.parentNode ) {
+		block.builders.mount.addBlock( deindent`
+			var ${iteration} = ${head};
+			while ( ${iteration} ) {
+				${iteration}.${mountOrIntro}( ${block.target}, null );
+				${iteration} = ${iteration}.next;
+			}
+		` );
+	}
 
+	const dynamic = node._block.hasUpdateMethod;
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
-	const hasIntros = node._block.hasIntroMethod;
-
-	const destroy = node._block.hasOutroMethod ?
-		deindent`
-			function outro ( key ) {
-				${lookup}[ key ].outro( function () {
-					${lookup}[ key ].destroy( true );
-					${lookup}[ key ] = null;
+	let destroy;
+	if ( node._block.hasOutroMethod ) {
+		const fn = block.getUniqueName( `${each_block}_outro` );
+		block.builders.create.addBlock( deindent`
+			function ${fn} ( iteration ) {
+				iteration.outro( function () {
+					iteration.destroy( true );
+					if ( iteration.next ) iteration.next.last = iteration.last;
+					if ( iteration.last ) iteration.last.next = iteration.next;
+					${lookup}[iteration.key] = null;
 				});
 			}
+		` );
 
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${key} = ${iterations}[${i}].key;
-				if ( !${keys}[ ${key} ] ) outro( ${key} );
+		destroy = deindent`
+			while ( ${expected} ) {
+				${fn}( ${expected} );
+				${expected} = ${expected}.next;
 			}
-		` :
-		deindent`
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				var ${iteration} = ${iterations}[${i}];
-				if ( !${keys}[ ${iteration}.key ] ) ${iteration}.destroy( true );
+
+			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
+				if ( discard_pile[${i}].discard ) {
+					${fn}( discard_pile[${i}] );
+				}
 			}
 		`;
+	} else {
+		const fn = block.getUniqueName( `${each_block}_destroy` );
+		block.builders.create.addBlock( deindent`
+			function ${fn} ( iteration ) {
+				iteration.destroy( true );
+				if ( iteration.next && iteration.next.last === iteration ) iteration.next.last = iteration.last;
+				if ( iteration.last && iteration.last.next === iteration ) iteration.last.next = iteration.next;
+				${lookup}[iteration.key] = null;
+			}
+		` );
+
+		destroy = deindent`
+			while ( ${expected} ) {
+				${fn}( ${expected} );
+				${expected} = ${expected}.next;
+			}
+
+			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
+				var ${iteration} = discard_pile[${i}];
+				if ( ${iteration}.discard ) {
+					${fn}( ${iteration} );
+				}
+			}
+		`;
+	}
 
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
-		var ${_iterations} = [];
-		var ${keys} = Object.create( null );
 
-		var ${fragment} = document.createDocumentFragment();
+		var ${expected} = ${head};
+		var ${last};
 
-		// create new iterations as necessary
-		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			var ${value} = ${each_block_value}[${i}];
-			var ${key} = ${value}.${node.key};
-			${keys}[ ${key} ] = true;
+		var discard_pile = [];
 
-			if ( ${lookup}[ ${key} ] ) {
-				${consequent}
-				${hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
+		for ( ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+			var ${key} = ${each_block_value}[${i}].${node.key};
+			var ${iteration} = ${lookup}[${key}];
+
+			${dynamic && `if ( ${iteration} ) ${iteration}.update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );`}
+
+			if ( ${expected} ) {
+				if ( ${key} === ${expected}.key ) {
+					${expected} = ${expected}.next;
+				} else {
+					if ( ${iteration} ) {
+						// probably a deletion
+						do {
+							${expected}.discard = true;
+							discard_pile.push( ${expected} );
+							${expected} = ${expected}.next;
+						} while ( ${expected} && ${expected}.key !== ${key} );
+
+						${expected} = ${expected} && ${expected}.next;
+						${iteration}.discard = false;
+						${iteration}.last = ${last};
+						${iteration}.next = ${expected};
+
+						${iteration}.mount( ${parentNode}, ${expected} ? ${expected}.first : ${anchor} );
+					} else {
+						// key is being inserted
+						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+						${iteration}.${mountOrIntro}( ${parentNode}, ${expected}.first );
+
+						if ( ${expected} ) ${expected}.last = ${iteration};
+						${iteration}.next = ${expected};
+					}
+				}
 			} else {
-				${_iterations}[${i}] = ${lookup}[ ${key} ] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-				${hasIntros && `${_iterations}[${i}].intro( ${fragment}, null );`}
+				// we're appending from this point forward
+				if ( ${iteration} ) {
+					${iteration}.discard = false;
+					${iteration}.next = null;
+					${iteration}.mount( ${parentNode}, ${anchor} );
+				} else {
+					${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+					${iteration}.${mountOrIntro}( ${parentNode}, ${anchor} );
+				}
 			}
 
-			${!hasIntros && `${_iterations}[${i}].mount( ${fragment}, null );`}
+			if ( ${last} ) ${last}.next = ${iteration};
+			${iteration}.last = ${last};
+			${node._block.hasIntroMethod && `${iteration}.intro( ${parentNode}, ${anchor} );`}
+			${last} = ${iteration};
 		}
 
-		// remove old iterations
+		if ( ${last} ) ${last}.next = null;
+
 		${destroy}
 
-		${parentNode}.insertBefore( ${fragment}, ${anchor} );
+		${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${node.key}];
+	` );
 
-		${iterations} = ${_iterations};
+	block.builders.destroy.addBlock( deindent`
+		var ${iteration} = ${head};
+		while ( ${iteration} ) {
+			${iteration}.destroy( ${state.parentNode ? 'false' : 'detach'} );
+			${iteration} = ${iteration}.next;
+		}
 	` );
 }
 
 function unkeyed ( generator, block, state, node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
 	block.builders.create.addBlock( deindent`
+		var ${iterations} = [];
+
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
 			${state.parentNode && `${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`}
 		}
 	` );
+
+	if ( !state.parentNode ) {
+		block.builders.mount.addBlock( deindent`
+			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+				${iterations}[${i}].${mountOrIntro}( ${block.target}, null );
+			}
+		` );
+	}
 
 	const dependencies = block.findDependencies( node.expression );
 	const allDependencies = new Set( node._block.dependencies );
@@ -207,6 +295,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 		allDependencies.add( dependency );
 	});
 
+	// TODO do this for keyed blocks as well
 	const condition = Array.from( allDependencies )
 		.map( dependency => `'${dependency}' in changed` )
 		.join( ' || ' );
@@ -215,14 +304,23 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 	if ( condition !== '' ) {
 		const forLoopBody = node._block.hasUpdateMethod ?
-			deindent`
-				if ( ${iterations}[${i}] ) {
-					${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
-				} else {
-					${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-					${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
-				}
-			` :
+			node._block.hasIntroMethod ?
+				deindent`
+					if ( ${iterations}[${i}] ) {
+						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					} else {
+						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+					}
+					${iterations}[${i}].intro( ${parentNode}, ${anchor} );
+				` :
+				deindent`
+					if ( ${iterations}[${i}] ) {
+						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					} else {
+						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+						${iterations}[${i}].mount( ${parentNode}, ${anchor} );
+					}
+				` :
 			deindent`
 				${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
 				${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
@@ -230,9 +328,10 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;
 
+		const outro = block.getUniqueName( 'outro' );
 		const destroy = node._block.hasOutroMethod ?
 			deindent`
-				function outro ( i ) {
+				function ${outro} ( i ) {
 					if ( ${iterations}[i] ) {
 						${iterations}[i].outro( function () {
 							${iterations}[i].destroy( true );
@@ -241,7 +340,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 					}
 				}
 
-				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) outro( ${i} );
+				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) ${outro}( ${i} );
 			` :
 			deindent`
 				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );
@@ -260,4 +359,8 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 			}
 		` );
 	}
+
+	block.builders.destroy.addBlock(
+		`${generator.helper( 'destroyEach' )}( ${iterations}, ${state.parentNode ? 'false' : 'detach'}, 0 );`
+	);
 }

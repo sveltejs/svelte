@@ -4,6 +4,7 @@ function create_main_fragment ( state, component ) {
 	var text_1_value;
 
 	var each_block_value = state.comments;
+
 	var each_block_iterations = [];
 
 	for ( var i = 0; i < each_block_value.length; i += 1 ) {
