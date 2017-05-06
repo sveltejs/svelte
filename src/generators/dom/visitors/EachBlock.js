@@ -138,8 +138,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		}
 	` );
 
-	// TODO!!!
-	// const dynamic = node._block.hasUpdateMethod;
+	const dynamic = node._block.hasUpdateMethod;
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	let destroy;
@@ -206,12 +205,15 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 		for ( ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
+			var ${iteration} = ${lookup}[${key}];
+
+			${dynamic && `if ( ${iteration} ) ${iteration}.update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );`}
 
 			if ( expected ) {
 				if ( ${key} === expected.key ) {
 					expected = expected.next;
 				} else {
-					if ( ${lookup}[${key}] ) {
+					if ( ${iteration} ) {
 						// probably a deletion
 						do {
 							expected.discard = true;
@@ -220,36 +222,36 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 						} while ( expected && expected.key !== ${key} );
 
 						expected = expected && expected.next;
-						${lookup}[${key}].discard = false;
-						${lookup}[${key}].last = last;
-						${lookup}[${key}].next = expected;
+						${iteration}.discard = false;
+						${iteration}.last = last;
+						${iteration}.next = expected;
 
-						${lookup}[${key}].mount( ${parentNode}, expected ? expected.first : ${anchor} );
+						${iteration}.mount( ${parentNode}, expected ? expected.first : ${anchor} );
 					} else {
 						// key is being inserted
-						${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-						${lookup}[${key}].${mountOrIntro}( ${parentNode}, expected.first );
+						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+						${iteration}.${mountOrIntro}( ${parentNode}, expected.first );
 
-						if ( expected ) expected.last = ${lookup}[${key}];
-						${lookup}[${key}].next = expected;
+						if ( expected ) expected.last = ${iteration};
+						${iteration}.next = expected;
 					}
 				}
 			} else {
 				// we're appending from this point forward
-				if ( ${lookup}[${key}] ) {
-					${lookup}[${key}].discard = false;
-					${lookup}[${key}].next = null;
-					${lookup}[${key}].mount( ${parentNode}, ${anchor} );
+				if ( ${iteration} ) {
+					${iteration}.discard = false;
+					${iteration}.next = null;
+					${iteration}.mount( ${parentNode}, ${anchor} );
 				} else {
-					${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-					${lookup}[${key}].${mountOrIntro}( ${parentNode}, ${anchor} );
+					${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+					${iteration}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
 			}
 
-			if ( last ) last.next = ${lookup}[${key}];
-			${lookup}[${key}].last = last;
-			${node._block.hasIntroMethod && `${lookup}[${key}].intro( ${parentNode}, ${anchor} );`}
-			last = ${lookup}[${key}];
+			if ( last ) last.next = ${iteration};
+			${iteration}.last = last;
+			${node._block.hasIntroMethod && `${iteration}.intro( ${parentNode}, ${anchor} );`}
+			last = ${iteration};
 
 			${_iterations}[${i}] = ${lookup}[ ${key} ];
 		}
