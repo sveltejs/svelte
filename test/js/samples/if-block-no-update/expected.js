@@ -1,8 +1,6 @@
 import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
-	var if_block_anchor = createComment();
-
 	function get_block ( state ) {
 		if ( state.foo ) return create_if_block;
 		return create_if_block_1;
@@ -11,10 +9,12 @@ function create_main_fragment ( state, component ) {
 	var current_block = get_block( state );
 	var if_block = current_block( state, component );
 
+	var if_block_anchor = createComment();
+
 	return {
 		mount: function ( target, anchor ) {
+			if_block.mount( target, anchor );
 			insertNode( if_block_anchor, target, anchor );
-			if_block.mount( target, null );
 		},
 
 		update: function ( changed, state ) {

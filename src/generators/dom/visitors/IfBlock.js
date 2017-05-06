@@ -52,13 +52,7 @@ export default function visitIfBlock ( generator, block, state, node ) {
 	const anchor = node.needsAnchor ? block.getUniqueName( `${name}_anchor` ) : ( node.next && node.next._state.name ) || 'null';
 	const params = block.params.join( ', ' );
 
-	if ( node.needsAnchor ) {
-		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
-	} else if ( node.next ) {
-		node.next.usedAsAnchor = true;
-	}
-
-	const branches = getBranches( generator, block, state, node, generator.getUniqueName( `create_if_block` ) );
+	const branches = getBranches( generator, block, state, node );
 
 	const hasElse = isElseBranch( branches[ branches.length - 1 ] );
 	const if_name = hasElse ? '' : `if ( ${name} ) `;
@@ -78,6 +72,12 @@ export default function visitIfBlock ( generator, block, state, node ) {
 		simple( generator, block, state, node, branches[0], dynamic, vars );
 	}
 
+	if ( node.needsAnchor ) {
+		block.addElement( anchor, `${generator.helper( 'createComment' )}()`, state.parentNode, true );
+	} else if ( node.next ) {
+		node.next.usedAsAnchor = true;
+	}
+
 	block.builders.destroy.addLine(
 		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
 	);
@@ -88,11 +88,11 @@ function simple ( generator, block, state, node, branch, dynamic, { name, anchor
 		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, ${block.component} );
 	` );
 
-	const isToplevel = !state.parentNode;
+	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branch.hasIntroMethod ? 'intro' : 'mount';
 
-	if ( isToplevel ) {
-		block.builders.mount.addLine( `if ( ${name} ) ${name}.${mountOrIntro}( ${block.target}, null );` );
+	if ( isTopLevel ) {
+		block.builders.mount.addLine( `if ( ${name} ) ${name}.${mountOrIntro}( ${block.target}, anchor );` );
 	} else {
 		block.builders.create.addLine( `if ( ${name} ) ${name}.${mountOrIntro}( ${state.parentNode}, null );` );
 	}
@@ -169,11 +169,11 @@ function compound ( generator, block, state, node, branches, dynamic, { name, an
 		var ${name} = ${current_block_and}${current_block}( ${params}, ${block.component} );
 	` );
 
-	const isToplevel = !state.parentNode;
+	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
 
-	if ( isToplevel ) {
-		block.builders.mount.addLine( `${if_name}${name}.${mountOrIntro}( ${block.target}, null );` );
+	if ( isTopLevel ) {
+		block.builders.mount.addLine( `${if_name}${name}.${mountOrIntro}( ${block.target}, anchor );` );
 	} else {
 		block.builders.create.addLine( `${if_name}${name}.${mountOrIntro}( ${state.parentNode}, null );` );
 	}
@@ -244,13 +244,14 @@ function compoundWithOutros ( generator, block, state, node, branches, dynamic, 
 		` );
 	}
 
-	const isToplevel = !state.parentNode;
+	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
-	const initialTarget = isToplevel ? block.target : state.parentNode;
 
-	( isToplevel ? block.builders.mount : block.builders.create ).addBlock(
-		`${if_current_block_index}${if_blocks}[ ${current_block_index} ].${mountOrIntro}( ${initialTarget}, null );`
-	);
+	if ( isTopLevel ) {
+		block.builders.mount.addLine( `${if_current_block_index}${if_blocks}[ ${current_block_index} ].${mountOrIntro}( ${block.target}, anchor );` );
+	} else {
+		block.builders.create.addLine( `${if_current_block_index}${if_blocks}[ ${current_block_index} ].${mountOrIntro}( ${state.parentNode}, null );` );
+	}
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 

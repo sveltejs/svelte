@@ -35,16 +35,17 @@ function create_main_fragment ( state, component ) {
 	var text_7 = createText( "\n\n\t" );
 	appendNode( text_7, div );
 	var text_8 = createText( "\n\n" );
-	var if_block_4_anchor = createComment();
 
 	var if_block_4 = (state.e) && create_if_block_4( state, component );
+
+	var if_block_4_anchor = createComment();
 
 	return {
 		mount: function ( target, anchor ) {
 			insertNode( div, target, anchor );
 			insertNode( text_8, target, anchor );
+			if ( if_block_4 ) if_block_4.mount( target, anchor );
 			insertNode( if_block_4_anchor, target, anchor );
-			if ( if_block_4 ) if_block_4.mount( target, null );
 		},
 
 		update: function ( changed, state ) {
