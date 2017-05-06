@@ -188,7 +188,6 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
 				var ${iteration} = discard_pile[${i}];
 				if ( ${iteration}.discard ) {
-					// console.log( 'discarding ' + [ ${iteration}.last && ${iteration}.last.key, ${iteration}.key, ${iteration}.next && ${iteration}.next.key ].join( '-' ) );
 					${fn}( ${iteration} );
 				}
 			}
@@ -249,6 +248,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 			if ( last ) last.next = ${lookup}[${key}];
 			${lookup}[${key}].last = last;
+			${node._block.hasIntroMethod && `${lookup}[${key}].intro( ${parentNode}, ${anchor} );`}
 			last = ${lookup}[${key}];
 
 			${_iterations}[${i}] = ${lookup}[ ${key} ];
