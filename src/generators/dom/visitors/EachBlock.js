@@ -225,7 +225,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 						${lookup}[${key}].last = last;
 						${lookup}[${key}].next = expected;
 
-						${lookup}[${key}].mount( ${parentNode}, expected ? expected.first : null );
+						${lookup}[${key}].mount( ${parentNode}, expected ? expected.first : ${anchor} );
 					} else {
 						// key is being inserted
 						${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
@@ -240,10 +240,10 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 				if ( ${lookup}[${key}] ) {
 					${lookup}[${key}].discard = false;
 					${lookup}[${key}].next = null;
-					${lookup}[${key}].mount( ${parentNode}, null );
+					${lookup}[${key}].mount( ${parentNode}, ${anchor} );
 				} else {
 					${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-					${lookup}[${key}].${mountOrIntro}( ${parentNode}, null );
+					${lookup}[${key}].${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
 			}
 
