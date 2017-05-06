@@ -304,14 +304,23 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 	if ( condition !== '' ) {
 		const forLoopBody = node._block.hasUpdateMethod ?
-			deindent`
-				if ( ${iterations}[${i}] ) {
-					${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
-				} else {
-					${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-					${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
-				}
-			` :
+			node._block.hasIntroMethod ?
+				deindent`
+					if ( ${iterations}[${i}] ) {
+						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					} else {
+						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+					}
+					${iterations}[${i}].intro( ${parentNode}, ${anchor} );
+				` :
+				deindent`
+					if ( ${iterations}[${i}] ) {
+						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					} else {
+						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+						${iterations}[${i}].mount( ${parentNode}, ${anchor} );
+					}
+				` :
 			deindent`
 				${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
 				${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
