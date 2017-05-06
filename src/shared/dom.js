@@ -18,7 +18,7 @@ export function detachBetween ( before, after ) {
 
 export function destroyEach ( iterations, detach, start ) {
 	for ( var i = start; i < iterations.length; i += 1 ) {
-		iterations[i].destroy( detach );
+		if ( iterations[i] ) iterations[i].destroy( detach );
 	}
 }
 

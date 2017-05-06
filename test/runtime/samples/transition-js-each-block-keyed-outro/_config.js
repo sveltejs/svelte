@@ -17,6 +17,11 @@ export default {
 			]
 		});
 
+		const divs2 = target.querySelectorAll( 'div' );
+		assert.strictEqual( divs[0], divs2[0] );
+		assert.strictEqual( divs[1], divs2[1] );
+		assert.strictEqual( divs[2], divs2[2] );
+
 		raf.tick( 50 );
 		assert.equal( divs[0].foo, undefined );
 		assert.equal( divs[1].foo, 0.5 );
