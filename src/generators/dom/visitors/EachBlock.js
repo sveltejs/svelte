@@ -101,6 +101,9 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	const key = block.getUniqueName( 'key' );
 	const lookup = block.getUniqueName( `${each_block}_lookup` );
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
+	const head = block.getUniqueName( `${each_block}_head` );
+	const last = block.getUniqueName( `${each_block}_last` );
+	const expected = block.getUniqueName( `${each_block}_expected` );
 
 	if ( node.children[0] && node.children[0].type === 'Element' ) { // TODO or text/tag/raw
 		node._block.first = node.children[0]._state.parentNode; // TODO this is highly confusing
@@ -112,25 +115,25 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	block.builders.create.addBlock( deindent`
 		var ${lookup} = Object.create( null );
 
-		var head;
-		var last;
+		var ${head};
+		var ${last};
 
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
 			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 			${state.parentNode && `${iteration}.${mountOrIntro}( ${state.parentNode}, null );`}
 
-			if ( last ) last.next = ${iteration};
-			${iteration}.last = last;
-			last = ${iteration};
+			if ( ${last} ) ${last}.next = ${iteration};
+			${iteration}.last = ${last};
+			${last} = ${iteration};
 
-			if ( ${i} === 0 ) head = ${iteration};
+			if ( ${i} === 0 ) ${head} = ${iteration};
 		}
 	` );
 
 	if ( !state.parentNode ) {
 		block.builders.mount.addBlock( deindent`
-			var ${iteration} = head;
+			var ${iteration} = ${head};
 			while ( ${iteration} ) {
 				${iteration}.${mountOrIntro}( ${block.target}, null );
 				${iteration} = ${iteration}.next;
@@ -156,9 +159,9 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		` );
 
 		destroy = deindent`
-			while ( expected ) {
-				${fn}( expected );
-				expected = expected.next;
+			while ( ${expected} ) {
+				${fn}( ${expected} );
+				${expected} = ${expected}.next;
 			}
 
 			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
@@ -179,9 +182,9 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		` );
 
 		destroy = deindent`
-			while ( expected ) {
-				${fn}( expected );
-				expected = expected.next;
+			while ( ${expected} ) {
+				${fn}( ${expected} );
+				${expected} = ${expected}.next;
 			}
 
 			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
@@ -196,8 +199,8 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
 
-		var expected = head;
-		var last;
+		var ${expected} = ${head};
+		var ${last};
 
 		var discard_pile = [];
 
@@ -207,31 +210,31 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 			${dynamic && `if ( ${iteration} ) ${iteration}.update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );`}
 
-			if ( expected ) {
-				if ( ${key} === expected.key ) {
-					expected = expected.next;
+			if ( ${expected} ) {
+				if ( ${key} === ${expected}.key ) {
+					${expected} = ${expected}.next;
 				} else {
 					if ( ${iteration} ) {
 						// probably a deletion
 						do {
-							expected.discard = true;
-							discard_pile.push( expected );
-							expected = expected.next;
-						} while ( expected && expected.key !== ${key} );
+							${expected}.discard = true;
+							discard_pile.push( ${expected} );
+							${expected} = ${expected}.next;
+						} while ( ${expected} && ${expected}.key !== ${key} );
 
-						expected = expected && expected.next;
+						${expected} = ${expected} && ${expected}.next;
 						${iteration}.discard = false;
-						${iteration}.last = last;
-						${iteration}.next = expected;
+						${iteration}.last = ${last};
+						${iteration}.next = ${expected};
 
-						${iteration}.mount( ${parentNode}, expected ? expected.first : ${anchor} );
+						${iteration}.mount( ${parentNode}, ${expected} ? ${expected}.first : ${anchor} );
 					} else {
 						// key is being inserted
 						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-						${iteration}.${mountOrIntro}( ${parentNode}, expected.first );
+						${iteration}.${mountOrIntro}( ${parentNode}, ${expected}.first );
 
-						if ( expected ) expected.last = ${iteration};
-						${iteration}.next = expected;
+						if ( ${expected} ) ${expected}.last = ${iteration};
+						${iteration}.next = ${expected};
 					}
 				}
 			} else {
@@ -246,21 +249,21 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 				}
 			}
 
-			if ( last ) last.next = ${iteration};
-			${iteration}.last = last;
+			if ( ${last} ) ${last}.next = ${iteration};
+			${iteration}.last = ${last};
 			${node._block.hasIntroMethod && `${iteration}.intro( ${parentNode}, ${anchor} );`}
-			last = ${iteration};
+			${last} = ${iteration};
 		}
 
-		if ( last ) last.next = null;
+		if ( ${last} ) ${last}.next = null;
 
 		${destroy}
 
-		head = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${node.key}];
+		${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${node.key}];
 	` );
 
 	block.builders.destroy.addBlock( deindent`
-		var ${iteration} = head;
+		var ${iteration} = ${head};
 		while ( ${iteration} ) {
 			${iteration}.destroy( ${state.parentNode ? 'false' : 'detach'} );
 			${iteration} = ${iteration}.next;
@@ -316,9 +319,10 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;
 
+		const outro = block.getUniqueName( 'outro' );
 		const destroy = node._block.hasOutroMethod ?
 			deindent`
-				function outro ( i ) {
+				function ${outro} ( i ) {
 					if ( ${iterations}[i] ) {
 						${iterations}[i].outro( function () {
 							${iterations}[i].destroy( true );
@@ -327,7 +331,7 @@ function unkeyed ( generator, block, state, node, snippet, { create_each_block, 
 					}
 				}
 
-				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) outro( ${i} );
+				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) ${outro}( ${i} );
 			` :
 			deindent`
 				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );
