@@ -112,7 +112,6 @@ export default function visitEachBlock ( generator, block, state, node ) {
 function keyed ( generator, block, state, node, snippet, { each_block, create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
 	const key = block.getUniqueName( 'key' );
 	const lookup = block.getUniqueName( `${each_block}_lookup` );
-	const keys = block.getUniqueName( `${each_block}_keys` );
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
 	const _iterations = block.getUniqueName( `_${each_block}_iterations` );
 
@@ -139,37 +138,65 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		}
 	` );
 
-	const dynamic = node._block.hasUpdateMethod;
+	// TODO!!!
+	// const dynamic = node._block.hasUpdateMethod;
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	let destroy;
 	if ( node._block.hasOutroMethod ) {
-		const outro = block.getUniqueName( `${each_block}_outro` );
+		const fn = block.getUniqueName( `${each_block}_outro` );
 		block.builders.create.addBlock( deindent`
-			function ${outro} ( key ) {
-				${lookup}[ key ].outro( function () {
-					${lookup}[ key ].destroy( true );
-					${lookup}[ key ] = null;
+			function ${fn} ( iteration ) {
+				iteration.outro( function () {
+					iteration.destroy( true );
+					if ( iteration.next ) iteration.next.last = iteration.last;
+					if ( iteration.last ) iteration.last.next = iteration.next;
+					${lookup}[iteration.key] = null;
 				});
 			}
 		` );
 
-		destroy = `${outro}( ${key} );`;
+		destroy = deindent`
+			while ( expected ) {
+				${fn}( expected );
+				expected = expected.next;
+			}
+
+			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
+				if ( discard_pile[${i}].discard ) {
+					${fn}( discard_pile[${i}] );
+				}
+			}
+		`;
 	} else {
-		destroy = `${iteration}.destroy( true );`;
+		const fn = block.getUniqueName( `${each_block}_destroy` );
+		block.builders.create.addBlock( deindent`
+			function ${fn} ( iteration ) {
+				iteration.destroy( true );
+				if ( iteration.next && iteration.next.last === iteration ) iteration.next.last = iteration.last;
+				if ( iteration.last && iteration.last.next === iteration ) iteration.last.next = iteration.next;
+				${lookup}[iteration.key] = null;
+			}
+		` );
+
+		destroy = deindent`
+			while ( expected ) {
+				${fn}( expected );
+				expected = expected.next;
+			}
+
+			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
+				var ${iteration} = discard_pile[${i}];
+				if ( ${iteration}.discard ) {
+					// console.log( 'discarding ' + [ ${iteration}.last && ${iteration}.last.key, ${iteration}.key, ${iteration}.next && ${iteration}.next.key ].join( '-' ) );
+					${fn}( ${iteration} );
+				}
+			}
+		`;
 	}
 
 	block.builders.update.addBlock( deindent`
 		var ${each_block_value} = ${snippet};
-
-		if ( ${each_block_value}.length === 0 ) {
-			// special case
-			for ( ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].destroy( true );
-			}
-			${iterations} = [];
-			return;
-		}
 
 		var ${_iterations} = Array( ${each_block_value}.length );
 
@@ -185,7 +212,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 				if ( ${key} === expected.key ) {
 					expected = expected.next;
 				} else {
-					if ( ${key} in ${lookup} ) {
+					if ( ${lookup}[${key}] ) {
 						// probably a deletion
 						do {
 							expected.discard = true;
@@ -195,6 +222,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 
 						expected = expected && expected.next;
 						${lookup}[${key}].discard = false;
+						${lookup}[${key}].last = last;
 						${lookup}[${key}].next = expected;
 
 						${lookup}[${key}].mount( ${parentNode}, expected ? expected.first : null );
@@ -202,6 +230,9 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 						// key is being inserted
 						${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 						${lookup}[${key}].${mountOrIntro}( ${parentNode}, expected.first );
+
+						if ( expected ) expected.last = ${lookup}[${key}];
+						${lookup}[${key}].next = expected;
 					}
 				}
 			} else {
@@ -223,18 +254,9 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			${_iterations}[${i}] = ${lookup}[ ${key} ];
 		}
 
-		last.next = null;
+		if ( last ) last.next = null;
 
-		while ( expected ) {
-			expected.destroy( true );
-			expected = expected.next;
-		}
-
-		for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
-			if ( discard_pile[${i}].discard ) {
-				discard_pile[${i}].destroy( true );
-			}
-		}
+		${destroy}
 
 		${iterations} = ${_iterations};
 	` );
