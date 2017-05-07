@@ -4,7 +4,9 @@
         "noImplicitAny": true,
         "diagnostics": true,
         "noImplicitThis": true,
-        "noEmitOnError": true
+        "noEmitOnError": true,
+        "allowJs": true,
+        "lib": ["es5", "es6", "dom"]
     },
     "target": "ES5",
     "include": [

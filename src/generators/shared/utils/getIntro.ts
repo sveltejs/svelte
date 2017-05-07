@@ -1,7 +1,7 @@
 import deindent from '../../../utils/deindent.js';
 import getGlobals from './getGlobals';
 
-export default function getIntro ( format, options, imports ) {
+export default function getIntro ( format: string, options, imports ) {
 	if ( format === 'es' ) return '';
 	if ( format === 'amd' ) return getAmdIntro( options, imports );
 	if ( format === 'cjs' ) return getCjsIntro( options, imports );
@@ -69,7 +69,7 @@ function paramString ( imports ) {
 	return imports.length ? ` ${imports.map( dep => dep.name ).join( ', ' )} ` : '';
 }
 
-function removeExtension ( file ) {
+function removeExtension ( file: string ) {
 	const index = file.lastIndexOf( '.' );
 	return ~index ? file.slice( 0, index ) : file;
 }

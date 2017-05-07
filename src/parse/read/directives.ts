@@ -1,7 +1,7 @@
 import { parseExpressionAt } from 'acorn';
 import spaces from '../../utils/spaces.js';
 
-function readExpression ( parser, start, quoteMark ) {
+function readExpression ( parser, start: number, quoteMark ) {
 	let str = '';
 	let escaped = false;
 
@@ -43,7 +43,7 @@ function readExpression ( parser, start, quoteMark ) {
 	return expression;
 }
 
-export function readEventHandlerDirective ( parser, start, name ) {
+export function readEventHandlerDirective ( parser, start: number, name: string ) {
 	const quoteMark = (
 		parser.eat( `'` ) ? `'` :
 		parser.eat( `"` ) ? `"` :
@@ -67,7 +67,7 @@ export function readEventHandlerDirective ( parser, start, name ) {
 	};
 }
 
-export function readBindingDirective ( parser, start, name ) {
+export function readBindingDirective ( parser, start: number, name: string ) {
 	let value;
 
 	if ( parser.eat( '=' ) ) {
@@ -130,7 +130,7 @@ export function readBindingDirective ( parser, start, name ) {
 	};
 }
 
-export function readTransitionDirective ( parser, start, name, type ) {
+export function readTransitionDirective ( parser, start: number, name: string, type: string ) {
 	let expression = null;
 
 	if ( parser.eat( '=' ) ) {

@@ -3,7 +3,7 @@ import spaces from '../../utils/spaces.js';
 
 const scriptClosingTag = '<\/script>';
 
-export default function readScript ( parser, start, attributes ) {
+export default function readScript ( parser, start: number, attributes ) {
 	const scriptStart = parser.index;
 	const scriptEnd = parser.template.indexOf( scriptClosingTag, scriptStart );
 

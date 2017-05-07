@@ -3,7 +3,7 @@ import htmlEntities from './entities';
 const windows1252 = [ 8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352, 8249, 338, 141, 381, 143, 144, 8216, 8217, 8220, 8221, 8226, 8211, 8212, 732, 8482, 353, 8250, 339, 157, 382, 376 ];
 const entityPattern = new RegExp( `&(#?(?:x[\\w\\d]+|\\d+|${Object.keys( htmlEntities ).join( '|' )}));?`, 'g' );
 
-export function decodeCharacterReferences ( html ) {
+export function decodeCharacterReferences ( html: string ) {
 	return html.replace( entityPattern, ( match, entity ) => {
 		let code;
 
@@ -31,7 +31,7 @@ const NUL = 0;
 // to replace them ourselves
 //
 // Source: http://en.wikipedia.org/wiki/Character_encodings_in_HTML#Illegal_characters
-function validateCode ( code ) {
+function validateCode ( code: number ) {
 	// line feed becomes generic whitespace
 	if ( code === 10 ) {
 		return 32;

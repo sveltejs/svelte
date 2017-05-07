@@ -1,18 +1,25 @@
-const LINE = {};
-const BLOCK = {};
+enum ChunkType {
+	Line,
+	Block
+}
 
 export default class CodeBuilder {
+	result: string
+	first: ChunkType
+	last: ChunkType
+	lastCondition: string
+
 	constructor ( str = '' ) {
 		this.result = str;
 
-		const initial = str ? ( /\n/.test( str ) ? BLOCK : LINE ) : null;
+		const initial = str ? ( /\n/.test( str ) ? ChunkType.Block : ChunkType.Line ) : null;
 		this.first = initial;
 		this.last = initial;
 
 		this.lastCondition = null;
 	}
 
-	addConditionalLine ( condition, line ) {
+	addConditionalLine ( condition: string, line: string ) {
 		if ( condition === this.lastCondition ) {
 			this.result += `\n\t${line}`;
 		} else {
@@ -24,41 +31,41 @@ export default class CodeBuilder {
 			this.lastCondition = condition;
 		}
 
-		this.last = BLOCK;
+		this.last = ChunkType.Block;
 	}
 
-	addLine ( line ) {
+	addLine ( line: string ) {
 		if ( this.lastCondition ) {
 			this.result += `\n}`;
 			this.lastCondition = null;
 		}
 
-		if ( this.last === BLOCK ) {
+		if ( this.last === ChunkType.Block ) {
 			this.result += `\n\n${line}`;
-		} else if ( this.last === LINE ) {
+		} else if ( this.last === ChunkType.Line ) {
 			this.result += `\n${line}`;
 		} else {
 			this.result += line;
 		}
 
-		this.last = LINE;
-		if ( !this.first ) this.first = LINE;
+		this.last = ChunkType.Line;
+		if ( !this.first ) this.first = ChunkType.Line;
 	}
 
-	addLineAtStart ( line ) {
-		if ( this.first === BLOCK ) {
+	addLineAtStart ( line: string ) {
+		if ( this.first === ChunkType.Block ) {
 			this.result = `${line}\n\n${this.result}`;
-		} else if ( this.first === LINE ) {
+		} else if ( this.first === ChunkType.Line ) {
 			this.result = `${line}\n${this.result}`;
 		} else {
 			this.result += line;
 		}
 
-		this.first = LINE;
-		if ( !this.last ) this.last = LINE;
+		this.first = ChunkType.Line;
+		if ( !this.last ) this.last = ChunkType.Line;
 	}
 
-	addBlock ( block ) {
+	addBlock ( block: string ) {
 		if ( this.lastCondition ) {
 			this.result += `\n}`;
 			this.lastCondition = null;
@@ -70,19 +77,19 @@ export default class CodeBuilder {
 			this.result += block;
 		}
 
-		this.last = BLOCK;
-		if ( !this.first ) this.first = BLOCK;
+		this.last = ChunkType.Block;
+		if ( !this.first ) this.first = ChunkType.Block;
 	}
 
-	addBlockAtStart ( block ) {
+	addBlockAtStart ( block: string ) {
 		if ( this.result ) {
 			this.result = `${block}\n\n${this.result}`;
 		} else {
 			this.result += block;
 		}
 
-		this.first = BLOCK;
-		if ( !this.last ) this.last = BLOCK;
+		this.first = ChunkType.Block;
+		if ( !this.last ) this.last = ChunkType.Block;
 	}
 
 	isEmpty () {

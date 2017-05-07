@@ -1,6 +1,6 @@
 import deindent from './deindent.js';
 
-export default function toSource ( thing ) {
+export default function toSource ( thing: any ) :string {
 	if ( typeof thing === 'function' ) {
 		return normaliseIndentation( thing.toString() );
 	}
@@ -25,7 +25,7 @@ export default function toSource ( thing ) {
 	return JSON.stringify( thing );
 }
 
-function normaliseIndentation ( str ) {
+function normaliseIndentation ( str: string ) {
 	const lines = str.split( '\n' ).slice( 1, -1 );
 	let minIndentation = Infinity;
 
