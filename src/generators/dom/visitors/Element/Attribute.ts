@@ -1,6 +1,6 @@
-import attributeLookup from './lookup.ts';
+import attributeLookup from './lookup';
 import deindent from '../../../../utils/deindent.js';
-import getStaticAttributeValue from './getStaticAttributeValue.ts';
+import getStaticAttributeValue from './getStaticAttributeValue';
 
 export default function visitAttribute ( generator, block, state, node, attribute ) {
 	const name = attribute.name;

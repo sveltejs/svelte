@@ -1,14 +1,14 @@
 import MagicString from 'magic-string';
 import { parseExpressionAt } from 'acorn';
-import annotateWithScopes from '../../utils/annotateWithScopes.ts';
-import isReference from '../../utils/isReference.ts';
+import annotateWithScopes from '../../utils/annotateWithScopes';
+import isReference from '../../utils/isReference';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent.js';
-import CodeBuilder from '../../utils/CodeBuilder.ts';
-import visit from './visit.ts';
-import shared from './shared.ts';
-import Generator from '../Generator.ts';
-import preprocess from './preprocess.ts';
+import CodeBuilder from '../../utils/CodeBuilder';
+import visit from './visit';
+import shared from './shared';
+import Generator from '../Generator';
+import preprocess from './preprocess';
 
 class DomGenerator extends Generator {
 	constructor ( parsed, source, name, options ) {

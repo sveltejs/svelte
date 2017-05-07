@@ -1,15 +1,15 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
-import isReference from '../utils/isReference.ts';
-import flattenReference from '../utils/flattenReference.ts';
-import globalWhitelist from '../utils/globalWhitelist.ts';
-import reservedNames from '../utils/reservedNames.ts';
-import namespaces from '../utils/namespaces.ts';
-import { removeNode, removeObjectKey } from '../utils/removeNode.ts';
-import getIntro from './shared/utils/getIntro.ts';
-import getOutro from './shared/utils/getOutro.ts';
-import processCss from './shared/processCss.ts';
-import annotateWithScopes from '../utils/annotateWithScopes.ts';
+import isReference from '../utils/isReference';
+import flattenReference from '../utils/flattenReference';
+import globalWhitelist from '../utils/globalWhitelist';
+import reservedNames from '../utils/reservedNames';
+import namespaces from '../utils/namespaces';
+import { removeNode, removeObjectKey } from '../utils/removeNode';
+import getIntro from './shared/utils/getIntro';
+import getOutro from './shared/utils/getOutro';
+import processCss from './shared/processCss';
+import annotateWithScopes from '../utils/annotateWithScopes';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 

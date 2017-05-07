@@ -1,4 +1,4 @@
-import usesThisOrArguments from '../utils/usesThisOrArguments.ts';
+import usesThisOrArguments from '../utils/usesThisOrArguments';
 
 export default function oncreate ( validator, prop ) {
 	if ( prop.value.type === 'ArrowFunctionExpression' ) {

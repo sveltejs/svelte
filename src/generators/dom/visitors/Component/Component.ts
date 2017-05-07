@@ -1,10 +1,10 @@
 import deindent from '../../../../utils/deindent.js';
-import CodeBuilder from '../../../../utils/CodeBuilder.ts';
-import visit from '../../visit.ts';
-import visitAttribute from './Attribute.ts';
-import visitEventHandler from './EventHandler.ts';
-import visitBinding from './Binding.ts';
-import visitRef from './Ref.ts';
+import CodeBuilder from '../../../../utils/CodeBuilder';
+import visit from '../../visit';
+import visitAttribute from './Attribute';
+import visitEventHandler from './EventHandler';
+import visitBinding from './Binding';
+import visitRef from './Ref';
 
 function stringifyProps ( props ) {
 	if ( !props.length ) return '{}';

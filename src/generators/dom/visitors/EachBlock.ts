@@ -1,5 +1,5 @@
 import deindent from '../../../utils/deindent.js';
-import visit from '../visit.ts';
+import visit from '../visit';
 
 export default function visitEachBlock ( generator, block, state, node ) {
 	const each_block = generator.getUniqueName( `each_block` );
