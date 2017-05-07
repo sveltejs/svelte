@@ -1,8 +1,8 @@
 import { locate } from 'locate-character';
 import fragment from './state/fragment.ts';
-import { whitespace } from '../utils/patterns.js';
-import { trimStart, trimEnd } from '../utils/trim.js';
-import getCodeFrame from '../utils/getCodeFrame.js';
+import { whitespace } from '../utils/patterns.ts';
+import { trimStart, trimEnd } from '../utils/trim.ts';
+import getCodeFrame from '../utils/getCodeFrame.ts';
 import hash from './utils/hash.ts';
 
 function ParseError ( message, template, index, filename ) {

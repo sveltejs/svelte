@@ -1,7 +1,7 @@
 import parse from './parse/index.ts';
-import validate from './validate/index.js';
-import generate from './generators/dom/index.js';
-import generateSSR from './generators/server-side-rendering/index.js';
+import validate from './validate/index.ts';
+import generate from './generators/dom/index.ts';
+import generateSSR from './generators/server-side-rendering/index.ts';
 import { assign } from './shared/index.js';
 import { version } from '../package.json';
 

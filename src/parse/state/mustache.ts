@@ -1,6 +1,6 @@
 import readExpression from '../read/expression.ts';
-import { whitespace } from '../../utils/patterns.js';
-import { trimStart, trimEnd } from '../../utils/trim.js';
+import { whitespace } from '../../utils/patterns.ts';
+import { trimStart, trimEnd } from '../../utils/trim.ts';
 
 const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
 
