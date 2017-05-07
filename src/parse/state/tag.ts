@@ -1,9 +1,9 @@
-import readExpression from '../read/expression.js';
-import readScript from '../read/script.js';
-import readStyle from '../read/style.js';
-import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives.js';
+import readExpression from '../read/expression.ts';
+import readScript from '../read/script.ts';
+import readStyle from '../read/style.ts';
+import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives.ts';
 import { trimStart, trimEnd } from '../../utils/trim.js';
-import { decodeCharacterReferences } from '../utils/html.js';
+import { decodeCharacterReferences } from '../utils/html.ts';
 import isVoidElementName from '../../utils/isVoidElementName.js';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
