@@ -1,4 +1,4 @@
-import { decodeCharacterReferences } from '../utils/html.js';
+import { decodeCharacterReferences } from '../utils/html.ts';
 
 export default function text ( parser ) {
 	const start = parser.index;

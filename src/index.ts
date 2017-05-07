@@ -1,4 +1,4 @@
-import parse from './parse/index.js';
+import parse from './parse/index.ts';
 import validate from './validate/index.js';
 import generate from './generators/dom/index.js';
 import generateSSR from './generators/server-side-rendering/index.js';

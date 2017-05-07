@@ -1,10 +1,10 @@
 {
-   "compilerOptions": {
-       "types" : ["node"],
-       "noImplicitAny": true,
-       "diagnostics": true,
-       "noImplicitThis": true,
-       "noEmitOnError": true
-   },
-   "target": "ES5"
+    "compilerOptions": {
+        "types" : ["node"],
+        "noImplicitAny": true,
+        "diagnostics": true,
+        "noImplicitThis": true,
+        "noEmitOnError": true
+    },
+    "target": "ES5"
 }

@@ -1,4 +1,4 @@
-import readExpression from '../read/expression.js';
+import readExpression from '../read/expression.ts';
 import { whitespace } from '../../utils/patterns.js';
 import { trimStart, trimEnd } from '../../utils/trim.js';
 

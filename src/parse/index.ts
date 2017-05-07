@@ -1,9 +1,9 @@
 import { locate } from 'locate-character';
-import fragment from './state/fragment.js';
+import fragment from './state/fragment.ts';
 import { whitespace } from '../utils/patterns.js';
 import { trimStart, trimEnd } from '../utils/trim.js';
 import getCodeFrame from '../utils/getCodeFrame.js';
-import hash from './utils/hash.js';
+import hash from './utils/hash.ts';
 
 function ParseError ( message, template, index, filename ) {
 	const { line, column } = locate( template, index );
