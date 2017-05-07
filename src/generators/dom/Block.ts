@@ -55,7 +55,7 @@ export default class Block {
 		});
 	}
 
-	addElement ( name, renderStatement, parentNode, needsIdentifier = false ) {
+	addElement ( name: string, renderStatement: string, parentNode, needsIdentifier = false ) {
 		const isToplevel = !parentNode;
 		if ( needsIdentifier || isToplevel ) {
 			this.builders.create.addLine(
@@ -72,7 +72,7 @@ export default class Block {
 		}
 	}
 
-	addVariable ( name, init ) {
+	addVariable ( name: string, init ) {
 		if ( this.variables.has( name ) && this.variables.get( name ) !== init ) {
 			throw new Error( `Variable '${name}' already initialised with a different value` );
 		}
@@ -80,7 +80,7 @@ export default class Block {
 		this.variables.set( name, init );
 	}
 
-	alias ( name ) {
+	alias ( name: string ) {
 		if ( !this.aliases.has( name ) ) {
 			this.aliases.set( name, this.getUniqueName( name ) );
 		}
@@ -100,7 +100,7 @@ export default class Block {
 		return this.generator.findDependencies( this.contextDependencies, this.indexes, expression );
 	}
 
-	mount ( name, parentNode ) {
+	mount ( name: string, parentNode: string ) {
 		if ( parentNode ) {
 			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
 		} else {

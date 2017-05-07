@@ -14,7 +14,11 @@ import annotateWithScopes from '../utils/annotateWithScopes';
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
 export default class Generator {
-	constructor ( parsed, source, name, options ) {
+	source: string
+	name: string
+	// TODO all the rest...
+
+	constructor ( parsed, source: string, name: string, options ) {
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
