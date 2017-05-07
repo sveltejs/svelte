@@ -1,7 +1,7 @@
 import deindent from '../../utils/deindent.js';
-import Generator from '../Generator.ts';
-import Block from './Block.ts';
-import visit from './visit.ts';
+import Generator from '../Generator';
+import Block from './Block';
+import visit from './visit';
 
 class SsrGenerator extends Generator {
 	constructor ( parsed, source, name, options ) {

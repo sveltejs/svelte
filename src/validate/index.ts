@@ -1,7 +1,7 @@
-import validateJs from './js/index.ts';
-import validateHtml from './html/index.ts';
+import validateJs from './js/index';
+import validateHtml from './html/index';
 import { getLocator } from 'locate-character';
-import getCodeFrame from '../utils/getCodeFrame.ts';
+import getCodeFrame from '../utils/getCodeFrame';
 
 export default function validate ( parsed, source, { onerror, onwarn, name, filename } ) {
 	const locator = getLocator( source );

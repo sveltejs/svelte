@@ -1,10 +1,10 @@
-import EachBlock from './EachBlock.ts';
-import Element from './Element/Element.ts';
-import IfBlock from './IfBlock.ts';
-import MustacheTag from './MustacheTag.ts';
-import RawMustacheTag from './RawMustacheTag.ts';
-import Text from './Text.ts';
-import YieldTag from './YieldTag.ts';
+import EachBlock from './EachBlock';
+import Element from './Element/Element';
+import IfBlock from './IfBlock';
+import MustacheTag from './MustacheTag';
+import RawMustacheTag from './RawMustacheTag';
+import Text from './Text';
+import YieldTag from './YieldTag';
 
 export default {
 	EachBlock,

@@ -6,5 +6,11 @@
         "noImplicitThis": true,
         "noEmitOnError": true
     },
-    "target": "ES5"
+    "target": "ES5",
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
 }
