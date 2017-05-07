@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import deindent from './deindent.js';
-import CodeBuilder from './CodeBuilder';
+import CodeBuilder from './CodeBuilder.ts';
 
 describe( 'deindent', () => {
 	it( 'deindents a simple string', () => {

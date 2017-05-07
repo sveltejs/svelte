@@ -1,4 +1,4 @@
-import validateEventHandler from './validateEventHandler';
+import validateEventHandler from './validateEventHandler.ts';
 
 export default function validateElement ( validator, node ) {
 	const isComponent = node.name === ':Self' || validator.components.has( node.name );

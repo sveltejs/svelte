@@ -1,5 +1,5 @@
 import deindent from '../../../../utils/deindent.js';
-import flattenReference from '../../../../utils/flattenReference';
+import flattenReference from '../../../../utils/flattenReference.ts';
 
 export default function visitEventHandler ( generator, block, state, node, attribute ) {
 	const name = attribute.name;

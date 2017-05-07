@@ -1,4 +1,4 @@
-import getGlobals from './getGlobals';
+import getGlobals from './getGlobals.ts';
 
 export default function getOutro ( format: string, name: string, options, imports ) {
 	if ( format === 'es' ) {

@@ -1,5 +1,5 @@
 import deindent from '../../../utils/deindent.js';
-import getGlobals from './getGlobals';
+import getGlobals from './getGlobals.ts';
 
 export default function getIntro ( format: string, options, imports ) {
 	if ( format === 'es' ) return '';

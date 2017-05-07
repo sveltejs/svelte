@@ -1,4 +1,4 @@
-import FuzzySet from './FuzzySet';
+import FuzzySet from './FuzzySet.ts';
 
 export default function fuzzymatch ( name, names ) {
 	const set = new FuzzySet( names );

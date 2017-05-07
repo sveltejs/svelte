@@ -1,7 +1,7 @@
 import deindent from '../../../../utils/deindent.js';
-import flattenReference from '../../../../utils/flattenReference';
-import getSetter from '../shared/binding/getSetter';
-import getStaticAttributeValue from './getStaticAttributeValue';
+import flattenReference from '../../../../utils/flattenReference.ts';
+import getSetter from '../shared/binding/getSetter.ts';
+import getStaticAttributeValue from './getStaticAttributeValue.ts';
 
 export default function visitBinding ( generator, block, state, node, attribute ) {
 	const { name, parts } = flattenReference( attribute.value );

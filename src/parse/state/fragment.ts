@@ -1,6 +1,6 @@
-import tag from './tag';
-import mustache from './mustache';
-import text from './text';
+import tag from './tag.ts';
+import mustache from './mustache.ts';
+import text from './text.ts';
 
 export default function fragment ( parser ) {
 	if ( parser.match( '<' ) ) {
