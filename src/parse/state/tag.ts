@@ -2,9 +2,9 @@ import readExpression from '../read/expression.ts';
 import readScript from '../read/script.ts';
 import readStyle from '../read/style.ts';
 import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives.ts';
-import { trimStart, trimEnd } from '../../utils/trim.js';
+import { trimStart, trimEnd } from '../../utils/trim.ts';
 import { decodeCharacterReferences } from '../utils/html.ts';
-import isVoidElementName from '../../utils/isVoidElementName.js';
+import isVoidElementName from '../../utils/isVoidElementName.ts';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
