@@ -1,5 +1,5 @@
 import deindent from '../../../utils/deindent.js';
-import visit from '../visit';
+import visit from '../visit.ts';
 
 function isElseIf ( node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';

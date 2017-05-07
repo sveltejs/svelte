@@ -1,4 +1,4 @@
-import visitors from './visitors/index';
+import visitors from './visitors/index.ts';
 
 export default function visit ( generator, fragment, node ) {
 	const visitor = visitors[ node.type ];

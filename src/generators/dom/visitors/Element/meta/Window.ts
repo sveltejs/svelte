@@ -1,4 +1,4 @@
-import flattenReference from '../../../../../utils/flattenReference';
+import flattenReference from '../../../../../utils/flattenReference.ts';
 import deindent from '../../../../../utils/deindent.js';
 
 const associatedEvents = {

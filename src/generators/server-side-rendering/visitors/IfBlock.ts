@@ -1,4 +1,4 @@
-import visit from '../visit';
+import visit from '../visit.ts';
 
 export default function visitIfBlock ( generator, block, node ) {
 	const { snippet } = block.contextualise( node.expression );

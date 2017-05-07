@@ -1,7 +1,7 @@
-import visitComponent from './Component';
-import isVoidElementName from '../../../utils/isVoidElementName';
-import visit from '../visit';
-import visitWindow from './meta/Window';
+import visitComponent from './Component.ts';
+import isVoidElementName from '../../../utils/isVoidElementName.ts';
+import visit from '../visit.ts';
+import visitWindow from './meta/Window.ts';
 
 const meta = {
 	':Window': visitWindow

@@ -1,5 +1,5 @@
-import checkForDupes from '../utils/checkForDupes';
-import checkForComputedKeys from '../utils/checkForComputedKeys';
+import checkForDupes from '../utils/checkForDupes.ts';
+import checkForComputedKeys from '../utils/checkForComputedKeys.ts';
 
 export default function transitions ( validator, prop ) {
 	if ( prop.value.type !== 'ObjectExpression' ) {
