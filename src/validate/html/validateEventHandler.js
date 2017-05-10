@@ -31,5 +31,5 @@ export default function validateEventHandlerCallee ( validator, attribute ) {
 		message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
 	}
 
-	validator.error( message, start );
+	validator.warn( message, start );
 }
