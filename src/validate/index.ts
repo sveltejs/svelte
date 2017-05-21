@@ -1,52 +1,68 @@
 import validateJs from './js/index';
 import validateHtml from './html/index';
-import { getLocator } from 'locate-character';
+import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
+import CompileError from '../utils/CompileError'
+import { Node } from '../interfaces';
+
+class ValidationError extends CompileError {
+	constructor ( message: string, template: string, index: number, filename: string ) {
+		super( message, template, index, filename );
+		this.name = 'ValidationError';
+	}
+}
+
+export class Validator {
+	readonly source: string;
+	readonly filename: string;
+
+	onwarn: ({}) => void;
+	locator?: (pos: number) => Location;
+
+	namespace: string;
+	defaultExport: Node;
+	components: Map<string, Node>;
+	methods: Map<string, Node>;
+	helpers: Map<string, Node>;
+	transitions: Map<string, Node>;
+
+	constructor ( parsed, source: string, options: { onwarn, name?: string, filename?: string } ) {
+		this.source = source;
+		this.filename = options !== undefined ? options.filename : undefined;
+
+		this.onwarn = options !== undefined ? options.onwarn : undefined;
+
+		this.namespace = null;
+		this.defaultExport = null;
+		this.properties = {};
+		this.components = new Map();
+		this.methods = new Map();
+		this.helpers = new Map();
+		this.transitions = new Map();
+	}
+
+	error ( message: string, pos: number ) {
+		throw new ValidationError( message, this.source, pos, this.filename );
+	}
+
+	warn ( message: string, pos: number ) {
+		if ( !this.locator ) this.locator = getLocator( this.source );
+		const { line, column } = this.locator( pos );
+
+		const frame = getCodeFrame( this.source, line, column );
+
+		this.onwarn({
+			message,
+			frame,
+			loc: { line: line + 1, column },
+			pos,
+			filename: this.filename,
+			toString: () => `${message} (${line + 1}:${column})\n${frame}`
+		});
+	}
+}
 
 export default function validate ( parsed, source, { onerror, onwarn, name, filename } ) {
-	const locator = getLocator( source );
-
-	const validator = {
-		error: ( message, pos ) => {
-			const { line, column } = locator( pos );
-
-			const error = new Error( message );
-			error.frame = getCodeFrame( source, line, column );
-			error.loc = { line: line + 1, column };
-			error.pos = pos;
-			error.filename = filename;
-
-			error.toString = () => `${error.message} (${error.loc.line}:${error.loc.column})\n${error.frame}`;
-
-			throw error;
-		},
-
-		warn: ( message, pos ) => {
-			const { line, column } = locator( pos );
-
-			const frame = getCodeFrame( source, line, column );
-
-			onwarn({
-				message,
-				frame,
-				loc: { line: line + 1, column },
-				pos,
-				filename,
-				toString: () => `${message} (${line + 1}:${column})\n${frame}`
-			});
-		},
-
-		source,
-
-		namespace: null,
-		defaultExport: null,
-		properties: {},
-		components: new Map(),
-		methods: new Map(),
-		helpers: new Map(),
-		transitions: new Map()
-	};
-
 	try {
 		if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {
 			const error = new Error( `options.name must be a valid identifier` );
@@ -61,6 +77,12 @@ export default function validate ( parsed, source, { onerror, onwarn, name, file
 				toString: () => message
 			});
 		}
+
+		const validator = new Validator( parsed, source, {
+			onwarn,
+			name,
+			filename
+		});
 
 		if ( parsed.js ) {
 			validateJs( validator, parsed.js );

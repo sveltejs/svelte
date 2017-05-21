@@ -1,8 +1,10 @@
 import checkForDupes from '../utils/checkForDupes';
 import checkForComputedKeys from '../utils/checkForComputedKeys';
 import { walk } from 'estree-walker';
+import { Validator } from '../../';
+import { Node } from '../../../interfaces';
 
-export default function helpers ( validator, prop ) {
+export default function helpers ( validator: Validator, prop: Node ) {
 	if ( prop.value.type !== 'ObjectExpression' ) {
 		validator.error( `The 'helpers' property must be an object literal`, prop.start );
 		return;
@@ -11,14 +13,14 @@ export default function helpers ( validator, prop ) {
 	checkForDupes( validator, prop.value.properties );
 	checkForComputedKeys( validator, prop.value.properties );
 
-	prop.value.properties.forEach( prop => {
+	prop.value.properties.forEach( ( prop: Node ) => {
 		if ( !/FunctionExpression/.test( prop.value.type ) ) return;
 
 		let lexicalDepth = 0;
 		let usesArguments = false;
 
 		walk( prop.value.body, {
-			enter ( node ) {
+			enter ( node: Node ) {
 				if ( /^Function/.test( node.type ) ) {
 					lexicalDepth += 1;
 				}
@@ -40,7 +42,7 @@ export default function helpers ( validator, prop ) {
 				}
 			},
 
-			leave ( node ) {
+			leave ( node: Node ) {
 				if ( /^Function/.test( node.type ) ) {
 					lexicalDepth -= 1;
 				}

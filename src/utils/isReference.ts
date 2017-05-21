@@ -1,4 +1,6 @@
-export default function isReference ( node, parent ): boolean {
+import { Node } from '../interfaces';
+
+export default function isReference ( node: Node, parent: Node ): boolean {
 	if ( node.type === 'MemberExpression' ) {
 		return !node.computed && isReference( node.object, node );
 	}

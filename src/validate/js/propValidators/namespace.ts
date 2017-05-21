@@ -1,9 +1,11 @@
 import * as namespaces from '../../../utils/namespaces';
 import fuzzymatch from '../../utils/fuzzymatch';
+import { Validator } from '../../';
+import { Node } from '../../../interfaces';
 
 const valid = new Set( namespaces.validNamespaces );
 
-export default function namespace ( validator, prop ) {
+export default function namespace ( validator: Validator, prop: Node ) {
 	const ns = prop.value.value;
 
 	if ( prop.value.type !== 'Literal' || typeof ns !== 'string' ) {

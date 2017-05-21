@@ -1,4 +1,7 @@
-export default function checkForDupes ( validator, properties ) {
+import { Validator } from '../../';
+import { Node } from '../../../interfaces';
+
+export default function checkForDupes ( validator: Validator, properties: Node[] ) {
 	const seen = new Set();
 
 	properties.forEach( prop => {

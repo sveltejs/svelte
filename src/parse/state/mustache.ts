@@ -2,7 +2,7 @@ import readExpression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { Parser } from '../index';
-import { Node } from '../interfaces';
+import { Node } from '../../interfaces';
 
 const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
 

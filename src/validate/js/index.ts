@@ -3,11 +3,13 @@ import fuzzymatch from '../utils/fuzzymatch';
 import checkForDupes from './utils/checkForDupes';
 import checkForComputedKeys from './utils/checkForComputedKeys';
 import namespaces from '../../utils/namespaces';
+import { Validator } from '../';
+import { Node } from '../../interfaces';
 
 const validPropList = Object.keys( propValidators );
 
-export default function validateJs ( validator, js ) {
-	js.content.body.forEach( node => {
+export default function validateJs ( validator: Validator, js ) {
+	js.content.body.forEach( ( node: Node ) => {
 		// check there are no named exports
 		if ( node.type === 'ExportNamedDeclaration' ) {
 			validator.error( `A component can only have a default export`, node.start );
@@ -23,7 +25,7 @@ export default function validateJs ( validator, js ) {
 
 			const props = validator.properties;
 
-			node.declaration.properties.forEach( prop => {
+			node.declaration.properties.forEach( ( prop: Node ) => {
 				props[ prop.key.name ] = prop;
 			});
 
@@ -37,7 +39,7 @@ export default function validateJs ( validator, js ) {
 			}
 
 			// ensure all exported props are valid
-			node.declaration.properties.forEach( prop => {
+			node.declaration.properties.forEach( ( prop: Node ) => {
 				const propValidator = propValidators[ prop.key.name ];
 
 				if ( propValidator ) {

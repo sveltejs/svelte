@@ -1,6 +1,6 @@
 import FuzzySet from './FuzzySet';
 
-export default function fuzzymatch ( name, names ) {
+export default function fuzzymatch ( name: string, names: string[] ) {
 	const set = new FuzzySet( names );
 	const matches = set.get( name );
 

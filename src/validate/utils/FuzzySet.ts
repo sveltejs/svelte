@@ -1,4 +1,4 @@
-// adapted from https://github.com/Glench/this.js/blob/master/lib/this.js
+// adapted from https://github.com/Glench/fuzzyset.js/blob/master/lib/fuzzyset.js
 // BSD Licensed
 
 export default function FuzzySet (arr, useLevenshtein, gramSizeLower, gramSizeUpper) {
