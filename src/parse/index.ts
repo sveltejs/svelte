@@ -4,7 +4,7 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from './utils/hash';
-import { Node } from '../interfaces';
+import { Node, Parsed } from '../interfaces';
 import CompileError from '../utils/CompileError'
 
 class ParseError extends CompileError {
@@ -178,7 +178,7 @@ export class Parser {
 	}
 }
 
-export default function parse ( template: string, options: ParserOptions = {} ) {
+export default function parse ( template: string, options: ParserOptions = {} ) :Parsed {
 	const parser = new Parser( template, options );
 
 	return {

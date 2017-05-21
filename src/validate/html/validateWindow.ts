@@ -2,6 +2,8 @@ import flattenReference from '../../utils/flattenReference';
 import fuzzymatch from '../utils/fuzzymatch';
 import list from '../utils/list';
 import validateEventHandler from './validateEventHandler';
+import { Validator } from '../index';
+import { Node } from '../../interfaces';
 
 const validBindings = [
 	'innerWidth',
@@ -12,8 +14,8 @@ const validBindings = [
 	'scrollY'
 ];
 
-export default function validateWindow ( validator, node ) {
-	node.attributes.forEach( attribute => {
+export default function validateWindow ( validator: Validator, node: Node ) {
+	node.attributes.forEach( ( attribute: Node ) => {
 		if ( attribute.type === 'Binding' ) {
 			if ( attribute.value.type !== 'Identifier' ) {
 				const { parts } = flattenReference( attribute.value );

@@ -8,7 +8,7 @@ import { Node } from '../../interfaces';
 
 const validPropList = Object.keys( propValidators );
 
-export default function validateJs ( validator: Validator, js ) {
+export default function validateJs ( validator: Validator, js: Node ) {
 	js.content.body.forEach( ( node: Node ) => {
 		// check there are no named exports
 		if ( node.type === 'ExportNamedDeclaration' ) {
@@ -26,16 +26,16 @@ export default function validateJs ( validator: Validator, js ) {
 			const props = validator.properties;
 
 			node.declaration.properties.forEach( ( prop: Node ) => {
-				props[ prop.key.name ] = prop;
+				props.set( prop.key.name, prop );
 			});
 
 			// Remove these checks in version 2
-			if ( props.oncreate && props.onrender ) {
-				validator.error( 'Cannot have both oncreate and onrender', props.onrender.start );
+			if ( props.has( 'oncreate' ) && props.has( 'onrender' ) ) {
+				validator.error( 'Cannot have both oncreate and onrender', props.get( 'onrender' ).start );
 			}
 
-			if ( props.ondestroy && props.onteardown ) {
-				validator.error( 'Cannot have both ondestroy and onteardown', props.onteardown.start );
+			if ( props.has( 'ondestroy' ) && props.has( 'onteardown' ) ) {
+				validator.error( 'Cannot have both ondestroy and onteardown', props.get( 'onteardown' ).start );
 			}
 
 			// ensure all exported props are valid
@@ -56,8 +56,8 @@ export default function validateJs ( validator: Validator, js ) {
 				}
 			});
 
-			if ( props.namespace ) {
-				const ns = props.namespace.value.value;
+			if ( props.has( 'namespace' ) ) {
+				const ns = props.get( 'namespace' ).value.value;
 				validator.namespace = namespaces[ ns ] || ns;
 			}
 
@@ -66,8 +66,8 @@ export default function validateJs ( validator: Validator, js ) {
 	});
 
 	[ 'components', 'methods', 'helpers', 'transitions' ].forEach( key => {
-		if ( validator.properties[ key ] ) {
-			validator.properties[ key ].value.properties.forEach( prop => {
+		if ( validator.properties.has( key ) ) {
+			validator.properties.get( key ).value.properties.forEach( ( prop: Node ) => {
 				validator[ key ].set( prop.key.name, prop.value );
 			});
 		}

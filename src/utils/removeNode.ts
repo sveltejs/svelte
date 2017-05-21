@@ -1,3 +1,5 @@
+import { Node } from '../interfaces';
+
 const keys = {
 	ObjectExpression: 'properties',
 	Program: 'body'
@@ -8,7 +10,7 @@ const offsets = {
 	Program: [ 0, 0 ]
 };
 
-export function removeNode ( code, parent, node ) {
+export function removeNode ( code, parent: Node, node: Node ) {
 	const key = keys[ parent.type ];
 	const offset = offsets[ parent.type ];
 	if ( !key || !offset ) throw new Error( `not implemented: ${parent.type}` );

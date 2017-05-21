@@ -1,5 +1,7 @@
 import flattenReference from '../../utils/flattenReference';
 import list from '../utils/list';
+import { Validator } from '../index';
+import { Node } from '../../interfaces';
 
 const validBuiltins = new Set([
 	'set',
@@ -7,7 +9,7 @@ const validBuiltins = new Set([
 	'destroy'
 ]);
 
-export default function validateEventHandlerCallee ( validator, attribute ) {
+export default function validateEventHandlerCallee ( validator: Validator, attribute: Node ) {
 	const { callee, start, type } = attribute.expression;
 
 	if ( type !== 'CallExpression' ) {

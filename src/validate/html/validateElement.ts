@@ -1,13 +1,15 @@
 import validateEventHandler from './validateEventHandler';
+import { Validator } from '../index';
+import { Node } from '../../interfaces';
 
-export default function validateElement ( validator, node ) {
+export default function validateElement ( validator: Validator, node: Node ) {
 	const isComponent = node.name === ':Self' || validator.components.has( node.name );
 
-	let hasIntro;
-	let hasOutro;
-	let hasTransition;
+	let hasIntro: boolean;
+	let hasOutro: boolean;
+	let hasTransition: boolean;
 
-	node.attributes.forEach( attribute => {
+	node.attributes.forEach( ( attribute: Node ) => {
 		if ( !isComponent && attribute.type === 'Binding' ) {
 			const { name } = attribute;
 
@@ -35,13 +37,13 @@ export default function validateElement ( validator, node ) {
 				const type = getType( validator, node );
 
 				if ( type !== 'checkbox' && type !== 'radio' ) {
-					validator.error( `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">` );
+					validator.error( `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`, attribute.start );
 				}
 			}
 
 			else if ( name === 'currentTime' || name === 'duration' || name === 'paused' ) {
 				if ( node.name !== 'audio' && node.name !== 'video' ) {
-					validator.error( `'${name}' binding can only be used with <audio> or <video>` );
+					validator.error( `'${name}' binding can only be used with <audio> or <video>`, attribute.start );
 				}
 			}
 
@@ -78,8 +80,8 @@ export default function validateElement ( validator, node ) {
 	});
 }
 
-function getType ( validator, node ) {
-	const attribute = node.attributes.find( attribute => attribute.name === 'type' );
+function getType ( validator: Validator, node: Node ) {
+	const attribute = node.attributes.find( ( attribute: Node ) => attribute.name === 'type' );
 	if ( !attribute ) return null;
 
 	if ( attribute.value === true ) {
