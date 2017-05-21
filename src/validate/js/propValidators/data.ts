@@ -1,6 +1,9 @@
-const disallowed = new Set( [ 'Literal', 'ObjectExpression', 'ArrayExpression' ] );
+import { Validator } from '../../';
+import { Node } from '../../../interfaces';
 
-export default function data ( validator, prop ) {
+const disallowed = new Set([ 'Literal', 'ObjectExpression', 'ArrayExpression' ]);
+
+export default function data ( validator: Validator, prop: Node ) {
 	while ( prop.type === 'ParenthesizedExpression' ) prop = prop.expression;
 
 	// TODO should we disallow references and expressions as well?

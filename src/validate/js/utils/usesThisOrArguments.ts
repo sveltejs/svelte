@@ -1,11 +1,12 @@
 import { walk } from 'estree-walker';
 import isReference from '../../../utils/isReference';
+import { Node } from '../../../interfaces';
 
-export default function usesThisOrArguments ( node ) {
+export default function usesThisOrArguments ( node: Node ) {
 	let result = false;
 
 	walk( node, {
-		enter ( node ) {
+		enter ( node: Node, parent: Node ) {
 			if ( result || node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration' ) {
 				return this.skip();
 			}
@@ -14,7 +15,7 @@ export default function usesThisOrArguments ( node ) {
 				result = true;
 			}
 
-			if ( node.type === 'Identifier' && isReference( node ) && node.name === 'arguments' ) {
+			if ( node.type === 'Identifier' && isReference( node, parent ) && node.name === 'arguments' ) {
 				result = true;
 			}
 		}

@@ -4,29 +4,13 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from './utils/hash';
-import { Node } from './interfaces';
+import { Node } from '../interfaces';
+import CompileError from '../utils/CompileError'
 
-class ParseError extends Error {
-	frame: string
-	loc: { line: number, column: number }
-	pos: number
-	filename: string
-
+class ParseError extends CompileError {
 	constructor ( message: string, template: string, index: number, filename: string ) {
-		super( message );
-
-		const { line, column } = locate( template, index );
-
+		super( message, template, index, filename );
 		this.name = 'ParseError';
-		this.loc = { line: line + 1, column };
-		this.pos = index;
-		this.filename = filename;
-
-		this.frame = getCodeFrame( template, line, column );
-	}
-
-	toString () {
-		return `${this.message} (${this.loc.line}:${this.loc.column})\n${this.frame}`;
 	}
 }
 

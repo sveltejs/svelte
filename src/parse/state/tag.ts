@@ -6,7 +6,7 @@ import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
 import { Parser } from '../index';
-import { Node } from '../interfaces';
+import { Node } from '../../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
