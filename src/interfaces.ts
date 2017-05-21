@@ -15,5 +15,12 @@ export interface Parser {
 	html: Node;
 	css: Node;
 	js: Node;
-	metaTags: {}
+	metaTags: {};
+}
+
+export interface Parsed {
+	hash: number;
+	html: Node;
+	css: Node;
+	js: Node;
 }

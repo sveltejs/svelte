@@ -4,6 +4,7 @@ import generate from './generators/dom/index';
 import generateSSR from './generators/server-side-rendering/index';
 import { assign } from './shared/index.js';
 import { version } from '../package.json';
+import { Parsed } from './interface';
 
 function normalizeOptions ( options ) {
 	return assign( {
@@ -29,7 +30,7 @@ function normalizeOptions ( options ) {
 export function compile ( source, _options ) {
 	const options = normalizeOptions( _options );
 
-	let parsed;
+	let parsed: Parsed;
 
 	try {
 		parsed = parse( source, options );
