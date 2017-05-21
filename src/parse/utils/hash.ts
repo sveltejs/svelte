@@ -1,5 +1,5 @@
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
-export default function hash ( str: string ) {
+export default function hash ( str: string ) :number {
 	let hash = 5381;
 	let i = str.length;
 

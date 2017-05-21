@@ -1,5 +1,5 @@
-import * as namespaces from '../../../utils/namespaces.ts';
-import fuzzymatch from '../../utils/fuzzymatch.ts';
+import * as namespaces from '../../../utils/namespaces';
+import fuzzymatch from '../../utils/fuzzymatch';
 
 const valid = new Set( namespaces.validNamespaces );
 

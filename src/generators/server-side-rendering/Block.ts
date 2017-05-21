@@ -1,5 +1,5 @@
 import deindent from '../../utils/deindent.js';
-import flattenReference from '../../utils/flattenReference.ts';
+import flattenReference from '../../utils/flattenReference';
 
 export default class Block {
 	constructor ( options ) {

@@ -1,7 +1,7 @@
-import checkForAccessors from '../utils/checkForAccessors.ts';
-import checkForDupes from '../utils/checkForDupes.ts';
-import checkForComputedKeys from '../utils/checkForComputedKeys.ts';
-import usesThisOrArguments from '../utils/usesThisOrArguments.ts';
+import checkForAccessors from '../utils/checkForAccessors';
+import checkForDupes from '../utils/checkForDupes';
+import checkForComputedKeys from '../utils/checkForComputedKeys';
+import usesThisOrArguments from '../utils/usesThisOrArguments';
 
 const builtin = new Set( [ 'set', 'get', 'on', 'fire', 'observe', 'destroy' ] );
 

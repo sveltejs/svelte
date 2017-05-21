@@ -1,6 +1,8 @@
-import readExpression from '../read/expression.ts';
-import { whitespace } from '../../utils/patterns.ts';
-import { trimStart, trimEnd } from '../../utils/trim.ts';
+import readExpression from '../read/expression';
+import { whitespace } from '../../utils/patterns';
+import { trimStart, trimEnd } from '../../utils/trim';
+import { Parser } from '../index';
+import { Node } from '../interfaces';
 
 const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
 
@@ -27,7 +29,7 @@ function trimWhitespace ( block, trimBefore, trimAfter ) {
 	}
 }
 
-export default function mustache ( parser ) {
+export default function mustache ( parser: Parser ) {
 	const start = parser.index;
 	parser.index += 2;
 
@@ -145,7 +147,7 @@ export default function mustache ( parser ) {
 
 		const expression = readExpression( parser );
 
-		const block = {
+		const block: Node = {
 			start,
 			end: null,
 			type,

@@ -1,177 +1,204 @@
-import { locate } from 'locate-character';
-import fragment from './state/fragment.ts';
-import { whitespace } from '../utils/patterns.ts';
-import { trimStart, trimEnd } from '../utils/trim.ts';
-import getCodeFrame from '../utils/getCodeFrame.ts';
-import hash from './utils/hash.ts';
+import { locate, Location } from 'locate-character';
+import fragment from './state/fragment';
+import { whitespace } from '../utils/patterns';
+import { trimStart, trimEnd } from '../utils/trim';
+import getCodeFrame from '../utils/getCodeFrame';
+import hash from './utils/hash';
+import { Node } from './interfaces';
 
-function ParseError ( message, template, index, filename ) {
-	const { line, column } = locate( template, index );
+class ParseError extends Error {
+	frame: string
+	loc: { line: number, column: number }
+	pos: number
+	filename: string
 
-	this.name = 'ParseError';
-	this.message = message;
-	this.frame = getCodeFrame( template, line, column );
+	constructor ( message: string, template: string, index: number, filename: string ) {
+		super( message );
 
-	this.loc = { line: line + 1, column };
-	this.pos = index;
-	this.filename = filename;
-}
+		const { line, column } = locate( template, index );
 
-ParseError.prototype.toString = function () {
-	return `${this.message} (${this.loc.line}:${this.loc.column})\n${this.frame}`;
-};
+		this.name = 'ParseError';
+		this.loc = { line: line + 1, column };
+		this.pos = index;
+		this.filename = filename;
 
-export default function parse ( template, options = {} ) {
-	if ( typeof template !== 'string' ) {
-		throw new TypeError( 'Template must be a string' );
+		this.frame = getCodeFrame( template, line, column );
 	}
 
-	template = template.replace( /\s+$/, '' );
+	toString () {
+		return `${this.message} (${this.loc.line}:${this.loc.column})\n${this.frame}`;
+	}
+}
 
-	const parser = {
-		index: 0,
-		template,
-		stack: [],
-		metaTags: {},
+interface ParserOptions {
+	filename?: string
+}
 
-		current () {
-			return this.stack[ this.stack.length - 1 ];
-		},
+export class Parser {
+	readonly template: string;
+	readonly filename?: string;
 
-		acornError ( err ) {
-			parser.error( err.message.replace( / \(\d+:\d+\)$/, '' ), err.pos );
-		},
+	index: number;
+	stack: Array<Node>;
 
-		error ( message, index = this.index ) {
-			throw new ParseError( message, this.template, index, options.filename );
-		},
+	html: Node;
+	css: Node;
+	js: Node;
+	metaTags: {}
 
-		eat ( str, required ) {
-			if ( this.match( str ) ) {
-				this.index += str.length;
-				return true;
-			}
+	constructor ( template: string, options: ParserOptions ) {
+		if ( typeof template !== 'string' ) {
+			throw new TypeError( 'Template must be a string' );
+		}
 
-			if ( required ) {
-				this.error( `Expected ${str}` );
-			}
-		},
+		this.template = template.replace( /\s+$/, '' );
+		this.filename = options.filename;
 
-		match ( str ) {
-			return this.template.slice( this.index, this.index + str.length ) === str;
-		},
+		this.index = 0;
+		this.stack = [];
+		this.metaTags = {};
 
-		allowWhitespace () {
-			while ( this.index < this.template.length && whitespace.test( this.template[ this.index ] ) ) {
-				this.index++;
-			}
-		},
-
-		read ( pattern ) {
-			const match = pattern.exec( this.template.slice( this.index ) );
-			if ( !match || match.index !== 0 ) return null;
-
-			parser.index += match[0].length;
-
-			return match[0];
-		},
-
-		readUntil ( pattern ) {
-			if ( this.index >= this.template.length ) parser.error( 'Unexpected end of input' );
-
-			const start = this.index;
-			const match = pattern.exec( this.template.slice( start ) );
-
-			if ( match ) {
-				const start = this.index;
-				this.index = start + match.index;
-				return this.template.slice( start, this.index );
-			}
-
-			this.index = this.template.length;
-			return this.template.slice( start );
-		},
-
-		remaining () {
-			return this.template.slice( this.index );
-		},
-
-		requireWhitespace () {
-			if ( !whitespace.test( this.template[ this.index ] ) ) {
-				this.error( `Expected whitespace` );
-			}
-
-			this.allowWhitespace();
-		},
-
-		html: {
+		this.html = {
 			start: null,
 			end: null,
 			type: 'Fragment',
 			children: []
-		},
+		};
 
-		css: null,
+		this.css = null;
+		this.js = null;
 
-		js: null
-	};
+		this.stack.push( this.html );
 
-	parser.stack.push( parser.html );
+		let state = fragment;
 
-	let state = fragment;
+		while ( this.index < this.template.length ) {
+			state = state( this ) || fragment;
+		}
 
-	while ( parser.index < parser.template.length ) {
-		state = state( parser ) || fragment;
-	}
+		if ( this.stack.length > 1 ) {
+			const current = this.current();
 
-	if ( parser.stack.length > 1 ) {
-		const current = parser.current();
+			const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
+			this.error( `${type} was left open`, current.start );
+		}
 
-		const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
-		parser.error( `${type} was left open`, current.start );
-	}
+		if ( state !== fragment ) {
+			this.error( 'Unexpected end of input' );
+		}
 
-	if ( state !== fragment ) {
-		parser.error( 'Unexpected end of input' );
-	}
+		// trim unnecessary whitespace
+		while ( this.html.children.length ) {
+			const firstChild = this.html.children[0];
+			this.html.start = firstChild.start;
 
-	// trim unnecessary whitespace
-	while ( parser.html.children.length ) {
-		const firstChild = parser.html.children[0];
-		parser.html.start = firstChild.start;
+			if ( firstChild.type !== 'Text' ) break;
 
-		if ( firstChild.type !== 'Text' ) break;
+			const length = firstChild.data.length;
+			firstChild.data = trimStart( firstChild.data );
 
-		const length = firstChild.data.length;
-		firstChild.data = trimStart( firstChild.data );
+			if ( firstChild.data === '' ) {
+				this.html.children.shift();
+			} else {
+				this.html.start += length - firstChild.data.length;
+				break;
+			}
+		}
 
-		if ( firstChild.data === '' ) {
-			parser.html.children.shift();
-		} else {
-			parser.html.start += length - firstChild.data.length;
-			break;
+		while ( this.html.children.length ) {
+			const lastChild = this.html.children[ this.html.children.length - 1 ];
+			this.html.end = lastChild.end;
+
+			if ( lastChild.type !== 'Text' ) break;
+
+			const length = lastChild.data.length;
+			lastChild.data = trimEnd( lastChild.data );
+
+			if ( lastChild.data === '' ) {
+				this.html.children.pop();
+			} else {
+				this.html.end -= length - lastChild.data.length;
+				break;
+			}
 		}
 	}
 
-	while ( parser.html.children.length ) {
-		const lastChild = parser.html.children[ parser.html.children.length - 1 ];
-		parser.html.end = lastChild.end;
+	current () {
+		return this.stack[ this.stack.length - 1 ];
+	}
 
-		if ( lastChild.type !== 'Text' ) break;
+	acornError ( err: Error ) {
+		this.error( err.message.replace( / \(\d+:\d+\)$/, '' ), err.pos );
+	}
 
-		const length = lastChild.data.length;
-		lastChild.data = trimEnd( lastChild.data );
+	error ( message: string, index = this.index ) {
+		throw new ParseError( message, this.template, index, this.filename );
+	}
 
-		if ( lastChild.data === '' ) {
-			parser.html.children.pop();
-		} else {
-			parser.html.end -= length - lastChild.data.length;
-			break;
+	eat ( str: string, required?: boolean ) {
+		if ( this.match( str ) ) {
+			this.index += str.length;
+			return true;
+		}
+
+		if ( required ) {
+			this.error( `Expected ${str}` );
 		}
 	}
+
+	match ( str: string ) {
+		return this.template.slice( this.index, this.index + str.length ) === str;
+	}
+
+	allowWhitespace () {
+		while ( this.index < this.template.length && whitespace.test( this.template[ this.index ] ) ) {
+			this.index++;
+		}
+	}
+
+	read ( pattern: RegExp ) {
+		const match = pattern.exec( this.template.slice( this.index ) );
+		if ( !match || match.index !== 0 ) return null;
+
+		this.index += match[0].length;
+
+		return match[0];
+	}
+
+	readUntil ( pattern: RegExp ) {
+		if ( this.index >= this.template.length ) this.error( 'Unexpected end of input' );
+
+		const start = this.index;
+		const match = pattern.exec( this.template.slice( start ) );
+
+		if ( match ) {
+			const start = this.index;
+			this.index = start + match.index;
+			return this.template.slice( start, this.index );
+		}
+
+		this.index = this.template.length;
+		return this.template.slice( start );
+	}
+
+	remaining () {
+		return this.template.slice( this.index );
+	}
+
+	requireWhitespace () {
+		if ( !whitespace.test( this.template[ this.index ] ) ) {
+			this.error( `Expected whitespace` );
+		}
+
+		this.allowWhitespace();
+	}
+}
+
+export default function parse ( template: string, options: ParserOptions = {} ) {
+	const parser = new Parser( template, options );
 
 	return {
-		hash: hash( template ),
+		hash: hash( parser.template ),
 		html: parser.html,
 		css: parser.css,
 		js: parser.js

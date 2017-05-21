@@ -1,4 +1,4 @@
-import CodeBuilder from '../../utils/CodeBuilder.ts';
+import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent.js';
 
 export default class Block {

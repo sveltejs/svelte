@@ -1,11 +1,11 @@
-import Comment from './Comment.ts';
-import EachBlock from './EachBlock.ts';
-import Element from './Element.ts';
-import IfBlock from './IfBlock.ts';
-import MustacheTag from './MustacheTag.ts';
-import RawMustacheTag from './RawMustacheTag.ts';
-import Text from './Text.ts';
-import YieldTag from './YieldTag.ts';
+import Comment from './Comment';
+import EachBlock from './EachBlock';
+import Element from './Element';
+import IfBlock from './IfBlock';
+import MustacheTag from './MustacheTag';
+import RawMustacheTag from './RawMustacheTag';
+import Text from './Text';
+import YieldTag from './YieldTag';
 
 export default {
 	Comment,

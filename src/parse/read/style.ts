@@ -1,7 +1,8 @@
 import parse from 'css-tree/lib/parser/index.js';
 import walk from 'css-tree/lib/utils/walk.js';
+import { Parser } from '../index';
 
-export default function readStyle ( parser, start: number, attributes ) {
+export default function readStyle ( parser: Parser, start: number, attributes ) {
 	const contentStart = parser.index;
 	const styles = parser.readUntil( /<\/style>/ );
 	const contentEnd = parser.index;

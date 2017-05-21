@@ -1,10 +1,12 @@
-import readExpression from '../read/expression.ts';
-import readScript from '../read/script.ts';
-import readStyle from '../read/style.ts';
-import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives.ts';
-import { trimStart, trimEnd } from '../../utils/trim.ts';
-import { decodeCharacterReferences } from '../utils/html.ts';
-import isVoidElementName from '../../utils/isVoidElementName.ts';
+import readExpression from '../read/expression';
+import readScript from '../read/script';
+import readStyle from '../read/style';
+import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives';
+import { trimStart, trimEnd } from '../../utils/trim';
+import { decodeCharacterReferences } from '../utils/html';
+import isVoidElementName from '../../utils/isVoidElementName';
+import { Parser } from '../index';
+import { Node } from '../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
@@ -61,7 +63,7 @@ function stripWhitespace ( element ) {
 	}
 }
 
-export default function tag ( parser ) {
+export default function tag ( parser: Parser ) {
 	const start = parser.index++;
 
 	let parent = parser.current();
@@ -162,7 +164,7 @@ export default function tag ( parser ) {
 		return;
 	}
 
-	const element = {
+	const element: Node = {
 		start,
 		end: null, // filled in later
 		type: 'Element',
@@ -187,7 +189,7 @@ export default function tag ( parser ) {
 	return null;
 }
 
-function readTagName ( parser ) {
+function readTagName ( parser: Parser ) {
 	const start = parser.index;
 
 	if ( parser.eat( SELF ) ) {
@@ -222,7 +224,7 @@ function readTagName ( parser ) {
 	return name;
 }
 
-function readAttribute ( parser, uniqueNames ) {
+function readAttribute ( parser: Parser, uniqueNames ) {
 	const start = parser.index;
 
 	let name = parser.readUntil( /(\s|=|\/|>)/ );
@@ -277,13 +279,13 @@ function readAttribute ( parser, uniqueNames ) {
 	};
 }
 
-function readAttributeValue ( parser ) {
+function readAttributeValue ( parser: Parser ) {
 	let quoteMark;
 
 	if ( parser.eat( `'` ) ) quoteMark = `'`;
 	if ( parser.eat( `"` ) ) quoteMark = `"`;
 
-	let currentChunk = {
+	let currentChunk: Node = {
 		start: parser.index,
 		end: null,
 		type: 'Text',
@@ -347,7 +349,7 @@ function readAttributeValue ( parser ) {
 	parser.error( `Unexpected end of input` );
 }
 
-function getShorthandValue ( start, name ) {
+function getShorthandValue ( start: number, name: string ) {
 	const end = start + name.length;
 
 	return [{
