@@ -1,7 +1,10 @@
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference';
+import { DomGenerator } from '../../index';
+import Block from '../../Block';
+import { Node } from '../../../../interfaces';
 
-export default function visitEventHandler ( generator, block, state, node, attribute ) {
+export default function visitEventHandler ( generator: DomGenerator, block: Block, state, node: Node, attribute ) {
 	const name = attribute.name;
 	const isCustomEvent = generator.events.has( name );
 	const shouldHoist = !isCustomEvent && state.inEachBlock;

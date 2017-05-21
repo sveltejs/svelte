@@ -4,16 +4,43 @@ import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 
 export interface BlockOptions {
-	generator: DomGenerator
-	name: string
-	expression: Node
-	context: string
+	generator: DomGenerator;
+	name: string;
+	expression: Node;
+	context: string;
+	key: string;
 }
 
 export default class Block {
 	generator: DomGenerator;
 	name: string;
 	expression: Node;
+	context: string;
+	key: string;
+
+	builders: {
+		create: CodeBuilder;
+		mount: CodeBuilder;
+		update: CodeBuilder;
+		intro: CodeBuilder;
+		outro: CodeBuilder;
+		detach: CodeBuilder;
+		detachRaw: CodeBuilder;
+		destroy: CodeBuilder;
+	}
+
+	hasIntroMethod: boolean;
+	hasOutroMethod: boolean;
+	outros: number;
+
+	aliases: Map<string, string>;
+	variables: Map<string, string>;
+	getUniqueName: (name: string) => string;
+
+	component: string;
+	target: string;
+
+	hasUpdateMethod: boolean;
 
 	constructor ( options: BlockOptions ) {
 		this.generator = options.generator;
@@ -85,7 +112,7 @@ export default class Block {
 		}
 	}
 
-	addVariable ( name: string, init ) {
+	addVariable ( name: string, init?: string ) {
 		if ( this.variables.has( name ) && this.variables.get( name ) !== init ) {
 			throw new Error( `Variable '${name}' already initialised with a different value` );
 		}
@@ -101,11 +128,11 @@ export default class Block {
 		return this.aliases.get( name );
 	}
 
-	child ( options ) {
+	child ( options: BlockOptions ) {
 		return new Block( Object.assign( {}, this, options, { parent: this } ) );
 	}
 
-	contextualise ( expression, context, isEventHandler ) {
+	contextualise ( expression: Node, context?: string, isEventHandler?: boolean ) {
 		return this.generator.contextualise( this, expression, context, isEventHandler );
 	}
 

@@ -7,6 +7,9 @@ import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
 import addTransitions from './addTransitions';
+import { DomGenerator } from '../../index';
+import Block from '../../Block';
+import { Node } from '../../../../interfaces';
 
 const meta = {
 	':Window': visitWindow
@@ -26,7 +29,7 @@ const visitors = {
 	Ref: visitRef
 };
 
-export default function visitElement ( generator, block, state, node ) {
+export default function visitElement ( generator: DomGenerator, block: Block, state, node: Node ) {
 	if ( node.name in meta ) {
 		return meta[ node.name ]( generator, block, node );
 	}
@@ -131,7 +134,7 @@ export default function visitElement ( generator, block, state, node ) {
 	}
 }
 
-function getRenderStatement ( generator, namespace, name ) {
+function getRenderStatement ( generator: DomGenerator, namespace, name ) {
 	if ( namespace === 'http://www.w3.org/2000/svg' ) {
 		return `${generator.helper( 'createSvgElement' )}( '${name}' )`;
 	}

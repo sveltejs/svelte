@@ -1,8 +1,11 @@
 import deindent from '../../../../utils/deindent.js';
 import flattenReference from '../../../../utils/flattenReference';
 import getSetter from '../shared/binding/getSetter';
+import { DomGenerator } from '../../index';
+import Block from '../../Block';
+import { Node } from '../../../../interfaces';
 
-export default function visitBinding ( generator, block, state, node, attribute, local ) {
+export default function visitBinding ( generator: DomGenerator, block: Block, state, node: Node, attribute, local ) {
 	const { name } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 

@@ -1,5 +1,8 @@
 import flattenReference from '../../../../../utils/flattenReference';
 import deindent from '../../../../../utils/deindent.js';
+import { DomGenerator } from '../../../index';
+import Block from '../../../Block';
+import { Node } from '../../../../../interfaces';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -19,18 +22,18 @@ const readonly = new Set([
 	'online'
 ]);
 
-export default function visitWindow ( generator, block, node ) {
+export default function visitWindow ( generator: DomGenerator, block: Block, node: Node ) {
 	const events = {};
 	const bindings = {};
 
-	node.attributes.forEach( attribute => {
+	node.attributes.forEach( ( attribute: Node ) => {
 		if ( attribute.type === 'EventHandler' ) {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			generator.addSourcemapLocations( attribute.expression );
 
 			let usesState = false;
 
-			attribute.expression.arguments.forEach( arg => {
+			attribute.expression.arguments.forEach( ( arg: Node ) => {
 				const { contexts } = block.contextualise( arg, null, true );
 				if ( contexts.length ) usesState = true;
 			});

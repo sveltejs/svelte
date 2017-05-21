@@ -1,6 +1,8 @@
+import { DomGenerator } from '../index';
+import Block from '../Block';
+import { Node } from '../../../interfaces';
 
-
-export default function visitText ( generator, block, state, node ) {
+export default function visitText ( generator: DomGenerator, block: Block, state, node: Node ) {
 	if ( !node._state.shouldCreate ) return;
 	block.addElement( node._state.name, `${generator.helper( 'createText' )}( ${JSON.stringify( node.data )} )`, state.parentNode, node.usedAsAnchor );
 }
