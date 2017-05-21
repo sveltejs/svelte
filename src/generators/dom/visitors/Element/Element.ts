@@ -46,7 +46,7 @@ export default function visitElement ( generator, block, state, node ) {
 		block.builders.create.addLine( `${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );` );
 	}
 
-	function visitAttributes () {
+	function visitAttributesAndAddProps () {
 		let intro;
 		let outro;
 
@@ -63,6 +63,37 @@ export default function visitElement ( generator, block, state, node ) {
 			});
 
 		if ( intro || outro ) addTransitions( generator, block, childState, node, intro, outro );
+
+		if ( childState.allUsedContexts.length || childState.usesComponent ) {
+			const initialProps = [];
+			const updates = [];
+
+			if ( childState.usesComponent ) {
+				initialProps.push( `component: ${block.component}` );
+			}
+
+			childState.allUsedContexts.forEach( contextName => {
+				if ( contextName === 'state' ) return;
+
+				const listName = block.listNames.get( contextName );
+				const indexName = block.indexNames.get( contextName );
+
+				initialProps.push( `${listName}: ${listName},\n${indexName}: ${indexName}` );
+				updates.push( `${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};` );
+			});
+
+			if ( initialProps.length ) {
+				block.builders.create.addBlock( deindent`
+					${name}._svelte = {
+						${initialProps.join( ',\n' )}
+					};
+				` );
+			}
+
+			if ( updates.length ) {
+				block.builders.update.addBlock( updates.join( '\n' ) );
+			}
+		}
 	}
 
 	if ( !state.parentNode ) {
@@ -74,44 +105,13 @@ export default function visitElement ( generator, block, state, node ) {
 	if ( node.name !== 'select' ) {
 		// <select> value attributes are an annoying special case — it must be handled
 		// *after* its children have been updated
-		visitAttributes();
+		visitAttributesAndAddProps();
 	}
 
 	// special case – bound <option> without a value attribute
 	if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
 		const statement = `${name}.__value = ${name}.textContent;`;
 		node.initialUpdate = node.lateUpdate = statement;
-	}
-
-	if ( childState.allUsedContexts.length || childState.usesComponent ) {
-		const initialProps = [];
-		const updates = [];
-
-		if ( childState.usesComponent ) {
-			initialProps.push( `component: ${block.component}` );
-		}
-
-		childState.allUsedContexts.forEach( contextName => {
-			if ( contextName === 'state' ) return;
-
-			const listName = block.listNames.get( contextName );
-			const indexName = block.indexNames.get( contextName );
-
-			initialProps.push( `${listName}: ${listName},\n${indexName}: ${indexName}` );
-			updates.push( `${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};` );
-		});
-
-		if ( initialProps.length ) {
-			block.builders.create.addBlock( deindent`
-				${name}._svelte = {
-					${initialProps.join( ',\n' )}
-				};
-			` );
-		}
-
-		if ( updates.length ) {
-			block.builders.update.addBlock( updates.join( '\n' ) );
-		}
 	}
 
 	node.children.forEach( child => {
@@ -123,7 +123,7 @@ export default function visitElement ( generator, block, state, node ) {
 	}
 
 	if ( node.name === 'select' ) {
-		visitAttributes();
+		visitAttributesAndAddProps();
 	}
 
 	if ( node.initialUpdate ) {
