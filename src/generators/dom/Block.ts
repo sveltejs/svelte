@@ -1,8 +1,21 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent.js';
+import { DomGenerator } from './index';
+import { Node } from '../../interfaces';
+
+export interface BlockOptions {
+	generator: DomGenerator
+	name: string
+	expression: Node
+	context: string
+}
 
 export default class Block {
-	constructor ( options ) {
+	generator: DomGenerator;
+	name: string;
+	expression: Node;
+
+	constructor ( options: BlockOptions ) {
 		this.generator = options.generator;
 		this.name = options.name;
 		this.expression = options.expression;

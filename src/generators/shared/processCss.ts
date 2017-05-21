@@ -1,6 +1,8 @@
+import { Parsed, Node } from '../../interfaces';
+
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
 
-export default function processCss ( parsed, code ) {
+export default function processCss ( parsed: Parsed, code ) {
 	const css = parsed.css.content.styles;
 	const offset = parsed.css.content.start;
 
@@ -8,9 +10,9 @@ export default function processCss ( parsed, code ) {
 
 	const keyframes = new Map();
 
-	function walkKeyframes ( node ) {
+	function walkKeyframes ( node: Node ) {
 		if ( node.type === 'Atrule' && node.name.toLowerCase() === 'keyframes' ) {
-			node.expression.children.forEach( expression => {
+			node.expression.children.forEach( ( expression: Node ) => {
 				if ( expression.type === 'Identifier' ) {
 					const newName = `svelte-${parsed.hash}-${expression.name}`;
 					code.overwrite( expression.start, expression.end, newName );
@@ -26,8 +28,8 @@ export default function processCss ( parsed, code ) {
 
 	parsed.css.children.forEach( walkKeyframes );
 
-	function transform ( rule ) {
-		rule.selector.children.forEach( selector => {
+	function transform ( rule: Node ) {
+		rule.selector.children.forEach( ( selector: Node ) => {
 			const start = selector.start - offset;
 			const end = selector.end - offset;
 
@@ -50,11 +52,11 @@ export default function processCss ( parsed, code ) {
 			code.overwrite( start + offset, end + offset, transformed );
 		});
 
-		rule.block.children.forEach( block => {
+		rule.block.children.forEach( ( block: Node ) => {
 			if ( block.type === 'Declaration' ) {
 				const property = block.property.toLowerCase();
 				if ( property === 'animation' || property === 'animation-name' ) {
-					block.value.children.forEach( block => {
+					block.value.children.forEach( ( block: Node ) => {
 						if ( block.type === 'Identifier' ) {
 							const name = block.name;
 							if ( keyframes.has( name ) ) {
@@ -67,7 +69,7 @@ export default function processCss ( parsed, code ) {
 		});
 	}
 
-	function walk ( node ) {
+	function walk ( node: Node ) {
 		if ( node.type === 'Rule' ) {
 			transform( node );
 		} else if ( node.type === 'Atrule' && node.name.toLowerCase() === 'keyframes' ) {

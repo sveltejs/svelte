@@ -24,3 +24,22 @@ export interface Parsed {
 	css: Node;
 	js: Node;
 }
+
+export interface Warning {
+	loc?: {line: number, column: number, pos: number};
+	message: string
+	filename?: string
+	toString: () => string
+}
+
+export interface CompileOptions {
+	format?: string;
+	name?: string;
+	filename?: string;
+
+	dev?: boolean;
+	shared?: boolean | string;
+
+	onerror?: (error: Error) => void
+	onwarn?: (warning: Warning) => void
+}
