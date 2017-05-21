@@ -3,7 +3,7 @@ import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
 import CompileError from '../utils/CompileError'
-import { Node, Parsed } from '../interfaces';
+import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 
 class ValidationError extends CompileError {
 	constructor ( message: string, template: string, index: number, filename: string ) {
@@ -27,7 +27,7 @@ export class Validator {
 	helpers: Map<string, Node>;
 	transitions: Map<string, Node>;
 
-	constructor ( parsed: Parsed, source: string, options: { onwarn, name?: string, filename?: string } ) {
+	constructor ( parsed: Parsed, source: string, options: CompileOptions ) {
 		this.source = source;
 		this.filename = options !== undefined ? options.filename : undefined;
 
@@ -64,7 +64,9 @@ export class Validator {
 	}
 }
 
-export default function validate ( parsed: Parsed, source: string, { onerror, onwarn, name, filename } ) {
+export default function validate ( parsed: Parsed, source: string, options: CompileOptions ) {
+	const { onwarn, onerror, name, filename } = options;
+
 	try {
 		if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {
 			const error = new Error( `options.name must be a valid identifier` );

@@ -1,12 +1,14 @@
 import Block from './Block';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { assign } from '../../shared/index.js';
+import { DomGenerator } from './index';
+import { Node } from '../../interfaces';
 
-function isElseIf ( node ) {
+function isElseIf ( node: Node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
 }
 
-function getChildState ( parent, child ) {
+function getChildState ( parent, child = {} ) {
 	return assign( {}, parent, { name: null, parentNode: null }, child || {} );
 }
 
@@ -25,7 +27,7 @@ const elementsWithoutText = new Set([
 ]);
 
 const preprocessors = {
-	MustacheTag: ( generator, block, state, node ) => {
+	MustacheTag: ( generator: DomGenerator, block, state, node: Node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -34,7 +36,7 @@ const preprocessors = {
 		});
 	},
 
-	RawMustacheTag: ( generator, block, state, node ) => {
+	RawMustacheTag: ( generator: DomGenerator, block, state, node: Node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -44,7 +46,7 @@ const preprocessors = {
 		node._state = getChildState( state, { basename, name });
 	},
 
-	Text: ( generator, block, state, node ) => {
+	Text: ( generator: DomGenerator, block, state, node: Node ) => {
 		node._state = getChildState( state );
 
 		if ( !/\S/.test( node.data ) ) {
@@ -56,13 +58,13 @@ const preprocessors = {
 		node._state.name = block.getUniqueName( `text` );
 	},
 
-	IfBlock: ( generator, block, state, node ) => {
+	IfBlock: ( generator: DomGenerator, block, state, node: Node ) => {
 		const blocks = [];
 		let dynamic = false;
 		let hasIntros = false;
 		let hasOutros = false;
 
-		function attachBlocks ( node ) {
+		function attachBlocks ( node: Node ) {
 			const dependencies = block.findDependencies( node.expression );
 			block.addDependencies( dependencies );
 
@@ -113,7 +115,7 @@ const preprocessors = {
 		generator.blocks.push( ...blocks );
 	},
 
-	EachBlock: ( generator, block, state, node ) => {
+	EachBlock: ( generator: DomGenerator, block, state, node: Node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -175,7 +177,7 @@ const preprocessors = {
 		}
 	},
 
-	Element: ( generator, block, state, node ) => {
+	Element: ( generator: DomGenerator, block, state, node: Node ) => {
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
 
 		if ( isComponent ) {
@@ -193,9 +195,9 @@ const preprocessors = {
 			});
 		}
 
-		node.attributes.forEach( attribute => {
+		node.attributes.forEach( ( attribute: Node ) => {
 			if ( attribute.type === 'Attribute' && attribute.value !== true ) {
-				attribute.value.forEach( chunk => {
+				attribute.value.forEach( ( chunk: Node ) => {
 					if ( chunk.type !== 'Text' ) {
 						const dependencies = block.findDependencies( chunk.expression );
 						block.addDependencies( dependencies );
@@ -238,12 +240,12 @@ const preprocessors = {
 	}
 };
 
-function preprocessChildren ( generator, block, state, node, isTopLevel ) {
+function preprocessChildren ( generator: DomGenerator, block, state, node: Node, isTopLevel: boolean ) {
 	// glue text nodes together
-	const cleaned = [];
-	let lastChild;
+	const cleaned: Node[] = [];
+	let lastChild: Node;
 
-	node.children.forEach( child => {
+	node.children.forEach( ( child: Node ) => {
 		if ( child.type === 'Comment' ) return;
 
 		if ( child.type === 'Text' && lastChild && lastChild.type === 'Text' ) {
@@ -273,7 +275,7 @@ function preprocessChildren ( generator, block, state, node, isTopLevel ) {
 
 	lastChild = null;
 
-	cleaned.forEach( child => {
+	cleaned.forEach( ( child: Node ) => {
 		const preprocess = preprocessors[ child.type ];
 		if ( preprocess ) preprocess( generator, block, state, child );
 
@@ -292,7 +294,7 @@ function preprocessChildren ( generator, block, state, node, isTopLevel ) {
 	node.children = cleaned;
 }
 
-export default function preprocess ( generator, state, node ) {
+export default function preprocess ( generator: DomGenerator, state, node ) {
 	const block = new Block({
 		generator,
 		name: generator.alias( 'create_main_fragment' ),

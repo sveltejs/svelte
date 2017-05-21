@@ -9,9 +9,16 @@ import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
 import preprocess from './preprocess';
+import Block from './Block';
+import { Parsed, CompileOptions, Node } from '../../interfaces';
 
-class DomGenerator extends Generator {
-	constructor ( parsed, source, name, options ) {
+export class DomGenerator extends Generator {
+	blocks: Block[]
+	uses: Set<string>;
+	readonly: Set<string>;
+	metaBindings: string[];
+
+	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
 		super( parsed, source, name, options );
 		this.blocks = [];
 		this.uses = new Set();
@@ -22,7 +29,7 @@ class DomGenerator extends Generator {
 		this.metaBindings = [];
 	}
 
-	helper ( name ) {
+	helper ( name: string ) {
 		if ( this.options.dev && `${name}Dev` in shared ) {
 			name = `${name}Dev`;
 		}
@@ -33,7 +40,7 @@ class DomGenerator extends Generator {
 	}
 }
 
-export default function dom ( parsed, source, options ) {
+export default function dom ( parsed: Parsed, source: string, options: CompileOptions ) {
 	const format = options.format || 'es';
 	const name = options.name || 'SvelteComponent';
 
@@ -49,7 +56,7 @@ export default function dom ( parsed, source, options ) {
 
 	const block = preprocess( generator, state, parsed.html );
 
-	parsed.html.children.forEach( node => {
+	parsed.html.children.forEach( ( node: Node ) => {
 		visit( generator, block, state, node );
 	});
 

@@ -4,16 +4,16 @@ import generate from './generators/dom/index';
 import generateSSR from './generators/server-side-rendering/index';
 import { assign } from './shared/index.js';
 import { version } from '../package.json';
-import { Parsed } from './interface';
+import { Parsed, CompileOptions, Warning } from './interfaces';
 
-function normalizeOptions ( options ) {
-	return assign( {
+function normalizeOptions ( options: CompileOptions ) :CompileOptions {
+	return assign({
 		generate: 'dom',
 
 		// a filename is necessary for sourcemap generation
 		filename: 'SvelteComponent.html',
 
-		onwarn: warning => {
+		onwarn: ( warning: Warning ) => {
 			if ( warning.loc ) {
 				console.warn( `(${warning.loc.line}:${warning.loc.column}) – ${warning.message}` ); // eslint-disable-line no-console
 			} else {
@@ -21,13 +21,13 @@ function normalizeOptions ( options ) {
 			}
 		},
 
-		onerror: error => {
+		onerror: ( error: Error ) => {
 			throw error;
 		}
 	}, options );
 }
 
-export function compile ( source, _options ) {
+export function compile ( source: string, _options: CompileOptions ) {
 	const options = normalizeOptions( _options );
 
 	let parsed: Parsed;

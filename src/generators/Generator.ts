@@ -10,15 +10,34 @@ import getIntro from './shared/utils/getIntro';
 import getOutro from './shared/utils/getOutro';
 import processCss from './shared/processCss';
 import annotateWithScopes from '../utils/annotateWithScopes';
+import { Node, Parsed, CompileOptions } from '../../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
 export default class Generator {
-	source: string
-	name: string
-	// TODO all the rest...
+	parsed: Parsed;
+	source: string;
+	name: string;
+	options: CompileOptions;
 
-	constructor ( parsed, source: string, name: string, options ) {
+	imports: Node[];
+	helpers: Set<string>;
+	components: Set<string>;
+	events: Set<string>;
+	transitions: Set<string>;
+	importedComponents: Map<string, string>;
+
+	bindingGroups: string[];
+	expectedProperties: Set<string>;
+	css: string;
+	cssId: string;
+	usesRefs: boolean;
+
+	importedNames: Set<string>;
+	aliases: Map<string, string>;
+	usedNames: Set<string>;
+
+	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
@@ -46,19 +65,19 @@ export default class Generator {
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
 		this.importedNames = new Set();
 		this.aliases = new Map();
-		this._usedNames = new Set( [ name ] );
+		this.usedNames = new Set( [ name ] );
 	}
 
-	addSourcemapLocations ( node ) {
+	addSourcemapLocations ( node: Node ) {
 		walk( node, {
-			enter: node => {
+			enter: ( node: Node ) => {
 				this.code.addSourcemapLocation( node.start );
 				this.code.addSourcemapLocation( node.end );
 			}
 		});
 	}
 
-	alias ( name ) {
+	alias ( name: string ) {
 		if ( !this.aliases.has( name ) ) {
 			this.aliases.set( name, this.getUniqueName( name ) );
 		}
@@ -66,10 +85,10 @@ export default class Generator {
 		return this.aliases.get( name );
 	}
 
-	contextualise ( block, expression, context, isEventHandler ) {
+	contextualise ( block, expression: Node, context, isEventHandler ) {
 		this.addSourcemapLocations( expression );
 
-		const usedContexts = [];
+		const usedContexts: string[] = [];
 
 		const { code, helpers } = this;
 		const { contexts, indexes } = block;
@@ -80,7 +99,7 @@ export default class Generator {
 		const self = this;
 
 		walk( expression, {
-			enter ( node, parent, key ) {
+			enter ( node: Node, parent: Node, key: string ) {
 				if ( /^Function/.test( node.type ) ) lexicalDepth += 1;
 
 				if ( node._scope ) {
@@ -142,7 +161,7 @@ export default class Generator {
 				}
 			},
 
-			leave ( node ) {
+			leave ( node: Node ) {
 				if ( /^Function/.test( node.type ) ) lexicalDepth -= 1;
 				if ( node._scope ) scope = scope.parent;
 			}
@@ -159,12 +178,12 @@ export default class Generator {
 		if ( expression._dependencies ) return expression._dependencies;
 
 		let scope = annotateWithScopes( expression );
-		const dependencies = [];
+		const dependencies: string[] = [];
 
 		const generator = this; // can't use arrow functions, because of this.skip()
 
 		walk( expression, {
-			enter ( node, parent ) {
+			enter ( node: Node, parent: Node ) {
 				if ( node._scope ) {
 					scope = node._scope;
 					return;
@@ -184,7 +203,7 @@ export default class Generator {
 				}
 			},
 
-			leave ( node ) {
+			leave ( node: Node ) {
 				if ( node._scope ) scope = scope.parent;
 			}
 		});
@@ -278,11 +297,11 @@ export default class Generator {
 		};
 	}
 
-	getUniqueName ( name ) {
+	getUniqueName ( name: string ) {
 		if ( test ) name = `${name}$`;
 		let alias = name;
-		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ); alias = `${name}_${i++}` );
-		this._usedNames.add( alias );
+		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this.usedNames.has( alias ); alias = `${name}_${i++}` );
+		this.usedNames.add( alias );
 		return alias;
 	}
 
@@ -291,13 +310,13 @@ export default class Generator {
 		return name => {
 			if ( test ) name = `${name}$`;
 			let alias = name;
-			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this._usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}_${i++}` );
+			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this.usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}_${i++}` );
 			localUsedNames.add( alias );
 			return alias;
 		};
 	}
 
-	parseJs ( ssr ) {
+	parseJs ( ssr: boolean = false ) {
 		const { source } = this;
 		const { js } = this.parsed;
 

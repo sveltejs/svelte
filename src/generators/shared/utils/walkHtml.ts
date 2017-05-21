@@ -1,12 +1,14 @@
-export default function walkHtml ( html, visitors ) {
-	function visit ( node ) {
+import { Node } from '../../../interfaces';
+
+export default function walkHtml ( html: Node, visitors ) {
+	function visit ( node: Node ) {
 		const visitor = visitors[ node.type ];
 		if ( !visitor ) throw new Error( `Not implemented: ${node.type}` );
 
 		if ( visitor.enter ) visitor.enter( node );
 
 		if ( node.children ) {
-			node.children.forEach( child => {
+			node.children.forEach( ( child: Node ) => {
 				visit( child );
 			});
 		}
