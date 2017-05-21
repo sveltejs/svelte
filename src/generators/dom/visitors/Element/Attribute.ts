@@ -1,8 +1,11 @@
 import attributeLookup from './lookup';
 import deindent from '../../../../utils/deindent.js';
 import getStaticAttributeValue from './getStaticAttributeValue';
+import { DomGenerator } from '../../index';
+import Block from '../../Block';
+import { Node } from '../../../../interfaces';
 
-export default function visitAttribute ( generator, block, state, node, attribute ) {
+export default function visitAttribute ( generator: DomGenerator, block: Block, state, node: Node, attribute ) {
 	const name = attribute.name;
 
 	let metadata = state.namespace ? null : attributeLookup[ name ];

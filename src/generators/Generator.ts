@@ -10,7 +10,9 @@ import getIntro from './shared/utils/getIntro';
 import getOutro from './shared/utils/getOutro';
 import processCss from './shared/processCss';
 import annotateWithScopes from '../utils/annotateWithScopes';
-import { Node, Parsed, CompileOptions } from '../../interfaces';
+import DomBlock from './dom/Block';
+import SsrBlock from './server-side-rendering/Block';
+import { Node, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
@@ -85,7 +87,7 @@ export default class Generator {
 		return this.aliases.get( name );
 	}
 
-	contextualise ( block, expression: Node, context, isEventHandler ) {
+	contextualise ( block: DomBlock | SsrBlock, expression: Node, context: string, isEventHandler: boolean ) {
 		this.addSourcemapLocations( expression );
 
 		const usedContexts: string[] = [];
@@ -219,7 +221,7 @@ export default class Generator {
 
 	generate ( result, options, { name, format } ) {
 		if ( this.imports.length ) {
-			const statements = [];
+			const statements: string[] = [];
 
 			this.imports.forEach( ( declaration, i ) => {
 				if ( format === 'es' ) {
@@ -227,14 +229,14 @@ export default class Generator {
 					return;
 				}
 
-				const defaultImport = declaration.specifiers.find( x => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
-				const namespaceImport = declaration.specifiers.find( x => x.type === 'ImportNamespaceSpecifier' );
-				const namedImports = declaration.specifiers.filter( x => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
+				const defaultImport = declaration.specifiers.find( ( x: Node ) => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
+				const namespaceImport = declaration.specifiers.find( ( x: Node ) => x.type === 'ImportNamespaceSpecifier' );
+				const namedImports = declaration.specifiers.filter( ( x: Node ) => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
 
 				const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
 				declaration.name = name; // hacky but makes life a bit easier later
 
-				namedImports.forEach( specifier => {
+				namedImports.forEach( ( specifier: Node ) => {
 					statements.push( `var ${specifier.local.name} = ${name}.${specifier.imported.name}` );
 				});
 
@@ -253,7 +255,7 @@ export default class Generator {
 
 		const compiled = new Bundle({ separator: '' });
 
-		function addString ( str ) {
+		function addString ( str: string ) {
 			compiled.addSource({
 				content: new MagicString( str )
 			});
@@ -273,7 +275,7 @@ export default class Generator {
 			});
 		}
 
-		parts.forEach( str => {
+		parts.forEach( ( str: string ) => {
 			const chunk = str.replace( pattern, '' );
 			if ( chunk ) addString( chunk );
 

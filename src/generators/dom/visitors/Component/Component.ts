@@ -5,6 +5,9 @@ import visitAttribute from './Attribute';
 import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
+import { DomGenerator } from '../../index';
+import Block from '../../Block';
+import { Node } from '../../../../interfaces';
 
 function stringifyProps ( props ) {
 	if ( !props.length ) return '{}';
@@ -32,7 +35,7 @@ const visitors = {
 	Ref: visitRef
 };
 
-export default function visitComponent ( generator, block, state, node ) {
+export default function visitComponent ( generator: DomGenerator, block: Block, state, node: Node ) {
 	const hasChildren = node.children.length > 0;
 	const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
 

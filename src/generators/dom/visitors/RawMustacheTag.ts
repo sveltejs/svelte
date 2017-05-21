@@ -1,6 +1,9 @@
 import deindent from '../../../utils/deindent.js';
+import { DomGenerator } from '../index';
+import Block from '../Block';
+import { Node } from '../../../interfaces';
 
-export default function visitRawMustacheTag ( generator, block, state, node ) {
+export default function visitRawMustacheTag ( generator: DomGenerator, block: Block, state, node: Node ) {
 	const name = node._state.basename;
 	const before = node._state.name;
 	const value = block.getUniqueName( `${name}_value` );

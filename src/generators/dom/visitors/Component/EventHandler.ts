@@ -1,6 +1,9 @@
 import deindent from '../../../../utils/deindent.js';
+import { DomGenerator } from '../../index';
+import Block from '../../Block';
+import { Node } from '../../../../interfaces';
 
-export default function visitEventHandler ( generator, block, state, node, attribute, local ) {
+export default function visitEventHandler ( generator: DomGenerator, block: Block, state, node: Node, attribute, local ) {
 	// TODO verify that it's a valid callee (i.e. built-in or declared method)
 	generator.addSourcemapLocations( attribute.expression );
 	generator.code.prependRight( attribute.expression.start, `${block.component}.` );
