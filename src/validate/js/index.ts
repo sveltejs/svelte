@@ -1,8 +1,8 @@
-import propValidators from './propValidators/index.ts';
-import fuzzymatch from '../utils/fuzzymatch.ts';
-import checkForDupes from './utils/checkForDupes.ts';
-import checkForComputedKeys from './utils/checkForComputedKeys.ts';
-import namespaces from '../../utils/namespaces.ts';
+import propValidators from './propValidators/index';
+import fuzzymatch from '../utils/fuzzymatch';
+import checkForDupes from './utils/checkForDupes';
+import checkForComputedKeys from './utils/checkForComputedKeys';
+import namespaces from '../../utils/namespaces';
 
 const validPropList = Object.keys( propValidators );
 

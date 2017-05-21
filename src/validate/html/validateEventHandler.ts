@@ -1,5 +1,5 @@
-import flattenReference from '../../utils/flattenReference.ts';
-import list from '../utils/list.ts';
+import flattenReference from '../../utils/flattenReference';
+import list from '../utils/list';
 
 const validBuiltins = new Set([
 	'set',

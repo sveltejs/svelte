@@ -1,5 +1,5 @@
 import { walk } from 'estree-walker';
-import isReference from '../../../utils/isReference.ts';
+import isReference from '../../../utils/isReference';
 
 export default function usesThisOrArguments ( node ) {
 	let result = false;

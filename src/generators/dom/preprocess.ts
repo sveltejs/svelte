@@ -1,5 +1,5 @@
-import Block from './Block.ts';
-import { trimStart, trimEnd } from '../../utils/trim.ts';
+import Block from './Block';
+import { trimStart, trimEnd } from '../../utils/trim';
 import { assign } from '../../shared/index.js';
 
 function isElseIf ( node ) {

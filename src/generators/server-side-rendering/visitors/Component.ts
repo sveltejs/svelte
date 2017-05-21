@@ -1,5 +1,5 @@
-import flattenReference from '../../../utils/flattenReference.ts';
-import visit from '../visit.ts';
+import flattenReference from '../../../utils/flattenReference';
+import visit from '../visit';
 
 export default function visitComponent ( generator, block, node ) {
 	function stringify ( chunk ) {

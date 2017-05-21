@@ -1,15 +1,15 @@
-import data from './data.ts';
-import computed from './computed.ts';
-import oncreate from './oncreate.ts';
-import ondestroy from './ondestroy.ts';
-import onrender from './onrender.ts';
-import onteardown from './onteardown.ts';
-import helpers from './helpers.ts';
-import methods from './methods.ts';
-import components from './components.ts';
-import events from './events.ts';
-import namespace from './namespace.ts';
-import transitions from './transitions.ts';
+import data from './data';
+import computed from './computed';
+import oncreate from './oncreate';
+import ondestroy from './ondestroy';
+import onrender from './onrender';
+import onteardown from './onteardown';
+import helpers from './helpers';
+import methods from './methods';
+import components from './components';
+import events from './events';
+import namespace from './namespace';
+import transitions from './transitions';
 
 export default {
 	data,

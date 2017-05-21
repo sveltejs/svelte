@@ -1,12 +1,12 @@
 import deindent from '../../../../utils/deindent.js';
-import visit from '../../visit.ts';
-import visitComponent from '../Component/Component.ts';
-import visitWindow from './meta/Window.ts';
-import visitAttribute from './Attribute.ts';
-import visitEventHandler from './EventHandler.ts';
-import visitBinding from './Binding.ts';
-import visitRef from './Ref.ts';
-import addTransitions from './addTransitions.ts';
+import visit from '../../visit';
+import visitComponent from '../Component/Component';
+import visitWindow from './meta/Window';
+import visitAttribute from './Attribute';
+import visitEventHandler from './EventHandler';
+import visitBinding from './Binding';
+import visitRef from './Ref';
+import addTransitions from './addTransitions';
 
 const meta = {
 	':Window': visitWindow

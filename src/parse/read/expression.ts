@@ -1,4 +1,5 @@
 import { parseExpressionAt } from 'acorn';
+import { Parser } from '../index';
 
 const literals = new Map([
 	[ 'true', true ],
@@ -6,7 +7,7 @@ const literals = new Map([
 	[ 'null', null ]
 ]);
 
-export default function readExpression ( parser ) {
+export default function readExpression ( parser: Parser ) {
 	const start = parser.index;
 
 	const name = parser.readUntil( /\s*}}/ );

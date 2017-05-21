@@ -1,7 +1,7 @@
-import flattenReference from '../../utils/flattenReference.ts';
-import fuzzymatch from '../utils/fuzzymatch.ts';
-import list from '../utils/list.ts';
-import validateEventHandler from './validateEventHandler.ts';
+import flattenReference from '../../utils/flattenReference';
+import fuzzymatch from '../utils/fuzzymatch';
+import list from '../utils/list';
+import validateEventHandler from './validateEventHandler';
 
 const validBindings = [
 	'innerWidth',
