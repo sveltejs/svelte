@@ -48,7 +48,7 @@ export function compile ( source: string, _options: CompileOptions ) {
 	return compiler( parsed, source, options );
 }
 
-export function create ( source: string, _options: CompileOptions ) {
+export function create ( source: string, _options: CompileOptions = {} ) {
 	_options.format = 'eval';
 
 	const compiled = compile( source, _options );
