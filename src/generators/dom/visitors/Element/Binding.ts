@@ -5,8 +5,9 @@ import getStaticAttributeValue from './getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitBinding ( generator: DomGenerator, block: Block, state, node: Node, attribute ) {
+export default function visitBinding ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node ) {
 	const { name, parts } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 
@@ -18,7 +19,7 @@ export default function visitBinding ( generator: DomGenerator, block: Block, st
 
 	const eventName = getBindingEventName( node, attribute );
 	const handler = block.getUniqueName( `${state.parentNode}_${eventName}_handler` );
-	const isMultipleSelect = node.name === 'select' && node.attributes.find( attr => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
+	const isMultipleSelect = node.name === 'select' && node.attributes.find( ( attr: Node ) => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
 	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, parts.join( '.' ) ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
@@ -144,9 +145,9 @@ export default function visitBinding ( generator: DomGenerator, block: Block, st
 	}
 }
 
-function getBindingEventName ( node, attribute ) {
+function getBindingEventName ( node: Node, attribute: Node ) {
 	if ( node.name === 'input' ) {
-		const typeAttribute = node.attributes.find( attr => attr.type === 'Attribute' && attr.name === 'type' );
+		const typeAttribute = node.attributes.find( ( attr: Node ) => attr.type === 'Attribute' && attr.name === 'type' );
 		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
 
 		return type === 'checkbox' || type === 'radio' ? 'change' : 'input';
@@ -160,7 +161,7 @@ function getBindingEventName ( node, attribute ) {
 	return 'change';
 }
 
-function getBindingValue ( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type ) {
+function getBindingValue ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node, isMultipleSelect: boolean, bindingGroup: number, type: string ) {
 	// <select multiple bind:value='selected>
 	if ( isMultipleSelect ) {
 		return `[].map.call( ${state.parentNode}.querySelectorAll(':checked'), function ( option ) { return option.__value; })`;
@@ -189,7 +190,7 @@ function getBindingValue ( generator, block, state, node, attribute, isMultipleS
 	return `${state.parentNode}.${attribute.name}`;
 }
 
-function getBindingGroup ( generator, keypath ) {
+function getBindingGroup ( generator: DomGenerator, keypath: string ) {
 	// TODO handle contextual bindings — `keypath` should include unique ID of
 	// each block that provides context
 	let index = generator.bindingGroups.indexOf( keypath );

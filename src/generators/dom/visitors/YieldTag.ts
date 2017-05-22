@@ -1,7 +1,8 @@
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import { State } from '../interfaces';
 
-export default function visitYieldTag ( generator: DomGenerator, block: Block, state ) {
+export default function visitYieldTag ( generator: DomGenerator, block: Block, state: State ) {
 	const parentNode = state.parentNode || block.target;
 
 	( state.parentNode ? block.builders.create : block.builders.mount ).addLine(

@@ -2,14 +2,15 @@ import deindent from '../../../../utils/deindent.js';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitEventHandler ( generator: DomGenerator, block: Block, state, node: Node, attribute, local ) {
+export default function visitEventHandler ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node, local ) {
 	// TODO verify that it's a valid callee (i.e. built-in or declared method)
 	generator.addSourcemapLocations( attribute.expression );
 	generator.code.prependRight( attribute.expression.start, `${block.component}.` );
 
-	const usedContexts = [];
-	attribute.expression.arguments.forEach( arg => {
+	const usedContexts: string[] = [];
+	attribute.expression.arguments.forEach( ( arg: Node ) => {
 		const { contexts } = block.contextualise( arg, null, true );
 
 		contexts.forEach( context => {

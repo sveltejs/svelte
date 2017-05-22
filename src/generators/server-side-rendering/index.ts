@@ -2,20 +2,24 @@ import deindent from '../../utils/deindent.js';
 import Generator from '../Generator';
 import Block from './Block';
 import visit from './visit';
+import { Parsed, Node, CompileOptions } from '../../interfaces';
 
-class SsrGenerator extends Generator {
-	constructor ( parsed, source, name, options ) {
+export class SsrGenerator extends Generator {
+	bindings: string[];
+	renderCode: string;
+
+	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
 		super( parsed, source, name, options );
 		this.bindings = [];
 		this.renderCode = '';
 	}
 
-	append ( code ) {
+	append ( code: string ) {
 		this.renderCode += code;
 	}
 }
 
-export default function ssr ( parsed, source, options ) {
+export default function ssr ( parsed: Parsed, source: string, options: CompileOptions ) {
 	const format = options.format || 'cjs';
 	const name = options.name || 'SvelteComponent';
 
@@ -31,7 +35,7 @@ export default function ssr ( parsed, source, options ) {
 		conditions: []
 	});
 
-	parsed.html.children.forEach( node => {
+	parsed.html.children.forEach( ( node: Node ) => {
 		visit( generator, mainBlock, node );
 	});
 

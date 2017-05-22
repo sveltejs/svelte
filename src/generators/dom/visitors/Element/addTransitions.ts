@@ -2,8 +2,9 @@ import deindent from '../../../../utils/deindent.js';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function addTransitions ( generator: DomGenerator, block: Block, state, node: Node, intro, outro ) {
+export default function addTransitions ( generator: DomGenerator, block: Block, state: State, node: Node, intro, outro ) {
 	const wrapTransition = generator.helper( 'wrapTransition' );
 
 	if ( intro === outro ) {

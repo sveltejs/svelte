@@ -1,8 +1,9 @@
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitAttribute ( generator: DomGenerator, block: Block, state, node: Node, attribute, local ) {
+export default function visitAttribute ( generator: DomGenerator, block: Block, state: State, node: Node, attribute, local ) {
 	if ( attribute.value === true ) {
 		// attributes without values, e.g. <textarea readonly>
 		local.staticAttributes.push({

@@ -176,7 +176,7 @@ export default class Generator {
 		};
 	}
 
-	findDependencies ( contextDependencies, indexes, expression ) {
+	findDependencies ( contextDependencies: Map<string, string[]>, indexes: Map<string, string>, expression: Node ) {
 		if ( expression._dependencies ) return expression._dependencies;
 
 		let scope = annotateWithScopes( expression );
@@ -340,23 +340,23 @@ export default class Generator {
 					removeNode( this.code, js.content, node );
 					imports.push( node );
 
-					node.specifiers.forEach( specifier => {
+					node.specifiers.forEach( ( specifier: Node ) => {
 						this.importedNames.add( specifier.local.name );
 					});
 				}
 			}
 
-			const defaultExport = body.find( node => node.type === 'ExportDefaultDeclaration' );
+			const defaultExport = body.find( ( node: Node ) => node.type === 'ExportDefaultDeclaration' );
 
 			if ( defaultExport ) {
-				defaultExport.declaration.properties.forEach( prop => {
+				defaultExport.declaration.properties.forEach( ( prop: Node ) => {
 					templateProperties[ prop.key.name ] = prop;
 				});
 			}
 
 			[ 'helpers', 'events', 'components', 'transitions' ].forEach( key => {
 				if ( templateProperties[ key ] ) {
-					templateProperties[ key ].value.properties.forEach( prop => {
+					templateProperties[ key ].value.properties.forEach( ( prop: node ) => {
 						this[ key ].add( prop.key.name );
 					});
 				}
@@ -365,11 +365,11 @@ export default class Generator {
 			if ( templateProperties.computed ) {
 				const dependencies = new Map();
 
-				templateProperties.computed.value.properties.forEach( prop => {
+				templateProperties.computed.value.properties.forEach( ( prop: Node ) => {
 					const key = prop.key.name;
 					const value = prop.value;
 
-					const deps = value.params.map( param => param.type === 'AssignmentPattern' ? param.left.name : param.name );
+					const deps = value.params.map( ( param: Node ) => param.type === 'AssignmentPattern' ? param.left.name : param.name );
 					dependencies.set( key, deps );
 				});
 
@@ -387,7 +387,7 @@ export default class Generator {
 					computations.push({ key, deps });
 				}
 
-				templateProperties.computed.value.properties.forEach( prop => visit( prop.key.name ) );
+				templateProperties.computed.value.properties.forEach( ( prop: Node ) => visit( prop.key.name ) );
 			}
 
 			if ( templateProperties.namespace ) {
@@ -399,7 +399,7 @@ export default class Generator {
 
 			if ( templateProperties.components ) {
 				let hasNonImportedComponent = false;
-				templateProperties.components.value.properties.forEach( property => {
+				templateProperties.components.value.properties.forEach( ( property: Node ) => {
 					const key = property.key.name;
 					const value = source.slice( property.value.start, property.value.end );
 					if ( this.importedNames.has( value ) ) {

@@ -2,8 +2,9 @@ import deindent from '../../../../utils/deindent.js';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitRef ( generator: DomGenerator, block: Block, state, node: Node, attribute, local ) {
+export default function visitRef ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node, local ) {
 	generator.usesRefs = true;
 
 	local.create.addLine(

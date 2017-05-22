@@ -3,8 +3,9 @@ import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
+import { State } from '../interfaces';
 
-export default function visitEachBlock ( generator: DomGenerator, block: Block, state, node: Node ) {
+export default function visitEachBlock ( generator: DomGenerator, block: Block, state: State, node: Node ) {
 	const each_block = generator.getUniqueName( `each_block` );
 	const create_each_block = node._block.name;
 	const each_block_value = node._block.listName;
@@ -100,7 +101,7 @@ export default function visitEachBlock ( generator: DomGenerator, block: Block, 
 	}
 }
 
-function keyed ( generator: DomGenerator, block: Block, state, node: Node, snippet, { each_block, create_each_block, each_block_value, i, params, anchor, mountOrIntro } ) {
+function keyed ( generator: DomGenerator, block: Block, state: State, node: Node, snippet, { each_block, create_each_block, each_block_value, i, params, anchor, mountOrIntro } ) {
 	const key = block.getUniqueName( 'key' );
 	const lookup = block.getUniqueName( `${each_block}_lookup` );
 	const iteration = block.getUniqueName( `${each_block}_iteration` );
@@ -274,7 +275,7 @@ function keyed ( generator: DomGenerator, block: Block, state, node: Node, snipp
 	` );
 }
 
-function unkeyed ( generator: DomGenerator, block: Block, state, node: Node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
+function unkeyed ( generator: DomGenerator, block: Block, state: State, node: Node, snippet, { create_each_block, each_block_value, iterations, i, params, anchor, mountOrIntro } ) {
 	block.builders.create.addBlock( deindent`
 		var ${iterations} = [];
 

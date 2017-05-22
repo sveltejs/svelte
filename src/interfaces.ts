@@ -36,6 +36,7 @@ export interface CompileOptions {
 	format?: string;
 	name?: string;
 	filename?: string;
+	generate?: string;
 
 	dev?: boolean;
 	shared?: boolean | string;

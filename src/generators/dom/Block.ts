@@ -4,11 +4,20 @@ import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 
 export interface BlockOptions {
-	generator: DomGenerator;
 	name: string;
-	expression: Node;
-	context: string;
-	key: string;
+	generator?: DomGenerator;
+	expression?: Node;
+	context?: string;
+	key?: string;
+	contexts?: Map<string, string>;
+	indexes?: Map<string, string>;
+	contextDependencies?: Map<string, string[]>;
+	params?: string[];
+	indexNames?: Map<string, string>;
+	listNames?: Map<string, string>;
+	indexName?: string;
+	listName?: string;
+	dependencies?: Set<string>;
 }
 
 export default class Block {
@@ -16,7 +25,19 @@ export default class Block {
 	name: string;
 	expression: Node;
 	context: string;
+
 	key: string;
+	first: string;
+
+	contexts: Map<string, string>;
+	indexes: Map<string, string>;
+	contextDependencies: Map<string, string[]>;
+	dependencies: Set<string>;
+	params: string[];
+	indexNames: Map<string, string>;
+	listNames: Map<string, string>;
+	indexName: string;
+	listName: string;
 
 	builders: {
 		create: CodeBuilder;
@@ -41,6 +62,7 @@ export default class Block {
 	target: string;
 
 	hasUpdateMethod: boolean;
+	autofocus: string;
 
 	constructor ( options: BlockOptions ) {
 		this.generator = options.generator;
@@ -95,7 +117,7 @@ export default class Block {
 		});
 	}
 
-	addElement ( name: string, renderStatement: string, parentNode, needsIdentifier = false ) {
+	addElement ( name: string, renderStatement: string, parentNode: string, needsIdentifier = false ) {
 		const isToplevel = !parentNode;
 		if ( needsIdentifier || isToplevel ) {
 			this.builders.create.addLine(
