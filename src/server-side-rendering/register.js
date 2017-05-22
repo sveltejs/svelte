@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { compile } from '../index.js';
+import { compile } from '../index.ts';
 
 function capitalise ( name ) {
 	return name[0].toUpperCase() + name.slice( 1 );
