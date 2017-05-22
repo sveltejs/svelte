@@ -3,6 +3,7 @@ import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
+import { State } from '../interfaces';
 
 function isElseIf ( node: Node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
@@ -12,7 +13,7 @@ function isElseBranch ( branch ) {
 	return branch.block && !branch.condition;
 }
 
-function getBranches ( generator: DomGenerator, block: Block, state, node: Node ) {
+function getBranches ( generator: DomGenerator, block: Block, state: State, node: Node ) {
 	const branches = [{
 		condition: block.contextualise( node.expression ).snippet,
 		block: node._block.name,
@@ -44,13 +45,13 @@ function getBranches ( generator: DomGenerator, block: Block, state, node: Node 
 	return branches;
 }
 
-function visitChildren ( generator: DomGenerator, block: Block, state, node: Node ) {
+function visitChildren ( generator: DomGenerator, block: Block, state: State, node: Node ) {
 	node.children.forEach( ( child: Node ) => {
 		visit( generator, node._block, node._state, child );
 	});
 }
 
-export default function visitIfBlock ( generator: DomGenerator, block: Block, state, node: Node ) {
+export default function visitIfBlock ( generator: DomGenerator, block: Block, state: State, node: Node ) {
 	const name = generator.getUniqueName( `if_block` );
 	const anchor = node.needsAnchor ? block.getUniqueName( `${name}_anchor` ) : ( node.next && node.next._state.name ) || 'null';
 	const params = block.params.join( ', ' );
@@ -82,7 +83,7 @@ export default function visitIfBlock ( generator: DomGenerator, block: Block, st
 	}
 }
 
-function simple ( generator: DomGenerator, block: Block, state, node: Node, branch, dynamic, { name, anchor, params, if_name } ) {
+function simple ( generator: DomGenerator, block: Block, state: State, node: Node, branch, dynamic, { name, anchor, params, if_name } ) {
 	block.builders.create.addBlock( deindent`
 		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, ${block.component} );
 	` );
@@ -156,7 +157,7 @@ function simple ( generator: DomGenerator, block: Block, state, node: Node, bran
 	);
 }
 
-function compound ( generator: DomGenerator, block: Block, state, node: Node, branches, dynamic, { name, anchor, params, hasElse, if_name } ) {
+function compound ( generator: DomGenerator, block: Block, state: State, node: Node, branches, dynamic, { name, anchor, params, hasElse, if_name } ) {
 	const get_block = block.getUniqueName( `get_block` );
 	const current_block = block.getUniqueName( `current_block` );
 	const current_block_and = hasElse ? '' : `${current_block} && `;
@@ -212,7 +213,7 @@ function compound ( generator: DomGenerator, block: Block, state, node: Node, br
 
 // if any of the siblings have outros, we need to keep references to the blocks
 // (TODO does this only apply to bidi transitions?)
-function compoundWithOutros ( generator: DomGenerator, block: Block, state, node: Node, branches, dynamic, { name, anchor, params, hasElse } ) {
+function compoundWithOutros ( generator: DomGenerator, block: Block, state: State, node: Node, branches, dynamic, { name, anchor, params, hasElse } ) {
 	const get_block = block.getUniqueName( `get_block` );
 	const current_block_index = block.getUniqueName( `current_block_index` );
 	const previous_block_index = block.getUniqueName( `previous_block_index` );

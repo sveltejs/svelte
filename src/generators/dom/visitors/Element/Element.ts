@@ -10,6 +10,7 @@ import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
 const meta = {
 	':Window': visitWindow
@@ -29,7 +30,7 @@ const visitors = {
 	Ref: visitRef
 };
 
-export default function visitElement ( generator: DomGenerator, block: Block, state, node: Node ) {
+export default function visitElement ( generator: DomGenerator, block: Block, state: State, node: Node ) {
 	if ( node.name in meta ) {
 		return meta[ node.name ]( generator, block, node );
 	}
@@ -54,8 +55,8 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 		let outro;
 
 		node.attributes
-			.sort( ( a, b ) => order[ a.type ] - order[ b.type ] )
-			.forEach( attribute => {
+			.sort( ( a: Node, b: Node ) => order[ a.type ] - order[ b.type ] )
+			.forEach( ( attribute: Node ) => {
 				if ( attribute.type === 'Transition' ) {
 					if ( attribute.intro ) intro = attribute;
 					if ( attribute.outro ) outro = attribute;
@@ -68,14 +69,14 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 		if ( intro || outro ) addTransitions( generator, block, childState, node, intro, outro );
 
 		if ( childState.allUsedContexts.length || childState.usesComponent ) {
-			const initialProps = [];
-			const updates = [];
+			const initialProps: string[] = [];
+			const updates: string[] = [];
 
 			if ( childState.usesComponent ) {
 				initialProps.push( `component: ${block.component}` );
 			}
 
-			childState.allUsedContexts.forEach( contextName => {
+			childState.allUsedContexts.forEach( ( contextName: string ) => {
 				if ( contextName === 'state' ) return;
 
 				const listName = block.listNames.get( contextName );
@@ -112,12 +113,12 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 	}
 
 	// special case – bound <option> without a value attribute
-	if ( node.name === 'option' && !node.attributes.find( attribute => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
+	if ( node.name === 'option' && !node.attributes.find( ( attribute: Node ) => attribute.type === 'Attribute' && attribute.name === 'value' ) ) { 	// TODO check it's bound
 		const statement = `${name}.__value = ${name}.textContent;`;
 		node.initialUpdate = node.lateUpdate = statement;
 	}
 
-	node.children.forEach( child => {
+	node.children.forEach( ( child: Node ) => {
 		visit( generator, block, childState, child );
 	});
 
@@ -134,7 +135,7 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 	}
 }
 
-function getRenderStatement ( generator: DomGenerator, namespace, name ) {
+function getRenderStatement ( generator: DomGenerator, namespace: string, name: string ) {
 	if ( namespace === 'http://www.w3.org/2000/svg' ) {
 		return `${generator.helper( 'createSvgElement' )}( '${name}' )`;
 	}

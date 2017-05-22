@@ -4,8 +4,9 @@ import getStaticAttributeValue from './getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitAttribute ( generator: DomGenerator, block: Block, state, node: Node, attribute ) {
+export default function visitAttribute ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node ) {
 	const name = attribute.name;
 
 	let metadata = state.namespace ? null : attributeLookup[ name ];
@@ -35,7 +36,7 @@ export default function visitAttribute ( generator: DomGenerator, block: Block, 
 		} else {
 			// '{{foo}} {{bar}}' — treat as string concatenation
 			value = ( attribute.value[0].type === 'Text' ? '' : `"" + ` ) + (
-				attribute.value.map( chunk => {
+				attribute.value.map( ( chunk: Node ) => {
 					if ( chunk.type === 'Text' ) {
 						return JSON.stringify( chunk.data );
 					} else {

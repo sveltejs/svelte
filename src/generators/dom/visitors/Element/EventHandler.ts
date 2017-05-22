@@ -3,8 +3,9 @@ import flattenReference from '../../../../utils/flattenReference';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitEventHandler ( generator: DomGenerator, block: Block, state, node: Node, attribute ) {
+export default function visitEventHandler ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node ) {
 	const name = attribute.name;
 	const isCustomEvent = generator.events.has( name );
 	const shouldHoist = !isCustomEvent && state.inEachBlock;
@@ -20,8 +21,8 @@ export default function visitEventHandler ( generator: DomGenerator, block: Bloc
 	}
 
 	const context = shouldHoist ? null : state.parentNode;
-	const usedContexts = [];
-	attribute.expression.arguments.forEach( arg => {
+	const usedContexts: string[] = [];
+	attribute.expression.arguments.forEach( ( arg: Node ) => {
 		const { contexts } = block.contextualise( arg, context, true );
 
 		contexts.forEach( context => {

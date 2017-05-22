@@ -8,8 +8,9 @@ import visitRef from './Ref';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-function stringifyProps ( props ) {
+function stringifyProps ( props: string[] ) {
 	if ( !props.length ) return '{}';
 
 	const joined = props.join( ', ' );
@@ -35,7 +36,7 @@ const visitors = {
 	Ref: visitRef
 };
 
-export default function visitComponent ( generator: DomGenerator, block: Block, state, node: Node ) {
+export default function visitComponent ( generator: DomGenerator, block: Block, state: State, node: Node ) {
 	const hasChildren = node.children.length > 0;
 	const name = block.getUniqueName( ( node.name === ':Self' ? generator.name : node.name ).toLowerCase() );
 
@@ -123,7 +124,7 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);
 	}
 
-	const statements = [];
+	const statements: string[] = [];
 
 	if ( local.staticAttributes.length || local.dynamicAttributes.length || local.bindings.length ) {
 		const initialProps = local.staticAttributes

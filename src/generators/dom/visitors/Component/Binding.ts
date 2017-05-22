@@ -4,8 +4,9 @@ import getSetter from '../shared/binding/getSetter';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
+import { State } from '../../interfaces';
 
-export default function visitBinding ( generator: DomGenerator, block: Block, state, node: Node, attribute, local ) {
+export default function visitBinding ( generator: DomGenerator, block: Block, state: State, node: Node, attribute, local ) {
 	const { name } = flattenReference( attribute.value );
 	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
 

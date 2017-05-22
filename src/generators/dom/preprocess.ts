@@ -3,12 +3,13 @@ import { trimStart, trimEnd } from '../../utils/trim';
 import { assign } from '../../shared/index.js';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
+import { State } from './interfaces';
 
 function isElseIf ( node: Node ) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
 }
 
-function getChildState ( parent, child = {} ) {
+function getChildState ( parent: State, child = {} ) {
 	return assign( {}, parent, { name: null, parentNode: null }, child || {} );
 }
 
@@ -27,7 +28,7 @@ const elementsWithoutText = new Set([
 ]);
 
 const preprocessors = {
-	MustacheTag: ( generator: DomGenerator, block, state, node: Node ) => {
+	MustacheTag: ( generator: DomGenerator, block: Block, state: State, node: Node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -36,7 +37,7 @@ const preprocessors = {
 		});
 	},
 
-	RawMustacheTag: ( generator: DomGenerator, block, state, node: Node ) => {
+	RawMustacheTag: ( generator: DomGenerator, block: Block, state: State, node: Node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -46,7 +47,7 @@ const preprocessors = {
 		node._state = getChildState( state, { basename, name });
 	},
 
-	Text: ( generator: DomGenerator, block, state, node: Node ) => {
+	Text: ( generator: DomGenerator, block: Block, state: State, node: Node ) => {
 		node._state = getChildState( state );
 
 		if ( !/\S/.test( node.data ) ) {
@@ -58,8 +59,8 @@ const preprocessors = {
 		node._state.name = block.getUniqueName( `text` );
 	},
 
-	IfBlock: ( generator: DomGenerator, block, state, node: Node ) => {
-		const blocks = [];
+	IfBlock: ( generator: DomGenerator, block: Block, state: State, node: Node ) => {
+		const blocks: Block[] = [];
 		let dynamic = false;
 		let hasIntros = false;
 		let hasOutros = false;
@@ -115,7 +116,7 @@ const preprocessors = {
 		generator.blocks.push( ...blocks );
 	},
 
-	EachBlock: ( generator: DomGenerator, block, state, node: Node ) => {
+	EachBlock: ( generator: DomGenerator, block: Block, state: State, node: Node ) => {
 		const dependencies = block.findDependencies( node.expression );
 		block.addDependencies( dependencies );
 
@@ -177,7 +178,7 @@ const preprocessors = {
 		}
 	},
 
-	Element: ( generator: DomGenerator, block, state, node: Node ) => {
+	Element: ( generator: DomGenerator, block: Block, state: State, node: Node ) => {
 		const isComponent = generator.components.has( node.name ) || node.name === ':Self';
 
 		if ( isComponent ) {
@@ -240,7 +241,7 @@ const preprocessors = {
 	}
 };
 
-function preprocessChildren ( generator: DomGenerator, block, state, node: Node, isTopLevel: boolean ) {
+function preprocessChildren ( generator: DomGenerator, block: Block, state: State, node: Node, isTopLevel: boolean = false ) {
 	// glue text nodes together
 	const cleaned: Node[] = [];
 	let lastChild: Node;
@@ -294,7 +295,7 @@ function preprocessChildren ( generator: DomGenerator, block, state, node: Node,
 	node.children = cleaned;
 }
 
-export default function preprocess ( generator: DomGenerator, state, node ) {
+export default function preprocess ( generator: DomGenerator, namespace: string, node: Node ) {
 	const block = new Block({
 		generator,
 		name: generator.alias( 'create_main_fragment' ),
@@ -311,9 +312,15 @@ export default function preprocess ( generator: DomGenerator, state, node ) {
 		dependencies: new Set()
 	});
 
+	const state: State = {
+		namespace,
+		parentNode: null,
+		isTopLevel: true
+	};
+
 	generator.blocks.push( block );
 	preprocessChildren( generator, block, state, node, true );
 	block.hasUpdateMethod = block.dependencies.size > 0;
 
-	return block;
+	return { block, state };
 }

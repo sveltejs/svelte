@@ -18,6 +18,10 @@ export class DomGenerator extends Generator {
 	readonly: Set<string>;
 	metaBindings: string[];
 
+	hasIntroTransitions: boolean;
+	hasOutroTransitions: boolean;
+	hasComplexBindings: boolean;
+
 	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
 		super( parsed, source, name, options );
 		this.blocks = [];
@@ -48,13 +52,7 @@ export default function dom ( parsed: Parsed, source: string, options: CompileOp
 
 	const { computations, hasJs, templateProperties, namespace } = generator.parseJs();
 
-	const state = {
-		namespace,
-		parentNode: null,
-		isTopLevel: true
-	};
-
-	const block = preprocess( generator, state, parsed.html );
+	const { block, state } = preprocess( generator, namespace, parsed.html );
 
 	parsed.html.children.forEach( ( node: Node ) => {
 		visit( generator, block, state, node );
