@@ -1,6 +1,9 @@
 import visit from '../visit';
+import { SsrGenerator } from '../index';
+import Block from '../Block';
+import { Node } from '../../../interfaces';
 
-export default function visitEachBlock ( generator, block, node ) {
+export default function visitEachBlock ( generator: SsrGenerator, block: Block, node: Node ) {
 	const { dependencies, snippet } = block.contextualise( node.expression );
 
 	const open = `\${ ${snippet}.map( ${ node.index ? `( ${node.context}, ${node.index} )` : node.context} => \``;
@@ -23,7 +26,7 @@ export default function visitEachBlock ( generator, block, node ) {
 		contextDependencies
 	});
 
-	node.children.forEach( child => {
+	node.children.forEach( ( child: Node ) => {
 		visit( generator, childBlock, child );
 	});
 

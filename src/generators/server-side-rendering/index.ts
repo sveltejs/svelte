@@ -7,6 +7,7 @@ import { Parsed, Node, CompileOptions } from '../../interfaces';
 export class SsrGenerator extends Generator {
 	bindings: string[];
 	renderCode: string;
+	elementDepth: number;
 
 	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
 		super( parsed, source, name, options );
