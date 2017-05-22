@@ -1,8 +1,11 @@
 import flattenReference from '../../../utils/flattenReference';
 import visit from '../visit';
+import { SsrGenerator } from '../index';
+import Block from '../Block';
+import { Node } from '../../../interfaces';
 
-export default function visitComponent ( generator, block, node ) {
-	function stringify ( chunk ) {
+export default function visitComponent ( generator: SsrGenerator, block: Block, node: Node ) {
+	function stringify ( chunk: Node ) {
 		if ( chunk.type === 'Text' ) return chunk.data;
 		if ( chunk.type === 'MustacheTag' ) {
 			const { snippet } = block.contextualise( chunk.expression );
@@ -10,10 +13,10 @@ export default function visitComponent ( generator, block, node ) {
 		}
 	}
 
-	const attributes = [];
-	const bindings = [];
+	const attributes: Node[] = [];
+	const bindings: Node[] = [];
 
-	node.attributes.forEach( attribute => {
+	node.attributes.forEach( ( attribute: Node ) => {
 		if ( attribute.type === 'Attribute' ) {
 			attributes.push( attribute );
 		} else if ( attribute.type === 'Binding' ) {
@@ -66,7 +69,7 @@ export default function visitComponent ( generator, block, node ) {
 
 	generator.elementDepth += 1;
 
-	node.children.forEach( child => {
+	node.children.forEach( ( child: Node ) => {
 		visit( generator, block, child );
 	});
 
