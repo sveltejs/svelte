@@ -151,8 +151,6 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 			function ${fn} ( iteration ) {
 				iteration.outro( function () {
 					iteration.destroy( true );
-					if ( iteration.next ) iteration.next.last = iteration.last;
-					if ( iteration.last ) iteration.last.next = iteration.next;
 					${lookup}[iteration.key] = null;
 				});
 			}
@@ -175,8 +173,6 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		block.builders.create.addBlock( deindent`
 			function ${fn} ( iteration ) {
 				iteration.destroy( true );
-				if ( iteration.next && iteration.next.last === iteration ) iteration.next.last = iteration.last;
-				if ( iteration.last && iteration.last.next === iteration ) iteration.last.next = iteration.next;
 				${lookup}[iteration.key] = null;
 			}
 		` );
@@ -200,7 +196,7 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 		var ${each_block_value} = ${snippet};
 
 		var ${expected} = ${head};
-		var ${last};
+		var ${last} = null;
 
 		var discard_pile = [];
 
@@ -216,24 +212,24 @@ function keyed ( generator, block, state, node, snippet, { each_block, create_ea
 				} else {
 					if ( ${iteration} ) {
 						// probably a deletion
-						do {
+
+						while ( ${expected} && ${expected}.key !== ${key} ) {
 							${expected}.discard = true;
 							discard_pile.push( ${expected} );
 							${expected} = ${expected}.next;
-						} while ( ${expected} && ${expected}.key !== ${key} );
+						};
 
 						${expected} = ${expected} && ${expected}.next;
 						${iteration}.discard = false;
 						${iteration}.last = ${last};
-						${iteration}.next = ${expected};
 
-						${iteration}.mount( ${parentNode}, ${expected} ? ${expected}.first : ${anchor} );
+						if (!${expected}) ${iteration}.mount( ${parentNode}, ${anchor} );
 					} else {
 						// key is being inserted
 						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
 						${iteration}.${mountOrIntro}( ${parentNode}, ${expected}.first );
 
-						if ( ${expected} ) ${expected}.last = ${iteration};
+						${expected}.last = ${iteration};
 						${iteration}.next = ${expected};
 					}
 				}
