@@ -1,7 +1,26 @@
 import deindent from '../../../utils/deindent.js';
-import getGlobals from './getGlobals';
+import getGlobals, { Globals } from './getGlobals';
 
-export default function getIntro ( format: string, options, imports ) {
+export type ModuleFormat = "es" | "amd" | "cjs" | "iife" | "umd" | "eval";
+
+export interface Options {
+	name: string;
+	amd?: {
+		id?: string;
+	};
+	globals: Globals | object;
+	onerror: (err: Error) => void;
+	onwarn: (obj: Error | { message: string }) => void;
+}
+
+export interface Declaration {
+	name: string;
+	source: {
+		value: string;
+	};
+}
+
+export default function getIntro ( format: ModuleFormat, options: Options, imports: Declaration[] ) {
 	if ( format === 'es' ) return '';
 	if ( format === 'amd' ) return getAmdIntro( options, imports );
 	if ( format === 'cjs' ) return getCjsIntro( options, imports );
@@ -12,7 +31,7 @@ export default function getIntro ( format: string, options, imports ) {
 	throw new Error( `Not implemented: ${format}` );
 }
 
-function getAmdIntro ( options, imports ) {
+function getAmdIntro ( options: Options, imports: Declaration[] ) {
 	const sourceString = imports.length ?
 		`[ ${imports.map( declaration => `'${removeExtension( declaration.source.value )}'` ).join( ', ' )} ], ` :
 		'';
@@ -22,7 +41,7 @@ function getAmdIntro ( options, imports ) {
 	return `define(${id ? ` '${id}', ` : ''}${sourceString}function (${paramString( imports )}) { 'use strict';\n\n`;
 }
 
-function getCjsIntro ( options, imports ) {
+function getCjsIntro ( options: Options, imports: Declaration[] ) {
 	const requireBlock = imports
 		.map( declaration => `var ${declaration.name} = require( '${declaration.source.value}' );` )
 		.join( '\n\n' );
@@ -34,7 +53,7 @@ function getCjsIntro ( options, imports ) {
 	return `'use strict';\n\n`;
 }
 
-function getIifeIntro ( options, imports ) {
+function getIifeIntro ( options: Options, imports: Declaration[] ) {
 	if ( !options.name ) {
 		throw new Error( `Missing required 'name' option for IIFE export` );
 	}
@@ -42,7 +61,7 @@ function getIifeIntro ( options, imports ) {
 	return `var ${options.name} = (function (${paramString( imports )}) { 'use strict';\n\n`;
 }
 
-function getUmdIntro ( options, imports ) {
+function getUmdIntro ( options: Options, imports: Declaration[] ) {
 	if ( !options.name ) {
 		throw new Error( `Missing required 'name' option for UMD export` );
 	}
@@ -61,11 +80,11 @@ function getUmdIntro ( options, imports ) {
 		}(this, (function (${paramString( imports )}) { 'use strict';` + '\n\n';
 }
 
-function getEvalIntro ( options, imports ) {
+function getEvalIntro ( options: Options, imports: Declaration[] ) {
 	return `(function (${paramString( imports )}) { 'use strict';\n\n`;
 }
 
-function paramString ( imports ) {
+function paramString ( imports: Declaration[] ) {
 	return imports.length ? ` ${imports.map( dep => dep.name ).join( ', ' )} ` : '';
 }
 
