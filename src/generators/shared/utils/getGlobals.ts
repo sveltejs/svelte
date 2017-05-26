@@ -1,4 +1,9 @@
-export default function getGlobals ( imports, { globals, onerror, onwarn } ) {
+import { Declaration, Options } from './getIntro';
+
+export type Globals = (id: string) => any;
+
+export default function getGlobals ( imports: Declaration[], options: Options ) {
+	const { globals, onerror, onwarn } = options;
 	const globalFn = getGlobalFn( globals );
 
 	return imports.map( x => {
@@ -33,7 +38,7 @@ export default function getGlobals ( imports, { globals, onerror, onwarn } ) {
 	});
 }
 
-function getGlobalFn ( globals ) {
+function getGlobalFn ( globals: any ): Globals {
 	if ( typeof globals === 'function' ) return globals;
 	if ( typeof globals === 'object' ) {
 		return id => globals[ id ];

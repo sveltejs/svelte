@@ -1,4 +1,5 @@
 export interface State {
+	name: string;
 	namespace: string;
 	parentNode: string;
 	isTopLevel: boolean

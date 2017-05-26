@@ -42,6 +42,8 @@
   },
   "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^7.0.22",
     "acorn": "^4.0.4",
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
