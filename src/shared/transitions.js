@@ -104,9 +104,10 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 export var transitionManager = {
 	running: false,
 	transitions: [],
+	bound: null,
 
 	add: function ( transition ) {
-		transitionManager.transitions.push( transition );
+		this.transitions.push( transition );
 
 		if ( !this.running ) {
 			this.running = true;
@@ -115,13 +116,13 @@ export var transitionManager = {
 	},
 
 	next: function () {
-		transitionManager.running = false;
+		this.running = false;
 
 		var now = window.performance.now();
-		var i = transitionManager.transitions.length;
+		var i = this.transitions.length;
 
 		while ( i-- ) {
-			var transition = transitionManager.transitions[i];
+			var transition = this.transitions[i];
 
 			if ( transition.program && now >= transition.program.end ) {
 				transition.done();
@@ -133,14 +134,14 @@ export var transitionManager = {
 
 			if ( transition.running ) {
 				transition.update( now );
-				transitionManager.running = true;
+				this.running = true;
 			} else if ( !transition.pending ) {
-				transitionManager.transitions.splice( i, 1 );
+				this.transitions.splice( i, 1 );
 			}
 		}
 
-		if ( transitionManager.running ) {
-			requestAnimationFrame( transitionManager.next );
+		if ( this.running ) {
+			requestAnimationFrame( this.bound || ( this.bound = this.next.bind( this ) ) );
 		}
 	}
 };
