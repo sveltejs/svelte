@@ -31,5 +31,5 @@ fs.readdirSync( __dirname ).forEach( file => {
 	});
 });
 
-fs.writeFileSync( 'src/generators/dom/shared.js', `// this file is auto-generated, do not edit it
+fs.writeFileSync( 'src/generators/dom/shared.ts', `// this file is auto-generated, do not edit it
 export default ${JSON.stringify( declarations, null, '\t' )};` );
