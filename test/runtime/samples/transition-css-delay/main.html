@@ -1,0 +1,19 @@
+{{#if visible}}
+	<div transition:foo>delayed</div>
+{{/if}}
+
+<script>
+	export default {
+		transitions: {
+			foo: function ( node, params ) {
+				return {
+					delay: 50,
+					duration: 100,
+					css: t => {
+						return `opacity: ${t}`;
+					}
+				};
+			}
+		}
+	};
+</script>
