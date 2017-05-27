@@ -39,50 +39,6 @@ function createText ( data ) {
 	return document.createTextNode( data );
 }
 
-var transitionManager = {
-	running: false,
-	transitions: [],
-
-	add: function ( transition ) {
-		transitionManager.transitions.push( transition );
-
-		if ( !this.running ) {
-			this.running = true;
-			this.next();
-		}
-	},
-
-	next: function () {
-		transitionManager.running = false;
-
-		var now = window.performance.now();
-		var i = transitionManager.transitions.length;
-
-		while ( i-- ) {
-			var transition = transitionManager.transitions[i];
-
-			if ( transition.program && now >= transition.program.end ) {
-				transition.done();
-			}
-
-			if ( transition.pending && now >= transition.pending.start ) {
-				transition.start( transition.pending );
-			}
-
-			if ( transition.running ) {
-				transition.update( now );
-				transitionManager.running = true;
-			} else if ( !transition.pending ) {
-				transitionManager.transitions.splice( i, 1 );
-			}
-		}
-
-		if ( transitionManager.running ) {
-			requestAnimationFrame( transitionManager.next );
-		}
-	}
-};
-
 function differs ( a, b ) {
 	return ( a !== b ) || ( a && ( typeof a === 'object' ) || ( typeof a === 'function' ) );
 }
