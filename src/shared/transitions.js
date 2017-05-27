@@ -31,13 +31,21 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 	var obj = fn( node, params );
 	var duration = obj.duration || 300;
 	var ease = obj.easing || linear;
+	var cssText;
 
 	// TODO share <style> tag between all transitions?
 	if ( obj.css ) {
 		var style = document.createElement( 'style' );
 	}
 
-	if ( intro && obj.tick ) obj.tick( 0 );
+	if ( intro ) {
+		if ( obj.css && obj.delay ) {
+			cssText = node.style.cssText;
+			node.style.cssText += obj.css( 0 );
+		}
+
+		if ( obj.tick ) obj.tick( 0 );
+	}
 
 	return {
 		t: intro ? 0 : 1,
@@ -70,6 +78,7 @@ export function wrapTransition ( node, fn, params, intro, outgroup ) {
 			program.end = program.start + program.duration;
 
 			if ( obj.css ) {
+				if ( obj.delay ) node.style.cssText = cssText;
 				generateKeyframes( program.a, program.b, program.delta, program.duration, ease, obj.css, node, style );
 			}
 
