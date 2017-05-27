@@ -42,6 +42,8 @@
   },
   "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^7.0.22",
     "acorn": "^4.0.4",
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
@@ -74,9 +76,11 @@
     "rollup-plugin-commonjs": "^7.0.0",
     "rollup-plugin-json": "^2.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-typescript": "^0.8.1",
     "rollup-watch": "^3.2.2",
     "source-map": "^0.5.6",
-    "source-map-support": "^0.4.8"
+    "source-map-support": "^0.4.8",
+    "typescript": "^2.3.2"
   },
   "nyc": {
     "include": [

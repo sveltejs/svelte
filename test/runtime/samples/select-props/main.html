@@ -1,0 +1,19 @@
+{{#each foo as bar}}
+	<select on:change='handler(bar)'>
+		<option>a</option>
+		<option>b</option>
+	</select>
+{{/each}}
+
+<script>
+	export default {
+		data: () => ({ foo: [ 1, 2 ], log: [] }),
+		methods: {
+			handler ( bar ) {
+				let { log } = this.get();
+				log.push( bar );
+				this.set( { log } );
+			}
+		}
+	}
+</script>

@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "diagnostics": true,
+        "noImplicitThis": true,
+        "noEmitOnError": true,
+        "allowJs": true,
+        "lib": ["es5", "es6", "dom"]
+    },
+    "target": "ES5",
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

@@ -20,9 +20,9 @@ export default {
 			}
 		})
 	],
-	external: [ path.resolve( 'src/index.js' ), 'fs', 'path' ],
+	external: [ path.resolve( 'src/index.ts' ), 'fs', 'path' ],
 	paths: {
-		[ path.resolve( 'src/index.js' ) ]: '../compiler/svelte.js'
+		[ path.resolve( 'src/index.ts' ) ]: '../compiler/svelte.js'
 	},
 	sourceMap: true
 };
