@@ -18,7 +18,7 @@ export function generateKeyframes ( a, b, delta, duration, ease, fn, node, style
 
 	document.head.appendChild( style );
 
-	node.style.animation = node.style.animation.split( ',' )
+	node.style.animation = ( node.style.animation || '' ).split( ',' )
 		.filter( function ( anim ) {
 			// when introing, discard old animations if there are any
 			return anim && ( delta < 0 || !/__svelte/.test( anim ) );
