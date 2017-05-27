@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "types" : ["node"],
         "noImplicitAny": true,
         "diagnostics": true,
         "noImplicitThis": true,
