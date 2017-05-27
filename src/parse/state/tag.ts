@@ -9,7 +9,6 @@ import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
-const invalidUnquotedAttributeCharacters = /[\s"'=<>\/`]/;
 
 const SELF = ':Self';
 
@@ -181,6 +180,11 @@ export default function tag ( parser: Parser ) {
 
 	if ( selfClosing ) {
 		element.end = parser.index;
+	} else if ( name === 'textarea' ) {
+		// special case
+		element.children = readSequence( parser, () => parser.template.slice( parser.index, parser.index + 11 ) === '</textarea>' );
+		parser.read( /<\/textarea>/ );
+		element.end = parser.index;
 	} else {
 		// don't push self-closing elements onto the stack
 		parser.stack.push( element );
@@ -280,11 +284,41 @@ function readAttribute ( parser: Parser, uniqueNames ) {
 }
 
 function readAttributeValue ( parser: Parser ) {
-	let quoteMark;
+	const quoteMark = (
+		parser.eat( `'` ) ? `'` :
+		parser.eat( `"` ) ? `"` :
+		null
+	);
 
-	if ( parser.eat( `'` ) ) quoteMark = `'`;
-	if ( parser.eat( `"` ) ) quoteMark = `"`;
+	const regex = (
+		quoteMark === `'` ? /'/ :
+		quoteMark === `"` ? /"/ :
+		/[\s"'=<>\/`]/
+	);
 
+	const value = readSequence( parser, () => regex.test( parser.template[ parser.index ] ) );
+
+	if ( quoteMark ) parser.index += 1;
+	return value;
+}
+
+function getShorthandValue ( start: number, name: string ) {
+	const end = start + name.length;
+
+	return [{
+		type: 'AttributeShorthand',
+		start,
+		end,
+		expression: {
+			type: 'Identifier',
+			start,
+			end,
+			name
+		}
+	}];
+}
+
+function readSequence ( parser: Parser, done: () => boolean ) {
 	let currentChunk: Node = {
 		start: parser.index,
 		end: null,
@@ -292,16 +326,24 @@ function readAttributeValue ( parser: Parser ) {
 		data: ''
 	};
 
-	const done = quoteMark ?
-		char => char === quoteMark :
-		char => invalidUnquotedAttributeCharacters.test( char );
-
 	const chunks = [];
 
 	while ( parser.index < parser.template.length ) {
 		const index = parser.index;
 
-		if ( parser.eat( '{{' ) ) {
+		if ( done() ) {
+			currentChunk.end = parser.index;
+
+			if ( currentChunk.data ) chunks.push( currentChunk );
+
+			chunks.forEach( chunk => {
+				if ( chunk.type === 'Text' ) chunk.data = decodeCharacterReferences( chunk.data );
+			});
+
+			return chunks;
+		}
+
+		else if ( parser.eat( '{{' ) ) {
 			if ( currentChunk.data ) {
 				currentChunk.end = index;
 				chunks.push( currentChunk );
@@ -328,39 +370,10 @@ function readAttributeValue ( parser: Parser ) {
 			};
 		}
 
-		else if ( done( parser.template[ parser.index ] ) ) {
-			currentChunk.end = parser.index;
-			if ( quoteMark ) parser.index += 1;
-
-			if ( currentChunk.data ) chunks.push( currentChunk );
-
-			chunks.forEach( chunk => {
-				if ( chunk.type === 'Text' ) chunk.data = decodeCharacterReferences( chunk.data );
-			});
-
-			return chunks;
-		}
-
 		else {
 			currentChunk.data += parser.template[ parser.index++ ];
 		}
 	}
 
 	parser.error( `Unexpected end of input` );
-}
-
-function getShorthandValue ( start: number, name: string ) {
-	const end = start + name.length;
-
-	return [{
-		type: 'AttributeShorthand',
-		start,
-		end,
-		expression: {
-			type: 'Identifier',
-			start,
-			end,
-			name
-		}
-	}];
 }
