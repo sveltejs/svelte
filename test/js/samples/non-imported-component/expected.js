@@ -1,4 +1,4 @@
-import Imported from './Imported.html';
+import Imported from 'Imported.html';
 
 import { assign, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 

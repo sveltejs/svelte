@@ -1,6 +1,7 @@
 import assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
+import { rollup } from 'rollup';
 import { svelte } from '../helpers.js';
 
 describe( 'js', () => {
@@ -31,11 +32,31 @@ describe( 'js', () => {
 
 			fs.writeFileSync( `${dir}/_actual.js`, actual );
 			const expected = fs.readFileSync( `${dir}/expected.js`, 'utf-8' );
+			const expectedBundle = fs.readFileSync( `${dir}/expected-bundle.js`, 'utf-8' );
 
 			assert.equal(
 				actual.trim().replace( /^\s+$/gm, '' ),
 				expected.trim().replace( /^\s+$/gm, '' )
 			);
+
+			return rollup({
+				entry: `${dir}/_actual.js`,
+				plugins: [{
+					resolveId ( importee, importer ) {
+						if ( !importer ) return importee;
+						if ( importee === 'svelte/shared.js' ) return path.resolve('shared.js');
+						return null;
+					}
+				}]
+			}).then(bundle => {
+				const actualBundle = bundle.generate({ format: 'es' }).code;
+				fs.writeFileSync( `${dir}/_actual-bundle.js`, actualBundle );
+
+				assert.equal(
+					actualBundle.trim().replace( /^\s+$/gm, '' ),
+					expectedBundle.trim().replace( /^\s+$/gm, '' )
+				);
+			});
 		});
 	});
 });
