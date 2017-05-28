@@ -1,5 +1,18 @@
 # Svelte changelog
 
+## 1.21.0
+
+* Always use `helpers` if referenced, not just for call expressions ([#575](https://github.com/sveltejs/svelte/issues/575))
+* Fix parsing of `<textarea>` children ([#599](https://github.com/sveltejs/svelte/pull/599))
+* Treat `<textarea>` value attributes and children as equivalent, and fail validation if both are present ([#599](https://github.com/sveltejs/svelte/pull/599))
+* Fix `<textarea>` SSR ([#599](https://github.com/sveltejs/svelte/pull/599))
+* Apply CSS transition styles immediately if transition has delay ([#574](https://github.com/sveltejs/svelte/issues/574))
+* Ensure `transitionManager` is treeshakeable ([#593](https://github.com/sveltejs/svelte/issues/593))
+* Fix for environments where `node.style.animation` is undefined ([#587](https://github.com/sveltejs/svelte/issues/587))
+* Fix order of operations when dealing with `<select>` elements ([#590](https://github.com/sveltejs/svelte/issues/590))
+* Downgrade 'invalid callee' to a warning ([#579](https://github.com/sveltejs/svelte/issues/579))
+* Convert to TypeScript ([#573](https://github.com/sveltejs/svelte/pull/573))
+
 ## 1.20.2
 
 * Fix destruction of compound if-blocks with outros ([#572](https://github.com/sveltejs/svelte/pull/572))
