@@ -1,0 +1,15 @@
+<p>{{numbers.map(square)}}</p>
+
+<script>
+	export default {
+		data () {
+			return {
+				numbers: [ 1, 2, 3 ]
+			};
+		},
+
+		helpers: {
+			square: num => num * num
+		}
+	};
+</script>
