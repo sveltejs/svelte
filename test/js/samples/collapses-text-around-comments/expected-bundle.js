@@ -1,3 +1,5 @@
+function noop () {}
+
 function assign ( target ) {
 	for ( var i = 1; i < arguments.length; i += 1 ) {
 		var source = arguments[i];
@@ -160,11 +162,11 @@ function create_main_fragment ( state, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -202,7 +204,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy( false ); // TODO no arguments to destroy
 	this._fragment = null;
 
 	this._state = {};
