@@ -42,10 +42,10 @@ export default class Block {
 	builders: {
 		create: CodeBuilder;
 		mount: CodeBuilder;
-		update: CodeBuilder;
 		intro: CodeBuilder;
+		update: CodeBuilder;
 		outro: CodeBuilder;
-		detach: CodeBuilder;
+		unmount: CodeBuilder;
 		detachRaw: CodeBuilder;
 		destroy: CodeBuilder;
 	}
@@ -88,10 +88,10 @@ export default class Block {
 		this.builders = {
 			create: new CodeBuilder(),
 			mount: new CodeBuilder(),
-			update: new CodeBuilder(),
 			intro: new CodeBuilder(),
+			update: new CodeBuilder(),
 			outro: new CodeBuilder(),
-			detach: new CodeBuilder(),
+			unmount: new CodeBuilder(),
 			detachRaw: new CodeBuilder(),
 			destroy: new CodeBuilder()
 		};
@@ -130,7 +130,7 @@ export default class Block {
 		}
 
 		if ( isToplevel ) {
-			this.builders.detach.addLine( `${this.generator.helper( 'detachNode' )}( ${name} );` );
+			this.builders.unmount.addLine( `${this.generator.helper( 'detachNode' )}( ${name} );` );
 		}
 	}
 
@@ -202,15 +202,7 @@ export default class Block {
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached
 		// first, so we append normal detach statements to detachRaw
-		this.builders.detachRaw.addBlock( this.builders.detach );
-
-		if ( !this.builders.detachRaw.isEmpty() ) {
-			this.builders.destroy.addBlock( deindent`
-				if ( detach ) {
-					${this.builders.detachRaw}
-				}
-			` );
-		}
+		this.builders.detachRaw.addBlock( this.builders.unmount ); // TODO reverse this, using addBlockAtStart?
 
 		const properties = new CodeBuilder();
 
@@ -290,11 +282,22 @@ export default class Block {
 			}
 		}
 
+		if ( this.builders.detachRaw.isEmpty() ) {
+			properties.addBlock( `unmount: ${this.generator.helper('noop')},`);
+		} else {
+			properties.addBlock( deindent`
+				unmount: function () {
+					${this.builders.detachRaw}
+				},
+			` );
+		}
+
 		if ( this.builders.destroy.isEmpty() ) {
 			properties.addBlock( `destroy: ${this.generator.helper( 'noop' )}` );
 		} else {
 			properties.addBlock( deindent`
 				destroy: function ( detach ) {
+					${!this.builders.detachRaw.isEmpty() && `if ( detach ) this.unmount();`}
 					${this.builders.destroy}
 				}
 			` );
