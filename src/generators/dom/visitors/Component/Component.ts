@@ -122,7 +122,7 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 		}
 
 		block.builders.destroy.addLine(
-			`${yieldFragment}.destroy( false );`
+			`${yieldFragment}.destroy();`
 		);
 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);

@@ -200,9 +200,8 @@ export default class Block {
 			this.builders.create.addLine( `${this.autofocus}.focus();` );
 		}
 
-		// minor hack – we need to ensure that any {{{triples}}} are detached
-		// first, so we append normal detach statements to detachRaw
-		this.builders.detachRaw.addBlock( this.builders.unmount ); // TODO reverse this, using addBlockAtStart?
+		// minor hack – we need to ensure that any {{{triples}}} are detached first
+		this.builders.unmount.addBlockAtStart( this.builders.detachRaw );
 
 		const properties = new CodeBuilder();
 
@@ -282,12 +281,12 @@ export default class Block {
 			}
 		}
 
-		if ( this.builders.detachRaw.isEmpty() ) {
+		if ( this.builders.unmount.isEmpty() ) {
 			properties.addBlock( `unmount: ${this.generator.helper('noop')},`);
 		} else {
 			properties.addBlock( deindent`
 				unmount: function () {
-					${this.builders.detachRaw}
+					${this.builders.unmount}
 				},
 			` );
 		}
@@ -296,8 +295,7 @@ export default class Block {
 			properties.addBlock( `destroy: ${this.generator.helper( 'noop' )}` );
 		} else {
 			properties.addBlock( deindent`
-				destroy: function ( detach ) {
-					${!this.builders.detachRaw.isEmpty() && `if ( detach ) this.unmount();`}
+				destroy: function () {
 					${this.builders.destroy}
 				}
 			` );

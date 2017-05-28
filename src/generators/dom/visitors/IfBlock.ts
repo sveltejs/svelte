@@ -159,7 +159,7 @@ function simple ( generator: DomGenerator, block: Block, state: State, node: Nod
 	);
 
 	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy( false );`
+		`${if_name}${name}.destroy();`
 	);
 }
 
@@ -277,7 +277,8 @@ function compoundWithOutros ( generator: DomGenerator, block: Block, state: Stat
 
 	const destroyOldBlock = deindent`
 		${name}.outro( function () {
-			${if_blocks}[ ${previous_block_index} ].destroy( true );
+			${if_blocks}[ ${previous_block_index} ].unmount();
+			${if_blocks}[ ${previous_block_index} ].destroy();
 			${if_blocks}[ ${previous_block_index} ] = null;
 		});
 	`;
@@ -325,7 +326,10 @@ function compoundWithOutros ( generator: DomGenerator, block: Block, state: Stat
 		` );
 	}
 
-	block.builders.destroy.addLine(
-		`${if_current_block_index}${if_blocks}[ ${current_block_index} ].destroy( ${state.parentNode ? 'false' : 'detach'} );`
-	);
+	block.builders.destroy.addLine( deindent`
+		${if_current_block_index}{
+			${if_blocks}[ ${current_block_index} ].unmount();
+			${if_blocks}[ ${current_block_index} ].destroy();
+		}
+	` );
 }
