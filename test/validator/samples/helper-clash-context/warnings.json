@@ -1,0 +1,8 @@
+[{
+	"message": "Context clashes with a helper. Rename one or the other to eliminate any ambiguity",
+	"loc": {
+		"line": 1,
+		"column": 18
+	},
+	"pos": 18
+}]

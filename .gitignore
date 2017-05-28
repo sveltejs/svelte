@@ -13,3 +13,4 @@ test/sourcemaps/samples/*/output.js
 test/sourcemaps/samples/*/output.js.map
 _actual.*
 _actual-bundle.*
+src/generators/dom/shared.ts
