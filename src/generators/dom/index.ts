@@ -191,7 +191,8 @@ export default function dom ( parsed: Parsed, source: string, options: CompileOp
 			this.fire( 'destroy' );
 			${templateProperties.ondestroy && `${generator.alias( 'template' )}.ondestroy.call( this );`}
 
-			this._fragment.destroy( detach !== false );
+			if ( detach !== false ) this._fragment.unmount();
+			this._fragment.destroy( false ); // TODO no arguments to destroy
 			this._fragment = null;
 
 			this._state = {};

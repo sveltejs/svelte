@@ -135,12 +135,14 @@ function simple ( generator: DomGenerator, block: Block, state: State, node: Nod
 	const exit = branch.hasOutroMethod ?
 		deindent`
 			${name}.outro( function () {
-				${name}.destroy( true );
+				${name}.unmount();
+				${name}.destroy();
 				${name} = null;
 			});
 		` :
 		deindent`
-			${name}.destroy( true );
+			${name}.unmount();
+			${name}.destroy();
 			${name} = null;
 		`;
 
@@ -152,8 +154,12 @@ function simple ( generator: DomGenerator, block: Block, state: State, node: Nod
 		}
 	` );
 
+	block.builders.unmount.addLine(
+		`${if_name}${name}.unmount();`
+	);
+
 	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+		`${if_name}${name}.destroy( false );`
 	);
 }
 
@@ -185,7 +191,10 @@ function compound ( generator: DomGenerator, block: Block, state: State, node: N
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
-		${if_name}${name}.destroy( true );
+		${if_name}{
+			${name}.unmount();
+			${name}.destroy();
+		}
 		${name} = ${current_block_and}${current_block}( ${params}, ${block.component} );
 		${if_name}${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
 	`;
@@ -207,7 +216,10 @@ function compound ( generator: DomGenerator, block: Block, state: State, node: N
 	}
 
 	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+		`${if_name}{
+			${name}.unmount();
+			${name}.destroy();
+		}`
 	);
 }
 
