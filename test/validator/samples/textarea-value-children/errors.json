@@ -1,0 +1,8 @@
+[{
+	"message": "A <textarea> can have either a value attribute or (equivalently) child content, but not both",
+	"loc": {
+		"line": 1,
+		"column": 10
+	},
+	"pos": 10
+}]

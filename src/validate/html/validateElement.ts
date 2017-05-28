@@ -77,6 +77,14 @@ export default function validateElement ( validator: Validator, node: Node ) {
 				validator.error( `Missing transition '${attribute.name}'`, attribute.start );
 			}
 		}
+
+		else if ( attribute.type === 'Attribute' ) {
+			if ( attribute.name === 'value' && node.name === 'textarea' ) {
+				if ( node.children.length ) {
+					validator.error( `A <textarea> can have either a value attribute or (equivalently) child content, but not both`, attribute.start );
+				}
+			}
+		}
 	});
 }
 
