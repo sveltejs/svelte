@@ -1,3 +1,5 @@
+function noop () {}
+
 function assign ( target ) {
 	for ( var i = 1; i < arguments.length; i += 1 ) {
 		var source = arguments[i];
@@ -25,6 +27,7 @@ function detachBetween ( before, after ) {
 	}
 }
 
+// TODO this is out of date
 function destroyEach ( iterations, detach, start ) {
 	for ( var i = start; i < iterations.length; i += 1 ) {
 		if ( iterations[i] ) iterations[i].destroy( detach );
@@ -173,7 +176,10 @@ function create_main_fragment ( state, component ) {
 					}
 				}
 
-				destroyEach( each_block_iterations, true, each_block_value.length );
+				for ( ; i < each_block_iterations.length; i += 1 ) {
+					each_block_iterations[i].unmount();
+					each_block_iterations[i].destroy();
+				}
 				each_block_iterations.length = each_block_value.length;
 			}
 
@@ -182,13 +188,17 @@ function create_main_fragment ( state, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			destroyEach( each_block_iterations, detach, 0 );
-
-			if ( detach ) {
-				detachNode( text );
-				detachNode( p );
+		unmount: function () {
+			for ( var i = 0; i < each_block_iterations.length; i += 1 ) {
+				each_block_iterations[i].unmount();
 			}
+
+			detachNode( text );
+			detachNode( p );
+		},
+
+		destroy: function () {
+			destroyEach( each_block_iterations, false, 0 );
 		}
 	};
 }
@@ -244,13 +254,13 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachBetween( raw_before, raw_after );
+		unmount: function () {
+			detachBetween( raw_before, raw_after );
 
-				detachNode( div );
-			}
-		}
+			detachNode( div );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -287,7 +297,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy( false ); // TODO no arguments to destroy
 	this._fragment = null;
 
 	this._state = {};

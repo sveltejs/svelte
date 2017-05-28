@@ -30,13 +30,15 @@ function create_main_fragment ( state, component ) {
 			nonimported._fragment.mount( target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			imported.destroy( detach );
-			nonimported.destroy( detach );
+		unmount: function () {
+			imported._fragment.unmount();
+			detachNode( text );
+			nonimported._fragment.unmount();
+		},
 
-			if ( detach ) {
-				detachNode( text );
-			}
+		destroy: function () {
+			imported.destroy( false );
+			nonimported.destroy( false );
 		}
 	};
 }
@@ -76,7 +78,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy( false ); // TODO no arguments to destroy
 	this._fragment = null;
 
 	this._state = {};

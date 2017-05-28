@@ -30,12 +30,12 @@ function create_main_fragment ( state, component ) {
 			insertNode( button, target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			foo_handler.teardown();
+		unmount: function () {
+			detachNode( button );
+		},
 
-			if ( detach ) {
-				detachNode( button );
-			}
+		destroy: function () {
+			foo_handler.teardown();
 		}
 	};
 }
@@ -72,7 +72,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy( false ); // TODO no arguments to destroy
 	this._fragment = null;
 
 	this._state = {};
