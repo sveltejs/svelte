@@ -164,7 +164,7 @@ SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = functio
 	template.ondestroy.call( this );
 
 	if ( detach !== false ) this._fragment.unmount();
-	this._fragment.destroy( false ); // TODO no arguments to destroy
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};
