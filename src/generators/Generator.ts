@@ -117,11 +117,7 @@ export default class Generator {
 					const { name } = flattenReference( node );
 					if ( scope.has( name ) ) return;
 
-					if ( parent && parent.type === 'CallExpression' && node === parent.callee && helpers.has( name ) ) {
-						code.prependRight( node.start, `${self.alias( 'template' )}.helpers.` );
-					}
-
-					else if ( name === 'event' && isEventHandler ) {
+					if ( name === 'event' && isEventHandler ) {
 						// noop
 					}
 
@@ -133,6 +129,10 @@ export default class Generator {
 						}
 
 						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
+					}
+
+					else if ( helpers.has( name ) ) {
+						code.prependRight( node.start, `${self.alias( 'template' )}.helpers.` );
 					}
 
 					else if ( indexes.has( name ) ) {

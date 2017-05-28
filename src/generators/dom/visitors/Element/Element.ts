@@ -107,6 +107,20 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 	}
 
 	if ( node.name !== 'select' ) {
+		if ( node.name === 'textarea' ) {
+			// this is an egregious hack, but it's the easiest way to get <textarea>
+			// children treated the same way as a value attribute
+			if ( node.children.length > 0 ) {
+				node.attributes.push({
+					type: 'Attribute',
+					name: 'value',
+					value: node.children
+				});
+
+				node.children = [];
+			}
+		}
+
 		// <select> value attributes are an annoying special case — it must be handled
 		// *after* its children have been updated
 		visitAttributesAndAddProps();
