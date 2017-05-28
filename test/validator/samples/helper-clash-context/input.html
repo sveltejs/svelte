@@ -1,0 +1,17 @@
+{{#each things as thing}}
+	{{thing}}
+{{/each}}
+
+<script>
+	export default {
+		data () {
+			return { things: [ 'a', 'b', 'c' ] };
+		},
+
+		helpers: {
+			thing: function ( x ) {
+				return x;
+			}
+		}
+	};
+</script>

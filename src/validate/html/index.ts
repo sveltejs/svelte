@@ -26,6 +26,17 @@ export default function validateHtml ( validator: Validator, html: Node ) {
 			elementDepth += 1;
 
 			validateElement( validator, node );
+		} else if ( node.type === 'EachBlock' ) {
+			if ( validator.helpers.has( node.context ) ) {
+				let c = node.expression.end;
+
+				// find start of context
+				while ( /\s/.test( validator.source[c] ) ) c += 1;
+				c += 2;
+				while ( /\s/.test( validator.source[c] ) ) c += 1;
+
+				validator.warn( `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`, c );
+			}
 		}
 
 		if ( node.children ) {
