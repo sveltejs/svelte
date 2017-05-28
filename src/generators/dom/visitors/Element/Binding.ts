@@ -183,7 +183,7 @@ function getBindingValue ( generator: DomGenerator, block: Block, state: State, 
 
 	// <input type='range|number' bind:value>
 	if ( type === 'range' || type === 'number' ) {
-		return `+${state.parentNode}.${attribute.name}`;
+		return `${generator.helper( 'toNumber' )}( ${state.parentNode}.${attribute.name} )`;
 	}
 
 	// everything else
