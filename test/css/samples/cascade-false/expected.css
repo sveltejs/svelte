@@ -1,0 +1,12 @@
+
+	div[svelte-4161687011] {
+		color: red;
+	}
+
+	div.foo[svelte-4161687011] {
+		color: blue;
+	}
+
+	.foo[svelte-4161687011] {
+		font-weight: bold;
+	}

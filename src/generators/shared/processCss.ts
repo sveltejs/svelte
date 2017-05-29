@@ -1,8 +1,9 @@
+import MagicString from 'magic-string';
 import { Parsed, Node } from '../../interfaces';
 
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
 
-export default function processCss ( parsed: Parsed, code ) {
+export default function processCss ( parsed: Parsed, code: MagicString, cascade: boolean ) {
 	const css = parsed.css.content.styles;
 	const offset = parsed.css.content.start;
 
@@ -14,9 +15,13 @@ export default function processCss ( parsed: Parsed, code ) {
 		if ( node.type === 'Atrule' && node.name.toLowerCase() === 'keyframes' ) {
 			node.expression.children.forEach( ( expression: Node ) => {
 				if ( expression.type === 'Identifier' ) {
-					const newName = `svelte-${parsed.hash}-${expression.name}`;
-					code.overwrite( expression.start, expression.end, newName );
-					keyframes.set( expression.name, newName );
+					if ( expression.name.startsWith( '-global-' ) ) {
+						code.remove( expression.start, expression.start + 8 );
+					} else {
+						const newName = `svelte-${parsed.hash}-${expression.name}`;
+						code.overwrite( expression.start, expression.end, newName );
+						keyframes.set( expression.name, newName );
+					}
 				}
 			});
 		} else if ( node.children ) {
@@ -30,26 +35,63 @@ export default function processCss ( parsed: Parsed, code ) {
 
 	function transform ( rule: Node ) {
 		rule.selector.children.forEach( ( selector: Node ) => {
-			const start = selector.start - offset;
-			const end = selector.end - offset;
+			if ( cascade ) {
+				// TODO disable cascading (without :global(...)) in v2
+				const start = selector.start - offset;
+				const end = selector.end - offset;
 
-			const selectorString = css.slice( start, end );
+				const selectorString = css.slice( start, end );
 
-			const firstToken = selector.children[0];
+				const firstToken = selector.children[0];
 
-			let transformed;
+				let transformed;
 
-			if ( firstToken.type === 'TypeSelector' ) {
-				const insert = firstToken.end - offset;
-				const head = css.slice( start, insert );
-				const tail = css.slice( insert, end );
+				if ( firstToken.type === 'TypeSelector' ) {
+					const insert = firstToken.end - offset;
+					const head = css.slice( start, insert );
+					const tail = css.slice( insert, end );
 
-				transformed = `${head}${attr}${tail}, ${attr} ${selectorString}`;
-			} else {
-				transformed = `${attr}${selectorString}, ${attr} ${selectorString}`;
+					transformed = `${head}${attr}${tail}, ${attr} ${selectorString}`;
+				} else {
+					transformed = `${attr}${selectorString}, ${attr} ${selectorString}`;
+				}
+
+				code.overwrite( selector.start, selector.end, transformed );
 			}
 
-			code.overwrite( start + offset, end + offset, transformed );
+			else {
+				let shouldTransform = true;
+				let c = selector.start;
+
+				selector.children.forEach( ( child: Node ) => {
+					if ( child.type === 'WhiteSpace' || child.type === 'Combinator' ) {
+						code.appendLeft( c, attr );
+						shouldTransform = true;
+						return;
+					}
+
+					if ( !shouldTransform ) return;
+
+					if ( child.type === 'PseudoClassSelector' ) {
+						// `:global(xyz)` > xyz
+						if ( child.name === 'global' ) {
+							const first = child.children[0];
+							const last = child.children[child.children.length - 1];
+							code.remove( child.start, first.start ).remove( last.end, child.end );
+						} else {
+							code.prependRight( c, attr );
+						}
+
+						shouldTransform = false;
+					}
+
+					c = child.end;
+				});
+
+				if ( shouldTransform ) {
+					code.appendLeft( c, attr );
+				}
+			}
 		});
 
 		rule.block.children.forEach( ( block: Node ) => {
