@@ -1,0 +1,12 @@
+
+	div {
+		color: red;
+	}
+
+	div.foo {
+		color: blue;
+	}
+
+	.foo {
+		font-weight: bold;
+	}
