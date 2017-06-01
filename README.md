@@ -77,6 +77,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `name` | `string` | The name of the constructor in the compiled component. | `'SvelteComponent'` |
 | `filename` | `string` | The filename to use in sourcemaps and compiler error and warning messages. | `'SvelteComponent.html'` |
 | `amd`.`id` | `string` | The AMD module ID to use for the `'amd'` and `'umd'` output formats. | `undefined` |
+| `cascade` | `true`, `false` | Whether to cascade all of the component's styles to child components. If `false`, only selectors wrapped in `:global(...)` and keyframe IDs beginning with `-global-` are cascaded. | `true` |
 | `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
 | `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
 | `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |
