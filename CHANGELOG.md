@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.22.0
+
+* Symmetry between `mount` and `unmount`. This is potentially a breaking change if your components import other components that were precompiled with an earlier version of Svelte ([#592](https://github.com/sveltejs/svelte/issues/592))
+* Add `cascade` option, which prevents styles affecting child components if `false`, unless selectors are wrapped in `:global(...)` and keyframe declaration IDs are prefixed with `-global-`. This will become the default behaviour in v2 ([#583](https://github.com/sveltejs/svelte/issues/583))
+* Support binding to computed member expressions ([#602](https://github.com/sveltejs/svelte/issues/602))
+* Coerce empty string in `number`/`range` inputs to `undefined`, not `0` ([#584](https://github.com/sveltejs/svelte/issues/584))
+* Fix insert location of DOM elements in each/if/nested component edge cases ([#610](https://github.com/sveltejs/svelte/issues/610))
+
 ## 1.21.0
 
 * Always use `helpers` if referenced, not just for call expressions ([#575](https://github.com/sveltejs/svelte/issues/575))
