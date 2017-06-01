@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, proto, setAttribute } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -34,11 +34,11 @@ function create_main_fragment ( state, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -76,7 +76,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};

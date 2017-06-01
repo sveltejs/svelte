@@ -64,7 +64,8 @@ export default function visitEachBlock ( generator: DomGenerator, block: Block, 
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
-					${each_block_else}.destroy( true );
+					${each_block_else}.unmount();
+					${each_block_else}.destroy();
 					${each_block_else} = null;
 				}
 			` );
@@ -72,7 +73,8 @@ export default function visitEachBlock ( generator: DomGenerator, block: Block, 
 			block.builders.update.addBlock( deindent`
 				if ( ${each_block_value}.length ) {
 					if ( ${each_block_else} ) {
-						${each_block_else}.destroy( true );
+						${each_block_else}.unmount();
+						${each_block_else}.destroy();
 						${each_block_else} = null;
 					}
 				} else if ( !${each_block_else} ) {
@@ -82,11 +84,12 @@ export default function visitEachBlock ( generator: DomGenerator, block: Block, 
 			` );
 		}
 
+		block.builders.unmount.addLine(
+			`if ( ${each_block_else} ) ${each_block_else}.unmount()`
+		);
 
 		block.builders.destroy.addBlock( deindent`
-			if ( ${each_block_else} ) {
-				${each_block_else}.destroy( ${isToplevel ? 'detach' : 'false'} );
-			}
+			if ( ${each_block_else} ) ${each_block_else}.destroy( false );
 		` );
 	}
 
@@ -154,7 +157,8 @@ function keyed ( generator: DomGenerator, block: Block, state: State, node: Node
 		block.builders.create.addBlock( deindent`
 			function ${fn} ( iteration ) {
 				iteration.outro( function () {
-					iteration.destroy( true );
+					iteration.unmount();
+					iteration.destroy();
 					${lookup}[iteration.key] = null;
 				});
 			}
@@ -176,7 +180,8 @@ function keyed ( generator: DomGenerator, block: Block, state: State, node: Node
 		const fn = block.getUniqueName( `${each_block}_destroy` );
 		block.builders.create.addBlock( deindent`
 			function ${fn} ( iteration ) {
-				iteration.destroy( true );
+				iteration.unmount();
+				iteration.destroy();
 				${lookup}[iteration.key] = null;
 			}
 		` );
@@ -262,10 +267,20 @@ function keyed ( generator: DomGenerator, block: Block, state: State, node: Node
 		${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${node.key}];
 	` );
 
+	if ( !state.parentNode ) {
+		block.builders.unmount.addBlock( deindent`
+			var ${iteration} = ${head};
+			while ( ${iteration} ) {
+				${iteration}.unmount();
+				${iteration} = ${iteration}.next;
+			}
+		` );
+	}
+
 	block.builders.destroy.addBlock( deindent`
 		var ${iteration} = ${head};
 		while ( ${iteration} ) {
-			${iteration}.destroy( ${state.parentNode ? 'false' : 'detach'} );
+			${iteration}.destroy( false );
 			${iteration} = ${iteration}.next;
 		}
 	` );
@@ -334,7 +349,8 @@ function unkeyed ( generator: DomGenerator, block: Block, state: State, node: No
 				function ${outro} ( i ) {
 					if ( ${iterations}[i] ) {
 						${iterations}[i].outro( function () {
-							${iterations}[i].destroy( true );
+							${iterations}[i].unmount();
+							${iterations}[i].destroy();
 							${iterations}[i] = null;
 						});
 					}
@@ -343,7 +359,10 @@ function unkeyed ( generator: DomGenerator, block: Block, state: State, node: No
 				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) ${outro}( ${i} );
 			` :
 			deindent`
-				${generator.helper( 'destroyEach' )}( ${iterations}, true, ${each_block_value}.length );
+				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) {
+					${iterations}[${i}].unmount();
+					${iterations}[${i}].destroy();
+				}
 				${iterations}.length = ${each_block_value}.length;
 			`;
 
@@ -360,7 +379,13 @@ function unkeyed ( generator: DomGenerator, block: Block, state: State, node: No
 		` );
 	}
 
+	block.builders.unmount.addBlock( deindent`
+		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			${iterations}[${i}].unmount();
+		}
+	` );
+
 	block.builders.destroy.addBlock(
-		`${generator.helper( 'destroyEach' )}( ${iterations}, ${state.parentNode ? 'false' : 'detach'}, 0 );`
+		`${generator.helper( 'destroyEach' )}( ${iterations}, false, 0 );`
 	);
 }

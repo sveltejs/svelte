@@ -135,12 +135,14 @@ function simple ( generator: DomGenerator, block: Block, state: State, node: Nod
 	const exit = branch.hasOutroMethod ?
 		deindent`
 			${name}.outro( function () {
-				${name}.destroy( true );
+				${name}.unmount();
+				${name}.destroy();
 				${name} = null;
 			});
 		` :
 		deindent`
-			${name}.destroy( true );
+			${name}.unmount();
+			${name}.destroy();
 			${name} = null;
 		`;
 
@@ -152,8 +154,12 @@ function simple ( generator: DomGenerator, block: Block, state: State, node: Nod
 		}
 	` );
 
+	block.builders.unmount.addLine(
+		`${if_name}${name}.unmount();`
+	);
+
 	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+		`${if_name}${name}.destroy();`
 	);
 }
 
@@ -185,7 +191,10 @@ function compound ( generator: DomGenerator, block: Block, state: State, node: N
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
-		${if_name}${name}.destroy( true );
+		${if_name}{
+			${name}.unmount();
+			${name}.destroy();
+		}
 		${name} = ${current_block_and}${current_block}( ${params}, ${block.component} );
 		${if_name}${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
 	`;
@@ -207,7 +216,10 @@ function compound ( generator: DomGenerator, block: Block, state: State, node: N
 	}
 
 	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy( ${state.parentNode ? 'false' : 'detach'} );`
+		`${if_name}{
+			${name}.unmount();
+			${name}.destroy();
+		}`
 	);
 }
 
@@ -265,7 +277,8 @@ function compoundWithOutros ( generator: DomGenerator, block: Block, state: Stat
 
 	const destroyOldBlock = deindent`
 		${name}.outro( function () {
-			${if_blocks}[ ${previous_block_index} ].destroy( true );
+			${if_blocks}[ ${previous_block_index} ].unmount();
+			${if_blocks}[ ${previous_block_index} ].destroy();
 			${if_blocks}[ ${previous_block_index} ] = null;
 		});
 	`;
@@ -313,7 +326,10 @@ function compoundWithOutros ( generator: DomGenerator, block: Block, state: Stat
 		` );
 	}
 
-	block.builders.destroy.addLine(
-		`${if_current_block_index}${if_blocks}[ ${current_block_index} ].destroy( ${state.parentNode ? 'false' : 'detach'} );`
-	);
+	block.builders.destroy.addLine( deindent`
+		${if_current_block_index}{
+			${if_blocks}[ ${current_block_index} ].unmount();
+			${if_blocks}[ ${current_block_index} ].destroy();
+		}
+	` );
 }
