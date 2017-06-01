@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
 	var text_1_value;
@@ -39,7 +39,10 @@ function create_main_fragment ( state, component ) {
 					}
 				}
 
-				destroyEach( each_block_iterations, true, each_block_value.length );
+				for ( ; i < each_block_iterations.length; i += 1 ) {
+					each_block_iterations[i].unmount();
+					each_block_iterations[i].destroy();
+				}
 				each_block_iterations.length = each_block_value.length;
 			}
 
@@ -48,13 +51,17 @@ function create_main_fragment ( state, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			destroyEach( each_block_iterations, detach, 0 );
-
-			if ( detach ) {
-				detachNode( text );
-				detachNode( p );
+		unmount: function () {
+			for ( var i = 0; i < each_block_iterations.length; i += 1 ) {
+				each_block_iterations[i].unmount();
 			}
+
+			detachNode( text );
+			detachNode( p );
+		},
+
+		destroy: function () {
+			destroyEach( each_block_iterations, false, 0 );
 		}
 	};
 }
@@ -110,13 +117,13 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachBetween( raw_before, raw_after );
+		unmount: function () {
+			detachBetween( raw_before, raw_after );
 
-				detachNode( div );
-			}
-		}
+			detachNode( div );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -153,7 +160,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};
