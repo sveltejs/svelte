@@ -1,0 +1,8 @@
+{
+	"message": "Cannot bind to rvalue",
+	"pos": 19,
+	"loc": {
+		"line": 1,
+		"column": 19
+	}
+}
