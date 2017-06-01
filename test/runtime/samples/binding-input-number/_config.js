@@ -29,5 +29,15 @@ export default {
 			<input type='number'>
 			<p>number 44</p>
 		` );
+
+		// empty string should be treated as undefined
+		input.value = '';
+		input.dispatchEvent( event );
+
+		assert.equal( component.get( 'count' ), undefined );
+		assert.htmlEqual( target.innerHTML, `
+			<input type='number'>
+			<p>undefined undefined</p>
+		` );
 	}
 };
