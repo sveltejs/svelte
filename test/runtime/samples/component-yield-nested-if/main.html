@@ -1,0 +1,14 @@
+<Outer :foo>
+	One
+	<Inner/>
+</Outer>
+
+<script>
+	import Outer from './Outer.html';
+	import Inner from './Inner.html';
+
+	export default {
+		data: () => ({ foo: true }),
+		components: { Outer, Inner }
+	};
+</script>

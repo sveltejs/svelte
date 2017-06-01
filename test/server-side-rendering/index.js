@@ -107,10 +107,12 @@ describe( 'ssr', () => {
 				}
 			}
 
-			const resolved = require.resolve( `../runtime/samples/${dir}/main.html` );
-			delete require.cache[ resolved ];
+			fs.readdirSync( `test/runtime/samples/${dir}` ).forEach( file => {
+				const resolved = require.resolve( `../runtime/samples/${dir}/${file}` );
+				delete require.cache[ resolved ];
+			});
 
-			const component = require( resolved );
+			const component = require( `../runtime/samples/${dir}/main.html` );
 			let html;
 
 			try {

@@ -56,7 +56,7 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 		update: new CodeBuilder()
 	};
 
-	const isToplevel = !state.parentNode;
+	const isTopLevel = !state.parentNode;
 
 	generator.hasComponents = true;
 
@@ -95,7 +95,7 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 	}
 
 	const componentInitProperties = [
-		`target: ${!isToplevel ? state.parentNode: 'null'}`,
+		`target: ${!isTopLevel ? state.parentNode: 'null'}`,
 		`_root: ${block.component}._root`
 	];
 
@@ -120,6 +120,10 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 				`${yieldFragment}.update( changed, ${params} );`
 			);
 		}
+
+		block.builders.destroy.addLine(
+			`${yieldFragment}.destroy();`
+		);
 
 		componentInitProperties.push( `_yield: ${yieldFragment}`);
 	}
@@ -157,7 +161,7 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 		});
 	` );
 
-	if ( isToplevel ) {
+	if ( isTopLevel ) {
 		block.builders.mount.addLine( `${name}._fragment.mount( ${block.target}, anchor );` );
 	}
 
@@ -183,7 +187,8 @@ export default function visitComponent ( generator: DomGenerator, block: Block, 
 		` );
 	}
 
-	block.builders.destroy.addLine( `${name}.destroy( ${isToplevel ? 'detach' : 'false'} );` );
+	if ( isTopLevel ) block.builders.unmount.addLine( `${name}._fragment.unmount();` );
+	block.builders.destroy.addLine( `${name}.destroy( false );` );
 
 	block.builders.create.addBlock( local.create );
 	if ( !local.update.isEmpty() ) block.builders.update.addBlock( local.update );

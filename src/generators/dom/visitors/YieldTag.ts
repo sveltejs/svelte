@@ -10,6 +10,6 @@ export default function visitYieldTag ( generator: DomGenerator, block: Block, s
 	);
 
 	block.builders.destroy.addLine(
-		`if ( ${block.component}._yield ) ${block.component}._yield.destroy( detach );`
+		`if ( ${block.component}._yield ) ${block.component}._yield.unmount();`
 	);
 }
