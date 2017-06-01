@@ -13,6 +13,7 @@ export class SsrGenerator extends Generator {
 		super( parsed, source, name, options );
 		this.bindings = [];
 		this.renderCode = '';
+		this.elementDepth = 0;
 	}
 
 	append ( code: string ) {

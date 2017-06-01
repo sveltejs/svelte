@@ -104,7 +104,7 @@ export function readBindingDirective ( parser: Parser, start: number, name: stri
 		value = parseExpressionAt( source, a );
 
 		if ( value.type !== 'Identifier' && value.type !== 'MemberExpression' ) {
-			parser.error( `Expected valid property name` );
+			parser.error( `Cannot bind to rvalue`, value.start );
 		}
 
 		parser.allowWhitespace();

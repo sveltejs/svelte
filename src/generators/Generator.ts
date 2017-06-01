@@ -29,8 +29,11 @@ export default class Generator {
 	transitions: Set<string>;
 	importedComponents: Map<string, string>;
 
+	code: MagicString;
+
 	bindingGroups: string[];
 	expectedProperties: Set<string>;
+	cascade: boolean;
 	css: string;
 	cssId: string;
 	usesRefs: boolean;
@@ -59,7 +62,8 @@ export default class Generator {
 		this.expectedProperties = new Set();
 
 		this.code = new MagicString( source );
-		this.css = parsed.css ? processCss( parsed, this.code ) : null;
+		this.cascade = options.cascade !== false; // TODO remove this option in v2
+		this.css = parsed.css ? processCss( parsed, this.code, this.cascade ) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
 

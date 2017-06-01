@@ -7,9 +7,16 @@ import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 
+function getObject ( node ) {
+	// TODO validation should ensure this is an Identifier or a MemberExpression
+	while ( node.type === 'MemberExpression' ) node = node.object;
+	return node;
+}
+
 export default function visitBinding ( generator: DomGenerator, block: Block, state: State, node: Node, attribute: Node ) {
-	const { name, parts } = flattenReference( attribute.value );
-	const { snippet, contexts, dependencies } = block.contextualise( attribute.value );
+	const { name } = getObject( attribute.value );
+	const { snippet, contexts } = block.contextualise( attribute.value );
+	const dependencies = block.contextDependencies.has( name ) ? block.contextDependencies.get( name ) : [ name ];
 
 	if ( dependencies.length > 1 ) throw new Error( 'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!' );
 
@@ -21,10 +28,10 @@ export default function visitBinding ( generator: DomGenerator, block: Block, st
 	const handler = block.getUniqueName( `${state.parentNode}_${eventName}_handler` );
 	const isMultipleSelect = node.name === 'select' && node.attributes.find( ( attr: Node ) => attr.name.toLowerCase() === 'multiple' ); // TODO use getStaticAttributeValue
 	const type = getStaticAttributeValue( node, 'type' );
-	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, parts.join( '.' ) ) : null;
+	const bindingGroup = attribute.name === 'group' ? getBindingGroup( generator, attribute.value ) : null;
 	const value = getBindingValue( generator, block, state, node, attribute, isMultipleSelect, bindingGroup, type );
 
-	let setter = getSetter({ block, name, context: '_svelte', attribute, dependencies, value });
+	let setter = getSetter({ block, name, snippet, context: '_svelte', attribute, dependencies, value });
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
 	const lock = block.alias( `${state.parentNode}_updating` );
 	let updateCondition = `!${lock}`;
@@ -183,14 +190,17 @@ function getBindingValue ( generator: DomGenerator, block: Block, state: State, 
 
 	// <input type='range|number' bind:value>
 	if ( type === 'range' || type === 'number' ) {
-		return `+${state.parentNode}.${attribute.name}`;
+		return `${generator.helper( 'toNumber' )}( ${state.parentNode}.${attribute.name} )`;
 	}
 
 	// everything else
 	return `${state.parentNode}.${attribute.name}`;
 }
 
-function getBindingGroup ( generator: DomGenerator, keypath: string ) {
+function getBindingGroup ( generator: DomGenerator, value: Node ) {
+	const { parts } = flattenReference( value ); // TODO handle cases involving computed member expressions
+	const keypath = parts.join( '.' );
+
 	// TODO handle contextual bindings — `keypath` should include unique ID of
 	// each block that provides context
 	let index = generator.bindingGroups.indexOf( keypath );

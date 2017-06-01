@@ -46,7 +46,7 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 	block.mount( name, state.parentNode );
 
 	// add CSS encapsulation attribute
-	if ( generator.cssId && state.isTopLevel ) {
+	if ( generator.cssId && ( !generator.cascade || state.isTopLevel ) ) {
 		block.builders.create.addLine( `${generator.helper( 'setAttribute' )}( ${name}, '${generator.cssId}', '' );` );
 	}
 
