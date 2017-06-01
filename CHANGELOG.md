@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.22.1
+
+* Sanitise event handler names ([#612](https://github.com/sveltejs/svelte/issues/612))
+
 ## 1.22.0
 
 * Symmetry between `mount` and `unmount`. This is potentially a breaking change if your components import other components that were precompiled with an earlier version of Svelte ([#592](https://github.com/sveltejs/svelte/issues/592))
