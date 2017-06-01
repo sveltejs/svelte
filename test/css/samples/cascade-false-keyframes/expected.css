@@ -1,0 +1,13 @@
+
+	@keyframes svelte-776829126-why {
+		0% { color: red; }
+		100% { color: blue; }
+	}
+
+	[svelte-776829126].animated, [svelte-776829126] .animated {
+		animation: svelte-776829126-why 2s;
+	}
+
+	[svelte-776829126].also-animated, [svelte-776829126] .also-animated {
+		animation: not-defined-here 2s;
+	}

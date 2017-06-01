@@ -50,7 +50,7 @@ export default function visitElement ( generator: SsrGenerator, block: Block, no
 		}
 	});
 
-	if ( generator.cssId && !generator.elementDepth ) {
+	if ( generator.cssId && ( !generator.cascade || generator.elementDepth === 0 ) ) {
 		openingTag += ` ${generator.cssId}`;
 	}
 
