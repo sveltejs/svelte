@@ -62,3 +62,7 @@ export function getBindingGroupValue ( group ) {
 	}
 	return value;
 }
+
+export function toNumber ( value ) {
+	return value === '' ? undefined : +value;
+}

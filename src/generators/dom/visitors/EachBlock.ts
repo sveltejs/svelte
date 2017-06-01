@@ -142,7 +142,7 @@ function keyed ( generator: DomGenerator, block: Block, state: State, node: Node
 		block.builders.mount.addBlock( deindent`
 			var ${iteration} = ${head};
 			while ( ${iteration} ) {
-				${iteration}.${mountOrIntro}( ${block.target}, null );
+				${iteration}.${mountOrIntro}( ${block.target}, anchor );
 				${iteration} = ${iteration}.next;
 			}
 		` );
@@ -299,7 +299,7 @@ function unkeyed ( generator: DomGenerator, block: Block, state: State, node: No
 	if ( !state.parentNode ) {
 		block.builders.mount.addBlock( deindent`
 			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].${mountOrIntro}( ${block.target}, null );
+				${iterations}[${i}].${mountOrIntro}( ${block.target}, anchor );
 			}
 		` );
 	}

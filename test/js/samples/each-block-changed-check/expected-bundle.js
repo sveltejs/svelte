@@ -1,9 +1,10 @@
 function noop () {}
 
 function assign ( target ) {
-	for ( var i = 1; i < arguments.length; i += 1 ) {
-		var source = arguments[i];
-		for ( var k in source ) target[k] = source[k];
+	var k, source, i = 1, len = arguments.length;
+	for ( ; i < len; i++ ) {
+		source = arguments[i];
+		for ( k in source ) target[k] = source[k];
 	}
 
 	return target;
@@ -156,7 +157,7 @@ function create_main_fragment ( state, component ) {
 	return {
 		mount: function ( target, anchor ) {
 			for ( var i = 0; i < each_block_iterations.length; i += 1 ) {
-				each_block_iterations[i].mount( target, null );
+				each_block_iterations[i].mount( target, anchor );
 			}
 
 			insertNode( text, target, anchor );
