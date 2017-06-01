@@ -47,9 +47,7 @@ export default function visitEventHandler ( generator: DomGenerator, block: Bloc
 
 	// get a name for the event handler that is globally unique
 	// if hoisted, locally unique otherwise
-	const handlerName = shouldHoist ?
-		generator.getUniqueName( `${name}_handler` ) :
-		block.getUniqueName( `${name}_handler` );
+	const handlerName = ( shouldHoist ? generator : block ).getUniqueName( `${name.replace( /[^a-zA-Z0-9_$]/g, '_' )}_handler` );
 
 	// create the handler body
 	const handlerBody = deindent`
@@ -71,7 +69,7 @@ export default function visitEventHandler ( generator: DomGenerator, block: Bloc
 		`;
 
 	if ( shouldHoist ) {
-		generator.blocks.push({
+		generator.blocks.push(<Block>{
 			render: () => handler
 		});
 	} else {
