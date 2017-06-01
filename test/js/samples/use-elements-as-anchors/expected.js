@@ -1,4 +1,4 @@
-import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
+import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
 	var div = createElement( 'div' );
@@ -55,7 +55,8 @@ function create_main_fragment ( state, component ) {
 					if_block.mount( div, text );
 				}
 			} else if ( if_block ) {
-				if_block.destroy( true );
+				if_block.unmount();
+				if_block.destroy();
 				if_block = null;
 			}
 
@@ -65,7 +66,8 @@ function create_main_fragment ( state, component ) {
 					if_block_1.mount( div, text_3 );
 				}
 			} else if ( if_block_1 ) {
-				if_block_1.destroy( true );
+				if_block_1.unmount();
+				if_block_1.destroy();
 				if_block_1 = null;
 			}
 
@@ -75,7 +77,8 @@ function create_main_fragment ( state, component ) {
 					if_block_2.mount( div, text_4 );
 				}
 			} else if ( if_block_2 ) {
-				if_block_2.destroy( true );
+				if_block_2.unmount();
+				if_block_2.destroy();
 				if_block_2 = null;
 			}
 
@@ -85,7 +88,8 @@ function create_main_fragment ( state, component ) {
 					if_block_3.mount( div, text_7 );
 				}
 			} else if ( if_block_3 ) {
-				if_block_3.destroy( true );
+				if_block_3.unmount();
+				if_block_3.destroy();
 				if_block_3 = null;
 			}
 
@@ -95,23 +99,29 @@ function create_main_fragment ( state, component ) {
 					if_block_4.mount( if_block_4_anchor.parentNode, if_block_4_anchor );
 				}
 			} else if ( if_block_4 ) {
-				if_block_4.destroy( true );
+				if_block_4.unmount();
+				if_block_4.destroy();
 				if_block_4 = null;
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( if_block ) if_block.destroy( false );
-			if ( if_block_1 ) if_block_1.destroy( false );
-			if ( if_block_2 ) if_block_2.destroy( false );
-			if ( if_block_3 ) if_block_3.destroy( false );
-			if ( if_block_4 ) if_block_4.destroy( detach );
+		unmount: function () {
+			detachNode( div );
+			if ( if_block ) if_block.unmount();
+			if ( if_block_1 ) if_block_1.unmount();
+			if ( if_block_2 ) if_block_2.unmount();
+			if ( if_block_3 ) if_block_3.unmount();
+			detachNode( text_8 );
+			if ( if_block_4 ) if_block_4.unmount();
+			detachNode( if_block_4_anchor );
+		},
 
-			if ( detach ) {
-				detachNode( div );
-				detachNode( text_8 );
-				detachNode( if_block_4_anchor );
-			}
+		destroy: function () {
+			if ( if_block ) if_block.destroy();
+			if ( if_block_1 ) if_block_1.destroy();
+			if ( if_block_2 ) if_block_2.destroy();
+			if ( if_block_3 ) if_block_3.destroy();
+			if ( if_block_4 ) if_block_4.destroy();
 		}
 	};
 }
@@ -125,11 +135,11 @@ function create_if_block ( state, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -142,11 +152,11 @@ function create_if_block_1 ( state, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -159,11 +169,11 @@ function create_if_block_2 ( state, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -176,11 +186,11 @@ function create_if_block_3 ( state, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -193,11 +203,11 @@ function create_if_block_4 ( state, component ) {
 			insertNode( p, target, anchor );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -234,7 +244,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};

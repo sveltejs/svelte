@@ -34,11 +34,6 @@ describe( 'js', () => {
 			const expected = fs.readFileSync( `${dir}/expected.js`, 'utf-8' );
 			const expectedBundle = fs.readFileSync( `${dir}/expected-bundle.js`, 'utf-8' );
 
-			assert.equal(
-				actual.trim().replace( /^\s+$/gm, '' ),
-				expected.trim().replace( /^\s+$/gm, '' )
-			);
-
 			return rollup({
 				entry: `${dir}/_actual.js`,
 				plugins: [{
@@ -51,6 +46,11 @@ describe( 'js', () => {
 			}).then(bundle => {
 				const actualBundle = bundle.generate({ format: 'es' }).code;
 				fs.writeFileSync( `${dir}/_actual-bundle.js`, actualBundle );
+
+				assert.equal(
+					actual.trim().replace( /^\s+$/gm, '' ),
+					expected.trim().replace( /^\s+$/gm, '' )
+				);
 
 				assert.equal(
 					actualBundle.trim().replace( /^\s+$/gm, '' ),

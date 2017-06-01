@@ -103,7 +103,7 @@ export default function visitElement ( generator: DomGenerator, block: Block, st
 	if ( !state.parentNode ) {
 		// TODO we eventually need to consider what happens to elements
 		// that belong to the same outgroup as an outroing element...
-		block.builders.detach.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
+		block.builders.unmount.addLine( `${generator.helper( 'detachNode' )}( ${name} );` );
 	}
 
 	if ( node.name !== 'select' ) {

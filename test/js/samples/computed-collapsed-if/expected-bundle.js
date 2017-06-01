@@ -127,6 +127,8 @@ function create_main_fragment ( state, component ) {
 	return {
 		mount: noop,
 
+		unmount: noop,
+
 		destroy: noop
 	};
 }
@@ -165,7 +167,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};
