@@ -1,26 +1,22 @@
 import { parseExpressionAt } from 'acorn';
 import { Parser } from '../index';
 
-const literals = new Map([
-	[ 'true', true ],
-	[ 'false', false ],
-	[ 'null', null ]
-]);
+const literals = new Map([['true', true], ['false', false], ['null', null]]);
 
-export default function readExpression ( parser: Parser ) {
+export default function readExpression(parser: Parser) {
 	const start = parser.index;
 
-	const name = parser.readUntil( /\s*}}/ );
-	if ( name && /^[a-z]+$/.test( name ) ) {
+	const name = parser.readUntil(/\s*}}/);
+	if (name && /^[a-z]+$/.test(name)) {
 		const end = start + name.length;
 
-		if ( literals.has( name ) ) {
+		if (literals.has(name)) {
 			return {
 				type: 'Literal',
 				start,
 				end,
-				value: literals.get( name ),
-				raw: name
+				value: literals.get(name),
+				raw: name,
 			};
 		}
 
@@ -28,18 +24,20 @@ export default function readExpression ( parser: Parser ) {
 			type: 'Identifier',
 			start,
 			end: start + name.length,
-			name
+			name,
 		};
 	}
 
 	parser.index = start;
 
 	try {
-		const node = parseExpressionAt( parser.template, parser.index, { preserveParens: true } );
+		const node = parseExpressionAt(parser.template, parser.index, {
+			preserveParens: true,
+		});
 		parser.index = node.end;
 
 		return node;
-	} catch ( err ) {
-		parser.acornError( err );
+	} catch (err) {
+		parser.acornError(err);
 	}
 }

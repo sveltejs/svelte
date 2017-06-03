@@ -1,33 +1,35 @@
-import { Declaration, Options } from './getIntro';
+import { Declaration, Options } from './getIntro';
 
 export type Globals = (id: string) => any;
 
-export default function getGlobals ( imports: Declaration[], options: Options ) {
+export default function getGlobals(imports: Declaration[], options: Options) {
 	const { globals, onerror, onwarn } = options;
-	const globalFn = getGlobalFn( globals );
+	const globalFn = getGlobalFn(globals);
 
-	return imports.map( x => {
-		let name = globalFn( x.source.value );
+	return imports.map(x => {
+		let name = globalFn(x.source.value);
 
-		if ( !name ) {
-			if ( x.name.startsWith( '__import' ) ) {
-				const error = new Error( `Could not determine name for imported module '${x.source.value}' – use options.globals` );
-				if ( onerror ) {
-					onerror( error );
+		if (!name) {
+			if (x.name.startsWith('__import')) {
+				const error = new Error(
+					`Could not determine name for imported module '${x.source
+						.value}' – use options.globals`
+				);
+				if (onerror) {
+					onerror(error);
 				} else {
 					throw error;
 				}
-			}
-
-			else {
+			} else {
 				const warning = {
-					message: `No name was supplied for imported module '${x.source.value}'. Guessing '${x.name}', but you should use options.globals`
+					message: `No name was supplied for imported module '${x.source
+						.value}'. Guessing '${x.name}', but you should use options.globals`,
 				};
 
-				if ( onwarn ) {
-					onwarn( warning );
+				if (onwarn) {
+					onwarn(warning);
 				} else {
-					console.warn( warning ); // eslint-disable-line no-console
+					console.warn(warning); // eslint-disable-line no-console
 				}
 			}
 
@@ -38,10 +40,10 @@ export default function getGlobals ( imports: Declaration[], options: Options ) 
 	});
 }
 
-function getGlobalFn ( globals: any ): Globals {
-	if ( typeof globals === 'function' ) return globals;
-	if ( typeof globals === 'object' ) {
-		return id => globals[ id ];
+function getGlobalFn(globals: any): Globals {
+	if (typeof globals === 'function') return globals;
+	if (typeof globals === 'object') {
+		return id => globals[id];
 	}
 
 	return () => undefined;
