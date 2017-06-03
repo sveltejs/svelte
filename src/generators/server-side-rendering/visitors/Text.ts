@@ -7,5 +7,5 @@ export default function visitText(
 	block: Block,
 	node: Node
 ) {
-	generator.append(node.data.replace(/\${/g, '\\${'));
+	generator.append(node.data.replace(/(\${|`|\\)/g, '\\$1'));
 }
