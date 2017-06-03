@@ -2,12 +2,12 @@ import { Node } from '../interfaces';
 
 const keys = {
 	ObjectExpression: 'properties',
-	Program: 'body'
+	Program: 'body',
 };
 
 const offsets = {
 	ObjectExpression: [1, -1],
-	Program: [0, 0]
+	Program: [0, 0],
 };
 
 export function removeNode(code, parent: Node, node: Node) {

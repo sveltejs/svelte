@@ -32,7 +32,7 @@ export default function annotateWithScopes(expression: Node) {
 			if (node._scope) {
 				scope = scope.parent;
 			}
-		}
+		},
 	});
 
 	return scope;
@@ -99,5 +99,5 @@ const extractors = {
 
 	AssignmentPattern(names: string[], param: Node) {
 		extractors[param.left.type](names, param.left);
-	}
+	},
 };

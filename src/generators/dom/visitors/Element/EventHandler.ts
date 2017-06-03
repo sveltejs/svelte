@@ -85,7 +85,7 @@ export default function visitEventHandler(
 	if (shouldHoist) {
 		generator.blocks.push(
 			<Block>{
-				render: () => handler
+				render: () => handler,
 			}
 		);
 	} else {

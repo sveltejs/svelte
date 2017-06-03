@@ -26,7 +26,7 @@ const elementsWithoutText = new Set([
 	'optgroup',
 	'select',
 	'ul',
-	'video'
+	'video',
 ]);
 
 const preprocessors = {
@@ -40,7 +40,7 @@ const preprocessors = {
 		block.addDependencies(dependencies);
 
 		node._state = getChildState(state, {
-			name: block.getUniqueName('text')
+			name: block.getUniqueName('text'),
 		});
 	},
 
@@ -87,7 +87,7 @@ const preprocessors = {
 			block.addDependencies(dependencies);
 
 			node._block = block.child({
-				name: generator.getUniqueName(`create_if_block`)
+				name: generator.getUniqueName(`create_if_block`),
 			});
 
 			node._state = getChildState(state);
@@ -107,7 +107,7 @@ const preprocessors = {
 				attachBlocks(node.else.children[0]);
 			} else if (node.else) {
 				node.else._block = block.child({
-					name: generator.getUniqueName(`create_if_block`)
+					name: generator.getUniqueName(`create_if_block`),
 				});
 
 				node.else._state = getChildState(state);
@@ -181,11 +181,11 @@ const preprocessors = {
 
 			indexNames,
 			listNames,
-			params: block.params.concat(listName, context, indexName)
+			params: block.params.concat(listName, context, indexName),
 		});
 
 		node._state = getChildState(state, {
-			inEachBlock: true
+			inEachBlock: true,
 		});
 
 		generator.blocks.push(node._block);
@@ -195,7 +195,7 @@ const preprocessors = {
 
 		if (node.else) {
 			node.else._block = block.child({
-				name: generator.getUniqueName(`${node._block.name}_else`)
+				name: generator.getUniqueName(`${node._block.name}_else`),
 			});
 
 			node.else._state = getChildState(state);
@@ -235,7 +235,7 @@ const preprocessors = {
 				namespace: node.name === 'svg'
 					? 'http://www.w3.org/2000/svg'
 					: state.namespace,
-				allUsedContexts: []
+				allUsedContexts: [],
 			});
 		}
 
@@ -267,7 +267,7 @@ const preprocessors = {
 				);
 
 				node._block = block.child({
-					name: generator.getUniqueName(`create_${name}_yield_fragment`)
+					name: generator.getUniqueName(`create_${name}_yield_fragment`),
 				});
 
 				generator.blocks.push(node._block);
@@ -278,7 +278,7 @@ const preprocessors = {
 				preprocessChildren(generator, block, node._state, node);
 			}
 		}
-	}
+	},
 };
 
 function preprocessChildren(
@@ -359,13 +359,13 @@ export default function preprocess(
 		indexNames: new Map(),
 		listNames: new Map(),
 
-		dependencies: new Set()
+		dependencies: new Set(),
 	});
 
 	const state: State = {
 		namespace,
 		parentNode: null,
-		isTopLevel: true
+		isTopLevel: true,
 	};
 
 	generator.blocks.push(block);

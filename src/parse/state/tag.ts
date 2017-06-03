@@ -4,7 +4,7 @@ import readStyle from '../read/style';
 import {
 	readEventHandlerDirective,
 	readBindingDirective,
-	readTransitionDirective
+	readTransitionDirective,
 } from '../read/directives';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
@@ -17,7 +17,7 @@ const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const SELF = ':Self';
 
 const metaTags = {
-	':Window': true
+	':Window': true,
 };
 
 const specials = new Map([
@@ -25,16 +25,16 @@ const specials = new Map([
 		'script',
 		{
 			read: readScript,
-			property: 'js'
-		}
+			property: 'js',
+		},
 	],
 	[
 		'style',
 		{
 			read: readStyle,
-			property: 'css'
-		}
-	]
+			property: 'css',
+		},
+	],
 ]);
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
@@ -48,7 +48,7 @@ const disallowedContents = new Map([
 			'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split(
 				' '
 			)
-		)
+		),
 	],
 	['rt', new Set(['rt', 'rp'])],
 	['rp', new Set(['rt', 'rp'])],
@@ -59,7 +59,7 @@ const disallowedContents = new Map([
 	['tfoot', new Set(['tbody'])],
 	['tr', new Set(['tr', 'tbody'])],
 	['td', new Set(['td', 'th', 'tr'])],
-	['th', new Set(['td', 'th', 'tr'])]
+	['th', new Set(['td', 'th', 'tr'])],
 ]);
 
 function stripWhitespace(element) {
@@ -92,7 +92,7 @@ export default function tag(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'Comment',
-			data
+			data,
 		});
 
 		return null;
@@ -198,7 +198,7 @@ export default function tag(parser: Parser) {
 		type: 'Element',
 		name,
 		attributes,
-		children: []
+		children: [],
 	};
 
 	parser.current().children.push(element);
@@ -291,7 +291,7 @@ function readAttribute(parser: Parser, uniqueNames) {
 			start,
 			end: parser.index,
 			type: 'Ref',
-			name: name.slice(4)
+			name: name.slice(4),
 		};
 	}
 
@@ -320,7 +320,7 @@ function readAttribute(parser: Parser, uniqueNames) {
 		end: parser.index,
 		type: 'Attribute',
 		name,
-		value
+		value,
 	};
 }
 
@@ -351,9 +351,9 @@ function getShorthandValue(start: number, name: string) {
 				type: 'Identifier',
 				start,
 				end,
-				name
-			}
-		}
+				name,
+			},
+		},
 	];
 }
 
@@ -362,7 +362,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 		start: parser.index,
 		end: null,
 		type: 'Text',
-		data: ''
+		data: '',
 	};
 
 	const chunks = [];
@@ -397,14 +397,14 @@ function readSequence(parser: Parser, done: () => boolean) {
 				start: index,
 				end: parser.index,
 				type: 'MustacheTag',
-				expression
+				expression,
 			});
 
 			currentChunk = {
 				start: parser.index,
 				end: null,
 				type: 'Text',
-				data: ''
+				data: '',
 			};
 		} else {
 			currentChunk.data += parser.template[parser.index++];

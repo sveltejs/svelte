@@ -22,5 +22,5 @@ export default new Set([
 	'RegExp',
 	'Set',
 	'String',
-	'undefined'
+	'undefined',
 ]);

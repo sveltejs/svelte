@@ -15,12 +15,12 @@ export default function visitAttribute(
 		// attributes without values, e.g. <textarea readonly>
 		local.staticAttributes.push({
 			name: attribute.name,
-			value: true
+			value: true,
 		});
 	} else if (attribute.value.length === 0) {
 		local.staticAttributes.push({
 			name: attribute.name,
-			value: `''`
+			value: `''`,
 		});
 	} else if (attribute.value.length === 1) {
 		const value = attribute.value[0];
@@ -32,7 +32,7 @@ export default function visitAttribute(
 				: value.data;
 			local.staticAttributes.push({
 				name: attribute.name,
-				value: result
+				value: result,
 			});
 		} else {
 			// simple dynamic attributes
@@ -42,7 +42,7 @@ export default function visitAttribute(
 			local.dynamicAttributes.push({
 				name: attribute.name,
 				value: snippet,
-				dependencies
+				dependencies,
 			});
 		}
 	} else {
@@ -72,7 +72,7 @@ export default function visitAttribute(
 		local.dynamicAttributes.push({
 			name: attribute.name,
 			value,
-			dependencies: allDependencies
+			dependencies: allDependencies,
 		});
 	}
 }

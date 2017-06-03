@@ -32,7 +32,7 @@ const windows1252 = [
 	339,
 	157,
 	382,
-	376
+	376,
 ];
 const entityPattern = new RegExp(
 	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(htmlEntities).join('|')}));?`,

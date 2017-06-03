@@ -19,7 +19,7 @@ export default function readScript(parser: Parser, start: number, attributes) {
 	try {
 		ast = parse(source, {
 			ecmaVersion: 8,
-			sourceType: 'module'
+			sourceType: 'module',
 		});
 	} catch (err) {
 		parser.acornError(err);
@@ -32,6 +32,6 @@ export default function readScript(parser: Parser, start: number, attributes) {
 		start,
 		end: parser.index,
 		attributes,
-		content: ast
+		content: ast,
 	};
 }

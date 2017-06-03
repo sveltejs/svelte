@@ -24,7 +24,7 @@
     "dev:shared": "rollup -c rollup/rollup.config.shared.js -w",
     "pretest": "npm run build",
     "prepublish": "npm run build && npm run lint",
-    "prettier": "prettier --use-tabs --single-quote --write \"src/**/*.ts\" \"src/**/*.js\""
+    "prettier": "prettier --use-tabs --single-quote --trailing-comma es5 --write \"src/**/*.ts\""
   },
   "repository": {
     "type": "git",

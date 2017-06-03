@@ -26,14 +26,14 @@ const order = {
 	Attribute: 1,
 	EventHandler: 2,
 	Binding: 3,
-	Ref: 4
+	Ref: 4,
 };
 
 const visitors = {
 	Attribute: visitAttribute,
 	EventHandler: visitEventHandler,
 	Binding: visitBinding,
-	Ref: visitRef
+	Ref: visitRef,
 };
 
 export default function visitComponent(
@@ -60,7 +60,7 @@ export default function visitComponent(
 		bindings: [],
 
 		create: new CodeBuilder(),
-		update: new CodeBuilder()
+		update: new CodeBuilder(),
 	};
 
 	const isTopLevel = !state.parentNode;
@@ -114,7 +114,7 @@ export default function visitComponent(
 
 	const componentInitProperties = [
 		`target: ${!isTopLevel ? state.parentNode : 'null'}`,
-		`_root: ${block.component}._root`
+		`_root: ${block.component}._root`,
 	];
 
 	// Component has children, put them in a separate {{yield}} block

@@ -67,7 +67,7 @@ export default function visitBinding(
 		context: '_svelte',
 		attribute,
 		dependencies,
-		value
+		value,
 	});
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
 	const lock = block.alias(`${state.parentNode}_updating`);

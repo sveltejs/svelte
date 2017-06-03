@@ -50,7 +50,7 @@ export default function visitBinding(
 		name: attribute.name,
 		value: snippet,
 		obj,
-		prop
+		prop,
 	});
 
 	const setter = getSetter({
@@ -60,7 +60,7 @@ export default function visitBinding(
 		context: '_context',
 		attribute,
 		dependencies,
-		value: 'value'
+		value: 'value',
 	});
 
 	generator.hasComplexBindings = true;

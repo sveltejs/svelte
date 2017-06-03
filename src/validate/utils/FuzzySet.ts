@@ -179,7 +179,7 @@ export default function FuzzySet(
 			matchScore = matches[matchIndex];
 			results.push([
 				matchScore / (vectorNormal * items[matchIndex][0]),
-				items[matchIndex][1]
+				items[matchIndex][1],
 			]);
 		}
 		function sortDescending(a, b) {
@@ -200,7 +200,7 @@ export default function FuzzySet(
 			for (let i = 0; i < endIndex; ++i) {
 				newResults.push([
 					_distance(results[i][1], normalizedValue),
-					results[i][1]
+					results[i][1],
 				]);
 			}
 			results = newResults;

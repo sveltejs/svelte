@@ -30,7 +30,7 @@ export default function visitEachBlock(
 		i,
 		params,
 		anchor,
-		mountOrIntro
+		mountOrIntro,
 	};
 
 	const { snippet } = block.contextualise(node.expression);
@@ -144,7 +144,7 @@ function keyed(
 		i,
 		params,
 		anchor,
-		mountOrIntro
+		mountOrIntro,
 	}
 ) {
 	const key = block.getUniqueName('key');
@@ -350,7 +350,7 @@ function unkeyed(
 		i,
 		params,
 		anchor,
-		mountOrIntro
+		mountOrIntro,
 	}
 ) {
 	block.builders.create.addBlock(deindent`

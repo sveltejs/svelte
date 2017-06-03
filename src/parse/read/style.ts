@@ -12,7 +12,7 @@ export default function readStyle(parser: Parser, start: number, attributes) {
 	try {
 		ast = parse(styles, {
 			positions: true,
-			offset: contentStart
+			offset: contentStart,
 		});
 	} catch (err) {
 		if (err.name === 'CssSyntaxError') {
@@ -42,7 +42,7 @@ export default function readStyle(parser: Parser, start: number, attributes) {
 		content: {
 			start: contentStart,
 			end: contentEnd,
-			styles
-		}
+			styles,
+		},
 	};
 }

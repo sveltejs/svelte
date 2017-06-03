@@ -26,7 +26,7 @@ export default function usesThisOrArguments(node: Node) {
 			) {
 				result = true;
 			}
-		}
+		},
 	});
 
 	return result;

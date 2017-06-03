@@ -63,7 +63,7 @@ export default function dom(
 		computations,
 		hasJs,
 		templateProperties,
-		namespace
+		namespace,
 	} = generator.parseJs();
 
 	const { block, state } = preprocess(generator, namespace, parsed.html);
@@ -74,7 +74,7 @@ export default function dom(
 
 	const builders = {
 		main: new CodeBuilder(),
-		_set: new CodeBuilder()
+		_set: new CodeBuilder(),
 	};
 
 	if (computations.length) {
@@ -319,7 +319,7 @@ export default function dom(
 
 				leave(node) {
 					if (node._scope) scope = scope.parent;
-				}
+				},
 			});
 
 			if (key === 'transitionManager') {
@@ -343,6 +343,6 @@ export default function dom(
 
 	return generator.generate(builders.main.toString(), options, {
 		name,
-		format
+		format,
 	});
 }

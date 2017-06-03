@@ -105,9 +105,9 @@ export default function mustache(parser: Parser) {
 					type: 'IfBlock',
 					elseif: true,
 					expression,
-					children: []
-				}
-			]
+					children: [],
+				},
+			],
 		};
 
 		parser.stack.push(block.else.children[0]);
@@ -126,7 +126,7 @@ export default function mustache(parser: Parser) {
 			start: parser.index,
 			end: null,
 			type: 'ElseBlock',
-			children: []
+			children: [],
 		};
 
 		parser.stack.push(block.else);
@@ -151,7 +151,7 @@ export default function mustache(parser: Parser) {
 			end: null,
 			type,
 			expression,
-			children: []
+			children: [],
 		};
 
 		parser.allowWhitespace();
@@ -192,7 +192,7 @@ export default function mustache(parser: Parser) {
 		parser.current().children.push({
 			start,
 			end: parser.index,
-			type: 'YieldTag'
+			type: 'YieldTag',
 		});
 	} else if (parser.eat('{')) {
 		// {{{raw}}} mustache
@@ -205,7 +205,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'RawMustacheTag',
-			expression
+			expression,
 		});
 	} else {
 		const expression = readExpression(parser);
@@ -217,7 +217,7 @@ export default function mustache(parser: Parser) {
 			start,
 			end: parser.index,
 			type: 'MustacheTag',
-			expression
+			expression,
 		});
 	}
 

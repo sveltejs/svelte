@@ -26,7 +26,7 @@ function normalizeOptions(options: CompileOptions): CompileOptions {
 
 			onerror: (error: Error) => {
 				throw error;
-			}
+			},
 		},
 		options
 	);

@@ -27,8 +27,8 @@ function getBranches(
 			block: node._block.name,
 			hasUpdateMethod: node._block.hasUpdateMethod,
 			hasIntroMethod: node._block.hasIntroMethod,
-			hasOutroMethod: node._block.hasOutroMethod
-		}
+			hasOutroMethod: node._block.hasOutroMethod,
+		},
 	];
 
 	visitChildren(generator, block, state, node);
@@ -43,7 +43,7 @@ function getBranches(
 			block: node.else ? node.else._block.name : null,
 			hasUpdateMethod: node.else ? node.else._block.hasUpdateMethod : false,
 			hasIntroMethod: node.else ? node.else._block.hasIntroMethod : false,
-			hasOutroMethod: node.else ? node.else._block.hasOutroMethod : false
+			hasOutroMethod: node.else ? node.else._block.hasOutroMethod : false,
 		});
 
 		if (node.else) {

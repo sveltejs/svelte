@@ -5,7 +5,7 @@ import { Node } from '../../../interfaces';
 
 const isFunctionExpression = new Set([
 	'FunctionExpression',
-	'ArrowFunctionExpression'
+	'ArrowFunctionExpression',
 ]);
 
 export default function computed(validator: Validator, prop: Node) {

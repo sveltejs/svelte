@@ -23,5 +23,5 @@ export default {
 	components,
 	events,
 	namespace,
-	transitions
+	transitions,
 };
