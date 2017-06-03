@@ -1,4 +1,3 @@
-import spaces from "../../src/utils/spaces.js";
 import assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
@@ -11,7 +10,8 @@ import {
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual
+	setupHtmlEqual,
+	spaces
 } from "../helpers.js";
 
 let svelte;

@@ -1,4 +1,4 @@
-import spaces from './spaces.js';
+import spaces from './spaces';
 
 function tabsToSpaces(str: string) {
 	return str.replace(/^\t+/, match => match.split('\t').join('  '));

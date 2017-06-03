@@ -1,6 +1,6 @@
 const start = /\n(\t+)/;
 
-export default function deindent(strings, ...values) {
+export default function deindent(strings: string[], ...values: any[]) {
 	const indentation = start.exec(strings[0])[1];
 	const pattern = new RegExp(`^${indentation}`, 'gm');
 
@@ -34,7 +34,7 @@ export default function deindent(strings, ...values) {
 	return result.trim().replace(/\t+$/gm, '');
 }
 
-function getTrailingIndentation(str) {
+function getTrailingIndentation(str: string) {
 	let i = str.length;
 	while (str[i - 1] === ' ' || str[i - 1] === '\t') i -= 1;
 	return str.slice(i, str.length);

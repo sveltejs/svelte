@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import deindent from './deindent.js';
+import deindent from './deindent';
 import CodeBuilder from './CodeBuilder';
 
 describe('deindent', () => {

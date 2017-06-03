@@ -1,5 +1,5 @@
 import flattenReference from '../../../../../utils/flattenReference';
-import deindent from '../../../../../utils/deindent.js';
+import deindent from '../../../../../utils/deindent';
 import { DomGenerator } from '../../../index';
 import Block from '../../../Block';
 import { Node } from '../../../../../interfaces';

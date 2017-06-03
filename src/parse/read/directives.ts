@@ -1,5 +1,5 @@
 import { parseExpressionAt } from 'acorn';
-import spaces from '../../utils/spaces.js';
+import spaces from '../../utils/spaces';
 import { Parser } from '../index';
 
 function readExpression(parser: Parser, start: number, quoteMark) {

@@ -1,5 +1,5 @@
 import attributeLookup from './lookup';
-import deindent from '../../../../utils/deindent.js';
+import deindent from '../../../../utils/deindent';
 import getStaticAttributeValue from './getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';

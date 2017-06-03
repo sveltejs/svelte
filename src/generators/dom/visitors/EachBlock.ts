@@ -1,4 +1,4 @@
-import deindent from '../../../utils/deindent.js';
+import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';

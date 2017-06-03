@@ -3,7 +3,7 @@ import { parseExpressionAt } from 'acorn';
 import annotateWithScopes from '../../utils/annotateWithScopes';
 import isReference from '../../utils/isReference';
 import { walk } from 'estree-walker';
-import deindent from '../../utils/deindent.js';
+import deindent from '../../utils/deindent';
 import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
