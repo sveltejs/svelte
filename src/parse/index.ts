@@ -51,7 +51,7 @@ export class Parser {
 			start: null,
 			end: null,
 			type: 'Fragment',
-			children: []
+			children: [],
 		};
 
 		this.css = null;
@@ -197,6 +197,6 @@ export default function parse(
 		hash: hash(parser.template),
 		html: parser.html,
 		css: parser.css,
-		js: parser.js
+		js: parser.js,
 	};
 }

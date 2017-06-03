@@ -29,7 +29,7 @@ export default function visitEachBlock(
 	const childBlock = block.child({
 		contexts,
 		indexes,
-		contextDependencies
+		contextDependencies,
 	});
 
 	node.children.forEach((child: Node) => {

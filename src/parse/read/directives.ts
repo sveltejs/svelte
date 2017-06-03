@@ -60,7 +60,7 @@ export function readEventHandlerDirective(
 		end: parser.index,
 		type: 'EventHandler',
 		name,
-		expression
+		expression,
 	};
 }
 
@@ -114,7 +114,7 @@ export function readBindingDirective(
 			type: 'Identifier',
 			start: start + 5,
 			end: parser.index,
-			name
+			name,
 		};
 	}
 
@@ -123,7 +123,7 @@ export function readBindingDirective(
 		end: parser.index,
 		type: 'Binding',
 		name,
-		value
+		value,
 	};
 }
 
@@ -154,6 +154,6 @@ export function readTransitionDirective(
 		name,
 		intro: type === 'in' || type === 'transition',
 		outro: type === 'out' || type === 'transition',
-		expression
+		expression,
 	};
 }

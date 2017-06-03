@@ -7,7 +7,7 @@ export default function getSetter({
 	context,
 	attribute,
 	dependencies,
-	value
+	value,
 }) {
 	const tail = attribute.value.type === 'MemberExpression'
 		? getTailSnippet(attribute.value)

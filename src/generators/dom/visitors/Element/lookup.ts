@@ -19,8 +19,8 @@ const lookup = {
 			'tfoot',
 			'th',
 			'thead',
-			'tr'
-		]
+			'tr',
+		],
 	},
 	allowfullscreen: { propertyName: 'allowFullscreen', appliesTo: ['iframe'] },
 	alt: { appliesTo: ['applet', 'area', 'img', 'input'] },
@@ -41,8 +41,8 @@ const lookup = {
 			'tfoot',
 			'td',
 			'th',
-			'tr'
-		]
+			'tr',
+		],
 	},
 	border: { appliesTo: ['img', 'object', 'table'] },
 	buffered: { appliesTo: ['audio', 'video'] },
@@ -77,8 +77,8 @@ const lookup = {
 			'optgroup',
 			'option',
 			'select',
-			'textarea'
-		]
+			'textarea',
+		],
 	},
 	download: { appliesTo: ['a', 'area'] },
 	draggable: {},
@@ -97,13 +97,13 @@ const lookup = {
 			'output',
 			'progress',
 			'select',
-			'textarea'
-		]
+			'textarea',
+		],
 	},
 	formaction: { appliesTo: ['input', 'button'] },
 	headers: { appliesTo: ['td', 'th'] },
 	height: {
-		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video']
+		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},
 	hidden: {},
 	high: { appliesTo: ['meter'] },
@@ -143,8 +143,8 @@ const lookup = {
 			'textarea',
 			'map',
 			'meta',
-			'param'
-		]
+			'param',
+		],
 	},
 	novalidate: { propertyName: 'noValidate', appliesTo: ['form'] },
 	open: { appliesTo: ['details'] },
@@ -181,8 +181,8 @@ const lookup = {
 			'script',
 			'source',
 			'track',
-			'video'
-		]
+			'video',
+		],
 	},
 	srcdoc: { appliesTo: ['iframe'] },
 	srclang: { appliesTo: ['track'] },
@@ -204,8 +204,8 @@ const lookup = {
 			'script',
 			'source',
 			'style',
-			'menu'
-		]
+			'menu',
+		],
 	},
 	usemap: { propertyName: 'useMap', appliesTo: ['img', 'input', 'object'] },
 	value: {
@@ -218,13 +218,13 @@ const lookup = {
 			'progress',
 			'param',
 			'select',
-			'textarea'
-		]
+			'textarea',
+		],
 	},
 	width: {
-		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video']
+		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},
-	wrap: { appliesTo: ['textarea'] }
+	wrap: { appliesTo: ['textarea'] },
 };
 
 Object.keys(lookup).forEach(name => {

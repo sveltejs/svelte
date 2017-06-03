@@ -46,7 +46,7 @@ const reservedNames = new Set([
 	'void',
 	'while',
 	'with',
-	'yield'
+	'yield',
 ]);
 
 // prevent e.g. `{{#each states as state}}` breaking

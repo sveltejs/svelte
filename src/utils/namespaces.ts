@@ -17,7 +17,7 @@ export const validNamespaces = [
 	svg,
 	xlink,
 	xml,
-	xmlns
+	xmlns,
 ];
 
 export default { html, mathml, svg, xlink, xml, xmlns };

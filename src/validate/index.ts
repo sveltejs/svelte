@@ -64,7 +64,7 @@ export class Validator {
 			loc: { line: line + 1, column },
 			pos,
 			filename: this.filename,
-			toString: () => `${message} (${line + 1}:${column})\n${frame}`
+			toString: () => `${message} (${line + 1}:${column})\n${frame}`,
 		});
 	}
 }
@@ -87,14 +87,14 @@ export default function validate(
 			onwarn({
 				message,
 				filename,
-				toString: () => message
+				toString: () => message,
 			});
 		}
 
 		const validator = new Validator(parsed, source, {
 			onwarn,
 			name,
-			filename
+			filename,
 		});
 
 		if (parsed.js) {

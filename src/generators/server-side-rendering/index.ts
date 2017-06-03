@@ -43,7 +43,7 @@ export default function ssr(
 		generator,
 		contexts: new Map(),
 		indexes: new Map(),
-		conditions: []
+		conditions: [],
 	});
 
 	parsed.html.children.forEach((node: Node) => {

@@ -18,7 +18,7 @@ export default function text(parser: Parser) {
 		start,
 		end: parser.index,
 		type: 'Text',
-		data: decodeCharacterReferences(data)
+		data: decodeCharacterReferences(data),
 	});
 
 	return null;

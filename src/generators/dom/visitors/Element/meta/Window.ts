@@ -11,7 +11,7 @@ const associatedEvents = {
 	outerHeight: 'resize',
 
 	scrollX: 'scroll',
-	scrollY: 'scroll'
+	scrollY: 'scroll',
 };
 
 const readonly = new Set([
@@ -19,7 +19,7 @@ const readonly = new Set([
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
-	'online'
+	'online',
 ]);
 
 export default function visitWindow(

@@ -23,7 +23,7 @@ export default function getGlobals(imports: Declaration[], options: Options) {
 			} else {
 				const warning = {
 					message: `No name was supplied for imported module '${x.source
-						.value}'. Guessing '${x.name}', but you should use options.globals`
+						.value}'. Guessing '${x.name}', but you should use options.globals`,
 				};
 
 				if (onwarn) {

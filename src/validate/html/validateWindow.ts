@@ -11,7 +11,7 @@ const validBindings = [
 	'outerWidth',
 	'outerHeight',
 	'scrollX',
-	'scrollY'
+	'scrollY',
 ];
 
 export default function validateWindow(validator: Validator, node: Node) {

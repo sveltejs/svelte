@@ -93,7 +93,7 @@ export default class Block {
 			outro: new CodeBuilder(),
 			unmount: new CodeBuilder(),
 			detachRaw: new CodeBuilder(),
-			destroy: new CodeBuilder()
+			destroy: new CodeBuilder(),
 		};
 
 		this.hasIntroMethod = false; // a block could have an intro method but not intro transitions, e.g. if a sibling block has intros

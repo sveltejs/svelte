@@ -13,21 +13,21 @@ import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 
 const meta = {
-	':Window': visitWindow
+	':Window': visitWindow,
 };
 
 const order = {
 	Attribute: 1,
 	Binding: 2,
 	EventHandler: 3,
-	Ref: 4
+	Ref: 4,
 };
 
 const visitors = {
 	Attribute: visitAttribute,
 	EventHandler: visitEventHandler,
 	Binding: visitBinding,
-	Ref: visitRef
+	Ref: visitRef,
 };
 
 export default function visitElement(
@@ -136,7 +136,7 @@ export default function visitElement(
 				node.attributes.push({
 					type: 'Attribute',
 					name: 'value',
-					value: node.children
+					value: node.children,
 				});
 
 				node.children = [];

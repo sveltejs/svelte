@@ -13,7 +13,7 @@ export default function visitIfBlock(
 	generator.append('${ ' + snippet + ' ? `');
 
 	const childBlock = block.child({
-		conditions: block.conditions.concat(snippet)
+		conditions: block.conditions.concat(snippet),
 	});
 
 	node.children.forEach((child: Node) => {

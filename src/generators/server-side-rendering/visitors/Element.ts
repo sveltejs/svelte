@@ -7,7 +7,7 @@ import Block from '../Block';
 import { Node } from '../../../interfaces';
 
 const meta = {
-	':Window': visitWindow
+	':Window': visitWindow,
 };
 
 function stringifyAttributeValue(block: Block, chunks: Node[]) {

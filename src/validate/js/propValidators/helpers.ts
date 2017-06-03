@@ -57,7 +57,7 @@ export default function helpers(validator: Validator, prop: Node) {
 				if (/^Function/.test(node.type)) {
 					lexicalDepth -= 1;
 				}
-			}
+			},
 		});
 
 		if (prop.value.params.length === 0 && !usesArguments) {

@@ -84,7 +84,7 @@ export default class Generator {
 			enter: (node: Node) => {
 				this.code.addSourcemapLocation(node.start);
 				this.code.addSourcemapLocation(node.end);
-			}
+			},
 		});
 	}
 
@@ -127,7 +127,7 @@ export default class Generator {
 					if (lexicalDepth === 0 && context)
 						code.overwrite(node.start, node.end, context, {
 							storeName: true,
-							contentOnly: false
+							contentOnly: false,
 						});
 				} else if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
@@ -182,13 +182,13 @@ export default class Generator {
 			leave(node: Node) {
 				if (/^Function/.test(node.type)) lexicalDepth -= 1;
 				if (node._scope) scope = scope.parent;
-			}
+			},
 		});
 
 		return {
 			dependencies: expression._dependencies, // TODO probably a better way to do this
 			contexts: usedContexts,
-			snippet: `[✂${expression.start}-${expression.end}✂]`
+			snippet: `[✂${expression.start}-${expression.end}✂]`,
 		};
 	}
 
@@ -227,7 +227,7 @@ export default class Generator {
 
 			leave(node: Node) {
 				if (node._scope) scope = scope.parent;
-			}
+			},
 		});
 
 		dependencies.forEach(name => {
@@ -294,7 +294,7 @@ export default class Generator {
 
 		function addString(str: string) {
 			compiled.addSource({
-				content: new MagicString(str)
+				content: new MagicString(str),
 			});
 		}
 
@@ -308,7 +308,7 @@ export default class Generator {
 		if (!parts.length) {
 			compiled.addSource({
 				filename,
-				content: new MagicString(this.source).remove(0, this.source.length)
+				content: new MagicString(this.source).remove(0, this.source.length),
 			});
 		}
 
@@ -322,7 +322,7 @@ export default class Generator {
 
 			compiled.addSource({
 				filename,
-				content: snippet
+				content: snippet,
 			});
 		});
 
@@ -333,9 +333,9 @@ export default class Generator {
 			code: compiled.toString(),
 			map: compiled.generateMap({
 				includeContent: true,
-				file: options.outputFilename
+				file: options.outputFilename,
 			}),
-			css: this.css
+			css: this.css,
 		};
 	}
 
@@ -493,7 +493,7 @@ export default class Generator {
 				const { key } = templateProperties.onrender;
 				this.code.overwrite(key.start, key.end, 'oncreate', {
 					storeName: true,
-					contentOnly: false
+					contentOnly: false,
 				});
 				templateProperties.oncreate = templateProperties.onrender;
 			}
@@ -502,7 +502,7 @@ export default class Generator {
 				const { key } = templateProperties.onteardown;
 				this.code.overwrite(key.start, key.end, 'ondestroy', {
 					storeName: true,
-					contentOnly: false
+					contentOnly: false,
 				});
 				templateProperties.ondestroy = templateProperties.onteardown;
 			}
@@ -597,7 +597,7 @@ export default class Generator {
 			computations,
 			hasJs,
 			namespace,
-			templateProperties
+			templateProperties,
 		};
 	}
 }

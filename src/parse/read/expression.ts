@@ -16,7 +16,7 @@ export default function readExpression(parser: Parser) {
 				start,
 				end,
 				value: literals.get(name),
-				raw: name
+				raw: name,
 			};
 		}
 
@@ -24,7 +24,7 @@ export default function readExpression(parser: Parser) {
 			type: 'Identifier',
 			start,
 			end: start + name.length,
-			name
+			name,
 		};
 	}
 
@@ -32,7 +32,7 @@ export default function readExpression(parser: Parser) {
 
 	try {
 		const node = parseExpressionAt(parser.template, parser.index, {
-			preserveParens: true
+			preserveParens: true,
 		});
 		parser.index = node.end;
 
