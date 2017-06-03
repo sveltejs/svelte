@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.22.2
+
+* Escape template strings correctly in SSR output ([#616](https://github.com/sveltejs/svelte/issues/616))
+* Prevent magic-string deprecation warning ([#617](https://github.com/sveltejs/svelte/pull/617))
+
 ## 1.22.1
 
 * Sanitise event handler names ([#612](https://github.com/sveltejs/svelte/issues/612))
