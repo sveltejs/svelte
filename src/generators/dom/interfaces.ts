@@ -2,7 +2,7 @@ export interface State {
 	name: string;
 	namespace: string;
 	parentNode: string;
-	isTopLevel: boolean
+	isTopLevel: boolean;
 	parentNodeName?: string;
 	basename?: string;
 	inEachBlock?: boolean;

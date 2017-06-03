@@ -1,5 +1,5 @@
-export default function spaces ( i ) {
+export default function spaces(i) {
 	let result = '';
-	while ( i-- ) result += ' ';
+	while (i--) result += ' ';
 	return result;
 }

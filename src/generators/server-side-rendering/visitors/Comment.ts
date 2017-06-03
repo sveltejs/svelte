@@ -1,3 +1,3 @@
-export default function visitComment () {
+export default function visitComment() {
 	// do nothing
 }
