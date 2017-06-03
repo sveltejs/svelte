@@ -26,10 +26,10 @@ export interface Parsed {
 }
 
 export interface Warning {
-	loc?: {line: number, column: number, pos: number};
-	message: string
-	filename?: string
-	toString: () => string
+	loc?: { line: number; column: number; pos: number };
+	message: string;
+	filename?: string;
+	toString: () => string;
 }
 
 export interface CompileOptions {
@@ -42,6 +42,6 @@ export interface CompileOptions {
 	shared?: boolean | string;
 	cascade?: boolean;
 
-	onerror?: (error: Error) => void
-	onwarn?: (warning: Warning) => void
+	onerror?: (error: Error) => void;
+	onwarn?: (warning: Warning) => void;
 }

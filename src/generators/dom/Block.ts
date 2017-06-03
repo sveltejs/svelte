@@ -1,5 +1,5 @@
 import CodeBuilder from '../../utils/CodeBuilder';
-import deindent from '../../utils/deindent.js';
+import deindent from '../../utils/deindent';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 
@@ -48,7 +48,7 @@ export default class Block {
 		unmount: CodeBuilder;
 		detachRaw: CodeBuilder;
 		destroy: CodeBuilder;
-	}
+	};
 
 	hasIntroMethod: boolean;
 	hasOutroMethod: boolean;
@@ -64,7 +64,7 @@ export default class Block {
 	hasUpdateMethod: boolean;
 	autofocus: string;
 
-	constructor ( options: BlockOptions ) {
+	constructor(options: BlockOptions) {
 		this.generator = options.generator;
 		this.name = options.name;
 		this.expression = options.expression;
@@ -93,7 +93,7 @@ export default class Block {
 			outro: new CodeBuilder(),
 			unmount: new CodeBuilder(),
 			detachRaw: new CodeBuilder(),
-			destroy: new CodeBuilder()
+			destroy: new CodeBuilder(),
 		};
 
 		this.hasIntroMethod = false; // a block could have an intro method but not intro transitions, e.g. if a sibling block has intros
@@ -102,144 +102,169 @@ export default class Block {
 
 		this.aliases = new Map();
 		this.variables = new Map();
-		this.getUniqueName = this.generator.getUniqueNameMaker( options.params );
+		this.getUniqueName = this.generator.getUniqueNameMaker(options.params);
 
 		// unique names
-		this.component = this.getUniqueName( 'component' );
-		this.target = this.getUniqueName( 'target' );
+		this.component = this.getUniqueName('component');
+		this.target = this.getUniqueName('target');
 
 		this.hasUpdateMethod = false; // determined later
 	}
 
-	addDependencies ( dependencies ) {
-		dependencies.forEach( dependency => {
-			this.dependencies.add( dependency );
+	addDependencies(dependencies) {
+		dependencies.forEach(dependency => {
+			this.dependencies.add(dependency);
 		});
 	}
 
-	addElement ( name: string, renderStatement: string, parentNode: string, needsIdentifier = false ) {
+	addElement(
+		name: string,
+		renderStatement: string,
+		parentNode: string,
+		needsIdentifier = false
+	) {
 		const isToplevel = !parentNode;
-		if ( needsIdentifier || isToplevel ) {
+		if (needsIdentifier || isToplevel) {
+			this.builders.create.addLine(`var ${name} = ${renderStatement};`);
+
+			this.mount(name, parentNode);
+		} else {
 			this.builders.create.addLine(
-				`var ${name} = ${renderStatement};`
+				`${this.generator.helper(
+					'appendNode'
+				)}( ${renderStatement}, ${parentNode} );`
 			);
+		}
 
-			this.mount( name, parentNode );
+		if (isToplevel) {
+			this.builders.unmount.addLine(
+				`${this.generator.helper('detachNode')}( ${name} );`
+			);
+		}
+	}
+
+	addVariable(name: string, init?: string) {
+		if (this.variables.has(name) && this.variables.get(name) !== init) {
+			throw new Error(
+				`Variable '${name}' already initialised with a different value`
+			);
+		}
+
+		this.variables.set(name, init);
+	}
+
+	alias(name: string) {
+		if (!this.aliases.has(name)) {
+			this.aliases.set(name, this.getUniqueName(name));
+		}
+
+		return this.aliases.get(name);
+	}
+
+	child(options: BlockOptions) {
+		return new Block(Object.assign({}, this, options, { parent: this }));
+	}
+
+	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
+		return this.generator.contextualise(
+			this,
+			expression,
+			context,
+			isEventHandler
+		);
+	}
+
+	findDependencies(expression) {
+		return this.generator.findDependencies(
+			this.contextDependencies,
+			this.indexes,
+			expression
+		);
+	}
+
+	mount(name: string, parentNode: string) {
+		if (parentNode) {
+			this.builders.create.addLine(
+				`${this.generator.helper('appendNode')}( ${name}, ${parentNode} );`
+			);
 		} else {
-			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${renderStatement}, ${parentNode} );` );
-		}
-
-		if ( isToplevel ) {
-			this.builders.unmount.addLine( `${this.generator.helper( 'detachNode' )}( ${name} );` );
-		}
-	}
-
-	addVariable ( name: string, init?: string ) {
-		if ( this.variables.has( name ) && this.variables.get( name ) !== init ) {
-			throw new Error( `Variable '${name}' already initialised with a different value` );
-		}
-
-		this.variables.set( name, init );
-	}
-
-	alias ( name: string ) {
-		if ( !this.aliases.has( name ) ) {
-			this.aliases.set( name, this.getUniqueName( name ) );
-		}
-
-		return this.aliases.get( name );
-	}
-
-	child ( options: BlockOptions ) {
-		return new Block( Object.assign( {}, this, options, { parent: this } ) );
-	}
-
-	contextualise ( expression: Node, context?: string, isEventHandler?: boolean ) {
-		return this.generator.contextualise( this, expression, context, isEventHandler );
-	}
-
-	findDependencies ( expression ) {
-		return this.generator.findDependencies( this.contextDependencies, this.indexes, expression );
-	}
-
-	mount ( name: string, parentNode: string ) {
-		if ( parentNode ) {
-			this.builders.create.addLine( `${this.generator.helper( 'appendNode' )}( ${name}, ${parentNode} );` );
-		} else {
-			this.builders.mount.addLine( `${this.generator.helper( 'insertNode' )}( ${name}, ${this.target}, anchor );` );
+			this.builders.mount.addLine(
+				`${this.generator.helper('insertNode')}( ${name}, ${this
+					.target}, anchor );`
+			);
 		}
 	}
 
-	render () {
+	render() {
 		let introing;
 		const hasIntros = !this.builders.intro.isEmpty();
-		if ( hasIntros ) {
-			introing = this.getUniqueName( 'introing' );
-			this.addVariable( introing );
+		if (hasIntros) {
+			introing = this.getUniqueName('introing');
+			this.addVariable(introing);
 		}
 
 		let outroing;
 		const hasOutros = !this.builders.outro.isEmpty();
-		if ( hasOutros ) {
-			outroing = this.getUniqueName( 'outroing' );
-			this.addVariable( outroing );
+		if (hasOutros) {
+			outroing = this.getUniqueName('outroing');
+			this.addVariable(outroing);
 		}
 
-		if ( this.variables.size ) {
-			const variables = Array.from( this.variables.keys() )
-				.map( key => {
-					const init = this.variables.get( key );
+		if (this.variables.size) {
+			const variables = Array.from(this.variables.keys())
+				.map(key => {
+					const init = this.variables.get(key);
 					return init !== undefined ? `${key} = ${init}` : key;
 				})
-				.join( ', ' );
+				.join(', ');
 
-			this.builders.create.addBlockAtStart( `var ${variables};` );
+			this.builders.create.addBlockAtStart(`var ${variables};`);
 		}
 
-		if ( this.autofocus ) {
-			this.builders.create.addLine( `${this.autofocus}.focus();` );
+		if (this.autofocus) {
+			this.builders.create.addLine(`${this.autofocus}.focus();`);
 		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
-		this.builders.unmount.addBlockAtStart( this.builders.detachRaw );
+		this.builders.unmount.addBlockAtStart(this.builders.detachRaw);
 
 		const properties = new CodeBuilder();
 
 		let localKey;
-		if ( this.key ) {
-			localKey = this.getUniqueName( 'key' );
-			properties.addBlock( `key: ${localKey},` );
+		if (this.key) {
+			localKey = this.getUniqueName('key');
+			properties.addBlock(`key: ${localKey},`);
 		}
 
-		if ( this.first ) {
-			properties.addBlock( `first: ${this.first},` );
+		if (this.first) {
+			properties.addBlock(`first: ${this.first},`);
 		}
 
-		if ( this.builders.mount.isEmpty() ) {
-			properties.addBlock( `mount: ${this.generator.helper( 'noop' )},` );
+		if (this.builders.mount.isEmpty()) {
+			properties.addBlock(`mount: ${this.generator.helper('noop')},`);
 		} else {
-			properties.addBlock( deindent`
+			properties.addBlock(deindent`
 				mount: function ( ${this.target}, anchor ) {
 					${this.builders.mount}
 				},
-			` );
+			`);
 		}
 
-		if ( this.hasUpdateMethod ) {
-			if ( this.builders.update.isEmpty() ) {
-				properties.addBlock( `update: ${this.generator.helper( 'noop' )},` );
+		if (this.hasUpdateMethod) {
+			if (this.builders.update.isEmpty()) {
+				properties.addBlock(`update: ${this.generator.helper('noop')},`);
 			} else {
-				properties.addBlock( deindent`
-					update: function ( changed, ${this.params.join( ', ' )} ) {
+				properties.addBlock(deindent`
+					update: function ( changed, ${this.params.join(', ')} ) {
 						${this.builders.update}
 					},
-				` );
+				`);
 			}
 		}
 
-		if ( this.hasIntroMethod ) {
-			if ( hasIntros ) {
-				properties.addBlock( deindent`
+		if (this.hasIntroMethod) {
+			if (hasIntros) {
+				properties.addBlock(deindent`
 					intro: function ( ${this.target}, anchor ) {
 						if ( ${introing} ) return;
 						${introing} = true;
@@ -249,60 +274,63 @@ export default class Block {
 
 						this.mount( ${this.target}, anchor );
 					},
-				` );
+				`);
 			} else {
-				properties.addBlock( deindent`
+				properties.addBlock(deindent`
 					intro: function ( ${this.target}, anchor ) {
 						this.mount( ${this.target}, anchor );
 					},
-				` );
+				`);
 			}
 		}
 
-		if ( this.hasOutroMethod ) {
-			if ( hasOutros ) {
-				properties.addBlock( deindent`
-					outro: function ( ${this.alias( 'outrocallback' )} ) {
+		if (this.hasOutroMethod) {
+			if (hasOutros) {
+				properties.addBlock(deindent`
+					outro: function ( ${this.alias('outrocallback')} ) {
 						if ( ${outroing} ) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
 
-						var ${this.alias( 'outros' )} = ${this.outros};
+						var ${this.alias('outros')} = ${this.outros};
 
 						${this.builders.outro}
 					},
-				` );
+				`);
 			} else {
-				properties.addBlock( deindent`
+				properties.addBlock(deindent`
 					outro: function ( outrocallback ) {
 						outrocallback();
 					},
-				` );
+				`);
 			}
 		}
 
-		if ( this.builders.unmount.isEmpty() ) {
-			properties.addBlock( `unmount: ${this.generator.helper('noop')},`);
+		if (this.builders.unmount.isEmpty()) {
+			properties.addBlock(`unmount: ${this.generator.helper('noop')},`);
 		} else {
-			properties.addBlock( deindent`
+			properties.addBlock(deindent`
 				unmount: function () {
 					${this.builders.unmount}
 				},
-			` );
+			`);
 		}
 
-		if ( this.builders.destroy.isEmpty() ) {
-			properties.addBlock( `destroy: ${this.generator.helper( 'noop' )}` );
+		if (this.builders.destroy.isEmpty()) {
+			properties.addBlock(`destroy: ${this.generator.helper('noop')}`);
 		} else {
-			properties.addBlock( deindent`
+			properties.addBlock(deindent`
 				destroy: function () {
 					${this.builders.destroy}
 				}
-			` );
+			`);
 		}
 
 		return deindent`
-			function ${this.name} ( ${this.params.join( ', ' )}, ${this.component}${this.key ? `, ${localKey}` : ''} ) {
+			function ${this.name} ( ${this.params.join(', ')}, ${this.component}${this
+			.key
+			? `, ${localKey}`
+			: ''} ) {
 				${this.builders.create}
 
 				return {

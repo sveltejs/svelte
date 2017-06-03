@@ -42,7 +42,12 @@ export default class Generator {
 	aliases: Map<string, string>;
 	usedNames: Set<string>;
 
-	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
+	constructor(
+		parsed: Parsed,
+		source: string,
+		name: string,
+		options: CompileOptions
+	) {
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
@@ -61,9 +66,9 @@ export default class Generator {
 		// in dev mode
 		this.expectedProperties = new Set();
 
-		this.code = new MagicString( source );
+		this.code = new MagicString(source);
 		this.cascade = options.cascade !== false; // TODO remove this option in v2
-		this.css = parsed.css ? processCss( parsed, this.code, this.cascade ) : null;
+		this.css = parsed.css ? processCss(parsed, this.code, this.cascade) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
 
@@ -71,258 +76,302 @@ export default class Generator {
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
 		this.importedNames = new Set();
 		this.aliases = new Map();
-		this.usedNames = new Set( [ name ] );
+		this.usedNames = new Set([name]);
 	}
 
-	addSourcemapLocations ( node: Node ) {
-		walk( node, {
-			enter: ( node: Node ) => {
-				this.code.addSourcemapLocation( node.start );
-				this.code.addSourcemapLocation( node.end );
-			}
+	addSourcemapLocations(node: Node) {
+		walk(node, {
+			enter: (node: Node) => {
+				this.code.addSourcemapLocation(node.start);
+				this.code.addSourcemapLocation(node.end);
+			},
 		});
 	}
 
-	alias ( name: string ) {
-		if ( !this.aliases.has( name ) ) {
-			this.aliases.set( name, this.getUniqueName( name ) );
+	alias(name: string) {
+		if (!this.aliases.has(name)) {
+			this.aliases.set(name, this.getUniqueName(name));
 		}
 
-		return this.aliases.get( name );
+		return this.aliases.get(name);
 	}
 
-	contextualise ( block: DomBlock | SsrBlock, expression: Node, context: string, isEventHandler: boolean ) {
-		this.addSourcemapLocations( expression );
+	contextualise(
+		block: DomBlock | SsrBlock,
+		expression: Node,
+		context: string,
+		isEventHandler: boolean
+	) {
+		this.addSourcemapLocations(expression);
 
 		const usedContexts: string[] = [];
 
 		const { code, helpers } = this;
 		const { contexts, indexes } = block;
 
-		let scope = annotateWithScopes( expression ); // TODO this already happens in findDependencies
+		let scope = annotateWithScopes(expression); // TODO this already happens in findDependencies
 		let lexicalDepth = 0;
 
 		const self = this;
 
-		walk( expression, {
-			enter ( node: Node, parent: Node, key: string ) {
-				if ( /^Function/.test( node.type ) ) lexicalDepth += 1;
+		walk(expression, {
+			enter(node: Node, parent: Node, key: string) {
+				if (/^Function/.test(node.type)) lexicalDepth += 1;
 
-				if ( node._scope ) {
+				if (node._scope) {
 					scope = node._scope;
 					return;
 				}
 
-				if ( node.type === 'ThisExpression' ) {
-					if ( lexicalDepth === 0 && context ) code.overwrite( node.start, node.end, context, { storeName: true, contentOnly: false } );
-				}
+				if (node.type === 'ThisExpression') {
+					if (lexicalDepth === 0 && context)
+						code.overwrite(node.start, node.end, context, {
+							storeName: true,
+							contentOnly: false,
+						});
+				} else if (isReference(node, parent)) {
+					const { name } = flattenReference(node);
+					if (scope.has(name)) return;
 
-				else if ( isReference( node, parent ) ) {
-					const { name } = flattenReference( node );
-					if ( scope.has( name ) ) return;
-
-					if ( name === 'event' && isEventHandler ) {
+					if (name === 'event' && isEventHandler) {
 						// noop
-					}
-
-					else if ( contexts.has( name ) ) {
-						const contextName = contexts.get( name );
-						if ( contextName !== name ) {
+					} else if (contexts.has(name)) {
+						const contextName = contexts.get(name);
+						if (contextName !== name) {
 							// this is true for 'reserved' names like `state` and `component`
-							code.overwrite( node.start, node.start + name.length, contextName, { storeName: true, contentOnly: false } );
+							code.overwrite(
+								node.start,
+								node.start + name.length,
+								contextName,
+								{ storeName: true, contentOnly: false }
+							);
 						}
 
-						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
-					}
-
-					else if ( helpers.has( name ) ) {
-						code.prependRight( node.start, `${self.alias( 'template' )}.helpers.` );
-					}
-
-					else if ( indexes.has( name ) ) {
-						const context = indexes.get( name );
-						if ( !~usedContexts.indexOf( context ) ) usedContexts.push( context );
-					}
-
-					else {
+						if (!~usedContexts.indexOf(name)) usedContexts.push(name);
+					} else if (helpers.has(name)) {
+						code.prependRight(node.start, `${self.alias('template')}.helpers.`);
+					} else if (indexes.has(name)) {
+						const context = indexes.get(name);
+						if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+					} else {
 						// handle shorthand properties
-						if ( parent && parent.type === 'Property' && parent.shorthand ) {
-							if ( key === 'key' ) {
-								code.appendLeft( node.start, `${name}: ` );
+						if (parent && parent.type === 'Property' && parent.shorthand) {
+							if (key === 'key') {
+								code.appendLeft(node.start, `${name}: `);
 								return;
 							}
 						}
 
-						if ( globalWhitelist.has( name ) ) {
-							code.prependRight( node.start, `( '${name}' in state ? state.` );
-							code.appendLeft( node.object ? node.object.end : node.end, ` : ${name} )` );
+						if (globalWhitelist.has(name)) {
+							code.prependRight(node.start, `( '${name}' in state ? state.`);
+							code.appendLeft(
+								node.object ? node.object.end : node.end,
+								` : ${name} )`
+							);
 						} else {
-							code.prependRight( node.start, `state.` );
+							code.prependRight(node.start, `state.`);
 						}
 
-						if ( !~usedContexts.indexOf( 'state' ) ) usedContexts.push( 'state' );
+						if (!~usedContexts.indexOf('state')) usedContexts.push('state');
 					}
 
 					this.skip();
 				}
 			},
 
-			leave ( node: Node ) {
-				if ( /^Function/.test( node.type ) ) lexicalDepth -= 1;
-				if ( node._scope ) scope = scope.parent;
-			}
+			leave(node: Node) {
+				if (/^Function/.test(node.type)) lexicalDepth -= 1;
+				if (node._scope) scope = scope.parent;
+			},
 		});
 
 		return {
 			dependencies: expression._dependencies, // TODO probably a better way to do this
 			contexts: usedContexts,
-			snippet: `[✂${expression.start}-${expression.end}✂]`
+			snippet: `[✂${expression.start}-${expression.end}✂]`,
 		};
 	}
 
-	findDependencies ( contextDependencies: Map<string, string[]>, indexes: Map<string, string>, expression: Node ) {
-		if ( expression._dependencies ) return expression._dependencies;
+	findDependencies(
+		contextDependencies: Map<string, string[]>,
+		indexes: Map<string, string>,
+		expression: Node
+	) {
+		if (expression._dependencies) return expression._dependencies;
 
-		let scope = annotateWithScopes( expression );
+		let scope = annotateWithScopes(expression);
 		const dependencies: string[] = [];
 
 		const generator = this; // can't use arrow functions, because of this.skip()
 
-		walk( expression, {
-			enter ( node: Node, parent: Node ) {
-				if ( node._scope ) {
+		walk(expression, {
+			enter(node: Node, parent: Node) {
+				if (node._scope) {
 					scope = node._scope;
 					return;
 				}
 
-				if ( isReference( node, parent ) ) {
-					const { name } = flattenReference( node );
-					if ( scope.has( name ) || generator.helpers.has( name ) ) return;
+				if (isReference(node, parent)) {
+					const { name } = flattenReference(node);
+					if (scope.has(name) || generator.helpers.has(name)) return;
 
-					if ( contextDependencies.has( name ) ) {
-						dependencies.push( ...contextDependencies.get( name ) );
-					} else if ( !indexes.has( name ) ) {
-						dependencies.push( name );
+					if (contextDependencies.has(name)) {
+						dependencies.push(...contextDependencies.get(name));
+					} else if (!indexes.has(name)) {
+						dependencies.push(name);
 					}
 
 					this.skip();
 				}
 			},
 
-			leave ( node: Node ) {
-				if ( node._scope ) scope = scope.parent;
+			leave(node: Node) {
+				if (node._scope) scope = scope.parent;
+			},
+		});
+
+		dependencies.forEach(name => {
+			if (!globalWhitelist.has(name)) {
+				this.expectedProperties.add(name);
 			}
 		});
 
-		dependencies.forEach( name => {
-			if ( !globalWhitelist.has( name ) ) {
-				this.expectedProperties.add( name );
-			}
-		});
-
-		return ( expression._dependencies = dependencies );
+		return (expression._dependencies = dependencies);
 	}
 
-	generate ( result, options, { name, format } ) {
-		if ( this.imports.length ) {
+	generate(result, options, { name, format }) {
+		if (this.imports.length) {
 			const statements: string[] = [];
 
-			this.imports.forEach( ( declaration, i ) => {
-				if ( format === 'es' ) {
-					statements.push( this.source.slice( declaration.start, declaration.end ) );
+			this.imports.forEach((declaration, i) => {
+				if (format === 'es') {
+					statements.push(
+						this.source.slice(declaration.start, declaration.end)
+					);
 					return;
 				}
 
-				const defaultImport = declaration.specifiers.find( ( x: Node ) => x.type === 'ImportDefaultSpecifier' || x.type === 'ImportSpecifier' && x.imported.name === 'default' );
-				const namespaceImport = declaration.specifiers.find( ( x: Node ) => x.type === 'ImportNamespaceSpecifier' );
-				const namedImports = declaration.specifiers.filter( ( x: Node ) => x.type === 'ImportSpecifier' && x.imported.name !== 'default' );
+				const defaultImport = declaration.specifiers.find(
+					(x: Node) =>
+						x.type === 'ImportDefaultSpecifier' ||
+						(x.type === 'ImportSpecifier' && x.imported.name === 'default')
+				);
+				const namespaceImport = declaration.specifiers.find(
+					(x: Node) => x.type === 'ImportNamespaceSpecifier'
+				);
+				const namedImports = declaration.specifiers.filter(
+					(x: Node) =>
+						x.type === 'ImportSpecifier' && x.imported.name !== 'default'
+				);
 
-				const name = ( defaultImport || namespaceImport ) ? ( defaultImport || namespaceImport ).local.name : `__import${i}`;
+				const name = defaultImport || namespaceImport
+					? (defaultImport || namespaceImport).local.name
+					: `__import${i}`;
 				declaration.name = name; // hacky but makes life a bit easier later
 
-				namedImports.forEach( ( specifier: Node ) => {
-					statements.push( `var ${specifier.local.name} = ${name}.${specifier.imported.name}` );
+				namedImports.forEach((specifier: Node) => {
+					statements.push(
+						`var ${specifier.local.name} = ${name}.${specifier.imported.name}`
+					);
 				});
 
-				if ( defaultImport ) {
-					statements.push( `${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};` );
+				if (defaultImport) {
+					statements.push(
+						`${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};`
+					);
 				}
 			});
 
-			result = `${statements.join( '\n' )}\n\n${result}`;
+			result = `${statements.join('\n')}\n\n${result}`;
 		}
 
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
-		const parts = result.split( '✂]' );
+		const parts = result.split('✂]');
 		const finalChunk = parts.pop();
 
 		const compiled = new Bundle({ separator: '' });
 
-		function addString ( str: string ) {
+		function addString(str: string) {
 			compiled.addSource({
-				content: new MagicString( str )
+				content: new MagicString(str),
 			});
 		}
 
-		const intro = getIntro( format, options, this.imports );
-		if ( intro ) addString( intro );
+		const intro = getIntro(format, options, this.imports);
+		if (intro) addString(intro);
 
 		const { filename } = options;
 
 		// special case — the source file doesn't actually get used anywhere. we need
 		// to add an empty file to populate map.sources and map.sourcesContent
-		if ( !parts.length ) {
+		if (!parts.length) {
 			compiled.addSource({
 				filename,
-				content: new MagicString( this.source ).remove( 0, this.source.length )
+				content: new MagicString(this.source).remove(0, this.source.length),
 			});
 		}
 
-		parts.forEach( ( str: string ) => {
-			const chunk = str.replace( pattern, '' );
-			if ( chunk ) addString( chunk );
+		parts.forEach((str: string) => {
+			const chunk = str.replace(pattern, '');
+			if (chunk) addString(chunk);
 
-			const match = pattern.exec( str );
+			const match = pattern.exec(str);
 
-			const snippet = this.code.snip( +match[1], +match[2] );
+			const snippet = this.code.snip(+match[1], +match[2]);
 
 			compiled.addSource({
 				filename,
-				content: snippet
+				content: snippet,
 			});
 		});
 
-		addString( finalChunk );
-		addString( '\n\n' + getOutro( format, name, options, this.imports ) );
+		addString(finalChunk);
+		addString('\n\n' + getOutro(format, name, options, this.imports));
 
 		return {
 			code: compiled.toString(),
-			map: compiled.generateMap({ includeContent: true, file: options.outputFilename }),
-			css: this.css
+			map: compiled.generateMap({
+				includeContent: true,
+				file: options.outputFilename,
+			}),
+			css: this.css,
 		};
 	}
 
-	getUniqueName ( name: string ) {
-		if ( test ) name = `${name}$`;
+	getUniqueName(name: string) {
+		if (test) name = `${name}$`;
 		let alias = name;
-		for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this.usedNames.has( alias ); alias = `${name}_${i++}` );
-		this.usedNames.add( alias );
+		for (
+			let i = 1;
+			reservedNames.has(alias) ||
+			this.importedNames.has(alias) ||
+			this.usedNames.has(alias);
+			alias = `${name}_${i++}`
+		);
+		this.usedNames.add(alias);
 		return alias;
 	}
 
-	getUniqueNameMaker ( params ) {
-		const localUsedNames = new Set( params );
+	getUniqueNameMaker(params) {
+		const localUsedNames = new Set(params);
 		return name => {
-			if ( test ) name = `${name}$`;
+			if (test) name = `${name}$`;
 			let alias = name;
-			for ( let i = 1; reservedNames.has( alias ) || this.importedNames.has( alias ) || this.usedNames.has( alias ) || localUsedNames.has( alias ); alias = `${name}_${i++}` );
-			localUsedNames.add( alias );
+			for (
+				let i = 1;
+				reservedNames.has(alias) ||
+				this.importedNames.has(alias) ||
+				this.usedNames.has(alias) ||
+				localUsedNames.has(alias);
+				alias = `${name}_${i++}`
+			);
+			localUsedNames.add(alias);
 			return alias;
 		};
 	}
 
-	parseJs ( ssr: boolean = false ) {
+	parseJs(ssr: boolean = false) {
 		const { source } = this;
 		const { js } = this.parsed;
 
@@ -333,154 +382,213 @@ export default class Generator {
 		let namespace = null;
 		let hasJs = !!js;
 
-		if ( js ) {
-			this.addSourcemapLocations( js.content );
+		if (js) {
+			this.addSourcemapLocations(js.content);
 			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
 			// imports need to be hoisted out of the IIFE
-			for ( let i = 0; i < body.length; i += 1 ) {
+			for (let i = 0; i < body.length; i += 1) {
 				const node = body[i];
-				if ( node.type === 'ImportDeclaration' ) {
-					removeNode( this.code, js.content, node );
-					imports.push( node );
+				if (node.type === 'ImportDeclaration') {
+					removeNode(this.code, js.content, node);
+					imports.push(node);
 
-					node.specifiers.forEach( ( specifier: Node ) => {
-						this.importedNames.add( specifier.local.name );
+					node.specifiers.forEach((specifier: Node) => {
+						this.importedNames.add(specifier.local.name);
 					});
 				}
 			}
 
-			const defaultExport = body.find( ( node: Node ) => node.type === 'ExportDefaultDeclaration' );
+			const defaultExport = body.find(
+				(node: Node) => node.type === 'ExportDefaultDeclaration'
+			);
 
-			if ( defaultExport ) {
-				defaultExport.declaration.properties.forEach( ( prop: Node ) => {
-					templateProperties[ prop.key.name ] = prop;
+			if (defaultExport) {
+				defaultExport.declaration.properties.forEach((prop: Node) => {
+					templateProperties[prop.key.name] = prop;
 				});
 			}
 
-			[ 'helpers', 'events', 'components', 'transitions' ].forEach( key => {
-				if ( templateProperties[ key ] ) {
-					templateProperties[ key ].value.properties.forEach( ( prop: node ) => {
-						this[ key ].add( prop.key.name );
+			['helpers', 'events', 'components', 'transitions'].forEach(key => {
+				if (templateProperties[key]) {
+					templateProperties[key].value.properties.forEach((prop: node) => {
+						this[key].add(prop.key.name);
 					});
 				}
 			});
 
-			if ( templateProperties.computed ) {
+			if (templateProperties.computed) {
 				const dependencies = new Map();
 
-				templateProperties.computed.value.properties.forEach( ( prop: Node ) => {
+				templateProperties.computed.value.properties.forEach((prop: Node) => {
 					const key = prop.key.name;
 					const value = prop.value;
 
-					const deps = value.params.map( ( param: Node ) => param.type === 'AssignmentPattern' ? param.left.name : param.name );
-					dependencies.set( key, deps );
+					const deps = value.params.map(
+						(param: Node) =>
+							param.type === 'AssignmentPattern' ? param.left.name : param.name
+					);
+					dependencies.set(key, deps);
 				});
 
 				const visited = new Set();
 
-				function visit ( key ) {
-					if ( !dependencies.has( key ) ) return; // not a computation
+				function visit(key) {
+					if (!dependencies.has(key)) return; // not a computation
 
-					if ( visited.has( key ) ) return;
-					visited.add( key );
+					if (visited.has(key)) return;
+					visited.add(key);
 
-					const deps = dependencies.get( key );
-					deps.forEach( visit );
+					const deps = dependencies.get(key);
+					deps.forEach(visit);
 
 					computations.push({ key, deps });
 				}
 
-				templateProperties.computed.value.properties.forEach( ( prop: Node ) => visit( prop.key.name ) );
+				templateProperties.computed.value.properties.forEach((prop: Node) =>
+					visit(prop.key.name)
+				);
 			}
 
-			if ( templateProperties.namespace ) {
+			if (templateProperties.namespace) {
 				const ns = templateProperties.namespace.value.value;
-				namespace = namespaces[ ns ] || ns;
+				namespace = namespaces[ns] || ns;
 
-				removeObjectKey( this.code, defaultExport.declaration, 'namespace' );
+				removeObjectKey(this.code, defaultExport.declaration, 'namespace');
 			}
 
-			if ( templateProperties.components ) {
+			if (templateProperties.components) {
 				let hasNonImportedComponent = false;
-				templateProperties.components.value.properties.forEach( ( property: Node ) => {
-					const key = property.key.name;
-					const value = source.slice( property.value.start, property.value.end );
-					if ( this.importedNames.has( value ) ) {
-						this.importedComponents.set( key, value );
-					} else {
-						hasNonImportedComponent = true;
+				templateProperties.components.value.properties.forEach(
+					(property: Node) => {
+						const key = property.key.name;
+						const value = source.slice(
+							property.value.start,
+							property.value.end
+						);
+						if (this.importedNames.has(value)) {
+							this.importedComponents.set(key, value);
+						} else {
+							hasNonImportedComponent = true;
+						}
 					}
-				});
-				if ( hasNonImportedComponent ) {
+				);
+				if (hasNonImportedComponent) {
 					// remove the specific components that were imported, as we'll refer to them directly
-					Array.from( this.importedComponents.keys() ).forEach( key => {
-						removeObjectKey( this.code, templateProperties.components.value, key );
+					Array.from(this.importedComponents.keys()).forEach(key => {
+						removeObjectKey(
+							this.code,
+							templateProperties.components.value,
+							key
+						);
 					});
 				} else {
 					// remove the entire components portion of the export
-					removeObjectKey( this.code, defaultExport.declaration, 'components' );
+					removeObjectKey(this.code, defaultExport.declaration, 'components');
 				}
 			}
 
 			// Remove these after version 2
-			if ( templateProperties.onrender ) {
+			if (templateProperties.onrender) {
 				const { key } = templateProperties.onrender;
-				this.code.overwrite( key.start, key.end, 'oncreate', { storeName: true, contentOnly: false } );
+				this.code.overwrite(key.start, key.end, 'oncreate', {
+					storeName: true,
+					contentOnly: false,
+				});
 				templateProperties.oncreate = templateProperties.onrender;
 			}
 
-			if ( templateProperties.onteardown ) {
+			if (templateProperties.onteardown) {
 				const { key } = templateProperties.onteardown;
-				this.code.overwrite( key.start, key.end, 'ondestroy', { storeName: true, contentOnly: false } );
+				this.code.overwrite(key.start, key.end, 'ondestroy', {
+					storeName: true,
+					contentOnly: false,
+				});
 				templateProperties.ondestroy = templateProperties.onteardown;
 			}
 
 			// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
-			if ( ssr ) {
-				if ( templateProperties.oncreate ) removeNode( this.code, defaultExport.declaration, templateProperties.oncreate );
-				if ( templateProperties.ondestroy ) removeNode( this.code, defaultExport.declaration, templateProperties.ondestroy );
-				if ( templateProperties.methods ) removeNode( this.code, defaultExport.declaration, templateProperties.methods );
-				if ( templateProperties.events ) removeNode( this.code, defaultExport.declaration, templateProperties.events );
+			if (ssr) {
+				if (templateProperties.oncreate)
+					removeNode(
+						this.code,
+						defaultExport.declaration,
+						templateProperties.oncreate
+					);
+				if (templateProperties.ondestroy)
+					removeNode(
+						this.code,
+						defaultExport.declaration,
+						templateProperties.ondestroy
+					);
+				if (templateProperties.methods)
+					removeNode(
+						this.code,
+						defaultExport.declaration,
+						templateProperties.methods
+					);
+				if (templateProperties.events)
+					removeNode(
+						this.code,
+						defaultExport.declaration,
+						templateProperties.events
+					);
 			}
 
 			// now that we've analysed the default export, we can determine whether or not we need to keep it
 			let hasDefaultExport = !!defaultExport;
-			if ( defaultExport && defaultExport.declaration.properties.length === 0 ) {
+			if (defaultExport && defaultExport.declaration.properties.length === 0) {
 				hasDefaultExport = false;
-				removeNode( this.code, js.content, defaultExport );
+				removeNode(this.code, js.content, defaultExport);
 			}
 
 			// if we do need to keep it, then we need to generate a return statement
-			if ( hasDefaultExport ) {
-				const finalNode = body[ body.length - 1 ];
-				if ( defaultExport === finalNode ) {
+			if (hasDefaultExport) {
+				const finalNode = body[body.length - 1];
+				if (defaultExport === finalNode) {
 					// export is last property, we can just return it
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `return ` );
+					this.code.overwrite(
+						defaultExport.start,
+						defaultExport.declaration.start,
+						`return `
+					);
 				} else {
-					const { declarations } = annotateWithScopes( js );
+					const { declarations } = annotateWithScopes(js);
 					let template = 'template';
-					for ( let i = 1; declarations.has( template ); template = `template_${i++}` );
+					for (
+						let i = 1;
+						declarations.has(template);
+						template = `template_${i++}`
+					);
 
-					this.code.overwrite( defaultExport.start, defaultExport.declaration.start, `var ${template} = ` );
+					this.code.overwrite(
+						defaultExport.start,
+						defaultExport.declaration.start,
+						`var ${template} = `
+					);
 
 					let i = defaultExport.start;
-					while ( /\s/.test( source[ i - 1 ] ) ) i--;
+					while (/\s/.test(source[i - 1])) i--;
 
-					const indentation = source.slice( i, defaultExport.start );
-					this.code.appendLeft( finalNode.end, `\n\n${indentation}return ${template};` );
+					const indentation = source.slice(i, defaultExport.start);
+					this.code.appendLeft(
+						finalNode.end,
+						`\n\n${indentation}return ${template};`
+					);
 				}
 			}
 
 			// user code gets wrapped in an IIFE
-			if ( js.content.body.length ) {
-				const prefix = hasDefaultExport ? `var ${this.alias( 'template' )} = (function () {` : `(function () {`;
-				this.code.prependRight( js.content.start, prefix ).appendLeft( js.content.end, '}());' );
-			}
-
-			// if there's no need to include user code, remove it altogether
-			else {
-				this.code.remove( js.content.start, js.content.end );
+			if (js.content.body.length) {
+				const prefix = hasDefaultExport
+					? `var ${this.alias('template')} = (function () {`
+					: `(function () {`;
+				this.code
+					.prependRight(js.content.start, prefix)
+					.appendLeft(js.content.end, '}());');
+			} else {
+				// if there's no need to include user code, remove it altogether
+				this.code.remove(js.content.start, js.content.end);
 				hasJs = false;
 			}
 		}
@@ -489,7 +597,7 @@ export default class Generator {
 			computations,
 			hasJs,
 			namespace,
-			templateProperties
+			templateProperties,
 		};
 	}
 }

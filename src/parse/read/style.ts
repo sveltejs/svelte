@@ -2,47 +2,47 @@ import parse from 'css-tree/lib/parser/index.js';
 import walk from 'css-tree/lib/utils/walk.js';
 import { Parser } from '../index';
 
-export default function readStyle ( parser: Parser, start: number, attributes ) {
+export default function readStyle(parser: Parser, start: number, attributes) {
 	const contentStart = parser.index;
-	const styles = parser.readUntil( /<\/style>/ );
+	const styles = parser.readUntil(/<\/style>/);
 	const contentEnd = parser.index;
 
 	let ast;
 
 	try {
-		ast = parse( styles, {
+		ast = parse(styles, {
 			positions: true,
-			offset: contentStart
+			offset: contentStart,
 		});
-	} catch ( err ) {
-		if ( err.name === 'CssSyntaxError' ) {
-			parser.error( err.message, err.offset );
+	} catch (err) {
+		if (err.name === 'CssSyntaxError') {
+			parser.error(err.message, err.offset);
 		} else {
 			throw err;
 		}
 	}
 
 	// tidy up AST
-	walk.all( ast, node => {
-		if ( node.loc ) {
+	walk.all(ast, node => {
+		if (node.loc) {
 			node.start = node.loc.start.offset;
 			node.end = node.loc.end.offset;
 			delete node.loc;
 		}
 	});
 
-	parser.eat( '</style>', true );
+	parser.eat('</style>', true);
 	const end = parser.index;
 
 	return {
 		start,
 		end,
 		attributes,
-		children: JSON.parse( JSON.stringify( ast.children ) ),
+		children: JSON.parse(JSON.stringify(ast.children)),
 		content: {
 			start: contentStart,
 			end: contentEnd,
-			styles
-		}
+			styles,
+		},
 	};
 }
