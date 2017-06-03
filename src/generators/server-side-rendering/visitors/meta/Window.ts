@@ -1,3 +1,3 @@
-export default function visitWindow () {
+export default function visitWindow() {
 	// noop
 }

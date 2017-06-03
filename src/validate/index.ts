@@ -2,12 +2,17 @@ import validateJs from './js/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
-import CompileError from '../utils/CompileError'
+import CompileError from '../utils/CompileError';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 
 class ValidationError extends CompileError {
-	constructor ( message: string, template: string, index: number, filename: string ) {
-		super( message, template, index, filename );
+	constructor(
+		message: string,
+		template: string,
+		index: number,
+		filename: string
+	) {
+		super(message, template, index, filename);
 		this.name = 'ValidationError';
 	}
 }
@@ -27,7 +32,7 @@ export class Validator {
 	helpers: Map<string, Node>;
 	transitions: Map<string, Node>;
 
-	constructor ( parsed: Parsed, source: string, options: CompileOptions ) {
+	constructor(parsed: Parsed, source: string, options: CompileOptions) {
 		this.source = source;
 		this.filename = options !== undefined ? options.filename : undefined;
 
@@ -43,15 +48,15 @@ export class Validator {
 		this.transitions = new Map();
 	}
 
-	error ( message: string, pos: number ) {
-		throw new ValidationError( message, this.source, pos, this.filename );
+	error(message: string, pos: number) {
+		throw new ValidationError(message, this.source, pos, this.filename);
 	}
 
-	warn ( message: string, pos: number ) {
-		if ( !this.locator ) this.locator = getLocator( this.source );
-		const { line, column } = this.locator( pos );
+	warn(message: string, pos: number) {
+		if (!this.locator) this.locator = getLocator(this.source);
+		const { line, column } = this.locator(pos);
 
-		const frame = getCodeFrame( this.source, line, column );
+		const frame = getCodeFrame(this.source, line, column);
 
 		this.onwarn({
 			message,
@@ -64,16 +69,20 @@ export class Validator {
 	}
 }
 
-export default function validate ( parsed: Parsed, source: string, options: CompileOptions ) {
+export default function validate(
+	parsed: Parsed,
+	source: string,
+	options: CompileOptions
+) {
 	const { onwarn, onerror, name, filename } = options;
 
 	try {
-		if ( name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test( name ) ) {
-			const error = new Error( `options.name must be a valid identifier` );
+		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
+			const error = new Error(`options.name must be a valid identifier`);
 			throw error;
 		}
 
-		if ( name && !/^[A-Z]/.test( name ) ) {
+		if (name && !/^[A-Z]/.test(name)) {
 			const message = `options.name should be capitalised`;
 			onwarn({
 				message,
@@ -82,22 +91,22 @@ export default function validate ( parsed: Parsed, source: string, options: Comp
 			});
 		}
 
-		const validator = new Validator( parsed, source, {
+		const validator = new Validator(parsed, source, {
 			onwarn,
 			name,
 			filename
 		});
 
-		if ( parsed.js ) {
-			validateJs( validator, parsed.js );
+		if (parsed.js) {
+			validateJs(validator, parsed.js);
 		}
 
-		if ( parsed.html ) {
-			validateHtml( validator, parsed.html );
+		if (parsed.html) {
+			validateHtml(validator, parsed.html);
 		}
-	} catch ( err ) {
-		if ( onerror ) {
-			onerror( err );
+	} catch (err) {
+		if (onerror) {
+			onerror(err);
 		} else {
 			throw err;
 		}

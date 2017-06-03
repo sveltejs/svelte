@@ -1,7 +1,11 @@
 import readExpression from '../read/expression';
 import readScript from '../read/script';
 import readStyle from '../read/style';
-import { readEventHandlerDirective, readBindingDirective, readTransitionDirective } from '../read/directives';
+import {
+	readEventHandlerDirective,
+	readBindingDirective,
+	readTransitionDirective
+} from '../read/directives';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
@@ -16,60 +20,73 @@ const metaTags = {
 	':Window': true
 };
 
-const specials = new Map( [
-	[ 'script', {
-		read: readScript,
-		property: 'js'
-	} ],
-	[ 'style', {
-		read: readStyle,
-		property: 'css'
-	} ]
-] );
+const specials = new Map([
+	[
+		'script',
+		{
+			read: readScript,
+			property: 'js'
+		}
+	],
+	[
+		'style',
+		{
+			read: readStyle,
+			property: 'css'
+		}
+	]
+]);
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
-const disallowedContents = new Map( [
-	[ 'li', new Set( [ 'li' ] ) ],
-	[ 'dt', new Set( [ 'dt', 'dd' ] ) ],
-	[ 'dd', new Set( [ 'dt', 'dd' ] ) ],
-	[ 'p', new Set( 'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split( ' ' ) ) ],
-	[ 'rt', new Set( [ 'rt', 'rp' ] ) ],
-	[ 'rp', new Set( [ 'rt', 'rp' ] ) ],
-	[ 'optgroup', new Set( [ 'optgroup' ] ) ],
-	[ 'option', new Set( [ 'option', 'optgroup' ] ) ],
-	[ 'thead', new Set( [ 'tbody', 'tfoot' ] ) ],
-	[ 'tbody', new Set( [ 'tbody', 'tfoot' ] ) ],
-	[ 'tfoot', new Set( [ 'tbody' ] ) ],
-	[ 'tr', new Set( [ 'tr', 'tbody' ] ) ],
-	[ 'td', new Set( [ 'td', 'th', 'tr' ] ) ],
-	[ 'th', new Set( [ 'td', 'th', 'tr' ] ) ],
-] );
+const disallowedContents = new Map([
+	['li', new Set(['li'])],
+	['dt', new Set(['dt', 'dd'])],
+	['dd', new Set(['dt', 'dd'])],
+	[
+		'p',
+		new Set(
+			'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split(
+				' '
+			)
+		)
+	],
+	['rt', new Set(['rt', 'rp'])],
+	['rp', new Set(['rt', 'rp'])],
+	['optgroup', new Set(['optgroup'])],
+	['option', new Set(['option', 'optgroup'])],
+	['thead', new Set(['tbody', 'tfoot'])],
+	['tbody', new Set(['tbody', 'tfoot'])],
+	['tfoot', new Set(['tbody'])],
+	['tr', new Set(['tr', 'tbody'])],
+	['td', new Set(['td', 'th', 'tr'])],
+	['th', new Set(['td', 'th', 'tr'])]
+]);
 
-function stripWhitespace ( element ) {
-	if ( element.children.length ) {
+function stripWhitespace(element) {
+	if (element.children.length) {
 		const firstChild = element.children[0];
-		const lastChild = element.children[ element.children.length - 1 ];
+		const lastChild = element.children[element.children.length - 1];
 
-		if ( firstChild.type === 'Text' ) {
-			firstChild.data = trimStart( firstChild.data );
-			if ( !firstChild.data ) element.children.shift();
+		if (firstChild.type === 'Text') {
+			firstChild.data = trimStart(firstChild.data);
+			if (!firstChild.data) element.children.shift();
 		}
 
-		if ( lastChild.type === 'Text' ) {
-			lastChild.data = trimEnd( lastChild.data );
-			if ( !lastChild.data ) element.children.pop();
+		if (lastChild.type === 'Text') {
+			lastChild.data = trimEnd(lastChild.data);
+			if (!lastChild.data) element.children.pop();
 		}
 	}
 }
 
-export default function tag ( parser: Parser ) {
+export default function tag(parser: Parser) {
 	const start = parser.index++;
 
 	let parent = parser.current();
 
-	if ( parser.eat( '!--' ) ) {
-		const data = parser.readUntil( /-->/ );
-		parser.eat( '-->' );
+	if (parser.eat('!--')) {
+		const data = parser.readUntil(/-->/);
+		parser.eat('-->');
 
 		parser.current().children.push({
 			start,
@@ -81,38 +98,48 @@ export default function tag ( parser: Parser ) {
 		return null;
 	}
 
-	const isClosingTag = parser.eat( '/' );
+	const isClosingTag = parser.eat('/');
 
-	const name = readTagName( parser );
+	const name = readTagName(parser);
 
-	if ( name in metaTags ) {
-		if ( name in parser.metaTags ) {
-			if ( isClosingTag && parser.current().children.length ) {
-				parser.error( `<${name}> cannot have children`, parser.current().children[0].start );
+	if (name in metaTags) {
+		if (name in parser.metaTags) {
+			if (isClosingTag && parser.current().children.length) {
+				parser.error(
+					`<${name}> cannot have children`,
+					parser.current().children[0].start
+				);
 			}
 
-			parser.error( `A component can only have one <${name}> tag`, start );
+			parser.error(`A component can only have one <${name}> tag`, start);
 		}
 
-		parser.metaTags[ name ] = true;
+		parser.metaTags[name] = true;
 
-		if ( parser.stack.length > 1 ) {
-			parser.error( `<${name}> tags cannot be inside elements or blocks`, start );
+		if (parser.stack.length > 1) {
+			parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
 		}
 	}
 
 	parser.allowWhitespace();
 
-	if ( isClosingTag ) {
-		if ( isVoidElementName( name ) ) {
-			parser.error( `<${name}> is a void element and cannot have children, or a closing tag`, start );
+	if (isClosingTag) {
+		if (isVoidElementName(name)) {
+			parser.error(
+				`<${name}> is a void element and cannot have children, or a closing tag`,
+				start
+			);
 		}
 
-		if ( !parser.eat( '>' ) ) parser.error( `Expected '>'` );
+		if (!parser.eat('>')) parser.error(`Expected '>'`);
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while ( parent.name !== name ) {
-			if ( parent.type !== 'Element' ) parser.error( `</${name}> attempted to close an element that was not open`, start );
+		while (parent.name !== name) {
+			if (parent.type !== 'Element')
+				parser.error(
+					`</${name}> attempted to close an element that was not open`,
+					start
+				);
 
 			parent.end = start;
 			parser.stack.pop();
@@ -121,17 +148,17 @@ export default function tag ( parser: Parser ) {
 		}
 
 		// strip leading/trailing whitespace as necessary
-		stripWhitespace( parent );
+		stripWhitespace(parent);
 
 		parent.end = parser.index;
 		parser.stack.pop();
 
 		return null;
-	} else if ( disallowedContents.has( parent.name ) ) {
+	} else if (disallowedContents.has(parent.name)) {
 		// can this be a child of the parent element, or does it implicitly
 		// close it, like `<li>one<li>two`?
-		if ( disallowedContents.get( parent.name ).has( name ) ) {
-			stripWhitespace( parent );
+		if (disallowedContents.get(parent.name).has(name)) {
+			stripWhitespace(parent);
 
 			parent.end = start;
 			parser.stack.pop();
@@ -142,24 +169,26 @@ export default function tag ( parser: Parser ) {
 	const uniqueNames = new Set();
 
 	let attribute;
-	while ( attribute = readAttribute( parser, uniqueNames ) ) {
-		attributes.push( attribute );
+	while ((attribute = readAttribute(parser, uniqueNames))) {
+		attributes.push(attribute);
 		parser.allowWhitespace();
 	}
 
 	parser.allowWhitespace();
 
 	// special cases – top-level <script> and <style>
-	if ( specials.has( name ) && parser.stack.length === 1 ) {
-		const special = specials.get( name );
+	if (specials.has(name) && parser.stack.length === 1) {
+		const special = specials.get(name);
 
-		if ( parser[ special.property ] ) {
+		if (parser[special.property]) {
 			parser.index = start;
-			parser.error( `You can only have one top-level <${name}> tag per component` );
+			parser.error(
+				`You can only have one top-level <${name}> tag per component`
+			);
 		}
 
-		parser.eat( '>', true );
-		parser[ special.property ] = special.read( parser, start, attributes );
+		parser.eat('>', true);
+		parser[special.property] = special.read(parser, start, attributes);
 		return;
 	}
 
@@ -172,106 +201,118 @@ export default function tag ( parser: Parser ) {
 		children: []
 	};
 
-	parser.current().children.push( element );
+	parser.current().children.push(element);
 
-	const selfClosing = parser.eat( '/' ) || isVoidElementName( name );
+	const selfClosing = parser.eat('/') || isVoidElementName(name);
 
-	parser.eat( '>', true );
+	parser.eat('>', true);
 
-	if ( selfClosing ) {
+	if (selfClosing) {
 		element.end = parser.index;
-	} else if ( name === 'textarea' ) {
+	} else if (name === 'textarea') {
 		// special case
-		element.children = readSequence( parser, () => parser.template.slice( parser.index, parser.index + 11 ) === '</textarea>' );
-		parser.read( /<\/textarea>/ );
+		element.children = readSequence(
+			parser,
+			() =>
+				parser.template.slice(parser.index, parser.index + 11) === '</textarea>'
+		);
+		parser.read(/<\/textarea>/);
 		element.end = parser.index;
 	} else {
 		// don't push self-closing elements onto the stack
-		parser.stack.push( element );
+		parser.stack.push(element);
 	}
 
 	return null;
 }
 
-function readTagName ( parser: Parser ) {
+function readTagName(parser: Parser) {
 	const start = parser.index;
 
-	if ( parser.eat( SELF ) ) {
+	if (parser.eat(SELF)) {
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
 		let i = parser.stack.length;
 		let legal = false;
 
-		while ( i-- ) {
+		while (i--) {
 			const fragment = parser.stack[i];
-			if ( fragment.type === 'IfBlock' || fragment.type === 'EachBlock' ) {
+			if (fragment.type === 'IfBlock' || fragment.type === 'EachBlock') {
 				legal = true;
 				break;
 			}
 		}
 
-		if ( !legal ) {
-			parser.error( `<${SELF}> components can only exist inside if-blocks or each-blocks`, start );
+		if (!legal) {
+			parser.error(
+				`<${SELF}> components can only exist inside if-blocks or each-blocks`,
+				start
+			);
 		}
 
 		return SELF;
 	}
 
-	const name = parser.readUntil( /(\s|\/|>)/ );
+	const name = parser.readUntil(/(\s|\/|>)/);
 
-	if ( name in metaTags ) return name;
+	if (name in metaTags) return name;
 
-	if ( !validTagName.test( name ) ) {
-		parser.error( `Expected valid tag name`, start );
+	if (!validTagName.test(name)) {
+		parser.error(`Expected valid tag name`, start);
 	}
 
 	return name;
 }
 
-function readAttribute ( parser: Parser, uniqueNames ) {
+function readAttribute(parser: Parser, uniqueNames) {
 	const start = parser.index;
 
-	let name = parser.readUntil( /(\s|=|\/|>)/ );
-	if ( !name ) return null;
-	if ( uniqueNames.has( name ) ) {
-		parser.error( 'Attributes need to be unique', start );
+	let name = parser.readUntil(/(\s|=|\/|>)/);
+	if (!name) return null;
+	if (uniqueNames.has(name)) {
+		parser.error('Attributes need to be unique', start);
 	}
 
-	uniqueNames.add( name );
+	uniqueNames.add(name);
 
 	parser.allowWhitespace();
 
-	if ( /^on:/.test( name ) ) {
-		parser.eat( '=', true );
-		return readEventHandlerDirective( parser, start, name.slice( 3 ) );
+	if (/^on:/.test(name)) {
+		parser.eat('=', true);
+		return readEventHandlerDirective(parser, start, name.slice(3));
 	}
 
-	if ( /^bind:/.test( name ) ) {
-		return readBindingDirective( parser, start, name.slice( 5 ) );
+	if (/^bind:/.test(name)) {
+		return readBindingDirective(parser, start, name.slice(5));
 	}
 
-	if ( /^ref:/.test( name ) ) {
+	if (/^ref:/.test(name)) {
 		return {
 			start,
 			end: parser.index,
 			type: 'Ref',
-			name: name.slice( 4 )
+			name: name.slice(4)
 		};
 	}
 
-	const match = /^(in|out|transition):/.exec( name );
-	if ( match ) {
-		return readTransitionDirective( parser, start, name.slice( match[0].length ), match[1] );
+	const match = /^(in|out|transition):/.exec(name);
+	if (match) {
+		return readTransitionDirective(
+			parser,
+			start,
+			name.slice(match[0].length),
+			match[1]
+		);
 	}
 
 	let value;
 
 	// :foo is shorthand for foo='{{foo}}'
-	if ( /^:\w+$/.test( name ) ) {
-		name = name.slice( 1 );
-		value = getShorthandValue( start + 1, name );
+	if (/^:\w+$/.test(name)) {
+		name = name.slice(1);
+		value = getShorthandValue(start + 1, name);
 	} else {
-		value = parser.eat( '=' ) ? readAttributeValue( parser ) : true;
+		value = parser.eat('=') ? readAttributeValue(parser) : true;
 	}
 
 	return {
@@ -283,42 +324,40 @@ function readAttribute ( parser: Parser, uniqueNames ) {
 	};
 }
 
-function readAttributeValue ( parser: Parser ) {
-	const quoteMark = (
-		parser.eat( `'` ) ? `'` :
-		parser.eat( `"` ) ? `"` :
-		null
+function readAttributeValue(parser: Parser) {
+	const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
+
+	const regex = quoteMark === `'`
+		? /'/
+		: quoteMark === `"` ? /"/ : /[\s"'=<>\/`]/;
+
+	const value = readSequence(parser, () =>
+		regex.test(parser.template[parser.index])
 	);
 
-	const regex = (
-		quoteMark === `'` ? /'/ :
-		quoteMark === `"` ? /"/ :
-		/[\s"'=<>\/`]/
-	);
-
-	const value = readSequence( parser, () => regex.test( parser.template[ parser.index ] ) );
-
-	if ( quoteMark ) parser.index += 1;
+	if (quoteMark) parser.index += 1;
 	return value;
 }
 
-function getShorthandValue ( start: number, name: string ) {
+function getShorthandValue(start: number, name: string) {
 	const end = start + name.length;
 
-	return [{
-		type: 'AttributeShorthand',
-		start,
-		end,
-		expression: {
-			type: 'Identifier',
+	return [
+		{
+			type: 'AttributeShorthand',
 			start,
 			end,
-			name
+			expression: {
+				type: 'Identifier',
+				start,
+				end,
+				name
+			}
 		}
-	}];
+	];
 }
 
-function readSequence ( parser: Parser, done: () => boolean ) {
+function readSequence(parser: Parser, done: () => boolean) {
 	let currentChunk: Node = {
 		start: parser.index,
 		end: null,
@@ -328,31 +367,30 @@ function readSequence ( parser: Parser, done: () => boolean ) {
 
 	const chunks = [];
 
-	while ( parser.index < parser.template.length ) {
+	while (parser.index < parser.template.length) {
 		const index = parser.index;
 
-		if ( done() ) {
+		if (done()) {
 			currentChunk.end = parser.index;
 
-			if ( currentChunk.data ) chunks.push( currentChunk );
+			if (currentChunk.data) chunks.push(currentChunk);
 
-			chunks.forEach( chunk => {
-				if ( chunk.type === 'Text' ) chunk.data = decodeCharacterReferences( chunk.data );
+			chunks.forEach(chunk => {
+				if (chunk.type === 'Text')
+					chunk.data = decodeCharacterReferences(chunk.data);
 			});
 
 			return chunks;
-		}
-
-		else if ( parser.eat( '{{' ) ) {
-			if ( currentChunk.data ) {
+		} else if (parser.eat('{{')) {
+			if (currentChunk.data) {
 				currentChunk.end = index;
-				chunks.push( currentChunk );
+				chunks.push(currentChunk);
 			}
 
-			const expression = readExpression( parser );
+			const expression = readExpression(parser);
 			parser.allowWhitespace();
-			if ( !parser.eat( '}}' ) ) {
-				parser.error( `Expected }}` );
+			if (!parser.eat('}}')) {
+				parser.error(`Expected }}`);
 			}
 
 			chunks.push({
@@ -368,12 +406,10 @@ function readSequence ( parser: Parser, done: () => boolean ) {
 				type: 'Text',
 				data: ''
 			};
-		}
-
-		else {
-			currentChunk.data += parser.template[ parser.index++ ];
+		} else {
+			currentChunk.data += parser.template[parser.index++];
 		}
 	}
 
-	parser.error( `Unexpected end of input` );
+	parser.error(`Unexpected end of input`);
 }

@@ -9,25 +9,34 @@ export class SsrGenerator extends Generator {
 	renderCode: string;
 	elementDepth: number;
 
-	constructor ( parsed: Parsed, source: string, name: string, options: CompileOptions ) {
-		super( parsed, source, name, options );
+	constructor(
+		parsed: Parsed,
+		source: string,
+		name: string,
+		options: CompileOptions
+	) {
+		super(parsed, source, name, options);
 		this.bindings = [];
 		this.renderCode = '';
 		this.elementDepth = 0;
 	}
 
-	append ( code: string ) {
+	append(code: string) {
 		this.renderCode += code;
 	}
 }
 
-export default function ssr ( parsed: Parsed, source: string, options: CompileOptions ) {
+export default function ssr(
+	parsed: Parsed,
+	source: string,
+	options: CompileOptions
+) {
 	const format = options.format || 'cjs';
 	const name = options.name || 'SvelteComponent';
 
-	const generator = new SsrGenerator( parsed, source, name, options );
+	const generator = new SsrGenerator(parsed, source, name, options);
 
-	const { computations, hasJs, templateProperties } = generator.parseJs( true );
+	const { computations, hasJs, templateProperties } = generator.parseJs(true);
 
 	// create main render() function
 	const mainBlock = new Block({
@@ -37,8 +46,8 @@ export default function ssr ( parsed: Parsed, source: string, options: CompileOp
 		conditions: []
 	});
 
-	parsed.html.children.forEach( ( node: Node ) => {
-		visit( generator, mainBlock, node );
+	parsed.html.children.forEach((node: Node) => {
+		visit(generator, mainBlock, node);
 	});
 
 	const result = deindent`
@@ -46,27 +55,37 @@ export default function ssr ( parsed: Parsed, source: string, options: CompileOp
 
 		var ${name} = {};
 
-		${name}.filename = ${JSON.stringify( options.filename )};
+		${name}.filename = ${JSON.stringify(options.filename)};
 
 		${name}.data = function () {
-			return ${templateProperties.data ? `${generator.alias( 'template' )}.data()` : `{}`};
+			return ${templateProperties.data
+				? `${generator.alias('template')}.data()`
+				: `{}`};
 		};
 
 		${name}.render = function ( state, options ) {
-			${templateProperties.data ? `state = Object.assign( ${generator.alias( 'template' )}.data(), state || {} );` : `state = state || {};`}
+			${templateProperties.data
+				? `state = Object.assign( ${generator.alias(
+						'template'
+					)}.data(), state || {} );`
+				: `state = state || {};`}
 
-			${computations.map( ({ key, deps }) =>
-				`state.${key} = ${generator.alias( 'template' )}.computed.${key}( ${deps.map( dep => `state.${dep}` ).join( ', ' )} );`
+			${computations.map(
+				({ key, deps }) =>
+					`state.${key} = ${generator.alias(
+						'template'
+					)}.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`
 			)}
 
-			${generator.bindings.length && deindent`
+			${generator.bindings.length &&
+				deindent`
 				var settled = false;
 				var tmp;
 
 				while ( !settled ) {
 					settled = true;
 
-					${generator.bindings.join( '\n\n' )}
+					${generator.bindings.join('\n\n')}
 				}
 			`}
 
@@ -76,15 +95,17 @@ export default function ssr ( parsed: Parsed, source: string, options: CompileOp
 		${name}.renderCss = function () {
 			var components = [];
 
-			${generator.css && deindent`
+			${generator.css &&
+				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${JSON.stringify( generator.css )},
+					css: ${JSON.stringify(generator.css)},
 					map: null // TODO
 				});
 			`}
 
-			${templateProperties.components && deindent`
+			${templateProperties.components &&
+				deindent`
 				var seen = {};
 
 				function addComponent ( component ) {
@@ -96,13 +117,13 @@ export default function ssr ( parsed: Parsed, source: string, options: CompileOp
 					});
 				}
 
-				${
-					templateProperties.components.value.properties.map( prop => {
-						const { name } = prop.key;
-						const expression = generator.importedComponents.get( name ) || `${generator.alias( 'template' )}.components.${name}`;
-						return `addComponent( ${expression} );`;
-					})
-				}
+				${templateProperties.components.value.properties.map(prop => {
+					const { name } = prop.key;
+					const expression =
+						generator.importedComponents.get(name) ||
+						`${generator.alias('template')}.components.${name}`;
+					return `addComponent( ${expression} );`;
+				})}
 			`}
 
 			return {
@@ -125,5 +146,5 @@ export default function ssr ( parsed: Parsed, source: string, options: CompileOp
 		}
 	`;
 
-	return generator.generate( result, options, { name, format } );
+	return generator.generate(result, options, { name, format });
 }
