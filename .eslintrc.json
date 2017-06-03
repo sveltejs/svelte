@@ -5,7 +5,6 @@
         "semi": [ 2, "always" ],
         "keyword-spacing": [ 2, { "before": true, "after": true } ],
         "space-before-blocks": [ 2, "always" ],
-        "space-before-function-paren": [ 2, "always" ],
         "no-mixed-spaces-and-tabs": [ 2, "smart-tabs" ],
         "no-cond-assign": 0,
         "no-unused-vars": 2,
