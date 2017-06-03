@@ -1,4 +1,4 @@
-import deindent from '../../../utils/deindent.js';
+import deindent from '../../../utils/deindent';
 import getGlobals, { Globals } from './getGlobals';
 
 export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';

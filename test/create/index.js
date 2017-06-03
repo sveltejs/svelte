@@ -1,6 +1,5 @@
-import deindent from "../../src/utils/deindent.js";
 import assert from "assert";
-import { svelte } from "../helpers.js";
+import { svelte, deindent } from "../helpers.js";
 
 describe("create", () => {
 	it("should return a component constructor", () => {

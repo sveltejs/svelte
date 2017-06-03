@@ -1,4 +1,4 @@
-import deindent from '../../../../../utils/deindent.js';
+import deindent from '../../../../../utils/deindent';
 
 export default function getSetter({
 	block,

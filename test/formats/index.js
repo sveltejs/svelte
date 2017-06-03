@@ -1,6 +1,5 @@
-import deindent from "../../src/utils/deindent.js";
 import assert from "assert";
-import { svelte, env, setupHtmlEqual } from "../helpers.js";
+import { svelte, deindent, env, setupHtmlEqual } from "../helpers.js";
 
 function testAmd(code, expectedId, dependencies, html) {
 	const fn = new Function("define", code);

@@ -1,5 +1,5 @@
 import CodeBuilder from '../../utils/CodeBuilder';
-import deindent from '../../utils/deindent.js';
+import deindent from '../../utils/deindent';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 

@@ -1,4 +1,4 @@
-import deindent from '../../../../utils/deindent.js';
+import deindent from '../../../../utils/deindent';
 import CodeBuilder from '../../../../utils/CodeBuilder';
 import visit from '../../visit';
 import visitAttribute from './Attribute';

@@ -1,4 +1,4 @@
-export default function spaces(i) {
+export default function spaces(i: number) {
 	let result = '';
 	while (i--) result += ' ';
 	return result;

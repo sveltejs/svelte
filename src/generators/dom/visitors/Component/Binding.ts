@@ -1,4 +1,4 @@
-import deindent from '../../../../utils/deindent.js';
+import deindent from '../../../../utils/deindent';
 import flattenReference from '../../../../utils/flattenReference';
 import getSetter from '../shared/binding/getSetter';
 import { DomGenerator } from '../../index';

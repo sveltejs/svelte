@@ -1,5 +1,5 @@
 import { parse } from 'acorn';
-import spaces from '../../utils/spaces.js';
+import spaces from '../../utils/spaces';
 import { Parser } from '../index';
 
 const scriptClosingTag = '</script>';
