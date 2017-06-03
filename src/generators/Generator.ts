@@ -114,7 +114,7 @@ export default class Generator {
 				}
 
 				if ( node.type === 'ThisExpression' ) {
-					if ( lexicalDepth === 0 && context ) code.overwrite( node.start, node.end, context, true );
+					if ( lexicalDepth === 0 && context ) code.overwrite( node.start, node.end, context, { storeName: true, contentOnly: false } );
 				}
 
 				else if ( isReference( node, parent ) ) {
@@ -129,7 +129,7 @@ export default class Generator {
 						const contextName = contexts.get( name );
 						if ( contextName !== name ) {
 							// this is true for 'reserved' names like `state` and `component`
-							code.overwrite( node.start, node.start + name.length, contextName, true );
+							code.overwrite( node.start, node.start + name.length, contextName, { storeName: true, contentOnly: false } );
 						}
 
 						if ( !~usedContexts.indexOf( name ) ) usedContexts.push( name );
@@ -426,13 +426,13 @@ export default class Generator {
 			// Remove these after version 2
 			if ( templateProperties.onrender ) {
 				const { key } = templateProperties.onrender;
-				this.code.overwrite( key.start, key.end, 'oncreate', true );
+				this.code.overwrite( key.start, key.end, 'oncreate', { storeName: true, contentOnly: false } );
 				templateProperties.oncreate = templateProperties.onrender;
 			}
 
 			if ( templateProperties.onteardown ) {
 				const { key } = templateProperties.onteardown;
-				this.code.overwrite( key.start, key.end, 'ondestroy', true );
+				this.code.overwrite( key.start, key.end, 'ondestroy', { storeName: true, contentOnly: false } );
 				templateProperties.ondestroy = templateProperties.onteardown;
 			}
 
