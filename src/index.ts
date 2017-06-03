@@ -6,62 +6,65 @@ import { assign } from './shared/index.js';
 import { version } from '../package.json';
 import { Parsed, CompileOptions, Warning } from './interfaces';
 
-function normalizeOptions ( options: CompileOptions ) :CompileOptions {
-	return assign({
-		generate: 'dom',
+function normalizeOptions(options: CompileOptions): CompileOptions {
+	return assign(
+		{
+			generate: 'dom',
 
-		// a filename is necessary for sourcemap generation
-		filename: 'SvelteComponent.html',
+			// a filename is necessary for sourcemap generation
+			filename: 'SvelteComponent.html',
 
-		onwarn: ( warning: Warning ) => {
-			if ( warning.loc ) {
-				console.warn( `(${warning.loc.line}:${warning.loc.column}) – ${warning.message}` ); // eslint-disable-line no-console
-			} else {
-				console.warn( warning.message ); // eslint-disable-line no-console
-			}
+			onwarn: (warning: Warning) => {
+				if (warning.loc) {
+					console.warn(
+						`(${warning.loc.line}:${warning.loc.column}) – ${warning.message}`
+					); // eslint-disable-line no-console
+				} else {
+					console.warn(warning.message); // eslint-disable-line no-console
+				}
+			},
+
+			onerror: (error: Error) => {
+				throw error;
+			},
 		},
-
-		onerror: ( error: Error ) => {
-			throw error;
-		}
-	}, options );
+		options
+	);
 }
 
-export function compile ( source: string, _options: CompileOptions ) {
-	const options = normalizeOptions( _options );
+export function compile(source: string, _options: CompileOptions) {
+	const options = normalizeOptions(_options);
 
 	let parsed: Parsed;
 
 	try {
-		parsed = parse( source, options );
-	} catch ( err ) {
-		options.onerror( err );
+		parsed = parse(source, options);
+	} catch (err) {
+		options.onerror(err);
 		return;
 	}
 
-	validate( parsed, source, options );
+	validate(parsed, source, options);
 
-	const compiler = options.generate === 'ssr'
-		? generateSSR
-		: generate;
+	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
-	return compiler( parsed, source, options );
+	return compiler(parsed, source, options);
 }
 
-export function create ( source: string, _options: CompileOptions = {} ) {
+export function create(source: string, _options: CompileOptions = {}) {
 	_options.format = 'eval';
 
-	const compiled = compile( source, _options );
+	const compiled = compile(source, _options);
 
-	if ( !compiled || !compiled.code ) {
+	if (!compiled || !compiled.code) {
 		return;
 	}
 
 	try {
-		return (new Function( 'return ' + compiled.code ))();
-	} catch ( err ) {
-		if ( _options.onerror ) {
-			_options.onerror( err );
+		return new Function('return ' + compiled.code)();
+	} catch (err) {
+		if (_options.onerror) {
+			_options.onerror(err);
 			return;
 		} else {
 			throw err;

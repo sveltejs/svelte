@@ -13,5 +13,5 @@ export default {
 	MustacheTag,
 	RawMustacheTag,
 	Text,
-	YieldTag
+	YieldTag,
 };
