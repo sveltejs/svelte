@@ -8,7 +8,7 @@ export default function getStaticAttributeValue(node: Node, name: string) {
 
 	if (attribute.value.length !== 1 || attribute.value[0].type !== 'Text') {
 		// TODO catch this in validation phase, give a more useful error (with location etc)
-		throw new Error(`'${name} must be a static attribute`);
+		throw new Error(`'${name}' must be a static attribute`);
 	}
 
 	return attribute.value[0].data;
