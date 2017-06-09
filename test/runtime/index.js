@@ -2,11 +2,10 @@ import assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
 import * as acorn from "acorn";
-import * as babel from "babel-core";
 import { transitionManager } from "../../shared.js";
 
 import {
-	addLineNumbers,
+	showOutput,
 	loadConfig,
 	loadSvelte,
 	env,
@@ -16,7 +15,6 @@ import {
 
 let svelte;
 
-let showCompiledCode = false;
 let compileOptions = null;
 
 function getName(filename) {
@@ -35,9 +33,7 @@ require.extensions[".html"] = function(module, filename) {
 	);
 	let { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
 
-	if (showCompiledCode) console.log(addLineNumbers(code)); // eslint-disable-line no-console
-
-	if (legacy) code = babel.transform(code, babelrc).code;
+	if (legacy) code = require('babel-core').transform(code, babelrc).code;
 
 	return module._compile(code, filename);
 };
@@ -60,9 +56,9 @@ describe("runtime", () => {
 		}
 
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
+			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 			let compiled;
 
-			showCompiledCode = config.show;
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
 			compileOptions.dev = config.dev;
@@ -78,6 +74,7 @@ describe("runtime", () => {
 					config.compileError(err);
 					return;
 				} else {
+					showOutput(cwd, shared);
 					throw err;
 				}
 			}
@@ -91,14 +88,16 @@ describe("runtime", () => {
 					if (startIndex === -1)
 						throw new Error("missing create_main_fragment");
 					const es5 =
-						spaces(startIndex) +
+						code.slice(0, startIndex).split('\n').map(x => spaces(x.length)).join('\n') +
 						code.slice(startIndex).replace(/export default .+/, "");
 					acorn.parse(es5, { ecmaVersion: 5 });
 				} catch (err) {
-					if (!config.show) console.log(addLineNumbers(code)); // eslint-disable-line no-console
+					if (!config.show) showOutput(cwd, shared); // eslint-disable-line no-console
 					throw err;
 				}
 			}
+
+			if (config.show) showOutput(cwd, shared);
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -140,7 +139,7 @@ describe("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`).default;
 					} catch (err) {
-						if (!config.show) console.log(addLineNumbers(code)); // eslint-disable-line no-console
+						showOutput(cwd, shared); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -203,9 +202,13 @@ describe("runtime", () => {
 					if (config.error && !unintendedError) {
 						config.error(assert, err);
 					} else {
-						if (!config.show) console.log(addLineNumbers(code)); // eslint-disable-line no-console
+						console.log('???');
+						showOutput(cwd, shared); // eslint-disable-line no-console
 						throw err;
 					}
+				})
+				.then(() => {
+					if (config.show) showOutput(cwd, shared);
 				});
 		});
 	}
