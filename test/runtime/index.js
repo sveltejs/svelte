@@ -202,7 +202,6 @@ describe("runtime", () => {
 					if (config.error && !unintendedError) {
 						config.error(assert, err);
 					} else {
-						console.log('???');
 						showOutput(cwd, shared); // eslint-disable-line no-console
 						throw err;
 					}
