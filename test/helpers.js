@@ -2,6 +2,7 @@ import jsdom from 'jsdom';
 import assert from 'assert';
 import glob from 'glob';
 import fs from 'fs';
+import path from 'path';
 import chalk from 'chalk';
 
 import * as consoleGroup from 'console-group';
@@ -162,13 +163,17 @@ export function addLineNumbers(code) {
 		.join('\n');
 }
 
-export function showOutput(cwd, shared) {
+function capitalize(str) {
+	return str[0].toUpperCase() + str.slice(1);
+}
+
+export function showOutput(cwd, options) {
 	glob.sync('**/*.html', { cwd }).forEach(file => {
 		const { code } = svelte.compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-			{
-				shared
-			}
+			Object.assign(options, {
+				name: capitalize(file.slice(0, -path.extname(file).length))
+			})
 		);
 
 		console.log( // eslint-disable-line no-console

@@ -3,10 +3,9 @@ import * as fs from "fs";
 import * as path from "path";
 
 import {
-	addLineNumbers,
+	showOutput,
 	loadConfig,
 	setupHtmlEqual,
-	svelte,
 	tryToLoadJson
 } from "../helpers.js";
 
@@ -17,10 +16,6 @@ function tryToReadFile(file) {
 		if (err.code !== "ENOENT") throw err;
 		return null;
 	}
-}
-
-function capitalize(str) {
-	return str[0].toUpperCase() + str.slice(1);
 }
 
 describe("ssr", () => {
@@ -64,18 +59,7 @@ describe("ssr", () => {
 				error = e;
 			}
 
-			if (show) {
-				fs.readdirSync(dir).forEach(file => {
-					if (file[0] === "_") return;
-					const source = fs.readFileSync(`${dir}/${file}`, "utf-8");
-					const name = capitalize(file.slice(0, -path.extname(file).length));
-					const { code } = svelte.compile(source, { generate: "ssr", name });
-					console.group(file);
-					console.log(addLineNumbers(code));
-					console.groupEnd();
-				});
-			}
-
+			if (show) showOutput(dir, { generate: "ssr" });
 			if (error) throw error;
 
 			fs.writeFileSync(`${dir}/_actual.html`, html);
@@ -102,22 +86,7 @@ describe("ssr", () => {
 		if (config["skip-ssr"]) return;
 
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
-			let compiled;
-
-			try {
-				const source = fs.readFileSync(
-					`test/runtime/samples/${dir}/main.html`,
-					"utf-8"
-				);
-				compiled = svelte.compile(source, { generate: "ssr" });
-			} catch (err) {
-				if (config.compileError) {
-					config.compileError(err);
-					return;
-				} else {
-					throw err;
-				}
-			}
+			const cwd = path.resolve("test/runtime/samples", dir);
 
 			fs.readdirSync(`test/runtime/samples/${dir}`).forEach(file => {
 				const resolved = require.resolve(`../runtime/samples/${dir}/${file}`);
@@ -134,7 +103,7 @@ describe("ssr", () => {
 					assert.htmlEqual(html, config.html);
 				}
 			} catch (err) {
-				console.log(addLineNumbers(compiled.code)); // eslint-disable-line no-console
+				showOutput(cwd, { generate: "ssr" });
 				throw err;
 			}
 		});
