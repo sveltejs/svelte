@@ -160,7 +160,7 @@ export default function visitBinding(
 		}
 
 		${generator.helper(
-			'addEventListener'
+			'addListener'
 		)}( ${state.parentNode}, '${eventName}', ${handler} );
 	`);
 
@@ -178,19 +178,19 @@ export default function visitBinding(
 
 	block.builders.destroy.addLine(deindent`
 		${generator.helper(
-			'removeEventListener'
+			'removeListener'
 		)}( ${state.parentNode}, '${eventName}', ${handler} );
 	`);
 
 	if (attribute.name === 'paused') {
 		block.builders.create.addLine(
 			`${generator.helper(
-				'addEventListener'
+				'addListener'
 			)}( ${state.parentNode}, 'play', ${handler} );`
 		);
 		block.builders.destroy.addLine(
 			`${generator.helper(
-				'removeEventListener'
+				'removeListener'
 			)}( ${state.parentNode}, 'play', ${handler} );`
 		);
 	}

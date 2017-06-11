@@ -39,11 +39,11 @@ export function createComment() {
 	return document.createComment('');
 }
 
-export function addEventListener(node, event, handler) {
+export function addListener(node, event, handler) {
 	node.addEventListener(event, handler, false);
 }
 
-export function removeEventListener(node, event, handler) {
+export function removeListener(node, event, handler) {
 	node.removeEventListener(event, handler, false);
 }
 
