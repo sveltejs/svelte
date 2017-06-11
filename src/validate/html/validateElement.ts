@@ -25,6 +25,8 @@ export default function validateElement(validator: Validator, node: Node) {
 						attribute.start
 					);
 				}
+
+				checkTypeAttribute(validator, node);
 			} else if (name === 'checked') {
 				if (node.name !== 'input') {
 					validator.error(
@@ -33,7 +35,7 @@ export default function validateElement(validator: Validator, node: Node) {
 					);
 				}
 
-				if (getType(validator, node) !== 'checkbox') {
+				if (checkTypeAttribute(validator, node) !== 'checkbox') {
 					validator.error(
 						`'checked' binding can only be used with <input type="checkbox">`,
 						attribute.start
@@ -47,7 +49,7 @@ export default function validateElement(validator: Validator, node: Node) {
 					);
 				}
 
-				const type = getType(validator, node);
+				const type = checkTypeAttribute(validator, node);
 
 				if (type !== 'checkbox' && type !== 'radio') {
 					validator.error(
@@ -128,7 +130,7 @@ export default function validateElement(validator: Validator, node: Node) {
 	});
 }
 
-function getType(validator: Validator, node: Node) {
+function checkTypeAttribute(validator: Validator, node: Node) {
 	const attribute = node.attributes.find(
 		(attribute: Node) => attribute.name === 'type'
 	);
@@ -139,7 +141,7 @@ function getType(validator: Validator, node: Node) {
 	}
 
 	if (attribute.value.length > 1 || attribute.value[0].type !== 'Text') {
-		validator.error(`'type attribute cannot be dynamic`, attribute.start);
+		validator.error(`'type' attribute cannot be dynamic if input uses two-way binding`, attribute.start);
 	}
 
 	return attribute.value[0].data;
