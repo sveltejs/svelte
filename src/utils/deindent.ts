@@ -1,6 +1,6 @@
 const start = /\n(\t+)/;
 
-export default function deindent(strings: string[], ...values: any[]) {
+export default function deindent(strings: TemplateStringsArray, ...values: any[]) {
 	const indentation = start.exec(strings[0])[1];
 	const pattern = new RegExp(`^${indentation}`, 'gm');
 

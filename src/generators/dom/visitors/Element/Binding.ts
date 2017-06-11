@@ -6,12 +6,7 @@ import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
-
-function getObject(node) {
-	// TODO validation should ensure this is an Identifier or a MemberExpression
-	while (node.type === 'MemberExpression') node = node.object;
-	return node;
-}
+import getObject from '../../../../utils/getObject';
 
 export default function visitBinding(
 	generator: DomGenerator,
@@ -21,15 +16,7 @@ export default function visitBinding(
 	attribute: Node
 ) {
 	const { name } = getObject(attribute.value);
-	const { snippet, contexts } = block.contextualise(attribute.value);
-	const dependencies = block.contextDependencies.has(name)
-		? block.contextDependencies.get(name)
-		: [name];
-
-	if (dependencies.length > 1)
-		throw new Error(
-			'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!'
-		);
+	const { snippet, contexts, dependencies } = block.contextualise(attribute.value);
 
 	contexts.forEach(context => {
 		if (!~state.allUsedContexts.indexOf(context))

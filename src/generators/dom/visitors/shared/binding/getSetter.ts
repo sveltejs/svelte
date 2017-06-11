@@ -1,4 +1,6 @@
 import deindent from '../../../../../utils/deindent';
+import getTailSnippet from '../../../../../utils/getTailSnippet';
+import { Node } from '../../../../../interfaces';
 
 export default function getSetter({
 	block,
@@ -40,15 +42,7 @@ export default function getSetter({
 	return `${block.component}._set({ ${name}: ${value} });`;
 }
 
-function getTailSnippet(node) {
-	const end = node.end;
-	while (node.type === 'MemberExpression') node = node.object;
-	const start = node.end;
-
-	return `[✂${start}-${end}✂]`;
-}
-
-function isComputed(node) {
+function isComputed(node: Node) {
 	while (node.type === 'MemberExpression') {
 		if (node.computed) return true;
 		node = node.object;
