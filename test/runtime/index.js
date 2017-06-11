@@ -46,6 +46,8 @@ describe("runtime", () => {
 		return setupHtmlEqual();
 	});
 
+	const failed = new Set();
+
 	function runTest(dir, shared) {
 		if (dir[0] === ".") return;
 
@@ -55,7 +57,12 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers`, () => {
+			if (failed.has(dir)) {
+				// this makes debugging easier, by only printing compiled output once
+				throw new Error('skipping inline helpers test');
+			}
+
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 			let compiled;
 
@@ -74,6 +81,7 @@ describe("runtime", () => {
 					config.compileError(err);
 					return;
 				} else {
+					failed.add(dir);
 					showOutput(cwd, shared);
 					throw err;
 				}
@@ -92,12 +100,11 @@ describe("runtime", () => {
 						code.slice(startIndex).replace(/export default .+/, "");
 					acorn.parse(es5, { ecmaVersion: 5 });
 				} catch (err) {
-					if (!config.show) showOutput(cwd, shared); // eslint-disable-line no-console
+					failed.add(dir);
+					showOutput(cwd, shared); // eslint-disable-line no-console
 					throw err;
 				}
 			}
-
-			if (config.show) showOutput(cwd, shared);
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -202,6 +209,7 @@ describe("runtime", () => {
 					if (config.error && !unintendedError) {
 						config.error(assert, err);
 					} else {
+						failed.add(dir);
 						showOutput(cwd, shared); // eslint-disable-line no-console
 						throw err;
 					}
@@ -212,17 +220,10 @@ describe("runtime", () => {
 		});
 	}
 
-	describe("inline helpers", () => {
-		fs.readdirSync("test/runtime/samples").forEach(dir => {
-			runTest(dir, null);
-		});
-	});
-
 	const shared = path.resolve("shared.js");
-	describe("shared helpers", () => {
-		fs.readdirSync("test/runtime/samples").forEach(dir => {
-			runTest(dir, shared);
-		});
+	fs.readdirSync("test/runtime/samples").forEach(dir => {
+		runTest(dir, shared);
+		runTest(dir, null);
 	});
 
 	it("fails if options.target is missing in dev mode", () => {
