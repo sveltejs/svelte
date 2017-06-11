@@ -171,7 +171,7 @@ export function showOutput(cwd, shared) {
 			}
 		);
 
-		console.log(
+		console.log( // eslint-disable-line no-console
 			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(code)}\n<< ${chalk.cyan.bold(file)}`
 		);
 	});
