@@ -99,13 +99,13 @@ export default function visitEventHandler(
 	} else {
 		block.builders.create.addLine(deindent`
 			${generator.helper(
-				'addEventListener'
+				'addListener'
 			)}( ${state.parentNode}, '${name}', ${handlerName} );
 		`);
 
 		block.builders.destroy.addLine(deindent`
 			${generator.helper(
-				'removeEventListener'
+				'removeListener'
 			)}( ${state.parentNode}, '${name}', ${handlerName} );
 		`);
 	}
