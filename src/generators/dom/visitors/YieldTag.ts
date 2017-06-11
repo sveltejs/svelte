@@ -13,7 +13,7 @@ export default function visitYieldTag(
 		`if ( ${block.component}._yield ) ${block.component}._yield.mount( ${parentNode}, null );`
 	);
 
-	block.builders.destroy.addLine(
+	block.builders.unmount.addLine(
 		`if ( ${block.component}._yield ) ${block.component}._yield.unmount();`
 	);
 }
