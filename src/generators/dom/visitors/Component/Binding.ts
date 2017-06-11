@@ -5,6 +5,7 @@ import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
+import getObject from '../../../../utils/getObject';
 
 export default function visitBinding(
 	generator: DomGenerator,
@@ -14,15 +15,10 @@ export default function visitBinding(
 	attribute,
 	local
 ) {
-	const { name } = flattenReference(attribute.value);
+	const { name } = getObject(attribute.value);
 	const { snippet, contexts, dependencies } = block.contextualise(
 		attribute.value
 	);
-
-	if (dependencies.length > 1)
-		throw new Error(
-			'An unexpected situation arose. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!'
-		);
 
 	contexts.forEach(context => {
 		if (!~local.allUsedContexts.indexOf(context))
@@ -38,8 +34,9 @@ export default function visitBinding(
 		obj = block.listNames.get(name);
 		prop = block.indexNames.get(name);
 	} else if (attribute.value.type === 'MemberExpression') {
-		prop = `'[✂${attribute.value.property.start}-${attribute.value.property
-			.end}✂]'`;
+		prop = `[✂${attribute.value.property.start}-${attribute.value.property
+			.end}✂]`;
+		if (!attribute.value.computed) prop = `'${prop}'`;
 		obj = `[✂${attribute.value.object.start}-${attribute.value.object.end}✂]`;
 	} else {
 		obj = 'state';
@@ -85,7 +82,7 @@ export default function visitBinding(
 	local.update.addBlock(deindent`
 		if ( !${updating} && ${dependencies
 		.map(dependency => `'${dependency}' in changed`)
-		.join('||')} ) {
+		.join(' || ')} ) {
 			${updating} = true;
 			${local.name}._set({ ${attribute.name}: ${snippet} });
 			${updating} = false;
