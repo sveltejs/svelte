@@ -57,6 +57,7 @@
     "babel-plugin-transform-es2015-spread": "^6.22.0",
     "babel-preset-env": "^1.2.1",
     "babel-register": "^6.23.0",
+    "chalk": "^1.1.3",
     "codecov": "^1.0.1",
     "console-group": "^0.3.2",
     "css-tree": "1.0.0-alpha16",
