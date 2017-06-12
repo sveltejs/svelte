@@ -22,8 +22,7 @@ export default function visitAttribute(
 	const isIndirectlyBoundValue =
 		name === 'value' &&
 		(node.name === 'option' || // TODO check it's actually bound
-			(node.name === 'input' &&
-				/^(checkbox|radio)$/.test(getStaticAttributeValue(node, 'type'))));
+			(node.name === 'input' && node.attributes.find((attribute: Node) => attribute.type === 'Binding' && /checked|group/.test(attribute.name))));
 
 	const propertyName = isIndirectlyBoundValue
 		? '__value'
@@ -133,8 +132,8 @@ export default function visitAttribute(
 		const statement = propertyName
 			? `${state.parentNode}.${propertyName} = ${value};`
 			: `${generator.helper(
-					method
-				)}( ${state.parentNode}, '${name}', ${value} );`;
+				method
+			)}( ${state.parentNode}, '${name}', ${value} );`;
 
 		block.builders.create.addLine(statement);
 

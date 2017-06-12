@@ -1,0 +1,8 @@
+[{
+	"message": "'type' attribute cannot be dynamic if input uses two-way binding",
+	"loc": {
+		"line": 1,
+		"column": 24
+	},
+	"pos": 24
+}]
