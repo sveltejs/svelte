@@ -6,7 +6,7 @@ export default function validateElement(validator: Validator, node: Node) {
 	const isComponent =
 		node.name === ':Self' || validator.components.has(node.name);
 
-	if (!isComponent && node.name[0] === node.name[0].toUpperCase()) {
+	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
 		validator.warn(`${node.name} component is not defined`, node.start);
 	}
