@@ -57,41 +57,26 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers)`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping inline helpers test');
 			}
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
-			let compiled;
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
 			compileOptions.dev = config.dev;
 
-			try {
-				const source = fs.readFileSync(
-					`test/runtime/samples/${dir}/main.html`,
-					"utf-8"
-				);
-				compiled = svelte.compile(source, compileOptions);
-			} catch (err) {
-				if (config.compileError) {
-					config.compileError(err);
-					return;
-				} else {
-					failed.add(dir);
-					showOutput(cwd, shared);
-					throw err;
-				}
-			}
-
-			const { code } = compiled;
-
 			// check that no ES2015+ syntax slipped in
 			if (!config.allowES2015) {
 				try {
+					const source = fs.readFileSync(
+						`test/runtime/samples/${dir}/main.html`,
+						"utf-8"
+					);
+					const { code } = svelte.compile(source, compileOptions);
 					const startIndex = code.indexOf("function create_main_fragment"); // may change!
 					if (startIndex === -1)
 						throw new Error("missing create_main_fragment");
@@ -101,7 +86,7 @@ describe("runtime", () => {
 					acorn.parse(es5, { ecmaVersion: 5 });
 				} catch (err) {
 					failed.add(dir);
-					showOutput(cwd, shared); // eslint-disable-line no-console
+					showOutput(cwd, { shared }); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -146,7 +131,7 @@ describe("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`).default;
 					} catch (err) {
-						showOutput(cwd, shared); // eslint-disable-line no-console
+						showOutput(cwd, { shared }); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -210,12 +195,12 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, shared); // eslint-disable-line no-console
+						showOutput(cwd, { shared }); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, shared);
+					if (config.show) showOutput(cwd, { shared });
 				});
 		});
 	}

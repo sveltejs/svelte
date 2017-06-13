@@ -2,6 +2,7 @@ import deindent from '../../utils/deindent';
 import flattenReference from '../../utils/flattenReference';
 import { SsrGenerator } from './index';
 import { Node } from '../../interfaces';
+import getObject from '../../utils/getObject';
 
 interface BlockOptions {
 	// TODO
@@ -25,13 +26,13 @@ export default class Block {
 			this.conditions.map(c => `(${c})`)
 		);
 
-		const { keypath } = flattenReference(binding.value);
+		const { name: prop } = getObject(binding.value);
 
 		this.generator.bindings.push(deindent`
 			if ( ${conditions.join('&&')} ) {
 				tmp = ${name}.data();
-				if ( '${keypath}' in tmp ) {
-					state.${binding.name} = tmp.${keypath};
+				if ( '${prop}' in tmp ) {
+					state.${binding.name} = tmp.${prop};
 					settled = false;
 				}
 			}
