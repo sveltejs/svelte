@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 1.22.3
+
+* Fix nested component unmounting bug ([#625](https://github.com/sveltejs/svelte/issues/625))
+* Allow components to have computed member expression bindings ([#624](https://github.com/sveltejs/svelte/issues/624))
+* Handle empty `<style>` tags ([#634](https://github.com/sveltejs/svelte/issues/634))
+* Warn on missing component ([#623](https://github.com/sveltejs/svelte/issues/623))
+* Allow dynamic `type` attribute for unbound inputs ([#620](https://github.com/sveltejs/svelte/issues/620))
+* Rename `addEventListener` and `removeEventListener` directives ([#621](https://github.com/sveltejs/svelte/issues/621))
+
 ## 1.22.2
 
 * Escape template strings correctly in SSR output ([#616](https://github.com/sveltejs/svelte/issues/616))
