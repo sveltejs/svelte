@@ -222,7 +222,7 @@ export default function dom(
 			this._yield = options._yield;
 
 			this._torndown = false;
-			${parsed.css &&
+			${generator.css &&
 				options.css !== false &&
 				`if ( !document.getElementById( ${JSON.stringify(
 					generator.cssId + '-style'
