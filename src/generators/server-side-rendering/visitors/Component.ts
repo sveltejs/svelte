@@ -3,6 +3,8 @@ import visit from '../visit';
 import { SsrGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
+import getObject from '../../../utils/getObject';
+import getTailSnippet from '../../../utils/getTailSnippet';
 
 export default function visitComponent(
 	generator: SsrGenerator,
@@ -52,9 +54,13 @@ export default function visitComponent(
 		})
 		.concat(
 			bindings.map(binding => {
-				const { name, keypath } = flattenReference(binding.value);
-				const value = block.contexts.has(name) ? keypath : `state.${keypath}`;
-				return `${binding.name}: ${value}`;
+				const { name } = getObject(binding.value);
+				const tail = binding.value.type === 'MemberExpression'
+					? getTailSnippet(binding.value)
+					: '';
+
+				const keypath = block.contexts.has(name) ? `${name}${tail}` : `state.${name}${tail}`;
+				return `${binding.name}: ${keypath}`;
 			})
 		)
 		.join(', ');
