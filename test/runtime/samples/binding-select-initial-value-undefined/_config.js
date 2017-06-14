@@ -1,6 +1,5 @@
 export default {
-	solo: true,
-	show: true,
+	'skip-ssr': true, // TODO would be nice to fix this in SSR as well
 
 	html: `
 		<p>selected: a</p>
