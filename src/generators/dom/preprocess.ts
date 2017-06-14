@@ -355,7 +355,7 @@ export default function preprocess(
 		indexes: new Map(),
 		contextDependencies: new Map(),
 
-		params: ['state'],
+		params: ['target', 'h', 'state'],
 		indexNames: new Map(),
 		listNames: new Map(),
 

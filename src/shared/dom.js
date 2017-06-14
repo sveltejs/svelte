@@ -66,3 +66,31 @@ export function getBindingGroupValue(group) {
 export function toNumber(value) {
 	return value === '' ? undefined : +value;
 }
+
+export function hydrateElement(target, i, type) { // TODO attrs
+	var child;
+	while (child = target.childNodes[i]) {
+		if (child.nodeName === type) {
+			return child;
+		}
+		target.removeChild(child);
+	}
+
+	child = createElement(type);
+	target.appendChild(child);
+	return child;
+}
+
+export function hydrateText(target, i, data) {
+	var child;
+	while (child = target.childNodes[i]) {
+		if (child.nodeType === 3) {
+			return (child.data = data, child);
+		}
+		target.removeChild(child);
+	}
+
+	child = createText(data);
+	target.appendChild(child);
+	return child;
+}

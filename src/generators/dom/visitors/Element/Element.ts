@@ -178,18 +178,34 @@ export default function visitElement(
 	}
 }
 
+// function getRenderStatement(
+// 	generator: DomGenerator,
+// 	namespace: string,
+// 	name: string
+// ) {
+// 	if (namespace === 'http://www.w3.org/2000/svg') {
+// 		return `${generator.helper('createSvgElement')}( '${name}' )`;
+// 	}
+
+// 	if (namespace) {
+// 		return `document.createElementNS( '${namespace}', '${name}' )`;
+// 	}
+
+// 	return `${generator.helper('createElement')}( '${name}' )`;
+// }
+
 function getRenderStatement(
 	generator: DomGenerator,
 	namespace: string,
 	name: string
 ) {
-	if (namespace === 'http://www.w3.org/2000/svg') {
-		return `${generator.helper('createSvgElement')}( '${name}' )`;
-	}
+	// if (namespace === 'http://www.w3.org/2000/svg') {
+	// 	return `${generator.helper('createSvgElement')}( '${name}' )`;
+	// }
 
-	if (namespace) {
-		return `document.createElementNS( '${namespace}', '${name}' )`;
-	}
+	// if (namespace) {
+	// 	return `document.createElementNS( '${namespace}', '${name}' )`;
+	// }
 
-	return `${generator.helper('createElement')}( '${name}' )`;
+	return `${generator.helper('hydrateElement')}( target, h, '${name.toUpperCase()}' )`;
 }
