@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.23.0
+
+* Include `ast` in `svelte.compile` return value ([#632](https://github.com/sveltejs/svelte/issues/632))
+* Set initial value of `<select>` binding, if unspecified ([#639](https://github.com/sveltejs/svelte/issues/639))
+* Mark indirect dependencies of `<select>` bindings (i.e. the dependencies of their `<option>` values) ([#639](https://github.com/sveltejs/svelte/issues/639))
+
 ## 1.22.3
 
 * Fix nested component unmounting bug ([#625](https://github.com/sveltejs/svelte/issues/625))
