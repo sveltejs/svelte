@@ -8,4 +8,5 @@ export interface State {
 	inEachBlock?: boolean;
 	allUsedContexts?: string[];
 	usesComponent?: boolean;
+	selectBindingDependencies?: string[];
 }

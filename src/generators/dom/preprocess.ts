@@ -217,6 +217,60 @@ const preprocessors = {
 		state: State,
 		node: Node
 	) => {
+		node.attributes.forEach((attribute: Node) => {
+			if (attribute.type === 'Attribute' && attribute.value !== true) {
+				attribute.value.forEach((chunk: Node) => {
+					if (chunk.type !== 'Text') {
+						const dependencies = block.findDependencies(chunk.expression);
+						block.addDependencies(dependencies);
+
+						// special case — <option value='{{foo}}'> — see below
+						if (node.name === 'option' && attribute.name === 'value' && state.selectBindingDependencies) {
+							state.selectBindingDependencies.forEach(prop => {
+								dependencies.forEach((dependency: string) => {
+									generator.indirectDependencies.get(prop).add(dependency);
+								});
+							});
+						}
+					}
+				});
+			} else if (attribute.type === 'Binding') {
+				const dependencies = block.findDependencies(attribute.value);
+				block.addDependencies(dependencies);
+			} else if (attribute.type === 'Transition') {
+				if (attribute.intro)
+					generator.hasIntroTransitions = block.hasIntroMethod = true;
+				if (attribute.outro) {
+					generator.hasOutroTransitions = block.hasOutroMethod = true;
+					block.outros += 1;
+				}
+			}
+		});
+
+		// special case — in a case like this...
+		//
+		//   <select bind:value='foo'>
+		//     <option value='{{bar}}'>bar</option>
+		//     <option value='{{baz}}'>baz</option>
+		//   </option>
+		//
+		// ...we need to know that `foo` depends on `bar` and `baz`,
+		// so that if `foo.qux` changes, we know that we need to
+		// mark `bar` and `baz` as dirty too
+		if (node.name === 'select') {
+			const value = node.attributes.find((attribute: Node) => attribute.name === 'value');
+			if (value) {
+				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
+				const dependencies = block.findDependencies(value.value);
+				state.selectBindingDependencies = dependencies;
+				dependencies.forEach((prop: string) => {
+					generator.indirectDependencies.set(prop, new Set());
+				});
+			} else {
+				state.selectBindingDependencies = null;
+			}
+		}
+
 		const isComponent =
 			generator.components.has(node.name) || node.name === ':Self';
 
@@ -238,27 +292,6 @@ const preprocessors = {
 				allUsedContexts: [],
 			});
 		}
-
-		node.attributes.forEach((attribute: Node) => {
-			if (attribute.type === 'Attribute' && attribute.value !== true) {
-				attribute.value.forEach((chunk: Node) => {
-					if (chunk.type !== 'Text') {
-						const dependencies = block.findDependencies(chunk.expression);
-						block.addDependencies(dependencies);
-					}
-				});
-			} else if (attribute.type === 'Binding') {
-				const dependencies = block.findDependencies(attribute.value);
-				block.addDependencies(dependencies);
-			} else if (attribute.type === 'Transition') {
-				if (attribute.intro)
-					generator.hasIntroTransitions = block.hasIntroMethod = true;
-				if (attribute.outro) {
-					generator.hasOutroTransitions = block.hasOutroMethod = true;
-					block.outros += 1;
-				}
-			}
-		});
 
 		if (node.children.length) {
 			if (isComponent) {
