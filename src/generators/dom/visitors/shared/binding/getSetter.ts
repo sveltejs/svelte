@@ -25,7 +25,10 @@ export default function getSetter({
 			${computed && `var state = ${block.component}.get();`}
 			list[index]${tail} = ${value};
 
-			${block.component}._set({ ${prop}: ${block.component}.get( '${prop}' ) });
+			${computed ?
+				`${block.component}._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });` :
+				`${block.component}._set({ ${dependencies.map((prop: string) => `${prop}: ${block.component}.get( '${prop}' )`).join(', ')} });`
+			}
 		`;
 	}
 
@@ -35,7 +38,7 @@ export default function getSetter({
 		return deindent`
 			var state = ${block.component}.get();
 			${snippet} = ${value};
-			${block.component}._set({ ${name}: state.${name} });
+			${block.component}._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });
 		`;
 	}
 

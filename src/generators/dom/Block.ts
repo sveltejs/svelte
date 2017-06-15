@@ -174,7 +174,7 @@ export default class Block {
 		);
 	}
 
-	findDependencies(expression) {
+	findDependencies(expression: Node) {
 		return this.generator.findDependencies(
 			this.contextDependencies,
 			this.indexes,
