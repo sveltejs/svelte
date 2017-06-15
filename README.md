@@ -62,7 +62,7 @@ const { code, map } = svelte.compile( source, {
 
 The Svelte compiler exposes the following API:
 
-* `compile( source [, options ] ) => { code, map }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript and a sourcemap.
+* `compile( source [, options ] ) => { code, map, ast, css }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
 * `create( source [, options ] ) => function` - Compile the component and return the component itself.
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
