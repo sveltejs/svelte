@@ -89,6 +89,11 @@ export default function visitBinding(
 				${ifStatement}
 			}
 		`;
+
+		generator.hasComplexBindings = true;
+		block.builders.create.addBlock(
+			`if ( !('${name}' in state) ) ${block.component}._bindings.push( ${handler} );`
+		);
 	} else if (attribute.name === 'group') {
 		// <input type='checkbox|radio' bind:group='selected'> special case
 		if (type === 'radio') {
