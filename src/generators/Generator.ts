@@ -10,6 +10,7 @@ import getIntro from './shared/utils/getIntro';
 import getOutro from './shared/utils/getOutro';
 import processCss from './shared/processCss';
 import annotateWithScopes from '../utils/annotateWithScopes';
+import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import { Node, Parsed, CompileOptions } from '../interfaces';
@@ -48,6 +49,8 @@ export default class Generator {
 		name: string,
 		options: CompileOptions
 	) {
+		this.ast = clone(parsed);
+
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
@@ -330,6 +333,7 @@ export default class Generator {
 		addString('\n\n' + getOutro(format, name, options, this.imports));
 
 		return {
+			ast: this.ast,
 			code: compiled.toString(),
 			map: compiled.generateMap({
 				includeContent: true,
