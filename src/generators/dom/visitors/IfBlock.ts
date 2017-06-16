@@ -271,9 +271,14 @@ function compound(
 		`);
 	}
 
-	block.builders.destroy.addLine(
+	block.builders.unmount.addLine(
 		`${if_name}{
 			${name}.unmount();
+		}`
+	);
+
+	block.builders.destroy.addLine(
+		`${if_name}{
 			${name}.destroy();
 		}`
 	);
