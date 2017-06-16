@@ -29,12 +29,14 @@ function create_main_fragment ( state, component ) {
 		},
 
 		unmount: function () {
+			{
+						if_block.unmount();
+					}
 			detachNode( if_block_anchor );
 		},
 
 		destroy: function () {
 			{
-						if_block.unmount();
 						if_block.destroy();
 					}
 		}
