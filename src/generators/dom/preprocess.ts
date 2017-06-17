@@ -12,7 +12,7 @@ function isElseIf(node: Node) {
 }
 
 function getChildState(parent: State, child = {}) {
-	return assign({}, parent, { name: null, parentNode: null }, child || {});
+	return assign({}, parent, { name: null, parentNode: null, parentNodes: 'nodes' }, child || {});
 }
 
 // Whitespace inside one of these elements will not result in
@@ -285,6 +285,7 @@ const preprocessors = {
 				isTopLevel: false,
 				name,
 				parentNode: name,
+				parentNodes: block.getUniqueName(`${name}_nodes`),
 				parentNodeName: node.name,
 				namespace: node.name === 'svg'
 					? 'http://www.w3.org/2000/svg'
@@ -388,7 +389,7 @@ export default function preprocess(
 		indexes: new Map(),
 		contextDependencies: new Map(),
 
-		params: ['target', 'h', 'state'],
+		params: ['state'],
 		indexNames: new Map(),
 		listNames: new Map(),
 
@@ -398,6 +399,7 @@ export default function preprocess(
 	const state: State = {
 		namespace,
 		parentNode: null,
+		parentNodes: 'nodes',
 		isTopLevel: true,
 	};
 

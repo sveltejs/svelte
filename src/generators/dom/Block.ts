@@ -40,7 +40,9 @@ export default class Block {
 	listName: string;
 
 	builders: {
+		init: CodeBuilder;
 		create: CodeBuilder;
+		hydrate: CodeBuilder;
 		mount: CodeBuilder;
 		intro: CodeBuilder;
 		update: CodeBuilder;
@@ -86,7 +88,9 @@ export default class Block {
 		this.listName = options.listName;
 
 		this.builders = {
+			init: new CodeBuilder(),
 			create: new CodeBuilder(),
+			hydrate: new CodeBuilder(),
 			mount: new CodeBuilder(),
 			intro: new CodeBuilder(),
 			update: new CodeBuilder(),
@@ -111,7 +115,7 @@ export default class Block {
 		this.hasUpdateMethod = false; // determined later
 	}
 
-	addDependencies(dependencies) {
+	addDependencies(dependencies: string[]) {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
 		});
@@ -120,21 +124,17 @@ export default class Block {
 	addElement(
 		name: string,
 		renderStatement: string,
+		hydrateStatement: string,
 		parentNode: string,
 		needsIdentifier = false
 	) {
 		const isToplevel = !parentNode;
-		if (needsIdentifier || isToplevel) {
-			this.builders.create.addLine(`var ${name} = ${renderStatement};`);
 
-			this.mount(name, parentNode);
-		} else {
-			this.builders.create.addLine(
-				`${this.generator.helper(
-					'appendNode'
-				)}( ${renderStatement}, ${parentNode} );`
-			);
-		}
+		this.addVariable(name);
+		this.builders.create.addLine(`${name} = ${renderStatement};`);
+		this.builders.hydrate.addLine(`${name} = ${hydrateStatement};`)
+
+		this.mount(name, parentNode);
 
 		if (isToplevel) {
 			this.builders.unmount.addLine(
@@ -184,7 +184,7 @@ export default class Block {
 
 	mount(name: string, parentNode: string) {
 		if (parentNode) {
-			this.builders.create.addLine(
+			this.builders.mount.addLine(
 				`${this.generator.helper('appendNode')}( ${name}, ${parentNode} );`
 			);
 		} else {
@@ -210,19 +210,8 @@ export default class Block {
 			this.addVariable(outroing);
 		}
 
-		if (this.variables.size) {
-			const variables = Array.from(this.variables.keys())
-				.map(key => {
-					const init = this.variables.get(key);
-					return init !== undefined ? `${key} = ${init}` : key;
-				})
-				.join(', ');
-
-			this.builders.create.addBlockAtStart(`var ${variables};`);
-		}
-
 		if (this.autofocus) {
-			this.builders.create.addLine(`${this.autofocus}.focus();`);
+			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
@@ -238,6 +227,26 @@ export default class Block {
 
 		if (this.first) {
 			properties.addBlock(`first: ${this.first},`);
+		}
+
+		if (this.builders.create.isEmpty()) {
+			properties.addBlock(`create: ${this.generator.helper('noop')},`);
+		} else {
+			properties.addBlock(deindent`
+				create: function () {
+					${this.builders.create}
+				},
+			`);
+		}
+
+		if (this.builders.hydrate.isEmpty()) {
+			properties.addBlock(`hydrate: ${this.generator.helper('noop')},`);
+		} else {
+			properties.addBlock(deindent`
+				hydrate: function ( nodes ) {
+					${this.builders.hydrate}
+				},
+			`);
 		}
 
 		if (this.builders.mount.isEmpty()) {
@@ -331,7 +340,13 @@ export default class Block {
 			.key
 			? `, ${localKey}`
 			: ''} ) {
-				${this.builders.create}
+				${this.variables.size > 0 && (
+					`var ${Array.from(this.variables.keys()).map(key => {
+						const init = this.variables.get(key);
+						return init !== undefined ? `${key} = ${init}` : key;
+					}).join(', ')};`)}
+
+				${!this.builders.init.isEmpty() && this.builders.init}
 
 				return {
 					${properties}
