@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.22.5
+
+* Fix nested component unmounting bug ([#643](https://github.com/sveltejs/svelte/issues/643)) 
+
 ## 1.22.4
 
 * Include `ast` in `svelte.compile` return value ([#632](https://github.com/sveltejs/svelte/issues/632))
