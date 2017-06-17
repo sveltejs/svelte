@@ -105,9 +105,18 @@ export default function visitIfBlock(
 		simple(generator, block, state, node, branches[0], dynamic, vars);
 	}
 
+	block.builders.create.addLine(
+		`${name}.create();`
+	);
+
+	block.builders.hydrate.addLine(
+		`${name}.hydrate( ${state.parentNodes} );`
+	);
+
 	if (node.needsAnchor) {
 		block.addElement(
 			anchor,
+			`${generator.helper('createComment')}()`,
 			`${generator.helper('createComment')}()`,
 			state.parentNode,
 			true
@@ -126,22 +135,18 @@ function simple(
 	dynamic,
 	{ name, anchor, params, if_name }
 ) {
-	block.builders.create.addBlock(deindent`
+	block.builders.init.addBlock(deindent`
 		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, ${block.component} );
 	`);
 
 	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branch.hasIntroMethod ? 'intro' : 'mount';
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
-	if (isTopLevel) {
-		block.builders.mount.addLine(
-			`if ( ${name} ) ${name}.${mountOrIntro}( ${block.target}, anchor );`
-		);
-	} else {
-		block.builders.create.addLine(
-			`if ( ${name} ) ${name}.${mountOrIntro}( ${state.parentNode}, null );`
-		);
-	}
+	block.builders.mount.addLine(
+		`if ( ${name} ) ${name}.${mountOrIntro}( ${block.target}, anchor );`
+	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
@@ -218,7 +223,7 @@ function compound(
 	const current_block = block.getUniqueName(`current_block`);
 	const current_block_and = hasElse ? '' : `${current_block} && `;
 
-	block.builders.create.addBlock(deindent`
+	block.builders.init.addBlock(deindent`
 		function ${get_block} ( ${params} ) {
 			${branches
 				.map(({ condition, block }) => {
@@ -234,15 +239,11 @@ function compound(
 	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
 
-	if (isTopLevel) {
-		block.builders.mount.addLine(
-			`${if_name}${name}.${mountOrIntro}( ${block.target}, anchor );`
-		);
-	} else {
-		block.builders.create.addLine(
-			`${if_name}${name}.${mountOrIntro}( ${state.parentNode}, null );`
-		);
-	}
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	block.builders.mount.addLine(
+		`${if_name}${name}.${mountOrIntro}( ${targetNode}, ${anchorNode} );`
+	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
@@ -304,7 +305,7 @@ function compoundWithOutros(
 	block.addVariable(current_block_index);
 	block.addVariable(name);
 
-	block.builders.create.addBlock(deindent`
+	block.builders.init.addBlock(deindent`
 		var ${if_block_creators} = [
 			${branches.map(branch => branch.block).join(',\n')}
 		];
@@ -323,12 +324,12 @@ function compoundWithOutros(
 	`);
 
 	if (hasElse) {
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			${current_block_index} = ${get_block}( ${params} );
 			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
 		`);
 	} else {
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			if ( ~( ${current_block_index} = ${get_block}( ${params} ) ) ) {
 				${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
 			}
@@ -337,16 +338,12 @@ function compoundWithOutros(
 
 	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
-	if (isTopLevel) {
-		block.builders.mount.addLine(
-			`${if_current_block_index}${if_blocks}[ ${current_block_index} ].${mountOrIntro}( ${block.target}, anchor );`
-		);
-	} else {
-		block.builders.create.addLine(
-			`${if_current_block_index}${if_blocks}[ ${current_block_index} ].${mountOrIntro}( ${state.parentNode}, null );`
-		);
-	}
+	block.builders.mount.addLine(
+		`${if_current_block_index}${if_blocks}[ ${current_block_index} ].${mountOrIntro}( ${targetNode}, ${anchorNode} );`
+	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 

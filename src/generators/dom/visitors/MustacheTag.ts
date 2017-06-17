@@ -19,6 +19,7 @@ export default function visitMustacheTag(
 	block.addElement(
 		name,
 		`${generator.helper('createText')}( ${value} = ${snippet} )`,
+		`${generator.helper('claimText')}( ${state.parentNode}_nodes, ${value} = ${snippet} )`,
 		state.parentNode,
 		true
 	);

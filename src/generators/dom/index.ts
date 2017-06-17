@@ -233,7 +233,9 @@ export default function dom(
 
 			this._fragment = ${generator.alias(
 				'create_main_fragment'
-			)}( options.target, 0, this._state, this );
+			)}( this._state, this );
+			this._fragment.hydrate( ${generator.helper('children')}( options.target ) );
+			this._fragment.mount( options.target, null );
 			${generator.hasComplexBindings &&
 				`while ( this._bindings.length ) this._bindings.pop()();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&

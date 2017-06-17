@@ -67,30 +67,30 @@ export function toNumber(value) {
 	return value === '' ? undefined : +value;
 }
 
-export function hydrateElement(target, i, type) { // TODO attrs
-	var child;
-	while (child = target.childNodes[i]) {
-		if (child.nodeName === type) {
-			return child;
-		}
-		target.removeChild(child);
-	}
-
-	child = createElement(type);
-	target.appendChild(child);
-	return child;
+export function children ( element ) {
+	return Array.from(element.childNodes);
 }
 
-export function hydrateText(target, i, data) {
-	var child;
-	while (child = target.childNodes[i]) {
-		if (child.nodeType === 3) {
-			return (child.data = data, child);
+export function claimElement ( nodes, name ) {
+	for (var i = 0; i < nodes.length; i += 1) {
+		var node = nodes[i];
+		if (node.nodeName === name) {
+			return nodes.splice(i, 1)[0]; // TODO strip unwanted attributes
 		}
-		target.removeChild(child);
 	}
 
-	child = createText(data);
-	target.appendChild(child);
-	return child;
+	console.trace('creating', name);
+	return createElement(name);
+}
+
+export function claimText ( nodes, data ) {
+	for (var i = 0; i < nodes.length; i += 1) {
+		var node = nodes[i];
+		if (node.nodeType === 3) {
+			node.data = data;
+			return nodes.splice(i, 1)[0];
+		}
+	}
+
+	return createText(data);
 }

@@ -47,14 +47,44 @@ export default function visitElement(
 	const childState = node._state;
 	const name = childState.parentNode;
 
-	block.builders.create.addLine(
-		`var ${name} = ${getRenderStatement(
-			generator,
-			childState.namespace,
-			node.name
-		)};`
-	);
-	block.mount(name, state.parentNode);
+	const isToplevel = !state.parentNode;
+
+	block.addVariable(name);
+	block.builders.create.addLine(`${name} = ${getRenderStatement(generator, childState.namespace, node.name)};`);
+	block.builders.hydrate.addBlock(deindent`
+		${name} = ${getHydrateStatement(generator, childState.namespace, state.parentNodes, node.name)};
+		var ${childState.parentNodes} = ${generator.helper('children')}( ${name} )
+	`);
+
+	if (state.parentNode) {
+		block.builders.mount.addLine(`${block.generator.helper('appendNode')}( ${name}, ${state.parentNode} );`);
+	} else {
+		block.builders.mount.addLine(`${block.generator.helper('insertNode')}( ${name}, ${block.target}, anchor );`);
+	}
+
+	if (isToplevel) {
+		block.builders.unmount.addLine(
+			`${block.generator.helper('detachNode')}( ${name} );`
+		);
+	}
+
+	// block.addVariable(name);
+
+	// block.builders.create.addLine(
+	// 	`${name} = ${getRenderStatement(
+	// 		generator,
+	// 		childState.namespace,
+	// 		node.name
+	// 	)};`
+	// );
+
+	// block.builders.hydrate.addLine(
+	// 	`${name} = ${getHydrateStatement(
+	// 		generator,
+	// 		childState.namespace,
+	// 		node.name
+	// 	)};`
+	// );
 
 	// add CSS encapsulation attribute
 	if (generator.cssId && (!generator.cascade || state.isTopLevel)) {
@@ -178,34 +208,35 @@ export default function visitElement(
 	}
 }
 
-// function getRenderStatement(
-// 	generator: DomGenerator,
-// 	namespace: string,
-// 	name: string
-// ) {
-// 	if (namespace === 'http://www.w3.org/2000/svg') {
-// 		return `${generator.helper('createSvgElement')}( '${name}' )`;
-// 	}
-
-// 	if (namespace) {
-// 		return `document.createElementNS( '${namespace}', '${name}' )`;
-// 	}
-
-// 	return `${generator.helper('createElement')}( '${name}' )`;
-// }
-
 function getRenderStatement(
 	generator: DomGenerator,
 	namespace: string,
 	name: string
 ) {
-	// if (namespace === 'http://www.w3.org/2000/svg') {
-	// 	return `${generator.helper('createSvgElement')}( '${name}' )`;
-	// }
+	if (namespace === 'http://www.w3.org/2000/svg') {
+		return `${generator.helper('createSvgElement')}( '${name}' )`;
+	}
 
-	// if (namespace) {
-	// 	return `document.createElementNS( '${namespace}', '${name}' )`;
-	// }
+	if (namespace) {
+		return `document.createElementNS( '${namespace}', '${name}' )`;
+	}
 
-	return `${generator.helper('hydrateElement')}( target, h, '${name.toUpperCase()}' )`;
+	return `${generator.helper('createElement')}( '${name}' )`;
+}
+
+function getHydrateStatement(
+	generator: DomGenerator,
+	namespace: string,
+	nodes: string,
+	name: string
+) {
+	if (namespace === 'http://www.w3.org/2000/svg') {
+		return `${generator.helper('claimSvgElement')}( '${name}' )`;
+	}
+
+	if (namespace) {
+		throw new Error('TODO hydrate exotic namespaces');
+	}
+
+	return `${generator.helper('claimElement')}( ${nodes}, '${name.toUpperCase()}' )`;
 }
