@@ -109,8 +109,8 @@ export default function visitIfBlock(
 		`${name}.create();`
 	);
 
-	block.builders.hydrate.addLine(
-		`${name}.hydrate( ${state.parentNodes} );`
+	block.builders.claim.addLine(
+		`${name}.claim( ${state.parentNodes} );`
 	);
 
 	if (node.needsAnchor) {
