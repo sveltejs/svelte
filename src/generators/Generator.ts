@@ -10,6 +10,7 @@ import getIntro from './shared/utils/getIntro';
 import getOutro from './shared/utils/getOutro';
 import processCss from './shared/processCss';
 import annotateWithScopes from '../utils/annotateWithScopes';
+import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import { Node, Parsed, CompileOptions } from '../interfaces';
@@ -32,6 +33,7 @@ export default class Generator {
 	code: MagicString;
 
 	bindingGroups: string[];
+	indirectDependencies: Map<string, Set<string>>;
 	expectedProperties: Set<string>;
 	cascade: boolean;
 	css: string;
@@ -48,6 +50,8 @@ export default class Generator {
 		name: string,
 		options: CompileOptions
 	) {
+		this.ast = clone(parsed);
+
 		this.parsed = parsed;
 		this.source = source;
 		this.name = name;
@@ -61,6 +65,7 @@ export default class Generator {
 		this.importedComponents = new Map();
 
 		this.bindingGroups = [];
+		this.indirectDependencies = new Map();
 
 		// track which properties are needed, so we can provide useful info
 		// in dev mode
@@ -185,8 +190,20 @@ export default class Generator {
 			},
 		});
 
+		const dependencies = new Set(expression._dependencies || []);
+
+		if (expression._dependencies) {
+			expression._dependencies.forEach((prop: string) => {
+				if (this.indirectDependencies.has(prop)) {
+					this.indirectDependencies.get(prop).forEach(dependency => {
+						dependencies.add(dependency);
+					});
+				}
+			});
+		}
+
 		return {
-			dependencies: expression._dependencies, // TODO probably a better way to do this
+			dependencies: Array.from(dependencies),
 			contexts: usedContexts,
 			snippet: `[✂${expression.start}-${expression.end}✂]`,
 		};
@@ -330,6 +347,7 @@ export default class Generator {
 		addString('\n\n' + getOutro(format, name, options, this.imports));
 
 		return {
+			ast: this.ast,
 			code: compiled.toString(),
 			map: compiled.generateMap({
 				includeContent: true,
