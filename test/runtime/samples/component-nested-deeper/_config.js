@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-	
 	data: {
 		values: [1, 2, 3, 4]
 	},
