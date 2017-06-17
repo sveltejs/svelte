@@ -271,11 +271,12 @@ function compound(
 		`);
 	}
 
+	block.builders.unmount.addLine(
+		`${if_name}${name}.unmount();`
+	);
+
 	block.builders.destroy.addLine(
-		`${if_name}{
-			${name}.unmount();
-			${name}.destroy();
-		}`
+		`${if_name}${name}.destroy();`
 	);
 }
 
