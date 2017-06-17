@@ -113,7 +113,6 @@ export default function visitComponent(
 	}
 
 	const componentInitProperties = [
-		`target: ${!isTopLevel ? state.parentNode : 'null'}`,
 		`_root: ${block.component}._root`,
 	];
 
@@ -123,7 +122,7 @@ export default function visitComponent(
 
 		const childBlock = node._block;
 
-		node.children.forEach(child => {
+		node.children.forEach((child: Node) => {
 			visit(generator, childBlock, childState, child);
 		});
 
@@ -224,8 +223,12 @@ export default function visitComponent(
 
 	block.builders.init.addBlock(local.create);
 
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
+
 	block.builders.create.addLine(`${name}._fragment.create();`);
 	block.builders.claim.addLine(`${name}._fragment.claim( ${state.parentNodes} );`);
+	block.builders.mount.addLine(`${name}._fragment.mount( ${targetNode}, ${anchorNode} );` );
 
 	if (!local.update.isEmpty()) block.builders.update.addBlock(local.update);
 }
