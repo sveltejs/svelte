@@ -234,8 +234,14 @@ export default function dom(
 			this._fragment = ${generator.alias(
 				'create_main_fragment'
 			)}( this._state, this );
-			this._fragment.hydrate( ${generator.helper('children')}( options.target ) );
-			this._fragment.mount( options.target, null );
+
+			if ( options.target ) {
+				var nodes = ${generator.helper('children')}( options.target );
+				this._fragment.claim( nodes );
+				nodes.forEach( ${generator.helper('detachNode')} );
+				this._fragment.mount( options.target, null );
+			}
+			
 			${generator.hasComplexBindings &&
 				`while ( this._bindings.length ) this._bindings.pop()();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&

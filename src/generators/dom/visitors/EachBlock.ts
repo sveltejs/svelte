@@ -35,7 +35,7 @@ export default function visitEachBlock(
 
 	const { snippet } = block.contextualise(node.expression);
 
-	block.builders.create.addLine(`var ${each_block_value} = ${snippet};`);
+	block.builders.init.addLine(`var ${each_block_value} = ${snippet};`);
 
 	if (node.key) {
 		keyed(generator, block, state, node, snippet, vars);
@@ -49,6 +49,7 @@ export default function visitEachBlock(
 		block.addElement(
 			anchor,
 			`${generator.helper('createComment')}()`,
+			`${generator.helper('createComment')}()`,
 			state.parentNode,
 			true
 		);
@@ -59,23 +60,18 @@ export default function visitEachBlock(
 	if (node.else) {
 		const each_block_else = generator.getUniqueName(`${each_block}_else`);
 
-		block.builders.create.addLine(`var ${each_block_else} = null;`);
+		block.builders.init.addLine(`var ${each_block_else} = null;`);
 
 		// TODO neaten this up... will end up with an empty line in the block
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			if ( !${each_block_value}.length ) {
-				${each_block_else} = ${node.else._block
-			.name}( ${params}, ${block.component} );
-				${!isToplevel
-					? `${each_block_else}.${mountOrIntro}( ${state.parentNode}, null );`
-					: ''}
+				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
 			}
 		`);
 
 		block.builders.mount.addBlock(deindent`
 			if ( ${each_block_else} ) {
-				${each_block_else}.${mountOrIntro}( ${state.parentNode ||
-			block.target}, null );
+				${each_block_else}.${mountOrIntro}( ${state.parentNode || block.target}, null );
 			}
 		`);
 
@@ -86,8 +82,7 @@ export default function visitEachBlock(
 				if ( !${each_block_value}.length && ${each_block_else} ) {
 					${each_block_else}.update( changed, ${params} );
 				} else if ( !${each_block_value}.length ) {
-					${each_block_else} = ${node.else._block
-				.name}( ${params}, ${block.component} );
+					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
 					${each_block_else}.unmount();
@@ -162,6 +157,7 @@ function keyed(
 		node._block.addElement(
 			node._block.first,
 			`${generator.helper('createComment')}()`,
+			`${generator.helper('createComment')}()`,
 			null,
 			true
 		);
@@ -176,8 +172,6 @@ function keyed(
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
 			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
-			${state.parentNode &&
-				`${iteration}.${mountOrIntro}( ${state.parentNode}, null );`}
 
 			if ( ${last} ) ${last}.next = ${iteration};
 			${iteration}.last = ${last};
@@ -187,15 +181,32 @@ function keyed(
 		}
 	`);
 
-	if (!state.parentNode) {
-		block.builders.mount.addBlock(deindent`
-			var ${iteration} = ${head};
-			while ( ${iteration} ) {
-				${iteration}.${mountOrIntro}( ${block.target}, anchor );
-				${iteration} = ${iteration}.next;
-			}
-		`);
-	}
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
+
+	block.builders.create.addBlock(deindent`
+		var ${iteration} = ${head};
+		while ( ${iteration} ) {
+			${iteration}.create();
+			${iteration} = ${iteration}.next;
+		}
+	`);
+
+	block.builders.claim.addBlock(deindent`
+		var ${iteration} = ${head};
+		while ( ${iteration} ) {
+			${iteration}.claim( ${state.parentNodes} );
+			${iteration} = ${iteration}.next;
+		}
+	`);
+
+	block.builders.mount.addBlock(deindent`
+		var ${iteration} = ${head};
+		while ( ${iteration} ) {
+			${iteration}.${mountOrIntro}( ${targetNode}, ${anchorNode} );
+			${iteration} = ${iteration}.next;
+		}
+	`);
 
 	const dynamic = node._block.hasUpdateMethod;
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
@@ -203,7 +214,7 @@ function keyed(
 	let destroy;
 	if (node._block.hasOutroMethod) {
 		const fn = block.getUniqueName(`${each_block}_outro`);
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			function ${fn} ( iteration ) {
 				iteration.outro( function () {
 					iteration.unmount();
@@ -227,7 +238,7 @@ function keyed(
 		`;
 	} else {
 		const fn = block.getUniqueName(`${each_block}_destroy`);
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			function ${fn} ( iteration ) {
 				iteration.unmount();
 				iteration.destroy();
@@ -353,27 +364,38 @@ function unkeyed(
 		mountOrIntro,
 	}
 ) {
-	block.builders.create.addBlock(deindent`
+	block.builders.init.addBlock(deindent`
 		var ${iterations} = [];
 
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-			${state.parentNode &&
-				`${iterations}[${i}].${mountOrIntro}( ${state.parentNode}, null );`}
 		}
 	`);
 
-	if (!state.parentNode) {
-		block.builders.mount.addBlock(deindent`
-			for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-				${iterations}[${i}].${mountOrIntro}( ${block.target}, anchor );
-			}
-		`);
-	}
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
+
+	block.builders.create.addBlock(deindent`
+		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			${iterations}[${i}].create();
+		}
+	`);
+
+	block.builders.claim.addBlock(deindent`
+		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			${iterations}[${i}].claim( ${state.parentNodes} );
+		}
+	`);
+
+	block.builders.mount.addBlock(deindent`
+		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
+			${iterations}[${i}].${mountOrIntro}( ${targetNode}, ${anchorNode} );
+		}
+	`);
 
 	const dependencies = block.findDependencies(node.expression);
 	const allDependencies = new Set(node._block.dependencies);
-	dependencies.forEach(dependency => {
+	dependencies.forEach((dependency: string) => {
 		allDependencies.add(dependency);
 	});
 

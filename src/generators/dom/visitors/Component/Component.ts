@@ -129,7 +129,7 @@ export default function visitComponent(
 
 		const yieldFragment = block.getUniqueName(`${name}_yield_fragment`);
 
-		block.builders.create.addLine(
+		block.builders.init.addLine(
 			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
 		);
 
@@ -222,6 +222,10 @@ export default function visitComponent(
 		block.builders.unmount.addLine(`${name}._fragment.unmount();`);
 	block.builders.destroy.addLine(`${name}.destroy( false );`);
 
-	block.builders.create.addBlock(local.create);
+	block.builders.init.addBlock(local.create);
+
+	block.builders.create.addLine(`${name}._fragment.create();`);
+	block.builders.claim.addLine(`${name}._fragment.claim( ${state.parentNodes} );`);
+
 	if (!local.update.isEmpty()) block.builders.update.addBlock(local.update);
 }

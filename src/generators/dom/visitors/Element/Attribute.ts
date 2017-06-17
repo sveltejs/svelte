@@ -22,7 +22,11 @@ export default function visitAttribute(
 	const isIndirectlyBoundValue =
 		name === 'value' &&
 		(node.name === 'option' || // TODO check it's actually bound
-			(node.name === 'input' && node.attributes.find((attribute: Node) => attribute.type === 'Binding' && /checked|group/.test(attribute.name))));
+			(node.name === 'input' &&
+				node.attributes.find(
+					(attribute: Node) =>
+						attribute.type === 'Binding' && /checked|group/.test(attribute.name)
+				)));
 
 	const propertyName = isIndirectlyBoundValue
 		? '__value'
@@ -76,7 +80,7 @@ export default function visitAttribute(
 			// annoying special case
 			const isMultipleSelect =
 				node.name === 'select' &&
-				node.attributes.find(attr => attr.name.toLowerCase() === 'multiple'); // TODO use getStaticAttributeValue
+				node.attributes.find((attr: Node) => attr.name.toLowerCase() === 'multiple'); // TODO use getStaticAttributeValue
 			const i = block.getUniqueName('i');
 			const option = block.getUniqueName('option');
 
@@ -97,17 +101,17 @@ export default function visitAttribute(
 				}
 			`;
 
-			block.builders.create.addLine(deindent`
+			block.builders.hydrate.addLine(deindent`
 				${last} = ${value}
 				${updater}
 			`);
 		} else if (propertyName) {
-			block.builders.create.addLine(
+			block.builders.hydrate.addLine(
 				`${state.parentNode}.${propertyName} = ${last} = ${value};`
 			);
 			updater = `${state.parentNode}.${propertyName} = ${last};`;
 		} else {
-			block.builders.create.addLine(
+			block.builders.hydrate.addLine(
 				`${generator.helper(
 					method
 				)}( ${state.parentNode}, '${name}', ${last} = ${value} );`
@@ -132,10 +136,10 @@ export default function visitAttribute(
 		const statement = propertyName
 			? `${state.parentNode}.${propertyName} = ${value};`
 			: `${generator.helper(
-				method
-			)}( ${state.parentNode}, '${name}', ${value} );`;
+					method
+				)}( ${state.parentNode}, '${name}', ${value} );`;
 
-		block.builders.create.addLine(statement);
+		block.builders.hydrate.addLine(statement);
 
 		// special case – autofocus. has to be handled in a bit of a weird way
 		if (attribute.value === true && name === 'autofocus') {
@@ -152,7 +156,7 @@ export default function visitAttribute(
 	if (isIndirectlyBoundValue) {
 		const updateValue = `${state.parentNode}.value = ${state.parentNode}.__value;`;
 
-		block.builders.create.addLine(updateValue);
+		block.builders.hydrate.addLine(updateValue);
 		if (isDynamic) block.builders.update.addLine(updateValue);
 	}
 }

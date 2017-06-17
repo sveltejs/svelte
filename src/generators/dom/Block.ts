@@ -42,6 +42,7 @@ export default class Block {
 	builders: {
 		init: CodeBuilder;
 		create: CodeBuilder;
+		claim: CodeBuilder;
 		hydrate: CodeBuilder;
 		mount: CodeBuilder;
 		intro: CodeBuilder;
@@ -90,6 +91,7 @@ export default class Block {
 		this.builders = {
 			init: new CodeBuilder(),
 			create: new CodeBuilder(),
+			claim: new CodeBuilder(),
 			hydrate: new CodeBuilder(),
 			mount: new CodeBuilder(),
 			intro: new CodeBuilder(),
@@ -124,7 +126,7 @@ export default class Block {
 	addElement(
 		name: string,
 		renderStatement: string,
-		hydrateStatement: string,
+		claimStatement: string,
 		parentNode: string,
 		needsIdentifier = false
 	) {
@@ -132,7 +134,7 @@ export default class Block {
 
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
-		this.builders.hydrate.addLine(`${name} = ${hydrateStatement};`)
+		this.builders.claim.addLine(`${name} = ${claimStatement};`)
 
 		this.mount(name, parentNode);
 
@@ -235,13 +237,23 @@ export default class Block {
 			properties.addBlock(deindent`
 				create: function () {
 					${this.builders.create}
+					${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
 				},
 			`);
 		}
 
-		if (this.builders.hydrate.isEmpty()) {
-			properties.addBlock(`hydrate: ${this.generator.helper('noop')},`);
+		if (this.builders.claim.isEmpty()) {
+			properties.addBlock(`claim: ${this.generator.helper('noop')},`);
 		} else {
+			properties.addBlock(deindent`
+				claim: function ( nodes ) {
+					${this.builders.claim}
+					${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
+				},
+			`);
+		}
+
+		if (!this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
 				hydrate: function ( nodes ) {
 					${this.builders.hydrate}

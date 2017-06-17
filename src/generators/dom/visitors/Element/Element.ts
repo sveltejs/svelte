@@ -51,21 +51,15 @@ export default function visitElement(
 
 	block.addVariable(name);
 	block.builders.create.addLine(`${name} = ${getRenderStatement(generator, childState.namespace, node.name)};`);
-	block.builders.hydrate.addBlock(deindent`
-		${name} = ${getHydrateStatement(generator, childState.namespace, state.parentNodes, node.name)};
-		var ${childState.parentNodes} = ${generator.helper('children')}( ${name} )
+	block.builders.claim.addBlock(deindent`
+		${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
+		var ${childState.parentNodes} = ${generator.helper('children')}( ${name} );
 	`);
 
 	if (state.parentNode) {
 		block.builders.mount.addLine(`${block.generator.helper('appendNode')}( ${name}, ${state.parentNode} );`);
 	} else {
 		block.builders.mount.addLine(`${block.generator.helper('insertNode')}( ${name}, ${block.target}, anchor );`);
-	}
-
-	if (isToplevel) {
-		block.builders.unmount.addLine(
-			`${block.generator.helper('detachNode')}( ${name} );`
-		);
 	}
 
 	// block.addVariable(name);
@@ -78,8 +72,8 @@ export default function visitElement(
 	// 	)};`
 	// );
 
-	// block.builders.hydrate.addLine(
-	// 	`${name} = ${getHydrateStatement(
+	// block.builders.claim.addLine(
+	// 	`${name} = ${getClaimStatement(
 	// 		generator,
 	// 		childState.namespace,
 	// 		node.name
@@ -88,7 +82,7 @@ export default function visitElement(
 
 	// add CSS encapsulation attribute
 	if (generator.cssId && (!generator.cascade || state.isTopLevel)) {
-		block.builders.create.addLine(
+		block.builders.hydrate.addLine(
 			`${generator.helper(
 				'setAttribute'
 			)}( ${name}, '${generator.cssId}', '' );`
@@ -150,7 +144,7 @@ export default function visitElement(
 		}
 	}
 
-	if (!state.parentNode) {
+	if (isToplevel) {
 		// TODO we eventually need to consider what happens to elements
 		// that belong to the same outgroup as an outroing element...
 		block.builders.unmount.addLine(
@@ -206,6 +200,10 @@ export default function visitElement(
 	if (node.initialUpdate) {
 		block.builders.create.addBlock(node.initialUpdate);
 	}
+
+	block.builders.claim.addLine(
+		`${childState.parentNodes}.forEach( ${generator.helper('detachNode')} );`
+	);
 }
 
 function getRenderStatement(
@@ -224,19 +222,24 @@ function getRenderStatement(
 	return `${generator.helper('createElement')}( '${name}' )`;
 }
 
-function getHydrateStatement(
+function getClaimStatement(
 	generator: DomGenerator,
 	namespace: string,
 	nodes: string,
-	name: string
+	node: Node
 ) {
 	if (namespace === 'http://www.w3.org/2000/svg') {
-		return `${generator.helper('claimSvgElement')}( '${name}' )`;
+		return `${generator.helper('claimSvgElement')}( '${node.name}' )`;
 	}
 
 	if (namespace) {
-		throw new Error('TODO hydrate exotic namespaces');
+		throw new Error('TODO claim exotic namespaces');
 	}
 
-	return `${generator.helper('claimElement')}( ${nodes}, '${name.toUpperCase()}' )`;
+	const attributes = node.attributes
+		.filter((attr: Node) => attr.type === 'Attribute')
+		.map((attr: Node) => `${attr.name}: true`)
+		.join(', ');
+
+	return `${generator.helper('claimElement')}( ${nodes}, '${node.name.toUpperCase()}', ${attributes ? `{ ${attributes} }` : `{}`} )`;
 }
