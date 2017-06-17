@@ -83,7 +83,6 @@ export function claimElement (nodes, name, attributes) {
 		}
 	}
 
-	console.trace('creating', name);
 	return createElement(name);
 }
 
