@@ -199,7 +199,7 @@ export default function visitElement(
 	}
 
 	if (node.initialUpdate) {
-		block.builders.hydrate.addBlock(node.initialUpdate);
+		block.builders.mount.addBlock(node.initialUpdate);
 	}
 
 	block.builders.claim.addLine(

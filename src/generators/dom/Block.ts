@@ -228,7 +228,8 @@ export default class Block {
 		}
 
 		if (this.first) {
-			properties.addBlock(`first: ${this.first},`);
+			properties.addBlock(`first: null,`);
+			this.builders.hydrate.addLine( `this.first = ${this.first};` );
 		}
 
 		if (this.builders.create.isEmpty()) {
