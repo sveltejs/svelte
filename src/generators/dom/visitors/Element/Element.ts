@@ -52,34 +52,19 @@ export default function visitElement(
 
 	block.addVariable(name);
 	block.builders.create.addLine(`${name} = ${getRenderStatement(generator, childState.namespace, node.name)};`);
-	block.builders.claim.addBlock(deindent`
-		${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
-		var ${childState.parentNodes} = ${generator.helper('children')}( ${name} );
-	`);
+
+	if (generator.hydratable) {
+		block.builders.claim.addBlock(deindent`
+			${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
+			var ${childState.parentNodes} = ${generator.helper('children')}( ${name} );
+		`);
+	}
 
 	if (state.parentNode) {
 		block.builders.mount.addLine(`${block.generator.helper('appendNode')}( ${name}, ${state.parentNode} );`);
 	} else {
 		block.builders.mount.addLine(`${block.generator.helper('insertNode')}( ${name}, ${block.target}, anchor );`);
 	}
-
-	// block.addVariable(name);
-
-	// block.builders.create.addLine(
-	// 	`${name} = ${getRenderStatement(
-	// 		generator,
-	// 		childState.namespace,
-	// 		node.name
-	// 	)};`
-	// );
-
-	// block.builders.claim.addLine(
-	// 	`${name} = ${getClaimStatement(
-	// 		generator,
-	// 		childState.namespace,
-	// 		node.name
-	// 	)};`
-	// );
 
 	// add CSS encapsulation attribute
 	if (generator.cssId && (!generator.cascade || state.isTopLevel)) {

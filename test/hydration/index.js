@@ -27,7 +27,7 @@ describe('hydration', () => {
 
 		require.extensions['.html'] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename) },
+				{ filename, name: getName(filename), hydratable: true },
 				compileOptions
 			);
 			let { code } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
@@ -76,6 +76,7 @@ describe('hydration', () => {
 
 					const component = new SvelteComponent({
 						target,
+						hydrate: true,
 						data: config.data
 					});
 

@@ -13,7 +13,7 @@ export default function visitText(
 	block.addElement(
 		node._state.name,
 		`${generator.helper('createText')}( ${JSON.stringify(node.data)} )`,
-		`${generator.helper('claimText')}( ${state.parentNodes}, ${JSON.stringify(node.data)} )`,
+		generator.hydratable ? `${generator.helper('claimText')}( ${state.parentNodes}, ${JSON.stringify(node.data)} )` : '',
 		state.parentNode,
 		node.usedAsAnchor
 	);

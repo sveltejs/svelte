@@ -19,7 +19,7 @@ export default function visitMustacheTag(
 	block.addElement(
 		name,
 		`${generator.helper('createText')}( ${value} = ${snippet} )`,
-		`${generator.helper('claimText')}( ${state.parentNodes}, ${value} = ${snippet} )`,
+		generator.hydratable ? `${generator.helper('claimText')}( ${state.parentNodes}, ${value} = ${snippet} )` : '',
 		state.parentNode,
 		true
 	);
