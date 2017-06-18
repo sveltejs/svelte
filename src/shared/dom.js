@@ -71,7 +71,7 @@ export function children (element) {
 	return Array.from(element.childNodes);
 }
 
-export function claimElement (nodes, name, attributes) {
+export function claimElement (nodes, name, attributes, svg) {
 	for (var i = 0; i < nodes.length; i += 1) {
 		var node = nodes[i];
 		if (node.nodeName === name) {
@@ -83,7 +83,7 @@ export function claimElement (nodes, name, attributes) {
 		}
 	}
 
-	return createElement(name);
+	return svg ? createSvgElement(name) : createElement(name);
 }
 
 export function claimText (nodes, data) {

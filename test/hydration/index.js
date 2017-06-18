@@ -21,7 +21,7 @@ const nodeVersionMatch = /^v(\d)/.exec(process.version);
 const legacy = +nodeVersionMatch[1] < 6;
 const babelrc = require('../../package.json').babel;
 
-describe.only('hydration', () => {
+describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
