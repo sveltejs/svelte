@@ -83,6 +83,7 @@ export default function visitEachBlock(
 					${each_block_else}.update( changed, ${params} );
 				} else if ( !${each_block_value}.length ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+					${each_block_else}.create();
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
 					${each_block_else}.unmount();
@@ -99,8 +100,8 @@ export default function visitEachBlock(
 						${each_block_else} = null;
 					}
 				} else if ( !${each_block_else} ) {
-					${each_block_else} = ${node.else._block
-				.name}( ${params}, ${block.component} );
+					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+					${each_block_else}.create();
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
 			`);
@@ -149,6 +150,10 @@ function keyed(
 	const last = block.getUniqueName(`${each_block}_last`);
 	const expected = block.getUniqueName(`${each_block}_expected`);
 
+	block.addVariable(lookup, `Object.create( null )`);
+	block.addVariable(head);
+	block.addVariable(last);
+
 	if (node.children[0] && node.children[0].type === 'Element') {
 		// TODO or text/tag/raw
 		node._block.first = node.children[0]._state.parentNode; // TODO this is highly confusing
@@ -163,12 +168,7 @@ function keyed(
 		);
 	}
 
-	block.builders.create.addBlock(deindent`
-		var ${lookup} = Object.create( null );
-
-		var ${head};
-		var ${last};
-
+	block.builders.init.addBlock(deindent`
 		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
 			var ${key} = ${each_block_value}[${i}].${node.key};
 			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
@@ -297,6 +297,7 @@ function keyed(
 					} else {
 						// key is being inserted
 						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+						${iteration}.create();
 						${iteration}.${mountOrIntro}( ${parentNode}, ${expected}.first );
 
 						${expected}.last = ${iteration};
@@ -311,6 +312,7 @@ function keyed(
 					${iteration}.mount( ${parentNode}, ${anchor} );
 				} else {
 					${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+					${iteration}.create();
 					${iteration}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
 			}
@@ -414,6 +416,7 @@ function unkeyed(
 						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
 					} else {
 						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+						${iterations}[${i}].create();
 					}
 					${iterations}[${i}].intro( ${parentNode}, ${anchor} );
 				`
@@ -422,6 +425,7 @@ function unkeyed(
 						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
 					} else {
 						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+						${iterations}[${i}].create();
 						${iterations}[${i}].mount( ${parentNode}, ${anchor} );
 					}
 				`

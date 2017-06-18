@@ -6,6 +6,7 @@ import visitAttribute from './Attribute';
 import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
+import * as namespaces from '../../../../utils/namespaces';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -131,7 +132,7 @@ export default function visitElement(
 			});
 
 			if (initialProps.length) {
-				block.builders.create.addBlock(deindent`
+				block.builders.hydrate.addBlock(deindent`
 					${name}._svelte = {
 						${initialProps.join(',\n')}
 					};
@@ -198,7 +199,7 @@ export default function visitElement(
 	}
 
 	if (node.initialUpdate) {
-		block.builders.create.addBlock(node.initialUpdate);
+		block.builders.hydrate.addBlock(node.initialUpdate);
 	}
 
 	block.builders.claim.addLine(
@@ -228,18 +229,17 @@ function getClaimStatement(
 	nodes: string,
 	node: Node
 ) {
-	if (namespace === 'http://www.w3.org/2000/svg') {
-		return `${generator.helper('claimSvgElement')}( '${node.name}' )`;
-	}
-
-	if (namespace) {
-		throw new Error('TODO claim exotic namespaces');
-	}
-
 	const attributes = node.attributes
 		.filter((attr: Node) => attr.type === 'Attribute')
-		.map((attr: Node) => `${attr.name}: true`)
+		.map((attr: Node) => `${quoteProp(attr.name)}: true`)
 		.join(', ');
 
-	return `${generator.helper('claimElement')}( ${nodes}, '${node.name.toUpperCase()}', ${attributes ? `{ ${attributes} }` : `{}`} )`;
+	const name = namespace ? node.name : node.name.toUpperCase();
+
+	return `${generator.helper('claimElement')}( ${nodes}, '${name}', ${attributes ? `{ ${attributes} }` : `{}`}, ${namespace === namespaces.svg ? true : false} )`;
+}
+
+function quoteProp(name: string) {
+	if (/[^a-zA-Z_$0-9]/.test(name)) return `'${name}'`;
+	return name;
 }

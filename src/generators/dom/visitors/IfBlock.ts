@@ -157,6 +157,7 @@ function simple(
 					${name}.update( changed, ${params} );
 				} else {
 					${name} = ${branch.block}( ${params}, ${block.component} );
+					if ( ${name} ) ${name}.create();
 				}
 
 				${name}.intro( ${parentNode}, ${anchor} );
@@ -173,6 +174,7 @@ function simple(
 		: branch.hasIntroMethod
 			? deindent`
 				if ( !${name} ) ${name} = ${branch.block}( ${params}, ${block.component} );
+				${name}.create();
 				${name}.intro( ${parentNode}, ${anchor} );
 			`
 			: deindent`
