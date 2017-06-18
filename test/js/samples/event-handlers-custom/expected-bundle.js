@@ -145,18 +145,25 @@ var template = (function () {
 }());
 
 function create_main_fragment ( state, component ) {
-	var button = createElement( 'button' );
-
-	var foo_handler = template.events.foo.call( component, button, function ( event ) {
-		var state = component.get();
-		component.foo( state.bar );
-	});
-
-	appendNode( createText( "foo" ), button );
+	var button, foo_handler, text;
 
 	return {
+		create: function () {
+			button = createElement( 'button' );
+			text = createText( "foo" );
+			this.hydrate();
+		},
+
+		hydrate: function ( nodes ) {
+			foo_handler = template.events.foo.call( component, button, function ( event ) {
+				var state = component.get();
+				component.foo( state.bar );
+			});
+		},
+
 		mount: function ( target, anchor ) {
 			insertNode( button, target, anchor );
+			appendNode( text, button );
 		},
 
 		unmount: function () {
@@ -186,7 +193,11 @@ function SvelteComponent ( options ) {
 	this._torndown = false;
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, template.methods, proto );
