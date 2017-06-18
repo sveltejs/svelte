@@ -243,15 +243,17 @@ export default class Block {
 			`);
 		}
 
-		if (this.builders.claim.isEmpty()) {
-			properties.addBlock(`claim: ${this.generator.helper('noop')},`);
-		} else {
-			properties.addBlock(deindent`
-				claim: function ( nodes ) {
-					${this.builders.claim}
-					${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
-				},
-			`);
+		if (this.generator.hydratable) {
+			if (this.builders.claim.isEmpty()) {
+				properties.addBlock(`claim: ${this.generator.helper('noop')},`);
+			} else {
+				properties.addBlock(deindent`
+					claim: function ( nodes ) {
+						${this.builders.claim}
+						${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
+					},
+				`);
+			}
 		}
 
 		if (!this.builders.hydrate.isEmpty()) {

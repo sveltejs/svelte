@@ -49,7 +49,7 @@ describe("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, shared) {
+	function runTest(dir, shared, hydrate) {
 		if (dir[0] === ".") return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
@@ -61,13 +61,14 @@ describe("runtime", () => {
 		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers)`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
-				throw new Error('skipping inline helpers test');
+				throw new Error('skipping test, already failed');
 			}
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
+			compileOptions.hydratable = hydrate;
 			compileOptions.dev = config.dev;
 
 			// check that no ES2015+ syntax slipped in
@@ -157,6 +158,7 @@ describe("runtime", () => {
 
 					const component = new SvelteComponent({
 						target,
+						hydrate,
 						data: config.data
 					});
 
@@ -208,8 +210,9 @@ describe("runtime", () => {
 
 	const shared = path.resolve("shared.js");
 	fs.readdirSync("test/runtime/samples").forEach(dir => {
-		runTest(dir, shared);
-		runTest(dir, null);
+		runTest(dir, shared, false);
+		runTest(dir, shared, true);
+		runTest(dir, null, false);
 	});
 
 	it("fails if options.target is missing in dev mode", () => {

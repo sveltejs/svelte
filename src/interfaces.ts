@@ -41,6 +41,7 @@ export interface CompileOptions {
 	dev?: boolean;
 	shared?: boolean | string;
 	cascade?: boolean;
+	hydratable?: boolean;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
