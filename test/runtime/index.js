@@ -26,23 +26,24 @@ const nodeVersionMatch = /^v(\d)/.exec(process.version);
 const legacy = +nodeVersionMatch[1] < 6;
 const babelrc = require("../../package.json").babel;
 
-require.extensions[".html"] = function(module, filename) {
-	const options = Object.assign(
-		{ filename, name: getName(filename) },
-		compileOptions
-	);
-	let { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
-
-	if (legacy) code = require('babel-core').transform(code, babelrc).code;
-
-	return module._compile(code, filename);
-};
-
 const Object_assign = Object.assign;
 
 describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(true);
+
+		require.extensions[".html"] = function(module, filename) {
+			const options = Object.assign(
+				{ filename, name: getName(filename) },
+				compileOptions
+			);
+			let { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
+
+			if (legacy) code = require('babel-core').transform(code, babelrc).code;
+
+			return module._compile(code, filename);
+		};
+
 		return setupHtmlEqual();
 	});
 
