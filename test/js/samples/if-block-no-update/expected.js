@@ -1,6 +1,8 @@
 import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
+	var if_block_anchor;
+
 	function get_block ( state ) {
 		if ( state.foo ) return create_if_block;
 		return create_if_block_1;
@@ -9,9 +11,12 @@ function create_main_fragment ( state, component ) {
 	var current_block = get_block( state );
 	var if_block = current_block( state, component );
 
-	var if_block_anchor = createComment();
-
 	return {
+		create: function () {
+			if_block.create();
+			if_block_anchor = createComment();
+		},
+
 		mount: function ( target, anchor ) {
 			if_block.mount( target, anchor );
 			insertNode( if_block_anchor, target, anchor );
@@ -19,11 +24,10 @@ function create_main_fragment ( state, component ) {
 
 		update: function ( changed, state ) {
 			if ( current_block !== ( current_block = get_block( state ) ) ) {
-				{
-					if_block.unmount();
-					if_block.destroy();
-				}
+				if_block.unmount();
+				if_block.destroy();
 				if_block = current_block( state, component );
+				if_block.create();
 				if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 			}
 		},
@@ -40,12 +44,17 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_if_block ( state, component ) {
-	var p = createElement( 'p' );
-	appendNode( createText( "foo!" ), p );
+	var p, text;
 
 	return {
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( "foo!" );
+		},
+
 		mount: function ( target, anchor ) {
 			insertNode( p, target, anchor );
+			appendNode( text, p );
 		},
 
 		unmount: function () {
@@ -57,12 +66,17 @@ function create_if_block ( state, component ) {
 }
 
 function create_if_block_1 ( state, component ) {
-	var p = createElement( 'p' );
-	appendNode( createText( "not foo!" ), p );
+	var p, text;
 
 	return {
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( "not foo!" );
+		},
+
 		mount: function ( target, anchor ) {
 			insertNode( p, target, anchor );
+			appendNode( text, p );
 		},
 
 		unmount: function () {
@@ -90,7 +104,11 @@ function SvelteComponent ( options ) {
 	this._torndown = false;
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, proto );

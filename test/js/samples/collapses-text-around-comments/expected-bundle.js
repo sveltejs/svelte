@@ -151,16 +151,22 @@ function add_css () {
 }
 
 function create_main_fragment ( state, component ) {
-	var text_value;
-
-	var p = createElement( 'p' );
-	setAttribute( p, 'svelte-3842350206', '' );
-	var text = createText( text_value = state.foo );
-	appendNode( text, p );
+	var p, text_value, text;
 
 	return {
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( text_value = state.foo );
+			this.hydrate();
+		},
+
+		hydrate: function ( nodes ) {
+			setAttribute( p, 'svelte-3842350206', '' );
+		},
+
 		mount: function ( target, anchor ) {
 			insertNode( p, target, anchor );
+			appendNode( text, p );
 		},
 
 		update: function ( changed, state ) {
@@ -195,7 +201,11 @@ function SvelteComponent ( options ) {
 	if ( !document.getElementById( "svelte-3842350206-style" ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, proto );
