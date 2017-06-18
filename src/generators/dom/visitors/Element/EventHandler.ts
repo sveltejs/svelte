@@ -68,36 +68,38 @@ export default function visitEventHandler(
 		[✂${attribute.expression.start}-${attribute.expression.end}✂];
 	`;
 
-	const handler = isCustomEvent
-		? deindent`
-			var ${handlerName} = ${generator.alias(
+	if (isCustomEvent) {
+		block.addVariable(handlerName);
+
+		block.builders.hydrate.addBlock(deindent`
+			${handlerName} = ${generator.alias(
 				'template'
 			)}.events.${name}.call( ${block.component}, ${state.parentNode}, function ( event ) {
 				${handlerBody}
 			});
-		`
-		: deindent`
+		`);
+
+		block.builders.destroy.addLine(deindent`
+			${handlerName}.teardown();
+		`);
+	} else {
+		const handler = deindent`
 			function ${handlerName} ( event ) {
 				${handlerBody}
 			}
 		`;
 
-	if (shouldHoist) {
-		generator.blocks.push(
-			<Block>{
-				render: () => handler,
-			}
-		);
-	} else {
-		block.builders.create.addBlock(handler);
-	}
+		if (shouldHoist) {
+			generator.blocks.push(
+				<Block>{
+					render: () => handler,
+				}
+			);
+		} else {
+			block.builders.init.addBlock(handler);
+		}
 
-	if (isCustomEvent) {
-		block.builders.destroy.addLine(deindent`
-			${handlerName}.teardown();
-		`);
-	} else {
-		block.builders.create.addLine(deindent`
+		block.builders.hydrate.addLine(deindent`
 			${generator.helper(
 				'addListener'
 			)}( ${state.parentNode}, '${name}', ${handlerName} );

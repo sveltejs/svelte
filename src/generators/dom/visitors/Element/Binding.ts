@@ -91,7 +91,7 @@ export default function visitBinding(
 		`;
 
 		generator.hasComplexBindings = true;
-		block.builders.create.addBlock(
+		block.builders.hydrate.addBlock(
 			`if ( !('${name}' in state) ) ${block.component}._bindings.push( ${handler} );`
 		);
 	} else if (attribute.name === 'group') {
@@ -107,7 +107,7 @@ export default function visitBinding(
 			? `~${snippet}.indexOf( ${state.parentNode}.__value )`
 			: `${state.parentNode}.__value === ${snippet}`;
 
-		block.builders.create.addLine(
+		block.builders.hydrate.addLine(
 			`${block.component}._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
 		);
 
@@ -118,7 +118,7 @@ export default function visitBinding(
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	} else if (node.name === 'audio' || node.name === 'video') {
 		generator.hasComplexBindings = true;
-		block.builders.create.addBlock(
+		block.builders.hydrate.addBlock(
 			`${block.component}._bindings.push( ${handler} );`
 		);
 
@@ -144,13 +144,15 @@ export default function visitBinding(
 		}
 	}
 
-	block.builders.create.addBlock(deindent`
+	block.builders.init.addBlock(deindent`
 		function ${handler} () {
 			${lock} = true;
 			${setter}
 			${lock} = false;
 		}
+	`);
 
+	block.builders.hydrate.addBlock(deindent`
 		${generator.helper(
 			'addListener'
 		)}( ${state.parentNode}, '${eventName}', ${handler} );

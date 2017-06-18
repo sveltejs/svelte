@@ -82,7 +82,7 @@ describe.only('hydration', () => {
 					assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
 
 					if (config.test) {
-						config.test(assert, target, snapshot, component);
+						config.test(assert, target, snapshot, component, window);
 					} else {
 						component.destroy();
 						assert.equal(target.innerHTML, '');
