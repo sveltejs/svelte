@@ -106,11 +106,11 @@ export default function visitIfBlock(
 	}
 
 	block.builders.create.addLine(
-		`${name}.create();`
+		`${if_name}${name}.create();`
 	);
 
 	block.builders.claim.addLine(
-		`${name}.claim( ${state.parentNodes} );`
+		`${if_name}${name}.claim( ${state.parentNodes} );`
 	);
 
 	if (node.needsAnchor) {
@@ -145,7 +145,7 @@ function simple(
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`if ( ${name} ) ${name}.${mountOrIntro}( ${block.target}, anchor );`
+		`if ( ${name} ) ${name}.${mountOrIntro}( ${targetNode}, ${anchorNode} );`
 	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
@@ -166,6 +166,7 @@ function simple(
 					${name}.update( changed, ${params} );
 				} else {
 					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.create();
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			`
@@ -177,6 +178,7 @@ function simple(
 			: deindent`
 				if ( !${name} ) {
 					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.create();
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
 			`;
@@ -248,11 +250,18 @@ function compound(
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
-		${if_name}{
-			${name}.unmount();
-			${name}.destroy();
-		}
+		${hasElse ?
+			deindent`
+				${name}.unmount();
+				${name}.destroy();
+			` :
+			deindent`
+				if ( ${name} ) {
+					${name}.unmount();
+					${name}.destroy();
+				}`}
 		${name} = ${current_block_and}${current_block}( ${params}, ${block.component} );
+		${if_name}${name}.create();
 		${if_name}${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
 	`;
 

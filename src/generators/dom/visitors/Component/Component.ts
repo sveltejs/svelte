@@ -185,12 +185,6 @@ export default function visitComponent(
 		});
 	`);
 
-	if (isTopLevel) {
-		block.builders.mount.addLine(
-			`${name}._fragment.mount( ${block.target}, anchor );`
-		);
-	}
-
 	if (local.dynamicAttributes.length) {
 		const updates = local.dynamicAttributes.map(attribute => {
 			if (attribute.dependencies.length) {
