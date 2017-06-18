@@ -132,7 +132,7 @@ function keyed(
 	block: Block,
 	state: State,
 	node: Node,
-	snippet,
+	snippet: string,
 	{
 		each_block,
 		create_each_block,
@@ -282,7 +282,6 @@ function keyed(
 				} else {
 					if ( ${iteration} ) {
 						// probably a deletion
-
 						while ( ${expected} && ${expected}.key !== ${key} ) {
 							${expected}.discard = true;
 							discard_pile.push( ${expected} );
