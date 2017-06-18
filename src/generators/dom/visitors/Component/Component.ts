@@ -132,6 +132,14 @@ export default function visitComponent(
 			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
 		);
 
+		block.builders.create.addLine(
+			`${yieldFragment}.create();`
+		);
+
+		block.builders.claim.addLine(
+			`${yieldFragment}.claim( ${state.parentNodes} );`
+		);
+
 		if (childBlock.hasUpdateMethod) {
 			block.builders.update.addLine(
 				`${yieldFragment}.update( changed, ${params} );`
