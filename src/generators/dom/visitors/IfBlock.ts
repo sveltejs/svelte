@@ -395,7 +395,7 @@ function compoundWithOutros(
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_index};
-			${current_block_index} = ${get_block}( state );
+			${current_block_index} = ${get_block}( ${params} );
 			if ( ${current_block_index} === ${previous_block_index} ) {
 				${if_current_block_index}${if_blocks}[ ${current_block_index} ].update( changed, ${params} );
 			} else {
@@ -405,7 +405,7 @@ function compoundWithOutros(
 	} else {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_index};
-			${current_block_index} = ${get_block}( state );
+			${current_block_index} = ${get_block}( ${params} );
 			if ( ${current_block_index} !== ${previous_block_index} ) {
 				${changeBlock}
 			}
