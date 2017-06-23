@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.23.3
+
+* Pass parameters to `get_block` ([#667](https://github.com/sveltejs/svelte/issues/667))
+
 ## 1.23.2
 
 * Fix if blocks being recreated on update ([#665](https://github.com/sveltejs/svelte/issues/665))
