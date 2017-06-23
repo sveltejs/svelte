@@ -10,7 +10,7 @@ export default function visitEachBlock(
 ) {
 	const { dependencies, snippet } = block.contextualise(node.expression);
 
-	const open = `\${ ${snippet}.map( ${node.index
+	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}${snippet}.map( ${node.index
 		? `( ${node.context}, ${node.index} )`
 		: node.context} => \``;
 	generator.append(open);
@@ -36,6 +36,16 @@ export default function visitEachBlock(
 		visit(generator, childBlock, child);
 	});
 
-	const close = `\` ).join( '' )}`;
+	const close = `\` ).join( '' )`;
 	generator.append(close);
+
+	if (node.else) {
+		generator.append(` : \``);
+		node.else.children.forEach((child: Node) => {
+			visit(generator, block, child);
+		});
+		generator.append(`\``);
+	}
+
+	generator.append('}');
 }
