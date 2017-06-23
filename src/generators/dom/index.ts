@@ -18,6 +18,8 @@ export class DomGenerator extends Generator {
 	readonly: Set<string>;
 	metaBindings: string[];
 
+	hydratable: boolean;
+
 	hasIntroTransitions: boolean;
 	hasOutroTransitions: boolean;
 	hasComplexBindings: boolean;
@@ -33,6 +35,8 @@ export class DomGenerator extends Generator {
 		this.uses = new Set();
 
 		this.readonly = new Set();
+
+		this.hydratable = options.hydratable;
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.metaBindings = [];
@@ -234,7 +238,20 @@ export default function dom(
 			this._fragment = ${generator.alias(
 				'create_main_fragment'
 			)}( this._state, this );
-			if ( options.target ) this._fragment.mount( options.target, null );
+
+			if ( options.target ) {
+				${generator.hydratable ?
+					deindent`
+						var nodes = ${generator.helper('children')}( options.target );
+						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
+						nodes.forEach( ${generator.helper('detachNode')} );
+					` :
+					deindent`
+						this._fragment.create();
+					`}
+				this._fragment.mount( options.target, null );
+			}
+			
 			${generator.hasComplexBindings &&
 				`while ( this._bindings.length ) this._bindings.pop()();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&

@@ -136,11 +136,16 @@ var proto = {
 };
 
 function create_main_fragment ( state, component ) {
+	var if_block_anchor;
+
 	var if_block = (state.foo) && create_if_block( state, component );
 
-	var if_block_anchor = createComment();
-
 	return {
+		create: function () {
+			if ( if_block ) if_block.create();
+			if_block_anchor = createComment();
+		},
+
 		mount: function ( target, anchor ) {
 			if ( if_block ) if_block.mount( target, anchor );
 			insertNode( if_block_anchor, target, anchor );
@@ -150,6 +155,7 @@ function create_main_fragment ( state, component ) {
 			if ( state.foo ) {
 				if ( !if_block ) {
 					if_block = create_if_block( state, component );
+					if_block.create();
 					if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 				}
 			} else if ( if_block ) {
@@ -171,12 +177,17 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_if_block ( state, component ) {
-	var p = createElement( 'p' );
-	appendNode( createText( "foo!" ), p );
+	var p, text;
 
 	return {
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( "foo!" );
+		},
+
 		mount: function ( target, anchor ) {
 			insertNode( p, target, anchor );
+			appendNode( text, p );
 		},
 
 		unmount: function () {
@@ -204,7 +215,11 @@ function SvelteComponent ( options ) {
 	this._torndown = false;
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, proto );

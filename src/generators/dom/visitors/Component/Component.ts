@@ -113,7 +113,6 @@ export default function visitComponent(
 	}
 
 	const componentInitProperties = [
-		`target: ${!isTopLevel ? state.parentNode : 'null'}`,
 		`_root: ${block.component}._root`,
 	];
 
@@ -123,14 +122,22 @@ export default function visitComponent(
 
 		const childBlock = node._block;
 
-		node.children.forEach(child => {
+		node.children.forEach((child: Node) => {
 			visit(generator, childBlock, childState, child);
 		});
 
 		const yieldFragment = block.getUniqueName(`${name}_yield_fragment`);
 
-		block.builders.create.addLine(
+		block.builders.init.addLine(
 			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
+		);
+
+		block.builders.create.addLine(
+			`${yieldFragment}.create();`
+		);
+
+		block.builders.claim.addLine(
+			`${yieldFragment}.claim( ${state.parentNodes} );`
 		);
 
 		if (childBlock.hasUpdateMethod) {
@@ -186,12 +193,6 @@ export default function visitComponent(
 		});
 	`);
 
-	if (isTopLevel) {
-		block.builders.mount.addLine(
-			`${name}._fragment.mount( ${block.target}, anchor );`
-		);
-	}
-
 	if (local.dynamicAttributes.length) {
 		const updates = local.dynamicAttributes.map(attribute => {
 			if (attribute.dependencies.length) {
@@ -222,6 +223,14 @@ export default function visitComponent(
 		block.builders.unmount.addLine(`${name}._fragment.unmount();`);
 	block.builders.destroy.addLine(`${name}.destroy( false );`);
 
-	block.builders.create.addBlock(local.create);
+	block.builders.init.addBlock(local.create);
+
+	const targetNode = state.parentNode || block.target;
+	const anchorNode = state.parentNode ? 'null' : 'anchor';
+
+	block.builders.create.addLine(`${name}._fragment.create();`);
+	block.builders.claim.addLine(`${name}._fragment.claim( ${state.parentNodes} );`);
+	block.builders.mount.addLine(`${name}._fragment.mount( ${targetNode}, ${anchorNode} );` );
+
 	if (!local.update.isEmpty()) block.builders.update.addBlock(local.update);
 }

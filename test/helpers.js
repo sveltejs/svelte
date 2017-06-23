@@ -167,8 +167,9 @@ function capitalize(str) {
 	return str[0].toUpperCase() + str.slice(1);
 }
 
-export function showOutput(cwd, options) {
+export function showOutput(cwd, options = {}) {
 	glob.sync('**/*.html', { cwd }).forEach(file => {
+		if (file[0] === '_') return;
 		const { code } = svelte.compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {

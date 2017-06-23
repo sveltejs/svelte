@@ -57,7 +57,7 @@ export default function visitWindow(
 				[✂${attribute.expression.start}-${attribute.expression.end}✂];
 			`;
 
-			block.builders.create.addBlock(deindent`
+			block.builders.init.addBlock(deindent`
 				function ${handlerName} ( event ) {
 					${handlerBody}
 				};
@@ -121,7 +121,7 @@ export default function visitWindow(
 			${event === 'scroll' && `${lock} = false;`}
 		`;
 
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			function ${handlerName} ( event ) {
 				${handlerBody}
 			};
@@ -137,7 +137,7 @@ export default function visitWindow(
 	if (bindings.scrollX && bindings.scrollY) {
 		const observerCallback = block.getUniqueName(`scrollobserver`);
 
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			function ${observerCallback} () {
 				if ( ${lock} ) return;
 				var x = ${bindings.scrollX
@@ -151,17 +151,17 @@ export default function visitWindow(
 		`);
 
 		if (bindings.scrollX)
-			block.builders.create.addLine(
+			block.builders.init.addLine(
 				`${block.component}.observe( '${bindings.scrollX}', ${observerCallback} );`
 			);
 		if (bindings.scrollY)
-			block.builders.create.addLine(
+			block.builders.init.addLine(
 				`${block.component}.observe( '${bindings.scrollY}', ${observerCallback} );`
 			);
 	} else if (bindings.scrollX || bindings.scrollY) {
 		const isX = !!bindings.scrollX;
 
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			${block.component}.observe( '${bindings.scrollX ||
 			bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
 				if ( ${lock} ) return;
@@ -173,7 +173,7 @@ export default function visitWindow(
 	// another special case. (I'm starting to think these are all special cases.)
 	if (bindings.online) {
 		const handlerName = block.getUniqueName(`onlinestatuschanged`);
-		block.builders.create.addBlock(deindent`
+		block.builders.init.addBlock(deindent`
 			function ${handlerName} ( event ) {
 				${block.component}.set({ ${bindings.online}: navigator.onLine });
 			};
