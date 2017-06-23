@@ -87,6 +87,11 @@ export default function processCss(
 						shouldTransform = false;
 					}
 
+					else if (child.type === 'PseudoElementSelector') {
+						code.prependRight(c, attr);
+						shouldTransform = false;
+					}
+
 					c = child.end;
 				});
 
