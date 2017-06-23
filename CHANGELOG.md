@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.23.1
+
+* Fix each-else blocks that are empty on initial render ([#662](https://github.com/sveltejs/svelte/issues/662))
+
 ## 1.23.0
 
 * Hydration ([#649](https://github.com/sveltejs/svelte/pull/649))
