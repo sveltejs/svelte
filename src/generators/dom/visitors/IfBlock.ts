@@ -369,8 +369,11 @@ function compoundWithOutros(
 	`;
 
 	const createNewBlock = deindent`
-		${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
-		${name}.create();
+		${name} = ${if_blocks}[ ${current_block_index} ];
+		if ( !${name} ) {
+			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+			${name}.create();
+		}
 		${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
 	`;
 
