@@ -173,8 +173,10 @@ function simple(
 			`
 		: branch.hasIntroMethod
 			? deindent`
-				if ( !${name} ) ${name} = ${branch.block}( ${params}, ${block.component} );
-				${name}.create();
+				if ( !${name} ) {
+					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name}.create();
+				}
 				${name}.intro( ${parentNode}, ${anchor} );
 			`
 			: deindent`
