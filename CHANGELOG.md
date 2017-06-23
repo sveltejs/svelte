@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.23.2
+
+* Fix if blocks being recreated on update ([#665](https://github.com/sveltejs/svelte/issues/665))
+
 ## 1.23.1
 
 * Fix each-else blocks that are empty on initial render ([#662](https://github.com/sveltejs/svelte/issues/662))
