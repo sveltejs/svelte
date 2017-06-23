@@ -66,6 +66,7 @@ export default function visitEachBlock(
 		block.builders.init.addBlock(deindent`
 			if ( !${each_block_value}.length ) {
 				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+				${each_block_else}.create();
 			}
 		`);
 
