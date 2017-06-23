@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.23.0
+
+* Hydration ([#649](https://github.com/sveltejs/svelte/pull/649))
+* Correctly transform CSS selectors with pseudo-elements ([#658](https://github.com/sveltejs/svelte/issues/658))
+
 ## 1.22.5
 
 * Fix nested component unmounting bug ([#643](https://github.com/sveltejs/svelte/issues/643)) 
