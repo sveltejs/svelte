@@ -132,19 +132,23 @@ var template = (function () {
 }());
 
 function create_main_fragment ( state, component ) {
+	var text;
+
 	var imported = new Imported({
-		target: null,
 		_root: component._root
 	});
 
-	var text = createText( "\n" );
-
 	var nonimported = new template.components.NonImported({
-		target: null,
 		_root: component._root
 	});
 
 	return {
+		create: function () {
+			imported._fragment.create();
+			text = createText( "\n" );
+			nonimported._fragment.create();
+		},
+
 		mount: function ( target, anchor ) {
 			imported._fragment.mount( target, anchor );
 			insertNode( text, target, anchor );
@@ -182,7 +186,11 @@ function SvelteComponent ( options ) {
 	this._renderHooks = [];
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 	this._flush();
 }
 

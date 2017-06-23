@@ -66,3 +66,34 @@ export function getBindingGroupValue(group) {
 export function toNumber(value) {
 	return value === '' ? undefined : +value;
 }
+
+export function children (element) {
+	return Array.from(element.childNodes);
+}
+
+export function claimElement (nodes, name, attributes, svg) {
+	for (var i = 0; i < nodes.length; i += 1) {
+		var node = nodes[i];
+		if (node.nodeName === name) {
+			for (var j = 0; j < node.attributes.length; j += 1) {
+				var attribute = node.attributes[j];
+				if (!attributes[attribute.name]) node.removeAttribute(attribute.name);
+			}
+			return nodes.splice(i, 1)[0]; // TODO strip unwanted attributes
+		}
+	}
+
+	return svg ? createSvgElement(name) : createElement(name);
+}
+
+export function claimText (nodes, data) {
+	for (var i = 0; i < nodes.length; i += 1) {
+		var node = nodes[i];
+		if (node.nodeType === 3) {
+			node.data = data;
+			return nodes.splice(i, 1)[0];
+		}
+	}
+
+	return createText(data);
+}

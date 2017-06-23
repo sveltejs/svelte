@@ -6,6 +6,7 @@ import visitAttribute from './Attribute';
 import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
+import * as namespaces from '../../../../utils/namespaces';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -47,18 +48,27 @@ export default function visitElement(
 	const childState = node._state;
 	const name = childState.parentNode;
 
-	block.builders.create.addLine(
-		`var ${name} = ${getRenderStatement(
-			generator,
-			childState.namespace,
-			node.name
-		)};`
-	);
-	block.mount(name, state.parentNode);
+	const isToplevel = !state.parentNode;
+
+	block.addVariable(name);
+	block.builders.create.addLine(`${name} = ${getRenderStatement(generator, childState.namespace, node.name)};`);
+
+	if (generator.hydratable) {
+		block.builders.claim.addBlock(deindent`
+			${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
+			var ${childState.parentNodes} = ${generator.helper('children')}( ${name} );
+		`);
+	}
+
+	if (state.parentNode) {
+		block.builders.mount.addLine(`${block.generator.helper('appendNode')}( ${name}, ${state.parentNode} );`);
+	} else {
+		block.builders.mount.addLine(`${block.generator.helper('insertNode')}( ${name}, ${block.target}, anchor );`);
+	}
 
 	// add CSS encapsulation attribute
 	if (generator.cssId && (!generator.cascade || state.isTopLevel)) {
-		block.builders.create.addLine(
+		block.builders.hydrate.addLine(
 			`${generator.helper(
 				'setAttribute'
 			)}( ${name}, '${generator.cssId}', '' );`
@@ -107,7 +117,7 @@ export default function visitElement(
 			});
 
 			if (initialProps.length) {
-				block.builders.create.addBlock(deindent`
+				block.builders.hydrate.addBlock(deindent`
 					${name}._svelte = {
 						${initialProps.join(',\n')}
 					};
@@ -120,7 +130,7 @@ export default function visitElement(
 		}
 	}
 
-	if (!state.parentNode) {
+	if (isToplevel) {
 		// TODO we eventually need to consider what happens to elements
 		// that belong to the same outgroup as an outroing element...
 		block.builders.unmount.addLine(
@@ -174,8 +184,12 @@ export default function visitElement(
 	}
 
 	if (node.initialUpdate) {
-		block.builders.create.addBlock(node.initialUpdate);
+		block.builders.mount.addBlock(node.initialUpdate);
 	}
+
+	block.builders.claim.addLine(
+		`${childState.parentNodes}.forEach( ${generator.helper('detachNode')} );`
+	);
 }
 
 function getRenderStatement(
@@ -192,4 +206,25 @@ function getRenderStatement(
 	}
 
 	return `${generator.helper('createElement')}( '${name}' )`;
+}
+
+function getClaimStatement(
+	generator: DomGenerator,
+	namespace: string,
+	nodes: string,
+	node: Node
+) {
+	const attributes = node.attributes
+		.filter((attr: Node) => attr.type === 'Attribute')
+		.map((attr: Node) => `${quoteProp(attr.name)}: true`)
+		.join(', ');
+
+	const name = namespace ? node.name : node.name.toUpperCase();
+
+	return `${generator.helper('claimElement')}( ${nodes}, '${name}', ${attributes ? `{ ${attributes} }` : `{}`}, ${namespace === namespaces.svg ? true : false} )`;
+}
+
+function quoteProp(name: string) {
+	if (/[^a-zA-Z_$0-9]/.test(name)) return `'${name}'`;
+	return name;
 }

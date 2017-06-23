@@ -13,11 +13,11 @@ export default function visitRef(
 ) {
 	const name = attribute.name;
 
-	block.builders.create.addLine(
+	block.builders.mount.addLine(
 		`${block.component}.refs.${name} = ${state.parentNode};`
 	);
 
-	block.builders.destroy.addLine(deindent`
+	block.builders.unmount.addLine(deindent`
 		if ( ${block.component}.refs.${name} === ${state.parentNode} ) ${block.component}.refs.${name} = null;
 	`);
 

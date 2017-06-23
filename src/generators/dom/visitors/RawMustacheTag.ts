@@ -17,10 +17,13 @@ export default function visitRawMustacheTag(
 
 	const { snippet } = block.contextualise(node.expression);
 
+	block.addVariable(value);
+
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.
 	block.addElement(
 		before,
+		`${generator.helper('createElement')}( 'noscript' )`,
 		`${generator.helper('createElement')}( 'noscript' )`,
 		state.parentNode,
 		true
@@ -28,23 +31,19 @@ export default function visitRawMustacheTag(
 	block.addElement(
 		after,
 		`${generator.helper('createElement')}( 'noscript' )`,
+		`${generator.helper('createElement')}( 'noscript' )`,
 		state.parentNode,
 		true
 	);
 
 	const isToplevel = !state.parentNode;
 
-	block.builders.create.addLine(`var ${value} = ${snippet};`);
-	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${value} );`;
+	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${value} = ${snippet} );`;
 	const detachStatement = `${generator.helper(
 		'detachBetween'
 	)}( ${before}, ${after} );`;
 
-	if (isToplevel) {
-		block.builders.mount.addLine(mountStatement);
-	} else {
-		block.builders.create.addLine(mountStatement);
-	}
+	block.builders.mount.addLine(mountStatement);
 
 	block.builders.update.addBlock(deindent`
 		if ( ${value} !== ( ${value} = ${snippet} ) ) {

@@ -121,8 +121,9 @@ var template = (function () {
 
 function create_main_fragment ( state, component ) {
 
-
 	return {
+		create: noop,
+
 		mount: noop,
 
 		unmount: noop,
@@ -148,7 +149,11 @@ function SvelteComponent ( options ) {
 	this._torndown = false;
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 
 	if ( options._root ) {
 		options._root._renderHooks.push( template.oncreate.bind( this ) );
