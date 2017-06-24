@@ -4,37 +4,31 @@ export function linear(t) {
 	return t;
 }
 
-export function generateKeyframes(
+export function generateRule(
 	a,
 	b,
 	delta,
 	duration,
 	ease,
-	fn,
-	node,
-	style
+	fn
 ) {
-	var id = '__svelte' + ~~(Math.random() * 1e9); // TODO make this more robust
-	var keyframes = '@keyframes ' + id + '{\n';
+	var keyframes = '{\n';
 
 	for (var p = 0; p <= 1; p += 16.666 / duration) {
 		var t = a + delta * ease(p);
 		keyframes += p * 100 + '%{' + fn(t) + '}\n';
 	}
 
-	keyframes += '100% {' + fn(b) + '}\n}';
-	style.textContent += keyframes;
+	return keyframes + '100% {' + fn(b) + '}\n}';
+}
 
-	document.head.appendChild(style);
+// https://github.com/darkskyapp/string-hash/blob/master/index.js
+export function hash(str) {
+	var hash = 5381;
+	var i = str.length;
 
-	node.style.animation = (node.style.animation || '')
-		.split(',')
-		.filter(function(anim) {
-			// when introing, discard old animations if there are any
-			return anim && (delta < 0 || !/__svelte/.test(anim));
-		})
-		.concat(id + ' ' + duration + 'ms linear 1 forwards')
-		.join(', ');
+	while (i--) hash = (hash * 33) ^ str.charCodeAt(i);
+	return hash >>> 0;
 }
 
 export function wrapTransition(node, fn, params, intro, outgroup) {
@@ -43,9 +37,10 @@ export function wrapTransition(node, fn, params, intro, outgroup) {
 	var ease = obj.easing || linear;
 	var cssText;
 
-	// TODO share <style> tag between all transitions?
-	if (obj.css) {
+	if (obj.css && !transitionManager.stylesheet) {
 		var style = document.createElement('style');
+		document.head.appendChild(style);
+		transitionManager.stylesheet = style.sheet;
 	}
 
 	if (intro) {
@@ -89,16 +84,26 @@ export function wrapTransition(node, fn, params, intro, outgroup) {
 
 			if (obj.css) {
 				if (obj.delay) node.style.cssText = cssText;
-				generateKeyframes(
+
+				program.rule = generateRule(
 					program.a,
 					program.b,
 					program.delta,
 					program.duration,
 					ease,
-					obj.css,
-					node,
-					style
+					obj.css
 				);
+
+				transitionManager.addRule(program.rule, program.name = '__svelte_' + hash(program.rule));
+
+				node.style.animation = (node.style.animation || '')
+					.split(', ')
+					.filter(function(anim) {
+						// when introing, discard old animations if there are any
+						return anim && (program.delta < 0 || !/__svelte/.test(anim));
+					})
+					.concat(program.name + ' ' + duration + 'ms linear 1 forwards')
+					.join(', ');
 			}
 
 			this.program = program;
@@ -113,16 +118,17 @@ export function wrapTransition(node, fn, params, intro, outgroup) {
 			if (obj.tick) obj.tick(this.t);
 		},
 		done: function() {
-			this.t = this.program.b;
+			var program = this.program;
+			this.t = program.b;
 			if (obj.tick) obj.tick(this.t);
-			if (obj.css) document.head.removeChild(style);
-			this.program.callback();
-			this.program = null;
+			if (obj.css) transitionManager.deleteRule(node, program.name);
+			program.callback();
+			program = null;
 			this.running = !!this.pending;
 		},
 		abort: function() {
 			if (obj.tick) obj.tick(1);
-			if (obj.css) document.head.removeChild(style);
+			if (obj.css) transitionManager.deleteRule(node, this.program.name);
 			this.program = this.pending = null;
 			this.running = false;
 		}
@@ -133,6 +139,8 @@ export var transitionManager = {
 	running: false,
 	transitions: [],
 	bound: null,
+	stylesheet: null,
+	activeRules: {},
 
 	add: function(transition) {
 		this.transitions.push(transition);
@@ -140,6 +148,13 @@ export var transitionManager = {
 		if (!this.running) {
 			this.running = true;
 			this.next();
+		}
+	},
+
+	addRule: function(rule, name) {
+		if (!this.activeRules[name]) {
+			this.activeRules[name] = true;
+			this.stylesheet.insertRule('@keyframes ' + name + ' ' + rule, this.stylesheet.cssRules.length);
 		}
 	},
 
@@ -170,6 +185,19 @@ export var transitionManager = {
 
 		if (this.running) {
 			requestAnimationFrame(this.bound || (this.bound = this.next.bind(this)));
+		} else if (this.stylesheet) {
+			var i = this.stylesheet.cssRules.length;
+			while (i--) this.stylesheet.deleteRule(i);
+			this.activeRules = {};
 		}
+	},
+
+	deleteRule: function(node, name) {
+		node.style.animation = node.style.animation
+			.split(', ')
+			.filter(function(anim) {
+				return anim.slice(0, name.length) !== name;
+			})
+			.join(', ');
 	}
 };
