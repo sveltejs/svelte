@@ -16,14 +16,14 @@
     "codecov": "codecov",
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
-    "build": "npm run build:main && npm run build:shared && npm run build:ssr",
+    "build": "(npm run build:main & npm run build:shared & npm run build:ssr) && echo \"build complete\"",
     "build:main": "node src/shared/_build.js && rollup -c rollup/rollup.config.main.js",
     "build:shared": "rollup -c rollup/rollup.config.shared.js",
     "build:ssr": "rollup -c rollup/rollup.config.ssr.js",
     "dev": "node src/shared/_build.js && rollup -c rollup/rollup.config.main.js -w",
     "dev:shared": "rollup -c rollup/rollup.config.shared.js -w",
     "pretest": "npm run build",
-    "prepublish": "npm run build && npm run lint",
+    "prepublish": "npm run build & npm run lint",
     "prettier": "prettier --use-tabs --single-quote --trailing-comma es5 --write \"src/**/*.ts\""
   },
   "repository": {
