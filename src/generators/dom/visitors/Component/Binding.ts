@@ -73,9 +73,7 @@ export default function visitBinding(
 				${updating} = true;
 				${setter}
 				${updating} = false;
-			}, { init: ${generator.helper(
-				'differs'
-			)}( ${local.name}.get( '${attribute.name}' ), ${snippet} ) });
+			}, { init: @differs( ${local.name}.get( '${attribute.name}' ), ${snippet} ) });
 		});
 	`);
 

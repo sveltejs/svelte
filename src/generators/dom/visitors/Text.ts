@@ -12,8 +12,8 @@ export default function visitText(
 	if (!node._state.shouldCreate) return;
 	block.addElement(
 		node._state.name,
-		`${generator.helper('createText')}( ${JSON.stringify(node.data)} )`,
-		generator.hydratable ? `${generator.helper('claimText')}( ${state.parentNodes}, ${JSON.stringify(node.data)} )` : '',
+		`@createText( ${JSON.stringify(node.data)} )`,
+		generator.hydratable ? `@claimText( ${state.parentNodes}, ${JSON.stringify(node.data)} )` : '',
 		state.parentNode,
 		node.usedAsAnchor
 	);

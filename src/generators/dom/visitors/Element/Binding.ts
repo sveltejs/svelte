@@ -152,11 +152,9 @@ export default function visitBinding(
 		}
 	`);
 
-	block.builders.hydrate.addBlock(deindent`
-		${generator.helper(
-			'addListener'
-		)}( ${state.parentNode}, '${eventName}', ${handler} );
-	`);
+	block.builders.hydrate.addBlock(
+		`@addListener( ${state.parentNode}, '${eventName}', ${handler} );`
+	);
 
 	if (node.name !== 'audio' && node.name !== 'video')
 		node.initialUpdate = updateElement;
@@ -170,22 +168,15 @@ export default function visitBinding(
 		`);
 	}
 
-	block.builders.destroy.addLine(deindent`
-		${generator.helper(
-			'removeListener'
-		)}( ${state.parentNode}, '${eventName}', ${handler} );
-	`);
+	block.builders.destroy.addLine(
+		`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`);
 
 	if (attribute.name === 'paused') {
 		block.builders.create.addLine(
-			`${generator.helper(
-				'addListener'
-			)}( ${state.parentNode}, 'play', ${handler} );`
+			`@addListener( ${state.parentNode}, 'play', ${handler} );`
 		);
 		block.builders.destroy.addLine(
-			`${generator.helper(
-				'removeListener'
-			)}( ${state.parentNode}, 'play', ${handler} );`
+			`@removeListener( ${state.parentNode}, 'play', ${handler} );`
 		);
 	}
 }
@@ -231,9 +222,7 @@ function getBindingValue(
 	// <input type='checkbox' bind:group='foo'>
 	if (attribute.name === 'group') {
 		if (type === 'checkbox') {
-			return `${generator.helper(
-				'getBindingGroupValue'
-			)}( ${block.component}._bindingGroups[${bindingGroup}] )`;
+			return `@getBindingGroupValue( ${block.component}._bindingGroups[${bindingGroup}] )`;
 		}
 
 		return `${state.parentNode}.__value`;
@@ -241,9 +230,7 @@ function getBindingValue(
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `${generator.helper(
-			'toNumber'
-		)}( ${state.parentNode}.${attribute.name} )`;
+		return `@toNumber( ${state.parentNode}.${attribute.name} )`;
 	}
 
 	// everything else

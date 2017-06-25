@@ -99,16 +99,12 @@ export default function visitEventHandler(
 			block.builders.init.addBlock(handler);
 		}
 
-		block.builders.hydrate.addLine(deindent`
-			${generator.helper(
-				'addListener'
-			)}( ${state.parentNode}, '${name}', ${handlerName} );
-		`);
+		block.builders.hydrate.addLine(
+			`@addListener( ${state.parentNode}, '${name}', ${handlerName} );`
+		);
 
-		block.builders.destroy.addLine(deindent`
-			${generator.helper(
-				'removeListener'
-			)}( ${state.parentNode}, '${name}', ${handlerName} );
-		`);
+		block.builders.destroy.addLine(
+			`@removeListener( ${state.parentNode}, '${name}', ${handlerName} );`
+		);
 	}
 }

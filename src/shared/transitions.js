@@ -1,4 +1,5 @@
 import { assign, noop } from './utils.js';
+import { createElement } from './dom.js';
 
 export function linear(t) {
 	return t;
@@ -45,7 +46,7 @@ export function wrapTransition(node, fn, params, intro, outgroup) {
 
 	// TODO share <style> tag between all transitions?
 	if (obj.css) {
-		var style = document.createElement('style');
+		var style = createElement('style');
 	}
 
 	if (intro) {
