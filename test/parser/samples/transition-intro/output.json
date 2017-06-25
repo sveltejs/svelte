@@ -1,5 +1,5 @@
 {
-	"hash": 3160753914,
+	"hash": 3731674194,
 	"html": {
 		"start": 0,
 		"end": 43,
@@ -19,18 +19,17 @@
 						"intro": true,
 						"outro": false,
 						"expression": {
-								"start": 15,
-							"end": 27,
 							"type": "ObjectExpression",
+							"start": 15,
+							"end": 27,
 							"properties": [
 								{
+									"type": "Property",
 									"start": 16,
 									"end": 26,
-									"type": "Property",
 									"method": false,
-									"computed": false,
 									"shorthand": false,
-									"kind": "init",
+									"computed": false,
 									"key": {
 										"type": "Identifier",
 										"start": 16,
@@ -38,12 +37,13 @@
 										"name": "opacity"
 									},
 									"value": {
+										"type": "Literal",
 										"start": 25,
 										"end": 26,
-										"type": "Literal",
 										"value": 0,
 										"raw": "0"
-									}
+									},
+									"kind": "init"
 								}
 							]
 						}

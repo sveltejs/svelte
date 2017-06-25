@@ -1,4 +1,5 @@
 {
+	"hash": 1147407419,
 	"html": {
 		"start": 0,
 		"end": 14,
@@ -18,6 +19,12 @@
 						"data": "foo"
 					}
 				]
+			},
+			{
+				"start": 14,
+				"end": 16,
+				"type": "Text",
+				"data": "\n\n"
 			}
 		]
 	},
@@ -25,65 +32,65 @@
 		"start": 16,
 		"end": 56,
 		"attributes": [],
-		"content": {
-			"start": 23,
-			"end": 48,
-			"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
-		},
 		"children": [
 			{
 				"type": "Rule",
-				"start": 25,
-				"end": 47,
 				"selector": {
 					"type": "SelectorList",
-					"start": 25,
-					"end": 28,
 					"children": [
 						{
 							"type": "Selector",
-							"start": 25,
-							"end": 28,
 							"children": [
 								{
 									"type": "TypeSelector",
+									"name": "div",
 									"start": 25,
-									"end": 28,
-									"name": "div"
+									"end": 28
 								}
-							]
+							],
+							"start": 25,
+							"end": 28
 						}
-					]
+					],
+					"start": 25,
+					"end": 28
 				},
 				"block": {
 					"type": "Block",
-					"start": 29,
-					"end": 47,
 					"children": [
 						{
 							"type": "Declaration",
-							"start": 33,
-							"end": 43,
 							"important": false,
 							"property": "color",
 							"value": {
 								"type": "Value",
-								"start": 39,
-								"end": 43,
 								"children": [
 									{
 										"type": "Identifier",
+										"name": "red",
 										"start": 40,
-										"end": 43,
-										"name": "red"
+										"end": 43
 									}
-								]
-							}
+								],
+								"start": 39,
+								"end": 43
+							},
+							"start": 33,
+							"end": 43
 						}
-					]
-				}
+					],
+					"start": 29,
+					"end": 47
+				},
+				"start": 25,
+				"end": 47
 			}
-		]
+		],
+		"content": {
+			"start": 23,
+			"end": 48,
+			"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
+		}
 	},
 	"js": null
 }

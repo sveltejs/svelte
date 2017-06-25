@@ -77,10 +77,18 @@ export class Parser {
 			this.error('Unexpected end of input');
 		}
 
-		// trim unnecessary whitespace
-		// stripWhitespace(this.html.children);
-		// this.html.start = this.html.children[0] && this.html.children.start;
-		// this.html.end = this.html.children[this.html.children.length] && this.html.children[this.html.children.length].end;
+		if (this.html.children.length) {
+			let start = this.html.children[0] && this.html.children[0].start;
+			while (/\s/.test(template[start])) start += 1;
+
+			let end = this.html.children[this.html.children.length - 1] && this.html.children[this.html.children.length - 1].end;
+			while (/\s/.test(template[end - 1])) end -= 1;
+
+			this.html.start = start;
+			this.html.end = end;
+		} else {
+			this.html.start = this.html.end = null;
+		}
 	}
 
 	current() {
