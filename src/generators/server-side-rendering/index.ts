@@ -117,7 +117,7 @@ export default function ssr(
 				}
 			`}
 
-			return \`${generator.renderCode}\`;
+			return \`${generator.renderCode}\`.trim();
 		};
 
 		${name}.renderCss = function () {
