@@ -136,7 +136,7 @@ var proto = {
 };
 
 function create_main_fragment ( state, component ) {
-	var div, text, p, text_1, text_2, text_3, text_4, p_1, text_5, text_6, text_7, text_8, if_block_4_anchor;
+	var div, text, p, text_1, text_2, text_3, text_4, p_1, text_5, text_6, text_8, if_block_4_anchor;
 
 	var if_block = (state.a) && create_if_block( state, component );
 
@@ -164,7 +164,6 @@ function create_main_fragment ( state, component ) {
 			text_5 = createText( "so can this" );
 			text_6 = createText( "\n\n\t" );
 			if ( if_block_3 ) if_block_3.create();
-			text_7 = createText( "\n\n\t" );
 			text_8 = createText( "\n\n" );
 			if ( if_block_4 ) if_block_4.create();
 			if_block_4_anchor = createComment();
@@ -185,7 +184,6 @@ function create_main_fragment ( state, component ) {
 			appendNode( text_5, p_1 );
 			appendNode( text_6, div );
 			if ( if_block_3 ) if_block_3.mount( div, null );
-			appendNode( text_7, div );
 			insertNode( text_8, target, anchor );
 			if ( if_block_4 ) if_block_4.mount( target, anchor );
 			insertNode( if_block_4_anchor, target, anchor );
@@ -232,7 +230,7 @@ function create_main_fragment ( state, component ) {
 				if ( !if_block_3 ) {
 					if_block_3 = create_if_block_3( state, component );
 					if_block_3.create();
-					if_block_3.mount( div, text_7 );
+					if_block_3.mount( div, null );
 				}
 			} else if ( if_block_3 ) {
 				if_block_3.unmount();
