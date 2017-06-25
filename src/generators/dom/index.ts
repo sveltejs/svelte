@@ -13,8 +13,6 @@ import preprocess from './preprocess';
 import Block from './Block';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
 
-const helperPattern = new RegExp(`@(${Object.keys(shared).join('|')})\\b`, 'g');
-
 export class DomGenerator extends Generator {
 	blocks: Block[];
 	readonly: Set<string>;
