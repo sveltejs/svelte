@@ -54,7 +54,6 @@ export default class Generator {
 
 		this.parsed = parsed;
 		this.source = source;
-		this.name = name;
 		this.options = options;
 
 		this.imports = [];
@@ -81,7 +80,10 @@ export default class Generator {
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
 		this.importedNames = new Set();
 		this.aliases = new Map();
-		this.usedNames = new Set([name]);
+		this.usedNames = new Set();
+
+		this.parseJs();
+		this.name = this.alias(name);
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -389,7 +391,7 @@ export default class Generator {
 		};
 	}
 
-	parseJs(ssr: boolean = false) {
+	parseJs() {
 		const { source } = this;
 		const { js } = this.parsed;
 
@@ -417,7 +419,7 @@ export default class Generator {
 				}
 			}
 
-			const defaultExport = body.find(
+			const defaultExport = this.defaultExport = body.find(
 				(node: Node) => node.type === 'ExportDefaultDeclaration'
 			);
 
@@ -525,34 +527,6 @@ export default class Generator {
 				templateProperties.ondestroy = templateProperties.onteardown;
 			}
 
-			// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
-			if (ssr) {
-				if (templateProperties.oncreate)
-					removeNode(
-						this.code,
-						defaultExport.declaration,
-						templateProperties.oncreate
-					);
-				if (templateProperties.ondestroy)
-					removeNode(
-						this.code,
-						defaultExport.declaration,
-						templateProperties.ondestroy
-					);
-				if (templateProperties.methods)
-					removeNode(
-						this.code,
-						defaultExport.declaration,
-						templateProperties.methods
-					);
-				if (templateProperties.events)
-					removeNode(
-						this.code,
-						defaultExport.declaration,
-						templateProperties.events
-					);
-			}
-
 			// now that we've analysed the default export, we can determine whether or not we need to keep it
 			let hasDefaultExport = !!defaultExport;
 			if (defaultExport && defaultExport.declaration.properties.length === 0) {
@@ -611,11 +585,9 @@ export default class Generator {
 			}
 		}
 
-		return {
-			computations,
-			hasJs,
-			namespace,
-			templateProperties,
-		};
+		this.computations = computations;
+		this.hasJs = hasJs;
+		this.namespace = namespace;
+		this.templateProperties = templateProperties;
 	}
 }
