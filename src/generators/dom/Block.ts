@@ -62,9 +62,6 @@ export default class Block {
 	variables: Map<string, string>;
 	getUniqueName: (name: string) => string;
 
-	component: string;
-	target: string;
-
 	hasUpdateMethod: boolean;
 	autofocus: string;
 
@@ -110,10 +107,6 @@ export default class Block {
 		this.aliases = new Map();
 		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker(options.params);
-
-		// unique names
-		this.component = this.getUniqueName('component');
-		this.target = this.getUniqueName('target');
 
 		this.hasUpdateMethod = false; // determined later
 	}
@@ -192,7 +185,7 @@ export default class Block {
 			);
 		} else {
 			this.builders.mount.addLine(
-				`@insertNode( ${name}, ${this.target}, anchor );`
+				`@insertNode( ${name}, #target, anchor );`
 			);
 		}
 	}
@@ -268,7 +261,7 @@ export default class Block {
 			properties.addBlock(`mount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				mount: function ( ${this.target}, anchor ) {
+				mount: function ( #target, anchor ) {
 					${this.builders.mount}
 				},
 			`);
@@ -289,20 +282,20 @@ export default class Block {
 		if (this.hasIntroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
-					intro: function ( ${this.target}, anchor ) {
+					intro: function ( #target, anchor ) {
 						if ( ${introing} ) return;
 						${introing} = true;
 						${hasOutros && `${outroing} = false;`}
 
 						${this.builders.intro}
 
-						this.mount( ${this.target}, anchor );
+						this.mount( #target, anchor );
 					},
 				`);
 			} else {
 				properties.addBlock(deindent`
-					intro: function ( ${this.target}, anchor ) {
-						this.mount( ${this.target}, anchor );
+					intro: function ( #target, anchor ) {
+						this.mount( #target, anchor );
 					},
 				`);
 			}
@@ -351,8 +344,7 @@ export default class Block {
 		}
 
 		return deindent`
-			function ${this.name} ( ${this.params.join(', ')}, ${this.component}${this
-			.key
+			function ${this.name} ( ${this.params.join(', ')}, #component${this.key
 			? `, ${localKey}`
 			: ''} ) {
 				${this.variables.size > 0 && (

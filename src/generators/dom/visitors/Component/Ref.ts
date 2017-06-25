@@ -15,10 +15,10 @@ export default function visitRef(
 	generator.usesRefs = true;
 
 	local.create.addLine(
-		`${block.component}.refs.${attribute.name} = ${local.name};`
+		`#component.refs.${attribute.name} = ${local.name};`
 	);
 
 	block.builders.destroy.addLine(deindent`
-		if ( ${block.component}.refs.${attribute.name} === ${local.name} ) ${block.component}.refs.${attribute.name} = null;
+		if ( #component.refs.${attribute.name} === ${local.name} ) #component.refs.${attribute.name} = null;
 	`);
 }

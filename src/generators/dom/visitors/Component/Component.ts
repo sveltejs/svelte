@@ -113,7 +113,7 @@ export default function visitComponent(
 	}
 
 	const componentInitProperties = [
-		`_root: ${block.component}._root`,
+		`_root: #component._root`,
 	];
 
 	// Component has children, put them in a separate {{yield}} block
@@ -129,7 +129,7 @@ export default function visitComponent(
 		const yieldFragment = block.getUniqueName(`${name}_yield_fragment`);
 
 		block.builders.init.addLine(
-			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
+			`var ${yieldFragment} = ${childBlock.name}( ${params}, #component );`
 		);
 
 		block.builders.create.addLine(
@@ -225,7 +225,7 @@ export default function visitComponent(
 
 	block.builders.init.addBlock(local.create);
 
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addLine(`${name}._fragment.create();`);

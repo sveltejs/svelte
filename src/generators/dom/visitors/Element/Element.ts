@@ -63,7 +63,7 @@ export default function visitElement(
 	if (state.parentNode) {
 		block.builders.mount.addLine(`@appendNode( ${name}, ${state.parentNode} );`);
 	} else {
-		block.builders.mount.addLine(`@insertNode( ${name}, ${block.target}, anchor );`);
+		block.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
 	}
 
 	// add CSS encapsulation attribute
@@ -97,7 +97,7 @@ export default function visitElement(
 			const updates: string[] = [];
 
 			if (childState.usesComponent) {
-				initialProps.push(`component: ${block.component}`);
+				initialProps.push(`component: #component`);
 			}
 
 			childState.allUsedContexts.forEach((contextName: string) => {

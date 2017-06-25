@@ -23,17 +23,17 @@ export default function addTransitions(
 		const fn = `@template.transitions.${intro.name}`;
 
 		block.builders.intro.addBlock(deindent`
-			${block.component}._renderHooks.push( function () {
+			#component._renderHooks.push( function () {
 				if ( !${name} ) ${name} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, true, null );
 				${name}.run( true, function () {
-					${block.component}.fire( 'intro.end', { node: ${state.name} });
+					#component.fire( 'intro.end', { node: ${state.name} });
 				});
 			});
 		`);
 
 		block.builders.outro.addBlock(deindent`
 			${name}.run( false, function () {
-				${block.component}.fire( 'outro.end', { node: ${state.name} });
+				#component.fire( 'outro.end', { node: ${state.name} });
 				if ( --#outros === 0 ) #outrocallback();
 				${name} = null;
 			});
@@ -58,10 +58,10 @@ export default function addTransitions(
 			}
 
 			block.builders.intro.addBlock(deindent`
-				${block.component}._renderHooks.push( function () {
+				#component._renderHooks.push( function () {
 					${introName} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, true, null );
 					${introName}.run( true, function () {
-						${block.component}.fire( 'intro.end', { node: ${state.name} });
+						#component.fire( 'intro.end', { node: ${state.name} });
 					});
 				});
 			`);
@@ -80,7 +80,7 @@ export default function addTransitions(
 			block.builders.outro.addBlock(deindent`
 				${outroName} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, false, null );
 				${outroName}.run( false, function () {
-					${block.component}.fire( 'outro.end', { node: ${state.name} });
+					#component.fire( 'outro.end', { node: ${state.name} });
 					if ( --#outros === 0 ) #outrocallback();
 				});
 			`);

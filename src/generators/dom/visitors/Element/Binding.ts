@@ -91,7 +91,7 @@ export default function visitBinding(
 
 		generator.hasComplexBindings = true;
 		block.builders.hydrate.addBlock(
-			`if ( !('${name}' in state) ) ${block.component}._bindings.push( ${handler} );`
+			`if ( !('${name}' in state) ) #component._bindings.push( ${handler} );`
 		);
 	} else if (attribute.name === 'group') {
 		// <input type='checkbox|radio' bind:group='selected'> special case
@@ -107,18 +107,18 @@ export default function visitBinding(
 			: `${state.parentNode}.__value === ${snippet}`;
 
 		block.builders.hydrate.addLine(
-			`${block.component}._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
+			`#component._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
 		);
 
 		block.builders.destroy.addBlock(
-			`${block.component}._bindingGroups[${bindingGroup}].splice( ${block.component}._bindingGroups[${bindingGroup}].indexOf( ${state.parentNode} ), 1 );`
+			`#component._bindingGroups[${bindingGroup}].splice( #component._bindingGroups[${bindingGroup}].indexOf( ${state.parentNode} ), 1 );`
 		);
 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	} else if (node.name === 'audio' || node.name === 'video') {
 		generator.hasComplexBindings = true;
 		block.builders.hydrate.addBlock(
-			`${block.component}._bindings.push( ${handler} );`
+			`#component._bindings.push( ${handler} );`
 		);
 
 		if (attribute.name === 'currentTime') {
@@ -221,7 +221,7 @@ function getBindingValue(
 	// <input type='checkbox' bind:group='foo'>
 	if (attribute.name === 'group') {
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue( ${block.component}._bindingGroups[${bindingGroup}] )`;
+			return `@getBindingGroupValue( #component._bindingGroups[${bindingGroup}] )`;
 		}
 
 		return `${state.parentNode}.__value`;
