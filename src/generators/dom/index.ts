@@ -78,13 +78,10 @@ export default function dom(
 		visit(generator, block, state, node);
 	});
 
-	const builders = {
-		main: new CodeBuilder(),
-		_set: new CodeBuilder(),
-	};
+	const builder = new CodeBuilder();
 
 	if (computations.length) {
-		const builder = new CodeBuilder();
+		const computationBuilder = new CodeBuilder();
 
 		computations.forEach(({ key, deps }) => {
 			if (generator.readonly.has(key)) {
@@ -106,19 +103,19 @@ export default function dom(
 				'template'
 			)}.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`;
 
-			builder.addConditionalLine(condition, statement);
+			computationBuilder.addConditionalLine(condition, statement);
 		});
 
-		builders.main.addBlock(deindent`
+		builder.addBlock(deindent`
 			function ${generator.alias(
 				'recompute'
 			)} ( state, newState, oldState, isInitial ) {
-				${builder}
+				${computationBuilder}
 			}
 		`);
 	}
 
-	builders._set.addBlock(deindent`
+	const _set = deindent`
 		${options.dev &&
 			deindent`
 			if ( typeof newState !== 'object' ) {
@@ -144,16 +141,16 @@ export default function dom(
 			`while ( this._bindings.length ) this._bindings.pop()();`}
 		${(generator.hasComponents || generator.hasIntroTransitions) &&
 			`this._flush();`}
-	`);
+	`;
 
 	if (hasJs) {
-		builders.main.addBlock(
+		builder.addBlock(
 			`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`
 		);
 	}
 
 	if (generator.css && options.css !== false) {
-		builders.main.addBlock(deindent`
+		builder.addBlock(deindent`
 			function ${generator.alias('add_css')} () {
 				var style = @createElement( 'style' );
 				style.id = ${JSON.stringify(generator.cssId + '-style')};
@@ -164,7 +161,7 @@ export default function dom(
 	}
 
 	generator.blocks.forEach(block => {
-		builders.main.addBlock(block.render());
+		builder.addBlock(block.render());
 	});
 
 	const sharedPath = options.shared === true
@@ -186,7 +183,7 @@ export default function dom(
 		}`;
 
 	// TODO deprecate component.teardown()
-	builders.main.addBlock(deindent`
+	builder.addBlock(deindent`
 		function ${name} ( options ) {
 			options = options || {};
 			${options.dev &&
@@ -269,7 +266,7 @@ export default function dom(
 		@assign( ${prototypeBase}, ${proto});
 
 		${name}.prototype._set = function _set ( newState ) {
-			${builders._set}
+			${_set}
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
@@ -286,7 +283,7 @@ export default function dom(
 		};
 	`);
 
-	let result = builders.main.toString()
+	let result = builder.toString()
 		.replace(helperPattern, (match: string, name: string) => generator.helper(name));
 
 	if (sharedPath) {
