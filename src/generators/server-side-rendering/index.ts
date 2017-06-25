@@ -3,6 +3,7 @@ import Generator from '../Generator';
 import Block from './Block';
 import visit from './visit';
 import stringify from '../../utils/stringify';
+import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
 
 export class SsrGenerator extends Generator {
@@ -20,6 +21,34 @@ export class SsrGenerator extends Generator {
 		this.bindings = [];
 		this.renderCode = '';
 		this.elementDepth = 0;
+
+		// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
+		const { templateProperties, defaultExport } = this;
+
+		if (templateProperties.oncreate)
+			removeNode(
+				this.code,
+				defaultExport.declaration,
+				templateProperties.oncreate
+			);
+		if (templateProperties.ondestroy)
+			removeNode(
+				this.code,
+				defaultExport.declaration,
+				templateProperties.ondestroy
+			);
+		if (templateProperties.methods)
+			removeNode(
+				this.code,
+				defaultExport.declaration,
+				templateProperties.methods
+			);
+		if (templateProperties.events)
+			removeNode(
+				this.code,
+				defaultExport.declaration,
+				templateProperties.events
+			);
 	}
 
 	append(code: string) {
@@ -33,11 +62,10 @@ export default function ssr(
 	options: CompileOptions
 ) {
 	const format = options.format || 'cjs';
-	const name = options.name || 'SvelteComponent';
 
-	const generator = new SsrGenerator(parsed, source, name, options);
+	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', options);
 
-	const { computations, hasJs, templateProperties } = generator.parseJs(true);
+	const { computations, name, hasJs, templateProperties } = generator;
 
 	// create main render() function
 	const mainBlock = new Block({

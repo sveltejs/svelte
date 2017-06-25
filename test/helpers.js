@@ -163,7 +163,7 @@ export function addLineNumbers(code) {
 		.join('\n');
 }
 
-function capitalize(str) {
+function capitalise(str) {
 	return str[0].toUpperCase() + str.slice(1);
 }
 
@@ -173,7 +173,8 @@ export function showOutput(cwd, options = {}) {
 		const { code } = svelte.compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
-				name: capitalize(file.slice(0, -path.extname(file).length))
+				filename: file,
+				name: capitalise(path.basename(file).replace(/\.html$/, ''))
 			})
 		);
 

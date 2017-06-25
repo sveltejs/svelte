@@ -48,16 +48,16 @@ export default function dom(
 	options: CompileOptions
 ) {
 	const format = options.format || 'es';
-	const name = options.name || 'SvelteComponent';
 
-	const generator = new DomGenerator(parsed, source, name, options);
+	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', options);
 
 	const {
 		computations,
 		hasJs,
+		name,
 		templateProperties,
 		namespace,
-	} = generator.parseJs();
+	} = generator;
 
 	const { block, state } = preprocess(generator, namespace, parsed.html);
 
