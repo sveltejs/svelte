@@ -4,10 +4,10 @@
 		100% { color: blue; }
 	}
 
-	[svelte-2486527405].animated, [svelte-2486527405] .animated {
+	.animated[svelte-90785995] {
 		animation: why 2s;
 	}
 
-	[svelte-2486527405].also-animated, [svelte-2486527405] .also-animated {
+	.also-animated[svelte-90785995] {
 		animation: not-defined-here 2s;
 	}

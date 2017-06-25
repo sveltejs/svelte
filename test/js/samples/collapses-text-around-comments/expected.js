@@ -10,8 +10,8 @@ var template = (function () {
 
 function add_css () {
 	var style = createElement( 'style' );
-	style.id = "svelte-3842350206-style";
-	style.textContent = "\n\tp[svelte-3842350206], [svelte-3842350206] p {\n\t\tcolor: red;\n\t}\n";
+	style.id = "svelte-3590263702-style";
+	style.textContent = "\n\tp[svelte-3590263702], [svelte-3590263702] p {\n\t\tcolor: red;\n\t}\n";
 	appendNode( style, document.head );
 }
 
@@ -26,7 +26,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			setAttribute( p, 'svelte-3842350206', '' );
+			setAttribute( p, 'svelte-3590263702', '' );
 		},
 
 		mount: function ( target, anchor ) {
@@ -63,7 +63,7 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	if ( !document.getElementById( "svelte-3842350206-style" ) ) add_css();
+	if ( !document.getElementById( "svelte-3590263702-style" ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
 
