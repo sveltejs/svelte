@@ -4,7 +4,6 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from './utils/hash';
-import stripWhitespace from './utils/stripWhitespace';
 import { Node, Parsed } from '../interfaces';
 import CompileError from '../utils/CompileError';
 
