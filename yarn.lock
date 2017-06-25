@@ -2578,9 +2578,9 @@ rollup-watch@^3.2.2:
   dependencies:
     require-relative "0.8.7"
 
-rollup@^0.39.0:
-  version "0.39.2"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.39.2.tgz#858cf3020027cf74e0c5d7faa1c18275faf00df4"
+rollup@^0.43.0:
+  version "0.43.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.43.0.tgz#b36bdb75fa5e0823b6de8aee18ff7b5655520543"
   dependencies:
     source-map-support "^0.4.0"
 
