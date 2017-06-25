@@ -34,7 +34,7 @@ export default function addTransitions(
 		block.builders.outro.addBlock(deindent`
 			${name}.run( false, function () {
 				${block.component}.fire( 'outro.end', { node: ${state.name} });
-				if ( --${block.alias('outros')} === 0 ) ${block.alias('outrocallback')}();
+				if ( --#outros === 0 ) #outrocallback();
 				${name} = null;
 			});
 		`);
@@ -81,7 +81,7 @@ export default function addTransitions(
 				${outroName} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, false, null );
 				${outroName}.run( false, function () {
 					${block.component}.fire( 'outro.end', { node: ${state.name} });
-					if ( --${block.alias('outros')} === 0 ) ${block.alias('outrocallback')}();
+					if ( --#outros === 0 ) #outrocallback();
 				});
 			`);
 		}

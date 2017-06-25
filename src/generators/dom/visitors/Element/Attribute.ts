@@ -1,5 +1,6 @@
 import attributeLookup from './lookup';
 import deindent from '../../../../utils/deindent';
+import stringify from '../../../../utils/stringify';
 import getStaticAttributeValue from './getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -57,7 +58,7 @@ export default function visitAttribute(
 				attribute.value
 					.map((chunk: Node) => {
 						if (chunk.type === 'Text') {
-							return JSON.stringify(chunk.data);
+							return stringify(chunk.data);
 						} else {
 							const { snippet } = block.contextualise(chunk.expression);
 							return `( ${snippet} )`;
@@ -127,7 +128,7 @@ export default function visitAttribute(
 			? 'true'
 			: attribute.value.length === 0
 				? `''`
-				: JSON.stringify(attribute.value[0].data);
+				: stringify(attribute.value[0].data);
 
 		const statement = propertyName
 			? `${state.parentNode}.${propertyName} = ${value};`

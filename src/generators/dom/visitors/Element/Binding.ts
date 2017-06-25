@@ -57,7 +57,7 @@ export default function visitBinding(
 		value,
 	});
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
-	const lock = block.alias(`${state.parentNode}_updating`);
+	const lock = `#${state.parentNode}_updating`;
 	let updateCondition = `!${lock}`;
 
 	block.addVariable(lock, 'false');
@@ -69,7 +69,6 @@ export default function visitBinding(
 		}
 
 		const value = block.getUniqueName('value');
-		const i = block.alias('i');
 		const option = block.getUniqueName('option');
 
 		const ifStatement = isMultipleSelect
@@ -83,8 +82,8 @@ export default function visitBinding(
 
 		updateElement = deindent`
 			var ${value} = ${snippet};
-			for ( var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1 ) {
-				var ${option} = ${state.parentNode}.options[${i}];
+			for ( var #i = 0; #i < ${state.parentNode}.options.length; #i += 1 ) {
+				var ${option} = ${state.parentNode}.options[#i];
 
 				${ifStatement}
 			}

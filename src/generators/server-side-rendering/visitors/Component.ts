@@ -4,6 +4,7 @@ import { SsrGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
 import getObject from '../../../utils/getObject';
+import stringify from '../../../utils/stringify';
 import getTailSnippet from '../../../utils/getTailSnippet';
 
 export default function visitComponent(
@@ -11,7 +12,7 @@ export default function visitComponent(
 	block: Block,
 	node: Node
 ) {
-	function stringify(chunk: Node) {
+	function stringifyAttribute(chunk: Node) {
 		if (chunk.type === 'Text') return chunk.data;
 		if (chunk.type === 'MustacheTag') {
 			const { snippet } = block.contextualise(chunk.expression);
@@ -41,13 +42,13 @@ export default function visitComponent(
 			} else if (attribute.value.length === 1) {
 				const chunk = attribute.value[0];
 				if (chunk.type === 'Text') {
-					value = isNaN(chunk.data) ? JSON.stringify(chunk.data) : chunk.data;
+					value = isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
 				} else {
 					const { snippet } = block.contextualise(chunk.expression);
 					value = snippet;
 				}
 			} else {
-				value = '`' + attribute.value.map(stringify).join('') + '`';
+				value = '`' + attribute.value.map(stringifyAttribute).join('') + '`';
 			}
 
 			return `${attribute.name}: ${value}`;

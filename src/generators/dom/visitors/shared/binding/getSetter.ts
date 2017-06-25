@@ -33,8 +33,6 @@ export default function getSetter({
 	}
 
 	if (attribute.value.type === 'MemberExpression') {
-		const alias = block.alias(name);
-
 		return deindent`
 			var state = ${block.component}.get();
 			${snippet} = ${value};
