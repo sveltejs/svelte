@@ -4,6 +4,7 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from './utils/hash';
+import stripWhitespace from './utils/stripWhitespace';
 import { Node, Parsed } from '../interfaces';
 import CompileError from '../utils/CompileError';
 
@@ -77,39 +78,9 @@ export class Parser {
 		}
 
 		// trim unnecessary whitespace
-		while (this.html.children.length) {
-			const firstChild = this.html.children[0];
-			this.html.start = firstChild.start;
-
-			if (firstChild.type !== 'Text') break;
-
-			const length = firstChild.data.length;
-			firstChild.data = trimStart(firstChild.data);
-
-			if (firstChild.data === '') {
-				this.html.children.shift();
-			} else {
-				this.html.start += length - firstChild.data.length;
-				break;
-			}
-		}
-
-		while (this.html.children.length) {
-			const lastChild = this.html.children[this.html.children.length - 1];
-			this.html.end = lastChild.end;
-
-			if (lastChild.type !== 'Text') break;
-
-			const length = lastChild.data.length;
-			lastChild.data = trimEnd(lastChild.data);
-
-			if (lastChild.data === '') {
-				this.html.children.pop();
-			} else {
-				this.html.end -= length - lastChild.data.length;
-				break;
-			}
-		}
+		// stripWhitespace(this.html.children);
+		// this.html.start = this.html.children[0] && this.html.children.start;
+		// this.html.end = this.html.children[this.html.children.length] && this.html.children[this.html.children.length].end;
 	}
 
 	current() {

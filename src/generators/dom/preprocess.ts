@@ -34,7 +34,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -48,7 +49,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -59,7 +61,7 @@ const preprocessors = {
 		node._state = getChildState(state, { basename, name });
 	},
 
-	Text: (generator: DomGenerator, block: Block, state: State, node: Node) => {
+	Text: (generator: DomGenerator, block: Block, state: State, node: Node, stripWhitespace: boolean) => {
 		node._state = getChildState(state);
 
 		if (!/\S/.test(node.data)) {
@@ -75,7 +77,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		const blocks: Block[] = [];
 		let dynamic = false;
@@ -93,7 +96,7 @@ const preprocessors = {
 			node._state = getChildState(state);
 
 			blocks.push(node._block);
-			preprocessChildren(generator, node._block, node._state, node);
+			preprocessChildren(generator, node._block, node._state, node, stripWhitespace);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -117,7 +120,8 @@ const preprocessors = {
 					generator,
 					node.else._block,
 					node.else._state,
-					node.else
+					node.else,
+					stripWhitespace
 				);
 
 				if (node.else._block.dependencies.size > 0) {
@@ -142,7 +146,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -189,7 +194,7 @@ const preprocessors = {
 		});
 
 		generator.blocks.push(node._block);
-		preprocessChildren(generator, node._block, node._state, node);
+		preprocessChildren(generator, node._block, node._state, node, stripWhitespace);
 		block.addDependencies(node._block.dependencies);
 		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
@@ -205,7 +210,8 @@ const preprocessors = {
 				generator,
 				node.else._block,
 				node.else._state,
-				node.else
+				node.else,
+				stripWhitespace
 			);
 			node.else._block.hasUpdateMethod = node.else._block.dependencies.size > 0;
 		}
@@ -215,7 +221,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		node.attributes.forEach((attribute: Node) => {
 			if (attribute.type === 'Attribute' && attribute.value !== true) {
@@ -305,11 +312,12 @@ const preprocessors = {
 				});
 
 				generator.blocks.push(node._block);
-				preprocessChildren(generator, node._block, node._state, node);
+				preprocessChildren(generator, node._block, node._state, node, stripWhitespace);
 				block.addDependencies(node._block.dependencies);
 				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 			} else {
-				preprocessChildren(generator, block, node._state, node);
+				if (node.name === 'pre' || node.name === 'textarea') stripWhitespace = false;
+				preprocessChildren(generator, block, node._state, node, stripWhitespace);
 			}
 		}
 	},
@@ -320,7 +328,7 @@ function preprocessChildren(
 	block: Block,
 	state: State,
 	node: Node,
-	isTopLevel: boolean = false
+	stripWhitespace: boolean
 ) {
 	// glue text nodes together
 	const cleaned: Node[] = [];
@@ -333,32 +341,22 @@ function preprocessChildren(
 			lastChild.data += child.data;
 			lastChild.end = child.end;
 		} else {
-			cleaned.push(child);
+			if (child.type === 'Text' && stripWhitespace && cleaned.length === 0) {
+				child.data = trimStart(child.data);
+				if (child.data) cleaned.push(child);
+			} else {
+				cleaned.push(child);
+			}
 		}
 
 		lastChild = child;
 	});
 
-	if (isTopLevel) {
-		// trim leading and trailing whitespace from the top level
-		const firstChild = cleaned[0];
-		if (firstChild && firstChild.type === 'Text') {
-			firstChild.data = trimStart(firstChild.data);
-			if (!firstChild.data) cleaned.shift();
-		}
-
-		const lastChild = cleaned[cleaned.length - 1];
-		if (lastChild && lastChild.type === 'Text') {
-			lastChild.data = trimEnd(lastChild.data);
-			if (!lastChild.data) cleaned.pop();
-		}
-	}
-
 	lastChild = null;
 
 	cleaned.forEach((child: Node) => {
-		const preprocess = preprocessors[child.type];
-		if (preprocess) preprocess(generator, block, state, child);
+		const preprocessor = preprocessors[child.type];
+		if (preprocessor) preprocessor(generator, block, state, child, stripWhitespace);
 
 		if (lastChild) {
 			lastChild.next = child;
@@ -367,6 +365,17 @@ function preprocessChildren(
 
 		lastChild = child;
 	});
+
+	if (lastChild) {
+		if (stripWhitespace && lastChild.type === 'Text') {
+			lastChild.data = trimEnd(lastChild.data);
+			if (!lastChild.data) {
+				cleaned.pop();
+				lastChild = cleaned[cleaned.length - 1];
+				lastChild.next = null;
+			}
+		}
+	}
 
 	if (lastChild) {
 		lastChild.needsAnchor = !state.parentNode;
