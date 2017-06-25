@@ -247,6 +247,7 @@ export default function dom(
 						nodes.forEach( ${generator.helper('detachNode')} );
 					` :
 					deindent`
+						${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
 						this._fragment.create();
 					`}
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );

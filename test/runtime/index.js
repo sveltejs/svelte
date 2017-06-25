@@ -230,4 +230,23 @@ describe("runtime", () => {
 			new SvelteComponent();
 		}, /'target' is a required option/);
 	});
+
+	it("fails if options.hydrate is true but the component is non-hydratable", () => {
+		const { code } = svelte.compile(`<div></div>`, {
+			format: "iife",
+			name: "SvelteComponent",
+			dev: true
+		});
+
+		const SvelteComponent = eval(
+			`(function () { ${code}; return SvelteComponent; }())`
+		);
+
+		assert.throws(() => {
+			new SvelteComponent({
+				target: {},
+				hydrate: true
+			});
+		}, /options.hydrate only works if the component was compiled with the `hydratable: true` option/);
+	});
 });
