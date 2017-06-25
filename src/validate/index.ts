@@ -78,7 +78,7 @@ export default function validate(
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
-			const error = new Error(`options.name must be a valid identifier`);
+			const error = new Error(`options.name must be a valid identifier (got '${name}')`);
 			throw error;
 		}
 
