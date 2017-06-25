@@ -36,8 +36,8 @@ export default function visitAttribute(
 	// namespaced attributes but I'm not sure that's applicable in
 	// HTML5?
 	const method = name.slice(0, 6) === 'xlink:'
-		? 'setXlinkAttribute'
-		: 'setAttribute';
+		? '@setXlinkAttribute'
+		: '@setAttribute';
 
 	const isDynamic =
 		(attribute.value !== true && attribute.value.length > 1) ||
@@ -112,13 +112,9 @@ export default function visitAttribute(
 			updater = `${state.parentNode}.${propertyName} = ${last};`;
 		} else {
 			block.builders.hydrate.addLine(
-				`${generator.helper(
-					method
-				)}( ${state.parentNode}, '${name}', ${last} = ${value} );`
+				`${method}( ${state.parentNode}, '${name}', ${last} = ${value} );`
 			);
-			updater = `${generator.helper(
-				method
-			)}( ${state.parentNode}, '${name}', ${last} );`;
+			updater = `${method}( ${state.parentNode}, '${name}', ${last} );`;
 		}
 
 		block.builders.update.addBlock(deindent`
@@ -135,9 +131,7 @@ export default function visitAttribute(
 
 		const statement = propertyName
 			? `${state.parentNode}.${propertyName} = ${value};`
-			: `${generator.helper(
-					method
-				)}( ${state.parentNode}, '${name}', ${value} );`;
+			: `${method}( ${state.parentNode}, '${name}', ${value} );`;
 
 		block.builders.hydrate.addLine(statement);
 

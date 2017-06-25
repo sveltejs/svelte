@@ -48,8 +48,8 @@ export default function visitEachBlock(
 	if (node.needsAnchor) {
 		block.addElement(
 			anchor,
-			`${generator.helper('createComment')}()`,
-			`${generator.helper('createComment')}()`,
+			`@createComment()`,
+			`@createComment()`,
 			state.parentNode,
 			true
 		);
@@ -162,8 +162,8 @@ function keyed(
 		node._block.first = node._block.getUniqueName('first');
 		node._block.addElement(
 			node._block.first,
-			`${generator.helper('createComment')}()`,
-			`${generator.helper('createComment')}()`,
+			`@createComment()`,
+			`@createComment()`,
 			null,
 			true
 		);
@@ -479,6 +479,6 @@ function unkeyed(
 	`);
 
 	block.builders.destroy.addBlock(
-		`${generator.helper('destroyEach')}( ${iterations}, false, 0 );`
+		`@destroyEach( ${iterations}, false, 0 );`
 	);
 }

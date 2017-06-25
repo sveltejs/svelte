@@ -116,8 +116,8 @@ export default function visitIfBlock(
 	if (node.needsAnchor) {
 		block.addElement(
 			anchor,
-			`${generator.helper('createComment')}()`,
-			`${generator.helper('createComment')}()`,
+			`@createComment()`,
+			`@createComment()`,
 			state.parentNode,
 			true
 		);

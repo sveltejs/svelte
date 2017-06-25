@@ -12,6 +12,8 @@ import preprocess from './preprocess';
 import Block from './Block';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
 
+const helperPattern = new RegExp(`@(${Object.keys(shared).join('|')})\\b`, 'g');
+
 export class DomGenerator extends Generator {
 	blocks: Block[];
 	uses: Set<string>;
@@ -83,7 +85,6 @@ export default function dom(
 
 	if (computations.length) {
 		const builder = new CodeBuilder();
-		const differs = generator.helper('differs');
 
 		computations.forEach(({ key, deps }) => {
 			if (generator.readonly.has(key)) {
@@ -98,7 +99,7 @@ export default function dom(
 			const condition = `isInitial || ${deps
 				.map(
 					dep =>
-						`( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )`
+						`( '${dep}' in newState && @differs( state.${dep}, oldState.${dep} ) )`
 				)
 				.join(' || ')}`;
 			const statement = `state.${key} = newState.${key} = ${generator.alias(
@@ -131,18 +132,14 @@ export default function dom(
 		`}
 
 		var oldState = this._state;
-		this._state = ${generator.helper('assign')}( {}, oldState, newState );
+		this._state = @assign( {}, oldState, newState );
 		${computations.length &&
 			`${generator.alias(
 				'recompute'
 			)}( this._state, newState, oldState, false )`}
-		${generator.helper(
-			'dispatchObservers'
-		)}( this, this._observers.pre, newState, oldState );
+		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
-		${generator.helper(
-			'dispatchObservers'
-		)}( this, this._observers.post, newState, oldState );
+		@dispatchObservers( this, this._observers.post, newState, oldState );
 		${generator.hasComplexBindings &&
 			`while ( this._bindings.length ) this._bindings.pop()();`}
 		${(generator.hasComponents || generator.hasIntroTransitions) &&
@@ -158,10 +155,10 @@ export default function dom(
 	if (generator.css && options.css !== false) {
 		builders.main.addBlock(deindent`
 			function ${generator.alias('add_css')} () {
-				var style = ${generator.helper('createElement')}( 'style' );
+				var style = @createElement( 'style' );
 				style.id = ${JSON.stringify(generator.cssId + '-style')};
 				style.textContent = ${JSON.stringify(generator.css)};
-				${generator.helper('appendNode')}( style, document.head );
+				@appendNode( style, document.head );
 			}
 		`);
 	}
@@ -180,7 +177,7 @@ export default function dom(
 			? `, ${generator.alias('template')}.methods`
 			: '');
 	const proto = sharedPath
-		? `${generator.helper('proto')} `
+		? `@proto `
 		: deindent`
 		{
 			${['get', 'fire', 'observe', 'on', 'set', '_flush']
@@ -196,7 +193,7 @@ export default function dom(
 				`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
 			${generator.usesRefs && `this.refs = {};`}
 			this._state = ${templateProperties.data
-				? `${generator.helper('assign')}( ${generator.alias(
+				? `@assign( ${generator.alias(
 						'template'
 					)}.data(), options.data )`
 				: `options.data || {}`};
@@ -242,9 +239,9 @@ export default function dom(
 			if ( options.target ) {
 				${generator.hydratable ?
 					deindent`
-						var nodes = ${generator.helper('children')}( options.target );
+						var nodes = @children( options.target );
 						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
-						nodes.forEach( ${generator.helper('detachNode')} );
+						nodes.forEach( @detachNode );
 					` :
 					deindent`
 						this._fragment.create();
@@ -269,7 +266,7 @@ export default function dom(
 			`}
 		}
 
-		${generator.helper('assign')}( ${prototypeBase}, ${proto});
+		@assign( ${prototypeBase}, ${proto});
 
 		${name}.prototype._set = function _set ( newState ) {
 			${builders._set}
@@ -289,6 +286,9 @@ export default function dom(
 		};
 	`);
 
+	let result = builders.main.toString()
+		.replace(helperPattern, (match: string, name: string) => generator.helper(name));
+
 	if (sharedPath) {
 		if (format !== 'es') {
 			throw new Error(
@@ -302,9 +302,7 @@ export default function dom(
 				: name;
 		});
 
-		builders.main.addLineAtStart(
-			`import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};`
-		);
+		result = `import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};\n\n` + result;
 	} else {
 		generator.uses.forEach(key => {
 			const str = shared[key];
@@ -343,22 +341,20 @@ export default function dom(
 				// special case
 				const global = `_svelteTransitionManager`;
 
-				builders.main.addBlock(
-					`var ${generator.alias(
-						'transitionManager'
-					)} = window.${global} || ( window.${global} = ${code});`
-				);
+				result += `\n\nvar ${generator.alias(
+					'transitionManager'
+				)} = window.${global} || ( window.${global} = ${code});`;
 			} else {
 				const alias = generator.alias(expression.id.name);
 				if (alias !== expression.id.name)
 					code.overwrite(expression.id.start, expression.id.end, alias);
 
-				builders.main.addBlock(code.toString());
+				result += `\n\n${code}`;
 			}
 		});
 	}
 
-	return generator.generate(builders.main.toString(), options, {
+	return generator.generate(result, options, {
 		name,
 		format,
 	});

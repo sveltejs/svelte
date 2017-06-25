@@ -2,6 +2,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
+import shared from './shared';
 
 export interface BlockOptions {
 	name: string;
@@ -140,7 +141,7 @@ export default class Block {
 
 		if (isToplevel) {
 			this.builders.unmount.addLine(
-				`${this.generator.helper('detachNode')}( ${name} );`
+				`@detachNode( ${name} );`
 			);
 		}
 	}
@@ -187,12 +188,11 @@ export default class Block {
 	mount(name: string, parentNode: string) {
 		if (parentNode) {
 			this.builders.mount.addLine(
-				`${this.generator.helper('appendNode')}( ${name}, ${parentNode} );`
+				`@appendNode( ${name}, ${parentNode} );`
 			);
 		} else {
 			this.builders.mount.addLine(
-				`${this.generator.helper('insertNode')}( ${name}, ${this
-					.target}, anchor );`
+				`@insertNode( ${name}, ${this.target}, anchor );`
 			);
 		}
 	}
@@ -233,7 +233,7 @@ export default class Block {
 		}
 
 		if (this.builders.create.isEmpty()) {
-			properties.addBlock(`create: ${this.generator.helper('noop')},`);
+			properties.addBlock(`create: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				create: function () {
@@ -245,7 +245,7 @@ export default class Block {
 
 		if (this.generator.hydratable) {
 			if (this.builders.claim.isEmpty()) {
-				properties.addBlock(`claim: ${this.generator.helper('noop')},`);
+				properties.addBlock(`claim: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					claim: function ( nodes ) {
@@ -265,7 +265,7 @@ export default class Block {
 		}
 
 		if (this.builders.mount.isEmpty()) {
-			properties.addBlock(`mount: ${this.generator.helper('noop')},`);
+			properties.addBlock(`mount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				mount: function ( ${this.target}, anchor ) {
@@ -276,7 +276,7 @@ export default class Block {
 
 		if (this.hasUpdateMethod) {
 			if (this.builders.update.isEmpty()) {
-				properties.addBlock(`update: ${this.generator.helper('noop')},`);
+				properties.addBlock(`update: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					update: function ( changed, ${this.params.join(', ')} ) {
@@ -331,7 +331,7 @@ export default class Block {
 		}
 
 		if (this.builders.unmount.isEmpty()) {
-			properties.addBlock(`unmount: ${this.generator.helper('noop')},`);
+			properties.addBlock(`unmount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				unmount: function () {
@@ -341,7 +341,7 @@ export default class Block {
 		}
 
 		if (this.builders.destroy.isEmpty()) {
-			properties.addBlock(`destroy: ${this.generator.helper('noop')}`);
+			properties.addBlock(`destroy: @noop`);
 		} else {
 			properties.addBlock(deindent`
 				destroy: function () {
