@@ -90,12 +90,8 @@ describe("ssr", () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
 			glob.sync('**/*.html', { cwd: `test/runtime/samples/${dir}` }).forEach(file => {
-				try {
-					const resolved = require.resolve(`../runtime/samples/${dir}/${file}`);
-					delete require.cache[resolved];
-				} catch (e) {
-					// do nothing (probably a directory)
-				}
+				const resolved = require.resolve(`../runtime/samples/${dir}/${file}`);
+				delete require.cache[resolved];
 			});
 
 			const component = require(`../runtime/samples/${dir}/main.html`);
