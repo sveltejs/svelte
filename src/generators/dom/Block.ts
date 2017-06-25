@@ -128,14 +128,12 @@ export default class Block {
 
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
-		this.builders.claim.addLine(`${name} = ${claimStatement};`)
+		this.builders.claim.addLine(`${name} = ${claimStatement};`);
 
 		this.mount(name, parentNode);
 
 		if (isToplevel) {
-			this.builders.unmount.addLine(
-				`@detachNode( ${name} );`
-			);
+			this.builders.unmount.addLine(`@detachNode( ${name} );`);
 		}
 	}
 
@@ -180,13 +178,9 @@ export default class Block {
 
 	mount(name: string, parentNode: string) {
 		if (parentNode) {
-			this.builders.mount.addLine(
-				`@appendNode( ${name}, ${parentNode} );`
-			);
+			this.builders.mount.addLine(`@appendNode( ${name}, ${parentNode} );`);
 		} else {
-			this.builders.mount.addLine(
-				`@insertNode( ${name}, #target, anchor );`
-			);
+			this.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
 		}
 	}
 
@@ -222,7 +216,7 @@ export default class Block {
 
 		if (this.first) {
 			properties.addBlock(`first: null,`);
-			this.builders.hydrate.addLine( `this.first = ${this.first};` );
+			this.builders.hydrate.addLine(`this.first = ${this.first};`);
 		}
 
 		if (this.builders.create.isEmpty()) {
@@ -347,11 +341,13 @@ export default class Block {
 			function ${this.name} ( ${this.params.join(', ')}, #component${this.key
 			? `, ${localKey}`
 			: ''} ) {
-				${this.variables.size > 0 && (
-					`var ${Array.from(this.variables.keys()).map(key => {
-						const init = this.variables.get(key);
-						return init !== undefined ? `${key} = ${init}` : key;
-					}).join(', ')};`)}
+				${this.variables.size > 0 &&
+					`var ${Array.from(this.variables.keys())
+						.map(key => {
+							const init = this.variables.get(key);
+							return init !== undefined ? `${key} = ${init}` : key;
+						})
+						.join(', ')};`}
 
 				${!this.builders.init.isEmpty() && this.builders.init}
 

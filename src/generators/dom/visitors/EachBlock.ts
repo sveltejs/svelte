@@ -70,7 +70,8 @@ export default function visitEachBlock(
 
 		block.builders.mount.addBlock(deindent`
 			if ( ${each_block_else} ) {
-				${each_block_else}.${mountOrIntro}( ${state.parentNode || '#target'}, null );
+				${each_block_else}.${mountOrIntro}( ${state.parentNode ||
+			'#target'}, null );
 			}
 		`);
 
@@ -474,7 +475,5 @@ function unkeyed(
 		}
 	`);
 
-	block.builders.destroy.addBlock(
-		`@destroyEach( ${iterations}, false, 0 );`
-	);
+	block.builders.destroy.addBlock(`@destroyEach( ${iterations}, false, 0 );`);
 }

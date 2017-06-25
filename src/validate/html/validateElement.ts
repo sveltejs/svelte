@@ -146,7 +146,10 @@ function checkTypeAttribute(validator: Validator, node: Node) {
 	}
 
 	if (attribute.value.length > 1 || attribute.value[0].type !== 'Text') {
-		validator.error(`'type' attribute cannot be dynamic if input uses two-way binding`, attribute.start);
+		validator.error(
+			`'type' attribute cannot be dynamic if input uses two-way binding`,
+			attribute.start
+		);
 	}
 
 	return attribute.value[0].data;

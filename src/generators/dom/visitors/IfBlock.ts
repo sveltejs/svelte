@@ -105,9 +105,7 @@ export default function visitIfBlock(
 		simple(generator, block, state, node, branches[0], dynamic, vars);
 	}
 
-	block.builders.create.addLine(
-		`${if_name}${name}.create();`
-	);
+	block.builders.create.addLine(`${if_name}${name}.create();`);
 
 	block.builders.claim.addLine(
 		`${if_name}${name}.claim( ${state.parentNodes} );`
@@ -254,12 +252,12 @@ function compound(
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
-		${hasElse ?
-			deindent`
+		${hasElse
+			? deindent`
 				${name}.unmount();
 				${name}.destroy();
-			` :
-			deindent`
+			`
+			: deindent`
 				if ( ${name} ) {
 					${name}.unmount();
 					${name}.destroy();
@@ -285,13 +283,9 @@ function compound(
 		`);
 	}
 
-	block.builders.unmount.addLine(
-		`${if_name}${name}.unmount();`
-	);
+	block.builders.unmount.addLine(`${if_name}${name}.unmount();`);
 
-	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy();`
-	);
+	block.builders.destroy.addLine(`${if_name}${name}.destroy();`);
 }
 
 // if any of the siblings have outros, we need to keep references to the blocks

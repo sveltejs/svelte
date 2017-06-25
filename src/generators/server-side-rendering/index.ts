@@ -59,9 +59,7 @@ export default function ssr(
 		${name}.filename = ${stringify(options.filename)};
 
 		${name}.data = function () {
-			return ${templateProperties.data
-				? `@template.data()`
-				: `{}`};
+			return ${templateProperties.data ? `@template.data()` : `{}`};
 		};
 
 		${name}.render = function ( state, options ) {
@@ -71,7 +69,9 @@ export default function ssr(
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = @template.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`
+					`state.${key} = @template.computed.${key}( ${deps
+						.map(dep => `state.${dep}`)
+						.join(', ')} );`
 			)}
 
 			${generator.bindings.length &&

@@ -14,7 +14,9 @@ export default function visitText(
 	block.addElement(
 		node._state.name,
 		`@createText( ${stringify(node.data)} )`,
-		generator.hydratable ? `@claimText( ${state.parentNodes}, ${stringify(node.data)} )` : '',
+		generator.hydratable
+			? `@claimText( ${state.parentNodes}, ${stringify(node.data)} )`
+			: '',
 		state.parentNode,
 		node.usedAsAnchor
 	);
