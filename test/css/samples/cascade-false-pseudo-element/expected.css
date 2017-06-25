@@ -1,12 +1,12 @@
 
-	span[svelte-583610229]::after {
+	span[svelte-2146001331]::after {
 		content: 'i am a pseudo-element';
 	}
 
-	span[svelte-583610229]:first-child {
+	span[svelte-2146001331]:first-child {
 		color: red;
 	}
 
-	span[svelte-583610229]:last-child::after {
+	span[svelte-2146001331]:last-child::after {
 		color: blue;
 	}
