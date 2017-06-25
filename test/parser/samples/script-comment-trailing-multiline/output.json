@@ -1,4 +1,5 @@
 {
+	"hash": 1378757574,
 	"html": {
 		"start": 0,
 		"end": 24,
@@ -22,9 +23,9 @@
 						"end": 18,
 						"type": "MustacheTag",
 						"expression": {
+							"type": "Identifier",
 							"start": 12,
 							"end": 16,
-							"type": "Identifier",
 							"name": "name"
 						}
 					},
@@ -35,6 +36,12 @@
 						"data": "!"
 					}
 				]
+			},
+			{
+				"start": 24,
+				"end": 26,
+				"type": "Text",
+				"data": "\n\n"
 			}
 		]
 	},
@@ -49,70 +56,70 @@
 			"end": 134,
 			"body": [
 				{
+					"type": "ExportDefaultDeclaration",
+					"start": 36,
+					"end": 95,
 					"declaration": {
+						"type": "ObjectExpression",
 						"start": 51,
 						"end": 94,
-						"type": "ObjectExpression",
 						"properties": [
 							{
+								"type": "Property",
 								"start": 55,
 								"end": 91,
-								"type": "Property",
-								"computed": false,
-								"key": {
-									"start": 55,
-									"end": 59,
-									"type": "Identifier",
-									"name": "data"
-								},
-								"kind": "init",
 								"method": false,
 								"shorthand": false,
+								"computed": false,
+								"key": {
+									"type": "Identifier",
+									"start": 55,
+									"end": 59,
+									"name": "data"
+								},
 								"value": {
+									"type": "ArrowFunctionExpression",
 									"start": 61,
 									"end": 91,
-									"type": "ArrowFunctionExpression",
+									"id": null,
+									"generator": false,
+									"expression": true,
 									"async": false,
+									"params": [],
 									"body": {
+										"type": "ObjectExpression",
 										"start": 68,
 										"end": 90,
-										"type": "ObjectExpression",
 										"properties": [
 											{
+												"type": "Property",
 												"start": 73,
 												"end": 86,
-												"type": "Property",
-												"computed": false,
-												"key": {
-													"start": 73,
-													"end": 77,
-													"type": "Identifier",
-													"name": "name"
-												},
-												"kind": "init",
 												"method": false,
 												"shorthand": false,
+												"computed": false,
+												"key": {
+													"type": "Identifier",
+													"start": 73,
+													"end": 77,
+													"name": "name"
+												},
 												"value": {
+													"type": "Literal",
 													"start": 79,
 													"end": 86,
-													"type": "Literal",
-													"raw": "'world'",
-													"value": "world"
-												}
+													"value": "world",
+													"raw": "'world'"
+												},
+												"kind": "init"
 											}
 										]
-									},
-									"expression": true,
-									"generator": false,
-									"id": null,
-									"params": []
-								}
+									}
+								},
+								"kind": "init"
 							}
 						]
-					},
-					"end": 95,
-					"start": 36,
-					"type": "ExportDefaultDeclaration"
+					}
 				}
 			],
 			"sourceType": "module"
