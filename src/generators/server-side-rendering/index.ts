@@ -2,6 +2,7 @@ import deindent from '../../utils/deindent';
 import Generator from '../Generator';
 import Block from './Block';
 import visit from './visit';
+import stringify from '../../utils/stringify';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
 
 export class SsrGenerator extends Generator {
@@ -55,7 +56,7 @@ export default function ssr(
 
 		var ${name} = {};
 
-		${name}.filename = ${JSON.stringify(options.filename)};
+		${name}.filename = ${stringify(options.filename)};
 
 		${name}.data = function () {
 			return ${templateProperties.data
@@ -95,7 +96,7 @@ export default function ssr(
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${JSON.stringify(generator.css)},
+					css: ${stringify(generator.css)},
 					map: null // TODO
 				});
 			`}

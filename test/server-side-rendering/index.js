@@ -65,11 +65,16 @@ describe("ssr", () => {
 			fs.writeFileSync(`${dir}/_actual.html`, html);
 			if (css) fs.writeFileSync(`${dir}/_actual.css`, css);
 
-			assert.htmlEqual(html, expectedHtml);
-			assert.equal(
-				css.replace(/^\s+/gm, ""),
-				expectedCss.replace(/^\s+/gm, "")
-			);
+			try {
+				assert.htmlEqual(html, expectedHtml);
+				assert.equal(
+					css.replace(/^\s+/gm, ""),
+					expectedCss.replace(/^\s+/gm, "")
+				);
+			} catch (err) {
+				showOutput(dir, { generate: 'ssr' });
+				throw err;
+			}
 		});
 	});
 

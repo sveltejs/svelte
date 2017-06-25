@@ -4,6 +4,7 @@ import annotateWithScopes from '../../utils/annotateWithScopes';
 import isReference from '../../utils/isReference';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
+import stringify from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
@@ -135,7 +136,7 @@ export default function dom(
 			function @add_css () {
 				var style = @createElement( 'style' );
 				style.id = '${generator.cssId}-style';
-				style.textContent = ${JSON.stringify(generator.css)};
+				style.textContent = ${stringify(generator.css)};
 				@appendNode( style, document.head );
 			}
 		`);
@@ -199,9 +200,7 @@ export default function dom(
 			this._torndown = false;
 			${generator.css &&
 				options.css !== false &&
-				`if ( !document.getElementById( ${JSON.stringify(
-					generator.cssId + '-style'
-				)} ) ) @add_css();`}
+				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
 				`this._renderHooks = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
@@ -280,7 +279,7 @@ export default function dom(
 				: name;
 		});
 
-		result = `import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};\n\n` + result;
+		result = `import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` + result;
 	} else {
 		usedHelpers.forEach(key => {
 			const str = shared[key];

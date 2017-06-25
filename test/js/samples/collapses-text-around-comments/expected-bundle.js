@@ -198,7 +198,7 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	if ( !document.getElementById( "svelte-3842350206-style" ) ) add_css();
+	if ( !document.getElementById( 'svelte-3842350206-style' ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
 
