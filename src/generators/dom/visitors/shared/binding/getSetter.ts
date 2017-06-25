@@ -25,10 +25,13 @@ export default function getSetter({
 			${computed && `var state = #component.get();`}
 			list[index]${tail} = ${value};
 
-			${computed ?
-				`#component._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });` :
-				`#component._set({ ${dependencies.map((prop: string) => `${prop}: #component.get( '${prop}' )`).join(', ')} });`
-			}
+			${computed
+				? `#component._set({ ${dependencies
+						.map((prop: string) => `${prop}: state.${prop}`)
+						.join(', ')} });`
+				: `#component._set({ ${dependencies
+						.map((prop: string) => `${prop}: #component.get( '${prop}' )`)
+						.join(', ')} });`}
 		`;
 	}
 
@@ -36,7 +39,9 @@ export default function getSetter({
 		return deindent`
 			var state = #component.get();
 			${snippet} = ${value};
-			#component._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });
+			#component._set({ ${dependencies
+				.map((prop: string) => `${prop}: state.${prop}`)
+				.join(', ')} });
 		`;
 	}
 

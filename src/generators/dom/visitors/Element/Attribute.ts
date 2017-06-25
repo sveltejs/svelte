@@ -81,7 +81,9 @@ export default function visitAttribute(
 			// annoying special case
 			const isMultipleSelect =
 				node.name === 'select' &&
-				node.attributes.find((attr: Node) => attr.name.toLowerCase() === 'multiple'); // TODO use getStaticAttributeValue
+				node.attributes.find(
+					(attr: Node) => attr.name.toLowerCase() === 'multiple'
+				); // TODO use getStaticAttributeValue
 			const i = block.getUniqueName('i');
 			const option = block.getUniqueName('option');
 

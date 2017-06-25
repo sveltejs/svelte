@@ -86,7 +86,9 @@ export default function dom(
 						`( '${dep}' in newState && @differs( state.${dep}, oldState.${dep} ) )`
 				)
 				.join(' || ')}`;
-			const statement = `state.${key} = newState.${key} = @template.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`;
+			const statement = `state.${key} = newState.${key} = @template.computed.${key}( ${deps
+				.map(dep => `state.${dep}`)
+				.join(', ')} );`;
 
 			computationBuilder.addConditionalLine(condition, statement);
 		});
@@ -113,7 +115,8 @@ export default function dom(
 
 		var oldState = this._state;
 		this._state = @assign( {}, oldState, newState );
-		${computations.length && `@recompute( this._state, newState, oldState, false )`}
+		${computations.length &&
+			`@recompute( this._state, newState, oldState, false )`}
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
@@ -124,9 +127,7 @@ export default function dom(
 	`;
 
 	if (hasJs) {
-		builder.addBlock(
-			`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`
-		);
+		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
 	}
 
 	if (generator.css && options.css !== false) {
@@ -150,9 +151,7 @@ export default function dom(
 
 	const prototypeBase =
 		`${name}.prototype` +
-		(templateProperties.methods
-			? `, @template.methods`
-			: '');
+		(templateProperties.methods ? `, @template.methods` : '');
 	const proto = sharedPath
 		? `@proto `
 		: deindent`
@@ -173,8 +172,7 @@ export default function dom(
 				? `@assign( @template.data(), options.data )`
 				: `options.data || {}`};
 			${generator.metaBindings}
-			${computations.length &&
-				`@recompute( this._state, this._state, {}, true );`}
+			${computations.length && `@recompute( this._state, this._state, {}, true );`}
 			${options.dev &&
 				Array.from(generator.expectedProperties).map(
 					prop =>
@@ -206,13 +204,13 @@ export default function dom(
 			this._fragment = @create_main_fragment( this._state, this );
 
 			if ( options.target ) {
-				${generator.hydratable ?
-					deindent`
+				${generator.hydratable
+					? deindent`
 						var nodes = @children( options.target );
 						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
 						nodes.forEach( @detachNode );
-					` :
-					deindent`
+					`
+					: deindent`
 						this._fragment.create();
 					`}
 				this._fragment.mount( options.target, null );
@@ -241,8 +239,7 @@ export default function dom(
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
 			this.fire( 'destroy' );
-			${templateProperties.ondestroy &&
-				`@template.ondestroy.call( this );`}
+			${templateProperties.ondestroy && `@template.ondestroy.call( this );`}
 
 			if ( detach !== false ) this._fragment.unmount();
 			this._fragment.destroy();
@@ -255,7 +252,8 @@ export default function dom(
 
 	const usedHelpers = new Set();
 
-	let result = builder.toString()
+	let result = builder
+		.toString()
 		.replace(/@(\w+)\b/g, (match: string, name: string) => {
 			if (name in shared) {
 				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
@@ -277,7 +275,9 @@ export default function dom(
 				: name;
 		});
 
-		result = `import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` + result;
+		result =
+			`import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` +
+			result;
 	} else {
 		usedHelpers.forEach(key => {
 			const str = shared[key];

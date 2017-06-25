@@ -63,7 +63,8 @@ export default function visitEventHandler(
 
 	// create the handler body
 	const handlerBody = deindent`
-		${state.usesComponent && `var ${block.alias('component')} = this._svelte.component;`}
+		${state.usesComponent &&
+			`var ${block.alias('component')} = this._svelte.component;`}
 		${declarations}
 		[✂${attribute.expression.start}-${attribute.expression.end}✂];
 	`;

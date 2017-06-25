@@ -51,17 +51,30 @@ export default function visitElement(
 	const isToplevel = !state.parentNode;
 
 	block.addVariable(name);
-	block.builders.create.addLine(`${name} = ${getRenderStatement(generator, childState.namespace, node.name)};`);
+	block.builders.create.addLine(
+		`${name} = ${getRenderStatement(
+			generator,
+			childState.namespace,
+			node.name
+		)};`
+	);
 
 	if (generator.hydratable) {
 		block.builders.claim.addBlock(deindent`
-			${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
+			${name} = ${getClaimStatement(
+			generator,
+			childState.namespace,
+			state.parentNodes,
+			node
+		)};
 			var ${childState.parentNodes} = @children( ${name} );
 		`);
 	}
 
 	if (state.parentNode) {
-		block.builders.mount.addLine(`@appendNode( ${name}, ${state.parentNode} );`);
+		block.builders.mount.addLine(
+			`@appendNode( ${name}, ${state.parentNode} );`
+		);
 	} else {
 		block.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
 	}
@@ -131,9 +144,7 @@ export default function visitElement(
 	if (isToplevel) {
 		// TODO we eventually need to consider what happens to elements
 		// that belong to the same outgroup as an outroing element...
-		block.builders.unmount.addLine(
-			`@detachNode( ${name} );`
-		);
+		block.builders.unmount.addLine(`@detachNode( ${name} );`);
 	}
 
 	if (node.name !== 'select') {
@@ -219,7 +230,9 @@ function getClaimStatement(
 
 	const name = namespace ? node.name : node.name.toUpperCase();
 
-	return `@claimElement( ${nodes}, '${name}', ${attributes ? `{ ${attributes} }` : `{}`}, ${namespace === namespaces.svg ? true : false} )`;
+	return `@claimElement( ${nodes}, '${name}', ${attributes
+		? `{ ${attributes} }`
+		: `{}`}, ${namespace === namespaces.svg ? true : false} )`;
 }
 
 function quoteProp(name: string) {

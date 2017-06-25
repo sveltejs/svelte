@@ -60,7 +60,9 @@ export default function visitComponent(
 					? getTailSnippet(binding.value)
 					: '';
 
-				const keypath = block.contexts.has(name) ? `${name}${tail}` : `state.${name}${tail}`;
+				const keypath = block.contexts.has(name)
+					? `${name}${tail}`
+					: `state.${name}${tail}`;
 				return `${binding.name}: ${keypath}`;
 			})
 		)

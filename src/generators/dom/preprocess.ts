@@ -12,7 +12,12 @@ function isElseIf(node: Node) {
 }
 
 function getChildState(parent: State, child = {}) {
-	return assign({}, parent, { name: null, parentNode: null, parentNodes: 'nodes' }, child || {});
+	return assign(
+		{},
+		parent,
+		{ name: null, parentNode: null, parentNodes: 'nodes' },
+		child || {}
+	);
 }
 
 // Whitespace inside one of these elements will not result in
@@ -225,7 +230,11 @@ const preprocessors = {
 						block.addDependencies(dependencies);
 
 						// special case — <option value='{{foo}}'> — see below
-						if (node.name === 'option' && attribute.name === 'value' && state.selectBindingDependencies) {
+						if (
+							node.name === 'option' &&
+							attribute.name === 'value' &&
+							state.selectBindingDependencies
+						) {
 							state.selectBindingDependencies.forEach(prop => {
 								dependencies.forEach((dependency: string) => {
 									generator.indirectDependencies.get(prop).add(dependency);
@@ -258,7 +267,9 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			const value = node.attributes.find((attribute: Node) => attribute.name === 'value');
+			const value = node.attributes.find(
+				(attribute: Node) => attribute.name === 'value'
+			);
 			if (value) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 				const dependencies = block.findDependencies(value.value);

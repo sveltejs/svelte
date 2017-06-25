@@ -28,9 +28,7 @@ export default function visitAttribute(
 
 		if (value.type === 'Text') {
 			// static attributes
-			const result = isNaN(value.data)
-				? stringify(value.data)
-				: value.data;
+			const result = isNaN(value.data) ? stringify(value.data) : value.data;
 			local.staticAttributes.push({
 				name: attribute.name,
 				value: result,

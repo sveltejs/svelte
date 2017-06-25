@@ -163,7 +163,7 @@ export default function visitWindow(
 
 		block.builders.init.addBlock(deindent`
 			#component.observe( '${bindings.scrollX ||
-			bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
+				bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
 				if ( ${lock} ) return;
 				window.scrollTo( ${isX ? 'x, window.scrollY' : 'window.scrollX, y'} );
 			});

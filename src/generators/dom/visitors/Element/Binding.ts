@@ -16,7 +16,9 @@ export default function visitBinding(
 	attribute: Node
 ) {
 	const { name } = getObject(attribute.value);
-	const { snippet, contexts, dependencies } = block.contextualise(attribute.value);
+	const { snippet, contexts, dependencies } = block.contextualise(
+		attribute.value
+	);
 
 	contexts.forEach(context => {
 		if (!~state.allUsedContexts.indexOf(context))
@@ -117,9 +119,7 @@ export default function visitBinding(
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	} else if (node.name === 'audio' || node.name === 'video') {
 		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(
-			`#component._bindings.push( ${handler} );`
-		);
+		block.builders.hydrate.addBlock(`#component._bindings.push( ${handler} );`);
 
 		if (attribute.name === 'currentTime') {
 			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
@@ -168,7 +168,8 @@ export default function visitBinding(
 	}
 
 	block.builders.destroy.addLine(
-		`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`);
+		`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`
+	);
 
 	if (attribute.name === 'paused') {
 		block.builders.create.addLine(
