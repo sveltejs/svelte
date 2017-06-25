@@ -1,9 +1,9 @@
 
-	@keyframes svelte-4112859982-why {
+	@keyframes svelte-2931302006-why {
 		0% { color: red; }
 		100% { color: blue; }
 	}
 
-	[svelte-4112859982].animated, [svelte-4112859982] .animated {
-		animation: svelte-4112859982-why 2s;
+	[svelte-2931302006].animated, [svelte-2931302006] .animated {
+		animation: svelte-2931302006-why 2s;
 	}
