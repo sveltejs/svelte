@@ -382,7 +382,7 @@ export default function preprocess(
 ) {
 	const block = new Block({
 		generator,
-		name: generator.alias('create_main_fragment'),
+		name: '@create_main_fragment',
 		key: null,
 
 		contexts: new Map(),

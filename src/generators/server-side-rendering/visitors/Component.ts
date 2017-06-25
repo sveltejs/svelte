@@ -68,7 +68,7 @@ export default function visitComponent(
 	const expression = node.name === ':Self'
 		? generator.name
 		: generator.importedComponents.get(node.name) ||
-				`${generator.alias('template')}.components.${node.name}`;
+				`@template.components.${node.name}`;
 
 	bindings.forEach(binding => {
 		block.addBinding(binding, expression);

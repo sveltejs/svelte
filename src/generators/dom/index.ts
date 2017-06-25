@@ -16,7 +16,6 @@ const helperPattern = new RegExp(`@(${Object.keys(shared).join('|')})\\b`, 'g');
 
 export class DomGenerator extends Generator {
 	blocks: Block[];
-	uses: Set<string>;
 	readonly: Set<string>;
 	metaBindings: string[];
 
@@ -34,7 +33,6 @@ export class DomGenerator extends Generator {
 	) {
 		super(parsed, source, name, options);
 		this.blocks = [];
-		this.uses = new Set();
 
 		this.readonly = new Set();
 
@@ -42,16 +40,6 @@ export class DomGenerator extends Generator {
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.metaBindings = [];
-	}
-
-	helper(name: string) {
-		if (this.options.dev && `${name}Dev` in shared) {
-			name = `${name}Dev`;
-		}
-
-		this.uses.add(name);
-
-		return this.alias(name);
 	}
 }
 
@@ -99,17 +87,13 @@ export default function dom(
 						`( '${dep}' in newState && @differs( state.${dep}, oldState.${dep} ) )`
 				)
 				.join(' || ')}`;
-			const statement = `state.${key} = newState.${key} = ${generator.alias(
-				'template'
-			)}.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`;
+			const statement = `state.${key} = newState.${key} = @template.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`;
 
 			computationBuilder.addConditionalLine(condition, statement);
 		});
 
 		builder.addBlock(deindent`
-			function ${generator.alias(
-				'recompute'
-			)} ( state, newState, oldState, isInitial ) {
+			function @recompute ( state, newState, oldState, isInitial ) {
 				${computationBuilder}
 			}
 		`);
@@ -130,10 +114,7 @@ export default function dom(
 
 		var oldState = this._state;
 		this._state = @assign( {}, oldState, newState );
-		${computations.length &&
-			`${generator.alias(
-				'recompute'
-			)}( this._state, newState, oldState, false )`}
+		${computations.length && `@recompute( this._state, newState, oldState, false )`}
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
@@ -151,9 +132,9 @@ export default function dom(
 
 	if (generator.css && options.css !== false) {
 		builder.addBlock(deindent`
-			function ${generator.alias('add_css')} () {
+			function @add_css () {
 				var style = @createElement( 'style' );
-				style.id = ${JSON.stringify(generator.cssId + '-style')};
+				style.id = '${generator.cssId}-style';
 				style.textContent = ${JSON.stringify(generator.css)};
 				@appendNode( style, document.head );
 			}
@@ -171,14 +152,14 @@ export default function dom(
 	const prototypeBase =
 		`${name}.prototype` +
 		(templateProperties.methods
-			? `, ${generator.alias('template')}.methods`
+			? `, @template.methods`
 			: '');
 	const proto = sharedPath
 		? `@proto `
 		: deindent`
 		{
 			${['get', 'fire', 'observe', 'on', 'set', '_flush']
-				.map(n => `${n}: ${generator.helper(n)}`)
+				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
 
@@ -190,15 +171,11 @@ export default function dom(
 				`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
 			${generator.usesRefs && `this.refs = {};`}
 			this._state = ${templateProperties.data
-				? `@assign( ${generator.alias(
-						'template'
-					)}.data(), options.data )`
+				? `@assign( @template.data(), options.data )`
 				: `options.data || {}`};
 			${generator.metaBindings}
 			${computations.length &&
-				`${generator.alias(
-					'recompute'
-				)}( this._state, this._state, {}, true );`}
+				`@recompute( this._state, this._state, {}, true );`}
 			${options.dev &&
 				Array.from(generator.expectedProperties).map(
 					prop =>
@@ -224,14 +201,12 @@ export default function dom(
 				options.css !== false &&
 				`if ( !document.getElementById( ${JSON.stringify(
 					generator.cssId + '-style'
-				)} ) ) ${generator.alias('add_css')}();`}
+				)} ) ) @add_css();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
 				`this._renderHooks = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
 
-			this._fragment = ${generator.alias(
-				'create_main_fragment'
-			)}( this._state, this );
+			this._fragment = @create_main_fragment( this._state, this );
 
 			if ( options.target ) {
 				${generator.hydratable ?
@@ -254,11 +229,9 @@ export default function dom(
 			${templateProperties.oncreate &&
 				deindent`
 				if ( options._root ) {
-					options._root._renderHooks.push( ${generator.alias(
-						'template'
-					)}.oncreate.bind( this ) );
+					options._root._renderHooks.push( @template.oncreate.bind( this ) );
 				} else {
-					${generator.alias('template')}.oncreate.call( this );
+					@template.oncreate.call( this );
 				}
 			`}
 		}
@@ -272,7 +245,7 @@ export default function dom(
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
 			this.fire( 'destroy' );
 			${templateProperties.ondestroy &&
-				`${generator.alias('template')}.ondestroy.call( this );`}
+				`@template.ondestroy.call( this );`}
 
 			if ( detach !== false ) this._fragment.unmount();
 			this._fragment.destroy();
@@ -283,8 +256,16 @@ export default function dom(
 		};
 	`);
 
+	const usedHelpers = new Set();
+
 	let result = builder.toString()
-		.replace(helperPattern, (match: string, name: string) => generator.helper(name));
+		.replace(/@(\w+)\b/g, (match: string, name: string) => {
+			if (name in shared) {
+				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+				usedHelpers.add(name);
+			}
+			return generator.alias(name);
+		});
 
 	if (sharedPath) {
 		if (format !== 'es') {
@@ -293,7 +274,7 @@ export default function dom(
 			);
 		}
 
-		const names = Array.from(generator.uses).sort().map(name => {
+		const names = Array.from(usedHelpers).sort().map(name => {
 			return name !== generator.alias(name)
 				? `${name} as ${generator.alias(name)}`
 				: name;
@@ -301,7 +282,7 @@ export default function dom(
 
 		result = `import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};\n\n` + result;
 	} else {
-		generator.uses.forEach(key => {
+		usedHelpers.forEach(key => {
 			const str = shared[key];
 			const code = new MagicString(str);
 			const expression = parseExpressionAt(str, 0);
@@ -320,7 +301,7 @@ export default function dom(
 						if (node.name in shared) {
 							// this helper function depends on another one
 							const dependency = node.name;
-							generator.uses.add(dependency);
+							usedHelpers.add(dependency);
 
 							const alias = generator.alias(dependency);
 							if (alias !== node.name)
