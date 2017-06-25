@@ -22,25 +22,25 @@ export default function getSetter({
 		return deindent`
 			var list = this.${context}.${block.listNames.get(name)};
 			var index = this.${context}.${block.indexNames.get(name)};
-			${computed && `var state = ${block.component}.get();`}
+			${computed && `var state = #component.get();`}
 			list[index]${tail} = ${value};
 
 			${computed ?
-				`${block.component}._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });` :
-				`${block.component}._set({ ${dependencies.map((prop: string) => `${prop}: ${block.component}.get( '${prop}' )`).join(', ')} });`
+				`#component._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });` :
+				`#component._set({ ${dependencies.map((prop: string) => `${prop}: #component.get( '${prop}' )`).join(', ')} });`
 			}
 		`;
 	}
 
 	if (attribute.value.type === 'MemberExpression') {
 		return deindent`
-			var state = ${block.component}.get();
+			var state = #component.get();
 			${snippet} = ${value};
-			${block.component}._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });
+			#component._set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });
 		`;
 	}
 
-	return `${block.component}._set({ ${name}: ${value} });`;
+	return `#component._set({ ${name}: ${value} });`;
 }
 
 function isComputed(node: Node) {

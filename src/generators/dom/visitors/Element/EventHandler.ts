@@ -24,7 +24,7 @@ export default function visitEventHandler(
 		// TODO verify that it's a valid callee (i.e. built-in or declared method)
 		generator.code.prependRight(
 			attribute.expression.start,
-			`${block.component}.`
+			`${block.alias('component')}.`
 		);
 		if (shouldHoist) state.usesComponent = true; // this feels a bit hacky but it works!
 	}
@@ -45,7 +45,7 @@ export default function visitEventHandler(
 	const declarations = usedContexts.map(name => {
 		if (name === 'state') {
 			if (shouldHoist) state.usesComponent = true;
-			return `var state = ${block.component}.get();`;
+			return `var state = #component.get();`;
 		}
 
 		const listName = block.listNames.get(name);
@@ -63,7 +63,7 @@ export default function visitEventHandler(
 
 	// create the handler body
 	const handlerBody = deindent`
-		${state.usesComponent && `var ${block.component} = this._svelte.component;`}
+		${state.usesComponent && `var ${block.alias('component')} = this._svelte.component;`}
 		${declarations}
 		[✂${attribute.expression.start}-${attribute.expression.end}✂];
 	`;
@@ -72,7 +72,7 @@ export default function visitEventHandler(
 		block.addVariable(handlerName);
 
 		block.builders.hydrate.addBlock(deindent`
-			${handlerName} = @template.events.${name}.call( ${block.component}, ${state.parentNode}, function ( event ) {
+			${handlerName} = @template.events.${name}.call( #component, ${state.parentNode}, function ( event ) {
 				${handlerBody}
 			});
 		`);

@@ -16,7 +16,7 @@ export default function visitEventHandler(
 	generator.addSourcemapLocations(attribute.expression);
 	generator.code.prependRight(
 		attribute.expression.start,
-		`${block.component}.`
+		`${block.alias('component')}.`
 	);
 
 	const usedContexts: string[] = [];
