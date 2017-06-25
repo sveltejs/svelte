@@ -249,7 +249,7 @@ export default function dom(
 					deindent`
 						this._fragment.create();
 					`}
-				this._fragment.mount( options.target, null );
+				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 			
 			${generator.hasComplexBindings &&
