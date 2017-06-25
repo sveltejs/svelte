@@ -72,9 +72,7 @@ export default function visitEventHandler(
 		block.addVariable(handlerName);
 
 		block.builders.hydrate.addBlock(deindent`
-			${handlerName} = ${generator.alias(
-				'template'
-			)}.events.${name}.call( ${block.component}, ${state.parentNode}, function ( event ) {
+			${handlerName} = @template.events.${name}.call( ${block.component}, ${state.parentNode}, function ( event ) {
 				${handlerBody}
 			});
 		`);

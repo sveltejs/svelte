@@ -59,22 +59,18 @@ export default function ssr(
 
 		${name}.data = function () {
 			return ${templateProperties.data
-				? `${generator.alias('template')}.data()`
+				? `@template.data()`
 				: `{}`};
 		};
 
 		${name}.render = function ( state, options ) {
 			${templateProperties.data
-				? `state = Object.assign( ${generator.alias(
-						'template'
-					)}.data(), state || {} );`
+				? `state = Object.assign( @template.data(), state || {} );`
 				: `state = state || {};`}
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = ${generator.alias(
-						'template'
-					)}.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`
+					`state.${key} = @template.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`
 			)}
 
 			${generator.bindings.length &&
@@ -121,7 +117,7 @@ export default function ssr(
 					const { name } = prop.key;
 					const expression =
 						generator.importedComponents.get(name) ||
-						`${generator.alias('template')}.components.${name}`;
+						`@template.components.${name}`;
 					return `addComponent( ${expression} );`;
 				})}
 			`}
@@ -144,7 +140,7 @@ export default function ssr(
 		function __escape ( html ) {
 			return String( html ).replace( /["'&<>]/g, match => escaped[ match ] );
 		}
-	`;
+	`.replace(/@(\w+)/g, (match, name) => generator.alias(name));
 
 	return generator.generate(result, options, { name, format });
 }
