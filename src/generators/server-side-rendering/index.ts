@@ -2,7 +2,6 @@ import deindent from '../../utils/deindent';
 import Generator from '../Generator';
 import Block from './Block';
 import visit from './visit';
-import stringify from '../../utils/stringify';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
 
@@ -84,7 +83,7 @@ export default function ssr(
 
 		var ${name} = {};
 
-		${name}.filename = ${stringify(options.filename)};
+		${name}.filename = ${JSON.stringify(options.filename)};
 
 		${name}.data = function () {
 			return ${templateProperties.data ? `@template.data()` : `{}`};
@@ -124,7 +123,7 @@ export default function ssr(
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${stringify(generator.css)},
+					css: ${JSON.stringify(generator.css)},
 					map: null // TODO
 				});
 			`}
@@ -169,7 +168,7 @@ export default function ssr(
 		function __escape ( html ) {
 			return String( html ).replace( /["'&<>]/g, match => escaped[ match ] );
 		}
-	`.replace(/@(\w+)/g, (match, name) => generator.alias(name));
+	`.replace(/(\\)?@(\w*)/g, (match: string, escaped: string, name: string) => escaped ? match.slice(1) : generator.alias(name));
 
 	return generator.generate(result, options, { name, format });
 }
