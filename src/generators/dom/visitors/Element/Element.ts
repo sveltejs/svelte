@@ -35,14 +35,15 @@ export default function visitElement(
 	generator: DomGenerator,
 	block: Block,
 	state: State,
-	node: Node
+	node: Node,
+	elementStack: Node[]
 ) {
 	if (node.name in meta) {
 		return meta[node.name](generator, block, node);
 	}
 
 	if (generator.components.has(node.name) || node.name === ':Self') {
-		return visitComponent(generator, block, state, node);
+		return visitComponent(generator, block, state, node, elementStack);
 	}
 
 	const childState = node._state;
@@ -67,7 +68,7 @@ export default function visitElement(
 	}
 
 	// add CSS encapsulation attribute
-	if (generator.cssId && (!generator.cascade || state.isTopLevel)) {
+	if (generator.cssId && (generator.cascade ? state.isTopLevel : generator.cssAppliesTo(node, elementStack))) {
 		block.builders.hydrate.addLine(
 			`${generator.helper(
 				'setAttribute'
@@ -172,7 +173,7 @@ export default function visitElement(
 	}
 
 	node.children.forEach((child: Node) => {
-		visit(generator, block, childState, child);
+		visit(generator, block, childState, child, elementStack.concat(node));
 	});
 
 	if (node.lateUpdate) {

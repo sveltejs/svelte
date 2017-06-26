@@ -73,7 +73,7 @@ export default function dom(
 	const { block, state } = preprocess(generator, namespace, parsed.html);
 
 	parsed.html.children.forEach((node: Node) => {
-		visit(generator, block, state, node);
+		visit(generator, block, state, node, []);
 	});
 
 	const builders = {

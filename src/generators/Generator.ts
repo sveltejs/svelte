@@ -13,6 +13,7 @@ import annotateWithScopes from '../utils/annotateWithScopes';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
+import extractSelectors from './extractSelectors';
 import { Node, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
@@ -39,6 +40,8 @@ export default class Generator {
 	css: string;
 	cssId: string;
 	usesRefs: boolean;
+
+	selectors: any[]; // TODO how to indicate it takes `(Node[]) => boolean` functions?
 
 	importedNames: Set<string>;
 	aliases: Map<string, string>;
@@ -75,6 +78,8 @@ export default class Generator {
 		this.css = parsed.css ? processCss(parsed, this.code, this.cascade) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
+
+		this.selectors = extractSelectors(parsed.css);
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
@@ -209,6 +214,16 @@ export default class Generator {
 			contexts: usedContexts,
 			snippet: `[✂${expression.start}-${expression.end}✂]`,
 		};
+	}
+
+	cssAppliesTo(node: Node, stack: Node[]) {
+		for (let i = 0; i < this.selectors.length; i += 1) {
+			const selector = this.selectors[i];
+			if (selector.appliesTo(node, stack)) {
+				selector.used = true;
+				return true;
+			}
+		}
 	}
 
 	findDependencies(
