@@ -2,6 +2,7 @@ import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
+import stringify from '../../../../utils/stringify';
 
 export default function visitAttribute(
 	generator: DomGenerator,
@@ -27,9 +28,7 @@ export default function visitAttribute(
 
 		if (value.type === 'Text') {
 			// static attributes
-			const result = isNaN(value.data)
-				? JSON.stringify(value.data)
-				: value.data;
+			const result = isNaN(value.data) ? stringify(value.data) : value.data;
 			local.staticAttributes.push({
 				name: attribute.name,
 				value: result,
@@ -54,7 +53,7 @@ export default function visitAttribute(
 			attribute.value
 				.map(chunk => {
 					if (chunk.type === 'Text') {
-						return JSON.stringify(chunk.data);
+						return stringify(chunk.data);
 					} else {
 						const { dependencies, snippet } = block.contextualise(
 							chunk.expression

@@ -15,7 +15,6 @@ export default function visitEachBlock(
 	const create_each_block = node._block.name;
 	const each_block_value = node._block.listName;
 	const iterations = block.getUniqueName(`${each_block}_iterations`);
-	const i = block.alias(`i`);
 	const params = block.params.join(', ');
 	const anchor = node.needsAnchor
 		? block.getUniqueName(`${each_block}_anchor`)
@@ -27,7 +26,6 @@ export default function visitEachBlock(
 		create_each_block,
 		each_block_value,
 		iterations,
-		i,
 		params,
 		anchor,
 		mountOrIntro,
@@ -48,8 +46,8 @@ export default function visitEachBlock(
 	if (node.needsAnchor) {
 		block.addElement(
 			anchor,
-			`${generator.helper('createComment')}()`,
-			`${generator.helper('createComment')}()`,
+			`@createComment()`,
+			`@createComment()`,
 			state.parentNode,
 			true
 		);
@@ -65,14 +63,15 @@ export default function visitEachBlock(
 		// TODO neaten this up... will end up with an empty line in the block
 		block.builders.init.addBlock(deindent`
 			if ( !${each_block_value}.length ) {
-				${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+				${each_block_else} = ${node.else._block.name}( ${params}, #component );
 				${each_block_else}.create();
 			}
 		`);
 
 		block.builders.mount.addBlock(deindent`
 			if ( ${each_block_else} ) {
-				${each_block_else}.${mountOrIntro}( ${state.parentNode || block.target}, null );
+				${each_block_else}.${mountOrIntro}( ${state.parentNode ||
+			'#target'}, null );
 			}
 		`);
 
@@ -83,7 +82,7 @@ export default function visitEachBlock(
 				if ( !${each_block_value}.length && ${each_block_else} ) {
 					${each_block_else}.update( changed, ${params} );
 				} else if ( !${each_block_value}.length ) {
-					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+					${each_block_else} = ${node.else._block.name}( ${params}, #component );
 					${each_block_else}.create();
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				} else if ( ${each_block_else} ) {
@@ -101,7 +100,7 @@ export default function visitEachBlock(
 						${each_block_else} = null;
 					}
 				} else if ( !${each_block_else} ) {
-					${each_block_else} = ${node.else._block.name}( ${params}, ${block.component} );
+					${each_block_else} = ${node.else._block.name}( ${params}, #component );
 					${each_block_else}.create();
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
@@ -138,7 +137,6 @@ function keyed(
 		each_block,
 		create_each_block,
 		each_block_value,
-		i,
 		params,
 		anchor,
 		mountOrIntro,
@@ -162,27 +160,27 @@ function keyed(
 		node._block.first = node._block.getUniqueName('first');
 		node._block.addElement(
 			node._block.first,
-			`${generator.helper('createComment')}()`,
-			`${generator.helper('createComment')}()`,
+			`@createComment()`,
+			`@createComment()`,
 			null,
 			true
 		);
 	}
 
 	block.builders.init.addBlock(deindent`
-		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			var ${key} = ${each_block_value}[${i}].${node.key};
-			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+		for ( var #i = 0; #i < ${each_block_value}.length; #i += 1 ) {
+			var ${key} = ${each_block_value}[#i].${node.key};
+			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key} );
 
 			if ( ${last} ) ${last}.next = ${iteration};
 			${iteration}.last = ${last};
 			${last} = ${iteration};
 
-			if ( ${i} === 0 ) ${head} = ${iteration};
+			if ( #i === 0 ) ${head} = ${iteration};
 		}
 	`);
 
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addBlock(deindent`
@@ -231,9 +229,9 @@ function keyed(
 				${expected} = ${expected}.next;
 			}
 
-			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
-				if ( discard_pile[${i}].discard ) {
-					${fn}( discard_pile[${i}] );
+			for ( #i = 0; #i < discard_pile.length; #i += 1 ) {
+				if ( discard_pile[#i].discard ) {
+					${fn}( discard_pile[#i] );
 				}
 			}
 		`;
@@ -253,8 +251,8 @@ function keyed(
 				${expected} = ${expected}.next;
 			}
 
-			for ( ${i} = 0; ${i} < discard_pile.length; ${i} += 1 ) {
-				var ${iteration} = discard_pile[${i}];
+			for ( #i = 0; #i < discard_pile.length; #i += 1 ) {
+				var ${iteration} = discard_pile[#i];
 				if ( ${iteration}.discard ) {
 					${fn}( ${iteration} );
 				}
@@ -270,12 +268,12 @@ function keyed(
 
 		var discard_pile = [];
 
-		for ( ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			var ${key} = ${each_block_value}[${i}].${node.key};
+		for ( #i = 0; #i < ${each_block_value}.length; #i += 1 ) {
+			var ${key} = ${each_block_value}[#i].${node.key};
 			var ${iteration} = ${lookup}[${key}];
 
 			${dynamic &&
-				`if ( ${iteration} ) ${iteration}.update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );`}
+				`if ( ${iteration} ) ${iteration}.update( changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i );`}
 
 			if ( ${expected} ) {
 				if ( ${key} === ${expected}.key ) {
@@ -296,7 +294,7 @@ function keyed(
 						if (!${expected}) ${iteration}.mount( ${parentNode}, ${anchor} );
 					} else {
 						// key is being inserted
-						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+						${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key} );
 						${iteration}.create();
 						${iteration}.${mountOrIntro}( ${parentNode}, ${expected}.first );
 
@@ -311,7 +309,7 @@ function keyed(
 					${iteration}.next = null;
 					${iteration}.mount( ${parentNode}, ${anchor} );
 				} else {
-					${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component}, ${key} );
+					${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key} );
 					${iteration}.create();
 					${iteration}.${mountOrIntro}( ${parentNode}, ${anchor} );
 				}
@@ -360,7 +358,6 @@ function unkeyed(
 		create_each_block,
 		each_block_value,
 		iterations,
-		i,
 		params,
 		anchor,
 		mountOrIntro,
@@ -369,29 +366,29 @@ function unkeyed(
 	block.builders.init.addBlock(deindent`
 		var ${iterations} = [];
 
-		for ( var ${i} = 0; ${i} < ${each_block_value}.length; ${i} += 1 ) {
-			${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
+		for ( var #i = 0; #i < ${each_block_value}.length; #i += 1 ) {
+			${iterations}[#i] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component );
 		}
 	`);
 
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addBlock(deindent`
-		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-			${iterations}[${i}].create();
+		for ( var #i = 0; #i < ${iterations}.length; #i += 1 ) {
+			${iterations}[#i].create();
 		}
 	`);
 
 	block.builders.claim.addBlock(deindent`
-		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-			${iterations}[${i}].claim( ${state.parentNodes} );
+		for ( var #i = 0; #i < ${iterations}.length; #i += 1 ) {
+			${iterations}[#i].claim( ${state.parentNodes} );
 		}
 	`);
 
 	block.builders.mount.addBlock(deindent`
-		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-			${iterations}[${i}].${mountOrIntro}( ${targetNode}, ${anchorNode} );
+		for ( var #i = 0; #i < ${iterations}.length; #i += 1 ) {
+			${iterations}[#i].${mountOrIntro}( ${targetNode}, ${anchorNode} );
 		}
 	`);
 
@@ -412,26 +409,26 @@ function unkeyed(
 		const forLoopBody = node._block.hasUpdateMethod
 			? node._block.hasIntroMethod
 				? deindent`
-					if ( ${iterations}[${i}] ) {
-						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					if ( ${iterations}[#i] ) {
+						${iterations}[#i].update( changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i );
 					} else {
-						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-						${iterations}[${i}].create();
+						${iterations}[#i] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component );
+						${iterations}[#i].create();
 					}
-					${iterations}[${i}].intro( ${parentNode}, ${anchor} );
+					${iterations}[#i].intro( ${parentNode}, ${anchor} );
 				`
 				: deindent`
-					if ( ${iterations}[${i}] ) {
-						${iterations}[${i}].update( changed, ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i} );
+					if ( ${iterations}[#i] ) {
+						${iterations}[#i].update( changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i );
 					} else {
-						${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-						${iterations}[${i}].create();
-						${iterations}[${i}].mount( ${parentNode}, ${anchor} );
+						${iterations}[#i] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component );
+						${iterations}[#i].create();
+						${iterations}[#i].mount( ${parentNode}, ${anchor} );
 					}
 				`
 			: deindent`
-				${iterations}[${i}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[${i}], ${i}, ${block.component} );
-				${iterations}[${i}].${mountOrIntro}( ${parentNode}, ${anchor} );
+				${iterations}[#i] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component );
+				${iterations}[#i].${mountOrIntro}( ${parentNode}, ${anchor} );
 			`;
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;
@@ -449,12 +446,12 @@ function unkeyed(
 					}
 				}
 
-				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) ${outro}( ${i} );
+				for ( ; #i < ${iterations}.length; #i += 1 ) ${outro}( #i );
 			`
 			: deindent`
-				for ( ; ${i} < ${iterations}.length; ${i} += 1 ) {
-					${iterations}[${i}].unmount();
-					${iterations}[${i}].destroy();
+				for ( ; #i < ${iterations}.length; #i += 1 ) {
+					${iterations}[#i].unmount();
+					${iterations}[#i].destroy();
 				}
 				${iterations}.length = ${each_block_value}.length;
 			`;
@@ -463,7 +460,7 @@ function unkeyed(
 			var ${each_block_value} = ${snippet};
 
 			if ( ${condition} ) {
-				for ( var ${i} = ${start}; ${i} < ${each_block_value}.length; ${i} += 1 ) {
+				for ( var #i = ${start}; #i < ${each_block_value}.length; #i += 1 ) {
 					${forLoopBody}
 				}
 
@@ -473,12 +470,10 @@ function unkeyed(
 	}
 
 	block.builders.unmount.addBlock(deindent`
-		for ( var ${i} = 0; ${i} < ${iterations}.length; ${i} += 1 ) {
-			${iterations}[${i}].unmount();
+		for ( var #i = 0; #i < ${iterations}.length; #i += 1 ) {
+			${iterations}[#i].unmount();
 		}
 	`);
 
-	block.builders.destroy.addBlock(
-		`${generator.helper('destroyEach')}( ${iterations}, false, 0 );`
-	);
+	block.builders.destroy.addBlock(`@destroyEach( ${iterations}, false, 0 );`);
 }

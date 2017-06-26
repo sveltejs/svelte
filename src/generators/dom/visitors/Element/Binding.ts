@@ -16,7 +16,9 @@ export default function visitBinding(
 	attribute: Node
 ) {
 	const { name } = getObject(attribute.value);
-	const { snippet, contexts, dependencies } = block.contextualise(attribute.value);
+	const { snippet, contexts, dependencies } = block.contextualise(
+		attribute.value
+	);
 
 	contexts.forEach(context => {
 		if (!~state.allUsedContexts.indexOf(context))
@@ -57,7 +59,7 @@ export default function visitBinding(
 		value,
 	});
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
-	const lock = block.alias(`${state.parentNode}_updating`);
+	const lock = `#${state.parentNode}_updating`;
 	let updateCondition = `!${lock}`;
 
 	block.addVariable(lock, 'false');
@@ -69,7 +71,6 @@ export default function visitBinding(
 		}
 
 		const value = block.getUniqueName('value');
-		const i = block.alias('i');
 		const option = block.getUniqueName('option');
 
 		const ifStatement = isMultipleSelect
@@ -83,8 +84,8 @@ export default function visitBinding(
 
 		updateElement = deindent`
 			var ${value} = ${snippet};
-			for ( var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1 ) {
-				var ${option} = ${state.parentNode}.options[${i}];
+			for ( var #i = 0; #i < ${state.parentNode}.options.length; #i += 1 ) {
+				var ${option} = ${state.parentNode}.options[#i];
 
 				${ifStatement}
 			}
@@ -92,7 +93,7 @@ export default function visitBinding(
 
 		generator.hasComplexBindings = true;
 		block.builders.hydrate.addBlock(
-			`if ( !('${name}' in state) ) ${block.component}._bindings.push( ${handler} );`
+			`if ( !('${name}' in state) ) #component._bindings.push( ${handler} );`
 		);
 	} else if (attribute.name === 'group') {
 		// <input type='checkbox|radio' bind:group='selected'> special case
@@ -108,19 +109,17 @@ export default function visitBinding(
 			: `${state.parentNode}.__value === ${snippet}`;
 
 		block.builders.hydrate.addLine(
-			`${block.component}._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
+			`#component._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
 		);
 
 		block.builders.destroy.addBlock(
-			`${block.component}._bindingGroups[${bindingGroup}].splice( ${block.component}._bindingGroups[${bindingGroup}].indexOf( ${state.parentNode} ), 1 );`
+			`#component._bindingGroups[${bindingGroup}].splice( #component._bindingGroups[${bindingGroup}].indexOf( ${state.parentNode} ), 1 );`
 		);
 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	} else if (node.name === 'audio' || node.name === 'video') {
 		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(
-			`${block.component}._bindings.push( ${handler} );`
-		);
+		block.builders.hydrate.addBlock(`#component._bindings.push( ${handler} );`);
 
 		if (attribute.name === 'currentTime') {
 			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
@@ -152,11 +151,9 @@ export default function visitBinding(
 		}
 	`);
 
-	block.builders.hydrate.addBlock(deindent`
-		${generator.helper(
-			'addListener'
-		)}( ${state.parentNode}, '${eventName}', ${handler} );
-	`);
+	block.builders.hydrate.addBlock(
+		`@addListener( ${state.parentNode}, '${eventName}', ${handler} );`
+	);
 
 	if (node.name !== 'audio' && node.name !== 'video')
 		node.initialUpdate = updateElement;
@@ -170,22 +167,16 @@ export default function visitBinding(
 		`);
 	}
 
-	block.builders.destroy.addLine(deindent`
-		${generator.helper(
-			'removeListener'
-		)}( ${state.parentNode}, '${eventName}', ${handler} );
-	`);
+	block.builders.destroy.addLine(
+		`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`
+	);
 
 	if (attribute.name === 'paused') {
 		block.builders.create.addLine(
-			`${generator.helper(
-				'addListener'
-			)}( ${state.parentNode}, 'play', ${handler} );`
+			`@addListener( ${state.parentNode}, 'play', ${handler} );`
 		);
 		block.builders.destroy.addLine(
-			`${generator.helper(
-				'removeListener'
-			)}( ${state.parentNode}, 'play', ${handler} );`
+			`@removeListener( ${state.parentNode}, 'play', ${handler} );`
 		);
 	}
 }
@@ -231,9 +222,7 @@ function getBindingValue(
 	// <input type='checkbox' bind:group='foo'>
 	if (attribute.name === 'group') {
 		if (type === 'checkbox') {
-			return `${generator.helper(
-				'getBindingGroupValue'
-			)}( ${block.component}._bindingGroups[${bindingGroup}] )`;
+			return `@getBindingGroupValue( #component._bindingGroups[${bindingGroup}] )`;
 		}
 
 		return `${state.parentNode}.__value`;
@@ -241,9 +230,7 @@ function getBindingValue(
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `${generator.helper(
-			'toNumber'
-		)}( ${state.parentNode}.${attribute.name} )`;
+		return `@toNumber( ${state.parentNode}.${attribute.name} )`;
 	}
 
 	// everything else

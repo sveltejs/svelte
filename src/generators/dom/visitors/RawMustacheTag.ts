@@ -23,15 +23,15 @@ export default function visitRawMustacheTag(
 	// exists for `Element`s.
 	block.addElement(
 		before,
-		`${generator.helper('createElement')}( 'noscript' )`,
-		`${generator.helper('createElement')}( 'noscript' )`,
+		`@createElement( 'noscript' )`,
+		`@createElement( 'noscript' )`,
 		state.parentNode,
 		true
 	);
 	block.addElement(
 		after,
-		`${generator.helper('createElement')}( 'noscript' )`,
-		`${generator.helper('createElement')}( 'noscript' )`,
+		`@createElement( 'noscript' )`,
+		`@createElement( 'noscript' )`,
 		state.parentNode,
 		true
 	);
@@ -39,9 +39,7 @@ export default function visitRawMustacheTag(
 	const isToplevel = !state.parentNode;
 
 	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${value} = ${snippet} );`;
-	const detachStatement = `${generator.helper(
-		'detachBetween'
-	)}( ${before}, ${after} );`;
+	const detachStatement = `@detachBetween( ${before}, ${after} );`;
 
 	block.builders.mount.addLine(mountStatement);
 

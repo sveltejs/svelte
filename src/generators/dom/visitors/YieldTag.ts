@@ -7,13 +7,13 @@ export default function visitYieldTag(
 	block: Block,
 	state: State
 ) {
-	const parentNode = state.parentNode || block.target;
+	const parentNode = state.parentNode || '#target';
 
 	block.builders.mount.addLine(
-		`if ( ${block.component}._yield ) ${block.component}._yield.mount( ${parentNode}, null );`
+		`if ( #component._yield ) #component._yield.mount( ${parentNode}, null );`
 	);
 
 	block.builders.unmount.addLine(
-		`if ( ${block.component}._yield ) ${block.component}._yield.unmount();`
+		`if ( #component._yield ) #component._yield.unmount();`
 	);
 }
