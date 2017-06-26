@@ -1,0 +1,68 @@
+{
+	"hash": 2961389466,
+	"html": {
+		"start": 0,
+		"end": 67,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 67,
+				"type": "Element",
+				"name": "h1",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 10,
+						"type": "Text",
+						"data": "Hello "
+					},
+					{
+						"start": 10,
+						"end": 37,
+						"type": "Element",
+						"name": "strong",
+						"attributes": [],
+						"children": [
+							{
+								"start": 18,
+								"end": 26,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 20,
+									"end": 24,
+									"name": "name"
+								}
+							},
+							{
+								"start": 26,
+								"end": 28,
+								"type": "Text",
+								"data": "! "
+							}
+						]
+					},
+					{
+						"start": 37,
+						"end": 62,
+						"type": "Element",
+						"name": "span",
+						"attributes": [],
+						"children": [
+							{
+								"start": 43,
+								"end": 55,
+								"type": "Text",
+								"data": "How are you?"
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

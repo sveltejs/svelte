@@ -76,39 +76,17 @@ export class Parser {
 			this.error('Unexpected end of input');
 		}
 
-		// trim unnecessary whitespace
-		while (this.html.children.length) {
-			const firstChild = this.html.children[0];
-			this.html.start = firstChild.start;
+		if (this.html.children.length) {
+			let start = this.html.children[0] && this.html.children[0].start;
+			while (/\s/.test(template[start])) start += 1;
 
-			if (firstChild.type !== 'Text') break;
+			let end = this.html.children[this.html.children.length - 1] && this.html.children[this.html.children.length - 1].end;
+			while (/\s/.test(template[end - 1])) end -= 1;
 
-			const length = firstChild.data.length;
-			firstChild.data = trimStart(firstChild.data);
-
-			if (firstChild.data === '') {
-				this.html.children.shift();
-			} else {
-				this.html.start += length - firstChild.data.length;
-				break;
-			}
-		}
-
-		while (this.html.children.length) {
-			const lastChild = this.html.children[this.html.children.length - 1];
-			this.html.end = lastChild.end;
-
-			if (lastChild.type !== 'Text') break;
-
-			const length = lastChild.data.length;
-			lastChild.data = trimEnd(lastChild.data);
-
-			if (lastChild.data === '') {
-				this.html.children.pop();
-			} else {
-				this.html.end -= length - lastChild.data.length;
-				break;
-			}
+			this.html.start = start;
+			this.html.end = end;
+		} else {
+			this.html.start = this.html.end = null;
 		}
 	}
 
