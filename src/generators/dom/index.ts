@@ -209,8 +209,9 @@ export default function dom(
 						var nodes = @children( options.target );
 						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
 						nodes.forEach( @detachNode );
-					`
-					: deindent`
+					` :
+					deindent`
+						${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
 						this._fragment.create();
 					`}
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
