@@ -12,7 +12,12 @@ function isElseIf(node: Node) {
 }
 
 function getChildState(parent: State, child = {}) {
-	return assign({}, parent, { name: null, parentNode: null, parentNodes: 'nodes' }, child || {});
+	return assign(
+		{},
+		parent,
+		{ name: null, parentNode: null, parentNodes: 'nodes' },
+		child || {}
+	);
 }
 
 // Whitespace inside one of these elements will not result in
@@ -34,7 +39,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -48,7 +54,8 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -59,7 +66,7 @@ const preprocessors = {
 		node._state = getChildState(state, { basename, name });
 	},
 
-	Text: (generator: DomGenerator, block: Block, state: State, node: Node) => {
+	Text: (generator: DomGenerator, block: Block, state: State, node: Node, stripWhitespace: boolean) => {
 		node._state = getChildState(state);
 
 		if (!/\S/.test(node.data)) {
@@ -75,7 +82,9 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean,
+		nextSibling: Node
 	) => {
 		const blocks: Block[] = [];
 		let dynamic = false;
@@ -93,7 +102,7 @@ const preprocessors = {
 			node._state = getChildState(state);
 
 			blocks.push(node._block);
-			preprocessChildren(generator, node._block, node._state, node);
+			preprocessChildren(generator, node._block, node._state, node, stripWhitespace, node);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -117,7 +126,9 @@ const preprocessors = {
 					generator,
 					node.else._block,
 					node.else._state,
-					node.else
+					node.else,
+					stripWhitespace,
+					nextSibling
 				);
 
 				if (node.else._block.dependencies.size > 0) {
@@ -142,7 +153,9 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean,
+		nextSibling: Node
 	) => {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -189,7 +202,7 @@ const preprocessors = {
 		});
 
 		generator.blocks.push(node._block);
-		preprocessChildren(generator, node._block, node._state, node);
+		preprocessChildren(generator, node._block, node._state, node, stripWhitespace, nextSibling);
 		block.addDependencies(node._block.dependencies);
 		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
@@ -205,7 +218,9 @@ const preprocessors = {
 				generator,
 				node.else._block,
 				node.else._state,
-				node.else
+				node.else,
+				stripWhitespace,
+				nextSibling
 			);
 			node.else._block.hasUpdateMethod = node.else._block.dependencies.size > 0;
 		}
@@ -215,7 +230,9 @@ const preprocessors = {
 		generator: DomGenerator,
 		block: Block,
 		state: State,
-		node: Node
+		node: Node,
+		stripWhitespace: boolean,
+		nextSibling: Node
 	) => {
 		node.attributes.forEach((attribute: Node) => {
 			if (attribute.type === 'Attribute' && attribute.value !== true) {
@@ -225,7 +242,11 @@ const preprocessors = {
 						block.addDependencies(dependencies);
 
 						// special case — <option value='{{foo}}'> — see below
-						if (node.name === 'option' && attribute.name === 'value' && state.selectBindingDependencies) {
+						if (
+							node.name === 'option' &&
+							attribute.name === 'value' &&
+							state.selectBindingDependencies
+						) {
 							state.selectBindingDependencies.forEach(prop => {
 								dependencies.forEach((dependency: string) => {
 									generator.indirectDependencies.get(prop).add(dependency);
@@ -258,7 +279,9 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			const value = node.attributes.find((attribute: Node) => attribute.name === 'value');
+			const value = node.attributes.find(
+				(attribute: Node) => attribute.name === 'value'
+			);
 			if (value) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 				const dependencies = block.findDependencies(value.value);
@@ -305,11 +328,12 @@ const preprocessors = {
 				});
 
 				generator.blocks.push(node._block);
-				preprocessChildren(generator, node._block, node._state, node);
+				preprocessChildren(generator, node._block, node._state, node, stripWhitespace, nextSibling);
 				block.addDependencies(node._block.dependencies);
 				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 			} else {
-				preprocessChildren(generator, block, node._state, node);
+				if (node.name === 'pre' || node.name === 'textarea') stripWhitespace = false;
+				preprocessChildren(generator, block, node._state, node, stripWhitespace, nextSibling);
 			}
 		}
 	},
@@ -320,7 +344,8 @@ function preprocessChildren(
 	block: Block,
 	state: State,
 	node: Node,
-	isTopLevel: boolean = false
+	stripWhitespace: boolean,
+	nextSibling: Node
 ) {
 	// glue text nodes together
 	const cleaned: Node[] = [];
@@ -333,32 +358,22 @@ function preprocessChildren(
 			lastChild.data += child.data;
 			lastChild.end = child.end;
 		} else {
-			cleaned.push(child);
+			if (child.type === 'Text' && stripWhitespace && cleaned.length === 0) {
+				child.data = trimStart(child.data);
+				if (child.data) cleaned.push(child);
+			} else {
+				cleaned.push(child);
+			}
 		}
 
 		lastChild = child;
 	});
 
-	if (isTopLevel) {
-		// trim leading and trailing whitespace from the top level
-		const firstChild = cleaned[0];
-		if (firstChild && firstChild.type === 'Text') {
-			firstChild.data = trimStart(firstChild.data);
-			if (!firstChild.data) cleaned.shift();
-		}
-
-		const lastChild = cleaned[cleaned.length - 1];
-		if (lastChild && lastChild.type === 'Text') {
-			lastChild.data = trimEnd(lastChild.data);
-			if (!lastChild.data) cleaned.pop();
-		}
-	}
-
 	lastChild = null;
 
-	cleaned.forEach((child: Node) => {
-		const preprocess = preprocessors[child.type];
-		if (preprocess) preprocess(generator, block, state, child);
+	cleaned.forEach((child: Node, i: number) => {
+		const preprocessor = preprocessors[child.type];
+		if (preprocessor) preprocessor(generator, block, state, child, stripWhitespace, cleaned[i + 1] || nextSibling);
 
 		if (lastChild) {
 			lastChild.next = child;
@@ -367,6 +382,19 @@ function preprocessChildren(
 
 		lastChild = child;
 	});
+
+	// We want to remove trailing whitespace inside an element/component/block,
+	// *unless* there is no whitespace between this node and its next sibling
+	if (lastChild && lastChild.type === 'Text') {
+		if (stripWhitespace && (!nextSibling || (nextSibling.type === 'Text' && /^\s/.test(nextSibling.data)))) {
+			lastChild.data = trimEnd(lastChild.data);
+			if (!lastChild.data) {
+				cleaned.pop();
+				lastChild = cleaned[cleaned.length - 1];
+				lastChild.next = null;
+			}
+		}
+	}
 
 	if (lastChild) {
 		lastChild.needsAnchor = !state.parentNode;
@@ -382,7 +410,7 @@ export default function preprocess(
 ) {
 	const block = new Block({
 		generator,
-		name: generator.alias('create_main_fragment'),
+		name: '@create_main_fragment',
 		key: null,
 
 		contexts: new Map(),
@@ -404,7 +432,7 @@ export default function preprocess(
 	};
 
 	generator.blocks.push(block);
-	preprocessChildren(generator, block, state, node, true);
+	preprocessChildren(generator, block, state, node, true, null);
 	block.hasUpdateMethod = block.dependencies.size > 0;
 
 	return { block, state };

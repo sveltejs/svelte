@@ -34,7 +34,7 @@ describe("ssr", () => {
 		// add .solo to a sample directory name to only run that test, or
 		// .show to always show the output. or both
 		const solo = /\.solo/.test(dir);
-		let show = /\.show/.test(dir);
+		const show = /\.show/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
@@ -42,35 +42,31 @@ describe("ssr", () => {
 
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/server-side-rendering/samples", dir);
-			const component = require(`${dir}/main.html`);
-
-			const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
-			const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
-
-			const data = tryToLoadJson(`${dir}/data.json`);
-			let html;
-			let css;
-			let error;
-
 			try {
-				html = component.render(data);
-				css = component.renderCss().css;
-			} catch (e) {
-				show = true;
-				error = e;
+				const component = require(`${dir}/main.html`);
+
+				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
+				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
+
+				const data = tryToLoadJson(`${dir}/data.json`);
+
+				const html = component.render(data);
+				const css = component.renderCss().css;
+
+				fs.writeFileSync(`${dir}/_actual.html`, html);
+				if (css) fs.writeFileSync(`${dir}/_actual.css`, css);
+
+				assert.htmlEqual(html, expectedHtml);
+				assert.equal(
+					css.replace(/^\s+/gm, ""),
+					expectedCss.replace(/^\s+/gm, "")
+				);
+
+				if (show) showOutput(dir, { generate: 'ssr' });
+			} catch (err) {
+				showOutput(dir, { generate: 'ssr' });
+				throw err;
 			}
-
-			if (show) showOutput(dir, { generate: "ssr" });
-			if (error) throw error;
-
-			fs.writeFileSync(`${dir}/_actual.html`, html);
-			if (css) fs.writeFileSync(`${dir}/_actual.css`, css);
-
-			assert.htmlEqual(html, expectedHtml);
-			assert.equal(
-				css.replace(/^\s+/gm, ""),
-				expectedCss.replace(/^\s+/gm, "")
-			);
 		});
 	});
 

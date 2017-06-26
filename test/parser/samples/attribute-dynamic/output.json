@@ -1,4 +1,5 @@
 {
+	"hash": 804348386,
 	"html": {
 		"start": 0,
 		"end": 46,
@@ -27,9 +28,9 @@
 								"end": 28,
 								"type": "MustacheTag",
 								"expression": {
+									"type": "Identifier",
 									"start": 21,
 									"end": 26,
-									"type": "Identifier",
 									"name": "color"
 								}
 							},
@@ -48,9 +49,9 @@
 						"end": 40,
 						"type": "MustacheTag",
 						"expression": {
+							"type": "Identifier",
 							"start": 33,
 							"end": 38,
-							"type": "Identifier",
 							"name": "color"
 						}
 					}

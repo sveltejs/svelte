@@ -1,4 +1,5 @@
 {
+	"hash": 3451341610,
 	"html": {
 		"start": 0,
 		"end": 11,
@@ -11,6 +12,12 @@
 				"name": "div",
 				"attributes": [],
 				"children": []
+			},
+			{
+				"start": 11,
+				"end": 13,
+				"type": "Text",
+				"data": "\n\n"
 			}
 		]
 	},

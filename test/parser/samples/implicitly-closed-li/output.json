@@ -1,5 +1,5 @@
 {
-	"hash": 3806276940,
+	"hash": 126082492,
 	"html": {
 		"start": 0,
 		"end": 31,
@@ -13,6 +13,12 @@
 				"attributes": [],
 				"children": [
 					{
+						"start": 4,
+						"end": 6,
+						"type": "Text",
+						"data": "\n\t"
+					},
+					{
 						"start": 6,
 						"end": 13,
 						"type": "Element",
@@ -23,7 +29,7 @@
 								"start": 10,
 								"end": 13,
 								"type": "Text",
-								"data": "a"
+								"data": "a\n\t"
 							}
 						]
 					},
@@ -38,7 +44,7 @@
 								"start": 17,
 								"end": 20,
 								"type": "Text",
-								"data": "b"
+								"data": "b\n\t"
 							}
 						]
 					},

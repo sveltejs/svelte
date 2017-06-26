@@ -2,6 +2,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
+import shared from './shared';
 
 export interface BlockOptions {
 	name: string;
@@ -61,9 +62,6 @@ export default class Block {
 	variables: Map<string, string>;
 	getUniqueName: (name: string) => string;
 
-	component: string;
-	target: string;
-
 	hasUpdateMethod: boolean;
 	autofocus: string;
 
@@ -110,10 +108,6 @@ export default class Block {
 		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker(options.params);
 
-		// unique names
-		this.component = this.getUniqueName('component');
-		this.target = this.getUniqueName('target');
-
 		this.hasUpdateMethod = false; // determined later
 	}
 
@@ -134,14 +128,12 @@ export default class Block {
 
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
-		this.builders.claim.addLine(`${name} = ${claimStatement};`)
+		this.builders.claim.addLine(`${name} = ${claimStatement};`);
 
 		this.mount(name, parentNode);
 
 		if (isToplevel) {
-			this.builders.unmount.addLine(
-				`${this.generator.helper('detachNode')}( ${name} );`
-			);
+			this.builders.unmount.addLine(`@detachNode( ${name} );`);
 		}
 	}
 
@@ -186,14 +178,9 @@ export default class Block {
 
 	mount(name: string, parentNode: string) {
 		if (parentNode) {
-			this.builders.mount.addLine(
-				`${this.generator.helper('appendNode')}( ${name}, ${parentNode} );`
-			);
+			this.builders.mount.addLine(`@appendNode( ${name}, ${parentNode} );`);
 		} else {
-			this.builders.mount.addLine(
-				`${this.generator.helper('insertNode')}( ${name}, ${this
-					.target}, anchor );`
-			);
+			this.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
 		}
 	}
 
@@ -229,11 +216,11 @@ export default class Block {
 
 		if (this.first) {
 			properties.addBlock(`first: null,`);
-			this.builders.hydrate.addLine( `this.first = ${this.first};` );
+			this.builders.hydrate.addLine(`this.first = ${this.first};`);
 		}
 
 		if (this.builders.create.isEmpty()) {
-			properties.addBlock(`create: ${this.generator.helper('noop')},`);
+			properties.addBlock(`create: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				create: function () {
@@ -245,7 +232,7 @@ export default class Block {
 
 		if (this.generator.hydratable) {
 			if (this.builders.claim.isEmpty()) {
-				properties.addBlock(`claim: ${this.generator.helper('noop')},`);
+				properties.addBlock(`claim: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					claim: function ( nodes ) {
@@ -265,10 +252,10 @@ export default class Block {
 		}
 
 		if (this.builders.mount.isEmpty()) {
-			properties.addBlock(`mount: ${this.generator.helper('noop')},`);
+			properties.addBlock(`mount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				mount: function ( ${this.target}, anchor ) {
+				mount: function ( #target, anchor ) {
 					${this.builders.mount}
 				},
 			`);
@@ -276,7 +263,7 @@ export default class Block {
 
 		if (this.hasUpdateMethod) {
 			if (this.builders.update.isEmpty()) {
-				properties.addBlock(`update: ${this.generator.helper('noop')},`);
+				properties.addBlock(`update: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					update: function ( changed, ${this.params.join(', ')} ) {
@@ -289,20 +276,20 @@ export default class Block {
 		if (this.hasIntroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
-					intro: function ( ${this.target}, anchor ) {
+					intro: function ( #target, anchor ) {
 						if ( ${introing} ) return;
 						${introing} = true;
 						${hasOutros && `${outroing} = false;`}
 
 						${this.builders.intro}
 
-						this.mount( ${this.target}, anchor );
+						this.mount( #target, anchor );
 					},
 				`);
 			} else {
 				properties.addBlock(deindent`
-					intro: function ( ${this.target}, anchor ) {
-						this.mount( ${this.target}, anchor );
+					intro: function ( #target, anchor ) {
+						this.mount( #target, anchor );
 					},
 				`);
 			}
@@ -331,7 +318,7 @@ export default class Block {
 		}
 
 		if (this.builders.unmount.isEmpty()) {
-			properties.addBlock(`unmount: ${this.generator.helper('noop')},`);
+			properties.addBlock(`unmount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				unmount: function () {
@@ -341,7 +328,7 @@ export default class Block {
 		}
 
 		if (this.builders.destroy.isEmpty()) {
-			properties.addBlock(`destroy: ${this.generator.helper('noop')}`);
+			properties.addBlock(`destroy: @noop`);
 		} else {
 			properties.addBlock(deindent`
 				destroy: function () {
@@ -351,15 +338,16 @@ export default class Block {
 		}
 
 		return deindent`
-			function ${this.name} ( ${this.params.join(', ')}, ${this.component}${this
-			.key
+			function ${this.name} ( ${this.params.join(', ')}, #component${this.key
 			? `, ${localKey}`
 			: ''} ) {
-				${this.variables.size > 0 && (
-					`var ${Array.from(this.variables.keys()).map(key => {
-						const init = this.variables.get(key);
-						return init !== undefined ? `${key} = ${init}` : key;
-					}).join(', ')};`)}
+				${this.variables.size > 0 &&
+					`var ${Array.from(this.variables.keys())
+						.map(key => {
+							const init = this.variables.get(key);
+							return init !== undefined ? `${key} = ${init}` : key;
+						})
+						.join(', ')};`}
 
 				${!this.builders.init.isEmpty() && this.builders.init}
 
@@ -367,6 +355,8 @@ export default class Block {
 					${properties}
 				};
 			}
-		`;
+		`.replace(/(\\)?#(\w*)/g, (match, escaped, name) => {
+			return escaped ? match.slice(1) : this.alias(name);
+		});
 	}
 }
