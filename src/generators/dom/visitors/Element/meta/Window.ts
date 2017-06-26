@@ -47,13 +47,13 @@ export default function visitWindow(
 				// allow event.stopPropagation(), this.select() etc
 				generator.code.prependRight(
 					attribute.expression.start,
-					`${block.component}.`
+					`${block.alias('component')}.`
 				);
 			}
 
 			const handlerName = block.getUniqueName(`onwindow${attribute.name}`);
 			const handlerBody = deindent`
-				${usesState && `var state = ${block.component}.get();`}
+				${usesState && `var state = #component.get();`}
 				[✂${attribute.expression.start}-${attribute.expression.end}✂];
 			`;
 
@@ -113,7 +113,7 @@ export default function visitWindow(
 			${event === 'scroll' && `${lock} = true;`}
 			${generator.options.dev && `component._updatingReadonlyProperty = true;`}
 
-			${block.component}.set({
+			#component.set({
 				${props}
 			});
 
@@ -141,10 +141,10 @@ export default function visitWindow(
 			function ${observerCallback} () {
 				if ( ${lock} ) return;
 				var x = ${bindings.scrollX
-					? `${block.component}.get( '${bindings.scrollX}' )`
+					? `#component.get( '${bindings.scrollX}' )`
 					: `window.scrollX`};
 				var y = ${bindings.scrollY
-					? `${block.component}.get( '${bindings.scrollY}' )`
+					? `#component.get( '${bindings.scrollY}' )`
 					: `window.scrollY`};
 				window.scrollTo( x, y );
 			};
@@ -152,18 +152,18 @@ export default function visitWindow(
 
 		if (bindings.scrollX)
 			block.builders.init.addLine(
-				`${block.component}.observe( '${bindings.scrollX}', ${observerCallback} );`
+				`#component.observe( '${bindings.scrollX}', ${observerCallback} );`
 			);
 		if (bindings.scrollY)
 			block.builders.init.addLine(
-				`${block.component}.observe( '${bindings.scrollY}', ${observerCallback} );`
+				`#component.observe( '${bindings.scrollY}', ${observerCallback} );`
 			);
 	} else if (bindings.scrollX || bindings.scrollY) {
 		const isX = !!bindings.scrollX;
 
 		block.builders.init.addBlock(deindent`
-			${block.component}.observe( '${bindings.scrollX ||
-			bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
+			#component.observe( '${bindings.scrollX ||
+				bindings.scrollY}', function ( ${isX ? 'x' : 'y'} ) {
 				if ( ${lock} ) return;
 				window.scrollTo( ${isX ? 'x, window.scrollY' : 'window.scrollX, y'} );
 			});
@@ -175,7 +175,7 @@ export default function visitWindow(
 		const handlerName = block.getUniqueName(`onlinestatuschanged`);
 		block.builders.init.addBlock(deindent`
 			function ${handlerName} ( event ) {
-				${block.component}.set({ ${bindings.online}: navigator.onLine });
+				#component.set({ ${bindings.online}: navigator.onLine });
 			};
 			window.addEventListener( 'online', ${handlerName} );
 			window.addEventListener( 'offline', ${handlerName} );

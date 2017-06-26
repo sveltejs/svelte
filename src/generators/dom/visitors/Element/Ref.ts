@@ -14,11 +14,11 @@ export default function visitRef(
 	const name = attribute.name;
 
 	block.builders.mount.addLine(
-		`${block.component}.refs.${name} = ${state.parentNode};`
+		`#component.refs.${name} = ${state.parentNode};`
 	);
 
 	block.builders.unmount.addLine(deindent`
-		if ( ${block.component}.refs.${name} === ${state.parentNode} ) ${block.component}.refs.${name} = null;
+		if ( #component.refs.${name} === ${state.parentNode} ) #component.refs.${name} = null;
 	`);
 
 	generator.usesRefs = true; // so this component.refs object is created

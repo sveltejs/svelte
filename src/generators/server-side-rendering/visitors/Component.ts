@@ -11,7 +11,7 @@ export default function visitComponent(
 	block: Block,
 	node: Node
 ) {
-	function stringify(chunk: Node) {
+	function stringifyAttribute(chunk: Node) {
 		if (chunk.type === 'Text') return chunk.data;
 		if (chunk.type === 'MustacheTag') {
 			const { snippet } = block.contextualise(chunk.expression);
@@ -47,7 +47,7 @@ export default function visitComponent(
 					value = snippet;
 				}
 			} else {
-				value = '`' + attribute.value.map(stringify).join('') + '`';
+				value = '`' + attribute.value.map(stringifyAttribute).join('') + '`';
 			}
 
 			return `${attribute.name}: ${value}`;
@@ -59,7 +59,9 @@ export default function visitComponent(
 					? getTailSnippet(binding.value)
 					: '';
 
-				const keypath = block.contexts.has(name) ? `${name}${tail}` : `state.${name}${tail}`;
+				const keypath = block.contexts.has(name)
+					? `${name}${tail}`
+					: `state.${name}${tail}`;
 				return `${binding.name}: ${keypath}`;
 			})
 		)
@@ -68,7 +70,7 @@ export default function visitComponent(
 	const expression = node.name === ':Self'
 		? generator.name
 		: generator.importedComponents.get(node.name) ||
-				`${generator.alias('template')}.components.${node.name}`;
+				`@template.components.${node.name}`;
 
 	bindings.forEach(binding => {
 		block.addBinding(binding, expression);

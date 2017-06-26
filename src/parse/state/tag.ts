@@ -62,23 +62,6 @@ const disallowedContents = new Map([
 	['th', new Set(['td', 'th', 'tr'])],
 ]);
 
-function stripWhitespace(element) {
-	if (element.children.length) {
-		const firstChild = element.children[0];
-		const lastChild = element.children[element.children.length - 1];
-
-		if (firstChild.type === 'Text') {
-			firstChild.data = trimStart(firstChild.data);
-			if (!firstChild.data) element.children.shift();
-		}
-
-		if (lastChild.type === 'Text') {
-			lastChild.data = trimEnd(lastChild.data);
-			if (!lastChild.data) element.children.pop();
-		}
-	}
-}
-
 export default function tag(parser: Parser) {
 	const start = parser.index++;
 
@@ -147,9 +130,6 @@ export default function tag(parser: Parser) {
 			parent = parser.current();
 		}
 
-		// strip leading/trailing whitespace as necessary
-		stripWhitespace(parent);
-
 		parent.end = parser.index;
 		parser.stack.pop();
 
@@ -158,8 +138,6 @@ export default function tag(parser: Parser) {
 		// can this be a child of the parent element, or does it implicitly
 		// close it, like `<li>one<li>two`?
 		if (disallowedContents.get(parent.name).has(name)) {
-			stripWhitespace(parent);
-
 			parent.end = start;
 			parser.stack.pop();
 		}

@@ -108,9 +108,7 @@ export default function visitIfBlock(
 		simple(generator, block, state, node, branches[0], dynamic, vars);
 	}
 
-	block.builders.create.addLine(
-		`${if_name}${name}.create();`
-	);
+	block.builders.create.addLine(`${if_name}${name}.create();`);
 
 	block.builders.claim.addLine(
 		`${if_name}${name}.claim( ${state.parentNodes} );`
@@ -119,8 +117,8 @@ export default function visitIfBlock(
 	if (node.needsAnchor) {
 		block.addElement(
 			anchor,
-			`${generator.helper('createComment')}()`,
-			`${generator.helper('createComment')}()`,
+			`@createComment()`,
+			`@createComment()`,
 			state.parentNode,
 			true
 		);
@@ -139,12 +137,12 @@ function simple(
 	{ name, anchor, params, if_name }
 ) {
 	block.builders.init.addBlock(deindent`
-		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, ${block.component} );
+		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, #component );
 	`);
 
 	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branch.hasIntroMethod ? 'intro' : 'mount';
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
@@ -159,7 +157,7 @@ function simple(
 				if ( ${name} ) {
 					${name}.update( changed, ${params} );
 				} else {
-					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name} = ${branch.block}( ${params}, #component );
 					if ( ${name} ) ${name}.create();
 				}
 
@@ -169,7 +167,7 @@ function simple(
 				if ( ${name} ) {
 					${name}.update( changed, ${params} );
 				} else {
-					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name} = ${branch.block}( ${params}, #component );
 					${name}.create();
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
@@ -177,14 +175,14 @@ function simple(
 		: branch.hasIntroMethod
 			? deindent`
 				if ( !${name} ) {
-					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name} = ${branch.block}( ${params}, #component );
 					${name}.create();
 				}
 				${name}.intro( ${parentNode}, ${anchor} );
 			`
 			: deindent`
 				if ( !${name} ) {
-					${name} = ${branch.block}( ${params}, ${block.component} );
+					${name} = ${branch.block}( ${params}, #component );
 					${name}.create();
 					${name}.mount( ${parentNode}, ${anchor} );
 				}
@@ -242,13 +240,13 @@ function compound(
 		}
 
 		var ${current_block} = ${get_block}( ${params} );
-		var ${name} = ${current_block_and}${current_block}( ${params}, ${block.component} );
+		var ${name} = ${current_block_and}${current_block}( ${params}, #component );
 	`);
 
 	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
 
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 	block.builders.mount.addLine(
 		`${if_name}${name}.${mountOrIntro}( ${targetNode}, ${anchorNode} );`
@@ -257,17 +255,17 @@ function compound(
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
-		${hasElse ?
-			deindent`
+		${hasElse
+			? deindent`
 				${name}.unmount();
 				${name}.destroy();
-			` :
-			deindent`
+			`
+			: deindent`
 				if ( ${name} ) {
 					${name}.unmount();
 					${name}.destroy();
 				}`}
-		${name} = ${current_block_and}${current_block}( ${params}, ${block.component} );
+		${name} = ${current_block_and}${current_block}( ${params}, #component );
 		${if_name}${name}.create();
 		${if_name}${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
 	`;
@@ -288,13 +286,9 @@ function compound(
 		`);
 	}
 
-	block.builders.unmount.addLine(
-		`${if_name}${name}.unmount();`
-	);
+	block.builders.unmount.addLine(`${if_name}${name}.unmount();`);
 
-	block.builders.destroy.addLine(
-		`${if_name}${name}.destroy();`
-	);
+	block.builders.destroy.addLine(`${if_name}${name}.destroy();`);
 }
 
 // if any of the siblings have outros, we need to keep references to the blocks
@@ -342,19 +336,19 @@ function compoundWithOutros(
 	if (hasElse) {
 		block.builders.init.addBlock(deindent`
 			${current_block_index} = ${get_block}( ${params} );
-			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, #component );
 		`);
 	} else {
 		block.builders.init.addBlock(deindent`
 			if ( ~( ${current_block_index} = ${get_block}( ${params} ) ) ) {
-				${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+				${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, #component );
 			}
 		`);
 	}
 
 	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
@@ -374,7 +368,7 @@ function compoundWithOutros(
 	const createNewBlock = deindent`
 		${name} = ${if_blocks}[ ${current_block_index} ];
 		if ( !${name} ) {
-			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, ${block.component} );
+			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, #component );
 			${name}.create();
 		}
 		${name}.${mountOrIntro}( ${parentNode}, ${anchor} );

@@ -1,4 +1,5 @@
 {
+	"hash": 4260626221,
 	"html": {
 		"start": 0,
 		"end": 101,
@@ -16,48 +17,48 @@
 						"type": "EventHandler",
 						"name": "click",
 						"expression": {
+							"type": "CallExpression",
 							"start": 18,
 							"end": 44,
-							"type": "CallExpression",
 							"callee": {
+								"type": "Identifier",
 								"start": 18,
 								"end": 21,
-								"type": "Identifier",
 								"name": "set"
 							},
 							"arguments": [
 								{
+									"type": "ObjectExpression",
 									"start": 22,
 									"end": 43,
-									"type": "ObjectExpression",
 									"properties": [
 										{
+											"type": "Property",
 											"start": 24,
 											"end": 41,
-											"type": "Property",
-											"kind": "init",
-											"computed": false,
 											"method": false,
 											"shorthand": false,
+											"computed": false,
 											"key": {
+												"type": "Identifier",
 												"start": 24,
 												"end": 31,
-												"type": "Identifier",
 												"name": "visible"
 											},
 											"value": {
+												"type": "UnaryExpression",
 												"start": 33,
 												"end": 41,
-												"type": "UnaryExpression",
 												"operator": "!",
 												"prefix": true,
 												"argument": {
+													"type": "Identifier",
 													"start": 34,
 													"end": 41,
-													"type": "Identifier",
 													"name": "visible"
 												}
-											}
+											},
+											"kind": "init"
 										}
 									]
 								}
@@ -67,10 +68,10 @@
 				],
 				"children": [
 					{
-						"data": "toggle",
 						"start": 46,
 						"end": 52,
-						"type": "Text"
+						"type": "Text",
+						"data": "toggle"
 					}
 				]
 			},
@@ -85,10 +86,10 @@
 				"end": 101,
 				"type": "IfBlock",
 				"expression": {
-					"end": 76,
-					"name": "visible",
+					"type": "Identifier",
 					"start": 69,
-					"type": "Identifier"
+					"end": 76,
+					"name": "visible"
 				},
 				"children": [
 					{
@@ -99,10 +100,10 @@
 						"attributes": [],
 						"children": [
 							{
-								"data": "hello!",
-								"end": 89,
 								"start": 83,
-								"type": "Text"
+								"end": 89,
+								"type": "Text",
+								"data": "hello!"
 							}
 						]
 					}

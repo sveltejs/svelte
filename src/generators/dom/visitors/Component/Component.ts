@@ -113,9 +113,7 @@ export default function visitComponent(
 		local.update.addBlock(updates);
 	}
 
-	const componentInitProperties = [
-		`_root: ${block.component}._root`,
-	];
+	const componentInitProperties = [`_root: #component._root`];
 
 	// Component has children, put them in a separate {{yield}} block
 	if (hasChildren) {
@@ -130,12 +128,10 @@ export default function visitComponent(
 		const yieldFragment = block.getUniqueName(`${name}_yield_fragment`);
 
 		block.builders.init.addLine(
-			`var ${yieldFragment} = ${childBlock.name}( ${params}, ${block.component} );`
+			`var ${yieldFragment} = ${childBlock.name}( ${params}, #component );`
 		);
 
-		block.builders.create.addLine(
-			`${yieldFragment}.create();`
-		);
+		block.builders.create.addLine(`${yieldFragment}.create();`);
 
 		block.builders.claim.addLine(
 			`${yieldFragment}.claim( ${state.parentNodes} );`
@@ -185,7 +181,7 @@ export default function visitComponent(
 	const expression = node.name === ':Self'
 		? generator.name
 		: generator.importedComponents.get(node.name) ||
-				`${generator.alias('template')}.components.${node.name}`;
+				`@template.components.${node.name}`;
 
 	local.create.addBlockAtStart(deindent`
 		${statements.join('\n')}
@@ -226,12 +222,16 @@ export default function visitComponent(
 
 	block.builders.init.addBlock(local.create);
 
-	const targetNode = state.parentNode || block.target;
+	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addLine(`${name}._fragment.create();`);
-	block.builders.claim.addLine(`${name}._fragment.claim( ${state.parentNodes} );`);
-	block.builders.mount.addLine(`${name}._fragment.mount( ${targetNode}, ${anchorNode} );` );
+	block.builders.claim.addLine(
+		`${name}._fragment.claim( ${state.parentNodes} );`
+	);
+	block.builders.mount.addLine(
+		`${name}._fragment.mount( ${targetNode}, ${anchorNode} );`
+	);
 
 	if (!local.update.isEmpty()) block.builders.update.addBlock(local.update);
 }

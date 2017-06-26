@@ -1,4 +1,5 @@
 {
+	"hash": 1937205193,
 	"html": {
 		"start": 0,
 		"end": 25,
@@ -16,9 +17,9 @@
 						"type": "Binding",
 						"name": "value",
 						"value": {
+							"type": "Identifier",
 							"start": 19,
 							"end": 23,
-							"type": "Identifier",
 							"name": "name"
 						}
 					}
