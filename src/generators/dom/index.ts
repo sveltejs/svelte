@@ -254,11 +254,14 @@ export default function dom(
 
 	let result = builder
 		.toString()
-		.replace(/@(\w+)\b/g, (match: string, name: string) => {
+		.replace(/(\\)?@(\w*)/g, (match: string, escaped: string, name: string) => {
+			if (escaped) return match.slice(1);
+
 			if (name in shared) {
 				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
 				usedHelpers.add(name);
 			}
+
 			return generator.alias(name);
 		});
 
