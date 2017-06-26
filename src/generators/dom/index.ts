@@ -4,6 +4,7 @@ import annotateWithScopes from '../../utils/annotateWithScopes';
 import isReference from '../../utils/isReference';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
+import stringify from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
@@ -14,7 +15,6 @@ import { Parsed, CompileOptions, Node } from '../../interfaces';
 
 export class DomGenerator extends Generator {
 	blocks: Block[];
-	uses: Set<string>;
 	readonly: Set<string>;
 	metaBindings: string[];
 
@@ -32,7 +32,6 @@ export class DomGenerator extends Generator {
 	) {
 		super(parsed, source, name, options);
 		this.blocks = [];
-		this.uses = new Set();
 
 		this.readonly = new Set();
 
@@ -40,16 +39,6 @@ export class DomGenerator extends Generator {
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.metaBindings = [];
-	}
-
-	helper(name: string) {
-		if (this.options.dev && `${name}Dev` in shared) {
-			name = `${name}Dev`;
-		}
-
-		this.uses.add(name);
-
-		return this.alias(name);
 	}
 }
 
@@ -76,14 +65,10 @@ export default function dom(
 		visit(generator, block, state, node);
 	});
 
-	const builders = {
-		main: new CodeBuilder(),
-		_set: new CodeBuilder(),
-	};
+	const builder = new CodeBuilder();
 
 	if (computations.length) {
-		const builder = new CodeBuilder();
-		const differs = generator.helper('differs');
+		const computationBuilder = new CodeBuilder();
 
 		computations.forEach(({ key, deps }) => {
 			if (generator.readonly.has(key)) {
@@ -98,26 +83,24 @@ export default function dom(
 			const condition = `isInitial || ${deps
 				.map(
 					dep =>
-						`( '${dep}' in newState && ${differs}( state.${dep}, oldState.${dep} ) )`
+						`( '${dep}' in newState && @differs( state.${dep}, oldState.${dep} ) )`
 				)
 				.join(' || ')}`;
-			const statement = `state.${key} = newState.${key} = ${generator.alias(
-				'template'
-			)}.computed.${key}( ${deps.map(dep => `state.${dep}`).join(', ')} );`;
+			const statement = `state.${key} = newState.${key} = @template.computed.${key}( ${deps
+				.map(dep => `state.${dep}`)
+				.join(', ')} );`;
 
-			builder.addConditionalLine(condition, statement);
+			computationBuilder.addConditionalLine(condition, statement);
 		});
 
-		builders.main.addBlock(deindent`
-			function ${generator.alias(
-				'recompute'
-			)} ( state, newState, oldState, isInitial ) {
-				${builder}
+		builder.addBlock(deindent`
+			function @recompute ( state, newState, oldState, isInitial ) {
+				${computationBuilder}
 			}
 		`);
 	}
 
-	builders._set.addBlock(deindent`
+	const _set = deindent`
 		${options.dev &&
 			deindent`
 			if ( typeof newState !== 'object' ) {
@@ -131,43 +114,35 @@ export default function dom(
 		`}
 
 		var oldState = this._state;
-		this._state = ${generator.helper('assign')}( {}, oldState, newState );
+		this._state = @assign( {}, oldState, newState );
 		${computations.length &&
-			`${generator.alias(
-				'recompute'
-			)}( this._state, newState, oldState, false )`}
-		${generator.helper(
-			'dispatchObservers'
-		)}( this, this._observers.pre, newState, oldState );
+			`@recompute( this._state, newState, oldState, false )`}
+		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
-		${generator.helper(
-			'dispatchObservers'
-		)}( this, this._observers.post, newState, oldState );
+		@dispatchObservers( this, this._observers.post, newState, oldState );
 		${generator.hasComplexBindings &&
 			`while ( this._bindings.length ) this._bindings.pop()();`}
 		${(generator.hasComponents || generator.hasIntroTransitions) &&
 			`this._flush();`}
-	`);
+	`;
 
 	if (hasJs) {
-		builders.main.addBlock(
-			`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`
-		);
+		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
 	}
 
 	if (generator.css && options.css !== false) {
-		builders.main.addBlock(deindent`
-			function ${generator.alias('add_css')} () {
-				var style = ${generator.helper('createElement')}( 'style' );
-				style.id = ${JSON.stringify(generator.cssId + '-style')};
-				style.textContent = ${JSON.stringify(generator.css)};
-				${generator.helper('appendNode')}( style, document.head );
+		builder.addBlock(deindent`
+			function @add_css () {
+				var style = @createElement( 'style' );
+				style.id = '${generator.cssId}-style';
+				style.textContent = ${stringify(generator.css)};
+				@appendNode( style, document.head );
 			}
 		`);
 	}
 
 	generator.blocks.forEach(block => {
-		builders.main.addBlock(block.render());
+		builder.addBlock(block.render());
 	});
 
 	const sharedPath = options.shared === true
@@ -176,35 +151,28 @@ export default function dom(
 
 	const prototypeBase =
 		`${name}.prototype` +
-		(templateProperties.methods
-			? `, ${generator.alias('template')}.methods`
-			: '');
+		(templateProperties.methods ? `, @template.methods` : '');
 	const proto = sharedPath
-		? `${generator.helper('proto')} `
+		? `@proto `
 		: deindent`
 		{
 			${['get', 'fire', 'observe', 'on', 'set', '_flush']
-				.map(n => `${n}: ${generator.helper(n)}`)
+				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
 
 	// TODO deprecate component.teardown()
-	builders.main.addBlock(deindent`
+	builder.addBlock(deindent`
 		function ${name} ( options ) {
 			options = options || {};
 			${options.dev &&
 				`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
 			${generator.usesRefs && `this.refs = {};`}
 			this._state = ${templateProperties.data
-				? `${generator.helper('assign')}( ${generator.alias(
-						'template'
-					)}.data(), options.data )`
+				? `@assign( @template.data(), options.data )`
 				: `options.data || {}`};
 			${generator.metaBindings}
-			${computations.length &&
-				`${generator.alias(
-					'recompute'
-				)}( this._state, this._state, {}, true );`}
+			${computations.length && `@recompute( this._state, this._state, {}, true );`}
 			${options.dev &&
 				Array.from(generator.expectedProperties).map(
 					prop =>
@@ -228,23 +196,19 @@ export default function dom(
 			this._torndown = false;
 			${generator.css &&
 				options.css !== false &&
-				`if ( !document.getElementById( ${JSON.stringify(
-					generator.cssId + '-style'
-				)} ) ) ${generator.alias('add_css')}();`}
+				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
 				`this._renderHooks = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
 
-			this._fragment = ${generator.alias(
-				'create_main_fragment'
-			)}( this._state, this );
+			this._fragment = @create_main_fragment( this._state, this );
 
 			if ( options.target ) {
-				${generator.hydratable ?
-					deindent`
-						var nodes = ${generator.helper('children')}( options.target );
+				${generator.hydratable
+					? deindent`
+						var nodes = @children( options.target );
 						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
-						nodes.forEach( ${generator.helper('detachNode')} );
+						nodes.forEach( @detachNode );
 					` :
 					deindent`
 						${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
@@ -261,25 +225,22 @@ export default function dom(
 			${templateProperties.oncreate &&
 				deindent`
 				if ( options._root ) {
-					options._root._renderHooks.push( ${generator.alias(
-						'template'
-					)}.oncreate.bind( this ) );
+					options._root._renderHooks.push( @template.oncreate.bind( this ) );
 				} else {
-					${generator.alias('template')}.oncreate.call( this );
+					@template.oncreate.call( this );
 				}
 			`}
 		}
 
-		${generator.helper('assign')}( ${prototypeBase}, ${proto});
+		@assign( ${prototypeBase}, ${proto});
 
 		${name}.prototype._set = function _set ( newState ) {
-			${builders._set}
+			${_set}
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
 			this.fire( 'destroy' );
-			${templateProperties.ondestroy &&
-				`${generator.alias('template')}.ondestroy.call( this );`}
+			${templateProperties.ondestroy && `@template.ondestroy.call( this );`}
 
 			if ( detach !== false ) this._fragment.unmount();
 			this._fragment.destroy();
@@ -290,6 +251,21 @@ export default function dom(
 		};
 	`);
 
+	const usedHelpers = new Set();
+
+	let result = builder
+		.toString()
+		.replace(/(\\)?@(\w*)/g, (match: string, escaped: string, name: string) => {
+			if (escaped) return match.slice(1);
+
+			if (name in shared) {
+				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+				usedHelpers.add(name);
+			}
+
+			return generator.alias(name);
+		});
+
 	if (sharedPath) {
 		if (format !== 'es') {
 			throw new Error(
@@ -297,17 +273,17 @@ export default function dom(
 			);
 		}
 
-		const names = Array.from(generator.uses).sort().map(name => {
+		const names = Array.from(usedHelpers).sort().map(name => {
 			return name !== generator.alias(name)
 				? `${name} as ${generator.alias(name)}`
 				: name;
 		});
 
-		builders.main.addLineAtStart(
-			`import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};`
-		);
+		result =
+			`import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` +
+			result;
 	} else {
-		generator.uses.forEach(key => {
+		usedHelpers.forEach(key => {
 			const str = shared[key];
 			const code = new MagicString(str);
 			const expression = parseExpressionAt(str, 0);
@@ -326,7 +302,7 @@ export default function dom(
 						if (node.name in shared) {
 							// this helper function depends on another one
 							const dependency = node.name;
-							generator.uses.add(dependency);
+							usedHelpers.add(dependency);
 
 							const alias = generator.alias(dependency);
 							if (alias !== node.name)
@@ -344,22 +320,20 @@ export default function dom(
 				// special case
 				const global = `_svelteTransitionManager`;
 
-				builders.main.addBlock(
-					`var ${generator.alias(
-						'transitionManager'
-					)} = window.${global} || ( window.${global} = ${code});`
-				);
+				result += `\n\nvar ${generator.alias(
+					'transitionManager'
+				)} = window.${global} || ( window.${global} = ${code});`;
 			} else {
 				const alias = generator.alias(expression.id.name);
 				if (alias !== expression.id.name)
 					code.overwrite(expression.id.start, expression.id.end, alias);
 
-				builders.main.addBlock(code.toString());
+				result += `\n\n${code}`;
 			}
 		});
 	}
 
-	return generator.generate(builders.main.toString(), options, {
+	return generator.generate(result, options, {
 		name,
 		format,
 	});

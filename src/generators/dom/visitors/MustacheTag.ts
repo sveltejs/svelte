@@ -18,8 +18,10 @@ export default function visitMustacheTag(
 	block.addVariable(value);
 	block.addElement(
 		name,
-		`${generator.helper('createText')}( ${value} = ${snippet} )`,
-		generator.hydratable ? `${generator.helper('claimText')}( ${state.parentNodes}, ${value} = ${snippet} )` : '',
+		`@createText( ${value} = ${snippet} )`,
+		generator.hydratable
+			? `@claimText( ${state.parentNodes}, ${value} = ${snippet} )`
+			: '',
 		state.parentNode,
 		true
 	);
