@@ -81,7 +81,8 @@ export default function visitElement(
 	}
 
 	// add CSS encapsulation attribute
-	if (generator.cssId && (generator.cascade ? state.isTopLevel : generator.cssAppliesTo(node, elementStack))) {
+	// TODO add a helper for this, rather than repeating it
+	if (node._needsCssAttribute) {
 		block.builders.hydrate.addLine(
 			`@setAttribute( ${name}, '${generator.cssId}', '' );`
 		);
