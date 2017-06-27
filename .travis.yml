@@ -8,11 +8,10 @@ sudo: required
 env:
   global:
   - BUILD_TIMEOUT=10000
+  - SAUCE_USERNAME=PaulBGD
 addons:
-    sauce_connect:
-      username: "PaulBGD"
-      access_key:
-        - secure: dwcE27veEFzWIZ9ThievcuNk7NmyKVk+eiPCt74q1eeBxwmaBqsW/j3QP/D4GEREkhimf92PCmA3AYRGDeoMuGaXHwtFCfynbnNKgl1qzxXxxRimd9bTAzmjHvB3eDkmpyadFDXrIneh/g9DZM/wtZUVGdoUPi7LwvF0OCJy3WTaxGwjhYEpDTxs4hEWvjXsNWocdkk7sfJKTqjD4nZ4f/dZdsBJvzq/WOj8+DGKIM/PuIkZgWwYXtLCbxBgWT24iG4LPvqp/q3rszdrLmJLOrypeA5nkC2kqQT8zcqMR6ZIqXOPi9NFWsrKtGk/FEeWdMpzseURIzDgIkDoqOkH0NxlTw4MvFHkot7s5FhCCKsCv28Ce2kp5THDyuE+NLVW/xkjAmnzgC4ZqFoHuNqfn3AwSQHjEfu9seQpiyahl2IAhwO1h7gxGe4OlX1B/r3Yh/9B2ADSNxRtyV1uyEfevaZtRLas7O2qMiXt9/xeKdhVKkEBrx9ZQ8hRK0lXoevge5iB2vjs5+bqwN6Ar+gjZvWST0rxmietJFgG59m1K63+7sTRn++CQbgts5zYb/0uDTx8p6fiaIOxkF14rx4BYqJJckO6O9UJYaEP2tW+r30e1c0dLhLyjSfW/cVa9jRo63mKCRriW+8VScF/uA/hfHo0v+EIq+D8/LT3rshzcR4=
+  jwt:
+    secure: DQK+GD8grif8WD3u+72h5ofO7pnyf0Jn8A2R4sEnBQtNeVRmzDtY/fOHDzUCVvUROb+sun+ERsXPx9IEqEJVp6rNNLGFhHjSfofSoKEP/uDY6jproetUPB4EMVBoS7gq9uwUa98/oOmAr0fWlkwxvueY+Ke8Sc2Cm7+Cos4AarFR+uW48o70d9AqzDzWlFSwAaNEuYPO25k26juOkh+J0IH++92il5aDBFzMhuZD28fElmRrds0Ne31X2gU9rlaVgd6Xk2tvZBdkizNKEIgLW4nGXsUe9WYXWhpvwfCEKGUdqaAvNC4LtU+YXtl4uWmiUz4Zz7y98Samw8cmj6voio8NIKjXOvmm4YGfwy7FmnRF1BTCJlFmJ56mGnDFaUvw2r2ju7DPhQEc07Y2M6m8j6iCJUV9/4dJry12LTTREK9ER3DNtvOUjN9Qq8194zKWWV3hCTkH917thTpG8+TWZ+TFffz/vAsOzLVESvLtMtcC5Y30GgyWdtI19lUfoL0j8+dcVFLmCbzOJ6+PdkydIKf3OD6EVL6pc8gY7o0cTH38r9qZbMozHHwOYUB98vE7jyu1JCWPBjmH8EwW5HgyZMyju71jb8Nq7uYdp3ggYIX7c/Xtpb+9oEnf5JXGQfJY1pujESeKPElhwfdNN5ktBkqTmUtnfqlB/0emdjFB2GM=
 cache:
   directories:
   - "$HOME/.yarn-cache"

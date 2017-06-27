@@ -56,7 +56,7 @@ const args = [
                 tags,
             },
     ])}`,
-    `--server=https://${username}:${accessKey}@localhost:4445/wd/hub`
+    `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`
 ];
 
     childProcess.execFileSync(path.join(__dirname, 'benchmark.sh'), args, {
