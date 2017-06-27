@@ -1,33 +1,22 @@
 language: node_js
 node_js:
-  - "4"
-  - "6"
-  - "node"
+- '4'
+- '6'
+- node
 dist: trusty
 sudo: required
-addons:
-  firefox: "latest"
 env:
   global:
-    - BUILD_TIMEOUT=10000
+  - BUILD_TIMEOUT=10000
+addons:
+    sauce_connect:
+      username: "PaulBGD"
+      access_key:
+        - secure: dwcE27veEFzWIZ9ThievcuNk7NmyKVk+eiPCt74q1eeBxwmaBqsW/j3QP/D4GEREkhimf92PCmA3AYRGDeoMuGaXHwtFCfynbnNKgl1qzxXxxRimd9bTAzmjHvB3eDkmpyadFDXrIneh/g9DZM/wtZUVGdoUPi7LwvF0OCJy3WTaxGwjhYEpDTxs4hEWvjXsNWocdkk7sfJKTqjD4nZ4f/dZdsBJvzq/WOj8+DGKIM/PuIkZgWwYXtLCbxBgWT24iG4LPvqp/q3rszdrLmJLOrypeA5nkC2kqQT8zcqMR6ZIqXOPi9NFWsrKtGk/FEeWdMpzseURIzDgIkDoqOkH0NxlTw4MvFHkot7s5FhCCKsCv28Ce2kp5THDyuE+NLVW/xkjAmnzgC4ZqFoHuNqfn3AwSQHjEfu9seQpiyahl2IAhwO1h7gxGe4OlX1B/r3Yh/9B2ADSNxRtyV1uyEfevaZtRLas7O2qMiXt9/xeKdhVKkEBrx9ZQ8hRK0lXoevge5iB2vjs5+bqwN6Ar+gjZvWST0rxmietJFgG59m1K63+7sTRn++CQbgts5zYb/0uDTx8p6fiaIOxkF14rx4BYqJJckO6O9UJYaEP2tW+r30e1c0dLhLyjSfW/cVa9jRo63mKCRriW+8VScF/uA/hfHo0v+EIq+D8/LT3rshzcR4=
 cache:
   directories:
-  - $HOME/.yarn-cache
-before_install:
-  - sudo apt-key adv --keyserver pgp.mit.edu --recv D101F7899D41F3C3
-  - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-  - sudo apt-get update -qq
-  - sudo apt-get install -y -qq yarn
-  - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  - sudo dpkg -i google-chrome-stable_current_amd64.deb
-  - wget https://github.com/mozilla/geckodriver/releases/download/v0.14.0/geckodriver-v0.14.0-linux64.tar.gz
-  - mkdir geckodriver
-  - tar -xzf geckodriver-v0.14.0-linux64.tar.gz -C geckodriver
-  - wget https://chromedriver.storage.googleapis.com/2.29/chromedriver_linux64.zip
-  - unzip chromedriver_linux64.zip -d chromedriver
-  - export PATH=$PATH:$PWD/geckodriver:$PWD/chromedriver
-  - "export DISPLAY=:99.0"
+  - "$HOME/.yarn-cache"
 install: yarn
-after_success: 
-  - npm run codecov
-  - npm run benchmark
+after_success:
+- npm run codecov
+- node scripts/travis-bench.js
