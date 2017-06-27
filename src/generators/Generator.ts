@@ -216,13 +216,17 @@ export default class Generator {
 		};
 	}
 
-	cssAppliesTo(node: Node, stack: Node[]) {
+	applyCss(node: Node, stack: Node[]) {
+		if (!this.cssId) return;
+
+		if (this.cascade) {
+			if (stack.length === 0) node._needsCssAttribute = true;
+			return;
+		}
+
 		for (let i = 0; i < this.selectors.length; i += 1) {
 			const selector = this.selectors[i];
-			if (selector.appliesTo(node, stack)) {
-				selector.used = true;
-				return true;
-			}
+			selector.apply(node, stack);
 		}
 	}
 

@@ -6,6 +6,15 @@ export default function extractSelectors(css: Node) :Node[] {
 	const selectors = [];
 
 	function processRule(rule: Node) {
+		if (rule.type === 'Atrule') {
+			if (rule.name === 'keyframes') return;
+			if (rule.name == 'media') {
+				rule.block.children.forEach(processRule);
+				return;
+			}
+			console.log(rule);
+			throw new Error('nope');
+		}
 		if (rule.type !== 'Rule') {
 			// TODO @media etc
 			throw new Error(`not supported: ${rule.type}`);
@@ -18,33 +27,13 @@ export default function extractSelectors(css: Node) :Node[] {
 	function processSelector(selector: Node) {
 		selectors.push({
 			used: false,
-			appliesTo: (node: Node, stack: Node[]) => {
-				let i = selector.children.length;
-				let j = stack.length;
+			apply: (node: Node, stack: Node[]) => {
+				const applies = selectorAppliesTo(selector.children, node, stack.slice());
 
-				while (i--) {
-					if (!node) return false;
-
-					const part = selector.children[i];
-
-					if (part.type === 'ClassSelector') {
-						if (!classMatches(node, part.name)) return false;
-					}
-
-					else if (part.type === 'TypeSelector') {
-						if (node.name !== part.name) return false;
-					}
-
-					else if (part.type === 'WhiteSpace') {
-						node = stack[--j];
-					}
-
-					else {
-						throw new Error(`TODO ${part.type}`);
-					}
+				if (applies) {
+					node._needsCssAttribute = true;
+					if (selector.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
 				}
-
-				return true;
 			}
 		});
 	}
@@ -52,6 +41,59 @@ export default function extractSelectors(css: Node) :Node[] {
 	css.children.forEach(processRule);
 
 	return selectors;
+}
+
+function isDescendantSelector(selector: Node) {
+	return selector.type === 'WhiteSpace'; // TODO or '>'
+}
+
+function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]) {
+	let i = parts.length;
+	let j = stack.length;
+
+	while (i--) {
+		if (!node) return;
+		const part = parts[i];
+
+		if (part.type === 'PseudoClassSelector' || part.type === 'PseudoElementSelector') {
+			continue;
+		}
+
+		if (part.type === 'ClassSelector') {
+			if (!classMatches(node, part.name)) return false;
+		}
+
+		else if (part.type === 'TypeSelector') {
+			if (node.name !== part.name) return false;
+		}
+
+		else if (part.type === 'WhiteSpace') {
+			parts = parts.slice(0, i);
+
+			while (stack.length) {
+				if (selectorAppliesTo(parts, stack.pop(), stack)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		else if (part.type === 'Combinator') {
+			if (part.name === '>') {
+				return selectorAppliesTo(parts.slice(0, i), stack.pop(), stack);
+			}
+
+			console.log(part);
+			return true;
+		}
+
+		else {
+			throw new Error(`TODO ${part.type}`);
+		}
+	}
+
+	return true;
 }
 
 function classMatches(node: Node, className: string) {
