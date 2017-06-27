@@ -3,7 +3,6 @@ const childProcess = require('child_process');
 
 const username = process.env.SAUCE_USERNAME;
 const accessKey = process.env.SAUCE_ACCESS_KEY;
-const tunnelIdentifier = process.env.TRAVIS_JOB_NUMBER;
 const build = process.env.TRAVIS_BUILD_NUMBER;
 const tags = [ process.env.TRAVIS_NODE_VERSION, 'CI' ];
 const idleTimeout = 30;
@@ -17,7 +16,6 @@ const args = [
                 username,
                 accessKey,
                 idleTimeout,
-                tunnelIdentifier,
                 build,
                 tags,
             },
@@ -28,7 +26,6 @@ const args = [
                 username,
                 accessKey,
                 idleTimeout,
-                tunnelIdentifier,
                 build,
                 tags,
             },
@@ -40,7 +37,6 @@ const args = [
                 username,
                 accessKey,
                 idleTimeout,
-                tunnelIdentifier,
                 build,
                 tags,
             },
@@ -51,7 +47,6 @@ const args = [
                 username,
                 accessKey,
                 idleTimeout,
-                tunnelIdentifier,
                 build,
                 tags,
             },
