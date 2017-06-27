@@ -1,5 +1,124 @@
 # Svelte changelog
 
+## 1.23.4
+
+* Don't recreate if blocks incorrectly ([#669](https://github.com/sveltejs/svelte/pull/669))
+
+## 1.23.3
+
+* Pass parameters to `get_block` ([#667](https://github.com/sveltejs/svelte/issues/667))
+
+## 1.23.2
+
+* Fix if blocks being recreated on update ([#665](https://github.com/sveltejs/svelte/issues/665))
+
+## 1.23.1
+
+* Fix each-else blocks that are empty on initial render ([#662](https://github.com/sveltejs/svelte/issues/662))
+
+## 1.23.0
+
+* Hydration ([#649](https://github.com/sveltejs/svelte/pull/649))
+* Correctly transform CSS selectors with pseudo-elements ([#658](https://github.com/sveltejs/svelte/issues/658))
+
+## 1.22.5
+
+* Fix nested component unmounting bug ([#643](https://github.com/sveltejs/svelte/issues/643)) 
+
+## 1.22.4
+
+* Include `ast` in `svelte.compile` return value ([#632](https://github.com/sveltejs/svelte/issues/632))
+* Set initial value of `<select>` binding, if unspecified ([#639](https://github.com/sveltejs/svelte/issues/639))
+* Mark indirect dependencies of `<select>` bindings (i.e. the dependencies of their `<option>` values) ([#639](https://github.com/sveltejs/svelte/issues/639))
+
+## 1.22.3
+
+* Fix nested component unmounting bug ([#625](https://github.com/sveltejs/svelte/issues/625))
+* Allow components to have computed member expression bindings ([#624](https://github.com/sveltejs/svelte/issues/624))
+* Handle empty `<style>` tags ([#634](https://github.com/sveltejs/svelte/issues/634))
+* Warn on missing component ([#623](https://github.com/sveltejs/svelte/issues/623))
+* Allow dynamic `type` attribute for unbound inputs ([#620](https://github.com/sveltejs/svelte/issues/620))
+* Rename `addEventListener` and `removeEventListener` directives ([#621](https://github.com/sveltejs/svelte/issues/621))
+
+## 1.22.2
+
+* Escape template strings correctly in SSR output ([#616](https://github.com/sveltejs/svelte/issues/616))
+* Prevent magic-string deprecation warning ([#617](https://github.com/sveltejs/svelte/pull/617))
+
+## 1.22.1
+
+* Sanitise event handler names ([#612](https://github.com/sveltejs/svelte/issues/612))
+
+## 1.22.0
+
+* Symmetry between `mount` and `unmount`. This is potentially a breaking change if your components import other components that were precompiled with an earlier version of Svelte ([#592](https://github.com/sveltejs/svelte/issues/592))
+* Add `cascade` option, which prevents styles affecting child components if `false`, unless selectors are wrapped in `:global(...)` and keyframe declaration IDs are prefixed with `-global-`. This will become the default behaviour in v2 ([#583](https://github.com/sveltejs/svelte/issues/583))
+* Support binding to computed member expressions ([#602](https://github.com/sveltejs/svelte/issues/602))
+* Coerce empty string in `number`/`range` inputs to `undefined`, not `0` ([#584](https://github.com/sveltejs/svelte/issues/584))
+* Fix insert location of DOM elements in each/if/nested component edge cases ([#610](https://github.com/sveltejs/svelte/issues/610))
+
+## 1.21.0
+
+* Always use `helpers` if referenced, not just for call expressions ([#575](https://github.com/sveltejs/svelte/issues/575))
+* Fix parsing of `<textarea>` children ([#599](https://github.com/sveltejs/svelte/pull/599))
+* Treat `<textarea>` value attributes and children as equivalent, and fail validation if both are present ([#599](https://github.com/sveltejs/svelte/pull/599))
+* Fix `<textarea>` SSR ([#599](https://github.com/sveltejs/svelte/pull/599))
+* Apply CSS transition styles immediately if transition has delay ([#574](https://github.com/sveltejs/svelte/issues/574))
+* Ensure `transitionManager` is treeshakeable ([#593](https://github.com/sveltejs/svelte/issues/593))
+* Fix for environments where `node.style.animation` is undefined ([#587](https://github.com/sveltejs/svelte/issues/587))
+* Fix order of operations when dealing with `<select>` elements ([#590](https://github.com/sveltejs/svelte/issues/590))
+* Downgrade 'invalid callee' to a warning ([#579](https://github.com/sveltejs/svelte/issues/579))
+* Convert to TypeScript ([#573](https://github.com/sveltejs/svelte/pull/573))
+
+## 1.20.2
+
+* Fix destruction of compound if-blocks with outros ([#572](https://github.com/sveltejs/svelte/pull/572))
+
+## 1.20.1
+
+* Fix insertion order of `if` blocks and their anchors ([#569](https://github.com/sveltejs/svelte/issues/569))
+
+## 1.20.0
+
+* Faster, better updates of keyed each blocks ([#373](https://github.com/sveltejs/svelte/issues/373), [#543](https://github.com/sveltejs/svelte/issues/543))
+* Use element IDs to robustly track dynamically injected `<style>` tags ([#554](https://github.com/sveltejs/svelte/issues/554))
+* Abort outros before corresponding intros ([#546](https://github.com/sveltejs/svelte/issues/546))
+* Generate less code for `if` blocks with `else` blocks ([#540](https://github.com/sveltejs/svelte/issues/540))
+* Ensure `{{yield}}` block content is injected into the right place ([#561](https://github.com/sveltejs/svelte/issues/561))
+* Simpler, more readable codegen code ([#559](https://github.com/sveltejs/svelte/pull/559))
+* Validate transition directives ([#564](https://github.com/sveltejs/svelte/issues/564))
+* Apply delays to bidirectional transitions ([#562](https://github.com/sveltejs/svelte/issues/562))
+* Handle all valid HTML entities ([#565](https://github.com/sveltejs/svelte/pull/565))
+* Fix outros on compound `if` blocks ([#565](https://github.com/sveltejs/svelte/pull/565))
+* Validation for `<:Window>` tags ([#565](https://github.com/sveltejs/svelte/pull/565))
+* Increased test coverage ([#565](https://github.com/sveltejs/svelte/pull/565))
+
+## 1.19.1
+
+* Export `generateKeyframes`, so that CSS transitions work
+
+## 1.19.0
+
+* Experimental support for transitions ([#7](https://github.com/sveltejs/svelte/issues/7))
+* Use `querySelector(':checked')` instead of `selectedOptions` ([#539](https://github.com/sveltejs/svelte/issues/539))
+* Stringify helpers before bundling them, to avoid renaming errors ([#538](https://github.com/sveltejs/svelte/issues/538))
+
+## 1.18.2
+
+* Parenthesize if-block conditions ([#532](https://github.com/sveltejs/svelte/issues/532))
+* Fix parsing of parenthesized expressions ([#534](https://github.com/sveltejs/svelte/issues/534))
+* Fix error on `bind:checked` that doesn't belong to a checkbox input ([#529](https://github.com/sveltejs/svelte/pull/529))
+
+## 1.18.1
+
+* Allow `destroy()` in event handlers ([#523](https://github.com/sveltejs/svelte/issues/523))
+* Fix bug with `{{yield}}` blocks following elements ([#524](https://github.com/sveltejs/svelte/issues/524))
+
+## 1.18.0
+
+* Visit `<select>` attributes after children, to ensure options are in the right state ([#521](https://github.com/sveltejs/svelte/pull/521))
+* Use sibling elements as anchors rather than creating comment nodes wherever possible ([#3](https://github.com/sveltejs/svelte/issues/3))
+
 ## 1.17.2
 
 * Replace bad characters when creating variable names based on element names ([#516](https://github.com/sveltejs/svelte/issues/516))

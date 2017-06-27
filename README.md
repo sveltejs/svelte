@@ -62,7 +62,7 @@ const { code, map } = svelte.compile( source, {
 
 The Svelte compiler exposes the following API:
 
-* `compile( source [, options ] ) => { code, map }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript and a sourcemap.
+* `compile( source [, options ] ) => { code, map, ast, css }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
 * `create( source [, options ] ) => function` - Compile the component and return the component itself.
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
@@ -77,6 +77,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `name` | `string` | The name of the constructor in the compiled component. | `'SvelteComponent'` |
 | `filename` | `string` | The filename to use in sourcemaps and compiler error and warning messages. | `'SvelteComponent.html'` |
 | `amd`.`id` | `string` | The AMD module ID to use for the `'amd'` and `'umd'` output formats. | `undefined` |
+| `cascade` | `true`, `false` | Whether to cascade all of the component's styles to child components. If `false`, only selectors wrapped in `:global(...)` and keyframe IDs beginning with `-global-` are cascaded. | `true` |
 | `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
 | `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
 | `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |

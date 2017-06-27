@@ -1,4 +1,5 @@
 {
+	"hash": 1185019088,
 	"html": {
 		"start": 0,
 		"end": 30,
@@ -12,13 +13,19 @@
 				"attributes": [],
 				"children": [
 					{
+						"start": 3,
+						"end": 4,
+						"type": "Text",
+						"data": " "
+					},
+					{
 						"start": 4,
 						"end": 9,
 						"type": "MustacheTag",
 						"expression": {
+							"type": "Identifier",
 							"start": 6,
 							"end": 7,
-							"type": "Identifier",
 							"name": "a"
 						}
 					},
@@ -33,9 +40,9 @@
 						"end": 15,
 						"type": "MustacheTag",
 						"expression": {
+							"type": "Identifier",
 							"start": 12,
 							"end": 13,
-							"type": "Identifier",
 							"name": "b"
 						}
 					},
@@ -50,9 +57,9 @@
 						"end": 23,
 						"type": "MustacheTag",
 						"expression": {
+							"type": "Identifier",
 							"start": 20,
 							"end": 21,
-							"type": "Identifier",
 							"name": "c"
 						}
 					},
@@ -60,7 +67,7 @@
 						"start": 23,
 						"end": 26,
 						"type": "Text",
-						"data": " :"
+						"data": " : "
 					}
 				]
 			}

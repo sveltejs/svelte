@@ -1,0 +1,8 @@
+[{
+	"message": "An element can only have one 'transition' directive",
+	"loc": {
+		"line": 1,
+		"column": 20
+	},
+	"pos": 20
+}]

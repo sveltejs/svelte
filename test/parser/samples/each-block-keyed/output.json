@@ -1,4 +1,5 @@
 {
+	"hash": 2025411181,
 	"html": {
 		"start": 0,
 		"end": 54,
@@ -9,13 +10,11 @@
 				"end": 54,
 				"type": "EachBlock",
 				"expression": {
+					"type": "Identifier",
 					"start": 8,
 					"end": 13,
-					"type": "Identifier",
 					"name": "todos"
 				},
-				"context": "todo",
-				"key": "id",
 				"children": [
 					{
 						"start": 29,
@@ -29,15 +28,17 @@
 								"end": 40,
 								"type": "MustacheTag",
 								"expression": {
+									"type": "Identifier",
 									"start": 34,
 									"end": 38,
-									"type": "Identifier",
 									"name": "todo"
 								}
 							}
 						]
 					}
-				]
+				],
+				"context": "todo",
+				"key": "id"
 			}
 		]
 	},

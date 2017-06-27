@@ -1,0 +1,13 @@
+
+	@keyframes why {
+		0% { color: red; }
+		100% { color: blue; }
+	}
+
+	.animated[svelte-90785995] {
+		animation: why 2s;
+	}
+
+	.also-animated[svelte-90785995] {
+		animation: not-defined-here 2s;
+	}

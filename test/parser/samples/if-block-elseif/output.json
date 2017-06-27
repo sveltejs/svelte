@@ -1,4 +1,5 @@
 {
+	"hash": 985817334,
 	"html": {
 		"start": 0,
 		"end": 93,
@@ -9,20 +10,20 @@
 				"end": 93,
 				"type": "IfBlock",
 				"expression": {
+					"type": "BinaryExpression",
 					"start": 6,
 					"end": 12,
-					"type": "BinaryExpression",
-					"operator": ">",
 					"left": {
+						"type": "Identifier",
 						"start": 6,
 						"end": 7,
-						"type": "Identifier",
 						"name": "x"
 					},
+					"operator": ">",
 					"right": {
+						"type": "Literal",
 						"start": 10,
 						"end": 12,
-						"type": "Literal",
 						"value": 10,
 						"raw": "10"
 					}
@@ -55,20 +56,20 @@
 							"type": "IfBlock",
 							"elseif": true,
 							"expression": {
+								"type": "BinaryExpression",
 								"start": 53,
 								"end": 58,
-								"type": "BinaryExpression",
-								"operator": "<",
 								"left": {
+									"type": "Identifier",
 									"start": 53,
 									"end": 54,
-									"type": "Identifier",
 									"name": "x"
 								},
+								"operator": "<",
 								"right": {
+									"type": "Literal",
 									"start": 57,
 									"end": 58,
-									"type": "Literal",
 									"value": 5,
 									"raw": "5"
 								}

@@ -16,26 +16,33 @@ var template = (function () {
 }());
 
 function create_main_fragment ( state, component ) {
-	var button = createElement( 'button' );
-
-	var foo_handler = template.events.foo.call( component, button, function ( event ) {
-		var state = component.get();
-		component.foo( state.bar );
-	});
-
-	appendNode( createText( "foo" ), button );
+	var button, foo_handler, text;
 
 	return {
-		mount: function ( target, anchor ) {
-			insertNode( button, target, anchor );
+		create: function () {
+			button = createElement( 'button' );
+			text = createText( "foo" );
+			this.hydrate();
 		},
 
-		destroy: function ( detach ) {
-			foo_handler.teardown();
+		hydrate: function ( nodes ) {
+			foo_handler = template.events.foo.call( component, button, function ( event ) {
+				var state = component.get();
+				component.foo( state.bar );
+			});
+		},
 
-			if ( detach ) {
-				detachNode( button );
-			}
+		mount: function ( target, anchor ) {
+			insertNode( button, target, anchor );
+			appendNode( text, button );
+		},
+
+		unmount: function () {
+			detachNode( button );
+		},
+
+		destroy: function () {
+			foo_handler.teardown();
 		}
 	};
 }
@@ -51,13 +58,17 @@ function SvelteComponent ( options ) {
 
 	this._handlers = Object.create( null );
 
-	this._root = options._root;
+	this._root = options._root || this;
 	this._yield = options._yield;
 
 	this._torndown = false;
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, template.methods, proto );
@@ -72,7 +83,8 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};

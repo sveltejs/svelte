@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "1.17.2",
+  "version": "1.23.4",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
@@ -17,12 +17,11 @@
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
     "benchmark": "./scripts/benchmark.sh",
-    "build": "npm run build:main && npm run build:shared && npm run build:ssr",
-    "build:main": "rollup -c rollup/rollup.config.main.js",
-    "build:shared": "rollup -c rollup/rollup.config.shared.js",
-    "build:ssr": "rollup -c rollup/rollup.config.ssr.js",
+    "build": "node src/shared/_build.js && rollup -c",
+    "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
-    "prepublish": "npm run lint && npm run build"
+    "prepublish": "npm run build && npm run lint",
+    "prettier": "prettier --use-tabs --single-quote --trailing-comma es5 --write \"src/**/*.ts\""
   },
   "repository": {
     "type": "git",
@@ -41,6 +40,8 @@
   },
   "homepage": "https://github.com/sveltejs/svelte#README",
   "devDependencies": {
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^7.0.22",
     "acorn": "^4.0.4",
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
@@ -53,35 +54,43 @@
     "babel-plugin-transform-es2015-spread": "^6.22.0",
     "babel-preset-env": "^1.2.1",
     "babel-register": "^6.23.0",
+    "chalk": "^1.1.3",
     "codecov": "^1.0.1",
     "console-group": "^0.3.2",
     "css-tree": "1.0.0-alpha16",
     "eslint": "^3.12.2",
+    "eslint-plugin-html": "^3.0.0",
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.3.0",
     "fuzzyset.js": "0.0.1",
     "glob": "^7.1.1",
     "jsdom": "^9.9.1",
     "locate-character": "^2.0.0",
-    "magic-string": "^0.19.0",
+    "magic-string": "^0.21.1",
     "mocha": "^3.2.0",
     "node-resolve": "^1.3.3",
     "nyc": "^10.0.0",
+    "prettier": "^1.4.1",
     "reify": "^0.4.4",
-    "rollup": "^0.39.0",
+    "rollup": "^0.43.0",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-commonjs": "^7.0.0",
     "rollup-plugin-json": "^2.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-typescript": "^0.8.1",
+    "rollup-watch": "^3.2.2",
     "source-map": "^0.5.6",
-    "source-map-support": "^0.4.8"
+    "source-map-support": "^0.4.8",
+    "typescript": "^2.3.2"
   },
   "nyc": {
     "include": [
-      "src/**/*.js"
+      "src/**/*.js",
+      "shared.js"
     ],
     "exclude": [
-      "src/**/__test__.js"
+      "src/**/__test__.js",
+      "src/shared/**"
     ]
   },
   "babel": {

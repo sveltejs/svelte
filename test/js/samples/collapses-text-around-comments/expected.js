@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, proto, setAttribute } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -8,26 +8,30 @@ var template = (function () {
 	};
 }());
 
-var added_css = false;
 function add_css () {
 	var style = createElement( 'style' );
-	style.textContent = "\n\tp[svelte-3842350206], [svelte-3842350206] p {\n\t\tcolor: red;\n\t}\n";
+	style.id = 'svelte-3590263702-style';
+	style.textContent = "\n\tp[svelte-3590263702], [svelte-3590263702] p {\n\t\tcolor: red;\n\t}\n";
 	appendNode( style, document.head );
-
-	added_css = true;
 }
 
 function create_main_fragment ( state, component ) {
-	var text_value;
-
-	var p = createElement( 'p' );
-	setAttribute( p, 'svelte-3842350206', '' );
-	var text = createText( text_value = state.foo );
-	appendNode( text, p );
+	var p, text_value, text;
 
 	return {
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( text_value = state.foo );
+			this.hydrate();
+		},
+
+		hydrate: function ( nodes ) {
+			setAttribute( p, 'svelte-3590263702', '' );
+		},
+
 		mount: function ( target, anchor ) {
 			insertNode( p, target, anchor );
+			appendNode( text, p );
 		},
 
 		update: function ( changed, state ) {
@@ -36,11 +40,11 @@ function create_main_fragment ( state, component ) {
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -55,14 +59,18 @@ function SvelteComponent ( options ) {
 
 	this._handlers = Object.create( null );
 
-	this._root = options._root;
+	this._root = options._root || this;
 	this._yield = options._yield;
 
 	this._torndown = false;
-	if ( !added_css ) add_css();
+	if ( !document.getElementById( 'svelte-3590263702-style' ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, proto );
@@ -71,14 +79,15 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	if ( this._fragment ) this._fragment.update( newState, this._state );
+	this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};

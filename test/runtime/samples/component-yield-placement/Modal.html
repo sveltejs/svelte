@@ -1,0 +1,6 @@
+<div class='modal-background' on:click='destroy()'></div>
+
+<div class='modal'>
+	{{yield}}
+	<button on:click='destroy()'>close modal</button>
+</div>

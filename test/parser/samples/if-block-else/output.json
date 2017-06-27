@@ -1,4 +1,5 @@
 {
+	"hash": 3134964533,
 	"html": {
 		"start": 0,
 		"end": 56,
@@ -9,9 +10,9 @@
 				"end": 56,
 				"type": "IfBlock",
 				"expression": {
+					"type": "Identifier",
 					"start": 6,
 					"end": 9,
-					"type": "Identifier",
 					"name": "foo"
 				},
 				"children": [

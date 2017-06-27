@@ -1,0 +1,18 @@
+{{#each things as thing @name}}
+	<div transition:foo>{{thing.name}}</div>
+{{/each}}
+
+<script>
+	export default {
+		transitions: {
+			foo: function ( node, params ) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

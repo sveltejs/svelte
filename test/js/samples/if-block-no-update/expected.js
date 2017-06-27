@@ -1,7 +1,7 @@
-import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
+import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
-	var if_block_anchor = createComment();
+	var if_block_anchor;
 
 	function get_block ( state ) {
 		if ( state.foo ) return create_if_block;
@@ -9,63 +9,81 @@ function create_main_fragment ( state, component ) {
 	}
 
 	var current_block = get_block( state );
-	var if_block = current_block && current_block( state, component );
+	var if_block = current_block( state, component );
 
 	return {
+		create: function () {
+			if_block.create();
+			if_block_anchor = createComment();
+		},
+
 		mount: function ( target, anchor ) {
+			if_block.mount( target, anchor );
 			insertNode( if_block_anchor, target, anchor );
-			if ( if_block ) if_block.mount( target, if_block_anchor );
 		},
 
 		update: function ( changed, state ) {
 			if ( current_block !== ( current_block = get_block( state ) ) ) {
-				if ( if_block ) if_block.destroy( true );
-				if_block = current_block && current_block( state, component );
-				if ( if_block ) if_block.mount( if_block_anchor.parentNode, if_block_anchor );
+				if_block.unmount();
+				if_block.destroy();
+				if_block = current_block( state, component );
+				if_block.create();
+				if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 			}
 		},
 
-		destroy: function ( detach ) {
-			if ( if_block ) if_block.destroy( detach );
+		unmount: function () {
+			if_block.unmount();
+			detachNode( if_block_anchor );
+		},
 
-			if ( detach ) {
-				detachNode( if_block_anchor );
-			}
+		destroy: function () {
+			if_block.destroy();
 		}
 	};
 }
 
 function create_if_block ( state, component ) {
-	var p = createElement( 'p' );
-	appendNode( createText( "foo!" ), p );
+	var p, text;
 
 	return {
-		mount: function ( target, anchor ) {
-			insertNode( p, target, anchor );
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( "foo!" );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		mount: function ( target, anchor ) {
+			insertNode( p, target, anchor );
+			appendNode( text, p );
+		},
+
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
 function create_if_block_1 ( state, component ) {
-	var p = createElement( 'p' );
-	appendNode( createText( "not foo!" ), p );
+	var p, text;
 
 	return {
-		mount: function ( target, anchor ) {
-			insertNode( p, target, anchor );
+		create: function () {
+			p = createElement( 'p' );
+			text = createText( "not foo!" );
 		},
 
-		destroy: function ( detach ) {
-			if ( detach ) {
-				detachNode( p );
-			}
-		}
+		mount: function ( target, anchor ) {
+			insertNode( p, target, anchor );
+			appendNode( text, p );
+		},
+
+		unmount: function () {
+			detachNode( p );
+		},
+
+		destroy: noop
 	};
 }
 
@@ -80,13 +98,17 @@ function SvelteComponent ( options ) {
 
 	this._handlers = Object.create( null );
 
-	this._root = options._root;
+	this._root = options._root || this;
 	this._yield = options._yield;
 
 	this._torndown = false;
 
 	this._fragment = create_main_fragment( this._state, this );
-	if ( options.target ) this._fragment.mount( options.target, null );
+
+	if ( options.target ) {
+		this._fragment.create();
+		this._fragment.mount( options.target, null );
+	}
 }
 
 assign( SvelteComponent.prototype, proto );
@@ -95,14 +117,15 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	if ( this._fragment ) this._fragment.update( newState, this._state );
+	this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
 	this.fire( 'destroy' );
 
-	this._fragment.destroy( detach !== false );
+	if ( detach !== false ) this._fragment.unmount();
+	this._fragment.destroy();
 	this._fragment = null;
 
 	this._state = {};

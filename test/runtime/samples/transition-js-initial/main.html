@@ -1,0 +1,16 @@
+<div transition:foo></div>
+
+<script>
+	export default {
+		transitions: {
+			foo: function ( node, params ) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

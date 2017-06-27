@@ -1,12 +1,12 @@
 export default {
-	skip: true, // selectedOptions doesn't work in JSDOM???
+	skip: true, // JSDOM
 
 	data: {
 		selected: [ 'two', 'three' ]
 	},
 
 	html: `
-		<select>
+		<select multiple>
 			<option>one</option>
 			<option>two</option>
 			<option>three</option>
@@ -26,7 +26,7 @@ export default {
 
 		assert.deepEqual( component.get( 'selected' ), [ 'three' ] );
 		assert.htmlEqual( target.innerHTML, `
-			<select>
+			<select multiple>
 				<option>one</option>
 				<option>two</option>
 				<option>three</option>
@@ -40,7 +40,7 @@ export default {
 
 		assert.deepEqual( component.get( 'selected' ), [ 'one', 'three' ] );
 		assert.htmlEqual( target.innerHTML, `
-			<select>
+			<select multiple>
 				<option>one</option>
 				<option>two</option>
 				<option>three</option>
@@ -56,7 +56,7 @@ export default {
 		assert.ok( !options[2].selected );
 
 		assert.htmlEqual( target.innerHTML, `
-			<select>
+			<select multiple>
 				<option>one</option>
 				<option>two</option>
 				<option>three</option>

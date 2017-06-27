@@ -1,0 +1,8 @@
+[{
+	"message": "Missing transition 'foo'",
+	"loc": {
+		"line": 1,
+		"column": 5
+	},
+	"pos": 5
+}]
