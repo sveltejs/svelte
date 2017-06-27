@@ -29,6 +29,5 @@ before_install:
   - "export DISPLAY=:99.0"
 install: yarn
 after_success: 
-  - npm run lint
-  - npm run test
+  - npm run codecov
   - npm run benchmark
