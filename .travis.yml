@@ -18,4 +18,8 @@ cache:
 install: yarn
 after_success:
 - npm run codecov
-- node scripts/travis-bench.js
+
+jobs:
+  include:
+    - stage: benchmark
+      script: node scripts/travis-bench.js
