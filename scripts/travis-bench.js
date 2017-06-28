@@ -54,7 +54,11 @@ const args = [
     `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`
 ];
 
+try {
     childProcess.execFileSync(path.join(__dirname, 'benchmark.sh'), args, {
         cwd: process.cwd(),
         stdio: 'inherit'
     });
+} catch (err) {
+    console.error('An error occurred running the benchmark!');
+}

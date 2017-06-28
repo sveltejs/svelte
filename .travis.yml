@@ -9,18 +9,17 @@ env:
   global:
   - BUILD_TIMEOUT=10000
   - SAUCE_USERNAME=PaulBGD
-addons:
-  jwt:
-    secure: DQK+GD8grif8WD3u+72h5ofO7pnyf0Jn8A2R4sEnBQtNeVRmzDtY/fOHDzUCVvUROb+sun+ERsXPx9IEqEJVp6rNNLGFhHjSfofSoKEP/uDY6jproetUPB4EMVBoS7gq9uwUa98/oOmAr0fWlkwxvueY+Ke8Sc2Cm7+Cos4AarFR+uW48o70d9AqzDzWlFSwAaNEuYPO25k26juOkh+J0IH++92il5aDBFzMhuZD28fElmRrds0Ne31X2gU9rlaVgd6Xk2tvZBdkizNKEIgLW4nGXsUe9WYXWhpvwfCEKGUdqaAvNC4LtU+YXtl4uWmiUz4Zz7y98Samw8cmj6voio8NIKjXOvmm4YGfwy7FmnRF1BTCJlFmJ56mGnDFaUvw2r2ju7DPhQEc07Y2M6m8j6iCJUV9/4dJry12LTTREK9ER3DNtvOUjN9Qq8194zKWWV3hCTkH917thTpG8+TWZ+TFffz/vAsOzLVESvLtMtcC5Y30GgyWdtI19lUfoL0j8+dcVFLmCbzOJ6+PdkydIKf3OD6EVL6pc8gY7o0cTH38r9qZbMozHHwOYUB98vE7jyu1JCWPBjmH8EwW5HgyZMyju71jb8Nq7uYdp3ggYIX7c/Xtpb+9oEnf5JXGQfJY1pujESeKPElhwfdNN5ktBkqTmUtnfqlB/0emdjFB2GM=
 cache:
   directories:
   - "$HOME/.yarn-cache"
 install: yarn
 after_success:
 - npm run codecov
-
 jobs:
   include:
-    - stage: benchmark
-      script: node scripts/travis-bench.js
-      node_js: '6'
+  - stage: benchmark
+    script: node scripts/travis-bench.js
+    node_js: '6'
+addons:
+  jwt:
+    secure: paQL489vgNsfNpPW7cZw6lp0ludg05A3j1ZohzSnW/qMwdR4NEp2Dmpag+BTbB86dUK7uVEJCGQ0sASRpDXJjVuWfFLwUehuPwmREggy6O4TLpkRS3Evju2LdKZWF46bkJcf257R/CdfRD1ug1r83wQEzJCAje8mRyPDRucZy6oEYqy7Q+qs5HOfGDHP3giFnbiweqxjscP1et/+PA2wQmdnxTdIZTJ7qs0/vwD8bGlDz8qt/h9X4CAv2KgT0Mw1kYocC/pZExPgfHbbS7nYIWHtwl3I9SPgZ/Hd+cDu2F8AHVppeoJyFJ6N+lxlqfnPyShFzXrXD5phJwKjEfcQAb7VyWNYbX+kYKPd4RCoYP4RBaiSqR3NKz5lgJCRhPmaDxQD3aDkJ/Uc6uU++x+t6vdxEtPH8OgywoPJrAWtFmJppInR79KJstGe6K0/kwQ3eLWos+lDd3dxsQmMAOUqxmSREeY5trHSK/jb70VfafqMCEgvSVkyJNKUqqXivXg4NhxPKWCE62XoWtDxXq+0OzYZGMJx2pKjIrINo8Q8uFy+yjVyw6WUq7L/JStZU7mwotzUzLuoIisx/3W5qaw1atjd4e13M+NBx5G6f/RrGTWSma5iHmIjGgBmz1biPamNxGlHetfaonohRcYHGS8egeUHlWpyyQ20iSvtgiZBjAE=
