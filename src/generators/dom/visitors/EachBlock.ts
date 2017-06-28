@@ -20,11 +20,19 @@ export default function visitEachBlock(
 		? block.getUniqueName(`${each_block}_anchor`)
 		: (node.next && node.next._state.name) || 'null';
 
+	// hack the sourcemap, so that if data is missing the bug
+	// is easy to find
+	let c = node.start + 3;
+	while (generator.source[c] !== 'e') c += 1;
+	generator.code.overwrite(c, c + 4, 'length');
+	const length = `[✂${c}-${c+4}✂]`;
+
 	const mountOrIntro = node._block.hasIntroMethod ? 'intro' : 'mount';
 	const vars = {
 		each_block,
 		create_each_block,
 		each_block_value,
+		length,
 		iterations,
 		params,
 		anchor,
@@ -62,7 +70,7 @@ export default function visitEachBlock(
 
 		// TODO neaten this up... will end up with an empty line in the block
 		block.builders.init.addBlock(deindent`
-			if ( !${each_block_value}.length ) {
+			if ( !${each_block_value}.${length} ) {
 				${each_block_else} = ${node.else._block.name}( ${params}, #component );
 				${each_block_else}.create();
 			}
@@ -79,9 +87,9 @@ export default function visitEachBlock(
 
 		if (node.else._block.hasUpdateMethod) {
 			block.builders.update.addBlock(deindent`
-				if ( !${each_block_value}.length && ${each_block_else} ) {
+				if ( !${each_block_value}.${length} && ${each_block_else} ) {
 					${each_block_else}.update( changed, ${params} );
-				} else if ( !${each_block_value}.length ) {
+				} else if ( !${each_block_value}.${length} ) {
 					${each_block_else} = ${node.else._block.name}( ${params}, #component );
 					${each_block_else}.create();
 					${each_block_else}.${mountOrIntro}( ${parentNode}, ${anchor} );
@@ -93,7 +101,7 @@ export default function visitEachBlock(
 			`);
 		} else {
 			block.builders.update.addBlock(deindent`
-				if ( ${each_block_value}.length ) {
+				if ( ${each_block_value}.${length} ) {
 					if ( ${each_block_else} ) {
 						${each_block_else}.unmount();
 						${each_block_else}.destroy();
@@ -137,6 +145,7 @@ function keyed(
 		each_block,
 		create_each_block,
 		each_block_value,
+		length,
 		params,
 		anchor,
 		mountOrIntro,
@@ -168,7 +177,7 @@ function keyed(
 	}
 
 	block.builders.init.addBlock(deindent`
-		for ( var #i = 0; #i < ${each_block_value}.length; #i += 1 ) {
+		for ( var #i = 0; #i < ${each_block_value}.${length}; #i += 1 ) {
 			var ${key} = ${each_block_value}[#i].${node.key};
 			var ${iteration} = ${lookup}[${key}] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key} );
 
@@ -268,7 +277,7 @@ function keyed(
 
 		var discard_pile = [];
 
-		for ( #i = 0; #i < ${each_block_value}.length; #i += 1 ) {
+		for ( #i = 0; #i < ${each_block_value}.${length}; #i += 1 ) {
 			var ${key} = ${each_block_value}[#i].${node.key};
 			var ${iteration} = ${lookup}[${key}];
 
@@ -357,6 +366,7 @@ function unkeyed(
 	{
 		create_each_block,
 		each_block_value,
+		length,
 		iterations,
 		params,
 		anchor,
@@ -366,7 +376,7 @@ function unkeyed(
 	block.builders.init.addBlock(deindent`
 		var ${iterations} = [];
 
-		for ( var #i = 0; #i < ${each_block_value}.length; #i += 1 ) {
+		for ( var #i = 0; #i < ${each_block_value}.${length}; #i += 1 ) {
 			${iterations}[#i] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component );
 		}
 	`);
@@ -453,14 +463,14 @@ function unkeyed(
 					${iterations}[#i].unmount();
 					${iterations}[#i].destroy();
 				}
-				${iterations}.length = ${each_block_value}.length;
+				${iterations}.length = ${each_block_value}.${length};
 			`;
 
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
 
 			if ( ${condition} ) {
-				for ( var #i = ${start}; #i < ${each_block_value}.length; #i += 1 ) {
+				for ( var #i = ${start}; #i < ${each_block_value}.${length}; #i += 1 ) {
 					${forLoopBody}
 				}
 
