@@ -87,14 +87,9 @@ fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/sv
 
         if (res.length === 0) {
             addComment = true;
-        } else if (res[res.length - 1].user.id !== id) {
+        } else if (res[res.length - 1].user.id === id) {
             addComment = true;
-
-            res.forEach(reply => {
-                if (reply.user.id === id) {
-                    editId = reply.id;
-                }
-            });
+            editId = res[res.length - 1].id;
         }
 
         if (addComment) {
