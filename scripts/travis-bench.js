@@ -53,7 +53,8 @@ const args = [
                 tags,
             },
     ])}`,
-    `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`
+    `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`,
+    `--custom=${process.cwd()}`
 ];
 
 let stdout;
@@ -61,9 +62,7 @@ let stdout;
 try {
     stdout = childProcess.execFileSync(path.join(__dirname, 'benchmark.sh'), args, {
         cwd: process.cwd(),
-        stdio: [
-            0,
-        ]
+        stdio: 'inherit'
     });
 } catch (err) {
     console.error('An error occurred running the benchmark!');
