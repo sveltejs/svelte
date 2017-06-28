@@ -59,7 +59,7 @@ const args = [
             },
     ])}`,
     `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`,
-    `--custom=${path.join(process.cwd(), '..')}`
+    `--custom=${process.cwd()}`
 ];
 
 let stdout;
