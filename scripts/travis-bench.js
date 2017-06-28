@@ -9,6 +9,11 @@ const pullRequest = process.env.TRAVIS_PULL_REQUEST;
 const tags = [ process.env.TRAVIS_NODE_VERSION, 'CI' ];
 const idleTimeout = 30;
 
+if (pullRequest === 'false') {
+    console.log('Benchmark skipped.');
+    process.exit(0);
+}
+
 const args = [
     `--capabilities=${JSON.stringify([
 /*            {
