@@ -64,6 +64,7 @@ const args = [
     `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`,
     `--custom=${process.cwd()}`,
     `--output=${outputFile}`,
+    `--iterations=15`,
 ];
 
 try {
@@ -84,7 +85,7 @@ fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/sv
     .then(res => {
         let addComment = false;
         let editId = null;
-
+        console.log('[DEBUG]', res);
         if (res.length === 0) {
             addComment = true;
         } else if (res[res.length - 1].user.id === id) {
