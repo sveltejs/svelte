@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const childProcess = require('child_process');
 const fetch = require('node-fetch');
 
@@ -13,6 +14,8 @@ if (pullRequest === 'false') {
     console.log('Benchmark skipped.');
     process.exit(0);
 }
+
+const outputFile = path.join(process.cwd(), 'tmp', 'output.txt');
 
 const args = [
     `--capabilities=${JSON.stringify([
@@ -59,13 +62,12 @@ const args = [
             },
     ])}`,
     `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`,
-    `--custom=${process.cwd()}`
+    `--custom=${process.cwd()}`,
+    `--output=${outputFile}`,
 ];
 
-let stdout;
-
 try {
-    stdout = childProcess.execFileSync(path.join(__dirname, 'benchmark.sh'), args, {
+    childProcess.execFileSync(path.join(__dirname, 'benchmark.sh'), args, {
         cwd: process.cwd(),
         stdio: 'inherit'
     });
@@ -73,74 +75,44 @@ try {
     console.error('An error occurred running the benchmark!');
 }
 
-if (typeof stdout !== 'string') {
-    stdout = stdout.toString('utf8');
-}
+const githubUsername = 'Svelte-Bot';
+const id = 29757693;
+const githubToken = process.env.GITHUB_ACCESS_TOKEN;
 
-const outputs = [];
-let index = 0;
-let started = false;
+fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`)
+    .then(res => res.json())
+    .then(res => {
+        let addComment = false;
+        let editId = null;
 
-// parse the output to find what we want
-const split = stdout.split('\n');
-split.forEach((line, lineNum) => {
-    if (started) {
-        if (line.indexOf('Running capability') === 0 || line.indexOf('Took ') === 0) {
-            started = false;
-            index++;
-        } else {
-            if (outputs.length <= index) {
-                outputs[index] = [];
-            }
-            outputs[index].push(line);
+        if (res.length === 0) {
+            addComment = true;
+        } else if (res[res.length - 1].user.id !== id) {
+            addComment = true;
+
+            res.forEach(reply => {
+                if (reply.user.id === id) {
+                    editId = reply.id;
+                }
+            });
         }
-    } else if (lineNum > 0 && line === '' && split[lineNum - 1].indexOf('Testing ') === 0) {
-        started = true;
-    }
-});
 
-if (pullRequest !== 'false') {
-    const githubUsername = 'Svelte-Bot';
-    const id = 29757693;
-    const githubToken = process.env.GITHUB_ACCESS_TOKEN;
-
-    fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`)
-        .then(res => res.json())
-        .then(res => {
-            let addComment = false;
-            let editId = null;
-
-            if (res.length === 0) {
-                addComment = true;
-            } else if (res[res.length - 1].user.id !== id) {
-                addComment = true;
-
-                res.forEach(reply => {
-                    if (reply.user.id === id) {
-                        editId = reply.id;
-                    }
+        if (addComment) {
+            const contents = '<details><summary>Benchmark Results</summary>' + fs.readFileSync(outputFile) + '</details>';
+            if (editId === null) {
+                return fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        body: contents
+                    })
+                });
+            } else {
+                return fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/svelte/issues/comments/${editId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        body: contents
+                    })
                 });
             }
-
-            if (addComment) {
-                const contents = '<details><summary>Benchmark Results</summary>' + 
-                    outputs.map(output => output.join('\n')).join('\n----------------------------------------------------------------------\n') +
-                    '</details>';
-                if (editId === null) {
-                    return fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            body: contents
-                        })
-                    });
-                } else {
-                    return fetch(`https://${githubUsername}:${githubToken}@api.github.com/repos/sveltejs/svelte/issues/comments/${editId}`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({
-                            body: contents
-                        })
-                    });
-                }
-            }
-        });
-}
+        }
+    });
