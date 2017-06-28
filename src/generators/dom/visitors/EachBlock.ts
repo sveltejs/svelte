@@ -33,7 +33,8 @@ export default function visitEachBlock(
 
 	const { snippet } = block.contextualise(node.expression);
 
-	block.builders.init.addLine(`var ${each_block_value} = ${snippet};`);
+	//Warn user if "each_block_value" is null @rich_harris
+	block.builders.init.addLine(`var ${each_block_value} = ${snippet} || [];`);
 
 	if (node.key) {
 		keyed(generator, block, state, node, snippet, vars);
