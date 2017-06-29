@@ -33,8 +33,9 @@ export default function visitEachBlock(
 
 	const { snippet } = block.contextualise(node.expression);
 
-	//Warn user if "each_block_value" is null @rich_harris
-	block.builders.init.addLine(`var ${each_block_value} = ${snippet} || [];`);
+	
+	block.builders.init.addLine(`var ${each_block_value} = ${snippet};`);
+	block.builders.init.addLine(`if(!${each_block_value}) throw new Error('Missing field or value is null ${node.expression}');`
 
 	if (node.key) {
 		keyed(generator, block, state, node, snippet, vars);
