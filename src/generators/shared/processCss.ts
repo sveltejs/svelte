@@ -37,6 +37,29 @@ export default function processCss(
 
 	parsed.css.children.forEach(walkKeyframes);
 
+	function transformBlock(block: Node[]) {
+		let i = block.length;
+		while (i--) {
+			const child = block[i];
+
+			if (child.type === 'PseudoElementSelector') continue;
+
+			if (child.type === 'PseudoClassSelector') {
+				if (child.name === 'global') {
+					const first = child.children[0];
+					const last = child.children[child.children.length - 1];
+					code.remove(child.start, first.start).remove(last.end, child.end);
+					return;
+				} else {
+					continue;
+				}
+			}
+
+			code.appendLeft(child.end, attr);
+			return;
+		}
+	}
+
 	function transform(rule: Node) {
 		rule.selector.children.forEach((selector: Node) => {
 			if (cascade) {
@@ -65,37 +88,22 @@ export default function processCss(
 				let shouldTransform = true;
 				let c = selector.start;
 
+				// separate .foo > .bar > .baz into three separate blocks, so
+				// that we can transform only the first and last
+				let block: Node[] = [];
+				const blocks: Node[][] = [block];
+
 				selector.children.forEach((child: Node) => {
 					if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
-						code.appendLeft(c, attr);
-						shouldTransform = true;
-						return;
+						block = [];
+						blocks.push(block);
+					} else {
+						block.push(child);
 					}
-
-					if (!shouldTransform) return;
-
-					if (child.type === 'PseudoClassSelector') {
-						// `:global(xyz)` > xyz
-						if (child.name === 'global') {
-							const first = child.children[0];
-							const last = child.children[child.children.length - 1];
-							code.remove(child.start, first.start).remove(last.end, child.end);
-						} else {
-							code.prependRight(c, attr);
-						}
-
-						shouldTransform = false;
-					} else if (child.type === 'PseudoElementSelector') {
-						code.prependRight(c, attr);
-						shouldTransform = false;
-					}
-
-					c = child.end;
 				});
 
-				if (shouldTransform) {
-					code.appendLeft(c, attr);
-				}
+				transformBlock(blocks[0]);
+				if (blocks.length > 1) transformBlock(blocks[blocks.length - 1]);
 			}
 		});
 
