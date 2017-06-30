@@ -46,7 +46,7 @@ describe("css", () => {
 					const Component = eval(`(function () { ${actual.code}; return SvelteComponent; }())`);
 					const target = window.document.querySelector("main");
 
-					new Component({ target });
+					new Component({ target, data: config.data });
 					const html = target.innerHTML;
 
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);

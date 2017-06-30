@@ -26,7 +26,7 @@ export default function extractSelectors(css: Node) :Node[] {
 
 	function processSelector(selector: Node) {
 		selectors.push({
-			used: false,
+			used: false, // TODO use this! warn on unused selectors
 			apply: (node: Node, stack: Node[]) => {
 				const applies = selectorAppliesTo(selector.children, node, stack.slice());
 
@@ -52,8 +52,14 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]) {
 	let j = stack.length;
 
 	while (i--) {
-		if (!node) return;
 		const part = parts[i];
+
+		if (part.type === 'PseudoClassSelector' && part.name === 'global') {
+			// bail
+			return true;
+		}
+
+		if (!node) return false;
 
 		if (part.type === 'PseudoClassSelector' || part.type === 'PseudoElementSelector') {
 			continue;
