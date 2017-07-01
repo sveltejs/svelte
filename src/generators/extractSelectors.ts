@@ -134,6 +134,10 @@ function attributeMatches(node: Node, selector: Node) {
 		return actualValue === expectedValue;
 	}
 
+	if(selector.operator === '~=') {
+		return actualValue.split(/\s/).indexOf(expectedValue) !== -1;
+	}
+
 	return true;
 }
 
