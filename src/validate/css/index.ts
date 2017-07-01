@@ -1,23 +1,11 @@
-import { groupSelectors, isGlobalSelector } from '../../utils/css';
+import { groupSelectors, isGlobalSelector, walkRules } from '../../utils/css';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
 export default function validateCss(validator: Validator, css: Node) {
-	function validateRule(rule: Node) {
-		if (rule.type === 'Atrule') {
-			if (rule.name === 'keyframes') return;
-			if (rule.name == 'media') {
-				rule.block.children.forEach(validateRule);
-				return;
-			}
-			
-			// TODO
-			throw new Error(`Not implemented: @${rule.name}. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!`);
-		}
-
-		const selectors = rule.selector.children;
-		selectors.forEach(validateSelector);
-	}
+	walkRules(css.children, rule => {
+		rule.selector.children.forEach(validateSelector);
+	});
 
 	function validateSelector(selector: Node) {
 		const blocks: Node[][] = groupSelectors(selector);
@@ -53,6 +41,4 @@ export default function validateCss(validator: Validator, css: Node) {
 			}
 		}
 	}
-
-	css.children.forEach(validateRule);
 }
