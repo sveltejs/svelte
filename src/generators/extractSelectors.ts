@@ -73,6 +73,10 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 			if (!classMatches(node, part.name)) return false;
 		}
 
+		else if (part.type === 'AttributeSelector') {
+			if (!attributeMatches(node, part)) return false;
+		}
+
 		else if (part.type === 'TypeSelector') {
 			if (part.name === '*') return true;
 			if (node.name !== part.name) return false;
@@ -111,8 +115,34 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 function classMatches(node: Node, className: string) {
 	const attr = node.attributes.find((attr: Node) => attr.name === 'class');
 	if (!attr) return false;
-	if (attr.value.length > 1) return true;
-	if (attr.value[0].type !== 'Text') return true;
+	if (isDynamic(attr)) return true;
 
-	return attr.value[0].data.split(' ').indexOf(className) !== -1;
+	const value = attr.value[0].data;
+
+	return value.split(' ').indexOf(className) !== -1;
+}
+
+function attributeMatches(node: Node, selector: Node) {
+	const attr = node.attributes.find((attr: Node) => attr.name === selector.name.name);
+	if (!attr) return false;
+	if (isDynamic(attr)) return true;
+
+	const expectedValue = unquote(selector.value.value);
+	const actualValue = attr.value[0].data;
+
+	if (selector.operator === '=') {
+		return actualValue === expectedValue;
+	}
+
+	return true;
+}
+
+function isDynamic(attr: Node) {
+	return attr.value.length > 1 || attr.value[0].type !== 'Text';
+}
+
+function unquote(str: string) {
+	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
+		return str.slice(1, str.length - 1);
+	}
 }
