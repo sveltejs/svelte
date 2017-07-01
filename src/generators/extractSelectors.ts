@@ -122,6 +122,15 @@ function classMatches(node: Node, className: string) {
 	return value.split(' ').indexOf(className) !== -1;
 }
 
+const operators = {
+	'=' : (value: string, flags: string) => new RegExp(`^${value}$`, flags),
+	'~=': (value: string, flags: string) => new RegExp(`\\b${value}\\b`, flags),
+	'|=': (value: string, flags: string) => new RegExp(`^${value}(-.+)?$`, flags),
+	'^=': (value: string, flags: string) => new RegExp(`^${value}`, flags),
+	'$=': (value: string, flags: string) => new RegExp(`${value}$`, flags),
+	'*=': (value: string, flags: string) => new RegExp(value, flags)
+};
+
 function attributeMatches(node: Node, selector: Node) {
 	const attr = node.attributes.find((attr: Node) => attr.name === selector.name.name);
 	if (!attr) return false;
@@ -130,15 +139,8 @@ function attributeMatches(node: Node, selector: Node) {
 	const expectedValue = unquote(selector.value.value);
 	const actualValue = attr.value[0].data;
 
-	if (selector.operator === '=') {
-		return actualValue === expectedValue;
-	}
-
-	if(selector.operator === '~=') {
-		return actualValue.split(/\s/).indexOf(expectedValue) !== -1;
-	}
-
-	return true;
+	const pattern = operators[selector.operator](expectedValue, selector.flags || '');
+	return pattern.test(actualValue);
 }
 
 function isDynamic(value: Node) {
