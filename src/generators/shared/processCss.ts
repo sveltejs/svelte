@@ -1,5 +1,5 @@
 import MagicString from 'magic-string';
-import { groupSelectors, isGlobalSelector } from '../../utils/css';
+import { groupSelectors, isGlobalSelector, walkRules } from '../../utils/css';
 import { Parsed, Node } from '../../interfaces';
 
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
@@ -114,22 +114,7 @@ export default function processCss(
 		});
 	}
 
-	function walk(node: Node) {
-		if (node.type === 'Rule') {
-			transform(node);
-		} else if (
-			node.type === 'Atrule' &&
-			node.name.toLowerCase() === 'keyframes'
-		) {
-			// these have already been processed
-		} else if (node.children) {
-			node.children.forEach(walk);
-		} else if (node.block) {
-			walk(node.block);
-		}
-	}
-
-	parsed.css.children.forEach(walk);
+	walkRules(parsed.css.children, transform);
 
 	// remove comments. TODO would be nice if this was exposed in css-tree
 	let match;

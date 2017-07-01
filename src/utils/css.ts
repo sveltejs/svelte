@@ -19,3 +19,15 @@ export function groupSelectors(selector: Node) {
 
 	return blocks;
 }
+
+export function walkRules(nodes: Node[], callback: (node: Node) => void) {
+	nodes.forEach((node: Node) => {
+		if (node.type === 'Rule') {
+			callback(node);
+		} else if (node.type === 'Atrule') {
+			if (node.name === 'media' || node.name === 'supports' || node.name === 'document') {
+				walkRules(node.block.children, callback);
+			}
+		}
+	});
+}

@@ -1,3 +1,4 @@
+import { walkRules } from '../utils/css';
 import { Node } from '../interfaces';
 
 export default function extractSelectors(css: Node) :Node[] {
@@ -5,21 +6,9 @@ export default function extractSelectors(css: Node) :Node[] {
 
 	const selectors = [];
 
-	function processRule(rule: Node) {
-		if (rule.type === 'Atrule') {
-			if (rule.name === 'keyframes') return;
-			if (rule.name == 'media') {
-				rule.block.children.forEach(processRule);
-				return;
-			}
-
-			// TODO
-			throw new Error(`Not implemented: @${rule.name}. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!`);
-		}
-
-		const selectors = rule.selector.children;
-		selectors.forEach(processSelector);
-	}
+	walkRules(css.children, node => {
+		node.selector.children.forEach(processSelector);
+	});
 
 	function processSelector(selector: Node) {
 		// take trailing :global(...) selectors out of consideration
@@ -50,8 +39,6 @@ export default function extractSelectors(css: Node) :Node[] {
 		});
 	}
 
-	css.children.forEach(processRule);
-
 	return selectors;
 }
 
@@ -59,7 +46,7 @@ function isDescendantSelector(selector: Node) {
 	return selector.type === 'WhiteSpace'; // TODO or '>'
 }
 
-function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]) {
+function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 	let i = parts.length;
 	let j = stack.length;
 
