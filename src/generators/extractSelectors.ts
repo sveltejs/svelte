@@ -25,10 +25,25 @@ export default function extractSelectors(css: Node) :Node[] {
 	}
 
 	function processSelector(selector: Node) {
+		// take trailing :global(...) selectors out of consideration
+		let i = selector.children.length;
+		while (i > 2) {
+			const last = selector.children[i-1];
+			const penultimate = selector.children[i-2];
+
+			if (last.type === 'PseudoClassSelector' && last.name === 'global') {
+				i -= 2;
+			} else {
+				break;
+			}
+		}
+
+		const parts = selector.children.slice(0, i);
+
 		selectors.push({
 			used: false, // TODO use this! warn on unused selectors
 			apply: (node: Node, stack: Node[]) => {
-				const applies = selectorAppliesTo(selector.children, node, stack.slice());
+				const applies = selectorAppliesTo(parts, node, stack.slice());
 
 				if (applies) {
 					node._needsCssAttribute = true;
@@ -52,14 +67,19 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]) {
 	let j = stack.length;
 
 	while (i--) {
+		if (!node) {
+			return parts.every((part: Node) => {
+				return part.type === 'Combinator' || (part.type === 'PseudoClassSelector' && part.name === 'global');
+			});
+		}
+
 		const part = parts[i];
 
 		if (part.type === 'PseudoClassSelector' && part.name === 'global') {
-			// bail
-			return true;
+			// TODO shouldn't see this here... maybe we should enforce that :global(...)
+			// cannot be sandwiched between non-global selectors?
+			return false;
 		}
-
-		if (!node) return false;
 
 		if (part.type === 'PseudoClassSelector' || part.type === 'PseudoElementSelector') {
 			continue;
