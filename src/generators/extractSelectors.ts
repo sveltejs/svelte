@@ -114,8 +114,8 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 
 function classMatches(node: Node, className: string) {
 	const attr = node.attributes.find((attr: Node) => attr.name === 'class');
-	if (!attr) return false;
-	if (isDynamic(attr)) return true;
+	if (!attr || attr.value === true) return false;
+	if (isDynamic(attr.value)) return true;
 
 	const value = attr.value[0].data;
 
@@ -125,7 +125,7 @@ function classMatches(node: Node, className: string) {
 function attributeMatches(node: Node, selector: Node) {
 	const attr = node.attributes.find((attr: Node) => attr.name === selector.name.name);
 	if (!attr) return false;
-	if (isDynamic(attr)) return true;
+	if (attr.value === true || isDynamic(attr.value)) return true;
 
 	const expectedValue = unquote(selector.value.value);
 	const actualValue = attr.value[0].data;
@@ -137,8 +137,8 @@ function attributeMatches(node: Node, selector: Node) {
 	return true;
 }
 
-function isDynamic(attr: Node) {
-	return attr.value.length > 1 || attr.value[0].type !== 'Text';
+function isDynamic(value: Node) {
+	return value.length > 1 || value[0].type !== 'Text';
 }
 
 function unquote(str: string) {
