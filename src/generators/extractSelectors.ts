@@ -12,12 +12,9 @@ export default function extractSelectors(css: Node) :Node[] {
 				rule.block.children.forEach(processRule);
 				return;
 			}
-			console.log(rule);
-			throw new Error('nope');
-		}
-		if (rule.type !== 'Rule') {
-			// TODO @media etc
-			throw new Error(`not supported: ${rule.type}`);
+
+			// TODO
+			throw new Error(`Not implemented: @${rule.name}. Please raise an issue at https://github.com/sveltejs/svelte/issues — thanks!`);
 		}
 
 		const selectors = rule.selector.children;
@@ -110,12 +107,13 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]) {
 				return selectorAppliesTo(parts.slice(0, i), stack.pop(), stack);
 			}
 
-			console.log(part);
+			// TODO other combinators
 			return true;
 		}
 
 		else {
-			throw new Error(`TODO ${part.type}`);
+			// bail. TODO figure out what these could be
+			return true;
 		}
 	}
 
