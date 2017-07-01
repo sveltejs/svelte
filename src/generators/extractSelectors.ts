@@ -74,6 +74,7 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 		}
 
 		else if (part.type === 'TypeSelector') {
+			if (part.name === '*') return true;
 			if (node.name !== part.name) return false;
 		}
 
