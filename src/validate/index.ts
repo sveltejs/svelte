@@ -1,4 +1,5 @@
 import validateJs from './js/index';
+import validateCss from './css/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -99,6 +100,10 @@ export default function validate(
 
 		if (parsed.js) {
 			validateJs(validator, parsed.js);
+		}
+
+		if (parsed.css) {
+			validateCss(validator, parsed.css);
 		}
 
 		if (parsed.html) {

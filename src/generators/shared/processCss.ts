@@ -1,4 +1,5 @@
 import MagicString from 'magic-string';
+import { groupSelectors, isGlobalSelector } from '../../utils/css';
 import { Parsed, Node } from '../../interfaces';
 
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
@@ -37,23 +38,11 @@ export default function processCss(
 
 	parsed.css.children.forEach(walkKeyframes);
 
-	function transformBlock(block: Node[]) {
+	function encapsulateBlock(block: Node[]) {
 		let i = block.length;
 		while (i--) {
 			const child = block[i];
-
-			if (child.type === 'PseudoElementSelector') continue;
-
-			if (child.type === 'PseudoClassSelector') {
-				if (child.name === 'global') {
-					const first = child.children[0];
-					const last = child.children[child.children.length - 1];
-					code.remove(child.start, first.start).remove(last.end, child.end);
-					return;
-				} else {
-					continue;
-				}
-			}
+			if (child.type === 'PseudoElementSelector' || child.type === 'PseudoClassSelector') continue;
 
 			code.appendLeft(child.end, attr);
 			return;
@@ -91,19 +80,20 @@ export default function processCss(
 				// separate .foo > .bar > .baz into three separate blocks, so
 				// that we can transform only the first and last
 				let block: Node[] = [];
-				const blocks: Node[][] = [block];
+				const blocks: Node[][] = groupSelectors(selector);
 
-				selector.children.forEach((child: Node) => {
-					if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
-						block = [];
-						blocks.push(block);
-					} else {
-						block.push(child);
+				blocks.forEach((block: Node[], i) => {
+					if (i === 0 || i === blocks.length - 1) {
+						encapsulateBlock(blocks[i]);
+					}
+
+					if (isGlobalSelector(block)) {
+						const selector = block[0];
+						const first = selector.children[0];
+						const last = selector.children[selector.children.length - 1];
+						code.remove(selector.start, first.start).remove(last.end, selector.end);
 					}
 				});
-
-				transformBlock(blocks[0]);
-				if (blocks.length > 1) transformBlock(blocks[blocks.length - 1]);
 			}
 		});
 

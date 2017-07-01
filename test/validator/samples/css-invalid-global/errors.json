@@ -1,0 +1,8 @@
+[{
+	"message": ":global(...) cannot be mixed with non-global selectors",
+	"loc": {
+		"line": 2,
+		"column": 1
+	},
+	"pos": 9
+}]
