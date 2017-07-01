@@ -44,7 +44,12 @@ export default function processCss(
 			const child = block[i];
 			if (child.type === 'PseudoElementSelector' || child.type === 'PseudoClassSelector') continue;
 
-			code.appendLeft(child.end, attr);
+			if (child.type === 'TypeSelector' && child.name === '*') {
+				code.overwrite(child.start, child.end, attr);
+			} else {
+				code.appendLeft(child.end, attr);
+			}
+
 			return;
 		}
 	}
@@ -64,7 +69,7 @@ export default function processCss(
 
 				if (firstToken.type === 'TypeSelector') {
 					const insert = firstToken.end - offset;
-					const head = css.slice(start, insert);
+					const head = firstToken.name === '*' ? css.slice(firstToken.end - offset, insert) : css.slice(start, insert);
 					const tail = css.slice(insert, end);
 
 					transformed = `${head}${attr}${tail}, ${attr} ${selectorString}`;
