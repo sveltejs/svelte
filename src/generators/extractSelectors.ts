@@ -70,11 +70,15 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 		}
 
 		if (part.type === 'ClassSelector') {
-			if (!classMatches(node, part.name)) return false;
+			if (!attributeMatches(node, 'class', part.name, '~=', false)) return false;
+		}
+
+		else if (part.type === 'IdSelector') {
+			if (!attributeMatches(node, 'id', part.name, '=', false)) return false;
 		}
 
 		else if (part.type === 'AttributeSelector') {
-			if (!attributeMatches(node, part)) return false;
+			if (!attributeMatches(node, part.name.name, part.value && unquote(part.value.value), part.operator, part.flags)) return false;
 		}
 
 		else if (part.type === 'TypeSelector') {
@@ -112,16 +116,6 @@ function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
 	return true;
 }
 
-function classMatches(node: Node, className: string) {
-	const attr = node.attributes.find((attr: Node) => attr.name === 'class');
-	if (!attr || attr.value === true) return false;
-	if (isDynamic(attr.value)) return true;
-
-	const value = attr.value[0].data;
-
-	return value.split(' ').indexOf(className) !== -1;
-}
-
 const operators = {
 	'=' : (value: string, flags: string) => new RegExp(`^${value}$`, flags),
 	'~=': (value: string, flags: string) => new RegExp(`\\b${value}\\b`, flags),
@@ -131,15 +125,15 @@ const operators = {
 	'*=': (value: string, flags: string) => new RegExp(value, flags)
 };
 
-function attributeMatches(node: Node, selector: Node) {
-	const attr = node.attributes.find((attr: Node) => attr.name === selector.name.name);
+function attributeMatches(node: Node, name: string, expectedValue: string, operator: string, caseInsensitive: boolean) {
+	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
-	if (attr.value === true || isDynamic(attr.value)) return true;
+	if (attr.value === true) return operator === null;
+	if (isDynamic(attr.value)) return true;
 
-	const expectedValue = unquote(selector.value.value);
 	const actualValue = attr.value[0].data;
 
-	const pattern = operators[selector.operator](expectedValue, selector.flags || '');
+	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
 	return pattern.test(actualValue);
 }
 
