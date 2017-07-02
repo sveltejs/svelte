@@ -69,6 +69,20 @@ export function env() {
 function cleanChildren(node) {
 	let previous = null;
 
+	// sort attributes
+	const attributes = Array.from(node.attributes).sort((a, b) => {
+		return a.name < b.name ? -1 : 1;
+	});
+
+	attributes.forEach(attr => {
+		node.removeAttribute(attr.name);
+	});
+
+	attributes.forEach(attr => {
+		node.setAttribute(attr.name, attr.value);
+	});
+
+	// recurse
 	[...node.childNodes].forEach(child => {
 		if (child.nodeType === 8) {
 			// comment
@@ -114,22 +128,23 @@ function cleanChildren(node) {
 	}
 }
 
+export function normalizeHtml(window, html) {
+	const node = window.document.createElement('div');
+	node.innerHTML = html
+		.replace(/>[\s\r\n]+</g, '><')
+		.trim();
+	cleanChildren(node, '');
+	return node.innerHTML;
+}
+
 export function setupHtmlEqual() {
 	return env().then(window => {
 		assert.htmlEqual = (actual, expected, message) => {
-			window.document.body.innerHTML = actual
-				.replace(/>[\s\r\n]+</g, '><')
-				.trim();
-			cleanChildren(window.document.body, '');
-			actual = window.document.body.innerHTML;
-
-			window.document.body.innerHTML = expected
-				.replace(/>[\s\r\n]+</g, '><')
-				.trim();
-			cleanChildren(window.document.body, '');
-			expected = window.document.body.innerHTML;
-
-			assert.deepEqual(actual, expected, message);
+			assert.deepEqual(
+				normalizeHtml(window, actual),
+				normalizeHtml(window, expected),
+				message
+			);
 		};
 	});
 }
