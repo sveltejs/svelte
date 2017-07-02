@@ -32,8 +32,10 @@ export default function extractSelectors(css: Node) :Node[] {
 				const applies = selectorAppliesTo(parts, node, stack.slice());
 
 				if (applies) {
+					// add svelte-123xyz attribute to outermost and innermost
+					// elements — no need to add it to intermediate elements
 					node._needsCssAttribute = true;
-					if (selector.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
+					if (stack[0] && selector.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
 				}
 			}
 		});
@@ -43,7 +45,7 @@ export default function extractSelectors(css: Node) :Node[] {
 }
 
 function isDescendantSelector(selector: Node) {
-	return selector.type === 'WhiteSpace'; // TODO or '>'
+	return selector.type === 'WhiteSpace' || selector.type === 'Combinator';
 }
 
 function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
