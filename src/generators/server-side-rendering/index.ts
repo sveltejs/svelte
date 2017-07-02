@@ -1,6 +1,7 @@
 import deindent from '../../utils/deindent';
 import Generator from '../Generator';
 import Block from './Block';
+import preprocess from './preprocess';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
@@ -23,6 +24,8 @@ export class SsrGenerator extends Generator {
 
 		// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
 		const { templateProperties, defaultExport } = this;
+
+		preprocess(this, parsed.html);
 
 		if (templateProperties.oncreate)
 			removeNode(
