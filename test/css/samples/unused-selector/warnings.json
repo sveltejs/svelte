@@ -1,0 +1,10 @@
+[{
+	"filename": "SvelteComponent.html",
+	"message": "Unused CSS selector",
+	"loc": {
+		"line": 8,
+		"column": 1
+	},
+	"pos": 61,
+	"frame": " 6:   }\n 7: \n 8:   .bar {\n      ^\n 9:     color: blue;\n10:   }"
+}]

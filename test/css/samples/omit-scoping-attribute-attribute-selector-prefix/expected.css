@@ -1,0 +1,4 @@
+
+	[data-foo^='bar'][svelte-3106767242] {
+		color: red;
+	}
