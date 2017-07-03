@@ -1,21 +1,19 @@
 import { walkRules } from '../utils/css';
 import { Node } from '../interfaces';
 
-export default function extractSelectors(css: Node) :Node[] {
-	if (!css) return [];
+export default class Selector {
+	node: Node;
+	parts: Node[];
+	used: boolean;
 
-	const selectors = [];
+	constructor(node: Node) {
+		this.node = node;
 
-	walkRules(css.children, node => {
-		node.selector.children.forEach(processSelector);
-	});
-
-	function processSelector(selector: Node) {
 		// take trailing :global(...) selectors out of consideration
-		let i = selector.children.length;
+		let i = node.children.length;
 		while (i > 2) {
-			const last = selector.children[i-1];
-			const penultimate = selector.children[i-2];
+			const last = node.children[i-1];
+			const penultimate = node.children[i-2];
 
 			if (last.type === 'PseudoClassSelector' && last.name === 'global') {
 				i -= 2;
@@ -24,24 +22,21 @@ export default function extractSelectors(css: Node) :Node[] {
 			}
 		}
 
-		const parts = selector.children.slice(0, i);
+		this.parts = node.children.slice(0, i);
 
-		selectors.push({
-			used: false, // TODO use this! warn on unused selectors
-			apply: (node: Node, stack: Node[]) => {
-				const applies = selectorAppliesTo(parts, node, stack.slice());
-
-				if (applies) {
-					// add svelte-123xyz attribute to outermost and innermost
-					// elements — no need to add it to intermediate elements
-					node._needsCssAttribute = true;
-					if (stack[0] && selector.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
-				}
-			}
-		});
+		this.used = false; // TODO use this! warn on unused selectors
 	}
 
-	return selectors;
+	apply(node: Node, stack: Node[]) {
+		const applies = selectorAppliesTo(this.parts, node, stack.slice());
+
+		if (applies) {
+			// add svelte-123xyz attribute to outermost and innermost
+			// elements — no need to add it to intermediate elements
+			node._needsCssAttribute = true;
+			if (stack[0] && this.node.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
+		}
+	}
 }
 
 function isDescendantSelector(selector: Node) {
