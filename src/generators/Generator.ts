@@ -1,5 +1,7 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
+import { getLocator } from 'locate-character';
+import getCodeFrame from '../utils/getCodeFrame';
 import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
 import globalWhitelist from '../utils/globalWhitelist';
@@ -618,5 +620,32 @@ export default class Generator {
 		this.hasJs = hasJs;
 		this.namespace = namespace;
 		this.templateProperties = templateProperties;
+	}
+
+	warnOnUnusedSelectors() {
+		if (this.cascade) return;
+
+		let locator;
+
+		this.selectors.forEach((selector: Selector) => {
+			if (!selector.used) {
+				const pos = selector.node.start;
+
+				if (!locator) locator = getLocator(this.source);
+				const { line, column } = locator(pos);
+
+				const frame = getCodeFrame(this.source, line, column);
+				const message = `Unused CSS selector`;
+
+				this.options.onwarn({
+					message,
+					frame,
+					loc: { line: line + 1, column },
+					pos,
+					filename: this.options.filename,
+					toString: () => `${message} (${line + 1}:${column})\n${frame}`,
+				});
+			}
+		});
 	}
 }

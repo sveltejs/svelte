@@ -4,11 +4,19 @@ import { env, normalizeHtml, svelte } from "../helpers.js";
 
 function tryRequire(file) {
 	try {
-		return require(file).default;
+		const mod = require(file);
+		return mod.default || mod;
 	} catch (err) {
 		if (err.code !== "MODULE_NOT_FOUND") throw err;
 		return null;
 	}
+}
+
+function normalizeWarning(warning) {
+	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '');
+	delete warning.filename;
+	delete warning.toString;
+	return warning;
 }
 
 describe("css", () => {
@@ -28,18 +36,31 @@ describe("css", () => {
 				.readFileSync(`test/css/samples/${dir}/input.html`, "utf-8")
 				.replace(/\s+$/, "");
 
+			const expectedWarnings = (config.warnings || []).map(normalizeWarning);
+			const domWarnings = [];
+			const ssrWarnings = [];
+
 			const dom = svelte.compile(input, Object.assign(config, {
 				format: 'iife',
-				name: 'SvelteComponent'
+				name: 'SvelteComponent',
+				onwarn: warning => {
+					domWarnings.push(warning);
+				}
 			}));
 
 			const ssr = svelte.compile(input, Object.assign(config, {
 				format: 'iife',
 				generate: 'ssr',
-				name: 'SvelteComponent'
+				name: 'SvelteComponent',
+				onwarn: warning => {
+					ssrWarnings.push(warning);
+				}
 			}));
 
 			assert.equal(dom.css, ssr.css);
+
+			assert.deepEqual(domWarnings.map(normalizeWarning), ssrWarnings.map(normalizeWarning));
+			assert.deepEqual(domWarnings.map(normalizeWarning), expectedWarnings);
 
 			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css);
 			const expected = {

@@ -35,9 +35,9 @@ export class Validator {
 
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
 		this.source = source;
-		this.filename = options !== undefined ? options.filename : undefined;
+		this.filename = options.filename;
 
-		this.onwarn = options !== undefined ? options.onwarn : undefined;
+		this.onwarn = options.onwarn;
 
 		this.namespace = null;
 		this.defaultExport = null;
