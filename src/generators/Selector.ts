@@ -1,13 +1,16 @@
-import { walkRules } from '../utils/css';
+import { groupSelectors, isGlobalSelector, walkRules } from '../utils/css';
 import { Node } from '../interfaces';
 
 export default class Selector {
 	node: Node;
+	blocks: Node[][];
 	parts: Node[];
 	used: boolean;
 
 	constructor(node: Node) {
 		this.node = node;
+
+		this.blocks = groupSelectors(this.node);
 
 		// take trailing :global(...) selectors out of consideration
 		let i = node.children.length;
@@ -24,13 +27,15 @@ export default class Selector {
 
 		this.parts = node.children.slice(0, i);
 
-		this.used = false; // TODO use this! warn on unused selectors
+		this.used = isGlobalSelector(this.blocks[0]);
 	}
 
 	apply(node: Node, stack: Node[]) {
 		const applies = selectorAppliesTo(this.parts, node, stack.slice());
 
 		if (applies) {
+			this.used = true;
+
 			// add svelte-123xyz attribute to outermost and innermost
 			// elements — no need to add it to intermediate elements
 			node._needsCssAttribute = true;

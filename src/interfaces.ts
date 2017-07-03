@@ -26,9 +26,11 @@ export interface Parsed {
 }
 
 export interface Warning {
-	loc?: { line: number; column: number; pos: number };
+	loc?: { line: number; column: number; pos?: number };
+	pos?: number;
 	message: string;
 	filename?: string;
+	frame?: string;
 	toString: () => string;
 }
 
