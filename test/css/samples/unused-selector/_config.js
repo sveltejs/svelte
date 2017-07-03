@@ -1,0 +1,20 @@
+export default {
+	cascade: false,
+
+	warnings: [{
+		filename: "SvelteComponent.html",
+		message: "Unused CSS selector",
+		loc: {
+			line: 8,
+			column: 1
+		},
+		pos: 60,
+		frame: `
+			 6:   }
+			 7: 
+			 8:   .bar {
+			      ^
+			 9:     color: blue;
+			10:   }`
+	}]
+};
