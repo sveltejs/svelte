@@ -61,6 +61,8 @@ export default function dom(
 
 	const { block, state } = preprocess(generator, namespace, parsed.html);
 
+	generator.warnOnUnusedSelectors();
+
 	parsed.html.children.forEach((node: Node) => {
 		visit(generator, block, state, node, []);
 	});
