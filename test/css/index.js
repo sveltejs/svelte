@@ -47,7 +47,7 @@ describe("css", () => {
 				css: read(`test/css/samples/${dir}/expected.css`)
 			};
 
-			assert.equal(dom.css.trim(), expected.css.trim());
+			assert.equal(dom.css.replace(/svelte-\d+/g, 'svelte-xyz').trim(), expected.css.trim());
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
@@ -62,7 +62,7 @@ describe("css", () => {
 
 					// dom
 					assert.equal(
-						normalizeHtml(window, html),
+						normalizeHtml(window, html).replace(/svelte-\d+/g, 'svelte-xyz'),
 						normalizeHtml(window, expected.html)
 					);
 
@@ -70,7 +70,7 @@ describe("css", () => {
 					const component = eval(`(function () { ${ssr.code}; return SvelteComponent; }())`);
 
 					assert.equal(
-						normalizeHtml(window, component.render(config.data)),
+						normalizeHtml(window, component.render(config.data)).replace(/svelte-\d+/g, 'svelte-xyz'),
 						normalizeHtml(window, expected.html)
 					);
 				});
