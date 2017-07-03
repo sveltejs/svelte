@@ -13,7 +13,8 @@ import annotateWithScopes from '../utils/annotateWithScopes';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
-import extractSelectors from './extractSelectors';
+import { walkRules } from '../utils/css';
+import Selector from './Selector';
 import { Node, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
@@ -41,7 +42,7 @@ export default class Generator {
 	cssId: string;
 	usesRefs: boolean;
 
-	selectors: any[]; // TODO how to indicate it takes `(Node[]) => boolean` functions?
+	selectors: Selector[];
 
 	importedNames: Set<string>;
 	aliases: Map<string, string>;
@@ -74,12 +75,21 @@ export default class Generator {
 		this.expectedProperties = new Set();
 
 		this.code = new MagicString(source);
+		this.usesRefs = false;
+
+		// styles
 		this.cascade = options.cascade !== false; // TODO remove this option in v2
 		this.css = parsed.css ? processCss(parsed, this.code, this.cascade) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
-		this.usesRefs = false;
+		this.selectors = [];
 
-		this.selectors = extractSelectors(parsed.css);
+		if (parsed.css) {
+			walkRules(parsed.css.children, node => {
+				node.selector.children.forEach((child: Node) => {
+					this.selectors.push(new Selector(child));
+				});
+			});
+		}
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
