@@ -10,17 +10,13 @@ export default function validateCss(validator: Validator, css: Node) {
 	function validateSelector(selector: Node) {
 		const blocks: Node[][] = groupSelectors(selector);
 
-		blocks.forEach((block, i) => {
-			if (block.find((part: Node) => part.type === 'PseudoClassSelector' && part.name === 'global')) {
-				// check that :global(...) is by itself
-				if (block.length !== 1) {
-					validator.error(`:global(...) cannot be mixed with non-global selectors`, block[0].start);
+		blocks.forEach((block) => {
+			let i = block.length;
+			while (i-- > 1) {
+				const part = block[i];
+				if (part.type === 'PseudoClassSelector' && part.name === 'global') {
+					validator.error(`:global(...) must be the first element in a compound selector`, part.start);
 				}
-
-				// check that :global(...) isn't sandwiched by other selectors
-				// if (i > 0 && i < blocks.length - 1) {
-				// 	validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, block[0].start);
-				// }
 			}
 		});
 
