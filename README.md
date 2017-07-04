@@ -91,6 +91,9 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
 * [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
 
+## BrowserStack
+<img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">
+<p>To keep Svelte's performance in check, we use BrowserStack to quickly run benchmarks for each PR that immediately give feedback to the contributor. You can see how we use BrowserStack in the <a href="https://github.com/sveltejs/svelte-bench">svelte-bench</a> project and check out BrowserStack's services on their <a href="https://www.browserstack.com/">website</a>.</p>
 
 ## License
 
