@@ -8,6 +8,8 @@ const accessKey = process.env.BROWSER_KEY;
 const build = process.env.TRAVIS_BUILD_NUMBER;
 const pullRequest = process.env.TRAVIS_PULL_REQUEST;
 
+console.log(username.length, accessKey ? accessKey.length : typeof accessKey);
+
 if (pullRequest === 'false') {
     console.log('Benchmark skipped.');
     process.exit(0);
