@@ -18,6 +18,7 @@ const outputFile = path.join(process.cwd(), 'tmp', 'output.txt');
 const defaultCap = {
     'browserstack.user': username,
     'browserstack.key': accessKey,
+    'browserstack.debug': 'true',
     build
 };
 
@@ -60,11 +61,16 @@ try {
     console.error('An error occurred running the benchmark!');
 }
 
+if (!fs.existsSync(outputFile)) {
+    throw new Error('Benchmark failed.');
+}
+
 const githubUsername = 'Svelte-Bot';
 const id = 29757693;
 const githubToken = process.env.GITHUB_ACCESS_TOKEN;
+console.log('GitHub token is of type', typeof githubToken);
 const headers = {
-    Authorization: `token ${githubToken}`
+    'Authorization': `token ${githubToken}`
 };
 
 fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`)
@@ -78,10 +84,12 @@ fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/commen
         } else if (res[res.length - 1].user.id === id) {
             addComment = true;
             editId = res[res.length - 1].id;
+        } else {
+            addComment = true;
         }
 
         if (addComment) {
-            const contents = '<details><summary>Benchmark Results</summary>' + fs.readFileSync(outputFile) + '</details>';
+            const contents = '<details><summary>Benchmark Results</summary>```' + fs.readFileSync(outputFile).replace(/[\r\n]+/g, '\n') + '```</details>';
             let action;
             if (editId === null) {
                 action = fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`, {
