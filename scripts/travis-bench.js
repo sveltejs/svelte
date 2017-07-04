@@ -3,12 +3,10 @@ const fs = require('fs');
 const childProcess = require('child_process');
 const fetch = require('node-fetch');
 
-const username = process.env.SAUCE_USERNAME;
-const accessKey = process.env.SAUCE_ACCESS_KEY;
+const username = process.env.BROWSER_USERNAME;
+const accessKey = process.env.BROWSER_KEY;
 const build = process.env.TRAVIS_BUILD_NUMBER;
 const pullRequest = process.env.TRAVIS_PULL_REQUEST;
-const tags = [ process.env.TRAVIS_NODE_VERSION, 'CI' ];
-const idleTimeout = 30;
 
 if (pullRequest === 'false') {
     console.log('Benchmark skipped.');
@@ -17,51 +15,37 @@ if (pullRequest === 'false') {
 
 const outputFile = path.join(process.cwd(), 'tmp', 'output.txt');
 
+const defaultCap = {
+    'browserstack.user': username,
+    'browserstack.key': accessKey,
+    build
+};
+
 const args = [
     `--capabilities=${JSON.stringify([
 /*            {
                 browserName: 'safari',
                 version: '10.0',
                 platform: 'macOS 10.12',
-                username,
-                accessKey,
-                idleTimeout,
-                build,
-                tags,
             },
             {
                 browserName: 'internet explorer',
                 version: '11.103',
                 platform: 'Windows 10',
-                username,
-                accessKey,
-                idleTimeout,
-                build,
-                tags,
             },
 */
             {
-                browserName: 'firefox',
-                version: 'latest',
-                platform: 'Windows 10',
-                username,
-                accessKey,
-                idleTimeout,
-                build,
-                tags,
+                browserName: 'Firefox',
+                os: 'Windows',
+                os_version: '10',
             },
             {
                 browserName: 'chrome',
-                version: 'latest',
-                platform: 'Windows 10',
-                username,
-                accessKey,
-                idleTimeout,
-                build,
-                tags,
+                os: 'Windows',
+                os_version: '10',
             },
-    ])}`,
-    `--server=http://${username}:${accessKey}@ondemand.saucelabs.com/wd/hub`,
+    ].map(cap => Object.assign(cap, defaultCap))}`,
+    `--server=http://hub-cloud.browserstack.com/wd/hub`,
     `--custom=${process.cwd()}`,
     `--output=${outputFile}`,
     `--iterations=15`,
