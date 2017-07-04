@@ -67,7 +67,7 @@ const headers = {
     Authorization: `token ${githubToken}`
 };
 
-fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`, { headers })
+fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`)
     .then(res => res.json())
     .then(res => {
         let addComment = false;
@@ -82,8 +82,9 @@ fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/commen
 
         if (addComment) {
             const contents = '<details><summary>Benchmark Results</summary>' + fs.readFileSync(outputFile) + '</details>';
+            let action;
             if (editId === null) {
-                return fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`, {
+                action = fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/comments`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
@@ -91,7 +92,7 @@ fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/commen
                     })
                 });
             } else {
-                return fetch(`https://api.github.com/repos/sveltejs/svelte/issues/comments/${editId}`, {
+                action = fetch(`https://api.github.com/repos/sveltejs/svelte/issues/comments/${editId}`, {
                     method: 'PATCH',
                     headers,
                     body: JSON.stringify({
@@ -99,5 +100,6 @@ fetch(`https://api.github.com/repos/sveltejs/svelte/issues/${pullRequest}/commen
                     })
                 });
             }
+            return action.then(res => res.json()).then(res => console.log('[DEBUG]', res));
         }
     });

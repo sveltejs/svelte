@@ -8,7 +8,7 @@ sudo: required
 env:
   global:
   - BUILD_TIMEOUT=10000
-  - BROWSER_USERNAME=PaulBGD
+  - BROWSER_USERNAME=paulsauve1
 cache:
   directories:
   - "$HOME/.yarn-cache"
