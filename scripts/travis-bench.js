@@ -44,7 +44,7 @@ const args = [
                 os: 'Windows',
                 os_version: '10',
             },
-    ].map(cap => Object.assign(cap, defaultCap))}`,
+    ].map(cap => Object.assign(cap, defaultCap)))}`,
     `--server=http://hub-cloud.browserstack.com/wd/hub`,
     `--custom=${process.cwd()}`,
     `--output=${outputFile}`,
