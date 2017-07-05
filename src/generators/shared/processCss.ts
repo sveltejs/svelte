@@ -1,17 +1,19 @@
 import MagicString from 'magic-string';
-import { Parsed, Node } from '../../interfaces';
+import { groupSelectors, isGlobalSelector, walkRules } from '../../utils/css';
+import Generator from '../Generator';
+import { Node } from '../../interfaces';
 
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
 
 export default function processCss(
-	parsed: Parsed,
+	generator: Generator,
 	code: MagicString,
 	cascade: boolean
 ) {
-	const css = parsed.css.content.styles;
-	const offset = parsed.css.content.start;
+	const css = generator.parsed.css.content.styles;
+	const offset = generator.parsed.css.content.start;
 
-	const attr = `[svelte-${parsed.hash}]`;
+	const attr = `[svelte-${generator.parsed.hash}]`;
 
 	const keyframes = new Map();
 
@@ -22,7 +24,7 @@ export default function processCss(
 					if (expression.name.startsWith('-global-')) {
 						code.remove(expression.start, expression.start + 8);
 					} else {
-						const newName = `svelte-${parsed.hash}-${expression.name}`;
+						const newName = `svelte-${generator.parsed.hash}-${expression.name}`;
 						code.overwrite(expression.start, expression.end, newName);
 						keyframes.set(expression.name, newName);
 					}
@@ -35,7 +37,7 @@ export default function processCss(
 		}
 	}
 
-	parsed.css.children.forEach(walkKeyframes);
+	generator.parsed.css.children.forEach(walkKeyframes);
 
 	function transform(rule: Node) {
 		rule.selector.children.forEach((selector: Node) => {
@@ -52,7 +54,7 @@ export default function processCss(
 
 				if (firstToken.type === 'TypeSelector') {
 					const insert = firstToken.end - offset;
-					const head = css.slice(start, insert);
+					const head = firstToken.name === '*' ? css.slice(firstToken.end - offset, insert) : css.slice(start, insert);
 					const tail = css.slice(insert, end);
 
 					transformed = `${head}${attr}${tail}, ${attr} ${selectorString}`;
@@ -61,41 +63,6 @@ export default function processCss(
 				}
 
 				code.overwrite(selector.start, selector.end, transformed);
-			} else {
-				let shouldTransform = true;
-				let c = selector.start;
-
-				selector.children.forEach((child: Node) => {
-					if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
-						code.appendLeft(c, attr);
-						shouldTransform = true;
-						return;
-					}
-
-					if (!shouldTransform) return;
-
-					if (child.type === 'PseudoClassSelector') {
-						// `:global(xyz)` > xyz
-						if (child.name === 'global') {
-							const first = child.children[0];
-							const last = child.children[child.children.length - 1];
-							code.remove(child.start, first.start).remove(last.end, child.end);
-						} else {
-							code.prependRight(c, attr);
-						}
-
-						shouldTransform = false;
-					} else if (child.type === 'PseudoElementSelector') {
-						code.prependRight(c, attr);
-						shouldTransform = false;
-					}
-
-					c = child.end;
-				});
-
-				if (shouldTransform) {
-					code.appendLeft(c, attr);
-				}
 			}
 		});
 
@@ -116,22 +83,13 @@ export default function processCss(
 		});
 	}
 
-	function walk(node: Node) {
-		if (node.type === 'Rule') {
-			transform(node);
-		} else if (
-			node.type === 'Atrule' &&
-			node.name.toLowerCase() === 'keyframes'
-		) {
-			// these have already been processed
-		} else if (node.children) {
-			node.children.forEach(walk);
-		} else if (node.block) {
-			walk(node.block);
-		}
-	}
+	walkRules(generator.parsed.css.children, transform);
 
-	parsed.css.children.forEach(walk);
+	if (!cascade) {
+		generator.selectors.forEach(selector => {
+			selector.transform(code, attr);
+		});
+	}
 
 	// remove comments. TODO would be nice if this was exposed in css-tree
 	let match;
@@ -142,5 +100,5 @@ export default function processCss(
 		code.remove(start, end);
 	}
 
-	return code.slice(parsed.css.content.start, parsed.css.content.end);
+	return code.slice(generator.parsed.css.content.start, generator.parsed.css.content.end);
 }

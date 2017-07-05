@@ -1,4 +1,5 @@
 import validateJs from './js/index';
+import validateCss from './css/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -34,9 +35,9 @@ export class Validator {
 
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
 		this.source = source;
-		this.filename = options !== undefined ? options.filename : undefined;
+		this.filename = options.filename;
 
-		this.onwarn = options !== undefined ? options.onwarn : undefined;
+		this.onwarn = options.onwarn;
 
 		this.namespace = null;
 		this.defaultExport = null;
@@ -99,6 +100,10 @@ export default function validate(
 
 		if (parsed.js) {
 			validateJs(validator, parsed.js);
+		}
+
+		if (parsed.css) {
+			validateCss(validator, parsed.css);
 		}
 
 		if (parsed.html) {

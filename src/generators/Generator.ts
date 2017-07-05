@@ -1,5 +1,7 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
+import { getLocator } from 'locate-character';
+import getCodeFrame from '../utils/getCodeFrame';
 import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
 import globalWhitelist from '../utils/globalWhitelist';
@@ -13,6 +15,8 @@ import annotateWithScopes from '../utils/annotateWithScopes';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
+import { walkRules } from '../utils/css';
+import Selector from './Selector';
 import { Node, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
@@ -39,6 +43,8 @@ export default class Generator {
 	css: string;
 	cssId: string;
 	usesRefs: boolean;
+
+	selectors: Selector[];
 
 	importedNames: Set<string>;
 	aliases: Map<string, string>;
@@ -71,10 +77,24 @@ export default class Generator {
 		this.expectedProperties = new Set();
 
 		this.code = new MagicString(source);
-		this.cascade = options.cascade !== false; // TODO remove this option in v2
-		this.css = parsed.css ? processCss(parsed, this.code, this.cascade) : null;
-		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.usesRefs = false;
+
+		// styles
+		this.cascade = options.cascade !== false; // TODO remove this option in v2
+		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
+		this.selectors = [];
+
+		if (parsed.css) {
+			walkRules(parsed.css.children, node => {
+				node.selector.children.forEach((child: Node) => {
+					this.selectors.push(new Selector(child));
+				});
+			});
+
+			this.css = processCss(this, this.code, this.cascade);
+		} else {
+			this.css = null;
+		}
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
@@ -209,6 +229,20 @@ export default class Generator {
 			contexts: usedContexts,
 			snippet: `[✂${expression.start}-${expression.end}✂]`,
 		};
+	}
+
+	applyCss(node: Node, stack: Node[]) {
+		if (!this.cssId) return;
+
+		if (this.cascade) {
+			if (stack.length === 0) node._needsCssAttribute = true;
+			return;
+		}
+
+		for (let i = 0; i < this.selectors.length; i += 1) {
+			const selector = this.selectors[i];
+			selector.apply(node, stack);
+		}
 	}
 
 	findDependencies(
@@ -589,5 +623,32 @@ export default class Generator {
 		this.hasJs = hasJs;
 		this.namespace = namespace;
 		this.templateProperties = templateProperties;
+	}
+
+	warnOnUnusedSelectors() {
+		if (this.cascade) return;
+
+		let locator;
+
+		this.selectors.forEach((selector: Selector) => {
+			if (!selector.used) {
+				const pos = selector.node.start;
+
+				if (!locator) locator = getLocator(this.source);
+				const { line, column } = locator(pos);
+
+				const frame = getCodeFrame(this.source, line, column);
+				const message = `Unused CSS selector`;
+
+				this.options.onwarn({
+					message,
+					frame,
+					loc: { line: line + 1, column },
+					pos,
+					filename: this.options.filename,
+					toString: () => `${message} (${line + 1}:${column})\n${frame}`,
+				});
+			}
+		});
 	}
 }

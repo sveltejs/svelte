@@ -1,12 +1,12 @@
 
-	div[svelte-781920915] {
+	div[svelte-xyz] {
 		color: red;
 	}
 
-	div.foo[svelte-781920915] {
+	div.foo[svelte-xyz] {
 		color: blue;
 	}
 
-	.foo[svelte-781920915] {
+	.foo[svelte-xyz] {
 		font-weight: bold;
 	}

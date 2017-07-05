@@ -40,7 +40,8 @@ export default function visitComponent(
 	generator: DomGenerator,
 	block: Block,
 	state: State,
-	node: Node
+	node: Node,
+	elementStack: Node[]
 ) {
 	const hasChildren = node.children.length > 0;
 	const name = block.getUniqueName(
@@ -121,7 +122,7 @@ export default function visitComponent(
 		const childBlock = node._block;
 
 		node.children.forEach((child: Node) => {
-			visit(generator, childBlock, childState, child);
+			visit(generator, childBlock, childState, child, elementStack);
 		});
 
 		const yieldFragment = block.getUniqueName(`${name}_yield_fragment`);
