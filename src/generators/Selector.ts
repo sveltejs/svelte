@@ -1,9 +1,10 @@
+import MagicString from 'magic-string';
 import { groupSelectors, isGlobalSelector, walkRules } from '../utils/css';
 import { Node } from '../interfaces';
 
 export default class Selector {
 	node: Node;
-	blocks: Node[][];
+	blocks: any; // TODO
 	parts: Node[];
 	used: boolean;
 
@@ -27,7 +28,7 @@ export default class Selector {
 
 		this.parts = node.children.slice(0, i);
 
-		this.used = isGlobalSelector(this.blocks[0]);
+		this.used = this.blocks[0].global;
 	}
 
 	apply(node: Node, stack: Node[]) {
@@ -41,6 +42,35 @@ export default class Selector {
 			node._needsCssAttribute = true;
 			if (stack[0] && this.node.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
 		}
+	}
+
+	transform(code: MagicString, attr: string) {
+		function encapsulateBlock(block) {
+			let i = block.selectors.length;
+			while (i--) {
+				const selector = block.selectors[i];
+				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') continue;
+
+				if (selector.type === 'TypeSelector' && selector.name === '*') {
+					code.overwrite(selector.start, selector.end, attr);
+				} else {
+					code.appendLeft(selector.end, attr);
+				}
+
+				return;
+			}
+		}
+
+		this.blocks.forEach((block, i) => {
+			if (block.global) {
+				const selector = block.selectors[0];
+				const first = selector.children[0];
+				const last = selector.children[selector.children.length - 1];
+				code.remove(selector.start, first.start).remove(last.end, selector.end);
+			} else if (i === 0 || i === this.blocks.length - 1) {
+				encapsulateBlock(block);
+			}
+		});
 	}
 }
 

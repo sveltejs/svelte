@@ -81,7 +81,6 @@ export default class Generator {
 
 		// styles
 		this.cascade = options.cascade !== false; // TODO remove this option in v2
-		this.css = parsed.css ? processCss(parsed, this.code, this.cascade) : null;
 		this.cssId = parsed.css ? `svelte-${parsed.hash}` : '';
 		this.selectors = [];
 
@@ -91,6 +90,10 @@ export default class Generator {
 					this.selectors.push(new Selector(child));
 				});
 			});
+
+			this.css = processCss(this, this.code, this.cascade);
+		} else {
+			this.css = null;
 		}
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
