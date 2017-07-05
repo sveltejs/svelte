@@ -1,0 +1,4 @@
+
+	div[svelte-xyz] > p > em {
+		color: red;
+	}

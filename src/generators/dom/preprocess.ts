@@ -40,6 +40,7 @@ const preprocessors = {
 		block: Block,
 		state: State,
 		node: Node,
+		elementStack: Node[],
 		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
@@ -55,6 +56,7 @@ const preprocessors = {
 		block: Block,
 		state: State,
 		node: Node,
+		elementStack: Node[],
 		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
@@ -66,7 +68,14 @@ const preprocessors = {
 		node._state = getChildState(state, { basename, name });
 	},
 
-	Text: (generator: DomGenerator, block: Block, state: State, node: Node, stripWhitespace: boolean) => {
+	Text: (
+		generator: DomGenerator,
+		block: Block,
+		state: State,
+		node: Node,
+		elementStack: Node[],
+		stripWhitespace: boolean
+	) => {
 		node._state = getChildState(state);
 
 		if (!/\S/.test(node.data)) {
@@ -83,6 +92,7 @@ const preprocessors = {
 		block: Block,
 		state: State,
 		node: Node,
+		elementStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
@@ -102,7 +112,7 @@ const preprocessors = {
 			node._state = getChildState(state);
 
 			blocks.push(node._block);
-			preprocessChildren(generator, node._block, node._state, node, stripWhitespace, node);
+			preprocessChildren(generator, node._block, node._state, node, elementStack, stripWhitespace, nextSibling);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -127,6 +137,7 @@ const preprocessors = {
 					node.else._block,
 					node.else._state,
 					node.else,
+					elementStack,
 					stripWhitespace,
 					nextSibling
 				);
@@ -154,6 +165,7 @@ const preprocessors = {
 		block: Block,
 		state: State,
 		node: Node,
+		elementStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
@@ -202,7 +214,7 @@ const preprocessors = {
 		});
 
 		generator.blocks.push(node._block);
-		preprocessChildren(generator, node._block, node._state, node, stripWhitespace, nextSibling);
+		preprocessChildren(generator, node._block, node._state, node, elementStack, stripWhitespace, nextSibling);
 		block.addDependencies(node._block.dependencies);
 		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
@@ -219,6 +231,7 @@ const preprocessors = {
 				node.else._block,
 				node.else._state,
 				node.else,
+				elementStack,
 				stripWhitespace,
 				nextSibling
 			);
@@ -231,6 +244,7 @@ const preprocessors = {
 		block: Block,
 		state: State,
 		node: Node,
+		elementStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
@@ -315,6 +329,8 @@ const preprocessors = {
 					: state.namespace,
 				allUsedContexts: [],
 			});
+
+			generator.applyCss(node, elementStack);
 		}
 
 		if (node.children.length) {
@@ -328,12 +344,12 @@ const preprocessors = {
 				});
 
 				generator.blocks.push(node._block);
-				preprocessChildren(generator, node._block, node._state, node, stripWhitespace, nextSibling);
+				preprocessChildren(generator, node._block, node._state, node, elementStack, stripWhitespace, nextSibling);
 				block.addDependencies(node._block.dependencies);
 				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 			} else {
 				if (node.name === 'pre' || node.name === 'textarea') stripWhitespace = false;
-				preprocessChildren(generator, block, node._state, node, stripWhitespace, nextSibling);
+				preprocessChildren(generator, block, node._state, node, elementStack.concat(node), stripWhitespace, nextSibling);
 			}
 		}
 	},
@@ -344,6 +360,7 @@ function preprocessChildren(
 	block: Block,
 	state: State,
 	node: Node,
+	elementStack: Node[],
 	stripWhitespace: boolean,
 	nextSibling: Node
 ) {
@@ -373,7 +390,7 @@ function preprocessChildren(
 
 	cleaned.forEach((child: Node, i: number) => {
 		const preprocessor = preprocessors[child.type];
-		if (preprocessor) preprocessor(generator, block, state, child, stripWhitespace, cleaned[i + 1] || nextSibling);
+		if (preprocessor) preprocessor(generator, block, state, child, elementStack, stripWhitespace, cleaned[i + 1] || nextSibling);
 
 		if (lastChild) {
 			lastChild.next = child;
@@ -432,7 +449,7 @@ export default function preprocess(
 	};
 
 	generator.blocks.push(block);
-	preprocessChildren(generator, block, state, node, true, null);
+	preprocessChildren(generator, block, state, node, [], true, null);
 	block.hasUpdateMethod = block.dependencies.size > 0;
 
 	return { block, state };

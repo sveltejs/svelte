@@ -1,13 +1,13 @@
 
-	@keyframes svelte-1647166666-why {
+	@keyframes svelte-xyz-why {
 		0% { color: red; }
 		100% { color: blue; }
 	}
 
-	.animated[svelte-1647166666] {
-		animation: svelte-1647166666-why 2s;
+	.animated[svelte-xyz] {
+		animation: svelte-xyz-why 2s;
 	}
 
-	.also-animated[svelte-1647166666] {
+	.also-animated[svelte-xyz] {
 		animation: not-defined-here 2s;
 	}

@@ -1,0 +1,4 @@
+
+	div[svelte-xyz] > p[svelte-xyz] {
+		color: red;
+	}

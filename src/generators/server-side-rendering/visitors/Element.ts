@@ -56,7 +56,7 @@ export default function visitElement(
 		}
 	});
 
-	if (generator.cssId && (!generator.cascade || generator.elementDepth === 0)) {
+	if (node._needsCssAttribute) {
 		openingTag += ` ${generator.cssId}`;
 	}
 

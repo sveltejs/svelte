@@ -1,0 +1,8 @@
+[{
+	"message": ":global(...) must be the first element in a compound selector",
+	"loc": {
+		"line": 2,
+		"column": 5
+	},
+	"pos": 13
+}]
