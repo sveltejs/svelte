@@ -6,7 +6,8 @@ export default function getSetter({
 	block,
 	name,
 	snippet,
-	context,
+	_this,
+	props,
 	attribute,
 	dependencies,
 	value,
@@ -20,8 +21,8 @@ export default function getSetter({
 		const computed = isComputed(attribute.value);
 
 		return deindent`
-			var list = this.${context}.${block.listNames.get(name)};
-			var index = this.${context}.${block.indexNames.get(name)};
+			var list = ${_this}.${props}.${block.listNames.get(name)};
+			var index = ${_this}.${props}.${block.indexNames.get(name)};
 			${computed && `var state = #component.get();`}
 			list[index]${tail} = ${value};
 
