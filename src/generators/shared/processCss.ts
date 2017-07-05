@@ -1,18 +1,19 @@
 import MagicString from 'magic-string';
 import { groupSelectors, isGlobalSelector, walkRules } from '../../utils/css';
-import { Parsed, Node } from '../../interfaces';
+import Generator from '../Generator';
+import { Node } from '../../interfaces';
 
 const commentsPattern = /\/\*[\s\S]*?\*\//g;
 
 export default function processCss(
-	parsed: Parsed,
+	generator: Generator,
 	code: MagicString,
 	cascade: boolean
 ) {
-	const css = parsed.css.content.styles;
-	const offset = parsed.css.content.start;
+	const css = generator.parsed.css.content.styles;
+	const offset = generator.parsed.css.content.start;
 
-	const attr = `[svelte-${parsed.hash}]`;
+	const attr = `[svelte-${generator.parsed.hash}]`;
 
 	const keyframes = new Map();
 
@@ -23,7 +24,7 @@ export default function processCss(
 					if (expression.name.startsWith('-global-')) {
 						code.remove(expression.start, expression.start + 8);
 					} else {
-						const newName = `svelte-${parsed.hash}-${expression.name}`;
+						const newName = `svelte-${generator.parsed.hash}-${expression.name}`;
 						code.overwrite(expression.start, expression.end, newName);
 						keyframes.set(expression.name, newName);
 					}
@@ -36,23 +37,7 @@ export default function processCss(
 		}
 	}
 
-	parsed.css.children.forEach(walkKeyframes);
-
-	function encapsulateBlock(block: Node[]) {
-		let i = block.length;
-		while (i--) {
-			const child = block[i];
-			if (child.type === 'PseudoElementSelector' || child.type === 'PseudoClassSelector') continue;
-
-			if (child.type === 'TypeSelector' && child.name === '*') {
-				code.overwrite(child.start, child.end, attr);
-			} else {
-				code.appendLeft(child.end, attr);
-			}
-
-			return;
-		}
-	}
+	generator.parsed.css.children.forEach(walkKeyframes);
 
 	function transform(rule: Node) {
 		rule.selector.children.forEach((selector: Node) => {
@@ -78,27 +63,6 @@ export default function processCss(
 				}
 
 				code.overwrite(selector.start, selector.end, transformed);
-			} else {
-				let shouldTransform = true;
-				let c = selector.start;
-
-				// separate .foo > .bar > .baz into three separate blocks, so
-				// that we can transform only the first and last
-				let block: Node[] = [];
-				const blocks: Node[][] = groupSelectors(selector);
-
-				blocks.forEach((block: Node[], i) => {
-					if (i === 0 || i === blocks.length - 1) {
-						encapsulateBlock(blocks[i]);
-					}
-
-					if (isGlobalSelector(block)) {
-						const selector = block[0];
-						const first = selector.children[0];
-						const last = selector.children[selector.children.length - 1];
-						code.remove(selector.start, first.start).remove(last.end, selector.end);
-					}
-				});
 			}
 		});
 
@@ -119,7 +83,13 @@ export default function processCss(
 		});
 	}
 
-	walkRules(parsed.css.children, transform);
+	walkRules(generator.parsed.css.children, transform);
+
+	if (!cascade) {
+		generator.selectors.forEach(selector => {
+			selector.transform(code, attr);
+		});
+	}
 
 	// remove comments. TODO would be nice if this was exposed in css-tree
 	let match;
@@ -130,5 +100,5 @@ export default function processCss(
 		code.remove(start, end);
 	}
 
-	return code.slice(parsed.css.content.start, parsed.css.content.end);
+	return code.slice(generator.parsed.css.content.start, generator.parsed.css.content.end);
 }

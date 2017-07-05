@@ -5,15 +5,27 @@ export function isGlobalSelector(block: Node[]) {
 }
 
 export function groupSelectors(selector: Node) {
-	let block: Node[] = [];
-	const blocks: Node[][] = [block];
+	let block = {
+		global: selector.children[0].type === 'PseudoClassSelector' && selector.children[0].name === 'global',
+		selectors: [],
+		combinator: null
+	};
 
-	selector.children.forEach((child: Node) => {
+	const blocks = [block];
+
+	selector.children.forEach((child: Node, i: number) => {
 		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
-			block = [];
+			const next = selector.children[i + 1];
+
+			block = {
+				global: next.type === 'PseudoClassSelector' && next.name === 'global',
+				selectors: [],
+				combinator: child
+			};
+
 			blocks.push(block);
 		} else {
-			block.push(child);
+			block.selectors.push(child);
 		}
 	});
 

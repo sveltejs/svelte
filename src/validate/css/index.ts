@@ -8,12 +8,12 @@ export default function validateCss(validator: Validator, css: Node) {
 	});
 
 	function validateSelector(selector: Node) {
-		const blocks: Node[][] = groupSelectors(selector);
+		const blocks = groupSelectors(selector);
 
 		blocks.forEach((block) => {
-			let i = block.length;
+			let i = block.selectors.length;
 			while (i-- > 1) {
-				const part = block[i];
+				const part = block.selectors[i];
 				if (part.type === 'PseudoClassSelector' && part.name === 'global') {
 					validator.error(`:global(...) must be the first element in a compound selector`, part.start);
 				}
@@ -24,16 +24,16 @@ export default function validateCss(validator: Validator, css: Node) {
 		let end = blocks.length;
 
 		for (; start < end; start += 1) {
-			if (!isGlobalSelector(blocks[start])) break;
+			if (!blocks[start].global) break;
 		}
 
 		for (; end > start; end -= 1) {
-			if (!isGlobalSelector(blocks[end - 1])) break;
+			if (!blocks[end - 1].global) break;
 		}
 
 		for (let i = start; i < end; i += 1) {
-			if (isGlobalSelector(blocks[i])) {
-				validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, blocks[i][0].start);
+			if (blocks[i].global) {
+				validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, blocks[i].selectors[0].start);
 			}
 		}
 	}
