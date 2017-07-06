@@ -122,10 +122,10 @@ export default function dom(
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
-		${generator.hasComplexBindings &&
-			`while ( this._bindings.length ) this._bindings.pop()();`}
 		${(generator.hasComponents || generator.hasIntroTransitions) &&
 			`this._flush();`}
+		${generator.hasComplexBindings &&
+			`while ( this._bindings.length ) this._bindings.pop()();`}
 	`;
 
 	if (hasJs) {
@@ -219,10 +219,10 @@ export default function dom(
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 			
-			${generator.hasComplexBindings &&
-				`while ( this._bindings.length ) this._bindings.pop()();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
 				`this._flush();`}
+			${generator.hasComplexBindings &&
+				`while ( this._bindings.length ) this._bindings.pop()();`}
 
 			${templateProperties.oncreate &&
 				deindent`
