@@ -200,7 +200,7 @@ export default function dom(
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
-				`this._renderHooks = [];`}
+				`this._oncreate = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
 
 			this._fragment = @create_main_fragment( this._state, this );
@@ -227,7 +227,7 @@ export default function dom(
 			${templateProperties.oncreate &&
 				deindent`
 				if ( options._root ) {
-					options._root._renderHooks.push( @template.oncreate.bind( this ) );
+					options._root._oncreate.push( @template.oncreate.bind( this ) );
 				} else {
 					@template.oncreate.call( this );
 				}
