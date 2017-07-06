@@ -62,7 +62,7 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	this._renderHooks = [];
+	this._oncreate = [];
 
 	this._fragment = create_main_fragment( this._state, this );
 

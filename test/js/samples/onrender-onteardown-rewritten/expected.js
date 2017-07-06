@@ -45,7 +45,7 @@ function SvelteComponent ( options ) {
 	}
 
 	if ( options._root ) {
-		options._root._renderHooks.push( template.oncreate.bind( this ) );
+		options._root._oncreate.push( template.oncreate.bind( this ) );
 	} else {
 		template.oncreate.call( this );
 	}
