@@ -70,6 +70,7 @@ function SvelteComponent ( options ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
 	}
+
 	this._flush();
 }
 
