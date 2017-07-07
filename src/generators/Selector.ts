@@ -1,5 +1,5 @@
 import MagicString from 'magic-string';
-import { groupSelectors, isGlobalSelector, walkRules } from '../utils/css';
+import { groupSelectors, isGlobalSelector } from '../utils/css';
 import { Node } from '../interfaces';
 
 export default class Selector {
