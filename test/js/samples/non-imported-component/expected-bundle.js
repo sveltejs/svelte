@@ -107,10 +107,10 @@ function set(newState) {
 }
 
 function _flush() {
-	if (!this._renderHooks) return;
+	if (!this._oncreate) return;
 
-	while (this._renderHooks.length) {
-		this._renderHooks.pop()();
+	while (this._oncreate.length) {
+		this._oncreate.pop()();
 	}
 }
 
@@ -183,7 +183,7 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	this._renderHooks = [];
+	this._oncreate = [];
 
 	this._fragment = create_main_fragment( this._state, this );
 
@@ -191,6 +191,7 @@ function SvelteComponent ( options ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
 	}
+
 	this._flush();
 }
 

@@ -119,10 +119,10 @@ function set(newState) {
 }
 
 function _flush() {
-	if (!this._renderHooks) return;
+	if (!this._oncreate) return;
 
-	while (this._renderHooks.length) {
-		this._renderHooks.pop()();
+	while (this._oncreate.length) {
+		this._oncreate.pop()();
 	}
 }
 

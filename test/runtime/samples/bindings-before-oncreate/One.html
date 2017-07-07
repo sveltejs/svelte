@@ -1,0 +1,15 @@
+<Two bind:foo/>
+
+<script>
+	import Two from './Two.html';
+
+	export default {
+		components: {
+			Two
+		},
+
+		oncreate() {
+			this.snapshot = this.get('foo');
+		}
+	};
+</script>

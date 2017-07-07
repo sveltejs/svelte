@@ -1,0 +1,24 @@
+<Nested bind:visibleThings="visibleThings" />
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		data() {
+			return {
+				visibleThings: []
+			};
+		},
+
+		components: {
+			Nested
+		},
+
+		oncreate() {
+			this.snapshots = [];
+			this.observe('visibleThings', things => {
+				this.snapshots.push(things);
+			});
+		}
+	};
+</script>

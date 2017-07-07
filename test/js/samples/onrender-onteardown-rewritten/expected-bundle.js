@@ -95,10 +95,10 @@ function set(newState) {
 }
 
 function _flush() {
-	if (!this._renderHooks) return;
+	if (!this._oncreate) return;
 
-	while (this._renderHooks.length) {
-		this._renderHooks.pop()();
+	while (this._oncreate.length) {
+		this._oncreate.pop()();
 	}
 }
 
@@ -156,7 +156,7 @@ function SvelteComponent ( options ) {
 	}
 
 	if ( options._root ) {
-		options._root._renderHooks.push( template.oncreate.bind( this ) );
+		options._root._oncreate.push( template.oncreate.bind( this ) );
 	} else {
 		template.oncreate.call( this );
 	}
