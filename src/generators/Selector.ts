@@ -1,5 +1,6 @@
 import MagicString from 'magic-string';
-import { groupSelectors, isGlobalSelector } from '../utils/css';
+import { groupSelectors } from '../utils/css';
+import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
 export default class Selector {
@@ -71,6 +72,35 @@ export default class Selector {
 				encapsulateBlock(block);
 			}
 		});
+	}
+
+	validate(validator: Validator) {
+		this.blocks.forEach((block) => {
+			let i = block.selectors.length;
+			while (i-- > 1) {
+				const part = block.selectors[i];
+				if (part.type === 'PseudoClassSelector' && part.name === 'global') {
+					validator.error(`:global(...) must be the first element in a compound selector`, part.start);
+				}
+			}
+		});
+
+		let start = 0;
+		let end = this.blocks.length;
+
+		for (; start < end; start += 1) {
+			if (!this.blocks[start].global) break;
+		}
+
+		for (; end > start; end -= 1) {
+			if (!this.blocks[end - 1].global) break;
+		}
+
+		for (let i = start; i < end; i += 1) {
+			if (this.blocks[i].global) {
+				validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, this.blocks[i].selectors[0].start);
+			}
+		}
 	}
 }
 

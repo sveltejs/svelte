@@ -1,4 +1,4 @@
-import { groupSelectors, isGlobalSelector, walkRules } from '../../utils/css';
+import { groupSelectors, walkRules } from '../../utils/css';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 

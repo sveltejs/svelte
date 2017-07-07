@@ -4,6 +4,7 @@ import generate from './generators/dom/index';
 import generateSSR from './generators/server-side-rendering/index';
 import { assign } from './shared/index.js';
 import { version } from '../package.json';
+import Stylesheet from './generators/Stylesheet';
 import { Parsed, CompileOptions, Warning } from './interfaces';
 
 function normalizeOptions(options: CompileOptions): CompileOptions {
@@ -44,11 +45,13 @@ export function compile(source: string, _options: CompileOptions) {
 		return;
 	}
 
-	validate(parsed, source, options);
+	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false);
+
+	validate(parsed, source, stylesheet, options);
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
-	return compiler(parsed, source, options);
+	return compiler(parsed, source, stylesheet, options);
 }
 
 export function create(source: string, _options: CompileOptions = {}) {
