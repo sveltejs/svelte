@@ -18,12 +18,10 @@ describe("validate", () => {
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
 
 			try {
-				const parsed = svelte.parse(input);
-
 				const errors = [];
 				const warnings = [];
 
-				svelte.validate(parsed, input, {
+				svelte.compile(input, {
 					onerror(error) {
 						errors.push({
 							message: error.message,

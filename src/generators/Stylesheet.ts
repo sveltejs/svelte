@@ -3,6 +3,7 @@ import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
+import { Validator } from '../validate/index';
 import { Node, Parsed } from '../interfaces';
 
 class Rule {
@@ -191,6 +192,14 @@ export default class Stylesheet {
 				file: cssOutputFilename
 			})
 		};
+	}
+
+	validate(validator: Validator) {
+		this.rules.forEach(rule => {
+			rule.selectors.forEach(selector => {
+				selector.validate(validator);
+			});
+		});
 	}
 
 	warnOnUnusedSelectors(onwarn) {

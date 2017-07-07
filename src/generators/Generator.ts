@@ -50,6 +50,7 @@ export default class Generator {
 		parsed: Parsed,
 		source: string,
 		name: string,
+		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
 		this.ast = clone(parsed);
@@ -76,7 +77,7 @@ export default class Generator {
 		this.usesRefs = false;
 
 		// styles
-		this.stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false);
+		this.stylesheet = stylesheet;
 
 		// TODO this is legacy — just to get the tests to pass during the transition
 		this.css = this.stylesheet.render(options.cssOutputFilename).css;

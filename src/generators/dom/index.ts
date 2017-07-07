@@ -9,6 +9,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
+import Stylesheet from '../Stylesheet';
 import preprocess from './preprocess';
 import Block from './Block';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
@@ -28,9 +29,10 @@ export class DomGenerator extends Generator {
 		parsed: Parsed,
 		source: string,
 		name: string,
+		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, options);
+		super(parsed, source, name, stylesheet, options);
 		this.blocks = [];
 
 		this.readonly = new Set();
@@ -45,11 +47,12 @@ export class DomGenerator extends Generator {
 export default function dom(
 	parsed: Parsed,
 	source: string,
+	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
 	const format = options.format || 'es';
 
-	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', options);
+	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
 
 	const {
 		computations,

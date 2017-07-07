@@ -1,9 +1,5 @@
 import { Node } from '../interfaces';
 
-export function isGlobalSelector(block: Node[]) {
-	return block[0].type === 'PseudoClassSelector' && block[0].name === 'global';
-}
-
 export function groupSelectors(selector: Node) {
 	let block = {
 		global: selector.children[0].type === 'PseudoClassSelector' && selector.children[0].name === 'global',
