@@ -40,6 +40,9 @@ export interface CompileOptions {
 	filename?: string;
 	generate?: string;
 
+	outputFilename?: string;
+	cssOutputFilename?: string;
+
 	dev?: boolean;
 	shared?: boolean | string;
 	cascade?: boolean;

@@ -330,7 +330,7 @@ const preprocessors = {
 				allUsedContexts: [],
 			});
 
-			generator.applyCss(node, elementStack);
+			generator.stylesheet.apply(node, elementStack);
 		}
 
 		if (node.children.length) {

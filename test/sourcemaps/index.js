@@ -21,34 +21,50 @@ describe("sourcemaps", () => {
 				`test/sourcemaps/samples/${dir}/input.html`
 			);
 			const outputFilename = path.resolve(
-				`test/sourcemaps/samples/${dir}/output.js`
+				`test/sourcemaps/samples/${dir}/output`
 			);
 
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
-			const { code, map } = svelte.compile(input, {
+			const { code, map, css, cssMap } = svelte.compile(input, {
 				filename,
-				outputFilename
+				outputFilename: `${outputFilename}.js`,
+				cssOutputFilename: `${outputFilename}.css`
 			});
 
 			fs.writeFileSync(
-				outputFilename,
+				`${outputFilename}.js`,
 				`${code}\n//# sourceMappingURL=output.js.map`
 			);
 			fs.writeFileSync(
-				`${outputFilename}.map`,
+				`${outputFilename}.js.map`,
 				JSON.stringify(map, null, "  ")
 			);
 
+			if (css) {
+				fs.writeFileSync(
+					`${outputFilename}.css`,
+					`${css}\n/*# sourceMappingURL=output.css.map */`
+				);
+				fs.writeFileSync(
+					`${outputFilename}.css.map`,
+					JSON.stringify(cssMap, null, "  ")
+				);
+			}
+
 			assert.deepEqual(map.sources, ["input.html"]);
+			if (cssMap) assert.deepEqual(cssMap.sources, ["input.html"]);
 
 			const { test } = require(`./samples/${dir}/test.js`);
 
-			const smc = new SourceMapConsumer(map);
-
 			const locateInSource = getLocator(input);
+
+			const smc = new SourceMapConsumer(map);
 			const locateInGenerated = getLocator(code);
 
-			test({ assert, code, map, smc, locateInSource, locateInGenerated });
+			const smcCss = cssMap && new SourceMapConsumer(cssMap);
+			const locateInGeneratedCss = getLocator(css || '');
+
+			test({ assert, code, map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });
 		});
 	});
 });

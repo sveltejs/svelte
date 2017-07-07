@@ -27,7 +27,7 @@ export class SsrGenerator extends Generator {
 
 		preprocess(this, parsed.html);
 
-		this.warnOnUnusedSelectors();
+		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 		if (templateProperties.oncreate)
 			removeNode(

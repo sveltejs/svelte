@@ -11,7 +11,7 @@ export default class Selector {
 	constructor(node: Node) {
 		this.node = node;
 
-		this.blocks = groupSelectors(this.node);
+		this.blocks = groupSelectors(node);
 
 		// take trailing :global(...) selectors out of consideration
 		let i = node.children.length;

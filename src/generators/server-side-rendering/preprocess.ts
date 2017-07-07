@@ -61,7 +61,7 @@ const preprocessors = {
 			generator.components.has(node.name) || node.name === ':Self';
 
 		if (!isComponent) {
-			generator.applyCss(node, elementStack);
+			generator.stylesheet.apply(node, elementStack);
 		}
 
 		if (node.children.length) {
