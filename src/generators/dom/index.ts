@@ -122,10 +122,10 @@ export default function dom(
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
-		${generator.hasComplexBindings &&
-			`while ( this._bindings.length ) this._bindings.pop()();`}
 		${(generator.hasComponents || generator.hasIntroTransitions) &&
 			`this._flush();`}
+		${generator.hasComplexBindings &&
+			`while ( this._bindings.length ) this._bindings.pop()();`}
 	`;
 
 	if (hasJs) {
@@ -200,7 +200,7 @@ export default function dom(
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
-				`this._renderHooks = [];`}
+				`this._oncreate = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
 
 			this._fragment = @create_main_fragment( this._state, this );
@@ -219,15 +219,15 @@ export default function dom(
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 			
-			${generator.hasComplexBindings &&
-				`while ( this._bindings.length ) this._bindings.pop()();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
 				`this._flush();`}
+			${generator.hasComplexBindings &&
+				`while ( this._bindings.length ) this._bindings.pop()();`}
 
 			${templateProperties.oncreate &&
 				deindent`
 				if ( options._root ) {
-					options._root._renderHooks.push( @template.oncreate.bind( this ) );
+					options._root._oncreate.push( @template.oncreate.bind( this ) );
 				} else {
 					@template.oncreate.call( this );
 				}
