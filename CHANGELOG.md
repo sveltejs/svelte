@@ -1,5 +1,18 @@
 # Svelte changelog
 
+## 1.24.0
+
+* Deconflict names with imports in SSR compiler ([#655](https://github.com/sveltejs/svelte/issues/655))
+* Improved transition performance ([#670](https://github.com/sveltejs/svelte/pull/670))
+* Run transitions on initial render ([#651](https://github.com/sveltejs/svelte/issues/651))
+* Add dev mode warning if `hydrate` is true but `hydratable` was false ([#664](https://github.com/sveltejs/svelte/issues/664))
+* Manipulate sourcemap to make missing loop values obvious ([#683](https://github.com/sveltejs/svelte/pull/683))
+* Only add CSS scoping attributes where necessary ([#679](https://github.com/sveltejs/svelte/issues/679))
+* Warn on unused CSS selectors ([#678](https://github.com/sveltejs/svelte/issues/678))
+* Fix `<select>` binding in loop ([#685](https://github.com/sveltejs/svelte/issues/685))
+* Prevent bindings from calling `oncreate` functions prematurely ([#694](https://github.com/sveltejs/svelte/pull/694))
+* Simpler codegen ([#673](https://github.com/sveltejs/svelte/pull/673))
+
 ## 1.23.4
 
 * Don't recreate if blocks incorrectly ([#669](https://github.com/sveltejs/svelte/pull/669))
