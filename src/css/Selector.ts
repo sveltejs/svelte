@@ -2,10 +2,16 @@ import MagicString from 'magic-string';
 import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
+interface Block {
+	global: boolean;
+	combinator: Node;
+	selectors: Node[]
+}
+
 export default class Selector {
 	node: Node;
-	blocks: any; // TODO
-	parts: Node[];
+	blocks: Block[];
+	localBlocks: Block[];
 	used: boolean;
 
 	constructor(node: Node) {
@@ -14,25 +20,18 @@ export default class Selector {
 		this.blocks = groupSelectors(node);
 
 		// take trailing :global(...) selectors out of consideration
-		let i = node.children.length;
-		while (i > 2) {
-			const last = node.children[i-1];
-			const penultimate = node.children[i-2];
-
-			if (last.type === 'PseudoClassSelector' && last.name === 'global') {
-				i -= 2;
-			} else {
-				break;
-			}
+		let i = this.blocks.length;
+		while (i > 0) {
+			if (!this.blocks[i - 1].global) break;
+			i -= 1;
 		}
 
-		this.parts = node.children.slice(0, i);
-
+		this.localBlocks = this.blocks.slice(0, i);
 		this.used = this.blocks[0].global;
 	}
 
 	apply(node: Node, stack: Node[]) {
-		const applies = selectorAppliesTo(this.parts, node, stack.slice());
+		const applies = selectorAppliesTo(this.localBlocks.slice(), node, stack.slice());
 
 		if (applies) {
 			this.used = true;
@@ -45,7 +44,7 @@ export default class Selector {
 	}
 
 	transform(code: MagicString, attr: string) {
-		function encapsulateBlock(block) {
+		function encapsulateBlock(block: Block) {
 			let i = block.selectors.length;
 			while (i--) {
 				const selector = block.selectors[i];
@@ -77,9 +76,9 @@ export default class Selector {
 		this.blocks.forEach((block) => {
 			let i = block.selectors.length;
 			while (i-- > 1) {
-				const part = block.selectors[i];
-				if (part.type === 'PseudoClassSelector' && part.name === 'global') {
-					validator.error(`:global(...) must be the first element in a compound selector`, part.start);
+				const selector = block.selectors[i];
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					validator.error(`:global(...) must be the first element in a compound selector`, selector.start);
 				}
 			}
 		});
@@ -107,71 +106,67 @@ function isDescendantSelector(selector: Node) {
 	return selector.type === 'WhiteSpace' || selector.type === 'Combinator';
 }
 
-function selectorAppliesTo(parts: Node[], node: Node, stack: Node[]): boolean {
-	let i = parts.length;
+function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[]): boolean {
+	const block = blocks.pop();
+	if (!block) return false;
+
+	if (!node) {
+		return blocks.every(block => block.global);
+	}
+
+	let i = block.selectors.length;
 	let j = stack.length;
 
 	while (i--) {
-		if (!node) {
-			return parts.every((part: Node) => {
-				return part.type === 'Combinator' || (part.type === 'PseudoClassSelector' && part.name === 'global');
-			});
-		}
+		const selector = block.selectors[i];
 
-		const part = parts[i];
-
-		if (part.type === 'PseudoClassSelector' && part.name === 'global') {
+		if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 			// TODO shouldn't see this here... maybe we should enforce that :global(...)
 			// cannot be sandwiched between non-global selectors?
 			return false;
 		}
 
-		if (part.type === 'PseudoClassSelector' || part.type === 'PseudoElementSelector') {
+		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
 			continue;
 		}
 
-		if (part.type === 'ClassSelector') {
-			if (!attributeMatches(node, 'class', part.name, '~=', false)) return false;
+		if (selector.type === 'ClassSelector') {
+			if (!attributeMatches(node, 'class', selector.name, '~=', false)) return false;
 		}
 
-		else if (part.type === 'IdSelector') {
-			if (!attributeMatches(node, 'id', part.name, '=', false)) return false;
+		else if (selector.type === 'IdSelector') {
+			if (!attributeMatches(node, 'id', selector.name, '=', false)) return false;
 		}
 
-		else if (part.type === 'AttributeSelector') {
-			if (!attributeMatches(node, part.name.name, part.value && unquote(part.value.value), part.operator, part.flags)) return false;
+		else if (selector.type === 'AttributeSelector') {
+			if (!attributeMatches(node, selector.name.name, selector.value && unquote(selector.value.value), selector.operator, selector.flags)) return false;
 		}
 
-		else if (part.type === 'TypeSelector') {
-			if (part.name === '*') return true;
-			if (node.name !== part.name) return false;
-		}
-
-		else if (part.type === 'WhiteSpace') {
-			parts = parts.slice(0, i);
-
-			while (stack.length) {
-				if (selectorAppliesTo(parts, stack.pop(), stack)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		else if (part.type === 'Combinator') {
-			if (part.name === '>') {
-				return selectorAppliesTo(parts.slice(0, i), stack.pop(), stack);
-			}
-
-			// TODO other combinators
-			return true;
+		else if (selector.type === 'TypeSelector') {
+			if (node.name !== selector.name && selector.name !== '*') return false;
 		}
 
 		else {
 			// bail. TODO figure out what these could be
 			return true;
 		}
+	}
+
+	if (block.combinator) {
+		if (block.combinator.type === 'WhiteSpace') {
+			while (stack.length) {
+				if (selectorAppliesTo(blocks.slice(), stack.pop(), stack)) {
+					return true;
+				}
+			}
+
+			return false;
+		} else if (block.combinator.name === '>') {
+			return selectorAppliesTo(blocks, stack.pop(), stack);
+		}
+
+		// TODO other combinators
+		return true;
 	}
 
 	return true;
@@ -209,7 +204,7 @@ function unquote(str: string) {
 }
 
 function groupSelectors(selector: Node) {
-	let block = {
+	let block: Block = {
 		global: selector.children[0].type === 'PseudoClassSelector' && selector.children[0].name === 'global',
 		selectors: [],
 		combinator: null
