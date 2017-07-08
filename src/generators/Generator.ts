@@ -14,8 +14,7 @@ import annotateWithScopes from '../utils/annotateWithScopes';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
-import Selector from './Selector';
-import Stylesheet from './Stylesheet';
+import Stylesheet from '../css/Stylesheet';
 import { Node, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;

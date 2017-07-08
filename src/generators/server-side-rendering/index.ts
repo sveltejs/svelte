@@ -1,6 +1,6 @@
 import deindent from '../../utils/deindent';
 import Generator from '../Generator';
-import Stylesheet from '../Stylesheet';
+import Stylesheet from '../../css/Stylesheet';
 import Block from './Block';
 import preprocess from './preprocess';
 import visit from './visit';

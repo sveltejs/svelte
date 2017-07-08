@@ -9,7 +9,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
-import Stylesheet from '../Stylesheet';
+import Stylesheet from '../../css/Stylesheet';
 import preprocess from './preprocess';
 import Block from './Block';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
