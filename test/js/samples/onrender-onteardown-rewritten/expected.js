@@ -44,8 +44,6 @@ function SvelteComponent ( options ) {
 		this._fragment.mount( options.target, null );
 	}
 
-	this._flush();
-
 	if ( options._root ) {
 		options._root._oncreate.push( template.oncreate.bind( this ) );
 	} else {

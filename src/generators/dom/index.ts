@@ -122,8 +122,8 @@ export default function dom(
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
-		${(generator.hasComponents || generator.hasComplexBindings) &&
-			`this._flush();`}
+		${generator.hasComponents && `@callAll(this._oncreate);`}
+		${generator.hasComplexBindings && `@callAll(this._bindings);`}
 		${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 	`;
 
@@ -157,7 +157,7 @@ export default function dom(
 		? `@proto `
 		: deindent`
 		{
-			${['get', 'fire', 'observe', 'on', 'set', '_flush']
+			${['get', 'fire', 'observe', 'on', 'set']
 				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
@@ -218,16 +218,15 @@ export default function dom(
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 			
-			${(generator.hasComponents || generator.hasIntroTransitions || generator.hasComplexBindings || templateProperties.oncreate) &&
-				`this._flush();`}
+			${generator.hasComponents && `@callAll(this._oncreate);`}
+			${generator.hasComplexBindings && `@callAll(this._bindings);`}
 
-			${templateProperties.oncreate &&
-				deindent`
-					if ( options._root ) {
-						options._root._oncreate.push( @template.oncreate.bind( this ) );
-					} else {
-						@template.oncreate.call( this );
-					}`}
+			${templateProperties.oncreate && deindent`
+				if ( options._root ) {
+					options._root._oncreate.push( @template.oncreate.bind( this ) );
+				} else {
+					@template.oncreate.call( this );
+				}`}
 
 			${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 		}
