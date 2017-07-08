@@ -1,5 +1,4 @@
 import MagicString from 'magic-string';
-import { groupSelectors } from '../utils/css';
 import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
@@ -207,4 +206,32 @@ function unquote(str: string) {
 	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
 		return str.slice(1, str.length - 1);
 	}
+}
+
+function groupSelectors(selector: Node) {
+	let block = {
+		global: selector.children[0].type === 'PseudoClassSelector' && selector.children[0].name === 'global',
+		selectors: [],
+		combinator: null
+	};
+
+	const blocks = [block];
+
+	selector.children.forEach((child: Node, i: number) => {
+		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
+			const next = selector.children[i + 1];
+
+			block = {
+				global: next.type === 'PseudoClassSelector' && next.name === 'global',
+				selectors: [],
+				combinator: child
+			};
+
+			blocks.push(block);
+		} else {
+			block.selectors.push(child);
+		}
+	});
+
+	return blocks;
 }

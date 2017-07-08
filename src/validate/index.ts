@@ -1,5 +1,4 @@
 import validateJs from './js/index';
-import validateCss from './css/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
