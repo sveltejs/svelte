@@ -18,18 +18,9 @@ describe("validate", () => {
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
 
 			try {
-				const errors = [];
 				const warnings = [];
 
 				svelte.compile(input, {
-					onerror(error) {
-						errors.push({
-							message: error.message,
-							pos: error.pos,
-							loc: error.loc
-						});
-					},
-
 					onwarn(warning) {
 						warnings.push({
 							message: warning.message,
@@ -39,16 +30,11 @@ describe("validate", () => {
 					}
 				});
 
-				const expectedErrors =
-					tryToLoadJson(`test/validator/samples/${dir}/errors.json`) || [];
 				const expectedWarnings =
 					tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
 
-				assert.deepEqual(errors, expectedErrors);
 				assert.deepEqual(warnings, expectedWarnings);
 			} catch (err) {
-				if (err.name !== "ParseError") throw err;
-
 				try {
 					const expected = require(`./samples/${dir}/errors.json`)[0];
 
