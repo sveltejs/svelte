@@ -4,7 +4,7 @@ import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
 import { Validator } from '../validate/index';
-import { Node, Parsed } from '../interfaces';
+import { Node, Parsed, Warning } from '../interfaces';
 
 class Rule {
 	selectors: Selector[];
@@ -166,7 +166,7 @@ export default class Stylesheet {
 		}
 	}
 
-	render(cssOutputFilename) {
+	render(cssOutputFilename: string) {
 		if (!this.hasStyles) {
 			return { css: null, cssMap: null };
 		}
@@ -202,7 +202,7 @@ export default class Stylesheet {
 		});
 	}
 
-	warnOnUnusedSelectors(onwarn) {
+	warnOnUnusedSelectors(onwarn: (warning: Warning) => void) {
 		if (this.cascade) return;
 
 		let locator;
