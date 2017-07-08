@@ -91,16 +91,11 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
-	this._root._flush();
+	callAll(this._root._oncreate);
 }
 
 function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
-}
-
-function _flush() {
-	callAll(this._oncreate);
-	callAll(this._bindings);
 }
 
 var proto = {
@@ -108,8 +103,7 @@ var proto = {
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set,
-	_flush: _flush
+	set: set
 };
 
 var template = (function () {
@@ -155,8 +149,6 @@ function SvelteComponent ( options ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
 	}
-
-	this._flush();
 
 	if ( options._root ) {
 		options._root._oncreate.push( template.oncreate.bind( this ) );
