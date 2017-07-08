@@ -109,12 +109,13 @@ export function set(newState) {
 	this._root._flush();
 }
 
-export function _flush() {
-	if (!this._oncreate) return;
+export function callAll(fns) {
+	while (fns && fns.length) fns.pop()();
+}
 
-	while (this._oncreate.length) {
-		this._oncreate.pop()();
-	}
+export function _flush() {
+	callAll(this._oncreate);
+	callAll(this._bindings);
 }
 
 export var proto = {

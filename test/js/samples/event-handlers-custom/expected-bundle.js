@@ -112,12 +112,13 @@ function set(newState) {
 	this._root._flush();
 }
 
-function _flush() {
-	if (!this._oncreate) return;
+function callAll(fns) {
+	while (fns && fns.length) fns.pop()();
+}
 
-	while (this._oncreate.length) {
-		this._oncreate.pop()();
-	}
+function _flush() {
+	callAll(this._oncreate);
+	callAll(this._bindings);
 }
 
 var proto = {
