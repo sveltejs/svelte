@@ -80,7 +80,6 @@ export default class Generator {
 
 		// TODO this is legacy — just to get the tests to pass during the transition
 		this.css = this.stylesheet.render(options.cssOutputFilename).css;
-		this.cssId = `svelte-${parsed.hash}`;
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;

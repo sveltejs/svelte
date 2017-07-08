@@ -84,7 +84,7 @@ export default function visitElement(
 	// TODO add a helper for this, rather than repeating it
 	if (node._needsCssAttribute) {
 		block.builders.hydrate.addLine(
-			`@setAttribute( ${name}, '${generator.cssId}', '' );`
+			`@setAttribute( ${name}, '${generator.stylesheet.id}', '' );`
 		);
 	}
 

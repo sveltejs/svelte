@@ -86,6 +86,8 @@ export default function ssr(
 		visit(generator, mainBlock, node);
 	});
 
+	const { css, cssMap } = generator.stylesheet.render(options.filename);
+
 	const result = deindent`
 		${hasJs && `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`}
 
@@ -127,12 +129,12 @@ export default function ssr(
 		${name}.renderCss = function () {
 			var components = [];
 
-			${generator.css &&
+			${generator.stylesheet.hasStyles &&
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${JSON.stringify(generator.css)},
-					map: null // TODO
+					css: ${JSON.stringify(css)},
+					map: ${JSON.stringify(cssMap)}
 				});
 			`}
 
