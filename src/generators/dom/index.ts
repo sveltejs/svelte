@@ -135,12 +135,18 @@ export default function dom(
 		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
 	}
 
-	if (generator.css && options.css !== false) {
+	if (generator.stylesheet.hasStyles && options.css !== false) {
+		const { css, cssMap } = generator.stylesheet.render(options.filename);
+
+		const textContent = options.dev ?
+			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
+			css;
+
 		builder.addBlock(deindent`
 			function @add_css () {
 				var style = @createElement( 'style' );
-				style.id = '${generator.cssId}-style';
-				style.textContent = ${stringify(generator.css)};
+				style.id = '${generator.stylesheet.id}-style';
+				style.textContent = ${JSON.stringify(textContent)};
 				@appendNode( style, document.head );
 			}
 		`);
@@ -199,9 +205,9 @@ export default function dom(
 			this._yield = options._yield;
 
 			this._torndown = false;
-			${generator.css &&
+			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
-				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
+				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
 			${(generator.hasComponents || generator.hasIntroTransitions) &&
 				`this._oncreate = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
