@@ -1,0 +1,13 @@
+{{#each titles as title @name}}
+	<Nested title="{{title.name}}"/>
+{{/each}}
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		components: {
+			Nested
+		}
+	};
+</script>
