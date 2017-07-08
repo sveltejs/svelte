@@ -3,7 +3,7 @@ import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
 import CompileError from '../utils/CompileError';
-import Stylesheet from '../generators/Stylesheet';
+import Stylesheet from '../css/Stylesheet';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 
 class ValidationError extends CompileError {

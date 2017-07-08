@@ -4,7 +4,7 @@ import generate from './generators/dom/index';
 import generateSSR from './generators/server-side-rendering/index';
 import { assign } from './shared/index.js';
 import { version } from '../package.json';
-import Stylesheet from './generators/Stylesheet';
+import Stylesheet from './css/Stylesheet';
 import { Parsed, CompileOptions, Warning } from './interfaces';
 
 function normalizeOptions(options: CompileOptions): CompileOptions {
