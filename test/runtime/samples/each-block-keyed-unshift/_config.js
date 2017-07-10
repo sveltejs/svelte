@@ -1,0 +1,24 @@
+export default {
+	data: {
+		titles: [{ name: 'b' }, { name: 'c' }]
+	},
+
+	html: `
+		<p>b</p>
+		<p>c</p>
+	`,
+
+	test (assert, component, target) {
+		component.set({
+			titles: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+		});
+
+		assert.htmlEqual(target.innerHTML, `
+			<p>a</p>
+			<p>b</p>
+			<p>c</p>
+		`);
+
+		component.destroy();
+	}
+};
