@@ -1,6 +1,6 @@
 import Imported from 'Imported.html';
 
-import { assign, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
+import { assign, callAll, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -71,7 +71,7 @@ function SvelteComponent ( options ) {
 		this._fragment.mount( options.target, null );
 	}
 
-	this._flush();
+	callAll(this._oncreate);
 }
 
 assign( SvelteComponent.prototype, proto );
@@ -81,7 +81,7 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
 	dispatchObservers( this, this._observers.post, newState, oldState );
-	this._flush();
+	callAll(this._oncreate);
 };
 
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {

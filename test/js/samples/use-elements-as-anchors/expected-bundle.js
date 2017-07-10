@@ -115,15 +115,11 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
-	this._root._flush();
+	callAll(this._root._oncreate);
 }
 
-function _flush() {
-	if (!this._oncreate) return;
-
-	while (this._oncreate.length) {
-		this._oncreate.pop()();
-	}
+function callAll(fns) {
+	while (fns && fns.length) fns.pop()();
 }
 
 var proto = {
@@ -131,8 +127,7 @@ var proto = {
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set,
-	_flush: _flush
+	set: set
 };
 
 function create_main_fragment ( state, component ) {

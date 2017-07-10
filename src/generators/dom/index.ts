@@ -122,10 +122,9 @@ export default function dom(
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
-		${(generator.hasComponents || generator.hasIntroTransitions) &&
-			`this._flush();`}
-		${generator.hasComplexBindings &&
-			`while ( this._bindings.length ) this._bindings.pop()();`}
+		${generator.hasComponents && `@callAll(this._oncreate);`}
+		${generator.hasComplexBindings && `@callAll(this._bindings);`}
+		${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 	`;
 
 	if (hasJs) {
@@ -158,7 +157,7 @@ export default function dom(
 		? `@proto `
 		: deindent`
 		{
-			${['get', 'fire', 'observe', 'on', 'set', '_flush']
+			${['get', 'fire', 'observe', 'on', 'set']
 				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
@@ -199,9 +198,9 @@ export default function dom(
 			${generator.css &&
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
-			${(generator.hasComponents || generator.hasIntroTransitions) &&
-				`this._oncreate = [];`}
+			${generator.hasComponents && `this._oncreate = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
+			${generator.hasIntroTransitions && `this._postcreate = [];`}
 
 			this._fragment = @create_main_fragment( this._state, this );
 
@@ -219,19 +218,17 @@ export default function dom(
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 			
-			${(generator.hasComponents || generator.hasIntroTransitions) &&
-				`this._flush();`}
-			${generator.hasComplexBindings &&
-				`while ( this._bindings.length ) this._bindings.pop()();`}
+			${generator.hasComponents && `@callAll(this._oncreate);`}
+			${generator.hasComplexBindings && `@callAll(this._bindings);`}
 
-			${templateProperties.oncreate &&
-				deindent`
+			${templateProperties.oncreate && deindent`
 				if ( options._root ) {
 					options._root._oncreate.push( @template.oncreate.bind( this ) );
 				} else {
 					@template.oncreate.call( this );
-				}
-			`}
+				}`}
+
+			${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 		}
 
 		@assign( ${prototypeBase}, ${proto});
