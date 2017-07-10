@@ -1224,6 +1224,10 @@ estree-walker@^0.3.0:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/estree-walker/-/estree-walker-0.3.1.tgz#e6b1a51cf7292524e7237c312e5fe6660c1ce1aa"
 
+estree-walker@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/estree-walker/-/estree-walker-0.5.0.tgz#aae3b57c42deb8010e349c892462f0e71c5dd1aa"
+
 esutils@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/esutils/-/esutils-2.0.2.tgz#0abf4f1caa5bcb1f7a9d8acc6dea4faaa04bac9b"
@@ -1972,9 +1976,9 @@ magic-string@^0.19.0, magic-string@~0.19.0:
   dependencies:
     vlq "^0.2.1"
 
-magic-string@^0.21.1:
-  version "0.21.3"
-  resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.21.3.tgz#87e201009ebfde6f46dc5757305a70af71e31624"
+magic-string@^0.22.1:
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.22.1.tgz#a1bda64dfd4ae6c63797a45a67ee473b1f8d0e0f"
   dependencies:
     vlq "^0.2.1"
 

@@ -57,7 +57,7 @@ export default function visitElement(
 	});
 
 	if (node._needsCssAttribute) {
-		openingTag += ` ${generator.cssId}`;
+		openingTag += ` ${generator.stylesheet.id}`;
 	}
 
 	openingTag += '>';

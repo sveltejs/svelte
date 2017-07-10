@@ -1,5 +1,6 @@
 import deindent from '../../utils/deindent';
 import Generator from '../Generator';
+import Stylesheet from '../../css/Stylesheet';
 import Block from './Block';
 import preprocess from './preprocess';
 import visit from './visit';
@@ -15,9 +16,10 @@ export class SsrGenerator extends Generator {
 		parsed: Parsed,
 		source: string,
 		name: string,
+		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, options);
+		super(parsed, source, name, stylesheet, options);
 		this.bindings = [];
 		this.renderCode = '';
 		this.elementDepth = 0;
@@ -27,7 +29,7 @@ export class SsrGenerator extends Generator {
 
 		preprocess(this, parsed.html);
 
-		this.warnOnUnusedSelectors();
+		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 		if (templateProperties.oncreate)
 			removeNode(
@@ -63,11 +65,12 @@ export class SsrGenerator extends Generator {
 export default function ssr(
 	parsed: Parsed,
 	source: string,
+	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
 	const format = options.format || 'cjs';
 
-	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', options);
+	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
 
 	const { computations, name, hasJs, templateProperties } = generator;
 
@@ -82,6 +85,8 @@ export default function ssr(
 	parsed.html.children.forEach((node: Node) => {
 		visit(generator, mainBlock, node);
 	});
+
+	const { css, cssMap } = generator.stylesheet.render(options.filename);
 
 	const result = deindent`
 		${hasJs && `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`}
@@ -124,12 +129,12 @@ export default function ssr(
 		${name}.renderCss = function () {
 			var components = [];
 
-			${generator.css &&
+			${generator.stylesheet.hasStyles &&
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${JSON.stringify(generator.css)},
-					map: null // TODO
+					css: ${JSON.stringify(css)},
+					map: ${JSON.stringify(cssMap)}
 				});
 			`}
 

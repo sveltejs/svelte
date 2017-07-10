@@ -1,9 +1,9 @@
 import validateJs from './js/index';
-import validateCss from './css/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
 import CompileError from '../utils/CompileError';
+import Stylesheet from '../css/Stylesheet';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 
 class ValidationError extends CompileError {
@@ -73,6 +73,7 @@ export class Validator {
 export default function validate(
 	parsed: Parsed,
 	source: string,
+	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
 	const { onwarn, onerror, name, filename } = options;
@@ -103,7 +104,7 @@ export default function validate(
 		}
 
 		if (parsed.css) {
-			validateCss(validator, parsed.css);
+			stylesheet.validate(validator);
 		}
 
 		if (parsed.html) {
