@@ -32,7 +32,7 @@ export function hash(str) {
 	return hash >>> 0;
 }
 
-export function wrapTransition(node, fn, params, intro, outgroup) {
+export function wrapTransition(component, node, fn, params, intro, outgroup) {
 	var obj = fn(node, params);
 	var duration = obj.duration || 300;
 	var ease = obj.easing || linear;
@@ -78,6 +78,8 @@ export function wrapTransition(node, fn, params, intro, outgroup) {
 			}
 		},
 		start: function(program) {
+			component.fire(program.intro ? 'intro.start' : 'outro.start', { node: node });
+
 			program.a = this.t;
 			program.b = program.intro ? 1 : 0;
 			program.delta = program.b - program.a;
@@ -149,7 +151,7 @@ export var transitionManager = {
 
 		if (!this.running) {
 			this.running = true;
-			this.next();
+			requestAnimationFrame(this.bound || (this.bound = this.next.bind(this)));
 		}
 	},
 
@@ -186,7 +188,7 @@ export var transitionManager = {
 		}
 
 		if (this.running) {
-			requestAnimationFrame(this.bound || (this.bound = this.next.bind(this)));
+			requestAnimationFrame(this.bound);
 		} else if (this.stylesheet) {
 			var i = this.stylesheet.cssRules.length;
 			while (i--) this.stylesheet.deleteRule(i);

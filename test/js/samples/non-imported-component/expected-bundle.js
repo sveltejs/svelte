@@ -103,15 +103,11 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
-	this._root._flush();
+	callAll(this._root._oncreate);
 }
 
-function _flush() {
-	if (!this._oncreate) return;
-
-	while (this._oncreate.length) {
-		this._oncreate.pop()();
-	}
+function callAll(fns) {
+	while (fns && fns.length) fns.pop()();
 }
 
 var proto = {
@@ -119,8 +115,7 @@ var proto = {
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set,
-	_flush: _flush
+	set: set
 };
 
 var template = (function () {
@@ -192,7 +187,7 @@ function SvelteComponent ( options ) {
 		this._fragment.mount( options.target, null );
 	}
 
-	this._flush();
+	callAll(this._oncreate);
 }
 
 assign( SvelteComponent.prototype, proto );
@@ -202,7 +197,7 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
 	dispatchObservers( this, this._observers.post, newState, oldState );
-	this._flush();
+	callAll(this._oncreate);
 };
 
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
