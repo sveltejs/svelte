@@ -25,12 +25,13 @@ describe("css", () => {
 
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo/.test(dir);
+		const skip = /\.skip/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = tryRequire(`./samples/${dir}/_config.js`) || {};
 			const input = fs
 				.readFileSync(`test/css/samples/${dir}/input.html`, "utf-8")

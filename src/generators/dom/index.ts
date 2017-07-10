@@ -9,6 +9,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
+import Stylesheet from '../../css/Stylesheet';
 import preprocess from './preprocess';
 import Block from './Block';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
@@ -28,9 +29,10 @@ export class DomGenerator extends Generator {
 		parsed: Parsed,
 		source: string,
 		name: string,
+		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, options);
+		super(parsed, source, name, stylesheet, options);
 		this.blocks = [];
 
 		this.readonly = new Set();
@@ -45,11 +47,12 @@ export class DomGenerator extends Generator {
 export default function dom(
 	parsed: Parsed,
 	source: string,
+	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
 	const format = options.format || 'es';
 
-	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', options);
+	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
 
 	const {
 		computations,
@@ -61,7 +64,7 @@ export default function dom(
 
 	const { block, state } = preprocess(generator, namespace, parsed.html);
 
-	generator.warnOnUnusedSelectors();
+	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 	parsed.html.children.forEach((node: Node) => {
 		visit(generator, block, state, node, []);
@@ -131,12 +134,18 @@ export default function dom(
 		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
 	}
 
-	if (generator.css && options.css !== false) {
+	if (generator.stylesheet.hasStyles && options.css !== false) {
+		const { css, cssMap } = generator.stylesheet.render(options.filename);
+
+		const textContent = options.dev ?
+			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
+			css;
+
 		builder.addBlock(deindent`
 			function @add_css () {
 				var style = @createElement( 'style' );
-				style.id = '${generator.cssId}-style';
-				style.textContent = ${stringify(generator.css)};
+				style.id = '${generator.stylesheet.id}-style';
+				style.textContent = ${JSON.stringify(textContent)};
 				@appendNode( style, document.head );
 			}
 		`);
@@ -195,9 +204,9 @@ export default function dom(
 			this._yield = options._yield;
 
 			this._torndown = false;
-			${generator.css &&
+			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
-				`if ( !document.getElementById( '${generator.cssId}-style' ) ) @add_css();`}
+				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
 			${generator.hasComponents && `this._oncreate = [];`}
 			${generator.hasComplexBindings && `this._bindings = [];`}
 			${generator.hasIntroTransitions && `this._postcreate = [];`}
