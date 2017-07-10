@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.25.0
+
+* Fix hoisted event handlers ([#699](https://github.com/sveltejs/svelte/issues/699))
+* Fire `intro.start` and `outro.start` events ([#702](https://github.com/sveltejs/svelte/issues/702))
+* Preserve order of components in keyed each blocks ([#700](https://github.com/sveltejs/svelte/issues/700))
+* Add `cssMap` property to compiler output ([#698](https://github.com/sveltejs/svelte/pull/698/))
+
 ## 1.24.0
 
 * Deconflict names with imports in SSR compiler ([#655](https://github.com/sveltejs/svelte/issues/655))
