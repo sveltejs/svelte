@@ -45,7 +45,7 @@ export default function visitEventHandler(
 	const declarations = usedContexts.map(name => {
 		if (name === 'state') {
 			if (shouldHoist) state.usesComponent = true;
-			return `var state = #component.get();`;
+			return `var state = ${block.alias('component')}.get();`;
 		}
 
 		const listName = block.listNames.get(name);

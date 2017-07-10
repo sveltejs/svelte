@@ -23,8 +23,8 @@ export default function addTransitions(
 		const fn = `@template.transitions.${intro.name}`;
 
 		block.builders.intro.addBlock(deindent`
-			#component._oncreate.push( function () {
-				if ( !${name} ) ${name} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, true, null );
+			#component._postcreate.push( function () {
+				if ( !${name} ) ${name} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, true, null );
 				${name}.run( true, function () {
 					#component.fire( 'intro.end', { node: ${state.name} });
 				});
@@ -58,8 +58,8 @@ export default function addTransitions(
 			}
 
 			block.builders.intro.addBlock(deindent`
-				#component._oncreate.push( function () {
-					${introName} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, true, null );
+				#component._postcreate.push( function () {
+					${introName} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, true, null );
 					${introName}.run( true, function () {
 						#component.fire( 'intro.end', { node: ${state.name} });
 					});
@@ -78,7 +78,7 @@ export default function addTransitions(
 			// TODO hide elements that have outro'd (unless they belong to a still-outroing
 			// group) prior to their removal from the DOM
 			block.builders.outro.addBlock(deindent`
-				${outroName} = @wrapTransition( ${state.name}, ${fn}, ${snippet}, false, null );
+				${outroName} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, false, null );
 				${outroName}.run( false, function () {
 					#component.fire( 'outro.end', { node: ${state.name} });
 					if ( --#outros === 0 ) #outrocallback();

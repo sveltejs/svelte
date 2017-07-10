@@ -106,15 +106,11 @@ export function onDev(eventName, handler) {
 
 export function set(newState) {
 	this._set(assign({}, newState));
-	this._root._flush();
+	callAll(this._root._oncreate);
 }
 
-export function _flush() {
-	if (!this._oncreate) return;
-
-	while (this._oncreate.length) {
-		this._oncreate.pop()();
-	}
+export function callAll(fns) {
+	while (fns && fns.length) fns.pop()();
 }
 
 export var proto = {
@@ -122,8 +118,7 @@ export var proto = {
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set,
-	_flush: _flush
+	set: set
 };
 
 export var protoDev = {
@@ -131,6 +126,5 @@ export var protoDev = {
 	fire: fire,
 	observe: observeDev,
 	on: onDev,
-	set: set,
-	_flush: _flush
+	set: set
 };

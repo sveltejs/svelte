@@ -163,7 +163,7 @@ function keyed(
 	block.addVariable(head);
 	block.addVariable(last);
 
-	if (node.children[0] && node.children[0].type === 'Element') {
+	if (node.children[0] && node.children[0].type === 'Element' && !generator.components.has(node.children[0].name)) {
 		// TODO or text/tag/raw
 		node._block.first = node.children[0]._state.parentNode; // TODO this is highly confusing
 	} else {
