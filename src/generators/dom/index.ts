@@ -207,18 +207,16 @@ export default function dom(
 
 			${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
 
-			// TODO maybe only nec if we have components...
-			if ( !options._root ) {
-				// this._bindings = [];
-				this._beforecreate = [];
-				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
-				this._aftercreate = [];
-			}
-
-			${templateProperties.oncreate && deindent`
-				else {
-					this._root._oncreate.push(oncreate);
-				}
+			${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
+				if ( !options._root ) {
+					this._oncreate = [${templateProperties.oncreate && `oncreate`}];
+					${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
+					${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
+				} ${templateProperties.oncreate && deindent`
+					else {
+						this._root._oncreate.push(oncreate);
+					}
+				`}
 			`}
 
 			this._fragment = @create_main_fragment( this._state, this );
@@ -237,9 +235,9 @@ export default function dom(
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 
-			@callAll(this._beforecreate);
-			@callAll(this._oncreate);
-			@callAll(this._aftercreate);
+			${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+			${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+			${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
 		}
 
 		@assign( ${prototypeBase}, ${proto});
