@@ -125,8 +125,6 @@ export default function dom(
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
-		${generator.hasComponents && `@callAll(this._oncreate);`}
-		${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 	`;
 
 	if (hasJs) {
@@ -206,8 +204,22 @@ export default function dom(
 			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
-			${generator.hasComponents && `this._oncreate = [];`}
-			${(generator.hasComplexBindings || generator.hasIntroTransitions) && `this._postcreate = [];`}
+
+			${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
+
+			// TODO maybe only nec if we have components...
+			if ( !options._root ) {
+				// this._bindings = [];
+				this._beforecreate = [];
+				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
+				this._postcreate = [];
+			}
+
+			${templateProperties.oncreate && deindent`
+				else {
+					this._root._oncreate.push(oncreate);
+				}
+			`}
 
 			this._fragment = @create_main_fragment( this._state, this );
 
@@ -224,17 +236,10 @@ export default function dom(
 					`}
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
-			
-			${generator.hasComponents && `@callAll(this._oncreate);`}
 
-			${templateProperties.oncreate && deindent`
-				if ( options._root ) {
-					options._root._oncreate.push( @template.oncreate.bind( this ) );
-				} else {
-					@template.oncreate.call( this );
-				}`}
-
-			${(generator.hasComplexBindings || generator.hasIntroTransitions) && `@callAll(this._postcreate);`}
+			@callAll(this._beforecreate);
+			@callAll(this._oncreate);
+			@callAll(this._postcreate);
 		}
 
 		@assign( ${prototypeBase}, ${proto});
