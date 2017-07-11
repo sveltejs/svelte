@@ -234,7 +234,7 @@ export default function dom(
 					@template.oncreate.call( this );
 				}`}
 
-			${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
+			${(generator.hasComplexBindings || generator.hasIntroTransitions) && `@callAll(this._postcreate);`}
 		}
 
 		@assign( ${prototypeBase}, ${proto});
