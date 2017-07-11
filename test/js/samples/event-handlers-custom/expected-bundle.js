@@ -109,7 +109,9 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
+	callAll(this._root._beforecreate);
 	callAll(this._root._oncreate);
+	callAll(this._root._aftercreate);
 }
 
 function callAll(fns) {
