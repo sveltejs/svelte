@@ -1,0 +1,24 @@
+<ol>
+	{{#each ids as id}}
+		<Nested :id bind:value="idToValue[id]">
+			{{id}}: value is {{idToValue[id]}}
+		</Nested>
+	{{/each}}
+</ol>
+
+<script>
+	import Nested from './Nested.html';
+	
+	export default {
+		data() {
+			return {
+				ids: ['id-0', 'id-1', 'id-2'],
+				idToValue: Object.create(null)
+			};
+		},
+
+		components: {
+			Nested
+		}
+	};
+</script>

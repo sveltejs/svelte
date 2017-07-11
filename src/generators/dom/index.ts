@@ -126,7 +126,6 @@ export default function dom(
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
 		${generator.hasComponents && `@callAll(this._oncreate);`}
-		${generator.hasComplexBindings && `@callAll(this._bindings);`}
 		${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 	`;
 
@@ -208,8 +207,7 @@ export default function dom(
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
 			${generator.hasComponents && `this._oncreate = [];`}
-			${generator.hasComplexBindings && `this._bindings = [];`}
-			${generator.hasIntroTransitions && `this._postcreate = [];`}
+			${(generator.hasComplexBindings || generator.hasIntroTransitions) && `this._postcreate = [];`}
 
 			this._fragment = @create_main_fragment( this._state, this );
 
@@ -228,7 +226,6 @@ export default function dom(
 			}
 			
 			${generator.hasComponents && `@callAll(this._oncreate);`}
-			${generator.hasComplexBindings && `@callAll(this._bindings);`}
 
 			${templateProperties.oncreate && deindent`
 				if ( options._root ) {
