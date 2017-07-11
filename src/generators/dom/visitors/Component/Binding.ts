@@ -79,7 +79,7 @@ export default function visitBinding(
 
 		${local.name}.observe( '${attribute.name}', ${observer}, { init: false });
 
-		#component._postcreate.push( function () {
+		#component._root._beforecreate.push( function () {
 			var value = ${local.name}.get( '${attribute.name}' );
 			if ( @differs( value, ${snippet} ) ) {
 				${observer}.call( ${local.name}, value );
