@@ -212,7 +212,7 @@ export default function dom(
 				// this._bindings = [];
 				this._beforecreate = [];
 				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
-				this._postcreate = [];
+				this._aftercreate = [];
 			}
 
 			${templateProperties.oncreate && deindent`
@@ -239,7 +239,7 @@ export default function dom(
 
 			@callAll(this._beforecreate);
 			@callAll(this._oncreate);
-			@callAll(this._postcreate);
+			@callAll(this._aftercreate);
 		}
 
 		@assign( ${prototypeBase}, ${proto});

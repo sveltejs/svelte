@@ -108,7 +108,7 @@ export function set(newState) {
 	this._set(assign({}, newState));
 	callAll(this._root._beforecreate);
 	callAll(this._root._oncreate);
-	callAll(this._root._postcreate);
+	callAll(this._root._aftercreate);
 }
 
 export function callAll(fns) {
