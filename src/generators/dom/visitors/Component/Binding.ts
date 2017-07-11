@@ -67,15 +67,18 @@ export default function visitBinding(
 	block.addVariable(updating, 'false');
 
 	local.create.addBlock(deindent`
-		#component._bindings.push( function () {
-			if ( ${local.name}._torndown ) return;
-			${local.name}.observe( '${attribute.name}', function ( value ) {
-				if ( ${updating} ) return;
-				${updating} = true;
+		${local.name}.observe( '${attribute.name}', function ( value ) {
+			if ( ${updating} ) return;
+			${updating} = true;
+			${setter}
+			${updating} = false;
+		}, { init: false });
+
+		if ( @differs( ${local.name}.get( '${attribute.name}' ), ${snippet} ) ) {
+			#component._postcreate.push( function () {
 				${setter}
-				${updating} = false;
-			}, { init: @differs( ${local.name}.get( '${attribute.name}' ), ${snippet} ) });
-		});
+			});
+		}
 	`);
 
 	local.update.addBlock(deindent`

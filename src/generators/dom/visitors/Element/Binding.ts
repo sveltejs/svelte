@@ -94,7 +94,7 @@ export default function visitBinding(
 
 		generator.hasComplexBindings = true;
 		block.builders.hydrate.addBlock(
-			`if ( !('${name}' in state) ) #component._bindings.push( ${handler} );`
+			`if ( !('${name}' in state) ) #component._postcreate.push( ${handler} );`
 		);
 	} else if (attribute.name === 'group') {
 		// <input type='checkbox|radio' bind:group='selected'> special case
@@ -120,7 +120,7 @@ export default function visitBinding(
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	} else if (node.name === 'audio' || node.name === 'video') {
 		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(`#component._bindings.push( ${handler} );`);
+		block.builders.hydrate.addBlock(`#component._postcreate.push( ${handler} );`);
 
 		if (attribute.name === 'currentTime') {
 			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
