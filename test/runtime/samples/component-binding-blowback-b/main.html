@@ -1,3 +1,5 @@
+<input type='number' bind:value='count'>
+
 <ol>
 	{{#each ids as id}}
 		<Nested :id bind:value="idToValue[id]">
@@ -14,6 +16,14 @@
 			return {
 				idToValue: Object.create(null)
 			};
+		},
+
+		computed: {
+			ids(count) {
+				return new Array(count)
+					.fill(null)
+					.map((_, i) => 'id-' + i);
+			}
 		},
 
 		components: {

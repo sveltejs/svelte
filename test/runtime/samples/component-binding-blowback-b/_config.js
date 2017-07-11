@@ -2,10 +2,11 @@ export default {
 	'skip-ssr': true,
 
 	data: {
-		ids: ['id-0', 'id-1', 'id-2']
+		count: 3
 	},
 
 	html: `
+		<input type='number'>
 		<ol>
 			<li>id-0: value is zero</li>
 			<li>id-1: value is one</li>
@@ -13,12 +14,14 @@ export default {
 		</ol>
 	`,
 
-	test (assert, component, target) {
-		component.set({
-			ids: ['id-0', 'id-1', 'id-2', 'id-3']
-		});
+	test (assert, component, target, window) {
+		const input = target.querySelector('input');
+
+		input.value = 4;
+		input.dispatchEvent(new window.Event('input'));
 
 		assert.htmlEqual(target.innerHTML, `
+			<input type='number'>
 			<ol>
 				<li>id-0: value is zero</li>
 				<li>id-1: value is one</li>
