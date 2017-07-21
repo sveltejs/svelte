@@ -17,7 +17,7 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations[i].create();
 			}
 
-			text = createText( "\n\n" );
+			text = createText( "\r\n\r\n" );
 			p = createElement( 'p' );
 			text_1 = createText( text_1_value = state.foo );
 		},
@@ -81,13 +81,13 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			div = createElement( 'div' );
 			strong = createElement( 'strong' );
 			text = createText( text_value = i );
-			text_1 = createText( "\n\n\t\t" );
+			text_1 = createText( "\r\n\r\n\t\t" );
 			span = createElement( 'span' );
 			text_2 = createText( text_2_value = comment.author );
 			text_3 = createText( " wrote " );
 			text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
 			text_5 = createText( " ago:" );
-			text_6 = createText( "\n\n\t\t" );
+			text_6 = createText( "\r\n\r\n\t\t" );
 			raw_before = createElement( 'noscript' );
 			raw_after = createElement( 'noscript' );
 			this.hydrate();
@@ -161,19 +161,24 @@ function SvelteComponent ( options ) {
 
 	this._fragment = create_main_fragment( this._state, this );
 
+	this._protectDomUpdate = false;
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
+	} else {
+		this._protectDomUpdate = true;
 	}
+	this._protectDomUpdate = false;
 }
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
+SvelteComponent.prototype._set = function _set ( newState, withoutDomUpdate ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
+
+	withoutDomUpdate || this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 

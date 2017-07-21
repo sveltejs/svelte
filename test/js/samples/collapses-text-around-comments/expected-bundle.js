@@ -140,8 +140,8 @@ var template = (function () {
 
 function add_css () {
 	var style = createElement( 'style' );
-	style.id = 'svelte-3590263702-style';
-	style.textContent = "\n\tp[svelte-3590263702], [svelte-3590263702] p {\n\t\tcolor: red;\n\t}\n";
+	style.id = 'svelte-2421768003-style';
+	style.textContent = "\r\n\tp[svelte-2421768003], [svelte-2421768003] p {\r\n\t\tcolor: red;\r\n\t}\r\n";
 	appendNode( style, document.head );
 }
 
@@ -156,7 +156,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			setAttribute( p, 'svelte-3590263702', '' );
+			setAttribute( p, 'svelte-2421768003', '' );
 		},
 
 		mount: function ( target, anchor ) {
@@ -193,23 +193,28 @@ function SvelteComponent ( options ) {
 	this._yield = options._yield;
 
 	this._torndown = false;
-	if ( !document.getElementById( 'svelte-3590263702-style' ) ) add_css();
+	if ( !document.getElementById( 'svelte-2421768003-style' ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
 
+	this._protectDomUpdate = false;
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
+	} else {
+		this._protectDomUpdate = true;
 	}
+	this._protectDomUpdate = false;
 }
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
+SvelteComponent.prototype._set = function _set ( newState, withoutDomUpdate ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
+
+	withoutDomUpdate || this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 

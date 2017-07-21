@@ -17,19 +17,19 @@ function create_main_fragment ( state, component ) {
 		create: function () {
 			div = createElement( 'div' );
 			if ( if_block ) if_block.create();
-			text = createText( "\n\n\t" );
+			text = createText( "\r\n\r\n\t" );
 			p = createElement( 'p' );
 			text_1 = createText( "this can be used as an anchor" );
-			text_2 = createText( "\n\n\t" );
+			text_2 = createText( "\r\n\r\n\t" );
 			if ( if_block_1 ) if_block_1.create();
-			text_3 = createText( "\n\n\t" );
+			text_3 = createText( "\r\n\r\n\t" );
 			if ( if_block_2 ) if_block_2.create();
-			text_4 = createText( "\n\n\t" );
+			text_4 = createText( "\r\n\r\n\t" );
 			p_1 = createElement( 'p' );
 			text_5 = createText( "so can this" );
-			text_6 = createText( "\n\n\t" );
+			text_6 = createText( "\r\n\r\n\t" );
 			if ( if_block_3 ) if_block_3.create();
-			text_8 = createText( "\n\n" );
+			text_8 = createText( "\r\n\r\n" );
 			if ( if_block_4 ) if_block_4.create();
 			if_block_4_anchor = createComment();
 		},
@@ -265,19 +265,24 @@ function SvelteComponent ( options ) {
 
 	this._fragment = create_main_fragment( this._state, this );
 
+	this._protectDomUpdate = false;
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
+	} else {
+		this._protectDomUpdate = true;
 	}
+	this._protectDomUpdate = false;
 }
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
+SvelteComponent.prototype._set = function _set ( newState, withoutDomUpdate ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
+
+	withoutDomUpdate || this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 
