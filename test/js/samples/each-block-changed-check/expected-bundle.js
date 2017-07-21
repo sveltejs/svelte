@@ -156,7 +156,7 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations[i].create();
 			}
 
-			text = createText( "\r\n\r\n" );
+			text = createText( "\n\n" );
 			p = createElement( 'p' );
 			text_1 = createText( text_1_value = state.foo );
 		},
@@ -220,13 +220,13 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			div = createElement( 'div' );
 			strong = createElement( 'strong' );
 			text = createText( text_value = i );
-			text_1 = createText( "\r\n\r\n\t\t" );
+			text_1 = createText( "\n\n\t\t" );
 			span = createElement( 'span' );
 			text_2 = createText( text_2_value = comment.author );
 			text_3 = createText( " wrote " );
 			text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
 			text_5 = createText( " ago:" );
-			text_6 = createText( "\r\n\r\n\t\t" );
+			text_6 = createText( "\n\n\t\t" );
 			raw_before = createElement( 'noscript' );
 			raw_after = createElement( 'noscript' );
 			this.hydrate();

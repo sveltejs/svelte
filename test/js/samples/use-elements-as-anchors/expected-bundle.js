@@ -147,19 +147,19 @@ function create_main_fragment ( state, component ) {
 		create: function () {
 			div = createElement( 'div' );
 			if ( if_block ) if_block.create();
-			text = createText( "\r\n\r\n\t" );
+			text = createText( "\n\n\t" );
 			p = createElement( 'p' );
 			text_1 = createText( "this can be used as an anchor" );
-			text_2 = createText( "\r\n\r\n\t" );
+			text_2 = createText( "\n\n\t" );
 			if ( if_block_1 ) if_block_1.create();
-			text_3 = createText( "\r\n\r\n\t" );
+			text_3 = createText( "\n\n\t" );
 			if ( if_block_2 ) if_block_2.create();
-			text_4 = createText( "\r\n\r\n\t" );
+			text_4 = createText( "\n\n\t" );
 			p_1 = createElement( 'p' );
 			text_5 = createText( "so can this" );
-			text_6 = createText( "\r\n\r\n\t" );
+			text_6 = createText( "\n\n\t" );
 			if ( if_block_3 ) if_block_3.create();
-			text_8 = createText( "\r\n\r\n" );
+			text_8 = createText( "\n\n" );
 			if ( if_block_4 ) if_block_4.create();
 			if_block_4_anchor = createComment();
 		},

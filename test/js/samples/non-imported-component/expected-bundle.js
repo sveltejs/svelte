@@ -140,7 +140,7 @@ function create_main_fragment ( state, component ) {
 	return {
 		create: function () {
 			imported._fragment.create();
-			text = createText( "\r\n" );
+			text = createText( "\n" );
 			nonimported._fragment.create();
 		},
 
