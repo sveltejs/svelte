@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.25.1
+
+* Better CSS sourcemaps ([#716](https://github.com/sveltejs/svelte/pull/716))
+
 ## 1.25.0
 
 * Fix hoisted event handlers ([#699](https://github.com/sveltejs/svelte/issues/699))
