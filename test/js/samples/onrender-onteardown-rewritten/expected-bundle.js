@@ -145,10 +145,14 @@ function SvelteComponent ( options ) {
 
 	this._fragment = create_main_fragment( this._state, this );
 
+	this._protectDomUpdate = false;
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
+	} else {
+		this._protectDomUpdate = true;
 	}
+	this._protectDomUpdate = false;
 
 	if ( options._root ) {
 		options._root._oncreate.push( template.oncreate.bind( this ) );
@@ -159,7 +163,7 @@ function SvelteComponent ( options ) {
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
+SvelteComponent.prototype._set = function _set ( newState, withoutDomUpdate ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );

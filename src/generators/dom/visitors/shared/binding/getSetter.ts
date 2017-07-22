@@ -29,10 +29,10 @@ export default function getSetter({
 			${computed
 				? `#component._set({ ${dependencies
 						.map((prop: string) => `${prop}: state.${prop}`)
-						.join(', ')} });`
+						.join(', ')} }, #component._protectDomUpdate);`
 				: `#component._set({ ${dependencies
 						.map((prop: string) => `${prop}: #component.get( '${prop}' )`)
-						.join(', ')} });`}
+						.join(', ')} }, #component._protectDomUpdate);`}
 		`;
 	}
 
@@ -42,11 +42,11 @@ export default function getSetter({
 			${snippet} = ${value};
 			#component._set({ ${dependencies
 				.map((prop: string) => `${prop}: state.${prop}`)
-				.join(', ')} });
+				.join(', ')} }, #component._protectDomUpdate);
 		`;
 	}
 
-	return `#component._set({ ${name}: ${value} });`;
+	return `#component._set({ ${name}: ${value} }, #component._protectDomUpdate);`;
 }
 
 function isComputed(node: Node) {

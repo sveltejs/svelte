@@ -123,7 +123,8 @@ export default function dom(
 		${computations.length &&
 			`@recompute( this._state, newState, oldState, false )`}
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
-		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
+
+		${block.hasUpdateMethod && `withoutDomUpdate || this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
 		${generator.hasComponents && `@callAll(this._oncreate);`}
 		${generator.hasComplexBindings && `@callAll(this._bindings);`}
@@ -213,6 +214,7 @@ export default function dom(
 
 			this._fragment = @create_main_fragment( this._state, this );
 
+			this._protectDomUpdate = false;
 			if ( options.target ) {
 				${generator.hydratable
 					? deindent`
@@ -225,10 +227,13 @@ export default function dom(
 						this._fragment.create();
 					`}
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
+			} else {
+				this._protectDomUpdate = true;
 			}
 			
 			${generator.hasComponents && `@callAll(this._oncreate);`}
 			${generator.hasComplexBindings && `@callAll(this._bindings);`}
+			this._protectDomUpdate = false;
 
 			${templateProperties.oncreate && deindent`
 				if ( options._root ) {
@@ -242,7 +247,7 @@ export default function dom(
 
 		@assign( ${prototypeBase}, ${proto});
 
-		${name}.prototype._set = function _set ( newState ) {
+		${name}.prototype._set = function _set ( newState, withoutDomUpdate ) {
 			${_set}
 		};
 

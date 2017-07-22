@@ -67,19 +67,24 @@ function SvelteComponent ( options ) {
 
 	this._fragment = create_main_fragment( this._state, this );
 
+	this._protectDomUpdate = false;
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
+	} else {
+		this._protectDomUpdate = true;
 	}
+	this._protectDomUpdate = false;
 }
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
+SvelteComponent.prototype._set = function _set ( newState, withoutDomUpdate ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
+
+	withoutDomUpdate || this._fragment.update( newState, this._state );
 	dispatchObservers( this, this._observers.post, newState, oldState );
 };
 

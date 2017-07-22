@@ -1,0 +1,20 @@
+<Two bind:foo/>
+<p class="{{test ? 't1' : 't2'}}"></p>
+
+<script>
+	import Two from './Two.html';
+
+	export default {
+    data() {
+      return {
+        test: false
+      };
+    },
+		components: {
+			Two
+		},
+		oncreate() {
+			this.snapshot = this.get('foo');
+		}
+	};
+</script>

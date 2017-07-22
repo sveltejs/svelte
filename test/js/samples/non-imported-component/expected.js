@@ -66,17 +66,21 @@ function SvelteComponent ( options ) {
 
 	this._fragment = create_main_fragment( this._state, this );
 
+	this._protectDomUpdate = false;
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
+	} else {
+		this._protectDomUpdate = true;
 	}
 
 	callAll(this._oncreate);
+	this._protectDomUpdate = false;
 }
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
+SvelteComponent.prototype._set = function _set ( newState, withoutDomUpdate ) {
 	var oldState = this._state;
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
