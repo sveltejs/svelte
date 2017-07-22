@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import assert from "assert";
-import { svelte } from "../helpers.js";
+import { loadConfig, svelte } from "../helpers.js";
 import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 
@@ -17,6 +17,8 @@ describe("sourcemaps", () => {
 		}
 
 		(solo ? it.only : it)(dir, () => {
+			const config = loadConfig(`./sourcemaps/samples/${dir}/_config.js`);
+
 			const filename = path.resolve(
 				`test/sourcemaps/samples/${dir}/input.html`
 			);
@@ -28,7 +30,8 @@ describe("sourcemaps", () => {
 			const { code, map, css, cssMap } = svelte.compile(input, {
 				filename,
 				outputFilename: `${outputFilename}.js`,
-				cssOutputFilename: `${outputFilename}.css`
+				cssOutputFilename: `${outputFilename}.css`,
+				cascade: config.cascade
 			});
 
 			fs.writeFileSync(
