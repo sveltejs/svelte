@@ -175,6 +175,13 @@ export default class Stylesheet {
 		code.remove(0, this.parsed.css.start + 7);
 		code.remove(this.parsed.css.end - 8, this.source.length);
 
+		walk(this.parsed.css, {
+			enter: (node: Node) => {
+				code.addSourcemapLocation(node.start);
+				code.addSourcemapLocation(node.end);
+			}
+		});
+
 		const keyframes = new Map();
 		this.atrules.forEach((atrule: Atrule) => {
 			atrule.transform(code, this.id, keyframes);
