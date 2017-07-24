@@ -137,15 +137,15 @@ export default function dom(
 	if (generator.stylesheet.hasStyles && options.css !== false) {
 		const { css, cssMap } = generator.stylesheet.render(options.filename);
 
-		const textContent = options.dev ?
+		const textContent = stringify(options.dev ?
 			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-			css;
+			css);
 
 		builder.addBlock(deindent`
 			function @add_css () {
 				var style = @createElement( 'style' );
 				style.id = '${generator.stylesheet.id}-style';
-				style.textContent = ${JSON.stringify(textContent)};
+				style.textContent = ${textContent};
 				@appendNode( style, document.head );
 			}
 		`);
@@ -263,8 +263,8 @@ export default function dom(
 
 	let result = builder
 		.toString()
-		.replace(/(\\)?@(\w*)/g, (match: string, escaped: string, name: string) => {
-			if (escaped) return match.slice(1);
+		.replace(/(\\\\)?@(\w*)/g, (match: string, escaped: string, name: string) => {
+			if (escaped) return match.slice(2);
 
 			if (name in shared) {
 				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;

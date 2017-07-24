@@ -355,8 +355,8 @@ export default class Block {
 					${properties}
 				};
 			}
-		`.replace(/(\\)?#(\w*)/g, (match, escaped, name) => {
-			return escaped ? match.slice(1) : this.alias(name);
+		`.replace(/(\\\\)?#(\w*)/g, (match, escaped, name) => {
+			return escaped ? match.slice(2) : this.alias(name);
 		});
 	}
 }
