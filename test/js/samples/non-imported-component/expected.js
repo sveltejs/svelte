@@ -76,9 +76,13 @@ function SvelteComponent ( options ) {
 		this._fragment.mount( options.target, null );
 	}
 
-	callAll(this._beforecreate);
-	callAll(this._oncreate);
-	callAll(this._aftercreate);
+	if ( !options._root ) {
+		this._block = true;
+		callAll(this._beforecreate);
+		callAll(this._oncreate);
+		callAll(this._aftercreate);
+		this._block = false;
+	}
 }
 
 assign( SvelteComponent.prototype, proto );
