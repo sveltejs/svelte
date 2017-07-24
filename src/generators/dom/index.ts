@@ -235,9 +235,15 @@ export default function dom(
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
 
-			${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-			${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-			${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+				if ( !options._root ) {
+					${generator.hasComponents && `this._block = true;`}
+					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+					${generator.hasComponents && `this._block = false;`}
+				}
+			`}
 		}
 
 		@assign( ${prototypeBase}, ${proto});
