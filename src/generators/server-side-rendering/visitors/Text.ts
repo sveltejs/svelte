@@ -7,5 +7,5 @@ export default function visitText(
 	block: Block,
 	node: Node
 ) {
-	generator.append(node.data.replace(/(\${|`|\\)/g, '\\$1').replace(/([^\\])?([@#])/g, '$1\\$2'));
+	generator.append(node.data.replace(/(\${|`|\\)/g, '\\$1').replace(/([^\\@#])?([@#])/g, '$1\\$2'));
 }
