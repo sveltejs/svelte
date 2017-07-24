@@ -51,7 +51,10 @@ function SvelteComponent ( options ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, null );
 	}
-	callAll(this._oncreate);
+
+	if ( !options._root ) {
+		callAll(this._oncreate);
+	}
 }
 
 assign( SvelteComponent.prototype, proto );

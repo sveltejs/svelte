@@ -103,9 +103,12 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
+	if (this._root._block) return;
+	this._root._block = true;
 	callAll(this._root._beforecreate);
 	callAll(this._root._oncreate);
 	callAll(this._root._aftercreate);
+	this._root._block = false;
 }
 
 function callAll(fns) {
@@ -194,9 +197,13 @@ function SvelteComponent ( options ) {
 		this._fragment.mount( options.target, null );
 	}
 
-	callAll(this._beforecreate);
-	callAll(this._oncreate);
-	callAll(this._aftercreate);
+	if ( !options._root ) {
+		this._block = true;
+		callAll(this._beforecreate);
+		callAll(this._oncreate);
+		callAll(this._aftercreate);
+		this._block = false;
+	}
 }
 
 assign( SvelteComponent.prototype, proto );
