@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.26.0
+
+* Enforce correct order of operations when initialising ([#708](https://github.com/sveltejs/svelte/issues/708) and [#714](https://github.com/sveltejs/svelte/issues/714))
+* Ensure data is up-to-date when re-rendering yield block ([#711](https://github.com/sveltejs/svelte/issues/711))
+* Fix unescaping of strings, preserve at-rules in CSS ([#712](https://github.com/sveltejs/svelte/issues/712))
+* Preserve whitespace at end of each blocks ([#713](https://github.com/sveltejs/svelte/issues/713))
+
 ## 1.25.1
 
 * Better CSS sourcemaps ([#716](https://github.com/sveltejs/svelte/pull/716))
