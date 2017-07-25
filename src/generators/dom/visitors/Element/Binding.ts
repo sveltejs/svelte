@@ -7,6 +7,7 @@ import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 import getObject from '../../../../utils/getObject';
+import getTailSnippet from '../../../../utils/getTailSnippet';
 
 export default function visitBinding(
 	generator: DomGenerator,
@@ -83,8 +84,11 @@ export default function visitBinding(
 					break;
 				}`;
 
+		const { name } = getObject(attribute.value);
+		const tailSnippet = getTailSnippet(attribute.value);
+
 		updateElement = deindent`
-			var ${value} = ${snippet};
+			var ${value} = #component.get( '${name}' )${tailSnippet};
 			for ( var #i = 0; #i < ${state.parentNode}.options.length; #i += 1 ) {
 				var ${option} = ${state.parentNode}.options[#i];
 
