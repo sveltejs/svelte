@@ -23,7 +23,7 @@ export default function addTransitions(
 		const fn = `@template.transitions.${intro.name}`;
 
 		block.builders.intro.addBlock(deindent`
-			#component._postcreate.push( function () {
+			#component._root._aftercreate.push( function () {
 				if ( !${name} ) ${name} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, true, null );
 				${name}.run( true, function () {
 					#component.fire( 'intro.end', { node: ${state.name} });
@@ -58,7 +58,7 @@ export default function addTransitions(
 			}
 
 			block.builders.intro.addBlock(deindent`
-				#component._postcreate.push( function () {
+				#component._root._aftercreate.push( function () {
 					${introName} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, true, null );
 					${introName}.run( true, function () {
 						#component.fire( 'intro.end', { node: ${state.name} });

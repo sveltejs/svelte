@@ -125,9 +125,6 @@ export default function dom(
 		@dispatchObservers( this, this._observers.pre, newState, oldState );
 		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
 		@dispatchObservers( this, this._observers.post, newState, oldState );
-		${generator.hasComponents && `@callAll(this._oncreate);`}
-		${generator.hasComplexBindings && `@callAll(this._bindings);`}
-		${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
 	`;
 
 	if (hasJs) {
@@ -207,9 +204,20 @@ export default function dom(
 			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
-			${generator.hasComponents && `this._oncreate = [];`}
-			${generator.hasComplexBindings && `this._bindings = [];`}
-			${generator.hasIntroTransitions && `this._postcreate = [];`}
+
+			${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
+
+			${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
+				if ( !options._root ) {
+					this._oncreate = [${templateProperties.oncreate && `oncreate`}];
+					${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
+					${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
+				} ${templateProperties.oncreate && deindent`
+					else {
+						this._root._oncreate.push(oncreate);
+					}
+				`}
+			`}
 
 			this._fragment = @create_main_fragment( this._state, this );
 
@@ -226,18 +234,16 @@ export default function dom(
 					`}
 				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, null );
 			}
-			
-			${generator.hasComponents && `@callAll(this._oncreate);`}
-			${generator.hasComplexBindings && `@callAll(this._bindings);`}
 
-			${templateProperties.oncreate && deindent`
-				if ( options._root ) {
-					options._root._oncreate.push( @template.oncreate.bind( this ) );
-				} else {
-					@template.oncreate.call( this );
-				}`}
-
-			${generator.hasIntroTransitions && `@callAll(this._postcreate);`}
+			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+				if ( !options._root ) {
+					${generator.hasComponents && `this._lock = true;`}
+					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+					${generator.hasComponents && `this._lock = false;`}
+				}
+			`}
 		}
 
 		@assign( ${prototypeBase}, ${proto});

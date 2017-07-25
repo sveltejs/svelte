@@ -137,10 +137,9 @@ describe("runtime", () => {
 						throw err;
 					}
 
+					let usedObjectAssign = false;
 					Object.assign = () => {
-						throw new Error(
-							"cannot use Object.assign in generated code, as it is not supported everywhere"
-						);
+						usedObjectAssign = true;
 					};
 
 					global.window = window;
@@ -182,13 +181,17 @@ describe("runtime", () => {
 						assert.htmlEqual(target.innerHTML, config.html);
 					}
 
-					Object.assign = Object_assign;
-
 					if (config.test) {
 						config.test(assert, component, target, window, raf);
 					} else {
 						component.destroy();
 						assert.equal(target.innerHTML, "");
+					}
+
+					if (usedObjectAssign) {
+						throw new Error(
+							"cannot use Object.assign in generated code, as it is not supported everywhere"
+						);
 					}
 				})
 				.catch(err => {
