@@ -23,6 +23,13 @@ export default {
 
 		select.options[2].selected = true;
 		select.dispatchEvent(change);
+		assert.equal(component.get('letter'), 'c');
+
+		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
+			false,
+			false,
+			true
+		]);
 
 		assert.htmlEqual(target.innerHTML, `
 			<span>c</span>
@@ -37,7 +44,11 @@ export default {
 		component.refs.modal.toggle();
 		component.refs.modal.toggle();
 
-		assert.ok(select.options[2].selected);
+		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
+			false,
+			false,
+			true
+		]);
 
 		assert.htmlEqual(target.innerHTML, `
 			<span>c</span>
