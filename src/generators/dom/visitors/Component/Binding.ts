@@ -66,15 +66,24 @@ export default function visitBinding(
 	const updating = block.getUniqueName(`${local.name}_updating`);
 	block.addVariable(updating, 'false');
 
+	const observer = block.getUniqueName('observer');
+	const value = block.getUniqueName('value');
+
 	local.create.addBlock(deindent`
-		#component._bindings.push( function () {
-			if ( ${local.name}._torndown ) return;
-			${local.name}.observe( '${attribute.name}', function ( value ) {
-				if ( ${updating} ) return;
-				${updating} = true;
-				${setter}
-				${updating} = false;
-			}, { init: @differs( ${local.name}.get( '${attribute.name}' ), ${snippet} ) });
+		function ${observer} ( value ) {
+			if ( ${updating} ) return;
+			${updating} = true;
+			${setter}
+			${updating} = false;
+		}
+
+		${local.name}.observe( '${attribute.name}', ${observer}, { init: false });
+
+		#component._root._beforecreate.push( function () {
+			var value = ${local.name}.get( '${attribute.name}' );
+			if ( @differs( value, ${snippet} ) ) {
+				${observer}.call( ${local.name}, value );
+			}
 		});
 	`);
 

@@ -27,10 +27,10 @@ export default function getSetter({
 			list[index]${tail} = ${value};
 
 			${computed
-				? `#component._set({ ${dependencies
+				? `#component.set({ ${dependencies
 						.map((prop: string) => `${prop}: state.${prop}`)
 						.join(', ')} });`
-				: `#component._set({ ${dependencies
+				: `#component.set({ ${dependencies
 						.map((prop: string) => `${prop}: #component.get( '${prop}' )`)
 						.join(', ')} });`}
 		`;
@@ -40,13 +40,13 @@ export default function getSetter({
 		return deindent`
 			var state = #component.get();
 			${snippet} = ${value};
-			#component._set({ ${dependencies
+			#component.set({ ${dependencies
 				.map((prop: string) => `${prop}: state.${prop}`)
 				.join(', ')} });
 		`;
 	}
 
-	return `#component._set({ ${name}: ${value} });`;
+	return `#component.set({ ${name}: ${value} });`;
 }
 
 function isComputed(node: Node) {

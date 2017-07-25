@@ -91,7 +91,12 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
+	if (this._root._lock) return;
+	this._root._lock = true;
+	callAll(this._root._beforecreate);
 	callAll(this._root._oncreate);
+	callAll(this._root._aftercreate);
+	this._root._lock = false;
 }
 
 function callAll(fns) {
@@ -143,6 +148,14 @@ function SvelteComponent ( options ) {
 
 	this._torndown = false;
 
+	var oncreate = template.oncreate.bind( this );
+
+	if ( !options._root ) {
+		this._oncreate = [oncreate];
+	} else {
+	 	this._root._oncreate.push(oncreate);
+	 }
+
 	this._fragment = create_main_fragment( this._state, this );
 
 	if ( options.target ) {
@@ -150,10 +163,8 @@ function SvelteComponent ( options ) {
 		this._fragment.mount( options.target, null );
 	}
 
-	if ( options._root ) {
-		options._root._oncreate.push( template.oncreate.bind( this ) );
-	} else {
-		template.oncreate.call( this );
+	if ( !options._root ) {
+		callAll(this._oncreate);
 	}
 }
 
