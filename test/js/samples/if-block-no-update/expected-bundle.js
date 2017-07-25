@@ -115,12 +115,12 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
-	if (this._root._block) return;
-	this._root._block = true;
+	if (this._root._lock) return;
+	this._root._lock = true;
 	callAll(this._root._beforecreate);
 	callAll(this._root._oncreate);
 	callAll(this._root._aftercreate);
-	this._root._block = false;
+	this._root._lock = false;
 }
 
 function callAll(fns) {
