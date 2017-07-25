@@ -77,11 +77,11 @@ function SvelteComponent ( options ) {
 	}
 
 	if ( !options._root ) {
-		this._block = true;
+		this._lock = true;
 		callAll(this._beforecreate);
 		callAll(this._oncreate);
 		callAll(this._aftercreate);
-		this._block = false;
+		this._lock = false;
 	}
 }
 
