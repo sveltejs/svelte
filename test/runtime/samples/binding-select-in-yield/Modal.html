@@ -1,0 +1,20 @@
+{{#if !hidden}}
+	{{ yield }}
+{{/if}}
+
+<script>
+	export default {
+		data () {
+			return {
+				hidden: true
+			};
+		},
+		methods: {
+			toggle () {
+				this.set({
+					hidden: !this.get('hidden')
+				});
+			}
+		}
+	};
+</script>
