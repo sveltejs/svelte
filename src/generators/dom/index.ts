@@ -237,11 +237,11 @@ export default function dom(
 
 			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
 				if ( !options._root ) {
-					${generator.hasComponents && `this._block = true;`}
+					${generator.hasComponents && `this._lock = true;`}
 					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
 					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
 					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-					${generator.hasComponents && `this._block = false;`}
+					${generator.hasComponents && `this._lock = false;`}
 				}
 			`}
 		}
