@@ -87,8 +87,16 @@ export default function visitBinding(
 		const { name } = getObject(attribute.value);
 		const tailSnippet = getTailSnippet(attribute.value);
 
-		updateElement = deindent`
-			var ${value} = #component.get( '${name}' )${tailSnippet};
+		if (state.inEachBlock === true) {
+			updateElement = deindent`
+				var ${value} = ${snippet};
+			`;
+		} else {
+			updateElement = deindent`
+				var ${value} = #component.get( '${name}' )${tailSnippet};
+			`;
+		}
+		updateElement += `
 			for ( var #i = 0; #i < ${state.parentNode}.options.length; #i += 1 ) {
 				var ${option} = ${state.parentNode}.options[#i];
 
