@@ -3,6 +3,6 @@ export default {
 		const [ control, test ] = target.querySelectorAll( 'p' );
 
 		assert.equal( window.getComputedStyle( control ).color, '' );
-		assert.equal( window.getComputedStyle( test ).color, 'red' );
+		assert.equal( window.getComputedStyle( test ).color, 'rgb(255, 0, 0)' );
 	}
 };
