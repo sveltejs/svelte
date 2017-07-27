@@ -317,7 +317,9 @@ const preprocessors = {
 			generator.components.has(node.name) || node.name === ':Self';
 
 		if (isComponent) {
-			node._state = getChildState(state);
+			node._state = getChildState(state, {
+				isYield: true
+			});
 		} else {
 			const name = block.getUniqueName(
 				node.name.replace(/[^a-zA-Z0-9_$]/g, '_')

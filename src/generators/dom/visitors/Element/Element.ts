@@ -195,6 +195,17 @@ export default function visitElement(
 	}
 
 	if (node.initialUpdate) {
+		// special case — if we're in a yield block, then we may call mount
+		// long after the fragment is created. We may therefore need to get
+		// the latest `state` object
+		// TODO what about contexts in yield blocks? do we need to do
+		// `var ${contextName} = [something complicated]`?
+		const needsStateObject = node.initialUpdateNeedsStateObject && state.isYield;
+
+		if ( needsStateObject ) {
+			block.builders.mount.addLine(`var state = #component.get()`);
+		}
+
 		block.builders.mount.addBlock(node.initialUpdate);
 	}
 
