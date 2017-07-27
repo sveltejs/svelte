@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.26.1
+
+* Fix select binding regression  ([#724](https://github.com/sveltejs/svelte/issues/724))
+
 ## 1.26.0
 
 * Enforce correct order of operations when initialising ([#708](https://github.com/sveltejs/svelte/issues/708) and [#714](https://github.com/sveltejs/svelte/issues/714))
