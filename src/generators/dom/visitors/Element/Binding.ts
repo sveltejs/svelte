@@ -87,16 +87,8 @@ export default function visitBinding(
 		const { name } = getObject(attribute.value);
 		const tailSnippet = getTailSnippet(attribute.value);
 
-		if (state.inEachBlock === true) {
-			updateElement = deindent`
-				var ${value} = ${snippet};
-			`;
-		} else {
-			updateElement = deindent`
-				var ${value} = #component.get( '${name}' )${tailSnippet};
-			`;
-		}
-		updateElement += `
+		updateElement = deindent`
+			var ${value} = ${snippet};
 			for ( var #i = 0; #i < ${state.parentNode}.options.length; #i += 1 ) {
 				var ${option} = ${state.parentNode}.options[#i];
 
@@ -168,8 +160,10 @@ export default function visitBinding(
 		`@addListener( ${state.parentNode}, '${eventName}', ${handler} );`
 	);
 
-	if (node.name !== 'audio' && node.name !== 'video')
+	if (node.name !== 'audio' && node.name !== 'video') {
 		node.initialUpdate = updateElement;
+		node.initialUpdateNeedsStateObject = !block.contexts.has(name);
+	}
 
 	if (updateCondition !== null) {
 		// audio/video duration is read-only, it never updates
