@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.26.2
+
+* Unescape `#` characters ([#722](https://github.com/sveltejs/svelte/issues/722))
+
 ## 1.26.1
 
 * Fix select binding regression  ([#724](https://github.com/sveltejs/svelte/issues/724))
