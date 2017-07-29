@@ -9,6 +9,8 @@ export default function validateEventHandlerCallee(
 	validator: Validator,
 	attribute: Node
 ) {
+	if (!attribute.expression) return;
+
 	const { callee, start, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {

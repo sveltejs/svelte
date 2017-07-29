@@ -43,16 +43,21 @@ function readExpression(parser: Parser, start: number, quoteMark) {
 export function readEventHandlerDirective(
 	parser: Parser,
 	start: number,
-	name: string
+	name: string,
+	hasValue: boolean
 ) {
-	const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
+	let expression;
 
-	const expressionStart = parser.index;
+	if (hasValue) {
+		const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
 
-	const expression = readExpression(parser, expressionStart, quoteMark);
+		const expressionStart = parser.index;
 
-	if (expression.type !== 'CallExpression') {
-		parser.error(`Expected call expression`, expressionStart);
+		expression = readExpression(parser, expressionStart, quoteMark);
+
+		if (expression.type !== 'CallExpression') {
+			parser.error(`Expected call expression`, expressionStart);
+		}
 	}
 
 	return {
