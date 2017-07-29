@@ -1,0 +1,18 @@
+{{#if visible}}
+	<Top ref:top></Top>
+{{/if}}
+
+<script>
+	import Top from './Top.html';
+	
+	export default {
+		data() {
+			return {
+				visible: true
+			};
+		},
+		components: {
+			Top
+		}
+	};
+</script>
