@@ -13,22 +13,25 @@ export default function visitEventHandler(
 	local
 ) {
 	// TODO verify that it's a valid callee (i.e. built-in or declared method)
-	generator.addSourcemapLocations(attribute.expression);
-	generator.code.prependRight(
-		attribute.expression.start,
-		`${block.alias('component')}.`
-	);
-
 	const usedContexts: string[] = [];
-	attribute.expression.arguments.forEach((arg: Node) => {
-		const { contexts } = block.contextualise(arg, null, true);
 
-		contexts.forEach(context => {
-			if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-			if (!~local.allUsedContexts.indexOf(context))
-				local.allUsedContexts.push(context);
+	if (attribute.expression) {
+		generator.addSourcemapLocations(attribute.expression);
+		generator.code.prependRight(
+			attribute.expression.start,
+			`${block.alias('component')}.`
+		);
+
+		attribute.expression.arguments.forEach((arg: Node) => {
+			const { contexts } = block.contextualise(arg, null, true);
+
+			contexts.forEach(context => {
+				if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+				if (!~local.allUsedContexts.indexOf(context))
+					local.allUsedContexts.push(context);
+			});
 		});
-	});
+	}
 
 	// TODO hoist event handlers? can do `this.__component.method(...)`
 	const declarations = usedContexts.map(name => {
@@ -42,7 +45,9 @@ export default function visitEventHandler(
 
 	const handlerBody =
 		(declarations.length ? declarations.join('\n') + '\n\n' : '') +
-		`[✂${attribute.expression.start}-${attribute.expression.end}✂];`;
+		(attribute.expression ?
+			`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
+			`${block.alias('component')}.fire('${attribute.name}', event);`);
 
 	local.create.addBlock(deindent`
 		${local.name}.on( '${attribute.name}', function ( event ) {

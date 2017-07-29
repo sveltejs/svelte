@@ -256,8 +256,7 @@ function readAttribute(parser: Parser, uniqueNames) {
 	parser.allowWhitespace();
 
 	if (/^on:/.test(name)) {
-		parser.eat('=', true);
-		return readEventHandlerDirective(parser, start, name.slice(3));
+		return readEventHandlerDirective(parser, start, name.slice(3), parser.eat('='));
 	}
 
 	if (/^bind:/.test(name)) {

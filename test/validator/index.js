@@ -17,6 +17,10 @@ describe("validate", () => {
 			const filename = `test/validator/samples/${dir}/input.html`;
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
 
+			const expectedWarnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
+			const expectedErrors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
+			let error;
+
 			try {
 				const warnings = [];
 
@@ -30,20 +34,25 @@ describe("validate", () => {
 					}
 				});
 
-				const expectedWarnings =
-					tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
-
 				assert.deepEqual(warnings, expectedWarnings);
-			} catch (err) {
-				try {
-					const expected = require(`./samples/${dir}/errors.json`)[0];
+			} catch (e) {
+				error = e;
+			}
 
-					assert.equal(err.message, expected.message);
-					assert.deepEqual(err.loc, expected.loc);
-					assert.equal(err.pos, expected.pos);
-				} catch (err2) {
-					throw err2.code === "MODULE_NOT_FOUND" ? err : err2;
+			const expected = expectedErrors && expectedErrors[0];
+
+			if (error || expected) {
+				if (error && !expected) {
+					throw error;
 				}
+
+				if (expected && !error) {
+					throw new Error(`Expected an error: ${expected.message}`);
+				}
+
+				assert.equal(error.message, expected.message);
+				assert.deepEqual(error.loc, expected.loc);
+				assert.equal(error.pos, expected.pos);
 			}
 		});
 	});
