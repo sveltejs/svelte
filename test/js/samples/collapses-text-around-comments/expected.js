@@ -11,7 +11,7 @@ var template = (function () {
 function add_css () {
 	var style = createElement( 'style' );
 	style.id = 'svelte-3590263702-style';
-	style.textContent = "\n\tp[svelte-3590263702], [svelte-3590263702] p {\n\t\tcolor: red;\n\t}\n";
+	style.textContent = "p[svelte-3590263702],[svelte-3590263702] p{color:red}";
 	appendNode( style, document.head );
 }
 
