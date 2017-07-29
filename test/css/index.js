@@ -69,7 +69,7 @@ describe("css", () => {
 				css: read(`test/css/samples/${dir}/expected.css`)
 			};
 
-			assert.equal(dom.css.replace(/svelte-\d+/g, 'svelte-xyz').trim(), expected.css.trim());
+			assert.equal(dom.css.replace(/svelte-\d+/g, 'svelte-xyz'), expected.css);
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {

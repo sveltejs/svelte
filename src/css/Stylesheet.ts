@@ -8,18 +8,62 @@ import { Node, Parsed, Warning } from '../interfaces';
 
 class Rule {
 	selectors: Selector[];
-	declarations: Node[];
+	declarations: Declaration[];
+	node: Node;
+	parent: Atrule;
 
-	constructor(node: Node) {
+	constructor(node: Node, parent: Atrule) {
+		this.node = node;
+		this.parent = parent;
 		this.selectors = node.selector.children.map((node: Node) => new Selector(node));
-		this.declarations = node.block.children;
+		this.declarations = node.block.children.map((node: Node) => new Declaration(node));
+
+		if (parent) parent.rules.push(this);
 	}
 
 	apply(node: Node, stack: Node[]) {
 		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
 	}
 
+	isUsed() {
+		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
+		return this.selectors.some(s => s.used);
+	}
+
+	minify(code: MagicString, cascade: boolean) {
+		let c = this.node.start;
+		this.selectors.forEach((selector, i) => {
+			if (cascade || selector.used) {
+				const separator = i > 0 ? ',' : '';
+				if ((selector.node.start - c) > separator.length) {
+					code.overwrite(c, selector.node.start, separator);
+				}
+
+				selector.minify(code);
+				c = selector.node.end;
+			}
+		});
+
+		code.remove(c, this.node.block.start);
+
+		c = this.node.block.start + 1;
+		this.declarations.forEach((declaration, i) => {
+			const separator = i > 0 ? ';' : '';
+			if ((declaration.node.start - c) > separator.length) {
+				code.overwrite(c, declaration.node.start, separator);
+			}
+
+			declaration.minify(code);
+
+			c = declaration.node.end;
+		});
+
+		code.remove(c, this.node.block.end - 1);
+	}
+
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, cascade: boolean) {
+		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
+
 		const attr = `[${id}]`;
 
 		if (cascade) {
@@ -39,9 +83,9 @@ class Rule {
 					const head = firstToken.name === '*' ? '' : css.slice(start, insert);
 					const tail = css.slice(insert, end);
 
-					transformed = `${head}${attr}${tail}, ${attr} ${selectorString}`;
+					transformed = `${head}${attr}${tail},${attr} ${selectorString}`;
 				} else {
-					transformed = `${attr}${selectorString}, ${attr} ${selectorString}`;
+					transformed = `${attr}${selectorString},${attr} ${selectorString}`;
 				}
 
 				code.overwrite(start, end, transformed);
@@ -50,27 +94,87 @@ class Rule {
 			this.selectors.forEach(selector => selector.transform(code, attr));
 		}
 
-		this.declarations.forEach((declaration: Node) => {
-			const property = declaration.property.toLowerCase();
-			if (property === 'animation' || property === 'animation-name') {
-				declaration.value.children.forEach((block: Node) => {
-					if (block.type === 'Identifier') {
-						const name = block.name;
-						if (keyframes.has(name)) {
-							code.overwrite(block.start, block.end, keyframes.get(name));
-						}
+		this.declarations.forEach(declaration => declaration.transform(code, keyframes));
+	}
+}
+
+class Declaration {
+	node: Node;
+
+	constructor(node: Node) {
+		this.node = node;
+	}
+
+	transform(code: MagicString, keyframes: Map<string, string>) {
+		const property = this.node.property.toLowerCase();
+		if (property === 'animation' || property === 'animation-name') {
+			this.node.value.children.forEach((block: Node) => {
+				if (block.type === 'Identifier') {
+					const name = block.name;
+					if (keyframes.has(name)) {
+						code.overwrite(block.start, block.end, keyframes.get(name));
 					}
-				});
-			}
-		});
+				}
+			});
+		}
+	}
+
+	minify(code: MagicString) {
+		const c = this.node.start + this.node.property.length;
+		const first = this.node.value.children[0];
+
+		if (first.start - c > 1) {
+			code.overwrite(c, first.start, ':');
+		}
 	}
 }
 
 class Atrule {
 	node: Node;
+	rules: Rule[];
 
 	constructor(node: Node) {
 		this.node = node;
+		this.rules = [];
+	}
+
+	isUsed() {
+		return true; // TODO
+	}
+
+	minify(code: MagicString, cascade: boolean) {
+		if (this.node.name === 'media') {
+			let c = this.node.start + 6;
+			if (this.node.expression.start > c) code.remove(c, this.node.expression.start);
+
+			this.node.expression.children.forEach((query: Node) => {
+				// TODO minify queries
+				c = query.end;
+			});
+
+			code.remove(c, this.node.block.start);
+		} else if (this.node.name === 'keyframes') {
+			let c = this.node.start + 10;
+			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
+			c = this.node.expression.end;
+			if (this.node.block.start - c > 0) code.remove(c, this.node.block.start);
+		}
+
+		// TODO other atrules
+
+		if (this.node.block) {
+			let c = this.node.block.start + 1;
+
+			this.rules.forEach(rule => {
+				if (cascade || rule.isUsed()) {
+					code.remove(c, rule.node.start);
+					rule.minify(code, cascade);
+					c = rule.node.end;
+				}
+			});
+
+			code.remove(c, this.node.block.end - 1);
+		}
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
@@ -133,10 +237,17 @@ export default class Stylesheet {
 						this.atrules.push(atrule);
 					}
 
-					if (node.type === 'Rule' && (!currentAtrule || /(media|supports|document)/.test(currentAtrule.node.name))) {
-						const rule = new Rule(node);
-						this.nodes.push(rule);
+					if (node.type === 'Rule') {
+						// TODO this is a bit confusing. Don't have a separate
+						// array of rules, just transform top-level nodes and
+						// let them worry about their children
+						const rule = new Rule(node, currentAtrule);
+
 						this.rules.push(rule);
+
+						if (!currentAtrule) {
+							this.nodes.push(rule);
+						}
 					}
 				},
 
@@ -172,8 +283,6 @@ export default class Stylesheet {
 		}
 
 		const code = new MagicString(this.source);
-		code.remove(0, this.parsed.css.start + 7);
-		code.remove(this.parsed.css.end - 8, this.source.length);
 
 		walk(this.parsed.css, {
 			enter: (node: Node) => {
@@ -182,6 +291,8 @@ export default class Stylesheet {
 			}
 		});
 
+		// TODO all transform/minify in single pass. The mutation of
+		// `keyframes` here is confusing
 		const keyframes = new Map();
 		this.atrules.forEach((atrule: Atrule) => {
 			atrule.transform(code, this.id, keyframes);
@@ -190,6 +301,17 @@ export default class Stylesheet {
 		this.rules.forEach((rule: Rule) => {
 			rule.transform(code, this.id, keyframes, this.cascade);
 		});
+
+		let c = 0;
+		this.nodes.forEach(node => {
+			if (this.cascade || node.isUsed()) {
+				code.remove(c, node.node.start);
+				node.minify(code, this.cascade);
+				c = node.node.end;
+			}
+		});
+
+		code.remove(c, this.source.length);
 
 		return {
 			css: code.toString(),

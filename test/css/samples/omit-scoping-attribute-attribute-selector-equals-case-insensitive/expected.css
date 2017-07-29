@@ -1,4 +1,1 @@
-
-	[data-foo='bar' i][svelte-xyz] {
-		color: red;
-	}
+[data-foo='bar' i][svelte-xyz]{color:red}
