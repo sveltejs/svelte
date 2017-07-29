@@ -83,8 +83,9 @@ export default function visitElement(
 	// add CSS encapsulation attribute
 	// TODO add a helper for this, rather than repeating it
 	if (node._needsCssAttribute) {
+		generator.needsEncapsulateHelper = true;
 		block.builders.hydrate.addLine(
-			`@setAttribute( ${name}, '${generator.stylesheet.id}', '' );`
+			`@encapsulateStyles( ${name} );`
 		);
 	}
 
