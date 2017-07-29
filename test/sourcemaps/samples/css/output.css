@@ -1,6 +1,2 @@
-
-	[svelte-2772200924].foo, [svelte-2772200924] .foo {
-		color: red;
-	}
-
+[svelte-2772200924].foo,[svelte-2772200924] .foo{color:red}
 /*# sourceMappingURL=output.css.map */

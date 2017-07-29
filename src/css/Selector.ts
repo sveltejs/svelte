@@ -2,12 +2,6 @@ import MagicString from 'magic-string';
 import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
-interface Block {
-	global: boolean;
-	combinator: Node;
-	selectors: Node[]
-}
-
 export default class Selector {
 	node: Node;
 	blocks: Block[];
@@ -41,6 +35,19 @@ export default class Selector {
 			node._needsCssAttribute = true;
 			if (stack[0] && this.node.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
 		}
+	}
+
+	minify(code: MagicString) {
+		let c: number = null;
+		this.blocks.forEach((block, i) => {
+			if (i > 0) {
+				if (block.start - c > 1) {
+					code.overwrite(c, block.start, block.combinator.name || ' ');
+				}
+			}
+
+			c = block.end;
+		});
 	}
 
 	transform(code: MagicString, attr: string) {
@@ -203,28 +210,44 @@ function unquote(str: string) {
 	}
 }
 
+class Block {
+	global: boolean;
+	combinator: Node;
+	selectors: Node[]
+	start: number;
+	end: number;
+
+	constructor(combinator: Node) {
+		this.combinator = combinator;
+		this.global = false;
+		this.selectors = [];
+
+		this.start = null;
+		this.end = null;
+	}
+
+	add(selector: Node) {
+		if (this.selectors.length === 0) {
+			this.start = selector.start;
+			this.global = selector.type === 'PseudoClassSelector' && selector.name === 'global';
+		}
+
+		this.selectors.push(selector);
+		this.end = selector.end;
+	}
+}
+
 function groupSelectors(selector: Node) {
-	let block: Block = {
-		global: selector.children[0].type === 'PseudoClassSelector' && selector.children[0].name === 'global',
-		selectors: [],
-		combinator: null
-	};
+	let block: Block = new Block(null);
 
 	const blocks = [block];
 
 	selector.children.forEach((child: Node, i: number) => {
 		if (child.type === 'WhiteSpace' || child.type === 'Combinator') {
-			const next = selector.children[i + 1];
-
-			block = {
-				global: next.type === 'PseudoClassSelector' && next.name === 'global',
-				selectors: [],
-				combinator: child
-			};
-
+			block = new Block(child);
 			blocks.push(block);
 		} else {
-			block.selectors.push(child);
+			block.add(child);
 		}
 	});
 

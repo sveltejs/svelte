@@ -1,4 +1,1 @@
-
-	div > section > p[svelte-xyz] {
-		color: red;
-	}
+div>section>p[svelte-xyz]{color:red}
