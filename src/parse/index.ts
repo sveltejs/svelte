@@ -111,6 +111,8 @@ export class Parser {
 		if (required) {
 			this.error(`Expected ${str}`);
 		}
+
+		return false;
 	}
 
 	match(str: string) {
