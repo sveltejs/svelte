@@ -1,0 +1,11 @@
+<button on:click>click me</button>
+
+<script>
+	export default {
+		oncreate () {
+			this.on('click', () => {
+				this.clicked = true;
+			});
+		}
+	};
+</script>

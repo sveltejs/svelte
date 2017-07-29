@@ -1,6 +1,8 @@
 import * as namespaces from '../../utils/namespaces';
 import validateElement from './validateElement';
 import validateWindow from './validateWindow';
+import fuzzymatch from '../utils/fuzzymatch'
+import flattenReference from '../../utils/flattenReference';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
@@ -10,6 +12,9 @@ const meta = new Map([[':Window', validateWindow]]);
 
 export default function validateHtml(validator: Validator, html: Node) {
 	let elementDepth = 0;
+
+	const refs = new Map();
+	const refCallees: Node[] = [];
 
 	function visit(node: Node) {
 		if (node.type === 'Element') {
@@ -25,12 +30,12 @@ export default function validateHtml(validator: Validator, html: Node) {
 			}
 
 			if (meta.has(node.name)) {
-				return meta.get(node.name)(validator, node);
+				return meta.get(node.name)(validator, node, refs, refCallees);
 			}
 
 			elementDepth += 1;
 
-			validateElement(validator, node);
+			validateElement(validator, node, refs, refCallees);
 		} else if (node.type === 'EachBlock') {
 			if (validator.helpers.has(node.context)) {
 				let c = node.expression.end;
@@ -61,4 +66,20 @@ export default function validateHtml(validator: Validator, html: Node) {
 	}
 
 	html.children.forEach(visit);
+
+	refCallees.forEach(callee => {
+		const { parts } = flattenReference(callee);
+		const ref = parts[1];
+
+		if (refs.has(ref)) {
+			// TODO check method is valid, e.g. `audio.stop()` should be `audio.pause()`
+		} else {
+			const match = fuzzymatch(ref, Array.from(refs.keys()));
+
+			let message = `'refs.${ref}' does not exist`;
+			if (match) message += ` (did you mean 'refs.${match}'?)`;
+
+			validator.error(message, callee.start);
+		}
+	});
 }

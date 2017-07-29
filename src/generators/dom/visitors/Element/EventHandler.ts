@@ -16,30 +16,33 @@ export default function visitEventHandler(
 	const isCustomEvent = generator.events.has(name);
 	const shouldHoist = !isCustomEvent && state.inEachBlock;
 
-	generator.addSourcemapLocations(attribute.expression);
-
-	const flattened = flattenReference(attribute.expression.callee);
-	if (flattened.name !== 'event' && flattened.name !== 'this') {
-		// allow event.stopPropagation(), this.select() etc
-		// TODO verify that it's a valid callee (i.e. built-in or declared method)
-		generator.code.prependRight(
-			attribute.expression.start,
-			`${block.alias('component')}.`
-		);
-		if (shouldHoist) state.usesComponent = true; // this feels a bit hacky but it works!
-	}
-
 	const context = shouldHoist ? null : state.parentNode;
 	const usedContexts: string[] = [];
-	attribute.expression.arguments.forEach((arg: Node) => {
-		const { contexts } = block.contextualise(arg, context, true);
 
-		contexts.forEach(context => {
-			if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-			if (!~state.allUsedContexts.indexOf(context))
-				state.allUsedContexts.push(context);
+	if (attribute.expression) {
+		generator.addSourcemapLocations(attribute.expression);
+
+		const flattened = flattenReference(attribute.expression.callee);
+		if (flattened.name !== 'event' && flattened.name !== 'this') {
+			// allow event.stopPropagation(), this.select() etc
+			// TODO verify that it's a valid callee (i.e. built-in or declared method)
+			generator.code.prependRight(
+				attribute.expression.start,
+				`${block.alias('component')}.`
+			);
+			if (shouldHoist) state.usesComponent = true; // this feels a bit hacky but it works!
+		}
+
+		attribute.expression.arguments.forEach((arg: Node) => {
+			const { contexts } = block.contextualise(arg, context, true);
+
+			contexts.forEach(context => {
+				if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+				if (!~state.allUsedContexts.indexOf(context))
+					state.allUsedContexts.push(context);
+			});
 		});
-	});
+	}
 
 	const _this = context || 'this';
 	const declarations = usedContexts.map(name => {
@@ -66,7 +69,9 @@ export default function visitEventHandler(
 		${state.usesComponent &&
 			`var ${block.alias('component')} = ${_this}._svelte.component;`}
 		${declarations}
-		[✂${attribute.expression.start}-${attribute.expression.end}✂];
+		${attribute.expression ?
+			`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
+			`${block.alias('component')}.fire('${attribute.name}', event);`}
 	`;
 
 	if (isCustomEvent) {

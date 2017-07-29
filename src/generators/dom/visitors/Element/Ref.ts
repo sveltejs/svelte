@@ -17,7 +17,7 @@ export default function visitRef(
 		`#component.refs.${name} = ${state.parentNode};`
 	);
 
-	block.builders.unmount.addLine(deindent`
+	block.builders.destroy.addLine(deindent`
 		if ( #component.refs.${name} === ${state.parentNode} ) #component.refs.${name} = null;
 	`);
 

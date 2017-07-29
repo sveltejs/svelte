@@ -7,8 +7,11 @@ const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
 export default function validateEventHandlerCallee(
 	validator: Validator,
-	attribute: Node
+	attribute: Node,
+	refCallees: Node[]
 ) {
+	if (!attribute.expression) return;
+
 	const { callee, start, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {
@@ -18,6 +21,12 @@ export default function validateEventHandlerCallee(
 	const { name } = flattenReference(callee);
 
 	if (name === 'this' || name === 'event') return;
+
+	if (name === 'refs') {
+		refCallees.push(callee);
+		return;
+	}
+
 	if (
 		(callee.type === 'Identifier' && validBuiltins.has(callee.name)) ||
 		validator.methods.has(callee.name)
