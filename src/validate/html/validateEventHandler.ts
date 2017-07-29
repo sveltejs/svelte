@@ -10,6 +10,8 @@ export default function validateEventHandlerCallee(
 	attribute: Node,
 	refCallees: Node[]
 ) {
+	if (!attribute.expression) return;
+
 	const { callee, start, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {
