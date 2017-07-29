@@ -25,6 +25,8 @@ export class DomGenerator extends Generator {
 	hasOutroTransitions: boolean;
 	hasComplexBindings: boolean;
 
+	needsEncapsulateHelper: boolean;
+
 	constructor(
 		parsed: Parsed,
 		source: string,
@@ -38,6 +40,7 @@ export class DomGenerator extends Generator {
 		this.readonly = new Set();
 
 		this.hydratable = options.hydratable;
+		this.needsEncapsulateHelper = false;
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.metaBindings = [];
@@ -129,6 +132,14 @@ export default function dom(
 
 	if (hasJs) {
 		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
+	}
+
+	if (generator.needsEncapsulateHelper) {
+		builder.addBlock(deindent`
+			function @encapsulateStyles ( node ) {
+				@setAttribute( node, '${generator.stylesheet.id}', '' );
+			}
+		`);
 	}
 
 	if (generator.stylesheet.hasStyles && options.css !== false) {
