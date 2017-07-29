@@ -1,6 +1,1 @@
-
-	@media (min-width: 400px) {
-		[svelte-xyz].large-screen, [svelte-xyz] .large-screen {
-			display: block;
-		}
-	}
+@media(min-width: 400px){[svelte-xyz].large-screen,[svelte-xyz] .large-screen{display:block}}

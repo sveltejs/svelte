@@ -3,7 +3,7 @@ import { appendNode, assign, createElement, detachNode, dispatchObservers, inser
 function add_css () {
 	var style = createElement( 'style' );
 	style.id = 'svelte-2363328337-style';
-	style.textContent = "\n\t@media (min-width: 1px) {\n\t\tdiv[svelte-2363328337], [svelte-2363328337] div {\n\t\t\tcolor: red;\n\t\t}\n\t}\n";
+	style.textContent = "@media(min-width: 1px){div[svelte-2363328337],[svelte-2363328337] div{color:red}}";
 	appendNode( style, document.head );
 }
 
