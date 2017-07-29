@@ -1,0 +1,18 @@
+<li>
+	{{yield}}
+</li>
+
+<script>
+	const initialValues = {
+		'id-0': 'zero',
+		'id-1': 'one',
+		'id-2': 'two',
+		'id-3': 'three'
+	};
+
+	export default {
+		oncreate() {
+			this.set({ value: initialValues[this.get('id')] });
+		}
+	};
+</script>
