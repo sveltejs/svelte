@@ -14,7 +14,7 @@ const validBindings = [
 	'scrollY',
 ];
 
-export default function validateWindow(validator: Validator, node: Node) {
+export default function validateWindow(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Binding') {
 			if (attribute.value.type !== 'Identifier') {
@@ -50,7 +50,7 @@ export default function validateWindow(validator: Validator, node: Node) {
 				}
 			}
 		} else if (attribute.type === 'EventHandler') {
-			validateEventHandler(validator, attribute);
+			validateEventHandler(validator, attribute, refCallees);
 		}
 	});
 }

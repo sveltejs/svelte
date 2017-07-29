@@ -2,7 +2,7 @@ import validateEventHandler from './validateEventHandler';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
-export default function validateElement(validator: Validator, node: Node) {
+export default function validateElement(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {
 	const isComponent =
 		node.name === ':Self' || validator.components.has(node.name);
 
@@ -16,6 +16,11 @@ export default function validateElement(validator: Validator, node: Node) {
 	let hasTransition: boolean;
 
 	node.attributes.forEach((attribute: Node) => {
+		if (attribute.type === 'Ref') {
+			if (!refs.has(attribute.name)) refs.set(attribute.name, []);
+			refs.get(attribute.name).push(node);
+		}
+
 		if (!isComponent && attribute.type === 'Binding') {
 			const { name } = attribute;
 
@@ -80,7 +85,7 @@ export default function validateElement(validator: Validator, node: Node) {
 				);
 			}
 		} else if (attribute.type === 'EventHandler') {
-			validateEventHandler(validator, attribute);
+			validateEventHandler(validator, attribute, refCallees);
 		} else if (attribute.type === 'Transition') {
 			const bidi = attribute.intro && attribute.outro;
 
