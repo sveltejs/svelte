@@ -1,5 +1,9 @@
 import { appendNode, assign, createElement, detachNode, dispatchObservers, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
+function encapsulateStyles ( node ) {
+	setAttribute( node, 'svelte-2363328337', '' );
+}
+
 function add_css () {
 	var style = createElement( 'style' );
 	style.id = 'svelte-2363328337-style';
@@ -17,7 +21,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			setAttribute( div, 'svelte-2363328337', '' );
+			encapsulateStyles( div );
 		},
 
 		mount: function ( target, anchor ) {

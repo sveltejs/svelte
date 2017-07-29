@@ -143,6 +143,10 @@ var template = (function () {
 	};
 }());
 
+function encapsulateStyles ( node ) {
+	setAttribute( node, 'svelte-3590263702', '' );
+}
+
 function add_css () {
 	var style = createElement( 'style' );
 	style.id = 'svelte-3590263702-style';
@@ -161,7 +165,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			setAttribute( p, 'svelte-3590263702', '' );
+			encapsulateStyles( p );
 		},
 
 		mount: function ( target, anchor ) {
