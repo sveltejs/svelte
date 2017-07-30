@@ -52,8 +52,9 @@ describe("js", () => {
 					}
 				]
 			}).then(bundle => {
-				const actualBundle = bundle.generate({ format: "es" }).code;
-				fs.writeFileSync(`${dir}/_actual-bundle.js`, actualBundle);
+				return bundle.generate({ format: "es" })
+			}).then(({ code }) => {
+				fs.writeFileSync(`${dir}/_actual-bundle.js`, code);
 
 				assert.equal(
 					actual.trim().replace(/^\s+$/gm, ""),
@@ -61,7 +62,7 @@ describe("js", () => {
 				);
 
 				assert.equal(
-					actualBundle.trim().replace(/^\s+$/gm, ""),
+					code.trim().replace(/^\s+$/gm, ""),
 					expectedBundle.trim().replace(/^\s+$/gm, "")
 				);
 			});
