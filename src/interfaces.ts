@@ -34,11 +34,17 @@ export interface Warning {
 	toString: () => string;
 }
 
+export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';
+
 export interface CompileOptions {
-	format?: string;
+	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
 	generate?: string;
+	globals?: ((id: string) => string) | object;
+	amd?: {
+		id?: string;
+	};
 
 	outputFilename?: string;
 	cssOutputFilename?: string;
@@ -50,4 +56,14 @@ export interface CompileOptions {
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
+}
+
+export interface GenerateOptions {
+	name: string;
+	format: ModuleFormat;
+}
+
+export interface Visitor {
+	enter: (node: Node) => void;
+	leave?: (node: Node) => void;
 }

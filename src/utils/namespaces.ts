@@ -20,4 +20,6 @@ export const validNamespaces = [
 	xmlns,
 ];
 
-export default { html, mathml, svg, xlink, xml, xmlns };
+const namespaces: Record<string, string> = { html, mathml, svg, xlink, xml, xmlns };
+
+export default namespaces;

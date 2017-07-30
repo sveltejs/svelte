@@ -2,7 +2,7 @@ import { parseExpressionAt } from 'acorn';
 import spaces from '../../utils/spaces';
 import { Parser } from '../index';
 
-function readExpression(parser: Parser, start: number, quoteMark) {
+function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 	let str = '';
 	let escaped = false;
 

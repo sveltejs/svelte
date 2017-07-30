@@ -15,22 +15,34 @@ import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
-import { Node, Parsed, CompileOptions } from '../interfaces';
+import { Node, GenerateOptions, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
+interface Computation {
+	key: string;
+	deps: string[]
+}
+
 export default class Generator {
+	ast: Parsed;
 	parsed: Parsed;
 	source: string;
 	name: string;
 	options: CompileOptions;
 
+	defaultExport: Node[];
 	imports: Node[];
 	helpers: Set<string>;
 	components: Set<string>;
 	events: Set<string>;
 	transitions: Set<string>;
 	importedComponents: Map<string, string>;
+	namespace: string;
+	hasComponents: boolean;
+	hasJs: boolean;
+	computations: Computation[];
+	templateProperties: Record<string, Node>;
 
 	code: MagicString;
 
@@ -77,9 +89,6 @@ export default class Generator {
 
 		// styles
 		this.stylesheet = stylesheet;
-
-		// TODO this is legacy — just to get the tests to pass during the transition
-		this.css = this.stylesheet.render(options.cssOutputFilename).css;
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
@@ -263,7 +272,7 @@ export default class Generator {
 		return (expression._dependencies = dependencies);
 	}
 
-	generate(result, options: CompileOptions, { name, format }) {
+	generate(result: string, options: CompileOptions, { name, format }: GenerateOptions ) {
 		if (this.imports.length) {
 			const statements: string[] = [];
 
@@ -381,9 +390,9 @@ export default class Generator {
 		return alias;
 	}
 
-	getUniqueNameMaker(params) {
+	getUniqueNameMaker(params: string[]) {
 		const localUsedNames = new Set(params);
-		return name => {
+		return (name: string) => {
 			if (test) name = `${name}$`;
 			let alias = name;
 			for (
@@ -404,8 +413,8 @@ export default class Generator {
 		const { js } = this.parsed;
 
 		const imports = this.imports;
-		const computations = [];
-		const templateProperties = {};
+		const computations: Computation[] = [];
+		const templateProperties: Record<string, Node> = {};
 
 		let namespace = null;
 		let hasJs = !!js;
@@ -439,7 +448,7 @@ export default class Generator {
 
 			['helpers', 'events', 'components', 'transitions'].forEach(key => {
 				if (templateProperties[key]) {
-					templateProperties[key].value.properties.forEach((prop: node) => {
+					templateProperties[key].value.properties.forEach((prop: Node) => {
 						this[key].add(prop.key.name);
 					});
 				}
@@ -461,7 +470,7 @@ export default class Generator {
 
 				const visited = new Set();
 
-				function visit(key) {
+				const visit = function visit(key: string) {
 					if (!dependencies.has(key)) return; // not a computation
 
 					if (visited.has(key)) return;

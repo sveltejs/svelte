@@ -1,8 +1,7 @@
-import { Declaration, Options } from './getIntro';
+import { CompileOptions, Node } from '../../../interfaces';
 
-export type Globals = (id: string) => any;
 
-export default function getGlobals(imports: Declaration[], options: Options) {
+export default function getGlobals(imports: Node[], options: CompileOptions) {
 	const { globals, onerror, onwarn } = options;
 	const globalFn = getGlobalFn(globals);
 
@@ -40,7 +39,7 @@ export default function getGlobals(imports: Declaration[], options: Options) {
 	});
 }
 
-function getGlobalFn(globals: any): Globals {
+function getGlobalFn(globals: any): (id: string) => string {
 	if (typeof globals === 'function') return globals;
 	if (typeof globals === 'object') {
 		return id => globals[id];

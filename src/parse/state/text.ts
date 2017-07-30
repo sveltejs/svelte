@@ -20,6 +20,4 @@ export default function text(parser: Parser) {
 		type: 'Text',
 		data: decodeCharacterReferences(data),
 	});
-
-	return null;
 }

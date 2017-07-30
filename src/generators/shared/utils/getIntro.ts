@@ -1,29 +1,11 @@
 import deindent from '../../../utils/deindent';
-import getGlobals, { Globals } from './getGlobals';
-
-export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';
-
-export interface Options {
-	name: string;
-	amd?: {
-		id?: string;
-	};
-	globals: Globals | object;
-	onerror: (err: Error) => void;
-	onwarn: (obj: Error | { message: string }) => void;
-}
-
-export interface Declaration {
-	name: string;
-	source: {
-		value: string;
-	};
-}
+import getGlobals from './getGlobals';
+import { CompileOptions, ModuleFormat, Node } from '../../../interfaces';
 
 export default function getIntro(
 	format: ModuleFormat,
-	options: Options,
-	imports: Declaration[]
+	options: CompileOptions,
+	imports: Node[]
 ) {
 	if (format === 'es') return '';
 	if (format === 'amd') return getAmdIntro(options, imports);
@@ -35,7 +17,7 @@ export default function getIntro(
 	throw new Error(`Not implemented: ${format}`);
 }
 
-function getAmdIntro(options: Options, imports: Declaration[]) {
+function getAmdIntro(options: CompileOptions, imports: Node[]) {
 	const sourceString = imports.length
 		? `[ ${imports
 				.map(declaration => `'${removeExtension(declaration.source.value)}'`)
@@ -49,7 +31,7 @@ function getAmdIntro(options: Options, imports: Declaration[]) {
 		: ''}${sourceString}function (${paramString(imports)}) { 'use strict';\n\n`;
 }
 
-function getCjsIntro(options: Options, imports: Declaration[]) {
+function getCjsIntro(options: CompileOptions, imports: Node[]) {
 	const requireBlock = imports
 		.map(
 			declaration =>
@@ -64,7 +46,7 @@ function getCjsIntro(options: Options, imports: Declaration[]) {
 	return `'use strict';\n\n`;
 }
 
-function getIifeIntro(options: Options, imports: Declaration[]) {
+function getIifeIntro(options: CompileOptions, imports: Node[]) {
 	if (!options.name) {
 		throw new Error(`Missing required 'name' option for IIFE export`);
 	}
@@ -74,7 +56,7 @@ function getIifeIntro(options: Options, imports: Declaration[]) {
 	)}) { 'use strict';\n\n`;
 }
 
-function getUmdIntro(options: Options, imports: Declaration[]) {
+function getUmdIntro(options: CompileOptions, imports: Node[]) {
 	if (!options.name) {
 		throw new Error(`Missing required 'name' option for UMD export`);
 	}
@@ -101,11 +83,11 @@ function getUmdIntro(options: Options, imports: Declaration[]) {
 	);
 }
 
-function getEvalIntro(options: Options, imports: Declaration[]) {
+function getEvalIntro(options: CompileOptions, imports: Node[]) {
 	return `(function (${paramString(imports)}) { 'use strict';\n\n`;
 }
 
-function paramString(imports: Declaration[]) {
+function paramString(imports: Node[]) {
 	return imports.length ? ` ${imports.map(dep => dep.name).join(', ')} ` : '';
 }
 

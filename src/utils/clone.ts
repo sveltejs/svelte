@@ -1,7 +1,7 @@
-import { Node } from '../interfaces';
+import { Node, Parsed } from '../interfaces';
 
-export default function clone(node: Node) {
-	const cloned = {};
+export default function clone(node: Node|Parsed) {
+	const cloned: any = {};
 
 	for (const key in node) {
 		const value = node[key];
