@@ -1,10 +1,8 @@
 language: node_js
 node_js:
-  - "4"
-  - "6"
   - "node"
 env:
   global:
     - BUILD_TIMEOUT=10000
 install: npm install
-after_success: npm run codecov
+after_success: sh ./test/ci.sh
