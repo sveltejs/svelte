@@ -73,29 +73,29 @@ describe("css", () => {
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
-				return env().then(window => {
-					const Component = eval(`(function () { ${dom.code}; return SvelteComponent; }())`);
-					const target = window.document.querySelector("main");
+				const window = env();
 
-					new Component({ target, data: config.data });
-					const html = target.innerHTML;
+				const Component = eval(`(function () { ${dom.code}; return SvelteComponent; }())`);
+				const target = window.document.querySelector("main");
 
-					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
+				new Component({ target, data: config.data });
+				const html = target.innerHTML;
 
-					// dom
-					assert.equal(
-						normalizeHtml(window, html).replace(/svelte-\d+/g, 'svelte-xyz'),
-						normalizeHtml(window, expected.html)
-					);
+				fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
 
-					// ssr
-					const component = eval(`(function () { ${ssr.code}; return SvelteComponent; }())`);
+				// dom
+				assert.equal(
+					normalizeHtml(window, html).replace(/svelte-\d+/g, 'svelte-xyz'),
+					normalizeHtml(window, expected.html)
+				);
 
-					assert.equal(
-						normalizeHtml(window, component.render(config.data)).replace(/svelte-\d+/g, 'svelte-xyz'),
-						normalizeHtml(window, expected.html)
-					);
-				});
+				// ssr
+				const component = eval(`(function () { ${ssr.code}; return SvelteComponent; }())`);
+
+				assert.equal(
+					normalizeHtml(window, component.render(config.data)).replace(/svelte-\d+/g, 'svelte-xyz'),
+					normalizeHtml(window, expected.html)
+				);
 			}
 		});
 	});
