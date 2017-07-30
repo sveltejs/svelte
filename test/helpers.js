@@ -1,4 +1,4 @@
-import jsdom from 'jsdom';
+import { JSDOM } from 'jsdom';
 import assert from 'assert';
 import glob from 'glob';
 import fs from 'fs';
@@ -54,16 +54,10 @@ export function tryToReadFile(file) {
 }
 
 export function env() {
-	return new Promise((fulfil, reject) => {
-		jsdom.env('<main></main>', (err, window) => {
-			if (err) {
-				reject(err);
-			} else {
-				global.document = window.document;
-				fulfil(window);
-			}
-		});
-	});
+	const { window } = new JSDOM('<main></main>');
+	global.document = window.document;
+
+	return window;
 }
 
 function cleanChildren(node) {
@@ -138,15 +132,15 @@ export function normalizeHtml(window, html) {
 }
 
 export function setupHtmlEqual() {
-	return env().then(window => {
-		assert.htmlEqual = (actual, expected, message) => {
-			assert.deepEqual(
-				normalizeHtml(window, actual),
-				normalizeHtml(window, expected),
-				message
-			);
-		};
-	});
+	const window = env();
+
+	assert.htmlEqual = (actual, expected, message) => {
+		assert.deepEqual(
+			normalizeHtml(window, actual),
+			normalizeHtml(window, expected),
+			message
+		);
+	};
 }
 
 export function loadConfig(file) {
