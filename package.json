@@ -42,13 +42,6 @@
     "@types/mocha": "^2.2.41",
     "@types/node": "^8.0.17",
     "acorn": "^5.1.1",
-    "babel": "^6.23.0",
-    "babel-core": "^6.23.1",
-    "babel-plugin-istanbul": "^4.1.4",
-    "babel-plugin-transform-new-target": "^7.0.0-alpha.14",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-env": "^1.6.0",
-    "babel-register": "^6.23.0",
     "chalk": "^2.0.1",
     "codecov": "^2.2.0",
     "console-group": "^0.3.2",
@@ -84,21 +77,6 @@
     "exclude": [
       "src/**/__test__.js",
       "src/shared/**"
-    ]
-  },
-  "babel": {
-    "presets": [
-      [
-        "env",
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
-    ],
-    "plugins": [
-      "transform-new-target"
     ]
   }
 }
