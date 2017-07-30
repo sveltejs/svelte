@@ -1,0 +1,15 @@
+{{#if active}}
+	<button ref:button class='active'>deactivate</button>
+{{else}}
+	<button ref:button>activate</button>
+{{/if}}
+
+<style>
+	ref:button.active {
+		color: red;
+	}
+
+	ref:button.inactive {
+		color: green;
+	}
+</style>
