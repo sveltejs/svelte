@@ -17,10 +17,6 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-const nodeVersionMatch = /^v(\d)/.exec(process.version);
-const legacy = +nodeVersionMatch[1] < 6;
-const babelrc = require('../../package.json').babel;
-
 describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
@@ -30,9 +26,8 @@ describe('hydration', () => {
 				{ filename, name: getName(filename), hydratable: true, format: 'cjs' },
 				compileOptions
 			);
-			let { code } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
 
-			if (legacy) code = require('babel-core').transform(code, babelrc).code;
+			const { code } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
 
 			return module._compile(code, filename);
 		};
