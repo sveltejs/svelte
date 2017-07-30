@@ -45,13 +45,9 @@
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
     "babel-plugin-istanbul": "^4.1.4",
-    "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
-    "babel-plugin-transform-es2015-block-scoping": "^6.23.0",
-    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.23.0",
-    "babel-plugin-transform-es2015-parameters": "^6.23.0",
-    "babel-plugin-transform-es2015-spread": "^6.22.0",
-    "babel-preset-env": "^1.2.1",
+    "babel-plugin-transform-new-target": "^7.0.0-alpha.14",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.6.0",
     "babel-register": "^6.23.0",
     "chalk": "^2.0.1",
     "codecov": "^2.2.0",
@@ -91,13 +87,18 @@
     ]
   },
   "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ],
     "plugins": [
-      "transform-es2015-arrow-functions",
-      "transform-es2015-block-scoping",
-      "transform-es2015-spread",
-      "transform-es2015-parameters",
-      "transform-es2015-destructuring",
-      "transform-es2015-modules-commonjs"
+      "transform-new-target"
     ]
   }
 }
