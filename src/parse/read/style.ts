@@ -1,8 +1,9 @@
 import parse from 'css-tree/lib/parser/index.js';
 import walk from 'css-tree/lib/utils/walk.js';
 import { Parser } from '../index';
+import { Node } from '../../interfaces';
 
-export default function readStyle(parser: Parser, start: number, attributes) {
+export default function readStyle(parser: Parser, start: number, attributes: Node[]) {
 	const contentStart = parser.index;
 	const styles = parser.readUntil(/<\/style>/);
 	const contentEnd = parser.index;
@@ -23,7 +24,7 @@ export default function readStyle(parser: Parser, start: number, attributes) {
 	}
 
 	// tidy up AST
-	walk.all(ast, node => {
+	walk.all(ast, (node: Node) => {
 		if (node.loc) {
 			node.start = node.loc.start.offset;
 			node.end = node.loc.end.offset;

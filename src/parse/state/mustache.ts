@@ -6,7 +6,7 @@ import { Node } from '../../interfaces';
 
 const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
 
-function trimWhitespace(block, trimBefore, trimAfter) {
+function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
 	const firstChild = block.children[0];
 	const lastChild = block.children[block.children.length - 1];
 
@@ -220,6 +220,4 @@ export default function mustache(parser: Parser) {
 			expression,
 		});
 	}
-
-	return null;
 }

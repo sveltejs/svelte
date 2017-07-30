@@ -78,7 +78,7 @@ export default function tag(parser: Parser) {
 			data,
 		});
 
-		return null;
+		return;
 	}
 
 	const isClosingTag = parser.eat('/');
@@ -133,7 +133,7 @@ export default function tag(parser: Parser) {
 		parent.end = parser.index;
 		parser.stack.pop();
 
-		return null;
+		return;
 	} else if (disallowedContents.has(parent.name)) {
 		// can this be a child of the parent element, or does it implicitly
 		// close it, like `<li>one<li>two`?
@@ -200,8 +200,6 @@ export default function tag(parser: Parser) {
 		// don't push self-closing elements onto the stack
 		parser.stack.push(element);
 	}
-
-	return null;
 }
 
 function readTagName(parser: Parser) {
@@ -242,7 +240,7 @@ function readTagName(parser: Parser) {
 	return name;
 }
 
-function readAttribute(parser: Parser, uniqueNames) {
+function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
 	let name = parser.readUntil(/(\s|=|\/|>)/);
