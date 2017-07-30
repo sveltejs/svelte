@@ -5,12 +5,6 @@ import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 
-import * as consoleGroup from 'console-group';
-consoleGroup.install();
-
-import * as sourceMapSupport from 'source-map-support';
-sourceMapSupport.install();
-
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
 export function loadSvelte(test) {
@@ -150,7 +144,9 @@ export function loadConfig(file) {
 	try {
 		const resolved = require.resolve(file);
 		delete require.cache[resolved];
-		return require(resolved);
+
+		const config = require(resolved);
+		return config.default || config;
 	} catch (err) {
 		if (err.code === 'MODULE_NOT_FOUND') {
 			return {};
