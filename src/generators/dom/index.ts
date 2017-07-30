@@ -264,7 +264,7 @@ export default function dom(
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
-			if ( this._destroyed ) return;
+			if ( this._destroyed ) return${options.dev && ` console.warn( 'Component was already destroyed' )`};
 			this.fire( 'destroy' );
 			${templateProperties.ondestroy && `@template.ondestroy.call( this );`}
 
