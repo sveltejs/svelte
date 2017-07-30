@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## 1.27.0
+
+* Minify CSS and remove unused styles ([#697](https://github.com/sveltejs/svelte/issues/697))
+* Optimize ternary expressions when excluding unused CSS ([#696](https://github.com/sveltejs/svelte/issues/696))
+* Clear refs after `ondestroy` callbacks fire ([#706](https://github.com/sveltejs/svelte/issues/706))
+* Prevent certain forms of component binding blowback ([#721](https://github.com/sveltejs/svelte/issues/721))
+* Use helper to encapsulate styles ([#375](https://github.com/sveltejs/svelte/issues/375))
+* Event propagation shorthand — `on:foo` equals `on:foo='fire("foo", event)` ([#638](https://github.com/sveltejs/svelte/issues/638))
+* Allow `refs.*` in event handlers, and validate them ([#686](https://github.com/sveltejs/svelte/issues/686))
+
 ## 1.26.2
 
 * Unescape `#` characters ([#722](https://github.com/sveltejs/svelte/issues/722))
@@ -62,7 +72,7 @@
 
 ## 1.22.5
 
-* Fix nested component unmounting bug ([#643](https://github.com/sveltejs/svelte/issues/643)) 
+* Fix nested component unmounting bug ([#643](https://github.com/sveltejs/svelte/issues/643))
 
 ## 1.22.4
 
