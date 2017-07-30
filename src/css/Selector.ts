@@ -1,4 +1,5 @@
 import MagicString from 'magic-string';
+import { gatherPossibleValues, UNKNOWN } from './gatherPossibleValues';
 import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
@@ -192,12 +193,22 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
 	if (attr.value === true) return operator === null;
-	if (isDynamic(attr.value)) return true;
-
-	const actualValue = attr.value[0].data;
+	if (attr.value.length > 1) return true;
 
 	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
-	return pattern.test(actualValue);
+	const value = attr.value[0];
+
+	if (value.type === 'Text') return pattern.test(value.data);
+
+	const possibleValues = new Set();
+	gatherPossibleValues(value.expression, possibleValues);
+	if (possibleValues.has(UNKNOWN)) return true;
+
+	for (const x of Array.from(possibleValues)) { // TypeScript for-of is slightly unlike JS
+		if (pattern.test(x)) return true;
+	}
+
+	return false;
 }
 
 function isDynamic(value: Node) {
