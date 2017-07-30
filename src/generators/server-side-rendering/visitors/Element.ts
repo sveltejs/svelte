@@ -58,6 +58,10 @@ export default function visitElement(
 
 	if (node._needsCssAttribute) {
 		openingTag += ` ${generator.stylesheet.id}`;
+
+		if (node._cssRefAttribute) {
+			openingTag += ` svelte-ref-${node._cssRefAttribute}`;
+		}
 	}
 
 	openingTag += '>';

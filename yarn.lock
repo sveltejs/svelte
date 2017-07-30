@@ -1976,9 +1976,9 @@ magic-string@^0.19.0, magic-string@~0.19.0:
   dependencies:
     vlq "^0.2.1"
 
-magic-string@^0.22.1:
-  version "0.22.1"
-  resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.22.1.tgz#a1bda64dfd4ae6c63797a45a67ee473b1f8d0e0f"
+magic-string@^0.22.3:
+  version "0.22.3"
+  resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.22.3.tgz#047989d99bfc7cbdefba1604adc8912551cd7ef1"
   dependencies:
     vlq "^0.2.1"
 
