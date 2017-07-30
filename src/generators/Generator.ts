@@ -16,9 +16,13 @@ import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
 import { Node, GenerateOptions, Parsed, CompileOptions } from '../interfaces';
-import { Computation, TemplateProperties } from './interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
+
+interface Computation {
+	key: string;
+	deps: string[]
+}
 
 export default class Generator {
 	ast: Parsed;
@@ -38,7 +42,7 @@ export default class Generator {
 	hasComponents: boolean;
 	hasJs: boolean;
 	computations: Computation[];
-	templateProperties: TemplateProperties;
+	templateProperties: Record<string, Node>;
 
 	code: MagicString;
 
@@ -410,7 +414,7 @@ export default class Generator {
 
 		const imports = this.imports;
 		const computations: Computation[] = [];
-		const templateProperties: TemplateProperties = {};
+		const templateProperties: Record<string, Node> = {};
 
 		let namespace = null;
 		let hasJs = !!js;
@@ -444,7 +448,7 @@ export default class Generator {
 
 			['helpers', 'events', 'components', 'transitions'].forEach(key => {
 				if (templateProperties[key]) {
-					templateProperties[key].value.properties.forEach((prop: node) => {
+					templateProperties[key].value.properties.forEach((prop: Node) => {
 						this[key].add(prop.key.name);
 					});
 				}
@@ -466,7 +470,7 @@ export default class Generator {
 
 				const visited = new Set();
 
-				function visit(key: string) {
+				const visit = function visit(key: string) {
 					if (!dependencies.has(key)) return; // not a computation
 
 					if (visited.has(key)) return;
