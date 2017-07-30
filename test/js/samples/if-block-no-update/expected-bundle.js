@@ -236,7 +236,7 @@ function SvelteComponent ( options ) {
 	this._root = options._root || this;
 	this._yield = options._yield;
 
-	this._torndown = false;
+	this._destroyed = false;
 
 	this._fragment = create_main_fragment( this._state, this );
 
@@ -257,6 +257,7 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 };
 
 SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
+	if ( this._destroyed ) return;
 	this.fire( 'destroy' );
 
 	if ( detach !== false ) this._fragment.unmount();
@@ -264,7 +265,7 @@ SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = functio
 	this._fragment = null;
 
 	this._state = {};
-	this._torndown = true;
+	this._destroyed = true;
 };
 
 export default SvelteComponent;
