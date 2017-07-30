@@ -53,9 +53,12 @@ export function tryToReadFile(file) {
 	}
 }
 
+const { window } = new JSDOM('<main></main>');
+global.document = window.document;
+
 export function env() {
-	const { window } = new JSDOM('<main></main>');
-	global.document = window.document;
+	window._svelteTransitionManager = null;
+	window.document.body.innerHTML = '<main></main>';
 
 	return window;
 }
