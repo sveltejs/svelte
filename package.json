@@ -19,7 +19,7 @@
     "build": "node src/shared/_build.js && rollup -c",
     "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
-    "prepublish": "npm run build && npm run lint",
+    "prepublishOnly": "npm run build && npm run lint",
     "prettier": "prettier --use-tabs --single-quote --trailing-comma es5 --write \"src/**/*.ts\""
   },
   "repository": {
@@ -70,7 +70,6 @@
     "node-resolve": "^1.3.3",
     "nyc": "^11.1.0",
     "prettier": "^1.4.1",
-    "reify": "^0.4.4",
     "rollup": "^0.45.2",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-commonjs": "^8.0.2",

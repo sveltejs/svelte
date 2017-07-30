@@ -147,7 +147,7 @@ export function loadConfig(file) {
 	try {
 		const resolved = require.resolve(file);
 		delete require.cache[resolved];
-		return require(resolved).default;
+		return require(resolved);
 	} catch (err) {
 		if (err.code === 'MODULE_NOT_FOUND') {
 			return {};

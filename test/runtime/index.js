@@ -34,7 +34,7 @@ describe("runtime", () => {
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename) },
+				{ filename, name: getName(filename), format: 'cjs' },
 				compileOptions
 			);
 			let { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
@@ -132,7 +132,7 @@ describe("runtime", () => {
 				global.window = window;
 
 				try {
-					SvelteComponent = require(`./samples/${dir}/main.html`).default;
+					SvelteComponent = require(`./samples/${dir}/main.html`);
 				} catch (err) {
 					showOutput(cwd, { shared }); // eslint-disable-line no-console
 					throw err;
