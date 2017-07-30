@@ -317,7 +317,7 @@ export default function dom(
 			let scope = annotateWithScopes(expression);
 
 			walk(expression, {
-				enter(node, parent) {
+				enter(node: Node, parent: Node) {
 					if (node._scope) scope = node._scope;
 
 					if (
@@ -337,7 +337,7 @@ export default function dom(
 					}
 				},
 
-				leave(node) {
+				leave(node: Node) {
 					if (node._scope) scope = scope.parent;
 				},
 			});

@@ -1,10 +1,11 @@
 import { parse } from 'acorn';
 import spaces from '../../utils/spaces';
 import { Parser } from '../index';
+import { Node } from '../../interfaces';
 
 const scriptClosingTag = '</script>';
 
-export default function readScript(parser: Parser, start: number, attributes) {
+export default function readScript(parser: Parser, start: number, attributes: Node[]) {
 	const scriptStart = parser.index;
 	const scriptEnd = parser.template.indexOf(scriptClosingTag, scriptStart);
 

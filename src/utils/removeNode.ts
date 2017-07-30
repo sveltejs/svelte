@@ -1,3 +1,4 @@
+import MagicString from 'magic-string';
 import { Node } from '../interfaces';
 
 const keys = {
@@ -10,7 +11,7 @@ const offsets = {
 	Program: [0, 0],
 };
 
-export function removeNode(code, parent: Node, node: Node) {
+export function removeNode(code: MagicString, parent: Node, node: Node) {
 	const key = keys[parent.type];
 	const offset = offsets[parent.type];
 	if (!key || !offset) throw new Error(`not implemented: ${parent.type}`);
@@ -44,7 +45,7 @@ export function removeNode(code, parent: Node, node: Node) {
 	return;
 }
 
-export function removeObjectKey(code, node, key) {
+export function removeObjectKey(code: MagicString, node: Node, key: string) {
 	if (node.type !== 'ObjectExpression') return;
 
 	let i = node.properties.length;

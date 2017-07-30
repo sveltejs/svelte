@@ -1,5 +1,5 @@
 export interface State {
-	name: string;
+	name?: string;
 	namespace: string;
 	parentNode: string;
 	parentNodes: string;
