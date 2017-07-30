@@ -13,7 +13,7 @@ function tryRequire(file) {
 }
 
 function normalizeWarning(warning) {
-	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '');
+	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
 	delete warning.filename;
 	delete warning.toString;
 	return warning;
