@@ -61,7 +61,6 @@
     "eslint-plugin-html": "^3.0.0",
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.5.0",
-    "fuzzyset.js": "0.0.1",
     "glob": "^7.1.1",
     "jsdom": "^11.1.0",
     "locate-character": "^2.0.0",
