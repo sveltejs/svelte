@@ -1,10 +1,11 @@
 import getGlobals from './getGlobals';
+import { CompileOptions, Node } from '../../../interfaces';
 
 export default function getOutro(
 	format: string,
 	name: string,
-	options,
-	imports
+	options: CompileOptions,
+	imports: Node[]
 ) {
 	if (format === 'es') {
 		return `export default ${name};`;

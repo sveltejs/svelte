@@ -1,4 +1,4 @@
-import { Node } from '../../../interfaces';
+import { Node, Visitor } from '../../../interfaces';
 
 export default function walkHtml(html: Node, visitors) {
 	function visit(node: Node) {

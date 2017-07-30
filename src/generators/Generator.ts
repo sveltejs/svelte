@@ -15,11 +15,12 @@ import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
-import { Node, Parsed, CompileOptions } from '../interfaces';
+import { Node, GenerateOptions, Parsed, CompileOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
 export default class Generator {
+	ast: Parsed;
 	parsed: Parsed;
 	source: string;
 	name: string;
@@ -77,9 +78,6 @@ export default class Generator {
 
 		// styles
 		this.stylesheet = stylesheet;
-
-		// TODO this is legacy — just to get the tests to pass during the transition
-		this.css = this.stylesheet.render(options.cssOutputFilename).css;
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
@@ -263,7 +261,7 @@ export default class Generator {
 		return (expression._dependencies = dependencies);
 	}
 
-	generate(result, options: CompileOptions, { name, format }) {
+	generate(result: string, options: CompileOptions, { name, format }: GenerateOptions ) {
 		if (this.imports.length) {
 			const statements: string[] = [];
 
