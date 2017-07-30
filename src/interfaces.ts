@@ -34,8 +34,10 @@ export interface Warning {
 	toString: () => string;
 }
 
+export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';
+
 export interface CompileOptions {
-	format?: string;
+	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
 	generate?: string;
@@ -55,8 +57,6 @@ export interface CompileOptions {
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
 }
-
-export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';
 
 export interface GenerateOptions {
 	name: string;

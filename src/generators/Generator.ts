@@ -16,6 +16,7 @@ import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
 import { Node, GenerateOptions, Parsed, CompileOptions } from '../interfaces';
+import { Computation, TemplateProperties } from './interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
@@ -26,12 +27,18 @@ export default class Generator {
 	name: string;
 	options: CompileOptions;
 
+	defaultExport: Node[];
 	imports: Node[];
 	helpers: Set<string>;
 	components: Set<string>;
 	events: Set<string>;
 	transitions: Set<string>;
 	importedComponents: Map<string, string>;
+	namespace: string;
+	hasComponents: boolean;
+	hasJs: boolean;
+	computations: Computation[];
+	templateProperties: TemplateProperties;
 
 	code: MagicString;
 
@@ -379,9 +386,9 @@ export default class Generator {
 		return alias;
 	}
 
-	getUniqueNameMaker(params) {
+	getUniqueNameMaker(params: string[]) {
 		const localUsedNames = new Set(params);
-		return name => {
+		return (name: string) => {
 			if (test) name = `${name}$`;
 			let alias = name;
 			for (
@@ -402,8 +409,8 @@ export default class Generator {
 		const { js } = this.parsed;
 
 		const imports = this.imports;
-		const computations = [];
-		const templateProperties = {};
+		const computations: Computation[] = [];
+		const templateProperties: TemplateProperties = {};
 
 		let namespace = null;
 		let hasJs = !!js;
@@ -459,7 +466,7 @@ export default class Generator {
 
 				const visited = new Set();
 
-				function visit(key) {
+				function visit(key: string) {
 					if (!dependencies.has(key)) return; // not a computation
 
 					if (visited.has(key)) return;
