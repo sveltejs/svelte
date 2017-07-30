@@ -33,7 +33,7 @@ if (legacy) {
 		try {
 			return module._compile(code, filename);
 		} catch (err) {
-			console.log(code);
+			console.log(code); // eslint-disable-line no-console
 			throw err;
 		}
 	};
