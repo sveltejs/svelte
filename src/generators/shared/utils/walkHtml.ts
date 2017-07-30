@@ -1,6 +1,6 @@
 import { Node, Visitor } from '../../../interfaces';
 
-export default function walkHtml(html: Node, visitors) {
+export default function walkHtml(html: Node, visitors: Record<string, Visitor>) {
 	function visit(node: Node) {
 		const visitor = visitors[node.type];
 		if (!visitor) throw new Error(`Not implemented: ${node.type}`);
