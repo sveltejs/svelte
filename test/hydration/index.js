@@ -27,7 +27,7 @@ describe('hydration', () => {
 
 		require.extensions['.html'] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename), hydratable: true },
+				{ filename, name: getName(filename), hydratable: true, format: 'cjs' },
 				compileOptions
 			);
 			let { code } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
@@ -65,7 +65,7 @@ describe('hydration', () => {
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require(`${cwd}/main.html`).default;
+					SvelteComponent = require(`${cwd}/main.html`);
 				} catch (err) {
 					throw err;
 				}
