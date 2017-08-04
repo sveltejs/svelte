@@ -22,10 +22,6 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-const nodeVersionMatch = /^v(\d)/.exec(process.version);
-const legacy = +nodeVersionMatch[1] < 6;
-const babelrc = require("../../package.json").babel;
-
 const Object_assign = Object.assign;
 
 describe("runtime", () => {
@@ -34,12 +30,11 @@ describe("runtime", () => {
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename) },
+				{ filename, name: getName(filename), format: 'cjs' },
 				compileOptions
 			);
-			let { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
 
-			if (legacy) code = require('babel-core').transform(code, babelrc).code;
+			const { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
 
 			return module._compile(code, filename);
 		};
@@ -103,111 +98,110 @@ describe("runtime", () => {
 
 			let unintendedError = null;
 
-			return env()
-				.then(window => {
-					// set of hacks to support transition tests
-					transitionManager.running = false;
-					transitionManager.transitions = [];
+			const window = env();
 
-					const raf = {
-						time: 0,
-						callback: null,
-						tick: now => {
-							raf.time = now;
-							if (raf.callback) raf.callback();
+			try {
+				// set of hacks to support transition tests
+				transitionManager.running = false;
+				transitionManager.transitions = [];
+
+				const raf = {
+					time: 0,
+					callback: null,
+					tick: now => {
+						raf.time = now;
+						if (raf.callback) raf.callback();
+					}
+				};
+				window.performance = { now: () => raf.time };
+				global.requestAnimationFrame = cb => {
+					let called = false;
+					raf.callback = () => {
+						if (!called) {
+							called = true;
+							cb();
 						}
 					};
-					window.performance = { now: () => raf.time };
-					global.requestAnimationFrame = cb => {
-						let called = false;
-						raf.callback = () => {
-							if (!called) {
-								called = true;
-								cb();
-							}
-						};
-					};
+				};
 
-					global.window = window;
+				global.window = window;
 
-					try {
-						SvelteComponent = require(`./samples/${dir}/main.html`).default;
-					} catch (err) {
-						showOutput(cwd, { shared }); // eslint-disable-line no-console
-						throw err;
-					}
+				try {
+					SvelteComponent = require(`./samples/${dir}/main.html`);
+				} catch (err) {
+					showOutput(cwd, { shared }); // eslint-disable-line no-console
+					throw err;
+				}
 
-					let usedObjectAssign = false;
-					Object.assign = () => {
-						usedObjectAssign = true;
-					};
+				let usedObjectAssign = false;
+				Object.assign = () => {
+					usedObjectAssign = true;
+				};
 
-					global.window = window;
+				global.window = window;
 
-					// Put the constructor on window for testing
-					window.SvelteComponent = SvelteComponent;
+				// Put the constructor on window for testing
+				window.SvelteComponent = SvelteComponent;
 
-					const target = window.document.querySelector("main");
+				const target = window.document.querySelector("main");
 
-					const warnings = [];
-					const warn = console.warn;
-					console.warn = warning => {
-						warnings.push(warning);
-					};
+				const warnings = [];
+				const warn = console.warn;
+				console.warn = warning => {
+					warnings.push(warning);
+				};
 
-					const component = new SvelteComponent({
-						target,
-						hydrate,
-						data: config.data
-					});
-
-					Object.assign = Object_assign;
-
-					console.warn = warn;
-
-					if (config.error) {
-						unintendedError = true;
-						throw new Error("Expected a runtime error");
-					}
-
-					if (config.warnings) {
-						assert.deepEqual(warnings, config.warnings);
-					} else if (warnings.length) {
-						unintendedError = true;
-						throw new Error("Received unexpected warnings");
-					}
-
-					if (config.html) {
-						assert.htmlEqual(target.innerHTML, config.html);
-					}
-
-					if (config.test) {
-						config.test(assert, component, target, window, raf);
-					} else {
-						component.destroy();
-						assert.equal(target.innerHTML, "");
-					}
-
-					if (usedObjectAssign) {
-						throw new Error(
-							"cannot use Object.assign in generated code, as it is not supported everywhere"
-						);
-					}
-				})
-				.catch(err => {
-					Object.assign = Object_assign;
-
-					if (config.error && !unintendedError) {
-						config.error(assert, err);
-					} else {
-						failed.add(dir);
-						showOutput(cwd, { shared }); // eslint-disable-line no-console
-						throw err;
-					}
-				})
-				.then(() => {
-					if (config.show) showOutput(cwd, { shared });
+				const component = new SvelteComponent({
+					target,
+					hydrate,
+					data: config.data
 				});
+
+				Object.assign = Object_assign;
+
+				console.warn = warn;
+
+				if (config.error) {
+					unintendedError = true;
+					throw new Error("Expected a runtime error");
+				}
+
+				if (config.warnings) {
+					assert.deepEqual(warnings, config.warnings);
+				} else if (warnings.length) {
+					unintendedError = true;
+					throw new Error("Received unexpected warnings");
+				}
+
+				if (config.html) {
+					assert.htmlEqual(target.innerHTML, config.html);
+				}
+
+				if (config.test) {
+					config.test(assert, component, target, window, raf);
+				} else {
+					component.destroy();
+					assert.equal(target.innerHTML, "");
+				}
+
+				if (usedObjectAssign) {
+					throw new Error(
+						"cannot use Object.assign in generated code, as it is not supported everywhere"
+					);
+				}
+			} catch (err) {
+				Object.assign = Object_assign;
+
+				if (config.error && !unintendedError) {
+					config.error(assert, err);
+				} else {
+					failed.add(dir);
+					showOutput(cwd, { shared }); // eslint-disable-line no-console
+					throw err;
+				}
+			}
+
+			if (config.show) showOutput(cwd, { shared });
 		});
 	}
 

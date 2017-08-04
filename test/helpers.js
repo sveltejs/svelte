@@ -1,15 +1,9 @@
-import jsdom from 'jsdom';
+import { JSDOM } from 'jsdom';
 import assert from 'assert';
 import glob from 'glob';
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
-
-import * as consoleGroup from 'console-group';
-consoleGroup.install();
-
-import * as sourceMapSupport from 'source-map-support';
-sourceMapSupport.install();
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -53,17 +47,14 @@ export function tryToReadFile(file) {
 	}
 }
 
+const { window } = new JSDOM('<main></main>');
+global.document = window.document;
+
 export function env() {
-	return new Promise((fulfil, reject) => {
-		jsdom.env('<main></main>', (err, window) => {
-			if (err) {
-				reject(err);
-			} else {
-				global.document = window.document;
-				fulfil(window);
-			}
-		});
-	});
+	window._svelteTransitionManager = null;
+	window.document.body.innerHTML = '<main></main>';
+
+	return window;
 }
 
 function cleanChildren(node) {
@@ -138,22 +129,24 @@ export function normalizeHtml(window, html) {
 }
 
 export function setupHtmlEqual() {
-	return env().then(window => {
-		assert.htmlEqual = (actual, expected, message) => {
-			assert.deepEqual(
-				normalizeHtml(window, actual),
-				normalizeHtml(window, expected),
-				message
-			);
-		};
-	});
+	const window = env();
+
+	assert.htmlEqual = (actual, expected, message) => {
+		assert.deepEqual(
+			normalizeHtml(window, actual),
+			normalizeHtml(window, expected),
+			message
+		);
+	};
 }
 
 export function loadConfig(file) {
 	try {
 		const resolved = require.resolve(file);
 		delete require.cache[resolved];
-		return require(resolved).default;
+
+		const config = require(resolved);
+		return config.default || config;
 	} catch (err) {
 		if (err.code === 'MODULE_NOT_FOUND') {
 			return {};
