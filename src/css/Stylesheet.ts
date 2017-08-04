@@ -39,7 +39,7 @@ class Rule {
 					code.overwrite(c, selector.node.start, separator);
 				}
 
-				selector.minify(code);
+				if (!cascade) selector.minify(code);
 				c = selector.node.end;
 			}
 		});
