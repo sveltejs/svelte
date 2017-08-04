@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.28.0
+
+* Support `ref:foo` as a CSS selector ([#693](https://github.com/sveltejs/svelte/issues/693))
+* Prevent magic-string bugs by only minifying CSS combinators if `cascade: false` ([#743](https://github.com/sveltejs/svelte/issues/743))
+* Don't throw an error if component is destroyed twice ([#643](https://github.com/sveltejs/svelte/issues/643))
+
 ## 1.27.0
 
 * Minify CSS and remove unused styles ([#697](https://github.com/sveltejs/svelte/issues/697))
