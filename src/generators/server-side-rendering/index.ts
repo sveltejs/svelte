@@ -178,7 +178,12 @@ export default function ssr(
 		function __escape ( html ) {
 			return String( html ).replace( /["'&<>]/g, match => escaped[ match ] );
 		}
-	`.replace(/(\\)?@(\w*)/g, (match: string, escaped: string, name: string) => escaped ? match.slice(1) : generator.alias(name));
+	`.replace(/(\\)?([@#])(\w*)/g, (match: string, escaped: string, sigil: string, name: string) => {
+		if (escaped) return match.slice(1);
+		if (sigil !== '@') return match;
+
+		return generator.alias(name);
+	});
 
 	return generator.generate(result, options, { name, format });
 }
