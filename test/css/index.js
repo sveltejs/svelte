@@ -81,19 +81,19 @@ describe("css", () => {
 				new Component({ target, data: config.data });
 				const html = target.innerHTML;
 
-				fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
+        // dom
+        assert.equal(
+          normalizeHtml(window, html.replace(/svelte-\d+/g, 'svelte-xyz')),
+          normalizeHtml(window, expected.html)
+        );
 
-				// dom
-				assert.equal(
-					normalizeHtml(window, html).replace(/svelte-\d+/g, 'svelte-xyz'),
-					normalizeHtml(window, expected.html)
-				);
+				fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
 
 				// ssr
 				const component = eval(`(function () { ${ssr.code}; return SvelteComponent; }())`);
 
 				assert.equal(
-					normalizeHtml(window, component.render(config.data)).replace(/svelte-\d+/g, 'svelte-xyz'),
+					normalizeHtml(window, component.render(config.data).replace(/svelte-\d+/g, 'svelte-xyz')),
 					normalizeHtml(window, expected.html)
 				);
 			}

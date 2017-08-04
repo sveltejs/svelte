@@ -87,6 +87,12 @@ export default function visitElement(
 		block.builders.hydrate.addLine(
 			`@encapsulateStyles( ${name} );`
 		);
+
+		if (node._cssRefAttribute) {
+			block.builders.hydrate.addLine(
+				`@setAttribute( ${name}, 'svelte-ref-${node._cssRefAttribute}', '' );`
+			)
+		}
 	}
 
 	function visitAttributesAndAddProps() {

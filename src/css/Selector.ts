@@ -51,7 +51,7 @@ export default class Selector {
 		});
 	}
 
-	transform(code: MagicString, attr: string) {
+	transform(code: MagicString, attr: string, id: string) {
 		function encapsulateBlock(block: Block) {
 			let i = block.selectors.length;
 			while (i--) {
@@ -64,7 +64,19 @@ export default class Selector {
 					code.appendLeft(selector.end, attr);
 				}
 
-				return;
+				break;
+			}
+
+			i = block.selectors.length;
+			while (i--) {
+				const selector = block.selectors[i];
+
+				if (selector.type === 'RefSelector') {
+					code.overwrite(selector.start, selector.end, `[svelte-ref-${selector.name}]`, {
+						contentOnly: true,
+						storeName: false
+					});
+				}
 			}
 		}
 
@@ -152,6 +164,14 @@ function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[]): boolean 
 
 		else if (selector.type === 'TypeSelector') {
 			if (node.name !== selector.name && selector.name !== '*') return false;
+		}
+
+		else if (selector.type === 'RefSelector') {
+			if (node.attributes.some((attr: Node) => attr.type === 'Ref' && attr.name === selector.name)) {
+				node._cssRefAttribute = selector.name;
+				return true;
+			}
+			return;
 		}
 
 		else {
