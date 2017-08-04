@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.28.1
+
+* Fix unescaping of special words in SSR mode ([#741](https://github.com/sveltejs/svelte/issues/741))
+
 ## 1.28.0
 
 * Support `ref:foo` as a CSS selector ([#693](https://github.com/sveltejs/svelte/issues/693))
