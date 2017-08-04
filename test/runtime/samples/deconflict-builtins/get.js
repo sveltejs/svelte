@@ -1,3 +1,3 @@
-export default function get () {
+export function get () {
 	return 'got';
 }

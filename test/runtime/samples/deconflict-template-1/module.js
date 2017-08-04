@@ -1,1 +1,1 @@
-export default 'template';
+export const template = 'template';

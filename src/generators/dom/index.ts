@@ -294,21 +294,32 @@ export default function dom(
 		});
 
 	if (sharedPath) {
-		if (format !== 'es') {
-			throw new Error(
-				`Components with shared helpers must be compiled to ES2015 modules (format: 'es')`
-			);
+		const used = Array.from(usedHelpers).sort();
+		if (format === 'es') {
+			const names = used.map(name => {
+				const alias = generator.alias(name);
+				return name !== alias ? `${name} as ${alias}` : name;
+			});
+
+			result =
+				`import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` +
+				result;
 		}
 
-		const names = Array.from(usedHelpers).sort().map(name => {
-			return name !== generator.alias(name)
-				? `${name} as ${generator.alias(name)}`
-				: name;
-		});
+		else if (format === 'cjs') {
+			const SHARED = '__shared';
+			let requires = `var ${SHARED} = require( ${stringify(sharedPath)} );`;
+			used.forEach(name => {
+				const alias = generator.alias(name);
+				requires += `\nvar ${alias} = ${SHARED}.${name};`;
+			});
 
-		result =
-			`import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` +
-			result;
+			result = `${requires}\n\n${result}`;
+		}
+
+		else {
+			throw new Error(`Components with shared helpers must be compiled with \`format: 'es'\` or \`format: 'cjs'\``);
+		}
 	} else {
 		usedHelpers.forEach(key => {
 			const str = shared[key];
