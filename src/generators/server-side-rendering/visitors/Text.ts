@@ -1,5 +1,6 @@
 import { SsrGenerator } from '../index';
 import Block from '../Block';
+import { escape } from '../../../utils/stringify';
 import { Node } from '../../../interfaces';
 
 export default function visitText(
@@ -7,5 +8,5 @@ export default function visitText(
 	block: Block,
 	node: Node
 ) {
-	generator.append(node.data.replace(/(\${|`|\\)/g, '\\$1').replace(/([^\\@#])?([@#])/g, '$1\\$2'));
+	generator.append(escape(node.data).replace(/(\${|`|\\)/g, '\\$1'));
 }

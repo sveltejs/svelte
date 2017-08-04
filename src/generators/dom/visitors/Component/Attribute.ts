@@ -2,7 +2,7 @@ import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
-import stringify from '../../../../utils/stringify';
+import { stringify } from '../../../../utils/stringify';
 
 export default function visitAttribute(
 	generator: DomGenerator,

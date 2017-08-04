@@ -4,6 +4,7 @@ import visit from '../visit';
 import visitWindow from './meta/Window';
 import { SsrGenerator } from '../index';
 import Block from '../Block';
+import { escape } from '../../../utils/stringify';
 import { Node } from '../../../interfaces';
 
 const meta = {
@@ -14,7 +15,7 @@ function stringifyAttributeValue(block: Block, chunks: Node[]) {
 	return chunks
 		.map((chunk: Node) => {
 			if (chunk.type === 'Text') {
-				return chunk.data;
+				return escape(chunk.data).replace(/"/g, '&quot;');
 			}
 
 			const { snippet } = block.contextualise(chunk.expression);
