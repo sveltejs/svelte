@@ -211,7 +211,7 @@ export default function dom(
 			this._root = options._root || this;
 			this._yield = options._yield;
 
-			this._torndown = false;
+			this._destroyed = false;
 			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
@@ -264,6 +264,7 @@ export default function dom(
 		};
 
 		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
+			if ( this._destroyed ) return${options.dev && ` console.warn( 'Component was already destroyed' )`};
 			this.fire( 'destroy' );
 			${templateProperties.ondestroy && `@template.ondestroy.call( this );`}
 
@@ -272,7 +273,7 @@ export default function dom(
 			this._fragment = null;
 
 			this._state = {};
-			this._torndown = true;
+			this._destroyed = true;
 		};
 	`);
 
