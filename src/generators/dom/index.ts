@@ -301,13 +301,13 @@ export default function dom(
 			});
 
 			result =
-				`import { ${names.join(', ')} } from ${stringify(sharedPath, { onlyEscapeAtSymbol: true })};\n\n` +
+				`import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};\n\n` +
 				result;
 		}
 
 		else if (format === 'cjs') {
 			const SHARED = '__shared';
-			let requires = `var ${SHARED} = require( ${stringify(sharedPath, { onlyEscapeAtSymbol: true })} );`;
+			let requires = `var ${SHARED} = require( ${JSON.stringify(sharedPath)} );`;
 			used.forEach(name => {
 				const alias = generator.alias(name);
 				requires += `\nvar ${alias} = ${SHARED}.${name};`;
