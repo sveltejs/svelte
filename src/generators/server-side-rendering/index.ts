@@ -6,6 +6,7 @@ import preprocess from './preprocess';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
+import { stringify } from '../../utils/stringify';
 
 export class SsrGenerator extends Generator {
 	bindings: string[];
@@ -93,7 +94,7 @@ export default function ssr(
 
 		var ${name} = {};
 
-		${name}.filename = ${JSON.stringify(options.filename)};
+		${name}.filename = ${stringify(options.filename)};
 
 		${name}.data = function () {
 			return ${templateProperties.data ? `@template.data()` : `{}`};
@@ -133,8 +134,8 @@ export default function ssr(
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${JSON.stringify(css)},
-					map: ${JSON.stringify(cssMap)}
+					css: ${stringify(css)},
+					map: ${stringify(cssMap.toString())}
 				});
 			`}
 
@@ -169,7 +170,7 @@ export default function ssr(
 
 		var escaped = {
 			'"': '&quot;',
-			"'": '&#39;',
+			"'": '&##39;',
 			'&': '&amp;',
 			'<': '&lt;',
 			'>': '&gt;'
@@ -178,11 +179,8 @@ export default function ssr(
 		function __escape ( html ) {
 			return String( html ).replace( /["'&<>]/g, match => escaped[ match ] );
 		}
-	`.replace(/(\\)?([@#])(\w*)/g, (match: string, escaped: string, sigil: string, name: string) => {
-		if (escaped) return match.slice(1);
-		if (sigil !== '@') return match;
-
-		return generator.alias(name);
+	`.replace(/(@+|#+)(\w*)/g, (match: string, sigil: string, name: string) => {
+		return sigil === '@' ? generator.alias(name) : sigil.slice(1) + name;
 	});
 
 	return generator.generate(result, options, { name, format });

@@ -145,9 +145,12 @@ export default function dom(
 	if (generator.stylesheet.hasStyles && options.css !== false) {
 		const { css, cssMap } = generator.stylesheet.render(options.filename);
 
-		const textContent = stringify(options.dev ?
+		// special case: we only want to escape '@' and not '#', because at this point all we'll be unescaping is '@'
+		const textContent = JSON.stringify((options.dev ?
 			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-			css);
+			css).replace(/(@+)/g, (match: string) => {
+				return match + match[0];
+			}));
 
 		builder.addBlock(deindent`
 			function @add_css () {
@@ -281,9 +284,8 @@ export default function dom(
 
 	let result = builder
 		.toString()
-		.replace(/(\\\\)?([@#])(\w*)/g, (match: string, escaped: string, sigil: string, name: string) => {
-			if (escaped) return match.slice(2);
-			if (sigil !== '@') return match;
+		.replace(/(@+)(\w*)/g, (match: string, sigil: string, name: string) => {
+			if (sigil !== '@') return sigil.slice(1) + name;
 
 			if (name in shared) {
 				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;

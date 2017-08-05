@@ -3,5 +3,7 @@ export function stringify(data: string) {
 }
 
 export function escape(data: string) {
-	return data.replace(/([^\\@#])?([@#])/g, '$1\\$2');
+	return data.replace(/(@+|#+)/g, (match: string) => {
+		return match + match[0];
+	});
 }
