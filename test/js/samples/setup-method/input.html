@@ -1,0 +1,13 @@
+<script>
+	export default {
+		methods: {
+			foo ( bar ) {
+				console.log( bar );
+			}
+		},
+		setup () {
+			this.SOME_CONSTANT = 42;
+			this.prototype.foo( 'baz' );
+		}
+	};
+</script>
