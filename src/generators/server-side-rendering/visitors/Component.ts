@@ -5,6 +5,7 @@ import Block from '../Block';
 import { Node } from '../../../interfaces';
 import getObject from '../../../utils/getObject';
 import getTailSnippet from '../../../utils/getTailSnippet';
+import { stringify } from '../../../utils/stringify';
 
 export default function visitComponent(
 	generator: SsrGenerator,
@@ -41,7 +42,7 @@ export default function visitComponent(
 			} else if (attribute.value.length === 1) {
 				const chunk = attribute.value[0];
 				if (chunk.type === 'Text') {
-					value = isNaN(chunk.data) ? JSON.stringify(chunk.data) : chunk.data;
+					value = isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
 				} else {
 					const { snippet } = block.contextualise(chunk.expression);
 					value = snippet;
