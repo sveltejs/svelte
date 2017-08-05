@@ -5,9 +5,14 @@
 				console.log( bar );
 			}
 		},
-		setup () {
-			this.SOME_CONSTANT = 42;
-			this.prototype.foo( 'baz' );
+		setup: (Component) => {
+			Component.SOME_CONSTANT = 42;
+			Component.factory = function (target) {
+				return new Component({
+					target: target
+				});
+			}
+			Component.prototype.foo( 'baz' );
 		}
 	};
 </script>

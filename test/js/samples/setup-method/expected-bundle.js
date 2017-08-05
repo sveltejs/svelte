@@ -118,9 +118,14 @@ var template = (function () {
 				console.log( bar );
 			}
 		},
-		setup () {
-			this.SOME_CONSTANT = 42;
-			this.prototype.foo( 'baz' );
+		setup: (Component) => {
+			Component.SOME_CONSTANT = 42;
+			Component.factory = function (target) {
+				return new Component({
+					target: target
+				});
+			};
+			Component.prototype.foo( 'baz' );
 		}
 	};
 }());
@@ -183,6 +188,6 @@ SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = functio
 	this._destroyed = true;
 };
 
-template.setup.call( SvelteComponent );
+template.setup( SvelteComponent );
 
 export default SvelteComponent;
