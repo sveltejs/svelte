@@ -145,12 +145,9 @@ export default function dom(
 	if (generator.stylesheet.hasStyles && options.css !== false) {
 		const { css, cssMap } = generator.stylesheet.render(options.filename);
 
-		// special case: we only want to escape '@' and not '#', because at this point all we'll be unescaping is '@'
-		const textContent = JSON.stringify((options.dev ?
+		const textContent = stringify(options.dev ?
 			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-			css).replace(/(@+)/g, (match: string) => {
-				return match + match[0];
-			}));
+			css, { onlyEscapeAtSymbol: true });
 
 		builder.addBlock(deindent`
 			function @add_css () {
@@ -304,13 +301,13 @@ export default function dom(
 			});
 
 			result =
-				`import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` +
+				`import { ${names.join(', ')} } from ${stringify(sharedPath, { onlyEscapeAtSymbol: true })};\n\n` +
 				result;
 		}
 
 		else if (format === 'cjs') {
 			const SHARED = '__shared';
-			let requires = `var ${SHARED} = require( ${stringify(sharedPath)} );`;
+			let requires = `var ${SHARED} = require( ${stringify(sharedPath, { onlyEscapeAtSymbol: true })} );`;
 			used.forEach(name => {
 				const alias = generator.alias(name);
 				requires += `\nvar ${alias} = ${SHARED}.${name};`;
