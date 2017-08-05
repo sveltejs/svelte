@@ -10,6 +10,7 @@ import components from './components';
 import events from './events';
 import namespace from './namespace';
 import transitions from './transitions';
+import setup from './setup';
 
 export default {
 	data,
@@ -24,4 +25,5 @@ export default {
 	events,
 	namespace,
 	transitions,
+	setup,
 };
