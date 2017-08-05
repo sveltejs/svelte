@@ -226,20 +226,22 @@ function compound(
 	dynamic,
 	{ name, anchor, params, hasElse, if_name }
 ) {
-	const get_block = block.getUniqueName(`get_block`);
+	const select_block = generator.getUniqueName(`select_block`);
 	const current_block = block.getUniqueName(`current_block`);
 	const current_block_and = hasElse ? '' : `${current_block} && `;
 
-	block.builders.init.addBlock(deindent`
-		function ${get_block} ( ${params} ) {
+	generator.blocks.push(deindent`
+		function ${select_block} ( ${params} ) {
 			${branches
 				.map(({ condition, block }) => {
 					return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
 				})
 				.join('\n')}
 		}
+	`);
 
-		var ${current_block} = ${get_block}( ${params} );
+	block.builders.init.addBlock(deindent`
+		var ${current_block} = ${select_block}( ${params} );
 		var ${name} = ${current_block_and}${current_block}( ${params}, #component );
 	`);
 
@@ -272,7 +274,7 @@ function compound(
 
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
-			if ( ${current_block} === ( ${current_block} = ${get_block}( ${params} ) ) && ${name} ) {
+			if ( ${current_block} === ( ${current_block} = ${select_block}( ${params} ) ) && ${name} ) {
 				${name}.update( changed, ${params} );
 			} else {
 				${changeBlock}
@@ -280,7 +282,7 @@ function compound(
 		`);
 	} else {
 		block.builders.update.addBlock(deindent`
-			if ( ${current_block} !== ( ${current_block} = ${get_block}( ${params} ) ) ) {
+			if ( ${current_block} !== ( ${current_block} = ${select_block}( ${params} ) ) ) {
 				${changeBlock}
 			}
 		`);
@@ -302,7 +304,7 @@ function compoundWithOutros(
 	dynamic,
 	{ name, anchor, params, hasElse }
 ) {
-	const get_block = block.getUniqueName(`get_block`);
+	const select_block = block.getUniqueName(`select_block`);
 	const current_block_index = block.getUniqueName(`current_block_index`);
 	const previous_block_index = block.getUniqueName(`previous_block_index`);
 	const if_block_creators = block.getUniqueName(`if_block_creators`);
@@ -322,7 +324,7 @@ function compoundWithOutros(
 
 		var ${if_blocks} = [];
 
-		function ${get_block} ( ${params} ) {
+		function ${select_block} ( ${params} ) {
 			${branches
 				.map(({ condition, block }, i) => {
 					return `${condition ? `if ( ${condition} ) ` : ''}return ${block
@@ -335,12 +337,12 @@ function compoundWithOutros(
 
 	if (hasElse) {
 		block.builders.init.addBlock(deindent`
-			${current_block_index} = ${get_block}( ${params} );
+			${current_block_index} = ${select_block}( ${params} );
 			${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, #component );
 		`);
 	} else {
 		block.builders.init.addBlock(deindent`
-			if ( ~( ${current_block_index} = ${get_block}( ${params} ) ) ) {
+			if ( ~( ${current_block_index} = ${select_block}( ${params} ) ) ) {
 				${name} = ${if_blocks}[ ${current_block_index} ] = ${if_block_creators}[ ${current_block_index} ]( ${params}, #component );
 			}
 		`);
@@ -395,7 +397,7 @@ function compoundWithOutros(
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_index};
-			${current_block_index} = ${get_block}( ${params} );
+			${current_block_index} = ${select_block}( ${params} );
 			if ( ${current_block_index} === ${previous_block_index} ) {
 				${if_current_block_index}${if_blocks}[ ${current_block_index} ].update( changed, ${params} );
 			} else {
@@ -405,7 +407,7 @@ function compoundWithOutros(
 	} else {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_index};
-			${current_block_index} = ${get_block}( ${params} );
+			${current_block_index} = ${select_block}( ${params} );
 			if ( ${current_block_index} !== ${previous_block_index} ) {
 				${changeBlock}
 			}
