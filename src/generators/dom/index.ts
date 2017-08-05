@@ -147,7 +147,7 @@ export default function dom(
 
 		const textContent = stringify(options.dev ?
 			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-			css);
+			css, { onlyEscapeAtSymbol: true });
 
 		builder.addBlock(deindent`
 			function @add_css () {
@@ -281,9 +281,8 @@ export default function dom(
 
 	let result = builder
 		.toString()
-		.replace(/(\\\\)?([@#])(\w*)/g, (match: string, escaped: string, sigil: string, name: string) => {
-			if (escaped) return match.slice(2);
-			if (sigil !== '@') return match;
+		.replace(/(@+)(\w*)/g, (match: string, sigil: string, name: string) => {
+			if (sigil !== '@') return sigil.slice(1) + name;
 
 			if (name in shared) {
 				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
@@ -302,13 +301,13 @@ export default function dom(
 			});
 
 			result =
-				`import { ${names.join(', ')} } from ${stringify(sharedPath)};\n\n` +
+				`import { ${names.join(', ')} } from ${JSON.stringify(sharedPath)};\n\n` +
 				result;
 		}
 
 		else if (format === 'cjs') {
 			const SHARED = '__shared';
-			let requires = `var ${SHARED} = require( ${stringify(sharedPath)} );`;
+			let requires = `var ${SHARED} = require( ${JSON.stringify(sharedPath)} );`;
 			used.forEach(name => {
 				const alias = generator.alias(name);
 				requires += `\nvar ${alias} = ${SHARED}.${name};`;
