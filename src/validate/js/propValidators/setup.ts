@@ -1,14 +1,12 @@
-import usesThisOrArguments from '../utils/usesThisOrArguments';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
 
+const disallowed = new Set(['Literal', 'ObjectExpression', 'ArrayExpression']);
+
 export default function setup(validator: Validator, prop: Node) {
-	if (prop.value.type === 'ArrowFunctionExpression') {
-		if (usesThisOrArguments(prop.value.body)) {
-			validator.error(
-				`'setup' should be a function expression, not an arrow function expression`,
-				prop.start
-			);
-		}
+	while (prop.type === 'ParenthesizedExpression') prop = prop.expression;
+
+	if (disallowed.has(prop.value.type)) {
+		validator.error(`'setup' must be a function`, prop.value.start);
 	}
 }
