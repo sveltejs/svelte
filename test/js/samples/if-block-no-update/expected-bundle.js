@@ -138,12 +138,7 @@ var proto = {
 function create_main_fragment ( state, component ) {
 	var if_block_anchor;
 
-	function get_block ( state ) {
-		if ( state.foo ) return create_if_block;
-		return create_if_block_1;
-	}
-
-	var current_block = get_block( state );
+	var current_block = select_block( state );
 	var if_block = current_block( state, component );
 
 	return {
@@ -158,7 +153,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		update: function ( changed, state ) {
-			if ( current_block !== ( current_block = get_block( state ) ) ) {
+			if ( current_block !== ( current_block = select_block( state ) ) ) {
 				if_block.unmount();
 				if_block.destroy();
 				if_block = current_block( state, component );
@@ -220,6 +215,11 @@ function create_if_block_1 ( state, component ) {
 
 		destroy: noop
 	};
+}
+
+function select_block ( state ) {
+	if ( state.foo ) return create_if_block;
+	return create_if_block_1;
 }
 
 function SvelteComponent ( options ) {
