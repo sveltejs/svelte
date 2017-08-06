@@ -38,17 +38,14 @@ function setAttribute(node, attribute, value) {
 }
 
 function destroy(detach) {
-	if (!this._destroyed) {
-		this.set = noop;
-		this.fire('destroy');
+	this.destroy = this.set = noop;
+	this.fire('destroy');
 
-		if (detach !== false) this._fragment.unmount();
-		this._fragment.destroy();
-		this._fragment = null;
+	if (detach !== false) this._fragment.unmount();
+	this._fragment.destroy();
+	this._fragment = null;
 
-		this._state = {};
-		this._destroyed = true;
-	}
+	this._state = {};
 }
 
 function differs(a, b) {
@@ -217,7 +214,6 @@ function SvelteComponent ( options ) {
 	this._root = options._root || this;
 	this._yield = options._yield;
 
-	this._destroyed = false;
 	if ( !document.getElementById( 'svelte-3590263702-style' ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );

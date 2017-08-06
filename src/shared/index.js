@@ -5,22 +5,21 @@ export * from './transitions.js';
 export * from './utils.js';
 
 export function destroy(detach) {
-	if (!this._destroyed) {
-		this.set = noop;
-		this.fire('destroy');
+	this.destroy = this.set = noop;
+	this.fire('destroy');
 
-		if (detach !== false) this._fragment.unmount();
-		this._fragment.destroy();
-		this._fragment = null;
+	if (detach !== false) this._fragment.unmount();
+	this._fragment.destroy();
+	this._fragment = null;
 
-		this._state = {};
-		this._destroyed = true;
-	}
+	this._state = {};
 }
 
 export function destroyDev(detach) {
-	if (this._destroyed) console.warn('Component was already destroyed');
 	destroy.call(this, detach);
+	this.destroy = function() {
+		console.warn('Component was already destroyed');
+	};
 }
 
 export function differs(a, b) {

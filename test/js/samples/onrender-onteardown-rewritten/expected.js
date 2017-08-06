@@ -36,8 +36,6 @@ function SvelteComponent ( options ) {
 	this._root = options._root || this;
 	this._yield = options._yield;
 
-	this._destroyed = false;
-
 	var oncreate = template.oncreate.bind( this );
 
 	if ( !options._root ) {

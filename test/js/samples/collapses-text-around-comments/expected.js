@@ -66,7 +66,6 @@ function SvelteComponent ( options ) {
 	this._root = options._root || this;
 	this._yield = options._yield;
 
-	this._destroyed = false;
 	if ( !document.getElementById( 'svelte-3590263702-style' ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );

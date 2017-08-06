@@ -157,8 +157,6 @@ function SvelteComponent ( options ) {
 	this._root = options._root || this;
 	this._yield = options._yield;
 
-	this._destroyed = false;
-
 	this._fragment = create_main_fragment( this._state, this );
 
 	if ( options.target ) {
