@@ -5,6 +5,7 @@ export * from './utils.js';
 
 export function destroy(detach) {
 	if (!this._destroyed) {
+		this.set = noop;
 		this.fire('destroy');
 
 		if (detach !== false) this._fragment.unmount();
@@ -123,7 +124,6 @@ export function onDev(eventName, handler) {
 }
 
 export function set(newState) {
-	if (this._destroyed) return;
 	this._set(assign({}, newState));
 	if (this._root._lock) return;
 	this._root._lock = true;
