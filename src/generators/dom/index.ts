@@ -275,6 +275,8 @@ export default function dom(
 			this._state = {};
 			this._destroyed = true;
 		};
+
+		${templateProperties.setup && `@template.setup( ${name} );`}
 	`);
 
 	const usedHelpers = new Set();
