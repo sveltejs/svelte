@@ -184,7 +184,7 @@ export default class Block {
 		}
 	}
 
-	render() {
+	toString() {
 		let introing;
 		const hasIntros = !this.builders.intro.isEmpty();
 		if (hasIntros) {
