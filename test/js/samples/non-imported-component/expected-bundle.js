@@ -169,7 +169,7 @@ function create_main_fragment ( state, component ) {
 }
 
 function SvelteComponent ( options ) {
-	options = options || {};
+	if ( !options || ( !options.target && !options._root ) ) throw new Error( "'target' is a required option" );
 	this._state = options.data || {};
 
 	this._observers = {
