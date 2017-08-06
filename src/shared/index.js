@@ -3,6 +3,24 @@ export * from './dom.js';
 export * from './transitions.js';
 export * from './utils.js';
 
+export function destroy(detach) {
+	if (!this._destroyed) {
+		this.fire('destroy');
+
+		if (detach !== false) this._fragment.unmount();
+		this._fragment.destroy();
+		this._fragment = null;
+
+		this._state = {};
+		this._destroyed = true;
+	}
+}
+
+export function destroyDev(detach) {
+	if (this._destroyed) console.warn('Component was already destroyed');
+	destroy.call(this, detach);
+}
+
 export function differs(a, b) {
 	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
@@ -105,6 +123,7 @@ export function onDev(eventName, handler) {
 }
 
 export function set(newState) {
+	if (this._destroyed) return;
 	this._set(assign({}, newState));
 	if (this._root._lock) return;
 	this._root._lock = true;
@@ -119,17 +138,21 @@ export function callAll(fns) {
 }
 
 export var proto = {
+	destroy: destroy,
 	get: get,
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set
+	set: set,
+	teardown: destroy
 };
 
 export var protoDev = {
+	destroy: destroyDev,
 	get: get,
 	fire: fire,
 	observe: observeDev,
 	on: onDev,
-	set: set
+	set: set,
+	teardown: destroyDev
 };
