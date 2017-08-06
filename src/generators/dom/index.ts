@@ -207,7 +207,7 @@ export default function dom(
 			};
 
 			this._handlers = Object.create( null );
-			${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy.bind(this)]`}
+			${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
 
 			this._root = options._root || this;
 			this._yield = options._yield;
