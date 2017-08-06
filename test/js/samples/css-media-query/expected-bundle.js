@@ -35,6 +35,7 @@ function setAttribute(node, attribute, value) {
 
 function destroy(detach) {
 	if (!this._destroyed) {
+		this.set = noop;
 		this.fire('destroy');
 
 		if (detach !== false) this._fragment.unmount();
@@ -123,7 +124,6 @@ function on(eventName, handler) {
 }
 
 function set(newState) {
-	if (this._destroyed) return;
 	this._set(assign({}, newState));
 	if (this._root._lock) return;
 	this._root._lock = true;

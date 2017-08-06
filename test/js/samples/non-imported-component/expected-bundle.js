@@ -1,5 +1,7 @@
 import Imported from 'Imported.html';
 
+function noop() {}
+
 function assign(target) {
 	var k,
 		source,
@@ -27,6 +29,7 @@ function createText(data) {
 
 function destroy(detach) {
 	if (!this._destroyed) {
+		this.set = noop;
 		this.fire('destroy');
 
 		if (detach !== false) this._fragment.unmount();
@@ -115,7 +118,6 @@ function on(eventName, handler) {
 }
 
 function set(newState) {
-	if (this._destroyed) return;
 	this._set(assign({}, newState));
 	if (this._root._lock) return;
 	this._root._lock = true;
