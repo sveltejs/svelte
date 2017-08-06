@@ -31,7 +31,7 @@ function SvelteComponent ( options ) {
 	};
 
 	this._handlers = Object.create( null );
-	this._handlers.destroy = [template.ondestroy.bind(this)]
+	this._handlers.destroy = [template.ondestroy]
 
 	this._root = options._root || this;
 	this._yield = options._yield;
