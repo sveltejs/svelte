@@ -94,11 +94,7 @@ export default function visitEventHandler(
 		`;
 
 		if (shouldHoist) {
-			generator.blocks.push(
-				<Block>{
-					render: () => handler,
-				}
-			);
+			generator.blocks.push(handler);
 		} else {
 			block.builders.init.addBlock(handler);
 		}

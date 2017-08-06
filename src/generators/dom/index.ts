@@ -15,7 +15,7 @@ import Block from './Block';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
 
 export class DomGenerator extends Generator {
-	blocks: Block[];
+	blocks: (Block|string)[];
 	readonly: Set<string>;
 	metaBindings: string[];
 
@@ -160,7 +160,7 @@ export default function dom(
 	}
 
 	generator.blocks.forEach(block => {
-		builder.addBlock(block.render());
+		builder.addBlock(block.toString());
 	});
 
 	const sharedPath = options.shared === true

@@ -3,13 +3,8 @@ import { appendNode, assign, createComment, createElement, createText, detachNod
 function create_main_fragment ( state, component ) {
 	var if_block_anchor;
 
-	function get_block ( state ) {
-		if ( state.foo ) return create_if_block;
-		return create_if_block_1;
-	}
-
-	var current_block = get_block( state );
-	var if_block = current_block( state, component );
+	var current_block_type = select_block_type( state );
+	var if_block = current_block_type( state, component );
 
 	return {
 		create: function () {
@@ -23,10 +18,10 @@ function create_main_fragment ( state, component ) {
 		},
 
 		update: function ( changed, state ) {
-			if ( current_block !== ( current_block = get_block( state ) ) ) {
+			if ( current_block_type !== ( current_block_type = select_block_type( state ) ) ) {
 				if_block.unmount();
 				if_block.destroy();
-				if_block = current_block( state, component );
+				if_block = current_block_type( state, component );
 				if_block.create();
 				if_block.mount( if_block_anchor.parentNode, if_block_anchor );
 			}
@@ -85,6 +80,11 @@ function create_if_block_1 ( state, component ) {
 
 		destroy: noop
 	};
+}
+
+function select_block_type ( state ) {
+	if ( state.foo ) return create_if_block;
+	return create_if_block_1;
 }
 
 function SvelteComponent ( options ) {
