@@ -1,0 +1,18 @@
+<script>
+	export default {
+		methods: {
+			foo ( bar ) {
+				console.log( bar );
+			}
+		},
+		setup: (Component) => {
+			Component.SOME_CONSTANT = 42;
+			Component.factory = function (target) {
+				return new Component({
+					target: target
+				});
+			}
+			Component.prototype.foo( 'baz' );
+		}
+	};
+</script>
