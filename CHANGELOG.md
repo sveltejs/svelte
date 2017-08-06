@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.29.0
+
+* Add static `setup` method ([#578](https://github.com/sveltejs/svelte/issues/578))
+* Hoist if block selectors ([#751](https://github.com/sveltejs/svelte/pull/751))
+* More sigil escaping fixes ([#750](https://github.com/sveltejs/svelte/pull/750))
+
 ## 1.28.1
 
 * Fix unescaping of special words in SSR mode ([#741](https://github.com/sveltejs/svelte/issues/741))
