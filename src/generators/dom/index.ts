@@ -212,7 +212,6 @@ export default function dom(
 			this._root = options._root || this;
 			this._yield = options._yield;
 
-			this._destroyed = false;
 			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
 				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
