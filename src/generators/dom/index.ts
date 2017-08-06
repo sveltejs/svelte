@@ -174,8 +174,8 @@ export default function dom(
 		? `@proto `
 		: deindent`
 		{
-			${['get', 'fire', 'observe', 'on', 'set']
-				.map(n => `${n}: @${n}`)
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown']
+				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
 
@@ -207,6 +207,7 @@ export default function dom(
 			};
 
 			this._handlers = Object.create( null );
+			${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy.bind(this)]`}
 
 			this._root = options._root || this;
 			this._yield = options._yield;
@@ -261,19 +262,6 @@ export default function dom(
 
 		${name}.prototype._set = function _set ( newState ) {
 			${_set}
-		};
-
-		${name}.prototype.teardown = ${name}.prototype.destroy = function destroy ( detach ) {
-			if ( this._destroyed ) return${options.dev && ` console.warn( 'Component was already destroyed' )`};
-			this.fire( 'destroy' );
-			${templateProperties.ondestroy && `@template.ondestroy.call( this );`}
-
-			if ( detach !== false ) this._fragment.unmount();
-			this._fragment.destroy();
-			this._fragment = null;
-
-			this._state = {};
-			this._destroyed = true;
 		};
 
 		${templateProperties.setup && `@template.setup( ${name} );`}

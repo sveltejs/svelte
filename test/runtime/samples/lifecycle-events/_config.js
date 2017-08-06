@@ -1,7 +1,7 @@
 export default {
-	test ( assert, component ) {
-		assert.deepEqual( component.events, [ 'render' ]);
+	test(assert, component) {
+		assert.deepEqual(component.events, ['create']);
 		component.destroy();
-		assert.deepEqual( component.events, [ 'render', 'teardown' ]);
+		assert.deepEqual(component.events, ['create', 'destroy']);
 	}
 };
