@@ -1,7 +1,26 @@
 import { assign } from './utils.js';
+import { noop } from './utils.js';
 export * from './dom.js';
 export * from './transitions.js';
 export * from './utils.js';
+
+export function destroy(detach) {
+	this.destroy = this.set = noop;
+	this.fire('destroy');
+
+	if (detach !== false) this._fragment.unmount();
+	this._fragment.destroy();
+	this._fragment = null;
+
+	this._state = {};
+}
+
+export function destroyDev(detach) {
+	destroy.call(this, detach);
+	this.destroy = function() {
+		console.warn('Component was already destroyed');
+	};
+}
 
 export function differs(a, b) {
 	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
@@ -119,17 +138,21 @@ export function callAll(fns) {
 }
 
 export var proto = {
+	destroy: destroy,
 	get: get,
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set
+	set: set,
+	teardown: destroy
 };
 
 export var protoDev = {
+	destroy: destroyDev,
 	get: get,
 	fire: fire,
 	observe: observeDev,
 	on: onDev,
-	set: set
+	set: set,
+	teardown: destroyDev
 };
