@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.29.1
+
+* Replace `set` and `destroy` with `noop` when component is destroyed ([#744](https://github.com/sveltejs/svelte/issues/744))
+
 ## 1.29.0
 
 * Add static `setup` method ([#578](https://github.com/sveltejs/svelte/issues/578))
