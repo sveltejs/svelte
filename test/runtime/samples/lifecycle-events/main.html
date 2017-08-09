@@ -2,12 +2,12 @@
 
 <script>
 	export default {
-		oncreate () {
-			this.events = [ 'render' ];
+		oncreate() {
+			this.events = ['create'];
 		},
 
-		ondestroy () {
-			this.events.push( 'teardown' );
+		ondestroy() {
+			this.events.push('destroy');
 		}
 	};
 </script>

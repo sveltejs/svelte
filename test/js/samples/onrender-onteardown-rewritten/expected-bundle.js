@@ -13,6 +13,17 @@ function assign(target) {
 	return target;
 }
 
+function destroy(detach) {
+	this.destroy = this.set = noop;
+	this.fire('destroy');
+
+	if (detach !== false) this._fragment.unmount();
+	this._fragment.destroy();
+	this._fragment = null;
+
+	this._state = {};
+}
+
 function differs(a, b) {
 	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
@@ -104,11 +115,13 @@ function callAll(fns) {
 }
 
 var proto = {
+	destroy: destroy,
 	get: get,
 	fire: fire,
 	observe: observe,
 	on: on,
-	set: set
+	set: set,
+	teardown: destroy
 };
 
 var template = (function () {
@@ -142,11 +155,10 @@ function SvelteComponent ( options ) {
 	};
 
 	this._handlers = Object.create( null );
+	this._handlers.destroy = [template.ondestroy];
 
 	this._root = options._root || this;
 	this._yield = options._yield;
-
-	this._destroyed = false;
 
 	var oncreate = template.oncreate.bind( this );
 
@@ -175,19 +187,6 @@ SvelteComponent.prototype._set = function _set ( newState ) {
 	this._state = assign( {}, oldState, newState );
 	dispatchObservers( this, this._observers.pre, newState, oldState );
 	dispatchObservers( this, this._observers.post, newState, oldState );
-};
-
-SvelteComponent.prototype.teardown = SvelteComponent.prototype.destroy = function destroy ( detach ) {
-	if ( this._destroyed ) return;
-	this.fire( 'destroy' );
-	template.ondestroy.call( this );
-
-	if ( detach !== false ) this._fragment.unmount();
-	this._fragment.destroy();
-	this._fragment = null;
-
-	this._state = {};
-	this._destroyed = true;
 };
 
 export default SvelteComponent;
