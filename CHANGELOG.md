@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.29.2
+
+* Preserve space before non-parenthesized media query expression ([#759](https://github.com/sveltejs/svelte/issues/759))
+* Call `create()` on new iterations of static each blocks ([#762](https://github.com/sveltejs/svelte/issues/762))
+* Use `change` events as well as `input` events to bind range inputs ([#740](https://github.com/sveltejs/svelte/issues/740))
+
 ## 1.29.1
 
 * Replace `set` and `destroy` with `noop` when component is destroyed ([#744](https://github.com/sveltejs/svelte/issues/744))
