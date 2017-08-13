@@ -156,9 +156,26 @@ export default function visitBinding(
 		}
 	`);
 
-	block.builders.hydrate.addBlock(
-		`@addListener( ${state.parentNode}, '${eventName}', ${handler} );`
-	);
+	if (node.name === 'input' && type === 'range') {
+		// need to bind to `input` and `change`, for the benefit of IE
+		block.builders.hydrate.addBlock(deindent`
+			@addListener( ${state.parentNode}, 'input', ${handler} );
+			@addListener( ${state.parentNode}, 'change', ${handler} );
+		`);
+
+		block.builders.destroy.addBlock(deindent`
+			@removeListener( ${state.parentNode}, 'input', ${handler} );
+			@removeListener( ${state.parentNode}, 'change', ${handler} );
+		`);
+	} else {
+		block.builders.hydrate.addLine(
+			`@addListener( ${state.parentNode}, '${eventName}', ${handler} );`
+		);
+
+		block.builders.destroy.addLine(
+			`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`
+		);
+	}
 
 	if (node.name !== 'audio' && node.name !== 'video') {
 		node.initialUpdate = updateElement;
@@ -173,10 +190,6 @@ export default function visitBinding(
 			}
 		`);
 	}
-
-	block.builders.destroy.addLine(
-		`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`
-	);
 
 	if (attribute.name === 'paused') {
 		block.builders.create.addLine(
