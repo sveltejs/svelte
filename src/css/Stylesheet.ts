@@ -144,7 +144,8 @@ class Atrule {
 
 	minify(code: MagicString, cascade: boolean) {
 		if (this.node.name === 'media') {
-			let c = this.node.start + 6;
+			const expressionChar = code.original[this.node.expression.start];
+			let c = this.node.start + (expressionChar === '(' ? 6 : 7);
 			if (this.node.expression.start > c) code.remove(c, this.node.expression.start);
 
 			this.node.expression.children.forEach((query: Node) => {
