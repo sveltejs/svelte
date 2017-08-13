@@ -439,6 +439,7 @@ function unkeyed(
 				`
 			: deindent`
 				${iterations}[#i] = ${create_each_block}( ${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component );
+				${iterations}[#i].create();
 				${iterations}[#i].${mountOrIntro}( ${parentNode}, ${anchor} );
 			`;
 
