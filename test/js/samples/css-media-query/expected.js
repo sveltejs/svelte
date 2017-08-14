@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, detachNode, dispatchObservers, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
+import { appendNode, assign, createElement, detachNode, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
 function encapsulateStyles ( node ) {
 	setAttribute( node, 'svelte-2363328337', '' );
@@ -27,6 +27,8 @@ function create_main_fragment ( state, component ) {
 		mount: function ( target, anchor ) {
 			insertNode( div, target, anchor );
 		},
+
+		update: noop,
 
 		unmount: function () {
 			detachNode( div );
@@ -61,12 +63,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;

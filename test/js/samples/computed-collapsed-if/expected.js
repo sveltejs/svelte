@@ -1,11 +1,4 @@
-import { assign, differs, dispatchObservers, noop, proto } from "svelte/shared.js";
-
-function recompute ( state, newState, oldState, isInitial ) {
-	if ( isInitial || ( 'x' in newState && differs( state.x, oldState.x ) ) ) {
-		state.a = newState.a = template.computed.a( state.x );
-		state.b = newState.b = template.computed.b( state.x );
-	}
-}
+import { assign, differs, noop, proto } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -23,6 +16,8 @@ function create_main_fragment ( state, component ) {
 
 		mount: noop,
 
+		update: noop,
+
 		unmount: noop,
 
 		destroy: noop
@@ -32,7 +27,7 @@ function create_main_fragment ( state, component ) {
 function SvelteComponent ( options ) {
 	options = options || {};
 	this._state = options.data || {};
-	recompute( this._state, this._state, {}, true );
+	this._recompute( {}, this._state, {}, true );
 
 	this._observers = {
 		pre: Object.create( null ),
@@ -54,12 +49,11 @@ function SvelteComponent ( options ) {
 
 assign( SvelteComponent.prototype, proto );
 
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	recompute( this._state, newState, oldState, false )
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
+SvelteComponent.prototype._recompute = function _recompute ( changed, state, oldState, isInitial ) {
+	if ( isInitial || ( 'x' in changed ) ) {
+		if ( differs( ( state.a = template.computed.a( state.x ) ), oldState.a ) ) changed.a = true;
+		if ( differs( ( state.b = template.computed.b( state.x ) ), oldState.b ) ) changed.b = true;
+	}
+}
 
 export default SvelteComponent;

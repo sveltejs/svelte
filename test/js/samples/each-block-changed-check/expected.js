@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
 	var text, p, text_1_value, text_1;
@@ -53,7 +53,7 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( text_1_value !== ( text_1_value = state.foo ) ) {
+			if ( ( 'foo' in changed ) && text_1_value !== ( text_1_value = state.foo ) ) {
 				text_1.data = text_1_value;
 			}
 		},
@@ -115,15 +115,11 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 		},
 
 		update: function ( changed, state, each_block_value, comment, i ) {
-			if ( text_value !== ( text_value = i ) ) {
-				text.data = text_value;
-			}
-
-			if ( text_2_value !== ( text_2_value = comment.author ) ) {
+			if ( ( 'comments' in changed ) && text_2_value !== ( text_2_value = comment.author ) ) {
 				text_2.data = text_2_value;
 			}
 
-			if ( text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
+			if ( ( 'elapsed' in changed || 'comments' in changed || 'time' in changed ) && text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
 				text_4.data = text_4_value;
 			}
 
@@ -166,13 +162,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;
