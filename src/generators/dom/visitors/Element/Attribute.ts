@@ -47,10 +47,26 @@ export default function visitAttribute(
 	if (isDynamic) {
 		let value;
 
+		const allDependencies = new Set();
+		let shouldCache;
+		let hasChangeableIndex;
+
 		if (attribute.value.length === 1) {
 			// single {{tag}} — may be a non-string
-			const { snippet } = block.contextualise(attribute.value[0].expression);
+			const { expression } = attribute.value[0];
+			const { snippet, dependencies, indexes } = block.contextualise(expression);
 			value = snippet;
+			dependencies.forEach(d => {
+				allDependencies.add(d);
+			});
+
+			hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
+
+			shouldCache = (
+				expression.type !== 'Identifier' ||
+				block.contexts.has(expression.name) ||
+				hasChangeableIndex
+			);
 		} else {
 			// '{{foo}} {{bar}}' — treat as string concatenation
 			value =
@@ -60,22 +76,35 @@ export default function visitAttribute(
 						if (chunk.type === 'Text') {
 							return stringify(chunk.data);
 						} else {
-							const { snippet } = block.contextualise(chunk.expression);
+							const { snippet, dependencies, indexes } = block.contextualise(chunk.expression);
+
+							if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
+								hasChangeableIndex = true;
+							}
+
+							dependencies.forEach(d => {
+								allDependencies.add(d);
+							});
+
 							return `( ${snippet} )`;
 						}
 					})
 					.join(' + ');
-		}
 
-		const last = block.getUniqueName(
-			`${state.parentNode}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
-		);
-		block.addVariable(last);
+			shouldCache = true;
+		}
 
 		const isSelectValueAttribute =
 			name === 'value' && state.parentNodeName === 'select';
 
+		const last = (shouldCache || isSelectValueAttribute) && block.getUniqueName(
+			`${state.parentNode}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+		);
+
+		if (shouldCache || isSelectValueAttribute) block.addVariable(last);
+
 		let updater;
+		const init = shouldCache ? `${last} = ${value}` : value;
 
 		if (isSelectValueAttribute) {
 			// annoying special case
@@ -104,27 +133,48 @@ export default function visitAttribute(
 				}
 			`;
 
-			block.builders.hydrate.addLine(deindent`
-				${last} = ${value}
+			block.builders.hydrate.addBlock(deindent`
+				${last} = ${value};
 				${updater}
 			`);
+
+			block.builders.update.addLine(`${last} = ${value};`);
 		} else if (propertyName) {
 			block.builders.hydrate.addLine(
-				`${state.parentNode}.${propertyName} = ${last} = ${value};`
+				`${state.parentNode}.${propertyName} = ${init};`
 			);
-			updater = `${state.parentNode}.${propertyName} = ${last};`;
+			updater = `${state.parentNode}.${propertyName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
 		} else {
 			block.builders.hydrate.addLine(
-				`${method}( ${state.parentNode}, '${name}', ${last} = ${value} );`
+				`${method}( ${state.parentNode}, '${name}', ${init} );`
 			);
-			updater = `${method}( ${state.parentNode}, '${name}', ${last} );`;
+			updater = `${method}( ${state.parentNode}, '${name}', ${shouldCache || isSelectValueAttribute ? last : value} );`;
 		}
 
-		block.builders.update.addBlock(deindent`
-			if ( ${last} !== ( ${last} = ${value} ) ) {
-				${updater}
-			}
-		`);
+		if (allDependencies.size || hasChangeableIndex || isSelectValueAttribute) {
+			const dependencies = Array.from(allDependencies);
+			const changedCheck = (
+				( block.hasOutroMethod ? `#outroing || ` : '' ) +
+				dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
+			);
+
+			const updateCachedValue = `${last} !== ( ${last} = ${value} )`;
+
+			const condition = shouldCache ?
+				( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
+				changedCheck;
+
+			// block.builders.update.addConditionalLine(
+			// 	condition,
+			// 	updater
+			// );
+
+			block.builders.update.addBlock(deindent`
+				if ( ${condition} ) {
+					${updater}
+				}
+			`);
+		}
 	} else {
 		const value = attribute.value === true
 			? 'true'
