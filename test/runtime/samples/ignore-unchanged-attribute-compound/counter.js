@@ -1,4 +1,3 @@
 export default {
-	y: 0,
-	z: 0
+	count: 0
 };

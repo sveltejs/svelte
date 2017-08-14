@@ -1,18 +1,13 @@
 <p>{{x}}</p>
-<p class='{{getClass(y)}}'>{{myHelper(z)}}</p>
+<p class='-{{myHelper(y)}}-'></p>
 
 <script>
 	import counter from './counter.js';
 
 	export default {
 		helpers: {
-			getClass(value) {
-				counter.y += 1;
-				return value;
-			},
-
 			myHelper(value) {
-				counter.z += 1;
+				counter.count += 1;
 				return value;
 			}
 		}

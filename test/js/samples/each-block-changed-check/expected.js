@@ -123,9 +123,9 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 				text_4.data = text_4_value;
 			}
 
-			if ( raw_value !== ( raw_value = comment.html ) ) {
+			if ( ( 'comments' in changed ) && raw_value !== ( raw_value = comment.html ) ) {
 				detachBetween( raw_before, raw_after );
-				raw_before.insertAdjacentHTML( 'afterend', raw_value = comment.html );
+				raw_before.insertAdjacentHTML( 'afterend', raw_value );
 			}
 		},
 
