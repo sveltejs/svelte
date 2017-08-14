@@ -39,7 +39,7 @@ export default function visitTag(
 			( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
 			changedCheck;
 
-		block.builders.update.addConditionalLine(
+		block.builders.update.addConditional(
 			condition,
 			update(shouldCache ? value : snippet)
 		);

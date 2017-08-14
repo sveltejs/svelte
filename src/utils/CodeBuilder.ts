@@ -21,7 +21,7 @@ export default class CodeBuilder {
 		this.lastCondition = null;
 	}
 
-	addConditionalLine(condition: string, body: string) {
+	addConditional(condition: string, body: string) {
 		body = body.replace(/^/gm, '\t');
 
 		if (condition === this.lastCondition) {
