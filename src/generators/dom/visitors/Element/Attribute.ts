@@ -51,6 +51,8 @@ export default function visitAttribute(
 		let shouldCache;
 		let hasChangeableIndex;
 
+		// TODO some of this code is repeated in Tag.ts — would be good to
+		// DRY it out if that's possible without introducing crazy indirection
 		if (attribute.value.length === 1) {
 			// single {{tag}} — may be a non-string
 			const { expression } = attribute.value[0];
