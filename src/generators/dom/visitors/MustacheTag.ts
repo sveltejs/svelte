@@ -1,4 +1,5 @@
 import deindent from '../../../utils/deindent';
+import visitTag from './shared/Tag';
 import { DomGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
@@ -10,25 +11,21 @@ export default function visitMustacheTag(
 	state: State,
 	node: Node
 ) {
-	const name = node._state.name;
-	const value = block.getUniqueName(`${name}_value`);
+	const { name } = node._state;
 
-	const { snippet } = block.contextualise(node.expression);
-
-	block.addVariable(value);
-	block.addElement(
+	const { init } = visitTag(
+		generator,
+		block,
+		state,
+		node,
 		name,
-		`@createText( ${value} = ${snippet} )`,
-		generator.hydratable
-			? `@claimText( ${state.parentNodes}, ${value} = ${snippet} )`
-			: '',
-		state.parentNode,
-		true
+		value => `${name}.data = ${value};`
 	);
 
-	block.builders.update.addBlock(deindent`
-		if ( ${value} !== ( ${value} = ${snippet} ) ) {
-			${name}.data = ${value};
-		}
-	`);
+	block.addElement(
+		name,
+		`@createText( ${init} )`,
+		`@claimText( ${state.parentNodes}, ${init} )`,
+		state.parentNode
+	);
 }

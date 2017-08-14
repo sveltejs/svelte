@@ -57,8 +57,7 @@ export default function visitEachBlock(
 			anchor,
 			`@createComment()`,
 			`@createComment()`,
-			state.parentNode,
-			true
+			state.parentNode
 		);
 	} else if (node.next) {
 		node.next.usedAsAnchor = true;
@@ -172,8 +171,7 @@ function keyed(
 			node._block.first,
 			`@createComment()`,
 			`@createComment()`,
-			null,
-			true
+			null
 		);
 	}
 
@@ -411,7 +409,7 @@ function unkeyed(
 
 	// TODO do this for keyed blocks as well
 	const condition = Array.from(allDependencies)
-		.map(dependency => `'${dependency}' in changed`)
+		.map(dependency => `changed.${dependency}`)
 		.join(' || ');
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;

@@ -12,6 +12,7 @@ export interface BlockOptions {
 	key?: string;
 	contexts?: Map<string, string>;
 	indexes?: Map<string, string>;
+	changeableIndexes?: Map<string, boolean>;
 	contextDependencies?: Map<string, string[]>;
 	params?: string[];
 	indexNames?: Map<string, string>;
@@ -32,6 +33,7 @@ export default class Block {
 
 	contexts: Map<string, string>;
 	indexes: Map<string, string>;
+	changeableIndexes: Map<string, boolean>;
 	contextDependencies: Map<string, string[]>;
 	dependencies: Set<string>;
 	params: string[];
@@ -77,6 +79,7 @@ export default class Block {
 
 		this.contexts = options.contexts;
 		this.indexes = options.indexes;
+		this.changeableIndexes = options.changeableIndexes;
 		this.contextDependencies = options.contextDependencies;
 		this.dependencies = new Set();
 
@@ -121,8 +124,7 @@ export default class Block {
 		name: string,
 		renderStatement: string,
 		claimStatement: string,
-		parentNode: string,
-		needsIdentifier = false
+		parentNode: string
 	) {
 		const isToplevel = !parentNode;
 
@@ -195,7 +197,7 @@ export default class Block {
 		let outroing;
 		const hasOutros = !this.builders.outro.isEmpty();
 		if (hasOutros) {
-			outroing = this.getUniqueName('outroing');
+			outroing = this.alias('outroing');
 			this.addVariable(outroing);
 		}
 

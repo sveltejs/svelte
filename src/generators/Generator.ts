@@ -125,7 +125,8 @@ export default class Generator {
 	) {
 		this.addSourcemapLocations(expression);
 
-		const usedContexts: string[] = [];
+		const usedContexts = new Set();
+		const usedIndexes = new Set();
 
 		const { code, helpers } = this;
 		const { contexts, indexes } = block;
@@ -168,12 +169,13 @@ export default class Generator {
 							);
 						}
 
-						if (!~usedContexts.indexOf(name)) usedContexts.push(name);
+						usedContexts.add(name);
 					} else if (helpers.has(name)) {
 						code.prependRight(node.start, `${self.alias('template')}.helpers.`);
 					} else if (indexes.has(name)) {
 						const context = indexes.get(name);
-						if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+						usedContexts.add(context); // TODO is this right?
+						usedIndexes.add(name);
 					} else {
 						// handle shorthand properties
 						if (parent && parent.type === 'Property' && parent.shorthand) {
@@ -193,7 +195,7 @@ export default class Generator {
 							code.prependRight(node.start, `state.`);
 						}
 
-						if (!~usedContexts.indexOf('state')) usedContexts.push('state');
+						usedContexts.add('state');
 					}
 
 					this.skip();
@@ -221,6 +223,7 @@ export default class Generator {
 		return {
 			dependencies: Array.from(dependencies),
 			contexts: usedContexts,
+			indexes: usedIndexes,
 			snippet: `[✂${expression.start}-${expression.end}✂]`,
 		};
 	}

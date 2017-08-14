@@ -195,10 +195,8 @@ export default function visitComponent(
 			if (attribute.dependencies.length) {
 				return deindent`
 					if ( ${attribute.dependencies
-						.map(dependency => `'${dependency}' in changed`)
-						.join(
-							'||'
-						)} ) ${name}_changes.${attribute.name} = ${attribute.value};
+						.map(dependency => `changed.${dependency}`)
+						.join(' || ')} ) ${name}_changes.${attribute.name} = ${attribute.value};
 				`;
 			}
 
@@ -212,7 +210,7 @@ export default function visitComponent(
 
 			${updates.join('\n')}
 
-			if ( Object.keys( ${name}_changes ).length ) ${name}._set( ${name}_changes );
+			${name}._set( ${name}_changes );
 		`);
 	}
 
