@@ -27,7 +27,7 @@ export default class Selector {
 
 	apply(node: Node, stack: Node[]) {
 		const toEncapsulate: Node[] = [];
-		selectorAppliesTo(this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
+		applySelector(this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
 
 		if (toEncapsulate.length > 0) {
 			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
@@ -127,7 +127,7 @@ function isDescendantSelector(selector: Node) {
 	return selector.type === 'WhiteSpace' || selector.type === 'Combinator';
 }
 
-function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
+function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -186,7 +186,7 @@ function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[], toEncapsu
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
 			while (stack.length) {
-				if (selectorAppliesTo(blocks.slice(), stack.pop(), stack, toEncapsulate)) {
+				if (applySelector(blocks.slice(), stack.pop(), stack, toEncapsulate)) {
 					toEncapsulate.push({ node, block });
 					return true;
 				}
@@ -194,7 +194,7 @@ function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[], toEncapsu
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (selectorAppliesTo(blocks, stack.pop(), stack, toEncapsulate)) {
+			if (applySelector(blocks, stack.pop(), stack, toEncapsulate)) {
 				toEncapsulate.push({ node, block });
 				return true;
 			}
