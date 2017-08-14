@@ -20,12 +20,12 @@ function add_css () {
 }
 
 function create_main_fragment ( state, component ) {
-	var p, text_value, text;
+	var p, text;
 
 	return {
 		create: function () {
 			p = createElement( 'p' );
-			text = createText( text_value = state.foo );
+			text = createText( state.foo );
 			this.hydrate();
 		},
 
@@ -39,8 +39,8 @@ function create_main_fragment ( state, component ) {
 		},
 
 		update: function ( changed, state ) {
-			if ( ( 'foo' in changed ) && text_value !== ( text_value = state.foo ) ) {
-				text.data = text_value;
+			if ( 'foo' in changed ) {
+				text.data = state.foo;
 			}
 		},
 
