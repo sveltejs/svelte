@@ -1,7 +1,7 @@
 import { appendNode, assign, createElement, createText, destroyEach, detachBetween, detachNode, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
-	var text, p, text_1_value, text_1;
+	var text, p, text_1;
 
 	var each_block_value = state.comments;
 
@@ -19,7 +19,7 @@ function create_main_fragment ( state, component ) {
 
 			text = createText( "\n\n" );
 			p = createElement( 'p' );
-			text_1 = createText( text_1_value = state.foo );
+			text_1 = createText( state.foo );
 		},
 
 		mount: function ( target, anchor ) {
@@ -53,8 +53,8 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( ( 'foo' in changed ) && text_1_value !== ( text_1_value = state.foo ) ) {
-				text_1.data = text_1_value;
+			if ( 'foo' in changed ) {
+				text_1.data = state.foo;
 			}
 		},
 
@@ -74,13 +74,13 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_each_block ( state, each_block_value, comment, i, component ) {
-	var div, strong, text_value, text, text_1, span, text_2_value, text_2, text_3, text_4_value, text_4, text_5, text_6, raw_value, raw_before, raw_after;
+	var div, strong, text, text_1, span, text_2_value, text_2, text_3, text_4_value, text_4, text_5, text_6, raw_value, raw_before, raw_after;
 
 	return {
 		create: function () {
 			div = createElement( 'div' );
 			strong = createElement( 'strong' );
-			text = createText( text_value = i );
+			text = createText( i );
 			text_1 = createText( "\n\n\t\t" );
 			span = createElement( 'span' );
 			text_2 = createText( text_2_value = comment.author );
