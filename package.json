@@ -19,7 +19,7 @@
     "build": "node src/shared/_build.js && rollup -c",
     "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
-    "prepublishOnly": "npm run build && npm run lint",
+    "prepublishOnly": "npm run lint && npm test",
     "prettier": "prettier --use-tabs --single-quote --trailing-comma es5 --write \"src/**/*.ts\""
   },
   "repository": {
