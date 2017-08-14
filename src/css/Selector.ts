@@ -26,15 +26,16 @@ export default class Selector {
 	}
 
 	apply(node: Node, stack: Node[]) {
-		const applies = selectorAppliesTo(this.localBlocks.slice(), node, stack.slice());
+		const toEncapsulate: Node[] = [];
+		selectorAppliesTo(this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
 
-		if (applies) {
+		if (toEncapsulate.length > 0) {
+			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
+				node._needsCssAttribute = true;
+				block.shouldEncapsulate = true;
+			});
+
 			this.used = true;
-
-			// add svelte-123xyz attribute to outermost and innermost
-			// elements — no need to add it to intermediate elements
-			node._needsCssAttribute = true;
-			if (stack[0] && this.node.children.find(isDescendantSelector)) stack[0]._needsCssAttribute = true;
 		}
 	}
 
@@ -86,9 +87,9 @@ export default class Selector {
 				const first = selector.children[0];
 				const last = selector.children[selector.children.length - 1];
 				code.remove(selector.start, first.start).remove(last.end, selector.end);
-			} else if (i === 0 || i === this.blocks.length - 1) {
-				encapsulateBlock(block);
 			}
+
+			if (block.shouldEncapsulate) encapsulateBlock(block);
 		});
 	}
 
@@ -126,7 +127,7 @@ function isDescendantSelector(selector: Node) {
 	return selector.type === 'WhiteSpace' || selector.type === 'Combinator';
 }
 
-function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[]): boolean {
+function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -169,6 +170,7 @@ function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[]): boolean 
 		else if (selector.type === 'RefSelector') {
 			if (node.attributes.some((attr: Node) => attr.type === 'Ref' && attr.name === selector.name)) {
 				node._cssRefAttribute = selector.name;
+				toEncapsulate.push({ node, block });
 				return true;
 			}
 			return;
@@ -176,6 +178,7 @@ function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[]): boolean 
 
 		else {
 			// bail. TODO figure out what these could be
+			toEncapsulate.push({ node, block });
 			return true;
 		}
 	}
@@ -183,20 +186,27 @@ function selectorAppliesTo(blocks: Block[], node: Node, stack: Node[]): boolean 
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
 			while (stack.length) {
-				if (selectorAppliesTo(blocks.slice(), stack.pop(), stack)) {
+				if (selectorAppliesTo(blocks.slice(), stack.pop(), stack, toEncapsulate)) {
+					toEncapsulate.push({ node, block });
 					return true;
 				}
 			}
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			return selectorAppliesTo(blocks, stack.pop(), stack);
+			if (selectorAppliesTo(blocks, stack.pop(), stack, toEncapsulate)) {
+				toEncapsulate.push({ node, block });
+				return true;
+			}
+			return false;
 		}
 
 		// TODO other combinators
+		toEncapsulate.push({ node, block });
 		return true;
 	}
 
+	toEncapsulate.push({ node, block });
 	return true;
 }
 
@@ -247,6 +257,7 @@ class Block {
 	selectors: Node[]
 	start: number;
 	end: number;
+	shouldEncapsulate: boolean;
 
 	constructor(combinator: Node) {
 		this.combinator = combinator;
@@ -255,6 +266,8 @@ class Block {
 
 		this.start = null;
 		this.end = null;
+
+		this.shouldEncapsulate = false;
 	}
 
 	add(selector: Node) {
