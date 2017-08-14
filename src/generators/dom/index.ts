@@ -87,9 +87,7 @@ export default function dom(
 
 			generator.readonly.add(key);
 
-			const condition = `isInitial || ${deps.map(dep =>
-				`( '${dep}' in changed )`
-			).join(' || ')}`;
+			const condition = `isInitial || ${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
 			const statement = `if ( @differs( ( state.${key} = @template.computed.${key}( ${deps
 				.map(dep => `state.${dep}`)

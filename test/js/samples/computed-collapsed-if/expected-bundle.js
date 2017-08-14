@@ -30,7 +30,7 @@ function differs(a, b) {
 
 function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
-		if (!(key in changed)) continue;
+		if (!changed[key]) continue;
 
 		var newValue = newState[key];
 		var oldValue = oldState[key];
@@ -191,7 +191,7 @@ function SvelteComponent ( options ) {
 assign( SvelteComponent.prototype, proto );
 
 SvelteComponent.prototype._recompute = function _recompute ( changed, state, oldState, isInitial ) {
-	if ( isInitial || ( 'x' in changed ) ) {
+	if ( isInitial || changed.x ) {
 		if ( differs( ( state.a = template.computed.a( state.x ) ), oldState.a ) ) changed.a = true;
 		if ( differs( ( state.b = template.computed.b( state.x ) ), oldState.b ) ) changed.b = true;
 	}

@@ -39,7 +39,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		update: function ( changed, state ) {
-			if ( 'foo' in changed ) {
+			if ( changed.foo ) {
 				text.data = state.foo;
 			}
 		},

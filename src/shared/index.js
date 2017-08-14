@@ -28,7 +28,7 @@ export function differs(a, b) {
 
 export function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
-		if (!(key in changed)) continue;
+		if (!changed[key]) continue;
 
 		var newValue = newState[key];
 		var oldValue = oldState[key];

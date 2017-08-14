@@ -409,7 +409,7 @@ function unkeyed(
 
 	// TODO do this for keyed blocks as well
 	const condition = Array.from(allDependencies)
-		.map(dependency => `'${dependency}' in changed`)
+		.map(dependency => `changed.${dependency}`)
 		.join(' || ');
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;

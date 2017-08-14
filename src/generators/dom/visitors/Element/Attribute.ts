@@ -157,7 +157,7 @@ export default function visitAttribute(
 			const dependencies = Array.from(allDependencies);
 			const changedCheck = (
 				( block.hasOutroMethod ? `#outroing || ` : '' ) +
-				dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
+				dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 			);
 
 			const updateCachedValue = `${last} !== ( ${last} = ${value} )`;

@@ -30,7 +30,7 @@ export default function visitTag(
 	if (dependencies.length || hasChangeableIndex) {
 		const changedCheck = (
 			( block.hasOutroMethod ? `#outroing || ` : '' ) +
-			dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
+			dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 		);
 
 		const updateCachedValue = `${value} !== ( ${value} = ${snippet} )`;
