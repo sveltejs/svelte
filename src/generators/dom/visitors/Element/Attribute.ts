@@ -166,16 +166,10 @@ export default function visitAttribute(
 				( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
 				changedCheck;
 
-			// block.builders.update.addConditionalLine(
-			// 	condition,
-			// 	updater
-			// );
-
-			block.builders.update.addBlock(deindent`
-				if ( ${condition} ) {
-					${updater}
-				}
-			`);
+			block.builders.update.addConditional(
+				condition,
+				updater
+			);
 		}
 	} else {
 		const value = attribute.value === true

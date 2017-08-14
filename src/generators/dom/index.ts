@@ -95,7 +95,7 @@ export default function dom(
 				.map(dep => `state.${dep}`)
 				.join(', ')} ) ), oldState.${key} ) ) changed.${key} = true;`;
 
-			computationBuilder.addConditionalLine(condition, statement);
+			computationBuilder.addConditional(condition, statement);
 		});
 	}
 
