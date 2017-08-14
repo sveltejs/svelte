@@ -212,7 +212,7 @@ export default function visitComponent(
 
 			${updates.join('\n')}
 
-			if ( Object.keys( ${name}_changes ).length ) ${name}._set( ${name}_changes );
+			${name}._set( ${name}_changes );
 		`);
 	}
 
