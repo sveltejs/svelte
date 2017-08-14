@@ -195,7 +195,7 @@ export default class Block {
 		let outroing;
 		const hasOutros = !this.builders.outro.isEmpty();
 		if (hasOutros) {
-			outroing = this.getUniqueName('outroing');
+			outroing = this.alias('outroing');
 			this.addVariable(outroing);
 		}
 
