@@ -10,9 +10,15 @@ export default function visitMustacheTag(
 	state: State,
 	node: Node
 ) {
-	const { dependencies, snippet } = block.contextualise(node.expression);
+	const { dependencies, indexes, snippet } = block.contextualise(node.expression);
 
-	const shouldCache = node.expression.type !== 'Identifier' || block.contexts.has(node.expression.name);
+	const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
+
+	const shouldCache = (
+		node.expression.type !== 'Identifier' ||
+		block.contexts.has(node.expression.name) ||
+		hasChangeableIndex
+	);
 
 	const name = node._state.name;
 	const value = shouldCache && block.getUniqueName(`${name}_value`);
@@ -30,14 +36,16 @@ export default function visitMustacheTag(
 		true
 	);
 
-	if (dependencies.length) {
+	if (dependencies.length || hasChangeableIndex) {
 		const changedCheck = (
 			( block.hasOutroMethod ? `#outroing || ` : '' ) +
 			dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
 		);
 
+		const updateCachedValue = `${value} !== ( ${value} = ${snippet} )`;
+
 		const condition = shouldCache ?
-			`( ${changedCheck} ) && ${value} !== ( ${value} = ${snippet} )` :
+			( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
 			changedCheck;
 
 		block.builders.update.addConditionalLine(

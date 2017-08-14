@@ -26,10 +26,10 @@ export default class CodeBuilder {
 			this.result += `\n\t${line}`;
 		} else {
 			if (this.lastCondition) {
-				this.result += `\n}\n\n`;
+				this.result += `\n}`;
 			}
 
-			this.result += `if ( ${condition} ) {\n\t${line}`;
+			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}if ( ${condition} ) {\n\t${line}`;
 			this.lastCondition = condition;
 		}
 
