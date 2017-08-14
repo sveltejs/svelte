@@ -1,4 +1,4 @@
-import { appendNode, assign, createComment, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto } from "svelte/shared.js";
+import { appendNode, assign, createComment, createElement, createText, detachNode, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
 	var div, text, p, text_1, text_2, text_3, text_4, p_1, text_5, text_6, text_8, if_block_4_anchor;
@@ -270,13 +270,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;

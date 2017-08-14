@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, proto } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, detachNode, insertNode, noop, proto } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -37,6 +37,8 @@ function create_main_fragment ( state, component ) {
 			appendNode( text, button );
 		},
 
+		update: noop,
+
 		unmount: function () {
 			detachNode( button );
 		},
@@ -70,12 +72,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, template.methods, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;

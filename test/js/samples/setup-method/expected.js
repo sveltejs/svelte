@@ -1,4 +1,4 @@
-import { assign, dispatchObservers, noop, proto } from "svelte/shared.js";
+import { assign, noop, proto } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -25,6 +25,8 @@ function create_main_fragment ( state, component ) {
 		create: noop,
 
 		mount: noop,
+
+		update: noop,
 
 		unmount: noop,
 
@@ -55,13 +57,6 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, template.methods, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 template.setup( SvelteComponent );
 

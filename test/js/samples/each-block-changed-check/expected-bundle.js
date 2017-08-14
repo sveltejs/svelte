@@ -61,25 +61,23 @@ function differs(a, b) {
 	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-function dispatchObservers(component, group, newState, oldState) {
+function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
-		if (!(key in newState)) continue;
+		if (!(key in changed)) continue;
 
 		var newValue = newState[key];
 		var oldValue = oldState[key];
 
-		if (differs(newValue, oldValue)) {
-			var callbacks = group[key];
-			if (!callbacks) continue;
+		var callbacks = group[key];
+		if (!callbacks) continue;
 
-			for (var i = 0; i < callbacks.length; i += 1) {
-				var callback = callbacks[i];
-				if (callback.__calling) continue;
+		for (var i = 0; i < callbacks.length; i += 1) {
+			var callback = callbacks[i];
+			if (callback.__calling) continue;
 
-				callback.__calling = true;
-				callback.call(component, newValue, oldValue);
-				callback.__calling = false;
-			}
+			callback.__calling = true;
+			callback.call(component, newValue, oldValue);
+			callback.__calling = false;
 		}
 	}
 }
@@ -143,6 +141,23 @@ function set(newState) {
 	this._root._lock = false;
 }
 
+function _set(newState) {
+	var oldState = this._state,
+		changed = {},
+		dirty = false;
+
+	for (var key in newState) {
+		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+	}
+	if (!dirty) return;
+
+	this._state = assign({}, oldState, newState);
+	this._recompute(changed, this._state, oldState, false);
+	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+	this._fragment.update(changed, this._state);
+	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+}
+
 function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
@@ -154,7 +169,9 @@ var proto = {
 	observe: observe,
 	on: on,
 	set: set,
-	teardown: destroy
+	teardown: destroy,
+	_recompute: noop,
+	_set: _set
 };
 
 function create_main_fragment ( state, component ) {
@@ -210,7 +227,7 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( text_1_value !== ( text_1_value = state.foo ) ) {
+			if ( ( 'foo' in changed ) && text_1_value !== ( text_1_value = state.foo ) ) {
 				text_1.data = text_1_value;
 			}
 		},
@@ -272,15 +289,11 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 		},
 
 		update: function ( changed, state, each_block_value, comment, i ) {
-			if ( text_value !== ( text_value = i ) ) {
-				text.data = text_value;
-			}
-
-			if ( text_2_value !== ( text_2_value = comment.author ) ) {
+			if ( ( 'comments' in changed ) && text_2_value !== ( text_2_value = comment.author ) ) {
 				text_2.data = text_2_value;
 			}
 
-			if ( text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
+			if ( ( 'elapsed' in changed || 'comments' in changed || 'time' in changed ) && text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
 				text_4.data = text_4_value;
 			}
 
@@ -323,13 +336,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;

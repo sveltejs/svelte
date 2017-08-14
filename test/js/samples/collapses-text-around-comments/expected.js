@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, detachNode, dispatchObservers, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, detachNode, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
 var template = (function () {
 	return {
@@ -39,7 +39,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		update: function ( changed, state ) {
-			if ( text_value !== ( text_value = state.foo ) ) {
+			if ( ( 'foo' in changed ) && text_value !== ( text_value = state.foo ) ) {
 				text.data = text_value;
 			}
 		},
@@ -77,13 +77,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;
