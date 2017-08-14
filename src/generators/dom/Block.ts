@@ -124,8 +124,7 @@ export default class Block {
 		name: string,
 		renderStatement: string,
 		claimStatement: string,
-		parentNode: string,
-		needsIdentifier = false
+		parentNode: string
 	) {
 		const isToplevel = !parentNode;
 
