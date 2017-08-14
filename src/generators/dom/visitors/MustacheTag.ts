@@ -27,7 +27,10 @@ export default function visitMustacheTag(
 	);
 
 	if (dependencies.length) {
-		const changedCheck = dependencies.map(dependency => `'${dependency}' in changed`).join(' || ');
+		const changedCheck = (
+			( block.hasOutroMethod ? `#outroing || ` : '' ) +
+			dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
+		);
 
 		block.builders.update.addBlock(deindent`
 			if ( ( ${changedCheck} ) && ${value} !== ( ${value} = ${snippet} ) ) {
