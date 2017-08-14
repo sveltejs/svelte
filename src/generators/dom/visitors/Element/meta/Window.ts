@@ -38,8 +38,8 @@ export default function visitWindow(
 			let usesState = false;
 
 			attribute.expression.arguments.forEach((arg: Node) => {
-				const { contexts } = block.contextualise(arg, null, true);
-				if (contexts.length) usesState = true;
+				const { dependencies } = block.contextualise(arg, null, true);
+				if (dependencies.length) usesState = true;
 			});
 
 			const flattened = flattenReference(attribute.expression.callee);

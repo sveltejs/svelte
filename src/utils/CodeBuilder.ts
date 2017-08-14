@@ -21,15 +21,17 @@ export default class CodeBuilder {
 		this.lastCondition = null;
 	}
 
-	addConditionalLine(condition: string, line: string) {
+	addConditional(condition: string, body: string) {
+		body = body.replace(/^/gm, '\t');
+
 		if (condition === this.lastCondition) {
-			this.result += `\n\t${line}`;
+			this.result += `\n${body}`;
 		} else {
 			if (this.lastCondition) {
-				this.result += `\n}\n\n`;
+				this.result += `\n}`;
 			}
 
-			this.result += `if ( ${condition} ) {\n\t${line}`;
+			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}if ( ${condition} ) {\n${body}`;
 			this.lastCondition = condition;
 		}
 

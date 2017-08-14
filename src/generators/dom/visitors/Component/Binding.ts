@@ -89,7 +89,7 @@ export default function visitBinding(
 
 	local.update.addBlock(deindent`
 		if ( !${updating} && ${dependencies
-		.map(dependency => `'${dependency}' in changed`)
+		.map(dependency => `changed.${dependency}`)
 		.join(' || ')} ) {
 			${updating} = true;
 			${local.name}._set({ ${attribute.name}: ${snippet} });

@@ -52,7 +52,7 @@ describe("js", () => {
 					}
 				]
 			}).then(bundle => {
-				return bundle.generate({ format: "es" })
+				return bundle.generate({ format: "es" });
 			}).then(({ code }) => {
 				fs.writeFileSync(`${dir}/_actual-bundle.js`, code);
 
@@ -65,6 +65,9 @@ describe("js", () => {
 					code.trim().replace(/^\s+$/gm, ""),
 					expectedBundle.trim().replace(/^\s+$/gm, "")
 				);
+			}).catch(err => {
+				console.error(err.loc);
+				throw err;
 			});
 		});
 	});

@@ -61,25 +61,23 @@ function differs(a, b) {
 	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-function dispatchObservers(component, group, newState, oldState) {
+function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
-		if (!(key in newState)) continue;
+		if (!changed[key]) continue;
 
 		var newValue = newState[key];
 		var oldValue = oldState[key];
 
-		if (differs(newValue, oldValue)) {
-			var callbacks = group[key];
-			if (!callbacks) continue;
+		var callbacks = group[key];
+		if (!callbacks) continue;
 
-			for (var i = 0; i < callbacks.length; i += 1) {
-				var callback = callbacks[i];
-				if (callback.__calling) continue;
+		for (var i = 0; i < callbacks.length; i += 1) {
+			var callback = callbacks[i];
+			if (callback.__calling) continue;
 
-				callback.__calling = true;
-				callback.call(component, newValue, oldValue);
-				callback.__calling = false;
-			}
+			callback.__calling = true;
+			callback.call(component, newValue, oldValue);
+			callback.__calling = false;
 		}
 	}
 }
@@ -143,6 +141,23 @@ function set(newState) {
 	this._root._lock = false;
 }
 
+function _set(newState) {
+	var oldState = this._state,
+		changed = {},
+		dirty = false;
+
+	for (var key in newState) {
+		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+	}
+	if (!dirty) return;
+
+	this._state = assign({}, oldState, newState);
+	this._recompute(changed, this._state, oldState, false);
+	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+	this._fragment.update(changed, this._state);
+	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+}
+
 function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
@@ -154,11 +169,13 @@ var proto = {
 	observe: observe,
 	on: on,
 	set: set,
-	teardown: destroy
+	teardown: destroy,
+	_recompute: noop,
+	_set: _set
 };
 
 function create_main_fragment ( state, component ) {
-	var text, p, text_1_value, text_1;
+	var text, p, text_1;
 
 	var each_block_value = state.comments;
 
@@ -176,7 +193,7 @@ function create_main_fragment ( state, component ) {
 
 			text = createText( "\n\n" );
 			p = createElement( 'p' );
-			text_1 = createText( text_1_value = state.foo );
+			text_1 = createText( state.foo );
 		},
 
 		mount: function ( target, anchor ) {
@@ -192,7 +209,7 @@ function create_main_fragment ( state, component ) {
 		update: function ( changed, state ) {
 			var each_block_value = state.comments;
 
-			if ( 'comments' in changed || 'elapsed' in changed || 'time' in changed ) {
+			if ( changed.comments || changed.elapsed || changed.time ) {
 				for ( var i = 0; i < each_block_value.length; i += 1 ) {
 					if ( each_block_iterations[i] ) {
 						each_block_iterations[i].update( changed, state, each_block_value, each_block_value[i], i );
@@ -210,8 +227,8 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( text_1_value !== ( text_1_value = state.foo ) ) {
-				text_1.data = text_1_value;
+			if ( changed.foo ) {
+				text_1.data = state.foo;
 			}
 		},
 
@@ -231,18 +248,18 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_each_block ( state, each_block_value, comment, i, component ) {
-	var div, strong, text_value, text, text_1, span, text_2_value, text_2, text_3, text_4_value, text_4, text_5, text_6, raw_value, raw_before, raw_after;
+	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before, raw_after;
 
 	return {
 		create: function () {
 			div = createElement( 'div' );
 			strong = createElement( 'strong' );
-			text = createText( text_value = i );
+			text = createText( i );
 			text_1 = createText( "\n\n\t\t" );
 			span = createElement( 'span' );
-			text_2 = createText( text_2_value = comment.author );
+			text_2 = createText( text_2_value );
 			text_3 = createText( " wrote " );
-			text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
+			text_4 = createText( text_4_value );
 			text_5 = createText( " ago:" );
 			text_6 = createText( "\n\n\t\t" );
 			raw_before = createElement( 'noscript' );
@@ -268,25 +285,21 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			appendNode( text_6, div );
 			appendNode( raw_before, div );
 			appendNode( raw_after, div );
-			raw_before.insertAdjacentHTML( 'afterend', raw_value = comment.html );
+			raw_before.insertAdjacentHTML( 'afterend', raw_value );
 		},
 
 		update: function ( changed, state, each_block_value, comment, i ) {
-			if ( text_value !== ( text_value = i ) ) {
-				text.data = text_value;
-			}
-
-			if ( text_2_value !== ( text_2_value = comment.author ) ) {
+			if ( ( changed.comments ) && text_2_value !== ( text_2_value = comment.author ) ) {
 				text_2.data = text_2_value;
 			}
 
-			if ( text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
+			if ( ( changed.elapsed || changed.comments || changed.time ) && text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
 				text_4.data = text_4_value;
 			}
 
-			if ( raw_value !== ( raw_value = comment.html ) ) {
+			if ( ( changed.comments ) && raw_value !== ( raw_value = comment.html ) ) {
 				detachBetween( raw_before, raw_after );
-				raw_before.insertAdjacentHTML( 'afterend', raw_value = comment.html );
+				raw_before.insertAdjacentHTML( 'afterend', raw_value );
 			}
 		},
 
@@ -323,13 +336,5 @@ function SvelteComponent ( options ) {
 }
 
 assign( SvelteComponent.prototype, proto );
-
-SvelteComponent.prototype._set = function _set ( newState ) {
-	var oldState = this._state;
-	this._state = assign( {}, oldState, newState );
-	dispatchObservers( this, this._observers.pre, newState, oldState );
-	this._fragment.update( newState, this._state );
-	dispatchObservers( this, this._observers.post, newState, oldState );
-};
 
 export default SvelteComponent;
