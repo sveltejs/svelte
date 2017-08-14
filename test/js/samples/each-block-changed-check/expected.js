@@ -74,7 +74,7 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_each_block ( state, each_block_value, comment, i, component ) {
-	var div, strong, text, text_1, span, text_2_value, text_2, text_3, text_4_value, text_4, text_5, text_6, raw_value, raw_before, raw_after;
+	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before, raw_after;
 
 	return {
 		create: function () {
@@ -83,9 +83,9 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			text = createText( i );
 			text_1 = createText( "\n\n\t\t" );
 			span = createElement( 'span' );
-			text_2 = createText( text_2_value = comment.author );
+			text_2 = createText( text_2_value );
 			text_3 = createText( " wrote " );
-			text_4 = createText( text_4_value = state.elapsed(comment.time, state.time) );
+			text_4 = createText( text_4_value );
 			text_5 = createText( " ago:" );
 			text_6 = createText( "\n\n\t\t" );
 			raw_before = createElement( 'noscript' );
@@ -111,7 +111,7 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			appendNode( text_6, div );
 			appendNode( raw_before, div );
 			appendNode( raw_after, div );
-			raw_before.insertAdjacentHTML( 'afterend', raw_value = comment.html );
+			raw_before.insertAdjacentHTML( 'afterend', raw_value );
 		},
 
 		update: function ( changed, state, each_block_value, comment, i ) {

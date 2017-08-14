@@ -119,8 +119,7 @@ export default function visitIfBlock(
 			anchor,
 			`@createComment()`,
 			`@createComment()`,
-			state.parentNode,
-			true
+			state.parentNode
 		);
 	} else if (node.next) {
 		node.next.usedAsAnchor = true;

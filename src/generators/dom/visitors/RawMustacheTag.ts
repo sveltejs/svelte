@@ -1,4 +1,6 @@
 import deindent from '../../../utils/deindent';
+import addUpdateBlock from './shared/addUpdateBlock';
+import visitTag from './shared/Tag';
 import { DomGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
@@ -14,19 +16,17 @@ export default function visitRawMustacheTag(
 	const before = node._state.name;
 	const after = block.getUniqueName(`${name}_after`);
 
-	const { dependencies, indexes, snippet } = block.contextualise(node.expression);
-
-	const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
-
-	const shouldCache = (
-		node.expression.type !== 'Identifier' ||
-		block.contexts.has(node.expression.name) ||
-		hasChangeableIndex
+	const { init } = visitTag(
+		generator,
+		block,
+		state,
+		node,
+		name,
+		value => deindent`
+			@detachBetween( ${before}, ${after} );
+			${before}.insertAdjacentHTML( 'afterend', ${value} );
+		`
 	);
-
-	const value = shouldCache && block.getUniqueName(`${name}_value`);
-	const init = shouldCache ? `${value} = ${snippet}` : snippet;
-	if (shouldCache) block.addVariable(value);
 
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.
@@ -34,40 +34,16 @@ export default function visitRawMustacheTag(
 		before,
 		`@createElement( 'noscript' )`,
 		`@createElement( 'noscript' )`,
-		state.parentNode,
-		true
+		state.parentNode
 	);
+
 	block.addElement(
 		after,
 		`@createElement( 'noscript' )`,
 		`@createElement( 'noscript' )`,
-		state.parentNode,
-		true
+		state.parentNode
 	);
-
-	const isToplevel = !state.parentNode;
 
 	block.builders.mount.addLine(`${before}.insertAdjacentHTML( 'afterend', ${init} );`);
 	block.builders.detachRaw.addBlock(`@detachBetween( ${before}, ${after} );`);
-
-	if (dependencies.length || hasChangeableIndex) {
-		const changedCheck = (
-			( block.hasOutroMethod ? `#outroing || ` : '' ) +
-			dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
-		);
-
-		const updateCachedValue = `${value} !== ( ${value} = ${snippet} )`;
-
-		const condition = shouldCache ?
-			( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
-			changedCheck;
-
-		block.builders.update.addConditionalLine(
-			condition,
-			deindent`
-				@detachBetween( ${before}, ${after} );
-				${before}.insertAdjacentHTML( 'afterend', ${shouldCache ? value : snippet} );
-			`
-		);
-	}
 }
