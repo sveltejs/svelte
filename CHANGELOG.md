@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.29.3
+
+* Only recompute tag and attribute values if they could have changed ([#768](https://github.com/sveltejs/svelte/issues/768))
+* Fix CSS scoping with multiple levels of descendant selectors ([#767](https://github.com/sveltejs/svelte/issues/767))
+
 ## 1.29.2
 
 * Preserve space before non-parenthesized media query expression ([#759](https://github.com/sveltejs/svelte/issues/759))
