@@ -462,7 +462,7 @@ export default function preprocess(
 
 	generator.blocks.push(block);
 	preprocessChildren(generator, block, state, node, false, [], true, null);
-	block.hasUpdateMethod = block.dependencies.size > 0;
+	block.hasUpdateMethod = true;
 
 	return { block, state };
 }

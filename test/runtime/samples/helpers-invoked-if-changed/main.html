@@ -1,0 +1,13 @@
+<p>{{x}}</p>
+<p>{{myHelper(y)}}</p>
+
+<script>
+	export default {
+		helpers: {
+			myHelper(value) {
+				global.count += 1;
+				return value;
+			}
+		}
+	};
+</script>

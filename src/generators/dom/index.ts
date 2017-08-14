@@ -74,10 +74,9 @@ export default function dom(
 	});
 
 	const builder = new CodeBuilder();
+	const computationBuilder = new CodeBuilder();
 
 	if (computations.length) {
-		const computationBuilder = new CodeBuilder();
-
 		computations.forEach(({ key, deps }) => {
 			if (generator.readonly.has(key)) {
 				// <:Window> bindings
@@ -88,47 +87,17 @@ export default function dom(
 
 			generator.readonly.add(key);
 
-			const condition = `isInitial || ${deps
-				.map(
-					dep =>
-						`( '${dep}' in newState && @differs( state.${dep}, oldState.${dep} ) )`
-				)
-				.join(' || ')}`;
-			const statement = `state.${key} = newState.${key} = @template.computed.${key}( ${deps
+			const condition = `isInitial || ${deps.map(dep =>
+				`( '${dep}' in changed )`
+			).join(' || ')}`;
+
+			const statement = `if ( @differs( ( state.${key} = @template.computed.${key}( ${deps
 				.map(dep => `state.${dep}`)
-				.join(', ')} );`;
+				.join(', ')} ) ), oldState.${key} ) ) changed.${key} = true;`;
 
 			computationBuilder.addConditionalLine(condition, statement);
 		});
-
-		builder.addBlock(deindent`
-			function @recompute ( state, newState, oldState, isInitial ) {
-				${computationBuilder}
-			}
-		`);
 	}
-
-	const _set = deindent`
-		${options.dev &&
-			deindent`
-			if ( typeof newState !== 'object' ) {
-				throw new Error( 'Component .set was called without an object of data key-values to update.' );
-			}
-
-			${Array.from(generator.readonly).map(
-				prop =>
-					`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
-			)}
-		`}
-
-		var oldState = this._state;
-		this._state = @assign( {}, oldState, newState );
-		${computations.length &&
-			`@recompute( this._state, newState, oldState, false )`}
-		@dispatchObservers( this, this._observers.pre, newState, oldState );
-		${block.hasUpdateMethod && `this._fragment.update( newState, this._state );`}
-		@dispatchObservers( this, this._observers.post, newState, oldState );
-	`;
 
 	if (hasJs) {
 		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
@@ -174,7 +143,7 @@ export default function dom(
 		? `@proto `
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown']
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', '_set', 'teardown']
 				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
@@ -190,7 +159,7 @@ export default function dom(
 				? `@assign( @template.data(), options.data )`
 				: `options.data || {}`};
 			${generator.metaBindings}
-			${computations.length && `@recompute( this._state, this._state, {}, true );`}
+			${computations.length && `this._recompute( {}, this._state, {}, true );`}
 			${options.dev &&
 				Array.from(generator.expectedProperties).map(
 					prop =>
@@ -259,9 +228,20 @@ export default function dom(
 
 		@assign( ${prototypeBase}, ${proto});
 
-		${name}.prototype._set = function _set ( newState ) {
-			${_set}
-		};
+		${options.dev && deindent`
+			${name}.prototype._checkReadOnly = function _checkReadOnly ( newState ) {
+				${Array.from(generator.readonly).map(
+					prop =>
+						`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
+				)}
+			};
+		`}
+
+		${computations.length ? deindent`
+			${name}.prototype._recompute = function _recompute ( changed, state, oldState, isInitial ) {
+				${computationBuilder}
+			}
+		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
 
 		${templateProperties.setup && `@template.setup( ${name} );`}
 	`);
