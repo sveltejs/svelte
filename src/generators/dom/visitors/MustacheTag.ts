@@ -13,7 +13,7 @@ export default function visitMustacheTag(
 	const name = node._state.name;
 	const value = block.getUniqueName(`${name}_value`);
 
-	const { snippet } = block.contextualise(node.expression);
+	const { dependencies, snippet } = block.contextualise(node.expression);
 
 	block.addVariable(value);
 	block.addElement(
@@ -26,9 +26,13 @@ export default function visitMustacheTag(
 		true
 	);
 
-	block.builders.update.addBlock(deindent`
-		if ( ${value} !== ( ${value} = ${snippet} ) ) {
-			${name}.data = ${value};
-		}
-	`);
+	if (dependencies.length) {
+		const changedCheck = dependencies.map(dependency => `'${dependency}' in changed`).join(' || ');
+
+		block.builders.update.addBlock(deindent`
+			if ( ( ${changedCheck} ) && ${value} !== ( ${value} = ${snippet} ) ) {
+				${name}.data = ${value};
+			}
+		`);
+	}
 }
