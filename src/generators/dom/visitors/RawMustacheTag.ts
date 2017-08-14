@@ -12,12 +12,21 @@ export default function visitRawMustacheTag(
 ) {
 	const name = node._state.basename;
 	const before = node._state.name;
-	const value = block.getUniqueName(`${name}_value`);
 	const after = block.getUniqueName(`${name}_after`);
 
-	const { snippet } = block.contextualise(node.expression);
+	const { dependencies, indexes, snippet } = block.contextualise(node.expression);
 
-	block.addVariable(value);
+	const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
+
+	const shouldCache = (
+		node.expression.type !== 'Identifier' ||
+		block.contexts.has(node.expression.name) ||
+		hasChangeableIndex
+	);
+
+	const value = shouldCache && block.getUniqueName(`${name}_value`);
+	const init = shouldCache ? `${value} = ${snippet}` : snippet;
+	if (shouldCache) block.addVariable(value);
 
 	// we would have used comments here, but the `insertAdjacentHTML` api only
 	// exists for `Element`s.
@@ -38,17 +47,27 @@ export default function visitRawMustacheTag(
 
 	const isToplevel = !state.parentNode;
 
-	const mountStatement = `${before}.insertAdjacentHTML( 'afterend', ${value} = ${snippet} );`;
-	const detachStatement = `@detachBetween( ${before}, ${after} );`;
+	block.builders.mount.addLine(`${before}.insertAdjacentHTML( 'afterend', ${init} );`);
+	block.builders.detachRaw.addBlock(`@detachBetween( ${before}, ${after} );`);
 
-	block.builders.mount.addLine(mountStatement);
+	if (dependencies.length || hasChangeableIndex) {
+		const changedCheck = (
+			( block.hasOutroMethod ? `#outroing || ` : '' ) +
+			dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
+		);
 
-	block.builders.update.addBlock(deindent`
-		if ( ${value} !== ( ${value} = ${snippet} ) ) {
-			${detachStatement}
-			${mountStatement}
-		}
-	`);
+		const updateCachedValue = `${value} !== ( ${value} = ${snippet} )`;
 
-	block.builders.detachRaw.addBlock(detachStatement);
+		const condition = shouldCache ?
+			( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
+			changedCheck;
+
+		block.builders.update.addConditionalLine(
+			condition,
+			deindent`
+				@detachBetween( ${before}, ${after} );
+				${before}.insertAdjacentHTML( 'afterend', ${shouldCache ? value : snippet} );
+			`
+		);
+	}
 }

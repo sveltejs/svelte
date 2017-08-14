@@ -125,7 +125,7 @@ export function normalizeHtml(window, html) {
 		.replace(/>[\s\r\n]+</g, '><')
 		.trim();
 	cleanChildren(node, '');
-	return node.innerHTML;
+	return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 }
 
 export function setupHtmlEqual() {
