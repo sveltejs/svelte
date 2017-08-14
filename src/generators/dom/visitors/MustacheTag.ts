@@ -10,17 +10,21 @@ export default function visitMustacheTag(
 	state: State,
 	node: Node
 ) {
-	const name = node._state.name;
-	const value = block.getUniqueName(`${name}_value`);
-
 	const { dependencies, snippet } = block.contextualise(node.expression);
 
-	block.addVariable(value);
+	const shouldCache = node.expression.type !== 'Identifier' || block.contexts.has(node.expression.name);
+
+	const name = node._state.name;
+	const value = shouldCache && block.getUniqueName(`${name}_value`);
+	const init = shouldCache ? `${value} = ${snippet}` : snippet;
+
+	if (shouldCache) block.addVariable(value);
+
 	block.addElement(
 		name,
-		`@createText( ${value} = ${snippet} )`,
+		`@createText( ${init} )`,
 		generator.hydratable
-			? `@claimText( ${state.parentNodes}, ${value} = ${snippet} )`
+			? `@claimText( ${state.parentNodes}, ${init} )`
 			: '',
 		state.parentNode,
 		true
@@ -32,10 +36,13 @@ export default function visitMustacheTag(
 			dependencies.map(dependency => `'${dependency}' in changed`).join(' || ')
 		);
 
-		block.builders.update.addBlock(deindent`
-			if ( ( ${changedCheck} ) && ${value} !== ( ${value} = ${snippet} ) ) {
-				${name}.data = ${value};
-			}
-		`);
+		const condition = shouldCache ?
+			`( ${changedCheck} ) && ${value} !== ( ${value} = ${snippet} )` :
+			changedCheck;
+
+		block.builders.update.addConditionalLine(
+			condition,
+			`${name}.data = ${shouldCache ? value : snippet};`
+		);
 	}
 }
