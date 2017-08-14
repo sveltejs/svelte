@@ -6,7 +6,10 @@ export default {
 		]
 	},
 
-	html: '<p>implement keyed each blocks</p><p>implement client-side hydration</p>',
+	html: `
+		<p>1: implement keyed each blocks</p>
+		<p>2: implement client-side hydration</p>
+	`,
 
 	test ( assert, component, target ) {
 		const [ p1, p2 ] = target.querySelectorAll( 'p' );
@@ -16,7 +19,7 @@ export default {
 				{ id: 234, description: 'implement client-side hydration' }
 			]
 		});
-		assert.htmlEqual( target.innerHTML, '<p>implement client-side hydration</p>' );
+		assert.htmlEqual( target.innerHTML, '<p>1: implement client-side hydration</p>' );
 
 		const [ p3 ] = target.querySelectorAll( 'p' );
 

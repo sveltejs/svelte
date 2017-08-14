@@ -189,7 +189,10 @@ const preprocessors = {
 		contexts.set(node.context, context);
 
 		const indexes = new Map(block.indexes);
-		if (node.index) indexes.set(indexName, node.context);
+		if (node.index) indexes.set(node.index, node.context);
+
+		const changeableIndexes = new Map(block.changeableIndexes);
+		if (node.index) changeableIndexes.set(node.index, node.key);
 
 		const contextDependencies = new Map(block.contextDependencies);
 		contextDependencies.set(node.context, dependencies);
@@ -203,6 +206,7 @@ const preprocessors = {
 			contextDependencies,
 			contexts,
 			indexes,
+			changeableIndexes,
 
 			listName,
 			indexName,
@@ -273,6 +277,11 @@ const preprocessors = {
 							});
 						}
 					}
+				});
+			} else if (attribute.type === 'EventHandler' && attribute.expression) {
+				attribute.expression.arguments.forEach((arg: Node) => {
+					const dependencies = block.findDependencies(arg);
+					block.addDependencies(dependencies);
 				});
 			} else if (attribute.type === 'Binding') {
 				const dependencies = block.findDependencies(attribute.value);
@@ -444,6 +453,7 @@ export default function preprocess(
 
 		contexts: new Map(),
 		indexes: new Map(),
+		changeableIndexes: new Map(),
 		contextDependencies: new Map(),
 
 		params: ['state'],
