@@ -35,7 +35,7 @@ function create_main_fragment ( state, component ) {
 		update: function ( changed, state ) {
 			var each_block_value = state.comments;
 
-			if ( 'comments' in changed || 'elapsed' in changed || 'time' in changed ) {
+			if ( changed.comments || changed.elapsed || changed.time ) {
 				for ( var i = 0; i < each_block_value.length; i += 1 ) {
 					if ( each_block_iterations[i] ) {
 						each_block_iterations[i].update( changed, state, each_block_value, each_block_value[i], i );
@@ -53,7 +53,7 @@ function create_main_fragment ( state, component ) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( 'foo' in changed ) {
+			if ( changed.foo ) {
 				text_1.data = state.foo;
 			}
 		},
@@ -115,15 +115,15 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 		},
 
 		update: function ( changed, state, each_block_value, comment, i ) {
-			if ( ( 'comments' in changed ) && text_2_value !== ( text_2_value = comment.author ) ) {
+			if ( ( changed.comments ) && text_2_value !== ( text_2_value = comment.author ) ) {
 				text_2.data = text_2_value;
 			}
 
-			if ( ( 'elapsed' in changed || 'comments' in changed || 'time' in changed ) && text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
+			if ( ( changed.elapsed || changed.comments || changed.time ) && text_4_value !== ( text_4_value = state.elapsed(comment.time, state.time) ) ) {
 				text_4.data = text_4_value;
 			}
 
-			if ( ( 'comments' in changed ) && raw_value !== ( raw_value = comment.html ) ) {
+			if ( ( changed.comments ) && raw_value !== ( raw_value = comment.html ) ) {
 				detachBetween( raw_before, raw_after );
 				raw_before.insertAdjacentHTML( 'afterend', raw_value );
 			}

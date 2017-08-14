@@ -195,10 +195,8 @@ export default function visitComponent(
 			if (attribute.dependencies.length) {
 				return deindent`
 					if ( ${attribute.dependencies
-						.map(dependency => `'${dependency}' in changed`)
-						.join(
-							'||'
-						)} ) ${name}_changes.${attribute.name} = ${attribute.value};
+						.map(dependency => `changed.${dependency}`)
+						.join(' || ')} ) ${name}_changes.${attribute.name} = ${attribute.value};
 				`;
 			}
 
