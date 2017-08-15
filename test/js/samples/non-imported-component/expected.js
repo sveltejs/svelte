@@ -62,6 +62,7 @@ function SvelteComponent ( options ) {
 
 	this._root = options._root || this;
 	this._yield = options._yield;
+	this._bind = options._bind;
 
 	if ( !options._root ) {
 		this._oncreate = [];
