@@ -51,6 +51,7 @@ function SvelteComponent ( options ) {
 
 	this._root = options._root || this;
 	this._yield = options._yield;
+	this._bind = options._bind;
 
 	if ( !document.getElementById( 'svelte-2363328337-style' ) ) add_css();
 

@@ -152,12 +152,12 @@ export default function visitComponent(
 
 	const statements: string[] = [];
 	let name_updating: string;
-	let initialData: string;
+	let name_initial_data: string;
 	let bindings = [];
 
 	if (local.bindings.length) {
 		name_updating = block.alias(`${name}_updating`);
-		initialData = block.getUniqueName(`${name}_initial_data`);
+		name_initial_data = block.getUniqueName(`${name}_initial_data`);
 
 		block.addVariable(name_updating, '{}');
 
@@ -196,7 +196,7 @@ export default function visitComponent(
 			return {
 				init: deindent`
 					if ( ${binding.prop} in ${binding.obj} ) {
-						${initialData}.${binding.name} = ${binding.snippet};
+						${name_initial_data}.${binding.name} = ${binding.snippet};
 						${name_updating}.${binding.name} = true;
 					}`,
 				bind: deindent`
@@ -233,13 +233,13 @@ export default function visitComponent(
 		const initialPropString = stringifyProps(initialProps);
 
 		if (local.bindings.length) {
-			statements.push(`var ${initialData} = ${initialPropString};`);
+			statements.push(`var ${name_initial_data} = ${initialPropString};`);
 
 			bindings.forEach(binding => {
 				statements.push(binding.init);
 			});
 
-			componentInitProperties.push(`data: ${initialData}`);
+			componentInitProperties.push(`data: ${name_initial_data}`);
 
 			componentInitProperties.push(deindent`
 				_bind: function(changed, childState) {

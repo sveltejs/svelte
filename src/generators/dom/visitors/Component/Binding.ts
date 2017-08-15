@@ -1,6 +1,5 @@
 import deindent from '../../../../utils/deindent';
 import flattenReference from '../../../../utils/flattenReference';
-import getSetter from '../shared/binding/getSetter';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
@@ -52,52 +51,5 @@ export default function visitBinding(
 		dependencies
 	});
 
-	const setter = getSetter({
-		block,
-		name,
-		snippet,
-		_this: 'this',
-		props: '_context',
-		attribute,
-		dependencies,
-		value: 'value',
-	});
-
 	generator.hasComplexBindings = true;
-
-	const updating = block.getUniqueName(`${local.name}_updating`);
-	block.addVariable(updating, 'false');
-
-	const observer = block.getUniqueName('observer');
-	const value = block.getUniqueName('value');
-
-	//console.log({ setter });
-
-	// local.create.addBlock(deindent`
-	// 	function ${observer} ( value ) {
-	// 		if ( ${updating} ) return;
-	// 		${updating} = true;
-	// 		${setter}
-	// 		${updating} = false;
-	// 	}
-
-	// 	${local.name}.observe( '${attribute.name}', ${observer}, { init: false });
-
-	// 	#component._root._beforecreate.push( function () {
-	// 		var value = ${local.name}.get( '${attribute.name}' );
-	// 		if ( @differs( value, ${snippet} ) ) {
-	// 			${observer}.call( ${local.name}, value );
-	// 		}
-	// 	});
-	// `);
-
-	// local.update.addBlock(deindent`
-	// 	if ( !${updating} && ${dependencies
-	// 	.map(dependency => `changed.${dependency}`)
-	// 	.join(' || ')} ) {
-	// 		${updating} = true;
-	// 		${local.name}._set({ ${attribute.name}: ${snippet} });
-	// 		${updating} = false;
-	// 	}
-	// `);
 }
