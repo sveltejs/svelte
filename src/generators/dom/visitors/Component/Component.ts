@@ -151,8 +151,71 @@ export default function visitComponent(
 	}
 
 	const statements: string[] = [];
-	const name_updating = local.bindings.length && block.alias(`${name}_updating`);
-	if (local.bindings.length) block.addVariable(name_updating, '{}');
+	let name_updating: string;
+	let initialData: string;
+	let bindings = [];
+
+	if (local.bindings.length) {
+		name_updating = block.alias(`${name}_updating`);
+		initialData = block.getUniqueName(`${name}_initial_data`);
+
+		block.addVariable(name_updating, '{}');
+
+		bindings = local.bindings.map(binding => {
+			let setParentFromChild;
+
+			const { name: key } = getObject(binding.value);
+
+			if (block.contexts.has(key)) {
+				const prop = binding.dependencies[0];
+				const computed = isComputed(binding.value);
+				const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+
+				setParentFromChild = deindent`
+					var list = ${name}._context.${block.listNames.get(key)};
+					var index = ${name}._context.${block.indexNames.get(key)};
+					list[index]${tail} = childState.${binding.name};
+
+					${binding.dependencies
+						.map((prop: string) => `newState.${prop} = state.${prop};`)
+						.join('\n')}
+				`;
+			}
+
+			else if (binding.value.type === 'MemberExpression') {
+				setParentFromChild = deindent`
+					${binding.snippet} = childState.${binding.name};
+					${binding.dependencies.map((prop: string) => `newState.${prop} = state.${prop};`).join('\n')}
+				`;
+			}
+
+			else {
+				setParentFromChild = `newState.${binding.value.name} = childState.${binding.name};`;
+			}
+
+			return {
+				init: deindent`
+					if ( ${binding.prop} in ${binding.obj} ) {
+						${initialData}.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
+					}`,
+				bind: deindent`
+					if (!${name_updating}.${binding.name} && changed.${binding.name}) {
+						${setParentFromChild}
+					}
+				`,
+				setParentFromChild,
+
+				// TODO could binding.dependencies.length ever be 0?
+				update: binding.dependencies.length && deindent`
+					if ( !${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')} ) {
+						${name}_changes.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
+					}
+				`
+			}
+		});
+	}
 
 	if (
 		local.staticAttributes.length ||
@@ -166,14 +229,10 @@ export default function visitComponent(
 		const initialPropString = stringifyProps(initialProps);
 
 		if (local.bindings.length) {
-			const initialData = block.getUniqueName(`${name}_initial_data`);
-
 			statements.push(`var ${initialData} = ${initialPropString};`);
 
-			local.bindings.forEach(binding => {
-				statements.push(
-					`if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.snippet};`
-				);
+			bindings.forEach(binding => {
+				statements.push(binding.init);
 			});
 
 			componentInitProperties.push(`data: ${initialData}`);
@@ -181,38 +240,7 @@ export default function visitComponent(
 			componentInitProperties.push(deindent`
 				_bind: function(changed, childState) {
 					var state = #component.get(), newState = {};
-					${local.bindings.map(binding => {
-						const { name: key } = getObject(binding.value);
-
-						if (block.contexts.has(key)) {
-							const prop = binding.dependencies[0];
-							const computed = isComputed(binding.value);
-							const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
-
-							return deindent`
-								if (changed.${binding.name}) {
-									var list = ${name}._context.${block.listNames.get(key)};
-									var index = ${name}._context.${block.indexNames.get(key)};
-									list[index]${tail} = childState.${binding.name};
-
-									${binding.dependencies
-										.map((prop: string) => `newState.${prop} = state.${prop};`)
-										.join('\n')}
-								}
-							`;
-						}
-
-						if (binding.value.type === 'MemberExpression') {
-							return deindent`
-								if (changed.${binding.name}) {
-									${binding.snippet} = childState.${binding.name};
-									${binding.dependencies.map((prop: string) => `newState.${prop} = state.${prop};`).join('\n')}
-								}
-							`;
-						}
-
-						return `if (changed.${key}) newState.${binding.value.name} = childState.${key};`;
-					})}
+					${bindings.map(binding => binding.bind).join('\n')}
 					${name_updating} = changed;
 					#component._set(newState);
 					${name_updating} = {};
@@ -233,13 +261,19 @@ export default function visitComponent(
 		var ${name} = new ${expression}({
 			${componentInitProperties.join(',\n')}
 		});
-
-		#component._root._beforecreate.push(function () {
-			var state = component.get(), newState = {};
-			// TODO
-			#component._set(newState);
-		});
 	`);
+
+	if (bindings.length) {
+		local.create.addBlock(deindent`
+			#component._root._beforecreate.push(function () {
+				var state = #component.get(), childState = ${name}.get(), newState = {};
+				${bindings.map(binding => binding.setParentFromChild).join('\n')}
+				${name_updating} = { ${local.bindings.map(binding => `${binding.name}: true`).join(', ')} };
+				#component._set(newState);
+				${name_updating} = {};
+			});
+		`);
+	}
 
 	if (local.dynamicAttributes.length || local.bindings.length) {
 		const updates: string[] = [];
@@ -260,22 +294,15 @@ export default function visitComponent(
 			}
 		});
 
-		local.bindings.forEach(binding => {
-			if (binding.dependencies.length) {
-				updates.push(deindent`
-					if ( !${name_updating}.${binding.name} && ${binding.dependencies
-						.map((dependency: string) => `changed.${dependency}`)
-						.join(' || ')} ) ${name}_changes.${binding.name} = ${binding.snippet};
-				`);
-			}
+		bindings.forEach(binding => {
+			if (binding.update) updates.push(binding.update);
 		});
 
 		local.update.addBlock(deindent`
 			var ${name}_changes = {};
-
 			${updates.join('\n')}
-
 			${name}._set( ${name}_changes );
+			${bindings.length && `${name_updating} = {};`}
 		`);
 	}
 
