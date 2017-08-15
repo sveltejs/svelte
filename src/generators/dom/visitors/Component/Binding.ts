@@ -45,9 +45,11 @@ export default function visitBinding(
 
 	local.bindings.push({
 		name: attribute.name,
-		value: snippet,
+		value: attribute.value,
+		snippet: snippet,
 		obj,
 		prop,
+		dependencies
 	});
 
 	const setter = getSetter({
@@ -69,31 +71,33 @@ export default function visitBinding(
 	const observer = block.getUniqueName('observer');
 	const value = block.getUniqueName('value');
 
-	local.create.addBlock(deindent`
-		function ${observer} ( value ) {
-			if ( ${updating} ) return;
-			${updating} = true;
-			${setter}
-			${updating} = false;
-		}
+	//console.log({ setter });
 
-		${local.name}.observe( '${attribute.name}', ${observer}, { init: false });
+	// local.create.addBlock(deindent`
+	// 	function ${observer} ( value ) {
+	// 		if ( ${updating} ) return;
+	// 		${updating} = true;
+	// 		${setter}
+	// 		${updating} = false;
+	// 	}
 
-		#component._root._beforecreate.push( function () {
-			var value = ${local.name}.get( '${attribute.name}' );
-			if ( @differs( value, ${snippet} ) ) {
-				${observer}.call( ${local.name}, value );
-			}
-		});
-	`);
+	// 	${local.name}.observe( '${attribute.name}', ${observer}, { init: false });
 
-	local.update.addBlock(deindent`
-		if ( !${updating} && ${dependencies
-		.map(dependency => `changed.${dependency}`)
-		.join(' || ')} ) {
-			${updating} = true;
-			${local.name}._set({ ${attribute.name}: ${snippet} });
-			${updating} = false;
-		}
-	`);
+	// 	#component._root._beforecreate.push( function () {
+	// 		var value = ${local.name}.get( '${attribute.name}' );
+	// 		if ( @differs( value, ${snippet} ) ) {
+	// 			${observer}.call( ${local.name}, value );
+	// 		}
+	// 	});
+	// `);
+
+	// local.update.addBlock(deindent`
+	// 	if ( !${updating} && ${dependencies
+	// 	.map(dependency => `changed.${dependency}`)
+	// 	.join(' || ')} ) {
+	// 		${updating} = true;
+	// 		${local.name}._set({ ${attribute.name}: ${snippet} });
+	// 		${updating} = false;
+	// 	}
+	// `);
 }

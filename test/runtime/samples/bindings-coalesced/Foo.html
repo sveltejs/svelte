@@ -1,0 +1,20 @@
+<p>bar in Foo: {{bar}}</p>
+<p>baz in Foo: {{baz}}</p>
+
+<script>
+	export default {
+		data() {
+			return {
+				bar: 1,
+				baz: 2
+			};
+		},
+
+		methods: {
+			double() {
+				const { bar, baz } = this.get();
+				this.set({ bar: bar * 2, baz: baz * 2 });
+			}
+		}
+	};
+</script>

@@ -7,6 +7,8 @@ import visitBinding from './Binding';
 import visitRef from './Ref';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
+import getTailSnippet from '../../../../utils/getTailSnippet';
+import getObject from '../../../../utils/getObject';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 
@@ -149,6 +151,8 @@ export default function visitComponent(
 	}
 
 	const statements: string[] = [];
+	const name_updating = local.bindings.length && block.alias(`${name}_updating`);
+	if (local.bindings.length) block.addVariable(name_updating, '{}');
 
 	if (
 		local.staticAttributes.length ||
@@ -168,11 +172,52 @@ export default function visitComponent(
 
 			local.bindings.forEach(binding => {
 				statements.push(
-					`if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.value};`
+					`if ( ${binding.prop} in ${binding.obj} ) ${initialData}.${binding.name} = ${binding.snippet};`
 				);
 			});
 
 			componentInitProperties.push(`data: ${initialData}`);
+
+			componentInitProperties.push(deindent`
+				_bind: function(changed, childState) {
+					var state = #component.get(), newState = {};
+					${local.bindings.map(binding => {
+						const { name: key } = getObject(binding.value);
+
+						if (block.contexts.has(key)) {
+							const prop = binding.dependencies[0];
+							const computed = isComputed(binding.value);
+							const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+
+							return deindent`
+								if (changed.${binding.name}) {
+									var list = ${name}._context.${block.listNames.get(key)};
+									var index = ${name}._context.${block.indexNames.get(key)};
+									list[index]${tail} = childState.${binding.name};
+
+									${binding.dependencies
+										.map((prop: string) => `newState.${prop} = state.${prop};`)
+										.join('\n')}
+								}
+							`;
+						}
+
+						if (binding.value.type === 'MemberExpression') {
+							return deindent`
+								if (changed.${binding.name}) {
+									${binding.snippet} = childState.${binding.name};
+									${binding.dependencies.map((prop: string) => `newState.${prop} = state.${prop};`).join('\n')}
+								}
+							`;
+						}
+
+						return `if (changed.${key}) newState.${binding.value.name} = childState.${key};`;
+					})}
+					${name_updating} = changed;
+					#component._set(newState);
+					${name_updating} = {};
+				}
+			`);
 		} else if (initialProps.length) {
 			componentInitProperties.push(`data: ${initialPropString}`);
 		}
@@ -188,21 +233,41 @@ export default function visitComponent(
 		var ${name} = new ${expression}({
 			${componentInitProperties.join(',\n')}
 		});
+
+		#component._root._beforecreate.push(function () {
+			var state = component.get(), newState = {};
+			// TODO
+			#component._set(newState);
+		});
 	`);
 
-	if (local.dynamicAttributes.length) {
-		const updates = local.dynamicAttributes.map(attribute => {
+	if (local.dynamicAttributes.length || local.bindings.length) {
+		const updates: string[] = [];
+
+		local.dynamicAttributes.forEach(attribute => {
 			if (attribute.dependencies.length) {
-				return deindent`
+				updates.push(deindent`
 					if ( ${attribute.dependencies
 						.map(dependency => `changed.${dependency}`)
 						.join(' || ')} ) ${name}_changes.${attribute.name} = ${attribute.value};
-				`;
+				`);
 			}
 
-			// TODO this is an odd situation to encounter – I *think* it should only happen with
-			// each block indices, in which case it may be possible to optimise this
-			return `${name}_changes.${attribute.name} = ${attribute.value};`;
+			else {
+				// TODO this is an odd situation to encounter – I *think* it should only happen with
+				// each block indices, in which case it may be possible to optimise this
+				updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
+			}
+		});
+
+		local.bindings.forEach(binding => {
+			if (binding.dependencies.length) {
+				updates.push(deindent`
+					if ( !${name_updating}.${binding.name} && ${binding.dependencies
+						.map((dependency: string) => `changed.${dependency}`)
+						.join(' || ')} ) ${name}_changes.${binding.name} = ${binding.snippet};
+				`);
+			}
 		});
 
 		local.update.addBlock(deindent`
@@ -232,4 +297,13 @@ export default function visitComponent(
 	);
 
 	if (!local.update.isEmpty()) block.builders.update.addBlock(local.update);
+}
+
+function isComputed(node: Node) {
+	while (node.type === 'MemberExpression') {
+		if (node.computed) return true;
+		node = node.object;
+	}
+
+	return false;
 }
