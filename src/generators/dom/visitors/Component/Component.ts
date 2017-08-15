@@ -204,7 +204,11 @@ export default function visitComponent(
 						${setParentFromChild}
 					}
 				`,
-				setParentFromChild,
+				setParentFromChild: deindent`
+					if (!${name_updating}.${binding.name}) {
+						${setParentFromChild}
+					}
+				`,
 
 				// TODO could binding.dependencies.length ever be 0?
 				update: binding.dependencies.length && deindent`
@@ -267,6 +271,7 @@ export default function visitComponent(
 		local.create.addBlock(deindent`
 			#component._root._beforecreate.push(function () {
 				var state = #component.get(), childState = ${name}.get(), newState = {};
+				if (!childState) return;
 				${bindings.map(binding => binding.setParentFromChild).join('\n')}
 				${name_updating} = { ${local.bindings.map(binding => `${binding.name}: true`).join(', ')} };
 				#component._set(newState);
