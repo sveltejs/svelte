@@ -122,11 +122,16 @@ export default class Generator {
 		expression: Node,
 		context: string,
 		isEventHandler: boolean
-	) {
+	): {
+		dependencies: string[],
+		contexts: Set<string>,
+		indexes: Set<string>,
+		snippet: string
+	} {
 		this.addSourcemapLocations(expression);
 
-		const usedContexts = new Set();
-		const usedIndexes = new Set();
+		const usedContexts: Set<string> = new Set();
+		const usedIndexes: Set<string> = new Set();
 
 		const { code, helpers } = this;
 		const { contexts, indexes } = block;
@@ -208,7 +213,7 @@ export default class Generator {
 			},
 		});
 
-		const dependencies = new Set(expression._dependencies || []);
+		const dependencies: Set<string> = new Set(expression._dependencies || []);
 
 		if (expression._dependencies) {
 			expression._dependencies.forEach((prop: string) => {
