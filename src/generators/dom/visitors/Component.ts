@@ -252,19 +252,19 @@ export default function visitComponent(
 		${beforecreate}
 	`);
 
-	if (!state.parentNode) block.builders.unmount.addLine(`${name}._fragment.unmount();`);
-	block.builders.destroy.addLine(`${name}.destroy( false );`);
-
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
-
 	block.builders.create.addLine(`${name}._fragment.create();`);
+
 	block.builders.claim.addLine(
 		`${name}._fragment.claim( ${state.parentNodes} );`
 	);
+
 	block.builders.mount.addLine(
-		`${name}._fragment.mount( ${targetNode}, ${anchorNode} );`
+		`${name}._fragment.mount( ${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'} );`
 	);
+
+	if (!state.parentNode) block.builders.unmount.addLine(`${name}._fragment.unmount();`);
+
+	block.builders.destroy.addLine(`${name}.destroy( false );`);
 
 	// event handlers
 	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((handler: Node) => {
