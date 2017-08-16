@@ -178,6 +178,7 @@ export default function dom(
 
 			this._root = options._root || this;
 			this._yield = options._yield;
+			this._bind = options._bind;
 
 			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
