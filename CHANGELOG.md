@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.30.0
+
+* Update all component bindings simultaneously ([#760](https://github.com/sveltejs/svelte/issues/760))
+* Fix `@keyframes` atrules with `from` and `to` selectors ([#774](https://github.com/sveltejs/svelte/issues/774))
+
 ## 1.29.3
 
 * Only recompute tag and attribute values if they could have changed ([#768](https://github.com/sveltejs/svelte/issues/768))
