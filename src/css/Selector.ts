@@ -52,7 +52,7 @@ export default class Selector {
 		});
 	}
 
-	transform(code: MagicString, attr: string, id: string) {
+	transform(code: MagicString, attr: string) {
 		function encapsulateBlock(block: Block) {
 			let i = block.selectors.length;
 			while (i--) {
