@@ -153,73 +153,8 @@ export default function visitComponent(
 	const statements: string[] = [];
 	let name_updating: string;
 	let name_initial_data: string;
+	let _beforecreate: string = null;
 	let bindings = [];
-
-	if (local.bindings.length) {
-		name_updating = block.alias(`${name}_updating`);
-		name_initial_data = block.getUniqueName(`${name}_initial_data`);
-
-		block.addVariable(name_updating, '{}');
-
-		bindings = local.bindings.map(binding => {
-			let setParentFromChild;
-
-			const { name: key } = getObject(binding.value);
-
-			if (block.contexts.has(key)) {
-				const prop = binding.dependencies[0];
-				const computed = isComputed(binding.value);
-				const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
-
-				setParentFromChild = deindent`
-					var list = ${name}._context.${block.listNames.get(key)};
-					var index = ${name}._context.${block.indexNames.get(key)};
-					list[index]${tail} = childState.${binding.name};
-
-					${binding.dependencies
-						.map((prop: string) => `newState.${prop} = state.${prop};`)
-						.join('\n')}
-				`;
-			}
-
-			else if (binding.value.type === 'MemberExpression') {
-				setParentFromChild = deindent`
-					${binding.snippet} = childState.${binding.name};
-					${binding.dependencies.map((prop: string) => `newState.${prop} = state.${prop};`).join('\n')}
-				`;
-			}
-
-			else {
-				setParentFromChild = `newState.${binding.value.name} = childState.${binding.name};`;
-			}
-
-			return {
-				init: deindent`
-					if ( ${binding.prop} in ${binding.obj} ) {
-						${name_initial_data}.${binding.name} = ${binding.snippet};
-						${name_updating}.${binding.name} = true;
-					}`,
-				bind: deindent`
-					if (!${name_updating}.${binding.name} && changed.${binding.name}) {
-						${setParentFromChild}
-					}
-				`,
-				setParentFromChild: deindent`
-					if (!${name_updating}.${binding.name}) {
-						${setParentFromChild}
-					}
-				`,
-
-				// TODO could binding.dependencies.length ever be 0?
-				update: binding.dependencies.length && deindent`
-					if ( !${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')} ) {
-						${name}_changes.${binding.name} = ${binding.snippet};
-						${name_updating}.${binding.name} = true;
-					}
-				`
-			}
-		});
-	}
 
 	if (
 		local.staticAttributes.length ||
@@ -232,55 +167,6 @@ export default function visitComponent(
 
 		const initialPropString = stringifyProps(initialProps);
 
-		if (local.bindings.length) {
-			statements.push(`var ${name_initial_data} = ${initialPropString};`);
-
-			bindings.forEach(binding => {
-				statements.push(binding.init);
-			});
-
-			componentInitProperties.push(`data: ${name_initial_data}`);
-
-			componentInitProperties.push(deindent`
-				_bind: function(changed, childState) {
-					var state = #component.get(), newState = {};
-					${bindings.map(binding => binding.bind).join('\n')}
-					${name_updating} = changed;
-					#component._set(newState);
-					${name_updating} = {};
-				}
-			`);
-		} else if (initialProps.length) {
-			componentInitProperties.push(`data: ${initialPropString}`);
-		}
-	}
-
-	const expression = node.name === ':Self'
-		? generator.name
-		: generator.importedComponents.get(node.name) ||
-				`@template.components.${node.name}`;
-
-	local.create.addBlockAtStart(deindent`
-		${statements.join('\n')}
-		var ${name} = new ${expression}({
-			${componentInitProperties.join(',\n')}
-		});
-	`);
-
-	if (bindings.length) {
-		local.create.addBlock(deindent`
-			#component._root._beforecreate.push(function () {
-				var state = #component.get(), childState = ${name}.get(), newState = {};
-				if (!childState) return;
-				${bindings.map(binding => binding.setParentFromChild).join('\n')}
-				${name_updating} = { ${local.bindings.map(binding => `${binding.name}: true`).join(', ')} };
-				#component._set(newState);
-				${name_updating} = {};
-			});
-		`);
-	}
-
-	if (local.dynamicAttributes.length || local.bindings.length) {
 		const updates: string[] = [];
 
 		local.dynamicAttributes.forEach(attribute => {
@@ -299,9 +185,105 @@ export default function visitComponent(
 			}
 		});
 
-		bindings.forEach(binding => {
-			if (binding.update) updates.push(binding.update);
-		});
+		if (local.bindings.length) {
+			name_updating = block.alias(`${name}_updating`);
+			name_initial_data = block.getUniqueName(`${name}_initial_data`);
+
+			block.addVariable(name_updating, '{}');
+			statements.push(`var ${name_initial_data} = ${initialPropString};`);
+
+			bindings = local.bindings.map(binding => {
+				let setParentFromChild;
+
+				const { name: key } = getObject(binding.value);
+
+				if (block.contexts.has(key)) {
+					const prop = binding.dependencies[0];
+					const computed = isComputed(binding.value);
+					const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+
+					setParentFromChild = deindent`
+						var list = ${name}._context.${block.listNames.get(key)};
+						var index = ${name}._context.${block.indexNames.get(key)};
+						list[index]${tail} = childState.${binding.name};
+
+						${binding.dependencies
+							.map((prop: string) => `newState.${prop} = state.${prop};`)
+							.join('\n')}
+					`;
+				}
+
+				else if (binding.value.type === 'MemberExpression') {
+					setParentFromChild = deindent`
+						${binding.snippet} = childState.${binding.name};
+						${binding.dependencies.map((prop: string) => `newState.${prop} = state.${prop};`).join('\n')}
+					`;
+				}
+
+				else {
+					setParentFromChild = `newState.${binding.value.name} = childState.${binding.name};`;
+				}
+
+				return {
+					init: deindent`
+						if ( ${binding.prop} in ${binding.obj} ) {
+							${name_initial_data}.${binding.name} = ${binding.snippet};
+							${name_updating}.${binding.name} = true;
+						}`,
+					bind: deindent`
+						if (!${name_updating}.${binding.name} && changed.${binding.name}) {
+							${setParentFromChild}
+						}
+					`,
+					setParentFromChild: deindent`
+						if (!${name_updating}.${binding.name}) {
+							${setParentFromChild}
+						}
+					`,
+
+					// TODO could binding.dependencies.length ever be 0?
+					update: binding.dependencies.length && deindent`
+						if ( !${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')} ) {
+							${name}_changes.${binding.name} = ${binding.snippet};
+							${name_updating}.${binding.name} = true;
+						}
+					`
+				}
+			});
+
+			bindings.forEach(binding => {
+				statements.push(binding.init);
+			});
+
+			componentInitProperties.push(`data: ${name_initial_data}`);
+
+			componentInitProperties.push(deindent`
+				_bind: function(changed, childState) {
+					var state = #component.get(), newState = {};
+					${bindings.map(binding => binding.bind).join('\n')}
+					${name_updating} = changed;
+					#component._set(newState);
+					${name_updating} = {};
+				}
+			`);
+
+			bindings.forEach(binding => {
+				if (binding.update) updates.push(binding.update);
+			});
+
+			_beforecreate = deindent`
+				#component._root._beforecreate.push(function () {
+					var state = #component.get(), childState = ${name}.get(), newState = {};
+					if (!childState) return;
+					${bindings.map(binding => binding.setParentFromChild).join('\n')}
+					${name_updating} = { ${local.bindings.map(binding => `${binding.name}: true`).join(', ')} };
+					#component._set(newState);
+					${name_updating} = {};
+				});
+			`;
+		} else if (initialProps.length) {
+			componentInitProperties.push(`data: ${initialPropString}`);
+		}
 
 		local.update.addBlock(deindent`
 			var ${name}_changes = {};
@@ -310,6 +292,20 @@ export default function visitComponent(
 			${bindings.length && `${name_updating} = {};`}
 		`);
 	}
+
+	const expression = node.name === ':Self'
+		? generator.name
+		: generator.importedComponents.get(node.name) ||
+				`@template.components.${node.name}`;
+
+	local.create.addBlockAtStart(deindent`
+		${statements.join('\n')}
+		var ${name} = new ${expression}({
+			${componentInitProperties.join(',\n')}
+		});
+
+		${_beforecreate}
+	`);
 
 	if (isTopLevel)
 		block.builders.unmount.addLine(`${name}._fragment.unmount();`);
