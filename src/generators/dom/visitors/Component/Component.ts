@@ -2,9 +2,7 @@ import deindent from '../../../../utils/deindent';
 import CodeBuilder from '../../../../utils/CodeBuilder';
 import visit from '../../visit';
 import visitAttribute from './Attribute';
-import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
-import visitRef from './Ref';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import getTailSnippet from '../../../../utils/getTailSnippet';
@@ -26,16 +24,12 @@ function stringifyProps(props: string[]) {
 
 const order = {
 	Attribute: 1,
-	EventHandler: 2,
-	Binding: 3,
-	Ref: 4,
+	Binding: 3
 };
 
 const visitors = {
 	Attribute: visitAttribute,
-	EventHandler: visitEventHandler,
-	Binding: visitBinding,
-	Ref: visitRef,
+	Binding: visitBinding
 };
 
 export default function visitComponent(
@@ -53,17 +47,10 @@ export default function visitComponent(
 	const childState = node._state;
 
 	const local = {
-		name,
-		namespace: state.namespace,
-		isComponent: true,
-
 		allUsedContexts: [],
 		staticAttributes: [],
 		dynamicAttributes: [],
-		bindings: [],
-
-		create: new CodeBuilder(),
-		update: new CodeBuilder(),
+		bindings: []
 	};
 
 	const isTopLevel = !state.parentNode;
@@ -73,7 +60,7 @@ export default function visitComponent(
 	node.attributes
 		.sort((a, b) => order[a.type] - order[b.type])
 		.forEach(attribute => {
-			visitors[attribute.type](
+			visitors[attribute.type] && visitors[attribute.type](
 				generator,
 				block,
 				childState,
@@ -82,38 +69,6 @@ export default function visitComponent(
 				local
 			);
 		});
-
-	if (local.allUsedContexts.length) {
-		const initialProps = local.allUsedContexts
-			.map(contextName => {
-				if (contextName === 'state') return `state: state`;
-
-				const listName = block.listNames.get(contextName);
-				const indexName = block.indexNames.get(contextName);
-
-				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
-			})
-			.join(',\n');
-
-		const updates = local.allUsedContexts
-			.map(contextName => {
-				if (contextName === 'state') return `${name}._context.state = state;`;
-
-				const listName = block.listNames.get(contextName);
-				const indexName = block.indexNames.get(contextName);
-
-				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
-			})
-			.join('\n');
-
-		local.create.addBlock(deindent`
-			${name}._context = {
-				${initialProps}
-			};
-		`);
-
-		local.update.addBlock(updates);
-	}
 
 	const componentInitProperties = [`_root: #component._root`];
 
@@ -127,34 +82,33 @@ export default function visitComponent(
 			visit(generator, childBlock, childState, child, elementStack);
 		});
 
-		const yieldFragment = block.getUniqueName(`${name}_yield_fragment`);
+		const yield_fragment = block.getUniqueName(`${name}_yield_fragment`);
 
 		block.builders.init.addLine(
-			`var ${yieldFragment} = ${childBlock.name}( ${params}, #component );`
+			`var ${yield_fragment} = ${childBlock.name}( ${params}, #component );`
 		);
 
-		block.builders.create.addLine(`${yieldFragment}.create();`);
+		block.builders.create.addLine(`${yield_fragment}.create();`);
 
 		block.builders.claim.addLine(
-			`${yieldFragment}.claim( ${state.parentNodes} );`
+			`${yield_fragment}.claim( ${state.parentNodes} );`
 		);
 
 		if (childBlock.hasUpdateMethod) {
 			block.builders.update.addLine(
-				`${yieldFragment}.update( changed, ${params} );`
+				`${yield_fragment}.update( changed, ${params} );`
 			);
 		}
 
-		block.builders.destroy.addLine(`${yieldFragment}.destroy();`);
+		block.builders.destroy.addLine(`${yield_fragment}.destroy();`);
 
-		componentInitProperties.push(`_yield: ${yieldFragment}`);
+		componentInitProperties.push(`_yield: ${yield_fragment}`);
 	}
 
 	const statements: string[] = [];
 	let name_updating: string;
 	let name_initial_data: string;
-	let _beforecreate: string = null;
-	let bindings = [];
+	let beforecreate: string = null;
 
 	if (
 		local.staticAttributes.length ||
@@ -192,7 +146,10 @@ export default function visitComponent(
 			block.addVariable(name_updating, '{}');
 			statements.push(`var ${name_initial_data} = ${initialPropString};`);
 
-			bindings = local.bindings.map(binding => {
+			const setParentFromChildOnChange = new CodeBuilder();
+			const setParentFromChildOnInit = new CodeBuilder();
+
+			local.bindings.forEach(binding => {
 				let setParentFromChild;
 
 				const { name: key } = getObject(binding.value);
@@ -224,35 +181,32 @@ export default function visitComponent(
 					setParentFromChild = `newState.${binding.value.name} = childState.${binding.name};`;
 				}
 
-				return {
-					init: deindent`
-						if ( ${binding.prop} in ${binding.obj} ) {
-							${name_initial_data}.${binding.name} = ${binding.snippet};
-							${name_updating}.${binding.name} = true;
-						}`,
-					bind: deindent`
-						if (!${name_updating}.${binding.name} && changed.${binding.name}) {
-							${setParentFromChild}
-						}
-					`,
-					setParentFromChild: deindent`
-						if (!${name_updating}.${binding.name}) {
-							${setParentFromChild}
-						}
-					`,
+				statements.push(deindent`
+					if ( ${binding.prop} in ${binding.obj} ) {
+						${name_initial_data}.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
+					}`
+				);
 
-					// TODO could binding.dependencies.length ever be 0?
-					update: binding.dependencies.length && deindent`
+				setParentFromChildOnChange.addConditional(
+					`!${name_updating}.${binding.name} && changed.${binding.name}`,
+					setParentFromChild
+				);
+
+				setParentFromChildOnInit.addConditional(
+					`!${name_updating}.${binding.name}`,
+					setParentFromChild
+				);
+
+				// TODO could binding.dependencies.length ever be 0?
+				if (binding.dependencies.length) {
+					updates.push(deindent`
 						if ( !${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')} ) {
 							${name}_changes.${binding.name} = ${binding.snippet};
 							${name_updating}.${binding.name} = true;
 						}
-					`
+					`);
 				}
-			});
-
-			bindings.forEach(binding => {
-				statements.push(binding.init);
 			});
 
 			componentInitProperties.push(`data: ${name_initial_data}`);
@@ -260,22 +214,18 @@ export default function visitComponent(
 			componentInitProperties.push(deindent`
 				_bind: function(changed, childState) {
 					var state = #component.get(), newState = {};
-					${bindings.map(binding => binding.bind).join('\n')}
+					${setParentFromChildOnChange}
 					${name_updating} = changed;
 					#component._set(newState);
 					${name_updating} = {};
 				}
 			`);
 
-			bindings.forEach(binding => {
-				if (binding.update) updates.push(binding.update);
-			});
-
-			_beforecreate = deindent`
+			beforecreate = deindent`
 				#component._root._beforecreate.push(function () {
 					var state = #component.get(), childState = ${name}.get(), newState = {};
 					if (!childState) return;
-					${bindings.map(binding => binding.setParentFromChild).join('\n')}
+					${setParentFromChildOnInit}
 					${name_updating} = { ${local.bindings.map(binding => `${binding.name}: true`).join(', ')} };
 					#component._set(newState);
 					${name_updating} = {};
@@ -285,11 +235,11 @@ export default function visitComponent(
 			componentInitProperties.push(`data: ${initialPropString}`);
 		}
 
-		local.update.addBlock(deindent`
+		block.builders.update.addBlock(deindent`
 			var ${name}_changes = {};
 			${updates.join('\n')}
 			${name}._set( ${name}_changes );
-			${bindings.length && `${name_updating} = {};`}
+			${local.bindings.length && `${name_updating} = {};`}
 		`);
 	}
 
@@ -298,20 +248,18 @@ export default function visitComponent(
 		: generator.importedComponents.get(node.name) ||
 				`@template.components.${node.name}`;
 
-	local.create.addBlockAtStart(deindent`
+	block.builders.init.addBlock(deindent`
 		${statements.join('\n')}
 		var ${name} = new ${expression}({
 			${componentInitProperties.join(',\n')}
 		});
 
-		${_beforecreate}
+		${beforecreate}
 	`);
 
 	if (isTopLevel)
 		block.builders.unmount.addLine(`${name}._fragment.unmount();`);
 	block.builders.destroy.addLine(`${name}.destroy( false );`);
-
-	block.builders.init.addBlock(local.create);
 
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
@@ -324,7 +272,94 @@ export default function visitComponent(
 		`${name}._fragment.mount( ${targetNode}, ${anchorNode} );`
 	);
 
-	if (!local.update.isEmpty()) block.builders.update.addBlock(local.update);
+	// event handlers
+	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((handler: Node) => {
+		const usedContexts: string[] = [];
+
+		if (handler.expression) {
+			generator.addSourcemapLocations(handler.expression);
+			generator.code.prependRight(
+				handler.expression.start,
+				`${block.alias('component')}.`
+			);
+
+			handler.expression.arguments.forEach((arg: Node) => {
+				const { contexts } = block.contextualise(arg, null, true);
+
+				contexts.forEach(context => {
+					if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+					if (!~local.allUsedContexts.indexOf(context))
+						local.allUsedContexts.push(context);
+				});
+			});
+		}
+
+		// TODO hoist event handlers? can do `this.__component.method(...)`
+		const declarations = usedContexts.map(name => {
+			if (name === 'state') return 'var state = this._context.state;';
+
+			const listName = block.listNames.get(name);
+			const indexName = block.indexNames.get(name);
+
+			return `var ${listName} = this._context.${listName}, ${indexName} = this._context.${indexName}, ${name} = ${listName}[${indexName}]`;
+		});
+
+		const handlerBody =
+			(declarations.length ? declarations.join('\n') + '\n\n' : '') +
+			(handler.expression ?
+				`[✂${handler.expression.start}-${handler.expression.end}✂];` :
+				`${block.alias('component')}.fire('${handler.name}', event);`);
+
+		block.builders.init.addBlock(deindent`
+			${name}.on( '${handler.name}', function ( event ) {
+				${handlerBody}
+			});
+		`);
+	});
+
+	// refs
+	node.attributes.filter((a: Node) => a.type === 'Ref').forEach((ref: Node) => {
+		generator.usesRefs = true;
+
+		block.builders.init.addLine(`#component.refs.${ref.name} = ${name};`);
+
+		block.builders.destroy.addLine(deindent`
+			if ( #component.refs.${ref.name} === ${name} ) #component.refs.${ref.name} = null;
+		`);
+	});
+
+	// maintain component context
+	if (local.allUsedContexts.length) {
+		const initialProps = local.allUsedContexts
+			.map(contextName => {
+				if (contextName === 'state') return `state: state`;
+
+				const listName = block.listNames.get(contextName);
+				const indexName = block.indexNames.get(contextName);
+
+				return `${listName}: ${listName},\n${indexName}: ${indexName}`;
+			})
+			.join(',\n');
+
+		const updates = local.allUsedContexts
+			.map(contextName => {
+				if (contextName === 'state') return `${name}._context.state = state;`;
+
+				const listName = block.listNames.get(contextName);
+				const indexName = block.indexNames.get(contextName);
+
+				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
+			})
+			.join('\n');
+
+		block.builders.init.addBlock(deindent`
+			${name}._context = {
+				${initialProps}
+			};
+		`);
+
+		block.builders.update.addBlock(updates);
+	}
 }
 
 function isComputed(node: Node) {
