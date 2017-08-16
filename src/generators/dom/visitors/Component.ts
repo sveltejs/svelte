@@ -1,14 +1,13 @@
-import deindent from '../../../../utils/deindent';
-import CodeBuilder from '../../../../utils/CodeBuilder';
-import visit from '../../visit';
-import visitAttribute from './Attribute';
-import visitBinding from './Binding';
-import { DomGenerator } from '../../index';
-import Block from '../../Block';
-import getTailSnippet from '../../../../utils/getTailSnippet';
-import getObject from '../../../../utils/getObject';
-import { Node } from '../../../../interfaces';
-import { State } from '../../interfaces';
+import deindent from '../../../utils/deindent';
+import CodeBuilder from '../../../utils/CodeBuilder';
+import visit from '../visit';
+import { DomGenerator } from '../index';
+import Block from '../Block';
+import getTailSnippet from '../../../utils/getTailSnippet';
+import getObject from '../../../utils/getObject';
+import { stringify } from '../../../utils/stringify';
+import { Node } from '../../../interfaces';
+import { State } from '../interfaces';
 
 function stringifyProps(props: string[]) {
 	if (!props.length) return '{}';
@@ -22,15 +21,22 @@ function stringifyProps(props: string[]) {
 	return `{ ${joined} }`;
 }
 
-const order = {
-	Attribute: 1,
-	Binding: 3
-};
+interface Attribute {
+	name: string;
+	value: any;
+	dynamic: boolean;
+	dependencies?: string[]
+}
 
-const visitors = {
-	Attribute: visitAttribute,
-	Binding: visitBinding
-};
+interface Binding {
+	name: string;
+	value: Node;
+	contexts: Set<string>;
+	snippet: string;
+	obj: string;
+	prop: string;
+	dependencies: string[];
+}
 
 export default function visitComponent(
 	generator: DomGenerator,
@@ -39,47 +45,22 @@ export default function visitComponent(
 	node: Node,
 	elementStack: Node[]
 ) {
-	const hasChildren = node.children.length > 0;
+	generator.hasComponents = true;
+
 	const name = block.getUniqueName(
 		(node.name === ':Self' ? generator.name : node.name).toLowerCase()
 	);
 
-	const childState = node._state;
-
-	const local = {
-		allUsedContexts: [],
-		staticAttributes: [],
-		dynamicAttributes: [],
-		bindings: []
-	};
-
-	const isTopLevel = !state.parentNode;
-
-	generator.hasComponents = true;
-
-	node.attributes
-		.sort((a, b) => order[a.type] - order[b.type])
-		.forEach(attribute => {
-			visitors[attribute.type] && visitors[attribute.type](
-				generator,
-				block,
-				childState,
-				node,
-				attribute,
-				local
-			);
-		});
-
 	const componentInitProperties = [`_root: #component._root`];
 
 	// Component has children, put them in a separate {{yield}} block
-	if (hasChildren) {
+	if (node.children.length > 0) {
 		const params = block.params.join(', ');
 
 		const childBlock = node._block;
 
 		node.children.forEach((child: Node) => {
-			visit(generator, childBlock, childState, child, elementStack);
+			visit(generator, childBlock, node._state, child, elementStack);
 		});
 
 		const yield_fragment = block.getUniqueName(`${name}_yield_fragment`);
@@ -105,41 +86,51 @@ export default function visitComponent(
 		componentInitProperties.push(`_yield: ${yield_fragment}`);
 	}
 
+	const allContexts = new Set();
 	const statements: string[] = [];
+	const name_context = block.getUniqueName(`${name}_context`);
+
 	let name_updating: string;
 	let name_initial_data: string;
 	let beforecreate: string = null;
 
-	if (
-		local.staticAttributes.length ||
-		local.dynamicAttributes.length ||
-		local.bindings.length
-	) {
-		const initialProps = local.staticAttributes
-			.concat(local.dynamicAttributes)
-			.map(attribute => `${attribute.name}: ${attribute.value}`);
+	const attributes = node.attributes
+		.filter((a: Node) => a.type === 'Attribute')
+		.map((a: Node) => mungeAttribute(a, block));
+
+	const bindings = node.attributes
+		.filter((a: Node) => a.type === 'Binding')
+		.map((a: Node) => mungeBinding(a, block));
+
+	if (attributes.length || bindings.length) {
+		const initialProps = attributes
+			.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`);
 
 		const initialPropString = stringifyProps(initialProps);
 
 		const updates: string[] = [];
 
-		local.dynamicAttributes.forEach(attribute => {
-			if (attribute.dependencies.length) {
-				updates.push(deindent`
-					if ( ${attribute.dependencies
-						.map(dependency => `changed.${dependency}`)
-						.join(' || ')} ) ${name}_changes.${attribute.name} = ${attribute.value};
-				`);
-			}
+		attributes
+			.filter((attribute: Attribute) => attribute.dynamic)
+			.forEach((attribute: Attribute) => {
+				if (attribute.dependencies.length) {
+					updates.push(deindent`
+						if ( ${attribute.dependencies
+							.map(dependency => `changed.${dependency}`)
+							.join(' || ')} ) ${name}_changes.${attribute.name} = ${attribute.value};
+					`);
+				}
 
-			else {
-				// TODO this is an odd situation to encounter – I *think* it should only happen with
-				// each block indices, in which case it may be possible to optimise this
-				updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
-			}
-		});
+				else {
+					// TODO this is an odd situation to encounter – I *think* it should only happen with
+					// each block indices, in which case it may be possible to optimise this
+					updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
+				}
+			});
 
-		if (local.bindings.length) {
+		if (bindings.length) {
+			generator.hasComplexBindings = true;
+
 			name_updating = block.alias(`${name}_updating`);
 			name_initial_data = block.getUniqueName(`${name}_initial_data`);
 
@@ -149,8 +140,12 @@ export default function visitComponent(
 			const setParentFromChildOnChange = new CodeBuilder();
 			const setParentFromChildOnInit = new CodeBuilder();
 
-			local.bindings.forEach(binding => {
+			bindings.forEach((binding: Binding) => {
 				let setParentFromChild;
+
+				binding.contexts.forEach(context => {
+					allContexts.add(context);
+				});
 
 				const { name: key } = getObject(binding.value);
 
@@ -160,8 +155,8 @@ export default function visitComponent(
 					const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
 					setParentFromChild = deindent`
-						var list = ${name}._context.${block.listNames.get(key)};
-						var index = ${name}._context.${block.indexNames.get(key)};
+						var list = ${name_context}.${block.listNames.get(key)};
+						var index = ${name_context}.${block.indexNames.get(key)};
 						list[index]${tail} = childState.${binding.name};
 
 						${binding.dependencies
@@ -226,7 +221,7 @@ export default function visitComponent(
 					var state = #component.get(), childState = ${name}.get(), newState = {};
 					if (!childState) return;
 					${setParentFromChildOnInit}
-					${name_updating} = { ${local.bindings.map(binding => `${binding.name}: true`).join(', ')} };
+					${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
 					#component._set(newState);
 					${name_updating} = {};
 				});
@@ -239,7 +234,7 @@ export default function visitComponent(
 			var ${name}_changes = {};
 			${updates.join('\n')}
 			${name}._set( ${name}_changes );
-			${local.bindings.length && `${name_updating} = {};`}
+			${bindings.length && `${name_updating} = {};`}
 		`);
 	}
 
@@ -257,8 +252,7 @@ export default function visitComponent(
 		${beforecreate}
 	`);
 
-	if (isTopLevel)
-		block.builders.unmount.addLine(`${name}._fragment.unmount();`);
+	if (!state.parentNode) block.builders.unmount.addLine(`${name}._fragment.unmount();`);
 	block.builders.destroy.addLine(`${name}.destroy( false );`);
 
 	const targetNode = state.parentNode || '#target';
@@ -288,20 +282,19 @@ export default function visitComponent(
 
 				contexts.forEach(context => {
 					if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-					if (!~local.allUsedContexts.indexOf(context))
-						local.allUsedContexts.push(context);
+					allContexts.add(context);
 				});
 			});
 		}
 
 		// TODO hoist event handlers? can do `this.__component.method(...)`
 		const declarations = usedContexts.map(name => {
-			if (name === 'state') return 'var state = this._context.state;';
+			if (name === 'state') return `var state = ${name_context}.state;`;
 
 			const listName = block.listNames.get(name);
 			const indexName = block.indexNames.get(name);
 
-			return `var ${listName} = this._context.${listName}, ${indexName} = this._context.${indexName}, ${name} = ${listName}[${indexName}]`;
+			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
 		});
 
 		const handlerBody =
@@ -329,8 +322,10 @@ export default function visitComponent(
 	});
 
 	// maintain component context
-	if (local.allUsedContexts.length) {
-		const initialProps = local.allUsedContexts
+	if (allContexts.size) {
+		const contexts = Array.from(allContexts);
+
+		const initialProps = contexts
 			.map(contextName => {
 				if (contextName === 'state') return `state: state`;
 
@@ -341,25 +336,132 @@ export default function visitComponent(
 			})
 			.join(',\n');
 
-		const updates = local.allUsedContexts
+		const updates = contexts
 			.map(contextName => {
-				if (contextName === 'state') return `${name}._context.state = state;`;
+				if (contextName === 'state') return `${name_context}.state = state;`;
 
 				const listName = block.listNames.get(contextName);
 				const indexName = block.indexNames.get(contextName);
 
-				return `${name}._context.${listName} = ${listName};\n${name}._context.${indexName} = ${indexName};`;
+				return `${name_context}.${listName} = ${listName};\n${name_context}.${indexName} = ${indexName};`;
 			})
 			.join('\n');
 
 		block.builders.init.addBlock(deindent`
-			${name}._context = {
+			var ${name_context} = {
 				${initialProps}
 			};
 		`);
 
 		block.builders.update.addBlock(updates);
 	}
+}
+
+function mungeAttribute(attribute: Node, block: Block): Attribute {
+	if (attribute.value === true) {
+		// attributes without values, e.g. <textarea readonly>
+		return {
+			name: attribute.name,
+			value: true,
+			dynamic: false
+		};
+	}
+
+	if (attribute.value.length === 0) {
+		return {
+			name: attribute.name,
+			value: `''`,
+			dynamic: false
+		};
+	}
+
+	if (attribute.value.length === 1) {
+		const value = attribute.value[0];
+
+		if (value.type === 'Text') {
+			// static attributes
+			return {
+				name: attribute.name,
+				value: isNaN(value.data) ? stringify(value.data) : value.data,
+				dynamic: false
+			};
+		}
+
+		// simple dynamic attributes
+		const { dependencies, snippet } = block.contextualise(value.expression);
+
+		// TODO only update attributes that have changed
+		return {
+			name: attribute.name,
+			value: snippet,
+			dependencies,
+			dynamic: true
+		};
+	}
+
+	// otherwise we're dealing with a complex dynamic attribute
+	const allDependencies = new Set();
+
+	const value =
+		(attribute.value[0].type === 'Text' ? '' : `"" + `) +
+		attribute.value
+			.map((chunk: Node) => {
+				if (chunk.type === 'Text') {
+					return stringify(chunk.data);
+				} else {
+					const { dependencies, snippet } = block.contextualise(
+						chunk.expression
+					);
+
+					dependencies.forEach(dependency => {
+						allDependencies.add(dependency);
+					});
+
+					return `( ${snippet} )`; // TODO only parenthesize if necessary
+				}
+			})
+			.join(' + ');
+
+	return {
+		name: attribute.name,
+		value,
+		dependencies: Array.from(allDependencies),
+		dynamic: true
+	};
+}
+
+function mungeBinding(binding: Node, block: Block): Binding {
+	const { name } = getObject(binding.value);
+	const { snippet, contexts, dependencies } = block.contextualise(
+		binding.value
+	);
+
+	const contextual = block.contexts.has(name);
+
+	let obj;
+	let prop;
+
+	if (contextual) {
+		obj = block.listNames.get(name);
+		prop = block.indexNames.get(name);
+	} else if (binding.value.type === 'MemberExpression') {
+		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
+		if (!binding.value.computed) prop = `'${prop}'`;
+		obj = `[✂${binding.value.object.start}-${binding.value.object.end}✂]`;
+	} else {
+		obj = 'state';
+		prop = `'${name}'`;
+	}
+
+	return {
+		name: binding.name,
+		value: binding.value,
+		contexts,
+		snippet,
+		obj,
+		prop,
+		dependencies
+	};
 }
 
 function isComputed(node: Node) {
