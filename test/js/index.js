@@ -2,7 +2,7 @@ import assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import { rollup } from "rollup";
-import { svelte } from "../helpers.js";
+import { loadConfig, svelte } from "../helpers.js";
 
 describe("js", () => {
 	fs.readdirSync("test/js/samples").forEach(dir => {
@@ -17,6 +17,8 @@ describe("js", () => {
 
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/js/samples", dir);
+			const config = loadConfig(`${dir}/_config.js`);
+
 			const input = fs
 				.readFileSync(`${dir}/input.html`, "utf-8")
 				.replace(/\s+$/, "");
@@ -24,20 +26,17 @@ describe("js", () => {
 			let actual;
 
 			try {
-				actual = svelte.compile(input, {
+				const options = Object.assign(config.options || {}, {
 					shared: true
-				}).code;
+				});
+
+				actual = svelte.compile(input, options).code;
 			} catch (err) {
 				console.log(err.frame);
 				throw err;
 			}
 
 			fs.writeFileSync(`${dir}/_actual.js`, actual);
-			const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
-			const expectedBundle = fs.readFileSync(
-				`${dir}/expected-bundle.js`,
-				"utf-8"
-			);
 
 			return rollup({
 				entry: `${dir}/_actual.js`,
@@ -55,6 +54,12 @@ describe("js", () => {
 				return bundle.generate({ format: "es" });
 			}).then(({ code }) => {
 				fs.writeFileSync(`${dir}/_actual-bundle.js`, code);
+
+				const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
+				const expectedBundle = fs.readFileSync(
+					`${dir}/expected-bundle.js`,
+					"utf-8"
+				);
 
 				assert.equal(
 					actual.trim().replace(/^\s+$/gm, ""),

@@ -20,6 +20,7 @@ export class DomGenerator extends Generator {
 	metaBindings: string[];
 
 	hydratable: boolean;
+	legacy: boolean;
 
 	hasIntroTransitions: boolean;
 	hasOutroTransitions: boolean;
@@ -40,6 +41,7 @@ export class DomGenerator extends Generator {
 		this.readonly = new Set();
 
 		this.hydratable = options.hydratable;
+		this.legacy = options.legacy;
 		this.needsEncapsulateHelper = false;
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
