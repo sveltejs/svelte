@@ -10,10 +10,7 @@ const src = path.resolve('src');
 export default [
 	/* compiler/svelte.js */
 	{
-		entry: 'src/index.ts',
-		dest: 'compiler/svelte.js',
-		format: 'umd',
-		moduleName: 'svelte',
+		input: 'src/index.ts',
 		plugins: [
 			{
 				resolveId(importee, importer) {
@@ -39,14 +36,17 @@ export default [
 				typescript: require('typescript')
 			})
 		],
-		sourceMap: true
+		output: {
+			file: 'compiler/svelte.js',
+			format: 'umd',
+			name: 'svelte',
+			sourcemap: true
+		}
 	},
 
 	/* ssr/register.js */
 	{
-		entry: 'src/server-side-rendering/register.js',
-		dest: 'ssr/register.js',
-		format: 'cjs',
+		input: 'src/server-side-rendering/register.js',
 		plugins: [
 			nodeResolve({ jsnext: true, module: true }),
 			commonjs(),
@@ -59,16 +59,22 @@ export default [
 			})
 		],
 		external: [path.resolve('src/index.ts'), 'fs', 'path'],
-		paths: {
-			[path.resolve('src/index.ts')]: '../compiler/svelte.js'
-		},
-		sourceMap: true
+		output: {
+			file: 'ssr/register.js',
+			format: 'cjs',
+			paths: {
+				[path.resolve('src/index.ts')]: '../compiler/svelte.js'
+			},
+			sourcemap: true
+		}
 	},
 
 	/* shared.js */
 	{
-		entry: 'src/shared/index.js',
-		dest: 'shared.js',
-		format: 'es'
+		input: 'src/shared/index.js',
+		output: {
+			file: 'shared.js',
+			format: 'es'
+		}
 	}
 ];
