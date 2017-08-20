@@ -1,5 +1,5 @@
 import path from 'path';
-import nodeResolve from 'rollup-plugin-node-resolve';
+import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
 import typescript from 'rollup-plugin-typescript';
@@ -27,7 +27,7 @@ export default [
 					}
 				}
 			},
-			nodeResolve({ jsnext: true, module: true }),
+			resolve(),
 			commonjs(),
 			json(),
 			typescript({
@@ -48,7 +48,7 @@ export default [
 	{
 		input: 'src/server-side-rendering/register.js',
 		plugins: [
-			nodeResolve({ jsnext: true, module: true }),
+			resolve(),
 			commonjs(),
 			buble({
 				include: 'src/**',
