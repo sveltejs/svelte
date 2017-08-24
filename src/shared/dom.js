@@ -97,3 +97,9 @@ export function claimText (nodes, data) {
 
 	return createText(data);
 }
+
+export function setInputType(input, type) {
+	try {
+		input.type = type;
+	} catch (e) {}
+}
