@@ -82,6 +82,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
 | `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |
 | `globals` | `object`, `function` | When outputting to the `'umd'`, `'iife'` or `'eval'` formats, an object or function mapping the names of imported dependencies to the names of global variables. | `{}` |
+| `legacy` | `boolean` | Ensures compatibility with very old browsers, at the cost of some extra code |
 | `onerror` | `function` | Specify a callback for when Svelte encounters an error while compiling the component. | (exception is thrown) |
 | `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. | (warning is logged to console) |
 
