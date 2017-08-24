@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.31.0
+
+* Add `legacy` compile option, which adds IE9 compatibility ([#773](https://github.com/sveltejs/svelte/issues/773))
+
 ## 1.30.0
 
 * Update all component bindings simultaneously ([#760](https://github.com/sveltejs/svelte/issues/760))
