@@ -270,7 +270,7 @@ function SvelteComponent ( options ) {
 
 	if ( options.target ) {
 		this._fragment.create();
-		this._fragment.mount( options.target, null );
+		this._fragment.mount( options.target, options.anchor || null );
 	}
 }
 
