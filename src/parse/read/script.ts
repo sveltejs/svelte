@@ -1,5 +1,5 @@
 import { parse } from 'acorn';
-import spaces from '../../utils/spaces';
+import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
@@ -12,7 +12,7 @@ export default function readScript(parser: Parser, start: number, attributes: No
 	if (scriptEnd === -1) parser.error(`<script> must have a closing tag`);
 
 	const source =
-		spaces(scriptStart) + parser.template.slice(scriptStart, scriptEnd);
+		repeat(' ', scriptStart) + parser.template.slice(scriptStart, scriptEnd);
 	parser.index = scriptEnd + scriptClosingTag.length;
 
 	let ast;

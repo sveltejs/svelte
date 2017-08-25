@@ -1,3 +1,5 @@
+import repeat from './repeat';
+
 enum ChunkType {
 	Line,
 	Block
@@ -8,6 +10,8 @@ export default class CodeBuilder {
 	first: ChunkType;
 	last: ChunkType;
 	lastCondition: string;
+	conditionStack: string[];
+	indent: string;
 
 	constructor(str = '') {
 		this.result = str;
@@ -19,19 +23,21 @@ export default class CodeBuilder {
 		this.last = initial;
 
 		this.lastCondition = null;
+		this.conditionStack = [];
+		this.indent = '';
 	}
 
 	addConditional(condition: string, body: string) {
-		body = body.replace(/^/gm, '\t');
+		body = body.replace(/^/gm, `${this.indent}\t`);
 
 		if (condition === this.lastCondition) {
 			this.result += `\n${body}`;
 		} else {
 			if (this.lastCondition) {
-				this.result += `\n}`;
+				this.result += `\n${this.indent}}`;
 			}
 
-			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}if ( ${condition} ) {\n${body}`;
+			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}${this.indent}if ( ${condition} ) {\n${body}`;
 			this.lastCondition = condition;
 		}
 
@@ -40,14 +46,14 @@ export default class CodeBuilder {
 
 	addLine(line: string) {
 		if (this.lastCondition) {
-			this.result += `\n}`;
+			this.result += `\n${this.indent}}`;
 			this.lastCondition = null;
 		}
 
 		if (this.last === ChunkType.Block) {
-			this.result += `\n\n${line}`;
+			this.result += `\n\n${this.indent}${line}`;
 		} else if (this.last === ChunkType.Line) {
-			this.result += `\n${line}`;
+			this.result += `\n${this.indent}${line}`;
 		} else {
 			this.result += line;
 		}
@@ -58,9 +64,9 @@ export default class CodeBuilder {
 
 	addLineAtStart(line: string) {
 		if (this.first === ChunkType.Block) {
-			this.result = `${line}\n\n${this.result}`;
+			this.result = `${line}\n\n${this.indent}${this.result}`;
 		} else if (this.first === ChunkType.Line) {
-			this.result = `${line}\n${this.result}`;
+			this.result = `${line}\n${this.indent}${this.result}`;
 		} else {
 			this.result += line;
 		}
@@ -70,13 +76,15 @@ export default class CodeBuilder {
 	}
 
 	addBlock(block: string) {
+		if (this.indent) block = block.replace(/^/gm, `${this.indent}`);
+
 		if (this.lastCondition) {
-			this.result += `\n}`;
+			this.result += `\n${this.indent}}`;
 			this.lastCondition = null;
 		}
 
 		if (this.result) {
-			this.result += `\n\n${block}`;
+			this.result += `\n\n${this.indent}${block}`;
 		} else {
 			this.result += block;
 		}
@@ -87,7 +95,7 @@ export default class CodeBuilder {
 
 	addBlockAtStart(block: string) {
 		if (this.result) {
-			this.result = `${block}\n\n${this.result}`;
+			this.result = `${block}\n\n${this.indent}${this.result}`;
 		} else {
 			this.result += block;
 		}
@@ -98,6 +106,16 @@ export default class CodeBuilder {
 
 	isEmpty() {
 		return this.result === '';
+	}
+
+	pushCondition(condition: string) {
+		this.conditionStack.push(condition);
+		this.indent = repeat('\t', this.conditionStack.length);
+	}
+
+	popCondition() {
+		this.conditionStack.pop();
+		this.indent = repeat('\t', this.conditionStack.length);
 	}
 
 	toString() {

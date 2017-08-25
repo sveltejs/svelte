@@ -1,7 +1,7 @@
 import attributeLookup from './lookup';
 import deindent from '../../../../utils/deindent';
 import { stringify } from '../../../../utils/stringify';
-import getStaticAttributeValue from './getStaticAttributeValue';
+import getStaticAttributeValue from '../shared/getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';

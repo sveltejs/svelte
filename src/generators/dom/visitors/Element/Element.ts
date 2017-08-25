@@ -1,5 +1,6 @@
 import deindent from '../../../../utils/deindent';
 import visit from '../../visit';
+import visitSlot from '../Slot';
 import visitComponent from '../Component';
 import visitWindow from './meta/Window';
 import visitAttribute from './Attribute';
