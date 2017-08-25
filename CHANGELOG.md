@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.32.0
+
+* Allow `anchor` initialisation option, alongside `target` ([#784](https://github.com/sveltejs/svelte/issues/784))
+* Remove leading CSS selectors safely ([#783](https://github.com/sveltejs/svelte/issues/783))
+
 ## 1.31.0
 
 * Add `legacy` compile option, which adds IE9 compatibility ([#773](https://github.com/sveltejs/svelte/issues/773))
