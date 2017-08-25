@@ -30,15 +30,19 @@ class Rule {
 
 	minify(code: MagicString, cascade: boolean) {
 		let c = this.node.start;
+		let started = false;
+
 		this.selectors.forEach((selector, i) => {
 			if (cascade || selector.used) {
-				const separator = i > 0 ? ',' : '';
+				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
 					code.overwrite(c, selector.node.start, separator);
 				}
 
 				if (!cascade) selector.minify(code);
 				c = selector.node.end;
+
+				started = true;
 			}
 		});
 
