@@ -1,6 +1,7 @@
 import Block from './Block';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { assign } from '../../shared/index.js';
+import getStaticAttributeValue from '../shared/getStaticAttributeValue';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 import { State } from './interfaces';
@@ -344,15 +345,17 @@ const preprocessors = {
 				isYield: true
 			});
 		} else {
-			const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
+			const slot = getStaticAttributeValue(node, 'slot');
 			if (slot) {
 				// TODO validate slots — no nesting, no dynamic names...
 				const component = componentStack[componentStack.length - 1];
-				component._slots.add(slot.value[0].data);
+				component._slots.add(slot);
 			}
 
 			const name = block.getUniqueName(
-				node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+				node.name === 'slot' ?
+					`slot_${getStaticAttributeValue(node, 'name') || 'default'}`:
+					node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 			);
 
 			node._state = getChildState(state, {

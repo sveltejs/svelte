@@ -129,7 +129,7 @@ describe("runtime", () => {
 				try {
 					SvelteComponent = require(`./samples/${dir}/main.html`);
 				} catch (err) {
-					showOutput(cwd, { shared }); // eslint-disable-line no-console
+					showOutput(cwd, { shared, hydratable: hydrate }); // eslint-disable-line no-console
 					throw err;
 				}
 
@@ -196,12 +196,12 @@ describe("runtime", () => {
 					config.error(assert, err);
 				} else {
 					failed.add(dir);
-					showOutput(cwd, { shared }); // eslint-disable-line no-console
+					showOutput(cwd, { shared, hydratable: hydrate }); // eslint-disable-line no-console
 					throw err;
 				}
 			}
 
-			if (config.show) showOutput(cwd, { shared });
+			if (config.show) showOutput(cwd, { shared, hydratable: hydrate });
 		});
 	}
 

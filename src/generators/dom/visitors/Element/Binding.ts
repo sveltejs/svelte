@@ -1,6 +1,6 @@
 import deindent from '../../../../utils/deindent';
 import flattenReference from '../../../../utils/flattenReference';
-import getStaticAttributeValue from '../shared/getStaticAttributeValue';
+import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';

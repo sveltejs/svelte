@@ -73,12 +73,7 @@ export default function visitElement(
 
 	if (generator.hydratable) {
 		block.builders.claim.addBlock(deindent`
-			${name} = ${getClaimStatement(
-			generator,
-			childState.namespace,
-			state.parentNodes,
-			node
-		)};
+			${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
 			var ${childState.parentNodes} = @children( ${name} );
 		`);
 	}

@@ -2,7 +2,7 @@ import { DomGenerator } from '../index';
 import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import Block from '../Block';
-import getStaticAttributeValue from './shared/getStaticAttributeValue';
+import getStaticAttributeValue from '../../shared/getStaticAttributeValue';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
 
@@ -17,7 +17,7 @@ export default function visitSlot(
 	const slotName = getStaticAttributeValue(node, 'name') || 'default';
 	generator.slots.add(slotName);
 
-	const name = block.getUniqueName(`slot_${slotName}`);
+	const name = node._state.name;
 	const content_name = block.getUniqueName(`slot_content_${slotName}`);
 
 	block.addVariable(content_name, `#component._slotted.${slotName}`);
@@ -29,6 +29,12 @@ export default function visitSlot(
 		`@claimElement(${state.parentNodes}, 'slot', {${slotName !== 'default' ? ` name: '${slotName}' ` : ''}})`,
 		state.parentNode
 	);
+
+	if (generator.hydratable) {
+		block.builders.claim.addLine(
+			`var ${node._state.parentNodes} = @children(${name});`
+		);
+	}
 
 	if (slotName !== 'default') {
 		block.builders.hydrate.addBlock(deindent`
