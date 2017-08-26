@@ -1,6 +1,6 @@
 export default {
 	html: `
 		<div>before</div>
-		test
+		<slot>test</slot>
 	`
 };

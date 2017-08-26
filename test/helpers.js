@@ -82,6 +82,7 @@ function cleanChildren(node) {
 		}
 
 		if (child.nodeType === 3) {
+			// text
 			if (
 				node.namespaceURI === 'http://www.w3.org/2000/svg' &&
 				node.tagName !== 'text' &&
@@ -90,12 +91,11 @@ function cleanChildren(node) {
 				node.removeChild(child);
 			}
 
-			child.data = child.data.replace(/\s{2,}/, '\n');
+			child.data = child.data.replace(/\s{2,}/g, '\n');
 
-			// text
 			if (previous && previous.nodeType === 3) {
 				previous.data += child.data;
-				previous.data = previous.data.replace(/\s{2,}/, '\n');
+				previous.data = previous.data.replace(/\s{2,}/g, '\n');
 
 				node.removeChild(child);
 				child = previous;

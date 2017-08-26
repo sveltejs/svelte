@@ -1,6 +1,6 @@
 export default {
 	html: `
-		<div><p>Hello</p></div>
+		<div><p><slot>Hello</slot></p></div>
 	`,
 
 	test ( assert, component, target ) {
@@ -9,7 +9,7 @@ export default {
 		component.set({ data: 'World' });
 		assert.equal( component.get( 'data' ), 'World' );
 		assert.htmlEqual( target.innerHTML, `
-			<div><p>World</p></div>
+			<div><p><slot>World</slot></p></div>
 		` );
 	}
 };

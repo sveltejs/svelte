@@ -80,7 +80,7 @@ export default function visitComponent(
 	let open = `\${${expression}.render({${props}}`;
 
 	if (node.children.length) {
-		open += `, { yield: () => \``;
+		open += `, { slotted: { default: () => \``;
 	}
 
 	generator.append(open);
@@ -93,6 +93,6 @@ export default function visitComponent(
 
 	generator.elementDepth -= 1;
 
-	const close = node.children.length ? `\` })}` : ')}';
+	const close = node.children.length ? `\` } })}` : ')}';
 	generator.append(close);
 }

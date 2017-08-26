@@ -11,7 +11,7 @@ import { stringify } from '../../utils/stringify';
 export class SsrGenerator extends Generator {
 	bindings: string[];
 	renderCode: string;
-	elementDepth: number;
+	elementDepth: number; // TODO is this necessary? appears to be unused
 
 	constructor(
 		parsed: Parsed,

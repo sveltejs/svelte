@@ -8,7 +8,10 @@
 			{
 				"start": 0,
 				"end": 9,
-				"type": "YieldTag"
+				"type": "Element",
+				"name": "slot",
+				"attributes": [],
+				"children": []
 			}
 		]
 	},

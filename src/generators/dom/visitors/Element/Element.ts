@@ -43,6 +43,10 @@ export default function visitElement(
 		return meta[node.name](generator, block, node);
 	}
 
+	if (node.name === 'slot') {
+		return visitSlot(generator, block, state, node, elementStack);
+	}
+
 	if (generator.components.has(node.name) || node.name === ':Self') {
 		return visitComponent(generator, block, state, node, elementStack);
 	}
