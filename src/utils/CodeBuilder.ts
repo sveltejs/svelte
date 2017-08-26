@@ -110,12 +110,14 @@ export default class CodeBuilder {
 
 	pushCondition(condition: string) {
 		this.conditionStack.push(condition);
+		this.addLine(`if (${condition}) {`);
 		this.indent = repeat('\t', this.conditionStack.length);
 	}
 
 	popCondition() {
 		this.conditionStack.pop();
 		this.indent = repeat('\t', this.conditionStack.length);
+		this.addLine('}');
 	}
 
 	toString() {
