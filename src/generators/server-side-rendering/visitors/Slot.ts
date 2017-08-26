@@ -9,7 +9,11 @@ export default function visitSlot(
 	node: Node
 ) {
 	// TODO named slots
-	generator.append(`<slot>\${options && options.slotted && options.slotted.default ? options.slotted.default() : '`);
+	const name = node.attributes.find((attribute: Node) => attribute.name);
+	const slotName = name && name.value[0].data || 'default';
+
+	generator.append(`<slot${slotName !== 'default' ? ` name='${slotName}'` : ''}>`);
+	generator.append(`\${options && options.slotted && options.slotted.${slotName} ? options.slotted.${slotName}() : '`);
 
 	generator.elementDepth += 1;
 
