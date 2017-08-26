@@ -201,6 +201,8 @@ export default function dom(
 				`}
 			`}
 
+			${generator.slots.size && `this.slots = {};`}
+
 			this._fragment = @create_main_fragment( this._state, this );
 
 			if ( options.target ) {
