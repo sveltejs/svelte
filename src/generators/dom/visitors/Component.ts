@@ -43,7 +43,8 @@ export default function visitComponent(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	generator.hasComponents = true;
 
@@ -56,7 +57,7 @@ export default function visitComponent(
 		componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 		node.children.forEach((child: Node) => {
-			visit(generator, block, node._state, child, elementStack);
+			visit(generator, block, node._state, child, elementStack, componentStack.concat(node));
 		});
 	}
 

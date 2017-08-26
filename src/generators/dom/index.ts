@@ -72,7 +72,7 @@ export default function dom(
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 	parsed.html.children.forEach((node: Node) => {
-		visit(generator, block, state, node, []);
+		visit(generator, block, state, node, [], []);
 	});
 
 	const builder = new CodeBuilder();

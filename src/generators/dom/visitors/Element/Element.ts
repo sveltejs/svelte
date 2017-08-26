@@ -37,7 +37,8 @@ export default function visitElement(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	if (node.name in meta) {
 		return meta[node.name](generator, block, node);
@@ -48,13 +49,18 @@ export default function visitElement(
 	}
 
 	if (generator.components.has(node.name) || node.name === ':Self') {
-		return visitComponent(generator, block, state, node, elementStack);
+		return visitComponent(generator, block, state, node, elementStack, componentStack);
 	}
 
 	const childState = node._state;
 	const name = childState.parentNode;
 
-	const isToplevel = !state.parentNode;
+	const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
+	const parentNode = slot ?
+		`${componentStack[componentStack.length - 1]._state.name}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
+		state.parentNode;
+
+	const isToplevel = !parentNode;
 
 	block.addVariable(name);
 	block.builders.create.addLine(
@@ -77,9 +83,9 @@ export default function visitElement(
 		`);
 	}
 
-	if (state.parentNode) {
+	if (parentNode) {
 		block.builders.mount.addLine(
-			`@appendNode( ${name}, ${state.parentNode} );`
+			`@appendNode( ${name}, ${parentNode} );`
 		);
 	} else {
 		block.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
@@ -195,7 +201,7 @@ export default function visitElement(
 	}
 
 	node.children.forEach((child: Node) => {
-		visit(generator, block, childState, child, elementStack.concat(node));
+		visit(generator, block, childState, child, elementStack.concat(node), componentStack);
 	});
 
 	if (node.lateUpdate) {

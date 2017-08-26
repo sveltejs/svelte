@@ -9,8 +9,9 @@ export default function visit(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	const visitor = visitors[node.type];
-	visitor(generator, block, state, node, elementStack);
+	visitor(generator, block, state, node, elementStack, componentStack);
 }
