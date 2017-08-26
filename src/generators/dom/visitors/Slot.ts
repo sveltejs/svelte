@@ -15,6 +15,8 @@ export default function visitSlot(
 	componentStack: Node[]
 ) {
 	const slotName = getStaticAttributeValue(node, 'name') || 'default';
+	generator.slots.add(slotName);
+
 	const name = block.getUniqueName(`slot_${slotName}`);
 	const content_name = block.getUniqueName(`slot_content_${slotName}`);
 
@@ -33,6 +35,14 @@ export default function visitSlot(
 			@setAttribute(${name}, 'name', '${slotName}');
 		`);
 	}
+
+	block.builders.mount.addLine(
+		`#component.slots.${slotName} = ${name};`
+	);
+
+	block.builders.unmount.addLine(
+		`#component.slots.${slotName} = null;`
+	);
 
 	block.builders.create.pushCondition(`!${content_name}`);
 	block.builders.mount.pushCondition(`!${content_name}`);
