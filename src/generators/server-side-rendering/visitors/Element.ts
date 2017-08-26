@@ -1,4 +1,5 @@
 import visitComponent from './Component';
+import visitSlot from './Slot';
 import isVoidElementName from '../../../utils/isVoidElementName';
 import visit from '../visit';
 import visitWindow from './meta/Window';
@@ -31,6 +32,11 @@ export default function visitElement(
 ) {
 	if (node.name in meta) {
 		return meta[node.name](generator, block, node);
+	}
+
+	if (node.name === 'slot') {
+		visitSlot(generator, block, node);
+		return;
 	}
 
 	if (generator.components.has(node.name) || node.name === ':Self') {

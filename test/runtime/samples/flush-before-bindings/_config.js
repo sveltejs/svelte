@@ -1,11 +1,11 @@
-import counter from './counter.js';
+// import counter from './counter.js';
 
 export default {
 	'skip-ssr': true,
 
 	html: `
-		<div><p>first thing (true)</p></div>
-		<div><p>second thing (true)</p></div>
+		<div><slot><p>first thing (true)</p></slot></div>
+		<div><slot><p>second thing (true)</p></slot></div>
 	`,
 
 	test(assert, component) {

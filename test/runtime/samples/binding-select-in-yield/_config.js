@@ -9,13 +9,15 @@ export default {
 		component.refs.modal.toggle();
 
 		assert.htmlEqual(target.innerHTML, `
-			<span>b</span>
+			<slot>
+				<span>b</span>
 
-			<select>
-				<option value='a'>a</option>
-				<option value='b'>b</option>
-				<option value='c'>c</option>
-			</select>
+				<select>
+					<option value='a'>a</option>
+					<option value='b'>b</option>
+					<option value='c'>c</option>
+				</select>
+			</slot>
 		`);
 
 		const select = target.querySelector('select');
@@ -32,13 +34,15 @@ export default {
 		]);
 
 		assert.htmlEqual(target.innerHTML, `
-			<span>c</span>
+			<slot>
+				<span>c</span>
 
-			<select>
-				<option value='a'>a</option>
-				<option value='b'>b</option>
-				<option value='c'>c</option>
-			</select>
+				<select>
+					<option value='a'>a</option>
+					<option value='b'>b</option>
+					<option value='c'>c</option>
+				</select>
+			</slot>
 		`);
 
 		component.refs.modal.toggle();
@@ -51,13 +55,15 @@ export default {
 		]);
 
 		assert.htmlEqual(target.innerHTML, `
-			<span>c</span>
+			<slot>
+				<span>c</span>
 
-			<select>
-				<option value='a'>a</option>
-				<option value='b'>b</option>
-				<option value='c'>c</option>
-			</select>
+				<select>
+					<option value='a'>a</option>
+					<option value='b'>b</option>
+					<option value='c'>c</option>
+				</select>
+			</slot>
 		`);
 	}
 };

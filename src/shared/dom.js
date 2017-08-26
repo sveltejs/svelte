@@ -23,6 +23,10 @@ export function destroyEach(iterations, detach, start) {
 	}
 }
 
+export function createFragment() {
+	return document.createDocumentFragment();
+}
+
 export function createElement(name) {
 	return document.createElement(name);
 }

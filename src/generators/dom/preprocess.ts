@@ -41,6 +41,7 @@ const preprocessors = {
 		state: State,
 		node: Node,
 		elementStack: Node[],
+		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
@@ -57,6 +58,7 @@ const preprocessors = {
 		state: State,
 		node: Node,
 		elementStack: Node[],
+		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
 		const dependencies = block.findDependencies(node.expression);
@@ -74,6 +76,7 @@ const preprocessors = {
 		state: State,
 		node: Node,
 		elementStack: Node[],
+		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
 		node._state = getChildState(state);
@@ -94,6 +97,7 @@ const preprocessors = {
 		node: Node,
 		inEachBlock: boolean,
 		elementStack: Node[],
+		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
@@ -113,7 +117,7 @@ const preprocessors = {
 			node._state = getChildState(state);
 
 			blocks.push(node._block);
-			preprocessChildren(generator, node._block, node._state, node, inEachBlock, elementStack, stripWhitespace, nextSibling);
+			preprocessChildren(generator, node._block, node._state, node, inEachBlock, elementStack, componentStack, stripWhitespace, nextSibling);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -140,6 +144,7 @@ const preprocessors = {
 					node.else,
 					inEachBlock,
 					elementStack,
+					componentStack,
 					stripWhitespace,
 					nextSibling
 				);
@@ -169,6 +174,7 @@ const preprocessors = {
 		node: Node,
 		inEachBlock: boolean,
 		elementStack: Node[],
+		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
@@ -221,7 +227,7 @@ const preprocessors = {
 		});
 
 		generator.blocks.push(node._block);
-		preprocessChildren(generator, node._block, node._state, node, true, elementStack, stripWhitespace, nextSibling);
+		preprocessChildren(generator, node._block, node._state, node, true, elementStack, componentStack, stripWhitespace, nextSibling);
 		block.addDependencies(node._block.dependencies);
 		node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 
@@ -240,6 +246,7 @@ const preprocessors = {
 				node.else,
 				inEachBlock,
 				elementStack,
+				componentStack,
 				stripWhitespace,
 				nextSibling
 			);
@@ -254,6 +261,7 @@ const preprocessors = {
 		node: Node,
 		inEachBlock: boolean,
 		elementStack: Node[],
+		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
@@ -326,10 +334,23 @@ const preprocessors = {
 			generator.components.has(node.name) || node.name === ':Self';
 
 		if (isComponent) {
+			const name = block.getUniqueName(
+				(node.name === ':Self' ? generator.name : node.name).toLowerCase()
+			);
+
 			node._state = getChildState(state, {
+				name,
+				parentNode: `${name}._slotted.default`,
 				isYield: true
 			});
 		} else {
+			const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
+			if (slot) {
+				// TODO validate slots — no nesting, no dynamic names...
+				const component = componentStack[componentStack.length - 1];
+				component._slots.add(slot);
+			}
+
 			const name = block.getUniqueName(
 				node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 			);
@@ -355,17 +376,19 @@ const preprocessors = {
 					(node.name === ':Self' ? generator.name : node.name).toLowerCase()
 				);
 
-				node._block = block.child({
-					name: generator.getUniqueName(`create_${name}_yield_fragment`),
-				});
+				// node._block = block.child({
+				// 	name: generator.getUniqueName(`create_${name}_yield_fragment`),
+				// });
 
-				generator.blocks.push(node._block);
-				preprocessChildren(generator, node._block, node._state, node, inEachBlock, elementStack, stripWhitespace, nextSibling);
-				block.addDependencies(node._block.dependencies);
-				node._block.hasUpdateMethod = node._block.dependencies.size > 0;
+				if (node.children) node._slots = new Set(['default']); // TODO only include default if there are unslotted children
+
+				// generator.blocks.push(node._block);
+				preprocessChildren(generator, block, node._state, node, inEachBlock, elementStack, componentStack.concat(node), stripWhitespace, nextSibling);
+				// block.addDependencies(node._block.dependencies);
+				// node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 			} else {
 				if (node.name === 'pre' || node.name === 'textarea') stripWhitespace = false;
-				preprocessChildren(generator, block, node._state, node, inEachBlock, elementStack.concat(node), stripWhitespace, nextSibling);
+				preprocessChildren(generator, block, node._state, node, inEachBlock, elementStack.concat(node), componentStack, stripWhitespace, nextSibling);
 			}
 		}
 	},
@@ -378,6 +401,7 @@ function preprocessChildren(
 	node: Node,
 	inEachBlock: boolean,
 	elementStack: Node[],
+	componentStack: Node[],
 	stripWhitespace: boolean,
 	nextSibling: Node
 ) {
@@ -407,7 +431,7 @@ function preprocessChildren(
 
 	cleaned.forEach((child: Node, i: number) => {
 		const preprocessor = preprocessors[child.type];
-		if (preprocessor) preprocessor(generator, block, state, child, inEachBlock, elementStack, stripWhitespace, cleaned[i + 1] || nextSibling);
+		if (preprocessor) preprocessor(generator, block, state, child, inEachBlock, elementStack, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);
 
 		if (lastChild) {
 			lastChild.next = child;
@@ -471,7 +495,7 @@ export default function preprocess(
 	};
 
 	generator.blocks.push(block);
-	preprocessChildren(generator, block, state, node, false, [], true, null);
+	preprocessChildren(generator, block, state, node, false, [], [], true, null);
 	block.hasUpdateMethod = true;
 
 	return { block, state };

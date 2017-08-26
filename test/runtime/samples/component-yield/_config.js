@@ -1,3 +1,6 @@
 export default {
-	html: '<p>Hello</p>'
+	html: `
+		<p>Hello
+			<slot></slot>
+		</p>`
 };

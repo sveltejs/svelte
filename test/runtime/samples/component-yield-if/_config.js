@@ -7,10 +7,10 @@ export default {
 		assert.equal( widget.get( 'show' ), false );
 
 		widget.set({show: true});
-		assert.htmlEqual( target.innerHTML, '<div><p>Hello</p></div>' );
+		assert.htmlEqual( target.innerHTML, '<div><p><slot>Hello</slot></p></div>' );
 
 		component.set({data: 'World'});
-		assert.htmlEqual( target.innerHTML, '<div><p>World</p></div>' );
+		assert.htmlEqual( target.innerHTML, '<div><p><slot>World</slot></p></div>' );
 
 		widget.set({show: false});
 		assert.htmlEqual( target.innerHTML, '<div><p></p></div>' );
@@ -19,6 +19,6 @@ export default {
 		assert.htmlEqual( target.innerHTML, '<div><p></p></div>' );
 
 		widget.set({show: true});
-		assert.htmlEqual( target.innerHTML, '<div><p>Goodbye</p></div>' );
+		assert.htmlEqual( target.innerHTML, '<div><p><slot>Goodbye</slot></p></div>' );
 	}
 };

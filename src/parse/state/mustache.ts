@@ -186,13 +186,17 @@ export default function mustache(parser: Parser) {
 		parser.stack.push(block);
 	} else if (parser.eat('yield')) {
 		// {{yield}}
+		// TODO deprecate
 		parser.allowWhitespace();
 		parser.eat('}}', true);
 
 		parser.current().children.push({
 			start,
 			end: parser.index,
-			type: 'YieldTag',
+			type: 'Element',
+			name: 'slot',
+			attributes: [],
+			children: []
 		});
 	} else if (parser.eat('{')) {
 		// {{{raw}}} mustache

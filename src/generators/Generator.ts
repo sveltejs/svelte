@@ -43,6 +43,7 @@ export default class Generator {
 	hasJs: boolean;
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
+	slots: Set<string>;
 
 	code: MagicString;
 
@@ -76,6 +77,7 @@ export default class Generator {
 		this.events = new Set();
 		this.transitions = new Set();
 		this.importedComponents = new Map();
+		this.slots = new Set();
 
 		this.bindingGroups = [];
 		this.indirectDependencies = new Map();
