@@ -20,7 +20,8 @@ function getBranches(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	const branches = [
 		{
@@ -32,11 +33,11 @@ function getBranches(
 		},
 	];
 
-	visitChildren(generator, block, state, node, elementStack);
+	visitChildren(generator, block, state, node, elementStack, componentStack);
 
 	if (isElseIf(node.else)) {
 		branches.push(
-			...getBranches(generator, block, state, node.else.children[0], elementStack)
+			...getBranches(generator, block, state, node.else.children[0], elementStack, componentStack)
 		);
 	} else {
 		branches.push({
@@ -48,7 +49,7 @@ function getBranches(
 		});
 
 		if (node.else) {
-			visitChildren(generator, block, state, node.else, elementStack);
+			visitChildren(generator, block, state, node.else, elementStack, componentStack);
 		}
 	}
 
@@ -60,10 +61,11 @@ function visitChildren(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	node.children.forEach((child: Node) => {
-		visit(generator, node._block, node._state, child, elementStack);
+		visit(generator, node._block, node._state, child, elementStack, componentStack);
 	});
 }
 
@@ -72,7 +74,8 @@ export default function visitIfBlock(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	const name = generator.getUniqueName(`if_block`);
 	const anchor = node.needsAnchor
@@ -80,7 +83,7 @@ export default function visitIfBlock(
 		: (node.next && node.next._state.name) || 'null';
 	const params = block.params.join(', ');
 
-	const branches = getBranches(generator, block, state, node, elementStack);
+	const branches = getBranches(generator, block, state, node, elementStack, componentStack);
 
 	const hasElse = isElseBranch(branches[branches.length - 1]);
 	const if_name = hasElse ? '' : `if ( ${name} ) `;

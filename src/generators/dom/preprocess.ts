@@ -348,7 +348,7 @@ const preprocessors = {
 			if (slot) {
 				// TODO validate slots — no nesting, no dynamic names...
 				const component = componentStack[componentStack.length - 1];
-				component._slots.add(slot);
+				component._slots.add(slot.value[0].data);
 			}
 
 			const name = block.getUniqueName(
@@ -376,16 +376,9 @@ const preprocessors = {
 					(node.name === ':Self' ? generator.name : node.name).toLowerCase()
 				);
 
-				// node._block = block.child({
-				// 	name: generator.getUniqueName(`create_${name}_yield_fragment`),
-				// });
-
 				if (node.children) node._slots = new Set(['default']); // TODO only include default if there are unslotted children
 
-				// generator.blocks.push(node._block);
 				preprocessChildren(generator, block, node._state, node, inEachBlock, elementStack, componentStack.concat(node), stripWhitespace, nextSibling);
-				// block.addDependencies(node._block.dependencies);
-				// node._block.hasUpdateMethod = node._block.dependencies.size > 0;
 			} else {
 				if (node.name === 'pre' || node.name === 'textarea') stripWhitespace = false;
 				preprocessChildren(generator, block, node._state, node, inEachBlock, elementStack.concat(node), componentStack, stripWhitespace, nextSibling);

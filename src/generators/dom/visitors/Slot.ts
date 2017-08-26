@@ -11,7 +11,8 @@ export default function visitSlot(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	const slotName = getStaticAttributeValue(node, 'name') || 'default';
 	const name = block.getUniqueName(`slot_${slotName}`);
@@ -27,13 +28,19 @@ export default function visitSlot(
 		state.parentNode
 	);
 
+	if (slotName !== 'default') {
+		block.builders.hydrate.addBlock(deindent`
+			@setAttribute(${name}, 'name', '${slotName}');
+		`);
+	}
+
 	block.builders.create.pushCondition(`!${content_name}`);
 	block.builders.mount.pushCondition(`!${content_name}`);
 	block.builders.unmount.pushCondition(`!${content_name}`);
 	block.builders.destroy.pushCondition(`!${content_name}`);
 
 	node.children.forEach((child: Node) => {
-		visit(generator, block, node._state, child, elementStack.concat(node));
+		visit(generator, block, node._state, child, elementStack.concat(node), componentStack);
 	});
 
 	block.builders.create.popCondition();
