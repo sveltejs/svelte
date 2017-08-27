@@ -32,6 +32,7 @@ export class Validator {
 	methods: Map<string, Node>;
 	helpers: Map<string, Node>;
 	transitions: Map<string, Node>;
+	slots: Set<string>;
 
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
 		this.source = source;
@@ -47,6 +48,7 @@ export class Validator {
 		this.methods = new Map();
 		this.helpers = new Map();
 		this.transitions = new Map();
+		this.slots = new Set();
 	}
 
 	error(message: string, pos: number) {
