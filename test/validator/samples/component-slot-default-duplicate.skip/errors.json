@@ -1,0 +1,8 @@
+[{
+	"message": "duplicate default <slot> element",
+	"loc": {
+		"line": 2,
+		"column": 0
+	},
+	"pos": 14
+}]
