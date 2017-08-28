@@ -75,12 +75,6 @@ function cleanChildren(node) {
 
 	// recurse
 	[...node.childNodes].forEach(child => {
-		if (child.nodeType === 8) {
-			// comment
-			node.removeChild(child);
-			return;
-		}
-
 		if (child.nodeType === 3) {
 			// text
 			if (
@@ -123,6 +117,7 @@ export function normalizeHtml(window, html) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
+			.replace(/<!--.*?-->/g, '')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
 		cleanChildren(node, '');
