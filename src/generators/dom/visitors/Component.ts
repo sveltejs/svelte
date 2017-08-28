@@ -43,47 +43,22 @@ export default function visitComponent(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	generator.hasComponents = true;
 
-	const name = block.getUniqueName(
-		(node.name === ':Self' ? generator.name : node.name).toLowerCase()
-	);
+	const name = node._state.name;
 
 	const componentInitProperties = [`_root: #component._root`];
 
-	// Component has children, put them in a separate {{yield}} block
 	if (node.children.length > 0) {
-		const params = block.params.join(', ');
-
-		const childBlock = node._block;
+		const slots = Array.from(node._slots).map(name => `${name}: @createFragment()`);
+		componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 		node.children.forEach((child: Node) => {
-			visit(generator, childBlock, node._state, child, elementStack);
+			visit(generator, block, node._state, child, elementStack, componentStack.concat(node));
 		});
-
-		const yield_fragment = block.getUniqueName(`${name}_yield_fragment`);
-
-		block.builders.init.addLine(
-			`var ${yield_fragment} = ${childBlock.name}( ${params}, #component );`
-		);
-
-		block.builders.create.addLine(`${yield_fragment}.create();`);
-
-		block.builders.claim.addLine(
-			`${yield_fragment}.claim( ${state.parentNodes} );`
-		);
-
-		if (childBlock.hasUpdateMethod) {
-			block.builders.update.addLine(
-				`${yield_fragment}.update( changed, ${params} );`
-			);
-		}
-
-		block.builders.destroy.addLine(`${yield_fragment}.destroy();`);
-
-		componentInitProperties.push(`_yield: ${yield_fragment}`);
 	}
 
 	const allContexts = new Set();

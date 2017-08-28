@@ -75,13 +75,8 @@ function cleanChildren(node) {
 
 	// recurse
 	[...node.childNodes].forEach(child => {
-		if (child.nodeType === 8) {
-			// comment
-			node.removeChild(child);
-			return;
-		}
-
 		if (child.nodeType === 3) {
+			// text
 			if (
 				node.namespaceURI === 'http://www.w3.org/2000/svg' &&
 				node.tagName !== 'text' &&
@@ -90,12 +85,11 @@ function cleanChildren(node) {
 				node.removeChild(child);
 			}
 
-			child.data = child.data.replace(/\s{2,}/, '\n');
+			child.data = child.data.replace(/\s{2,}/g, '\n');
 
-			// text
 			if (previous && previous.nodeType === 3) {
 				previous.data += child.data;
-				previous.data = previous.data.replace(/\s{2,}/, '\n');
+				previous.data = previous.data.replace(/\s{2,}/g, '\n');
 
 				node.removeChild(child);
 				child = previous;
@@ -120,12 +114,17 @@ function cleanChildren(node) {
 }
 
 export function normalizeHtml(window, html) {
-	const node = window.document.createElement('div');
-	node.innerHTML = html
-		.replace(/>[\s\r\n]+</g, '><')
-		.trim();
-	cleanChildren(node, '');
-	return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+	try {
+		const node = window.document.createElement('div');
+		node.innerHTML = html
+			.replace(/<!--.*?-->/g, '')
+			.replace(/>[\s\r\n]+</g, '><')
+			.trim();
+		cleanChildren(node, '');
+		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+	} catch (err) {
+		throw new Error(`Failed to normalize HTML:\n${html}`);
+	}
 }
 
 export function setupHtmlEqual() {

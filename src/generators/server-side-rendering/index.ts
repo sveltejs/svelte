@@ -11,7 +11,9 @@ import { stringify } from '../../utils/stringify';
 export class SsrGenerator extends Generator {
 	bindings: string[];
 	renderCode: string;
-	elementDepth: number;
+	elementDepth: number; // TODO is this necessary? appears to be unused
+	appendTargets: Record<string, string> | null;
+	appendTarget: string | null;
 
 	constructor(
 		parsed: Parsed,
@@ -24,6 +26,7 @@ export class SsrGenerator extends Generator {
 		this.bindings = [];
 		this.renderCode = '';
 		this.elementDepth = 0;
+		this.appendTargets = null;
 
 		// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
 		const { templateProperties, defaultExport } = this;
@@ -59,7 +62,23 @@ export class SsrGenerator extends Generator {
 	}
 
 	append(code: string) {
-		this.renderCode += code;
+		if (this.appendTarget) {
+			this.appendTargets[this.appendTarget] += code;
+		} else {
+			this.renderCode += code;
+		}
+	}
+
+	removeAppendTarget() {
+		this.appendTarget = this.appendTargets = null;
+	}
+
+	setAppendTarget(name: string) {
+		if (!this.appendTargets[name]) {
+			this.appendTargets[name] = '';
+		}
+
+		this.appendTarget = name;
 	}
 }
 

@@ -1,0 +1,8 @@
+[{
+	"message": "slot attribute cannot have a dynamic value",
+	"loc": {
+		"line": 2,
+		"column": 9
+	},
+	"pos": 18
+}]

@@ -1,0 +1,8 @@
+[{
+	"message": "default is a reserved word — it cannot be used as a slot name",
+	"loc": {
+		"line": 1,
+		"column": 6
+	},
+	"pos": 6
+}]

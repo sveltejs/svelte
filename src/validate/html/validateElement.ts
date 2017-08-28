@@ -11,6 +11,35 @@ export default function validateElement(validator: Validator, node: Node, refs: 
 		validator.warn(`${node.name} component is not defined`, node.start);
 	}
 
+	if (node.name === 'slot') {
+		const nameAttribute = node.attributes.find((attribute: Node) => attribute.name === 'name');
+		if (nameAttribute) {
+			if (nameAttribute.value.length !== 1 || nameAttribute.value[0].type !== 'Text') {
+				validator.error(`<slot> name cannot be dynamic`, nameAttribute.start);
+			}
+
+			const slotName = nameAttribute.value[0].data;
+			if (slotName === 'default') {
+				validator.error(`default is a reserved word — it cannot be used as a slot name`, nameAttribute.start);
+			}
+
+			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
+			// bug than anything. Perhaps it should be a warning
+
+			// if (validator.slots.has(slotName)) {
+			// 	validator.error(`duplicate '${slotName}' <slot> element`, nameAttribute.start);
+			// }
+
+			// validator.slots.add(slotName);
+		} else {
+			// if (validator.slots.has('default')) {
+			// 	validator.error(`duplicate default <slot> element`, node.start);
+			// }
+
+			// validator.slots.add('default');
+		}
+	}
+
 	let hasIntro: boolean;
 	let hasOutro: boolean;
 	let hasTransition: boolean;
@@ -136,6 +165,13 @@ export default function validateElement(validator: Validator, node: Node, refs: 
 					);
 				}
 			}
+
+			if (attribute.name === 'slot' && !isComponent && isDynamic(attribute)) {
+				validator.error(
+					`slot attribute cannot have a dynamic value`,
+					attribute.start
+				);
+			}
 		}
 	});
 }
@@ -150,7 +186,7 @@ function checkTypeAttribute(validator: Validator, node: Node) {
 		validator.error(`'type' attribute must be specified`, attribute.start);
 	}
 
-	if (attribute.value.length > 1 || attribute.value[0].type !== 'Text') {
+	if (isDynamic(attribute)) {
 		validator.error(
 			`'type' attribute cannot be dynamic if input uses two-way binding`,
 			attribute.start
@@ -158,4 +194,8 @@ function checkTypeAttribute(validator: Validator, node: Node) {
 	}
 
 	return attribute.value[0].data;
+}
+
+function isDynamic(attribute: Node) {
+	return attribute.value.length > 1 || attribute.value[0].type !== 'Text';
 }

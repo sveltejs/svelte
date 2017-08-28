@@ -80,19 +80,25 @@ export default function visitComponent(
 	let open = `\${${expression}.render({${props}}`;
 
 	if (node.children.length) {
-		open += `, { yield: () => \``;
+		generator.appendTargets = {};
+		generator.setAppendTarget('default');
+
+		generator.elementDepth += 1;
+
+		node.children.forEach((child: Node) => {
+			visit(generator, block, child);
+		});
+
+		generator.elementDepth -= 1;
+
+		const slotted = Object.keys(generator.appendTargets)
+			.map(name => `${name}: () => \`${generator.appendTargets[name]}\``)
+			.join(', ');
+
+		open += `, { slotted: { ${slotted} } }`;
+		generator.setAppendTarget(null);
 	}
 
 	generator.append(open);
-
-	generator.elementDepth += 1;
-
-	node.children.forEach((child: Node) => {
-		visit(generator, block, child);
-	});
-
-	generator.elementDepth -= 1;
-
-	const close = node.children.length ? `\` })}` : ')}';
-	generator.append(close);
+	generator.append(')}');
 }

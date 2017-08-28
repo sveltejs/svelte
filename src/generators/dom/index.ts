@@ -72,7 +72,7 @@ export default function dom(
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 	parsed.html.children.forEach((node: Node) => {
-		visit(generator, block, state, node, []);
+		visit(generator, block, state, node, [], []);
 	});
 
 	const builder = new CodeBuilder();
@@ -181,6 +181,7 @@ export default function dom(
 			this._root = options._root || this;
 			this._yield = options._yield;
 			this._bind = options._bind;
+			${generator.slots.size && `this._slotted = options.slots || {};`}
 
 			${generator.stylesheet.hasStyles &&
 				options.css !== false &&
@@ -199,6 +200,8 @@ export default function dom(
 					}
 				`}
 			`}
+
+			${generator.slots.size && `this.slots = {};`}
 
 			this._fragment = @create_main_fragment( this._state, this );
 

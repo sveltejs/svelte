@@ -143,6 +143,26 @@ export default function tag(parser: Parser) {
 		}
 	}
 
+	if (name === 'slot') {
+		let i = parser.stack.length;
+		while (i--) {
+			const item = parser.stack[i];
+			if (item.type === 'EachBlock') {
+				parser.error(
+					`<slot> cannot be a child of an each-block`,
+					start
+				);
+			}
+
+			if (item.type === 'Element' && item.name === 'slot') {
+				parser.error(
+					`<slot> elements cannot be nested`,
+					start
+				);
+			}
+		}
+	}
+
 	const attributes = [];
 	const uniqueNames = new Set();
 

@@ -5,7 +5,6 @@ import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Text from './Text';
-import YieldTag from './YieldTag';
 
 export default {
 	Comment,
@@ -14,6 +13,5 @@ export default {
 	IfBlock,
 	MustacheTag,
 	RawMustacheTag,
-	Text,
-	YieldTag,
+	Text
 };

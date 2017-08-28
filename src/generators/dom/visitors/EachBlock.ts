@@ -10,7 +10,8 @@ export default function visitEachBlock(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[]
+	elementStack: Node[],
+	componentStack: Node[]
 ) {
 	const each_block = generator.getUniqueName(`each_block`);
 	const create_each_block = node._block.name;
@@ -125,12 +126,12 @@ export default function visitEachBlock(
 	}
 
 	node.children.forEach((child: Node) => {
-		visit(generator, node._block, node._state, child, elementStack);
+		visit(generator, node._block, node._state, child, elementStack, componentStack);
 	});
 
 	if (node.else) {
 		node.else.children.forEach((child: Node) => {
-			visit(generator, node.else._block, node.else._state, child, elementStack);
+			visit(generator, node.else._block, node.else._state, child, elementStack, componentStack);
 		});
 	}
 }
