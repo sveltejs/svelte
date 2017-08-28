@@ -5,8 +5,9 @@ import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Text from './Text';
 import YieldTag from './YieldTag';
+import { Visitor } from '../interfaces';
 
-export default {
+const visitors: Record<string, Visitor> = {
 	EachBlock,
 	Element,
 	IfBlock,
@@ -15,3 +16,5 @@ export default {
 	Text,
 	YieldTag,
 };
+
+export default visitors;

@@ -1,5 +1,5 @@
 import { parseExpressionAt } from 'acorn';
-import spaces from '../../utils/spaces';
+import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 
 function readExpression(parser: Parser, start: number, quoteMark: string|null) {
@@ -31,7 +31,7 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 		}
 	}
 
-	const expression = parseExpressionAt(spaces(start) + str, start);
+	const expression = parseExpressionAt(repeat(' ', start) + str, start);
 	parser.index = expression.end;
 
 	parser.allowWhitespace();
@@ -101,7 +101,7 @@ export function readBindingDirective(
 			b = parser.index;
 		}
 
-		const source = spaces(a) + parser.template.slice(a, b);
+		const source = repeat(' ', a) + parser.template.slice(a, b);
 		value = parseExpressionAt(source, a);
 
 		if (value.type !== 'Identifier' && value.type !== 'MemberExpression') {

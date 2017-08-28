@@ -1,4 +1,4 @@
-import spaces from './spaces';
+import repeat from './repeat';
 
 function tabsToSpaces(str: string) {
 	return str.replace(/^\t+/, match => match.split('\t').join('  '));
@@ -26,7 +26,7 @@ export default function getCodeFrame(
 
 			if (isErrorLine) {
 				const indicator =
-					spaces(digits + 2 + tabsToSpaces(str.slice(0, column)).length) + '^';
+					repeat(' ', digits + 2 + tabsToSpaces(str.slice(0, column)).length) + '^';
 				return `${lineNum}: ${tabsToSpaces(str)}\n${indicator}`;
 			}
 
