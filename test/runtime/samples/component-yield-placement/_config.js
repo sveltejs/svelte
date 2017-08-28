@@ -7,7 +7,7 @@ export default {
 		<div class='modal-background'></div>
 
 		<div class='modal'>
-			<slot><h2>Hello!</h2></slot>
+			<h2>Hello!</h2>
 			<button>close modal</button>
 		</div>
 	`,

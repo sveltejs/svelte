@@ -4,8 +4,8 @@ export default {
 	'skip-ssr': true,
 
 	html: `
-		<div><slot><p>first thing (true)</p></slot></div>
-		<div><slot><p>second thing (true)</p></slot></div>
+		<div><p>first thing (true)</p></div>
+		<div><p>second thing (true)</p></div>
 	`,
 
 	test(assert, component) {
