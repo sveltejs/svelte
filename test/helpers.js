@@ -120,12 +120,16 @@ function cleanChildren(node) {
 }
 
 export function normalizeHtml(window, html) {
-	const node = window.document.createElement('div');
-	node.innerHTML = html
-		.replace(/>[\s\r\n]+</g, '><')
-		.trim();
-	cleanChildren(node, '');
-	return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+	try {
+		const node = window.document.createElement('div');
+		node.innerHTML = html
+			.replace(/>[\s\r\n]+</g, '><')
+			.trim();
+		cleanChildren(node, '');
+		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
+	} catch (err) {
+		throw new Error(`Failed to normalize HTML:\n${html}`);
+	}
 }
 
 export function setupHtmlEqual() {

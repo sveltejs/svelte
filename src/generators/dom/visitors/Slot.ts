@@ -51,6 +51,7 @@ export default function visitSlot(
 	);
 
 	block.builders.create.pushCondition(`!${content_name}`);
+	block.builders.hydrate.pushCondition(`!${content_name}`);
 	block.builders.mount.pushCondition(`!${content_name}`);
 	block.builders.unmount.pushCondition(`!${content_name}`);
 	block.builders.destroy.pushCondition(`!${content_name}`);
@@ -60,6 +61,7 @@ export default function visitSlot(
 	});
 
 	block.builders.create.popCondition();
+	block.builders.hydrate.popCondition();
 	block.builders.mount.popCondition();
 	block.builders.unmount.popCondition();
 	block.builders.destroy.popCondition();

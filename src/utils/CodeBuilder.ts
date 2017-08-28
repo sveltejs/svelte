@@ -5,12 +5,17 @@ enum ChunkType {
 	Block
 }
 
+interface Condition {
+	condition: string;
+	used: boolean;
+}
+
 export default class CodeBuilder {
 	result: string;
 	first: ChunkType;
 	last: ChunkType;
 	lastCondition: string;
-	conditionStack: string[];
+	conditionStack: Condition[];
 	indent: string;
 
 	constructor(str = '') {
@@ -28,6 +33,8 @@ export default class CodeBuilder {
 	}
 
 	addConditional(condition: string, body: string) {
+		this.reifyConditions();
+
 		body = body.replace(/^/gm, `${this.indent}\t`);
 
 		if (condition === this.lastCondition) {
@@ -45,6 +52,8 @@ export default class CodeBuilder {
 	}
 
 	addLine(line: string) {
+		this.reifyConditions();
+
 		if (this.lastCondition) {
 			this.result += `\n${this.indent}}`;
 			this.lastCondition = null;
@@ -63,6 +72,8 @@ export default class CodeBuilder {
 	}
 
 	addLineAtStart(line: string) {
+		this.reifyConditions();
+
 		if (this.first === ChunkType.Block) {
 			this.result = `${line}\n\n${this.indent}${this.result}`;
 		} else if (this.first === ChunkType.Line) {
@@ -76,6 +87,8 @@ export default class CodeBuilder {
 	}
 
 	addBlock(block: string) {
+		this.reifyConditions();
+
 		if (this.indent) block = block.replace(/^/gm, `${this.indent}`);
 
 		if (this.lastCondition) {
@@ -94,6 +107,8 @@ export default class CodeBuilder {
 	}
 
 	addBlockAtStart(block: string) {
+		this.reifyConditions();
+
 		if (this.result) {
 			this.result = `${block}\n\n${this.indent}${this.result}`;
 		} else {
@@ -109,15 +124,37 @@ export default class CodeBuilder {
 	}
 
 	pushCondition(condition: string) {
-		this.conditionStack.push(condition);
-		this.addLine(`if (${condition}) {`);
-		this.indent = repeat('\t', this.conditionStack.length);
+		this.conditionStack.push({ condition, used: false });
 	}
 
 	popCondition() {
-		this.conditionStack.pop();
+		const { used } = this.conditionStack.pop();
+
 		this.indent = repeat('\t', this.conditionStack.length);
-		this.addLine('}');
+		if (used) this.addLine('}');
+	}
+
+	reifyConditions() {
+		for (let i = 0; i < this.conditionStack.length; i += 1) {
+			const condition = this.conditionStack[i];
+			if (!condition.used) {
+				const line = `if (${condition.condition}) {`;
+
+				if (this.last === ChunkType.Block) {
+					this.result += `\n\n${this.indent}${line}`;
+				} else if (this.last === ChunkType.Line) {
+					this.result += `\n${this.indent}${line}`;
+				} else {
+					this.result += line;
+				}
+
+				this.last = ChunkType.Line;
+				if (!this.first) this.first = ChunkType.Line;
+
+				this.indent = repeat('\t', this.conditionStack.length);
+				condition.used = true;
+			}
+		}
 	}
 
 	toString() {
