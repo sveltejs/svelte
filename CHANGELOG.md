@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.33.0
+
+* Replace `{{yield}}` with `<slot>` — adds fallback content named slots, and `options.slots` ([#763](https://github.com/sveltejs/svelte/issues/763))
+
 ## 1.32.0
 
 * Allow `anchor` initialisation option, alongside `target` ([#784](https://github.com/sveltejs/svelte/issues/784))
