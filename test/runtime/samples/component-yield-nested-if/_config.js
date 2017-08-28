@@ -1,7 +1,7 @@
 export default {
 	html: `
-		<slot>One
-		Inner</slot>
+		One
+		Inner
 	`,
 
 	test ( assert, component, target ) {
@@ -9,6 +9,6 @@ export default {
 		assert.htmlEqual( target.innerHTML, `` );
 
 		component.set({ foo: true });
-		assert.htmlEqual( target.innerHTML, `<slot>One\nInner</slot>` );
+		assert.htmlEqual( target.innerHTML, `One\nInner` );
 	}
 };

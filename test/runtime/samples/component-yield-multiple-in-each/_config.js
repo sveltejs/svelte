@@ -1,8 +1,8 @@
 export default {
 	html: `
-		<p><slot>Hello Alice</slot></p>
-		<p><slot>Hello Bob</slot></p>
-		<p><slot>Hello Charles</slot></p>
+		<p>Hello Alice</p>
+		<p>Hello Bob</p>
+		<p>Hello Charles</p>
 	`,
 
 	test ( assert, component, target ) {
@@ -11,9 +11,9 @@ export default {
 		});
 
 		assert.htmlEqual( target.innerHTML, `
-			<p><slot>Hello Alice</slot></p>
-			<p><slot>Hello Charles</slot></p>
-			<p><slot>Hello Bob</slot></p>
+			<p>Hello Alice</p>
+			<p>Hello Charles</p>
+			<p>Hello Bob</p>
 		`);
 	}
 };

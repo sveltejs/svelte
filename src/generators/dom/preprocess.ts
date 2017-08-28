@@ -353,9 +353,7 @@ const preprocessors = {
 			}
 
 			const name = block.getUniqueName(
-				node.name === 'slot' ?
-					`slot_${getStaticAttributeValue(node, 'name') || 'default'}`:
-					node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+				node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 			);
 
 			node._state = getChildState(state, {
