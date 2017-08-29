@@ -1,0 +1,8 @@
+[{
+	"message": "Transitions can only be applied to DOM elements, not components",
+	"loc": {
+		"line": 1,
+		"column": 8
+	},
+	"pos": 8
+}]
