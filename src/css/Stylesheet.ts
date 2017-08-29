@@ -135,10 +135,15 @@ class Declaration {
 
 	minify(code: MagicString) {
 		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children[0];
+		const first = this.node.value.children  ?
+			this.node.value.children[0] :
+			this.node.value;
 
-		if (first.start - c > 1) {
-			code.overwrite(c, first.start, ':');
+		let start = first.start;
+		while (/\s/.test(code.original[start])) start += 1;
+
+		if (start - c > 1) {
+			code.overwrite(c, start, ':');
 		}
 	}
 }
