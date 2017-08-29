@@ -116,6 +116,10 @@ export default function validateElement(validator: Validator, node: Node, refs: 
 		} else if (attribute.type === 'EventHandler') {
 			validateEventHandler(validator, attribute, refCallees);
 		} else if (attribute.type === 'Transition') {
+			if (isComponent) {
+				validator.error(`Transitions can only be applied to DOM elements, not components`, attribute.start);
+			}
+
 			const bidi = attribute.intro && attribute.outro;
 
 			if (hasTransition) {
