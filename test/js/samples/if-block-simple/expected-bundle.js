@@ -228,7 +228,7 @@ function create_if_block ( state, component ) {
 }
 
 function SvelteComponent ( options ) {
-	options = options || {};
+	this.options = options;
 	this._state = options.data || {};
 
 	this._observers = {

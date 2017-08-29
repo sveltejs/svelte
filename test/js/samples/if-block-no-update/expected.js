@@ -88,7 +88,7 @@ function select_block_type ( state ) {
 }
 
 function SvelteComponent ( options ) {
-	options = options || {};
+	this.options = options;
 	this._state = options.data || {};
 
 	this._observers = {
