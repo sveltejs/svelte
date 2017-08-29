@@ -153,13 +153,6 @@ export default function tag(parser: Parser) {
 					start
 				);
 			}
-
-			if (item.type === 'Element' && item.name === 'slot') {
-				parser.error(
-					`<slot> elements cannot be nested`,
-					start
-				);
-			}
 		}
 	}
 
