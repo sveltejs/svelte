@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.34.0
+
+* Support nested `<slot>` elements ([#790](https://github.com/sveltejs/svelte/issues/790))
+* Attach `options` to instance ([#550](https://github.com/sveltejs/svelte/issues/550), [#777](https://github.com/sveltejs/svelte/issues/777))
+* Error if transitions are applied to component ([#791](https://github.com/sveltejs/svelte/issues/791))
+* Handle CSS variables in `<style>` tag ([#757](https://github.com/sveltejs/svelte/issues/757))
+
 ## 1.33.0
 
 * Replace `{{yield}}` with `<slot>` — adds fallback content named slots, and `options.slots` ([#763](https://github.com/sveltejs/svelte/issues/763))
