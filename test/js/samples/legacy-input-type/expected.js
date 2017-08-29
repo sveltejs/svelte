@@ -28,7 +28,7 @@ function create_main_fragment ( state, component ) {
 }
 
 function SvelteComponent ( options ) {
-	options = options || {};
+	this.options = options;
 	this._state = options.data || {};
 
 	this._observers = {

@@ -313,7 +313,7 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 }
 
 function SvelteComponent ( options ) {
-	options = options || {};
+	this.options = options;
 	this._state = options.data || {};
 
 	this._observers = {
