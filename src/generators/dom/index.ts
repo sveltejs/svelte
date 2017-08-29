@@ -151,9 +151,9 @@ export default function dom(
 	// TODO deprecate component.teardown()
 	builder.addBlock(deindent`
 		function ${name} ( options ) {
-			options = options || {};
 			${options.dev &&
-				`if ( !options.target && !options._root ) throw new Error( "'target' is a required option" );`}
+				`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
+			this.options = options;
 			${generator.usesRefs && `this.refs = {};`}
 			this._state = ${templateProperties.data
 				? `@assign( @template.data(), options.data )`
