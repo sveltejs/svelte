@@ -153,7 +153,7 @@ export default function dom(
 		function ${name} ( options ) {
 			${options.dev &&
 				`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
-			this.options = options;
+			this.options = options || {};
 			${generator.usesRefs && `this.refs = {};`}
 			this._state = ${templateProperties.data
 				? `@assign( @template.data(), options.data )`

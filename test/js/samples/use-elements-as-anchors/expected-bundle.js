@@ -412,7 +412,7 @@ function create_if_block_4 ( state, component ) {
 }
 
 function SvelteComponent ( options ) {
-	this.options = options;
+	this.options = options || {};
 	this._state = options.data || {};
 
 	this._observers = {
