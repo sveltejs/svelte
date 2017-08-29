@@ -81,6 +81,12 @@ describe("runtime", () => {
 						code.slice(0, startIndex).split('\n').map(x => spaces(x.length)).join('\n') +
 						code.slice(startIndex).replace(/export default .+/, "");
 					acorn.parse(es5, { ecmaVersion: 5 });
+
+					if (/Object\.assign/.test(es5)) {
+						throw new Error(
+							"cannot use Object.assign in generated code, as it is not supported everywhere"
+						);
+					}
 				} catch (err) {
 					failed.add(dir);
 					showOutput(cwd, { shared }); // eslint-disable-line no-console
@@ -133,11 +139,6 @@ describe("runtime", () => {
 					throw err;
 				}
 
-				let usedObjectAssign = false;
-				Object.assign = () => {
-					usedObjectAssign = true;
-				};
-
 				global.window = window;
 
 				// Put the constructor on window for testing
@@ -151,13 +152,13 @@ describe("runtime", () => {
 					warnings.push(warning);
 				};
 
-				const component = new SvelteComponent({
+				const options = Object.assign({}, {
 					target,
 					hydrate,
 					data: config.data
-				});
+				}, config.options || {});
 
-				Object.assign = Object_assign;
+				const component = new SvelteComponent(options);
 
 				console.warn = warn;
 
@@ -183,15 +184,7 @@ describe("runtime", () => {
 					component.destroy();
 					assert.equal(target.innerHTML, "");
 				}
-
-				if (usedObjectAssign) {
-					throw new Error(
-						"cannot use Object.assign in generated code, as it is not supported everywhere"
-					);
-				}
 			} catch (err) {
-				Object.assign = Object_assign;
-
 				if (config.error && !unintendedError) {
 					config.error(assert, err);
 				} else {
