@@ -1,8 +1,0 @@
-[{
-	"message": "<slot> elements cannot be nested",
-	"loc": {
-		"line": 2,
-		"column": 1
-	},
-	"pos": 8
-}]

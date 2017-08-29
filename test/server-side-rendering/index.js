@@ -90,11 +90,9 @@ describe("ssr", () => {
 				delete require.cache[resolved];
 			});
 
-			const component = require(`../runtime/samples/${dir}/main.html`);
-			let html;
-
 			try {
-				html = component.render(config.data);
+				const component = require(`../runtime/samples/${dir}/main.html`);
+				const html = component.render(config.data);
 
 				if (config.html) {
 					assert.htmlEqual(html, config.html);
