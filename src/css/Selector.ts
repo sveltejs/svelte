@@ -160,7 +160,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attributeMatches(node, selector.name.name, selector.value && unquote(selector.value.value), selector.operator, selector.flags)) return false;
+			if (!attributeMatches(node, selector.name.name, selector.value && unquote(selector.value), selector.operator, selector.flags)) return false;
 		}
 
 		else if (selector.type === 'TypeSelector') {
@@ -245,10 +245,13 @@ function isDynamic(value: Node) {
 	return value.length > 1 || value[0].type !== 'Text';
 }
 
-function unquote(str: string) {
+function unquote(value: Node) {
+	if (value.type === 'Identifier') return value.name;
+	const str = value.value;
 	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
 		return str.slice(1, str.length - 1);
 	}
+	return str;
 }
 
 class Block {
