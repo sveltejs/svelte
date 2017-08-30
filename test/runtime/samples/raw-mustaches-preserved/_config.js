@@ -1,5 +1,3 @@
-const ns = '<noscript></noscript>';
-
 export default {
 	'skip-ssr': true,
 
@@ -7,13 +5,13 @@ export default {
 		raw: '<p>does not change</p>'
 	},
 
-	html: `<div>${ns}<p>does not change</p>${ns}</div>`,
+	html: `<div><p>does not change</p></div>`,
 
 	test ( assert, component, target ) {
 		const p = target.querySelector( 'p' );
 
 		component.set({ raw: '<p>does not change</p>' });
-		assert.equal( target.innerHTML, `<div>${ns}<p>does not change</p>${ns}</div>` );
+		assert.equal( target.innerHTML, `<div><p>does not change</p></div>` );
 		assert.strictEqual( target.querySelector( 'p' ), p );
 
 		component.destroy();

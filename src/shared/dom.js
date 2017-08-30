@@ -16,6 +16,18 @@ export function detachBetween(before, after) {
 	}
 }
 
+export function detachBefore(after) {
+	while (after.previousSibling) {
+		after.parentNode.removeChild(after.previousSibling);
+	}
+}
+
+export function detachAfter(before) {
+	while (before.nextSibling) {
+		before.parentNode.removeChild(before.nextSibling);
+	}
+}
+
 export function reinsertBetween(before, after, target) {
 	while (before.nextSibling && before.nextSibling !== after) {
 		target.appendChild(before.parentNode.removeChild(before.nextSibling));

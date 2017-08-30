@@ -25,8 +25,8 @@ function detachNode(node) {
 	node.parentNode.removeChild(node);
 }
 
-function detachBetween(before, after) {
-	while (before.nextSibling && before.nextSibling !== after) {
+function detachAfter(before) {
+	while (before.nextSibling) {
 		before.parentNode.removeChild(before.nextSibling);
 	}
 }
@@ -247,7 +247,7 @@ function create_main_fragment ( state, component ) {
 }
 
 function create_each_block ( state, each_block_value, comment, i, component ) {
-	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before, raw_after;
+	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before;
 
 	return {
 		create: function () {
@@ -262,7 +262,6 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			text_5 = createText( " ago:" );
 			text_6 = createText( "\n\n\t\t" );
 			raw_before = createElement( 'noscript' );
-			raw_after = createElement( 'noscript' );
 			this.hydrate();
 		},
 
@@ -283,8 +282,7 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			appendNode( text_5, span );
 			appendNode( text_6, div );
 			appendNode( raw_before, div );
-			appendNode( raw_after, div );
-			raw_before.insertAdjacentHTML( 'afterend', raw_value );
+			raw_before.insertAdjacentHTML('afterend', raw_value);
 		},
 
 		update: function ( changed, state, each_block_value, comment, i ) {
@@ -297,13 +295,13 @@ function create_each_block ( state, each_block_value, comment, i, component ) {
 			}
 
 			if ( ( changed.comments ) && raw_value !== ( raw_value = comment.html ) ) {
-				detachBetween( raw_before, raw_after );
-				raw_before.insertAdjacentHTML( 'afterend', raw_value );
+				detachAfter(raw_before);
+				raw_before.insertAdjacentHTML('afterend', raw_value);
 			}
 		},
 
 		unmount: function () {
-			detachBetween( raw_before, raw_after );
+			detachAfter(raw_before);
 
 			detachNode( div );
 		},

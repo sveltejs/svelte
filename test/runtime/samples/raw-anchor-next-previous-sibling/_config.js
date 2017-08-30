@@ -7,5 +7,9 @@ export default {
 		const span = target.querySelector('span');
 		assert.equal(span.previousSibling.nodeName, 'BR');
 		assert.equal(span.nextSibling.nodeName, 'BR');
+
+		component.set({
+			raw: `<span>bar</span>`
+		});
 	}
 };
