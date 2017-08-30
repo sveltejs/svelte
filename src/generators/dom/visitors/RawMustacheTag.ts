@@ -13,8 +13,8 @@ export default function visitRawMustacheTag(
 ) {
 	const name = node.var;
 
-	const needsAnchorBefore = node.prev ? (node.prev.type !== 'Element' || !node.prev._state || !node.prev.var) : !state.parentNode;
-	const needsAnchorAfter = node.next ? (node.next.type !== 'Element' || !node.next._state || !node.next.var) : !state.parentNode;
+	const needsAnchorBefore = node.prev ? node.prev.type !== 'Element' : !state.parentNode;
+	const needsAnchorAfter = node.next ? node.next.type !== 'Element' : !state.parentNode;
 
 	const anchorBefore = needsAnchorBefore
 		? block.getUniqueName(`${name}_before`)
