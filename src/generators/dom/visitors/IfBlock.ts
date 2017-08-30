@@ -78,7 +78,7 @@ export default function visitIfBlock(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
-	const name = generator.getUniqueName(`if_block`);
+	const name = node.var;
 
 	const needsAnchor = node.next ? !isDomNode(node.next) : !state.parentNode;
 	const anchor = needsAnchor

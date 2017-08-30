@@ -16,7 +16,7 @@ function getChildState(parent: State, child = {}) {
 	return assign(
 		{},
 		parent,
-		{ name: null, parentNode: null, parentNodes: 'nodes' },
+		{ parentNode: null, parentNodes: 'nodes' },
 		child || {}
 	);
 }
@@ -45,10 +45,10 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
+		node.var = block.getUniqueName('text');
+
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
-
-		node.var = block.getUniqueName('text');
 	},
 
 	RawMustacheTag: (
@@ -60,10 +60,10 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
+		node.var = block.getUniqueName('raw');
+
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
-
-		node.var = block.getUniqueName('raw');
 	},
 
 	Text: (
@@ -100,6 +100,8 @@ const preprocessors = {
 		let hasOutros = false;
 
 		function attachBlocks(node: Node) {
+			node.var = block.getUniqueName(`if_block`);
+
 			const dependencies = block.findDependencies(node.expression);
 			block.addDependencies(dependencies);
 
@@ -171,6 +173,8 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
+		node.var = block.getUniqueName(`each_block`);
+
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
 
