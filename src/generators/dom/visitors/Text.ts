@@ -10,7 +10,7 @@ export default function visitText(
 	state: State,
 	node: Node
 ) {
-	if (!node.shouldCreate) return;
+	if (node.shouldSkip) return;
 
 	block.addElement(
 		node.var,
