@@ -78,7 +78,9 @@ export default function visitIfBlock(
 	componentStack: Node[]
 ) {
 	const name = generator.getUniqueName(`if_block`);
-	const anchor = node.needsAnchor
+
+	const needsAnchor = node.next ? (!node.next._state || !node.next._state.name) : !state.parentNode;
+	const anchor = needsAnchor
 		? block.getUniqueName(`${name}_anchor`)
 		: (node.next && node.next._state.name) || 'null';
 	const params = block.params.join(', ');
@@ -117,7 +119,7 @@ export default function visitIfBlock(
 		`${if_name}${name}.claim( ${state.parentNodes} );`
 	);
 
-	if (node.needsAnchor) {
+	if (needsAnchor) {
 		block.addElement(
 			anchor,
 			`@createComment()`,

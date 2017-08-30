@@ -421,10 +421,8 @@ function preprocessChildren(
 		const preprocessor = preprocessors[child.type];
 		if (preprocessor) preprocessor(generator, block, state, child, inEachBlock, elementStack, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);
 
-		if (lastChild) {
-			lastChild.next = child;
-			lastChild.needsAnchor = !child._state || !child._state.name;
-		}
+		if (lastChild) lastChild.next = child;
+		child.prev = lastChild;
 
 		lastChild = child;
 	});
@@ -444,10 +442,6 @@ function preprocessChildren(
 				lastChild.next = null;
 			}
 		}
-	}
-
-	if (lastChild) {
-		lastChild.needsAnchor = !state.parentNode;
 	}
 
 	node.children = cleaned;
