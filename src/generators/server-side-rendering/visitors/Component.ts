@@ -83,13 +83,9 @@ export default function visitComponent(
 		generator.appendTargets = {};
 		generator.setAppendTarget('default');
 
-		generator.elementDepth += 1;
-
 		node.children.forEach((child: Node) => {
 			visit(generator, block, child);
 		});
-
-		generator.elementDepth -= 1;
 
 		const slotted = Object.keys(generator.appendTargets)
 			.map(name => `${name}: () => \`${generator.appendTargets[name]}\``)
