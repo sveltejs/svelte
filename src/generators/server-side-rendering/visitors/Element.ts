@@ -83,13 +83,9 @@ export default function visitElement(
 	if (node.name === 'textarea' && textareaContents !== undefined) {
 		generator.append(textareaContents);
 	} else {
-		generator.elementDepth += 1;
-
 		node.children.forEach((child: Node) => {
 			visit(generator, block, child);
 		});
-
-		generator.elementDepth -= 1;
 	}
 
 	if (!isVoidElementName(node.name)) {
