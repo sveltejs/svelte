@@ -14,7 +14,8 @@ export default function visitEachBlock(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
-	const each_block = generator.getUniqueName(`each_block`);
+	const each_block = node.var;
+
 	const create_each_block = node._block.name;
 	const each_block_value = node._block.listName;
 	const iterations = block.getUniqueName(`${each_block}_iterations`);
