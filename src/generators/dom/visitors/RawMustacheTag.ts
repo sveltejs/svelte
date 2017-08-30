@@ -26,8 +26,10 @@ export default function visitRawMustacheTag(
 
 	let detach: string;
 	let insert: (content: string) => string;
+	let useInnerHTML = false;
 
 	if (anchorBefore === 'null' && anchorAfter === 'null') {
+		useInnerHTML = true;
 		detach = `${state.parentNode}.innerHTML = '';`;
 		insert = content => `${state.parentNode}.innerHTML = ${content};`;
 	} else if (anchorBefore === 'null') {
@@ -48,7 +50,7 @@ export default function visitRawMustacheTag(
 		node,
 		name,
 		content => deindent`
-			${detach}
+			${!useInnerHTML && detach}
 			${insert(content)}
 		`
 	);
