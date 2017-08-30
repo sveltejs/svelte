@@ -2,6 +2,7 @@ import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import isDomNode from './shared/isDomNode';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
 
@@ -79,7 +80,7 @@ export default function visitIfBlock(
 ) {
 	const name = generator.getUniqueName(`if_block`);
 
-	const needsAnchor = node.next ? (!node.next._state || !node.next.var) : !state.parentNode;
+	const needsAnchor = node.next ? !isDomNode(node.next) : !state.parentNode;
 	const anchor = needsAnchor
 		? block.getUniqueName(`${name}_anchor`)
 		: (node.next && node.next.var) || 'null';

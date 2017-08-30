@@ -82,7 +82,7 @@ const preprocessors = {
 			if (elementsWithoutText.has(state.parentNodeName)) return;
 		}
 
-		node._state.shouldCreate = true;
+		node.shouldCreate = true;
 		node.var = block.getUniqueName(`text`);
 	},
 

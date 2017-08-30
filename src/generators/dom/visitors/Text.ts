@@ -10,7 +10,8 @@ export default function visitText(
 	state: State,
 	node: Node
 ) {
-	if (!node._state.shouldCreate) return;
+	if (!node.shouldCreate) return;
+
 	block.addElement(
 		node.var,
 		`@createText( ${stringify(node.data)} )`,
