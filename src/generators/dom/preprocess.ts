@@ -65,10 +65,8 @@ const preprocessors = {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
 
-		const basename = block.getUniqueName('raw');
-		const name = block.getUniqueName(`${basename}_before`);
-
-		node._state = getChildState(state, { basename, name });
+		const name = block.getUniqueName('raw');
+		node._state = getChildState(state, { name });
 	},
 
 	Text: (

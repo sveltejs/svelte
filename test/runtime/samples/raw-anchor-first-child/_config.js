@@ -5,6 +5,10 @@ export default {
 
 	test ( assert, component, target ) {
 		const span = target.querySelector('span');
-		assert.equal(!span.previousSibling);
+		assert.ok(!span.previousSibling);
+
+		component.set({
+			raw: `<span>bar</span>`
+		});
 	}
 };
