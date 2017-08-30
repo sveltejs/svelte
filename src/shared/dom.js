@@ -34,6 +34,19 @@ export function reinsertBetween(before, after, target) {
 	}
 }
 
+export function reinsertChildren(parent, target) {
+	while (parent.firstChild) target.appendChild(parent.firstChild);
+}
+
+export function reinsertAfter(before, target) {
+	while (before.nextSibling) target.appendChild(before.nextSibling);
+}
+
+export function reinsertBefore(after, target) {
+	var parent = after.parentNode;
+	while (parent.firstChild !== after) target.appendChild(parent.firstChild);
+}
+
 // TODO this is out of date
 export function destroyEach(iterations, detach, start) {
 	for (var i = start; i < iterations.length; i += 1) {
