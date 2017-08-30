@@ -48,7 +48,7 @@ export default function visitComponent(
 ) {
 	generator.hasComponents = true;
 
-	const name = node._state.name;
+	const name = node.var;
 
 	const componentInitProperties = [`_root: #component._root`];
 

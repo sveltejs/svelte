@@ -11,19 +11,17 @@ export default function visitMustacheTag(
 	state: State,
 	node: Node
 ) {
-	const { name } = node._state;
-
 	const { init } = visitTag(
 		generator,
 		block,
 		state,
 		node,
-		name,
-		value => `${name}.data = ${value};`
+		node.var,
+		value => `${node.var}.data = ${value};`
 	);
 
 	block.addElement(
-		name,
+		node.var,
 		`@createText( ${init} )`,
 		`@claimText( ${state.parentNodes}, ${init} )`,
 		state.parentNode

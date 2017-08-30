@@ -11,18 +11,18 @@ export default function visitRawMustacheTag(
 	state: State,
 	node: Node
 ) {
-	const name = node._state.name;
+	const name = node.var;
 
-	const needsAnchorBefore = node.prev ? (node.prev.type !== 'Element' || !node.prev._state || !node.prev._state.name) : !state.parentNode;
-	const needsAnchorAfter = node.next ? (node.next.type !== 'Element' || !node.next._state || !node.next._state.name) : !state.parentNode;
+	const needsAnchorBefore = node.prev ? (node.prev.type !== 'Element' || !node.prev._state || !node.prev.var) : !state.parentNode;
+	const needsAnchorAfter = node.next ? (node.next.type !== 'Element' || !node.next._state || !node.next.var) : !state.parentNode;
 
 	const anchorBefore = needsAnchorBefore
 		? block.getUniqueName(`${name}_before`)
-		: (node.prev && node.prev._state.name) || 'null';
+		: (node.prev && node.prev.var) || 'null';
 
 	const anchorAfter = needsAnchorAfter
 		? block.getUniqueName(`${name}_after`)
-		: (node.next && node.next._state.name) || 'null';
+		: (node.next && node.next.var) || 'null';
 
 	let detach: string;
 	let insert: (content: string) => string;

@@ -19,10 +19,10 @@ export default function visitEachBlock(
 	const iterations = block.getUniqueName(`${each_block}_iterations`);
 	const params = block.params.join(', ');
 
-	const needsAnchor = node.next ? (!node.next._state || !node.next._state.name) : !state.parentNode;
+	const needsAnchor = node.next ? (!node.next._state || !node.next.var) : !state.parentNode;
 	const anchor = needsAnchor
 		? block.getUniqueName(`${each_block}_anchor`)
-		: (node.next && node.next._state.name) || 'null';
+		: (node.next && node.next.var) || 'null';
 
 	// hack the sourcemap, so that if data is missing the bug
 	// is easy to find

@@ -48,9 +48,7 @@ const preprocessors = {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
 
-		node._state = getChildState(state, {
-			name: block.getUniqueName('text'),
-		});
+		node.var = block.getUniqueName('text');
 	},
 
 	RawMustacheTag: (
@@ -65,8 +63,7 @@ const preprocessors = {
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
 
-		const name = block.getUniqueName('raw');
-		node._state = getChildState(state, { name });
+		node.var = block.getUniqueName('raw');
 	},
 
 	Text: (
@@ -86,7 +83,7 @@ const preprocessors = {
 		}
 
 		node._state.shouldCreate = true;
-		node._state.name = block.getUniqueName(`text`);
+		node.var = block.getUniqueName(`text`);
 	},
 
 	IfBlock: (
@@ -333,13 +330,12 @@ const preprocessors = {
 			generator.components.has(node.name) || node.name === ':Self';
 
 		if (isComponent) {
-			const name = block.getUniqueName(
+			node.var = block.getUniqueName(
 				(node.name === ':Self' ? generator.name : node.name).toLowerCase()
 			);
 
 			node._state = getChildState(state, {
-				name,
-				parentNode: `${name}._slotted.default`
+				parentNode: `${node.var}._slotted.default`
 			});
 		} else {
 			const slot = getStaticAttributeValue(node, 'slot');
@@ -349,15 +345,14 @@ const preprocessors = {
 				component._slots.add(slot);
 			}
 
-			const name = block.getUniqueName(
+			node.var = block.getUniqueName(
 				node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 			);
 
 			node._state = getChildState(state, {
 				isTopLevel: false,
-				name,
-				parentNode: name,
-				parentNodes: block.getUniqueName(`${name}_nodes`),
+				parentNode: node.var,
+				parentNodes: block.getUniqueName(`${node.var}_nodes`),
 				parentNodeName: node.name,
 				namespace: node.name === 'svg'
 					? 'http://www.w3.org/2000/svg'
