@@ -14,13 +14,9 @@ export default function visitSlot(
 
 	generator.append(`\${options && options.slotted && options.slotted.${slotName} ? options.slotted.${slotName}() : \``);
 
-	generator.elementDepth += 1;
-
 	node.children.forEach((child: Node) => {
 		visit(generator, block, child);
 	});
-
-	generator.elementDepth -= 1;
 
 	generator.append(`\`}`);
 }
