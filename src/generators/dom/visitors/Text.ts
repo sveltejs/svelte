@@ -12,7 +12,7 @@ export default function visitText(
 ) {
 	if (!node._state.shouldCreate) return;
 	block.addElement(
-		node._state.name,
+		node.var,
 		`@createText( ${stringify(node.data)} )`,
 		`@claimText( ${state.parentNodes}, ${stringify(node.data)} )`,
 		state.parentNode

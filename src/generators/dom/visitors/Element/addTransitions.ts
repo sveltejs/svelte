@@ -13,7 +13,7 @@ export default function addTransitions(
 	outro
 ) {
 	if (intro === outro) {
-		const name = block.getUniqueName(`${state.name}_transition`);
+		const name = block.getUniqueName(`${node.var}_transition`);
 		const snippet = intro.expression
 			? block.contextualise(intro.expression).snippet
 			: '{}';
@@ -24,23 +24,23 @@ export default function addTransitions(
 
 		block.builders.intro.addBlock(deindent`
 			#component._root._aftercreate.push( function () {
-				if ( !${name} ) ${name} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, true, null );
+				if ( !${name} ) ${name} = @wrapTransition( #component, ${node.var}, ${fn}, ${snippet}, true, null );
 				${name}.run( true, function () {
-					#component.fire( 'intro.end', { node: ${state.name} });
+					#component.fire( 'intro.end', { node: ${node.var} });
 				});
 			});
 		`);
 
 		block.builders.outro.addBlock(deindent`
 			${name}.run( false, function () {
-				#component.fire( 'outro.end', { node: ${state.name} });
+				#component.fire( 'outro.end', { node: ${node.var} });
 				if ( --#outros === 0 ) #outrocallback();
 				${name} = null;
 			});
 		`);
 	} else {
-		const introName = intro && block.getUniqueName(`${state.name}_intro`);
-		const outroName = outro && block.getUniqueName(`${state.name}_outro`);
+		const introName = intro && block.getUniqueName(`${node.var}_intro`);
+		const outroName = outro && block.getUniqueName(`${node.var}_outro`);
 
 		if (intro) {
 			block.addVariable(introName);
@@ -59,9 +59,9 @@ export default function addTransitions(
 
 			block.builders.intro.addBlock(deindent`
 				#component._root._aftercreate.push( function () {
-					${introName} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, true, null );
+					${introName} = @wrapTransition( #component, ${node.var}, ${fn}, ${snippet}, true, null );
 					${introName}.run( true, function () {
-						#component.fire( 'intro.end', { node: ${state.name} });
+						#component.fire( 'intro.end', { node: ${node.var} });
 					});
 				});
 			`);
@@ -78,9 +78,9 @@ export default function addTransitions(
 			// TODO hide elements that have outro'd (unless they belong to a still-outroing
 			// group) prior to their removal from the DOM
 			block.builders.outro.addBlock(deindent`
-				${outroName} = @wrapTransition( #component, ${state.name}, ${fn}, ${snippet}, false, null );
+				${outroName} = @wrapTransition( #component, ${node.var}, ${fn}, ${snippet}, false, null );
 				${outroName}.run( false, function () {
-					#component.fire( 'outro.end', { node: ${state.name} });
+					#component.fire( 'outro.end', { node: ${node.var} });
 					if ( --#outros === 0 ) #outrocallback();
 				});
 			`);

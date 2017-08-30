@@ -79,10 +79,10 @@ export default function visitIfBlock(
 ) {
 	const name = generator.getUniqueName(`if_block`);
 
-	const needsAnchor = node.next ? (!node.next._state || !node.next._state.name) : !state.parentNode;
+	const needsAnchor = node.next ? (!node.next._state || !node.next.var) : !state.parentNode;
 	const anchor = needsAnchor
 		? block.getUniqueName(`${name}_anchor`)
-		: (node.next && node.next._state.name) || 'null';
+		: (node.next && node.next.var) || 'null';
 	const params = block.params.join(', ');
 
 	const branches = getBranches(generator, block, state, node, elementStack, componentStack);
