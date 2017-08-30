@@ -75,14 +75,11 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
-		node._state = getChildState(state);
-
-		if (!/\S/.test(node.data)) {
-			if (state.namespace) return;
-			if (elementsWithoutText.has(state.parentNodeName)) return;
+		if (!/\S/.test(node.data) && (state.namespace || elementsWithoutText.has(state.parentNodeName))) {
+			node.shouldSkip = true;
+			return;
 		}
 
-		node.shouldCreate = true;
 		node.var = block.getUniqueName(`text`);
 	},
 
