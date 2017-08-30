@@ -18,7 +18,9 @@ export default function visitEachBlock(
 	const each_block_value = node._block.listName;
 	const iterations = block.getUniqueName(`${each_block}_iterations`);
 	const params = block.params.join(', ');
-	const anchor = node.needsAnchor
+
+	const needsAnchor = node.next ? (!node.next._state || !node.next._state.name) : !state.parentNode;
+	const anchor = needsAnchor
 		? block.getUniqueName(`${each_block}_anchor`)
 		: (node.next && node.next._state.name) || 'null';
 
@@ -53,7 +55,7 @@ export default function visitEachBlock(
 
 	const isToplevel = !state.parentNode;
 
-	if (node.needsAnchor) {
+	if (needsAnchor) {
 		block.addElement(
 			anchor,
 			`@createComment()`,
