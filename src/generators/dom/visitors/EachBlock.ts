@@ -60,8 +60,6 @@ export default function visitEachBlock(
 			`@createComment()`,
 			state.parentNode
 		);
-	} else if (node.next) {
-		node.next.usedAsAnchor = true;
 	}
 
 	if (node.else) {
