@@ -341,8 +341,7 @@ const preprocessors = {
 
 			node._state = getChildState(state, {
 				name,
-				parentNode: `${name}._slotted.default`,
-				isYield: true
+				parentNode: `${name}._slotted.default`
 			});
 		} else {
 			const slot = getStaticAttributeValue(node, 'slot');
@@ -373,12 +372,7 @@ const preprocessors = {
 
 		if (node.children.length) {
 			if (isComponent) {
-				const name = block.getUniqueName(
-					(node.name === ':Self' ? generator.name : node.name).toLowerCase()
-				);
-
-				if (node.children) node._slots = new Set(['default']); // TODO only include default if there are unslotted children
-
+				if (node.children) node._slots = new Set(['default']);
 				preprocessChildren(generator, block, node._state, node, inEachBlock, elementStack, componentStack.concat(node), stripWhitespace, nextSibling);
 			} else {
 				if (node.name === 'pre' || node.name === 'textarea') stripWhitespace = false;
