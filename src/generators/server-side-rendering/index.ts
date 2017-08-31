@@ -6,13 +6,13 @@ import preprocess from './preprocess';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
+import { AppendTarget } from './interfaces';
 import { stringify } from '../../utils/stringify';
 
 export class SsrGenerator extends Generator {
 	bindings: string[];
 	renderCode: string;
-	appendTargets: Record<string, string> | null;
-	appendTarget: string | null;
+	appendTargets: AppendTarget[];
 
 	constructor(
 		parsed: Parsed,
@@ -24,7 +24,7 @@ export class SsrGenerator extends Generator {
 		super(parsed, source, name, stylesheet, options);
 		this.bindings = [];
 		this.renderCode = '';
-		this.appendTargets = null;
+		this.appendTargets = [];
 
 		// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
 		const { templateProperties, defaultExport } = this;
@@ -60,23 +60,13 @@ export class SsrGenerator extends Generator {
 	}
 
 	append(code: string) {
-		if (this.appendTarget) {
-			this.appendTargets[this.appendTarget] += code;
+		if (this.appendTargets.length) {
+			const appendTarget = this.appendTargets[this.appendTargets.length - 1];
+			const slotName = appendTarget.slotStack[appendTarget.slotStack.length - 1];
+			appendTarget.slots[slotName] += code;
 		} else {
 			this.renderCode += code;
 		}
-	}
-
-	removeAppendTarget() {
-		this.appendTarget = this.appendTargets = null;
-	}
-
-	setAppendTarget(name: string) {
-		if (!this.appendTargets[name]) {
-			this.appendTargets[name] = '';
-		}
-
-		this.appendTarget = name;
 	}
 }
 

@@ -49,7 +49,10 @@ export default function visitElement(
 
 	const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 	if (slot) {
-		generator.setAppendTarget(slot.value[0].data);
+		const slotName = slot.value[0].data;
+		const appendTarget = generator.appendTargets[generator.appendTargets.length - 1];
+		appendTarget.slotStack.push(slotName);
+		appendTarget.slots[slotName] = '';
 	}
 
 	node.attributes.forEach((attribute: Node) => {
