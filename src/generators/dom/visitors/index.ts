@@ -4,7 +4,6 @@ import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Text from './Text';
-import YieldTag from './YieldTag';
 import { Visitor } from '../interfaces';
 
 const visitors: Record<string, Visitor> = {
@@ -13,8 +12,7 @@ const visitors: Record<string, Visitor> = {
 	IfBlock,
 	MustacheTag,
 	RawMustacheTag,
-	Text,
-	YieldTag,
+	Text
 };
 
 export default visitors;

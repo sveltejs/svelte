@@ -10,9 +10,10 @@ export default function visitText(
 	state: State,
 	node: Node
 ) {
-	if (!node._state.shouldCreate) return;
+	if (node.shouldSkip) return;
+
 	block.addElement(
-		node._state.name,
+		node.var,
 		`@createText( ${stringify(node.data)} )`,
 		`@claimText( ${state.parentNodes}, ${stringify(node.data)} )`,
 		state.parentNode

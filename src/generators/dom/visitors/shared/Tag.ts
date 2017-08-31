@@ -23,7 +23,7 @@ export default function visitTag(
 	);
 
 	const value = shouldCache && block.getUniqueName(`${name}_value`);
-	const init = shouldCache ? value : snippet;
+	const content = shouldCache ? value : snippet;
 
 	if (shouldCache) block.addVariable(value, snippet);
 
@@ -41,9 +41,9 @@ export default function visitTag(
 
 		block.builders.update.addConditional(
 			condition,
-			update(shouldCache ? value : snippet)
+			update(content)
 		);
 	}
 
-	return { init };
+	return { init: content };
 }
