@@ -14,8 +14,9 @@ function assign(target) {
 }
 
 function destroy(detach) {
-	this.destroy = this.set = this.get = noop;
+	this.destroy = noop;
 	this.fire('destroy');
+	this.set = this.get = noop;
 
 	if (detach !== false) this._fragment.unmount();
 	this._fragment.destroy();
