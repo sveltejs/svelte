@@ -2,6 +2,7 @@ import flattenReference from '../../../utils/flattenReference';
 import visit from '../visit';
 import { SsrGenerator } from '../index';
 import Block from '../Block';
+import { AppendTarget } from '../interfaces';
 import { Node } from '../../../interfaces';
 import getObject from '../../../utils/getObject';
 import getTailSnippet from '../../../utils/getTailSnippet';
@@ -80,19 +81,24 @@ export default function visitComponent(
 	let open = `\${${expression}.render({${props}}`;
 
 	if (node.children.length) {
-		generator.appendTargets = {};
-		generator.setAppendTarget('default');
+		const appendTarget: AppendTarget = {
+			slots: { default: '' },
+			slotStack: ['default']
+		};
+
+		generator.appendTargets.push(appendTarget);
 
 		node.children.forEach((child: Node) => {
 			visit(generator, block, child);
 		});
 
-		const slotted = Object.keys(generator.appendTargets)
-			.map(name => `${name}: () => \`${generator.appendTargets[name]}\``)
+		const slotted = Object.keys(appendTarget.slots)
+			.map(name => `${name}: () => \`${appendTarget.slots[name]}\``)
 			.join(', ');
 
 		open += `, { slotted: { ${slotted} } }`;
-		generator.setAppendTarget(null);
+
+		generator.appendTargets.pop();
 	}
 
 	generator.append(open);
