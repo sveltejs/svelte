@@ -2,6 +2,7 @@ import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import isDomNode from './shared/isDomNode';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
 
@@ -13,14 +14,17 @@ export default function visitEachBlock(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
-	const each_block = generator.getUniqueName(`each_block`);
+	const each_block = node.var;
+
 	const create_each_block = node._block.name;
 	const each_block_value = node._block.listName;
 	const iterations = block.getUniqueName(`${each_block}_iterations`);
 	const params = block.params.join(', ');
-	const anchor = node.needsAnchor
+
+	const needsAnchor = node.next ? !isDomNode(node.next) : !state.parentNode;
+	const anchor = needsAnchor
 		? block.getUniqueName(`${each_block}_anchor`)
-		: (node.next && node.next._state.name) || 'null';
+		: (node.next && node.next.var) || 'null';
 
 	// hack the sourcemap, so that if data is missing the bug
 	// is easy to find
@@ -53,15 +57,13 @@ export default function visitEachBlock(
 
 	const isToplevel = !state.parentNode;
 
-	if (node.needsAnchor) {
+	if (needsAnchor) {
 		block.addElement(
 			anchor,
 			`@createComment()`,
 			`@createComment()`,
 			state.parentNode
 		);
-	} else if (node.next) {
-		node.next.usedAsAnchor = true;
 	}
 
 	if (node.else) {

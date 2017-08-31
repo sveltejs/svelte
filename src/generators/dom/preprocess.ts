@@ -16,7 +16,7 @@ function getChildState(parent: State, child = {}) {
 	return assign(
 		{},
 		parent,
-		{ name: null, parentNode: null, parentNodes: 'nodes' },
+		{ parentNode: null, parentNodes: 'nodes' },
 		child || {}
 	);
 }
@@ -45,12 +45,10 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
+		node.var = block.getUniqueName('text');
+
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
-
-		node._state = getChildState(state, {
-			name: block.getUniqueName('text'),
-		});
 	},
 
 	RawMustacheTag: (
@@ -62,13 +60,10 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
+		node.var = block.getUniqueName('raw');
+
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
-
-		const basename = block.getUniqueName('raw');
-		const name = block.getUniqueName(`${basename}_before`);
-
-		node._state = getChildState(state, { basename, name });
 	},
 
 	Text: (
@@ -80,15 +75,12 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
-		node._state = getChildState(state);
-
-		if (!/\S/.test(node.data)) {
-			if (state.namespace) return;
-			if (elementsWithoutText.has(state.parentNodeName)) return;
+		if (!/\S/.test(node.data) && (state.namespace || elementsWithoutText.has(state.parentNodeName))) {
+			node.shouldSkip = true;
+			return;
 		}
 
-		node._state.shouldCreate = true;
-		node._state.name = block.getUniqueName(`text`);
+		node.var = block.getUniqueName(`text`);
 	},
 
 	IfBlock: (
@@ -108,6 +100,8 @@ const preprocessors = {
 		let hasOutros = false;
 
 		function attachBlocks(node: Node) {
+			node.var = block.getUniqueName(`if_block`);
+
 			const dependencies = block.findDependencies(node.expression);
 			block.addDependencies(dependencies);
 
@@ -179,6 +173,8 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
+		node.var = block.getUniqueName(`each_block`);
+
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
 
@@ -335,13 +331,12 @@ const preprocessors = {
 			generator.components.has(node.name) || node.name === ':Self';
 
 		if (isComponent) {
-			const name = block.getUniqueName(
+			node.var = block.getUniqueName(
 				(node.name === ':Self' ? generator.name : node.name).toLowerCase()
 			);
 
 			node._state = getChildState(state, {
-				name,
-				parentNode: `${name}._slotted.default`
+				parentNode: `${node.var}._slotted.default`
 			});
 		} else {
 			const slot = getStaticAttributeValue(node, 'slot');
@@ -351,15 +346,14 @@ const preprocessors = {
 				component._slots.add(slot);
 			}
 
-			const name = block.getUniqueName(
+			node.var = block.getUniqueName(
 				node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 			);
 
 			node._state = getChildState(state, {
 				isTopLevel: false,
-				name,
-				parentNode: name,
-				parentNodes: block.getUniqueName(`${name}_nodes`),
+				parentNode: node.var,
+				parentNodes: block.getUniqueName(`${node.var}_nodes`),
 				parentNodeName: node.name,
 				namespace: node.name === 'svg'
 					? 'http://www.w3.org/2000/svg'
@@ -421,10 +415,8 @@ function preprocessChildren(
 		const preprocessor = preprocessors[child.type];
 		if (preprocessor) preprocessor(generator, block, state, child, inEachBlock, elementStack, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);
 
-		if (lastChild) {
-			lastChild.next = child;
-			lastChild.needsAnchor = !child._state || !child._state.name;
-		}
+		if (lastChild) lastChild.next = child;
+		child.prev = lastChild;
 
 		lastChild = child;
 	});
@@ -444,10 +436,6 @@ function preprocessChildren(
 				lastChild.next = null;
 			}
 		}
-	}
-
-	if (lastChild) {
-		lastChild.needsAnchor = !state.parentNode;
 	}
 
 	node.children = cleaned;

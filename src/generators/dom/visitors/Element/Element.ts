@@ -45,7 +45,7 @@ export default function visitElement(
 	}
 
 	if (node.name === 'slot') {
-		return visitSlot(generator, block, state, node, elementStack);
+		return visitSlot(generator, block, state, node, elementStack, componentStack);
 	}
 
 	if (generator.components.has(node.name) || node.name === ':Self') {
@@ -57,7 +57,7 @@ export default function visitElement(
 
 	const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 	const parentNode = slot ?
-		`${componentStack[componentStack.length - 1]._state.name}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
+		`${componentStack[componentStack.length - 1].var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 		state.parentNode;
 
 	const isToplevel = !parentNode;

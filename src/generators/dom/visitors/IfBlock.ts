@@ -2,6 +2,7 @@ import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import isDomNode from './shared/isDomNode';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
 
@@ -77,10 +78,12 @@ export default function visitIfBlock(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
-	const name = generator.getUniqueName(`if_block`);
-	const anchor = node.needsAnchor
+	const name = node.var;
+
+	const needsAnchor = node.next ? !isDomNode(node.next) : !state.parentNode;
+	const anchor = needsAnchor
 		? block.getUniqueName(`${name}_anchor`)
-		: (node.next && node.next._state.name) || 'null';
+		: (node.next && node.next.var) || 'null';
 	const params = block.params.join(', ');
 
 	const branches = getBranches(generator, block, state, node, elementStack, componentStack);
@@ -117,15 +120,13 @@ export default function visitIfBlock(
 		`${if_name}${name}.claim( ${state.parentNodes} );`
 	);
 
-	if (node.needsAnchor) {
+	if (needsAnchor) {
 		block.addElement(
 			anchor,
 			`@createComment()`,
 			`@createComment()`,
 			state.parentNode
 		);
-	} else if (node.next) {
-		node.next.usedAsAnchor = true;
 	}
 }
 
