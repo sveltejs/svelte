@@ -39,7 +39,7 @@ describe("js", () => {
 			fs.writeFileSync(`${dir}/_actual.js`, actual);
 
 			return rollup({
-				entry: `${dir}/_actual.js`,
+				input: `${dir}/_actual.js`,
 				plugins: [
 					{
 						resolveId(importee, importer) {
