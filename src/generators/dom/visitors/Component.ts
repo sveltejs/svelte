@@ -185,7 +185,7 @@ export default function visitComponent(
 				_bind: function(changed, childState) {
 					var state = #component.get(), newState = {};
 					${setParentFromChildOnChange}
-					${name_updating} = changed;
+					${name_updating} = @assign({}, changed);
 					#component._set(newState);
 					${name_updating} = {};
 				}
