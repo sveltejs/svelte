@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.35.0
+
+* `set` and `get` continue to work until `destroy` is complete ([#788](https://github.com/sveltejs/svelte/issues/788))
+* Observers of unchanged bound values don't fire incorrectly ([#804](https://github.com/sveltejs/svelte/issues/804))
+* Nested components with slotted content render correctly in SSR mode ([#801](https://github.com/sveltejs/svelte/issues/801))
+* More efficient rendering of raw and slotted content ([#637](https://github.com/sveltejs/svelte/issues/637))
+* Handle unquoted attributes in attribute selectors ([#798](https://github.com/sveltejs/svelte/issues/798))
+
 ## 1.34.0
 
 * Support nested `<slot>` elements ([#790](https://github.com/sveltejs/svelte/issues/790))
