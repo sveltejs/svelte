@@ -44,7 +44,7 @@ export default function visitElement(
 		return meta[node.name](generator, block, node);
 	}
 
-	if (node.name === 'slot') {
+	if (node.name === 'slot' && !generator.customElement) {
 		return visitSlot(generator, block, state, node, elementStack, componentStack);
 	}
 
