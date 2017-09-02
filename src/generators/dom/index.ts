@@ -148,88 +148,110 @@ export default function dom(
 				.join(',\n')}
 		}`;
 
-	// TODO deprecate component.teardown()
-	builder.addBlock(deindent`
-		function ${name} ( options ) {
-			${options.dev &&
-				`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
-			this.options = options;
-			${generator.usesRefs && `this.refs = {};`}
-			this._state = ${templateProperties.data
-				? `@assign( @template.data(), options.data )`
-				: `options.data || {}`};
-			${generator.metaBindings}
-			${computations.length && `this._recompute( {}, this._state, {}, true );`}
-			${options.dev &&
-				Array.from(generator.expectedProperties).map(
-					prop =>
-						`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
-				)}
-			${generator.bindingGroups.length &&
-				`this._bindingGroups = [ ${Array(generator.bindingGroups.length)
-					.fill('[]')
-					.join(', ')} ];`}
+	const target = generator.customElement ? `this.attachShadow({ mode: 'open' })` : `options.target`;
+	const anchor = generator.customElement ? `null` : `options.anchor || null`;
 
-			this._observers = {
-				pre: Object.create( null ),
-				post: Object.create( null )
-			};
+	const constructorBody = deindent`
+		${options.dev &&
+			`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
+		this.options = options;
+		${generator.usesRefs && `this.refs = {};`}
+		this._state = ${templateProperties.data
+			? `@assign( @template.data(), options.data )`
+			: `options.data || {}`};
+		${generator.metaBindings}
+		${computations.length && `this._recompute( {}, this._state, {}, true );`}
+		${options.dev &&
+			Array.from(generator.expectedProperties).map(
+				prop =>
+					`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
+			)}
+		${generator.bindingGroups.length &&
+			`this._bindingGroups = [ ${Array(generator.bindingGroups.length)
+				.fill('[]')
+				.join(', ')} ];`}
 
-			this._handlers = Object.create( null );
-			${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
+		this._observers = {
+			pre: Object.create( null ),
+			post: Object.create( null )
+		};
 
-			this._root = options._root || this;
-			this._yield = options._yield;
-			this._bind = options._bind;
-			${generator.slots.size && `this._slotted = options.slots || {};`}
+		this._handlers = Object.create( null );
+		${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
 
-			${generator.stylesheet.hasStyles &&
-				options.css !== false &&
-				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
+		this._root = options._root || this;
+		this._yield = options._yield;
+		this._bind = options._bind;
+		${generator.slots.size && `this._slotted = options.slots || {};`}
 
-			${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
+		${generator.stylesheet.hasStyles &&
+			options.css !== false &&
+			`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
 
-			${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
-				if ( !options._root ) {
-					this._oncreate = [${templateProperties.oncreate && `oncreate`}];
-					${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
-				} ${templateProperties.oncreate && deindent`
-					else {
-						this._root._oncreate.push(oncreate);
-					}
-				`}
-			`}
+		${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
 
-			${generator.slots.size && `this.slots = {};`}
-
-			this._fragment = @create_main_fragment( this._state, this );
-
-			if ( options.target ) {
-				${generator.hydratable
-					? deindent`
-						var nodes = @children( options.target );
-						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
-						nodes.forEach( @detachNode );
-					` :
-					deindent`
-						${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
-						this._fragment.create();
-					`}
-				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, options.anchor || null );
-			}
-
-			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
-				if ( !options._root ) {
-					${generator.hasComponents && `this._lock = true;`}
-					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-					${generator.hasComponents && `this._lock = false;`}
+		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
+			if ( !options._root ) {
+				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
+				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
+				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
+			} ${templateProperties.oncreate && deindent`
+				else {
+					this._root._oncreate.push(oncreate);
 				}
 			`}
+		`}
+
+		${generator.slots.size && `this.slots = {};`}
+
+		this._fragment = @create_main_fragment( this._state, this );
+
+		if ( !options._root ) {
+			${generator.hydratable
+				? deindent`
+					var nodes = @children( options.target );
+					options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
+					nodes.forEach( @detachNode );
+				` :
+				deindent`
+					${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
+					this._fragment.create();
+				`}
+			this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( ${target}, ${anchor} );
 		}
 
+		${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+			if ( !options._root ) {
+				${generator.hasComponents && `this._lock = true;`}
+				${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+				${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+				${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+				${generator.hasComponents && `this._lock = false;`}
+			}
+		`}
+	`;
+
+	if (generator.customElement) {
+		builder.addBlock(deindent`
+			class ${name} extends HTMLElement {
+				constructor(options = {}) {
+					super();
+					${constructorBody}
+				}
+			}
+
+			customElements.define('${generator.tag}', ${name});
+		`);
+	} else {
+		builder.addBlock(deindent`
+			function ${name} ( options ) {
+				${constructorBody}
+			}
+		`);
+	}
+
+	// TODO deprecate component.teardown()
+	builder.addBlock(deindent`
 		@assign( ${prototypeBase}, ${proto});
 
 		${options.dev && deindent`

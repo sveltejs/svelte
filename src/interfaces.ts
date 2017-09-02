@@ -54,6 +54,7 @@ export interface CompileOptions {
 	cascade?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
+	customElement: CustomElementOptions | true;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
@@ -67,4 +68,9 @@ export interface GenerateOptions {
 export interface Visitor {
 	enter: (node: Node) => void;
 	leave?: (node: Node) => void;
+}
+
+export interface CustomElementOptions {
+	tag?: string;
+	props?: string[];
 }

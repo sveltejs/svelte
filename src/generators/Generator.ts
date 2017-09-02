@@ -15,7 +15,7 @@ import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
-import { Node, GenerateOptions, Parsed, CompileOptions } from '../interfaces';
+import { Node, GenerateOptions, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
 
 const test = typeof global !== 'undefined' && global.__svelte_test;
 
@@ -30,6 +30,10 @@ export default class Generator {
 	source: string;
 	name: string;
 	options: CompileOptions;
+
+	customElement: CustomElementOptions;
+	tag: string;
+	props: string[];
 
 	defaultExport: Node[];
 	imports: Node[];
@@ -100,6 +104,19 @@ export default class Generator {
 
 		this.parseJs();
 		this.name = this.alias(name);
+
+		if (options.customElement === true) {
+			this.customElement = {
+				tag: this.tag,
+				props: this.props // TODO autofill this in
+			}
+		} else {
+			this.customElement = options.customElement;
+		}
+
+		if (this.customElement && !this.customElement.tag) {
+			throw new Error(`No tag name specified`); // TODO better error
+		}
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -552,6 +569,16 @@ export default class Generator {
 					contentOnly: false,
 				});
 				templateProperties.ondestroy = templateProperties.onteardown;
+			}
+
+			if (templateProperties.tag) {
+				this.tag = templateProperties.tag.value.value;
+				removeObjectKey(this.code, defaultExport.declaration, 'tag');
+			}
+
+			if (templateProperties.props) {
+				// TODO
+				this.props = templateProperties.props.value;
 			}
 
 			// now that we've analysed the default export, we can determine whether or not we need to keep it

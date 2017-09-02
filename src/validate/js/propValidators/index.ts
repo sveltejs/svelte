@@ -9,6 +9,7 @@ import methods from './methods';
 import components from './components';
 import events from './events';
 import namespace from './namespace';
+import tag from './tag';
 import transitions from './transitions';
 import setup from './setup';
 
@@ -24,6 +25,7 @@ export default {
 	components,
 	events,
 	namespace,
+	tag,
 	transitions,
 	setup,
 };
