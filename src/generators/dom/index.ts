@@ -151,7 +151,7 @@ export default function dom(
 	const anchor = generator.customElement ? `null` : `options.anchor || null`;
 
 	const constructorBody = deindent`
-		${options.dev &&
+		${options.dev && !generator.customElement &&
 			`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
 		this.options = options;
 		${generator.usesRefs && `this.refs = {};`}
@@ -186,7 +186,7 @@ export default function dom(
 		${generator.customElement ?
 			deindent`
 				this.attachShadow({ mode: 'open' });
-				${css && `this.shadowRoot.innerHTML = '<style>${options.dev ? `${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : css}</style>';`}
+				${css && `this.shadowRoot.innerHTML = \`<style>${options.dev ? `${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : css}</style>\`;`}
 			` :
 			(generator.stylesheet.hasStyles && options.css !== false &&
 			`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`)
