@@ -1,4 +1,3 @@
-import usesThisOrArguments from '../utils/usesThisOrArguments';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
 
