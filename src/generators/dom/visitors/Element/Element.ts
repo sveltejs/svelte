@@ -88,7 +88,7 @@ export default function visitElement(
 
 	// add CSS encapsulation attribute
 	// TODO add a helper for this, rather than repeating it
-	if (node._needsCssAttribute) {
+	if (node._needsCssAttribute && !generator.customElement) {
 		generator.needsEncapsulateHelper = true;
 		block.builders.hydrate.addLine(
 			`@encapsulateStyles( ${name} );`
