@@ -577,8 +577,8 @@ export default class Generator {
 			}
 
 			if (templateProperties.props) {
-				// TODO
-				this.props = templateProperties.props.value;
+				this.props = templateProperties.props.value.elements.map((element: Node) => element.value);
+				removeObjectKey(this.code, defaultExport.declaration, 'props');
 			}
 
 			// now that we've analysed the default export, we can determine whether or not we need to keep it

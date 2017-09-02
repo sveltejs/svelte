@@ -232,11 +232,31 @@ export default function dom(
 	`;
 
 	if (generator.customElement) {
+		const props = generator.props || Array.from(generator.expectedProperties);
+
 		builder.addBlock(deindent`
 			class ${name} extends HTMLElement {
 				constructor(options = {}) {
 					super();
 					${constructorBody}
+				}
+
+				static get observedAttributes() {
+					return ${JSON.stringify(props)};
+				}
+
+				${props.map(prop => deindent`
+					get ${prop}() {
+						return this.get('${prop}');
+					}
+
+					set ${prop}(value) {
+						this.set({ ${prop}: value });
+					}
+				`).join('\n\n')}
+
+				attributeChangedCallback ( attr, oldValue, newValue ) {
+					this.set({ [attr]: newValue });
 				}
 			}
 
