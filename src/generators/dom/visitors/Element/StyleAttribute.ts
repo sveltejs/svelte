@@ -118,51 +118,62 @@ function getStyleValue(chunks: Node[]) {
 	const value: Node[] = [];
 
 	let inUrl = false;
+	let quoteMark = null;
+	let escaped = false;
 
 	while (chunks.length) {
-		const chunk = chunks[0];
+		const chunk = chunks.shift();
 
 		if (chunk.type === 'Text') {
-			// TODO annoying special case — urls can contain semicolons
+			let c = 0;
+			while (c < chunk.data.length) {
+				const char = chunk.data[c];
 
-			let index = chunk.data.indexOf(';');
+				if (escaped) {
+					escaped = false;
+				} else if (char === '\\') {
+					escaped = true;
+				} else if (char === quoteMark) {
+					quoteMark === null;
+				} else if (char === '"' || char === "'") {
+					quoteMark = char;
+				} else if (char === ')' && inUrl) {
+					inUrl = false;
+				} else if (char === 'u' && chunk.data.slice(c, c + 4) === 'url(') {
+					inUrl = true;
+				} else if (char === ';' && !inUrl && !quoteMark) {
+					break;
+				}
 
-			if (index === -1) {
-				value.push(chunk);
-				chunks.shift();
+				c += 1;
 			}
 
-			else {
-				if (index > 0) {
-					value.push({
-						type: 'Text',
-						start: chunk.start,
-						end: chunk.start + index,
-						data: chunk.data.slice(0, index)
-					});
-				}
+			if (c > 0) {
+				value.push({
+					type: 'Text',
+					start: chunk.start,
+					end: chunk.start + c,
+					data: chunk.data.slice(0, c)
+				});
+			}
 
-				while (/[;\s]/.test(chunk.data[index])) index += 1;
+			while (/[;\s]/.test(chunk.data[c])) c += 1;
+			const remainingData = chunk.data.slice(c);
 
-				const remainingData = chunk.data.slice(index);
-
-				if (remainingData) {
-					chunks[0] = {
-						start: chunk.start + index,
-						end: chunk.end,
-						type: 'Text',
-						data: remainingData
-					};
-				} else {
-					chunks.shift();
-				}
+			if (remainingData) {
+				chunks.unshift({
+					start: chunk.start + c,
+					end: chunk.end,
+					type: 'Text',
+					data: remainingData
+				});
 
 				break;
 			}
 		}
 
 		else {
-			value.push(chunks.shift());
+			value.push(chunk);
 		}
 	}
 
