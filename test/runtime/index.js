@@ -22,8 +22,6 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-const Object_assign = Object.assign;
-
 describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(true);
