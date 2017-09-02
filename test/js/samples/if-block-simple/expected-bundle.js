@@ -245,7 +245,7 @@ function SvelteComponent ( options ) {
 
 	this._fragment = create_main_fragment( this._state, this );
 
-	if ( options.target ) {
+	if ( !options._root ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, options.anchor || null );
 	}

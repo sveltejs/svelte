@@ -389,7 +389,9 @@ export default class Generator {
 		addString(finalChunk);
 		addString('\n\n' + getOutro(format, name, options, this.imports));
 
-		const { css, cssMap } = this.stylesheet.render(options.cssOutputFilename);
+		const { css, cssMap } = this.customElement ?
+			{ css: null, cssMap: null } :
+			this.stylesheet.render(options.cssOutputFilename, true);
 
 		return {
 			ast: this.ast,

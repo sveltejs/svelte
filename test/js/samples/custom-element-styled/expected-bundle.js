@@ -33,10 +33,6 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
-function createComment() {
-	return document.createComment('');
-}
-
 function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
@@ -166,114 +162,83 @@ var proto = {
 };
 
 function create_main_fragment ( state, component ) {
-	var if_block_anchor;
-
-	var current_block_type = select_block_type( state );
-	var if_block = current_block_type( state, component );
+	var h1, text, text_1, text_2;
 
 	return {
 		create: function () {
-			if_block.create();
-			if_block_anchor = createComment();
+			h1 = createElement( 'h1' );
+			text = createText( "Hello " );
+			text_1 = createText( state.name );
+			text_2 = createText( "!" );
 		},
 
 		mount: function ( target, anchor ) {
-			if_block.mount( target, anchor );
-			insertNode( if_block_anchor, target, anchor );
+			insertNode( h1, target, anchor );
+			appendNode( text, h1 );
+			appendNode( text_1, h1 );
+			appendNode( text_2, h1 );
 		},
 
 		update: function ( changed, state ) {
-			if ( current_block_type !== ( current_block_type = select_block_type( state ) ) ) {
-				if_block.unmount();
-				if_block.destroy();
-				if_block = current_block_type( state, component );
-				if_block.create();
-				if_block.mount( if_block_anchor.parentNode, if_block_anchor );
+			if ( changed.name ) {
+				text_1.data = state.name;
 			}
 		},
 
 		unmount: function () {
-			if_block.unmount();
-			detachNode( if_block_anchor );
+			detachNode( h1 );
 		},
 
-		destroy: function () {
-			if_block.destroy();
+		destroy: noop
+	};
+}
+
+class SvelteComponent extends HTMLElement {
+	constructor(options = {}) {
+		super();
+		this.options = options;
+		this._state = options.data || {};
+
+		this._observers = {
+			pre: Object.create( null ),
+			post: Object.create( null )
+		};
+
+		this._handlers = Object.create( null );
+
+		this._root = options._root || this;
+		this._yield = options._yield;
+		this._bind = options._bind;
+
+		this.attachShadow({ mode: 'open' });
+		this.shadowRoot.innerHTML = '<style>h1{color:red}</style>';
+
+		this._fragment = create_main_fragment( this._state, this );
+
+		if ( !options._root ) {
+			this._fragment.create();
+			this._fragment.mount( this.shadowRoot, null );
 		}
-	};
-}
+	}
 
-function create_if_block ( state, component ) {
-	var p, text;
+	static get observedAttributes() {
+		return ["name"];
+	}
 
-	return {
-		create: function () {
-			p = createElement( 'p' );
-			text = createText( "foo!" );
-		},
+	get name() {
+		return this.get('name');
+	}
 
-		mount: function ( target, anchor ) {
-			insertNode( p, target, anchor );
-			appendNode( text, p );
-		},
+	set name(value) {
+		this.set({ name: value });
+	}
 
-		unmount: function () {
-			detachNode( p );
-		},
-
-		destroy: noop
-	};
-}
-
-function create_if_block_1 ( state, component ) {
-	var p, text;
-
-	return {
-		create: function () {
-			p = createElement( 'p' );
-			text = createText( "not foo!" );
-		},
-
-		mount: function ( target, anchor ) {
-			insertNode( p, target, anchor );
-			appendNode( text, p );
-		},
-
-		unmount: function () {
-			detachNode( p );
-		},
-
-		destroy: noop
-	};
-}
-
-function select_block_type ( state ) {
-	if ( state.foo ) return create_if_block;
-	return create_if_block_1;
-}
-
-function SvelteComponent ( options ) {
-	this.options = options;
-	this._state = options.data || {};
-
-	this._observers = {
-		pre: Object.create( null ),
-		post: Object.create( null )
-	};
-
-	this._handlers = Object.create( null );
-
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
-
-	this._fragment = create_main_fragment( this._state, this );
-
-	if ( !options._root ) {
-		this._fragment.create();
-		this._fragment.mount( options.target, options.anchor || null );
+	attributeChangedCallback ( attr, oldValue, newValue ) {
+		this.set({ [attr]: newValue });
 	}
 }
+
+customElements.define('custom-element', SvelteComponent);
 
 assign( SvelteComponent.prototype, proto );
 

@@ -111,18 +111,17 @@ export default function dom(
 		`);
 	}
 
-	if (generator.stylesheet.hasStyles && options.css !== false) {
-		const { css, cssMap } = generator.stylesheet.render(options.filename);
+	const { css, cssMap } = generator.stylesheet.render(options.filename, !generator.customElement);
+	const styles = generator.stylesheet.hasStyles && stringify(options.dev ?
+		`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
+		css, { onlyEscapeAtSymbol: true });
 
-		const textContent = stringify(options.dev ?
-			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-			css, { onlyEscapeAtSymbol: true });
-
+	if (styles && generator.options.css !== false && !generator.customElement) {
 		builder.addBlock(deindent`
 			function @add_css () {
 				var style = @createElement( 'style' );
 				style.id = '${generator.stylesheet.id}-style';
-				style.textContent = ${textContent};
+				style.textContent = ${styles};
 				@appendNode( style, document.head );
 			}
 		`);
@@ -148,7 +147,7 @@ export default function dom(
 				.join(',\n')}
 		}`;
 
-	const target = generator.customElement ? `this.attachShadow({ mode: 'open' })` : `options.target`;
+	const target = generator.customElement ? `this.shadowRoot` : `options.target`;
 	const anchor = generator.customElement ? `null` : `options.anchor || null`;
 
 	const constructorBody = deindent`
@@ -184,9 +183,14 @@ export default function dom(
 		this._bind = options._bind;
 		${generator.slots.size && `this._slotted = options.slots || {};`}
 
-		${generator.stylesheet.hasStyles &&
-			options.css !== false &&
-			`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
+		${generator.customElement ?
+			deindent`
+				this.attachShadow({ mode: 'open' });
+				${css && `this.shadowRoot.innerHTML = '<style>${options.dev ? `${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : css}</style>';`}
+			` :
+			(generator.stylesheet.hasStyles && options.css !== false &&
+			`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`)
+		}
 
 		${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
 

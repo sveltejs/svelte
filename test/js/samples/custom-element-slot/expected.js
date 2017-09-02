@@ -58,11 +58,13 @@ class SvelteComponent extends HTMLElement {
 		this._yield = options._yield;
 		this._bind = options._bind;
 
+		this.attachShadow({ mode: 'open' });
+
 		this._fragment = create_main_fragment( this._state, this );
 
 		if ( !options._root ) {
 			this._fragment.create();
-			this._fragment.mount( this.attachShadow({ mode: 'open' }), null );
+			this._fragment.mount( this.shadowRoot, null );
 		}
 	}
 

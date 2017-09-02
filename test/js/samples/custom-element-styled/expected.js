@@ -50,6 +50,7 @@ class SvelteComponent extends HTMLElement {
 		this._bind = options._bind;
 
 		this.attachShadow({ mode: 'open' });
+		this.shadowRoot.innerHTML = '<style>h1{color:red}</style>';
 
 		this._fragment = create_main_fragment( this._state, this );
 
