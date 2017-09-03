@@ -27,17 +27,19 @@ export default function a11y(
 
 	const attributeMap = new Map();
 	node.attributes.forEach((attribute: Node) => {
+		const name = attribute.name.toLowerCase();
+
 		// aria-props
-		if (attribute.name.startsWith('aria-')) {
+		if (name.startsWith('aria-')) {
 			if (invisibleElements.has(node.name)) {
 				// aria-unsupported-elements
 				validator.warn(`A11y: <${node.name}> should not have aria-* attributes`, attribute.start);
 			}
 
-			const name = attribute.name.slice(5);
-			if (!ariaAttributeSet.has(name)) {
-				const match = fuzzymatch(name, ariaAttributes);
-				let message = `A11y: Unknown aria attribute 'aria-${name}'`;
+			const type = name.slice(5);
+			if (!ariaAttributeSet.has(type)) {
+				const match = fuzzymatch(type, ariaAttributes);
+				let message = `A11y: Unknown aria attribute 'aria-${type}'`;
 				if (match) message += ` (did you mean '${match}'?)`;
 
 				validator.warn(message, attribute.start);
@@ -45,7 +47,7 @@ export default function a11y(
 		}
 
 		// aria-role
-		if (attribute.name === 'role') {
+		if (name === 'role') {
 			if (invisibleElements.has(node.name)) {
 				// aria-unsupported-elements
 				validator.warn(`A11y: <${node.name}> should not have role attribute`, attribute.start);
@@ -61,10 +63,15 @@ export default function a11y(
 			}
 		}
 
+		// no-access-key
+		if (name === 'accesskey') {
+			validator.warn(`A11y: Avoid using the accessKey attribute`, attribute.start);
+		}
+
 		attributeMap.set(attribute.name, attribute);
 	});
 
-	function shouldHaveOneOf(attributes: string[], name = node.name) {
+	function shouldHaveAttribute(attributes: string[], name = node.name) {
 		if (attributes.length === 0 || !attributes.some((name: string) => attributeMap.has(name))) {
 			const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
 			const sequence = attributes.length > 1 ?
@@ -97,11 +104,11 @@ export default function a11y(
 		shouldHaveContent();
 	}
 
-	if (node.name === 'img') shouldHaveOneOf(['alt']);
-	if (node.name === 'area') shouldHaveOneOf(['alt', 'aria-label', 'aria-labelledby']);
-	if (node.name === 'object') shouldHaveOneOf(['title', 'aria-label', 'aria-labelledby']);
+	if (node.name === 'img') shouldHaveAttribute(['alt']);
+	if (node.name === 'area') shouldHaveAttribute(['alt', 'aria-label', 'aria-labelledby']);
+	if (node.name === 'object') shouldHaveAttribute(['title', 'aria-label', 'aria-labelledby']);
 	if (node.name === 'input' && getStaticAttributeValue(node, 'type') === 'image') {
-		shouldHaveOneOf(['alt', 'aria-label', 'aria-labelledby'], 'input type="image"');
+		shouldHaveAttribute(['alt', 'aria-label', 'aria-labelledby'], 'input type="image"');
 	}
 
 	// heading-has-content
@@ -111,6 +118,11 @@ export default function a11y(
 		if (attributeMap.has('aria-hidden')) {
 			validator.warn(`A11y: <${node.name}> element should not be hidden`, attributeMap.get('aria-hidden').start);
 		}
+	}
+
+	// iframe-has-title
+	if (node.name === 'iframe') {
+		shouldHaveAttribute(['title']);
 	}
 
 	if (node.name === 'figcaption') {
