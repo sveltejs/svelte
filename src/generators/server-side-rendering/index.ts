@@ -105,20 +105,18 @@ export default function ssr(
 
 		${name}.filename = ${stringify(options.filename)};
 
-		${name}.data = function () {
+		${name}.data = function() {
 			return ${templateProperties.data ? `@template.data()` : `{}`};
 		};
 
-		${name}.render = function ( state, options ) {
+		${name}.render = function(state, options) {
 			${templateProperties.data
-				? `state = Object.assign( @template.data(), state || {} );`
+				? `state = Object.assign(@template.data(), state || {});`
 				: `state = state || {};`}
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = @template.computed.${key}( ${deps
-						.map(dep => `state.${dep}`)
-						.join(', ')} );`
+					`state.${key} = @template.computed.${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
 			)}
 
 			${generator.bindings.length &&
@@ -126,7 +124,7 @@ export default function ssr(
 				var settled = false;
 				var tmp;
 
-				while ( !settled ) {
+				while (!settled) {
 					settled = true;
 
 					${generator.bindings.join('\n\n')}
@@ -136,7 +134,7 @@ export default function ssr(
 			return \`${generator.renderCode}\`.trim();
 		};
 
-		${name}.renderCss = function () {
+		${name}.renderCss = function() {
 			var components = [];
 
 			${generator.stylesheet.hasStyles &&
@@ -152,26 +150,24 @@ export default function ssr(
 				deindent`
 				var seen = {};
 
-				function addComponent ( component ) {
+				function addComponent(component) {
 					var result = component.renderCss();
-					result.components.forEach( x => {
-						if ( seen[ x.filename ] ) return;
-						seen[ x.filename ] = true;
-						components.push( x );
+					result.components.forEach(x => {
+						if (seen[x.filename]) return;
+						seen[x.filename] = true;
+						components.push(x);
 					});
 				}
 
 				${templateProperties.components.value.properties.map(prop => {
 					const { name } = prop.key;
-					const expression =
-						generator.importedComponents.get(name) ||
-						`@template.components.${name}`;
-					return `addComponent( ${expression} );`;
+					const expression = generator.importedComponents.get(name) || `@template.components.${name}`;
+					return `addComponent(${expression});`;
 				})}
 			`}
 
 			return {
-				css: components.map( x => x.css ).join( '\\n' ),
+				css: components.map(x => x.css).join('\\n'),
 				map: null,
 				components
 			};
@@ -185,8 +181,8 @@ export default function ssr(
 			'>': '&gt;'
 		};
 
-		function __escape ( html ) {
-			return String( html ).replace( /["'&<>]/g, match => escaped[ match ] );
+		function __escape(html) {
+			return String(html).replace(/["'&<>]/g, match => escaped[match]);
 		}
 	`.replace(/(@+|#+)(\w*)/g, (match: string, sigil: string, name: string) => {
 		return sigil === '@' ? generator.alias(name) : sigil.slice(1) + name;

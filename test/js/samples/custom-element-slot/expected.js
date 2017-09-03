@@ -1,39 +1,39 @@
 import { appendNode, assign, createElement, createText, detachNode, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
-function create_main_fragment ( state, component ) {
+function create_main_fragment(state, component) {
 	var div, slot, p, text, text_2, slot_1, p_1, text_3;
 
 	return {
-		create: function () {
+		create: function() {
 			div = createElement( 'div' );
 			slot = createElement( 'slot' );
 			p = createElement( 'p' );
-			text = createText( "default fallback content" );
-			text_2 = createText( "\n\n\t" );
+			text = createText("default fallback content");
+			text_2 = createText("\n\n\t");
 			slot_1 = createElement( 'slot' );
 			p_1 = createElement( 'p' );
-			text_3 = createText( "foo fallback content" );
+			text_3 = createText("foo fallback content");
 			this.hydrate();
 		},
 
-		hydrate: function ( nodes ) {
-			setAttribute( slot_1, 'name', "foo" );
+		hydrate: function(nodes) {
+			setAttribute(slot_1, "name", "foo");
 		},
 
-		mount: function ( target, anchor ) {
+		mount: function(target, anchor) {
 			insertNode( div, target, anchor );
 			appendNode( slot, div );
 			appendNode( p, slot );
-			appendNode( text, p );
-			appendNode( text_2, div );
+			appendNode(text, p);
+			appendNode(text_2, div);
 			appendNode( slot_1, div );
 			appendNode( p_1, slot_1 );
-			appendNode( text_3, p_1 );
+			appendNode(text_3, p_1);
 		},
 
 		update: noop,
 
-		unmount: function () {
+		unmount: function() {
 			detachNode( div );
 		},
 
@@ -48,11 +48,11 @@ class SvelteComponent extends HTMLElement {
 		this._state = options.data || {};
 
 		this._observers = {
-			pre: Object.create( null ),
-			post: Object.create( null )
+			pre: Object.create(null),
+			post: Object.create(null)
 		};
 
-		this._handlers = Object.create( null );
+		this._handlers = Object.create(null);
 
 		this._root = options._root || this;
 		this._yield = options._yield;
@@ -63,11 +63,11 @@ class SvelteComponent extends HTMLElement {
 
 		this.slots = {};
 
-		this._fragment = create_main_fragment( this._state, this );
+		this._fragment = create_main_fragment(this._state, this);
 
-		if ( options.target ) {
+		if (options.target) {
 			this._fragment.create();
-			this._mount( options.target, options.anchor || null );
+			this._mount(options.target, options.anchor || null);
 		}
 	}
 
@@ -83,13 +83,13 @@ class SvelteComponent extends HTMLElement {
 		});
 	}
 
-	attributeChangedCallback ( attr, oldValue, newValue ) {
+	attributeChangedCallback(attr, oldValue, newValue) {
 		this.set({ [attr]: newValue });
 	}
 }
 
-customElements.define('custom-element', SvelteComponent);
-assign( SvelteComponent.prototype, proto , {
+customElements.define("custom-element", SvelteComponent);
+assign(SvelteComponent.prototype, proto , {
 	_mount(target, anchor) {
 		this._fragment.mount(this.shadowRoot, null);
 		target.insertBefore(this, anchor);
