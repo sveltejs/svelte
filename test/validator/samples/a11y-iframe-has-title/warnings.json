@@ -1,0 +1,10 @@
+[
+	{
+		"message": "A11y: <iframe> element should have a title attribute",
+		"loc": {
+			"line": 1,
+			"column": 0
+		},
+		"pos": 0
+	}
+]
