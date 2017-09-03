@@ -52,9 +52,7 @@ function SvelteComponent ( options ) {
 	if ( !options._root ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, options.anchor || null );
-	}
 
-	if ( !options._root ) {
 		callAll(this._oncreate);
 	}
 }

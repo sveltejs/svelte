@@ -129,6 +129,14 @@ function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
 
+function _mount(target, anchor) {
+	this._fragment.mount(target, anchor);
+}
+
+function _unmount() {
+	this._fragment.unmount();
+}
+
 var proto = {
 	destroy: destroy,
 	get: get,
@@ -138,7 +146,9 @@ var proto = {
 	set: set,
 	teardown: destroy,
 	_recompute: noop,
-	_set: _set
+	_set: _set,
+	_mount: _mount,
+	_unmount: _unmount
 };
 
 var template = (function () {

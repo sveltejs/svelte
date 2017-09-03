@@ -50,7 +50,7 @@ class SvelteComponent extends HTMLElement {
 		this._bind = options._bind;
 
 		this.attachShadow({ mode: 'open' });
-		this.shadowRoot.innerHTML = '<style>h1{color:red}</style>';
+		this.shadowRoot.innerHTML = `<style>h1{color:red}</style>`;
 
 		this._fragment = create_main_fragment( this._state, this );
 
@@ -78,7 +78,15 @@ class SvelteComponent extends HTMLElement {
 }
 
 customElements.define('custom-element', SvelteComponent);
+assign( SvelteComponent.prototype, proto , {
+	_mount(target, anchor) {
+		this._fragment.mount(this.shadowRoot, null);
+		target.insertBefore(this, anchor);
+	},
 
-assign( SvelteComponent.prototype, proto );
+	_unmount() {
+		this.parentNode.removeChild(this);
+	}
+});
 
 export default SvelteComponent;
