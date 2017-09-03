@@ -1,0 +1,19 @@
+[
+	{
+		"message": "A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'labelledby'?)",
+		"loc": {
+			"line": 1,
+			"column": 20
+		},
+		"pos": 20
+	},
+
+	{
+		"message": "A11y: <input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute",
+		"loc": {
+			"column": 0,
+			"line": 1
+		},
+		"pos": 0
+	}
+]
