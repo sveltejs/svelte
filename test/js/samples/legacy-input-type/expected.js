@@ -5,7 +5,7 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			input = createElement( 'input' );
+			input = createElement("input");
 			this.hydrate();
 		},
 
@@ -14,13 +14,13 @@ function create_main_fragment(state, component) {
 		},
 
 		mount: function(target, anchor) {
-			insertNode( input, target, anchor );
+			insertNode(input, target, anchor);
 		},
 
 		update: noop,
 
 		unmount: function() {
-			detachNode( input );
+			detachNode(input);
 		},
 
 		destroy: noop

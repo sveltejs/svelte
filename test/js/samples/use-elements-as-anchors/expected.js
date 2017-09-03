@@ -15,17 +15,17 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			div = createElement( 'div' );
+			div = createElement("div");
 			if (if_block) if_block.create();
 			text = createText("\n\n\t");
-			p = createElement( 'p' );
+			p = createElement("p");
 			text_1 = createText("this can be used as an anchor");
 			text_2 = createText("\n\n\t");
 			if (if_block_1) if_block_1.create();
 			text_3 = createText("\n\n\t");
 			if (if_block_2) if_block_2.create();
 			text_4 = createText("\n\n\t");
-			p_1 = createElement( 'p' );
+			p_1 = createElement("p");
 			text_5 = createText("so can this");
 			text_6 = createText("\n\n\t");
 			if (if_block_3) if_block_3.create();
@@ -35,17 +35,17 @@ function create_main_fragment(state, component) {
 		},
 
 		mount: function(target, anchor) {
-			insertNode( div, target, anchor );
+			insertNode(div, target, anchor);
 			if (if_block) if_block.mount(div, null);
 			appendNode(text, div);
-			appendNode( p, div );
+			appendNode(p, div);
 			appendNode(text_1, p);
 			appendNode(text_2, div);
 			if (if_block_1) if_block_1.mount(div, null);
 			appendNode(text_3, div);
 			if (if_block_2) if_block_2.mount(div, null);
 			appendNode(text_4, div);
-			appendNode( p_1, div );
+			appendNode(p_1, div);
 			appendNode(text_5, p_1);
 			appendNode(text_6, div);
 			if (if_block_3) if_block_3.mount(div, null);
@@ -117,7 +117,7 @@ function create_main_fragment(state, component) {
 		},
 
 		unmount: function() {
-			detachNode( div );
+			detachNode(div);
 			if (if_block) if_block.unmount();
 			if (if_block_1) if_block_1.unmount();
 			if (if_block_2) if_block_2.unmount();
@@ -142,17 +142,17 @@ function create_if_block(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("a");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
@@ -164,17 +164,17 @@ function create_if_block_1(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("b");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
@@ -186,17 +186,17 @@ function create_if_block_2(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("c");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
@@ -208,17 +208,17 @@ function create_if_block_3(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("d");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
@@ -230,17 +230,17 @@ function create_if_block_4(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("e");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop

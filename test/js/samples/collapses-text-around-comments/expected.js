@@ -24,17 +24,17 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText(state.foo);
 			this.hydrate();
 		},
 
 		hydrate: function(nodes) {
-			encapsulateStyles( p );
+			encapsulateStyles(p);
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
@@ -45,7 +45,7 @@ function create_main_fragment(state, component) {
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
