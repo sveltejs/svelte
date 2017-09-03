@@ -78,6 +78,14 @@ export default function a11y(
 			validator.warn(`A11y: The scope attribute should only be used with <th> elements`, attribute.start);
 		}
 
+		// tabindex-no-positive
+		if (name === 'tabindex') {
+			const value = getStaticAttributeValue(node, 'tabindex');
+			if (!isNaN(value) && +value > 0) {
+				validator.warn(`A11y: avoid tabindex values above zero`, attribute.start);
+			}
+		}
+
 		attributeMap.set(attribute.name, attribute);
 	});
 
