@@ -1,5 +1,5 @@
 [{
-	"message": "A11y: Avoid using accesskey",
+	"message": "A11y: Avoid using autofocus",
 	"loc": {
 		"line": 1,
 		"column": 5

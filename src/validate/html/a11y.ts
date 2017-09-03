@@ -65,7 +65,12 @@ export default function a11y(
 
 		// no-access-key
 		if (name === 'accesskey') {
-			validator.warn(`A11y: Avoid using the accessKey attribute`, attribute.start);
+			validator.warn(`A11y: Avoid using accesskey`, attribute.start);
+		}
+
+		// no-autofocus
+		if (name === 'autofocus') {
+			validator.warn(`A11y: Avoid using autofocus`, attribute.start);
 		}
 
 		attributeMap.set(attribute.name, attribute);
