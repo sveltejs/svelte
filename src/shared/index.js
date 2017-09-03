@@ -163,6 +163,14 @@ export function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
 
+export function _mount(target, anchor) {
+	this._fragment.mount(target, anchor);
+}
+
+export function _unmount() {
+	this._fragment.unmount();
+}
+
 export var proto = {
 	destroy: destroy,
 	get: get,
@@ -172,7 +180,9 @@ export var proto = {
 	set: set,
 	teardown: destroy,
 	_recompute: noop,
-	_set: _set
+	_set: _set,
+	_mount: _mount,
+	_unmount: _unmount
 };
 
 export var protoDev = {
@@ -184,5 +194,7 @@ export var protoDev = {
 	set: set,
 	teardown: destroyDev,
 	_recompute: noop,
-	_set: _setDev
+	_set: _setDev,
+	_mount: _mount,
+	_unmount: _unmount
 };
