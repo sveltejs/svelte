@@ -1,0 +1,8 @@
+[{
+	"message": "A11y: <img> element should have an alt attribute",
+	"loc": {
+		"line": 1,
+		"column": 0
+	},
+	"pos": 0
+}]

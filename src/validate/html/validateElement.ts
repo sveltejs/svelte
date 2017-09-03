@@ -1,14 +1,30 @@
+import * as namespaces from '../../utils/namespaces';
 import validateEventHandler from './validateEventHandler';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
-export default function validateElement(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {
+const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|title|tref|tspan|unknown|use|view|vkern)$/;
+
+export default function validateElement(
+	validator: Validator,
+	node: Node,
+	refs: Map<string, Node[]>,
+	refCallees: Node[],
+	elementStack: Node[]
+) {
 	const isComponent =
 		node.name === ':Self' || validator.components.has(node.name);
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
 		validator.warn(`${node.name} component is not defined`, node.start);
+	}
+
+	if (elementStack.length === 0 && validator.namespace !== namespaces.svg && svg.test(node.name)) {
+		validator.warn(
+			`<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`,
+			node.start
+		);
 	}
 
 	if (node.name === 'slot') {
@@ -43,6 +59,8 @@ export default function validateElement(validator: Validator, node: Node, refs: 
 	let hasIntro: boolean;
 	let hasOutro: boolean;
 	let hasTransition: boolean;
+
+	const attributeMap: Map<string, Node> = new Map();
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
@@ -161,6 +179,8 @@ export default function validateElement(validator: Validator, node: Node, refs: 
 				);
 			}
 		} else if (attribute.type === 'Attribute') {
+			attributeMap.set(attribute.name, attribute);
+
 			if (attribute.name === 'value' && node.name === 'textarea') {
 				if (node.children.length) {
 					validator.error(
@@ -178,6 +198,29 @@ export default function validateElement(validator: Validator, node: Node, refs: 
 			}
 		}
 	});
+
+	// a11y
+	if (node.name === 'a' && !attributeMap.has('href')) {
+		validator.warn(`A11y: <a> element should have an href attribute`, node.start);
+	}
+
+	if (node.name === 'img' && !attributeMap.has('alt')) {
+		validator.warn(`A11y: <img> element should have an alt attribute`, node.start);
+	}
+
+	if (node.name === 'figcaption') {
+		const parent = elementStack[elementStack.length - 1];
+		if (parent) {
+			if (parent.name !== 'figure') {
+				validator.warn(`A11y: <figcaption> must be an immediate child of <figure>`, node.start);
+			} else {
+				const index = parent.children.indexOf(node);
+				if (index !== 0 && index !== parent.children.length - 1) {
+					validator.warn(`A11y: <figcaption> must be first or last child of <figure>`, node.start);
+				}
+			}
+		}
+	}
 }
 
 function checkTypeAttribute(validator: Validator, node: Node) {
