@@ -25,6 +25,10 @@ function createElement(name) {
 	return document.createElement(name);
 }
 
+function setStyle(node, key, value) {
+	node.style.setProperty(key, value);
+}
+
 function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
@@ -163,7 +167,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			div.style.setProperty('color', state.color);
+			setStyle(div, 'color', state.color);
 		},
 
 		mount: function ( target, anchor ) {
@@ -172,7 +176,7 @@ function create_main_fragment ( state, component ) {
 
 		update: function ( changed, state ) {
 			if ( changed.color ) {
-				div.style.setProperty('color', state.color);
+				setStyle(div, 'color', state.color);
 			}
 		},
 

@@ -138,3 +138,7 @@ export function setInputType(input, type) {
 		input.type = type;
 	} catch (e) {}
 }
+
+export function setStyle(node, key, value) {
+	node.style.setProperty(key, value);
+}
