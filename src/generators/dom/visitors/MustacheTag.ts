@@ -22,8 +22,8 @@ export default function visitMustacheTag(
 
 	block.addElement(
 		node.var,
-		`@createText( ${init} )`,
-		`@claimText( ${state.parentNodes}, ${init} )`,
+		`@createText(${init})`,
+		`@claimText(${state.parentNodes}, ${init})`,
 		state.parentNode
 	);
 }

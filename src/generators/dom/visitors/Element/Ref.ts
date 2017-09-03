@@ -18,7 +18,7 @@ export default function visitRef(
 	);
 
 	block.builders.destroy.addLine(deindent`
-		if ( #component.refs.${name} === ${state.parentNode} ) #component.refs.${name} = null;
+		if (#component.refs.${name} === ${state.parentNode}) #component.refs.${name} = null;
 	`);
 
 	generator.usesRefs = true; // so this component.refs object is created

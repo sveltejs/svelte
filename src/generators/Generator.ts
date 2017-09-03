@@ -210,10 +210,10 @@ export default class Generator {
 						}
 
 						if (globalWhitelist.has(name)) {
-							code.prependRight(node.start, `( '${name}' in state ? state.`);
+							code.prependRight(node.start, `('${name}' in state ? state.`);
 							code.appendLeft(
 								node.object ? node.object.end : node.end,
-								` : ${name} )`
+								` : ${name})`
 							);
 						} else {
 							code.prependRight(node.start, `state.`);
@@ -337,7 +337,7 @@ export default class Generator {
 
 				if (defaultImport) {
 					statements.push(
-						`${name} = ( ${name} && ${name}.__esModule ) ? ${name}['default'] : ${name};`
+						`${name} = (${name} && ${name}.__esModule) ? ${name}['default'] : ${name};`
 					);
 				}
 			});
@@ -629,8 +629,8 @@ export default class Generator {
 			// user code gets wrapped in an IIFE
 			if (js.content.body.length) {
 				const prefix = hasDefaultExport
-					? `var ${this.alias('template')} = (function () {`
-					: `(function () {`;
+					? `var ${this.alias('template')} = (function() {`
+					: `(function() {`;
 				this.code
 					.prependRight(js.content.start, prefix)
 					.appendLeft(js.content.end, '}());');
