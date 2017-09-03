@@ -21,10 +21,18 @@ export default function a11y(
 	});
 
 	if (node.name === 'a') {
-		if (!attributeMap.has('href')) {
+		// anchor-is-valid
+		const href = attributeMap.get('href');
+		if (href) {
+			const value = getValue(href);
+			if (value === '' || value === '#') {
+				validator.warn(`A11y: '${value}' is not a valid href attribute`, href.start);
+			}
+		} else {
 			validator.warn(`A11y: <a> element should have an href attribute`, node.start);
 		}
 
+		// anchor-has-content
 		if (!node.children.length) {
 			validator.warn(`A11y: <a> element should have child content`, node.start);
 		}
@@ -47,4 +55,11 @@ export default function a11y(
 			}
 		}
 	}
+}
+
+function getValue(attribute: Node) {
+	if (attribute.value.length === 0) return '';
+	if (attribute.value.length === 1 && attribute.value[0].type === 'Text') return attribute.value[0].data;
+
+	return null;
 }
