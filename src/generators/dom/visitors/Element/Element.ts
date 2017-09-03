@@ -8,7 +8,7 @@ import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
 import * as namespaces from '../../../../utils/namespaces';
-import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
+import getStaticAttributeValue from '../../../../utils/getStaticAttributeValue';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
