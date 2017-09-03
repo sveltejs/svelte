@@ -1,6 +1,7 @@
 import assert from 'assert';
 import * as fs from 'fs';
-import { env, normalizeHtml, svelte } from '../helpers.js';
+import { parse } from 'acorn';
+import { addLineNumbers, env, normalizeHtml, svelte } from '../helpers.js';
 
 function tryRequire(file) {
 	try {
@@ -20,6 +21,15 @@ function normalizeWarning(warning) {
 	delete warning.filename;
 	delete warning.toString;
 	return warning;
+}
+
+function checkCodeIsValid(code) {
+	try {
+		parse(code);
+	} catch (err) {
+		console.error(addLineNumbers(code));
+		throw new Error(err.message);
+	}
 }
 
 describe('css', () => {
@@ -66,6 +76,10 @@ describe('css', () => {
 					}
 				})
 			);
+
+			// check the code is valid
+			checkCodeIsValid(dom.code);
+			checkCodeIsValid(ssr.code);
 
 			assert.equal(dom.css, ssr.css);
 

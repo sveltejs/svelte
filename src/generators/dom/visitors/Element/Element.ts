@@ -102,7 +102,7 @@ export default function visitElement(
 
 		if (node._cssRefAttribute) {
 			block.builders.hydrate.addLine(
-				`@setAttribute(${name}, "svelte-ref-${node._cssRefAttribute}", ");`
+				`@setAttribute(${name}, "svelte-ref-${node._cssRefAttribute}", "");`
 			)
 		}
 	}
