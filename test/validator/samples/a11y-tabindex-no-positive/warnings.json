@@ -1,0 +1,10 @@
+[
+	{
+		"message": "A11y: avoid tabindex values above zero",
+		"loc": {
+			"line": 3,
+			"column": 5
+		},
+		"pos": 46
+	}
+]
