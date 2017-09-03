@@ -60,8 +60,6 @@ export default function validateElement(
 	let hasOutro: boolean;
 	let hasTransition: boolean;
 
-	const attributeMap: Map<string, Node> = new Map();
-
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
 			if (!refs.has(attribute.name)) refs.set(attribute.name, []);
@@ -179,8 +177,6 @@ export default function validateElement(
 				);
 			}
 		} else if (attribute.type === 'Attribute') {
-			attributeMap.set(attribute.name, attribute);
-
 			if (attribute.name === 'value' && node.name === 'textarea') {
 				if (node.children.length) {
 					validator.error(
@@ -198,29 +194,6 @@ export default function validateElement(
 			}
 		}
 	});
-
-	// a11y
-	if (node.name === 'a' && !attributeMap.has('href')) {
-		validator.warn(`A11y: <a> element should have an href attribute`, node.start);
-	}
-
-	if (node.name === 'img' && !attributeMap.has('alt')) {
-		validator.warn(`A11y: <img> element should have an alt attribute`, node.start);
-	}
-
-	if (node.name === 'figcaption') {
-		const parent = elementStack[elementStack.length - 1];
-		if (parent) {
-			if (parent.name !== 'figure') {
-				validator.warn(`A11y: <figcaption> must be an immediate child of <figure>`, node.start);
-			} else {
-				const index = parent.children.indexOf(node);
-				if (index !== 0 && index !== parent.children.length - 1) {
-					validator.warn(`A11y: <figcaption> must be first or last child of <figure>`, node.start);
-				}
-			}
-		}
-	}
 }
 
 function checkTypeAttribute(validator: Validator, node: Node) {
