@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.36.0
+
+* Optimize `style` attributes where possible ([#455](https://github.com/sveltejs/svelte/issues/455))
+
 ## 1.35.0
 
 * `set` and `get` continue to work until `destroy` is complete ([#788](https://github.com/sveltejs/svelte/issues/788))
