@@ -1,5 +1,6 @@
 import attributeLookup from './lookup';
 import deindent from '../../../../utils/deindent';
+import visitStyleAttribute, { optimizeStyle } from './StyleAttribute';
 import { stringify } from '../../../../utils/stringify';
 import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
 import { DomGenerator } from '../../index';
@@ -15,6 +16,14 @@ export default function visitAttribute(
 	attribute: Node
 ) {
 	const name = attribute.name;
+
+	if (name === 'style') {
+		const styleProps = optimizeStyle(attribute.value);
+		if (styleProps) {
+			visitStyleAttribute(generator, block, state, node, attribute, styleProps);
+			return;
+		}
+	}
 
 	let metadata = state.namespace ? null : attributeLookup[name];
 	if (metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf(node.name))
