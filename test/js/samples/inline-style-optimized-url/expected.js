@@ -1,4 +1,4 @@
-import { assign, createElement, detachNode, insertNode, noop, proto } from "svelte/shared.js";
+import { assign, createElement, detachNode, insertNode, noop, proto, setStyle } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
 	var div;
@@ -10,7 +10,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			div.style.setProperty('background', "url(data:image/png;base64," + state.data + ")");
+			setStyle(div, 'background', "url(data:image/png;base64," + state.data + ")");
 		},
 
 		mount: function ( target, anchor ) {
@@ -19,7 +19,7 @@ function create_main_fragment ( state, component ) {
 
 		update: function ( changed, state ) {
 			if ( changed.data ) {
-				div.style.setProperty('background', "url(data:image/png;base64," + state.data + ")");
+				setStyle(div, 'background', "url(data:image/png;base64," + state.data + ")");
 			}
 		},
 

@@ -25,6 +25,10 @@ function createElement(name) {
 	return document.createElement(name);
 }
 
+function setStyle(node, key, value) {
+	node.style.setProperty(key, value);
+}
+
 function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
@@ -163,7 +167,7 @@ function create_main_fragment ( state, component ) {
 		},
 
 		hydrate: function ( nodes ) {
-			div.style.setProperty('background', "url(data:image/png;base64," + state.data + ")");
+			setStyle(div, 'background', "url(data:image/png;base64," + state.data + ")");
 		},
 
 		mount: function ( target, anchor ) {
@@ -172,7 +176,7 @@ function create_main_fragment ( state, component ) {
 
 		update: function ( changed, state ) {
 			if ( changed.data ) {
-				div.style.setProperty('background', "url(data:image/png;base64," + state.data + ")");
+				setStyle(div, 'background', "url(data:image/png;base64," + state.data + ")");
 			}
 		},
 

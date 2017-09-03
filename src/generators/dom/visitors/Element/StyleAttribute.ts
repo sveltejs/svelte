@@ -60,7 +60,7 @@ export default function visitStyleAttribute(
 
 				block.builders.update.addConditional(
 					condition,
-					`${node.var}.style.setProperty('${prop.key}', ${value});`
+					`@setStyle(${node.var}, '${prop.key}', ${value});`
 				);
 			}
 		} else {
@@ -68,7 +68,7 @@ export default function visitStyleAttribute(
 		}
 
 		block.builders.hydrate.addLine(
-			`${node.var}.style.setProperty('${prop.key}', ${value});`
+			`@setStyle(${node.var}, '${prop.key}', ${value});`
 		);
 	});
 }
