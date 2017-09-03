@@ -1,0 +1,10 @@
+[
+	{
+		"message": "A11y: Unknown role 'toooltip' (did you mean 'tooltip'?)",
+		"loc": {
+			"line": 1,
+			"column": 5
+		},
+		"pos": 5
+	}
+]
