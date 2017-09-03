@@ -77,7 +77,15 @@ class SvelteComponent extends HTMLElement {
 }
 
 customElements.define('custom-element', SvelteComponent);
+assign( SvelteComponent.prototype, proto , {
+	_mount(target, anchor) {
+		this._fragment.mount(this.shadowRoot, null);
+		target.insertBefore(this, anchor);
+	},
 
-assign( SvelteComponent.prototype, proto );
+	_unmount() {
+		this.parentNode.removeChild(this);
+	}
+});
 
 export default SvelteComponent;
