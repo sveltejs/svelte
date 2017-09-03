@@ -19,23 +19,23 @@ export default function getIntro(
 
 function getAmdIntro(options: CompileOptions, imports: Node[]) {
 	const sourceString = imports.length
-		? `[ ${imports
+		? `[${imports
 				.map(declaration => `'${removeExtension(declaration.source.value)}'`)
-				.join(', ')} ], `
+				.join(', ')}], `
 		: '';
 
 	const id = options.amd && options.amd.id;
 
 	return `define(${id
-		? ` '${id}', `
-		: ''}${sourceString}function (${paramString(imports)}) { 'use strict';\n\n`;
+		? `"${id}", `
+		: ''}${sourceString}function(${paramString(imports)}) { 'use strict';\n\n`;
 }
 
 function getCjsIntro(options: CompileOptions, imports: Node[]) {
 	const requireBlock = imports
 		.map(
 			declaration =>
-				`var ${declaration.name} = require( '${declaration.source.value}' );`
+				`var ${declaration.name} = require('${declaration.source.value}');`
 		)
 		.join('\n\n');
 
@@ -51,9 +51,7 @@ function getIifeIntro(options: CompileOptions, imports: Node[]) {
 		throw new Error(`Missing required 'name' option for IIFE export`);
 	}
 
-	return `var ${options.name} = (function (${paramString(
-		imports
-	)}) { 'use strict';\n\n`;
+	return `var ${options.name} = (function(${paramString(imports)}) { 'use strict';\n\n`;
 }
 
 function getUmdIntro(options: CompileOptions, imports: Node[]) {
@@ -75,7 +73,7 @@ function getUmdIntro(options: CompileOptions, imports: Node[]) {
 
 	return (
 		deindent`
-		(function ( global, factory ) {
+		(function(global, factory) {
 			typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(${cjsDeps}) :
 			typeof define === 'function' && define.amd ? define(${amdId}${amdDeps}factory) :
 			(global.${options.name} = factory(${globalDeps}));
@@ -88,7 +86,7 @@ function getEvalIntro(options: CompileOptions, imports: Node[]) {
 }
 
 function paramString(imports: Node[]) {
-	return imports.length ? ` ${imports.map(dep => dep.name).join(', ')} ` : '';
+	return imports.map(dep => dep.name).join(', ');
 }
 
 function removeExtension(file: string) {

@@ -2,6 +2,7 @@ import attributeLookup from './lookup';
 import deindent from '../../../../utils/deindent';
 import visitStyleAttribute, { optimizeStyle } from './StyleAttribute';
 import { stringify } from '../../../../utils/stringify';
+import getExpressionPrecedence from '../../../../utils/getExpressionPrecedence';
 import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -99,7 +100,7 @@ export default function visitAttribute(
 								allDependencies.add(d);
 							});
 
-							return `( ${snippet} )`;
+							return getExpressionPrecedence(chunk.expression) <= 13 ? `(${snippet})` : snippet;
 						}
 					})
 					.join(' + ');
@@ -121,9 +122,9 @@ export default function visitAttribute(
 
 		if (isLegacyInputType) {
 			block.builders.hydrate.addLine(
-				`@setInputType( ${state.parentNode}, ${init} );`
+				`@setInputType(${state.parentNode}, ${init});`
 			);
-			updater = `@setInputType( ${state.parentNode}, ${shouldCache ? last : value} );`;
+			updater = `@setInputType(${state.parentNode}, ${shouldCache ? last : value});`;
 		} else if (isSelectValueAttribute) {
 			// annoying special case
 			const isMultipleSelect =
@@ -136,15 +137,15 @@ export default function visitAttribute(
 
 			const ifStatement = isMultipleSelect
 				? deindent`
-					${option}.selected = ~${last}.indexOf( ${option}.__value );`
+					${option}.selected = ~${last}.indexOf(${option}.__value);`
 				: deindent`
-					if ( ${option}.__value === ${last} ) {
+					if (${option}.__value === ${last}) {
 						${option}.selected = true;
 						break;
 					}`;
 
 			updater = deindent`
-				for ( var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1 ) {
+				for (var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1) {
 					var ${option} = ${state.parentNode}.options[${i}];
 
 					${ifStatement}
@@ -164,9 +165,9 @@ export default function visitAttribute(
 			updater = `${state.parentNode}.${propertyName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
 		} else {
 			block.builders.hydrate.addLine(
-				`${method}( ${state.parentNode}, '${name}', ${init} );`
+				`${method}(${state.parentNode}, "${name}", ${init});`
 			);
-			updater = `${method}( ${state.parentNode}, '${name}', ${shouldCache || isSelectValueAttribute ? last : value} );`;
+			updater = `${method}(${state.parentNode}, "${name}", ${shouldCache || isSelectValueAttribute ? last : value});`;
 		}
 
 		if (allDependencies.size || hasChangeableIndex || isSelectValueAttribute) {
@@ -176,10 +177,10 @@ export default function visitAttribute(
 				dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 			);
 
-			const updateCachedValue = `${last} !== ( ${last} = ${value} )`;
+			const updateCachedValue = `${last} !== (${last} = ${value})`;
 
 			const condition = shouldCache ?
-				( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
+				( dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue ) :
 				changedCheck;
 
 			block.builders.update.addConditional(
@@ -195,9 +196,9 @@ export default function visitAttribute(
 				: stringify(attribute.value[0].data);
 
 		const statement = (
-			isLegacyInputType ? `@setInputType( ${state.parentNode}, ${value} );` :
+			isLegacyInputType ? `@setInputType(${state.parentNode}, ${value});` :
 			propertyName ? `${state.parentNode}.${propertyName} = ${value};` :
-			`${method}( ${state.parentNode}, '${name}', ${value} );`
+			`${method}(${state.parentNode}, "${name}", ${value});`
 		);
 
 		block.builders.hydrate.addLine(statement);

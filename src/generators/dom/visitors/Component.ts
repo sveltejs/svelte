@@ -5,6 +5,7 @@ import { DomGenerator } from '../index';
 import Block from '../Block';
 import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
+import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
 import { stringify } from '../../../utils/stringify';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
@@ -90,9 +91,9 @@ export default function visitComponent(
 			.forEach((attribute: Attribute) => {
 				if (attribute.dependencies.length) {
 					updates.push(deindent`
-						if ( ${attribute.dependencies
+						if (${attribute.dependencies
 							.map(dependency => `changed.${dependency}`)
-							.join(' || ')} ) ${name}_changes.${attribute.name} = ${attribute.value};
+							.join(' || ')}) ${name}_changes.${attribute.name} = ${attribute.value};
 					`);
 				}
 
@@ -152,7 +153,7 @@ export default function visitComponent(
 				}
 
 				statements.push(deindent`
-					if ( ${binding.prop} in ${binding.obj} ) {
+					if (${binding.prop} in ${binding.obj}) {
 						${name_initial_data}.${binding.name} = ${binding.snippet};
 						${name_updating}.${binding.name} = true;
 					}`
@@ -171,7 +172,7 @@ export default function visitComponent(
 				// TODO could binding.dependencies.length ever be 0?
 				if (binding.dependencies.length) {
 					updates.push(deindent`
-						if ( !${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')} ) {
+						if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
 							${name}_changes.${binding.name} = ${binding.snippet};
 							${name_updating}.${binding.name} = true;
 						}
@@ -234,12 +235,12 @@ export default function visitComponent(
 	);
 
 	block.builders.mount.addLine(
-		`${name}._mount( ${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'} );`
+		`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
 	);
 
 	if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
 
-	block.builders.destroy.addLine(`${name}.destroy( false );`);
+	block.builders.destroy.addLine(`${name}.destroy(false);`);
 
 	// event handlers
 	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((handler: Node) => {
@@ -279,7 +280,7 @@ export default function visitComponent(
 				`${block.alias('component')}.fire('${handler.name}', event);`);
 
 		block.builders.init.addBlock(deindent`
-			${name}.on( '${handler.name}', function ( event ) {
+			${name}.on("${handler.name}", function(event) {
 				${handlerBody}
 			});
 		`);
@@ -292,7 +293,7 @@ export default function visitComponent(
 		block.builders.init.addLine(`#component.refs.${ref.name} = ${name};`);
 
 		block.builders.destroy.addLine(deindent`
-			if ( #component.refs.${ref.name} === ${name} ) #component.refs.${ref.name} = null;
+			if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;
 		`);
 	});
 
@@ -392,7 +393,7 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 						allDependencies.add(dependency);
 					});
 
-					return `( ${snippet} )`; // TODO only parenthesize if necessary
+					return getExpressionPrecedence(chunk.expression) <= 13 ? `( ${snippet} )` : snippet;
 				}
 			})
 			.join(' + ');

@@ -34,13 +34,13 @@ export default function visitRawMustacheTag(
 		insert = content => `${state.parentNode}.innerHTML = ${content};`;
 	} else if (anchorBefore === 'null') {
 		detach = `@detachBefore(${anchorAfter});`;
-		insert = content => `${anchorAfter}.insertAdjacentHTML('beforebegin', ${content});`;
+		insert = content => `${anchorAfter}.insertAdjacentHTML("beforebegin", ${content});`;
 	} else if (anchorAfter === 'null') {
 		detach = `@detachAfter(${anchorBefore});`;
-		insert = content => `${anchorBefore}.insertAdjacentHTML('afterend', ${content});`;
+		insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
 	} else {
 		detach = `@detachBetween(${anchorBefore}, ${anchorAfter});`;
-		insert = content => `${anchorBefore}.insertAdjacentHTML('afterend', ${content});`;
+		insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
 	}
 
 	const { init } = visitTag(
@@ -60,8 +60,8 @@ export default function visitRawMustacheTag(
 	if (needsAnchorBefore) {
 		block.addElement(
 			anchorBefore,
-			`@createElement( 'noscript' )`,
-			`@createElement( 'noscript' )`,
+			`@createElement('noscript')`,
+			`@createElement('noscript')`,
 			state.parentNode
 		);
 	}
@@ -69,8 +69,8 @@ export default function visitRawMustacheTag(
 	function addAnchorAfter() {
 		block.addElement(
 			anchorAfter,
-			`@createElement( 'noscript' )`,
-			`@createElement( 'noscript' )`,
+			`@createElement('noscript')`,
+			`@createElement('noscript')`,
 			state.parentNode
 		);
 	}

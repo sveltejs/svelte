@@ -135,7 +135,7 @@ export default class Block {
 		this.mount(name, parentNode);
 
 		if (isToplevel) {
-			this.builders.unmount.addLine(`@detachNode( ${name} );`);
+			this.builders.unmount.addLine(`@detachNode(${name});`);
 		}
 	}
 
@@ -180,9 +180,9 @@ export default class Block {
 
 	mount(name: string, parentNode: string) {
 		if (parentNode) {
-			this.builders.mount.addLine(`@appendNode( ${name}, ${parentNode} );`);
+			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
 		} else {
-			this.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
+			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 		}
 	}
 
@@ -225,7 +225,7 @@ export default class Block {
 			properties.addBlock(`create: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				create: function () {
+				create: function() {
 					${this.builders.create}
 					${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
 				},
@@ -237,7 +237,7 @@ export default class Block {
 				properties.addBlock(`claim: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					claim: function ( nodes ) {
+					claim: function(nodes) {
 						${this.builders.claim}
 						${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
 					},
@@ -247,7 +247,7 @@ export default class Block {
 
 		if (!this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
-				hydrate: function ( nodes ) {
+				hydrate: function(nodes) {
 					${this.builders.hydrate}
 				},
 			`);
@@ -257,7 +257,7 @@ export default class Block {
 			properties.addBlock(`mount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				mount: function ( #target, anchor ) {
+				mount: function(#target, anchor) {
 					${this.builders.mount}
 				},
 			`);
@@ -268,7 +268,7 @@ export default class Block {
 				properties.addBlock(`update: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					update: function ( changed, ${this.params.join(', ')} ) {
+					update: function(changed, ${this.params.join(', ')}) {
 						${this.builders.update}
 					},
 				`);
@@ -278,20 +278,20 @@ export default class Block {
 		if (this.hasIntroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
-					intro: function ( #target, anchor ) {
-						if ( ${introing} ) return;
+					intro: function(#target, anchor) {
+						if (${introing}) return;
 						${introing} = true;
 						${hasOutros && `${outroing} = false;`}
 
 						${this.builders.intro}
 
-						this.mount( #target, anchor );
+						this.mount(#target, anchor);
 					},
 				`);
 			} else {
 				properties.addBlock(deindent`
-					intro: function ( #target, anchor ) {
-						this.mount( #target, anchor );
+					intro: function(#target, anchor) {
+						this.mount(#target, anchor);
 					},
 				`);
 			}
@@ -300,8 +300,8 @@ export default class Block {
 		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
-					outro: function ( ${this.alias('outrocallback')} ) {
-						if ( ${outroing} ) return;
+					outro: function(${this.alias('outrocallback')}) {
+						if (${outroing}) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
 
@@ -312,7 +312,7 @@ export default class Block {
 				`);
 			} else {
 				properties.addBlock(deindent`
-					outro: function ( outrocallback ) {
+					outro: function(outrocallback) {
 						outrocallback();
 					},
 				`);
@@ -323,7 +323,7 @@ export default class Block {
 			properties.addBlock(`unmount: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				unmount: function () {
+				unmount: function() {
 					${this.builders.unmount}
 				},
 			`);
@@ -333,16 +333,14 @@ export default class Block {
 			properties.addBlock(`destroy: @noop`);
 		} else {
 			properties.addBlock(deindent`
-				destroy: function () {
+				destroy: function() {
 					${this.builders.destroy}
 				}
 			`);
 		}
 
 		return deindent`
-			function ${this.name} ( ${this.params.join(', ')}, #component${this.key
-			? `, ${localKey}`
-			: ''} ) {
+			function ${this.name}(${this.params.join(', ')}, #component${this.key ? `, ${localKey}` : ''}) {
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())
 						.map(key => {

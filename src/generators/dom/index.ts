@@ -91,9 +91,9 @@ export default function dom(
 
 			const condition = `isInitial || ${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const statement = `if ( @differs( ( state.${key} = @template.computed.${key}( ${deps
+			const statement = `if (@differs((state.${key} = @template.computed.${key}(${deps
 				.map(dep => `state.${dep}`)
-				.join(', ')} ) ), oldState.${key} ) ) changed.${key} = true;`;
+				.join(', ')})), oldState.${key})) changed.${key} = true;`;
 
 			computationBuilder.addConditional(condition, statement);
 		});
@@ -105,8 +105,8 @@ export default function dom(
 
 	if (generator.needsEncapsulateHelper) {
 		builder.addBlock(deindent`
-			function @encapsulateStyles ( node ) {
-				@setAttribute( node, '${generator.stylesheet.id}', '' );
+			function @encapsulateStyles(node) {
+				@setAttribute(node, "${generator.stylesheet.id}", "");
 			}
 		`);
 	}
@@ -118,11 +118,11 @@ export default function dom(
 
 	if (styles && generator.options.css !== false && !generator.customElement) {
 		builder.addBlock(deindent`
-			function @add_css () {
-				var style = @createElement( 'style' );
+			function @add_css() {
+				var style = @createElement("style");
 				style.id = '${generator.stylesheet.id}-style';
 				style.textContent = ${styles};
-				@appendNode( style, document.head );
+				@appendNode(style, document.head);
 			}
 		`);
 	}
@@ -152,30 +152,28 @@ export default function dom(
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
-			`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
+			`if (!options || (!options.target && !options._root)) throw new Error("'target' is a required option");`}
 		this.options = options;
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${templateProperties.data
-			? `@assign( @template.data(), options.data )`
+			? `@assign(@template.data(), options.data)`
 			: `options.data || {}`};
 		${generator.metaBindings}
-		${computations.length && `this._recompute( {}, this._state, {}, true );`}
+		${computations.length && `this._recompute({}, this._state, {}, true);`}
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(
 				prop =>
-					`if ( !( '${prop}' in this._state ) ) console.warn( "${debugName} was created without expected data property '${prop}'" );`
+					`if (!('${prop}' in this._state)) console.warn("${debugName} was created without expected data property '${prop}'");`
 			)}
 		${generator.bindingGroups.length &&
-			`this._bindingGroups = [ ${Array(generator.bindingGroups.length)
-				.fill('[]')
-				.join(', ')} ];`}
+			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
 
 		this._observers = {
-			pre: Object.create( null ),
-			post: Object.create( null )
+			pre: Object.create(null),
+			post: Object.create(null)
 		};
 
-		this._handlers = Object.create( null );
+		this._handlers = Object.create(null);
 		${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
 
 		this._root = options._root || this;
@@ -189,13 +187,13 @@ export default function dom(
 				${css && `this.shadowRoot.innerHTML = \`<style>${options.dev ? `${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : css}</style>\`;`}
 			` :
 			(generator.stylesheet.hasStyles && options.css !== false &&
-			`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`)
+			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
 		}
 
-		${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
+		${templateProperties.oncreate && `var oncreate = @template.oncreate.bind(this);`}
 
 		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
-			if ( !options._root ) {
+			if (!options._root) {
 				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
 				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
 				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
@@ -208,22 +206,22 @@ export default function dom(
 
 		${generator.slots.size && `this.slots = {};`}
 
-		this._fragment = @create_main_fragment( this._state, this );
+		this._fragment = @create_main_fragment(this._state, this);
 
-		if ( options.target ) {
+		if (options.target) {
 			${generator.hydratable
 				? deindent`
-					var nodes = @children( options.target );
-					options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
-					nodes.forEach( @detachNode );
+					var nodes = @children(options.target);
+					options.hydrate ? this._fragment.claim(nodes) : this._fragment.create();
+					nodes.forEach(@detachNode);
 				` :
 				deindent`
-					${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
+					${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
 					this._fragment.create();
 				`}
 			${generator.customElement ?
-				`this._mount( options.target, options.anchor || null );` :
-				`this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, options.anchor || null );`}
+				`this._mount(options.target, options.anchor || null);` :
+				`this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(options.target, options.anchor || null);`}
 
 			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
 				${generator.hasComponents && `this._lock = true;`}
@@ -266,13 +264,13 @@ export default function dom(
 						});
 					}`}
 
-				attributeChangedCallback ( attr, oldValue, newValue ) {
+				attributeChangedCallback(attr, oldValue, newValue) {
 					this.set({ [attr]: newValue });
 				}
 			}
 
-			customElements.define('${generator.tag}', ${name});
-			@assign( ${prototypeBase}, ${proto}, {
+			customElements.define("${generator.tag}", ${name});
+			@assign(${prototypeBase}, ${proto}, {
 				_mount(target, anchor) {
 					this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(this.shadowRoot, null);
 					target.insertBefore(this, anchor);
@@ -285,31 +283,31 @@ export default function dom(
 		`);
 	} else {
 		builder.addBlock(deindent`
-			function ${name} ( options ) {
+			function ${name}(options) {
 				${constructorBody}
 			}
 
-			@assign( ${prototypeBase}, ${proto});
+			@assign(${prototypeBase}, ${proto});
 		`);
 	}
 
 	builder.addBlock(deindent`
 		${options.dev && deindent`
-			${name}.prototype._checkReadOnly = function _checkReadOnly ( newState ) {
+			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
 				${Array.from(generator.readonly).map(
 					prop =>
-						`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "${debugName}: Cannot set read-only property '${prop}'" );`
+						`if ('${prop}' in newState && !this._updatingReadonlyProperty) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`
 				)}
 			};
 		`}
 
 		${computations.length ? deindent`
-			${name}.prototype._recompute = function _recompute ( changed, state, oldState, isInitial ) {
+			${name}.prototype._recompute = function _recompute(changed, state, oldState, isInitial) {
 				${computationBuilder}
 			}
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
 
-		${templateProperties.setup && `@template.setup( ${name} );`}
+		${templateProperties.setup && `@template.setup(${name});`}
 	`);
 
 	const usedHelpers = new Set();
@@ -342,7 +340,7 @@ export default function dom(
 
 		else if (format === 'cjs') {
 			const SHARED = '__shared';
-			let requires = `var ${SHARED} = require( ${JSON.stringify(sharedPath)} );`;
+			let requires = `var ${SHARED} = require(${JSON.stringify(sharedPath)});`;
 			used.forEach(name => {
 				const alias = generator.alias(name);
 				requires += `\nvar ${alias} = ${SHARED}.${name};`;
@@ -392,9 +390,7 @@ export default function dom(
 				// special case
 				const global = `_svelteTransitionManager`;
 
-				result += `\n\nvar ${generator.alias(
-					'transitionManager'
-				)} = window.${global} || ( window.${global} = ${code});`;
+				result += `\n\nvar ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});`;
 			} else {
 				const alias = generator.alias(expression.id.name);
 				if (alias !== expression.id.name)
