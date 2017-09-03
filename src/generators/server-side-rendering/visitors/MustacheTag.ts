@@ -8,5 +8,5 @@ export default function visitMustacheTag(
 	node: Node
 ) {
 	const { snippet } = block.contextualise(node.expression);
-	generator.append('${__escape( ' + snippet + ' )}');
+	generator.append('${__escape(' + snippet + ')}');
 }

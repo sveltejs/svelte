@@ -165,7 +165,7 @@ var proto = {
 	_unmount: _unmount
 };
 
-var template = (function () {
+var template = (function() {
 	return {
 		components: {
 			NonImported
@@ -173,7 +173,7 @@ var template = (function () {
 	};
 }());
 
-function create_main_fragment ( state, component ) {
+function create_main_fragment(state, component) {
 	var text;
 
 	var imported = new Imported({
@@ -185,59 +185,59 @@ function create_main_fragment ( state, component ) {
 	});
 
 	return {
-		create: function () {
+		create: function() {
 			imported._fragment.create();
-			text = createText( "\n" );
+			text = createText("\n");
 			nonimported._fragment.create();
 		},
 
-		mount: function ( target, anchor ) {
-			imported._mount( target, anchor );
-			insertNode( text, target, anchor );
-			nonimported._mount( target, anchor );
+		mount: function(target, anchor) {
+			imported._mount(target, anchor);
+			insertNode(text, target, anchor);
+			nonimported._mount(target, anchor);
 		},
 
 		update: noop,
 
-		unmount: function () {
+		unmount: function() {
 			imported._unmount();
-			detachNode( text );
+			detachNode(text);
 			nonimported._unmount();
 		},
 
-		destroy: function () {
-			imported.destroy( false );
-			nonimported.destroy( false );
+		destroy: function() {
+			imported.destroy(false);
+			nonimported.destroy(false);
 		}
 	};
 }
 
-function SvelteComponent ( options ) {
+function SvelteComponent(options) {
 	this.options = options;
 	this._state = options.data || {};
 
 	this._observers = {
-		pre: Object.create( null ),
-		post: Object.create( null )
+		pre: Object.create(null),
+		post: Object.create(null)
 	};
 
-	this._handlers = Object.create( null );
+	this._handlers = Object.create(null);
 
 	this._root = options._root || this;
 	this._yield = options._yield;
 	this._bind = options._bind;
 
-	if ( !options._root ) {
+	if (!options._root) {
 		this._oncreate = [];
 		this._beforecreate = [];
 		this._aftercreate = [];
 	}
 
-	this._fragment = create_main_fragment( this._state, this );
+	this._fragment = create_main_fragment(this._state, this);
 
-	if ( options.target ) {
+	if (options.target) {
 		this._fragment.create();
-		this._fragment.mount( options.target, options.anchor || null );
+		this._fragment.mount(options.target, options.anchor || null);
 
 		this._lock = true;
 		callAll(this._beforecreate);
@@ -247,6 +247,6 @@ function SvelteComponent ( options ) {
 	}
 }
 
-assign( SvelteComponent.prototype, proto );
+assign(SvelteComponent.prototype, proto );
 
 export default SvelteComponent;

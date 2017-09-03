@@ -71,14 +71,14 @@ export default function visitEventHandler(
 		${declarations}
 		${attribute.expression ?
 			`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
-			`${block.alias('component')}.fire('${attribute.name}', event);`}
+			`${block.alias('component')}.fire("${attribute.name}", event);`}
 	`;
 
 	if (isCustomEvent) {
 		block.addVariable(handlerName);
 
 		block.builders.hydrate.addBlock(deindent`
-			${handlerName} = @template.events.${name}.call( #component, ${state.parentNode}, function ( event ) {
+			${handlerName} = @template.events.${name}.call(#component, ${state.parentNode}, function(event) {
 				${handlerBody}
 			});
 		`);
@@ -88,7 +88,7 @@ export default function visitEventHandler(
 		`);
 	} else {
 		const handler = deindent`
-			function ${handlerName} ( event ) {
+			function ${handlerName}(event) {
 				${handlerBody}
 			}
 		`;
@@ -100,11 +100,11 @@ export default function visitEventHandler(
 		}
 
 		block.builders.hydrate.addLine(
-			`@addListener( ${state.parentNode}, '${name}', ${handlerName} );`
+			`@addListener(${state.parentNode}, "${name}", ${handlerName});`
 		);
 
 		block.builders.destroy.addLine(
-			`@removeListener( ${state.parentNode}, '${name}', ${handlerName} );`
+			`@removeListener(${state.parentNode}, "${name}", ${handlerName});`
 		);
 	}
 }

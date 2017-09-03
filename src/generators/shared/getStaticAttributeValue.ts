@@ -1,4 +1,4 @@
-import { Node } from '../../../../interfaces';
+import { Node } from '../../interfaces';
 
 export default function getStaticAttributeValue(node: Node, name: string) {
 	const attribute = node.attributes.find(
