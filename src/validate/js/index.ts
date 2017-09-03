@@ -57,14 +57,12 @@ export default function validateJs(validator: Validator, js: Node) {
 					const match = fuzzymatch(prop.key.name, validPropList);
 					if (match) {
 						validator.error(
-							`Unexpected property '${prop.key
-								.name}' (did you mean '${match}'?)`,
+							`Unexpected property '${prop.key.name}' (did you mean '${match}'?)`,
 							prop.start
 						);
 					} else if (/FunctionExpression/.test(prop.value.type)) {
 						validator.error(
-							`Unexpected property '${prop.key
-								.name}' (did you mean to include it in 'methods'?)`,
+							`Unexpected property '${prop.key.name}' (did you mean to include it in 'methods'?)`,
 							prop.start
 						);
 					} else {

@@ -11,6 +11,8 @@ const ariaAttributeSet = new Set(ariaAttributes);
 const ariaRoles = 'alert alertdialog application article banner button checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search section sectionhead select separator slider spinbutton status structure tab tablist tabpanel textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
 const ariaRoleSet = new Set(ariaRoles);
 
+const invisibleElements = new Set(['meta', 'html', 'script', 'style']);
+
 export default function a11y(
 	validator: Validator,
 	node: Node,
@@ -27,6 +29,11 @@ export default function a11y(
 	node.attributes.forEach((attribute: Node) => {
 		// aria-props
 		if (attribute.name.startsWith('aria-')) {
+			if (invisibleElements.has(node.name)) {
+				// aria-unsupported-elements
+				validator.warn(`A11y: <${node.name}> should not have aria-* attributes`, attribute.start);
+			}
+
 			const name = attribute.name.slice(5);
 			if (!ariaAttributeSet.has(name)) {
 				const match = fuzzymatch(name, ariaAttributes);
@@ -39,6 +46,11 @@ export default function a11y(
 
 		// aria-role
 		if (attribute.name === 'role') {
+			if (invisibleElements.has(node.name)) {
+				// aria-unsupported-elements
+				validator.warn(`A11y: <${node.name}> should not have role attribute`, attribute.start);
+			}
+
 			const value = getStaticAttributeValue(node, 'role');
 			if (value && !ariaRoleSet.has(value)) {
 				const match = fuzzymatch(value, ariaRoles);
@@ -63,6 +75,12 @@ export default function a11y(
 		}
 	}
 
+	function shouldHaveContent() {
+		if (node.children.length === 0) {
+			validator.warn(`A11y: <${node.name}> element should have child content`, node.start);
+		}
+	}
+
 	if (node.name === 'a') {
 		// anchor-is-valid
 		const href = attributeMap.get('href');
@@ -76,9 +94,7 @@ export default function a11y(
 		}
 
 		// anchor-has-content
-		if (node.children.length === 0) {
-			validator.warn(`A11y: <a> element should have child content`, node.start);
-		}
+		shouldHaveContent();
 	}
 
 	if (node.name === 'img') shouldHaveOneOf(['alt']);
@@ -86,6 +102,15 @@ export default function a11y(
 	if (node.name === 'object') shouldHaveOneOf(['title', 'aria-label', 'aria-labelledby']);
 	if (node.name === 'input' && getStaticAttributeValue(node, 'type') === 'image') {
 		shouldHaveOneOf(['alt', 'aria-label', 'aria-labelledby'], 'input type="image"');
+	}
+
+	// heading-has-content
+	if (/^h[1-6]$/.test(node.name)) {
+		shouldHaveContent();
+
+		if (attributeMap.has('aria-hidden')) {
+			validator.warn(`A11y: <${node.name}> element should not be hidden`, attributeMap.get('aria-hidden').start);
+		}
 	}
 
 	if (node.name === 'figcaption') {
