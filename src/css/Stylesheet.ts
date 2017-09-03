@@ -337,7 +337,7 @@ export default class Stylesheet {
 		}
 	}
 
-	render(cssOutputFilename: string) {
+	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {
 		if (!this.hasStyles) {
 			return { css: null, cssMap: null };
 		}
@@ -351,9 +351,11 @@ export default class Stylesheet {
 			}
 		});
 
-		this.children.forEach((child: (Atrule|Rule)) => {
-			child.transform(code, this.id, this.keyframes, this.cascade);
-		});
+		if (shouldTransformSelectors) {
+			this.children.forEach((child: (Atrule|Rule)) => {
+				child.transform(code, this.id, this.keyframes, this.cascade);
+			});
+		}
 
 		let c = 0;
 		this.children.forEach(child => {

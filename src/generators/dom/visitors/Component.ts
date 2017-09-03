@@ -234,10 +234,10 @@ export default function visitComponent(
 	);
 
 	block.builders.mount.addLine(
-		`${name}._fragment.mount( ${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'} );`
+		`${name}._mount( ${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'} );`
 	);
 
-	if (!state.parentNode) block.builders.unmount.addLine(`${name}._fragment.unmount();`);
+	if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
 
 	block.builders.destroy.addLine(`${name}.destroy( false );`);
 

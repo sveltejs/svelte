@@ -94,7 +94,9 @@ export default function ssr(
 		visit(generator, mainBlock, node);
 	});
 
-	const { css, cssMap } = generator.stylesheet.render(options.filename);
+	const { css, cssMap } = generator.customElement ?
+		{ css: null, cssMap: null } :
+		generator.stylesheet.render(options.filename, true);
 
 	const result = deindent`
 		${hasJs && `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`}

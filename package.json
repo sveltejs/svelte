@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "test": "mocha --opts mocha.opts",
+    "quicktest": "mocha --opts mocha.opts",
     "precoverage": "export COVERAGE=true && nyc mocha --opts mocha.coverage.opts",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov",
     "codecov": "codecov",

@@ -13,6 +13,10 @@ function assign(target) {
 	return target;
 }
 
+function appendNode(node, target) {
+	target.appendChild(node);
+}
+
 function insertNode(node, target, anchor) {
 	target.insertBefore(node, anchor);
 }
@@ -25,8 +29,12 @@ function createElement(name) {
 	return document.createElement(name);
 }
 
-function setStyle(node, key, value) {
-	node.style.setProperty(key, value);
+function createText(data) {
+	return document.createTextNode(data);
+}
+
+function setAttribute(node, attribute, value) {
+	node.setAttribute(attribute, value);
 }
 
 function destroy(detach) {
@@ -168,27 +176,37 @@ var proto = {
 };
 
 function create_main_fragment ( state, component ) {
-	var div;
+	var div, slot, p, text, text_2, slot_1, p_1, text_3;
 
 	return {
 		create: function () {
 			div = createElement( 'div' );
+			slot = createElement( 'slot' );
+			p = createElement( 'p' );
+			text = createText( "default fallback content" );
+			text_2 = createText( "\n\n\t" );
+			slot_1 = createElement( 'slot' );
+			p_1 = createElement( 'p' );
+			text_3 = createText( "foo fallback content" );
 			this.hydrate();
 		},
 
 		hydrate: function ( nodes ) {
-			setStyle(div, 'color', state.color);
+			setAttribute( slot_1, 'name', "foo" );
 		},
 
 		mount: function ( target, anchor ) {
 			insertNode( div, target, anchor );
+			appendNode( slot, div );
+			appendNode( p, slot );
+			appendNode( text, p );
+			appendNode( text_2, div );
+			appendNode( slot_1, div );
+			appendNode( p_1, slot_1 );
+			appendNode( text_3, p_1 );
 		},
 
-		update: function ( changed, state ) {
-			if ( changed.color ) {
-				setStyle(div, 'color', state.color);
-			}
-		},
+		update: noop,
 
 		unmount: function () {
 			detachNode( div );
@@ -198,29 +216,63 @@ function create_main_fragment ( state, component ) {
 	};
 }
 
-function SvelteComponent ( options ) {
-	this.options = options;
-	this._state = options.data || {};
+class SvelteComponent extends HTMLElement {
+	constructor(options = {}) {
+		super();
+		this.options = options;
+		this._state = options.data || {};
 
-	this._observers = {
-		pre: Object.create( null ),
-		post: Object.create( null )
-	};
+		this._observers = {
+			pre: Object.create( null ),
+			post: Object.create( null )
+		};
 
-	this._handlers = Object.create( null );
+		this._handlers = Object.create( null );
 
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
+		this._root = options._root || this;
+		this._yield = options._yield;
+		this._bind = options._bind;
+		this._slotted = options.slots || {};
 
-	this._fragment = create_main_fragment( this._state, this );
+		this.attachShadow({ mode: 'open' });
 
-	if ( options.target ) {
-		this._fragment.create();
-		this._fragment.mount( options.target, options.anchor || null );
+		this.slots = {};
+
+		this._fragment = create_main_fragment( this._state, this );
+
+		if ( options.target ) {
+			this._fragment.create();
+			this._mount( options.target, options.anchor || null );
+		}
+	}
+
+	static get observedAttributes() {
+		return [];
+	}
+
+
+
+	connectedCallback() {
+		Object.keys(this._slotted).forEach(key => {
+			this.appendChild(this._slotted[key]);
+		});
+	}
+
+	attributeChangedCallback ( attr, oldValue, newValue ) {
+		this.set({ [attr]: newValue });
 	}
 }
 
-assign( SvelteComponent.prototype, proto );
+customElements.define('custom-element', SvelteComponent);
+assign( SvelteComponent.prototype, proto , {
+	_mount(target, anchor) {
+		this._fragment.mount(this.shadowRoot, null);
+		target.insertBefore(this, anchor);
+	},
+
+	_unmount() {
+		this.parentNode.removeChild(this);
+	}
+});
 
 export default SvelteComponent;
