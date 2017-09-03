@@ -147,7 +147,10 @@ export default function dom(
 				.join(',\n')}
 		}`;
 
+	const debugName = `<${generator.customElement ? generator.tag : name}>`;
+
 	const constructorBody = deindent`
+		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
 			`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
 		this.options = options;
@@ -160,7 +163,7 @@ export default function dom(
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(
 				prop =>
-					`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
+					`if ( !( '${prop}' in this._state ) ) console.warn( "${debugName} was created without expected data property '${prop}'" );`
 			)}
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [ ${Array(generator.bindingGroups.length)
@@ -290,13 +293,12 @@ export default function dom(
 		`);
 	}
 
-	// TODO deprecate component.teardown()
 	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly ( newState ) {
 				${Array.from(generator.readonly).map(
 					prop =>
-						`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "Cannot set read-only property '${prop}'" );`
+						`if ( '${prop}' in newState && !this._updatingReadonlyProperty ) throw new Error( "${debugName}: Cannot set read-only property '${prop}'" );`
 				)}
 			};
 		`}
