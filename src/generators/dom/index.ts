@@ -111,18 +111,17 @@ export default function dom(
 		`);
 	}
 
-	if (generator.stylesheet.hasStyles && options.css !== false) {
-		const { css, cssMap } = generator.stylesheet.render(options.filename);
+	const { css, cssMap } = generator.stylesheet.render(options.filename, !generator.customElement);
+	const styles = generator.stylesheet.hasStyles && stringify(options.dev ?
+		`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
+		css, { onlyEscapeAtSymbol: true });
 
-		const textContent = stringify(options.dev ?
-			`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-			css, { onlyEscapeAtSymbol: true });
-
+	if (styles && generator.options.css !== false && !generator.customElement) {
 		builder.addBlock(deindent`
 			function @add_css () {
 				var style = @createElement( 'style' );
 				style.id = '${generator.stylesheet.id}-style';
-				style.textContent = ${textContent};
+				style.textContent = ${styles};
 				@appendNode( style, document.head );
 			}
 		`);
@@ -143,95 +142,156 @@ export default function dom(
 		? `@proto `
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', '_set', 'teardown']
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount']
 				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
 
-	// TODO deprecate component.teardown()
-	builder.addBlock(deindent`
-		function ${name} ( options ) {
-			${options.dev &&
-				`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
-			this.options = options;
-			${generator.usesRefs && `this.refs = {};`}
-			this._state = ${templateProperties.data
-				? `@assign( @template.data(), options.data )`
-				: `options.data || {}`};
-			${generator.metaBindings}
-			${computations.length && `this._recompute( {}, this._state, {}, true );`}
-			${options.dev &&
-				Array.from(generator.expectedProperties).map(
-					prop =>
-						`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
-				)}
-			${generator.bindingGroups.length &&
-				`this._bindingGroups = [ ${Array(generator.bindingGroups.length)
-					.fill('[]')
-					.join(', ')} ];`}
+	const constructorBody = deindent`
+		${options.dev && !generator.customElement &&
+			`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
+		this.options = options;
+		${generator.usesRefs && `this.refs = {};`}
+		this._state = ${templateProperties.data
+			? `@assign( @template.data(), options.data )`
+			: `options.data || {}`};
+		${generator.metaBindings}
+		${computations.length && `this._recompute( {}, this._state, {}, true );`}
+		${options.dev &&
+			Array.from(generator.expectedProperties).map(
+				prop =>
+					`if ( !( '${prop}' in this._state ) ) console.warn( "Component was created without expected data property '${prop}'" );`
+			)}
+		${generator.bindingGroups.length &&
+			`this._bindingGroups = [ ${Array(generator.bindingGroups.length)
+				.fill('[]')
+				.join(', ')} ];`}
 
-			this._observers = {
-				pre: Object.create( null ),
-				post: Object.create( null )
-			};
+		this._observers = {
+			pre: Object.create( null ),
+			post: Object.create( null )
+		};
 
-			this._handlers = Object.create( null );
-			${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
+		this._handlers = Object.create( null );
+		${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
 
-			this._root = options._root || this;
-			this._yield = options._yield;
-			this._bind = options._bind;
-			${generator.slots.size && `this._slotted = options.slots || {};`}
+		this._root = options._root || this;
+		this._yield = options._yield;
+		this._bind = options._bind;
+		${generator.slots.size && `this._slotted = options.slots || {};`}
 
-			${generator.stylesheet.hasStyles &&
-				options.css !== false &&
-				`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`}
-
-			${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
-
-			${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
-				if ( !options._root ) {
-					this._oncreate = [${templateProperties.oncreate && `oncreate`}];
-					${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
-				} ${templateProperties.oncreate && deindent`
-					else {
-						this._root._oncreate.push(oncreate);
-					}
-				`}
-			`}
-
-			${generator.slots.size && `this.slots = {};`}
-
-			this._fragment = @create_main_fragment( this._state, this );
-
-			if ( options.target ) {
-				${generator.hydratable
-					? deindent`
-						var nodes = @children( options.target );
-						options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
-						nodes.forEach( @detachNode );
-					` :
-					deindent`
-						${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
-						this._fragment.create();
-					`}
-				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, options.anchor || null );
-			}
-
-			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
-				if ( !options._root ) {
-					${generator.hasComponents && `this._lock = true;`}
-					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-					${generator.hasComponents && `this._lock = false;`}
-				}
-			`}
+		${generator.customElement ?
+			deindent`
+				this.attachShadow({ mode: 'open' });
+				${css && `this.shadowRoot.innerHTML = \`<style>${options.dev ? `${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : css}</style>\`;`}
+			` :
+			(generator.stylesheet.hasStyles && options.css !== false &&
+			`if ( !document.getElementById( '${generator.stylesheet.id}-style' ) ) @add_css();`)
 		}
 
-		@assign( ${prototypeBase}, ${proto});
+		${templateProperties.oncreate && `var oncreate = @template.oncreate.bind( this );`}
 
+		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
+			if ( !options._root ) {
+				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
+				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
+				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
+			} ${templateProperties.oncreate && deindent`
+				else {
+					this._root._oncreate.push(oncreate);
+				}
+			`}
+		`}
+
+		${generator.slots.size && `this.slots = {};`}
+
+		this._fragment = @create_main_fragment( this._state, this );
+
+		if ( options.target ) {
+			${generator.hydratable
+				? deindent`
+					var nodes = @children( options.target );
+					options.hydrate ? this._fragment.claim( nodes ) : this._fragment.create();
+					nodes.forEach( @detachNode );
+				` :
+				deindent`
+					${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
+					this._fragment.create();
+				`}
+			${generator.customElement ?
+				`this._mount( options.target, options.anchor || null );` :
+				`this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, options.anchor || null );`}
+
+			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+				${generator.hasComponents && `this._lock = true;`}
+				${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+				${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+				${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+				${generator.hasComponents && `this._lock = false;`}
+			`}
+		}
+	`;
+
+	if (generator.customElement) {
+		const props = generator.props || Array.from(generator.expectedProperties);
+
+		builder.addBlock(deindent`
+			class ${name} extends HTMLElement {
+				constructor(options = {}) {
+					super();
+					${constructorBody}
+				}
+
+				static get observedAttributes() {
+					return ${JSON.stringify(props)};
+				}
+
+				${props.map(prop => deindent`
+					get ${prop}() {
+						return this.get('${prop}');
+					}
+
+					set ${prop}(value) {
+						this.set({ ${prop}: value });
+					}
+				`).join('\n\n')}
+
+				${generator.slots.size && deindent`
+					connectedCallback() {
+						Object.keys(this._slotted).forEach(key => {
+							this.appendChild(this._slotted[key]);
+						});
+					}`}
+
+				attributeChangedCallback ( attr, oldValue, newValue ) {
+					this.set({ [attr]: newValue });
+				}
+			}
+
+			customElements.define('${generator.tag}', ${name});
+			@assign( ${prototypeBase}, ${proto}, {
+				_mount(target, anchor) {
+					this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(this.shadowRoot, null);
+					target.insertBefore(this, anchor);
+				},
+
+				_unmount() {
+					this.parentNode.removeChild(this);
+				}
+			});
+		`);
+	} else {
+		builder.addBlock(deindent`
+			function ${name} ( options ) {
+				${constructorBody}
+			}
+
+			@assign( ${prototypeBase}, ${proto});
+		`);
+	}
+
+	// TODO deprecate component.teardown()
+	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly ( newState ) {
 				${Array.from(generator.readonly).map(

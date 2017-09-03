@@ -143,6 +143,14 @@ function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
 
+function _mount(target, anchor) {
+	this._fragment.mount(target, anchor);
+}
+
+function _unmount() {
+	this._fragment.unmount();
+}
+
 var proto = {
 	destroy: destroy,
 	get: get,
@@ -152,7 +160,9 @@ var proto = {
 	set: set,
 	teardown: destroy,
 	_recompute: noop,
-	_set: _set
+	_set: _set,
+	_mount: _mount,
+	_unmount: _unmount
 };
 
 var template = (function () {
@@ -182,17 +192,17 @@ function create_main_fragment ( state, component ) {
 		},
 
 		mount: function ( target, anchor ) {
-			imported._fragment.mount( target, anchor );
+			imported._mount( target, anchor );
 			insertNode( text, target, anchor );
-			nonimported._fragment.mount( target, anchor );
+			nonimported._mount( target, anchor );
 		},
 
 		update: noop,
 
 		unmount: function () {
-			imported._fragment.unmount();
+			imported._unmount();
 			detachNode( text );
-			nonimported._fragment.unmount();
+			nonimported._unmount();
 		},
 
 		destroy: function () {
@@ -228,9 +238,7 @@ function SvelteComponent ( options ) {
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, options.anchor || null );
-	}
 
-	if ( !options._root ) {
 		this._lock = true;
 		callAll(this._beforecreate);
 		callAll(this._oncreate);

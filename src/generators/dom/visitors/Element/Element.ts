@@ -8,6 +8,7 @@ import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
 import * as namespaces from '../../../../utils/namespaces';
+import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -45,7 +46,12 @@ export default function visitElement(
 	}
 
 	if (node.name === 'slot') {
-		return visitSlot(generator, block, state, node, elementStack, componentStack);
+		if (generator.customElement) {
+			const slotName = getStaticAttributeValue(node, 'name') || 'default';
+			generator.slots.add(slotName);
+		} else {
+			return visitSlot(generator, block, state, node, elementStack, componentStack);
+		}
 	}
 
 	if (generator.components.has(node.name) || node.name === ':Self') {
@@ -88,7 +94,7 @@ export default function visitElement(
 
 	// add CSS encapsulation attribute
 	// TODO add a helper for this, rather than repeating it
-	if (node._needsCssAttribute) {
+	if (node._needsCssAttribute && !generator.customElement) {
 		generator.needsEncapsulateHelper = true;
 		block.builders.hydrate.addLine(
 			`@encapsulateStyles( ${name} );`

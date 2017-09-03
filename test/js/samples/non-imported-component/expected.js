@@ -29,17 +29,17 @@ function create_main_fragment ( state, component ) {
 		},
 
 		mount: function ( target, anchor ) {
-			imported._fragment.mount( target, anchor );
+			imported._mount( target, anchor );
 			insertNode( text, target, anchor );
-			nonimported._fragment.mount( target, anchor );
+			nonimported._mount( target, anchor );
 		},
 
 		update: noop,
 
 		unmount: function () {
-			imported._fragment.unmount();
+			imported._unmount();
 			detachNode( text );
-			nonimported._fragment.unmount();
+			nonimported._unmount();
 		},
 
 		destroy: function () {
@@ -75,9 +75,7 @@ function SvelteComponent ( options ) {
 	if ( options.target ) {
 		this._fragment.create();
 		this._fragment.mount( options.target, options.anchor || null );
-	}
 
-	if ( !options._root ) {
 		this._lock = true;
 		callAll(this._beforecreate);
 		callAll(this._oncreate);
