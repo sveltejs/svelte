@@ -151,7 +151,7 @@ export function _set(newState) {
 export function _setDev(newState) {
 	if (typeof newState !== 'object') {
 		throw new Error(
-			'Component .set was called without an object of data key-values to update.'
+			this._debugName + ' .set was called without an object of data key-values to update.'
 		);
 	}
 
