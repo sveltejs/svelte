@@ -130,6 +130,11 @@ export default function a11y(
 		shouldHaveAttribute(['title']);
 	}
 
+	// no-distracting-elements
+	if (node.name === 'marquee' || node.name === 'blink') {
+		validator.warn(`A11y: Avoid <${node.name}> elements`, node.start);
+	}
+
 	if (node.name === 'figcaption') {
 		const parent = elementStack[elementStack.length - 1];
 		if (parent) {
