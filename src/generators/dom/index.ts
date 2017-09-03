@@ -147,9 +147,6 @@ export default function dom(
 				.join(',\n')}
 		}`;
 
-	const target = generator.customElement ? `this.shadowRoot` : `options.target`;
-	const anchor = generator.customElement ? `null` : `options.anchor || null`;
-
 	const constructorBody = deindent`
 		${options.dev && !generator.customElement &&
 			`if ( !options || (!options.target && !options._root) ) throw new Error( "'target' is a required option" );`}
@@ -210,7 +207,7 @@ export default function dom(
 
 		this._fragment = @create_main_fragment( this._state, this );
 
-		if ( !options._root ) {
+		if ( options.target ) {
 			${generator.hydratable
 				? deindent`
 					var nodes = @children( options.target );
@@ -221,7 +218,9 @@ export default function dom(
 					${options.dev && `if ( options.hydrate ) throw new Error( 'options.hydrate only works if the component was compiled with the \`hydratable: true\` option' );`}
 					this._fragment.create();
 				`}
-			this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( ${target}, ${anchor} );
+			${generator.customElement ?
+				`this._mount( options.target, options.anchor || null );` :
+				`this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( options.target, options.anchor || null );`}
 
 			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
 				${generator.hasComponents && `this._lock = true;`}
@@ -257,6 +256,13 @@ export default function dom(
 					}
 				`).join('\n\n')}
 
+				${generator.slots.size && deindent`
+					connectedCallback() {
+						Object.keys(this._slotted).forEach(key => {
+							this.appendChild(this._slotted[key]);
+						});
+					}`}
+
 				attributeChangedCallback ( attr, oldValue, newValue ) {
 					this.set({ [attr]: newValue });
 				}
@@ -265,7 +271,7 @@ export default function dom(
 			customElements.define('${generator.tag}', ${name});
 			@assign( ${prototypeBase}, ${proto}, {
 				_mount(target, anchor) {
-					this._fragment.mount(this.shadowRoot, null);
+					this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(this.shadowRoot, null);
 					target.insertBefore(this, anchor);
 				},
 

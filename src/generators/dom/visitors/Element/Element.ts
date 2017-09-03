@@ -8,6 +8,7 @@ import visitEventHandler from './EventHandler';
 import visitBinding from './Binding';
 import visitRef from './Ref';
 import * as namespaces from '../../../../utils/namespaces';
+import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -44,8 +45,13 @@ export default function visitElement(
 		return meta[node.name](generator, block, node);
 	}
 
-	if (node.name === 'slot' && !generator.customElement) {
-		return visitSlot(generator, block, state, node, elementStack, componentStack);
+	if (node.name === 'slot') {
+		if (generator.customElement) {
+			const slotName = getStaticAttributeValue(node, 'name') || 'default';
+			generator.slots.add(slotName);
+		} else {
+			return visitSlot(generator, block, state, node, elementStack, componentStack);
+		}
 	}
 
 	if (generator.components.has(node.name) || node.name === ':Self') {

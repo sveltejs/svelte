@@ -54,9 +54,9 @@ class SvelteComponent extends HTMLElement {
 
 		this._fragment = create_main_fragment( this._state, this );
 
-		if ( !options._root ) {
+		if ( options.target ) {
 			this._fragment.create();
-			this._fragment.mount( this.shadowRoot, null );
+			this._mount( options.target, options.anchor || null );
 		}
 	}
 

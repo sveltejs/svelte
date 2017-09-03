@@ -25,10 +25,8 @@ function createElement(name) {
 	return document.createElement(name);
 }
 
-function setInputType(input, type) {
-	try {
-		input.type = type;
-	} catch (e) {}
+function createText(data) {
+	return document.createTextNode(data);
 }
 
 function destroy(detach) {
@@ -147,14 +145,6 @@ function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
 
-function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
-}
-
-function _unmount() {
-	this._fragment.unmount();
-}
-
 var proto = {
 	destroy: destroy,
 	get: get,
@@ -164,32 +154,45 @@ var proto = {
 	set: set,
 	teardown: destroy,
 	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount
+	_set: _set
 };
 
 function create_main_fragment ( state, component ) {
-	var input;
+	var div, text, div_1, div_1_style_value;
 
 	return {
 		create: function () {
-			input = createElement( 'input' );
+			div = createElement( 'div' );
+			text = createText( "\n" );
+			div_1 = createElement( 'div' );
 			this.hydrate();
 		},
 
 		hydrate: function ( nodes ) {
-			setInputType( input, "search" );
+			div.style.cssText = state.style;
+			div_1.style.cssText = div_1_style_value = "" + ( state.key ) + ": " + ( state.value );
 		},
 
 		mount: function ( target, anchor ) {
-			insertNode( input, target, anchor );
+			insertNode( div, target, anchor );
+			insertNode( text, target, anchor );
+			insertNode( div_1, target, anchor );
 		},
 
-		update: noop,
+		update: function ( changed, state ) {
+			if ( changed.style ) {
+				div.style.cssText = state.style;
+			}
+
+			if ( ( changed.key || changed.value ) && div_1_style_value !== ( div_1_style_value = "" + ( state.key ) + ": " + ( state.value ) ) ) {
+				div_1.style.cssText = div_1_style_value;
+			}
+		},
 
 		unmount: function () {
-			detachNode( input );
+			detachNode( div );
+			detachNode( text );
+			detachNode( div_1 );
 		},
 
 		destroy: noop

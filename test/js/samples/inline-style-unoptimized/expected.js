@@ -1,37 +1,41 @@
-import { appendNode, assign, createElement, detachNode, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
-
-function encapsulateStyles ( node ) {
-	setAttribute( node, 'svelte-2363328337', '' );
-}
-
-function add_css () {
-	var style = createElement( 'style' );
-	style.id = 'svelte-2363328337-style';
-	style.textContent = "@media(min-width: 1px){div[svelte-2363328337],[svelte-2363328337] div{color:red}}";
-	appendNode( style, document.head );
-}
+import { assign, createElement, createText, detachNode, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
-	var div;
+	var div, text, div_1, div_1_style_value;
 
 	return {
 		create: function () {
 			div = createElement( 'div' );
+			text = createText( "\n" );
+			div_1 = createElement( 'div' );
 			this.hydrate();
 		},
 
 		hydrate: function ( nodes ) {
-			encapsulateStyles( div );
+			div.style.cssText = state.style;
+			div_1.style.cssText = div_1_style_value = "" + ( state.key ) + ": " + ( state.value );
 		},
 
 		mount: function ( target, anchor ) {
 			insertNode( div, target, anchor );
+			insertNode( text, target, anchor );
+			insertNode( div_1, target, anchor );
 		},
 
-		update: noop,
+		update: function ( changed, state ) {
+			if ( changed.style ) {
+				div.style.cssText = state.style;
+			}
+
+			if ( ( changed.key || changed.value ) && div_1_style_value !== ( div_1_style_value = "" + ( state.key ) + ": " + ( state.value ) ) ) {
+				div_1.style.cssText = div_1_style_value;
+			}
+		},
 
 		unmount: function () {
 			detachNode( div );
+			detachNode( text );
+			detachNode( div_1 );
 		},
 
 		destroy: noop
@@ -52,8 +56,6 @@ function SvelteComponent ( options ) {
 	this._root = options._root || this;
 	this._yield = options._yield;
 	this._bind = options._bind;
-
-	if ( !document.getElementById( 'svelte-2363328337-style' ) ) add_css();
 
 	this._fragment = create_main_fragment( this._state, this );
 
