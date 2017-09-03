@@ -80,16 +80,16 @@ export default function visitElement(
 	if (generator.hydratable) {
 		block.builders.claim.addBlock(deindent`
 			${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
-			var ${childState.parentNodes} = @children( ${name} );
+			var ${childState.parentNodes} = @children(${name});
 		`);
 	}
 
 	if (parentNode) {
 		block.builders.mount.addLine(
-			`@appendNode( ${name}, ${parentNode} );`
+			`@appendNode(${name}, ${parentNode});`
 		);
 	} else {
-		block.builders.mount.addLine(`@insertNode( ${name}, #target, anchor );`);
+		block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 	}
 
 	// add CSS encapsulation attribute
@@ -97,12 +97,12 @@ export default function visitElement(
 	if (node._needsCssAttribute && !generator.customElement) {
 		generator.needsEncapsulateHelper = true;
 		block.builders.hydrate.addLine(
-			`@encapsulateStyles( ${name} );`
+			`@encapsulateStyles(${name});`
 		);
 
 		if (node._cssRefAttribute) {
 			block.builders.hydrate.addLine(
-				`@setAttribute( ${name}, 'svelte-ref-${node._cssRefAttribute}', '' );`
+				`@setAttribute(${name}, "svelte-ref-${node._cssRefAttribute}", ");`
 			)
 		}
 	}
@@ -165,7 +165,7 @@ export default function visitElement(
 	if (isToplevel) {
 		// TODO we eventually need to consider what happens to elements
 		// that belong to the same outgroup as an outroing element...
-		block.builders.unmount.addLine(`@detachNode( ${name} );`);
+		block.builders.unmount.addLine(`@detachNode(${name});`);
 	}
 
 	if (node.name !== 'select') {
@@ -218,7 +218,7 @@ export default function visitElement(
 	}
 
 	block.builders.claim.addLine(
-		`${childState.parentNodes}.forEach( @detachNode );`
+		`${childState.parentNodes}.forEach(@detachNode);`
 	);
 }
 
@@ -228,14 +228,14 @@ function getRenderStatement(
 	name: string
 ) {
 	if (namespace === 'http://www.w3.org/2000/svg') {
-		return `@createSvgElement( '${name}' )`;
+		return `@createSvgElement("${name}")`;
 	}
 
 	if (namespace) {
-		return `document.createElementNS( '${namespace}', '${name}' )`;
+		return `document.createElementNS("${namespace}", "${name}")`;
 	}
 
-	return `@createElement( '${name}' )`;
+	return `@createElement("${name}")`;
 }
 
 function getClaimStatement(
@@ -251,12 +251,12 @@ function getClaimStatement(
 
 	const name = namespace ? node.name : node.name.toUpperCase();
 
-	return `@claimElement( ${nodes}, '${name}', ${attributes
+	return `@claimElement(${nodes}, "${name}", ${attributes
 		? `{ ${attributes} }`
-		: `{}`}, ${namespace === namespaces.svg ? true : false} )`;
+		: `{}`}, ${namespace === namespaces.svg ? true : false})`;
 }
 
 function quoteProp(name: string) {
-	if (/[^a-zA-Z_$0-9]/.test(name)) return `'${name}'`;
+	if (/[^a-zA-Z_$0-9]/.test(name)) return `"${name}"`;
 	return name;
 }
