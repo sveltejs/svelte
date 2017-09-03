@@ -67,9 +67,9 @@ export default function visitBinding(
 
 		const ifStatement = isMultipleSelect
 			? deindent`
-				${option}.selected = ~${value}.indexOf( ${option}.__value );`
+				${option}.selected = ~${value}.indexOf(${option}.__value);`
 			: deindent`
-				if ( ${option}.__value === ${value} ) {
+				if (${option}.__value === ${value}) {
 					${option}.selected = true;
 					break;
 				}`;
@@ -79,7 +79,7 @@ export default function visitBinding(
 
 		updateElement = deindent`
 			var ${value} = ${snippet};
-			for ( var #i = 0; #i < ${state.parentNode}.options.length; #i += 1 ) {
+			for (var #i = 0; #i < ${state.parentNode}.options.length; #i += 1) {
 				var ${option} = ${state.parentNode}.options[#i];
 
 				${ifStatement}
@@ -88,44 +88,44 @@ export default function visitBinding(
 
 		generator.hasComplexBindings = true;
 		block.builders.hydrate.addBlock(
-			`if ( !('${name}' in state) ) #component._root._beforecreate.push( ${handler} );`
+			`if (!('${name}' in state)) #component._root._beforecreate.push(${handler});`
 		);
 	} else if (attribute.name === 'group') {
 		// <input type='checkbox|radio' bind:group='selected'> special case
 		if (type === 'radio') {
 			setter = deindent`
-				if ( !${state.parentNode}.checked ) return;
+				if (!${state.parentNode}.checked) return;
 				${setter}
 			`;
 		}
 
 		const condition = type === 'checkbox'
-			? `~${snippet}.indexOf( ${state.parentNode}.__value )`
+			? `~${snippet}.indexOf(${state.parentNode}.__value)`
 			: `${state.parentNode}.__value === ${snippet}`;
 
 		block.builders.hydrate.addLine(
-			`#component._bindingGroups[${bindingGroup}].push( ${state.parentNode} );`
+			`#component._bindingGroups[${bindingGroup}].push(${state.parentNode});`
 		);
 
 		block.builders.destroy.addBlock(
-			`#component._bindingGroups[${bindingGroup}].splice( #component._bindingGroups[${bindingGroup}].indexOf( ${state.parentNode} ), 1 );`
+			`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${state.parentNode}), 1);`
 		);
 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
 	} else if (node.name === 'audio' || node.name === 'video') {
 		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(`#component._root._beforecreate.push( ${handler} );`);
+		block.builders.hydrate.addBlock(`#component._root._beforecreate.push(${handler});`);
 
 		if (attribute.name === 'currentTime') {
 			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
 			block.addVariable(frame);
 			setter = deindent`
-				cancelAnimationFrame( ${frame} );
-				if ( !${state.parentNode}.paused ) ${frame} = requestAnimationFrame( ${handler} );
+				cancelAnimationFrame(${frame});
+				if (!${state.parentNode}.paused) ${frame} = requestAnimationFrame(${handler});
 				${setter}
 			`;
 
-			updateCondition += ` && !isNaN( ${snippet} )`;
+			updateCondition += ` && !isNaN(${snippet})`;
 		} else if (attribute.name === 'duration') {
 			updateCondition = null;
 		} else if (attribute.name === 'paused') {
@@ -133,13 +133,13 @@ export default function visitBinding(
 			const last = block.getUniqueName(`${state.parentNode}_paused_value`);
 			block.addVariable(last, 'true');
 
-			updateCondition = `${last} !== ( ${last} = ${snippet} )`;
-			updateElement = `${state.parentNode}[ ${last} ? 'pause' : 'play' ]();`;
+			updateCondition = `${last} !== (${last} = ${snippet})`;
+			updateElement = `${state.parentNode}[${last} ? "pause" : "play"]();`;
 		}
 	}
 
 	block.builders.init.addBlock(deindent`
-		function ${handler} () {
+		function ${handler}() {
 			${lock} = true;
 			${setter}
 			${lock} = false;
@@ -149,21 +149,21 @@ export default function visitBinding(
 	if (node.name === 'input' && type === 'range') {
 		// need to bind to `input` and `change`, for the benefit of IE
 		block.builders.hydrate.addBlock(deindent`
-			@addListener( ${state.parentNode}, 'input', ${handler} );
-			@addListener( ${state.parentNode}, 'change', ${handler} );
+			@addListener(${state.parentNode}, "input", ${handler});
+			@addListener(${state.parentNode}, "change", ${handler});
 		`);
 
 		block.builders.destroy.addBlock(deindent`
-			@removeListener( ${state.parentNode}, 'input', ${handler} );
-			@removeListener( ${state.parentNode}, 'change', ${handler} );
+			@removeListener(${state.parentNode}, "input", ${handler});
+			@removeListener(${state.parentNode}, "change", ${handler});
 		`);
 	} else {
 		block.builders.hydrate.addLine(
-			`@addListener( ${state.parentNode}, '${eventName}', ${handler} );`
+			`@addListener(${state.parentNode}, "${eventName}", ${handler});`
 		);
 
 		block.builders.destroy.addLine(
-			`@removeListener( ${state.parentNode}, '${eventName}', ${handler} );`
+			`@removeListener(${state.parentNode}, "${eventName}", ${handler});`
 		);
 	}
 
@@ -175,7 +175,7 @@ export default function visitBinding(
 	if (updateCondition !== null) {
 		// audio/video duration is read-only, it never updates
 		block.builders.update.addBlock(deindent`
-			if ( ${updateCondition} ) {
+			if (${updateCondition}) {
 				${updateElement}
 			}
 		`);
@@ -183,10 +183,10 @@ export default function visitBinding(
 
 	if (attribute.name === 'paused') {
 		block.builders.create.addLine(
-			`@addListener( ${state.parentNode}, 'play', ${handler} );`
+			`@addListener(${state.parentNode}, "play", ${handler});`
 		);
 		block.builders.destroy.addLine(
-			`@removeListener( ${state.parentNode}, 'play', ${handler} );`
+			`@removeListener(${state.parentNode}, "play", ${handler});`
 		);
 	}
 }
@@ -221,7 +221,7 @@ function getBindingValue(
 ) {
 	// <select multiple bind:value='selected>
 	if (isMultipleSelect) {
-		return `[].map.call( ${state.parentNode}.querySelectorAll(':checked'), function ( option ) { return option.__value; })`;
+		return `[].map.call(${state.parentNode}.querySelectorAll(':checked'), function(option) { return option.__value; })`;
 	}
 
 	// <select bind:value='selected>
@@ -232,7 +232,7 @@ function getBindingValue(
 	// <input type='checkbox' bind:group='foo'>
 	if (attribute.name === 'group') {
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue( #component._bindingGroups[${bindingGroup}] )`;
+			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
 		}
 
 		return `${state.parentNode}.__value`;
@@ -240,7 +240,7 @@ function getBindingValue(
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `@toNumber( ${state.parentNode}.${attribute.name} )`;
+		return `@toNumber(${state.parentNode}.${attribute.name})`;
 	}
 
 	// everything else
@@ -286,12 +286,8 @@ function getSetter(
 			list[index]${tail} = ${value};
 
 			${computed
-				? `#component.set({ ${dependencies
-						.map((prop: string) => `${prop}: state.${prop}`)
-						.join(', ')} });`
-				: `#component.set({ ${dependencies
-						.map((prop: string) => `${prop}: #component.get( '${prop}' )`)
-						.join(', ')} });`}
+				? `#component.set({${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });`
+				: `#component.set({${dependencies.map((prop: string) => `${prop}: #component.get('${prop}')`).join(', ')} });`}
 		`;
 	}
 
@@ -299,9 +295,7 @@ function getSetter(
 		return deindent`
 			var state = #component.get();
 			${snippet} = ${value};
-			#component.set({ ${dependencies
-				.map((prop: string) => `${prop}: state.${prop}`)
-				.join(', ')} });
+			#component.set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });
 		`;
 	}
 

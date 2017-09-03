@@ -23,18 +23,18 @@ export default function addTransitions(
 		const fn = `@template.transitions.${intro.name}`;
 
 		block.builders.intro.addBlock(deindent`
-			#component._root._aftercreate.push( function () {
-				if ( !${name} ) ${name} = @wrapTransition( #component, ${node.var}, ${fn}, ${snippet}, true, null );
-				${name}.run( true, function () {
-					#component.fire( 'intro.end', { node: ${node.var} });
+			#component._root._aftercreate.push(function() {
+				if (!${name}) ${name} = @wrapTransition(#component, ${node.var}, ${fn}, ${snippet}, true, null);
+				${name}.run(true, function() {
+					#component.fire("intro.end", { node: ${node.var} });
 				});
 			});
 		`);
 
 		block.builders.outro.addBlock(deindent`
-			${name}.run( false, function () {
-				#component.fire( 'outro.end', { node: ${node.var} });
-				if ( --#outros === 0 ) #outrocallback();
+			${name}.run(false, function() {
+				#component.fire("outro.end", { node: ${node.var} });
+				if (--#outros === 0) #outrocallback();
 				${name} = null;
 			});
 		`);
@@ -52,16 +52,16 @@ export default function addTransitions(
 
 			if (outro) {
 				block.builders.intro.addBlock(deindent`
-					if ( ${introName} ) ${introName}.abort();
-					if ( ${outroName} ) ${outroName}.abort();
+					if (${introName}) ${introName}.abort();
+					if (${outroName}) ${outroName}.abort();
 				`);
 			}
 
 			block.builders.intro.addBlock(deindent`
-				#component._root._aftercreate.push( function () {
-					${introName} = @wrapTransition( #component, ${node.var}, ${fn}, ${snippet}, true, null );
-					${introName}.run( true, function () {
-						#component.fire( 'intro.end', { node: ${node.var} });
+				#component._root._aftercreate.push(function() {
+					${introName} = @wrapTransition(#component, ${node.var}, ${fn}, ${snippet}, true, null);
+					${introName}.run(true, function() {
+						#component.fire("intro.end", { node: ${node.var} });
 					});
 				});
 			`);
@@ -78,10 +78,10 @@ export default function addTransitions(
 			// TODO hide elements that have outro'd (unless they belong to a still-outroing
 			// group) prior to their removal from the DOM
 			block.builders.outro.addBlock(deindent`
-				${outroName} = @wrapTransition( #component, ${node.var}, ${fn}, ${snippet}, false, null );
-				${outroName}.run( false, function () {
-					#component.fire( 'outro.end', { node: ${node.var} });
-					if ( --#outros === 0 ) #outrocallback();
+				${outroName} = @wrapTransition(#component, ${node.var}, ${fn}, ${snippet}, false, null);
+				${outroName}.run(false, function() {
+					#component.fire("outro.end", { node: ${node.var} });
+					if (--#outros === 0) #outrocallback();
 				});
 			`);
 		}

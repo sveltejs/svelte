@@ -21,7 +21,7 @@ export default class Block {
 	}
 
 	addBinding(binding: Node, name: string) {
-		const conditions = [`!( '${binding.name}' in state )`].concat(
+		const conditions = [`!('${binding.name}' in state)`].concat(
 			// TODO handle contextual bindings...
 			this.conditions.map(c => `(${c})`)
 		);
@@ -29,9 +29,9 @@ export default class Block {
 		const { name: prop } = getObject(binding.value);
 
 		this.generator.bindings.push(deindent`
-			if ( ${conditions.join('&&')} ) {
+			if (${conditions.join('&&')}) {
 				tmp = ${name}.data();
-				if ( '${prop}' in tmp ) {
+				if ('${prop}' in tmp) {
 					state.${binding.name} = tmp.${prop};
 					settled = false;
 				}

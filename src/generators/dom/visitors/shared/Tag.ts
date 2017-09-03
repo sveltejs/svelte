@@ -29,14 +29,14 @@ export default function visitTag(
 
 	if (dependencies.length || hasChangeableIndex) {
 		const changedCheck = (
-			( block.hasOutroMethod ? `#outroing || ` : '' ) +
+			(block.hasOutroMethod ? `#outroing || ` : '') +
 			dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 		);
 
-		const updateCachedValue = `${value} !== ( ${value} = ${snippet} )`;
+		const updateCachedValue = `${value} !== (${value} = ${snippet})`;
 
 		const condition = shouldCache ?
-			( dependencies.length ? `( ${changedCheck} ) && ${updateCachedValue}` : updateCachedValue ) :
+			(dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue) :
 			changedCheck;
 
 		block.builders.update.addConditional(
