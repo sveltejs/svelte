@@ -466,8 +466,7 @@ export default function preprocess(
 	const state: State = {
 		namespace,
 		parentNode: null,
-		parentNodes: 'nodes',
-		isTopLevel: true,
+		parentNodes: 'nodes'
 	};
 
 	generator.blocks.push(block);

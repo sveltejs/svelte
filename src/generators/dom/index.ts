@@ -142,7 +142,7 @@ export default function dom(
 		? `@proto `
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', '_set', 'teardown']
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount']
 				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
@@ -222,17 +222,15 @@ export default function dom(
 					this._fragment.create();
 				`}
 			this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}( ${target}, ${anchor} );
-		}
 
-		${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
-			if ( !options._root ) {
+			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
 				${generator.hasComponents && `this._lock = true;`}
 				${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
 				${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
 				${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
 				${generator.hasComponents && `this._lock = false;`}
-			}
-		`}
+			`}
+		}
 	`;
 
 	if (generator.customElement) {
@@ -265,19 +263,29 @@ export default function dom(
 			}
 
 			customElements.define('${generator.tag}', ${name});
+			@assign( ${prototypeBase}, ${proto}, {
+				_mount(target, anchor) {
+					this._fragment.mount(this.shadowRoot, null);
+					target.insertBefore(this, anchor);
+				},
+
+				_unmount() {
+					this.parentNode.removeChild(this);
+				}
+			});
 		`);
 	} else {
 		builder.addBlock(deindent`
 			function ${name} ( options ) {
 				${constructorBody}
 			}
+
+			@assign( ${prototypeBase}, ${proto});
 		`);
 	}
 
 	// TODO deprecate component.teardown()
 	builder.addBlock(deindent`
-		@assign( ${prototypeBase}, ${proto});
-
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly ( newState ) {
 				${Array.from(generator.readonly).map(
