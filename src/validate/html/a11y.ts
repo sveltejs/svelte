@@ -1,4 +1,5 @@
 import * as namespaces from '../../utils/namespaces';
+import getStaticAttributeValue from '../../utils/getStaticAttributeValue';
 import validateEventHandler from './validateEventHandler';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
@@ -20,11 +21,27 @@ export default function a11y(
 		attributeMap.set(attribute.name, attribute);
 	});
 
+	function shouldHaveOneOf(attributes: string[], name = node.name) {
+		if (attributes.length === 0 || !attributes.some((name: string) => attributeMap.has(name))) {
+			const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+			const sequence = attributes.length > 1 ?
+				attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
+				attributes[0];
+
+			console.log(`warning about ${name}: ${sequence}`)
+			validator.warn(`A11y: <${name}> element should have ${article} ${sequence} attribute`, node.start);
+		}
+
+		else {
+			console.log('ok', node.name);
+		}
+	}
+
 	if (node.name === 'a') {
 		// anchor-is-valid
 		const href = attributeMap.get('href');
-		if (href) {
-			const value = getValue(href);
+		if (attributeMap.has('href')) {
+			const value = getStaticAttributeValue(node, 'href');
 			if (value === '' || value === '#') {
 				validator.warn(`A11y: '${value}' is not a valid href attribute`, href.start);
 			}
@@ -33,13 +50,16 @@ export default function a11y(
 		}
 
 		// anchor-has-content
-		if (!node.children.length) {
+		if (node.children.length === 0) {
 			validator.warn(`A11y: <a> element should have child content`, node.start);
 		}
 	}
 
-	if (node.name === 'img' && !attributeMap.has('alt')) {
-		validator.warn(`A11y: <img> element should have an alt attribute`, node.start);
+	if (node.name === 'img') shouldHaveOneOf(['alt']);
+	if (node.name === 'area') shouldHaveOneOf(['alt', 'aria-label', 'aria-labelledby']);
+	if (node.name === 'object') shouldHaveOneOf(['title', 'aria-label', 'aria-labelledby']);
+	if (node.name === 'input' && getStaticAttributeValue(node, 'type') === 'image') {
+		shouldHaveOneOf(['alt', 'aria-label', 'aria-labelledby'], 'input type="image"');
 	}
 
 	if (node.name === 'figcaption') {

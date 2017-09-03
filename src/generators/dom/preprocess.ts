@@ -1,7 +1,7 @@
 import Block from './Block';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { assign } from '../../shared/index.js';
-import getStaticAttributeValue from '../shared/getStaticAttributeValue';
+import getStaticAttributeValue from '../../utils/getStaticAttributeValue';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 import { State } from './interfaces';

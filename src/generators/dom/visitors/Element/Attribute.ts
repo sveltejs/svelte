@@ -3,7 +3,7 @@ import deindent from '../../../../utils/deindent';
 import visitStyleAttribute, { optimizeStyle } from './StyleAttribute';
 import { stringify } from '../../../../utils/stringify';
 import getExpressionPrecedence from '../../../../utils/getExpressionPrecedence';
-import getStaticAttributeValue from '../../../shared/getStaticAttributeValue';
+import getStaticAttributeValue from '../../../../utils/getStaticAttributeValue';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';

@@ -2,7 +2,7 @@ import { DomGenerator } from '../index';
 import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import Block from '../Block';
-import getStaticAttributeValue from '../../shared/getStaticAttributeValue';
+import getStaticAttributeValue from '../../../utils/getStaticAttributeValue';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
 
