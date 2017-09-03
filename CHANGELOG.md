@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.37.0
+
+* Experimental support for compiling to custom elements ([#797](https://github.com/sveltejs/svelte/issues/797))
+
 ## 1.36.0
 
 * Optimize `style` attributes where possible ([#455](https://github.com/sveltejs/svelte/issues/455))
