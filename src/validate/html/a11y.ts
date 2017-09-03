@@ -1,8 +1,12 @@
 import * as namespaces from '../../utils/namespaces';
 import getStaticAttributeValue from '../../utils/getStaticAttributeValue';
+import fuzzymatch from '../utils/fuzzymatch';
 import validateEventHandler from './validateEventHandler';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
+
+const ariaAttributes = 'activedescendant atomic autocomplete busy checked controls describedby disabled dropeffect expanded flowto grabbed haspopup hidden invalid label labelledby level live multiline multiselectable orientation owns posinset pressed readonly relevant required selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const ariaSet = new Set(ariaAttributes);
 
 export default function a11y(
 	validator: Validator,
@@ -18,6 +22,17 @@ export default function a11y(
 
 	const attributeMap = new Map();
 	node.attributes.forEach((attribute: Node) => {
+		if (attribute.name.startsWith('aria-')) {
+			const name = attribute.name.slice(5);
+			if (!ariaSet.has(name)) {
+				const match = fuzzymatch(name, ariaAttributes);
+				let message = `A11y: Unknown aria attribute 'aria-${name}'`;
+				if (match) message += ` (did you mean '${match}'?)`;
+
+				validator.warn(message, attribute.start);
+			}
+		}
+
 		attributeMap.set(attribute.name, attribute);
 	});
 
@@ -28,12 +43,7 @@ export default function a11y(
 				attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 				attributes[0];
 
-			console.log(`warning about ${name}: ${sequence}`)
 			validator.warn(`A11y: <${name}> element should have ${article} ${sequence} attribute`, node.start);
-		}
-
-		else {
-			console.log('ok', node.name);
 		}
 	}
 
