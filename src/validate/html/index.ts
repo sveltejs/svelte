@@ -1,5 +1,6 @@
 import validateElement from './validateElement';
 import validateWindow from './validateWindow';
+import a11y from './a11y';
 import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
 import { Validator } from '../index';
@@ -13,6 +14,8 @@ export default function validateHtml(validator: Validator, html: Node) {
 	const elementStack: Node[] = [];
 
 	function visit(node: Node) {
+		a11y(validator, node, elementStack);
+
 		if (node.type === 'Element') {
 			if (meta.has(node.name)) {
 				return meta.get(node.name)(validator, node, refs, refCallees);
