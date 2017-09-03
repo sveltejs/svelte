@@ -1,0 +1,10 @@
+[
+	{
+		"message": "A11y: The scope attribute should only be used with <th> elements",
+		"loc": {
+			"line": 1,
+			"column": 5
+		},
+		"pos": 5
+	}
+]

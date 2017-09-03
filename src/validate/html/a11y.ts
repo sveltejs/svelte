@@ -73,6 +73,11 @@ export default function a11y(
 			validator.warn(`A11y: Avoid using autofocus`, attribute.start);
 		}
 
+		// scope
+		if (name === 'scope' && node.name !== 'th') {
+			validator.warn(`A11y: The scope attribute should only be used with <th> elements`, attribute.start);
+		}
+
 		attributeMap.set(attribute.name, attribute);
 	});
 
