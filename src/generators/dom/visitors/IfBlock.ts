@@ -89,7 +89,7 @@ export default function visitIfBlock(
 	const branches = getBranches(generator, block, state, node, elementStack, componentStack);
 
 	const hasElse = isElseBranch(branches[branches.length - 1]);
-	const if_name = hasElse ? '' : `if ( ${name} ) `;
+	const if_name = hasElse ? '' : `if (${name}) `;
 
 	const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
 	const hasOutros = branches[0].hasOutroMethod;
@@ -117,7 +117,7 @@ export default function visitIfBlock(
 	block.builders.create.addLine(`${if_name}${name}.create();`);
 
 	block.builders.claim.addLine(
-		`${if_name}${name}.claim( ${state.parentNodes} );`
+		`${if_name}${name}.claim(${state.parentNodes});`
 	);
 
 	if (needsAnchor) {
@@ -140,7 +140,7 @@ function simple(
 	{ name, anchor, params, if_name }
 ) {
 	block.builders.init.addBlock(deindent`
-		var ${name} = (${branch.condition}) && ${branch.block}( ${params}, #component );
+		var ${name} = (${branch.condition}) && ${branch.block}(${params}, #component);
 	`);
 
 	const isTopLevel = !state.parentNode;
@@ -149,7 +149,7 @@ function simple(
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`if ( ${name} ) ${name}.${mountOrIntro}( ${targetNode}, ${anchorNode} );`
+		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
@@ -157,37 +157,37 @@ function simple(
 	const enter = dynamic
 		? branch.hasIntroMethod
 			? deindent`
-				if ( ${name} ) {
-					${name}.update( changed, ${params} );
+				if (${name}) {
+					${name}.update(changed, ${params});
 				} else {
-					${name} = ${branch.block}( ${params}, #component );
-					if ( ${name} ) ${name}.create();
+					${name} = ${branch.block}(${params}, #component);
+					if (${name}) ${name}.create();
 				}
 
-				${name}.intro( ${parentNode}, ${anchor} );
+				${name}.intro(${parentNode}, ${anchor});
 			`
 			: deindent`
-				if ( ${name} ) {
-					${name}.update( changed, ${params} );
+				if (${name}) {
+					${name}.update(changed, ${params});
 				} else {
-					${name} = ${branch.block}( ${params}, #component );
+					${name} = ${branch.block}(${params}, #component);
 					${name}.create();
-					${name}.mount( ${parentNode}, ${anchor} );
+					${name}.mount(${parentNode}, ${anchor});
 				}
 			`
 		: branch.hasIntroMethod
 			? deindent`
-				if ( !${name} ) {
-					${name} = ${branch.block}( ${params}, #component );
+				if (!${name}) {
+					${name} = ${branch.block}(${params}, #component);
 					${name}.create();
 				}
-				${name}.intro( ${parentNode}, ${anchor} );
+				${name}.intro(${parentNode}, ${anchor});
 			`
 			: deindent`
-				if ( !${name} ) {
-					${name} = ${branch.block}( ${params}, #component );
+				if (!${name}) {
+					${name} = ${branch.block}(${params}, #component);
 					${name}.create();
-					${name}.mount( ${parentNode}, ${anchor} );
+					${name}.mount(${parentNode}, ${anchor});
 				}
 			`;
 
@@ -195,7 +195,7 @@ function simple(
 	// as that will typically result in glitching
 	const exit = branch.hasOutroMethod
 		? deindent`
-			${name}.outro( function () {
+			${name}.outro(function() {
 				${name}.unmount();
 				${name}.destroy();
 				${name} = null;
@@ -208,9 +208,9 @@ function simple(
 		`;
 
 	block.builders.update.addBlock(deindent`
-		if ( ${branch.condition} ) {
+		if (${branch.condition}) {
 			${enter}
-		} else if ( ${name} ) {
+		} else if (${name}) {
 			${exit}
 		}
 	`);
@@ -234,18 +234,16 @@ function compound(
 	const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
 	generator.blocks.push(deindent`
-		function ${select_block_type} ( ${params} ) {
+		function ${select_block_type}(${params}) {
 			${branches
-				.map(({ condition, block }) => {
-					return `${condition ? `if ( ${condition} ) ` : ''}return ${block};`;
-				})
+				.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
 				.join('\n')}
 		}
 	`);
 
 	block.builders.init.addBlock(deindent`
-		var ${current_block_type} = ${select_block_type}( ${params} );
-		var ${name} = ${current_block_type_and}${current_block_type}( ${params}, #component );
+		var ${current_block_type} = ${select_block_type}(${params});
+		var ${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
 	`);
 
 	const isTopLevel = !state.parentNode;
@@ -254,7 +252,7 @@ function compound(
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 	block.builders.mount.addLine(
-		`${if_name}${name}.${mountOrIntro}( ${targetNode}, ${anchorNode} );`
+		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
@@ -266,26 +264,26 @@ function compound(
 				${name}.destroy();
 			`
 			: deindent`
-				if ( ${name} ) {
+				if (${name}) {
 					${name}.unmount();
 					${name}.destroy();
 				}`}
-		${name} = ${current_block_type_and}${current_block_type}( ${params}, #component );
+		${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
 		${if_name}${name}.create();
-		${if_name}${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
+		${if_name}${name}.${mountOrIntro}(${parentNode}, ${anchor});
 	`;
 
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
-			if ( ${current_block_type} === ( ${current_block_type} = ${select_block_type}( ${params} ) ) && ${name} ) {
-				${name}.update( changed, ${params} );
+			if (${current_block_type} === (${current_block_type} = ${select_block_type}(${params})) && ${name}) {
+				${name}.update(changed, ${params});
 			} else {
 				${changeBlock}
 			}
 		`);
 	} else {
 		block.builders.update.addBlock(deindent`
-			if ( ${current_block_type} !== ( ${current_block_type} = ${select_block_type}( ${params} ) ) ) {
+			if (${current_block_type} !== (${current_block_type} = ${select_block_type}(${params}))) {
 				${changeBlock}
 			}
 		`);
@@ -315,7 +313,7 @@ function compoundWithOutros(
 
 	const if_current_block_type_index = hasElse
 		? ''
-		: `if ( ~${current_block_type_index} ) `;
+		: `if (~${current_block_type_index}) `;
 
 	block.addVariable(current_block_type_index);
 	block.addVariable(name);
@@ -327,26 +325,22 @@ function compoundWithOutros(
 
 		var ${if_blocks} = [];
 
-		function ${select_block_type} ( ${params} ) {
+		function ${select_block_type}(${params}) {
 			${branches
-				.map(({ condition, block }, i) => {
-					return `${condition ? `if ( ${condition} ) ` : ''}return ${block
-						? i
-						: -1};`;
-				})
+				.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
 				.join('\n')}
 		}
 	`);
 
 	if (hasElse) {
 		block.builders.init.addBlock(deindent`
-			${current_block_type_index} = ${select_block_type}( ${params} );
-			${name} = ${if_blocks}[ ${current_block_type_index} ] = ${if_block_creators}[ ${current_block_type_index} ]( ${params}, #component );
+			${current_block_type_index} = ${select_block_type}(${params});
+			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
 		`);
 	} else {
 		block.builders.init.addBlock(deindent`
-			if ( ~( ${current_block_type_index} = ${select_block_type}( ${params} ) ) ) {
-				${name} = ${if_blocks}[ ${current_block_type_index} ] = ${if_block_creators}[ ${current_block_type_index} ]( ${params}, #component );
+			if (~(${current_block_type_index} = ${select_block_type}(${params}))) {
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
 			}
 		`);
 	}
@@ -357,13 +351,13 @@ function compoundWithOutros(
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`${if_current_block_type_index}${if_blocks}[ ${current_block_type_index} ].${mountOrIntro}( ${targetNode}, ${anchorNode} );`
+		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
 	const parentNode = state.parentNode || `${anchor}.parentNode`;
 
 	const destroyOldBlock = deindent`
-		${name}.outro( function () {
+		${name}.outro(function() {
 			${if_blocks}[ ${previous_block_index} ].unmount();
 			${if_blocks}[ ${previous_block_index} ].destroy();
 			${if_blocks}[ ${previous_block_index} ] = null;
@@ -371,12 +365,12 @@ function compoundWithOutros(
 	`;
 
 	const createNewBlock = deindent`
-		${name} = ${if_blocks}[ ${current_block_type_index} ];
-		if ( !${name} ) {
-			${name} = ${if_blocks}[ ${current_block_type_index} ] = ${if_block_creators}[ ${current_block_type_index} ]( ${params}, #component );
+		${name} = ${if_blocks}[${current_block_type_index}];
+		if (!${name}) {
+			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
 			${name}.create();
 		}
-		${name}.${mountOrIntro}( ${parentNode}, ${anchor} );
+		${name}.${mountOrIntro}(${parentNode}, ${anchor});
 	`;
 
 	const changeBlock = hasElse
@@ -386,11 +380,11 @@ function compoundWithOutros(
 			${createNewBlock}
 		`
 		: deindent`
-			if ( ${name} ) {
+			if (${name}) {
 				${destroyOldBlock}
 			}
 
-			if ( ~${current_block_type_index} ) {
+			if (~${current_block_type_index}) {
 				${createNewBlock}
 			} else {
 				${name} = null;
@@ -400,9 +394,9 @@ function compoundWithOutros(
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_type_index};
-			${current_block_type_index} = ${select_block_type}( ${params} );
-			if ( ${current_block_type_index} === ${previous_block_index} ) {
-				${if_current_block_type_index}${if_blocks}[ ${current_block_type_index} ].update( changed, ${params} );
+			${current_block_type_index} = ${select_block_type}(${params});
+			if (${current_block_type_index} === ${previous_block_index}) {
+				${if_current_block_type_index}${if_blocks}[${current_block_type_index}].update(changed, ${params});
 			} else {
 				${changeBlock}
 			}
@@ -410,8 +404,8 @@ function compoundWithOutros(
 	} else {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_type_index};
-			${current_block_type_index} = ${select_block_type}( ${params} );
-			if ( ${current_block_type_index} !== ${previous_block_index} ) {
+			${current_block_type_index} = ${select_block_type}(${params});
+			if (${current_block_type_index} !== ${previous_block_index}) {
 				${changeBlock}
 			}
 		`);
@@ -419,8 +413,8 @@ function compoundWithOutros(
 
 	block.builders.destroy.addLine(deindent`
 		${if_current_block_type_index}{
-			${if_blocks}[ ${current_block_type_index} ].unmount();
-			${if_blocks}[ ${current_block_type_index} ].destroy();
+			${if_blocks}[${current_block_type_index}].unmount();
+			${if_blocks}[${current_block_type_index}].destroy();
 		}
 	`);
 }

@@ -14,8 +14,8 @@ export default function visitText(
 
 	block.addElement(
 		node.var,
-		`@createText( ${stringify(node.data)} )`,
-		`@claimText( ${state.parentNodes}, ${stringify(node.data)} )`,
+		`@createText(${stringify(node.data)})`,
+		`@claimText(${state.parentNodes}, ${stringify(node.data)})`,
 		state.parentNode
 	);
 }

@@ -11,8 +11,7 @@ export default function getGlobals(imports: Node[], options: CompileOptions) {
 		if (!name) {
 			if (x.name.startsWith('__import')) {
 				const error = new Error(
-					`Could not determine name for imported module '${x.source
-						.value}' – use options.globals`
+					`Could not determine name for imported module '${x.source.value}' – use options.globals`
 				);
 				if (onerror) {
 					onerror(error);
@@ -21,8 +20,7 @@ export default function getGlobals(imports: Node[], options: CompileOptions) {
 				}
 			} else {
 				const warning = {
-					message: `No name was supplied for imported module '${x.source
-						.value}'. Guessing '${x.name}', but you should use options.globals`,
+					message: `No name was supplied for imported module '${x.source.value}'. Guessing '${x.name}', but you should use options.globals`,
 				};
 
 				if (onwarn) {

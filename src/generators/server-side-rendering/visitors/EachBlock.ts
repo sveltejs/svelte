@@ -10,11 +10,7 @@ export default function visitEachBlock(
 ) {
 	const { dependencies, snippet } = block.contextualise(node.expression);
 
-	const open = `\${ ${node.else
-		? `${snippet}.length ? `
-		: ''}${snippet}.map( ${node.index
-		? `( ${node.context}, ${node.index} )`
-		: node.context} => \``;
+	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}${snippet}.map(${node.index ? `(${node.context}, ${node.index})` : node.context} => \``;
 	generator.append(open);
 
 	// TODO should this be the generator's job? It's duplicated between
@@ -38,7 +34,7 @@ export default function visitEachBlock(
 		visit(generator, childBlock, child);
 	});
 
-	const close = `\` ).join( '' )`;
+	const close = `\`).join("")`;
 	generator.append(close);
 
 	if (node.else) {
