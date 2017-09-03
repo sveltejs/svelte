@@ -57,14 +57,17 @@ class SvelteComponent extends HTMLElement {
 		this._root = options._root || this;
 		this._yield = options._yield;
 		this._bind = options._bind;
+		this._slotted = options.slots || {};
 
 		this.attachShadow({ mode: 'open' });
 
+		this.slots = {};
+
 		this._fragment = create_main_fragment( this._state, this );
 
-		if ( !options._root ) {
+		if ( options.target ) {
 			this._fragment.create();
-			this._fragment.mount( this.shadowRoot, null );
+			this._mount( options.target, options.anchor || null );
 		}
 	}
 
@@ -73,6 +76,12 @@ class SvelteComponent extends HTMLElement {
 	}
 
 
+
+	connectedCallback() {
+		Object.keys(this._slotted).forEach(key => {
+			this.appendChild(this._slotted[key]);
+		});
+	}
 
 	attributeChangedCallback ( attr, oldValue, newValue ) {
 		this.set({ [attr]: newValue });

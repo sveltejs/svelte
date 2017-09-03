@@ -1,26 +1,30 @@
-import { assign, createElement, detachNode, insertNode, noop, proto, setInputType } from "svelte/shared.js";
+import { assign, createElement, detachNode, insertNode, noop, proto, setStyle } from "svelte/shared.js";
 
 function create_main_fragment ( state, component ) {
-	var input;
+	var div;
 
 	return {
 		create: function () {
-			input = createElement( 'input' );
+			div = createElement( 'div' );
 			this.hydrate();
 		},
 
 		hydrate: function ( nodes ) {
-			setInputType( input, "search" );
+			setStyle(div, 'color', state.color);
 		},
 
 		mount: function ( target, anchor ) {
-			insertNode( input, target, anchor );
+			insertNode( div, target, anchor );
 		},
 
-		update: noop,
+		update: function ( changed, state ) {
+			if ( changed.color ) {
+				setStyle(div, 'color', state.color);
+			}
+		},
 
 		unmount: function () {
-			detachNode( input );
+			detachNode( div );
 		},
 
 		destroy: noop

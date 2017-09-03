@@ -25,10 +25,8 @@ function createElement(name) {
 	return document.createElement(name);
 }
 
-function setInputType(input, type) {
-	try {
-		input.type = type;
-	} catch (e) {}
+function setStyle(node, key, value) {
+	node.style.setProperty(key, value);
 }
 
 function destroy(detach) {
@@ -147,14 +145,6 @@ function callAll(fns) {
 	while (fns && fns.length) fns.pop()();
 }
 
-function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
-}
-
-function _unmount() {
-	this._fragment.unmount();
-}
-
 var proto = {
 	destroy: destroy,
 	get: get,
@@ -164,32 +154,39 @@ var proto = {
 	set: set,
 	teardown: destroy,
 	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount
+	_set: _set
 };
 
 function create_main_fragment ( state, component ) {
-	var input;
+	var div;
 
 	return {
 		create: function () {
-			input = createElement( 'input' );
+			div = createElement( 'div' );
 			this.hydrate();
 		},
 
 		hydrate: function ( nodes ) {
-			setInputType( input, "search" );
+			setStyle(div, 'color', state.color);
+			setStyle(div, 'transform', "translate(" + state.x + "px," + state.y + "px)");
 		},
 
 		mount: function ( target, anchor ) {
-			insertNode( input, target, anchor );
+			insertNode( div, target, anchor );
 		},
 
-		update: noop,
+		update: function ( changed, state ) {
+			if ( changed.color ) {
+				setStyle(div, 'color', state.color);
+			}
+
+			if ( changed.x || changed.y ) {
+				setStyle(div, 'transform', "translate(" + state.x + "px," + state.y + "px)");
+			}
+		},
 
 		unmount: function () {
-			detachNode( input );
+			detachNode( div );
 		},
 
 		destroy: noop
