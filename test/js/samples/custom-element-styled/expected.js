@@ -5,14 +5,14 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			h1 = createElement( 'h1' );
+			h1 = createElement("h1");
 			text = createText("Hello ");
 			text_1 = createText(state.name);
 			text_2 = createText("!");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( h1, target, anchor );
+			insertNode(h1, target, anchor);
 			appendNode(text, h1);
 			appendNode(text_1, h1);
 			appendNode(text_2, h1);
@@ -25,7 +25,7 @@ function create_main_fragment(state, component) {
 		},
 
 		unmount: function() {
-			detachNode( h1 );
+			detachNode(h1);
 		},
 
 		destroy: noop

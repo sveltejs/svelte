@@ -191,7 +191,7 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			button = createElement( 'button' );
+			button = createElement("button");
 			text = createText("foo");
 			this.hydrate();
 		},
@@ -204,14 +204,14 @@ function create_main_fragment(state, component) {
 		},
 
 		mount: function(target, anchor) {
-			insertNode( button, target, anchor );
+			insertNode(button, target, anchor);
 			appendNode(text, button);
 		},
 
 		update: noop,
 
 		unmount: function() {
-			detachNode( button );
+			detachNode(button);
 		},
 
 		destroy: function() {

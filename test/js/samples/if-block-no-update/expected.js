@@ -43,17 +43,17 @@ function create_if_block(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("foo!");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
@@ -65,17 +65,17 @@ function create_if_block_1(state, component) {
 
 	return {
 		create: function() {
-			p = createElement( 'p' );
+			p = createElement("p");
 			text = createText("not foo!");
 		},
 
 		mount: function(target, anchor) {
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
 		unmount: function() {
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: noop
