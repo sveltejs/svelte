@@ -18,7 +18,7 @@ function create_main_fragment(state, component) {
 			}
 
 			text = createText("\n\n");
-			p = createElement( 'p' );
+			p = createElement("p");
 			text_1 = createText(state.foo);
 		},
 
@@ -28,7 +28,7 @@ function create_main_fragment(state, component) {
 			}
 
 			insertNode(text, target, anchor);
-			insertNode( p, target, anchor );
+			insertNode(p, target, anchor);
 			appendNode(text_1, p);
 		},
 
@@ -64,7 +64,7 @@ function create_main_fragment(state, component) {
 			}
 
 			detachNode(text);
-			detachNode( p );
+			detachNode(p);
 		},
 
 		destroy: function() {
@@ -78,11 +78,11 @@ function create_each_block(state, each_block_value, comment, i, component) {
 
 	return {
 		create: function() {
-			div = createElement( 'div' );
-			strong = createElement( 'strong' );
+			div = createElement("div");
+			strong = createElement("strong");
 			text = createText(i);
 			text_1 = createText("\n\n\t\t");
-			span = createElement( 'span' );
+			span = createElement("span");
 			text_2 = createText(text_2_value);
 			text_3 = createText(" wrote ");
 			text_4 = createText(text_4_value);
@@ -98,11 +98,11 @@ function create_each_block(state, each_block_value, comment, i, component) {
 		},
 
 		mount: function(target, anchor) {
-			insertNode( div, target, anchor );
-			appendNode( strong, div );
+			insertNode(div, target, anchor);
+			appendNode(strong, div);
 			appendNode(text, strong);
 			appendNode(text_1, div);
-			appendNode( span, div );
+			appendNode(span, div);
 			appendNode(text_2, span);
 			appendNode(text_3, span);
 			appendNode(text_4, span);
@@ -130,7 +130,7 @@ function create_each_block(state, each_block_value, comment, i, component) {
 		unmount: function() {
 			detachAfter(raw_before);
 
-			detachNode( div );
+			detachNode(div);
 		},
 
 		destroy: noop

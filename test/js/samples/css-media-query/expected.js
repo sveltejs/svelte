@@ -16,22 +16,22 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			div = createElement( 'div' );
+			div = createElement("div");
 			this.hydrate();
 		},
 
 		hydrate: function(nodes) {
-			encapsulateStyles( div );
+			encapsulateStyles(div);
 		},
 
 		mount: function(target, anchor) {
-			insertNode( div, target, anchor );
+			insertNode(div, target, anchor);
 		},
 
 		update: noop,
 
 		unmount: function() {
-			detachNode( div );
+			detachNode(div);
 		},
 
 		destroy: noop
