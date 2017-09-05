@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.38.0
+
+* Compile-time a11y warnings ([#815](https://github.com/sveltejs/svelte/pull/815))
+* Remove redundant input blowback guards ([#645](https://github.com/sveltejs/svelte/issues/645))
+* Use component name in debugging messages ([#781](https://github.com/sveltejs/svelte/issues/781))
+
 ## 1.37.0
 
 * Experimental support for compiling to custom elements ([#797](https://github.com/sveltejs/svelte/issues/797))
