@@ -180,13 +180,13 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			div = createElement( 'div' );
-			slot = createElement( 'slot' );
-			p = createElement( 'p' );
+			div = createElement("div");
+			slot = createElement("slot");
+			p = createElement("p");
 			text = createText("default fallback content");
 			text_2 = createText("\n\n\t");
-			slot_1 = createElement( 'slot' );
-			p_1 = createElement( 'p' );
+			slot_1 = createElement("slot");
+			p_1 = createElement("p");
 			text_3 = createText("foo fallback content");
 			this.hydrate();
 		},
@@ -196,20 +196,20 @@ function create_main_fragment(state, component) {
 		},
 
 		mount: function(target, anchor) {
-			insertNode( div, target, anchor );
-			appendNode( slot, div );
-			appendNode( p, slot );
+			insertNode(div, target, anchor);
+			appendNode(slot, div);
+			appendNode(p, slot);
 			appendNode(text, p);
 			appendNode(text_2, div);
-			appendNode( slot_1, div );
-			appendNode( p_1, slot_1 );
+			appendNode(slot_1, div);
+			appendNode(p_1, slot_1);
 			appendNode(text_3, p_1);
 		},
 
 		update: noop,
 
 		unmount: function() {
-			detachNode( div );
+			detachNode(div);
 		},
 
 		destroy: noop

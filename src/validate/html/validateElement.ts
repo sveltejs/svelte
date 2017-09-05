@@ -1,14 +1,30 @@
+import * as namespaces from '../../utils/namespaces';
 import validateEventHandler from './validateEventHandler';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
-export default function validateElement(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {
+const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|title|tref|tspan|unknown|use|view|vkern)$/;
+
+export default function validateElement(
+	validator: Validator,
+	node: Node,
+	refs: Map<string, Node[]>,
+	refCallees: Node[],
+	elementStack: Node[]
+) {
 	const isComponent =
 		node.name === ':Self' || validator.components.has(node.name);
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
 		validator.warn(`${node.name} component is not defined`, node.start);
+	}
+
+	if (elementStack.length === 0 && validator.namespace !== namespaces.svg && svg.test(node.name)) {
+		validator.warn(
+			`<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`,
+			node.start
+		);
 	}
 
 	if (node.name === 'slot') {
