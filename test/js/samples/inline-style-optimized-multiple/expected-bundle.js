@@ -172,7 +172,7 @@ function create_main_fragment(state, component) {
 
 	return {
 		create: function() {
-			div = createElement( 'div' );
+			div = createElement("div");
 			this.hydrate();
 		},
 
@@ -182,7 +182,7 @@ function create_main_fragment(state, component) {
 		},
 
 		mount: function(target, anchor) {
-			insertNode( div, target, anchor );
+			insertNode(div, target, anchor);
 		},
 
 		update: function(changed, state) {
@@ -196,7 +196,7 @@ function create_main_fragment(state, component) {
 		},
 
 		unmount: function() {
-			detachNode( div );
+			detachNode(div);
 		},
 
 		destroy: noop

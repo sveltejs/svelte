@@ -1,0 +1,26 @@
+[
+	{
+		"message": "A11y: <a> element should have an href attribute",
+		"loc": {
+			"line": 1,
+			"column": 0
+		},
+		"pos": 0
+	},
+	{
+		"message": "A11y: '' is not a valid href attribute",
+		"loc": {
+			"line": 2,
+			"column": 3
+		},
+		"pos": 30
+	},
+	{
+		"message": "A11y: '#' is not a valid href attribute",
+		"loc": {
+			"line": 3,
+			"column": 3
+		},
+		"pos": 53
+	}
+]

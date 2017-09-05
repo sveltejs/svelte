@@ -54,7 +54,7 @@ export interface CompileOptions {
 	cascade?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
-	customElement: CustomElementOptions | true;
+	customElement?: CustomElementOptions | true;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;

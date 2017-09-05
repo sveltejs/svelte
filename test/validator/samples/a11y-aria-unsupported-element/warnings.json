@@ -1,0 +1,19 @@
+[
+	{
+		"message": "A11y: <meta> should not have aria-* attributes",
+		"loc": {
+			"line": 1,
+			"column": 6
+		},
+		"pos": 6
+	},
+
+	{
+		"message": "A11y: <meta> should not have role attribute",
+		"loc": {
+			"line": 2,
+			"column": 6
+		},
+		"pos": 33
+	}
+]
