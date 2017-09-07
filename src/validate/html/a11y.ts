@@ -143,6 +143,11 @@ export default function a11y(
 		shouldHaveAttribute(['title']);
 	}
 
+	// html-has-lang
+	if (node.name === 'html') {
+		shouldHaveAttribute(['lang']);
+	}
+
 	// no-distracting-elements
 	if (node.name === 'marquee' || node.name === 'blink') {
 		validator.warn(`A11y: Avoid <${node.name}> elements`, node.start);
