@@ -14,6 +14,7 @@ import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
+import reservedNames from '../../../../utils/reservedNames';
 
 const meta = {
 	':Window': visitWindow,
@@ -246,7 +247,7 @@ function getClaimStatement(
 ) {
 	const attributes = node.attributes
 		.filter((attr: Node) => attr.type === 'Attribute')
-		.map((attr: Node) => `${quoteProp(attr.name)}: true`)
+		.map((attr: Node) => `${quoteProp(attr.name, generator.legacy)}: true`)
 		.join(', ');
 
 	const name = namespace ? node.name : node.name.toUpperCase();
@@ -256,7 +257,9 @@ function getClaimStatement(
 		: `{}`}, ${namespace === namespaces.svg ? true : false})`;
 }
 
-function quoteProp(name: string) {
-	if (/[^a-zA-Z_$0-9]/.test(name) || name === 'class') return `"${name}"`;
+function quoteProp(name: string, legacy: boolean) {
+	const isLegacyPropName = legacy && reservedNames.has(name);
+
+	if (/[^a-zA-Z_$0-9]/.test(name) || isLegacyPropName) return `"${name}"`;
 	return name;
 }
