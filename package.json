@@ -46,7 +46,7 @@
     "chalk": "^2.0.1",
     "codecov": "^2.2.0",
     "console-group": "^0.3.2",
-    "css-tree": "1.0.0-alpha16",
+    "css-tree": "1.0.0-alpha22",
     "eslint": "^4.3.0",
     "eslint-plugin-html": "^3.0.0",
     "eslint-plugin-import": "^2.2.0",
