@@ -1,10 +1,10 @@
 [
-		{
-			"loc": {
-				"column": 0,
-				"line": 5
-			},
-			"message": "A11y: <html> element should have a lang attribute",
-			"pos": 82
-		}
-	]
+	{
+		"loc": {
+			"column": 0,
+			"line": 5
+		},
+		"message": "A11y: <html> element should have a lang attribute",
+		"pos": 84
+	}
+]
