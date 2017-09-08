@@ -557,10 +557,11 @@ cryptiles@2.x.x:
   dependencies:
     boom "2.x.x"
 
-css-tree@1.0.0-alpha16:
-  version "1.0.0-alpha16"
-  resolved "https://registry.yarnpkg.com/css-tree/-/css-tree-1.0.0-alpha16.tgz#6cb2cdff6947259dfdaf790626333a862de948b0"
+css-tree@1.0.0-alpha22:
+  version "1.0.0-alpha22"
+  resolved "https://registry.yarnpkg.com/css-tree/-/css-tree-1.0.0-alpha22.tgz#338a006e331c7b4f9dab7b6af539ece56ff78af2"
   dependencies:
+    mdn-data "^1.0.0"
     source-map "^0.5.3"
 
 cssom@0.3.x, "cssom@>= 0.3.2 < 0.4.0":
@@ -1690,6 +1691,10 @@ md5-hex@^1.2.0:
 md5-o-matic@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/md5-o-matic/-/md5-o-matic-0.1.1.tgz#822bccd65e117c514fab176b25945d54100a03c3"
+
+mdn-data@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/mdn-data/-/mdn-data-1.0.0.tgz#a69d9da76847b4d5834c1465ea25c0653a1fbf66"
 
 mem@^1.1.0:
   version "1.1.0"

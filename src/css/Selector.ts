@@ -160,7 +160,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 		}
 
 		else if (selector.type === 'AttributeSelector') {
-			if (!attributeMatches(node, selector.name.name, selector.value && unquote(selector.value), selector.operator, selector.flags)) return false;
+			if (!attributeMatches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) return false;
 		}
 
 		else if (selector.type === 'TypeSelector') {
