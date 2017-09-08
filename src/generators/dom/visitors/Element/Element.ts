@@ -257,6 +257,6 @@ function getClaimStatement(
 }
 
 function quoteProp(name: string) {
-	if (/[^a-zA-Z_$0-9]/.test(name)) return `"${name}"`;
+	if (/[^a-zA-Z_$0-9]/.test(name) || name === 'class') return `"${name}"`;
 	return name;
 }
