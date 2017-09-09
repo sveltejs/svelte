@@ -138,6 +138,28 @@ export default function visitBinding(
 
 			updateConditions = [`${last} !== (${last} = ${snippet})`];
 			updateElement = `${state.parentNode}[${last} ? "pause" : "play"]();`;
+		} else if (attribute.name === 'buffered') {
+			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
+			block.addVariable(frame);
+			setter = deindent`
+				cancelAnimationFrame(${frame});
+				${frame} = requestAnimationFrame(${handler});
+				${setter}
+			`;
+
+			updateConditions.push(`${snippet}.start`);
+			readOnly = true;
+		} else if (attribute.name === 'seekable' || attribute.name === 'played') {
+			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
+			block.addVariable(frame);
+			setter = deindent`
+				cancelAnimationFrame(${frame});
+				if (!${state.parentNode}.paused) ${frame} = requestAnimationFrame(${handler});
+				${setter}
+			`;
+
+			updateConditions.push(`${snippet}.start`);
+			readOnly = true;
 		}
 	}
 
@@ -213,6 +235,9 @@ function getBindingEventName(node: Node, attribute: Node) {
 	if (attribute.name === 'currentTime') return 'timeupdate';
 	if (attribute.name === 'duration') return 'durationchange';
 	if (attribute.name === 'paused') return 'pause';
+	if (attribute.name === 'buffered') return 'progress';
+	if (attribute.name === 'seekable') return 'timeupdate';
+	if (attribute.name === 'played') return 'timeupdate';
 
 	return 'change';
 }
