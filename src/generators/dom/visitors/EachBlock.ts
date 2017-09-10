@@ -21,7 +21,7 @@ export default function visitEachBlock(
 	const iterations = block.getUniqueName(`${each_block}_iterations`);
 	const params = block.params.join(', ');
 
-	const needsAnchor = node.next ? !isDomNode(node.next) : !state.parentNode;
+	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode;
 	const anchor = needsAnchor
 		? block.getUniqueName(`${each_block}_anchor`)
 		: (node.next && node.next.var) || 'null';
