@@ -8,6 +8,13 @@ import { State } from '../../interfaces';
 import getObject from '../../../../utils/getObject';
 import getTailSnippet from '../../../../utils/getTailSnippet';
 
+const readOnlyMediaAttributes = new Set([
+	'duration',
+	'buffered',
+	'seekable',
+	'played'
+]);
+
 export default function visitBinding(
 	generator: DomGenerator,
 	block: Block,
@@ -25,9 +32,9 @@ export default function visitBinding(
 			state.allUsedContexts.push(context);
 	});
 
-	const eventName = getBindingEventName(node, attribute);
+	const eventNames = getBindingEventName(node, attribute);
 	const handler = block.getUniqueName(
-		`${state.parentNode}_${eventName}_handler`
+		`${state.parentNode}_${eventNames.join('_')}_handler`
 	);
 	const isMultipleSelect =
 		node.name === 'select' &&
@@ -38,6 +45,10 @@ export default function visitBinding(
 	const bindingGroup = attribute.name === 'group'
 		? getBindingGroup(generator, attribute.value)
 		: null;
+
+	const isMediaElement = node.name === 'audio' || node.name === 'video';
+	const isReadOnly = isMediaElement && readOnlyMediaAttributes.has(attribute.name)
+
 	const value = getBindingValue(
 		generator,
 		block,
@@ -45,6 +56,7 @@ export default function visitBinding(
 		node,
 		attribute,
 		isMultipleSelect,
+		isMediaElement,
 		bindingGroup,
 		type
 	);
@@ -52,10 +64,9 @@ export default function visitBinding(
 	let setter = getSetter(block, name, snippet, state.parentNode, attribute, dependencies, value);
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
 
-	const needsLock = node.name !== 'input' || !/radio|checkbox|range|color/.test(type); // TODO others?
+	const needsLock = !isReadOnly && node.name !== 'input' || !/radio|checkbox|range|color/.test(type); // TODO others?
 	const lock = `#${state.parentNode}_updating`;
 	let updateConditions = needsLock ? [`!${lock}`] : [];
-	let readOnly = false;
 
 	if (needsLock) block.addVariable(lock, 'false');
 
@@ -115,7 +126,7 @@ export default function visitBinding(
 		);
 
 		updateElement = `${state.parentNode}.checked = ${condition};`;
-	} else if (node.name === 'audio' || node.name === 'video') {
+	} else if (isMediaElement) {
 		generator.hasComplexBindings = true;
 		block.builders.hydrate.addBlock(`#component._root._beforecreate.push(${handler});`);
 
@@ -129,8 +140,6 @@ export default function visitBinding(
 			`;
 
 			updateConditions.push(`!isNaN(${snippet})`);
-		} else if (attribute.name === 'duration') {
-			readOnly = true;
 		} else if (attribute.name === 'paused') {
 			// this is necessary to prevent the audio restarting by itself
 			const last = block.getUniqueName(`${state.parentNode}_paused_value`);
@@ -138,28 +147,6 @@ export default function visitBinding(
 
 			updateConditions = [`${last} !== (${last} = ${snippet})`];
 			updateElement = `${state.parentNode}[${last} ? "pause" : "play"]();`;
-		} else if (attribute.name === 'buffered') {
-			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
-			block.addVariable(frame);
-			setter = deindent`
-				cancelAnimationFrame(${frame});
-				${frame} = requestAnimationFrame(${handler});
-				${setter}
-			`;
-
-			updateConditions.push(`${snippet}.start`);
-			readOnly = true;
-		} else if (attribute.name === 'seekable' || attribute.name === 'played') {
-			const frame = block.getUniqueName(`${state.parentNode}_animationframe`);
-			block.addVariable(frame);
-			setter = deindent`
-				cancelAnimationFrame(${frame});
-				if (!${state.parentNode}.paused) ${frame} = requestAnimationFrame(${handler});
-				${setter}
-			`;
-
-			updateConditions.push(`${snippet}.start`);
-			readOnly = true;
 		}
 	}
 
@@ -183,21 +170,23 @@ export default function visitBinding(
 			@removeListener(${state.parentNode}, "change", ${handler});
 		`);
 	} else {
-		block.builders.hydrate.addLine(
-			`@addListener(${state.parentNode}, "${eventName}", ${handler});`
-		);
+		eventNames.forEach(eventName => {
+			block.builders.hydrate.addLine(
+				`@addListener(${state.parentNode}, "${eventName}", ${handler});`
+			);
 
-		block.builders.destroy.addLine(
-			`@removeListener(${state.parentNode}, "${eventName}", ${handler});`
-		);
+			block.builders.destroy.addLine(
+				`@removeListener(${state.parentNode}, "${eventName}", ${handler});`
+			);
+		});
 	}
 
-	if (node.name !== 'audio' && node.name !== 'video') {
+	if (!isMediaElement) {
 		node.initialUpdate = updateElement;
 		node.initialUpdateNeedsStateObject = !block.contexts.has(name);
 	}
 
-	if (!readOnly) { // audio/video duration is read-only, it never updates
+	if (!isReadOnly) { // audio/video duration is read-only, it never updates
 		if (updateConditions.length) {
 			block.builders.update.addBlock(deindent`
 				if (${updateConditions.join(' && ')}) {
@@ -228,18 +217,18 @@ function getBindingEventName(node: Node, attribute: Node) {
 		);
 		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
 
-		return type === 'checkbox' || type === 'radio' ? 'change' : 'input';
+		return [type === 'checkbox' || type === 'radio' ? 'change' : 'input'];
 	}
 
-	if (node.name === 'textarea') return 'input';
-	if (attribute.name === 'currentTime') return 'timeupdate';
-	if (attribute.name === 'duration') return 'durationchange';
-	if (attribute.name === 'paused') return 'pause';
-	if (attribute.name === 'buffered') return 'progress';
-	if (attribute.name === 'seekable') return 'timeupdate';
-	if (attribute.name === 'played') return 'timeupdate';
+	if (node.name === 'textarea') return ['input'];
+	if (attribute.name === 'currentTime') return ['timeupdate'];
+	if (attribute.name === 'duration') return ['durationchange'];
+	if (attribute.name === 'paused') return ['pause'];
+	if (attribute.name === 'buffered') return ['progress', 'loadedmetadata'];
+	if (attribute.name === 'seekable') return ['loadedmetadata'];
+	if (attribute.name === 'played') return ['timeupdate'];
 
-	return 'change';
+	return ['change'];
 }
 
 function getBindingValue(
@@ -249,6 +238,7 @@ function getBindingValue(
 	node: Node,
 	attribute: Node,
 	isMultipleSelect: boolean,
+	isMediaElement: boolean,
 	bindingGroup: number,
 	type: string
 ) {
@@ -274,6 +264,10 @@ function getBindingValue(
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
 		return `@toNumber(${state.parentNode}.${attribute.name})`;
+	}
+
+	if (isMediaElement && attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played') {
+		return `@timeRangesToArray(${state.parentNode}.${attribute.name})`
 	}
 
 	// everything else
