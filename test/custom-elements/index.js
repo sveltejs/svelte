@@ -3,14 +3,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from 'rollup-plugin-virtual';
 import Nightmare from 'nightmare';
-import {
-	showOutput,
-	loadConfig,
-	loadSvelte,
-	env,
-	setupHtmlEqual,
-	spaces
-} from "../helpers.js";
+import { loadSvelte } from "../helpers.js";
 
 const page = `
 <body>
@@ -21,7 +14,7 @@ const page = `
 
 const assert = fs.readFileSync('test/custom-elements/assert.js', 'utf-8');
 
-describe.only('custom-elements', () => {
+describe('custom-elements', () => {
 	const nightmare = new Nightmare({ show: false });
 
 	let svelte;
