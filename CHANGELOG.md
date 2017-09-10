@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.39.0
+
+* Always attach fragment to shadow root ([#821](https://github.com/sveltejs/svelte/issues/821))
+* Add `buffered`, `seekable`, `played` bindings to media elements ([#819](https://github.com/sveltejs/svelte/pull/819))
+* Quote `class` properties in legacy mode ([#830](https://github.com/sveltejs/svelte/issues/830))
+* Warn on missing `lang` attribute on `<html>` ([#828](https://github.com/sveltejs/svelte/pull/828))
+
 ## 1.38.0
 
 * Compile-time a11y warnings ([#815](https://github.com/sveltejs/svelte/pull/815))
