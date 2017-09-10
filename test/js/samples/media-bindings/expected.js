@@ -5,19 +5,19 @@ function create_main_fragment(state, component) {
 
 	function audio_progress_loadedmetadata_handler() {
 		audio_updating = true;
-		component.set({ buffered: timeRangesToArray(audio.buffered) });
+		component.set({ buffered: audio.buffered ? timeRangesToArray(audio.buffered) : [] });
 		audio_updating = false;
 	}
 
 	function audio_loadedmetadata_handler() {
 		audio_updating = true;
-		component.set({ seekable: timeRangesToArray(audio.seekable) });
+		component.set({ seekable: audio.seekable ? timeRangesToArray(audio.seekable) : [] });
 		audio_updating = false;
 	}
 
 	function audio_timeupdate_handler() {
 		audio_updating = true;
-		component.set({ played: timeRangesToArray(audio.played) });
+		component.set({ played: audio.played ? timeRangesToArray(audio.played) : [] });
 		audio_updating = false;
 	}
 

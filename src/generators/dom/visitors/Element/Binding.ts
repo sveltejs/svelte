@@ -267,7 +267,7 @@ function getBindingValue(
 	}
 
 	if (isMediaElement && (attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played')) {
-		return `@timeRangesToArray(${state.parentNode}.${attribute.name})`
+		return `${state.parentNode}.${attribute.name} ? @timeRangesToArray(${state.parentNode}.${attribute.name}) : []`
 	}
 
 	// everything else
