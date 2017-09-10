@@ -80,7 +80,7 @@ export default function visitIfBlock(
 ) {
 	const name = node.var;
 
-	const needsAnchor = node.next ? !isDomNode(node.next) : !state.parentNode;
+	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode || !isDomNode(node.parent, generator);
 	const anchor = needsAnchor
 		? block.getUniqueName(`${name}_anchor`)
 		: (node.next && node.next.var) || 'null';
@@ -94,7 +94,7 @@ export default function visitIfBlock(
 	const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
 	const hasOutros = branches[0].hasOutroMethod;
 
-	const vars = { name, anchor, params, if_name, hasElse };
+	const vars = { name, needsAnchor, anchor, params, if_name, hasElse };
 
 	if (node.else) {
 		if (hasOutros) {
@@ -137,7 +137,7 @@ function simple(
 	node: Node,
 	branch,
 	dynamic,
-	{ name, anchor, params, if_name }
+	{ name, needsAnchor, anchor, params, if_name }
 ) {
 	block.builders.init.addBlock(deindent`
 		var ${name} = (${branch.condition}) && ${branch.block}(${params}, #component);
@@ -152,7 +152,7 @@ function simple(
 		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
 
 	const enter = dynamic
 		? branch.hasIntroMethod
@@ -227,7 +227,7 @@ function compound(
 	node: Node,
 	branches,
 	dynamic,
-	{ name, anchor, params, hasElse, if_name }
+	{ name, needsAnchor, anchor, params, hasElse, if_name }
 ) {
 	const select_block_type = generator.getUniqueName(`select_block_type`);
 	const current_block_type = block.getUniqueName(`current_block_type`);
@@ -255,7 +255,7 @@ function compound(
 		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
 		${hasElse
@@ -303,7 +303,7 @@ function compoundWithOutros(
 	node: Node,
 	branches,
 	dynamic,
-	{ name, anchor, params, hasElse }
+	{ name, needsAnchor, anchor, params, hasElse }
 ) {
 	const select_block_type = block.getUniqueName(`select_block_type`);
 	const current_block_type_index = block.getUniqueName(`current_block_type_index`);
@@ -354,7 +354,7 @@ function compoundWithOutros(
 		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
 
 	const destroyOldBlock = deindent`
 		${name}.outro(function() {

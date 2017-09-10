@@ -412,6 +412,8 @@ function preprocessChildren(
 	lastChild = null;
 
 	cleaned.forEach((child: Node, i: number) => {
+		child.parent = node;
+
 		const preprocessor = preprocessors[child.type];
 		if (preprocessor) preprocessor(generator, block, state, child, inEachBlock, elementStack, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);
 
