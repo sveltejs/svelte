@@ -35,7 +35,7 @@ function removeListener(node, event, handler) {
 
 function timeRangesToArray(ranges) {
 	var array = [];
-	for (let i = 0; i < ranges.length; i += 1) {
+	for (var i = 0; i < ranges.length; i += 1) {
 		array.push({ start: ranges.start(i), end: ranges.end(i) });
 	}
 	return array;
