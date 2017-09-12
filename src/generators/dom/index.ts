@@ -208,29 +208,36 @@ export default function dom(
 
 		this._fragment = @create_main_fragment(this._state, this);
 
-		if (options.target) {
-			${generator.hydratable
-				? deindent`
-					var nodes = @children(options.target);
-					options.hydrate ? this._fragment.claim(nodes) : this._fragment.create();
-					nodes.forEach(@detachNode);
-				` :
-				deindent`
-					${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
-					this._fragment.create();
-				`}
-			${generator.customElement ?
-				`this._mount(options.target, options.anchor || null);` :
-				`this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(options.target, options.anchor || null);`}
+		${generator.customElement ? deindent`
+			this._fragment.create();
+			this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(this.shadowRoot, null);
 
-			${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
-				${generator.hasComponents && `this._lock = true;`}
-				${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-				${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-				${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-				${generator.hasComponents && `this._lock = false;`}
-			`}
-		}
+			if (options.target) this._mount(options.target, options.anchor || null);
+		` : deindent`
+			if (options.target) {
+				${generator.hydratable
+					? deindent`
+						var nodes = @children(options.target);
+						options.hydrate ? this._fragment.claim(nodes) : this._fragment.create();
+						nodes.forEach(@detachNode);
+					` :
+					deindent`
+						${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
+						this._fragment.create();
+					`}
+				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(options.target, options.anchor || null);
+
+				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+					${generator.hasComponents && `this._lock = true;`}
+					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+					${generator.hasComponents && `this._lock = false;`}
+				`}
+			}
+		`}
+
+
 	`;
 
 	if (generator.customElement) {
@@ -272,7 +279,6 @@ export default function dom(
 			customElements.define("${generator.tag}", ${name});
 			@assign(${prototypeBase}, ${proto}, {
 				_mount(target, anchor) {
-					this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(this.shadowRoot, null);
 					target.insertBefore(this, anchor);
 				},
 

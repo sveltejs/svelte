@@ -102,6 +102,14 @@ export function toNumber(value) {
 	return value === '' ? undefined : +value;
 }
 
+export function timeRangesToArray(ranges) {
+	var array = [];
+	for (var i = 0; i < ranges.length; i += 1) {
+		array.push({ start: ranges.start(i), end: ranges.end(i) });
+	}
+	return array;
+}
+
 export function children (element) {
 	return Array.from(element.childNodes);
 }

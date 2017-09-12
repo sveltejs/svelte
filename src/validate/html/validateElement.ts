@@ -115,7 +115,10 @@ export default function validateElement(
 			} else if (
 				name === 'currentTime' ||
 				name === 'duration' ||
-				name === 'paused'
+				name === 'paused' ||
+				name === 'buffered' ||
+				name === 'seekable' ||
+				name === 'played'
 			) {
 				if (node.name !== 'audio' && node.name !== 'video') {
 					validator.error(
