@@ -1,0 +1,17 @@
+<Nested>
+	<p>unconditional</p>
+
+	{{#if foo}}
+		<p>conditional</p>
+	{{/if}}
+</Nested>
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		components: {
+			Nested
+		}
+	};
+</script>
