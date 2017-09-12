@@ -16,6 +16,11 @@ fs.readdirSync(__dirname).forEach(file => {
 	ast.body.forEach(node => {
 		if (node.type !== 'ExportNamedDeclaration') return;
 
+		// check no ES6+ slipped in
+		acorn.parse(source.slice(node.declaration.start, node.end), {
+			ecmaVersion: 5
+		});
+
 		const declaration = node.declaration;
 		if (!declaration) return;
 
@@ -34,5 +39,7 @@ fs.readdirSync(__dirname).forEach(file => {
 fs.writeFileSync(
 	'src/generators/dom/shared.ts',
 	`// this file is auto-generated, do not edit it
-export default ${JSON.stringify(declarations, null, '\t')};`
+const shared: Record<string, string> = ${JSON.stringify(declarations, null, '\t')};
+
+export default shared;`
 );
