@@ -47,8 +47,8 @@ export default function visitElement(
 	let openingTag = `<${node.name}`;
 	let textareaContents; // awkward special case
 
-	const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
-	if (slot) {
+	if (node.slotted) {
+		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const slotName = slot.value[0].data;
 		const appendTarget = generator.appendTargets[generator.appendTargets.length - 1];
 		appendTarget.slotStack.push(slotName);

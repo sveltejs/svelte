@@ -63,7 +63,7 @@ export default function visitElement(
 	const name = childState.parentNode;
 
 	const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
-	const parentNode = slot ?
+	const parentNode = node.slotted ?
 		`${componentStack[componentStack.length - 1].var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 		state.parentNode;
 
