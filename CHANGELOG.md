@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.39.2
+
+* Escape CSS in shadow DOM ([#840](https://github.com/sveltejs/svelte/issues/840))
+* Fix missing anchor bug inside SVG elements ([#843](https://github.com/sveltejs/svelte/issues/843))
+
 ## 1.39.1
 
 * Always use anchors for slotted content ([#822](https://github.com/sveltejs/svelte/issues/822))
