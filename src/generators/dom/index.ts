@@ -4,7 +4,7 @@ import annotateWithScopes from '../../utils/annotateWithScopes';
 import isReference from '../../utils/isReference';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
+import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import visit from './visit';
 import shared from './shared';
@@ -184,7 +184,7 @@ export default function dom(
 		${generator.customElement ?
 			deindent`
 				this.attachShadow({ mode: 'open' });
-				${css && `this.shadowRoot.innerHTML = \`<style>${options.dev ? `${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : css}</style>\`;`}
+				${css && `this.shadowRoot.innerHTML = \`<style>${options.dev ? `${escape(css, { onlyEscapeAtSymbol: true })}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : escape(css, { onlyEscapeAtSymbol: true })}</style>\`;`}
 			` :
 			(generator.stylesheet.hasStyles && options.css !== false &&
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
@@ -236,8 +236,6 @@ export default function dom(
 				`}
 			}
 		`}
-
-
 	`;
 
 	if (generator.customElement) {
