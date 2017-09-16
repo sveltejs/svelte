@@ -1,3 +1,5 @@
+import getStaticAttributeValue from '../../utils/getStaticAttributeValue';
+import isChildOfComponent from '../shared/utils/isChildOfComponent';
 import { SsrGenerator } from './index';
 import { Node } from '../../interfaces';
 
@@ -62,6 +64,11 @@ const preprocessors = {
 
 		if (!isComponent) {
 			generator.stylesheet.apply(node, elementStack);
+
+			const slot = getStaticAttributeValue(node, 'slot');
+			if (slot && isChildOfComponent(node, generator)) {
+				node.slotted = true;
+			}
 		}
 
 		if (node.children.length) {
@@ -80,6 +87,8 @@ function preprocessChildren(
 	elementStack: Node[]
 ) {
 	node.children.forEach((child: Node, i: number) => {
+		child.parent = node;
+
 		const preprocessor = preprocessors[child.type];
 		if (preprocessor) preprocessor(generator, child, elementStack);
 	});
