@@ -139,7 +139,7 @@ export default function dom(
 		`${name}.prototype` +
 		(templateProperties.methods ? `, @template.methods` : '');
 	const proto = sharedPath
-		? `@proto `
+		? `@proto`
 		: deindent`
 		{
 			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount']
