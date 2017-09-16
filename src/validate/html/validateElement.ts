@@ -10,6 +10,7 @@ export default function validateElement(
 	node: Node,
 	refs: Map<string, Node[]>,
 	refCallees: Node[],
+	stack: Node[],
 	elementStack: Node[]
 ) {
 	const isComponent =
@@ -189,11 +190,23 @@ export default function validateElement(
 				}
 			}
 
-			if (attribute.name === 'slot' && !isComponent && isDynamic(attribute)) {
-				validator.error(
-					`slot attribute cannot have a dynamic value`,
-					attribute.start
-				);
+			if (attribute.name === 'slot' && !isComponent) {
+				let i = stack.length;
+				while (i--) {
+					const parent = stack[i];
+					if (parent.type === 'Element' && validator.components.has(parent.name)) break;
+					if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
+						const message = `Cannot place slotted elements inside an ${parent.type === 'IfBlock' ? 'if' : 'each'}-block`;
+						validator.error(message, attribute.start);
+					}
+				}
+
+				if (isDynamic(attribute)) {
+					validator.error(
+						`slot attribute cannot have a dynamic value`,
+						attribute.start
+					);
+				}
 			}
 		}
 	});
