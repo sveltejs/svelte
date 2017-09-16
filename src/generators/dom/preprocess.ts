@@ -2,6 +2,7 @@ import Block from './Block';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { assign } from '../../shared/index.js';
 import getStaticAttributeValue from '../../utils/getStaticAttributeValue';
+import isChildOfComponent from '../shared/utils/isChildOfComponent';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 import { State } from './interfaces';
@@ -340,7 +341,8 @@ const preprocessors = {
 			});
 		} else {
 			const slot = getStaticAttributeValue(node, 'slot');
-			if (slot) {
+			if (slot && isChildOfComponent(node, generator)) {
+				node.slotted = true;
 				// TODO validate slots — no nesting, no dynamic names...
 				const component = componentStack[componentStack.length - 1];
 				component._slots.add(slot);
