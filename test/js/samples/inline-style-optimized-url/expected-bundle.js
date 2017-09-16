@@ -29,6 +29,10 @@ function setStyle(node, key, value) {
 	node.style.setProperty(key, value);
 }
 
+function blankObject() {
+	return Object.create(null);
+}
+
 function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
@@ -81,13 +85,8 @@ function get(key) {
 function init(component, options) {
 	component.options = options;
 
-	component._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	component._handlers = Object.create(null);
-
+	component._observers = { pre: blankObject(), post: blankObject() };
+	component._handlers = blankObject();
 	component._root = options._root || component;
 	component._yield = options._yield;
 	component._bind = options._bind;
