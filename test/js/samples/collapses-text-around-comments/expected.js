@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, detachNode, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, detachNode, init, insertNode, noop, proto, setAttribute } from "svelte/shared.js";
 
 var template = (function() {
 	return {
@@ -53,19 +53,8 @@ function create_main_fragment(state, component) {
 }
 
 function SvelteComponent(options) {
-	this.options = options;
+	init(this, options);
 	this._state = assign(template.data(), options.data);
-
-	this._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	this._handlers = Object.create(null);
-
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
 
 	if (!document.getElementById("svelte-3590263702-style")) add_css();
 

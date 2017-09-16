@@ -1,4 +1,4 @@
-import { appendNode, assign, createElement, createText, destroyEach, detachAfter, detachNode, insertNode, noop, proto } from "svelte/shared.js";
+import { appendNode, assign, createElement, createText, destroyEach, detachAfter, detachNode, init, insertNode, noop, proto } from "svelte/shared.js";
 
 function create_main_fragment(state, component) {
 	var text, p, text_1;
@@ -138,19 +138,8 @@ function create_each_block(state, each_block_value, comment, i, component) {
 }
 
 function SvelteComponent(options) {
-	this.options = options;
+	init(this, options);
 	this._state = options.data || {};
-
-	this._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	this._handlers = Object.create(null);
-
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
 
 	this._fragment = create_main_fragment(this._state, this);
 

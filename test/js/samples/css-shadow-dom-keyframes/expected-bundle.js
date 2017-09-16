@@ -68,10 +68,6 @@ function dispatchObservers(component, group, changed, newState, oldState) {
 	}
 }
 
-function get(key) {
-	return key ? this._state[key] : this._state;
-}
-
 function fire(eventName, data) {
 	var handlers =
 		eventName in this._handlers && this._handlers[eventName].slice();
@@ -80,6 +76,25 @@ function fire(eventName, data) {
 	for (var i = 0; i < handlers.length; i += 1) {
 		handlers[i].call(this, data);
 	}
+}
+
+function get(key) {
+	return key ? this._state[key] : this._state;
+}
+
+function init(component, options) {
+	component.options = options;
+
+	component._observers = {
+		pre: Object.create(null),
+		post: Object.create(null)
+	};
+
+	component._handlers = Object.create(null);
+
+	component._root = options._root || component;
+	component._yield = options._yield;
+	component._bind = options._bind;
 }
 
 function observe(key, callback, options) {
@@ -198,19 +213,8 @@ function create_main_fragment(state, component) {
 class SvelteComponent extends HTMLElement {
 	constructor(options = {}) {
 		super();
-		this.options = options;
+		init(this, options);
 		this._state = options.data || {};
-
-		this._observers = {
-			pre: Object.create(null),
-			post: Object.create(null)
-		};
-
-		this._handlers = Object.create(null);
-
-		this._root = options._root || this;
-		this._yield = options._yield;
-		this._bind = options._bind;
 
 		this.attachShadow({ mode: 'open' });
 		this.shadowRoot.innerHTML = `<style>div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}</style>`;
