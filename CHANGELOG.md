@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.39.3
+
+* Allow `slot='...'` inside custom elements ([#827](https://github.com/sveltejs/svelte/issues/827))
+* Disallow `slot='...'` inside if/each blocks ([#849](https://github.com/sveltejs/svelte/issues/849))
+* Use correct parent node for slotted if blocks ([#850](https://github.com/sveltejs/svelte/issues/850))
+
 ## 1.39.2
 
 * Escape CSS in shadow DOM ([#840](https://github.com/sveltejs/svelte/issues/840))
