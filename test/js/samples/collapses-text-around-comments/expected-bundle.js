@@ -72,10 +72,6 @@ function dispatchObservers(component, group, changed, newState, oldState) {
 	}
 }
 
-function get(key) {
-	return key ? this._state[key] : this._state;
-}
-
 function fire(eventName, data) {
 	var handlers =
 		eventName in this._handlers && this._handlers[eventName].slice();
@@ -84,6 +80,25 @@ function fire(eventName, data) {
 	for (var i = 0; i < handlers.length; i += 1) {
 		handlers[i].call(this, data);
 	}
+}
+
+function get(key) {
+	return key ? this._state[key] : this._state;
+}
+
+function init(component, options) {
+	component.options = options;
+
+	component._observers = {
+		pre: Object.create(null),
+		post: Object.create(null)
+	};
+
+	component._handlers = Object.create(null);
+
+	component._root = options._root || component;
+	component._yield = options._yield;
+	component._bind = options._bind;
 }
 
 function observe(key, callback, options) {
@@ -228,19 +243,8 @@ function create_main_fragment(state, component) {
 }
 
 function SvelteComponent(options) {
-	this.options = options;
+	init(this, options);
 	this._state = assign(template.data(), options.data);
-
-	this._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	this._handlers = Object.create(null);
-
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
 
 	if (!document.getElementById("svelte-3590263702-style")) add_css();
 

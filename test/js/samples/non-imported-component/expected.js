@@ -1,6 +1,6 @@
 import Imported from 'Imported.html';
 
-import { assign, callAll, createText, detachNode, insertNode, noop, proto } from "svelte/shared.js";
+import { assign, callAll, createText, detachNode, init, insertNode, noop, proto } from "svelte/shared.js";
 
 var template = (function() {
 	return {
@@ -50,19 +50,8 @@ function create_main_fragment(state, component) {
 }
 
 function SvelteComponent(options) {
-	this.options = options;
+	init(this, options);
 	this._state = options.data || {};
-
-	this._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	this._handlers = Object.create(null);
-
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
 
 	if (!options._root) {
 		this._oncreate = [];

@@ -153,7 +153,7 @@ export default function dom(
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options._root)) throw new Error("'target' is a required option");`}
-		this.options = options;
+		@init(this, options);
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${templateProperties.data
 			? `@assign(@template.data(), options.data)`
@@ -168,17 +168,8 @@ export default function dom(
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
 
-		this._observers = {
-			pre: Object.create(null),
-			post: Object.create(null)
-		};
-
-		this._handlers = Object.create(null);
 		${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
 
-		this._root = options._root || this;
-		this._yield = options._yield;
-		this._bind = options._bind;
 		${generator.slots.size && `this._slotted = options.slots || {};`}
 
 		${generator.customElement ?

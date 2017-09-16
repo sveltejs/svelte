@@ -81,10 +81,6 @@ function dispatchObservers(component, group, changed, newState, oldState) {
 	}
 }
 
-function get(key) {
-	return key ? this._state[key] : this._state;
-}
-
 function fire(eventName, data) {
 	var handlers =
 		eventName in this._handlers && this._handlers[eventName].slice();
@@ -93,6 +89,25 @@ function fire(eventName, data) {
 	for (var i = 0; i < handlers.length; i += 1) {
 		handlers[i].call(this, data);
 	}
+}
+
+function get(key) {
+	return key ? this._state[key] : this._state;
+}
+
+function init(component, options) {
+	component.options = options;
+
+	component._observers = {
+		pre: Object.create(null),
+		post: Object.create(null)
+	};
+
+	component._handlers = Object.create(null);
+
+	component._root = options._root || component;
+	component._yield = options._yield;
+	component._bind = options._bind;
 }
 
 function observe(key, callback, options) {
@@ -322,19 +337,8 @@ function create_each_block(state, each_block_value, comment, i, component) {
 }
 
 function SvelteComponent(options) {
-	this.options = options;
+	init(this, options);
 	this._state = options.data || {};
-
-	this._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	this._handlers = Object.create(null);
-
-	this._root = options._root || this;
-	this._yield = options._yield;
-	this._bind = options._bind;
 
 	this._fragment = create_main_fragment(this._state, this);
 

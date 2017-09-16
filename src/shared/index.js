@@ -46,10 +46,6 @@ export function dispatchObservers(component, group, changed, newState, oldState)
 	}
 }
 
-export function get(key) {
-	return key ? this._state[key] : this._state;
-}
-
 export function fire(eventName, data) {
 	var handlers =
 		eventName in this._handlers && this._handlers[eventName].slice();
@@ -58,6 +54,25 @@ export function fire(eventName, data) {
 	for (var i = 0; i < handlers.length; i += 1) {
 		handlers[i].call(this, data);
 	}
+}
+
+export function get(key) {
+	return key ? this._state[key] : this._state;
+}
+
+export function init(component, options) {
+	component.options = options;
+
+	component._observers = {
+		pre: Object.create(null),
+		post: Object.create(null)
+	};
+
+	component._handlers = Object.create(null);
+
+	component._root = options._root || component;
+	component._yield = options._yield;
+	component._bind = options._bind;
 }
 
 export function observe(key, callback, options) {
