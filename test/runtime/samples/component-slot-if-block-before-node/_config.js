@@ -1,5 +1,4 @@
 export default {
-	solo: true,
 	html: `
 		<div>
 			<p>unconditional</p>

@@ -152,7 +152,7 @@ function simple(
 		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
+	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
 
 	const enter = dynamic
 		? branch.hasIntroMethod
@@ -255,7 +255,7 @@ function compound(
 		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
+	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
 		${hasElse
