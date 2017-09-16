@@ -48,7 +48,7 @@ function SvelteComponent(options) {
 	}
 }
 
-assign(SvelteComponent.prototype, proto );
+assign(SvelteComponent.prototype, proto);
 
 SvelteComponent.prototype._recompute = function _recompute(changed, state, oldState, isInitial) {
 	if ( isInitial || changed.x ) {
