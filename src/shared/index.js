@@ -4,6 +4,10 @@ export * from './dom.js';
 export * from './transitions.js';
 export * from './utils.js';
 
+export function blankObject() {
+	return Object.create(null);
+}
+
 export function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
@@ -63,13 +67,8 @@ export function get(key) {
 export function init(component, options) {
 	component.options = options;
 
-	component._observers = {
-		pre: Object.create(null),
-		post: Object.create(null)
-	};
-
-	component._handlers = Object.create(null);
-
+	component._observers = { pre: blankObject(), post: blankObject() };
+	component._handlers = blankObject();
 	component._root = options._root || component;
 	component._yield = options._yield;
 	component._bind = options._bind;
