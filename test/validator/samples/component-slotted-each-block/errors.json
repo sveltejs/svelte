@@ -1,0 +1,8 @@
+[{
+	"message": "Cannot place slotted elements inside an each-block",
+	"loc": {
+		"line": 3,
+		"column": 7
+	},
+	"pos": 43
+}]

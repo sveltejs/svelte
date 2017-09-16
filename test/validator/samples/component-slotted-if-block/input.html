@@ -1,0 +1,15 @@
+<Nested>
+	{{#if thing}}
+		<div slot='foo'>{{thing}}</div>
+	{{/if}}
+</Nested>
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		components: {
+			Nested
+		}
+	};
+</script>

@@ -1,0 +1,8 @@
+[{
+	"message": "Cannot place slotted elements inside an if-block",
+	"loc": {
+		"line": 3,
+		"column": 7
+	},
+	"pos": 31
+}]
