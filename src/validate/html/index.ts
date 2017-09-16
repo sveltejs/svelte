@@ -11,6 +11,7 @@ const meta = new Map([[':Window', validateWindow]]);
 export default function validateHtml(validator: Validator, html: Node) {
 	const refs = new Map();
 	const refCallees: Node[] = [];
+	const stack: Node[] = [];
 	const elementStack: Node[] = [];
 
 	function visit(node: Node) {
@@ -21,7 +22,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 				return meta.get(node.name)(validator, node, refs, refCallees);
 			}
 
-			validateElement(validator, node, refs, refCallees, elementStack);
+			validateElement(validator, node, refs, refCallees, stack, elementStack);
 		} else if (node.type === 'EachBlock') {
 			if (validator.helpers.has(node.context)) {
 				let c = node.expression.end;
@@ -40,7 +41,9 @@ export default function validateHtml(validator: Validator, html: Node) {
 
 		if (node.children) {
 			if (node.type === 'Element') elementStack.push(node);
+			stack.push(node);
 			node.children.forEach(visit);
+			stack.pop();
 			if (node.type === 'Element') elementStack.pop();
 		}
 
