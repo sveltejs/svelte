@@ -207,7 +207,7 @@ function SvelteComponent(options) {
 assign(SvelteComponent.prototype, proto);
 
 SvelteComponent.prototype._recompute = function _recompute(changed, state, oldState, isInitial) {
-	if ( isInitial || changed.x ) {
+	if (isInitial || changed.x) {
 		if (differs((state.a = template.computed.a(state.x)), oldState.a)) changed.a = true;
 		if (differs((state.b = template.computed.b(state.x)), oldState.b)) changed.b = true;
 	}

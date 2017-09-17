@@ -202,11 +202,11 @@ function create_main_fragment(state, component) {
 		},
 
 		update: function(changed, state) {
-			if ( changed.color ) {
+			if (changed.color) {
 				setStyle(div, "color", state.color);
 			}
 
-			if ( changed.x || changed.y ) {
+			if (changed.x || changed.y) {
 				setStyle(div, "transform", "translate(" + state.x + "px," + state.y + "px)");
 			}
 		},
