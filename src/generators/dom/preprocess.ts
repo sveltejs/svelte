@@ -22,6 +22,25 @@ function getChildState(parent: State, child = {}) {
 	);
 }
 
+function createDebuggingComment(node: Node, generator: DomGenerator) {
+	const { locate, source } = generator;
+
+	let c = node.start;
+	if (node.type === 'ElseBlock') {
+		while (source[c] !== '{') c -= 1;
+		c -= 1;
+	}
+
+	let d = node.expression ? node.expression.end : c;
+	while (source[d] !== '}') d += 1;
+	d += 2;
+
+	const start = locate(c);
+	const loc = `(${start.line + 1}:${start.column})`;
+
+	return `${loc} ${source.slice(c, d)}`.replace(/\n/g, ' ');
+}
+
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
 // list is almost certainly very incomplete)
@@ -107,6 +126,7 @@ const preprocessors = {
 			block.addDependencies(dependencies);
 
 			node._block = block.child({
+				comment: createDebuggingComment(node, generator),
 				name: generator.getUniqueName(`create_if_block`),
 			});
 
@@ -127,6 +147,7 @@ const preprocessors = {
 				attachBlocks(node.else.children[0]);
 			} else if (node.else) {
 				node.else._block = block.child({
+					comment: createDebuggingComment(node.else, generator),
 					name: generator.getUniqueName(`create_if_block`),
 				});
 
@@ -202,6 +223,7 @@ const preprocessors = {
 		contextDependencies.set(node.context, dependencies);
 
 		node._block = block.child({
+			comment: createDebuggingComment(node, generator),
 			name: generator.getUniqueName('create_each_block'),
 			expression: node.expression,
 			context: node.context,
@@ -231,6 +253,7 @@ const preprocessors = {
 
 		if (node.else) {
 			node.else._block = block.child({
+				comment: createDebuggingComment(node.else, generator),
 				name: generator.getUniqueName(`${node._block.name}_else`),
 			});
 

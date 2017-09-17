@@ -103,7 +103,7 @@ export default function ssr(
 
 		var ${name} = {};
 
-		${name}.filename = ${stringify(options.filename)};
+		${options.filename && `${name}.filename = ${stringify(options.filename)}`};
 
 		${name}.data = function() {
 			return ${templateProperties.data ? `@template.data()` : `{}`};

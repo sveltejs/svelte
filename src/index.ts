@@ -12,9 +12,6 @@ function normalizeOptions(options: CompileOptions): CompileOptions {
 		{
 			generate: 'dom',
 
-			// a filename is necessary for sourcemap generation
-			filename: 'SvelteComponent.html',
-
 			onwarn: (warning: Warning) => {
 				if (warning.loc) {
 					console.warn(

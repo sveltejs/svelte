@@ -1,5 +1,6 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
+import { escape } from '../../utils/stringify';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
 import shared from './shared';
@@ -9,6 +10,7 @@ export interface BlockOptions {
 	generator?: DomGenerator;
 	expression?: Node;
 	context?: string;
+	comment?: string;
 	key?: string;
 	contexts?: Map<string, string>;
 	indexes?: Map<string, string>;
@@ -27,6 +29,7 @@ export default class Block {
 	name: string;
 	expression: Node;
 	context: string;
+	comment?: string;
 
 	key: string;
 	first: string;
@@ -72,6 +75,7 @@ export default class Block {
 		this.name = options.name;
 		this.expression = options.expression;
 		this.context = options.context;
+		this.comment = options.comment;
 
 		// for keyed each blocks
 		this.key = options.key;
@@ -340,6 +344,7 @@ export default class Block {
 		}
 
 		return deindent`
+			${this.comment && `// ${escape(this.comment)}`}
 			function ${this.name}(${this.params.join(', ')}, #component${this.key ? `, ${localKey}` : ''}) {
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())

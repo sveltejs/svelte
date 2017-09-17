@@ -56,6 +56,8 @@ export default class Generator {
 	expectedProperties: Set<string>;
 	usesRefs: boolean;
 
+	locate: (c: number) => { line: number, column: number };
+
 	stylesheet: Stylesheet;
 
 	importedNames: Set<string>;
@@ -85,6 +87,8 @@ export default class Generator {
 
 		this.bindingGroups = [];
 		this.indirectDependencies = new Map();
+
+		this.locate = getLocator(this.source);
 
 		// track which properties are needed, so we can provide useful info
 		// in dev mode
