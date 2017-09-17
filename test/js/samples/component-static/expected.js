@@ -4,24 +4,37 @@ import { assign, callAll, init, noop, proto } from "svelte/shared.js";
 
 var template = (function() {
 	return {
-		// this test should be removed in v2
-		oncreate () {},
-		ondestroy () {}
+		components: {
+			Nested: window.Nested
+		}
 	};
 }());
 
 function create_main_fragment(state, component) {
 
-	return {
-		create: noop,
+	var nested = new template.components.Nested({
+		_root: component._root,
+		data: { foo: "bar" }
+	});
 
-		mount: noop,
+	return {
+		create: function() {
+			nested._fragment.create();
+		},
+
+		mount: function(target, anchor) {
+			nested._mount(target, anchor);
+		},
 
 		update: noop,
 
-		unmount: noop,
+		unmount: function() {
+			nested._unmount();
+		},
 
-		destroy: noop
+		destroy: function() {
+			nested.destroy(false);
+		}
 	};
 }
 
@@ -29,15 +42,11 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = options.data || {};
 
-	this._handlers.destroy = [template.ondestroy]
-
-	var oncreate = template.oncreate.bind(this);
-
 	if (!options._root) {
-		this._oncreate = [oncreate];
-	} else {
-	 	this._root._oncreate.push(oncreate);
-	 }
+		this._oncreate = [];
+		this._beforecreate = [];
+		this._aftercreate = [];
+	}
 
 	this._fragment = create_main_fragment(this._state, this);
 
@@ -45,7 +54,11 @@ function SvelteComponent(options) {
 		this._fragment.create();
 		this._fragment.mount(options.target, options.anchor || null);
 
+		this._lock = true;
+		callAll(this._beforecreate);
 		callAll(this._oncreate);
+		callAll(this._aftercreate);
+		this._lock = false;
 	}
 }
 
