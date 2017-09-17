@@ -146,7 +146,7 @@ function _set(newState) {
 	if (!dirty) return;
 
 	this._state = assign({}, oldState, newState);
-	this._recompute(changed, this._state, oldState, false);
+	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
 	this._fragment.update(changed, this._state);

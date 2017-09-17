@@ -132,7 +132,7 @@ function _set(newState) {
 	if (!dirty) return;
 
 	this._state = assign({}, oldState, newState);
-	this._recompute(changed, this._state, oldState, false);
+	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
 	this._fragment.update(changed, this._state);
@@ -194,7 +194,7 @@ function create_main_fragment(state, component) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = options.data || {};
-	this._recompute({}, this._state, {}, true);
+	this._recompute({ x: 1 }, this._state);
 
 	this._fragment = create_main_fragment(this._state, this);
 
@@ -206,10 +206,10 @@ function SvelteComponent(options) {
 
 assign(SvelteComponent.prototype, proto);
 
-SvelteComponent.prototype._recompute = function _recompute(changed, state, oldState, isInitial) {
-	if (isInitial || changed.x) {
-		if (differs((state.a = template.computed.a(state.x)), oldState.a)) changed.a = true;
-		if (differs((state.b = template.computed.b(state.x)), oldState.b)) changed.b = true;
+SvelteComponent.prototype._recompute = function _recompute(changed, state) {
+	if (changed.x) {
+		if (differs(state.a, (state.a = template.computed.a(state.x)))) changed.a = true;
+		if (differs(state.b, (state.b = template.computed.b(state.x)))) changed.b = true;
 	}
 };
 
