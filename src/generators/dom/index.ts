@@ -97,9 +97,9 @@ export default function dom(
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const statement = `if (@differs((state.${key} = @template.computed.${key}(${deps
+			const statement = `if (@differs(state.${key}, (state.${key} = @template.computed.${key}(${deps
 				.map(dep => `state.${dep}`)
-				.join(', ')})), oldState.${key})) changed.${key} = true;`;
+				.join(', ')})))) changed.${key} = true;`;
 
 			computationBuilder.addConditional(condition, statement);
 		});
@@ -165,7 +165,7 @@ export default function dom(
 			? `@assign(@template.data(), options.data)`
 			: `options.data || {}`};
 		${generator.metaBindings}
-		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state, {});`}
+		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(
 				prop =>
@@ -303,7 +303,7 @@ export default function dom(
 		`}
 
 		${computations.length ? deindent`
-			${name}.prototype._recompute = function _recompute(changed, state, oldState) {
+			${name}.prototype._recompute = function _recompute(changed, state) {
 				${computationBuilder}
 			}
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
