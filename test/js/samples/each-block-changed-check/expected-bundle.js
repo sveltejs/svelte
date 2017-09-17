@@ -253,7 +253,7 @@ function create_main_fragment(state, component) {
 				each_block_iterations.length = each_block_value.length;
 			}
 
-			if ( changed.foo ) {
+			if (changed.foo) {
 				text_1.data = state.foo;
 			}
 		},
@@ -314,15 +314,15 @@ function create_each_block(state, each_block_value, comment, i, component) {
 		},
 
 		update: function(changed, state, each_block_value, comment, i) {
-			if ( (changed.comments) && text_2_value !== (text_2_value = comment.author) ) {
+			if ((changed.comments) && text_2_value !== (text_2_value = comment.author)) {
 				text_2.data = text_2_value;
 			}
 
-			if ( (changed.elapsed || changed.comments || changed.time) && text_4_value !== (text_4_value = state.elapsed(comment.time, state.time)) ) {
+			if ((changed.elapsed || changed.comments || changed.time) && text_4_value !== (text_4_value = state.elapsed(comment.time, state.time))) {
 				text_4.data = text_4_value;
 			}
 
-			if ( (changed.comments) && raw_value !== (raw_value = comment.html) ) {
+			if ((changed.comments) && raw_value !== (raw_value = comment.html)) {
 				detachAfter(raw_before);
 				raw_before.insertAdjacentHTML("afterend", raw_value);
 			}

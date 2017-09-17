@@ -44,7 +44,7 @@ export default class CodeBuilder {
 				this.result += `\n${this.indent}}`;
 			}
 
-			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}${this.indent}if ( ${condition} ) {\n${body}`;
+			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}${this.indent}if (${condition}) {\n${body}`;
 			this.lastCondition = condition;
 		}
 

@@ -20,7 +20,7 @@ function create_main_fragment(state, component) {
 		},
 
 		update: function(changed, state) {
-			if ( changed.data ) {
+			if (changed.data) {
 				setStyle(div, "background", "url(data:image/png;base64," + state.data + ")");
 			}
 		},

@@ -206,11 +206,11 @@ function create_main_fragment(state, component) {
 		},
 
 		update: function(changed, state) {
-			if ( changed.style ) {
+			if (changed.style) {
 				div.style.cssText = state.style;
 			}
 
-			if ( (changed.key || changed.value) && div_1_style_value !== (div_1_style_value = "" + state.key + ": " + state.value) ) {
+			if ((changed.key || changed.value) && div_1_style_value !== (div_1_style_value = "" + state.key + ": " + state.value)) {
 				div_1.style.cssText = div_1_style_value;
 			}
 		},
