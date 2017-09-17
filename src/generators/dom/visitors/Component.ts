@@ -206,12 +206,14 @@ export default function visitComponent(
 			componentInitProperties.push(`data: ${initialPropString}`);
 		}
 
-		block.builders.update.addBlock(deindent`
-			var ${name}_changes = {};
-			${updates.join('\n')}
-			${name}._set( ${name}_changes );
-			${bindings.length && `${name_updating} = {};`}
-		`);
+		if (updates.length) {
+			block.builders.update.addBlock(deindent`
+				var ${name}_changes = {};
+				${updates.join('\n')}
+				${name}._set( ${name}_changes );
+				${bindings.length && `${name_updating} = {};`}
+			`);
+		}
 	}
 
 	const expression = node.name === ':Self'
