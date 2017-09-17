@@ -77,9 +77,14 @@ export default function dom(
 
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();
+	const computationDeps = new Set();
 
 	if (computations.length) {
 		computations.forEach(({ key, deps }) => {
+			deps.forEach(dep => {
+				computationDeps.add(dep);
+			});
+
 			if (generator.readonly.has(key)) {
 				// <:Window> bindings
 				throw new Error(
@@ -89,7 +94,7 @@ export default function dom(
 
 			generator.readonly.add(key);
 
-			const condition = `isInitial || ${deps.map(dep => `changed.${dep}`).join(' || ')}`;
+			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
 			const statement = `if (@differs((state.${key} = @template.computed.${key}(${deps
 				.map(dep => `state.${dep}`)
@@ -159,7 +164,7 @@ export default function dom(
 			? `@assign(@template.data(), options.data)`
 			: `options.data || {}`};
 		${generator.metaBindings}
-		${computations.length && `this._recompute({}, this._state, {}, true);`}
+		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state, {});`}
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(
 				prop =>
@@ -306,7 +311,7 @@ export default function dom(
 		`}
 
 		${computations.length ? deindent`
-			${name}.prototype._recompute = function _recompute(changed, state, oldState, isInitial) {
+			${name}.prototype._recompute = function _recompute(changed, state, oldState) {
 				${computationBuilder}
 			}
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
