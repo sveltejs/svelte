@@ -160,7 +160,7 @@ function keyed(
 	const last = block.getUniqueName(`${each_block}_last`);
 	const expected = block.getUniqueName(`${each_block}_expected`);
 
-	block.addVariable(lookup, `Object.create(null)`);
+	block.addVariable(lookup, `@blankObject()`);
 	block.addVariable(head);
 	block.addVariable(last);
 
