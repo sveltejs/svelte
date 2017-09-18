@@ -64,6 +64,7 @@ export interface CompileOptions {
 export interface GenerateOptions {
 	name: string;
 	format: ModuleFormat;
+	banner?: string;
 }
 
 export interface Visitor {

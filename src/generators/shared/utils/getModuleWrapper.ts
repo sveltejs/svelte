@@ -68,8 +68,14 @@ function getEsWrapper(name: string, options: CompileOptions, imports: Node[], so
 		.join('\n');
 
 	return {
-		intro: importBlock ? importBlock + '\n\n' : '',
-		outro: `export default ${name};`
+		intro: deindent`
+			${importBlock}
+
+			export default (function() {
+		`,
+		outro: deindent`
+			return ${name};
+			}());`
 	};
 }
 
