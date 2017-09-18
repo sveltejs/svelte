@@ -203,12 +203,12 @@ var proto = {
 function create_main_fragment(state, component) {
 	var text, p, text_1;
 
-	var each_block_value = state.comments;
+	var comments = state.comments;
 
 	var each_block_iterations = [];
 
-	for (var i = 0; i < each_block_value.length; i += 1) {
-		each_block_iterations[i] = create_each_block(state, each_block_value, each_block_value[i], i, component);
+	for (var i = 0; i < comments.length; i += 1) {
+		each_block_iterations[i] = create_each_block(state, comments, comments[i], i, component);
 	}
 
 	return {
@@ -233,14 +233,14 @@ function create_main_fragment(state, component) {
 		},
 
 		update: function(changed, state) {
-			var each_block_value = state.comments;
+			var comments = state.comments;
 
 			if (changed.comments || changed.elapsed || changed.time) {
-				for (var i = 0; i < each_block_value.length; i += 1) {
+				for (var i = 0; i < comments.length; i += 1) {
 					if (each_block_iterations[i]) {
-						each_block_iterations[i].update(changed, state, each_block_value, each_block_value[i], i);
+						each_block_iterations[i].update(changed, state, comments, comments[i], i);
 					} else {
-						each_block_iterations[i] = create_each_block(state, each_block_value, each_block_value[i], i, component);
+						each_block_iterations[i] = create_each_block(state, comments, comments[i], i, component);
 						each_block_iterations[i].create();
 						each_block_iterations[i].mount(text.parentNode, text);
 					}
@@ -250,7 +250,7 @@ function create_main_fragment(state, component) {
 					each_block_iterations[i].unmount();
 					each_block_iterations[i].destroy();
 				}
-				each_block_iterations.length = each_block_value.length;
+				each_block_iterations.length = comments.length;
 			}
 
 			if (changed.foo) {
@@ -274,7 +274,7 @@ function create_main_fragment(state, component) {
 }
 
 // (1:0) {{#each comments as comment, i}}
-function create_each_block(state, each_block_value, comment, i, component) {
+function create_each_block(state, comments, comment, i, component) {
 	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before;
 
 	return {
@@ -313,7 +313,7 @@ function create_each_block(state, each_block_value, comment, i, component) {
 			raw_before.insertAdjacentHTML("afterend", raw_value);
 		},
 
-		update: function(changed, state, each_block_value, comment, i) {
+		update: function(changed, state, comments, comment, i) {
 			if ((changed.comments) && text_2_value !== (text_2_value = comment.author)) {
 				text_2.data = text_2_value;
 			}
