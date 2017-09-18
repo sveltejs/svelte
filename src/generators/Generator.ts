@@ -8,8 +8,7 @@ import globalWhitelist from '../utils/globalWhitelist';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
-import getIntro from './shared/utils/getIntro';
-import getOutro from './shared/utils/getOutro';
+import getModuleWrapper from './shared/utils/getModuleWrapper';
 import annotateWithScopes from '../utils/annotateWithScopes';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
@@ -304,51 +303,6 @@ export default class Generator {
 	}
 
 	generate(result: string, options: CompileOptions, { name, format }: GenerateOptions ) {
-		if (this.imports.length) {
-			const statements: string[] = [];
-
-			this.imports.forEach((declaration, i) => {
-				if (format === 'es') {
-					statements.push(
-						this.source.slice(declaration.start, declaration.end)
-					);
-					return;
-				}
-
-				const defaultImport = declaration.specifiers.find(
-					(x: Node) =>
-						x.type === 'ImportDefaultSpecifier' ||
-						(x.type === 'ImportSpecifier' && x.imported.name === 'default')
-				);
-				const namespaceImport = declaration.specifiers.find(
-					(x: Node) => x.type === 'ImportNamespaceSpecifier'
-				);
-				const namedImports = declaration.specifiers.filter(
-					(x: Node) =>
-						x.type === 'ImportSpecifier' && x.imported.name !== 'default'
-				);
-
-				const name = defaultImport || namespaceImport
-					? (defaultImport || namespaceImport).local.name
-					: `__import${i}`;
-				declaration.name = name; // hacky but makes life a bit easier later
-
-				namedImports.forEach((specifier: Node) => {
-					statements.push(
-						`var ${specifier.local.name} = ${name}.${specifier.imported.name}`
-					);
-				});
-
-				if (defaultImport) {
-					statements.push(
-						`${name} = (${name} && ${name}.__esModule) ? ${name}['default'] : ${name};`
-					);
-				}
-			});
-
-			result = `${statements.join('\n')}\n\n${result}`;
-		}
-
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
 		const parts = result.split('✂]');
@@ -362,8 +316,9 @@ export default class Generator {
 			});
 		}
 
-		const intro = getIntro(format, options, this.imports);
-		if (intro) addString(intro);
+		const { intro, outro } = getModuleWrapper(format, name, options, this.imports, this.source);
+
+		addString(intro + '\n\n');
 
 		const { filename } = options;
 
@@ -391,7 +346,7 @@ export default class Generator {
 		});
 
 		addString(finalChunk);
-		addString('\n\n' + getOutro(format, name, options, this.imports));
+		addString('\n\n' + outro);
 
 		const { css, cssMap } = this.customElement ?
 			{ css: null, cssMap: null } :
