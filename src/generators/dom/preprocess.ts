@@ -206,7 +206,11 @@ const preprocessors = {
 		indexNames.set(node.context, indexName);
 
 		const listNames = new Map(block.listNames);
-		const listName = block.getUniqueName(`each_block_value`);
+		const listName = block.getUniqueName(
+			(node.expression.type === 'MemberExpression' && !node.expression.computed) ? node.expression.property.name :
+			node.expression.type === 'Identifier' ? node.expression.name :
+			`each_block_value`
+		);
 		listNames.set(node.context, listName);
 
 		const context = generator.getUniqueName(node.context);
