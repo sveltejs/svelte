@@ -302,7 +302,7 @@ export default class Generator {
 		return (expression._dependencies = dependencies);
 	}
 
-	generate(result: string, options: CompileOptions, { banner = '', name, format }: GenerateOptions ) {
+	generate(result: string, options: CompileOptions, { banner = '', sharedPath, helpers, name, format }: GenerateOptions ) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
 		const parts = result.split('✂]');
@@ -316,9 +316,9 @@ export default class Generator {
 			});
 		}
 
-		const { intro, outro } = getModuleWrapper(format, name, options, this.imports, this.source);
+		const { intro, outro } = getModuleWrapper(format, name, options, banner, sharedPath, helpers, this.imports, this.source);
 
-		addString(banner + intro + '\n\n');
+		addString(intro + '\n\n');
 
 		const { filename } = options;
 

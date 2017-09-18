@@ -11,10 +11,13 @@ export default function getModuleWrapper(
 	format: ModuleFormat,
 	name: string,
 	options: CompileOptions,
+	banner: string,
+	sharedPath: string,
+	helpers: { name: string, alias: string }[],
 	imports: Node[],
 	source: string
 ) {
-	if (format === 'es') return getEsWrapper(name, options, imports, source);
+	if (format === 'es') return getEsWrapper(name, options, banner, sharedPath, helpers, imports, source);
 
 	const dependencies = imports.map((declaration, i) => {
 		const defaultImport = declaration.specifiers.find(
@@ -53,22 +56,36 @@ export default function getModuleWrapper(
 		return { name, statements, source: declaration.source.value };
 	});
 
-	if (format === 'amd') return getAmdWrapper(name, options, dependencies);
-	if (format === 'cjs') return getCjsWrapper(name, options, dependencies);
-	if (format === 'iife') return getIifeWrapper(name, options, dependencies);
-	if (format === 'umd') return getUmdWrapper(name, options, dependencies);
-	if (format === 'eval') return getEvalWrapper(name, options, dependencies);
+	if (format === 'amd') return getAmdWrapper(name, options, banner, dependencies);
+	if (format === 'cjs') return getCjsWrapper(name, options, banner, sharedPath, helpers, dependencies);
+	if (format === 'iife') return getIifeWrapper(name, options, banner, dependencies);
+	if (format === 'umd') return getUmdWrapper(name, options, banner, dependencies);
+	if (format === 'eval') return getEvalWrapper(name, options, banner, dependencies);
 
 	throw new Error(`Not implemented: ${format}`);
 }
 
-function getEsWrapper(name: string, options: CompileOptions, imports: Node[], source: string) {
+function getEsWrapper(
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	sharedPath: string,
+	helpers: { name: string, alias: string }[],
+	imports: Node[],
+	source: string
+) {
+	const importHelpers = helpers && (
+		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(sharedPath)};`
+	);
+
 	const importBlock = imports
 		.map((declaration: Node) => source.slice(declaration.start, declaration.end))
 		.join('\n');
 
 	return {
 		intro: deindent`
+			${banner}
+			${importHelpers}
 			${importBlock}
 
 			export default (function() {
@@ -79,7 +96,12 @@ function getEsWrapper(name: string, options: CompileOptions, imports: Node[], so
 	};
 }
 
-function getAmdWrapper(name: string, options: CompileOptions, dependencies: Dependency[]) {
+function getAmdWrapper(
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	dependencies: Dependency[]
+) {
 	const sourceString = dependencies.length
 		? `[${dependencies.map(d => `"${removeExtension(d.source)}"`).join(', ')}], `
 		: '';
@@ -99,22 +121,41 @@ function getAmdWrapper(name: string, options: CompileOptions, dependencies: Depe
 	};
 }
 
-function getCjsWrapper(name: string, options: CompileOptions, dependencies: Dependency[]) {
+function getCjsWrapper(
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	sharedPath: string,
+	helpers: { name: string, alias: string }[],
+	dependencies: Dependency[]
+) {
+	const SHARED = '__shared';
+	const helperBlock = helpers && (
+		`var ${SHARED} = require(${JSON.stringify(sharedPath)});\n` +
+		helpers.map(helper => {
+			return `var ${helper.alias} = ${SHARED}.${helper.name};`;
+		}).join('\n')
+	);
+
 	const requireBlock = dependencies
 		.map(d => `var ${d.name} = require("${d.source}");`)
 		.join('\n\n');
 
 	const intro = requireBlock ?
 		deindent`
+			${banner}
 			"use strict";
 
+			${helperBlock}
 			${requireBlock}
 			${getCompatibilityStatements(dependencies)}
 
 			` :
 		deindent`
+			${banner}
 			"use strict";
 
+			${helperBlock}
 			`;
 
 	const outro = `module.exports = ${name};`
@@ -122,7 +163,12 @@ function getCjsWrapper(name: string, options: CompileOptions, dependencies: Depe
 	return { intro, outro };
 }
 
-function getIifeWrapper(name: string, options: CompileOptions, dependencies: Dependency[]) {
+function getIifeWrapper(
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	dependencies: Dependency[]
+) {
 	if (!options.name) {
 		throw new Error(`Missing required 'name' option for IIFE export`);
 	}
@@ -131,17 +177,25 @@ function getIifeWrapper(name: string, options: CompileOptions, dependencies: Dep
 
 	return {
 		intro: deindent`
+			${banner}
 			var ${options.name} = (function(${paramString(dependencies)}) { "use strict";
 
 			${getCompatibilityStatements(dependencies)}
 
 			`,
 
-		outro: `return ${name};\n\n}(${globals.join(', ')}));`
+		outro: deindent`
+			return ${name};
+			}(${globals.join(', ')}));`
 	};
 }
 
-function getUmdWrapper(name: string, options: CompileOptions, dependencies: Dependency[]) {
+function getUmdWrapper(
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	dependencies: Dependency[]
+) {
 	if (!options.name) {
 		throw new Error(`Missing required 'name' option for UMD export`);
 	}
@@ -160,6 +214,7 @@ function getUmdWrapper(name: string, options: CompileOptions, dependencies: Depe
 
 	return {
 		intro: deindent`
+			${banner}
 			(function(global, factory) {
 				typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory(${cjsDeps}) :
 				typeof define === "function" && define.amd ? define(${amdId}${amdDeps}factory) :
@@ -177,18 +232,24 @@ function getUmdWrapper(name: string, options: CompileOptions, dependencies: Depe
 	};
 }
 
-function getEvalWrapper(name: string, options: CompileOptions, dependencies: Dependency[]) {
+function getEvalWrapper(
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	dependencies: Dependency[]
+) {
 	const globals = getGlobals(dependencies, options);
 
 	return {
 		intro: deindent`
 			(function (${paramString(dependencies)}) { "use strict";
+			${banner}
 
 			${getCompatibilityStatements(dependencies)}
 
 			`,
 
-		outro: `return ${name};\n\n}(${globals.join(', ')}));`
+		outro: `return ${name};\n\n}(${globals.join(', ')}))`
 	};
 }
 
