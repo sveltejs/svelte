@@ -13,7 +13,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			div.style.cssText = state.style;
 			div_1.style.cssText = div_1_style_value = "" + state.key + ": " + state.value;
 		},
