@@ -251,7 +251,7 @@ export default class Block {
 
 		if (!this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
-				hydrate: function(nodes) {
+				hydrate: function() {
 					${this.builders.hydrate}
 				},
 			`);

@@ -293,7 +293,7 @@ function create_each_block(state, each_block_value, comment, i, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			div.className = "comment";
 			span.className = "meta";
 		},

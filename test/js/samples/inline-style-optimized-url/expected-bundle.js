@@ -192,7 +192,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			setStyle(div, "background", "url(data:image/png;base64," + state.data + ")");
 		},
 
