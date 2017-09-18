@@ -65,6 +65,8 @@ export interface GenerateOptions {
 	name: string;
 	format: ModuleFormat;
 	banner?: string;
+	sharedPath?: string | boolean;
+	helpers?: { name: string, alias: string }[];
 }
 
 export interface Visitor {
