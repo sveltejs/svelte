@@ -13,10 +13,6 @@ function assign(target) {
 	return target;
 }
 
-function appendNode(node, target) {
-	target.appendChild(node);
-}
-
 function insertNode(node, target, anchor) {
 	target.insertBefore(node, anchor);
 }
@@ -27,10 +23,6 @@ function detachNode(node) {
 
 function createElement(name) {
 	return document.createElement(name);
-}
-
-function createText(data) {
-	return document.createTextNode(data);
 }
 
 function blankObject() {
@@ -203,12 +195,12 @@ var template = (function() {
 }());
 
 function create_main_fragment(state, component) {
-	var button, foo_handler, text;
+	var button, foo_handler;
 
 	return {
 		create: function() {
 			button = createElement("button");
-			text = createText("foo");
+			button.textContent = "foo";
 			this.hydrate();
 		},
 
@@ -221,7 +213,6 @@ function create_main_fragment(state, component) {
 
 		mount: function(target, anchor) {
 			insertNode(button, target, anchor);
-			appendNode(text, button);
 		},
 
 		update: noop,

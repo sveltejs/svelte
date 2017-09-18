@@ -9,6 +9,7 @@ import visitBinding from './Binding';
 import visitRef from './Ref';
 import * as namespaces from '../../../../utils/namespaces';
 import getStaticAttributeValue from '../../../../utils/getStaticAttributeValue';
+import isVoidElementName from '../../../../utils/isVoidElementName';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
@@ -94,7 +95,6 @@ export default function visitElement(
 	}
 
 	// add CSS encapsulation attribute
-	// TODO add a helper for this, rather than repeating it
 	if (node._needsCssAttribute && !generator.customElement) {
 		generator.needsEncapsulateHelper = true;
 		block.builders.hydrate.addLine(
@@ -202,9 +202,21 @@ export default function visitElement(
 		node.initialUpdate = node.lateUpdate = statement;
 	}
 
-	node.children.forEach((child: Node) => {
-		visit(generator, block, childState, child, elementStack.concat(node), componentStack);
-	});
+	if (!childState.namespace && node.canUseInnerHTML && node.children.length > 0) {
+		if (node.children.length === 1 && node.children[0].type === 'Text') {
+			block.builders.create.addLine(
+				`${name}.textContent = ${JSON.stringify(node.children[0].data)};`
+			);
+		} else {
+			block.builders.create.addLine(
+				`${name}.innerHTML = ${JSON.stringify(node.children.map(toHTML).join(''))};`
+			);
+		}
+	} else {
+		node.children.forEach((child: Node) => {
+			visit(generator, block, childState, child, elementStack.concat(node), componentStack);
+		});
+	}
 
 	if (node.lateUpdate) {
 		block.builders.update.addLine(node.lateUpdate);
@@ -221,6 +233,29 @@ export default function visitElement(
 	block.builders.claim.addLine(
 		`${childState.parentNodes}.forEach(@detachNode);`
 	);
+
+	function toHTML(node: Node) {
+		if (node.type === 'Text') return node.data;
+
+		let open = `<${node.name}`;
+
+		if (node._needsCssAttribute) {
+			open += ` ${generator.stylesheet.id}`;
+		}
+
+		if (node._cssRefAttribute) {
+			open += ` svelte-ref-${node._cssRefAttribute}`;
+		}
+
+		node.attributes.forEach((attr: Node) => {
+			open += ` ${attr.name}${stringifyAttributeValue(attr.value)}`
+		});
+
+		if (isVoidElementName(node.name)) return open + '>';
+		if (node.children.length === 0) return open + '/>';
+
+		return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
+	}
 }
 
 function getRenderStatement(
@@ -262,4 +297,12 @@ function quoteProp(name: string, legacy: boolean) {
 
 	if (/[^a-zA-Z_$0-9]/.test(name) || isLegacyPropName) return `"${name}"`;
 	return name;
+}
+
+function stringifyAttributeValue(value: Node | true) {
+	if (value === true) return '';
+	if (value.length === 0) return `=""`;
+
+	const data = value[0].data;
+	return `=${JSON.stringify(data)}`;
 }
