@@ -1,7 +1,8 @@
-export function test ({ assert, smc, locateInSource, locateInGenerated }) {
-	const expected = locateInSource( 'each' );
+export function test({ assert, code, smc, locateInSource, locateInGenerated }) {
+	const startIndex = code.indexOf('create_main_fragment');
 
-	const loc = locateInGenerated( 'length' );
+	const expected = locateInSource('each');
+	const loc = locateInGenerated('length', startIndex );
 
 	const actual = smc.originalPositionFor({
 		line: loc.line + 1,
