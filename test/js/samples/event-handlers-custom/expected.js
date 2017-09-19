@@ -29,7 +29,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			foo_handler = template.events.foo.call(component, button, function(event) {
 				var state = component.get();
 				component.foo( state.bar );

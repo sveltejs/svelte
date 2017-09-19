@@ -380,13 +380,19 @@ export default class Generator {
 
 	getUniqueNameMaker(params: string[]) {
 		const localUsedNames = new Set(params);
+
+		function add(name: string) {
+			localUsedNames.add(name);
+		}
+
+		reservedNames.forEach(add);
+		this.importedNames.forEach(add);
+
 		return (name: string) => {
 			if (test) name = `${name}$`;
 			let alias = name;
 			for (
 				let i = 1;
-				reservedNames.has(alias) ||
-				this.importedNames.has(alias) ||
 				this.usedNames.has(alias) ||
 				localUsedNames.has(alias);
 				alias = `${name}_${i++}`

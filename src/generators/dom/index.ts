@@ -6,6 +6,7 @@ import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
+import reservedNames from '../../utils/reservedNames';
 import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
@@ -14,6 +15,8 @@ import preprocess from './preprocess';
 import Block from './Block';
 import { version } from '../../../package.json';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
+
+const test = typeof global !== 'undefined' && global.__svelte_test;
 
 export class DomGenerator extends Generator {
 	blocks: (Block|string)[];
@@ -47,6 +50,33 @@ export class DomGenerator extends Generator {
 
 		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
 		this.metaBindings = [];
+	}
+
+	getUniqueNameMaker(params: string[]) {
+		const localUsedNames = new Set(params);
+
+		function add(name: string) {
+			localUsedNames.add(name);
+		}
+
+		reservedNames.forEach(add);
+		this.importedNames.forEach(add);
+		for (const name in shared) {
+			localUsedNames.add(test ? `${name}$` : name);
+		}
+
+		return (name: string) => {
+			if (test) name = `${name}$`;
+			let alias = name;
+			for (
+				let i = 1;
+				this.usedNames.has(alias) ||
+				localUsedNames.has(alias);
+				alias = `${name}_${i++}`
+			);
+			localUsedNames.add(alias);
+			return alias;
+		};
 	}
 }
 
