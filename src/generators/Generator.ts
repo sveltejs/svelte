@@ -59,7 +59,7 @@ export default class Generator {
 
 	stylesheet: Stylesheet;
 
-	importedNames: Set<string>;
+	userVars: Set<string>;
 	aliases: Map<string, string>;
 	usedNames: Set<string>;
 
@@ -101,7 +101,7 @@ export default class Generator {
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
-		this.importedNames = new Set();
+		this.userVars = new Set();
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
@@ -367,7 +367,7 @@ export default class Generator {
 		for (
 			let i = 1;
 			reservedNames.has(alias) ||
-			this.importedNames.has(alias) ||
+			this.userVars.has(alias) ||
 			this.usedNames.has(alias);
 			alias = `${name}_${i++}`
 		);
@@ -383,7 +383,7 @@ export default class Generator {
 		}
 
 		reservedNames.forEach(add);
-		this.importedNames.forEach(add);
+		this.userVars.forEach(add);
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -412,6 +412,12 @@ export default class Generator {
 
 		if (js) {
 			this.addSourcemapLocations(js.content);
+
+			const scope = annotateWithScopes(js.content);
+			scope.declarations.forEach(name => {
+				this.userVars.add(name);
+			});
+
 			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
 			// imports need to be hoisted out of the IIFE
@@ -422,7 +428,7 @@ export default class Generator {
 					imports.push(node);
 
 					node.specifiers.forEach((specifier: Node) => {
-						this.importedNames.add(specifier.local.name);
+						this.userVars.add(specifier.local.name);
 					});
 				}
 			}
@@ -494,7 +500,7 @@ export default class Generator {
 							property.value.start,
 							property.value.end
 						);
-						if (this.importedNames.has(value)) {
+						if (this.userVars.has(value)) {
 							this.importedComponents.set(key, value);
 						} else {
 							hasNonImportedComponent = true;
@@ -552,51 +558,16 @@ export default class Generator {
 				removeNode(this.code, js.content, defaultExport);
 			}
 
-			// if we do need to keep it, then we need to generate a return statement
+			// if we do need to keep it, then we need to replace `export default`
 			if (hasDefaultExport) {
-				const finalNode = body[body.length - 1];
-				if (defaultExport === finalNode) {
-					// export is last property, we can just return it
-					this.code.overwrite(
-						defaultExport.start,
-						defaultExport.declaration.start,
-						`return `
-					);
-				} else {
-					const { declarations } = annotateWithScopes(js);
-					let template = 'template';
-					for (
-						let i = 1;
-						declarations.has(template);
-						template = `template_${i++}`
-					);
-
-					this.code.overwrite(
-						defaultExport.start,
-						defaultExport.declaration.start,
-						`var ${template} = `
-					);
-
-					let i = defaultExport.start;
-					while (/\s/.test(source[i - 1])) i--;
-
-					const indentation = source.slice(i, defaultExport.start);
-					this.code.appendLeft(
-						finalNode.end,
-						`\n\n${indentation}return ${template};`
-					);
-				}
+				this.code.overwrite(
+					defaultExport.start,
+					defaultExport.declaration.start,
+					`var ${this.alias('template')} = `
+				);
 			}
 
-			// user code gets wrapped in an IIFE
-			if (js.content.body.length) {
-				const prefix = hasDefaultExport
-					? `var ${this.alias('template')} = (function() {`
-					: `(function() {`;
-				this.code
-					.prependRight(js.content.start, prefix)
-					.appendLeft(js.content.end, '}());');
-			} else {
+			if (js.content.body.length === 0) {
 				// if there's no need to include user code, remove it altogether
 				this.code.remove(js.content.start, js.content.end);
 				hasJs = false;

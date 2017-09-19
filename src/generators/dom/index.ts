@@ -60,7 +60,7 @@ export class DomGenerator extends Generator {
 		}
 
 		reservedNames.forEach(add);
-		this.importedNames.forEach(add);
+		this.userVars.forEach(add);
 		for (const name in shared) {
 			localUsedNames.add(test ? `${name}$` : name);
 		}
