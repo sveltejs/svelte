@@ -61,7 +61,7 @@ export function create(source: string, _options: CompileOptions = {}) {
 	}
 
 	try {
-		return new Function('return ' + compiled.code)();
+		return (0,eval)(compiled.code);
 	} catch (err) {
 		if (_options.onerror) {
 			_options.onerror(err);
