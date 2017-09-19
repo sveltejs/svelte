@@ -33,7 +33,7 @@ function detachAfter(before) {
 
 function destroyEach(iterations) {
 	for (var i = 0; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].destroy();
+		if (iterations[i]) iterations[i].d();
 	}
 }
 
@@ -54,8 +54,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -167,7 +167,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -176,11 +176,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -211,9 +211,9 @@ function create_main_fragment(state, component) {
 	}
 
 	return {
-		create: function() {
+		c: function create() {
 			for (var i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].create();
+				each_blocks[i].c();
 			}
 
 			text = createText("\n\n");
@@ -221,9 +221,9 @@ function create_main_fragment(state, component) {
 			text_1 = createText(state.foo);
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			for (var i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].mount(target, anchor);
+				each_blocks[i].m(target, anchor);
 			}
 
 			insertNode(text, target, anchor);
@@ -231,23 +231,23 @@ function create_main_fragment(state, component) {
 			appendNode(text_1, p);
 		},
 
-		update: function(changed, state) {
+		p: function update(changed, state) {
 			var comments = state.comments;
 
 			if (changed.comments || changed.elapsed || changed.time) {
 				for (var i = 0; i < comments.length; i += 1) {
 					if (each_blocks[i]) {
-						each_blocks[i].update(changed, state, comments, comments[i], i);
+						each_blocks[i].p(changed, state, comments, comments[i], i);
 					} else {
 						each_blocks[i] = create_each_block(state, comments, comments[i], i, component);
-						each_blocks[i].create();
-						each_blocks[i].mount(text.parentNode, text);
+						each_blocks[i].c();
+						each_blocks[i].m(text.parentNode, text);
 					}
 				}
 
 				for (; i < each_blocks.length; i += 1) {
-					each_blocks[i].unmount();
-					each_blocks[i].destroy();
+					each_blocks[i].u();
+					each_blocks[i].d();
 				}
 				each_blocks.length = comments.length;
 			}
@@ -257,16 +257,16 @@ function create_main_fragment(state, component) {
 			}
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			for (var i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].unmount();
+				each_blocks[i].u();
 			}
 
 			detachNode(text);
 			detachNode(p);
 		},
 
-		destroy: function() {
+		d: function destroy$$1() {
 			destroyEach(each_blocks);
 		}
 	};
@@ -277,7 +277,7 @@ function create_each_block(state, comments, comment, i, component) {
 	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before;
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
 			strong = createElement("strong");
 			text = createText(i);
@@ -289,15 +289,15 @@ function create_each_block(state, comments, comment, i, component) {
 			text_5 = createText(" ago:");
 			text_6 = createText("\n\n\t\t");
 			raw_before = createElement('noscript');
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			div.className = "comment";
 			span.className = "meta";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
 			appendNode(strong, div);
 			appendNode(text, strong);
@@ -312,7 +312,7 @@ function create_each_block(state, comments, comment, i, component) {
 			raw_before.insertAdjacentHTML("afterend", raw_value);
 		},
 
-		update: function(changed, state, comments, comment, i) {
+		p: function update(changed, state, comments, comment, i) {
 			if ((changed.comments) && text_2_value !== (text_2_value = comment.author)) {
 				text_2.data = text_2_value;
 			}
@@ -327,13 +327,13 @@ function create_each_block(state, comments, comment, i, component) {
 			}
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachAfter(raw_before);
 
 			detachNode(div);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -344,8 +344,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 

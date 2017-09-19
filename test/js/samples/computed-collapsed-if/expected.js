@@ -14,15 +14,15 @@ var template = (function() {
 function create_main_fragment(state, component) {
 
 	return {
-		create: noop,
+		c: noop,
 
-		mount: noop,
+		m: noop,
 
-		update: noop,
+		p: noop,
 
-		unmount: noop,
+		u: noop,
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -34,8 +34,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 

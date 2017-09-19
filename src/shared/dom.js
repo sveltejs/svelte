@@ -49,7 +49,7 @@ export function reinsertBefore(after, target) {
 
 export function destroyEach(iterations) {
 	for (var i = 0; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].destroy();
+		if (iterations[i]) iterations[i].d();
 	}
 }
 
