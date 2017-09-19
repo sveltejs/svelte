@@ -40,8 +40,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -153,7 +153,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -162,11 +162,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -189,26 +189,26 @@ function create_main_fragment(state, component) {
 	var input;
 
 	return {
-		create: function() {
+		c: function create() {
 			input = createElement("input");
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			setInputType(input, "search");
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(input, target, anchor);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(input);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -219,8 +219,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 

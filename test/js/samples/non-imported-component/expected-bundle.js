@@ -36,8 +36,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -149,7 +149,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -158,11 +158,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -201,27 +201,27 @@ function create_main_fragment(state, component) {
 	});
 
 	return {
-		create: function() {
-			imported._fragment.create();
+		c: function create() {
+			imported._fragment.c();
 			text = createText("\n");
-			nonimported._fragment.create();
+			nonimported._fragment.c();
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			imported._mount(target, anchor);
 			insertNode(text, target, anchor);
 			nonimported._mount(target, anchor);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			imported._unmount();
 			detachNode(text);
 			nonimported._unmount();
 		},
 
-		destroy: function() {
+		d: function destroy$$1() {
 			imported.destroy(false);
 			nonimported.destroy(false);
 		}
@@ -241,8 +241,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 
 		this._lock = true;
 		callAll(this._beforecreate);

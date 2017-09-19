@@ -10,31 +10,31 @@ function create_main_fragment(state, component) {
 	}
 
 	return {
-		create: function() {
+		c: function create() {
 			input = createElement("input");
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			input.type = "checkbox";
 			addListener(input, "change", input_change_handler);
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(input, target, anchor);
 
 			input.checked = state.foo;
 		},
 
-		update: function(changed, state) {
+		p: function update(changed, state) {
 			input.checked = state.foo;
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(input);
 		},
 
-		destroy: function() {
+		d: function destroy() {
 			removeListener(input, "change", input_change_handler);
 		}
 	};
@@ -47,8 +47,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 

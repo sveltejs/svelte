@@ -230,10 +230,10 @@ export default function visitComponent(
 		${beforecreate}
 	`);
 
-	block.builders.create.addLine(`${name}._fragment.create();`);
+	block.builders.create.addLine(`${name}._fragment.c();`);
 
 	block.builders.claim.addLine(
-		`${name}._fragment.claim( ${state.parentNodes} );`
+		`${name}._fragment.l( ${state.parentNodes} );`
 	);
 
 	block.builders.mount.addLine(

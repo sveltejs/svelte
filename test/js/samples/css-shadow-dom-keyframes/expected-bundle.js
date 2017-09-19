@@ -42,8 +42,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -155,7 +155,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -164,11 +164,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -191,23 +191,23 @@ function create_main_fragment(state, component) {
 	var div, text;
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
 			text = createText("fades in");
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
 			appendNode(text, div);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(div);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -222,8 +222,8 @@ class SvelteComponent extends HTMLElement {
 
 		this._fragment = create_main_fragment(this._state, this);
 
-		this._fragment.create();
-		this._fragment.mount(this.shadowRoot, null);
+		this._fragment.c();
+		this._fragment.m(this.shadowRoot, null);
 
 		if (options.target) this._mount(options.target, options.anchor || null);
 	}

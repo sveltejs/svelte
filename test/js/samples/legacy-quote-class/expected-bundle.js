@@ -57,8 +57,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -170,7 +170,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -179,11 +179,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -206,34 +206,34 @@ function create_main_fragment(state, component) {
 	var div;
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
-			this.hydrate();
+			this.h();
 		},
 
-		claim: function(nodes) {
+		l: function claim(nodes) {
 			div = claimElement(nodes, "DIV", { "class": true }, false);
 			var div_nodes = children(div);
 
 			div_nodes.forEach(detachNode);
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			div.className = "foo";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(div);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -245,9 +245,9 @@ function SvelteComponent(options) {
 
 	if (options.target) {
 		var nodes = children(options.target);
-		options.hydrate ? this._fragment.claim(nodes) : this._fragment.create();
+		options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
 		nodes.forEach(detachNode);
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 
