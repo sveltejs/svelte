@@ -13,10 +13,6 @@ function assign(target) {
 	return target;
 }
 
-function appendNode(node, target) {
-	target.appendChild(node);
-}
-
 function insertNode(node, target, anchor) {
 	target.insertBefore(node, anchor);
 }
@@ -27,10 +23,6 @@ function detachNode(node) {
 
 function createElement(name) {
 	return document.createElement(name);
-}
-
-function createText(data) {
-	return document.createTextNode(data);
 }
 
 function createComment() {
@@ -233,17 +225,16 @@ function create_main_fragment(state, component) {
 
 // (1:0) {{#if foo}}
 function create_if_block(state, component) {
-	var p, text;
+	var p;
 
 	return {
 		create: function() {
 			p = createElement("p");
-			text = createText("foo!");
+			p.textContent = "foo!";
 		},
 
 		mount: function(target, anchor) {
 			insertNode(p, target, anchor);
-			appendNode(text, p);
 		},
 
 		unmount: function() {
