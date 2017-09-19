@@ -87,7 +87,7 @@ describe("runtime", () => {
 					}
 				} catch (err) {
 					failed.add(dir);
-					showOutput(cwd, { shared }); // eslint-disable-line no-console
+					showOutput(cwd, { shared }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -133,7 +133,7 @@ describe("runtime", () => {
 				try {
 					SvelteComponent = require(`./samples/${dir}/main.html`);
 				} catch (err) {
-					showOutput(cwd, { shared, hydratable: hydrate }); // eslint-disable-line no-console
+					showOutput(cwd, { shared, hydratable: hydrate }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 
@@ -187,12 +187,12 @@ describe("runtime", () => {
 					config.error(assert, err);
 				} else {
 					failed.add(dir);
-					showOutput(cwd, { shared, hydratable: hydrate }); // eslint-disable-line no-console
+					showOutput(cwd, { shared, hydratable: hydrate }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 			}
 
-			if (config.show) showOutput(cwd, { shared, hydratable: hydrate });
+			if (config.show) showOutput(cwd, { shared, hydratable: hydrate }, svelte);
 		});
 	}
 

@@ -14,16 +14,16 @@ export default function visitEachBlock(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
-	const each_block = node.var;
+	const each = node.var;
 
 	const create_each_block = node._block.name;
 	const each_block_value = node._block.listName;
-	const iterations = block.getUniqueName(`${each_block}_iterations`);
+	const iterations = block.getUniqueName(`${each}_blocks`);
 	const params = block.params.join(', ');
 
 	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode;
 	const anchor = needsAnchor
-		? block.getUniqueName(`${each_block}_anchor`)
+		? block.getUniqueName(`${each}_anchor`)
 		: (node.next && node.next.var) || 'null';
 
 	// hack the sourcemap, so that if data is missing the bug
@@ -35,7 +35,7 @@ export default function visitEachBlock(
 
 	const mountOrIntro = node._block.hasIntroMethod ? 'intro' : 'mount';
 	const vars = {
-		each_block,
+		each,
 		create_each_block,
 		each_block_value,
 		length,
@@ -67,7 +67,7 @@ export default function visitEachBlock(
 	}
 
 	if (node.else) {
-		const each_block_else = generator.getUniqueName(`${each_block}_else`);
+		const each_block_else = generator.getUniqueName(`${each}_else`);
 
 		block.builders.init.addLine(`var ${each_block_else} = null;`);
 
@@ -144,7 +144,7 @@ function keyed(
 	node: Node,
 	snippet: string,
 	{
-		each_block,
+		each,
 		create_each_block,
 		each_block_value,
 		length,
@@ -154,11 +154,11 @@ function keyed(
 	}
 ) {
 	const key = block.getUniqueName('key');
-	const lookup = block.getUniqueName(`${each_block}_lookup`);
-	const iteration = block.getUniqueName(`${each_block}_iteration`);
-	const head = block.getUniqueName(`${each_block}_head`);
-	const last = block.getUniqueName(`${each_block}_last`);
-	const expected = block.getUniqueName(`${each_block}_expected`);
+	const lookup = block.getUniqueName(`${each}_lookup`);
+	const iteration = block.getUniqueName(`${each}_iteration`);
+	const head = block.getUniqueName(`${each}_head`);
+	const last = block.getUniqueName(`${each}_last`);
+	const expected = block.getUniqueName(`${each}_expected`);
 
 	block.addVariable(lookup, `@blankObject()`);
 	block.addVariable(head);
@@ -222,7 +222,7 @@ function keyed(
 
 	let destroy;
 	if (node._block.hasOutroMethod) {
-		const fn = block.getUniqueName(`${each_block}_outro`);
+		const fn = block.getUniqueName(`${each}_outro`);
 		block.builders.init.addBlock(deindent`
 			function ${fn}(iteration) {
 				iteration.outro(function() {
@@ -246,7 +246,7 @@ function keyed(
 			}
 		`;
 	} else {
-		const fn = block.getUniqueName(`${each_block}_destroy`);
+		const fn = block.getUniqueName(`${each}_destroy`);
 		block.builders.init.addBlock(deindent`
 			function ${fn}(iteration) {
 				iteration.unmount();
