@@ -70,7 +70,7 @@ export default (function() {
 			},
 
 			destroy: function() {
-				destroyEach(each_blocks, false, 0);
+				destroyEach(each_blocks);
 			}
 		};
 	}

@@ -47,10 +47,9 @@ export function reinsertBefore(after, target) {
 	while (parent.firstChild !== after) target.appendChild(parent.firstChild);
 }
 
-// TODO this is out of date
-export function destroyEach(iterations, detach, start) {
-	for (var i = start; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].destroy(detach);
+export function destroyEach(iterations) {
+	for (var i = 0; i < iterations.length; i += 1) {
+		if (iterations[i]) iterations[i].destroy();
 	}
 }
 
