@@ -74,7 +74,7 @@ describe("runtime", () => {
 					const { code } = svelte.compile(source, compileOptions);
 					const startIndex = code.indexOf("function create_main_fragment"); // may change!
 					if (startIndex === -1) throw new Error("missing create_main_fragment");
-					const endIndex = code.lastIndexOf("return");
+					const endIndex = code.lastIndexOf("export default");
 					const es5 =
 						code.slice(0, startIndex).split('\n').map(x => spaces(x.length)).join('\n') +
 						code.slice(startIndex, endIndex);
