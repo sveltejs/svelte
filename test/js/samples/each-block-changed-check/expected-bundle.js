@@ -31,10 +31,9 @@ function detachAfter(before) {
 	}
 }
 
-// TODO this is out of date
-function destroyEach(iterations, detach, start) {
-	for (var i = start; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].destroy(detach);
+function destroyEach(iterations) {
+	for (var i = 0; i < iterations.length; i += 1) {
+		if (iterations[i]) iterations[i].destroy();
 	}
 }
 
@@ -268,7 +267,7 @@ function create_main_fragment(state, component) {
 		},
 
 		destroy: function() {
-			destroyEach(each_blocks, false, 0);
+			destroyEach(each_blocks);
 		}
 	};
 }

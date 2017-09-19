@@ -70,7 +70,7 @@ function create_main_fragment(state, component) {
 		},
 
 		destroy: function() {
-			destroyEach(each_blocks, false, 0);
+			destroyEach(each_blocks);
 		}
 	};
 }
