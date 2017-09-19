@@ -63,6 +63,7 @@ export default class Generator {
 	stylesheet: Stylesheet;
 
 	userVars: Set<string>;
+	templateVars: Map<string, string>;
 	aliases: Map<string, string>;
 	usedNames: Set<string>;
 
@@ -105,6 +106,7 @@ export default class Generator {
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
 		this.userVars = new Set();
+		this.templateVars = new Map();
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
@@ -204,8 +206,8 @@ export default class Generator {
 						let object = node;
 						while (object.type === 'MemberExpression') object = object.object;
 
-						const alias = self.alias(name);
-						if (alias !== name) code.overwrite(object.start, object.end, `${self.alias(name)}`);
+						const alias = self.templateVars.get(`helpers-${name}`);
+						if (alias !== name) code.overwrite(object.start, object.end, alias);
 					} else if (indexes.has(name)) {
 						const context = indexes.get(name);
 						usedContexts.add(context); // TODO is this right?
@@ -458,7 +460,7 @@ export default class Generator {
 					}
 				});
 
-				const addArrowFunctionExpression = (key: string, node: Node) => {
+				const addArrowFunctionExpression = (name: string, node: Node) => {
 					const { body, params } = node;
 
 					const paramString = params.length ?
@@ -467,43 +469,45 @@ export default class Generator {
 
 					if (body.type === 'BlockStatement') {
 						componentDefinition.addBlock(deindent`
-							function @${key}(${paramString}) [✂${body.start}-${body.end}✂]
+							function ${name}(${paramString}) [✂${body.start}-${body.end}✂]
 						`);
 					} else {
 						componentDefinition.addBlock(deindent`
-							function @${key}(${paramString}) {
+							function ${name}(${paramString}) {
 								return [✂${body.start}-${body.end}✂];
 							}
 						`);
 					}
 				};
 
-				const addFunctionExpression = (key: string, node: Node) => {
+				const addFunctionExpression = (name: string, node: Node) => {
 					let c = node.start;
 					while (this.source[c] !== '(') c += 1;
 					componentDefinition.addBlock(deindent`
-						function @${key}[✂${c}-${node.end}✂];
+						function ${name}[✂${c}-${node.end}✂];
 					`);
 				};
 
-				const addValue = (key: string, node: Node) => {
-					const alias = this.alias(key);
-					if (node.type !== 'Identifier' || node.name !== alias) {
+				const addValue = (name: string, node: Node) => {
+					if (node.type !== 'Identifier' || node.name !== name) {
 						componentDefinition.addBlock(deindent`
-							var ${alias} = [✂${node.start}-${node.end}✂];
+							var ${name} = [✂${node.start}-${node.end}✂];
 						`);
 					}
 				};
 
-				const addDeclaration = (key: string, node: Node) => {
+				const addDeclaration = (key: string, node: Node, disambiguator?: string) => {
+					let name = this.getUniqueName(key);
+					this.templateVars.set(disambiguator ? `${disambiguator}-${key}` : key, name);
+
 					// TODO disambiguate between different categories, and ensure
 					// no conflicts with existing aliases
 					if (node.type === 'ArrowFunctionExpression') {
-						addArrowFunctionExpression(key, node);
+						addArrowFunctionExpression(name, node);
 					} else if (node.type === 'FunctionExpression') {
-						addFunctionExpression(key, node);
+						addFunctionExpression(name, node);
 					} else {
-						addValue(key, node);
+						addValue(name, node);
 					}
 				};
 
@@ -558,7 +562,7 @@ export default class Generator {
 						computations.push({ key, deps });
 
 						const prop = templateProperties.computed.value.properties.find((prop: Node) => prop.key.name === key);
-						addDeclaration(key, prop.value);
+						addDeclaration(key, prop.value, 'computed');
 					};
 
 					templateProperties.computed.value.properties.forEach((prop: Node) =>
@@ -572,13 +576,13 @@ export default class Generator {
 
 				if (templateProperties.events) {
 					templateProperties.events.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value);
+						addDeclaration(property.key.name, property.value, 'events');
 					});
 				}
 
 				if (templateProperties.helpers) {
 					templateProperties.helpers.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value);
+						addDeclaration(property.key.name, property.value, 'helpers');
 					});
 				}
 
@@ -615,7 +619,7 @@ export default class Generator {
 
 				if (templateProperties.transitions) {
 					templateProperties.transitions.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value);
+						addDeclaration(property.key.name, property.value, 'transitions');
 					});
 				}
 			}
