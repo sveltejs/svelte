@@ -122,7 +122,7 @@ export default function visitEachBlock(
 		);
 
 		block.builders.destroy.addBlock(deindent`
-			if (${each_block_else}) ${each_block_else}.destroy(false);
+			if (${each_block_else}) ${each_block_else}.destroy();
 		`);
 	}
 
@@ -351,7 +351,7 @@ function keyed(
 	block.builders.destroy.addBlock(deindent`
 		var ${iteration} = ${head};
 		while (${iteration}) {
-			${iteration}.destroy(false);
+			${iteration}.destroy();
 			${iteration} = ${iteration}.next;
 		}
 	`);
@@ -486,5 +486,5 @@ function unkeyed(
 		}
 	`);
 
-	block.builders.destroy.addBlock(`@destroyEach(${iterations}, false, 0);`);
+	block.builders.destroy.addBlock(`@destroyEach(${iterations});`);
 }
