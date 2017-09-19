@@ -33,30 +33,32 @@ export class SsrGenerator extends Generator {
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
-		if (templateProperties.oncreate)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.oncreate
-			);
-		if (templateProperties.ondestroy)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.ondestroy
-			);
-		if (templateProperties.methods)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.methods
-			);
-		if (templateProperties.events)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.events
-			);
+		// TODO how to exclude non-SSR-able stuff?
+
+		// if (templateProperties.oncreate)
+		// 	removeNode(
+		// 		this.code,
+		// 		defaultExport.declaration,
+		// 		templateProperties.oncreate
+		// 	);
+		// if (templateProperties.ondestroy)
+		// 	removeNode(
+		// 		this.code,
+		// 		defaultExport.declaration,
+		// 		templateProperties.ondestroy
+		// 	);
+		// if (templateProperties.methods)
+		// 	removeNode(
+		// 		this.code,
+		// 		defaultExport.declaration,
+		// 		templateProperties.methods
+		// 	);
+		// if (templateProperties.events)
+		// 	removeNode(
+		// 		this.code,
+		// 		defaultExport.declaration,
+		// 		templateProperties.events
+		// 	);
 	}
 
 	append(code: string) {
@@ -99,24 +101,24 @@ export default function ssr(
 		generator.stylesheet.render(options.filename, true);
 
 	const result = deindent`
-		${hasJs && `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`}
+		${generator.javascript}
 
 		var ${name} = {};
 
 		${options.filename && `${name}.filename = ${stringify(options.filename)}`};
 
 		${name}.data = function() {
-			return ${templateProperties.data ? `@template.data()` : `{}`};
+			return ${templateProperties.data ? `@data()` : `{}`};
 		};
 
 		${name}.render = function(state, options) {
 			${templateProperties.data
-				? `state = Object.assign(@template.data(), state || {});`
+				? `state = Object.assign(@data(), state || {});`
 				: `state = state || {};`}
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = @template.computed.${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
+					`state.${key} = @${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
 			)}
 
 			${generator.bindings.length &&
