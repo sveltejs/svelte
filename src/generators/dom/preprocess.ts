@@ -195,7 +195,7 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
-		node.var = block.getUniqueName(`each_block`);
+		node.var = block.getUniqueName(`each`);
 
 		const dependencies = block.findDependencies(node.expression);
 		block.addDependencies(dependencies);
@@ -209,7 +209,7 @@ const preprocessors = {
 		const listName = block.getUniqueName(
 			(node.expression.type === 'MemberExpression' && !node.expression.computed) ? node.expression.property.name :
 			node.expression.type === 'Identifier' ? node.expression.name :
-			`each_block_value`
+			`each_value`
 		);
 		listNames.set(node.context, listName);
 
