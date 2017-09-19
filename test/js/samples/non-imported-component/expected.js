@@ -3,8 +3,7 @@ import { assign, callAll, createText, detachNode, init, insertNode, noop, proto 
 import Imported from 'Imported.html';
 
 export default (function() {
-
-var template = (function() {
+	var template = (function() {
 	return {
 		components: {
 			NonImported
@@ -12,70 +11,69 @@ var template = (function() {
 	};
 }());
 
-function create_main_fragment(state, component) {
-	var text;
+	function create_main_fragment(state, component) {
+		var text;
 
-	var imported = new Imported({
-		_root: component._root
-	});
+		var imported = new Imported({
+			_root: component._root
+		});
 
-	var nonimported = new template.components.NonImported({
-		_root: component._root
-	});
+		var nonimported = new template.components.NonImported({
+			_root: component._root
+		});
 
-	return {
-		create: function() {
-			imported._fragment.create();
-			text = createText("\n");
-			nonimported._fragment.create();
-		},
+		return {
+			create: function() {
+				imported._fragment.create();
+				text = createText("\n");
+				nonimported._fragment.create();
+			},
 
-		mount: function(target, anchor) {
-			imported._mount(target, anchor);
-			insertNode(text, target, anchor);
-			nonimported._mount(target, anchor);
-		},
+			mount: function(target, anchor) {
+				imported._mount(target, anchor);
+				insertNode(text, target, anchor);
+				nonimported._mount(target, anchor);
+			},
 
-		update: noop,
+			update: noop,
 
-		unmount: function() {
-			imported._unmount();
-			detachNode(text);
-			nonimported._unmount();
-		},
+			unmount: function() {
+				imported._unmount();
+				detachNode(text);
+				nonimported._unmount();
+			},
 
-		destroy: function() {
-			imported.destroy(false);
-			nonimported.destroy(false);
+			destroy: function() {
+				imported.destroy(false);
+				nonimported.destroy(false);
+			}
+		};
+	}
+
+	function SvelteComponent(options) {
+		init(this, options);
+		this._state = options.data || {};
+
+		if (!options._root) {
+			this._oncreate = [];
+			this._beforecreate = [];
+			this._aftercreate = [];
 		}
-	};
-}
 
-function SvelteComponent(options) {
-	init(this, options);
-	this._state = options.data || {};
+		this._fragment = create_main_fragment(this._state, this);
 
-	if (!options._root) {
-		this._oncreate = [];
-		this._beforecreate = [];
-		this._aftercreate = [];
+		if (options.target) {
+			this._fragment.create();
+			this._fragment.mount(options.target, options.anchor || null);
+
+			this._lock = true;
+			callAll(this._beforecreate);
+			callAll(this._oncreate);
+			callAll(this._aftercreate);
+			this._lock = false;
+		}
 	}
 
-	this._fragment = create_main_fragment(this._state, this);
-
-	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
-
-		this._lock = true;
-		callAll(this._beforecreate);
-		callAll(this._oncreate);
-		callAll(this._aftercreate);
-		this._lock = false;
-	}
-}
-
-assign(SvelteComponent.prototype, proto);
-
-return SvelteComponent;
+	assign(SvelteComponent.prototype, proto);
+	return SvelteComponent;
 }());

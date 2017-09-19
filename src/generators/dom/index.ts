@@ -407,17 +407,17 @@ export default function dom(
 				// special case
 				const global = `_svelteTransitionManager`;
 
-				inlineHelpers += `var ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
+				inlineHelpers += `\n\nvar ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
 			} else {
 				const alias = generator.alias(expression.id.name);
 				if (alias !== expression.id.name)
 					code.overwrite(expression.id.start, expression.id.end, alias);
 
-				inlineHelpers += `${code}\n\n`;
+				inlineHelpers += `\n\n${code}`;
 			}
 		});
 
-		result = inlineHelpers + result;
+		result += inlineHelpers;
 	}
 
 	const filename = options.filename && (

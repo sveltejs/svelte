@@ -8,7 +8,7 @@ import globalWhitelist from '../utils/globalWhitelist';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
-import getModuleWrapper from './shared/utils/getModuleWrapper';
+import wrapModule from './shared/utils/wrapModule';
 import annotateWithScopes from '../utils/annotateWithScopes';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
@@ -305,7 +305,9 @@ export default class Generator {
 	generate(result: string, options: CompileOptions, { banner = '', sharedPath, helpers, name, format }: GenerateOptions ) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
-		const parts = result.split('✂]');
+		const module = wrapModule(result, format, name, options, banner, sharedPath, helpers, this.imports, this.source);
+
+		const parts = module.split('✂]');
 		const finalChunk = parts.pop();
 
 		const compiled = new Bundle({ separator: '' });
@@ -315,10 +317,6 @@ export default class Generator {
 				content: new MagicString(str),
 			});
 		}
-
-		const { intro, outro } = getModuleWrapper(format, name, options, banner, sharedPath, helpers, this.imports, this.source);
-
-		addString(intro + '\n\n');
 
 		const { filename } = options;
 
@@ -346,7 +344,6 @@ export default class Generator {
 		});
 
 		addString(finalChunk);
-		addString('\n\n' + outro);
 
 		const { css, cssMap } = this.customElement ?
 			{ css: null, cssMap: null } :
