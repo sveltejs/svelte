@@ -7,16 +7,16 @@ function create_main_fragment(state, component) {
 
 	var comments = state.comments;
 
-	var each_block_iterations = [];
+	var each_blocks = [];
 
 	for (var i = 0; i < comments.length; i += 1) {
-		each_block_iterations[i] = create_each_block(state, comments, comments[i], i, component);
+		each_blocks[i] = create_each_block(state, comments, comments[i], i, component);
 	}
 
 	return {
 		create: function() {
-			for (var i = 0; i < each_block_iterations.length; i += 1) {
-				each_block_iterations[i].create();
+			for (var i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].create();
 			}
 
 			text = createText("\n\n");
@@ -25,8 +25,8 @@ function create_main_fragment(state, component) {
 		},
 
 		mount: function(target, anchor) {
-			for (var i = 0; i < each_block_iterations.length; i += 1) {
-				each_block_iterations[i].mount(target, anchor);
+			for (var i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].mount(target, anchor);
 			}
 
 			insertNode(text, target, anchor);
@@ -39,20 +39,20 @@ function create_main_fragment(state, component) {
 
 			if (changed.comments || changed.elapsed || changed.time) {
 				for (var i = 0; i < comments.length; i += 1) {
-					if (each_block_iterations[i]) {
-						each_block_iterations[i].update(changed, state, comments, comments[i], i);
+					if (each_blocks[i]) {
+						each_blocks[i].update(changed, state, comments, comments[i], i);
 					} else {
-						each_block_iterations[i] = create_each_block(state, comments, comments[i], i, component);
-						each_block_iterations[i].create();
-						each_block_iterations[i].mount(text.parentNode, text);
+						each_blocks[i] = create_each_block(state, comments, comments[i], i, component);
+						each_blocks[i].create();
+						each_blocks[i].mount(text.parentNode, text);
 					}
 				}
 
-				for (; i < each_block_iterations.length; i += 1) {
-					each_block_iterations[i].unmount();
-					each_block_iterations[i].destroy();
+				for (; i < each_blocks.length; i += 1) {
+					each_blocks[i].unmount();
+					each_blocks[i].destroy();
 				}
-				each_block_iterations.length = comments.length;
+				each_blocks.length = comments.length;
 			}
 
 			if (changed.foo) {
@@ -61,8 +61,8 @@ function create_main_fragment(state, component) {
 		},
 
 		unmount: function() {
-			for (var i = 0; i < each_block_iterations.length; i += 1) {
-				each_block_iterations[i].unmount();
+			for (var i = 0; i < each_blocks.length; i += 1) {
+				each_blocks[i].unmount();
 			}
 
 			detachNode(text);
@@ -70,7 +70,7 @@ function create_main_fragment(state, component) {
 		},
 
 		destroy: function() {
-			destroyEach(each_block_iterations, false, 0);
+			destroyEach(each_blocks, false, 0);
 		}
 	};
 }
