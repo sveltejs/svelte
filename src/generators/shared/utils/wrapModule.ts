@@ -93,10 +93,8 @@ function es(
 		${importHelpers}
 		${importBlock}
 
-		export default (function() {
-			${code}
-			return ${name};
-		}());`;
+		${code}
+		export default ${name};`;
 }
 
 function amd(
