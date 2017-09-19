@@ -34,7 +34,7 @@ export default function validateEventHandlerCallee(
 	)
 		return;
 
-	const validCallees = ['this.*', 'event.*'].concat(
+	const validCallees = ['this.*', 'event.*', 'console.*'].concat(
 		Array.from(validBuiltins),
 		Array.from(validator.methods.keys())
 	);
