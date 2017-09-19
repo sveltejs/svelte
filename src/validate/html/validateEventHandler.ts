@@ -1,6 +1,7 @@
 import flattenReference from '../../utils/flattenReference';
 import list from '../utils/list';
 import { Validator } from '../index';
+import validCalleeObjects from '../../utils/validCalleeObjects';
 import { Node } from '../../interfaces';
 
 const validBuiltins = new Set(['set', 'fire', 'destroy']);
@@ -20,7 +21,7 @@ export default function validateEventHandlerCallee(
 
 	const { name } = flattenReference(callee);
 
-	if (name === 'this' || name === 'event') return;
+	if (validCalleeObjects.has(name)) return;
 
 	if (name === 'refs') {
 		refCallees.push(callee);
@@ -33,7 +34,7 @@ export default function validateEventHandlerCallee(
 	)
 		return;
 
-	const validCallees = ['this.*', 'event.*'].concat(
+	const validCallees = ['this.*', 'event.*', 'console.*'].concat(
 		Array.from(validBuiltins),
 		Array.from(validator.methods.keys())
 	);
