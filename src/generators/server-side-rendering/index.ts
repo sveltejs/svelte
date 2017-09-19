@@ -108,17 +108,17 @@ export default function ssr(
 		${options.filename && `${name}.filename = ${stringify(options.filename)}`};
 
 		${name}.data = function() {
-			return ${templateProperties.data ? `@data()` : `{}`};
+			return ${templateProperties.data ? `%data()` : `{}`};
 		};
 
 		${name}.render = function(state, options) {
 			${templateProperties.data
-				? `state = Object.assign(@data(), state || {});`
+				? `state = Object.assign(%data(), state || {});`
 				: `state = state || {};`}
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = @${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
+					`state.${key} = %computed-${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
 			)}
 
 			${generator.bindings.length &&
@@ -186,8 +186,10 @@ export default function ssr(
 		function __escape(html) {
 			return String(html).replace(/["'&<>]/g, match => escaped[match]);
 		}
-	`.replace(/(@+|#+)(\w*)/g, (match: string, sigil: string, name: string) => {
-		return sigil === '@' ? generator.alias(name) : sigil.slice(1) + name;
+	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+		if (sigil === '@') return generator.alias(name);
+		if (sigil === '%') return generator.templateVars.get(name);
+		return sigil.slice(1) + name;
 	});
 
 	return generator.generate(result, options, { name, format });
