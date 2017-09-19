@@ -13,7 +13,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			setStyle(div, "color", state.color);
 			setStyle(div, "transform", "translate(" + state.x + "px," + state.y + "px)");
 		},

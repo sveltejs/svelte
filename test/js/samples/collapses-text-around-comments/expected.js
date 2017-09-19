@@ -33,7 +33,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			encapsulateStyles(p);
 		},
 

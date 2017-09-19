@@ -52,7 +52,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			component._root._beforecreate.push(audio_progress_loadedmetadata_handler);
 
 			addListener(audio, "progress", audio_progress_loadedmetadata_handler);

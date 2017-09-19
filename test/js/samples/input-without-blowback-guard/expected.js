@@ -17,7 +17,7 @@ function create_main_fragment(state, component) {
 			this.hydrate();
 		},
 
-		hydrate: function(nodes) {
+		hydrate: function() {
 			input.type = "checkbox";
 			addListener(input, "change", input_change_handler);
 		},
