@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.40.0
+
+* Short fragment method names ([#863](https://github.com/sveltejs/svelte/pull/863))
+* Extract declarations out of default export ([#756](https://github.com/sveltejs/svelte/issues/756))
+
 ## 1.39.4
 
 * Extract shared init logic ([#855](https://github.com/sveltejs/svelte/pull/855))
