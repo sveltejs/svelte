@@ -20,7 +20,7 @@ export default function addTransitions(
 
 		block.addVariable(name);
 
-		const fn = `@template.transitions.${intro.name}`;
+		const fn = `%transitions-${intro.name}`;
 
 		block.builders.intro.addBlock(deindent`
 			#component._root._aftercreate.push(function() {
@@ -48,7 +48,7 @@ export default function addTransitions(
 				? block.contextualise(intro.expression).snippet
 				: '{}';
 
-			const fn = `@template.transitions.${intro.name}`; // TODO add built-in transitions?
+			const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
 
 			if (outro) {
 				block.builders.intro.addBlock(deindent`
@@ -73,7 +73,7 @@ export default function addTransitions(
 				? block.contextualise(outro.expression).snippet
 				: '{}';
 
-			const fn = `@template.transitions.${outro.name}`;
+			const fn = `%transitions-${outro.name}`;
 
 			// TODO hide elements that have outro'd (unless they belong to a still-outroing
 			// group) prior to their removal from the DOM

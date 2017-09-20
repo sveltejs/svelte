@@ -39,7 +39,7 @@ export class DomGenerator extends Generator {
 		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, stylesheet, options);
+		super(parsed, source, name, stylesheet, options, true);
 		this.blocks = [];
 
 		this.readonly = new Set();
@@ -60,7 +60,7 @@ export class DomGenerator extends Generator {
 		}
 
 		reservedNames.forEach(add);
-		this.importedNames.forEach(add);
+		this.userVars.forEach(add);
 		for (const name in shared) {
 			localUsedNames.add(test ? `${name}$` : name);
 		}
@@ -92,7 +92,6 @@ export default function dom(
 
 	const {
 		computations,
-		hasJs,
 		name,
 		templateProperties,
 		namespace,
@@ -127,7 +126,7 @@ export default function dom(
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const statement = `if (@differs(state.${key}, (state.${key} = @template.computed.${key}(${deps
+			const statement = `if (@differs(state.${key}, (state.${key} = %computed-${key}(${deps
 				.map(dep => `state.${dep}`)
 				.join(', ')})))) changed.${key} = true;`;
 
@@ -135,8 +134,8 @@ export default function dom(
 		});
 	}
 
-	if (hasJs) {
-		builder.addBlock(`[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`);
+	if (generator.javascript) {
+		builder.addBlock(generator.javascript);
 	}
 
 	if (generator.needsEncapsulateHelper) {
@@ -173,7 +172,7 @@ export default function dom(
 
 	const prototypeBase =
 		`${name}.prototype` +
-		(templateProperties.methods ? `, @template.methods` : '');
+		(templateProperties.methods ? `, %methods` : '');
 	const proto = sharedPath
 		? `@proto`
 		: deindent`
@@ -192,7 +191,7 @@ export default function dom(
 		@init(this, options);
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${templateProperties.data
-			? `@assign(@template.data(), options.data)`
+			? `@assign(%data(), options.data)`
 			: `options.data || {}`};
 		${generator.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
@@ -204,7 +203,7 @@ export default function dom(
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
 
-		${templateProperties.ondestroy && `this._handlers.destroy = [@template.ondestroy]`}
+		${templateProperties.ondestroy && `this._handlers.destroy = [%ondestroy]`}
 
 		${generator.slots.size && `this._slotted = options.slots || {};`}
 
@@ -217,16 +216,16 @@ export default function dom(
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
 		}
 
-		${templateProperties.oncreate && `var oncreate = @template.oncreate.bind(this);`}
+		${templateProperties.oncreate && `var _oncreate = %oncreate.bind(this);`}
 
 		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
 			if (!options._root) {
-				this._oncreate = [${templateProperties.oncreate && `oncreate`}];
+				this._oncreate = [${templateProperties.oncreate && `_oncreate`}];
 				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
 				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
 			} ${templateProperties.oncreate && deindent`
 				else {
-					this._root._oncreate.push(oncreate);
+					this._root._oncreate.push(_oncreate);
 				}
 			`}
 		`}
@@ -338,22 +337,28 @@ export default function dom(
 			}
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
 
-		${templateProperties.setup && `@template.setup(${name});`}
+		${templateProperties.setup && `%setup(${name});`}
 	`);
 
 	const usedHelpers = new Set();
 
 	let result = builder
 		.toString()
-		.replace(/(@+)(\w*)/g, (match: string, sigil: string, name: string) => {
-			if (sigil !== '@') return sigil.slice(1) + name;
+		.replace(/(%+|@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+			if (sigil === '@') {
+				if (name in shared) {
+					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+					usedHelpers.add(name);
+				}
 
-			if (name in shared) {
-				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
-				usedHelpers.add(name);
+				return generator.alias(name);
 			}
 
-			return generator.alias(name);
+			if (sigil === '%') {
+				return generator.templateVars.get(name);
+			}
+
+			return sigil.slice(1) + name;
 		});
 
 	let helpers;

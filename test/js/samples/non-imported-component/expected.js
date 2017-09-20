@@ -2,13 +2,7 @@
 import { assign, callAll, createText, detachNode, init, insertNode, noop, proto } from "svelte/shared.js";
 import Imported from 'Imported.html';
 
-var template = (function() {
-	return {
-		components: {
-			NonImported
-		}
-	};
-}());
+
 
 function create_main_fragment(state, component) {
 	var text;
@@ -17,7 +11,7 @@ function create_main_fragment(state, component) {
 		_root: component._root
 	});
 
-	var nonimported = new template.components.NonImported({
+	var nonimported = new NonImported({
 		_root: component._root
 	});
 

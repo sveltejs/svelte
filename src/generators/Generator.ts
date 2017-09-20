@@ -1,6 +1,8 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
+import deindent from '../utils/deindent';
+import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
 import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
@@ -23,6 +25,51 @@ interface Computation {
 	deps: string[]
 }
 
+function detectIndentation(str: string) {
+	const pattern = /^[\t\s]{1,4}/gm;
+	let match;
+
+	while (match = pattern.exec(str)) {
+		if (match[0][0] === '\t') return '\t';
+		if (match[0].length === 2) return '  ';
+	}
+
+	return '    ';
+}
+
+function getIndentationLevel(str: string, b: number) {
+	let a = b;
+	while (a > 0 && str[a - 1] !== '\n') a -= 1;
+	return /^\s*/.exec(str.slice(a, b))[0];
+}
+
+function getIndentExclusionRanges(node: Node) {
+	const ranges: Node[] = [];
+	walk(node, {
+		enter(node: Node) {
+			if (node.type === 'TemplateElement') ranges.push(node);
+		}
+	});
+	return ranges;
+}
+
+function removeIndentation(
+	code: MagicString,
+	start: number,
+	end: number,
+	indentationLevel: string,
+	ranges: Node[]
+) {
+	const str = code.original.slice(start, end);
+	const pattern = new RegExp(`^${indentationLevel}`, 'gm');
+	let match;
+
+	while (match = pattern.exec(str)) {
+		// TODO bail if we're inside an exclusion range
+		code.remove(start + match.index, start + match.index + indentationLevel.length);
+	}
+}
+
 export default class Generator {
 	ast: Parsed;
 	parsed: Parsed;
@@ -43,10 +90,10 @@ export default class Generator {
 	importedComponents: Map<string, string>;
 	namespace: string;
 	hasComponents: boolean;
-	hasJs: boolean;
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
 	slots: Set<string>;
+	javascript: string;
 
 	code: MagicString;
 
@@ -59,7 +106,8 @@ export default class Generator {
 
 	stylesheet: Stylesheet;
 
-	importedNames: Set<string>;
+	userVars: Set<string>;
+	templateVars: Map<string, string>;
 	aliases: Map<string, string>;
 	usedNames: Set<string>;
 
@@ -68,7 +116,8 @@ export default class Generator {
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
-		options: CompileOptions
+		options: CompileOptions,
+		dom: boolean
 	) {
 		this.ast = clone(parsed);
 
@@ -101,11 +150,12 @@ export default class Generator {
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
-		this.importedNames = new Set();
+		this.userVars = new Set();
+		this.templateVars = new Map();
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
-		this.parseJs();
+		this.parseJs(dom);
 		this.name = this.alias(name);
 
 		if (options.customElement === true) {
@@ -198,7 +248,11 @@ export default class Generator {
 
 						usedContexts.add(name);
 					} else if (helpers.has(name)) {
-						code.prependRight(node.start, `${self.alias('template')}.helpers.`);
+						let object = node;
+						while (object.type === 'MemberExpression') object = object.object;
+
+						const alias = self.templateVars.get(`helpers-${name}`);
+						if (alias !== name) code.overwrite(object.start, object.end, alias);
 					} else if (indexes.has(name)) {
 						const context = indexes.get(name);
 						usedContexts.add(context); // TODO is this right?
@@ -367,7 +421,7 @@ export default class Generator {
 		for (
 			let i = 1;
 			reservedNames.has(alias) ||
-			this.importedNames.has(alias) ||
+			this.userVars.has(alias) ||
 			this.usedNames.has(alias);
 			alias = `${name}_${i++}`
 		);
@@ -383,7 +437,7 @@ export default class Generator {
 		}
 
 		reservedNames.forEach(add);
-		this.importedNames.forEach(add);
+		this.userVars.forEach(add);
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -399,30 +453,40 @@ export default class Generator {
 		};
 	}
 
-	parseJs() {
-		const { source } = this;
+	parseJs(dom: boolean) {
+		const { code, source } = this;
 		const { js } = this.parsed;
 
 		const imports = this.imports;
 		const computations: Computation[] = [];
 		const templateProperties: Record<string, Node> = {};
+		const componentDefinition = new CodeBuilder();
 
 		let namespace = null;
-		let hasJs = !!js;
 
 		if (js) {
 			this.addSourcemapLocations(js.content);
+
+			const indentation = detectIndentation(source.slice(js.start, js.end));
+			const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
+			const indentExclusionRanges = getIndentExclusionRanges(js.content);
+
+			const scope = annotateWithScopes(js.content);
+			scope.declarations.forEach(name => {
+				this.userVars.add(name);
+			});
+
 			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
 			// imports need to be hoisted out of the IIFE
 			for (let i = 0; i < body.length; i += 1) {
 				const node = body[i];
 				if (node.type === 'ImportDeclaration') {
-					removeNode(this.code, js.content, node);
+					removeNode(code, js.content, node);
 					imports.push(node);
 
 					node.specifiers.forEach((specifier: Node) => {
-						this.importedNames.add(specifier.local.name);
+						this.userVars.add(specifier.local.name);
 					});
 				}
 			}
@@ -435,176 +499,197 @@ export default class Generator {
 				defaultExport.declaration.properties.forEach((prop: Node) => {
 					templateProperties[prop.key.name] = prop;
 				});
-			}
 
-			['helpers', 'events', 'components', 'transitions'].forEach(key => {
-				if (templateProperties[key]) {
-					templateProperties[key].value.properties.forEach((prop: Node) => {
-						this[key].add(prop.key.name);
-					});
-				}
-			});
-
-			if (templateProperties.computed) {
-				const dependencies = new Map();
-
-				templateProperties.computed.value.properties.forEach((prop: Node) => {
-					const key = prop.key.name;
-					const value = prop.value;
-
-					const deps = value.params.map(
-						(param: Node) =>
-							param.type === 'AssignmentPattern' ? param.left.name : param.name
-					);
-					dependencies.set(key, deps);
-				});
-
-				const visited = new Set();
-
-				const visit = function visit(key: string) {
-					if (!dependencies.has(key)) return; // not a computation
-
-					if (visited.has(key)) return;
-					visited.add(key);
-
-					const deps = dependencies.get(key);
-					deps.forEach(visit);
-
-					computations.push({ key, deps });
-				}
-
-				templateProperties.computed.value.properties.forEach((prop: Node) =>
-					visit(prop.key.name)
-				);
-			}
-
-			if (templateProperties.namespace) {
-				const ns = templateProperties.namespace.value.value;
-				namespace = namespaces[ns] || ns;
-
-				removeObjectKey(this.code, defaultExport.declaration, 'namespace');
-			}
-
-			if (templateProperties.components) {
-				let hasNonImportedComponent = false;
-				templateProperties.components.value.properties.forEach(
-					(property: Node) => {
-						const key = property.key.name;
-						const value = source.slice(
-							property.value.start,
-							property.value.end
-						);
-						if (this.importedNames.has(value)) {
-							this.importedComponents.set(key, value);
-						} else {
-							hasNonImportedComponent = true;
-						}
+				['helpers', 'events', 'components', 'transitions'].forEach(key => {
+					if (templateProperties[key]) {
+						templateProperties[key].value.properties.forEach((prop: Node) => {
+							this[key].add(prop.key.name);
+						});
 					}
-				);
-				if (hasNonImportedComponent) {
-					// remove the specific components that were imported, as we'll refer to them directly
-					Array.from(this.importedComponents.keys()).forEach(key => {
-						removeObjectKey(
-							this.code,
-							templateProperties.components.value,
-							key
-						);
+				});
+
+				const addArrowFunctionExpression = (name: string, node: Node) => {
+					const { body, params } = node;
+
+					const paramString = params.length ?
+						`[✂${params[0].start}-${params[params.length - 1].end}✂]` :
+						``;
+
+					if (body.type === 'BlockStatement') {
+						componentDefinition.addBlock(deindent`
+							function ${name}(${paramString}) [✂${body.start}-${body.end}✂]
+						`);
+					} else {
+						componentDefinition.addBlock(deindent`
+							function ${name}(${paramString}) {
+								return [✂${body.start}-${body.end}✂];
+							}
+						`);
+					}
+				};
+
+				const addFunctionExpression = (name: string, node: Node) => {
+					let c = node.start;
+					while (this.source[c] !== '(') c += 1;
+					componentDefinition.addBlock(deindent`
+						function ${name}[✂${c}-${node.end}✂];
+					`);
+				};
+
+				const addValue = (name: string, node: Node) => {
+					componentDefinition.addBlock(deindent`
+						var ${name} = [✂${node.start}-${node.end}✂];
+					`);
+				};
+
+				const addDeclaration = (key: string, node: Node, disambiguator?: string) => {
+					const qualified = disambiguator ? `${disambiguator}-${key}` : key;
+
+					if (node.type === 'Identifier' && node.name === key) {
+						this.templateVars.set(qualified, key);
+						return;
+					}
+
+					let name = this.getUniqueName(key);
+					this.templateVars.set(qualified, name);
+
+					// deindent
+					const indentationLevel = getIndentationLevel(source, node.start);
+					if (indentationLevel) {
+						removeIndentation(code, node.start, node.end, indentationLevel, indentExclusionRanges);
+					}
+
+					if (node.type === 'ArrowFunctionExpression') {
+						addArrowFunctionExpression(name, node);
+					} else if (node.type === 'FunctionExpression') {
+						addFunctionExpression(name, node);
+					} else {
+						addValue(name, node);
+					}
+				};
+
+				if (templateProperties.components) {
+					templateProperties.components.value.properties.forEach((property: Node) => {
+						addDeclaration(property.key.name, property.value, 'components');
 					});
-				} else {
-					// remove the entire components portion of the export
-					removeObjectKey(this.code, defaultExport.declaration, 'components');
+				}
+
+				if (templateProperties.computed) {
+					const dependencies = new Map();
+
+					templateProperties.computed.value.properties.forEach((prop: Node) => {
+						const key = prop.key.name;
+						const value = prop.value;
+
+						const deps = value.params.map(
+							(param: Node) =>
+								param.type === 'AssignmentPattern' ? param.left.name : param.name
+						);
+						dependencies.set(key, deps);
+					});
+
+					const visited = new Set();
+
+					const visit = (key: string) => {
+						if (!dependencies.has(key)) return; // not a computation
+
+						if (visited.has(key)) return;
+						visited.add(key);
+
+						const deps = dependencies.get(key);
+						deps.forEach(visit);
+
+						computations.push({ key, deps });
+
+						const prop = templateProperties.computed.value.properties.find((prop: Node) => prop.key.name === key);
+						addDeclaration(key, prop.value, 'computed');
+					};
+
+					templateProperties.computed.value.properties.forEach((prop: Node) =>
+						visit(prop.key.name)
+					);
+				}
+
+				if (templateProperties.data) {
+					addDeclaration('data', templateProperties.data.value);
+				}
+
+				if (templateProperties.events && dom) {
+					templateProperties.events.value.properties.forEach((property: Node) => {
+						addDeclaration(property.key.name, property.value, 'events');
+					});
+				}
+
+				if (templateProperties.helpers) {
+					templateProperties.helpers.value.properties.forEach((property: Node) => {
+						addDeclaration(property.key.name, property.value, 'helpers');
+					});
+				}
+
+				if (templateProperties.methods && dom) {
+					addDeclaration('methods', templateProperties.methods.value);
+				}
+
+				if (templateProperties.namespace) {
+					const ns = templateProperties.namespace.value.value;
+					namespace = namespaces[ns] || ns;
+				}
+
+				if (templateProperties.onrender) templateProperties.oncreate = templateProperties.onrender; // remove after v2
+				if (templateProperties.oncreate && dom) {
+					addDeclaration('oncreate', templateProperties.oncreate.value);
+				}
+
+				if (templateProperties.onteardown) templateProperties.ondestroy = templateProperties.onteardown; // remove after v2
+				if (templateProperties.ondestroy && dom) {
+					addDeclaration('ondestroy', templateProperties.ondestroy.value);
+				}
+
+				if (templateProperties.props) {
+					this.props = templateProperties.props.value.elements.map((element: Node) => element.value);
+				}
+
+				if (templateProperties.setup) {
+					addDeclaration('setup', templateProperties.setup.value);
+				}
+
+				if (templateProperties.tag) {
+					this.tag = templateProperties.tag.value.value;
+				}
+
+				if (templateProperties.transitions) {
+					templateProperties.transitions.value.properties.forEach((property: Node) => {
+						addDeclaration(property.key.name, property.value, 'transitions');
+					});
 				}
 			}
 
-			// Remove these after version 2
-			if (templateProperties.onrender) {
-				const { key } = templateProperties.onrender;
-				this.code.overwrite(key.start, key.end, 'oncreate', {
-					storeName: true,
-					contentOnly: false,
-				});
-				templateProperties.oncreate = templateProperties.onrender;
-			}
-
-			if (templateProperties.onteardown) {
-				const { key } = templateProperties.onteardown;
-				this.code.overwrite(key.start, key.end, 'ondestroy', {
-					storeName: true,
-					contentOnly: false,
-				});
-				templateProperties.ondestroy = templateProperties.onteardown;
-			}
-
-			if (templateProperties.tag) {
-				this.tag = templateProperties.tag.value.value;
-				removeObjectKey(this.code, defaultExport.declaration, 'tag');
-			}
-
-			if (templateProperties.props) {
-				this.props = templateProperties.props.value.elements.map((element: Node) => element.value);
-				removeObjectKey(this.code, defaultExport.declaration, 'props');
-			}
-
-			// now that we've analysed the default export, we can determine whether or not we need to keep it
-			let hasDefaultExport = !!defaultExport;
-			if (defaultExport && defaultExport.declaration.properties.length === 0) {
-				hasDefaultExport = false;
-				removeNode(this.code, js.content, defaultExport);
-			}
-
-			// if we do need to keep it, then we need to generate a return statement
-			if (hasDefaultExport) {
-				const finalNode = body[body.length - 1];
-				if (defaultExport === finalNode) {
-					// export is last property, we can just return it
-					this.code.overwrite(
-						defaultExport.start,
-						defaultExport.declaration.start,
-						`return `
-					);
+			if (indentationLevel) {
+				if (defaultExport) {
+					removeIndentation(code, js.content.start, defaultExport.start, indentationLevel, indentExclusionRanges);
+					removeIndentation(code, defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
 				} else {
-					const { declarations } = annotateWithScopes(js);
-					let template = 'template';
-					for (
-						let i = 1;
-						declarations.has(template);
-						template = `template_${i++}`
-					);
-
-					this.code.overwrite(
-						defaultExport.start,
-						defaultExport.declaration.start,
-						`var ${template} = `
-					);
-
-					let i = defaultExport.start;
-					while (/\s/.test(source[i - 1])) i--;
-
-					const indentation = source.slice(i, defaultExport.start);
-					this.code.appendLeft(
-						finalNode.end,
-						`\n\n${indentation}return ${template};`
-					);
+					removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
 				}
 			}
 
-			// user code gets wrapped in an IIFE
-			if (js.content.body.length) {
-				const prefix = hasDefaultExport
-					? `var ${this.alias('template')} = (function() {`
-					: `(function() {`;
-				this.code
-					.prependRight(js.content.start, prefix)
-					.appendLeft(js.content.end, '}());');
+			let a = js.content.start;
+			while (/\s/.test(source[a])) a += 1;
+
+			let b = js.content.end;
+			while (/\s/.test(source[b - 1])) b -= 1;
+
+			if (defaultExport) {
+				this.javascript = '';
+				if (a !== defaultExport.start) this.javascript += `[✂${a}-${defaultExport.start}✂]`;
+				if (!componentDefinition.isEmpty()) this.javascript += componentDefinition;
+				if (defaultExport.end !== b) this.javascript += `[✂${defaultExport.end}-${b}✂]`;
 			} else {
-				// if there's no need to include user code, remove it altogether
-				this.code.remove(js.content.start, js.content.end);
-				hasJs = false;
+				this.javascript = a === b ? null : `[✂${a}-${b}✂]`;
 			}
 		}
 
 		this.computations = computations;
-		this.hasJs = hasJs;
 		this.namespace = namespace;
 		this.templateProperties = templateProperties;
 	}
