@@ -11,21 +11,21 @@ function create_main_fragment(state, component) {
 	});
 
 	return {
-		create: function() {
-			nested._fragment.create();
+		c: function create() {
+			nested._fragment.c();
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			nested._mount(target, anchor);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			nested._unmount();
 		},
 
-		destroy: function() {
+		d: function destroy() {
 			nested.destroy(false);
 		}
 	};
@@ -44,8 +44,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 
 		this._lock = true;
 		callAll(this._beforecreate);

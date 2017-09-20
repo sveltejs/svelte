@@ -46,8 +46,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -159,7 +159,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -168,11 +168,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -204,123 +204,123 @@ function create_main_fragment(state, component) {
 	var if_block_4 = (state.e) && create_if_block_4(state, component);
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
-			if (if_block) if_block.create();
+			if (if_block) if_block.c();
 			text = createText("\n\n\t");
 			p = createElement("p");
 			p.textContent = "this can be used as an anchor";
 			text_2 = createText("\n\n\t");
-			if (if_block_1) if_block_1.create();
+			if (if_block_1) if_block_1.c();
 			text_3 = createText("\n\n\t");
-			if (if_block_2) if_block_2.create();
+			if (if_block_2) if_block_2.c();
 			text_4 = createText("\n\n\t");
 			p_1 = createElement("p");
 			p_1.textContent = "so can this";
 			text_6 = createText("\n\n\t");
-			if (if_block_3) if_block_3.create();
+			if (if_block_3) if_block_3.c();
 			text_8 = createText("\n\n");
-			if (if_block_4) if_block_4.create();
+			if (if_block_4) if_block_4.c();
 			if_block_4_anchor = createComment();
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
-			if (if_block) if_block.mount(div, null);
+			if (if_block) if_block.m(div, null);
 			appendNode(text, div);
 			appendNode(p, div);
 			appendNode(text_2, div);
-			if (if_block_1) if_block_1.mount(div, null);
+			if (if_block_1) if_block_1.m(div, null);
 			appendNode(text_3, div);
-			if (if_block_2) if_block_2.mount(div, null);
+			if (if_block_2) if_block_2.m(div, null);
 			appendNode(text_4, div);
 			appendNode(p_1, div);
 			appendNode(text_6, div);
-			if (if_block_3) if_block_3.mount(div, null);
+			if (if_block_3) if_block_3.m(div, null);
 			insertNode(text_8, target, anchor);
-			if (if_block_4) if_block_4.mount(target, anchor);
+			if (if_block_4) if_block_4.m(target, anchor);
 			insertNode(if_block_4_anchor, target, anchor);
 		},
 
-		update: function(changed, state) {
+		p: function update(changed, state) {
 			if (state.a) {
 				if (!if_block) {
 					if_block = create_if_block(state, component);
-					if_block.create();
-					if_block.mount(div, text);
+					if_block.c();
+					if_block.m(div, text);
 				}
 			} else if (if_block) {
-				if_block.unmount();
-				if_block.destroy();
+				if_block.u();
+				if_block.d();
 				if_block = null;
 			}
 
 			if (state.b) {
 				if (!if_block_1) {
 					if_block_1 = create_if_block_1(state, component);
-					if_block_1.create();
-					if_block_1.mount(div, text_3);
+					if_block_1.c();
+					if_block_1.m(div, text_3);
 				}
 			} else if (if_block_1) {
-				if_block_1.unmount();
-				if_block_1.destroy();
+				if_block_1.u();
+				if_block_1.d();
 				if_block_1 = null;
 			}
 
 			if (state.c) {
 				if (!if_block_2) {
 					if_block_2 = create_if_block_2(state, component);
-					if_block_2.create();
-					if_block_2.mount(div, text_4);
+					if_block_2.c();
+					if_block_2.m(div, text_4);
 				}
 			} else if (if_block_2) {
-				if_block_2.unmount();
-				if_block_2.destroy();
+				if_block_2.u();
+				if_block_2.d();
 				if_block_2 = null;
 			}
 
 			if (state.d) {
 				if (!if_block_3) {
 					if_block_3 = create_if_block_3(state, component);
-					if_block_3.create();
-					if_block_3.mount(div, null);
+					if_block_3.c();
+					if_block_3.m(div, null);
 				}
 			} else if (if_block_3) {
-				if_block_3.unmount();
-				if_block_3.destroy();
+				if_block_3.u();
+				if_block_3.d();
 				if_block_3 = null;
 			}
 
 			if (state.e) {
 				if (!if_block_4) {
 					if_block_4 = create_if_block_4(state, component);
-					if_block_4.create();
-					if_block_4.mount(if_block_4_anchor.parentNode, if_block_4_anchor);
+					if_block_4.c();
+					if_block_4.m(if_block_4_anchor.parentNode, if_block_4_anchor);
 				}
 			} else if (if_block_4) {
-				if_block_4.unmount();
-				if_block_4.destroy();
+				if_block_4.u();
+				if_block_4.d();
 				if_block_4 = null;
 			}
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(div);
-			if (if_block) if_block.unmount();
-			if (if_block_1) if_block_1.unmount();
-			if (if_block_2) if_block_2.unmount();
-			if (if_block_3) if_block_3.unmount();
+			if (if_block) if_block.u();
+			if (if_block_1) if_block_1.u();
+			if (if_block_2) if_block_2.u();
+			if (if_block_3) if_block_3.u();
 			detachNode(text_8);
-			if (if_block_4) if_block_4.unmount();
+			if (if_block_4) if_block_4.u();
 			detachNode(if_block_4_anchor);
 		},
 
-		destroy: function() {
-			if (if_block) if_block.destroy();
-			if (if_block_1) if_block_1.destroy();
-			if (if_block_2) if_block_2.destroy();
-			if (if_block_3) if_block_3.destroy();
-			if (if_block_4) if_block_4.destroy();
+		d: function destroy$$1() {
+			if (if_block) if_block.d();
+			if (if_block_1) if_block_1.d();
+			if (if_block_2) if_block_2.d();
+			if (if_block_3) if_block_3.d();
+			if (if_block_4) if_block_4.d();
 		}
 	};
 }
@@ -330,20 +330,20 @@ function create_if_block(state, component) {
 	var p;
 
 	return {
-		create: function() {
+		c: function create() {
 			p = createElement("p");
 			p.textContent = "a";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -352,20 +352,20 @@ function create_if_block_1(state, component) {
 	var p;
 
 	return {
-		create: function() {
+		c: function create() {
 			p = createElement("p");
 			p.textContent = "b";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -374,20 +374,20 @@ function create_if_block_2(state, component) {
 	var p;
 
 	return {
-		create: function() {
+		c: function create() {
 			p = createElement("p");
 			p.textContent = "c";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -396,20 +396,20 @@ function create_if_block_3(state, component) {
 	var p;
 
 	return {
-		create: function() {
+		c: function create() {
 			p = createElement("p");
 			p.textContent = "d";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -418,20 +418,20 @@ function create_if_block_4(state, component) {
 	var p;
 
 	return {
-		create: function() {
+		c: function create() {
 			p = createElement("p");
 			p.textContent = "e";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -442,8 +442,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 

@@ -50,8 +50,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -163,7 +163,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -172,11 +172,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -236,13 +236,13 @@ function create_main_fragment(state, component) {
 	}
 
 	return {
-		create: function() {
+		c: function create() {
 			audio = createElement("audio");
 			addListener(audio, "play", audio_pause_handler);
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			component._root._beforecreate.push(audio_progress_loadedmetadata_handler);
 
 			addListener(audio, "progress", audio_progress_loadedmetadata_handler);
@@ -269,11 +269,11 @@ function create_main_fragment(state, component) {
 			addListener(audio, "pause", audio_pause_handler);
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(audio, target, anchor);
 		},
 
-		update: function(changed, state) {
+		p: function update(changed, state) {
 			if (!audio_updating && !isNaN(state.currentTime )) {
 				audio.currentTime = state.currentTime ;
 			}
@@ -283,11 +283,11 @@ function create_main_fragment(state, component) {
 			}
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(audio);
 		},
 
-		destroy: function() {
+		d: function destroy$$1() {
 			removeListener(audio, "progress", audio_progress_loadedmetadata_handler);
 			removeListener(audio, "loadedmetadata", audio_progress_loadedmetadata_handler);
 			removeListener(audio, "loadedmetadata", audio_loadedmetadata_handler);
@@ -312,8 +312,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 
 		callAll(this._beforecreate);
 	}

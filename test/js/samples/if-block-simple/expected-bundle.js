@@ -38,8 +38,8 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -151,7 +151,7 @@ function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -160,11 +160,11 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 var proto = {
@@ -188,37 +188,37 @@ function create_main_fragment(state, component) {
 	var if_block = (state.foo) && create_if_block(state, component);
 
 	return {
-		create: function() {
-			if (if_block) if_block.create();
+		c: function create() {
+			if (if_block) if_block.c();
 			if_block_anchor = createComment();
 		},
 
-		mount: function(target, anchor) {
-			if (if_block) if_block.mount(target, anchor);
+		m: function mount(target, anchor) {
+			if (if_block) if_block.m(target, anchor);
 			insertNode(if_block_anchor, target, anchor);
 		},
 
-		update: function(changed, state) {
+		p: function update(changed, state) {
 			if (state.foo) {
 				if (!if_block) {
 					if_block = create_if_block(state, component);
-					if_block.create();
-					if_block.mount(if_block_anchor.parentNode, if_block_anchor);
+					if_block.c();
+					if_block.m(if_block_anchor.parentNode, if_block_anchor);
 				}
 			} else if (if_block) {
-				if_block.unmount();
-				if_block.destroy();
+				if_block.u();
+				if_block.d();
 				if_block = null;
 			}
 		},
 
-		unmount: function() {
-			if (if_block) if_block.unmount();
+		u: function unmount() {
+			if (if_block) if_block.u();
 			detachNode(if_block_anchor);
 		},
 
-		destroy: function() {
-			if (if_block) if_block.destroy();
+		d: function destroy$$1() {
+			if (if_block) if_block.d();
 		}
 	};
 }
@@ -228,20 +228,20 @@ function create_if_block(state, component) {
 	var p;
 
 	return {
-		create: function() {
+		c: function create() {
 			p = createElement("p");
 			p.textContent = "foo!";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -252,8 +252,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 
