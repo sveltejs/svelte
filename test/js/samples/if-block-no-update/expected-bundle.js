@@ -13,8 +13,8 @@ function assign(target) {
 	return target;
 }
 
-function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+function insert(parent, next, child) {
+	parent.insertBefore(child, next);
 }
 
 function detachNode(node) {
@@ -196,7 +196,8 @@ function create_main_fragment(state, component) {
 
 		m: function mount(target, anchor) {
 			if_block.m(target, anchor);
-			insertNode(if_block_anchor, target, anchor);
+
+			insert(target, anchor, if_block_anchor);
 		},
 
 		p: function update(changed, state) {
@@ -231,7 +232,7 @@ function create_if_block(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {
@@ -253,7 +254,7 @@ function create_if_block_1(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {

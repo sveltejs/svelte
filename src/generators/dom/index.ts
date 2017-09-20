@@ -160,7 +160,7 @@ export default function dom(
 				var style = @createElement("style");
 				style.id = '${generator.stylesheet.id}-style';
 				style.textContent = ${styles};
-				@appendNode(style, document.head);
+				@append(document.head, style);
 			}
 		`);
 	}

@@ -211,7 +211,7 @@ export default class Block {
 		if (this.first) {
 			properties.addBlock(`first: null,`);
 			this.builders.hydrate.addLine(`this.first = ${this.first};`);
-			this.builders.mount.addLineAtStart(`@insertNode(${this.first}, #target, anchor);`);
+			this.builders.mount.addLineAtStart(`@insert(#target, anchor, ${this.first});`);
 		}
 
 		if (this.builders.create.isEmpty()) {

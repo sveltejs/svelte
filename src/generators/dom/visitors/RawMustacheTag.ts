@@ -66,7 +66,7 @@ export default function visitRawMustacheTag(
 		);
 
 		mountStatements.push(
-			state.parentNode ? `@appendNode(${anchorBefore}, ${state.parentNode});` : `@insertNode(${anchorBefore}, #target, anchor);`
+			state.parentNode ? `@append(${state.parentNode}, ${anchorBefore});` : `@insert(#target, anchor, ${anchorBefore});`
 		);
 	}
 
@@ -79,7 +79,7 @@ export default function visitRawMustacheTag(
 		);
 
 		mountStatements.push(
-			state.parentNode ? `@appendNode(${anchorAfter}, ${state.parentNode});` : `@insertNode(${anchorAfter}, #target, anchor);`
+			state.parentNode ? `@append(${state.parentNode}, ${anchorAfter});` : `@insert(#target, anchor, ${anchorAfter});`
 		);
 	}
 

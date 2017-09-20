@@ -1,5 +1,26 @@
+export function append(parent, child) {
+	parent.appendChild(child);
+}
+
+export function appendAll(parent, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.appendChild(children[i]);
+	}
+}
+
+// TODO remove
 export function appendNode(node, target) {
 	target.appendChild(node);
+}
+
+export function insert(parent, next, child) {
+	parent.insertBefore(child, next);
+}
+
+export function insertAll(parent, next, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.insertBefore(children[i], next);
+	}
 }
 
 export function insertNode(node, target, anchor) {

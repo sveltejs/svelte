@@ -13,12 +13,24 @@ function assign(target) {
 	return target;
 }
 
-function appendNode(node, target) {
-	target.appendChild(node);
+function append(parent, child) {
+	parent.appendChild(child);
 }
 
-function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+function appendAll(parent, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.appendChild(children[i]);
+	}
+}
+
+function insert(parent, next, child) {
+	parent.insertBefore(child, next);
+}
+
+function insertAll(parent, next, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.insertBefore(children[i], next);
+	}
 }
 
 function detachNode(node) {
@@ -221,13 +233,13 @@ function create_main_fragment(state, component) {
 		},
 
 		m: function mount(target, anchor) {
+			append(p, text_1);
+
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insertNode(text, target, anchor);
-			insertNode(p, target, anchor);
-			appendNode(text_1, p);
+			insertAll(target, anchor, [text, p]);
 		},
 
 		p: function update(changed, state) {
@@ -297,18 +309,16 @@ function create_each_block(state, comments, comment, i, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(div, target, anchor);
-			appendNode(strong, div);
-			appendNode(text, strong);
-			appendNode(text_1, div);
-			appendNode(span, div);
-			appendNode(text_2, span);
-			appendNode(text_3, span);
-			appendNode(text_4, span);
-			appendNode(text_5, span);
-			appendNode(text_6, div);
-			appendNode(raw_before, div);
+			append(strong, text);
+
+			appendAll(span, [text_2, text_3, text_4, text_5]);
+
+			appendAll(div, [strong, text_1, span, text_6]);
+
+			append(div, raw_before);
 			raw_before.insertAdjacentHTML("afterend", raw_value);
+
+			insert(target, anchor, div);
 		},
 
 		p: function update(changed, state, comments, comment, i) {

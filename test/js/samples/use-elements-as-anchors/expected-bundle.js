@@ -13,12 +13,24 @@ function assign(target) {
 	return target;
 }
 
-function appendNode(node, target) {
-	target.appendChild(node);
+function append(parent, child) {
+	parent.appendChild(child);
 }
 
-function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+function appendAll(parent, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.appendChild(children[i]);
+	}
+}
+
+function insert(parent, next, child) {
+	parent.insertBefore(child, next);
+}
+
+function insertAll(parent, next, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.insertBefore(children[i], next);
+	}
 }
 
 function detachNode(node) {
@@ -225,21 +237,19 @@ function create_main_fragment(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(div, target, anchor);
 			if (if_block) if_block.m(div, null);
-			appendNode(text, div);
-			appendNode(p, div);
-			appendNode(text_2, div);
+			appendAll(div, [text, p, text_2]);
 			if (if_block_1) if_block_1.m(div, null);
-			appendNode(text_3, div);
+			append(div, text_3);
 			if (if_block_2) if_block_2.m(div, null);
-			appendNode(text_4, div);
-			appendNode(p_1, div);
-			appendNode(text_6, div);
+			appendAll(div, [text_4, p_1, text_6]);
 			if (if_block_3) if_block_3.m(div, null);
-			insertNode(text_8, target, anchor);
+
+			insertAll(target, anchor, [div, text_8]);
+
 			if (if_block_4) if_block_4.m(target, anchor);
-			insertNode(if_block_4_anchor, target, anchor);
+
+			insert(target, anchor, if_block_4_anchor);
 		},
 
 		p: function update(changed, state) {
@@ -336,7 +346,7 @@ function create_if_block(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {
@@ -358,7 +368,7 @@ function create_if_block_1(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {
@@ -380,7 +390,7 @@ function create_if_block_2(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {
@@ -402,7 +412,7 @@ function create_if_block_3(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {
@@ -424,7 +434,7 @@ function create_if_block_4(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, anchor, p);
 		},
 
 		u: function unmount() {

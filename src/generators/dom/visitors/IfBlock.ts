@@ -133,7 +133,7 @@ export default function visitIfBlock(
 
 		// TODO do this elsewhere?
 		node.mountStatement += '\n\n' + (
-			state.parentNode ? `@appendNode(${anchor}, ${state.parentNode})` : `@insertNode(${anchor}, #target, anchor)`
+			state.parentNode ? `@append(${state.parentNode}, ${anchor})` : `@insert(#target, anchor, ${anchor})`
 		);
 	}
 }

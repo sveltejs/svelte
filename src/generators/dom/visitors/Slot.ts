@@ -42,9 +42,9 @@ export default function visitSlot(
 	if (state.parentNode) {
 		node.mountStatement = deindent`
 			if (${content_name}) {
-				${needsAnchorBefore && `@appendNode(${anchorBefore} || (${anchorBefore} = @createComment()), ${state.parentNode});`}
-				@appendNode(${content_name}, ${state.parentNode});
-				${needsAnchorAfter && `@appendNode(${anchorAfter} || (${anchorAfter} = @createComment()), ${state.parentNode});`}
+				${needsAnchorBefore && `@append(${state.parentNode}, ${anchorBefore} || (${anchorBefore} = @createComment()));`}
+				@append(${state.parentNode}, ${content_name});
+				${needsAnchorAfter && `@append(${state.parentNode}, ${anchorAfter} || (${anchorAfter} = @createComment()));`}
 			} else {
 				${mountChildren(node, state.parentNode)}
 			}
@@ -52,9 +52,9 @@ export default function visitSlot(
 	} else {
 		node.mountStatement = deindent`
 			if (${content_name}) {
-				${needsAnchorBefore && `@insertNode(${anchorBefore} || (${anchorBefore} = @createComment()), #target, anchor);`}
-				@insertNode(${content_name}, #target, anchor);
-				${needsAnchorAfter && `@insertNode(${anchorAfter} || (${anchorAfter} = @createComment()), #target, anchor);`}
+				${needsAnchorBefore && `@insert(#target, anchor, ${anchorBefore} || (${anchorBefore} = @createComment()));`}
+				@insert(#target, anchor, ${content_name});
+				${needsAnchorAfter && `@insert(#target, anchor, ${anchorAfter} || (${anchorAfter} = @createComment()));`}
 			} else {
 				${mountChildren(node, state.parentNode)}
 			}

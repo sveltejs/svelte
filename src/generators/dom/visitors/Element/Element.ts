@@ -90,7 +90,7 @@ export default function visitElement(
 	// TODO this is kinda messy — this is a hack to prevent the mount statement
 	// going in the usual place
 	if (node.slotted) {
-		node.mountStatement = `@appendNode(${node.var}, ${parentNode});`;
+		node.mountStatement = `@append(${parentNode}, ${node.var});`;
 	}
 
 	// add CSS encapsulation attribute

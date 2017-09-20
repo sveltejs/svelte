@@ -129,7 +129,7 @@ export default function visitEachBlock(
 
 	// TODO do this elsewhere?
 	if (needsAnchor) node.mountStatement += '\n\n' + (
-		state.parentNode ? `@appendNode(${anchor}, ${state.parentNode});` : `@insertNode(${anchor}, #target, anchor);`
+		state.parentNode ? `@append(${state.parentNode}, ${anchor});` : `@insert(#target, anchor, ${anchor});`
 	);
 
 	node.children.forEach((child: Node) => {
