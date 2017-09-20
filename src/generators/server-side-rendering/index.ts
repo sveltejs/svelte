@@ -161,10 +161,8 @@ export default function ssr(
 					});
 				}
 
-				${templateProperties.components.value.properties.map(prop => {
-					const { name } = prop.key;
-					const expression = generator.importedComponents.get(name) || `@template.components.${name}`;
-					return `addComponent(${expression});`;
+				${templateProperties.components.value.properties.map((prop: Node) => {
+					return `addComponent(%components-${prop.key.name});`;
 				})}
 			`}
 

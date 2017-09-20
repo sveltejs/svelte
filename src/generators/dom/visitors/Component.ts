@@ -216,10 +216,7 @@ export default function visitComponent(
 		}
 	}
 
-	const expression = node.name === ':Self'
-		? generator.name
-		: generator.importedComponents.get(node.name) ||
-				`@template.components.${node.name}`; // TODO this is out of date
+	const expression = node.name === ':Self' ? generator.name : `%components-${node.name}`;
 
 	block.builders.init.addBlock(deindent`
 		${statements.join('\n')}

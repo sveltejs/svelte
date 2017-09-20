@@ -481,7 +481,7 @@ export default class Generator {
 			for (let i = 0; i < body.length; i += 1) {
 				const node = body[i];
 				if (node.type === 'ImportDeclaration') {
-					removeNode(this.code, js.content, node);
+					removeNode(code, js.content, node);
 					imports.push(node);
 
 					node.specifiers.forEach((specifier: Node) => {
@@ -536,16 +536,21 @@ export default class Generator {
 				};
 
 				const addValue = (name: string, node: Node) => {
-					if (node.type !== 'Identifier' || node.name !== name) {
-						componentDefinition.addBlock(deindent`
-							var ${name} = [✂${node.start}-${node.end}✂];
-						`);
-					}
+					componentDefinition.addBlock(deindent`
+						var ${name} = [✂${node.start}-${node.end}✂];
+					`);
 				};
 
 				const addDeclaration = (key: string, node: Node, disambiguator?: string) => {
+					const qualified = disambiguator ? `${disambiguator}-${key}` : key;
+
+					if (node.type === 'Identifier' && node.name === key) {
+						this.templateVars.set(qualified, key);
+						return;
+					}
+
 					let name = this.getUniqueName(key);
-					this.templateVars.set(disambiguator ? `${disambiguator}-${key}` : key, name);
+					this.templateVars.set(qualified, name);
 
 					// deindent
 					const indentationLevel = getIndentationLevel(source, node.start);
@@ -553,8 +558,6 @@ export default class Generator {
 						removeIndentation(code, node.start, node.end, indentationLevel, indentExclusionRanges);
 					}
 
-					// TODO disambiguate between different categories, and ensure
-					// no conflicts with existing aliases
 					if (node.type === 'ArrowFunctionExpression') {
 						addArrowFunctionExpression(name, node);
 					} else if (node.type === 'FunctionExpression') {
@@ -566,24 +569,7 @@ export default class Generator {
 
 				if (templateProperties.components) {
 					templateProperties.components.value.properties.forEach((property: Node) => {
-						// TODO replace all the guff below with this:
-						// addValue(property.key.name, property.value);
-
-						const key = property.key.name;
-						const value = source.slice(
-							property.value.start,
-							property.value.end
-						);
-
-						if (key !== value) {
-							const alias = this.alias(key);
-							componentDefinition.addLine(
-								`var ${alias} = [✂${property.value.start}-${property.value.end}✂];`
-							);
-							this.importedComponents.set(key, alias);
-						} else {
-							this.importedComponents.set(key, key);
-						}
+						addDeclaration(property.key.name, property.value, 'components');
 					});
 				}
 
@@ -677,15 +663,6 @@ export default class Generator {
 				}
 			}
 
-			// if we do need to keep it, then we need to replace `export default`
-			// if (defaultExport) {
-			// 	this.code.overwrite(
-			// 		defaultExport.start,
-			// 		defaultExport.declaration.start,
-			// 		`var ${this.alias('template')} = `
-			// 	);
-			// }
-
 			if (indentationLevel) {
 				if (defaultExport) {
 					removeIndentation(code, js.content.start, defaultExport.start, indentationLevel, indentExclusionRanges);
@@ -693,11 +670,6 @@ export default class Generator {
 				} else {
 					removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
 				}
-			}
-
-			if (js.content.body.length === 0) {
-				// if there's no need to include user code, remove it altogether
-				this.code.remove(js.content.start, js.content.end);
 			}
 
 			let a = js.content.start;
