@@ -21,44 +21,14 @@ export class SsrGenerator extends Generator {
 		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, stylesheet, options);
+		super(parsed, source, name, stylesheet, options, false);
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
 
-		// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
-		const { templateProperties, defaultExport } = this;
-
 		preprocess(this, parsed.html);
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
-
-		// TODO how to exclude non-SSR-able stuff?
-
-		// if (templateProperties.oncreate)
-		// 	removeNode(
-		// 		this.code,
-		// 		defaultExport.declaration,
-		// 		templateProperties.oncreate
-		// 	);
-		// if (templateProperties.ondestroy)
-		// 	removeNode(
-		// 		this.code,
-		// 		defaultExport.declaration,
-		// 		templateProperties.ondestroy
-		// 	);
-		// if (templateProperties.methods)
-		// 	removeNode(
-		// 		this.code,
-		// 		defaultExport.declaration,
-		// 		templateProperties.methods
-		// 	);
-		// if (templateProperties.events)
-		// 	removeNode(
-		// 		this.code,
-		// 		defaultExport.declaration,
-		// 		templateProperties.events
-		// 	);
 	}
 
 	append(code: string) {
