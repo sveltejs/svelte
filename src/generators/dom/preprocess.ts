@@ -41,6 +41,13 @@ function createDebuggingComment(node: Node, generator: DomGenerator) {
 	return `${loc} ${source.slice(c, d)}`.replace(/\n/g, ' ');
 }
 
+function cannotUseInnerHTML(node: Node) {
+	while (node && node.canUseInnerHTML) {
+		node.canUseInnerHTML = false;
+		node = node.parent;
+	}
+}
+
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
 // list is almost certainly very incomplete)
@@ -65,6 +72,7 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
+		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('text');
 
 		const dependencies = block.findDependencies(node.expression);
@@ -80,6 +88,7 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
+		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('raw');
 
 		const dependencies = block.findDependencies(node.expression);
@@ -114,6 +123,8 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
+		cannotUseInnerHTML(node);
+
 		const blocks: Block[] = [];
 		let dynamic = false;
 		let hasIntros = false;
@@ -195,6 +206,7 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
+		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
 
 		const dependencies = block.findDependencies(node.expression);
@@ -290,10 +302,16 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
+		if (node.name === 'slot') {
+			cannotUseInnerHTML(node);
+		}
+
 		node.attributes.forEach((attribute: Node) => {
 			if (attribute.type === 'Attribute' && attribute.value !== true) {
 				attribute.value.forEach((chunk: Node) => {
 					if (chunk.type !== 'Text') {
+						if (node.parent) cannotUseInnerHTML(node.parent);
+
 						const dependencies = block.findDependencies(chunk.expression);
 						block.addDependencies(dependencies);
 
@@ -311,20 +329,24 @@ const preprocessors = {
 						}
 					}
 				});
-			} else if (attribute.type === 'EventHandler' && attribute.expression) {
-				attribute.expression.arguments.forEach((arg: Node) => {
-					const dependencies = block.findDependencies(arg);
+			} else {
+				if (node.parent) cannotUseInnerHTML(node.parent);
+
+				if (attribute.type === 'EventHandler' && attribute.expression) {
+					attribute.expression.arguments.forEach((arg: Node) => {
+						const dependencies = block.findDependencies(arg);
+						block.addDependencies(dependencies);
+					});
+				} else if (attribute.type === 'Binding') {
+					const dependencies = block.findDependencies(attribute.value);
 					block.addDependencies(dependencies);
-				});
-			} else if (attribute.type === 'Binding') {
-				const dependencies = block.findDependencies(attribute.value);
-				block.addDependencies(dependencies);
-			} else if (attribute.type === 'Transition') {
-				if (attribute.intro)
-					generator.hasIntroTransitions = block.hasIntroMethod = true;
-				if (attribute.outro) {
-					generator.hasOutroTransitions = block.hasOutroMethod = true;
-					block.outros += 1;
+				} else if (attribute.type === 'Transition') {
+					if (attribute.intro)
+						generator.hasIntroTransitions = block.hasIntroMethod = true;
+					if (attribute.outro) {
+						generator.hasOutroTransitions = block.hasOutroMethod = true;
+						block.outros += 1;
+					}
 				}
 			}
 		});
@@ -340,6 +362,8 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
+			cannotUseInnerHTML(node);
+
 			const value = node.attributes.find(
 				(attribute: Node) => attribute.name === 'value'
 			);
@@ -359,6 +383,8 @@ const preprocessors = {
 			generator.components.has(node.name) || node.name === ':Self';
 
 		if (isComponent) {
+			cannotUseInnerHTML(node);
+
 			node.var = block.getUniqueName(
 				(node.name === ':Self' ? generator.name : node.name).toLowerCase()
 			);
@@ -369,6 +395,7 @@ const preprocessors = {
 		} else {
 			const slot = getStaticAttributeValue(node, 'slot');
 			if (slot && isChildOfComponent(node, generator)) {
+				cannotUseInnerHTML(node);
 				node.slotted = true;
 				// TODO validate slots — no nesting, no dynamic names...
 				const component = componentStack[componentStack.length - 1];
@@ -442,6 +469,7 @@ function preprocessChildren(
 
 	cleaned.forEach((child: Node, i: number) => {
 		child.parent = node;
+		child.canUseInnerHTML = !generator.hydratable;
 
 		const preprocessor = preprocessors[child.type];
 		if (preprocessor) preprocessor(generator, block, state, child, inEachBlock, elementStack, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);

@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.39.4
+
+* Extract shared init logic ([#855](https://github.com/sveltejs/svelte/pull/855))
+* Allow `console.*` calls in event handlers ([#782](https://github.com/sveltejs/svelte/issues/782))
+* Marker comments in output ([#823](https://github.com/sveltejs/svelte/issues/823))
+* Use `textContent` and `innerHTML` where appropriate ([#23](https://github.com/sveltejs/svelte/issues/23))
+* Various improvements to generated code
+
 ## 1.39.3
 
 * Allow `slot='...'` inside custom elements ([#827](https://github.com/sveltejs/svelte/issues/827))
