@@ -5,22 +5,22 @@ function create_main_fragment(state, component) {
 	var div;
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
 			div.textContent = "fades in";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(div);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -35,8 +35,8 @@ class SvelteComponent extends HTMLElement {
 
 		this._fragment = create_main_fragment(this._state, this);
 
-		this._fragment.create();
-		this._fragment.mount(this.shadowRoot, null);
+		this._fragment.c();
+		this._fragment.m(this.shadowRoot, null);
 
 		if (options.target) this._mount(options.target, options.anchor || null);
 	}

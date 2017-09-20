@@ -226,24 +226,24 @@ export default class Block {
 		}
 
 		if (this.builders.create.isEmpty()) {
-			properties.addBlock(`create: @noop,`);
+			properties.addBlock(`c: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				create: function() {
+				c: function create() {
 					${this.builders.create}
-					${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
+					${!this.builders.hydrate.isEmpty() && `this.h();`}
 				},
 			`);
 		}
 
 		if (this.generator.hydratable) {
 			if (this.builders.claim.isEmpty()) {
-				properties.addBlock(`claim: @noop,`);
+				properties.addBlock(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					claim: function(nodes) {
+					l: function claim(nodes) {
 						${this.builders.claim}
-						${!this.builders.hydrate.isEmpty() && `this.hydrate();`}
+						${!this.builders.hydrate.isEmpty() && `this.h();`}
 					},
 				`);
 			}
@@ -251,17 +251,17 @@ export default class Block {
 
 		if (!this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
-				hydrate: function() {
+				h: function hydrate() {
 					${this.builders.hydrate}
 				},
 			`);
 		}
 
 		if (this.builders.mount.isEmpty()) {
-			properties.addBlock(`mount: @noop,`);
+			properties.addBlock(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				mount: function(#target, anchor) {
+				m: function mount(#target, anchor) {
 					${this.builders.mount}
 				},
 			`);
@@ -269,10 +269,10 @@ export default class Block {
 
 		if (this.hasUpdateMethod) {
 			if (this.builders.update.isEmpty()) {
-				properties.addBlock(`update: @noop,`);
+				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					update: function(changed, ${this.params.join(', ')}) {
+					p: function update(changed, ${this.params.join(', ')}) {
 						${this.builders.update}
 					},
 				`);
@@ -282,20 +282,20 @@ export default class Block {
 		if (this.hasIntroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
-					intro: function(#target, anchor) {
+					i: function intro(#target, anchor) {
 						if (${introing}) return;
 						${introing} = true;
 						${hasOutros && `${outroing} = false;`}
 
 						${this.builders.intro}
 
-						this.mount(#target, anchor);
+						this.m(#target, anchor);
 					},
 				`);
 			} else {
 				properties.addBlock(deindent`
-					intro: function(#target, anchor) {
-						this.mount(#target, anchor);
+					i: function intro(#target, anchor) {
+						this.m(#target, anchor);
 					},
 				`);
 			}
@@ -304,7 +304,7 @@ export default class Block {
 		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
-					outro: function(${this.alias('outrocallback')}) {
+					o: function outro(${this.alias('outrocallback')}) {
 						if (${outroing}) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
@@ -315,8 +315,9 @@ export default class Block {
 					},
 				`);
 			} else {
+				// TODO should this be a helper?
 				properties.addBlock(deindent`
-					outro: function(outrocallback) {
+					o: function outro(outrocallback) {
 						outrocallback();
 					},
 				`);
@@ -324,20 +325,20 @@ export default class Block {
 		}
 
 		if (this.builders.unmount.isEmpty()) {
-			properties.addBlock(`unmount: @noop,`);
+			properties.addBlock(`u: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				unmount: function() {
+				u: function unmount() {
 					${this.builders.unmount}
 				},
 			`);
 		}
 
 		if (this.builders.destroy.isEmpty()) {
-			properties.addBlock(`destroy: @noop`);
+			properties.addBlock(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
-				destroy: function() {
+				d: function destroy() {
 					${this.builders.destroy}
 				}
 			`);

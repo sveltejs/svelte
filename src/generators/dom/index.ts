@@ -235,8 +235,8 @@ export default function dom(
 		this._fragment = @create_main_fragment(this._state, this);
 
 		${generator.customElement ? deindent`
-			this._fragment.create();
-			this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(this.shadowRoot, null);
+			this._fragment.c();
+			this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
 
 			if (options.target) this._mount(options.target, options.anchor || null);
 		` : deindent`
@@ -244,14 +244,14 @@ export default function dom(
 				${generator.hydratable
 					? deindent`
 						var nodes = @children(options.target);
-						options.hydrate ? this._fragment.claim(nodes) : this._fragment.create();
+						options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
 						nodes.forEach(@detachNode);
 					` :
 					deindent`
 						${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
-						this._fragment.create();
+						this._fragment.c();
 					`}
-				this._fragment.${block.hasIntroMethod ? 'intro' : 'mount'}(options.target, options.anchor || null);
+				this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(options.target, options.anchor || null);
 
 				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
 					${generator.hasComponents && `this._lock = true;`}
