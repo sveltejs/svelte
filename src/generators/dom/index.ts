@@ -92,7 +92,6 @@ export default function dom(
 
 	const {
 		computations,
-		hasJs,
 		name,
 		templateProperties,
 		namespace,
@@ -338,7 +337,7 @@ export default function dom(
 			}
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
 
-		${templateProperties.setup && `@template.setup(${name});`}
+		${templateProperties.setup && `%setup(${name});`}
 	`);
 
 	const usedHelpers = new Set();
