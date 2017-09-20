@@ -4,7 +4,7 @@ import * as path from "path";
 import { rollup } from "rollup";
 import { loadConfig, svelte } from "../helpers.js";
 
-describe.skip("js", () => {
+describe("js", () => {
 	fs.readdirSync("test/js/samples").forEach(dir => {
 		if (dir[0] === ".") return;
 
@@ -62,13 +62,13 @@ describe.skip("js", () => {
 				);
 
 				assert.equal(
-					actual.trim().replace(/^\s+$/gm, ""),
-					expected.trim().replace(/^\s+$/gm, "")
+					actual.trim().replace(/^[ \t]+$/gm, ""),
+					expected.trim().replace(/^[ \t]+$/gm, "")
 				);
 
 				assert.equal(
-					code.trim().replace(/^\s+$/gm, ""),
-					expectedBundle.trim().replace(/^\s+$/gm, "")
+					code.trim().replace(/^[ \t]+$/gm, ""),
+					expectedBundle.trim().replace(/^[ \t]+$/gm, "")
 				);
 			}).catch(err => {
 				if (err.loc) console.error(err.loc);

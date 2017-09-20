@@ -82,7 +82,7 @@ export default function ssr(
 
 	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
 
-	const { computations, name, hasJs, templateProperties } = generator;
+	const { computations, name, templateProperties } = generator;
 
 	// create main render() function
 	const mainBlock = new Block({

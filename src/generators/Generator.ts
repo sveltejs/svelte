@@ -25,6 +25,51 @@ interface Computation {
 	deps: string[]
 }
 
+function detectIndentation(str: string) {
+	const pattern = /^[\t\s]{1,4}/gm;
+	let match;
+
+	while (match = pattern.exec(str)) {
+		if (match[0][0] === '\t') return '\t';
+		if (match[0].length === 2) return '  ';
+	}
+
+	return '    ';
+}
+
+function getIndentationLevel(str: string, b: number) {
+	let a = b;
+	while (a > 0 && str[a - 1] !== '\n') a -= 1;
+	return /^\s*/.exec(str.slice(a, b))[0];
+}
+
+function getIndentExclusionRanges(node: Node) {
+	const ranges: Node[] = [];
+	walk(node, {
+		enter(node: Node) {
+			if (node.type === 'TemplateElement') ranges.push(node);
+		}
+	});
+	return ranges;
+}
+
+function removeIndentation(
+	code: MagicString,
+	start: number,
+	end: number,
+	indentationLevel: string,
+	ranges: Node[]
+) {
+	const str = code.original.slice(start, end);
+	const pattern = new RegExp(`^${indentationLevel}`, 'gm');
+	let match;
+
+	while (match = pattern.exec(str)) {
+		// TODO bail if we're inside an exclusion range
+		code.remove(start + match.index, start + match.index + indentationLevel.length);
+	}
+}
+
 export default class Generator {
 	ast: Parsed;
 	parsed: Parsed;
@@ -45,7 +90,6 @@ export default class Generator {
 	importedComponents: Map<string, string>;
 	namespace: string;
 	hasComponents: boolean;
-	hasJs: boolean;
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
 	slots: Set<string>;
@@ -409,7 +453,7 @@ export default class Generator {
 	}
 
 	parseJs() {
-		const { source } = this;
+		const { code, source } = this;
 		const { js } = this.parsed;
 
 		const imports = this.imports;
@@ -418,10 +462,13 @@ export default class Generator {
 		const componentDefinition = new CodeBuilder();
 
 		let namespace = null;
-		let hasJs = !!js;
 
 		if (js) {
 			this.addSourcemapLocations(js.content);
+
+			const indentation = detectIndentation(source.slice(js.start, js.end));
+			const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
+			const indentExclusionRanges = getIndentExclusionRanges(js.content);
 
 			const scope = annotateWithScopes(js.content);
 			scope.declarations.forEach(name => {
@@ -499,6 +546,12 @@ export default class Generator {
 				const addDeclaration = (key: string, node: Node, disambiguator?: string) => {
 					let name = this.getUniqueName(key);
 					this.templateVars.set(disambiguator ? `${disambiguator}-${key}` : key, name);
+
+					// deindent
+					const indentationLevel = getIndentationLevel(source, node.start);
+					if (indentationLevel) {
+						removeIndentation(code, node.start, node.end, indentationLevel, indentExclusionRanges);
+					}
 
 					// TODO disambiguate between different categories, and ensure
 					// no conflicts with existing aliases
@@ -624,35 +677,46 @@ export default class Generator {
 				}
 			}
 
-			// now that we've analysed the default export, we can determine whether or not we need to keep it
-			let hasDefaultExport = !!defaultExport;
-			if (defaultExport && defaultExport.declaration.properties.length === 0) {
-				hasDefaultExport = false;
-				removeNode(this.code, js.content, defaultExport);
-			}
-
 			// if we do need to keep it, then we need to replace `export default`
-			if (hasDefaultExport) {
-				this.code.overwrite(
-					defaultExport.start,
-					defaultExport.declaration.start,
-					`var ${this.alias('template')} = `
-				);
+			// if (defaultExport) {
+			// 	this.code.overwrite(
+			// 		defaultExport.start,
+			// 		defaultExport.declaration.start,
+			// 		`var ${this.alias('template')} = `
+			// 	);
+			// }
+
+			if (indentationLevel) {
+				if (defaultExport) {
+					removeIndentation(code, js.content.start, defaultExport.start, indentationLevel, indentExclusionRanges);
+					removeIndentation(code, defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
+				} else {
+					removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
+				}
 			}
 
 			if (js.content.body.length === 0) {
 				// if there's no need to include user code, remove it altogether
 				this.code.remove(js.content.start, js.content.end);
-				hasJs = false;
 			}
 
-			this.javascript = hasDefaultExport ?
-				`[✂${js.content.start}-${defaultExport.start}✂]${componentDefinition}[✂${defaultExport.end}-${js.content.end}✂]` :
-				`[✂${js.content.start}-${js.content.end}✂]`;
+			let a = js.content.start;
+			while (/\s/.test(source[a])) a += 1;
+
+			let b = js.content.end;
+			while (/\s/.test(source[b - 1])) b -= 1;
+
+			if (defaultExport) {
+				this.javascript = '';
+				if (a !== defaultExport.start) this.javascript += `[✂${a}-${defaultExport.start}✂]`;
+				if (!componentDefinition.isEmpty()) this.javascript += componentDefinition;
+				if (defaultExport.end !== b) this.javascript += `[✂${defaultExport.end}-${b}✂]`;
+			} else {
+				this.javascript = a === b ? null : `[✂${a}-${b}✂]`;
+			}
 		}
 
 		this.computations = computations;
-		this.hasJs = hasJs;
 		this.namespace = namespace;
 		this.templateProperties = templateProperties;
 	}

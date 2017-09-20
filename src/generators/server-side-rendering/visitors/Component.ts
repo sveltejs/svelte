@@ -72,7 +72,7 @@ export default function visitComponent(
 	const expression = node.name === ':Self'
 		? generator.name
 		: generator.importedComponents.get(node.name) ||
-				`@template.components.${node.name}`;
+				`@template.components.${node.name}`; // TODO out of date
 
 	bindings.forEach(binding => {
 		block.addBinding(binding, expression);
