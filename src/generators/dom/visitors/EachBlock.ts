@@ -33,7 +33,7 @@ export default function visitEachBlock(
 	generator.code.overwrite(c, c + 4, 'length');
 	const length = `[✂${c}-${c+4}✂]`;
 
-	const mountOrIntro = node._block.hasIntroMethod ? 'intro' : 'mount';
+	const mountOrIntro = node._block.hasIntroMethod ? 'i' : 'm';
 	const vars = {
 		each,
 		create_each_block,
@@ -75,7 +75,7 @@ export default function visitEachBlock(
 		block.builders.init.addBlock(deindent`
 			if (!${each_block_value}.${length}) {
 				${each_block_else} = ${node.else._block.name}(${params}, #component);
-				${each_block_else}.create();
+				${each_block_else}.c();
 			}
 		`);
 
@@ -90,14 +90,14 @@ export default function visitEachBlock(
 		if (node.else._block.hasUpdateMethod) {
 			block.builders.update.addBlock(deindent`
 				if (!${each_block_value}.${length} && ${each_block_else}) {
-					${each_block_else}.update( changed, ${params} );
+					${each_block_else}.p( changed, ${params} );
 				} else if (!${each_block_value}.${length}) {
 					${each_block_else} = ${node.else._block.name}(${params}, #component);
-					${each_block_else}.create();
+					${each_block_else}.c();
 					${each_block_else}.${mountOrIntro}(${parentNode}, ${anchor});
 				} else if (${each_block_else}) {
-					${each_block_else}.unmount();
-					${each_block_else}.destroy();
+					${each_block_else}.u();
+					${each_block_else}.d();
 					${each_block_else} = null;
 				}
 			`);
@@ -105,24 +105,24 @@ export default function visitEachBlock(
 			block.builders.update.addBlock(deindent`
 				if (${each_block_value}.${length}) {
 					if (${each_block_else}) {
-						${each_block_else}.unmount();
-						${each_block_else}.destroy();
+						${each_block_else}.u();
+						${each_block_else}.d();
 						${each_block_else} = null;
 					}
 				} else if (!${each_block_else}) {
 					${each_block_else} = ${node.else._block.name}(${params}, #component);
-					${each_block_else}.create();
+					${each_block_else}.c();
 					${each_block_else}.${mountOrIntro}(${parentNode}, ${anchor});
 				}
 			`);
 		}
 
 		block.builders.unmount.addLine(
-			`if (${each_block_else}) ${each_block_else}.unmount()`
+			`if (${each_block_else}) ${each_block_else}.u()`
 		);
 
 		block.builders.destroy.addBlock(deindent`
-			if (${each_block_else}) ${each_block_else}.destroy();
+			if (${each_block_else}) ${each_block_else}.d();
 		`);
 	}
 
@@ -196,7 +196,7 @@ function keyed(
 	block.builders.create.addBlock(deindent`
 		var ${iteration} = ${head};
 		while (${iteration}) {
-			${iteration}.create();
+			${iteration}.c();
 			${iteration} = ${iteration}.next;
 		}
 	`);
@@ -204,7 +204,7 @@ function keyed(
 	block.builders.claim.addBlock(deindent`
 		var ${iteration} = ${head};
 		while (${iteration}) {
-			${iteration}.claim(${state.parentNodes});
+			${iteration}.l(${state.parentNodes});
 			${iteration} = ${iteration}.next;
 		}
 	`);
@@ -225,9 +225,9 @@ function keyed(
 		const fn = block.getUniqueName(`${each}_outro`);
 		block.builders.init.addBlock(deindent`
 			function ${fn}(iteration) {
-				iteration.outro(function() {
-					iteration.unmount();
-					iteration.destroy();
+				iteration.o(function() {
+					iteration.u();
+					iteration.d();
 					${lookup}[iteration.key] = null;
 				});
 			}
@@ -249,8 +249,8 @@ function keyed(
 		const fn = block.getUniqueName(`${each}_destroy`);
 		block.builders.init.addBlock(deindent`
 			function ${fn}(iteration) {
-				iteration.unmount();
-				iteration.destroy();
+				iteration.u();
+				iteration.d();
 				${lookup}[iteration.key] = null;
 			}
 		`);
@@ -283,7 +283,7 @@ function keyed(
 			var ${iteration} = ${lookup}[${key}];
 
 			${dynamic &&
-				`if (${iteration}) ${iteration}.update(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);`}
+				`if (${iteration}) ${iteration}.p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);`}
 
 			if (${expected}) {
 				if (${key} === ${expected}.key) {
@@ -301,11 +301,11 @@ function keyed(
 						${iteration}.discard = false;
 						${iteration}.last = ${last};
 
-						if (!${expected}) ${iteration}.mount(${parentNode}, ${anchor});
+						if (!${expected}) ${iteration}.m(${parentNode}, ${anchor});
 					} else {
 						// key is being inserted
 						${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
-						${iteration}.create();
+						${iteration}.c();
 						${iteration}.${mountOrIntro}(${parentNode}, ${expected}.first);
 
 						${expected}.last = ${iteration};
@@ -317,17 +317,17 @@ function keyed(
 				if (${iteration}) {
 					${iteration}.discard = false;
 					${iteration}.next = null;
-					${iteration}.mount(${parentNode}, ${anchor});
+					${iteration}.m(${parentNode}, ${anchor});
 				} else {
 					${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
-					${iteration}.create();
+					${iteration}.c();
 					${iteration}.${mountOrIntro}(${parentNode}, ${anchor});
 				}
 			}
 
 			if (${last}) ${last}.next = ${iteration};
 			${iteration}.last = ${last};
-			${node._block.hasIntroMethod && `${iteration}.intro(${parentNode}, ${anchor});`}
+			${node._block.hasIntroMethod && `${iteration}.i(${parentNode}, ${anchor});`}
 			${last} = ${iteration};
 		}
 
@@ -342,7 +342,7 @@ function keyed(
 		block.builders.unmount.addBlock(deindent`
 			var ${iteration} = ${head};
 			while (${iteration}) {
-				${iteration}.unmount();
+				${iteration}.u();
 				${iteration} = ${iteration}.next;
 			}
 		`);
@@ -351,7 +351,7 @@ function keyed(
 	block.builders.destroy.addBlock(deindent`
 		var ${iteration} = ${head};
 		while (${iteration}) {
-			${iteration}.destroy();
+			${iteration}.d();
 			${iteration} = ${iteration}.next;
 		}
 	`);
@@ -386,13 +386,13 @@ function unkeyed(
 
 	block.builders.create.addBlock(deindent`
 		for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-			${iterations}[#i].create();
+			${iterations}[#i].c();
 		}
 	`);
 
 	block.builders.claim.addBlock(deindent`
 		for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-			${iterations}[#i].claim(${state.parentNodes});
+			${iterations}[#i].l(${state.parentNodes});
 		}
 	`);
 
@@ -420,25 +420,25 @@ function unkeyed(
 			? node._block.hasIntroMethod
 				? deindent`
 					if (${iterations}[#i]) {
-						${iterations}[#i].update(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
+						${iterations}[#i].p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
 					} else {
 						${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
-						${iterations}[#i].create();
+						${iterations}[#i].c();
 					}
-					${iterations}[#i].intro(${parentNode}, ${anchor});
+					${iterations}[#i].i(${parentNode}, ${anchor});
 				`
 				: deindent`
 					if (${iterations}[#i]) {
-						${iterations}[#i].update(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
+						${iterations}[#i].p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
 					} else {
 						${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
-						${iterations}[#i].create();
-						${iterations}[#i].mount(${parentNode}, ${anchor});
+						${iterations}[#i].c();
+						${iterations}[#i].m(${parentNode}, ${anchor});
 					}
 				`
 			: deindent`
 				${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
-				${iterations}[#i].create();
+				${iterations}[#i].c();
 				${iterations}[#i].${mountOrIntro}(${parentNode}, ${anchor});
 			`;
 
@@ -449,9 +449,9 @@ function unkeyed(
 			? deindent`
 				function ${outro}(i) {
 					if (${iterations}[i]) {
-						${iterations}[i].outro(function() {
-							${iterations}[i].unmount();
-							${iterations}[i].destroy();
+						${iterations}[i].o(function() {
+							${iterations}[i].u();
+							${iterations}[i].d();
 							${iterations}[i] = null;
 						});
 					}
@@ -461,8 +461,8 @@ function unkeyed(
 			`
 			: deindent`
 				for (; #i < ${iterations}.length; #i += 1) {
-					${iterations}[#i].unmount();
-					${iterations}[#i].destroy();
+					${iterations}[#i].u();
+					${iterations}[#i].d();
 				}
 				${iterations}.length = ${each_block_value}.${length};
 			`;
@@ -482,7 +482,7 @@ function unkeyed(
 
 	block.builders.unmount.addBlock(deindent`
 		for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-			${iterations}[#i].unmount();
+			${iterations}[#i].u();
 		}
 	`);
 

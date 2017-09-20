@@ -13,8 +13,8 @@ export function destroy(detach) {
 	this.fire('destroy');
 	this.set = this.get = noop;
 
-	if (detach !== false) this._fragment.unmount();
-	this._fragment.destroy();
+	if (detach !== false) this._fragment.u();
+	this._fragment.d();
 	this._fragment = this._state = null;
 }
 
@@ -158,7 +158,7 @@ export function _set(newState) {
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.update(changed, this._state);
+	this._fragment.p(changed, this._state);
 	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
 }
 
@@ -178,11 +178,11 @@ export function callAll(fns) {
 }
 
 export function _mount(target, anchor) {
-	this._fragment.mount(target, anchor);
+	this._fragment.m(target, anchor);
 }
 
 export function _unmount() {
-	this._fragment.unmount();
+	this._fragment.u();
 }
 
 export var proto = {

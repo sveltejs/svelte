@@ -114,10 +114,10 @@ export default function visitIfBlock(
 		simple(generator, block, state, node, branches[0], dynamic, vars);
 	}
 
-	block.builders.create.addLine(`${if_name}${name}.create();`);
+	block.builders.create.addLine(`${if_name}${name}.c();`);
 
 	block.builders.claim.addLine(
-		`${if_name}${name}.claim(${state.parentNodes});`
+		`${if_name}${name}.l(${state.parentNodes});`
 	);
 
 	if (needsAnchor) {
@@ -144,7 +144,7 @@ function simple(
 	`);
 
 	const isTopLevel = !state.parentNode;
-	const mountOrIntro = branch.hasIntroMethod ? 'intro' : 'mount';
+	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
@@ -158,52 +158,52 @@ function simple(
 		? branch.hasIntroMethod
 			? deindent`
 				if (${name}) {
-					${name}.update(changed, ${params});
+					${name}.p(changed, ${params});
 				} else {
 					${name} = ${branch.block}(${params}, #component);
-					if (${name}) ${name}.create();
+					if (${name}) ${name}.c();
 				}
 
-				${name}.intro(${parentNode}, ${anchor});
+				${name}.i(${parentNode}, ${anchor});
 			`
 			: deindent`
 				if (${name}) {
-					${name}.update(changed, ${params});
+					${name}.p(changed, ${params});
 				} else {
 					${name} = ${branch.block}(${params}, #component);
-					${name}.create();
-					${name}.mount(${parentNode}, ${anchor});
+					${name}.c();
+					${name}.m(${parentNode}, ${anchor});
 				}
 			`
 		: branch.hasIntroMethod
 			? deindent`
 				if (!${name}) {
 					${name} = ${branch.block}(${params}, #component);
-					${name}.create();
+					${name}.c();
 				}
-				${name}.intro(${parentNode}, ${anchor});
+				${name}.i(${parentNode}, ${anchor});
 			`
 			: deindent`
 				if (!${name}) {
 					${name} = ${branch.block}(${params}, #component);
-					${name}.create();
-					${name}.mount(${parentNode}, ${anchor});
+					${name}.c();
+					${name}.m(${parentNode}, ${anchor});
 				}
 			`;
 
-	// no `update()` here — we don't want to update outroing nodes,
+	// no `p()` here — we don't want to update outroing nodes,
 	// as that will typically result in glitching
 	const exit = branch.hasOutroMethod
 		? deindent`
-			${name}.outro(function() {
-				${name}.unmount();
-				${name}.destroy();
+			${name}.o(function() {
+				${name}.u();
+				${name}.d();
 				${name} = null;
 			});
 		`
 		: deindent`
-			${name}.unmount();
-			${name}.destroy();
+			${name}.u();
+			${name}.d();
 			${name} = null;
 		`;
 
@@ -215,9 +215,9 @@ function simple(
 		}
 	`);
 
-	block.builders.unmount.addLine(`${if_name}${name}.unmount();`);
+	block.builders.unmount.addLine(`${if_name}${name}.u();`);
 
-	block.builders.destroy.addLine(`${if_name}${name}.destroy();`);
+	block.builders.destroy.addLine(`${if_name}${name}.d();`);
 }
 
 function compound(
@@ -247,7 +247,7 @@ function compound(
 	`);
 
 	const isTopLevel = !state.parentNode;
-	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
+	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
@@ -260,23 +260,23 @@ function compound(
 	const changeBlock = deindent`
 		${hasElse
 			? deindent`
-				${name}.unmount();
-				${name}.destroy();
+				${name}.u();
+				${name}.d();
 			`
 			: deindent`
 				if (${name}) {
-					${name}.unmount();
-					${name}.destroy();
+					${name}.u();
+					${name}.d();
 				}`}
 		${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
-		${if_name}${name}.create();
+		${if_name}${name}.c();
 		${if_name}${name}.${mountOrIntro}(${parentNode}, ${anchor});
 	`;
 
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
 			if (${current_block_type} === (${current_block_type} = ${select_block_type}(${params})) && ${name}) {
-				${name}.update(changed, ${params});
+				${name}.p(changed, ${params});
 			} else {
 				${changeBlock}
 			}
@@ -289,9 +289,9 @@ function compound(
 		`);
 	}
 
-	block.builders.unmount.addLine(`${if_name}${name}.unmount();`);
+	block.builders.unmount.addLine(`${if_name}${name}.u();`);
 
-	block.builders.destroy.addLine(`${if_name}${name}.destroy();`);
+	block.builders.destroy.addLine(`${if_name}${name}.d();`);
 }
 
 // if any of the siblings have outros, we need to keep references to the blocks
@@ -346,7 +346,7 @@ function compoundWithOutros(
 	}
 
 	const isTopLevel = !state.parentNode;
-	const mountOrIntro = branches[0].hasIntroMethod ? 'intro' : 'mount';
+	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
@@ -357,9 +357,9 @@ function compoundWithOutros(
 	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
 
 	const destroyOldBlock = deindent`
-		${name}.outro(function() {
-			${if_blocks}[ ${previous_block_index} ].unmount();
-			${if_blocks}[ ${previous_block_index} ].destroy();
+		${name}.o(function() {
+			${if_blocks}[ ${previous_block_index} ].u();
+			${if_blocks}[ ${previous_block_index} ].d();
 			${if_blocks}[ ${previous_block_index} ] = null;
 		});
 	`;
@@ -368,7 +368,7 @@ function compoundWithOutros(
 		${name} = ${if_blocks}[${current_block_type_index}];
 		if (!${name}) {
 			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
-			${name}.create();
+			${name}.c();
 		}
 		${name}.${mountOrIntro}(${parentNode}, ${anchor});
 	`;
@@ -396,7 +396,7 @@ function compoundWithOutros(
 			var ${previous_block_index} = ${current_block_type_index};
 			${current_block_type_index} = ${select_block_type}(${params});
 			if (${current_block_type_index} === ${previous_block_index}) {
-				${if_current_block_type_index}${if_blocks}[${current_block_type_index}].update(changed, ${params});
+				${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, ${params});
 			} else {
 				${changeBlock}
 			}
@@ -413,8 +413,8 @@ function compoundWithOutros(
 
 	block.builders.destroy.addLine(deindent`
 		${if_current_block_type_index}{
-			${if_blocks}[${current_block_type_index}].unmount();
-			${if_blocks}[${current_block_type_index}].destroy();
+			${if_blocks}[${current_block_type_index}].u();
+			${if_blocks}[${current_block_type_index}].d();
 		}
 	`);
 }
