@@ -3,7 +3,7 @@ export function stringify(data: string, options = {}) {
 }
 
 export function escape(data: string, { onlyEscapeAtSymbol = false } = {}) {
-	return data.replace(onlyEscapeAtSymbol ? /(@+)/g : /(@+|#+)/g, (match: string) => {
+	return data.replace(onlyEscapeAtSymbol ? /(%+|@+)/g : /(%+|@+|#+)/g, (match: string) => {
 		return match + match[0];
 	});
 }
