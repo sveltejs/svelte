@@ -5,21 +5,21 @@ function create_main_fragment(state, component) {
 	var div;
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			setStyle(div, "color", state.color);
 			setStyle(div, "transform", "translate(" + state.x + "px," + state.y + "px)");
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
-		update: function(changed, state) {
+		p: function update(changed, state) {
 			if (changed.color) {
 				setStyle(div, "color", state.color);
 			}
@@ -29,11 +29,11 @@ function create_main_fragment(state, component) {
 			}
 		},
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(div);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -44,8 +44,8 @@ function SvelteComponent(options) {
 	this._fragment = create_main_fragment(this._state, this);
 
 	if (options.target) {
-		this._fragment.create();
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 

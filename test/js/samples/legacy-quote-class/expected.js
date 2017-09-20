@@ -5,34 +5,34 @@ function create_main_fragment(state, component) {
 	var div;
 
 	return {
-		create: function() {
+		c: function create() {
 			div = createElement("div");
-			this.hydrate();
+			this.h();
 		},
 
-		claim: function(nodes) {
+		l: function claim(nodes) {
 			div = claimElement(nodes, "DIV", { "class": true }, false);
 			var div_nodes = children(div);
 
 			div_nodes.forEach(detachNode);
-			this.hydrate();
+			this.h();
 		},
 
-		hydrate: function() {
+		h: function hydrate() {
 			div.className = "foo";
 		},
 
-		mount: function(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
-		update: noop,
+		p: noop,
 
-		unmount: function() {
+		u: function unmount() {
 			detachNode(div);
 		},
 
-		destroy: noop
+		d: noop
 	};
 }
 
@@ -44,9 +44,9 @@ function SvelteComponent(options) {
 
 	if (options.target) {
 		var nodes = children(options.target);
-		options.hydrate ? this._fragment.claim(nodes) : this._fragment.create();
+		options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
 		nodes.forEach(detachNode);
-		this._fragment.mount(options.target, options.anchor || null);
+		this._fragment.m(options.target, options.anchor || null);
 	}
 }
 
