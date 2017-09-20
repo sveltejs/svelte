@@ -69,10 +69,7 @@ export default function visitComponent(
 		)
 		.join(', ');
 
-	const expression = node.name === ':Self'
-		? generator.name
-		: generator.importedComponents.get(node.name) ||
-				`@template.components.${node.name}`; // TODO out of date
+	const expression = node.name === ':Self' ? generator.name : `%components-${node.name}`;
 
 	bindings.forEach(binding => {
 		block.addBinding(binding, expression);
