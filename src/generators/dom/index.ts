@@ -344,18 +344,21 @@ export default function dom(
 
 	let result = builder
 		.toString()
-		.replace(/%(\w+(?:-\w+)?)/gm, (match: string, name: string) => {
-			return generator.templateVars.get(name);
-		})
-		.replace(/(@+)(\w*)/g, (match: string, sigil: string, name: string) => {
-			if (sigil !== '@') return sigil.slice(1) + name;
+		.replace(/(%+|@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+			if (sigil === '@') {
+				if (name in shared) {
+					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+					usedHelpers.add(name);
+				}
 
-			if (name in shared) {
-				if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
-				usedHelpers.add(name);
+				return generator.alias(name);
 			}
 
-			return generator.alias(name);
+			if (sigil === '%') {
+				return generator.templateVars.get(name);
+			}
+
+			return sigil.slice(1) + name;
 		});
 
 	let helpers;

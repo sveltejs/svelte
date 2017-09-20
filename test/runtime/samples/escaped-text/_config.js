@@ -1,3 +1,7 @@
 export default {
-	html: `@@x`
+	html: `
+		@@x
+		%1
+		%%2
+	`
 };
