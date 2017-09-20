@@ -101,34 +101,44 @@ describe('css', () => {
 			if (expected.html !== null) {
 				const window = env();
 
-				const Component = eval(
-					`(function () { ${dom.code}; return SvelteComponent; }())`
-				);
-				const target = window.document.querySelector('main');
-
-				new Component({ target, data: config.data });
-				const html = target.innerHTML;
-
-				fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
-
 				// dom
-				assert.equal(
-					normalizeHtml(window, html.replace(/svelte-\d+/g, 'svelte-xyz')),
-					normalizeHtml(window, expected.html)
-				);
+				try {
+					const Component = eval(
+						`(function () { ${dom.code}; return SvelteComponent; }())`
+					);
+					const target = window.document.querySelector('main');
+
+					new Component({ target, data: config.data });
+					const html = target.innerHTML;
+
+					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
+
+					assert.equal(
+						normalizeHtml(window, html.replace(/svelte-\d+/g, 'svelte-xyz')),
+						normalizeHtml(window, expected.html)
+					);
+				} catch (err) {
+					console.log(dom.code);
+					throw err;
+				}
 
 				// ssr
-				const component = eval(
-					`(function () { ${ssr.code}; return SvelteComponent; }())`
-				);
+				try {
+					const component = eval(
+						`(function () { ${ssr.code}; return SvelteComponent; }())`
+					);
 
-				assert.equal(
-					normalizeHtml(
-						window,
-						component.render(config.data).replace(/svelte-\d+/g, 'svelte-xyz')
-					),
-					normalizeHtml(window, expected.html)
-				);
+					assert.equal(
+						normalizeHtml(
+							window,
+							component.render(config.data).replace(/svelte-\d+/g, 'svelte-xyz')
+						),
+						normalizeHtml(window, expected.html)
+					);
+				} catch (err) {
+					console.log(ssr.code);
+					throw err;
+				}
 			}
 		});
 	});

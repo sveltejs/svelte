@@ -21,42 +21,14 @@ export class SsrGenerator extends Generator {
 		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, stylesheet, options);
+		super(parsed, source, name, stylesheet, options, false);
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
 
-		// in an SSR context, we don't need to include events, methods, oncreate or ondestroy
-		const { templateProperties, defaultExport } = this;
-
 		preprocess(this, parsed.html);
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
-
-		if (templateProperties.oncreate)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.oncreate
-			);
-		if (templateProperties.ondestroy)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.ondestroy
-			);
-		if (templateProperties.methods)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.methods
-			);
-		if (templateProperties.events)
-			removeNode(
-				this.code,
-				defaultExport.declaration,
-				templateProperties.events
-			);
 	}
 
 	append(code: string) {
@@ -80,7 +52,7 @@ export default function ssr(
 
 	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
 
-	const { computations, name, hasJs, templateProperties } = generator;
+	const { computations, name, templateProperties } = generator;
 
 	// create main render() function
 	const mainBlock = new Block({
@@ -99,24 +71,24 @@ export default function ssr(
 		generator.stylesheet.render(options.filename, true);
 
 	const result = deindent`
-		${hasJs && `[✂${parsed.js.content.start}-${parsed.js.content.end}✂]`}
+		${generator.javascript}
 
 		var ${name} = {};
 
 		${options.filename && `${name}.filename = ${stringify(options.filename)}`};
 
 		${name}.data = function() {
-			return ${templateProperties.data ? `@template.data()` : `{}`};
+			return ${templateProperties.data ? `%data()` : `{}`};
 		};
 
 		${name}.render = function(state, options) {
 			${templateProperties.data
-				? `state = Object.assign(@template.data(), state || {});`
+				? `state = Object.assign(%data(), state || {});`
 				: `state = state || {};`}
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = @template.computed.${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
+					`state.${key} = %computed-${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
 			)}
 
 			${generator.bindings.length &&
@@ -159,10 +131,8 @@ export default function ssr(
 					});
 				}
 
-				${templateProperties.components.value.properties.map(prop => {
-					const { name } = prop.key;
-					const expression = generator.importedComponents.get(name) || `@template.components.${name}`;
-					return `addComponent(${expression});`;
+				${templateProperties.components.value.properties.map((prop: Node) => {
+					return `addComponent(%components-${prop.key.name});`;
 				})}
 			`}
 
@@ -184,8 +154,10 @@ export default function ssr(
 		function __escape(html) {
 			return String(html).replace(/["'&<>]/g, match => escaped[match]);
 		}
-	`.replace(/(@+|#+)(\w*)/g, (match: string, sigil: string, name: string) => {
-		return sigil === '@' ? generator.alias(name) : sigil.slice(1) + name;
+	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+		if (sigil === '@') return generator.alias(name);
+		if (sigil === '%') return generator.templateVars.get(name);
+		return sigil.slice(1) + name;
 	});
 
 	return generator.generate(result, options, { name, format });
