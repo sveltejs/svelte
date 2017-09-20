@@ -39,7 +39,7 @@ export class DomGenerator extends Generator {
 		stylesheet: Stylesheet,
 		options: CompileOptions
 	) {
-		super(parsed, source, name, stylesheet, options);
+		super(parsed, source, name, stylesheet, options, true);
 		this.blocks = [];
 
 		this.readonly = new Set();

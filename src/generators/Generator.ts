@@ -116,7 +116,8 @@ export default class Generator {
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
-		options: CompileOptions
+		options: CompileOptions,
+		dom: boolean
 	) {
 		this.ast = clone(parsed);
 
@@ -154,7 +155,7 @@ export default class Generator {
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
-		this.parseJs();
+		this.parseJs(dom);
 		this.name = this.alias(name);
 
 		if (options.customElement === true) {
@@ -452,7 +453,7 @@ export default class Generator {
 		};
 	}
 
-	parseJs() {
+	parseJs(dom: boolean) {
 		const { code, source } = this;
 		const { js } = this.parsed;
 
@@ -613,7 +614,7 @@ export default class Generator {
 					addDeclaration('data', templateProperties.data.value);
 				}
 
-				if (templateProperties.events) {
+				if (templateProperties.events && dom) {
 					templateProperties.events.value.properties.forEach((property: Node) => {
 						addDeclaration(property.key.name, property.value, 'events');
 					});
@@ -625,7 +626,7 @@ export default class Generator {
 					});
 				}
 
-				if (templateProperties.methods) {
+				if (templateProperties.methods && dom) {
 					addDeclaration('methods', templateProperties.methods.value);
 				}
 
@@ -635,12 +636,12 @@ export default class Generator {
 				}
 
 				if (templateProperties.onrender) templateProperties.oncreate = templateProperties.onrender; // remove after v2
-				if (templateProperties.oncreate) {
+				if (templateProperties.oncreate && dom) {
 					addDeclaration('oncreate', templateProperties.oncreate.value);
 				}
 
 				if (templateProperties.onteardown) templateProperties.ondestroy = templateProperties.onteardown; // remove after v2
-				if (templateProperties.ondestroy) {
+				if (templateProperties.ondestroy && dom) {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);
 				}
 
