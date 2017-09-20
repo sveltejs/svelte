@@ -130,15 +130,11 @@ export default class Block {
 		claimStatement: string,
 		parentNode: string
 	) {
-		const isToplevel = !parentNode;
-
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
 		this.builders.claim.addLine(`${name} = ${claimStatement};`);
 
-		this.mount(name, parentNode);
-
-		if (isToplevel) {
+		if (!parentNode) {
 			this.builders.unmount.addLine(`@detachNode(${name});`);
 		}
 	}
@@ -182,14 +178,6 @@ export default class Block {
 		);
 	}
 
-	mount(name: string, parentNode: string) {
-		if (parentNode) {
-			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
-		} else {
-			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
-		}
-	}
-
 	toString() {
 		let introing;
 		const hasIntros = !this.builders.intro.isEmpty();
@@ -223,6 +211,7 @@ export default class Block {
 		if (this.first) {
 			properties.addBlock(`first: null,`);
 			this.builders.hydrate.addLine(`this.first = ${this.first};`);
+			this.builders.mount.addLineAtStart(`@insertNode(${this.first}, #target, anchor);`);
 		}
 
 		if (this.builders.create.isEmpty()) {

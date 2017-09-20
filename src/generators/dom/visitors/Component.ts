@@ -3,6 +3,7 @@ import CodeBuilder from '../../../utils/CodeBuilder';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import mountChildren from '../mountChildren';
 import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
 import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
@@ -60,6 +61,8 @@ export default function visitComponent(
 		node.children.forEach((child: Node) => {
 			visit(generator, block, node._state, child, elementStack, componentStack.concat(node));
 		});
+
+		block.builders.mount.addBlock(mountChildren(node, node._state.parentNode));
 	}
 
 	const allContexts = new Set();
@@ -233,7 +236,7 @@ export default function visitComponent(
 		`${name}._fragment.l( ${state.parentNodes} );`
 	);
 
-	block.builders.mount.addLine(
+	node.mountStatement = (
 		`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
 	);
 

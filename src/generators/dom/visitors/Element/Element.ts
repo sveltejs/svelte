@@ -13,6 +13,7 @@ import isVoidElementName from '../../../../utils/isVoidElementName';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
+import mountChildren from '../../mountChildren';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 import reservedNames from '../../../../utils/reservedNames';
@@ -86,12 +87,10 @@ export default function visitElement(
 		`);
 	}
 
-	if (parentNode) {
-		block.builders.mount.addLine(
-			`@appendNode(${name}, ${parentNode});`
-		);
-	} else {
-		block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
+	// TODO this is kinda messy — this is a hack to prevent the mount statement
+	// going in the usual place
+	if (node.slotted) {
+		node.mountStatement = `@appendNode(${node.var}, ${parentNode});`;
 	}
 
 	// add CSS encapsulation attribute
@@ -216,6 +215,8 @@ export default function visitElement(
 		node.children.forEach((child: Node) => {
 			visit(generator, block, childState, child, elementStack.concat(node), componentStack);
 		});
+
+		block.builders.mount.addBlock(mountChildren(node, node.var));
 	}
 
 	if (node.lateUpdate) {

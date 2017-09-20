@@ -13,6 +13,7 @@ import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
 import preprocess from './preprocess';
 import Block from './Block';
+import mountChildren from './mountChildren';
 import { version } from '../../../package.json';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
 
@@ -104,6 +105,8 @@ export default function dom(
 	parsed.html.children.forEach((node: Node) => {
 		visit(generator, block, state, node, [], []);
 	});
+
+	block.builders.mount.addBlock(mountChildren(parsed.html));
 
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();

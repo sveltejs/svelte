@@ -55,14 +55,18 @@ export default function visitRawMustacheTag(
 		`
 	);
 
-	// we would have used comments here, but the `insertAdjacentHTML` api only
-	// exists for `Element`s.
+	let mountStatements: string[] = [];
+
 	if (needsAnchorBefore) {
 		block.addElement(
 			anchorBefore,
 			`@createElement('noscript')`,
 			`@createElement('noscript')`,
 			state.parentNode
+		);
+
+		mountStatements.push(
+			state.parentNode ? `@appendNode(${anchorBefore}, ${state.parentNode});` : `@insertNode(${anchorBefore}, #target, anchor);`
 		);
 	}
 
@@ -73,19 +77,17 @@ export default function visitRawMustacheTag(
 			`@createElement('noscript')`,
 			state.parentNode
 		);
+
+		mountStatements.push(
+			state.parentNode ? `@appendNode(${anchorAfter}, ${state.parentNode});` : `@insertNode(${anchorAfter}, #target, anchor);`
+		);
 	}
 
-	if (needsAnchorAfter && anchorBefore === 'null') {
-		// anchorAfter needs to be in the DOM before we
-		// insert the HTML...
-		addAnchorAfter();
-	}
+	if (needsAnchorAfter && anchorBefore === 'null') addAnchorAfter();
+	mountStatements.push(insert(init));
+	if (needsAnchorAfter && anchorBefore !== 'null') addAnchorAfter();
 
-	block.builders.mount.addLine(insert(init));
+	node.mountStatement = mountStatements.join('\n');
+
 	block.builders.detachRaw.addBlock(detach);
-
-	if (needsAnchorAfter && anchorBefore !== 'null') {
-		// ...otherwise it should go afterwards
-		addAnchorAfter();
-	}
 }
