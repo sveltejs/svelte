@@ -1,30 +1,13 @@
-export function append(parent, child) {
-	parent.appendChild(child);
-}
-
-export function appendAll(parent, children) {
-	for (var i = 0; i < children.length; i += 1) {
-		parent.appendChild(children[i]);
+export function append(parent) {
+	for (var i = 1; i < arguments.length; i += 1) {
+		parent.appendChild(arguments[i]);
 	}
 }
 
-// TODO remove
-export function appendNode(node, target) {
-	target.appendChild(node);
-}
-
-export function insert(parent, next, child) {
-	parent.insertBefore(child, next);
-}
-
-export function insertAll(parent, next, children) {
-	for (var i = 0; i < children.length; i += 1) {
-		parent.insertBefore(children[i], next);
+export function insert(parent, next) {
+	for (var i = 2; i < arguments.length; i += 1) {
+		parent.insertBefore(arguments[i], next);
 	}
-}
-
-export function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
 }
 
 export function detachNode(node) {

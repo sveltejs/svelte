@@ -11,17 +11,9 @@ export default function mountChildren(node: Node, parentNode?: string) {
 		if (consecutiveNodes.length === 0) return;
 
 		if (parentNode) {
-			if (consecutiveNodes.length === 1) {
-				builder.addLine(`@append(${parentNode}, ${consecutiveNodes[0]});`);
-			} else {
-				builder.addLine(`@appendAll(${parentNode}, [${consecutiveNodes.join(', ')}]);`);
-			}
+			builder.addLine(`@append(${parentNode}, ${consecutiveNodes.join(', ')});`);
 		} else {
-			if (consecutiveNodes.length === 1) {
-				builder.addLine(`@insert(#target, anchor, ${consecutiveNodes[0]});`);
-			} else {
-				builder.addLine(`@insertAll(#target, anchor, [${consecutiveNodes.join(', ')}]);`);
-			}
+			builder.addLine(`@insert(#target, anchor, ${consecutiveNodes.join(', ')});`);
 		}
 
 		consecutiveNodes = [];
