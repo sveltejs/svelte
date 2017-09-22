@@ -16,6 +16,7 @@ import Block from '../../Block';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 import reservedNames from '../../../../utils/reservedNames';
+import { stringify } from '../../../../utils/stringify';
 
 const meta = {
 	':Window': visitWindow,
@@ -205,11 +206,11 @@ export default function visitElement(
 	if (!childState.namespace && node.canUseInnerHTML && node.children.length > 0) {
 		if (node.children.length === 1 && node.children[0].type === 'Text') {
 			block.builders.create.addLine(
-				`${name}.textContent = ${JSON.stringify(node.children[0].data)};`
+				`${name}.textContent = ${stringify(node.children[0].data)};`
 			);
 		} else {
 			block.builders.create.addLine(
-				`${name}.innerHTML = ${JSON.stringify(node.children.map(toHTML).join(''))};`
+				`${name}.innerHTML = ${stringify(node.children.map(toHTML).join(''))};`
 			);
 		}
 	} else {
