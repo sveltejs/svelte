@@ -253,7 +253,6 @@ export default function visitElement(
 		});
 
 		if (isVoidElementName(node.name)) return open + '>';
-		if (node.children.length === 0) return open + '/>';
 
 		return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
 	}
