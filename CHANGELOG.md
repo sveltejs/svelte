@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.40.1
+
+* Always use explicit closing tags with `innerHTML` ([#866](https://github.com/sveltejs/svelte/issues/866))
+* Escape text in `textContent` and `innerHTML` expressions ([#868](https://github.com/sveltejs/svelte/issues/868))
+
 ## 1.40.0
 
 * Short fragment method names ([#863](https://github.com/sveltejs/svelte/pull/863))
