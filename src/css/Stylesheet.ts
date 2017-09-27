@@ -120,7 +120,7 @@ class Declaration {
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property.toLowerCase();
+		const property = this.node.property && this.node.property.toLowerCase();
 		if (property === 'animation' || property === 'animation-name') {
 			this.node.value.children.forEach((block: Node) => {
 				if (block.type === 'Identifier') {
@@ -134,6 +134,8 @@ class Declaration {
 	}
 
 	minify(code: MagicString) {
+		if (!this.node.property) return; // @apply, and possibly other weird cases?
+
 		const c = this.node.start + this.node.property.length;
 		const first = this.node.value.children  ?
 			this.node.value.children[0] :
@@ -274,14 +276,20 @@ export default class Stylesheet {
 		if (parsed.css && parsed.css.children.length) {
 			this.hasStyles = true;
 
-			const stack: Atrule[] = [];
+			const stack: (Rule | Atrule)[] = [];
 			let currentAtrule: Atrule = null;
 
 			walk(this.parsed.css, {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
+						const last = stack[stack.length - 1];
+
 						const atrule = new Atrule(node);
 						stack.push(atrule);
+
+						// this is an awkward special case — @apply (and
+						// possibly other future constructs)
+						if (last && !(last instanceof Atrule)) return;
 
 						if (currentAtrule) {
 							currentAtrule.children.push(atrule);
@@ -302,6 +310,7 @@ export default class Stylesheet {
 
 					if (node.type === 'Rule') {
 						const rule = new Rule(node, currentAtrule);
+						stack.push(rule);
 
 						if (currentAtrule) {
 							currentAtrule.children.push(rule);
@@ -312,10 +321,8 @@ export default class Stylesheet {
 				},
 
 				leave: (node: Node) => {
-					if (node.type === 'Atrule') {
-						stack.pop();
-						currentAtrule = stack[stack.length - 1];
-					}
+					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
+					if (node.type === 'Atrule') currentAtrule = stack[stack.length - 1];
 				}
 			});
 		} else {
