@@ -210,7 +210,7 @@ export default function dom(
 		${generator.customElement ?
 			deindent`
 				this.attachShadow({ mode: 'open' });
-				${css && `this.shadowRoot.innerHTML = \`<style>${options.dev ? `${escape(css, { onlyEscapeAtSymbol: true })}\n/*# sourceMappingURL=${cssMap.toUrl()} */` : escape(css, { onlyEscapeAtSymbol: true })}</style>\`;`}
+				${css && `this.shadowRoot.innerHTML = \`<style>${escape(css, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${cssMap.toUrl()} */` : ''}</style>\`;`}
 			` :
 			(generator.stylesheet.hasStyles && options.css !== false &&
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
