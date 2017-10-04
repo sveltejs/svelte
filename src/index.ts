@@ -8,26 +8,29 @@ import Stylesheet from './css/Stylesheet';
 import { Parsed, CompileOptions, Warning } from './interfaces';
 
 function normalizeOptions(options: CompileOptions): CompileOptions {
-	return assign(
-		{
-			generate: 'dom',
+	let normalizedOptions = assign({ generate: 'dom' }, options);
+	const { onwarn, onerror } = normalizedOptions;
+	normalizedOptions.onwarn = onwarn
+		? (warning: Warning) => onwarn(warning, defaultOnwarn)
+		: defaultOnwarn;
+	normalizedOptions.onerror = onerror
+		? (error: Error) => onerror(error, defaultOnerror)
+		: defaultOnerror;
+	return normalizedOptions;
+}
 
-			onwarn: (warning: Warning) => {
-				if (warning.loc) {
-					console.warn(
-						`(${warning.loc.line}:${warning.loc.column}) – ${warning.message}`
-					); // eslint-disable-line no-console
-				} else {
-					console.warn(warning.message); // eslint-disable-line no-console
-				}
-			},
+function defaultOnwarn(warning: Warning) {
+	if (warning.loc) {
+		console.warn(
+			`(${warning.loc.line}:${warning.loc.column}) – ${warning.message}`
+		); // eslint-disable-line no-console
+	} else {
+		console.warn(warning.message); // eslint-disable-line no-console
+	}
+}
 
-			onerror: (error: Error) => {
-				throw error;
-			},
-		},
-		options
-	);
+function defaultOnerror(error: Error) {
+	throw error;
 }
 
 export function compile(source: string, _options: CompileOptions) {
