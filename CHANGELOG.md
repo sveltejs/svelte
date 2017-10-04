@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.40.2
+
+* Ignore `@apply` and similar in CSS ([#871](https://github.com/sveltejs/svelte/issues/871))
+* Properly escape CSS in custom elements ([#872](https://github.com/sveltejs/svelte/issues/872))
+
 ## 1.40.1
 
 * Always use explicit closing tags with `innerHTML` ([#866](https://github.com/sveltejs/svelte/issues/866))
