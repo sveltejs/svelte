@@ -128,7 +128,7 @@ const lookup = {
 	method: { appliesTo: ['form'] },
 	min: { appliesTo: ['input', 'meter'] },
 	multiple: { appliesTo: ['input', 'select'] },
-	muted: { appliesTo: ['video'] },
+	muted: { appliesTo: ['audio', 'video'] },
 	name: {
 		appliesTo: [
 			'button',
