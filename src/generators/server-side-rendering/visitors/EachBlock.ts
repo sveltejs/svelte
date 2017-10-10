@@ -18,6 +18,12 @@ export default function visitEachBlock(
 	const contexts = new Map(block.contexts);
 	contexts.set(node.context, node.context);
 
+	if (node.destructuredContexts) {
+		for (const i = 0; i < node.destructuredContexts.length; i++) {
+			contexts.set(node.destructuredContexts[i], `${node.context}[${i}]`);
+		}
+	}
+
 	const indexes = new Map(block.indexes);
 	if (node.index) indexes.set(node.index, node.context);
 
