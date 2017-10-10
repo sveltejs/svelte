@@ -29,6 +29,7 @@ export default class Block {
 	name: string;
 	expression: Node;
 	context: string;
+	destructuredContexts?: string[];
 	comment?: string;
 
 	key: string;
@@ -75,6 +76,7 @@ export default class Block {
 		this.name = options.name;
 		this.expression = options.expression;
 		this.context = options.context;
+		this.destructuredContexts = options.destructuredContexts;
 		this.comment = options.comment;
 
 		// for keyed each blocks

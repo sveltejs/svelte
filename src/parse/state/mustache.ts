@@ -161,8 +161,29 @@ export default function mustache(parser: Parser) {
 			parser.eat('as', true);
 			parser.requireWhitespace();
 
-			block.context = parser.read(validIdentifier); // TODO check it's not a keyword
-			if (!block.context) parser.error(`Expected name`);
+			if (parser.eat('[')) {
+				parser.allowWhitespace();
+
+				block.destructuredContexts = [];
+
+				do {
+					parser.allowWhitespace();
+					const destructuredContext = parser.read(validIdentifier);
+					if (!destructuredContext) parser.error(`Expected name`);
+					block.destructuredContexts.push(destructuredContext);
+					parser.allowWhitespace();
+				} while (parser.eat(','));
+
+				if (!block.destructuredContexts.length) parser.error(`Expected name`);
+				block.context = block.destructuredContexts.join('_');
+
+				parser.allowWhitespace();
+				parser.eat(']', true);
+			} else {
+				block.context = parser.read(validIdentifier); // TODO check it's not a keyword
+
+				if (!block.context) parser.error(`Expected name`);
+			}
 
 			parser.allowWhitespace();
 

@@ -1,0 +1,67 @@
+{
+	"hash": 2621498076,
+	"html": {
+		"start": 0,
+		"end": 70,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 70,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 8,
+					"end": 15,
+					"name": "animals"
+				},
+				"children": [
+					{
+						"start": 35,
+						"end": 60,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 38,
+								"end": 45,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 40,
+									"end": 43,
+									"name": "key"
+								}
+							},
+							{
+								"start": 45,
+								"end": 47,
+								"type": "Text",
+								"data": ": "
+							},
+							{
+								"start": 47,
+								"end": 56,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 49,
+									"end": 54,
+									"name": "value"
+								}
+							}
+						]
+					}
+				],
+				"destructuredContexts": [
+					"key",
+					"value"
+				],
+				"context": "key_value"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
