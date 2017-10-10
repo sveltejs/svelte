@@ -1,9 +1,9 @@
 export default {
 	data: {
-		animalPaws: {
-			raccoon: 'hands',
-			eagle: 'wings'
-		}
+		animalPawsEntries: [
+			['raccoon', 'hands'],
+			['eagle', 'wings']
+		]
 	},
 
 	html: `
