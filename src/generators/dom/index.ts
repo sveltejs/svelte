@@ -190,10 +190,10 @@ export default function dom(
 			`if (!options || (!options.target && !options._root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
 		${generator.usesRefs && `this.refs = {};`}
-		this._state = ${templateProperties.data
-			? `@assign(%data(), options.data)`
-			: `options.data || {}`};
-		${generator.metaBindings}
+
+		this._state =`@assign({},(%data||%noop)(),options.data)`;
+
+    ${generator.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(
