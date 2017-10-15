@@ -191,7 +191,7 @@ function create_main_fragment(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._state = options.data || {};
+	this._state = assign({}, options.data);
 	this._recompute({ x: 1 }, this._state);
 
 	this._fragment = create_main_fragment(this._state, this);

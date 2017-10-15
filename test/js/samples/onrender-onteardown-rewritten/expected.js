@@ -22,7 +22,7 @@ function create_main_fragment(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._state = options.data || {};
+	this._state = assign({}, options.data);
 
 	this._handlers.destroy = [ondestroy]
 
