@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.41.0
+
+* `onwarn` and `onerror` receive default handlers as second arguments ([#883](https://github.com/sveltejs/svelte/pull/883))
+* Recognise `muted` as boolean property on `<audio>` elements ([#886](https://github.com/sveltejs/svelte/pull/886))
+* Array destructuring for `each` block contexts ([#889](https://github.com/sveltejs/svelte/pull/889))
+
 ## 1.40.2
 
 * Ignore `@apply` and similar in CSS ([#871](https://github.com/sveltejs/svelte/issues/871))
