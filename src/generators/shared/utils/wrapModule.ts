@@ -272,21 +272,13 @@ function getGlobals(dependencies: Dependency[], options: CompileOptions) {
 				const error = new Error(
 					`Could not determine name for imported module '${d.source}' – use options.globals`
 				);
-				if (onerror) {
-					onerror(error);
-				} else {
-					throw error;
-				}
+				onerror(error);
 			} else {
 				const warning = {
 					message: `No name was supplied for imported module '${d.source}'. Guessing '${d.name}', but you should use options.globals`,
 				};
 
-				if (onwarn) {
-					onwarn(warning);
-				} else {
-					console.warn(warning); // eslint-disable-line no-console
-				}
+				onwarn(warning);
 			}
 
 			name = d.name;
