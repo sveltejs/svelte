@@ -81,5 +81,8 @@
       "src/**/__test__.js",
       "src/shared/**"
     ]
+  },
+  "resolutions": {
+    "electron": "1.6.15"
   }
 }
