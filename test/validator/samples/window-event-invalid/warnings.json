@@ -1,5 +1,5 @@
 [{
-	"message": "'resize' is an invalid callee (should be one of this.*, event.*, console.*, set, fire or destroy)",
+	"message": "'resize' is an invalid callee (should be one of this.*, event.*, options.*, console.*, set, fire or destroy)",
 	"loc": {
 		"line": 1,
 		"column": 20
