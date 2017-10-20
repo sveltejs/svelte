@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.41.1
+
+* Fix updates of destructured each blocks ([#897](https://github.com/sveltejs/svelte/pull/897))
+* Don't warn on `options.*` event handler callee ([#900](https://github.com/sveltejs/svelte/pull/900))
+
 ## 1.41.0
 
 * `onwarn` and `onerror` receive default handlers as second arguments ([#883](https://github.com/sveltejs/svelte/pull/883))
