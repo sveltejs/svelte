@@ -229,12 +229,6 @@ const preprocessors = {
 		const contexts = new Map(block.contexts);
 		contexts.set(node.context, context);
 
-		if (node.destructuredContexts) {
-			for (const i = 0; i < node.destructuredContexts.length; i++) {
-				contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
-			}
-		}
-
 		const indexes = new Map(block.indexes);
 		if (node.index) indexes.set(node.index, node.context);
 
@@ -243,6 +237,13 @@ const preprocessors = {
 
 		const contextDependencies = new Map(block.contextDependencies);
 		contextDependencies.set(node.context, dependencies);
+
+		if (node.destructuredContexts) {
+			for (const i = 0; i < node.destructuredContexts.length; i++) {
+				contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
+				contextDependencies.set(node.destructuredContexts[i], dependencies);
+			}
+		}
 
 		node._block = block.child({
 			comment: createDebuggingComment(node, generator),
