@@ -1,0 +1,27 @@
+<select bind:value="selected.letter">
+	{{#each uppercase as letter}}
+		<option value="{{letter}}">{{letter}}</option>
+	{{/each}}
+</select>
+
+{{selected.letter}}
+
+<script>
+	export default {
+		data() {
+			return {
+				letters: [
+					'a',
+					'b',
+					'c'
+				],
+				selected: {
+					letter: ''
+				}
+			}
+		},
+		computed:{
+			uppercase: letters => letters.map(x => x.toUpperCase())
+		}
+	};
+</script>
