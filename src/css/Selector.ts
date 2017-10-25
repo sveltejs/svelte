@@ -224,6 +224,7 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 	if (!attr) return false;
 	if (attr.value === true) return operator === null;
 	if (attr.value.length > 1) return true;
+	if (!expectedValue) return true;
 
 	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
 	const value = attr.value[0];
