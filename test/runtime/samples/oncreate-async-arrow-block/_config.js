@@ -1,3 +1,3 @@
 export default {
-	skip: +(/^v(\d)/.exec(process.version)[0]) < 8
+	skip: +(/^v(\d)/.exec(process.version)[1]) < 8
 };
