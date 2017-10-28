@@ -70,7 +70,6 @@ export function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._root = options._root || component;
-	component._yield = options._yield;
 	component._bind = options._bind;
 }
 
