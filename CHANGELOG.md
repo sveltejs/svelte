@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.41.2
+
+* Handle attribute selectors with no value ([#905](https://github.com/sveltejs/svelte/issues/905))
+* Retain `async` keyword when extracting functions ([#904](https://github.com/sveltejs/svelte/issues/904))
+* Shallow clone `data` on initialisation ([#891](https://github.com/sveltejs/svelte/pull/891))
+
 ## 1.41.1
 
 * Fix updates of destructured each blocks ([#897](https://github.com/sveltejs/svelte/pull/897))
