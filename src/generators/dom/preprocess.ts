@@ -225,7 +225,7 @@ const preprocessors = {
 		);
 		listNames.set(node.context, listName);
 
-		const context = generator.getUniqueName(node.context);
+		const context = block.getUniqueName(node.context);
 		const contexts = new Map(block.contexts);
 		contexts.set(node.context, context);
 
