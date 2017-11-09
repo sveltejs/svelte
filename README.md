@@ -70,19 +70,24 @@ The Svelte compiler exposes the following API:
 
 The Svelte compiler optionally takes a second argument, an object of configuration options:
 
-| | **Values** | **Description** | **Defaults** |
+| | **Values** | **Description** | **Default** |
 |---|---|---|---|
-| `format` | `'es'`, `'amd'`, `'cjs'`, `'umd'`, `'iife'`, `'eval'` | The format to output in the compiled component.<br>`'es'` - ES6/ES2015 module, suitable for consumption by a bundler<br>`'amd'` - AMD module<br>`'cjs'` - CommonJS module<br>`'iife'` - IIFE-wrapped function defining a global variable, suitable for use directly in browser<br>`'eval'` - standalone function, suitable for passing to `eval()` | `'es'` for `generate: 'dom'`<br>`'cjs'` for `generate: 'ssr'` |
 | `generate` | `'dom'`, `'ssr'` | Whether to generate JavaScript code intended for use on the client (`'dom'`), or for use in server-side rendering (`'ssr'`). | `'dom'` |
+| `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
+| `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |
+| `hydratable` | `true`, `false` | Whether to support hydration on the compiled component. | `false` |
+| `customElement` | `true`, `false`, `{ tag, props }` | Whether to compile this component to a custom element. If `tag`/`props` are passed, compiles to a custom element and overrides the values exported by the component. | `false` |
+| `cascade` | `true`, `false` | Whether to cascade all of the component's styles to child components. If `false`, only selectors wrapped in `:global(...)` and keyframe IDs beginning with `-global-` are cascaded. | `true` |
+| | | |
+| `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
+| `legacy` | `true`, `false` | Ensures compatibility with very old browsers, at the cost of some extra code. | `false` |
+| | | |
+| `format` | `'es'`, `'amd'`, `'cjs'`, `'umd'`, `'iife'`, `'eval'` | The format to output in the compiled component.<br>`'es'` - ES6/ES2015 module, suitable for consumption by a bundler<br>`'amd'` - AMD module<br>`'cjs'` - CommonJS module<br>`'iife'` - IIFE-wrapped function defining a global variable, suitable for use directly in browser<br>`'eval'` - standalone function, suitable for passing to `eval()` | `'es'` for `generate: 'dom'`<br>`'cjs'` for `generate: 'ssr'` |
 | `name` | `string` | The name of the constructor in the compiled component. | `'SvelteComponent'` |
 | `filename` | `string` | The filename to use in sourcemaps and compiler error and warning messages. | `'SvelteComponent.html'` |
 | `amd`.`id` | `string` | The AMD module ID to use for the `'amd'` and `'umd'` output formats. | `undefined` |
-| `cascade` | `true`, `false` | Whether to cascade all of the component's styles to child components. If `false`, only selectors wrapped in `:global(...)` and keyframe IDs beginning with `-global-` are cascaded. | `true` |
-| `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
-| `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
-| `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |
 | `globals` | `object`, `function` | When outputting to the `'umd'`, `'iife'` or `'eval'` formats, an object or function mapping the names of imported dependencies to the names of global variables. | `{}` |
-| `legacy` | `boolean` | Ensures compatibility with very old browsers, at the cost of some extra code |
+| | | |
 | `onerror` | `function` | Specify a callback for when Svelte encounters an error while compiling the component. Passed two arguments: the error object, and another function that is Svelte's default onerror handling. | (exception is thrown) |
 | `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. Passed two arguments: the warning object, and another function that is Svelte's default onwarn handling. | (warning is logged to console) |
 
