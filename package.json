@@ -70,6 +70,7 @@
     "rollup-watch": "^4.3.1",
     "source-map": "^0.5.6",
     "source-map-support": "^0.4.8",
+    "tslib": "^1.8.0",
     "typescript": "^2.3.2"
   },
   "nyc": {
@@ -81,8 +82,5 @@
       "src/**/__test__.js",
       "src/shared/**"
     ]
-  },
-  "dependencies": {
-    "tslib": "^1.8.0"
   }
 }
