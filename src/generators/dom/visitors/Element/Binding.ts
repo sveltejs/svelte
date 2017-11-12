@@ -61,7 +61,7 @@ export default function visitBinding(
 		type
 	);
 
-	let setter = getSetter(block, name, snippet, state.parentNode, attribute, dependencies, value);
+	let setter = getSetter(generator, block, name, snippet, state.parentNode, attribute, dependencies, value);
 	let updateElement = `${state.parentNode}.${attribute.name} = ${snippet};`;
 
 	const needsLock = !isReadOnly && node.name !== 'input' || !/radio|checkbox|range|color/.test(type); // TODO others?
@@ -290,6 +290,7 @@ function getBindingGroup(generator: DomGenerator, value: Node) {
 }
 
 function getSetter(
+	generator: DomGenerator,
 	block: Block,
 	name: string,
 	snippet: string,
@@ -319,6 +320,15 @@ function getSetter(
 	}
 
 	if (attribute.value.type === 'MemberExpression') {
+		// This is a little confusing, and should probably be tidied up
+		// at some point. It addresses a tricky bug (#893), wherein
+		// Svelte tries to `set()` a computed property, which throws an
+		// error in dev mode. a) it's possible that we should be
+		// replacing computations with *their* dependencies, and b)
+		// we should probably populate `generator.readonly` sooner so
+		// that we don't have to do the `.some()` here
+		dependencies = dependencies.filter(prop => !generator.computations.some(computation => computation.key === prop));
+
 		return deindent`
 			var state = #component.get();
 			${snippet} = ${value};
