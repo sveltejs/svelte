@@ -81,5 +81,8 @@
       "src/**/__test__.js",
       "src/shared/**"
     ]
+  },
+  "dependencies": {
+    "tslib": "^1.8.0"
   }
 }
