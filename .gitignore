@@ -15,3 +15,5 @@ _actual.*
 _actual-bundle.*
 src/generators/dom/shared.ts
 package-lock.json
+.idea/
+*.iml
