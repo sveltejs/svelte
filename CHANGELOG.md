@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.41.3
+
+* Prevent argument name clashes ([#911](https://github.com/sveltejs/svelte/issues/911))
+* Fix UMD factory arguments ([#918](https://github.com/sveltejs/svelte/pull/918))
+* Don't attempt to set computed values ([#893](https://github.com/sveltejs/svelte/issues/893))
+* Fix TypeScript build error ([#919](https://github.com/sveltejs/svelte/issues/919))
+
 ## 1.41.2
 
 * Handle attribute selectors with no value ([#905](https://github.com/sveltejs/svelte/issues/905))
