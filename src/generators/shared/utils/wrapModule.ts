@@ -206,7 +206,7 @@ function umd(
 		(function(global, factory) {
 			typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory(${cjsDeps}) :
 			typeof define === "function" && define.amd ? define(${amdId}${amdDeps}factory) :
-			(global.${options.name} = factory(${globals}));
+			(global.${options.name} = factory(${globals.join(', ')}));
 		}(this, (function (${paramString(dependencies)}) { "use strict";
 
 			${getCompatibilityStatements(dependencies)}
