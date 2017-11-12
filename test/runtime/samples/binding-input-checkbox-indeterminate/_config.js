@@ -16,6 +16,7 @@ export default {
 		const event = new window.Event('change');
 
 		input.checked = true;
+		input.indeterminate = false;
 		input.dispatchEvent(event);
 
 		assert.equal(component.get('indeterminate'), false);
@@ -28,14 +29,11 @@ export default {
 
 		component.set({ indeterminate: true });
 		assert.equal(input.indeterminate, true);
-		assert.equal(input.checked, false);
+		assert.equal(input.checked, true);
 		assert.equal(target.innerHTML, `
 			<input type="checkbox">
-			<p>checked? false</p>
+			<p>checked? true</p>
 			<p>indeterminate? true</p>
 		`);
-
-		// TODO what is the behaviour when setting both `checked`
-		// and `indeterminate` to conflicting values simultaneously?
 	},
 };

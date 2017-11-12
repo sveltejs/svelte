@@ -112,6 +112,7 @@ const lookup = {
 	'http-equiv': { propertyName: 'httpEquiv', appliesTo: ['meta'] },
 	icon: { appliesTo: ['command'] },
 	id: {},
+	indeterminate: { appliesTo: ['input'] },
 	ismap: { propertyName: 'isMap', appliesTo: ['img'] },
 	itemprop: {},
 	keytype: { appliesTo: ['keygen'] },
