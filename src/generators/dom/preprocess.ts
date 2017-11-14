@@ -309,7 +309,7 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
-		if (node.name === 'slot') {
+		if (node.name === 'slot' || node.name === 'option') {
 			cannotUseInnerHTML(node);
 		}
 
@@ -369,8 +369,6 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			cannotUseInnerHTML(node);
-
 			const value = node.attributes.find(
 				(attribute: Node) => attribute.name === 'value'
 			);
