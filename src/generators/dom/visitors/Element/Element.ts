@@ -190,19 +190,6 @@ export default function visitElement(
 		visitAttributesAndAddProps();
 	}
 
-	// special case – bound <option> without a value attribute
-	if (
-		node.name === 'option' &&
-		!node.attributes.find(
-			(attribute: Node) =>
-				attribute.type === 'Attribute' && attribute.name === 'value'
-		)
-	) {
-		// TODO check it's bound
-		const statement = `${name}.__value = ${name}.textContent;`;
-		node.initialUpdate = node.lateUpdate = statement;
-	}
-
 	if (!childState.namespace && node.canUseInnerHTML && node.children.length > 0) {
 		if (node.children.length === 1 && node.children[0].type === 'Text') {
 			block.builders.create.addLine(
@@ -217,10 +204,6 @@ export default function visitElement(
 		node.children.forEach((child: Node) => {
 			visit(generator, block, childState, child, elementStack.concat(node), componentStack);
 		});
-	}
-
-	if (node.lateUpdate) {
-		block.builders.update.addLine(node.lateUpdate);
 	}
 
 	if (node.name === 'select') {
