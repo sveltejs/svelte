@@ -22,9 +22,9 @@ export default {
 
 		assert.htmlEqual( target.innerHTML, `
 			<select>
-				<option>one</option>
-				<option>two</option>
-				<option>three</option>
+				<option value='one'>one</option>
+				<option value='two'>two</option>
+				<option value='three'>three</option>
 			</select>
 			<p>selected: two</p>
 		` );
