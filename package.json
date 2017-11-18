@@ -18,6 +18,7 @@
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
     "build": "node src/shared/_build.js && rollup -c",
+    "prepare": "npm run build",
     "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
     "prepublishOnly": "npm run lint && npm test",
