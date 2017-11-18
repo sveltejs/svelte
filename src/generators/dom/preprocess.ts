@@ -358,6 +358,19 @@ const preprocessors = {
 			}
 		});
 
+		const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
+
+		// Treat these the same way:
+		//   <option>{{foo}}</option>
+		//   <option value='{{foo}}'>{{foo}}</option>
+		if (node.name === 'option' && !valueAttribute) {
+			node.attributes.push({
+				type: 'Attribute',
+				name: 'value',
+				value: node.children
+			});
+		}
+
 		// special case — in a case like this...
 		//
 		//   <select bind:value='foo'>
@@ -369,12 +382,9 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			const value = node.attributes.find(
-				(attribute: Node) => attribute.name === 'value'
-			);
-			if (value) {
+			if (valueAttribute) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = block.findDependencies(value.value);
+				const dependencies = block.findDependencies(valueAttribute.value);
 				state.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					generator.indirectDependencies.set(prop, new Set());
