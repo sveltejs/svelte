@@ -1,0 +1,14 @@
+{{#if show}}
+	<Nested bind:show/>
+{{else}}
+	<button on:click="set({show:true})">Show</button>
+{{/if}}
+
+<script>
+	import Nested from './Nested.html';
+	export default {
+		components: {
+			Nested
+		}
+	};
+</script>
