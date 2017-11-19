@@ -18,6 +18,7 @@ const types: Record<string, (
 	binding: Node[]
 ) => void> = {
 	input: addInputBinding,
+	textarea: addInputBinding,
 	select: addSelectBinding,
 	audio: addMediaBinding,
 	video: addMediaBinding
