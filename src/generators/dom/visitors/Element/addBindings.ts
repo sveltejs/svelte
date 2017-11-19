@@ -37,7 +37,6 @@ export default function addBindings(
 	node: Node
 ) {
 	const bindings: Node[] = node.attributes.filter((a: Node) => a.type === 'Binding');
-
 	if (bindings.length === 0) return;
 
 	types[node.name](generator, block, state, node, bindings);
@@ -143,19 +142,13 @@ function addInputBinding(
 		);
 	}
 
-	node.initialUpdate = updateElement;
+	block.builders.update.addBlock(
+		needsLock ?
+			`if (!${lock}) ${updateElement}` :
+			updateElement
+	);
 
-	if (updateConditions.length) {
-		block.builders.update.addBlock(deindent`
-			if (${updateConditions.join(' && ')}) {
-				${updateElement}
-			}
-		`);
-	} else {
-		block.builders.update.addBlock(deindent`
-			${updateElement}
-		`);
-	}
+	node.initialUpdate = updateElement;
 }
 
 function addSelectBinding(
@@ -177,181 +170,59 @@ function addSelectBinding(
 			state.allUsedContexts.push(context);
 	});
 
-	const eventNames = getBindingEventName(node, attribute);
+	const lock = `#${node.var}_updating`;
+	block.addVariable(lock, 'false');
+
 	const handler = block.getUniqueName(
-		`${node.var}_${eventNames.join('_')}_handler`
+		`${node.var}_change_handler`
 	);
-	const isMultipleSelect =
-		node.name === 'select' &&
-		node.attributes.find(
-			(attr: Node) => attr.name.toLowerCase() === 'multiple'
-		); // TODO use getStaticAttributeValue
-	const type = getStaticAttributeValue(node, 'type');
-	const bindingGroup = attribute.name === 'group'
-		? getBindingGroup(generator, attribute.value)
-		: null;
 
-	const isMediaElement = node.name === 'audio' || node.name === 'video';
-	const isReadOnly = isMediaElement && readOnlyMediaAttributes.has(attribute.name)
+	const isMultipleSelect = getStaticAttributeValue(node, 'multiple') === true;
 
-	const value = getBindingValue(
-		generator,
-		block,
-		state,
-		node,
-		attribute,
-		isMultipleSelect,
-		isMediaElement,
-		bindingGroup,
-		type
-	);
+	// view to model
+	const value = isMultipleSelect ?
+		`[].map.call(${node.var}.querySelectorAll(':checked'), function(option) { return option.__value; })` :
+		`selectedOption && selectedOption.__value`;
 
 	let setter = getSetter(generator, block, name, snippet, node, attribute, dependencies, value);
-	let updateElement = `${node.var}.${attribute.name} = ${snippet};`;
 
-	const needsLock = !isReadOnly && node.name !== 'input' || !/radio|checkbox|range|color/.test(type); // TODO others?
-	const lock = `#${node.var}_updating`;
-	let updateConditions = needsLock ? [`!${lock}`] : [];
-
-	if (needsLock) block.addVariable(lock, 'false');
-
-	// <select> special case
-	if (node.name === 'select') {
-		if (!isMultipleSelect) {
-			setter = `var selectedOption = ${node.var}.querySelector(':checked') || ${node.var}.options[0];\n${setter}`;
-		}
-
-		const value = block.getUniqueName('value');
-		const option = block.getUniqueName('option');
-
-		const ifStatement = isMultipleSelect
-			? deindent`
-				${option}.selected = ~${value}.indexOf(${option}.__value);`
-			: deindent`
-				if (${option}.__value === ${value}) {
-					${option}.selected = true;
-					break;
-				}`;
-
-		const { name } = getObject(attribute.value);
-		const tailSnippet = getTailSnippet(attribute.value);
-
-		updateElement = deindent`
-			var ${value} = ${snippet};
-			for (var #i = 0; #i < ${node.var}.options.length; #i += 1) {
-				var ${option} = ${node.var}.options[#i];
-
-				${ifStatement}
-			}
-		`;
-
-		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(
-			`if (!('${name}' in state)) #component._root._beforecreate.push(${handler});`
-		);
-	} else if (attribute.name === 'group') {
-		// <input type='checkbox|radio' bind:group='selected'> special case
-		if (type === 'radio') {
-			setter = deindent`
-				if (!${node.var}.checked) return;
-				${setter}
-			`;
-		}
-
-		const condition = type === 'checkbox'
-			? `~${snippet}.indexOf(${node.var}.__value)`
-			: `${node.var}.__value === ${snippet}`;
-
-		block.builders.hydrate.addLine(
-			`#component._bindingGroups[${bindingGroup}].push(${node.var});`
-		);
-
-		block.builders.destroy.addBlock(
-			`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${node.var}), 1);`
-		);
-
-		updateElement = `${node.var}.checked = ${condition};`;
-	} else if (isMediaElement) {
-		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(`#component._root._beforecreate.push(${handler});`);
-
-		if (attribute.name === 'currentTime') {
-			const frame = block.getUniqueName(`${node.var}_animationframe`);
-			block.addVariable(frame);
-			setter = deindent`
-				cancelAnimationFrame(${frame});
-				if (!${node.var}.paused) ${frame} = requestAnimationFrame(${handler});
-				${setter}
-			`;
-
-			updateConditions.push(`!isNaN(${snippet})`);
-		} else if (attribute.name === 'paused') {
-			// this is necessary to prevent the audio restarting by itself
-			const last = block.getUniqueName(`${node.var}_paused_value`);
-			block.addVariable(last, 'true');
-
-			updateConditions = [`${last} !== (${last} = ${snippet})`];
-			updateElement = `${node.var}[${last} ? "pause" : "play"]();`;
-		}
+	if (!isMultipleSelect) {
+		setter = deindent`
+			var selectedOption = ${node.var}.querySelector(':checked') || ${node.var}.options[0];
+			${setter}`;
 	}
+
+	generator.hasComplexBindings = true;
+	block.builders.hydrate.addBlock(
+		`if (!('${name}' in state)) #component._root._beforecreate.push(${handler});`
+	);
 
 	block.builders.init.addBlock(deindent`
 		function ${handler}() {
-			${needsLock && `${lock} = true;`}
+			${lock} = true;
 			${setter}
-			${needsLock && `${lock} = false;`}
+			${lock} = false;
 		}
 	`);
 
-	if (node.name === 'input' && type === 'range') {
-		// need to bind to `input` and `change`, for the benefit of IE
-		block.builders.hydrate.addBlock(deindent`
-			@addListener(${node.var}, "input", ${handler});
-			@addListener(${node.var}, "change", ${handler});
-		`);
+	block.builders.hydrate.addLine(
+		`@addListener(${node.var}, "change", ${handler});`
+	);
 
-		block.builders.destroy.addBlock(deindent`
-			@removeListener(${node.var}, "input", ${handler});
-			@removeListener(${node.var}, "change", ${handler});
-		`);
-	} else {
-		eventNames.forEach(eventName => {
-			block.builders.hydrate.addLine(
-				`@addListener(${node.var}, "${eventName}", ${handler});`
-			);
+	block.builders.destroy.addLine(
+		`@removeListener(${node.var}, "change", ${handler});`
+	);
 
-			block.builders.destroy.addLine(
-				`@removeListener(${node.var}, "${eventName}", ${handler});`
-			);
-		});
-	}
+	// model to view
+	const updateElement = isMultipleSelect ?
+		`@selectOptions(${node.var}, ${snippet});` :
+		`@selectOption(${node.var}, ${snippet});`;
 
-	if (!isMediaElement) {
-		node.initialUpdate = updateElement;
-	}
+	block.builders.update.addLine(
+		`if (!${lock}) ${updateElement}`
+	);
 
-	if (!isReadOnly) { // audio/video duration is read-only, it never updates
-		if (updateConditions.length) {
-			block.builders.update.addBlock(deindent`
-				if (${updateConditions.join(' && ')}) {
-					${updateElement}
-				}
-			`);
-		} else {
-			block.builders.update.addBlock(deindent`
-				${updateElement}
-			`);
-		}
-	}
-
-	if (attribute.name === 'paused') {
-		block.builders.create.addLine(
-			`@addListener(${node.var}, "play", ${handler});`
-		);
-		block.builders.destroy.addLine(
-			`@removeListener(${node.var}, "play", ${handler});`
-		);
-	}
+	node.initialUpdate = updateElement;
 }
 
 function addMediaBinding(
@@ -405,7 +276,6 @@ function addMediaBinding(
 	let setter = getSetter(generator, block, name, snippet, node, attribute, dependencies, value);
 	let updateElement = `${node.var}.${attribute.name} = ${snippet};`;
 
-	const needsLock = !isReadOnly && node.name !== 'input' || !/radio|checkbox|range|color/.test(type); // TODO others?
 	const lock = `#${node.var}_updating`;
 	let updateConditions = needsLock ? [`!${lock}`] : [];
 
