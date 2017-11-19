@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.41.4
+
+* Handle self-destructive bindings ([#917](https://github.com/sveltejs/svelte/issues/917))
+* Prevent `innerHTML` with `<option>` elements ([#915](https://github.com/sveltejs/svelte/issues/915))
+* Use `dataset` unless `legacy` is true ([#858](https://github.com/sveltejs/svelte/issues/858))
+* Add `prepare` script to facilitate installing from git ([#923](https://github.com/sveltejs/svelte/pull/923))
+
 ## 1.41.3
 
 * Prevent argument name clashes ([#911](https://github.com/sveltejs/svelte/issues/911))

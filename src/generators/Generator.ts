@@ -12,6 +12,7 @@ import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
 import wrapModule from './shared/utils/wrapModule';
 import annotateWithScopes from '../utils/annotateWithScopes';
+import getName from '../utils/getName';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
@@ -497,13 +498,13 @@ export default class Generator {
 
 			if (defaultExport) {
 				defaultExport.declaration.properties.forEach((prop: Node) => {
-					templateProperties[prop.key.name] = prop;
+					templateProperties[getName(prop.key)] = prop;
 				});
 
 				['helpers', 'events', 'components', 'transitions'].forEach(key => {
 					if (templateProperties[key]) {
 						templateProperties[key].value.properties.forEach((prop: Node) => {
-							this[key].add(prop.key.name);
+							this[key].add(getName(prop.key));
 						});
 					}
 				});
@@ -574,7 +575,7 @@ export default class Generator {
 
 				if (templateProperties.components) {
 					templateProperties.components.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value, 'components');
+						addDeclaration(getName(property.key), property.value, 'components');
 					});
 				}
 
@@ -582,7 +583,7 @@ export default class Generator {
 					const dependencies = new Map();
 
 					templateProperties.computed.value.properties.forEach((prop: Node) => {
-						const key = prop.key.name;
+						const key = getName(prop.key);
 						const value = prop.value;
 
 						const deps = value.params.map(
@@ -605,12 +606,12 @@ export default class Generator {
 
 						computations.push({ key, deps });
 
-						const prop = templateProperties.computed.value.properties.find((prop: Node) => prop.key.name === key);
+						const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
 						addDeclaration(key, prop.value, 'computed');
 					};
 
 					templateProperties.computed.value.properties.forEach((prop: Node) =>
-						visit(prop.key.name)
+						visit(getName(prop.key))
 					);
 				}
 
@@ -620,13 +621,13 @@ export default class Generator {
 
 				if (templateProperties.events && dom) {
 					templateProperties.events.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value, 'events');
+						addDeclaration(getName(property.key), property.value, 'events');
 					});
 				}
 
 				if (templateProperties.helpers) {
 					templateProperties.helpers.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value, 'helpers');
+						addDeclaration(getName(property.key), property.value, 'helpers');
 					});
 				}
 
@@ -663,7 +664,7 @@ export default class Generator {
 
 				if (templateProperties.transitions) {
 					templateProperties.transitions.value.properties.forEach((property: Node) => {
-						addDeclaration(property.key.name, property.value, 'transitions');
+						addDeclaration(getName(property.key), property.value, 'transitions');
 					});
 				}
 			}

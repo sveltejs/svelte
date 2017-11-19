@@ -3,9 +3,9 @@ export default {
 		<p>selected: b</p>
 
 		<select>
-			<option>a</option>
-			<option>b</option>
-			<option>c</option>
+			<option value='a'>a</option>
+			<option value='b'>b</option>
+			<option value='c'>c</option>
 		</select>
 
 		<p>selected: b</p>

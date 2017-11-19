@@ -5,6 +5,7 @@ import Block from './Block';
 import preprocess from './preprocess';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
+import getName from '../../utils/getName';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
 import { AppendTarget } from './interfaces';
 import { stringify } from '../../utils/stringify';
@@ -132,7 +133,7 @@ export default function ssr(
 				}
 
 				${templateProperties.components.value.properties.map((prop: Node) => {
-					return `addComponent(%components-${prop.key.name});`;
+					return `addComponent(%components-${getName(prop.key)});`;
 				})}
 			`}
 
