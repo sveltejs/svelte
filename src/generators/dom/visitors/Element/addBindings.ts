@@ -248,117 +248,42 @@ function addMediaBinding(
 	const handler = block.getUniqueName(
 		`${node.var}_${eventNames.join('_')}_handler`
 	);
-	const isMultipleSelect =
-		node.name === 'select' &&
-		node.attributes.find(
-			(attr: Node) => attr.name.toLowerCase() === 'multiple'
-		); // TODO use getStaticAttributeValue
-	const type = getStaticAttributeValue(node, 'type');
-	const bindingGroup = attribute.name === 'group'
-		? getBindingGroup(generator, attribute.value)
-		: null;
 
-	const isMediaElement = node.name === 'audio' || node.name === 'video';
-	const isReadOnly = isMediaElement && readOnlyMediaAttributes.has(attribute.name)
+	const isReadOnly = readOnlyMediaAttributes.has(attribute.name)
 
-	const value = getBindingValue(
-		generator,
-		block,
-		state,
-		node,
-		attribute,
-		isMultipleSelect,
-		isMediaElement,
-		bindingGroup,
-		type
-	);
+	const value = (attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played') ?
+		`@timeRangesToArray(${node.var}.${attribute.name})` :
+		`${node.var}.${attribute.name}`;
 
 	let setter = getSetter(generator, block, name, snippet, node, attribute, dependencies, value);
 	let updateElement = `${node.var}.${attribute.name} = ${snippet};`;
 
+	const needsLock = !isReadOnly;
 	const lock = `#${node.var}_updating`;
 	let updateConditions = needsLock ? [`!${lock}`] : [];
 
 	if (needsLock) block.addVariable(lock, 'false');
 
-	// <select> special case
-	if (node.name === 'select') {
-		if (!isMultipleSelect) {
-			setter = `var selectedOption = ${node.var}.querySelector(':checked') || ${node.var}.options[0];\n${setter}`;
-		}
+	generator.hasComplexBindings = true;
+	block.builders.hydrate.addBlock(`#component._root._beforecreate.push(${handler});`);
 
-		const value = block.getUniqueName('value');
-		const option = block.getUniqueName('option');
-
-		const ifStatement = isMultipleSelect
-			? deindent`
-				${option}.selected = ~${value}.indexOf(${option}.__value);`
-			: deindent`
-				if (${option}.__value === ${value}) {
-					${option}.selected = true;
-					break;
-				}`;
-
-		const { name } = getObject(attribute.value);
-		const tailSnippet = getTailSnippet(attribute.value);
-
-		updateElement = deindent`
-			var ${value} = ${snippet};
-			for (var #i = 0; #i < ${node.var}.options.length; #i += 1) {
-				var ${option} = ${node.var}.options[#i];
-
-				${ifStatement}
-			}
+	if (attribute.name === 'currentTime') {
+		const frame = block.getUniqueName(`${node.var}_animationframe`);
+		block.addVariable(frame);
+		setter = deindent`
+			cancelAnimationFrame(${frame});
+			if (!${node.var}.paused) ${frame} = requestAnimationFrame(${handler});
+			${setter}
 		`;
 
-		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(
-			`if (!('${name}' in state)) #component._root._beforecreate.push(${handler});`
-		);
-	} else if (attribute.name === 'group') {
-		// <input type='checkbox|radio' bind:group='selected'> special case
-		if (type === 'radio') {
-			setter = deindent`
-				if (!${node.var}.checked) return;
-				${setter}
-			`;
-		}
+		updateConditions.push(`!isNaN(${snippet})`);
+	} else if (attribute.name === 'paused') {
+		// this is necessary to prevent the audio restarting by itself
+		const last = block.getUniqueName(`${node.var}_paused_value`);
+		block.addVariable(last, 'true');
 
-		const condition = type === 'checkbox'
-			? `~${snippet}.indexOf(${node.var}.__value)`
-			: `${node.var}.__value === ${snippet}`;
-
-		block.builders.hydrate.addLine(
-			`#component._bindingGroups[${bindingGroup}].push(${node.var});`
-		);
-
-		block.builders.destroy.addBlock(
-			`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${node.var}), 1);`
-		);
-
-		updateElement = `${node.var}.checked = ${condition};`;
-	} else if (isMediaElement) {
-		generator.hasComplexBindings = true;
-		block.builders.hydrate.addBlock(`#component._root._beforecreate.push(${handler});`);
-
-		if (attribute.name === 'currentTime') {
-			const frame = block.getUniqueName(`${node.var}_animationframe`);
-			block.addVariable(frame);
-			setter = deindent`
-				cancelAnimationFrame(${frame});
-				if (!${node.var}.paused) ${frame} = requestAnimationFrame(${handler});
-				${setter}
-			`;
-
-			updateConditions.push(`!isNaN(${snippet})`);
-		} else if (attribute.name === 'paused') {
-			// this is necessary to prevent the audio restarting by itself
-			const last = block.getUniqueName(`${node.var}_paused_value`);
-			block.addVariable(last, 'true');
-
-			updateConditions = [`${last} !== (${last} = ${snippet})`];
-			updateElement = `${node.var}[${last} ? "pause" : "play"]();`;
-		}
+		updateConditions = [`${last} !== (${last} = ${snippet})`];
+		updateElement = `${node.var}[${last} ? "pause" : "play"]();`;
 	}
 
 	block.builders.init.addBlock(deindent`
@@ -369,32 +294,15 @@ function addMediaBinding(
 		}
 	`);
 
-	if (node.name === 'input' && type === 'range') {
-		// need to bind to `input` and `change`, for the benefit of IE
-		block.builders.hydrate.addBlock(deindent`
-			@addListener(${node.var}, "input", ${handler});
-			@addListener(${node.var}, "change", ${handler});
-		`);
+	eventNames.forEach(eventName => {
+		block.builders.hydrate.addLine(
+			`@addListener(${node.var}, "${eventName}", ${handler});`
+		);
 
-		block.builders.destroy.addBlock(deindent`
-			@removeListener(${node.var}, "input", ${handler});
-			@removeListener(${node.var}, "change", ${handler});
-		`);
-	} else {
-		eventNames.forEach(eventName => {
-			block.builders.hydrate.addLine(
-				`@addListener(${node.var}, "${eventName}", ${handler});`
-			);
-
-			block.builders.destroy.addLine(
-				`@removeListener(${node.var}, "${eventName}", ${handler});`
-			);
-		});
-	}
-
-	if (!isMediaElement) {
-		node.initialUpdate = updateElement;
-	}
+		block.builders.destroy.addLine(
+			`@removeListener(${node.var}, "${eventName}", ${handler});`
+		);
+	});
 
 	if (!isReadOnly) { // audio/video duration is read-only, it never updates
 		if (updateConditions.length) {
@@ -421,16 +329,6 @@ function addMediaBinding(
 }
 
 function getBindingEventName(node: Node, attribute: Node) {
-	if (node.name === 'input') {
-		const typeAttribute = node.attributes.find(
-			(attr: Node) => attr.type === 'Attribute' && attr.name === 'type'
-		);
-		const type = typeAttribute ? typeAttribute.value[0].data : 'text'; // TODO in validation, should throw if type attribute is not static
-
-		return [type === 'checkbox' || type === 'radio' ? 'change' : 'input'];
-	}
-
-	if (node.name === 'textarea') return ['input'];
 	if (attribute.name === 'currentTime') return ['timeupdate'];
 	if (attribute.name === 'duration') return ['durationchange'];
 	if (attribute.name === 'paused') return ['pause'];
@@ -439,49 +337,6 @@ function getBindingEventName(node: Node, attribute: Node) {
 	if (attribute.name === 'played') return ['timeupdate'];
 
 	return ['change'];
-}
-
-function getBindingValue(
-	generator: DomGenerator,
-	block: Block,
-	state: State,
-	node: Node,
-	attribute: Node,
-	isMultipleSelect: boolean,
-	isMediaElement: boolean,
-	bindingGroup: number,
-	type: string
-) {
-	// <select multiple bind:value='selected>
-	if (isMultipleSelect) {
-		return `[].map.call(${node.var}.querySelectorAll(':checked'), function(option) { return option.__value; })`;
-	}
-
-	// <select bind:value='selected>
-	if (node.name === 'select') {
-		return 'selectedOption && selectedOption.__value';
-	}
-
-	// <input type='checkbox' bind:group='foo'>
-	if (attribute.name === 'group') {
-		if (type === 'checkbox') {
-			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
-		}
-
-		return `${node.var}.__value`;
-	}
-
-	// <input type='range|number' bind:value>
-	if (type === 'range' || type === 'number') {
-		return `@toNumber(${node.var}.${attribute.name})`;
-	}
-
-	if (isMediaElement && (attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played')) {
-		return `@timeRangesToArray(${node.var}.${attribute.name})`
-	}
-
-	// everything else
-	return `${node.var}.${attribute.name}`;
 }
 
 function getBindingGroup(generator: DomGenerator, value: Node) {
