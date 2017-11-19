@@ -3,6 +3,7 @@ import fuzzymatch from '../utils/fuzzymatch';
 import checkForDupes from './utils/checkForDupes';
 import checkForComputedKeys from './utils/checkForComputedKeys';
 import namespaces from '../../utils/namespaces';
+import getName from '../../utils/getName';
 import { Validator } from '../';
 import { Node } from '../../interfaces';
 
@@ -29,7 +30,7 @@ export default function validateJs(validator: Validator, js: Node) {
 			const props = validator.properties;
 
 			node.declaration.properties.forEach((prop: Node) => {
-				props.set(prop.key.name, prop);
+				props.set(getName(prop.key), prop);
 			});
 
 			// Remove these checks in version 2
@@ -49,25 +50,26 @@ export default function validateJs(validator: Validator, js: Node) {
 
 			// ensure all exported props are valid
 			node.declaration.properties.forEach((prop: Node) => {
-				const propValidator = propValidators[prop.key.name];
+				const name = getName(prop.key);
+				const propValidator = propValidators[name];
 
 				if (propValidator) {
 					propValidator(validator, prop);
 				} else {
-					const match = fuzzymatch(prop.key.name, validPropList);
+					const match = fuzzymatch(name, validPropList);
 					if (match) {
 						validator.error(
-							`Unexpected property '${prop.key.name}' (did you mean '${match}'?)`,
+							`Unexpected property '${name}' (did you mean '${match}'?)`,
 							prop.start
 						);
 					} else if (/FunctionExpression/.test(prop.value.type)) {
 						validator.error(
-							`Unexpected property '${prop.key.name}' (did you mean to include it in 'methods'?)`,
+							`Unexpected property '${name}' (did you mean to include it in 'methods'?)`,
 							prop.start
 						);
 					} else {
 						validator.error(
-							`Unexpected property '${prop.key.name}'`,
+							`Unexpected property '${name}'`,
 							prop.start
 						);
 					}
@@ -86,7 +88,7 @@ export default function validateJs(validator: Validator, js: Node) {
 	['components', 'methods', 'helpers', 'transitions'].forEach(key => {
 		if (validator.properties.has(key)) {
 			validator.properties.get(key).value.properties.forEach((prop: Node) => {
-				validator[key].set(prop.key.name, prop.value);
+				validator[key].set(getName(prop.key), prop.value);
 			});
 		}
 	});
