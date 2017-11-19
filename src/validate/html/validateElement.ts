@@ -83,17 +83,17 @@ export default function validateElement(
 				}
 
 				checkTypeAttribute(validator, node);
-			} else if (name === 'checked') {
+			} else if (name === 'checked' || name === 'indeterminate') {
 				if (node.name !== 'input') {
 					validator.error(
-						`'checked' is not a valid binding on <${node.name}> elements`,
+						`'${name}' is not a valid binding on <${node.name}> elements`,
 						attribute.start
 					);
 				}
 
 				if (checkTypeAttribute(validator, node) !== 'checkbox') {
 					validator.error(
-						`'checked' binding can only be used with <input type="checkbox">`,
+						`'${name}' binding can only be used with <input type="checkbox">`,
 						attribute.start
 					);
 				}
