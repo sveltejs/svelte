@@ -183,7 +183,6 @@ export default function visitBinding(
 
 	if (!isMediaElement) {
 		node.initialUpdate = updateElement;
-		node.initialUpdateNeedsStateObject = !block.contexts.has(name);
 	}
 
 	if (!isReadOnly) { // audio/video duration is read-only, it never updates
