@@ -8,7 +8,6 @@ import { State } from '../../interfaces';
 import getObject from '../../../../utils/getObject';
 import getTailSnippet from '../../../../utils/getTailSnippet';
 import stringifyProps from '../../../../utils/stringifyProps';
-import visitBinding from './Binding';
 import { generateRule } from '../../../../shared/index';
 import flatten from '../../../../utils/flattenReference';
 
@@ -23,19 +22,19 @@ const readOnlyMediaAttributes = new Set([
 	'played'
 ]);
 
-function isMediaNode(node: Node) {
-	return node.name === 'audio' || node.name === 'video';
+function isMediaNode(name: string) {
+	return name === 'audio' || name === 'video';
 }
 
 const events = [
 	{
-		name: 'input',
+		eventNames: ['input'],
 		filter: (node: Node, binding: Binding) =>
 			node.name === 'textarea' ||
 			node.name === 'input' && !/radio|checkbox/.test(getStaticAttributeValue(node, 'type'))
 	},
 	{
-		name: 'change',
+		eventNames: ['change'],
 		filter: (node: Node, binding: Binding) =>
 			node.name === 'select' ||
 			node.name === 'input' && /radio|checkbox|range/.test(getStaticAttributeValue(node, 'type'))
@@ -43,31 +42,31 @@ const events = [
 
 	// media events
 	{
-		name: 'timeupdate',
+		eventNames: ['timeupdate'],
 		filter: (node: Node, binding: Binding) =>
 			isMediaNode(node.name) &&
 			(binding.name === 'currentTime' || binding.name === 'played')
 	},
 	{
-		name: 'durationchange',
+		eventNames: ['durationchange'],
 		filter: (node: Node, binding: Binding) =>
 			isMediaNode(node.name) &&
 			binding.name === 'duration'
 	},
 	{
-		name: 'pause',
+		eventNames: ['play', 'pause'],
 		filter: (node: Node, binding: Binding) =>
 			isMediaNode(node.name) &&
 			binding.name === 'paused'
 	},
 	{
-		name: 'progress',
+		eventNames: ['progress'],
 		filter: (node: Node, binding: Binding) =>
 			isMediaNode(node.name) &&
 			binding.name === 'buffered'
 	},
 	{
-		name: 'loadedmetadata',
+		eventNames: ['loadedmetadata'],
 		filter: (node: Node, binding: Binding) =>
 			isMediaNode(node.name) &&
 			(binding.name === 'buffered' || binding.name === 'seekable')
@@ -89,6 +88,8 @@ export default function addBindings(
 
 	const mungedBindings = bindings.map(binding => {
 		const isReadOnly = isMediaNode(node.name) && readOnlyMediaAttributes.has(binding.name);
+
+		let updateCondition: string;
 
 		const { name } = getObject(binding.value);
 		const { snippet, contexts, dependencies } = block.contextualise(
@@ -114,7 +115,7 @@ export default function addBindings(
 			getStaticAttributeValue(node, 'type')
 		);
 
-		const viewToModel = getSetter(
+		const viewToModel = getViewToModel(
 			generator,
 			block,
 			name,
@@ -126,7 +127,8 @@ export default function addBindings(
 		);
 
 		// model to view
-		const modelToView = getUpdater(node, binding, snippet);
+		let modelToView = getModelToView(node, binding, snippet);
+		let initialUpdate = modelToView;
 		// block.builders.update.addLine(modelToView);
 
 		// special cases
@@ -137,9 +139,24 @@ export default function addBindings(
 				`#component._bindingGroups[${bindingGroup}].push(${node.var});`
 			);
 
-			block.builders.destroy.addBlock(
+			block.builders.destroy.addLine(
 				`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${node.var}), 1);`
 			);
+		}
+
+		if (binding.name === 'currentTime') {
+			updateCondition = `!isNaN(${snippet})`;
+			initialUpdate = null;
+		}
+
+		if (binding.name === 'paused') {
+			// this is necessary to prevent the audio restarting by itself
+			const last = block.getUniqueName(`${node.var}_is_paused`);
+			block.addVariable(last, 'true');
+
+			updateCondition = `${last} !== (${last} = ${snippet})`;
+			modelToView = `${node.var}[${last} ? "pause" : "play"]();`;
+			initialUpdate = null;
 		}
 
 		return {
@@ -147,30 +164,42 @@ export default function addBindings(
 			object: name,
 			viewToModel,
 			modelToView,
-			needsLock: !isReadOnly && needsLock
+			initialUpdate,
+			needsLock: !isReadOnly && needsLock,
+			updateCondition
 		};
 	});
+
+	const lock = mungedBindings.some(binding => binding.needsLock) ?
+		block.getUniqueName(`${node.var}_updating`) :
+		null;
+
+	if (lock) block.addVariable(lock, 'false');
 
 	const groups = events
 		.map(event => {
 			return {
-				name: event.name,
+				events: event.eventNames,
 				bindings: mungedBindings.filter(binding => event.filter(node, binding))
 			};
 		})
 		.filter(group => group.bindings.length);
 
 	groups.forEach(group => {
-		const handler = block.getUniqueName(`${node.var}_${group.name}_handler`);
+		const handler = block.getUniqueName(`${node.var}_${group.events.join('_')}_handler`);
 
-		const needsLock  = group.bindings.some(binding => binding.needsLock);
+		const needsLock = group.bindings.some(binding => binding.needsLock);
 
-		const lock = needsLock ? block.getUniqueName(`${node.var}_updating`) : null;
-		if (needsLock) block.addVariable(lock, 'false');
+		group.bindings.forEach(binding => {
+			if (!binding.modelToView) return;
 
-		block.builders.update.addBlock(deindent`
-			${group.bindings.map(binding => needsLock ? `if (!${lock}) ${binding.modelToView}` : binding.modelToView)}
-		`);
+			const updateConditions = needsLock ? [`!${lock}`] : [];
+			if (binding.updateCondition) updateConditions.push(binding.updateCondition);
+
+			block.builders.update.addLine(
+				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.modelToView}` : binding.modelToView
+			);
+		});
 
 		const usesContext = group.bindings.some(binding => binding.viewToModel.usesContext);
 		const usesState = group.bindings.some(binding => binding.viewToModel.usesState);
@@ -183,8 +212,22 @@ export default function addBindings(
 			});
 		}); // TODO use stringifyProps here, once indenting is fixed
 
+		// media bindings — awkward special case. The native timeupdate events
+		// fire too infrequently, so we need to take matters into our
+		// own hands
+		let animation_frame;
+		if (group.bindings.find(binding => binding.name === 'currentTime')) {
+			animation_frame = block.getUniqueName(`${node.var}_animationframe`);
+			block.addVariable(animation_frame);
+		}
+
 		block.builders.init.addBlock(deindent`
 			function ${handler}() {
+				${
+					animation_frame && deindent`
+						cancelAnimationFrame(${animation_frame});
+						if (!${node.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+				}
 				${usesContext && `var context = ${node.var}._svelte;`}
 				${usesState && `var state = #component.get();`}
 				${needsLock && `${lock} = true;`}
@@ -194,43 +237,45 @@ export default function addBindings(
 			}
 		`);
 
-		block.builders.hydrate.addLine(
-			`@addListener(${node.var}, "${group.name}", ${handler});`
-		);
+		group.events.forEach(name => {
+			block.builders.hydrate.addLine(
+				`@addListener(${node.var}, "${name}", ${handler});`
+			);
 
-		block.builders.destroy.addLine(
-			`@removeListener(${node.var}, "${group.name}", ${handler});`
-		);
+			block.builders.destroy.addLine(
+				`@removeListener(${node.var}, "${name}", ${handler});`
+			);
+		});
 
 		const allInitialStateIsDefined = group.bindings
 			.map(binding => `'${binding.object}' in state`)
 			.join(' && ');
 
-		if (node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate')) {
+		if (node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || readOnlyMediaAttributes.has(binding.name))) {
 			generator.hasComplexBindings = true;
 
-			block.builders.hydrate.addBlock(
+			block.builders.hydrate.addLine(
 				`if (!(${allInitialStateIsDefined})) #component._root._beforecreate.push(${handler});`
 			);
 		}
 	});
 
-	node.initialUpdate = mungedBindings.map(binding => binding.modelToView).join('\n');
+	node.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 }
 
-function getUpdater(
+function getModelToView(
 	node: Node,
 	binding: Node,
 	snippet: string
 ) {
+	if (readOnlyMediaAttributes.has(binding.name)) {
+		return null;
+	}
+
 	if (node.name === 'select') {
 		return getStaticAttributeValue(node, 'multiple') === true ?
 			`@selectOptions(${node.var}, ${snippet})` :
 			`@selectOption(${node.var}, ${snippet})`;
-	}
-
-	if (isMediaNode(node.name)) {
-		throw new Error('TODO');
 	}
 
 	if (binding.name === 'group') {
@@ -261,7 +306,7 @@ function getBindingGroup(generator: DomGenerator, value: Node) {
 	return index;
 }
 
-function getSetter(
+function getViewToModel(
 	generator: DomGenerator,
 	block: Block,
 	name: string,

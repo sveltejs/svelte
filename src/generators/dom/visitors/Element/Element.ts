@@ -4,7 +4,6 @@ import visitSlot from '../Slot';
 import visitComponent from '../Component';
 import visitWindow from './meta/Window';
 import visitAttribute from './Attribute';
-import visitBinding from './Binding';
 import addBindings from './addBindings';
 import flattenReference from '../../../../utils/flattenReference';
 import validCalleeObjects from '../../../../utils/validCalleeObjects';
