@@ -1,5 +1,5 @@
 export default {
-	// solo: true,
+	'skip-ssr': true,
 
 	data: {
 		indeterminate: true,
@@ -13,7 +13,8 @@ export default {
 
 	test(assert, component, target, window) {
 		const input = target.querySelector('input');
-		assert.equal(input.checked, true);
+		assert.equal(input.checked, false);
+		assert.equal(input.indeterminate, true);
 
 		const event = new window.Event('change');
 

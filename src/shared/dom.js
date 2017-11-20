@@ -167,3 +167,14 @@ export function selectOptions(select, value) {
 		option.selected = ~value.indexOf(option.__value);
 	}
 }
+
+export function selectValue(select) {
+	var selectedOption = select.querySelector(':checked') || select.options[0];
+	return selectedOption && selectedOption.__value;
+}
+
+export function selectMultipleValue(select) {
+	return [].map.call(select.querySelectorAll(':checked'), function(option) {
+		return option.__value;
+	});
+}

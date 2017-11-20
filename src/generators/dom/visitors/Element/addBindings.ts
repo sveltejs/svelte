@@ -9,6 +9,11 @@ import getObject from '../../../../utils/getObject';
 import getTailSnippet from '../../../../utils/getTailSnippet';
 import visitBinding from './Binding';
 import { generateRule } from '../../../../shared/index';
+import flatten from '../../../../utils/flattenReference';
+
+interface Binding {
+	name: string;
+}
 
 const types: Record<string, (
 	generator: DomGenerator,
@@ -31,6 +36,57 @@ const readOnlyMediaAttributes = new Set([
 	'played'
 ]);
 
+function isMediaNode(node: Node) {
+	return node.name === 'audio' || node.name === 'video';
+}
+
+const events = [
+	{
+		name: 'input',
+		filter: (node: Node, binding: Binding) =>
+			node.name === 'textarea' ||
+			node.name === 'input' && !/radio|checkbox/.test(getStaticAttributeValue(node, 'type'))
+	},
+	{
+		name: 'change',
+		filter: (node: Node, binding: Binding) =>
+			node.name === 'select' ||
+			node.name === 'input' && /radio|checkbox|range/.test(getStaticAttributeValue(node, 'type'))
+	},
+
+	// media events
+	{
+		name: 'timeupdate',
+		filter: (node: Node, binding: Binding) =>
+			isMediaNode(node.name) &&
+			(binding.name === 'currentTime' || binding.name === 'played')
+	},
+	{
+		name: 'durationchange',
+		filter: (node: Node, binding: Binding) =>
+			isMediaNode(node.name) &&
+			binding.name === 'duration'
+	},
+	{
+		name: 'pause',
+		filter: (node: Node, binding: Binding) =>
+			isMediaNode(node.name) &&
+			binding.name === 'paused'
+	},
+	{
+		name: 'progress',
+		filter: (node: Node, binding: Binding) =>
+			isMediaNode(node.name) &&
+			binding.name === 'buffered'
+	},
+	{
+		name: 'loadedmetadata',
+		filter: (node: Node, binding: Binding) =>
+			isMediaNode(node.name) &&
+			(binding.name === 'buffered' || binding.name === 'seekable')
+	}
+];
+
 export default function addBindings(
 	generator: DomGenerator,
 	block: Block,
@@ -40,304 +96,139 @@ export default function addBindings(
 	const bindings: Node[] = node.attributes.filter((a: Node) => a.type === 'Binding');
 	if (bindings.length === 0) return;
 
-	types[node.name](generator, block, state, node, bindings);
-}
+	if (node.name === 'select' || isMediaNode(node.name)) generator.hasComplexBindings = true;
 
-function addInputBinding(
-	generator: DomGenerator,
-	block: Block,
-	state: State,
-	node: Node,
-	bindings: Node[]
-) {
-	const attribute = bindings[0];
+	const mungedBindings = bindings.map(binding => {
+		const needsLock = true; // TODO
 
-	const { name } = getObject(attribute.value);
-	const { snippet, contexts, dependencies } = block.contextualise(
-		attribute.value
-	);
+		const { name } = getObject(binding.value);
+		const { snippet, contexts, dependencies } = block.contextualise(
+			binding.value
+		);
 
-	contexts.forEach(context => {
-		if (!~state.allUsedContexts.indexOf(context))
-			state.allUsedContexts.push(context);
+		contexts.forEach(context => {
+			if (!~state.allUsedContexts.indexOf(context))
+				state.allUsedContexts.push(context);
+		});
+
+		// view to model
+		// TODO tidy this up
+		const valueFromDom = getBindingValue(
+			generator,
+			block,
+			node._state,
+			node,
+			binding,
+			node.name === 'select' && getStaticAttributeValue(node, 'multiple') === true,
+			isMediaNode(node.name),
+			binding.name === 'group' ? getBindingGroup(generator, binding.value) : null,
+			getStaticAttributeValue(node, 'type')
+		);
+
+		const setter = getSetter(
+			generator,
+			block,
+			name,
+			snippet,
+			node,
+			binding,
+			dependencies,
+			valueFromDom
+		);
+
+		// model to view
+		const update = getUpdater(node, binding, snippet);
+		block.builders.update.addLine(update);
+
+		// special cases
+		if (binding.name === 'group') {
+			const bindingGroup = getBindingGroup(generator, binding.value);
+
+			block.builders.hydrate.addLine(
+				`#component._bindingGroups[${bindingGroup}].push(${node.var});`
+			);
+
+			block.builders.destroy.addBlock(
+				`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${node.var}), 1);`
+			);
+		}
+
+		return {
+			name: binding.name,
+			object: name,
+			setter,
+			update,
+			needsLock
+		};
 	});
 
-	const type = getStaticAttributeValue(node, 'type');
-	const eventName = type === 'radio' || type === 'checkbox' ? 'change' : 'input';
+	const groups = events
+		.map(event => {
+			return {
+				name: event.name,
+				bindings: mungedBindings.filter(binding => event.filter(node, binding))
+			};
+		})
+		.filter(group => group.bindings.length);
 
-	const handler = block.getUniqueName(
-		`${node.var}_${eventName}_handler`
-	);
+	groups.forEach(group => {
+		const handler = block.getUniqueName(`${node.var}_${group.name}_handler`);
 
-	const bindingGroup = attribute.name === 'group'
-		? getBindingGroup(generator, attribute.value)
-		: null;
+		const needsLock  = group.bindings.some(binding => binding.needsLock);
 
-	const value = (
-		attribute.name === 'group' ?
-			(type === 'checkbox' ? `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])` : `${node.var}.__value`) :
-		(type === 'range' || type === 'number') ?
-			`@toNumber(${node.var}.${attribute.name})` :
-		`${node.var}.${attribute.name}`
-	);
+		const lock = needsLock ? block.getUniqueName(`${node.var}_updating`) : null;
+		if (needsLock) block.addVariable(lock, 'false');
 
-	let setter = getSetter(generator, block, name, snippet, node, attribute, dependencies, value);
-	let updateElement = `${node.var}.${attribute.name} = ${snippet};`;
+		block.builders.init.addBlock(deindent`
+			function ${handler}() {
+				${needsLock && `${lock} = true;`}
+				${group.bindings.map(binding => binding.setter)}
+				${needsLock && `${lock} = false;`}
+			}
+		`);
 
-	const needsLock = !/radio|checkbox|range|color/.test(type); // TODO others?
-	const lock = `#${node.var}_updating`;
-	let updateConditions = needsLock ? [`!${lock}`] : [];
+		block.builders.hydrate.addLine(
+			`@addListener(${node.var}, "${group.name}", ${handler});`
+		);
 
-	if (needsLock) block.addVariable(lock, 'false');
+		block.builders.destroy.addLine(
+			`@removeListener(${node.var}, "${group.name}", ${handler});`
+		);
 
-	if (attribute.name === 'group') {
-		// <input type='checkbox|radio' bind:group='selected'> special case
-		if (type === 'radio') {
-			setter = deindent`
-				if (!${node.var}.checked) return;
-				${setter}
-			`;
-		}
+		const allInitialStateIsDefined = group.bindings
+			.map(binding => `'${binding.object}' in state`)
+			.join(' && ');
+
+		generator.hasComplexBindings = true;
+
+		block.builders.hydrate.addBlock(
+			`if (!(${allInitialStateIsDefined})) #component._root._beforecreate.push(${handler});`
+		);
+	});
+
+	node.initialUpdate = mungedBindings.map(binding => binding.update).join('\n');
+}
+
+function getUpdater(
+	node: Node,
+	binding: Node,
+	snippet: string
+) {
+	if (binding.name === 'group') {
+		const type = getStaticAttributeValue(node, 'type');
 
 		const condition = type === 'checkbox'
 			? `~${snippet}.indexOf(${node.var}.__value)`
 			: `${node.var}.__value === ${snippet}`;
 
-		block.builders.hydrate.addLine(
-			`#component._bindingGroups[${bindingGroup}].push(${node.var});`
-		);
-
-		block.builders.destroy.addBlock(
-			`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${node.var}), 1);`
-		);
-
-		updateElement = `${node.var}.checked = ${condition};`;
+		return `${node.var}.checked = ${condition};`
 	}
 
-	block.builders.init.addBlock(deindent`
-		function ${handler}() {
-			${needsLock && `${lock} = true;`}
-			${setter}
-			${needsLock && `${lock} = false;`}
-		}
-	`);
+	if (binding.name === 'checked') {
 
-	if (type === 'range') {
-		// need to bind to `input` and `change`, for the benefit of IE
-		block.builders.hydrate.addBlock(deindent`
-			@addListener(${node.var}, "input", ${handler});
-			@addListener(${node.var}, "change", ${handler});
-		`);
-
-		block.builders.destroy.addBlock(deindent`
-			@removeListener(${node.var}, "input", ${handler});
-			@removeListener(${node.var}, "change", ${handler});
-		`);
-	} else {
-		block.builders.hydrate.addLine(
-			`@addListener(${node.var}, "${eventName}", ${handler});`
-		);
-
-		block.builders.destroy.addLine(
-			`@removeListener(${node.var}, "${eventName}", ${handler});`
-		);
 	}
 
-	block.builders.update.addBlock(
-		needsLock ?
-			`if (!${lock}) ${updateElement}` :
-			updateElement
-	);
-
-	node.initialUpdate = updateElement;
-}
-
-function addSelectBinding(
-	generator: DomGenerator,
-	block: Block,
-	state: State,
-	node: Node,
-	bindings: Node[]
-) {
-	const attribute = bindings[0];
-
-	const { name } = getObject(attribute.value);
-	const { snippet, contexts, dependencies } = block.contextualise(
-		attribute.value
-	);
-
-	contexts.forEach(context => {
-		if (!~state.allUsedContexts.indexOf(context))
-			state.allUsedContexts.push(context);
-	});
-
-	const lock = `#${node.var}_updating`;
-	block.addVariable(lock, 'false');
-
-	const handler = block.getUniqueName(
-		`${node.var}_change_handler`
-	);
-
-	const isMultipleSelect = getStaticAttributeValue(node, 'multiple') === true;
-
-	// view to model
-	const value = isMultipleSelect ?
-		`[].map.call(${node.var}.querySelectorAll(':checked'), function(option) { return option.__value; })` :
-		`selectedOption && selectedOption.__value`;
-
-	let setter = getSetter(generator, block, name, snippet, node, attribute, dependencies, value);
-
-	if (!isMultipleSelect) {
-		setter = deindent`
-			var selectedOption = ${node.var}.querySelector(':checked') || ${node.var}.options[0];
-			${setter}`;
-	}
-
-	generator.hasComplexBindings = true;
-	block.builders.hydrate.addBlock(
-		`if (!('${name}' in state)) #component._root._beforecreate.push(${handler});`
-	);
-
-	block.builders.init.addBlock(deindent`
-		function ${handler}() {
-			${lock} = true;
-			${setter}
-			${lock} = false;
-		}
-	`);
-
-	block.builders.hydrate.addLine(
-		`@addListener(${node.var}, "change", ${handler});`
-	);
-
-	block.builders.destroy.addLine(
-		`@removeListener(${node.var}, "change", ${handler});`
-	);
-
-	// model to view
-	const updateElement = isMultipleSelect ?
-		`@selectOptions(${node.var}, ${snippet});` :
-		`@selectOption(${node.var}, ${snippet});`;
-
-	block.builders.update.addLine(
-		`if (!${lock}) ${updateElement}`
-	);
-
-	node.initialUpdate = updateElement;
-}
-
-function addMediaBinding(
-	generator: DomGenerator,
-	block: Block,
-	state: State,
-	node: Node,
-	bindings: Node[]
-) {
-	const attribute = bindings[0];
-
-	const { name } = getObject(attribute.value);
-	const { snippet, contexts, dependencies } = block.contextualise(
-		attribute.value
-	);
-
-	contexts.forEach(context => {
-		if (!~state.allUsedContexts.indexOf(context))
-			state.allUsedContexts.push(context);
-	});
-
-	const eventNames = getBindingEventName(node, attribute);
-	const handler = block.getUniqueName(
-		`${node.var}_${eventNames.join('_')}_handler`
-	);
-
-	const isReadOnly = readOnlyMediaAttributes.has(attribute.name)
-
-	const value = (attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played') ?
-		`@timeRangesToArray(${node.var}.${attribute.name})` :
-		`${node.var}.${attribute.name}`;
-
-	let setter = getSetter(generator, block, name, snippet, node, attribute, dependencies, value);
-	let updateElement = `${node.var}.${attribute.name} = ${snippet};`;
-
-	const needsLock = !isReadOnly;
-	const lock = `#${node.var}_updating`;
-	let updateConditions = needsLock ? [`!${lock}`] : [];
-
-	if (needsLock) block.addVariable(lock, 'false');
-
-	generator.hasComplexBindings = true;
-	block.builders.hydrate.addBlock(`#component._root._beforecreate.push(${handler});`);
-
-	if (attribute.name === 'currentTime') {
-		const frame = block.getUniqueName(`${node.var}_animationframe`);
-		block.addVariable(frame);
-		setter = deindent`
-			cancelAnimationFrame(${frame});
-			if (!${node.var}.paused) ${frame} = requestAnimationFrame(${handler});
-			${setter}
-		`;
-
-		updateConditions.push(`!isNaN(${snippet})`);
-	} else if (attribute.name === 'paused') {
-		// this is necessary to prevent the audio restarting by itself
-		const last = block.getUniqueName(`${node.var}_paused_value`);
-		block.addVariable(last, 'true');
-
-		updateConditions = [`${last} !== (${last} = ${snippet})`];
-		updateElement = `${node.var}[${last} ? "pause" : "play"]();`;
-	}
-
-	block.builders.init.addBlock(deindent`
-		function ${handler}() {
-			${needsLock && `${lock} = true;`}
-			${setter}
-			${needsLock && `${lock} = false;`}
-		}
-	`);
-
-	eventNames.forEach(eventName => {
-		block.builders.hydrate.addLine(
-			`@addListener(${node.var}, "${eventName}", ${handler});`
-		);
-
-		block.builders.destroy.addLine(
-			`@removeListener(${node.var}, "${eventName}", ${handler});`
-		);
-	});
-
-	if (!isReadOnly) { // audio/video duration is read-only, it never updates
-		if (updateConditions.length) {
-			block.builders.update.addBlock(deindent`
-				if (${updateConditions.join(' && ')}) {
-					${updateElement}
-				}
-			`);
-		} else {
-			block.builders.update.addBlock(deindent`
-				${updateElement}
-			`);
-		}
-	}
-
-	if (attribute.name === 'paused') {
-		block.builders.create.addLine(
-			`@addListener(${node.var}, "play", ${handler});`
-		);
-		block.builders.destroy.addLine(
-			`@removeListener(${node.var}, "play", ${handler});`
-		);
-	}
-}
-
-function getBindingEventName(node: Node, attribute: Node) {
-	if (attribute.name === 'currentTime') return ['timeupdate'];
-	if (attribute.name === 'duration') return ['durationchange'];
-	if (attribute.name === 'paused') return ['pause'];
-	if (attribute.name === 'buffered') return ['progress', 'loadedmetadata'];
-	if (attribute.name === 'seekable') return ['loadedmetadata'];
-	if (attribute.name === 'played') return ['timeupdate'];
-
-	return ['change'];
+	return `${node.var}.${binding.name} = ${snippet};`;
 }
 
 function getBindingGroup(generator: DomGenerator, value: Node) {
@@ -403,6 +294,51 @@ function getSetter(
 	}
 
 	return `#component.set({ ${name}: ${value} });`;
+}
+
+function getBindingValue(
+	generator: DomGenerator,
+	block: Block,
+	state: State,
+	node: Node,
+	attribute: Node,
+	isMultipleSelect: boolean,
+	isMediaElement: boolean,
+	bindingGroup: number,
+	type: string
+) {
+	// <select multiple bind:value='selected>
+	if (isMultipleSelect) {
+		return `@selectMultipleValue(${node.var})`;
+		// return `[].map.call(${node.var}.querySelectorAll(':checked'), function(option) { return option.__value; })`;
+	}
+
+	// <select bind:value='selected>
+	if (node.name === 'select') {
+		// return 'selectedOption && selectedOption.__value';
+		return `@selectValue(${node.var})`;
+	}
+
+	// <input type='checkbox' bind:group='foo'>
+	if (attribute.name === 'group') {
+		if (type === 'checkbox') {
+			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
+		}
+
+		return `${node.var}.__value`;
+	}
+
+	// <input type='range|number' bind:value>
+	if (type === 'range' || type === 'number') {
+		return `@toNumber(${node.var}.${attribute.name})`;
+	}
+
+	if (isMediaElement && (attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played')) {
+		return `@timeRangesToArray(${node.var}.${attribute.name})`
+	}
+
+	// everything else
+	return `${node.var}.${attribute.name}`;
 }
 
 function isComputed(node: Node) {
