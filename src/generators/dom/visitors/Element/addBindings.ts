@@ -7,6 +7,7 @@ import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 import getObject from '../../../../utils/getObject';
 import getTailSnippet from '../../../../utils/getTailSnippet';
+import stringifyProps from '../../../../utils/stringifyProps';
 import visitBinding from './Binding';
 import { generateRule } from '../../../../shared/index';
 import flatten from '../../../../utils/flattenReference';
@@ -14,20 +15,6 @@ import flatten from '../../../../utils/flattenReference';
 interface Binding {
 	name: string;
 }
-
-const types: Record<string, (
-	generator: DomGenerator,
-	block: Block,
-	state: State,
-	node: Node,
-	binding: Node[]
-) => void> = {
-	input: addInputBinding,
-	textarea: addInputBinding,
-	select: addSelectBinding,
-	audio: addMediaBinding,
-	video: addMediaBinding
-};
 
 const readOnlyMediaAttributes = new Set([
 	'duration',
@@ -179,10 +166,26 @@ export default function addBindings(
 		const lock = needsLock ? block.getUniqueName(`${node.var}_updating`) : null;
 		if (needsLock) block.addVariable(lock, 'false');
 
+		const usesContext = group.bindings.some(binding => binding.setter.usesContext);
+		const usesState = group.bindings.some(binding => binding.setter.usesState);
+		const mutations = group.bindings.map(binding => binding.setter.mutation).filter(Boolean).join('\n');
+
+		const updates = new Set();
+		group.bindings.forEach(binding => {
+			binding.setter.updates.forEach(update => {
+				updates.add(update);
+			});
+		});
+
+		const props = Array.from(updates).join(', '); // TODO use stringifyProps once indenting is fixed
+
 		block.builders.init.addBlock(deindent`
 			function ${handler}() {
+				${usesContext && `var context = ${node.var}._svelte;`}
+				${usesState && `var state = #component.get();`}
 				${needsLock && `${lock} = true;`}
-				${group.bindings.map(binding => binding.setter)}
+				${mutations.length > 0 && mutations}
+				#component.set({ ${props} });
 				${needsLock && `${lock} = false;`}
 			}
 		`);
@@ -256,24 +259,20 @@ function getSetter(
 	dependencies: string[],
 	value: string,
 ) {
-	const tail = attribute.value.type === 'MemberExpression'
-		? getTailSnippet(attribute.value)
-		: '';
-
 	if (block.contexts.has(name)) {
-		const prop = dependencies[0];
-		const computed = isComputed(attribute.value);
+		const tail = attribute.value.type === 'MemberExpression'
+			? getTailSnippet(attribute.value)
+			: '';
 
-		return deindent`
-			var list = ${node.var}._svelte.${block.listNames.get(name)};
-			var index = ${node.var}._svelte.${block.indexNames.get(name)};
-			${computed && `var state = #component.get();`}
-			list[index]${tail} = ${value};
+		const list = `context.${block.listNames.get(name)}`;
+		const index = `context.${block.indexNames.get(name)}`;
 
-			${computed
-				? `#component.set({${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });`
-				: `#component.set({${dependencies.map((prop: string) => `${prop}: #component.get('${prop}')`).join(', ')} });`}
-		`;
+		return {
+			usesContext: true,
+			usesState: true,
+			mutation: `${list}[${index}]${tail} = ${value};`,
+			updates: dependencies.map(prop => `${prop}: state.${prop}`)
+		};
 	}
 
 	if (attribute.value.type === 'MemberExpression') {
@@ -286,14 +285,20 @@ function getSetter(
 		// that we don't have to do the `.some()` here
 		dependencies = dependencies.filter(prop => !generator.computations.some(computation => computation.key === prop));
 
-		return deindent`
-			var state = #component.get();
-			${snippet} = ${value};
-			#component.set({ ${dependencies.map((prop: string) => `${prop}: state.${prop}`).join(', ')} });
-		`;
+		return {
+			usesContext: false,
+			usesState: true,
+			mutation: `${snippet} = ${value}`,
+			updates: dependencies.map((prop: string) => `${prop}: state.${prop}`)
+		};
 	}
 
-	return `#component.set({ ${name}: ${value} });`;
+	return {
+		usesContext: false,
+		usesState: false,
+		mutation: null,
+		updates: [`${name}: ${value}`]
+	};
 }
 
 function getBindingValue(

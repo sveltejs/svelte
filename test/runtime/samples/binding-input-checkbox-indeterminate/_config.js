@@ -24,7 +24,7 @@ export default {
 
 		assert.equal(component.get('indeterminate'), false);
 		assert.equal(component.get('checked'), true);
-		assert.equal(target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<input type="checkbox">
 			<p>checked? true</p>
 			<p>indeterminate? false</p>
@@ -33,7 +33,7 @@ export default {
 		component.set({ indeterminate: true });
 		assert.equal(input.indeterminate, true);
 		assert.equal(input.checked, true);
-		assert.equal(target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<input type="checkbox">
 			<p>checked? true</p>
 			<p>indeterminate? true</p>

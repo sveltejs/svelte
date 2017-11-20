@@ -7,20 +7,9 @@ import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
 import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
 import { stringify } from '../../../utils/stringify';
+import stringifyProps from '../../../utils/stringifyProps';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
-
-function stringifyProps(props: string[]) {
-	if (!props.length) return '{}';
-
-	const joined = props.join(', ');
-	if (joined.length > 40) {
-		// make larger data objects readable
-		return `{\n\t${props.join(',\n\t')}\n}`;
-	}
-
-	return `{ ${joined} }`;
-}
 
 interface Attribute {
 	name: string;
