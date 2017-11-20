@@ -216,7 +216,7 @@ export default function addBindings(
 		// fire too infrequently, so we need to take matters into our
 		// own hands
 		let animation_frame;
-		if (group.bindings.find(binding => binding.name === 'currentTime')) {
+		if (group.events[0] === 'timeupdate') {
 			animation_frame = block.getUniqueName(`${node.var}_animationframe`);
 			block.addVariable(animation_frame);
 		}
