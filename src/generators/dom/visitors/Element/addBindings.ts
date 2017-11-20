@@ -85,8 +85,10 @@ export default function addBindings(
 
 	if (node.name === 'select' || isMediaNode(node.name)) generator.hasComplexBindings = true;
 
+	const needsLock = node.name !== 'input' || !/radio|checkbox|range|color/.test(getStaticAttributeValue(node, 'type'));
+
 	const mungedBindings = bindings.map(binding => {
-		const needsLock = true; // TODO
+		const isReadOnly = isMediaNode(node.name) && readOnlyMediaAttributes.has(binding.name);
 
 		const { name } = getObject(binding.value);
 		const { snippet, contexts, dependencies } = block.contextualise(
@@ -112,7 +114,7 @@ export default function addBindings(
 			getStaticAttributeValue(node, 'type')
 		);
 
-		const setter = getSetter(
+		const viewToModel = getSetter(
 			generator,
 			block,
 			name,
@@ -124,8 +126,8 @@ export default function addBindings(
 		);
 
 		// model to view
-		const update = getUpdater(node, binding, snippet);
-		block.builders.update.addLine(update);
+		const modelToView = getUpdater(node, binding, snippet);
+		// block.builders.update.addLine(modelToView);
 
 		// special cases
 		if (binding.name === 'group') {
@@ -143,9 +145,9 @@ export default function addBindings(
 		return {
 			name: binding.name,
 			object: name,
-			setter,
-			update,
-			needsLock
+			viewToModel,
+			modelToView,
+			needsLock: !isReadOnly && needsLock
 		};
 	});
 
@@ -166,18 +168,20 @@ export default function addBindings(
 		const lock = needsLock ? block.getUniqueName(`${node.var}_updating`) : null;
 		if (needsLock) block.addVariable(lock, 'false');
 
-		const usesContext = group.bindings.some(binding => binding.setter.usesContext);
-		const usesState = group.bindings.some(binding => binding.setter.usesState);
-		const mutations = group.bindings.map(binding => binding.setter.mutation).filter(Boolean).join('\n');
+		block.builders.update.addBlock(deindent`
+			${group.bindings.map(binding => needsLock ? `if (!${lock}) ${binding.modelToView}` : binding.modelToView)}
+		`);
 
-		const updates = new Set();
+		const usesContext = group.bindings.some(binding => binding.viewToModel.usesContext);
+		const usesState = group.bindings.some(binding => binding.viewToModel.usesState);
+		const mutations = group.bindings.map(binding => binding.viewToModel.mutation).filter(Boolean).join('\n');
+
+		const props = new Set();
 		group.bindings.forEach(binding => {
-			binding.setter.updates.forEach(update => {
-				updates.add(update);
+			binding.viewToModel.props.forEach(prop => {
+				props.add(prop);
 			});
-		});
-
-		const props = Array.from(updates).join(', '); // TODO use stringifyProps once indenting is fixed
+		}); // TODO use stringifyProps here, once indenting is fixed
 
 		block.builders.init.addBlock(deindent`
 			function ${handler}() {
@@ -185,7 +189,7 @@ export default function addBindings(
 				${usesState && `var state = #component.get();`}
 				${needsLock && `${lock} = true;`}
 				${mutations.length > 0 && mutations}
-				#component.set({ ${props} });
+				#component.set({ ${Array.from(props).join(', ')} });
 				${needsLock && `${lock} = false;`}
 			}
 		`);
@@ -202,14 +206,16 @@ export default function addBindings(
 			.map(binding => `'${binding.object}' in state`)
 			.join(' && ');
 
-		generator.hasComplexBindings = true;
+		if (node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate')) {
+			generator.hasComplexBindings = true;
 
-		block.builders.hydrate.addBlock(
-			`if (!(${allInitialStateIsDefined})) #component._root._beforecreate.push(${handler});`
-		);
+			block.builders.hydrate.addBlock(
+				`if (!(${allInitialStateIsDefined})) #component._root._beforecreate.push(${handler});`
+			);
+		}
 	});
 
-	node.initialUpdate = mungedBindings.map(binding => binding.update).join('\n');
+	node.initialUpdate = mungedBindings.map(binding => binding.modelToView).join('\n');
 }
 
 function getUpdater(
@@ -217,6 +223,16 @@ function getUpdater(
 	binding: Node,
 	snippet: string
 ) {
+	if (node.name === 'select') {
+		return getStaticAttributeValue(node, 'multiple') === true ?
+			`@selectOptions(${node.var}, ${snippet})` :
+			`@selectOption(${node.var}, ${snippet})`;
+	}
+
+	if (isMediaNode(node.name)) {
+		throw new Error('TODO');
+	}
+
 	if (binding.name === 'group') {
 		const type = getStaticAttributeValue(node, 'type');
 
@@ -225,10 +241,6 @@ function getUpdater(
 			: `${node.var}.__value === ${snippet}`;
 
 		return `${node.var}.checked = ${condition};`
-	}
-
-	if (binding.name === 'checked') {
-
 	}
 
 	return `${node.var}.${binding.name} = ${snippet};`;
@@ -271,7 +283,7 @@ function getSetter(
 			usesContext: true,
 			usesState: true,
 			mutation: `${list}[${index}]${tail} = ${value};`,
-			updates: dependencies.map(prop => `${prop}: state.${prop}`)
+			props: dependencies.map(prop => `${prop}: state.${prop}`)
 		};
 	}
 
@@ -289,7 +301,7 @@ function getSetter(
 			usesContext: false,
 			usesState: true,
 			mutation: `${snippet} = ${value}`,
-			updates: dependencies.map((prop: string) => `${prop}: state.${prop}`)
+			props: dependencies.map((prop: string) => `${prop}: state.${prop}`)
 		};
 	}
 
@@ -297,7 +309,7 @@ function getSetter(
 		usesContext: false,
 		usesState: false,
 		mutation: null,
-		updates: [`${name}: ${value}`]
+		props: [`${name}: ${value}`]
 	};
 }
 
