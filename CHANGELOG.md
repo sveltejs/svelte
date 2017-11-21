@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.42.0
+
+* Implement `indeterminate` binding for checkbox inputs ([#910](https://github.com/sveltejs/svelte/issues/910))
+* Use `<option>` children as `value` attribute if none exists ([#928](https://github.com/sveltejs/svelte/issues/928))
+* Allow quoted property names in default export and sub-properties ([#914](https://github.com/sveltejs/svelte/issues/914))
+* Various improvements to generated code for bindings
+
 ## 1.41.4
 
 * Handle self-destructive bindings ([#917](https://github.com/sveltejs/svelte/issues/917))
