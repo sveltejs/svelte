@@ -102,20 +102,9 @@ export default function addBindings(
 		});
 
 		// view to model
-		// TODO tidy this up
-		const valueFromDom = getBindingValue(
-			generator,
-			block,
-			node._state,
-			node,
-			binding,
-			node.name === 'select' && getStaticAttributeValue(node, 'multiple') === true,
-			isMediaNode(node.name),
-			binding.name === 'group' ? getBindingGroup(generator, binding.value) : null,
-			getStaticAttributeValue(node, 'type')
-		);
+		const valueFromDom = getValueFromDom(generator, node, binding);
 
-		const viewToModel = getViewToModel(
+		const handler = getEventHandler(
 			generator,
 			block,
 			name,
@@ -127,9 +116,8 @@ export default function addBindings(
 		);
 
 		// model to view
-		let modelToView = getModelToView(node, binding, snippet);
-		let initialUpdate = modelToView;
-		// block.builders.update.addLine(modelToView);
+		let updateDom = getDomUpdater(node, binding, snippet);
+		let initialUpdate = updateDom;
 
 		// special cases
 		if (binding.name === 'group') {
@@ -155,15 +143,15 @@ export default function addBindings(
 			block.addVariable(last, 'true');
 
 			updateCondition = `${last} !== (${last} = ${snippet})`;
-			modelToView = `${node.var}[${last} ? "pause" : "play"]();`;
+			updateDom = `${node.var}[${last} ? "pause" : "play"]();`;
 			initialUpdate = null;
 		}
 
 		return {
 			name: binding.name,
 			object: name,
-			viewToModel,
-			modelToView,
+			handler,
+			updateDom,
 			initialUpdate,
 			needsLock: !isReadOnly && needsLock,
 			updateCondition
@@ -191,23 +179,23 @@ export default function addBindings(
 		const needsLock = group.bindings.some(binding => binding.needsLock);
 
 		group.bindings.forEach(binding => {
-			if (!binding.modelToView) return;
+			if (!binding.updateDom) return;
 
 			const updateConditions = needsLock ? [`!${lock}`] : [];
 			if (binding.updateCondition) updateConditions.push(binding.updateCondition);
 
 			block.builders.update.addLine(
-				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.modelToView}` : binding.modelToView
+				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
 			);
 		});
 
-		const usesContext = group.bindings.some(binding => binding.viewToModel.usesContext);
-		const usesState = group.bindings.some(binding => binding.viewToModel.usesState);
-		const mutations = group.bindings.map(binding => binding.viewToModel.mutation).filter(Boolean).join('\n');
+		const usesContext = group.bindings.some(binding => binding.handler.usesContext);
+		const usesState = group.bindings.some(binding => binding.handler.usesState);
+		const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
 
 		const props = new Set();
 		group.bindings.forEach(binding => {
-			binding.viewToModel.props.forEach(prop => {
+			binding.handler.props.forEach(prop => {
 				props.add(prop);
 			});
 		}); // TODO use stringifyProps here, once indenting is fixed
@@ -263,7 +251,7 @@ export default function addBindings(
 	node.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 }
 
-function getModelToView(
+function getDomUpdater(
 	node: Node,
 	binding: Node,
 	snippet: string
@@ -306,7 +294,7 @@ function getBindingGroup(generator: DomGenerator, value: Node) {
 	return index;
 }
 
-function getViewToModel(
+function getEventHandler(
 	generator: DomGenerator,
 	block: Block,
 	name: string,
@@ -358,31 +346,23 @@ function getViewToModel(
 	};
 }
 
-function getBindingValue(
+function getValueFromDom(
 	generator: DomGenerator,
-	block: Block,
-	state: State,
 	node: Node,
-	attribute: Node,
-	isMultipleSelect: boolean,
-	isMediaElement: boolean,
-	bindingGroup: number,
-	type: string
+	binding: Node
 ) {
-	// <select multiple bind:value='selected>
-	if (isMultipleSelect) {
-		return `@selectMultipleValue(${node.var})`;
-		// return `[].map.call(${node.var}.querySelectorAll(':checked'), function(option) { return option.__value; })`;
-	}
-
 	// <select bind:value='selected>
 	if (node.name === 'select') {
-		// return 'selectedOption && selectedOption.__value';
-		return `@selectValue(${node.var})`;
+		return getStaticAttributeValue(node, 'multiple') === true ?
+			`@selectMultipleValue(${node.var})` :
+			`@selectValue(${node.var})`;
 	}
 
+	const type = getStaticAttributeValue(node, 'type');
+
 	// <input type='checkbox' bind:group='foo'>
-	if (attribute.name === 'group') {
+	if (binding.name === 'group') {
+		const bindingGroup = getBindingGroup(generator, binding.value);
 		if (type === 'checkbox') {
 			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
 		}
@@ -392,15 +372,15 @@ function getBindingValue(
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `@toNumber(${node.var}.${attribute.name})`;
+		return `@toNumber(${node.var}.${binding.name})`;
 	}
 
-	if (isMediaElement && (attribute.name === 'buffered' || attribute.name === 'seekable' || attribute.name === 'played')) {
-		return `@timeRangesToArray(${node.var}.${attribute.name})`
+	if ((binding.name === 'buffered' || binding.name === 'seekable' || binding.name === 'played')) {
+		return `@timeRangesToArray(${node.var}.${binding.name})`
 	}
 
 	// everything else
-	return `${node.var}.${attribute.name}`;
+	return `${node.var}.${binding.name}`;
 }
 
 function isComputed(node: Node) {
