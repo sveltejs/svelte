@@ -202,8 +202,8 @@ function create_main_fragment(state, component) {
 		},
 
 		h: function hydrate() {
-			input.type = "checkbox";
 			addListener(input, "change", input_change_handler);
+			input.type = "checkbox";
 		},
 
 		m: function mount(target, anchor) {
