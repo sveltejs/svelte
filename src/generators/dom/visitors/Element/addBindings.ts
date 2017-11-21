@@ -103,17 +103,7 @@ export default function addBindings(
 
 		// view to model
 		const valueFromDom = getValueFromDom(generator, node, binding);
-
-		const handler = getEventHandler(
-			generator,
-			block,
-			name,
-			snippet,
-			node,
-			binding,
-			dependencies,
-			valueFromDom
-		);
+		const handler = getEventHandler(generator, block, name, snippet, binding, dependencies, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(node, binding, snippet);
@@ -138,7 +128,7 @@ export default function addBindings(
 		}
 
 		if (binding.name === 'paused') {
-			// this is necessary to prevent the audio restarting by itself
+			// this is necessary to prevent audio restarting by itself
 			const last = block.getUniqueName(`${node.var}_is_paused`);
 			block.addVariable(last, 'true');
 
@@ -299,7 +289,6 @@ function getEventHandler(
 	block: Block,
 	name: string,
 	snippet: string,
-	node: Node,
 	attribute: Node,
 	dependencies: string[],
 	value: string,
