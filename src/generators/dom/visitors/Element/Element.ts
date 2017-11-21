@@ -4,9 +4,9 @@ import visitSlot from '../Slot';
 import visitComponent from '../Component';
 import visitWindow from './meta/Window';
 import visitAttribute from './Attribute';
-import visitEventHandler from './EventHandler';
-import visitBinding from './Binding';
-import visitRef from './Ref';
+import addBindings from './addBindings';
+import flattenReference from '../../../../utils/flattenReference';
+import validCalleeObjects from '../../../../utils/validCalleeObjects';
 import * as namespaces from '../../../../utils/namespaces';
 import getStaticAttributeValue from '../../../../utils/getStaticAttributeValue';
 import isVoidElementName from '../../../../utils/isVoidElementName';
@@ -18,22 +18,8 @@ import { State } from '../../interfaces';
 import reservedNames from '../../../../utils/reservedNames';
 import { stringify } from '../../../../utils/stringify';
 
-const meta = {
+const meta: Record<string, any> = {
 	':Window': visitWindow,
-};
-
-const order = {
-	Attribute: 1,
-	Binding: 2,
-	EventHandler: 3,
-	Ref: 4,
-};
-
-const visitors = {
-	Attribute: visitAttribute,
-	EventHandler: visitEventHandler,
-	Binding: visitBinding,
-	Ref: visitRef,
 };
 
 export default function visitElement(
@@ -69,8 +55,6 @@ export default function visitElement(
 		`${componentStack[componentStack.length - 1].var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 		state.parentNode;
 
-	const isToplevel = !parentNode;
-
 	block.addVariable(name);
 	block.builders.create.addLine(
 		`${name} = ${getRenderStatement(
@@ -93,6 +77,10 @@ export default function visitElement(
 		);
 	} else {
 		block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
+
+		// TODO we eventually need to consider what happens to elements
+		// that belong to the same outgroup as an outroing element...
+		block.builders.unmount.addLine(`@detachNode(${name});`);
 	}
 
 	// add CSS encapsulation attribute
@@ -109,87 +97,21 @@ export default function visitElement(
 		}
 	}
 
-	function visitAttributesAndAddProps() {
-		let intro;
-		let outro;
-
-		node.attributes
-			.sort((a: Node, b: Node) => order[a.type] - order[b.type])
-			.forEach((attribute: Node) => {
-				if (attribute.type === 'Transition') {
-					if (attribute.intro) intro = attribute;
-					if (attribute.outro) outro = attribute;
-					return;
-				}
-
-				visitors[attribute.type](generator, block, childState, node, attribute);
+	if (node.name === 'textarea') {
+		// this is an egregious hack, but it's the easiest way to get <textarea>
+		// children treated the same way as a value attribute
+		if (node.children.length > 0) {
+			node.attributes.push({
+				type: 'Attribute',
+				name: 'value',
+				value: node.children,
 			});
 
-		if (intro || outro)
-			addTransitions(generator, block, childState, node, intro, outro);
-
-		if (childState.allUsedContexts.length || childState.usesComponent) {
-			const initialProps: string[] = [];
-			const updates: string[] = [];
-
-			if (childState.usesComponent) {
-				initialProps.push(`component: #component`);
-			}
-
-			childState.allUsedContexts.forEach((contextName: string) => {
-				if (contextName === 'state') return;
-
-				const listName = block.listNames.get(contextName);
-				const indexName = block.indexNames.get(contextName);
-
-				initialProps.push(
-					`${listName}: ${listName},\n${indexName}: ${indexName}`
-				);
-				updates.push(
-					`${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};`
-				);
-			});
-
-			if (initialProps.length) {
-				block.builders.hydrate.addBlock(deindent`
-					${name}._svelte = {
-						${initialProps.join(',\n')}
-					};
-				`);
-			}
-
-			if (updates.length) {
-				block.builders.update.addBlock(updates.join('\n'));
-			}
+			node.children = [];
 		}
 	}
 
-	if (isToplevel) {
-		// TODO we eventually need to consider what happens to elements
-		// that belong to the same outgroup as an outroing element...
-		block.builders.unmount.addLine(`@detachNode(${name});`);
-	}
-
-	if (node.name !== 'select') {
-		if (node.name === 'textarea') {
-			// this is an egregious hack, but it's the easiest way to get <textarea>
-			// children treated the same way as a value attribute
-			if (node.children.length > 0) {
-				node.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: node.children,
-				});
-
-				node.children = [];
-			}
-		}
-
-		// <select> value attributes are an annoying special case — it must be handled
-		// *after* its children have been updated
-		visitAttributesAndAddProps();
-	}
-
+	// insert static children with textContent or innerHTML
 	if (!childState.namespace && node.canUseInnerHTML && node.children.length > 0) {
 		if (node.children.length === 1 && node.children[0].type === 'Text') {
 			block.builders.create.addLine(
@@ -206,8 +128,160 @@ export default function visitElement(
 		});
 	}
 
-	if (node.name === 'select') {
-		visitAttributesAndAddProps();
+	addBindings(generator, block, childState, node);
+
+	node.attributes.filter((a: Node) => a.type === 'Attribute').forEach((attribute: Node) => {
+		visitAttribute(generator, block, childState, node, attribute);
+	});
+
+	// event handlers
+	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((attribute: Node) => {
+		const isCustomEvent = generator.events.has(attribute.name);
+		const shouldHoist = !isCustomEvent && state.inEachBlock;
+
+		const context = shouldHoist ? null : name;
+		const usedContexts: string[] = [];
+
+		if (attribute.expression) {
+			generator.addSourcemapLocations(attribute.expression);
+
+			const flattened = flattenReference(attribute.expression.callee);
+			if (!validCalleeObjects.has(flattened.name)) {
+				// allow event.stopPropagation(), this.select() etc
+				// TODO verify that it's a valid callee (i.e. built-in or declared method)
+				generator.code.prependRight(
+					attribute.expression.start,
+					`${block.alias('component')}.`
+				);
+				if (shouldHoist) childState.usesComponent = true; // this feels a bit hacky but it works!
+			}
+
+			attribute.expression.arguments.forEach((arg: Node) => {
+				const { contexts } = block.contextualise(arg, context, true);
+
+				contexts.forEach(context => {
+					if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+					if (!~childState.allUsedContexts.indexOf(context))
+						childState.allUsedContexts.push(context);
+				});
+			});
+		}
+
+		const _this = context || 'this';
+		const declarations = usedContexts.map(name => {
+			if (name === 'state') {
+				if (shouldHoist) childState.usesComponent = true;
+				return `var state = ${block.alias('component')}.get();`;
+			}
+
+			const listName = block.listNames.get(name);
+			const indexName = block.indexNames.get(name);
+			const contextName = block.contexts.get(name);
+
+			return `var ${listName} = ${_this}._svelte.${listName}, ${indexName} = ${_this}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
+		});
+
+		// get a name for the event handler that is globally unique
+		// if hoisted, locally unique otherwise
+		const handlerName = (shouldHoist ? generator : block).getUniqueName(
+			`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+		);
+
+		// create the handler body
+		const handlerBody = deindent`
+			${childState.usesComponent &&
+				`var ${block.alias('component')} = ${_this}._svelte.component;`}
+			${declarations}
+			${attribute.expression ?
+				`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
+				`${block.alias('component')}.fire("${attribute.name}", event);`}
+		`;
+
+		if (isCustomEvent) {
+			block.addVariable(handlerName);
+
+			block.builders.hydrate.addBlock(deindent`
+				${handlerName} = %events-${attribute.name}.call(#component, ${name}, function(event) {
+					${handlerBody}
+				});
+			`);
+
+			block.builders.destroy.addLine(deindent`
+				${handlerName}.teardown();
+			`);
+		} else {
+			const handler = deindent`
+				function ${handlerName}(event) {
+					${handlerBody}
+				}
+			`;
+
+			if (shouldHoist) {
+				generator.blocks.push(handler);
+			} else {
+				block.builders.init.addBlock(handler);
+			}
+
+			block.builders.hydrate.addLine(
+				`@addListener(${name}, "${attribute.name}", ${handlerName});`
+			);
+
+			block.builders.destroy.addLine(
+				`@removeListener(${name}, "${attribute.name}", ${handlerName});`
+			);
+		}
+	});
+
+	// refs
+	node.attributes.filter((a: Node) => a.type === 'Ref').forEach((attribute: Node) => {
+		const ref = `#component.refs.${attribute.name}`;
+
+		block.builders.mount.addLine(
+			`${ref} = ${name};`
+		);
+
+		block.builders.destroy.addLine(
+			`if (${ref} === ${name}) ${ref} = null;`
+		);
+
+		generator.usesRefs = true; // so component.refs object is created
+	});
+
+	addTransitions(generator, block, childState, node);
+
+	if (childState.allUsedContexts.length || childState.usesComponent) {
+		const initialProps: string[] = [];
+		const updates: string[] = [];
+
+		if (childState.usesComponent) {
+			initialProps.push(`component: #component`);
+		}
+
+		childState.allUsedContexts.forEach((contextName: string) => {
+			if (contextName === 'state') return;
+
+			const listName = block.listNames.get(contextName);
+			const indexName = block.indexNames.get(contextName);
+
+			initialProps.push(
+				`${listName}: ${listName},\n${indexName}: ${indexName}`
+			);
+			updates.push(
+				`${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};`
+			);
+		});
+
+		if (initialProps.length) {
+			block.builders.hydrate.addBlock(deindent`
+				${name}._svelte = {
+					${initialProps.join(',\n')}
+				};
+			`);
+		}
+
+		if (updates.length) {
+			block.builders.update.addBlock(updates.join('\n'));
+		}
 	}
 
 	if (node.initialUpdate) {

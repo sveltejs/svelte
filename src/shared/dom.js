@@ -149,3 +149,32 @@ export function setInputType(input, type) {
 export function setStyle(node, key, value) {
 	node.style.setProperty(key, value);
 }
+
+export function selectOption(select, value) {
+	for (var i = 0; i < select.options.length; i += 1) {
+		var option = select.options[i];
+
+		if (option.__value === value) {
+			option.selected = true;
+			return;
+		}
+	}
+}
+
+export function selectOptions(select, value) {
+	for (var i = 0; i < select.options.length; i += 1) {
+		var option = select.options[i];
+		option.selected = ~value.indexOf(option.__value);
+	}
+}
+
+export function selectValue(select) {
+	var selectedOption = select.querySelector(':checked') || select.options[0];
+	return selectedOption && selectedOption.__value;
+}
+
+export function selectMultipleValue(select) {
+	return [].map.call(select.querySelectorAll(':checked'), function(option) {
+		return option.__value;
+	});
+}

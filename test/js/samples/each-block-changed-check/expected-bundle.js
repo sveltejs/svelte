@@ -294,8 +294,8 @@ function create_each_block(state, comments, comment, i, component) {
 		},
 
 		h: function hydrate() {
-			div.className = "comment";
 			span.className = "meta";
+			div.className = "comment";
 		},
 
 		m: function mount(target, anchor) {
