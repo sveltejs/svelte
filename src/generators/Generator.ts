@@ -1,5 +1,5 @@
 import MagicString, { Bundle } from 'magic-string';
-import { walk } from 'estree-walker';
+import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
@@ -69,6 +69,19 @@ function removeIndentation(
 		code.remove(start + match.index, start + match.index + indentationLevel.length);
 	}
 }
+
+// We need to tell estree-walker that it should always
+// look for an `else` block, otherwise it might get
+// the wrong idea about the shape of each/if blocks
+childKeys.EachBlock = [
+	'children',
+	'else'
+];
+
+childKeys.IfBlock = [
+	'children',
+	'else'
+];
 
 export default class Generator {
 	ast: Parsed;
@@ -693,7 +706,8 @@ export default class Generator {
 	walkTemplate() {
 		const {
 			expectedProperties,
-			helpers
+			helpers,
+			indirectDependencies
 		} = this;
 		const { html } = this.parsed;
 
@@ -732,6 +746,13 @@ export default class Generator {
 
 			dependencies.forEach(dependency => {
 				expectedProperties.add(dependency);
+
+				// TODO looks like this needs to happen in a subsequent pass?
+				if (indirectDependencies.has(dependency)) {
+					indirectDependencies.get(dependency).forEach(indirectDependency => {
+						dependencies.add(indirectDependency);
+					});
+				}
 			});
 
 			return Array.from(dependencies);
