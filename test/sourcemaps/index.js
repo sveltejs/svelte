@@ -34,9 +34,11 @@ describe("sourcemaps", () => {
 				cascade: config.cascade
 			});
 
+			const _code = code.replace(/Svelte v\d+\.\d+\.\d+/, match => match.replace(/\d/g, 'x'));
+
 			fs.writeFileSync(
 				`${outputFilename}.js`,
-				`${code}\n//# sourceMappingURL=output.js.map`
+				`${_code}\n//# sourceMappingURL=output.js.map`
 			);
 			fs.writeFileSync(
 				`${outputFilename}.js.map`,
@@ -62,12 +64,12 @@ describe("sourcemaps", () => {
 			const locateInSource = getLocator(input);
 
 			const smc = new SourceMapConsumer(map);
-			const locateInGenerated = getLocator(code);
+			const locateInGenerated = getLocator(_code);
 
 			const smcCss = cssMap && new SourceMapConsumer(cssMap);
 			const locateInGeneratedCss = getLocator(css || '');
 
-			test({ assert, code, map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });
+			test({ assert, code: _code, map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });
 		});
 	});
 });

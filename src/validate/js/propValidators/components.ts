@@ -1,5 +1,6 @@
 import checkForDupes from '../utils/checkForDupes';
 import checkForComputedKeys from '../utils/checkForComputedKeys';
+import getName from '../../../utils/getName';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
 
@@ -16,14 +17,16 @@ export default function components(validator: Validator, prop: Node) {
 	checkForComputedKeys(validator, prop.value.properties);
 
 	prop.value.properties.forEach((component: Node) => {
-		if (component.key.name === 'state') {
+		const name = getName(component.key);
+
+		if (name === 'state') {
 			validator.error(
 				`Component constructors cannot be called 'state' due to technical limitations`,
 				component.start
 			);
 		}
 
-		if (!/^[A-Z]/.test(component.key.name)) {
+		if (!/^[A-Z]/.test(name)) {
 			validator.warn(`Component names should be capitalised`, component.start);
 		}
 	});

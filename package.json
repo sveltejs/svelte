@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "1.41.3",
+  "version": "1.42.0",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
@@ -18,6 +18,7 @@
     "precodecov": "npm run coverage",
     "lint": "eslint src test/*.js",
     "build": "node src/shared/_build.js && rollup -c",
+    "prepare": "npm run build",
     "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
     "prepublishOnly": "npm run lint && npm test",

@@ -69,6 +69,19 @@ const preprocessors = {
 			if (slot && isChildOfComponent(node, generator)) {
 				node.slotted = true;
 			}
+
+			// Treat these the same way:
+			//   <option>{{foo}}</option>
+			//   <option value='{{foo}}'>{{foo}}</option>
+			const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
+
+			if (node.name === 'option' && !valueAttribute) {
+				node.attributes.push({
+					type: 'Attribute',
+					name: 'value',
+					value: node.children
+				});
+			}
 		}
 
 		if (node.children.length) {

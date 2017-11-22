@@ -8,10 +8,13 @@ export default function addTransitions(
 	generator: DomGenerator,
 	block: Block,
 	state: State,
-	node: Node,
-	intro,
-	outro
+	node: Node
 ) {
+	const intro = node.attributes.find((a: Node) => a.type === 'Transition' && a.intro);
+	const outro = node.attributes.find((a: Node) => a.type === 'Transition' && a.outro);
+
+	if (!intro && !outro) return;
+
 	if (intro === outro) {
 		const name = block.getUniqueName(`${node.var}_transition`);
 		const snippet = intro.expression

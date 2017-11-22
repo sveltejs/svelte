@@ -153,9 +153,12 @@ function _set(newState) {
 	this._state = assign({}, oldState, newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
-	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.p(changed, this._state);
-	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+
+	if (this._fragment) {
+		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this._fragment.p(changed, this._state);
+		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+	}
 }
 
 function callAll(fns) {
@@ -199,8 +202,8 @@ function create_main_fragment(state, component) {
 		},
 
 		h: function hydrate() {
-			input.type = "checkbox";
 			addListener(input, "change", input_change_handler);
+			input.type = "checkbox";
 		},
 
 		m: function mount(target, anchor) {
