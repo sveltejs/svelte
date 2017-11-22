@@ -411,7 +411,6 @@ const preprocessors = {
 			);
 
 			node._state = getChildState(state, {
-				isTopLevel: false,
 				parentNode: node.var,
 				parentNodes: block.getUniqueName(`${node.var}_nodes`),
 				parentNodeName: node.name,
