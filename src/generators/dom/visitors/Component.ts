@@ -182,7 +182,7 @@ export default function visitComponent(
 			`);
 
 			beforecreate = deindent`
-				#component._root._beforecreate.push(function () {
+				#component._root._beforecreate.push(function() {
 					var state = #component.get(), childState = ${name}.get(), newState = {};
 					if (!childState) return;
 					${setParentFromChildOnInit}
@@ -199,7 +199,7 @@ export default function visitComponent(
 			block.builders.update.addBlock(deindent`
 				var ${name}_changes = {};
 				${updates.join('\n')}
-				${name}._set( ${name}_changes );
+				${name}._set(${name}_changes);
 				${bindings.length && `${name_updating} = {};`}
 			`);
 		}
@@ -219,7 +219,7 @@ export default function visitComponent(
 	block.builders.create.addLine(`${name}._fragment.c();`);
 
 	block.builders.claim.addLine(
-		`${name}._fragment.l( ${state.parentNodes} );`
+		`${name}._fragment.l(${state.parentNodes});`
 	);
 
 	block.builders.mount.addLine(
