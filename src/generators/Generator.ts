@@ -6,7 +6,6 @@ import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
 import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
-import globalWhitelist from '../utils/globalWhitelist';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
@@ -267,16 +266,7 @@ export default class Generator {
 							}
 						}
 
-						if (globalWhitelist.has(name)) {
-							code.prependRight(node.start, `('${name}' in state ? state.`);
-							code.appendLeft(
-								node.object ? node.object.end : node.end,
-								` : ${name})`
-							);
-						} else {
-							code.prependRight(node.start, `state.`);
-						}
-
+						code.prependRight(node.start, `state.`);
 						usedContexts.add('state');
 					}
 
@@ -349,9 +339,7 @@ export default class Generator {
 		});
 
 		dependencies.forEach(name => {
-			if (!globalWhitelist.has(name)) {
-				this.expectedProperties.add(name);
-			}
+			this.expectedProperties.add(name);
 		});
 
 		return (expression._dependencies = dependencies);

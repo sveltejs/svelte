@@ -28,7 +28,7 @@ export default {
 			},
 			third: {
 				description: "Find life's true purpose",
-				done: true,
+				done: false,
 			},
 		},
 	},
