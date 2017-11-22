@@ -74,7 +74,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('text');
-		block.addDependencies(node.dependencies);
+		block.addDependencies(node.metadata.dependencies);
 	},
 
 	RawMustacheTag: (
@@ -88,7 +88,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('raw');
-		block.addDependencies(node.dependencies);
+		block.addDependencies(node.metadata.dependencies);
 	},
 
 	Text: (
@@ -129,7 +129,7 @@ const preprocessors = {
 		function attachBlocks(node: Node) {
 			node.var = block.getUniqueName(`if_block`);
 
-			block.addDependencies(node.dependencies);
+			block.addDependencies(node.metadata.dependencies);
 
 			node._block = block.child({
 				comment: createDebuggingComment(node, generator),
@@ -204,7 +204,7 @@ const preprocessors = {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
 
-		const { dependencies } = node;
+		const { dependencies } = node.metadata;
 		block.addDependencies(dependencies);
 
 		const indexNames = new Map(block.indexNames);
@@ -314,7 +314,7 @@ const preprocessors = {
 					if (chunk.type !== 'Text') {
 						if (node.parent) cannotUseInnerHTML(node.parent);
 
-						const dependencies = chunk.dependencies;
+						const dependencies = chunk.metadata.dependencies;
 						block.addDependencies(dependencies);
 
 						// special case — <option value='{{foo}}'> — see below
@@ -336,10 +336,10 @@ const preprocessors = {
 
 				if (attribute.type === 'EventHandler' && attribute.expression) {
 					attribute.expression.arguments.forEach((arg: Node) => {
-						block.addDependencies(arg.dependencies);
+						block.addDependencies(arg.metadata.dependencies);
 					});
 				} else if (attribute.type === 'Binding') {
-					block.addDependencies(attribute.dependencies);
+					block.addDependencies(attribute.metadata.dependencies);
 				} else if (attribute.type === 'Transition') {
 					if (attribute.intro)
 						generator.hasIntroTransitions = block.hasIntroMethod = true;
@@ -378,7 +378,7 @@ const preprocessors = {
 			const binding = node.attributes.find((node: Node) => node.type === 'Binding' && node.name === 'value');
 			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = binding.dependencies;
+				const dependencies = binding.metadata.dependencies;
 				state.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					generator.indirectDependencies.set(prop, new Set());

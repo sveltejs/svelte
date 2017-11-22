@@ -39,7 +39,7 @@ export default function visitWindow(
 
 			attribute.expression.arguments.forEach((arg: Node) => {
 				block.contextualise(arg, null, true);
-				const { dependencies } = arg;
+				const { dependencies } = arg.metadata;
 				if (dependencies.length) usesState = true;
 			});
 

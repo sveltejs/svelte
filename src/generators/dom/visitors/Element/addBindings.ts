@@ -101,8 +101,8 @@ export default function addBindings(
 		// we need to tell the component to update all the values `selected` might be
 		// pointing to
 		// TODO should this happen in preprocess?
-		const dependencies = binding.dependencies.slice();
-		binding.dependencies.forEach((prop: string) => {
+		const dependencies = binding.metadata.dependencies.slice();
+		binding.metadata.dependencies.forEach((prop: string) => {
 			const indirectDependencies = generator.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {

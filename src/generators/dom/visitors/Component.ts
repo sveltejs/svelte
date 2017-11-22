@@ -353,7 +353,7 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 
 		// simple dynamic attributes
 		const { snippet } = block.contextualise(value.expression);
-		const dependencies = value.dependencies;
+		const dependencies = value.metadata.dependencies;
 
 		// TODO only update attributes that have changed
 		return {
@@ -377,7 +377,7 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 					const { snippet } = block.contextualise(
 						chunk.expression
 					);
-					const dependencies = chunk.dependencies;
+					const dependencies = chunk.metadata.dependencies;
 
 					dependencies.forEach(dependency => {
 						allDependencies.add(dependency);
@@ -401,7 +401,7 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	const { snippet, contexts } = block.contextualise(
 		binding.value
 	);
-	const dependencies = binding.dependencies;
+	const dependencies = binding.metadata.dependencies;
 
 	const contextual = block.contexts.has(name);
 

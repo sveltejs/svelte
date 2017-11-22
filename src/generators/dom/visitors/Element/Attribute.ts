@@ -73,7 +73,7 @@ export default function visitAttribute(
 			// single {{tag}} — may be a non-string
 			const { expression } = attribute.value[0];
 			const { snippet, indexes } = block.contextualise(expression);
-			const dependencies = attribute.value[0].dependencies;
+			const dependencies = attribute.value[0].metadata.dependencies;
 
 			value = snippet;
 			dependencies.forEach(d => {
@@ -97,7 +97,7 @@ export default function visitAttribute(
 							return stringify(chunk.data);
 						} else {
 							const { snippet, indexes } = block.contextualise(chunk.expression);
-							const dependencies = chunk.dependencies;
+							const dependencies = chunk.metadata.dependencies;
 
 							if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
 								hasChangeableIndex = true;

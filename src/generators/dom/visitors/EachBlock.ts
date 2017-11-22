@@ -402,7 +402,7 @@ function unkeyed(
 		}
 	`);
 
-	const dependencies = node.dependencies;
+	const dependencies = node.metadata.dependencies;
 	const allDependencies = new Set(node._block.dependencies);
 	dependencies.forEach((dependency: string) => {
 		allDependencies.add(dependency);
