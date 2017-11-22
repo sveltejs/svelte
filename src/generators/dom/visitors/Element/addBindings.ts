@@ -95,7 +95,18 @@ export default function addBindings(
 		const { snippet, contexts } = block.contextualise(
 			binding.value
 		);
-		const dependencies = binding.dependencies;
+
+		// TODO tidy up
+		let dependencies = new Set(binding.dependencies);
+		binding.dependencies.forEach(prop => {
+			const indirectDependencies = generator.indirectDependencies.get(prop);
+			if (indirectDependencies) {
+				indirectDependencies.forEach(indirectDependency => {
+					dependencies.add(indirectDependency);
+				});
+			}
+		});
+		dependencies = Array.from(dependencies);
 
 		contexts.forEach(context => {
 			if (!~state.allUsedContexts.indexOf(context))

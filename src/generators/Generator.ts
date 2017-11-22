@@ -669,7 +669,7 @@ export default class Generator {
 		function findDependencies(node: Node, contextDependencies: Map<string, string[]>, indexes: Set<string>) {
 			const dependencies: Set<string> = new Set();
 
-			let scope = annotateWithScopes(html);
+			let scope = annotateWithScopes(node);
 
 			walk(node, {
 				enter(node: Node, parent: Node) {
