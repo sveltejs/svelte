@@ -92,9 +92,8 @@ export default function addBindings(
 		let updateCondition: string;
 
 		const { name } = getObject(binding.value);
-		const { snippet, contexts } = block.contextualise(
-			binding.value
-		);
+		const { contexts } = block.contextualise(binding.value);
+		const { snippet } = binding.metadata;
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,

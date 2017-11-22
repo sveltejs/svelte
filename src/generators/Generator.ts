@@ -214,8 +214,7 @@ export default class Generator {
 		isEventHandler: boolean
 	): {
 		contexts: Set<string>,
-		indexes: Set<string>,
-		snippet: string
+		indexes: Set<string>
 	} {
 		// this.addSourcemapLocations(expression);
 
@@ -299,8 +298,7 @@ export default class Generator {
 
 		return {
 			contexts: usedContexts,
-			indexes: usedIndexes,
-			snippet: `[✂${expression.start}-${expression.end}✂]`,
+			indexes: usedIndexes
 		};
 	}
 
@@ -694,6 +692,7 @@ export default class Generator {
 			});
 
 			return {
+				snippet: `[✂${node.start}-${node.end}✂]`,
 				dependencies: Array.from(dependencies)
 			};
 		}
@@ -721,7 +720,6 @@ export default class Generator {
 							const name = node.destructuredContexts[i];
 							const value = `${node.context}[${i}]`;
 
-							// contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
 							contextDependencies.set(name, node.metadata.dependencies);
 						}
 					}

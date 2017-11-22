@@ -12,8 +12,8 @@ export default function visitTag(
 	name: string,
 	update: (value: string) => string
 ) {
-	const { indexes, snippet } = block.contextualise(node.expression);
-	const dependencies = node.metadata.dependencies;
+	const { indexes } = block.contextualise(node.expression);
+	const { dependencies, snippet } = node.metadata;
 
 	const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
 

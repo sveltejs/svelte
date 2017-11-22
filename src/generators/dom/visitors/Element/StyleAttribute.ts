@@ -36,8 +36,8 @@ export default function visitStyleAttribute(
 						if (chunk.type === 'Text') {
 							return stringify(chunk.data);
 						} else {
-							const { snippet, indexes } = block.contextualise(chunk.expression);
-							const dependencies = chunk.metadata.dependencies;
+							const { indexes } = block.contextualise(chunk.expression);
+							const { dependencies, snippet } = chunk.metadata;
 
 							if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
 								hasChangeableIndex = true;

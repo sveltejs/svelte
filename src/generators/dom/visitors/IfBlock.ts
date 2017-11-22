@@ -24,9 +24,11 @@ function getBranches(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
+	block.contextualise(node.expression); // TODO remove
+
 	const branches = [
 		{
-			condition: block.contextualise(node.expression).snippet,
+			condition: node.metadata.snippet,
 			block: node._block.name,
 			hasUpdateMethod: node._block.hasUpdateMethod,
 			hasIntroMethod: node._block.hasIntroMethod,

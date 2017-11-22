@@ -352,8 +352,8 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 		}
 
 		// simple dynamic attributes
-		const { snippet } = block.contextualise(value.expression);
-		const dependencies = value.metadata.dependencies;
+		block.contextualise(value.expression); // TODO remove
+		const { dependencies, snippet } = value.metadata;
 
 		// TODO only update attributes that have changed
 		return {
@@ -374,16 +374,14 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 				if (chunk.type === 'Text') {
 					return stringify(chunk.data);
 				} else {
-					const { snippet } = block.contextualise(
-						chunk.expression
-					);
-					const dependencies = chunk.metadata.dependencies;
+					block.contextualise(chunk.expression); // TODO remove
+					const { dependencies, snippet } = chunk.metadata;
 
-					dependencies.forEach(dependency => {
+					dependencies.forEach((dependency: string) => {
 						allDependencies.add(dependency);
 					});
 
-					return getExpressionPrecedence(chunk.expression) <= 13 ? `( ${snippet} )` : snippet;
+					return getExpressionPrecedence(chunk.expression) <= 13 ? `(${snippet})` : snippet;
 				}
 			})
 			.join(' + ');
@@ -398,10 +396,8 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 
 function mungeBinding(binding: Node, block: Block): Binding {
 	const { name } = getObject(binding.value);
-	const { snippet, contexts } = block.contextualise(
-		binding.value
-	);
-	const dependencies = binding.metadata.dependencies;
+	const { contexts } = block.contextualise(binding.value);
+	const { dependencies, snippet } = binding.metadata;
 
 	const contextual = block.contexts.has(name);
 
