@@ -10,7 +10,7 @@ import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
 import wrapModule from './shared/utils/wrapModule';
-import annotateWithScopes from '../utils/annotateWithScopes';
+import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
@@ -155,7 +155,12 @@ export default class Generator {
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
-		this.parseJs(dom);
+		this.computations = [];
+		this.templateProperties = {};
+
+		this.walkJs(dom);
+		this.walkTemplate();
+
 		this.name = this.alias(name);
 
 		if (options.customElement === true) {
@@ -208,7 +213,7 @@ export default class Generator {
 		const { code, helpers } = this;
 		const { contexts, indexes } = block;
 
-		let scope = annotateWithScopes(expression); // TODO this already happens in findDependencies
+		let scope: Scope;
 		let lexicalDepth = 0;
 
 		const self = this;
@@ -230,7 +235,7 @@ export default class Generator {
 						});
 				} else if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
-					if (scope.has(name)) return;
+					if (scope && scope.has(name)) return;
 
 					if (name === 'event' && isEventHandler) {
 						// noop
@@ -307,10 +312,10 @@ export default class Generator {
 	) {
 		if (expression._dependencies) return expression._dependencies;
 
-		let scope = annotateWithScopes(expression);
+		let scope: Scope;
 		const dependencies: string[] = [];
 
-		const generator = this; // can't use arrow functions, because of this.skip()
+		const { helpers } = this; // can't use arrow functions, because of this.skip()
 
 		walk(expression, {
 			enter(node: Node, parent: Node) {
@@ -321,7 +326,7 @@ export default class Generator {
 
 				if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
-					if (scope.has(name) || generator.helpers.has(name)) return;
+					if (scope && scope.has(name) || helpers.has(name)) return;
 
 					if (contextDependencies.has(name)) {
 						dependencies.push(...contextDependencies.get(name));
@@ -442,16 +447,18 @@ export default class Generator {
 		};
 	}
 
-	parseJs(dom: boolean) {
-		const { code, source } = this;
+	walkJs(dom: boolean) {
+		const {
+			code,
+			source,
+			computations,
+			templateProperties,
+			imports
+		} = this;
+
 		const { js } = this.parsed;
 
-		const imports = this.imports;
-		const computations: Computation[] = [];
-		const templateProperties: Record<string, Node> = {};
 		const componentDefinition = new CodeBuilder();
-
-		let namespace = null;
 
 		if (js) {
 			this.addSourcemapLocations(js.content);
@@ -625,7 +632,7 @@ export default class Generator {
 
 				if (templateProperties.namespace) {
 					const ns = templateProperties.namespace.value.value;
-					namespace = namespaces[ns] || ns;
+					this.namespace = namespaces[ns] || ns;
 				}
 
 				if (templateProperties.onrender) templateProperties.oncreate = templateProperties.onrender; // remove after v2
@@ -681,9 +688,122 @@ export default class Generator {
 				this.javascript = a === b ? null : `[✂${a}-${b}✂]`;
 			}
 		}
+	}
 
-		this.computations = computations;
-		this.namespace = namespace;
-		this.templateProperties = templateProperties;
+	walkTemplate() {
+		const {
+			expectedProperties,
+			helpers
+		} = this;
+		const { html } = this.parsed;
+
+		function findDependencies(node: Node, contextDependencies: Map<string, string[]>, indexes: Set<string>) {
+			const dependencies: Set<string> = new Set();
+
+			let scope = annotateWithScopes(html);
+
+			walk(node, {
+				enter(node: Node, parent: Node) {
+					if (node._scope) {
+						scope = node._scope;
+						return;
+					}
+
+					if (isReference(node, parent)) {
+						const { name } = flattenReference(node);
+						if (scope && scope.has(name) || helpers.has(name)) return;
+
+						if (contextDependencies.has(name)) {
+							contextDependencies.get(name).forEach(dependency => {
+								dependencies.add(dependency);
+							});
+						} else if (!indexes.has(name)) {
+							dependencies.add(name);
+						}
+
+						this.skip();
+					}
+				},
+
+				leave(node: Node, parent: Node) {
+					if (node._scope) scope = scope.parent;
+				}
+			});
+
+			dependencies.forEach(dependency => {
+				expectedProperties.add(dependency);
+			});
+
+			return Array.from(dependencies);
+		}
+
+		const contextStack = [];
+		const indexStack = [];
+		const dependenciesStack = [];
+
+		let contextDependencies = new Map();
+		const contextDependenciesStack: Map<string, string[]>[] = [contextDependencies];
+
+		let indexes = new Set();
+		const indexesStack: Set<string>[] = [indexes];
+
+		walk(html, {
+			enter(node: Node, parent: Node) {
+				if (node.type === 'EachBlock') {
+					node.dependencies = findDependencies(node.expression, contextDependencies, indexes);
+
+					contextDependencies = new Map(contextDependencies);
+					contextDependencies.set(node.context, node.dependencies);
+
+					// if (node.destructuredContexts) {
+					// 	for (let i = 0; i < node.destructuredContexts.length; i += 1) {
+					// 		contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
+					// 		contextDependencies.set(node.destructuredContexts[i], dependencies);
+					// 	}
+					// }
+
+					contextDependenciesStack.push(contextDependencies);
+
+					if (node.index) {
+						indexes = new Set(indexes);
+						indexes.add(node.index);
+						indexesStack.push(indexes);
+					}
+				}
+
+				if (node.type === 'IfBlock') {
+					node.dependencies = findDependencies(node.expression, contextDependencies, indexes);
+				}
+
+				if (node.type === 'MustacheTag' || node.type === 'RawMustacheTag' || node.type === 'AttributeShorthand') {
+					node.dependencies = findDependencies(node.expression, contextDependencies, indexes);
+					this.skip();
+				}
+
+				if (node.type === 'Binding') {
+					node.dependencies = findDependencies(node.value, contextDependencies, indexes);
+					this.skip();
+				}
+
+				if (node.type === 'EventHandler' && node.expression) {
+					node.expression.arguments.forEach((arg: Node) => {
+						arg.dependencies = findDependencies(arg, contextDependencies, indexes);
+					});
+					this.skip();
+				}
+			},
+
+			leave(node: Node, parent: Node) {
+				if (node.type === 'EachBlock') {
+					contextDependenciesStack.pop();
+					contextDependencies = contextDependenciesStack[contextDependenciesStack.length - 1];
+
+					if (node.index) {
+						indexesStack.pop();
+						indexes = indexesStack[indexesStack.length - 1];
+					}
+				}
+			}
+		});
 	}
 }

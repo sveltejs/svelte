@@ -92,9 +92,10 @@ export default function addBindings(
 		let updateCondition: string;
 
 		const { name } = getObject(binding.value);
-		const { snippet, contexts, dependencies } = block.contextualise(
+		const { snippet, contexts } = block.contextualise(
 			binding.value
 		);
+		const dependencies = binding.dependencies;
 
 		contexts.forEach(context => {
 			if (!~state.allUsedContexts.indexOf(context))

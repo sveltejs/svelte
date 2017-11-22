@@ -74,9 +74,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('text');
-
-		const dependencies = block.findDependencies(node.expression);
-		block.addDependencies(dependencies);
+		block.addDependencies(node.dependencies);
 	},
 
 	RawMustacheTag: (
@@ -90,9 +88,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('raw');
-
-		const dependencies = block.findDependencies(node.expression);
-		block.addDependencies(dependencies);
+		block.addDependencies(node.dependencies);
 	},
 
 	Text: (
@@ -133,8 +129,7 @@ const preprocessors = {
 		function attachBlocks(node: Node) {
 			node.var = block.getUniqueName(`if_block`);
 
-			const dependencies = block.findDependencies(node.expression);
-			block.addDependencies(dependencies);
+			block.addDependencies(node.dependencies);
 
 			node._block = block.child({
 				comment: createDebuggingComment(node, generator),
@@ -209,7 +204,7 @@ const preprocessors = {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
 
-		const dependencies = block.findDependencies(node.expression);
+		const { dependencies } = node;
 		block.addDependencies(dependencies);
 
 		const indexNames = new Map(block.indexNames);
@@ -319,7 +314,7 @@ const preprocessors = {
 					if (chunk.type !== 'Text') {
 						if (node.parent) cannotUseInnerHTML(node.parent);
 
-						const dependencies = block.findDependencies(chunk.expression);
+						const dependencies = chunk.dependencies;
 						block.addDependencies(dependencies);
 
 						// special case — <option value='{{foo}}'> — see below
@@ -341,12 +336,10 @@ const preprocessors = {
 
 				if (attribute.type === 'EventHandler' && attribute.expression) {
 					attribute.expression.arguments.forEach((arg: Node) => {
-						const dependencies = block.findDependencies(arg);
-						block.addDependencies(dependencies);
+						block.addDependencies(arg.dependencies);
 					});
 				} else if (attribute.type === 'Binding') {
-					const dependencies = block.findDependencies(attribute.value);
-					block.addDependencies(dependencies);
+					block.addDependencies(attribute.dependencies);
 				} else if (attribute.type === 'Transition') {
 					if (attribute.intro)
 						generator.hasIntroTransitions = block.hasIntroMethod = true;
@@ -384,7 +377,8 @@ const preprocessors = {
 		if (node.name === 'select') {
 			if (valueAttribute) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = block.findDependencies(valueAttribute.value);
+				const dependencies = valueAttribute.dependencies;
+				console.log({ dependencies });
 				state.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					generator.indirectDependencies.set(prop, new Set());

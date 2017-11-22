@@ -176,14 +176,6 @@ export default class Block {
 		);
 	}
 
-	findDependencies(expression: Node) {
-		return this.generator.findDependencies(
-			this.contextDependencies,
-			this.indexes,
-			expression
-		);
-	}
-
 	mount(name: string, parentNode: string) {
 		if (parentNode) {
 			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
