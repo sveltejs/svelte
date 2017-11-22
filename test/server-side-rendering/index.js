@@ -21,7 +21,9 @@ function tryToReadFile(file) {
 
 describe("ssr", () => {
 	before(() => {
-		require("../../ssr/register");
+		require("../../ssr/register")({
+			extensions: ['.svelte', '.html']
+		});
 
 		return setupHtmlEqual();
 	});
@@ -41,7 +43,15 @@ describe("ssr", () => {
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/server-side-rendering/samples", dir);
 			try {
-				const component = require(`${dir}/main.html`);
+				let component;
+
+				const mainHtmlFile = `${dir}/main.html`;
+				const mainSvelteFile = `${dir}/main.svelte`;
+				if (fs.existsSync(mainHtmlFile)) {
+					component = require(mainHtmlFile);
+				} else if (fs.existsSync(mainSvelteFile)) {
+					component = require(mainSvelteFile);
+				}
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
 				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
