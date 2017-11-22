@@ -375,10 +375,10 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			if (valueAttribute) {
+			const binding = node.attributes.find((node: Node) => node.type === 'Binding' && node.name === 'value');
+			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = valueAttribute.dependencies;
-				console.log({ dependencies });
+				const dependencies = binding.dependencies;
 				state.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					generator.indirectDependencies.set(prop, new Set());

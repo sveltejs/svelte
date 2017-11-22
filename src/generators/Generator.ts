@@ -776,12 +776,15 @@ export default class Generator {
 					contextDependencies = new Map(contextDependencies);
 					contextDependencies.set(node.context, node.dependencies);
 
-					// if (node.destructuredContexts) {
-					// 	for (let i = 0; i < node.destructuredContexts.length; i += 1) {
-					// 		contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
-					// 		contextDependencies.set(node.destructuredContexts[i], dependencies);
-					// 	}
-					// }
+					if (node.destructuredContexts) {
+						for (let i = 0; i < node.destructuredContexts.length; i += 1) {
+							const name = node.destructuredContexts[i];
+							const value = `${node.context}[${i}]`;
+
+							// contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
+							contextDependencies.set(name, node.dependencies);
+						}
+					}
 
 					contextDependenciesStack.push(contextDependencies);
 
