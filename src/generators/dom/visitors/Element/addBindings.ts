@@ -96,17 +96,20 @@ export default function addBindings(
 			binding.value
 		);
 
-		// TODO tidy up
-		let dependencies = new Set(binding.dependencies);
-		binding.dependencies.forEach(prop => {
+		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
+		// and `selected` is an object chosen with a <select>, then when `checked` changes,
+		// we need to tell the component to update all the values `selected` might be
+		// pointing to
+		// TODO should this happen in preprocess?
+		const dependencies = binding.dependencies.slice();
+		binding.dependencies.forEach((prop: string) => {
 			const indirectDependencies = generator.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
-					dependencies.add(indirectDependency);
+					if (!~dependencies.indexOf(indirectDependency)) dependencies.push(indirectDependency);
 				});
 			}
 		});
-		dependencies = Array.from(dependencies);
 
 		contexts.forEach(context => {
 			if (!~state.allUsedContexts.indexOf(context))

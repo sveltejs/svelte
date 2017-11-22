@@ -300,16 +300,6 @@ export default class Generator {
 
 		const dependencies: Set<string> = new Set(expression._dependencies || []);
 
-		if (expression._dependencies) {
-			expression._dependencies.forEach((prop: string) => {
-				if (this.indirectDependencies.has(prop)) {
-					this.indirectDependencies.get(prop).forEach(dependency => {
-						dependencies.add(dependency);
-					});
-				}
-			});
-		}
-
 		return {
 			dependencies: Array.from(dependencies),
 			contexts: usedContexts,
@@ -661,8 +651,7 @@ export default class Generator {
 	walkTemplate() {
 		const {
 			expectedProperties,
-			helpers,
-			indirectDependencies
+			helpers
 		} = this;
 		const { html } = this.parsed;
 
@@ -701,13 +690,6 @@ export default class Generator {
 
 			dependencies.forEach(dependency => {
 				expectedProperties.add(dependency);
-
-				// TODO looks like this needs to happen in a subsequent pass?
-				if (indirectDependencies.has(dependency)) {
-					indirectDependencies.get(dependency).forEach(indirectDependency => {
-						dependencies.add(indirectDependency);
-					});
-				}
 			});
 
 			return Array.from(dependencies);
