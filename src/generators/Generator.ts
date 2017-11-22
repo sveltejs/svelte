@@ -318,51 +318,6 @@ export default class Generator {
 		};
 	}
 
-	findDependencies(
-		contextDependencies: Map<string, string[]>,
-		indexes: Map<string, string>,
-		expression: Node
-	) {
-		if (expression._dependencies) return expression._dependencies;
-
-		let scope: Scope;
-		const dependencies: string[] = [];
-
-		const { helpers } = this; // can't use arrow functions, because of this.skip()
-
-		walk(expression, {
-			enter(node: Node, parent: Node) {
-				if (node._scope) {
-					scope = node._scope;
-					return;
-				}
-
-				if (isReference(node, parent)) {
-					const { name } = flattenReference(node);
-					if (scope && scope.has(name) || helpers.has(name)) return;
-
-					if (contextDependencies.has(name)) {
-						dependencies.push(...contextDependencies.get(name));
-					} else if (!indexes.has(name)) {
-						dependencies.push(name);
-					}
-
-					this.skip();
-				}
-			},
-
-			leave(node: Node) {
-				if (node._scope) scope = scope.parent;
-			},
-		});
-
-		dependencies.forEach(name => {
-			this.expectedProperties.add(name);
-		});
-
-		return (expression._dependencies = dependencies);
-	}
-
 	generate(result: string, options: CompileOptions, { banner = '', sharedPath, helpers, name, format }: GenerateOptions ) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
