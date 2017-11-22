@@ -12,6 +12,7 @@ const validBindings = [
 	'outerHeight',
 	'scrollX',
 	'scrollY',
+	'online'
 ];
 
 export default function validateWindow(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {
