@@ -11,7 +11,7 @@ export function loadSvelte(test) {
 	if (test) global.__svelte_test = true;
 
 	const resolved = process.env.COVERAGE
-		? require.resolve('../src/index.js')
+		? require.resolve('../src/index.ts')
 		: require.resolve('../compiler/svelte.js');
 
 	delete require.cache[resolved];

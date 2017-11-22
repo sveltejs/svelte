@@ -1,4 +1,4 @@
---require babel-register
+--require ts-node/register
 --recursive
-./**/__test__.js
-test/*/index.js
+./**/__test__.ts
+test/test.js
