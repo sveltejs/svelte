@@ -230,13 +230,9 @@ const preprocessors = {
 		const changeableIndexes = new Map(block.changeableIndexes);
 		if (node.index) changeableIndexes.set(node.index, node.key);
 
-		const contextDependencies = new Map(block.contextDependencies);
-		contextDependencies.set(node.context, dependencies);
-
 		if (node.destructuredContexts) {
-			for (const i = 0; i < node.destructuredContexts.length; i++) {
+			for (let i = 0; i < node.destructuredContexts.length; i += 1) {
 				contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
-				contextDependencies.set(node.destructuredContexts[i], dependencies);
 			}
 		}
 
@@ -247,7 +243,6 @@ const preprocessors = {
 			context: node.context,
 			key: node.key,
 
-			contextDependencies,
 			contexts,
 			indexes,
 			changeableIndexes,
@@ -524,7 +519,6 @@ export default function preprocess(
 		contexts: new Map(),
 		indexes: new Map(),
 		changeableIndexes: new Map(),
-		contextDependencies: new Map(),
 
 		params: ['state'],
 		indexNames: new Map(),
