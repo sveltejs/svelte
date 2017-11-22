@@ -239,7 +239,6 @@ const preprocessors = {
 		node._block = block.child({
 			comment: createDebuggingComment(node, generator),
 			name: generator.getUniqueName('create_each_block'),
-			expression: node.expression,
 			context: node.context,
 			key: node.key,
 
