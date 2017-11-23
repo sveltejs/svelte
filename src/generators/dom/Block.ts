@@ -202,7 +202,7 @@ export default class Block {
 		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
-		this.builders.unmount.addBlockAtStart(this.builders.detachRaw);
+		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
 
 		const properties = new CodeBuilder();
 

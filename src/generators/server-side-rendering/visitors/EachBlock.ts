@@ -26,7 +26,7 @@ export default function visitEachBlock(
 	contextDependencies.set(node.context, dependencies);
 
 	if (node.destructuredContexts) {
-		for (const i = 0; i < node.destructuredContexts.length; i++) {
+		for (let i = 0; i < node.destructuredContexts.length; i += 1) {
 			contexts.set(node.destructuredContexts[i], `${node.context}[${i}]`);
 			contextDependencies.set(node.destructuredContexts[i], dependencies);
 		}
