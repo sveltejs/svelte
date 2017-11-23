@@ -1,0 +1,8 @@
+[{
+	"message": "'type' attribute must be specified",
+	"loc": {
+		"line": 1,
+		"column": 24
+	},
+	"pos": 24
+}]
