@@ -21,7 +21,7 @@ export default function visitEachBlock(
 	const iterations = block.getUniqueName(`${each}_blocks`);
 	const params = block.params.join(', ');
 
-	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode;
+	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode || !isDomNode(node.parent, generator);
 	const anchor = needsAnchor
 		? block.getUniqueName(`${each}_anchor`)
 		: (node.next && node.next.var) || 'null';
@@ -219,7 +219,7 @@ function keyed(
 	`);
 
 	const dynamic = node._block.hasUpdateMethod;
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
 
 	let destroy;
 	if (node._block.hasOutroMethod) {
@@ -414,7 +414,7 @@ function unkeyed(
 		.map(dependency => `changed.${dependency}`)
 		.join(' || ');
 
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
 
 	if (condition !== '') {
 		const forLoopBody = node._block.hasUpdateMethod
