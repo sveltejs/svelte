@@ -92,9 +92,23 @@ export default function addBindings(
 		let updateCondition: string;
 
 		const { name } = getObject(binding.value);
-		const { snippet, contexts, dependencies } = block.contextualise(
-			binding.value
-		);
+		const { contexts } = block.contextualise(binding.value);
+		const { snippet } = binding.metadata;
+
+		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
+		// and `selected` is an object chosen with a <select>, then when `checked` changes,
+		// we need to tell the component to update all the values `selected` might be
+		// pointing to
+		// TODO should this happen in preprocess?
+		const dependencies = binding.metadata.dependencies.slice();
+		binding.metadata.dependencies.forEach((prop: string) => {
+			const indirectDependencies = generator.indirectDependencies.get(prop);
+			if (indirectDependencies) {
+				indirectDependencies.forEach(indirectDependency => {
+					if (!~dependencies.indexOf(indirectDependency)) dependencies.push(indirectDependency);
+				});
+			}
+		});
 
 		contexts.forEach(context => {
 			if (!~state.allUsedContexts.indexOf(context))

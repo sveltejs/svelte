@@ -6,6 +6,7 @@ import preprocess from './preprocess';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import getName from '../../utils/getName';
+import globalWhitelist from '../../utils/globalWhitelist';
 import { Parsed, Node, CompileOptions } from '../../interfaces';
 import { AppendTarget } from './interfaces';
 import { stringify } from '../../utils/stringify';
@@ -71,6 +72,22 @@ export default function ssr(
 		{ css: null, cssMap: null } :
 		generator.stylesheet.render(options.filename, true);
 
+	// generate initial state object
+	// TODO this doesn't work, because expectedProperties isn't populated
+	const globals = Array.from(generator.expectedProperties).filter(prop => globalWhitelist.has(prop));
+	const initialState = [];
+	if (globals.length > 0) {
+		initialState.push(`{ ${globals.map(prop => `${prop} : ${prop}`).join(', ')} }`);
+	}
+
+	if (templateProperties.data) {
+		initialState.push(`%data()`);
+	} else if (globals.length === 0) {
+		initialState.push('{}');
+	}
+
+	initialState.push('state');
+
 	const result = deindent`
 		${generator.javascript}
 
@@ -83,9 +100,7 @@ export default function ssr(
 		};
 
 		${name}.render = function(state, options) {
-			${templateProperties.data
-				? `state = Object.assign(%data(), state || {});`
-				: `state = state || {};`}
+			state = Object.assign(${initialState.join(', ')});
 
 			${computations.map(
 				({ key, deps }) =>

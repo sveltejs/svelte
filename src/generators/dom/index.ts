@@ -6,6 +6,7 @@ import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
+import globalWhitelist from '../../utils/globalWhitelist';
 import reservedNames from '../../utils/reservedNames';
 import visit from './visit';
 import shared from './shared';
@@ -184,13 +185,28 @@ export default function dom(
 
 	const debugName = `<${generator.customElement ? generator.tag : name}>`;
 
+	// generate initial state object
+	const globals = Array.from(generator.expectedProperties).filter(prop => globalWhitelist.has(prop));
+	const initialState = [];
+	if (globals.length > 0) {
+		initialState.push(`{ ${globals.map(prop => `${prop} : ${prop}`).join(', ')} }`);
+	}
+
+	if (templateProperties.data) {
+		initialState.push(`%data()`);
+	} else if (globals.length === 0) {
+		initialState.push('{}');
+	}
+
+	initialState.push(`options.data`);
+
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options._root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
 		${generator.usesRefs && `this.refs = {};`}
-		this._state = @assign(${templateProperties.data ? '%data()' : '{}'}, options.data);
+		this._state = @assign(${initialState.join(', ')});
 		${generator.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&

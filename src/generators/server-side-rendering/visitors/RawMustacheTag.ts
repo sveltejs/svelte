@@ -7,6 +7,8 @@ export default function visitRawMustacheTag(
 	block: Block,
 	node: Node
 ) {
-	const { snippet } = block.contextualise(node.expression);
+	block.contextualise(node.expression);
+	const { snippet } = node.metadata;
+
 	generator.append('${' + snippet + '}');
 }

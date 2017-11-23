@@ -12,7 +12,8 @@ export default function visitTag(
 	name: string,
 	update: (value: string) => string
 ) {
-	const { dependencies, indexes, snippet } = block.contextualise(node.expression);
+	const { indexes } = block.contextualise(node.expression);
+	const { dependencies, snippet } = node.metadata;
 
 	const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
 
@@ -30,7 +31,7 @@ export default function visitTag(
 	if (dependencies.length || hasChangeableIndex) {
 		const changedCheck = (
 			(block.hasOutroMethod ? `#outroing || ` : '') +
-			dependencies.map(dependency => `changed.${dependency}`).join(' || ')
+			dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')
 		);
 
 		const updateCachedValue = `${value} !== (${value} = ${snippet})`;

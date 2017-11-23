@@ -19,7 +19,8 @@ function stringifyAttributeValue(block: Block, chunks: Node[]) {
 				return escape(chunk.data).replace(/"/g, '&quot;');
 			}
 
-			const { snippet } = block.contextualise(chunk.expression);
+			block.contextualise(chunk.expression);
+			const { snippet } = chunk.metadata;
 			return '${' + snippet + '}';
 		})
 		.join('');

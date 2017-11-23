@@ -7,7 +7,7 @@ SvelteComponent.data = function() {
 };
 
 SvelteComponent.render = function(state, options) {
-	state = state || {};
+	state = Object.assign({}, state);
 
 	return ``.trim();
 };
