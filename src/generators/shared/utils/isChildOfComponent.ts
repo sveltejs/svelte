@@ -7,7 +7,4 @@ export default function isChildOfComponent(node: Node, generator: Generator) {
 		if (generator.components.has(node.name)) return true;
 		if (/-/.test(node.name)) return false;
 	}
-
-	// TODO do this in validation
-	throw new Error(`Element with a slot='...' attribute must be a descendant of a component or custom element`);
 }

@@ -1,6 +1,6 @@
 import * as namespaces from '../../utils/namespaces';
 import validateEventHandler from './validateEventHandler';
-import { Validator } from '../index';
+import validate, { Validator } from '../index';
 import { Node } from '../../interfaces';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|title|tref|tspan|unknown|use|view|vkern)$/;
@@ -191,22 +191,7 @@ export default function validateElement(
 			}
 
 			if (attribute.name === 'slot' && !isComponent) {
-				let i = stack.length;
-				while (i--) {
-					const parent = stack[i];
-					if (parent.type === 'Element' && validator.components.has(parent.name)) break;
-					if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
-						const message = `Cannot place slotted elements inside an ${parent.type === 'IfBlock' ? 'if' : 'each'}-block`;
-						validator.error(message, attribute.start);
-					}
-				}
-
-				if (isDynamic(attribute)) {
-					validator.error(
-						`slot attribute cannot have a dynamic value`,
-						attribute.start
-					);
-				}
+				checkSlotAttribute(validator, node, attribute, stack);
 			}
 		}
 	});
@@ -230,6 +215,32 @@ function checkTypeAttribute(validator: Validator, node: Node) {
 	}
 
 	return attribute.value[0].data;
+}
+
+function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, stack: Node[]) {
+	if (isDynamic(attribute)) {
+		validator.error(
+			`slot attribute cannot have a dynamic value`,
+			attribute.start
+		);
+	}
+
+	let i = stack.length;
+	while (i--) {
+		const parent = stack[i];
+		if (parent.type === 'Element') {
+			// if we're inside a component or a custom element, gravy
+			if (validator.components.has(parent.name)) return;
+			if (/-/.test(parent.name)) return;
+		}
+
+		if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
+			const message = `Cannot place slotted elements inside an ${parent.type === 'IfBlock' ? 'if' : 'each'}-block`;
+			validator.error(message, attribute.start);
+		}
+	}
+
+	validator.error(`Element with a slot='...' attribute must be a descendant of a component or custom element`, attribute.start);
 }
 
 function isDynamic(attribute: Node) {
