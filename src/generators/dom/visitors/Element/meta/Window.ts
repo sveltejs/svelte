@@ -28,7 +28,7 @@ export default function visitWindow(
 	node: Node
 ) {
 	const events = {};
-	const bindings = {};
+	const bindings: Record<string, string> = {};
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'EventHandler') {
