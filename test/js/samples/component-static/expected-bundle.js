@@ -25,6 +25,7 @@ function destroy(detach) {
 	if (detach !== false) this._fragment.u();
 	this._fragment.d();
 	this._fragment = this._state = null;
+	this.destroyed = true;
 }
 
 function differs(a, b) {
@@ -154,6 +155,7 @@ function _unmount() {
 }
 
 var proto = {
+	destroyed: false,
 	destroy: destroy,
 	get: get,
 	fire: fire,
