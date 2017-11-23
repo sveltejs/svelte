@@ -61,7 +61,7 @@ export default function visitWindow(
 			block.builders.init.addBlock(deindent`
 				function ${handlerName}(event) {
 					${handlerBody}
-				};
+				}
 				window.addEventListener("${attribute.name}", ${handlerName});
 			`);
 
@@ -121,7 +121,7 @@ export default function visitWindow(
 		block.builders.init.addBlock(deindent`
 			function ${handlerName}(event) {
 				${handlerBody}
-			};
+			}
 			window.addEventListener("${event}", ${handlerName});
 		`);
 
@@ -144,7 +144,7 @@ export default function visitWindow(
 					? `#component.get("${bindings.scrollY}")`
 					: `window.scrollY`};
 				window.scrollTo(x, y);
-			};
+			}
 		`);
 
 		if (bindings.scrollX)
@@ -172,7 +172,7 @@ export default function visitWindow(
 		block.builders.init.addBlock(deindent`
 			function ${handlerName}(event) {
 				#component.set({ ${bindings.online}: navigator.onLine });
-			};
+			}
 			window.addEventListener("online", ${handlerName});
 			window.addEventListener("offline", ${handlerName});
 		`);
