@@ -49,7 +49,4 @@ const reservedNames = new Set([
 	'yield',
 ]);
 
-// prevent e.g. `{{#each states as state}}` breaking
-reservedNames.add('state');
-
 export default reservedNames;
