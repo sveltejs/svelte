@@ -14,7 +14,6 @@ export default function computed(validator: Validator, prop: Node) {
 			`The 'computed' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForDupes(validator, prop.value.properties);
@@ -26,7 +25,6 @@ export default function computed(validator: Validator, prop: Node) {
 				`Computed properties can be function expressions or arrow function expressions`,
 				computation.value.start
 			);
-			return;
 		}
 
 		const params = computation.value.params;
@@ -36,7 +34,6 @@ export default function computed(validator: Validator, prop: Node) {
 				`A computed value must depend on at least one property`,
 				computation.value.start
 			);
-			return;
 		}
 
 		params.forEach((param: Node) => {

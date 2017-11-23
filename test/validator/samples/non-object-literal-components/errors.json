@@ -1,0 +1,8 @@
+[{
+	"message": "The 'components' property must be an object literal",
+	"loc": {
+		"line": 3,
+		"column": 2
+	},
+	"pos": 29
+}]

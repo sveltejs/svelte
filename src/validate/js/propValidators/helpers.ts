@@ -10,7 +10,6 @@ export default function helpers(validator: Validator, prop: Node) {
 			`The 'helpers' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForDupes(validator, prop.value.properties);
