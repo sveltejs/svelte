@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.42.1
+
+* Correctly append items inside a slotted `each` block ([#932](https://github.com/sveltejs/svelte/pull/932))
+* Fix `<:Window bind:online/>` ([#936](https://github.com/sveltejs/svelte/issues/936))
+* Attach globals to state upon initialisation ([#908](https://github.com/sveltejs/svelte/issues/908))
+
 ## 1.42.0
 
 * Implement `indeterminate` binding for checkbox inputs ([#910](https://github.com/sveltejs/svelte/issues/910))
