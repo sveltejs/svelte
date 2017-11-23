@@ -218,4 +218,14 @@ describe("formats", () => {
 			return testEval(code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 	});
+
+	describe('unknown format', () => {
+		it('throws an error', () => {
+			assert.throws(() => {
+				svelte.compile('', {
+					format: 'nope'
+				});
+			}, /options.format is invalid \(must be es, amd, cjs, iife, umd or eval\)/);
+		});
+	});
 });
