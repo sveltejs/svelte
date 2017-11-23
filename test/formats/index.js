@@ -157,6 +157,51 @@ describe("formats", () => {
 
 			return testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
+
+		it('requires options.name', () => {
+			assert.throws(() => {
+				svelte.compile('', {
+					format: 'iife'
+				});
+			}, /Missing required 'name' option for IIFE export/);
+		});
+
+		it('suggests using options.globals for default imports', () => {
+			const warnings = [];
+
+			svelte.compile(`
+				<script>
+					import _ from 'lodash';
+				</script>
+			`,
+				{
+					format: 'iife',
+					name: 'App',
+					onwarn: warning => {
+						warnings.push(warning);
+					}
+				}
+			);
+
+			assert.deepEqual(warnings, [{
+				message: `No name was supplied for imported module 'lodash'. Guessing '_', but you should use options.globals`
+			}]);
+		});
+
+		it('insists on options.globals for named imports', () => {
+			assert.throws(() => {
+				svelte.compile(`
+					<script>
+						import { fade } from 'svelte-transitions';
+					</script>
+				`,
+					{
+						format: 'iife',
+						name: 'App'
+					}
+				);
+			}, /Could not determine name for imported module 'svelte-transitions' – use options.globals/);
+		});
 	});
 
 	describe("umd", () => {
@@ -190,6 +235,14 @@ describe("formats", () => {
 			testCjs(code, { answer: 42 }, `<div>42</div>`);
 			testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
+
+		it('requires options.name', () => {
+			assert.throws(() => {
+				svelte.compile('', {
+					format: 'umd'
+				});
+			}, /Missing required 'name' option for UMD export/);
+		});
 	});
 
 	describe("eval", () => {
@@ -216,6 +269,16 @@ describe("formats", () => {
 			});
 
 			return testEval(code, "Foo", { answer: 42 }, `<div>42</div>`);
+		});
+	});
+
+	describe('unknown format', () => {
+		it('throws an error', () => {
+			assert.throws(() => {
+				svelte.compile('', {
+					format: 'nope'
+				});
+			}, /options.format is invalid \(must be es, amd, cjs, iife, umd or eval\)/);
 		});
 	});
 });

@@ -8,11 +8,9 @@ import chalk from 'chalk';
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
 export function loadSvelte(test) {
-	if (test) global.__svelte_test = true;
+	process.env.TEST = test ? 'true' : '';
 
-	const resolved = process.env.COVERAGE
-		? require.resolve('../src/index.js')
-		: require.resolve('../compiler/svelte.js');
+	const resolved = require.resolve('../compiler/svelte.js');
 
 	delete require.cache[resolved];
 	return require(resolved);

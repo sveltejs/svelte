@@ -5,12 +5,6 @@ import { Node } from '../../interfaces';
 
 function noop () {}
 
-function isElseIf(node: Node) {
-	return (
-		node && node.children.length === 1 && node.children[0].type === 'IfBlock'
-	);
-}
-
 const preprocessors = {
 	MustacheTag: noop,
 	RawMustacheTag: noop,
@@ -21,21 +15,15 @@ const preprocessors = {
 		node: Node,
 		elementStack: Node[]
 	) => {
-		function attachBlocks(node: Node) {
-			preprocessChildren(generator, node, elementStack);
+		preprocessChildren(generator, node, elementStack);
 
-			if (isElseIf(node.else)) {
-				attachBlocks(node.else.children[0]);
-			} else if (node.else) {
-				preprocessChildren(
-					generator,
-					node.else,
-					elementStack
-				);
-			}
+		if (node.else) {
+			preprocessChildren(
+				generator,
+				node.else,
+				elementStack
+			);
 		}
-
-		attachBlocks(node);
 	},
 
 	EachBlock: (
@@ -68,6 +56,19 @@ const preprocessors = {
 			const slot = getStaticAttributeValue(node, 'slot');
 			if (slot && isChildOfComponent(node, generator)) {
 				node.slotted = true;
+			}
+
+			// Treat these the same way:
+			//   <option>{{foo}}</option>
+			//   <option value='{{foo}}'>{{foo}}</option>
+			const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
+
+			if (node.name === 'option' && !valueAttribute) {
+				node.attributes.push({
+					type: 'Attribute',
+					name: 'value',
+					value: node.children
+				});
 			}
 		}
 

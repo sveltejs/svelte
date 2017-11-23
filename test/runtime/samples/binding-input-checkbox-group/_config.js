@@ -16,15 +16,15 @@ export default {
 		<label>
 			<input type="checkbox"> Alpha
 		</label>
-		
+
 		<label>
 			<input type="checkbox"> Beta
 		</label>
-		
+
 		<label>
 			<input type="checkbox"> Gamma
 		</label>
-		
+
 		<p>Beta</p>`,
 
 	test ( assert, component, target, window ) {
@@ -42,15 +42,15 @@ export default {
 			<label>
 				<input type="checkbox"> Alpha
 			</label>
-			
+
 			<label>
 				<input type="checkbox"> Beta
 			</label>
-			
+
 			<label>
 				<input type="checkbox"> Gamma
 			</label>
-			
+
 			<p>Alpha, Beta</p>
 		` );
 
@@ -63,15 +63,15 @@ export default {
 			<label>
 				<input type="checkbox"> Alpha
 			</label>
-			
+
 			<label>
 				<input type="checkbox"> Beta
 			</label>
-			
+
 			<label>
 				<input type="checkbox"> Gamma
 			</label>
-			
+
 			<p>Beta, Gamma</p>
 		` );
 	}

@@ -1,5 +1,5 @@
 import flattenReference from '../../utils/flattenReference';
-import list from '../utils/list';
+import list from '../../utils/list';
 import { Validator } from '../index';
 import validCalleeObjects from '../../utils/validCalleeObjects';
 import { Node } from '../../interfaces';

@@ -9,7 +9,6 @@ export default function transitions(validator: Validator, prop: Node) {
 			`The 'transitions' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForDupes(validator, prop.value.properties);

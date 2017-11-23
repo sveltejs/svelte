@@ -23,6 +23,8 @@ interface ParserOptions {
 	filename?: string;
 }
 
+type ParserState = (parser: Parser) => (ParserState | void);
+
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
@@ -59,7 +61,7 @@ export class Parser {
 
 		this.stack.push(this.html);
 
-		let state = fragment;
+		let state: ParserState = fragment;
 
 		while (this.index < this.template.length) {
 			state = state(this) || fragment;
@@ -94,7 +96,7 @@ export class Parser {
 		return this.stack[this.stack.length - 1];
 	}
 
-	acornError(err: Error) {
+	acornError(err: any) {
 		this.error(err.message.replace(/ \(\d+:\d+\)$/, ''), err.pos);
 	}
 

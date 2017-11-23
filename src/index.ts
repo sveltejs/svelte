@@ -3,9 +3,10 @@ import validate from './validate/index';
 import generate from './generators/dom/index';
 import generateSSR from './generators/server-side-rendering/index';
 import { assign } from './shared/index.js';
-import { version } from '../package.json';
 import Stylesheet from './css/Stylesheet';
 import { Parsed, CompileOptions, Warning } from './interfaces';
+
+const version = '__VERSION__';
 
 function normalizeOptions(options: CompileOptions): CompileOptions {
 	let normalizedOptions = assign({ generate: 'dom' }, options);

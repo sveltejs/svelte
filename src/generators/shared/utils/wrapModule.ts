@@ -1,4 +1,5 @@
 import deindent from '../../../utils/deindent';
+import list from '../../../utils/list';
 import { CompileOptions, ModuleFormat, Node } from '../../../interfaces';
 
 interface Dependency {
@@ -65,7 +66,7 @@ export default function wrapModule(
 	if (format === 'umd') return umd(code, name, options, banner, dependencies);
 	if (format === 'eval') return expr(code, name, options, banner, dependencies);
 
-	throw new Error(`Not implemented: ${format}`);
+	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
 
 function es(
