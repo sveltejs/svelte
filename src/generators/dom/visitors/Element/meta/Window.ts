@@ -83,10 +83,6 @@ export default function visitWindow(
 
 			const associatedEvent = associatedEvents[attribute.name];
 
-			if (!associatedEvent) {
-				throw new Error(`Cannot bind to ${attribute.name} on <:Window>`);
-			}
-
 			if (!events[associatedEvent]) events[associatedEvent] = [];
 			events[associatedEvent].push(
 				`${attribute.value.name}: this.${attribute.name}`

@@ -9,7 +9,6 @@ export default function events(validator: Validator, prop: Node) {
 			`The 'events' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForDupes(validator, prop.value.properties);

@@ -1,0 +1,8 @@
+[{
+	"message": "Invalid namespace 'lol'",
+	"pos": 29,
+	"loc": {
+		"line": 3,
+		"column": 2
+	}
+}]

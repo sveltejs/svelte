@@ -1,0 +1,8 @@
+[{
+	"message": "tag name must be two or more words joined by the '-' character",
+	"loc": {
+		"line": 3,
+		"column": 7
+	},
+	"pos": 34
+}]
