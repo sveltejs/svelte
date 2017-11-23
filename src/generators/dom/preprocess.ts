@@ -449,8 +449,17 @@ function preprocessChildren(
 	const cleaned: Node[] = [];
 	let lastChild: Node;
 
+	let windowComponent;
+
 	node.children.forEach((child: Node) => {
 		if (child.type === 'Comment') return;
+
+		// special case — this is an easy way to remove whitespace surrounding
+		// <:Window/>. lil hacky but it works
+		if (child.type === 'Element' && child.name === ':Window') {
+			windowComponent = child;
+			return;
+		}
 
 		if (child.type === 'Text' && lastChild && lastChild.type === 'Text') {
 			lastChild.data += child.data;
@@ -502,6 +511,7 @@ function preprocessChildren(
 	}
 
 	node.children = cleaned;
+	if (windowComponent) cleaned.unshift(windowComponent);
 }
 
 export default function preprocess(
