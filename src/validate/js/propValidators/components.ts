@@ -10,7 +10,6 @@ export default function components(validator: Validator, prop: Node) {
 			`The 'components' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForDupes(validator, prop.value.properties);

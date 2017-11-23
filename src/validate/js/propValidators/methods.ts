@@ -14,7 +14,6 @@ export default function methods(validator: Validator, prop: Node) {
 			`The 'methods' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForAccessors(validator, prop.value.properties, 'Methods');

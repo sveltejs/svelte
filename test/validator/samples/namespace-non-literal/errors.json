@@ -1,0 +1,8 @@
+[{
+	"message": "The 'namespace' property must be a string literal representing a valid namespace",
+	"pos": 79,
+	"loc": {
+		"line": 5,
+		"column": 2
+	}
+}]

@@ -1,0 +1,8 @@
+[{
+	"message": "'tag' must be a string literal",
+	"loc": {
+		"line": 3,
+		"column": 7
+	},
+	"pos": 34
+}]
