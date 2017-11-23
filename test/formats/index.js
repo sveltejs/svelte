@@ -198,6 +198,14 @@ describe("formats", () => {
 			testCjs(code, { answer: 42 }, `<div>42</div>`);
 			testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
+
+		it('requires options.name', () => {
+			assert.throws(() => {
+				svelte.compile('', {
+					format: 'umd'
+				});
+			}, /Missing required 'name' option for UMD export/);
+		});
 	});
 
 	describe("eval", () => {
