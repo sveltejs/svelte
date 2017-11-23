@@ -45,7 +45,8 @@ export default function visitEachBlock(
 		mountOrIntro,
 	};
 
-	const { snippet } = block.contextualise(node.expression);
+	block.contextualise(node.expression);
+	const { snippet } = node.metadata;
 
 	block.builders.init.addLine(`var ${each_block_value} = ${snippet};`);
 
@@ -362,7 +363,7 @@ function unkeyed(
 	block: Block,
 	state: State,
 	node: Node,
-	snippet,
+	snippet: string,
 	{
 		create_each_block,
 		each_block_value,
@@ -402,8 +403,8 @@ function unkeyed(
 		}
 	`);
 
-	const dependencies = block.findDependencies(node.expression);
 	const allDependencies = new Set(node._block.dependencies);
+	const { dependencies } = node.metadata;
 	dependencies.forEach((dependency: string) => {
 		allDependencies.add(dependency);
 	});

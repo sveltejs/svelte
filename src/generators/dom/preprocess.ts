@@ -74,9 +74,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('text');
-
-		const dependencies = block.findDependencies(node.expression);
-		block.addDependencies(dependencies);
+		block.addDependencies(node.metadata.dependencies);
 	},
 
 	RawMustacheTag: (
@@ -90,9 +88,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('raw');
-
-		const dependencies = block.findDependencies(node.expression);
-		block.addDependencies(dependencies);
+		block.addDependencies(node.metadata.dependencies);
 	},
 
 	Text: (
@@ -133,8 +129,7 @@ const preprocessors = {
 		function attachBlocks(node: Node) {
 			node.var = block.getUniqueName(`if_block`);
 
-			const dependencies = block.findDependencies(node.expression);
-			block.addDependencies(dependencies);
+			block.addDependencies(node.metadata.dependencies);
 
 			node._block = block.child({
 				comment: createDebuggingComment(node, generator),
@@ -209,7 +204,7 @@ const preprocessors = {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
 
-		const dependencies = block.findDependencies(node.expression);
+		const { dependencies } = node.metadata;
 		block.addDependencies(dependencies);
 
 		const indexNames = new Map(block.indexNames);
@@ -235,24 +230,18 @@ const preprocessors = {
 		const changeableIndexes = new Map(block.changeableIndexes);
 		if (node.index) changeableIndexes.set(node.index, node.key);
 
-		const contextDependencies = new Map(block.contextDependencies);
-		contextDependencies.set(node.context, dependencies);
-
 		if (node.destructuredContexts) {
-			for (const i = 0; i < node.destructuredContexts.length; i++) {
+			for (let i = 0; i < node.destructuredContexts.length; i += 1) {
 				contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
-				contextDependencies.set(node.destructuredContexts[i], dependencies);
 			}
 		}
 
 		node._block = block.child({
 			comment: createDebuggingComment(node, generator),
 			name: generator.getUniqueName('create_each_block'),
-			expression: node.expression,
 			context: node.context,
 			key: node.key,
 
-			contextDependencies,
 			contexts,
 			indexes,
 			changeableIndexes,
@@ -319,7 +308,7 @@ const preprocessors = {
 					if (chunk.type !== 'Text') {
 						if (node.parent) cannotUseInnerHTML(node.parent);
 
-						const dependencies = block.findDependencies(chunk.expression);
+						const dependencies = chunk.metadata.dependencies;
 						block.addDependencies(dependencies);
 
 						// special case — <option value='{{foo}}'> — see below
@@ -341,12 +330,10 @@ const preprocessors = {
 
 				if (attribute.type === 'EventHandler' && attribute.expression) {
 					attribute.expression.arguments.forEach((arg: Node) => {
-						const dependencies = block.findDependencies(arg);
-						block.addDependencies(dependencies);
+						block.addDependencies(arg.metadata.dependencies);
 					});
 				} else if (attribute.type === 'Binding') {
-					const dependencies = block.findDependencies(attribute.value);
-					block.addDependencies(dependencies);
+					block.addDependencies(attribute.metadata.dependencies);
 				} else if (attribute.type === 'Transition') {
 					if (attribute.intro)
 						generator.hasIntroTransitions = block.hasIntroMethod = true;
@@ -382,9 +369,10 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			if (valueAttribute) {
+			const binding = node.attributes.find((node: Node) => node.type === 'Binding' && node.name === 'value');
+			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = block.findDependencies(valueAttribute.value);
+				const dependencies = binding.metadata.dependencies;
 				state.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					generator.indirectDependencies.set(prop, new Set());
@@ -422,7 +410,6 @@ const preprocessors = {
 			);
 
 			node._state = getChildState(state, {
-				isTopLevel: false,
 				parentNode: node.var,
 				parentNodes: block.getUniqueName(`${node.var}_nodes`),
 				parentNodeName: node.name,
@@ -530,7 +517,6 @@ export default function preprocess(
 		contexts: new Map(),
 		indexes: new Map(),
 		changeableIndexes: new Map(),
-		contextDependencies: new Map(),
 
 		params: ['state'],
 		indexNames: new Map(),

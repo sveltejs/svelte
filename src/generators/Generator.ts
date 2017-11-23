@@ -1,17 +1,16 @@
 import MagicString, { Bundle } from 'magic-string';
-import { walk } from 'estree-walker';
+import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
 import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
-import globalWhitelist from '../utils/globalWhitelist';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
 import wrapModule from './shared/utils/wrapModule';
-import annotateWithScopes from '../utils/annotateWithScopes';
+import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import clone from '../utils/clone';
 import DomBlock from './dom/Block';
@@ -70,6 +69,19 @@ function removeIndentation(
 		code.remove(start + match.index, start + match.index + indentationLevel.length);
 	}
 }
+
+// We need to tell estree-walker that it should always
+// look for an `else` block, otherwise it might get
+// the wrong idea about the shape of each/if blocks
+childKeys.EachBlock = [
+	'children',
+	'else'
+];
+
+childKeys.IfBlock = [
+	'children',
+	'else'
+];
 
 export default class Generator {
 	ast: Parsed;
@@ -156,7 +168,12 @@ export default class Generator {
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
-		this.parseJs(dom);
+		this.computations = [];
+		this.templateProperties = {};
+
+		this.walkJs(dom);
+		this.walkTemplate();
+
 		this.name = this.alias(name);
 
 		if (options.customElement === true) {
@@ -196,12 +213,10 @@ export default class Generator {
 		context: string,
 		isEventHandler: boolean
 	): {
-		dependencies: string[],
 		contexts: Set<string>,
-		indexes: Set<string>,
-		snippet: string
+		indexes: Set<string>
 	} {
-		this.addSourcemapLocations(expression);
+		// this.addSourcemapLocations(expression);
 
 		const usedContexts: Set<string> = new Set();
 		const usedIndexes: Set<string> = new Set();
@@ -209,7 +224,7 @@ export default class Generator {
 		const { code, helpers } = this;
 		const { contexts, indexes } = block;
 
-		let scope = annotateWithScopes(expression); // TODO this already happens in findDependencies
+		let scope: Scope;
 		let lexicalDepth = 0;
 
 		const self = this;
@@ -231,7 +246,7 @@ export default class Generator {
 						});
 				} else if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
-					if (scope.has(name)) return;
+					if (scope && scope.has(name)) return;
 
 					if (name === 'event' && isEventHandler) {
 						// noop
@@ -267,16 +282,7 @@ export default class Generator {
 							}
 						}
 
-						if (globalWhitelist.has(name)) {
-							code.prependRight(node.start, `('${name}' in state ? state.`);
-							code.appendLeft(
-								node.object ? node.object.end : node.end,
-								` : ${name})`
-							);
-						} else {
-							code.prependRight(node.start, `state.`);
-						}
-
+						code.prependRight(node.start, `state.`);
 						usedContexts.add('state');
 					}
 
@@ -290,71 +296,10 @@ export default class Generator {
 			},
 		});
 
-		const dependencies: Set<string> = new Set(expression._dependencies || []);
-
-		if (expression._dependencies) {
-			expression._dependencies.forEach((prop: string) => {
-				if (this.indirectDependencies.has(prop)) {
-					this.indirectDependencies.get(prop).forEach(dependency => {
-						dependencies.add(dependency);
-					});
-				}
-			});
-		}
-
 		return {
-			dependencies: Array.from(dependencies),
 			contexts: usedContexts,
-			indexes: usedIndexes,
-			snippet: `[✂${expression.start}-${expression.end}✂]`,
+			indexes: usedIndexes
 		};
-	}
-
-	findDependencies(
-		contextDependencies: Map<string, string[]>,
-		indexes: Map<string, string>,
-		expression: Node
-	) {
-		if (expression._dependencies) return expression._dependencies;
-
-		let scope = annotateWithScopes(expression);
-		const dependencies: string[] = [];
-
-		const generator = this; // can't use arrow functions, because of this.skip()
-
-		walk(expression, {
-			enter(node: Node, parent: Node) {
-				if (node._scope) {
-					scope = node._scope;
-					return;
-				}
-
-				if (isReference(node, parent)) {
-					const { name } = flattenReference(node);
-					if (scope.has(name) || generator.helpers.has(name)) return;
-
-					if (contextDependencies.has(name)) {
-						dependencies.push(...contextDependencies.get(name));
-					} else if (!indexes.has(name)) {
-						dependencies.push(name);
-					}
-
-					this.skip();
-				}
-			},
-
-			leave(node: Node) {
-				if (node._scope) scope = scope.parent;
-			},
-		});
-
-		dependencies.forEach(name => {
-			if (!globalWhitelist.has(name)) {
-				this.expectedProperties.add(name);
-			}
-		});
-
-		return (expression._dependencies = dependencies);
 	}
 
 	generate(result: string, options: CompileOptions, { banner = '', sharedPath, helpers, name, format }: GenerateOptions ) {
@@ -454,16 +399,18 @@ export default class Generator {
 		};
 	}
 
-	parseJs(dom: boolean) {
-		const { code, source } = this;
+	walkJs(dom: boolean) {
+		const {
+			code,
+			source,
+			computations,
+			templateProperties,
+			imports
+		} = this;
+
 		const { js } = this.parsed;
 
-		const imports = this.imports;
-		const computations: Computation[] = [];
-		const templateProperties: Record<string, Node> = {};
 		const componentDefinition = new CodeBuilder();
-
-		let namespace = null;
 
 		if (js) {
 			this.addSourcemapLocations(js.content);
@@ -637,7 +584,7 @@ export default class Generator {
 
 				if (templateProperties.namespace) {
 					const ns = templateProperties.namespace.value.value;
-					namespace = namespaces[ns] || ns;
+					this.namespace = namespaces[ns] || ns;
 				}
 
 				if (templateProperties.onrender) templateProperties.oncreate = templateProperties.onrender; // remove after v2
@@ -693,9 +640,132 @@ export default class Generator {
 				this.javascript = a === b ? null : `[✂${a}-${b}✂]`;
 			}
 		}
+	}
 
-		this.computations = computations;
-		this.namespace = namespace;
-		this.templateProperties = templateProperties;
+	walkTemplate() {
+		const {
+			code,
+			expectedProperties,
+			helpers
+		} = this;
+		const { html } = this.parsed;
+
+		const contextualise = (node: Node, contextDependencies: Map<string, string[]>, indexes: Set<string>) => {
+			this.addSourcemapLocations(node); // TODO this involves an additional walk — can we roll it in somewhere else?
+			let scope = annotateWithScopes(node);
+
+			const dependencies: Set<string> = new Set();
+
+			walk(node, {
+				enter(node: Node, parent: Node) {
+					code.addSourcemapLocation(node.start);
+					code.addSourcemapLocation(node.end);
+
+					if (node._scope) {
+						scope = node._scope;
+						return;
+					}
+
+					if (isReference(node, parent)) {
+						const { name } = flattenReference(node);
+						if (scope && scope.has(name) || helpers.has(name)) return;
+
+						if (contextDependencies.has(name)) {
+							contextDependencies.get(name).forEach(dependency => {
+								dependencies.add(dependency);
+							});
+						} else if (!indexes.has(name)) {
+							dependencies.add(name);
+						}
+
+						this.skip();
+					}
+				},
+
+				leave(node: Node, parent: Node) {
+					if (node._scope) scope = scope.parent;
+				}
+			});
+
+			dependencies.forEach(dependency => {
+				expectedProperties.add(dependency);
+			});
+
+			return {
+				snippet: `[✂${node.start}-${node.end}✂]`,
+				dependencies: Array.from(dependencies)
+			};
+		}
+
+		const contextStack = [];
+		const indexStack = [];
+		const dependenciesStack = [];
+
+		let contextDependencies = new Map();
+		const contextDependenciesStack: Map<string, string[]>[] = [contextDependencies];
+
+		let indexes = new Set();
+		const indexesStack: Set<string>[] = [indexes];
+
+		walk(html, {
+			enter(node: Node, parent: Node) {
+				if (node.type === 'EachBlock') {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+
+					contextDependencies = new Map(contextDependencies);
+					contextDependencies.set(node.context, node.metadata.dependencies);
+
+					if (node.destructuredContexts) {
+						for (let i = 0; i < node.destructuredContexts.length; i += 1) {
+							const name = node.destructuredContexts[i];
+							const value = `${node.context}[${i}]`;
+
+							contextDependencies.set(name, node.metadata.dependencies);
+						}
+					}
+
+					contextDependenciesStack.push(contextDependencies);
+
+					if (node.index) {
+						indexes = new Set(indexes);
+						indexes.add(node.index);
+						indexesStack.push(indexes);
+					}
+				}
+
+				if (node.type === 'IfBlock') {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+				}
+
+				if (node.type === 'MustacheTag' || node.type === 'RawMustacheTag' || node.type === 'AttributeShorthand') {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					this.skip();
+				}
+
+				if (node.type === 'Binding') {
+					node.metadata = contextualise(node.value, contextDependencies, indexes);
+					this.skip();
+				}
+
+				if (node.type === 'EventHandler' && node.expression) {
+					node.expression.arguments.forEach((arg: Node) => {
+						arg.metadata = contextualise(arg, contextDependencies, indexes);
+					});
+					this.skip();
+				}
+			},
+
+			leave(node: Node, parent: Node) {
+				if (node.type === 'EachBlock') {
+					contextDependenciesStack.pop();
+					contextDependencies = contextDependenciesStack[contextDependenciesStack.length - 1];
+
+					if (node.index) {
+						indexesStack.pop();
+						indexes = indexesStack[indexesStack.length - 1];
+					}
+				}
+			}
+		});
 	}
 }
