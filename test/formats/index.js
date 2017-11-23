@@ -157,6 +157,14 @@ describe("formats", () => {
 
 			return testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
+
+		it('requires options.name', () => {
+			assert.throws(() => {
+				svelte.compile('', {
+					format: 'iife'
+				});
+			}, /Missing required 'name' option for IIFE export/);
+		});
 	});
 
 	describe("umd", () => {
