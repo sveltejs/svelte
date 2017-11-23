@@ -1,4 +1,5 @@
---require ts-node/register
+--compilers ts-node/register
+--require source-map-support/register
+--full-trace
 --recursive
-./**/__test__.ts
 test/test.js
