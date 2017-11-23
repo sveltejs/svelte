@@ -65,7 +65,7 @@ export interface GenerateOptions {
 	name: string;
 	format: ModuleFormat;
 	banner?: string;
-	sharedPath?: string | boolean;
+	sharedPath?: string;
 	helpers?: { name: string, alias: string }[];
 }
 

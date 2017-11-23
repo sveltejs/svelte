@@ -1,9 +1,11 @@
 import path from 'path';
+import replace from 'rollup-plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
 import typescript from 'rollup-plugin-typescript';
 import buble from 'rollup-plugin-buble';
+import pkg from './package.json';
 
 const src = path.resolve('src');
 
@@ -27,6 +29,9 @@ export default [
 					}
 				}
 			},
+			replace({
+				__VERSION__: pkg.version
+			}),
 			resolve(),
 			commonjs(),
 			json(),

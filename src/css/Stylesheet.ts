@@ -322,7 +322,7 @@ export default class Stylesheet {
 
 				leave: (node: Node) => {
 					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
-					if (node.type === 'Atrule') currentAtrule = stack[stack.length - 1];
+					if (node.type === 'Atrule') currentAtrule = <Atrule>stack[stack.length - 1];
 				}
 			});
 		} else {

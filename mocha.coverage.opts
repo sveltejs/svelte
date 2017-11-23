@@ -1,4 +1,5 @@
---require babel-register
+--compilers ts-node/register
+--require source-map-support/register
+--full-trace
 --recursive
-./**/__test__.js
-test/*/index.js
+test/test.js

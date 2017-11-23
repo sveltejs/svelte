@@ -16,9 +16,8 @@ import clone from '../utils/clone';
 import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
+import { test } from '../config';
 import { Node, GenerateOptions, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
-
-const test = typeof global !== 'undefined' && global.__svelte_test;
 
 interface Computation {
 	key: string;

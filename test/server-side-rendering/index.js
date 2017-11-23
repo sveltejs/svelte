@@ -21,9 +21,7 @@ function tryToReadFile(file) {
 
 describe("ssr", () => {
 	before(() => {
-		require(process.env.COVERAGE
-			? "../../src/server-side-rendering/register.js"
-			: "../../ssr/register");
+		require("../../ssr/register");
 
 		return setupHtmlEqual();
 	});
