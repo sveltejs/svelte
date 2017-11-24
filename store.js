@@ -25,6 +25,15 @@ assign(Store.prototype, {
 		});
 	},
 
+	_init: function(props) {
+		var state = {};
+		for (let i = 0; i < props.length; i += 1) {
+			var prop = props[i];
+			state['$' + prop] = this._state[prop];
+		}
+		return state;
+	},
+
 	_remove: function(component) {
 		let i = this._dependents.length;
 		while (i--) {
