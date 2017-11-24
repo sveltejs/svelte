@@ -32,8 +32,6 @@ const store = new MyStore({
 });
 
 export default {
-	solo: true,
-
 	store,
 
 	html: `

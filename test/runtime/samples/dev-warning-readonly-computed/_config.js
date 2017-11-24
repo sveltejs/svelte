@@ -1,5 +1,11 @@
 export default {
+	solo: true,
+
 	dev: true,
+
+	data: {
+		a: 42
+	},
 
 	test ( assert, component ) {
 		try {
