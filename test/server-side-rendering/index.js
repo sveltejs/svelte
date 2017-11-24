@@ -22,7 +22,8 @@ function tryToReadFile(file) {
 describe("ssr", () => {
 	before(() => {
 		require("../../ssr/register")({
-			extensions: ['.svelte', '.html']
+			extensions: ['.svelte', '.html'],
+			store: true
 		});
 
 		return setupHtmlEqual();
@@ -98,9 +99,15 @@ describe("ssr", () => {
 				delete require.cache[resolved];
 			});
 
+			require("../../ssr/register")({
+				store: !!config.store
+			});
+
 			try {
 				const component = require(`../runtime/samples/${dir}/main.html`);
-				const html = component.render(config.data);
+				const html = component.render(config.data, {
+					store: config.store
+				});
 
 				if (config.html) {
 					assert.htmlEqual(html, config.html);
