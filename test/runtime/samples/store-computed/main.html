@@ -1,0 +1,11 @@
+{{#each $todos as todo}}
+	<Todo :todo/>
+{{/each}}
+
+<script>
+	import Todo from './Todo.html';
+
+	export default {
+		components: { Todo }
+	};
+</script>
