@@ -1,6 +1,6 @@
 import flattenReference from '../../utils/flattenReference';
 import list from '../../utils/list';
-import { Validator } from '../index';
+import validate, { Validator } from '../index';
 import validCalleeObjects from '../../utils/validCalleeObjects';
 import { Node } from '../../interfaces';
 
@@ -28,6 +28,13 @@ export default function validateEventHandlerCallee(
 		return;
 	}
 
+	if (name === 'store' && attribute.expression.callee.type === 'MemberExpression') {
+		if (!validator.options.store) {
+			validator.warn('compile with `store: true` in order to call store methods', attribute.expression.start);
+		}
+		return;
+	}
+
 	if (
 		(callee.type === 'Identifier' && validBuiltins.has(callee.name)) ||
 		validator.methods.has(callee.name)
@@ -35,6 +42,7 @@ export default function validateEventHandlerCallee(
 		return;
 
 	const validCallees = ['this.*', 'event.*', 'options.*', 'console.*'].concat(
+		validator.options.store ? 'store.*' : [],
 		Array.from(validBuiltins),
 		Array.from(validator.methods.keys())
 	);

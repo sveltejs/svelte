@@ -22,6 +22,7 @@ export class Validator {
 	readonly source: string;
 	readonly filename: string;
 
+	options: CompileOptions;
 	onwarn: ({}) => void;
 	locator?: (pos: number) => Location;
 
@@ -37,8 +38,8 @@ export class Validator {
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
 		this.source = source;
 		this.filename = options.filename;
-
 		this.onwarn = options.onwarn;
+		this.options = options;
 
 		this.namespace = null;
 		this.defaultExport = null;
@@ -78,7 +79,7 @@ export default function validate(
 	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
-	const { onwarn, onerror, name, filename } = options;
+	const { onwarn, onerror, name, filename, store } = options;
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
@@ -99,6 +100,7 @@ export default function validate(
 			onwarn,
 			name,
 			filename,
+			store
 		});
 
 		if (parsed.js) {
