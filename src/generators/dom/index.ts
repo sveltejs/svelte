@@ -184,15 +184,23 @@ export default function dom(
 	const debugName = `<${generator.customElement ? generator.tag : name}>`;
 
 	// generate initial state object
-	const globals = Array.from(generator.expectedProperties).filter(prop => globalWhitelist.has(prop));
+	const expectedProperties = Array.from(generator.expectedProperties);
+	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
+	const storeProps = options.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
+
 	const initialState = [];
+
 	if (globals.length > 0) {
 		initialState.push(`{ ${globals.map(prop => `${prop} : ${prop}`).join(', ')} }`);
 	}
 
+	if (storeProps.length > 0) {
+		initialState.push(`this.store._init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`);
+	}
+
 	if (templateProperties.data) {
 		initialState.push(`%data()`);
-	} else if (globals.length === 0) {
+	} else if (globals.length === 0 && storeProps.length === 0) {
 		initialState.push('{}');
 	}
 
@@ -205,6 +213,7 @@ export default function dom(
 		@init(this, options);
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
+		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
 		${generator.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
@@ -215,7 +224,11 @@ export default function dom(
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
 
-		${templateProperties.ondestroy && `this._handlers.destroy = [%ondestroy]`}
+		${(templateProperties.ondestroy || storeProps.length) && (
+			`this._handlers.destroy = [${
+				[templateProperties.ondestroy && `%ondestroy`, storeProps.length && `@removeFromStore`].filter(Boolean).join(', ')
+			}]`
+		)}
 
 		${generator.slots.size && `this._slotted = options.slots || {};`}
 

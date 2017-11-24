@@ -63,6 +63,7 @@ describe("runtime", () => {
 			compileOptions.shared = shared;
 			compileOptions.hydratable = hydrate;
 			compileOptions.dev = config.dev;
+			compileOptions.store = !!config.store;
 
 			// check that no ES2015+ syntax slipped in
 			if (!config.allowES2015) {
@@ -88,7 +89,7 @@ describe("runtime", () => {
 					}
 				} catch (err) {
 					failed.add(dir);
-					showOutput(cwd, { shared }, svelte); // eslint-disable-line no-console
+					showOutput(cwd, { shared, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -134,7 +135,7 @@ describe("runtime", () => {
 				try {
 					SvelteComponent = require(`./samples/${dir}/main.html`);
 				} catch (err) {
-					showOutput(cwd, { shared, hydratable: hydrate }, svelte); // eslint-disable-line no-console
+					showOutput(cwd, { shared, hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 
@@ -154,7 +155,8 @@ describe("runtime", () => {
 				const options = Object.assign({}, {
 					target,
 					hydrate,
-					data: config.data
+					data: config.data,
+					store: config.store
 				}, config.options || {});
 
 				const component = new SvelteComponent(options);
@@ -188,12 +190,12 @@ describe("runtime", () => {
 					config.error(assert, err);
 				} else {
 					failed.add(dir);
-					showOutput(cwd, { shared, hydratable: hydrate }, svelte); // eslint-disable-line no-console
+					showOutput(cwd, { shared, hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 			}
 
-			if (config.show) showOutput(cwd, { shared, hydratable: hydrate }, svelte);
+			if (config.show) showOutput(cwd, { shared, hydratable: hydrate, store: !!compileOptions.store }, svelte);
 		});
 	}
 
