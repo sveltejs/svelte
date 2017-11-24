@@ -1,5 +1,6 @@
 src/shared
 shared.js
+store.js
 test/test.js
 test/setup.js
 **/_actual.js
