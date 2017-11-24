@@ -213,37 +213,63 @@ export default function addBindings(
 			block.addVariable(animation_frame);
 		}
 
-		block.builders.init.addBlock(deindent`
-			function ${handler}() {
-				${
-					animation_frame && deindent`
-						cancelAnimationFrame(${animation_frame});
-						if (!${node.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-				}
-				${usesContext && `var context = ${node.var}._svelte;`}
-				${usesState && `var state = #component.get();`}
-				${needsLock && `${lock} = true;`}
-				${mutations.length > 0 && mutations}
-				#component.set({ ${Array.from(props).join(', ')} });
-				${needsLock && `${lock} = false;`}
+		const handlerBody = deindent`
+			${
+				animation_frame && deindent`
+					cancelAnimationFrame(${animation_frame});
+					if (!${node.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 			}
-		`);
+			${usesContext && `var context = ${node.var}._svelte;`}
+			${usesState && `var state = #component.get();`}
+			${needsLock && `${lock} = true;`}
+			${mutations.length > 0 && mutations}
+			#component.set({ ${Array.from(props).join(', ')} });
+			${needsLock && `${lock} = false;`}
+		`;
 
-		group.events.forEach(name => {
-			block.builders.hydrate.addLine(
-				`@addListener(${node.var}, "${name}", ${handler});`
-			);
+		const shouldImmediatelyUpdateState = node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || readOnlyMediaAttributes.has(binding.name));
+
+		if (group.events.length > 1 || shouldImmediatelyUpdateState) {
+			block.builders.init.addBlock(deindent`
+				function ${handler}() {
+					${handlerBody}
+				}
+			`);
+
+			group.events.forEach(name => {
+				const remove_handler = block.getUniqueName(`remove_${node.var}_${name}_handler`);
+				block.addVariable(remove_handler);
+
+				block.builders.hydrate.addLine(
+					`${remove_handler} = @listen(${node.var}, "${name}", ${handler});`
+				);
+
+				block.builders.destroy.addLine(
+					`${remove_handler}();`
+				);
+			});
+		} else {
+			const name = group.events[0];
+
+			const remove_handler = block.getUniqueName(`remove_${node.var}_${name}_handler`);
+			block.addVariable(remove_handler);
+
+			block.builders.hydrate.addBlock(deindent`
+				${remove_handler} = @listen(${node.var}, "${name}", function() {
+					${handlerBody}
+				});
+			`);
 
 			block.builders.destroy.addLine(
-				`@removeListener(${node.var}, "${name}", ${handler});`
+				`${remove_handler}();`
 			);
-		});
+		}
 
 		const allInitialStateIsDefined = group.bindings
 			.map(binding => `'${binding.object}' in state`)
 			.join(' && ');
 
-		if (node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || readOnlyMediaAttributes.has(binding.name))) {
+		if (shouldImmediatelyUpdateState) {
 			generator.hasComplexBindings = true;
 
 			block.builders.hydrate.addLine(
