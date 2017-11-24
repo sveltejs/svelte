@@ -25,9 +25,11 @@ function getBranches(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
+	block.contextualise(node.expression); // TODO remove
+
 	const branches = [
 		{
-			condition: block.contextualise(node.expression).snippet,
+			condition: node.metadata.snippet,
 			block: node._block.name,
 			hasUpdateMethod: node._block.hasUpdateMethod,
 			hasIntroMethod: node._block.hasIntroMethod,
@@ -151,7 +153,6 @@ function simple(
 		var ${name} = (${branch.condition}) && ${branch.block}(${params}, #component);
 	`);
 
-	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
@@ -254,7 +255,6 @@ function compound(
 		var ${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
 	`);
 
-	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 
 	const targetNode = state.parentNode || '#target';
@@ -354,7 +354,6 @@ function compoundWithOutros(
 		`);
 	}
 
-	const isTopLevel = !state.parentNode;
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';

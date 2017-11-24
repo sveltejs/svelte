@@ -10,12 +10,12 @@ export interface BlockOptions {
 	generator?: DomGenerator;
 	expression?: Node;
 	context?: string;
+	destructuredContexts?: string[];
 	comment?: string;
 	key?: string;
 	contexts?: Map<string, string>;
 	indexes?: Map<string, string>;
 	changeableIndexes?: Map<string, boolean>;
-	contextDependencies?: Map<string, string[]>;
 	params?: string[];
 	indexNames?: Map<string, string>;
 	listNames?: Map<string, string>;
@@ -29,6 +29,7 @@ export default class Block {
 	name: string;
 	expression: Node;
 	context: string;
+	destructuredContexts?: string[];
 	comment?: string;
 
 	key: string;
@@ -37,7 +38,6 @@ export default class Block {
 	contexts: Map<string, string>;
 	indexes: Map<string, string>;
 	changeableIndexes: Map<string, boolean>;
-	contextDependencies: Map<string, string[]>;
 	dependencies: Set<string>;
 	params: string[];
 	indexNames: Map<string, string>;
@@ -75,6 +75,7 @@ export default class Block {
 		this.name = options.name;
 		this.expression = options.expression;
 		this.context = options.context;
+		this.destructuredContexts = options.destructuredContexts;
 		this.comment = options.comment;
 
 		// for keyed each blocks
@@ -84,7 +85,6 @@ export default class Block {
 		this.contexts = options.contexts;
 		this.indexes = options.indexes;
 		this.changeableIndexes = options.changeableIndexes;
-		this.contextDependencies = options.contextDependencies;
 		this.dependencies = new Set();
 
 		this.params = options.params;
@@ -170,14 +170,6 @@ export default class Block {
 		);
 	}
 
-	findDependencies(expression: Node) {
-		return this.generator.findDependencies(
-			this.contextDependencies,
-			this.indexes,
-			expression
-		);
-	}
-
 	toString() {
 		let introing;
 		const hasIntros = !this.builders.intro.isEmpty();
@@ -198,7 +190,7 @@ export default class Block {
 		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
-		this.builders.unmount.addBlockAtStart(this.builders.detachRaw);
+		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
 
 		const properties = new CodeBuilder();
 

@@ -8,7 +8,8 @@ export default function visitEachBlock(
 	block: Block,
 	node: Node
 ) {
-	const { dependencies, snippet } = block.contextualise(node.expression);
+	block.contextualise(node.expression);
+	const { dependencies, snippet } = node.metadata;
 
 	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}${snippet}.map(${node.index ? `(${node.context}, ${node.index})` : node.context} => \``;
 	generator.append(open);
@@ -23,6 +24,13 @@ export default function visitEachBlock(
 
 	const contextDependencies = new Map(block.contextDependencies);
 	contextDependencies.set(node.context, dependencies);
+
+	if (node.destructuredContexts) {
+		for (let i = 0; i < node.destructuredContexts.length; i += 1) {
+			contexts.set(node.destructuredContexts[i], `${node.context}[${i}]`);
+			contextDependencies.set(node.destructuredContexts[i], dependencies);
+		}
+	}
 
 	const childBlock = block.child({
 		contexts,

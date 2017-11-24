@@ -1,6 +1,7 @@
 import readExpression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
 import { trimStart, trimEnd } from '../../utils/trim';
+import reservedNames from '../../utils/reservedNames';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
@@ -161,8 +162,40 @@ export default function mustache(parser: Parser) {
 			parser.eat('as', true);
 			parser.requireWhitespace();
 
-			block.context = parser.read(validIdentifier); // TODO check it's not a keyword
-			if (!block.context) parser.error(`Expected name`);
+			if (parser.eat('[')) {
+				parser.allowWhitespace();
+
+				block.destructuredContexts = [];
+
+				do {
+					parser.allowWhitespace();
+
+					const start = parser.index;
+					const destructuredContext = parser.read(validIdentifier);
+
+					if (!destructuredContext) parser.error(`Expected name`);
+					if (reservedNames.has(destructuredContext)) {
+						parser.error(`'${destructuredContext}' is a reserved word in JavaScript and cannot be used here`, start);
+					}
+
+					block.destructuredContexts.push(destructuredContext);
+					parser.allowWhitespace();
+				} while (parser.eat(','));
+
+				if (!block.destructuredContexts.length) parser.error(`Expected name`);
+				block.context = block.destructuredContexts.join('_');
+
+				parser.allowWhitespace();
+				parser.eat(']', true);
+			} else {
+				const start = parser.index;
+				block.context = parser.read(validIdentifier);
+				if (reservedNames.has(block.context)) {
+					parser.error(`'${block.context}' is a reserved word in JavaScript and cannot be used here`, start);
+				}
+
+				if (!block.context) parser.error(`Expected name`);
+			}
 
 			parser.allowWhitespace();
 

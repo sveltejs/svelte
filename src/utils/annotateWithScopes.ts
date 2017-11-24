@@ -38,7 +38,7 @@ export default function annotateWithScopes(expression: Node) {
 	return scope;
 }
 
-class Scope {
+export class Scope {
 	parent: Scope;
 	block: boolean;
 	declarations: Set<string>;

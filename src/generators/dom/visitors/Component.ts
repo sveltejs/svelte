@@ -8,20 +8,9 @@ import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
 import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
 import { stringify } from '../../../utils/stringify';
+import stringifyProps from '../../../utils/stringifyProps';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
-
-function stringifyProps(props: string[]) {
-	if (!props.length) return '{}';
-
-	const joined = props.join(', ');
-	if (joined.length > 40) {
-		// make larger data objects readable
-		return `{\n\t${props.join(',\n\t')}\n}`;
-	}
-
-	return `{ ${joined} }`;
-}
 
 interface Attribute {
 	name: string;
@@ -196,7 +185,7 @@ export default function visitComponent(
 			`);
 
 			beforecreate = deindent`
-				#component._root._beforecreate.push(function () {
+				#component._root._beforecreate.push(function() {
 					var state = #component.get(), childState = ${name}.get(), newState = {};
 					if (!childState) return;
 					${setParentFromChildOnInit}
@@ -213,7 +202,7 @@ export default function visitComponent(
 			block.builders.update.addBlock(deindent`
 				var ${name}_changes = {};
 				${updates.join('\n')}
-				${name}._set( ${name}_changes );
+				${name}._set(${name}_changes);
 				${bindings.length && `${name_updating} = {};`}
 			`);
 		}
@@ -233,7 +222,7 @@ export default function visitComponent(
 	block.builders.create.addLine(`${name}._fragment.c();`);
 
 	block.builders.claim.addLine(
-		`${name}._fragment.l( ${state.parentNodes} );`
+		`${name}._fragment.l(${state.parentNodes});`
 	);
 
 	node.mountStatement = (
@@ -366,7 +355,8 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 		}
 
 		// simple dynamic attributes
-		const { dependencies, snippet } = block.contextualise(value.expression);
+		block.contextualise(value.expression); // TODO remove
+		const { dependencies, snippet } = value.metadata;
 
 		// TODO only update attributes that have changed
 		return {
@@ -387,15 +377,14 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 				if (chunk.type === 'Text') {
 					return stringify(chunk.data);
 				} else {
-					const { dependencies, snippet } = block.contextualise(
-						chunk.expression
-					);
+					block.contextualise(chunk.expression); // TODO remove
+					const { dependencies, snippet } = chunk.metadata;
 
-					dependencies.forEach(dependency => {
+					dependencies.forEach((dependency: string) => {
 						allDependencies.add(dependency);
 					});
 
-					return getExpressionPrecedence(chunk.expression) <= 13 ? `( ${snippet} )` : snippet;
+					return getExpressionPrecedence(chunk.expression) <= 13 ? `(${snippet})` : snippet;
 				}
 			})
 			.join(' + ');
@@ -410,9 +399,8 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 
 function mungeBinding(binding: Node, block: Block): Binding {
 	const { name } = getObject(binding.value);
-	const { snippet, contexts, dependencies } = block.contextualise(
-		binding.value
-	);
+	const { contexts } = block.contextualise(binding.value);
+	const { dependencies, snippet } = binding.metadata;
 
 	const contextual = block.contexts.has(name);
 

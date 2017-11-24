@@ -22,7 +22,7 @@ export default function visitEachBlock(
 	const iterations = block.getUniqueName(`${each}_blocks`);
 	const params = block.params.join(', ');
 
-	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode;
+	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode || !isDomNode(node.parent, generator);
 	const anchor = needsAnchor
 		? block.getUniqueName(`${each}_anchor`)
 		: (node.next && node.next.var) || 'null';
@@ -46,7 +46,8 @@ export default function visitEachBlock(
 		mountOrIntro,
 	};
 
-	const { snippet } = block.contextualise(node.expression);
+	block.contextualise(node.expression);
+	const { snippet } = node.metadata;
 
 	block.builders.init.addLine(`var ${each_block_value} = ${snippet};`);
 
@@ -230,7 +231,7 @@ function keyed(
 	`;
 
 	const dynamic = node._block.hasUpdateMethod;
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
 
 	let destroy;
 	if (node._block.hasOutroMethod) {
@@ -374,7 +375,7 @@ function unkeyed(
 	block: Block,
 	state: State,
 	node: Node,
-	snippet,
+	snippet: string,
 	{
 		create_each_block,
 		each_block_value,
@@ -414,8 +415,8 @@ function unkeyed(
 		}
 	`;
 
-	const dependencies = block.findDependencies(node.expression);
 	const allDependencies = new Set(node._block.dependencies);
+	const { dependencies } = node.metadata;
 	dependencies.forEach((dependency: string) => {
 		allDependencies.add(dependency);
 	});
@@ -425,7 +426,7 @@ function unkeyed(
 		.map(dependency => `changed.${dependency}`)
 		.join(' || ');
 
-	const parentNode = state.parentNode || `${anchor}.parentNode`;
+	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
 
 	if (condition !== '') {
 		const forLoopBody = node._block.hasUpdateMethod

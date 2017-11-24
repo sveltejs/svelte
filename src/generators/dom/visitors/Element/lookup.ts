@@ -112,6 +112,7 @@ const lookup = {
 	'http-equiv': { propertyName: 'httpEquiv', appliesTo: ['meta'] },
 	icon: { appliesTo: ['command'] },
 	id: {},
+	indeterminate: { appliesTo: ['input'] },
 	ismap: { propertyName: 'isMap', appliesTo: ['img'] },
 	itemprop: {},
 	keytype: { appliesTo: ['keygen'] },
@@ -128,7 +129,7 @@ const lookup = {
 	method: { appliesTo: ['form'] },
 	min: { appliesTo: ['input', 'meter'] },
 	multiple: { appliesTo: ['input', 'select'] },
-	muted: { appliesTo: ['video'] },
+	muted: { appliesTo: ['audio', 'video'] },
 	name: {
 		appliesTo: [
 			'button',

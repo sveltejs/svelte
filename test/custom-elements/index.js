@@ -50,7 +50,9 @@ describe('custom-elements', function() {
 	fs.readdirSync('test/custom-elements/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
-		it(dir, () => {
+		const solo = /\.solo$/.test(dir);
+
+		(solo ? it.only : it)(dir, () => {
 			return rollup({
 				input: `test/custom-elements/samples/${dir}/test.js`,
 				plugins: [

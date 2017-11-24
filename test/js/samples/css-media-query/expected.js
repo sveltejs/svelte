@@ -41,7 +41,7 @@ function create_main_fragment(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._state = options.data || {};
+	this._state = assign({}, options.data);
 
 	if (!document.getElementById("svelte-2363328337-style")) add_css();
 

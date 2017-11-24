@@ -1,0 +1,8 @@
+[{
+	"message": "Element with a slot='...' attribute must be a descendant of a component or custom element",
+	"loc": {
+		"line": 1,
+		"column": 5
+	},
+	"pos": 5
+}]

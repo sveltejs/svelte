@@ -1,5 +1,5 @@
 [{
-	"message": "'potato' is not a valid binding on <:Window> — valid bindings are innerWidth, innerHeight, outerWidth, outerHeight, scrollX or scrollY",
+	"message": "'potato' is not a valid binding on <:Window> — valid bindings are innerWidth, innerHeight, outerWidth, outerHeight, scrollX, scrollY or online",
 	"loc": {
 		"line": 1,
 		"column": 9

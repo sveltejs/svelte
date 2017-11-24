@@ -1,6 +1,6 @@
 import flattenReference from '../../utils/flattenReference';
 import fuzzymatch from '../utils/fuzzymatch';
-import list from '../utils/list';
+import list from '../../utils/list';
 import validateEventHandler from './validateEventHandler';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
@@ -12,6 +12,7 @@ const validBindings = [
 	'outerHeight',
 	'scrollX',
 	'scrollY',
+	'online'
 ];
 
 export default function validateWindow(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {

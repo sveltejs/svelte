@@ -116,7 +116,6 @@ function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._root = options._root || component;
-	component._yield = options._yield;
 	component._bind = options._bind;
 }
 
@@ -178,9 +177,12 @@ function _set(newState) {
 	this._state = assign({}, oldState, newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
-	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.p(changed, this._state);
-	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+
+	if (this._fragment) {
+		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this._fragment.p(changed, this._state);
+		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+	}
 }
 
 function callAll(fns) {
@@ -304,8 +306,8 @@ function create_each_block(state, comments, comment, i, component) {
 		},
 
 		h: function hydrate() {
-			div.className = "comment";
 			span.className = "meta";
+			div.className = "comment";
 		},
 
 		m: function mount(target, anchor) {
@@ -348,7 +350,7 @@ function create_each_block(state, comments, comment, i, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._state = options.data || {};
+	this._state = assign({}, options.data);
 
 	this._fragment = create_main_fragment(this._state, this);
 

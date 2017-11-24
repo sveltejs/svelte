@@ -15,8 +15,8 @@ function create_main_fragment(state, component) {
 		},
 
 		h: function hydrate() {
-			input.type = "checkbox";
 			addListener(input, "change", input_change_handler);
+			input.type = "checkbox";
 		},
 
 		m: function mount(target, anchor) {
@@ -41,7 +41,7 @@ function create_main_fragment(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._state = options.data || {};
+	this._state = assign({}, options.data);
 
 	this._fragment = create_main_fragment(this._state, this);
 

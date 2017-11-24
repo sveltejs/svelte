@@ -74,9 +74,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('text');
-
-		const dependencies = block.findDependencies(node.expression);
-		block.addDependencies(dependencies);
+		block.addDependencies(node.metadata.dependencies);
 	},
 
 	RawMustacheTag: (
@@ -90,9 +88,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName('raw');
-
-		const dependencies = block.findDependencies(node.expression);
-		block.addDependencies(dependencies);
+		block.addDependencies(node.metadata.dependencies);
 	},
 
 	Text: (
@@ -133,8 +129,7 @@ const preprocessors = {
 		function attachBlocks(node: Node) {
 			node.var = block.getUniqueName(`if_block`);
 
-			const dependencies = block.findDependencies(node.expression);
-			block.addDependencies(dependencies);
+			block.addDependencies(node.metadata.dependencies);
 
 			node._block = block.child({
 				comment: createDebuggingComment(node, generator),
@@ -209,7 +204,7 @@ const preprocessors = {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
 
-		const dependencies = block.findDependencies(node.expression);
+		const { dependencies } = node.metadata;
 		block.addDependencies(dependencies);
 
 		const indexNames = new Map(block.indexNames);
@@ -225,7 +220,7 @@ const preprocessors = {
 		);
 		listNames.set(node.context, listName);
 
-		const context = generator.getUniqueName(node.context);
+		const context = block.getUniqueName(node.context);
 		const contexts = new Map(block.contexts);
 		contexts.set(node.context, context);
 
@@ -235,17 +230,18 @@ const preprocessors = {
 		const changeableIndexes = new Map(block.changeableIndexes);
 		if (node.index) changeableIndexes.set(node.index, node.key);
 
-		const contextDependencies = new Map(block.contextDependencies);
-		contextDependencies.set(node.context, dependencies);
+		if (node.destructuredContexts) {
+			for (let i = 0; i < node.destructuredContexts.length; i += 1) {
+				contexts.set(node.destructuredContexts[i], `${context}[${i}]`);
+			}
+		}
 
 		node._block = block.child({
 			comment: createDebuggingComment(node, generator),
 			name: generator.getUniqueName('create_each_block'),
-			expression: node.expression,
 			context: node.context,
 			key: node.key,
 
-			contextDependencies,
 			contexts,
 			indexes,
 			changeableIndexes,
@@ -302,7 +298,7 @@ const preprocessors = {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) => {
-		if (node.name === 'slot') {
+		if (node.name === 'slot' || node.name === 'option') {
 			cannotUseInnerHTML(node);
 		}
 
@@ -312,7 +308,7 @@ const preprocessors = {
 					if (chunk.type !== 'Text') {
 						if (node.parent) cannotUseInnerHTML(node.parent);
 
-						const dependencies = block.findDependencies(chunk.expression);
+						const dependencies = chunk.metadata.dependencies;
 						block.addDependencies(dependencies);
 
 						// special case — <option value='{{foo}}'> — see below
@@ -334,12 +330,10 @@ const preprocessors = {
 
 				if (attribute.type === 'EventHandler' && attribute.expression) {
 					attribute.expression.arguments.forEach((arg: Node) => {
-						const dependencies = block.findDependencies(arg);
-						block.addDependencies(dependencies);
+						block.addDependencies(arg.metadata.dependencies);
 					});
 				} else if (attribute.type === 'Binding') {
-					const dependencies = block.findDependencies(attribute.value);
-					block.addDependencies(dependencies);
+					block.addDependencies(attribute.metadata.dependencies);
 				} else if (attribute.type === 'Transition') {
 					if (attribute.intro)
 						generator.hasIntroTransitions = block.hasIntroMethod = true;
@@ -350,6 +344,19 @@ const preprocessors = {
 				}
 			}
 		});
+
+		const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
+
+		// Treat these the same way:
+		//   <option>{{foo}}</option>
+		//   <option value='{{foo}}'>{{foo}}</option>
+		if (node.name === 'option' && !valueAttribute) {
+			node.attributes.push({
+				type: 'Attribute',
+				name: 'value',
+				value: node.children
+			});
+		}
 
 		// special case — in a case like this...
 		//
@@ -362,14 +369,10 @@ const preprocessors = {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (node.name === 'select') {
-			cannotUseInnerHTML(node);
-
-			const value = node.attributes.find(
-				(attribute: Node) => attribute.name === 'value'
-			);
-			if (value) {
+			const binding = node.attributes.find((node: Node) => node.type === 'Binding' && node.name === 'value');
+			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = block.findDependencies(value.value);
+				const dependencies = binding.metadata.dependencies;
 				state.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					generator.indirectDependencies.set(prop, new Set());
@@ -407,7 +410,6 @@ const preprocessors = {
 			);
 
 			node._state = getChildState(state, {
-				isTopLevel: false,
 				parentNode: node.var,
 				parentNodes: block.getUniqueName(`${node.var}_nodes`),
 				parentNodeName: node.name,
@@ -447,8 +449,17 @@ function preprocessChildren(
 	const cleaned: Node[] = [];
 	let lastChild: Node;
 
+	let windowComponent;
+
 	node.children.forEach((child: Node) => {
 		if (child.type === 'Comment') return;
+
+		// special case — this is an easy way to remove whitespace surrounding
+		// <:Window/>. lil hacky but it works
+		if (child.type === 'Element' && child.name === ':Window') {
+			windowComponent = child;
+			return;
+		}
 
 		if (child.type === 'Text' && lastChild && lastChild.type === 'Text') {
 			lastChild.data += child.data;
@@ -500,6 +511,7 @@ function preprocessChildren(
 	}
 
 	node.children = cleaned;
+	if (windowComponent) cleaned.unshift(windowComponent);
 }
 
 export default function preprocess(
@@ -515,7 +527,6 @@ export default function preprocess(
 		contexts: new Map(),
 		indexes: new Map(),
 		changeableIndexes: new Map(),
-		contextDependencies: new Map(),
 
 		params: ['state'],
 		indexNames: new Map(),

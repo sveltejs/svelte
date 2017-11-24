@@ -84,7 +84,6 @@ function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._root = options._root || component;
-	component._yield = options._yield;
 	component._bind = options._bind;
 }
 
@@ -146,9 +145,12 @@ function _set(newState) {
 	this._state = assign({}, oldState, newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
-	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.p(changed, this._state);
-	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+
+	if (this._fragment) {
+		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this._fragment.p(changed, this._state);
+		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+	}
 }
 
 function callAll(fns) {
@@ -205,7 +207,7 @@ class SvelteComponent extends HTMLElement {
 	constructor(options = {}) {
 		super();
 		init(this, options);
-		this._state = options.data || {};
+		this._state = assign({}, options.data);
 
 		this.attachShadow({ mode: 'open' });
 		this.shadowRoot.innerHTML = `<style>div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}</style>`;

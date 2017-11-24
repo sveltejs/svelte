@@ -1,0 +1,13 @@
+<Nested>
+	{{#each things as thing}}
+		<span>{{thing}}</span>
+	{{/each}}
+</Nested>
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		components: { Nested }
+	};
+</script>

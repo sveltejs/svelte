@@ -1,4 +1,5 @@
 import deindent from '../../../utils/deindent';
+import list from '../../../utils/list';
 import { CompileOptions, ModuleFormat, Node } from '../../../interfaces';
 
 interface Dependency {
@@ -65,7 +66,7 @@ export default function wrapModule(
 	if (format === 'umd') return umd(code, name, options, banner, dependencies);
 	if (format === 'eval') return expr(code, name, options, banner, dependencies);
 
-	throw new Error(`Not implemented: ${format}`);
+	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
 
 function es(
@@ -206,7 +207,7 @@ function umd(
 		(function(global, factory) {
 			typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory(${cjsDeps}) :
 			typeof define === "function" && define.amd ? define(${amdId}${amdDeps}factory) :
-			(global.${options.name} = factory(${globals}));
+			(global.${options.name} = factory(${globals.join(', ')}));
 		}(this, (function (${paramString(dependencies)}) { "use strict";
 
 			${getCompatibilityStatements(dependencies)}
@@ -272,21 +273,13 @@ function getGlobals(dependencies: Dependency[], options: CompileOptions) {
 				const error = new Error(
 					`Could not determine name for imported module '${d.source}' – use options.globals`
 				);
-				if (onerror) {
-					onerror(error);
-				} else {
-					throw error;
-				}
+				onerror(error);
 			} else {
 				const warning = {
 					message: `No name was supplied for imported module '${d.source}'. Guessing '${d.name}', but you should use options.globals`,
 				};
 
-				if (onwarn) {
-					onwarn(warning);
-				} else {
-					console.warn(warning); // eslint-disable-line no-console
-				}
+				onwarn(warning);
 			}
 
 			name = d.name;

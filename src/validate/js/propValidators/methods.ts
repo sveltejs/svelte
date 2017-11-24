@@ -2,6 +2,7 @@ import checkForAccessors from '../utils/checkForAccessors';
 import checkForDupes from '../utils/checkForDupes';
 import checkForComputedKeys from '../utils/checkForComputedKeys';
 import usesThisOrArguments from '../utils/usesThisOrArguments';
+import getName from '../../../utils/getName';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
 
@@ -13,7 +14,6 @@ export default function methods(validator: Validator, prop: Node) {
 			`The 'methods' property must be an object literal`,
 			prop.start
 		);
-		return;
 	}
 
 	checkForAccessors(validator, prop.value.properties, 'Methods');
@@ -21,9 +21,11 @@ export default function methods(validator: Validator, prop: Node) {
 	checkForComputedKeys(validator, prop.value.properties);
 
 	prop.value.properties.forEach((prop: Node) => {
-		if (builtin.has(prop.key.name)) {
+		const name = getName(prop.key);
+
+		if (builtin.has(name)) {
 			validator.error(
-				`Cannot overwrite built-in method '${prop.key.name}'`,
+				`Cannot overwrite built-in method '${name}'`,
 				prop.start
 			);
 		}

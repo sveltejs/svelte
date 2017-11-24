@@ -95,8 +95,8 @@ function create_each_block(state, comments, comment, i, component) {
 		},
 
 		h: function hydrate() {
-			div.className = "comment";
 			span.className = "meta";
+			div.className = "comment";
 		},
 
 		m: function mount(target, anchor) {
@@ -139,7 +139,7 @@ function create_each_block(state, comments, comment, i, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._state = options.data || {};
+	this._state = assign({}, options.data);
 
 	this._fragment = create_main_fragment(this._state, this);
 

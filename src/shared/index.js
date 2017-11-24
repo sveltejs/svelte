@@ -70,7 +70,6 @@ export function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._root = options._root || component;
-	component._yield = options._yield;
 	component._bind = options._bind;
 }
 
@@ -157,9 +156,12 @@ export function _set(newState) {
 	this._state = assign({}, oldState, newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
-	dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
-	this._fragment.p(changed, this._state);
-	dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+
+	if (this._fragment) {
+		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this._fragment.p(changed, this._state);
+		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+	}
 }
 
 export function _setDev(newState) {

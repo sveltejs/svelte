@@ -16,7 +16,8 @@ export default function visitComponent(
 	function stringifyAttribute(chunk: Node) {
 		if (chunk.type === 'Text') return chunk.data;
 		if (chunk.type === 'MustacheTag') {
-			const { snippet } = block.contextualise(chunk.expression);
+			block.contextualise(chunk.expression);
+			const { snippet } = chunk.metadata;
 			return '${__escape( ' + snippet + ')}';
 		}
 	}
@@ -45,7 +46,8 @@ export default function visitComponent(
 				if (chunk.type === 'Text') {
 					value = isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
 				} else {
-					const { snippet } = block.contextualise(chunk.expression);
+					block.contextualise(chunk.expression);
+					const { snippet } = chunk.metadata;
 					value = snippet;
 				}
 			} else {

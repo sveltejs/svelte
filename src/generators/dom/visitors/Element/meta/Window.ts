@@ -28,7 +28,7 @@ export default function visitWindow(
 	node: Node
 ) {
 	const events = {};
-	const bindings = {};
+	const bindings: Record<string, string> = {};
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'EventHandler') {
@@ -38,7 +38,8 @@ export default function visitWindow(
 			let usesState = false;
 
 			attribute.expression.arguments.forEach((arg: Node) => {
-				const { dependencies } = block.contextualise(arg, null, true);
+				block.contextualise(arg, null, true);
+				const { dependencies } = arg.metadata;
 				if (dependencies.length) usesState = true;
 			});
 
@@ -60,7 +61,7 @@ export default function visitWindow(
 			block.builders.init.addBlock(deindent`
 				function ${handlerName}(event) {
 					${handlerBody}
-				};
+				}
 				window.addEventListener("${attribute.name}", ${handlerName});
 			`);
 
@@ -81,10 +82,6 @@ export default function visitWindow(
 			if (attribute.name === 'online') return;
 
 			const associatedEvent = associatedEvents[attribute.name];
-
-			if (!associatedEvent) {
-				throw new Error(`Cannot bind to ${attribute.name} on <:Window>`);
-			}
 
 			if (!events[associatedEvent]) events[associatedEvent] = [];
 			events[associatedEvent].push(
@@ -124,7 +121,7 @@ export default function visitWindow(
 		block.builders.init.addBlock(deindent`
 			function ${handlerName}(event) {
 				${handlerBody}
-			};
+			}
 			window.addEventListener("${event}", ${handlerName});
 		`);
 
@@ -147,7 +144,7 @@ export default function visitWindow(
 					? `#component.get("${bindings.scrollY}")`
 					: `window.scrollY`};
 				window.scrollTo(x, y);
-			};
+			}
 		`);
 
 		if (bindings.scrollX)
@@ -175,7 +172,7 @@ export default function visitWindow(
 		block.builders.init.addBlock(deindent`
 			function ${handlerName}(event) {
 				#component.set({ ${bindings.online}: navigator.onLine });
-			};
+			}
 			window.addEventListener("online", ${handlerName});
 			window.addEventListener("offline", ${handlerName});
 		`);

@@ -1,5 +1,59 @@
 # Svelte changelog
 
+## 1.42.1
+
+* Correctly append items inside a slotted `each` block ([#932](https://github.com/sveltejs/svelte/pull/932))
+* Fix `<:Window bind:online/>` ([#936](https://github.com/sveltejs/svelte/issues/936))
+* Attach globals to state upon initialisation ([#908](https://github.com/sveltejs/svelte/issues/908))
+
+## 1.42.0
+
+* Implement `indeterminate` binding for checkbox inputs ([#910](https://github.com/sveltejs/svelte/issues/910))
+* Use `<option>` children as `value` attribute if none exists ([#928](https://github.com/sveltejs/svelte/issues/928))
+* Allow quoted property names in default export and sub-properties ([#914](https://github.com/sveltejs/svelte/issues/914))
+* Various improvements to generated code for bindings
+
+## 1.41.4
+
+* Handle self-destructive bindings ([#917](https://github.com/sveltejs/svelte/issues/917))
+* Prevent `innerHTML` with `<option>` elements ([#915](https://github.com/sveltejs/svelte/issues/915))
+* Use `dataset` unless `legacy` is true ([#858](https://github.com/sveltejs/svelte/issues/858))
+* Add `prepare` script to facilitate installing from git ([#923](https://github.com/sveltejs/svelte/pull/923))
+
+## 1.41.3
+
+* Prevent argument name clashes ([#911](https://github.com/sveltejs/svelte/issues/911))
+* Fix UMD factory arguments ([#918](https://github.com/sveltejs/svelte/pull/918))
+* Don't attempt to set computed values ([#893](https://github.com/sveltejs/svelte/issues/893))
+* Fix TypeScript build error ([#919](https://github.com/sveltejs/svelte/issues/919))
+
+## 1.41.2
+
+* Handle attribute selectors with no value ([#905](https://github.com/sveltejs/svelte/issues/905))
+* Retain `async` keyword when extracting functions ([#904](https://github.com/sveltejs/svelte/issues/904))
+* Shallow clone `data` on initialisation ([#891](https://github.com/sveltejs/svelte/pull/891))
+
+## 1.41.1
+
+* Fix updates of destructured each blocks ([#897](https://github.com/sveltejs/svelte/pull/897))
+* Don't warn on `options.*` event handler callee ([#900](https://github.com/sveltejs/svelte/pull/900))
+
+## 1.41.0
+
+* `onwarn` and `onerror` receive default handlers as second arguments ([#883](https://github.com/sveltejs/svelte/pull/883))
+* Recognise `muted` as boolean property on `<audio>` elements ([#886](https://github.com/sveltejs/svelte/pull/886))
+* Array destructuring for `each` block contexts ([#889](https://github.com/sveltejs/svelte/pull/889))
+
+## 1.40.2
+
+* Ignore `@apply` and similar in CSS ([#871](https://github.com/sveltejs/svelte/issues/871))
+* Properly escape CSS in custom elements ([#872](https://github.com/sveltejs/svelte/issues/872))
+
+## 1.40.1
+
+* Always use explicit closing tags with `innerHTML` ([#866](https://github.com/sveltejs/svelte/issues/866))
+* Escape text in `textContent` and `innerHTML` expressions ([#868](https://github.com/sveltejs/svelte/issues/868))
+
 ## 1.40.0
 
 * Short fragment method names ([#863](https://github.com/sveltejs/svelte/pull/863))
