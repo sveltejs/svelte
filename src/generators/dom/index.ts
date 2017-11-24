@@ -227,7 +227,7 @@ export default function dom(
 		${(templateProperties.ondestroy || storeProps.length) && (
 			`this._handlers.destroy = [${
 				[templateProperties.ondestroy && `%ondestroy`, storeProps.length && `@removeFromStore`].filter(Boolean).join(', ')
-			}]`
+			}];`
 		)}
 
 		${generator.slots.size && `this._slotted = options.slots || {};`}

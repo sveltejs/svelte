@@ -24,7 +24,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	this._handlers.destroy = [ondestroy]
+	this._handlers.destroy = [ondestroy];
 
 	var _oncreate = oncreate.bind(this);
 
