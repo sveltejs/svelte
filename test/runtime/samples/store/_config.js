@@ -5,8 +5,6 @@ const store = new Store({
 });
 
 export default {
-	solo: true,
-
 	store,
 
 	html: `<h1>Hello world!</h1>`,
