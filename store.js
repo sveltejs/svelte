@@ -19,9 +19,6 @@ function Store(state) {
 }
 
 assign(Store.prototype, {
-	get,
-	observe
-}, {
 	_add: function(component, props) {
 		this._dependents.push({
 			component: component,
@@ -31,7 +28,7 @@ assign(Store.prototype, {
 
 	_init: function(props) {
 		var state = {};
-		for (let i = 0; i < props.length; i += 1) {
+		for (var i = 0; i < props.length; i += 1) {
 			var prop = props[i];
 			state['$' + prop] = this._state[prop];
 		}
@@ -39,7 +36,7 @@ assign(Store.prototype, {
 	},
 
 	_remove: function(component) {
-		let i = this._dependents.length;
+		var i = this._dependents.length;
 		while (i--) {
 			if (this._dependents[i].component === component) {
 				this._dependents.splice(i, 1);
@@ -48,7 +45,7 @@ assign(Store.prototype, {
 		}
 	},
 
-	_sortComputedProperties() {
+	_sortComputedProperties: function() {
 		var computed = this._computed;
 		var sorted = this._sortedComputedProperties = [];
 		var visited = blankObject();
@@ -94,6 +91,10 @@ assign(Store.prototype, {
 		this._computed[key] = c;
 		this._sortComputedProperties();
 	},
+
+	get: get,
+
+	observe: observe,
 
 	onchange: function(callback) {
 		this._changeHandlers.push(callback);
@@ -153,11 +154,11 @@ function combineStores(children, store) {
 	if (!store) store = new Store();
 	var updates = {};
 
-	for (const key in children) {
-		const child = children[key];
+	for (var key in children) {
+		var child = children[key];
 		updates[key] = child.get();
 
-		child.onchange(state => {
+		child.onchange(function(state) {
 			var update = {};
 			update[key] = state;
 			store.set(update);
