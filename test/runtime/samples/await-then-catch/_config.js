@@ -13,38 +13,37 @@ export default {
 		<p>loading...</p>
 	`,
 
-	async test(assert, component, target) {
+	test(assert, component, target) {
 		fulfil(42);
-		await thePromise;
 
-		assert.htmlEqual(target.innerHTML, `
-			<p>the value is 42</p>
-		`);
+		return thePromise
+			.then(() => {
+				assert.htmlEqual(target.innerHTML, `
+					<p>the value is 42</p>
+				`);
 
-		let reject;
+				let reject;
 
-		thePromise = new Promise((f, r) => {
-			reject = r;
-		});
+				thePromise = new Promise((f, r) => {
+					reject = r;
+				});
 
-		component.set({
-			thePromise
-		});
+				component.set({
+					thePromise
+				});
 
-		assert.htmlEqual(target.innerHTML, `
-			<p>loading...</p>
-		`);
+				assert.htmlEqual(target.innerHTML, `
+					<p>loading...</p>
+				`);
 
-		reject(new Error('something broke'));
+				reject(new Error('something broke'));
 
-		try {
-			await thePromise;
-		} catch (err) {
-			// do nothing
-		}
-
-		assert.htmlEqual(target.innerHTML, `
-			<p>oh no! something broke</p>
-		`);
+				return thePromise.catch(() => {});
+			})
+			.then(() => {
+				assert.htmlEqual(target.innerHTML, `
+					<p>oh no! something broke</p>
+				`);
+			});
 	}
 };
