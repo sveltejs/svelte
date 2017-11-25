@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.43.0
+
+* Export `Store` class to manage global state ([#930](https://github.com/sveltejs/svelte/issues/930))
+* Recognise `aria-current` ([#953](https://github.com/sveltejs/svelte/pull/953))
+* Support SSR register options including `extensions` ([#939](https://github.com/sveltejs/svelte/issues/939))
+* Friendlier error for illegal contexts ([#934](https://github.com/sveltejs/svelte/issues/934))
+* Remove whitespace around `<:Window>` components ([#943](https://github.com/sveltejs/svelte/issues/943))
+
 ## 1.42.1
 
 * Correctly append items inside a slotted `each` block ([#932](https://github.com/sveltejs/svelte/pull/932))
