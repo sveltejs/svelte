@@ -88,9 +88,13 @@ export default function visitAwaitBlock(
 					return true;
 				}
 			} else {
+				${resolved} = ${promise};
 				if (${await_block_type} !== ${create_then_block}) {
-					if (${await_block}) ${await_block}.d();
-					${await_block} = (${await_block_type} = ${create_then_block})(${params}, ${resolved} = promise, #component);
+					if (${await_block}) {
+						${await_block}.u();
+						${await_block}.d();
+					}
+					${await_block} = (${await_block_type} = ${create_then_block})(${params}, ${resolved}, #component);
 					return true;
 				}
 			}
