@@ -8,10 +8,20 @@ import {
 } from './shared.js';
 
 function Store(state) {
-	this._state = state ? assign({}, state) : {};
 	this._observers = { pre: blankObject(), post: blankObject() };
 	this._changeHandlers = [];
 	this._dependents = [];
+
+	this._proto = blankObject();
+	this._changed = blankObject();
+	this._dependentProps = blankObject();
+	this._dirty = blankObject();
+	this._state = Object.create(this._proto);
+
+	for (var key in state) {
+		this._changed[key] = true;
+		this._state[key] = state[key];
+	}
 }
 
 assign(Store.prototype, {
@@ -23,6 +33,17 @@ assign(Store.prototype, {
 			component: component,
 			props: props
 		});
+	},
+
+	_makeDirty: function(prop) {
+		var dependentProps = this._dependentProps[prop];
+		if (dependentProps) {
+			for (var i = 0; i < dependentProps.length; i += 1) {
+				var dependentProp = dependentProps[i];
+				this._dirty[dependentProp] = this._changed[dependentProp] = true;
+				this._makeDirty(dependentProp);
+			}
+		}
 	},
 
 	_init: function(props) {
@@ -44,6 +65,52 @@ assign(Store.prototype, {
 		}
 	},
 
+	compute: function(key, deps, fn) {
+		var store = this;
+		var value;
+
+		store._dirty[key] = true;
+
+		for (var i = 0; i < deps.length; i += 1) {
+			var dep = deps[i];
+			if (!this._dependentProps[dep]) this._dependentProps[dep] = [];
+			this._dependentProps[dep].push(key);
+		}
+
+		Object.defineProperty(this._proto, key, {
+			get: function() {
+				if (store._dirty[key]) {
+					var values = deps.map(function(dep) {
+						if (dep in store._changed) changed = true;
+						return store._state[dep];
+					});
+
+					var newValue = fn.apply(null, values);
+
+					if (differs(newValue, value)) {
+						value = newValue;
+						store._changed[key] = true;
+
+						var dependentProps = store._dependentProps[key];
+						if (dependentProps) {
+							for (var i = 0; i < dependentProps.length; i += 1) {
+								var prop = dependentProps[i];
+								store._dirty[prop] = store._changed[prop] = true;
+							}
+						}
+					}
+
+					store._dirty[key] = false;
+				}
+
+				return value;
+			},
+			set: function() {
+				throw new Error(`'${key}' is a read-only property`);
+			}
+		});
+	},
+
 	onchange: function(callback) {
 		this._changeHandlers.push(callback);
 		return {
@@ -56,7 +123,7 @@ assign(Store.prototype, {
 
 	set: function(newState) {
 		var oldState = this._state,
-			changed = {},
+			changed = this._changed = {},
 			dirty = false;
 
 		for (var key in newState) {
@@ -64,7 +131,9 @@ assign(Store.prototype, {
 		}
 		if (!dirty) return;
 
-		this._state = assign({}, oldState, newState);
+		this._state = assign(Object.create(this._proto), oldState, newState);
+
+		for (var key in changed) this._makeDirty(key);
 
 		for (var i = 0; i < this._changeHandlers.length; i += 1) {
 			this._changeHandlers[i](this._state, changed);
