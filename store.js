@@ -12,16 +12,10 @@ function Store(state) {
 	this._changeHandlers = [];
 	this._dependents = [];
 
-	this._proto = blankObject();
-	this._changed = blankObject();
-	this._dependentProps = blankObject();
-	this._dirty = blankObject();
-	this._state = Object.create(this._proto);
+	this._computed = blankObject();
+	this._sortedComputedProperties = [];
 
-	for (var key in state) {
-		this._changed[key] = true;
-		this._state[key] = state[key];
-	}
+	this._state = assign({}, state);
 }
 
 assign(Store.prototype, {
@@ -33,17 +27,6 @@ assign(Store.prototype, {
 			component: component,
 			props: props
 		});
-	},
-
-	_makeDirty: function(prop) {
-		var dependentProps = this._dependentProps[prop];
-		if (dependentProps) {
-			for (var i = 0; i < dependentProps.length; i += 1) {
-				var dependentProp = dependentProps[i];
-				this._dirty[dependentProp] = this._changed[dependentProp] = true;
-				this._makeDirty(dependentProp);
-			}
-		}
 	},
 
 	_init: function(props) {
@@ -65,51 +48,51 @@ assign(Store.prototype, {
 		}
 	},
 
+	_sortComputedProperties() {
+		var computed = this._computed;
+		var sorted = this._sortedComputedProperties = [];
+		var visited = blankObject();
+
+		function visit(key) {
+			if (visited[key]) return;
+			var c = computed[key];
+
+			if (c) {
+				c.deps.forEach(visit);
+				sorted.push(c);
+			}
+		}
+
+		for (var key in this._computed) visit(key);
+	},
+
 	compute: function(key, deps, fn) {
 		var store = this;
 		var value;
 
-		store._dirty[key] = true;
+		var c = {
+			deps: deps,
+			update: function(state, changed, dirty) {
+				var values = deps.map(function(dep) {
+					if (dep in changed) dirty = true;
+					return state[dep];
+				});
 
-		for (var i = 0; i < deps.length; i += 1) {
-			var dep = deps[i];
-			if (!this._dependentProps[dep]) this._dependentProps[dep] = [];
-			this._dependentProps[dep].push(key);
-		}
-
-		Object.defineProperty(this._proto, key, {
-			enumerable: true,
-			get: function() {
-				if (store._dirty[key]) {
-					var values = deps.map(function(dep) {
-						if (dep in store._changed) changed = true;
-						return store._state[dep];
-					});
-
+				if (dirty) {
 					var newValue = fn.apply(null, values);
-
 					if (differs(newValue, value)) {
 						value = newValue;
-						store._changed[key] = true;
-
-						var dependentProps = store._dependentProps[key];
-						if (dependentProps) {
-							for (var i = 0; i < dependentProps.length; i += 1) {
-								var prop = dependentProps[i];
-								store._dirty[prop] = store._changed[prop] = true;
-							}
-						}
+						changed[key] = true;
+						state[key] = value;
 					}
-
-					store._dirty[key] = false;
 				}
-
-				return value;
-			},
-			set: function() {
-				throw new Error(`'${key}' is a read-only property`);
 			}
-		});
+		};
+
+		c.update(this._state, {}, true);
+
+		this._computed[key] = c;
+		this._sortComputedProperties();
 	},
 
 	onchange: function(callback) {
@@ -128,13 +111,16 @@ assign(Store.prototype, {
 			dirty = false;
 
 		for (var key in newState) {
+			if (this._computed[key]) throw new Error("'" + key + "' is a read-only property");
 			if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
 		}
 		if (!dirty) return;
 
-		this._state = assign(Object.create(this._proto), oldState, newState);
+		this._state = assign({}, oldState, newState);
 
-		for (var key in changed) this._makeDirty(key);
+		for (var i = 0; i < this._sortedComputedProperties.length; i += 1) {
+			this._sortedComputedProperties[i].update(this._state, changed);
+		}
 
 		for (var i = 0; i < this._changeHandlers.length; i += 1) {
 			this._changeHandlers[i](this._state, changed);
@@ -176,8 +162,6 @@ function combineStores(store, children) {
 			store.set(update);
 		});
 	}
-
-	console.log('updates', updates);
 
 	store.set(updates);
 	return store;

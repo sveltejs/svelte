@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { Store, combineStores } from '../../store.js';
 
-describe('store', () => {
+describe.only('store', () => {
 	describe('get', () => {
 		it('gets a specific key', () => {
 			const store = new Store({
@@ -177,6 +177,17 @@ describe('store', () => {
 				},
 				total: 10
 			});
+
+			const values = [];
+
+			c.observe('total', total => {
+				values.push(total);
+			});
+
+			a.set({ x: 2, y: 3 });
+			b.set({ x: 5, y: 6 });
+
+			assert.deepEqual(values, [10, 12, 16]);
 		});
 	});
 });
