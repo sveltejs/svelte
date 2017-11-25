@@ -51,15 +51,6 @@ export default function visitAwaitBlock(
 	const create_then_block = node.then._block.name;
 	const create_catch_block = node.catch._block.name;
 
-	const conditions = [];
-	if (node.metadata.dependencies) {
-		conditions.push(
-			`(${node.metadata.dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
-		);
-	}
-
-	conditions.push(`${promise} !== (${promise} = ${snippet})`);
-
 	block.addVariable(await_block);
 	block.addVariable(await_block_type);
 	block.addVariable(await_token);
@@ -89,7 +80,10 @@ export default function visitAwaitBlock(
 
 				// if we previously had a then/catch block, destroy it
 				if (${await_block_type} !== ${create_pending_block}) {
-					if (${await_block}) ${await_block}.d();
+					if (${await_block}) {
+						${await_block}.u();
+						${await_block}.d();
+					}
 					${await_block} = (${await_block_type} = ${create_pending_block})(${params}, ${resolved} = null, #component);
 					return true;
 				}
@@ -119,6 +113,36 @@ export default function visitAwaitBlock(
 	block.builders.mount.addBlock(deindent`
 		${await_block}.m(${targetNode}, ${anchor});
 	`);
+
+	const conditions = [];
+	if (node.metadata.dependencies) {
+		conditions.push(
+			`(${node.metadata.dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
+		);
+	}
+
+	conditions.push(
+		`${promise} !== (${promise} = ${snippet})`,
+		`${handle_promise}(${promise}, ${params})`
+	);
+
+	if (node.pending._block.hasUpdateMethod) {
+		block.builders.update.addBlock(deindent`
+			if (${conditions.join(' && ')}) {
+				${await_block}.c();
+				${await_block}.m(${anchor}.parentNode, ${anchor});
+			} else {
+				${await_block}.p(changed, ${params}, ${resolved});
+			}
+		`);
+	} else {
+		block.builders.update.addBlock(deindent`
+			if (${conditions.join(' && ')}) {
+				${await_block}.c();
+				${await_block}.m(${anchor}.parentNode, ${anchor});
+			}
+		`);
+	}
 
 	block.builders.destroy.addBlock(deindent`
 		${await_token} = null;

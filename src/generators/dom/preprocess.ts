@@ -124,6 +124,8 @@ const preprocessors = {
 		node.var = block.getUniqueName('await_block');
 		block.addDependencies(node.metadata.dependencies);
 
+		let dynamic = false;
+
 		[
 			['pending', null],
 			['then', node.value],
@@ -147,7 +149,16 @@ const preprocessors = {
 
 			preprocessChildren(generator, child._block, child._state, child, inEachBlock, elementStack, componentStack, stripWhitespace, nextSibling);
 			generator.blocks.push(child._block);
+
+			if (child._block.dependencies.size > 0) {
+				dynamic = true;
+				block.addDependencies(child._block.dependencies);
+			}
 		});
+
+		node.pending._block.hasUpdateMethod = dynamic;
+		node.then._block.hasUpdateMethod = dynamic;
+		node.catch._block.hasUpdateMethod = dynamic;
 	},
 
 	IfBlock: (

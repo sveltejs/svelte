@@ -5,8 +5,6 @@ let thePromise = new Promise(f => {
 });
 
 export default {
-	solo: true,
-
 	data: {
 		thePromise
 	},
@@ -38,7 +36,12 @@ export default {
 		`);
 
 		reject(new Error('something broke'));
-		await thePromise;
+
+		try {
+			await thePromise;
+		} catch (err) {
+			// do nothing
+		}
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>oh no! something broke</p>
