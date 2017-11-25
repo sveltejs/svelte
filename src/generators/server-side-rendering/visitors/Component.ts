@@ -79,6 +79,11 @@ export default function visitComponent(
 
 	let open = `\${${expression}.render({${props}}`;
 
+	const options = [];
+	if (generator.options.store) {
+		options.push(`store: options.store`);
+	}
+
 	if (node.children.length) {
 		const appendTarget: AppendTarget = {
 			slots: { default: '' },
@@ -95,9 +100,13 @@ export default function visitComponent(
 			.map(name => `${name}: () => \`${appendTarget.slots[name]}\``)
 			.join(', ');
 
-		open += `, { slotted: { ${slotted} } }`;
+		options.push(`slotted: { ${slotted} }`);
 
 		generator.appendTargets.pop();
+	}
+
+	if (options.length) {
+		open += `, { ${options.join(', ')} }`;
 	}
 
 	generator.append(open);

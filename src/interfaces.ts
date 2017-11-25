@@ -56,6 +56,7 @@ export interface CompileOptions {
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
+	store?: boolean;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;

@@ -1,6 +1,10 @@
 export default {
 	dev: true,
 
+	data: {
+		a: 42
+	},
+
 	test ( assert, component ) {
 		try {
 			component.set({ foo: 1 });
