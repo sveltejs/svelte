@@ -5,8 +5,6 @@ import reservedNames from '../../utils/reservedNames';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
-const validIdentifier = /[a-zA-Z_$][a-zA-Z0-9_$]*/;
-
 function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
 	const firstChild = block.children[0];
 	const lastChild = block.children[block.children.length - 1];
@@ -41,16 +39,20 @@ export default function mustache(parser: Parser) {
 		let block = parser.current();
 		let expected;
 
-		if (block.type === 'ElseBlock') {
+		if (block.type === 'ElseBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
 			block.end = start;
 			parser.stack.pop();
 			block = parser.current();
+
+			expected = 'await';
 		}
 
 		if (block.type === 'IfBlock') {
 			expected = 'if';
 		} else if (block.type === 'EachBlock') {
 			expected = 'each';
+		} else if (block.type === 'AwaitBlock') {
+			expected = 'await';
 		} else {
 			parser.error(`Unexpected block closing tag`);
 		}
@@ -131,6 +133,50 @@ export default function mustache(parser: Parser) {
 		};
 
 		parser.stack.push(block.else);
+	} else if (parser.eat('then')) {
+		// {{then}} is valid by itself — we need to check that a)
+		// we're inside an await block, and b) there's an expression
+		const awaitBlock = parser.current();
+		if (awaitBlock.type === 'AwaitBlock') {
+			parser.requireWhitespace();
+			awaitBlock.value = parser.readIdentifier();
+
+			parser.allowWhitespace();
+			parser.eat('}}', true);
+
+			const thenBlock: Node = {
+				start,
+				end: null,
+				type: 'ThenBlock',
+				children: []
+			};
+
+			awaitBlock.then = thenBlock;
+			parser.stack.push(thenBlock);
+		}
+	} else if (parser.eat('catch')) {
+		const thenBlock = parser.current();
+		if (thenBlock.type === 'ThenBlock') {
+			thenBlock.end = start;
+			parser.stack.pop();
+			const awaitBlock = parser.current();
+
+			parser.requireWhitespace();
+			awaitBlock.error = parser.readIdentifier();
+
+			parser.allowWhitespace();
+			parser.eat('}}', true);
+
+			const catchBlock: Node = {
+				start,
+				end: null,
+				type: 'CatchBlock',
+				children: []
+			};
+
+			awaitBlock.catch = catchBlock;
+			parser.stack.push(catchBlock);
+		}
 	} else if (parser.eat('#')) {
 		// {{#if foo}} or {{#each foo}}
 		let type;
@@ -139,8 +185,10 @@ export default function mustache(parser: Parser) {
 			type = 'IfBlock';
 		} else if (parser.eat('each')) {
 			type = 'EachBlock';
+		} else if (parser.eat('await')) {
+			type = 'AwaitBlock';
 		} else {
-			parser.error(`Expected if or each`);
+			parser.error(`Expected if, each or await`);
 		}
 
 		parser.requireWhitespace();
@@ -170,13 +218,8 @@ export default function mustache(parser: Parser) {
 				do {
 					parser.allowWhitespace();
 
-					const start = parser.index;
-					const destructuredContext = parser.read(validIdentifier);
-
+					const destructuredContext = parser.readIdentifier();
 					if (!destructuredContext) parser.error(`Expected name`);
-					if (reservedNames.has(destructuredContext)) {
-						parser.error(`'${destructuredContext}' is a reserved word in JavaScript and cannot be used here`, start);
-					}
 
 					block.destructuredContexts.push(destructuredContext);
 					parser.allowWhitespace();
@@ -188,12 +231,7 @@ export default function mustache(parser: Parser) {
 				parser.allowWhitespace();
 				parser.eat(']', true);
 			} else {
-				const start = parser.index;
-				block.context = parser.read(validIdentifier);
-				if (reservedNames.has(block.context)) {
-					parser.error(`'${block.context}' is a reserved word in JavaScript and cannot be used here`, start);
-				}
-
+				block.context = parser.readIdentifier();
 				if (!block.context) parser.error(`Expected name`);
 			}
 
@@ -201,13 +239,13 @@ export default function mustache(parser: Parser) {
 
 			if (parser.eat(',')) {
 				parser.allowWhitespace();
-				block.index = parser.read(validIdentifier);
+				block.index = parser.readIdentifier();
 				if (!block.index) parser.error(`Expected name`);
 				parser.allowWhitespace();
 			}
 
 			if (parser.eat('@')) {
-				block.key = parser.read(validIdentifier);
+				block.key = parser.readIdentifier();
 				if (!block.key) parser.error(`Expected name`);
 				parser.allowWhitespace();
 			}
