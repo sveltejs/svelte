@@ -183,8 +183,9 @@ export default function visitElement(
 
 		// get a name for the event handler that is globally unique
 		// if hoisted, locally unique otherwise
+		const sanitized = attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_');
 		const handlerName = (shouldHoist ? generator : block).getUniqueName(
-			`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+			`${sanitized}_handler`
 		);
 
 		// create the handler body
@@ -201,7 +202,7 @@ export default function visitElement(
 			block.addVariable(handlerName);
 
 			block.builders.hydrate.addBlock(deindent`
-				${handlerName} = %events-${attribute.name}.call(#component, ${name}, function(event) {
+				${handlerName} = %events-${sanitized}.call(#component, ${name}, function(event) {
 					${handlerBody}
 				});
 			`);
@@ -210,24 +211,29 @@ export default function visitElement(
 				${handlerName}.teardown();
 			`);
 		} else {
-			const handler = deindent`
-				function ${handlerName}(event) {
-					${handlerBody}
-				}
-			`;
+			const remove_handler = block.getUniqueName(`remove_${name}_${sanitized}_handler`);
+			block.addVariable(remove_handler);
 
 			if (shouldHoist) {
-				generator.blocks.push(handler);
+				generator.blocks.push(deindent`
+					function ${handlerName}(event) {
+						${handlerBody}
+					}
+				`);
+
+				block.builders.hydrate.addLine(
+					`${remove_handler} = @listen(${name}, "${attribute.name}", ${handlerName});`
+				);
 			} else {
-				block.builders.init.addBlock(handler);
+				block.builders.hydrate.addBlock(deindent`
+					${remove_handler} = @listen(${name}, "${attribute.name}", function (event) {
+						${handlerBody}
+					});
+				`);
 			}
 
-			block.builders.hydrate.addLine(
-				`@addListener(${name}, "${attribute.name}", ${handlerName});`
-			);
-
 			block.builders.destroy.addLine(
-				`@removeListener(${name}, "${attribute.name}", ${handlerName});`
+				`${remove_handler}();`
 			);
 		}
 	});

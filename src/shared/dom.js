@@ -73,6 +73,13 @@ export function createComment() {
 	return document.createComment('');
 }
 
+export function listen(node, event, handler) {
+	node.addEventListener(event, handler, false);
+	return function() {
+		node.removeEventListener(event, handler, false);
+	};
+}
+
 export function addListener(node, event, handler) {
 	node.addEventListener(event, handler, false);
 }
