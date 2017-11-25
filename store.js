@@ -154,7 +154,7 @@ function combineStores(children, store) {
 	if (!store) store = new Store();
 	var updates = {};
 
-	for (var key in children) {
+	function addChild(key) {
 		var child = children[key];
 		updates[key] = child.get();
 
@@ -164,6 +164,8 @@ function combineStores(children, store) {
 			store.set(update);
 		});
 	}
+
+	for (var key in children) addChild(key);
 
 	store.set(updates);
 	return store;
