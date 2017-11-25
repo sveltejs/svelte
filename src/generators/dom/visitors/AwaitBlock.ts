@@ -37,14 +37,13 @@ export default function visitAwaitBlock(
 
 	const promise = block.getUniqueName(`promise`);
 	const resolved = block.getUniqueName(`resolved`);
-	const status = block.getUniqueName(`status`);
-	const select_block_type = block.getUniqueName(`select_block_type`);
 	const await_block = block.getUniqueName(`await_block`);
 	const await_block_type = block.getUniqueName(`await_block_type`);
 	const token = block.getUniqueName(`token`);
 	const await_token = block.getUniqueName(`await_token`);
-	const update = block.getUniqueName(`update`);
 	const handle_promise = block.getUniqueName(`handle_promise`);
+	const replace_await_block = block.getUniqueName(`replace_await_block`);
+	const old_block = block.getUniqueName(`old_block`);
 	const value = block.getUniqueName(`value`);
 	const error = block.getUniqueName(`error`);
 	const create_pending_block = node.pending._block.name;
@@ -58,43 +57,39 @@ export default function visitAwaitBlock(
 	block.addVariable(resolved);
 
 	block.builders.init.addBlock(deindent`
+		function ${replace_await_block}(${token}, type, ${value}, ${params}) {
+			if (${token} !== ${await_token}) return;
+
+			var ${old_block} = ${await_block};
+			${await_block} = (${await_block_type} = type)(${params}, ${resolved} = ${value}, #component);
+
+			if (${old_block}) {
+				${old_block}.u();
+				${old_block}.d();
+				${await_block}.c();
+				${await_block}.m(${anchor}.parentNode, ${anchor});
+			}
+		}
+
 		function ${handle_promise}(${promise}, ${params}) {
 			var ${token} = ${await_token} = {};
 
 			if (@isPromise(${promise})) {
 				${promise}.then(function(${value}) {
-					if (${token} !== ${await_token}) return;
-					${await_block}.u();
-					${await_block}.d();
-					${await_block} = (${await_block_type} = ${create_then_block})(${params}, ${resolved} = ${value}, #component);
-					${await_block}.c();
-					${await_block}.m(${anchor}.parentNode, ${anchor});
+					${replace_await_block}(${token}, ${create_then_block}, ${value}, ${params});
 				}, function (${error}) {
-					if (${token} !== ${await_token}) return;
-					${await_block}.u();
-					${await_block}.d();
-					${await_block} = (${await_block_type} = ${create_catch_block})(${params}, ${resolved} = ${error}, #component);
-					${await_block}.c();
-					${await_block}.m(${anchor}.parentNode, ${anchor});
+					${replace_await_block}(${token}, ${create_catch_block}, ${error}, ${params});
 				});
 
 				// if we previously had a then/catch block, destroy it
 				if (${await_block_type} !== ${create_pending_block}) {
-					if (${await_block}) {
-						${await_block}.u();
-						${await_block}.d();
-					}
-					${await_block} = (${await_block_type} = ${create_pending_block})(${params}, ${resolved} = null, #component);
+					${replace_await_block}(${token}, ${create_pending_block}, null, ${params});
 					return true;
 				}
 			} else {
 				${resolved} = ${promise};
 				if (${await_block_type} !== ${create_then_block}) {
-					if (${await_block}) {
-						${await_block}.u();
-						${await_block}.d();
-					}
-					${await_block} = (${await_block_type} = ${create_then_block})(${params}, ${resolved}, #component);
+					${replace_await_block}(${token}, ${create_then_block}, ${resolved}, ${params});
 					return true;
 				}
 			}
@@ -133,8 +128,7 @@ export default function visitAwaitBlock(
 	if (node.pending._block.hasUpdateMethod) {
 		block.builders.update.addBlock(deindent`
 			if (${conditions.join(' && ')}) {
-				${await_block}.c();
-				${await_block}.m(${anchor}.parentNode, ${anchor});
+				// nothing
 			} else {
 				${await_block}.p(changed, ${params}, ${resolved});
 			}
