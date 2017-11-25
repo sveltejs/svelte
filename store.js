@@ -150,25 +150,4 @@ assign(Store.prototype, {
 	}
 });
 
-function combineStores(children, store) {
-	if (!store) store = new Store();
-	var updates = {};
-
-	function addChild(key) {
-		var child = children[key];
-		updates[key] = child.get();
-
-		child.onchange(function(state) {
-			var update = {};
-			update[key] = state;
-			store.set(update);
-		});
-	}
-
-	for (var key in children) addChild(key);
-
-	store.set(updates);
-	return store;
-}
-
-export { Store, combineStores };
+export { Store };
