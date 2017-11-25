@@ -92,4 +92,55 @@ describe('store', () => {
 			});
 		});
 	});
+
+	describe('computed', () => {
+		it('computes a property based on data', () => {
+			const store = new Store({
+				foo: 1
+			});
+
+			store.compute('bar', ['foo'], foo => foo * 2);
+			assert.equal(store.get('bar'), 2);
+
+			const values = [];
+
+			store.observe('bar', bar => {
+				values.push(bar);
+			});
+
+			store.set({ foo: 2 });
+			assert.deepEqual(values, [2, 4]);
+		});
+
+		it('computes a property based on another computed property', () => {
+			const store = new Store({
+				foo: 1
+			});
+
+			store.compute('bar', ['foo'], foo => foo * 2);
+			store.compute('baz', ['bar'], bar => bar * 2);
+			assert.equal(store.get('baz'), 4);
+
+			const values = [];
+
+			store.observe('baz', baz => {
+				values.push(baz);
+			});
+
+			store.set({ foo: 2 });
+			assert.deepEqual(values, [4, 8]);
+		});
+
+		it('prevents computed properties from being set', () => {
+			const store = new Store({
+				foo: 1
+			});
+
+			store.compute('bar', ['foo'], foo => foo * 2);
+
+			assert.throws(() => {
+				store.set({ bar: 'whatever' });
+			}, /'bar' is a read-only property/);
+		});
+	});
 });
