@@ -732,7 +732,7 @@ export default class Generator {
 					}
 				}
 
-				if (node.type === 'IfBlock') {
+				if (node.type === 'IfBlock' || node.type === 'AwaitBlock') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 				}
 

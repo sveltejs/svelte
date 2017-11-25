@@ -6,6 +6,8 @@ import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
 function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
+	if (!block.children) return; // AwaitBlock
+
 	const firstChild = block.children[0];
 	const lastChild = block.children[block.children.length - 1];
 
@@ -39,7 +41,7 @@ export default function mustache(parser: Parser) {
 		let block = parser.current();
 		let expected;
 
-		if (block.type === 'ElseBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
+		if (block.type === 'ElseBlock' || block.type === 'PendingBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
 			block.end = start;
 			parser.stack.pop();
 			block = parser.current();
@@ -72,7 +74,7 @@ export default function mustache(parser: Parser) {
 		}
 
 		// strip leading/trailing whitespace as necessary
-		if (!block.children.length) parser.error(`Empty block`, block.start);
+		if (block.children && !block.children.length) parser.error(`Empty block`, block.start);
 
 		const charBefore = parser.template[block.start - 1];
 		const charAfter = parser.template[parser.index];
@@ -134,10 +136,13 @@ export default function mustache(parser: Parser) {
 
 		parser.stack.push(block.else);
 	} else if (parser.eat('then')) {
-		// {{then}} is valid by itself — we need to check that a)
-		// we're inside an await block, and b) there's an expression
-		const awaitBlock = parser.current();
-		if (awaitBlock.type === 'AwaitBlock') {
+		// TODO DRY out this and the next section
+		const pendingBlock = parser.current();
+		if (pendingBlock.type === 'PendingBlock') {
+			pendingBlock.end = start;
+			parser.stack.pop();
+			const awaitBlock = parser.current();
+
 			parser.requireWhitespace();
 			awaitBlock.value = parser.readIdentifier();
 
@@ -195,13 +200,40 @@ export default function mustache(parser: Parser) {
 
 		const expression = readExpression(parser);
 
-		const block: Node = {
-			start,
-			end: null,
-			type,
-			expression,
-			children: [],
-		};
+		const block: Node = type === 'AwaitBlock' ?
+			{
+				start,
+				end: null,
+				type,
+				expression,
+				value: null,
+				error: null,
+				pending: {
+					start,
+					end: null,
+					type: 'PendingBlock',
+					children: []
+				},
+				then: {
+					start: null,
+					end: null,
+					type: 'ThenBlock',
+					children: []
+				},
+				catch: {
+					start: null,
+					end: null,
+					type: 'CatchBlock',
+					children: []
+				},
+			} :
+			{
+				start,
+				end: null,
+				type,
+				expression,
+				children: [],
+			};
 
 		parser.allowWhitespace();
 
@@ -255,6 +287,10 @@ export default function mustache(parser: Parser) {
 
 		parser.current().children.push(block);
 		parser.stack.push(block);
+
+		if (type === 'AwaitBlock') {
+			parser.stack.push(block.pending);
+		}
 	} else if (parser.eat('yield')) {
 		// {{yield}}
 		// TODO deprecate

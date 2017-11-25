@@ -15,24 +15,42 @@
 					"end": 19,
 					"name": "thePromise"
 				},
-				"children": [
-					{
-						"start": 23,
-						"end": 40,
-						"type": "Element",
-						"name": "p",
-						"attributes": [],
-						"children": [
-							{
-								"start": 26,
-								"end": 36,
-								"type": "Text",
-								"data": "loading..."
-							}
-						]
-					}
-				],
 				"value": "theValue",
+				"error": "theError",
+				"pending": {
+					"start": 21,
+					"end": 41,
+					"type": "PendingBlock",
+					"children": [
+						{
+							"start": 21,
+							"end": 23,
+							"type": "Text",
+							"data": "\n\t"
+						},
+						{
+							"start": 23,
+							"end": 40,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 26,
+									"end": 36,
+									"type": "Text",
+									"data": "loading..."
+								}
+							]
+						},
+						{
+							"start": 40,
+							"end": 41,
+							"type": "Text",
+							"data": "\n"
+						}
+					]
+				},
 				"then": {
 					"start": 41,
 					"end": 93,
@@ -78,7 +96,6 @@
 						}
 					]
 				},
-				"error": "theError",
 				"catch": {
 					"start": 93,
 					"end": 148,

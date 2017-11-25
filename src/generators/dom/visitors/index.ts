@@ -1,3 +1,4 @@
+import AwaitBlock from './AwaitBlock';
 import EachBlock from './EachBlock';
 import Element from './Element/Element';
 import IfBlock from './IfBlock';
@@ -7,6 +8,7 @@ import Text from './Text';
 import { Visitor } from '../interfaces';
 
 const visitors: Record<string, Visitor> = {
+	AwaitBlock,
 	EachBlock,
 	Element,
 	IfBlock,
