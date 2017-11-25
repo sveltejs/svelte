@@ -149,7 +149,8 @@ assign(Store.prototype, {
 	}
 });
 
-function combineStores(store, children) {
+function combineStores(children, store) {
+	if (!store) store = new Store();
 	var updates = {};
 
 	for (const key in children) {

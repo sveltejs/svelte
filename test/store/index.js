@@ -160,7 +160,7 @@ describe.only('store', () => {
 
 			b.compute('z', ['x', 'y'], (x, y) => x + y);
 
-			const c = combineStores(new Store(), { a, b });
+			const c = combineStores({ a, b });
 
 			c.compute('total', ['a', 'b'], (a, b) => a.z + b.z);
 
