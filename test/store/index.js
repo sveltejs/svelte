@@ -1,5 +1,5 @@
 import assert from 'assert';
-import Store from '../../store.js';
+import { Store, combineStores } from '../../store.js';
 
 describe('store', () => {
 	describe('get', () => {
@@ -141,6 +141,42 @@ describe('store', () => {
 			assert.throws(() => {
 				store.set({ bar: 'whatever' });
 			}, /'bar' is a read-only property/);
+		});
+	});
+
+	describe('combineStores', () => {
+		it('merges stores', () => {
+			const a = new Store({
+				x: 1,
+				y: 2
+			});
+
+			a.compute('z', ['x', 'y'], (x, y) => x + y);
+
+			const b = new Store({
+				x: 3,
+				y: 4
+			});
+
+			b.compute('z', ['x', 'y'], (x, y) => x + y);
+
+			const c = combineStores(new Store(), { a, b });
+
+			c.compute('total', ['a', 'b'], (a, b) => a.z + b.z);
+
+			assert.deepEqual(c.get(), {
+				a: {
+					x: 1,
+					y: 2,
+					z: 3
+				},
+				b: {
+					x: 3,
+					y: 4,
+					z: 7
+				},
+				total: 10
+			});
 		});
 	});
 });
