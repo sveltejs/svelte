@@ -536,6 +536,9 @@ export default class Generator {
 							(param: Node) =>
 								param.type === 'AssignmentPattern' ? param.left.name : param.name
 						);
+						deps.forEach(dep => {
+							this.expectedProperties.add(dep);
+						});
 						dependencies.set(key, deps);
 					});
 
