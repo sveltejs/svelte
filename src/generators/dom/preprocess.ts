@@ -108,6 +108,48 @@ const preprocessors = {
 		node.var = block.getUniqueName(`text`);
 	},
 
+	AwaitBlock: (
+		generator: DomGenerator,
+		block: Block,
+		state: State,
+		node: Node,
+		inEachBlock: boolean,
+		elementStack: Node[],
+		componentStack: Node[],
+		stripWhitespace: boolean,
+		nextSibling: Node
+	) => {
+		cannotUseInnerHTML(node);
+
+		node.var = block.getUniqueName('await_block');
+		block.addDependencies(node.metadata.dependencies);
+
+		[
+			['pending', null],
+			['then', node.value],
+			['catch', node.error]
+		].forEach(([status, arg]) => {
+			const child = node[status];
+
+			const context = block.getUniqueName(arg || '_');
+			const contexts = new Map(block.contexts);
+			contexts.set(arg, context);
+
+			child._block = block.child({
+				comment: createDebuggingComment(child, generator),
+				name: generator.getUniqueName(`create_${status}_block`),
+				params: block.params.concat(context),
+				context,
+				contexts
+			});
+
+			child._state = getChildState(state);
+
+			preprocessChildren(generator, child._block, child._state, child, inEachBlock, elementStack, componentStack, stripWhitespace, nextSibling);
+			generator.blocks.push(child._block);
+		});
+	},
+
 	IfBlock: (
 		generator: DomGenerator,
 		block: Block,
