@@ -78,6 +78,7 @@ assign(Store.prototype, {
 		}
 
 		Object.defineProperty(this._proto, key, {
+			enumerable: true,
 			get: function() {
 				if (store._dirty[key]) {
 					var values = deps.map(function(dep) {
@@ -162,4 +163,24 @@ assign(Store.prototype, {
 	}
 });
 
-export default Store;
+function combineStores(store, children) {
+	var updates = {};
+
+	for (const key in children) {
+		const child = children[key];
+		updates[key] = child.get();
+
+		child.onchange(state => {
+			var update = {};
+			update[key] = state;
+			store.set(update);
+		});
+	}
+
+	console.log('updates', updates);
+
+	store.set(updates);
+	return store;
+}
+
+export { Store, combineStores };

@@ -1,4 +1,4 @@
-import Store from '../../../../store.js';
+import { Store } from '../../../../store.js';
 
 class MyStore extends Store {
 	setFilter(filter) {
