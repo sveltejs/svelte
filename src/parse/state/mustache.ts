@@ -209,7 +209,7 @@ export default function mustache(parser: Parser) {
 				value: null,
 				error: null,
 				pending: {
-					start,
+					start: null,
 					end: null,
 					type: 'PendingBlock',
 					children: []
@@ -289,6 +289,7 @@ export default function mustache(parser: Parser) {
 		parser.stack.push(block);
 
 		if (type === 'AwaitBlock') {
+			block.pending.start = parser.index;
 			parser.stack.push(block.pending);
 		}
 	} else if (parser.eat('yield')) {
