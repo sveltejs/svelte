@@ -53,7 +53,7 @@ assign(Store.prototype, {
 
 		function visit(key) {
 			if (cycles[key]) {
-				throw new Error(`Cyclical dependency detected — a computed property cannot indirectly depend on itself`);
+				throw new Error('Cyclical dependency detected');
 			}
 
 			if (visited[key]) return;
