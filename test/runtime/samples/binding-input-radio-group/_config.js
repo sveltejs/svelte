@@ -10,19 +10,17 @@ export default {
 		selected: values[1]
 	},
 
-	'skip-ssr': true, // values are rendered as [object Object]
-
 	html: `
 		<label>
-			<input type="radio"> Alpha
+			<input type="radio" value="[object Object]"> Alpha
 		</label>
 
 		<label>
-			<input type="radio"> Beta
+			<input type="radio" value="[object Object]"> Beta
 		</label>
 
 		<label>
-			<input type="radio"> Gamma
+			<input type="radio" value="[object Object]"> Gamma
 		</label>
 
 		<p>Beta</p>`,
@@ -40,15 +38,15 @@ export default {
 
 		assert.htmlEqual( target.innerHTML, `
 			<label>
-				<input type="radio"> Alpha
+				<input type="radio" value="[object Object]"> Alpha
 			</label>
 
 			<label>
-				<input type="radio"> Beta
+				<input type="radio" value="[object Object]"> Beta
 			</label>
 
 			<label>
-				<input type="radio"> Gamma
+				<input type="radio" value="[object Object]"> Gamma
 			</label>
 
 			<p>Alpha</p>
@@ -65,15 +63,15 @@ export default {
 
 		assert.htmlEqual( target.innerHTML, `
 			<label>
-				<input type="radio"> Alpha
+				<input type="radio" value="[object Object]"> Alpha
 			</label>
 
 			<label>
-				<input type="radio"> Beta
+				<input type="radio" value="[object Object]"> Beta
 			</label>
 
 			<label>
-				<input type="radio"> Gamma
+				<input type="radio" value="[object Object]"> Gamma
 			</label>
 
 			<p>Gamma</p>
