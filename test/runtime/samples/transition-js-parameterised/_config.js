@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	test(assert, component, target, window, raf) {
 		component.set({ visible: true });
 		const div = target.querySelector('div');
