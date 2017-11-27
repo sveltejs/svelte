@@ -10,19 +10,17 @@ export default {
 		selected: [ values[1] ]
 	},
 
-	'skip-ssr': true, // values are rendered as [object Object]
-
 	html: `
 		<label>
-			<input type="checkbox"> Alpha
+			<input type="checkbox" value="[object Object]"> Alpha
 		</label>
 
 		<label>
-			<input type="checkbox"> Beta
+			<input type="checkbox" value="[object Object]"> Beta
 		</label>
 
 		<label>
-			<input type="checkbox"> Gamma
+			<input type="checkbox" value="[object Object]"> Gamma
 		</label>
 
 		<p>Beta</p>`,
@@ -40,15 +38,15 @@ export default {
 
 		assert.htmlEqual( target.innerHTML, `
 			<label>
-				<input type="checkbox"> Alpha
+				<input type="checkbox" value="[object Object]"> Alpha
 			</label>
 
 			<label>
-				<input type="checkbox"> Beta
+				<input type="checkbox" value="[object Object]"> Beta
 			</label>
 
 			<label>
-				<input type="checkbox"> Gamma
+				<input type="checkbox" value="[object Object]"> Gamma
 			</label>
 
 			<p>Alpha, Beta</p>
@@ -61,15 +59,15 @@ export default {
 
 		assert.htmlEqual( target.innerHTML, `
 			<label>
-				<input type="checkbox"> Alpha
+				<input type="checkbox" value="[object Object]"> Alpha
 			</label>
 
 			<label>
-				<input type="checkbox"> Beta
+				<input type="checkbox" value="[object Object]"> Beta
 			</label>
 
 			<label>
-				<input type="checkbox"> Gamma
+				<input type="checkbox" value="[object Object]"> Gamma
 			</label>
 
 			<p>Beta, Gamma</p>
