@@ -72,15 +72,8 @@ function removeIndentation(
 // We need to tell estree-walker that it should always
 // look for an `else` block, otherwise it might get
 // the wrong idea about the shape of each/if blocks
-childKeys.EachBlock = [
-	'children',
-	'else'
-];
-
-childKeys.IfBlock = [
-	'children',
-	'else'
-];
+childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
+childKeys.Attribute = ['value'];
 
 export default class Generator {
 	ast: Parsed;
