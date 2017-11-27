@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Store, combineStores } from '../../store.js';
+import { Store } from '../../store.js';
 
 describe('store', () => {
 	describe('get', () => {
@@ -141,6 +141,30 @@ describe('store', () => {
 			assert.throws(() => {
 				store.set({ bar: 'whatever' });
 			}, /'bar' is a read-only property/);
+		});
+
+		it('allows multiple dependents to depend on the same computed property', () => {
+			const store = new Store({
+				a: 1
+			});
+
+			store.compute('b', ['a'], a => a * 2);
+			store.compute('c', ['b'], b => b * 3);
+			store.compute('d', ['b'], b => b * 4);
+
+			assert.deepEqual(store.get(), { a: 1, b: 2, c: 6, d: 8 });
+
+			// bit cheeky, testing a private property, but whatever
+			assert.equal(store._sortedComputedProperties.length, 3);
+		});
+
+		it('prevents cyclical dependencies', () => {
+			const store = new Store();
+
+			assert.throws(() => {
+				store.compute('a', ['b'], b => b + 1);
+				store.compute('b', ['a'], a => a + 1);
+			}, /Cyclical dependency detected — a computed property cannot indirectly depend on itself/);
 		});
 	});
 });

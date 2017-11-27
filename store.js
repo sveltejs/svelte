@@ -48,19 +48,30 @@ assign(Store.prototype, {
 	_sortComputedProperties: function() {
 		var computed = this._computed;
 		var sorted = this._sortedComputedProperties = [];
+		var cycles;
 		var visited = blankObject();
 
 		function visit(key) {
+			if (cycles[key]) {
+				throw new Error(`Cyclical dependency detected — a computed property cannot indirectly depend on itself`);
+			}
+
 			if (visited[key]) return;
+			visited[key] = true;
+
 			var c = computed[key];
 
 			if (c) {
+				cycles[key] = true;
 				c.deps.forEach(visit);
 				sorted.push(c);
 			}
 		}
 
-		for (var key in this._computed) visit(key);
+		for (var key in this._computed) {
+			cycles = blankObject();
+			visit(key);
+		}
 	},
 
 	compute: function(key, deps, fn) {
