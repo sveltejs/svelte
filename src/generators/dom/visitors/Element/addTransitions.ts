@@ -21,7 +21,7 @@ export default function addTransitions(
 	if (intro === outro) {
 		const name = block.getUniqueName(`${node.var}_transition`);
 		const snippet = intro.expression
-			? intro.expression.metadata.snippet
+			? intro.metadata.snippet
 			: '{}';
 
 		block.addVariable(name);
@@ -51,7 +51,7 @@ export default function addTransitions(
 		if (intro) {
 			block.addVariable(introName);
 			const snippet = intro.expression
-				? intro.expression.metadata.snippet
+				? intro.metadata.snippet
 				: '{}';
 
 			const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
@@ -76,7 +76,7 @@ export default function addTransitions(
 		if (outro) {
 			block.addVariable(outroName);
 			const snippet = outro.expression
-				? intro.expression.metadata.snippet
+				? outro.metadata.snippet
 				: '{}';
 
 			const fn = `%transitions-${outro.name}`;
