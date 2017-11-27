@@ -1,7 +1,27 @@
+import fs from 'fs';
 import assert from 'assert';
+import MagicString from 'magic-string';
+import { parse } from 'acorn';
 import { Store } from '../../store.js';
 
 describe('store', () => {
+	it('is written in ES5', () => {
+		const source = fs.readFileSync('store.js', 'utf-8');
+
+		const ast = parse(source, {
+			sourceType: 'module'
+		});
+
+		const magicString = new MagicString(source);
+		ast.body.forEach(node => {
+			if (/^(Im|Ex)port/.test(node.type)) magicString.remove(node.start, node.end);
+		});
+
+		parse(magicString.toString(), {
+			ecmaVersion: 5
+		});
+	});
+
 	describe('get', () => {
 		it('gets a specific key', () => {
 			const store = new Store({
