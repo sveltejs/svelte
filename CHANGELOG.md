@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.43.1
+
+* Fix parameterised transitions ([#962](https://github.com/sveltejs/svelte/issues/962))
+* Prevent boolean attributes breaking estree-walker expectations ([#961](https://github.com/sveltejs/svelte/issues/961))
+* Throw error on cyclical store computations ([#964](https://github.com/sveltejs/svelte/pull/964))
+
 ## 1.43.0
 
 * Export `Store` class to manage global state ([#930](https://github.com/sveltejs/svelte/issues/930))
