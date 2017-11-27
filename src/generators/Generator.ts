@@ -755,6 +755,11 @@ export default class Generator {
 					});
 					this.skip();
 				}
+
+				if (node.type === 'Transition' && node.expression) {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					this.skip();
+				}
 			},
 
 			leave(node: Node, parent: Node) {

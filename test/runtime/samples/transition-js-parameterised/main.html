@@ -1,0 +1,18 @@
+{{#if visible}}
+	<div in:foo='{k: 200}'>fades in</div>
+{{/if}}
+
+<script>
+	export default {
+		transitions: {
+			foo: function(node, params) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t * params.k;
+					}
+				};
+			}
+		}
+	};
+</script>
