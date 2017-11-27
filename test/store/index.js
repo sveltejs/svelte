@@ -184,7 +184,7 @@ describe('store', () => {
 			assert.throws(() => {
 				store.compute('a', ['b'], b => b + 1);
 				store.compute('b', ['a'], a => a + 1);
-			}, /Cyclical dependency detected — a computed property cannot indirectly depend on itself/);
+			}, /Cyclical dependency detected/);
 		});
 	});
 });
