@@ -1,0 +1,43 @@
+{
+	"hash": 755548012,
+	"html": {
+		"start": 0,
+		"end": 37,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 37,
+				"type": "Element",
+				"name": ":Switch",
+				"attributes": [],
+				"children": [],
+				"expression": {
+					"type": "ConditionalExpression",
+					"start": 10,
+					"end": 25,
+					"test": {
+						"type": "Identifier",
+						"start": 10,
+						"end": 13,
+						"name": "foo"
+					},
+					"consequent": {
+						"type": "Identifier",
+						"start": 16,
+						"end": 19,
+						"name": "Foo"
+					},
+					"alternate": {
+						"type": "Identifier",
+						"start": 22,
+						"end": 25,
+						"name": "Bar"
+					}
+				}
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
