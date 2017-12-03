@@ -4,16 +4,11 @@ export default {
 	cascade: false,
 	script: ({content, attributes}) => {
 		if (attributes.type !== 'text/coffeescript') {
-			return {code: content};
+			return null;
 		}
 
-		return new Promise((fulfil, reject) => {
-			try {
-				const code = CoffeeScript.compile(content, {});
-				fulfil({code});
-			} catch (error) {
-				reject(error);
-			}
-		});
+		return {
+			code: CoffeeScript.compile(content, {})
+		};
 	},
 };
