@@ -14,7 +14,7 @@ export default function validateElement(
 	elementStack: Node[]
 ) {
 	const isComponent =
-		node.name === ':Self' || validator.components.has(node.name);
+		node.name === ':Self' || node.name === ':Switch' || validator.components.has(node.name);
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
