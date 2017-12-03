@@ -728,6 +728,16 @@ export default class Generator {
 					}
 				}
 
+				if (node.type === 'AwaitBlock') {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+
+					contextDependencies = new Map(contextDependencies);
+					contextDependencies.set(node.value, node.metadata.dependencies);
+					contextDependencies.set(node.error, node.metadata.dependencies);
+
+					contextDependenciesStack.push(contextDependencies);
+				}
+
 				if (node.type === 'IfBlock') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 				}

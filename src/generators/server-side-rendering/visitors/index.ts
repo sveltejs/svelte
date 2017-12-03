@@ -1,3 +1,4 @@
+import AwaitBlock from './AwaitBlock';
 import Comment from './Comment';
 import EachBlock from './EachBlock';
 import Element from './Element';
@@ -7,6 +8,7 @@ import RawMustacheTag from './RawMustacheTag';
 import Text from './Text';
 
 export default {
+	AwaitBlock,
 	Comment,
 	EachBlock,
 	Element,

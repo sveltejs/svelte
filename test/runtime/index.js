@@ -89,7 +89,7 @@ describe("runtime", () => {
 					}
 				} catch (err) {
 					failed.add(dir);
-					showOutput(cwd, { shared, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -106,96 +106,97 @@ describe("runtime", () => {
 
 			const window = env();
 
-			try {
-				// set of hacks to support transition tests
-				transitionManager.running = false;
-				transitionManager.transitions = [];
+			return Promise.resolve()
+				.then(() => {
+					// set of hacks to support transition tests
+					transitionManager.running = false;
+					transitionManager.transitions = [];
 
-				const raf = {
-					time: 0,
-					callback: null,
-					tick: now => {
-						raf.time = now;
-						if (raf.callback) raf.callback();
-					}
-				};
-				window.performance = { now: () => raf.time };
-				global.requestAnimationFrame = cb => {
-					let called = false;
-					raf.callback = () => {
-						if (!called) {
-							called = true;
-							cb();
+					const raf = {
+						time: 0,
+						callback: null,
+						tick: now => {
+							raf.time = now;
+							if (raf.callback) raf.callback();
 						}
 					};
-				};
+					window.performance = { now: () => raf.time };
+					global.requestAnimationFrame = cb => {
+						let called = false;
+						raf.callback = () => {
+							if (!called) {
+								called = true;
+								cb();
+							}
+						};
+					};
 
-				global.window = window;
+					try {
+						SvelteComponent = require(`./samples/${dir}/main.html`);
+					} catch (err) {
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+						throw err;
+					}
 
-				try {
-					SvelteComponent = require(`./samples/${dir}/main.html`);
-				} catch (err) {
-					showOutput(cwd, { shared, hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
-					throw err;
-				}
+					global.window = window;
 
-				global.window = window;
+					// Put the constructor on window for testing
+					window.SvelteComponent = SvelteComponent;
 
-				// Put the constructor on window for testing
-				window.SvelteComponent = SvelteComponent;
+					const target = window.document.querySelector("main");
 
-				const target = window.document.querySelector("main");
+					const warnings = [];
+					const warn = console.warn;
+					console.warn = warning => {
+						warnings.push(warning);
+					};
 
-				const warnings = [];
-				const warn = console.warn;
-				console.warn = warning => {
-					warnings.push(warning);
-				};
+					const options = Object.assign({}, {
+						target,
+						hydrate,
+						data: config.data,
+					  store: config.store
+					}, config.options || {});
 
-				const options = Object.assign({}, {
-					target,
-					hydrate,
-					data: config.data,
-					store: config.store
-				}, config.options || {});
+					const component = new SvelteComponent(options);
 
-				const component = new SvelteComponent(options);
+					console.warn = warn;
 
-				console.warn = warn;
+					if (config.error) {
+						unintendedError = true;
+						throw new Error("Expected a runtime error");
+					}
 
-				if (config.error) {
-					unintendedError = true;
-					throw new Error("Expected a runtime error");
-				}
+					if (config.warnings) {
+						assert.deepEqual(warnings, config.warnings);
+					} else if (warnings.length) {
+						unintendedError = true;
+						throw new Error("Received unexpected warnings");
+					}
 
-				if (config.warnings) {
-					assert.deepEqual(warnings, config.warnings);
-				} else if (warnings.length) {
-					unintendedError = true;
-					throw new Error("Received unexpected warnings");
-				}
+					if (config.html) {
+						assert.htmlEqual(target.innerHTML, config.html);
+					}
 
-				if (config.html) {
-					assert.htmlEqual(target.innerHTML, config.html);
-				}
-
-				if (config.test) {
-					config.test(assert, component, target, window, raf);
-				} else {
-					component.destroy();
-					assert.equal(target.innerHTML, "");
-				}
-			} catch (err) {
-				if (config.error && !unintendedError) {
-					config.error(assert, err);
-				} else {
-					failed.add(dir);
-					showOutput(cwd, { shared, hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
-					throw err;
-				}
-			}
-
-			if (config.show) showOutput(cwd, { shared, hydratable: hydrate, store: !!compileOptions.store }, svelte);
+					if (config.test) {
+						return config.test(assert, component, target, window, raf);
+					} else {
+						component.destroy();
+						assert.equal(target.innerHTML, "");
+					}
+				})
+				.catch(err => {
+					if (config.error && !unintendedError) {
+						config.error(assert, err);
+					} else {
+						failed.add(dir);
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+						throw err;
+					}
+				})
+				.then(() => {
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte);
+				});
 		});
 	}
 
