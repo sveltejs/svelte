@@ -43,7 +43,7 @@ export default function visitElement(
 		}
 	}
 
-	if (generator.components.has(node.name) || node.name === ':Self') {
+	if (generator.components.has(node.name) || node.name === ':Self' || node.name === ':Switch') {
 		return visitComponent(generator, block, state, node, elementStack, componentStack);
 	}
 

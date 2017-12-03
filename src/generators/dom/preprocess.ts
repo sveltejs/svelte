@@ -436,13 +436,17 @@ const preprocessors = {
 		}
 
 		const isComponent =
-			generator.components.has(node.name) || node.name === ':Self';
+			generator.components.has(node.name) || node.name === ':Self' || node.name === ':Switch';
 
 		if (isComponent) {
 			cannotUseInnerHTML(node);
 
 			node.var = block.getUniqueName(
-				(node.name === ':Self' ? generator.name : node.name).toLowerCase()
+				(
+					node.name === ':Self' ? generator.name :
+					node.name === ':Switch' ? 'switch_instance' :
+					node.name
+				).toLowerCase()
 			);
 
 			node._state = getChildState(state, {

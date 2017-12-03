@@ -171,6 +171,7 @@ export default function tag(parser: Parser) {
 		element.expression = readExpression(parser);
 		parser.allowWhitespace();
 		parser.eat('}', true);
+		parser.allowWhitespace();
 	}
 
 	const uniqueNames = new Set();
@@ -180,8 +181,6 @@ export default function tag(parser: Parser) {
 		element.attributes.push(attribute);
 		parser.allowWhitespace();
 	}
-
-	parser.allowWhitespace();
 
 	// special cases – top-level <script> and <style>
 	if (specials.has(name) && parser.stack.length === 1) {
