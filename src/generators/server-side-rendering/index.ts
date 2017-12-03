@@ -73,16 +73,22 @@ export default function ssr(
 		generator.stylesheet.render(options.filename, true);
 
 	// generate initial state object
-	// TODO this doesn't work, because expectedProperties isn't populated
-	const globals = Array.from(generator.expectedProperties).filter(prop => globalWhitelist.has(prop));
+	const expectedProperties = Array.from(generator.expectedProperties);
+	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
+	const storeProps = options.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
+
 	const initialState = [];
 	if (globals.length > 0) {
 		initialState.push(`{ ${globals.map(prop => `${prop} : ${prop}`).join(', ')} }`);
 	}
 
+	if (storeProps.length > 0) {
+		initialState.push(`options.store._init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`);
+	}
+
 	if (templateProperties.data) {
 		initialState.push(`%data()`);
-	} else if (globals.length === 0) {
+	} else if (globals.length === 0 && storeProps.length === 0) {
 		initialState.push('{}');
 	}
 
@@ -99,7 +105,7 @@ export default function ssr(
 			return ${templateProperties.data ? `%data()` : `{}`};
 		};
 
-		${name}.render = function(state, options) {
+		${name}.render = function(state, options = {}) {
 			state = Object.assign(${initialState.join(', ')});
 
 			${computations.map(

@@ -72,15 +72,8 @@ function removeIndentation(
 // We need to tell estree-walker that it should always
 // look for an `else` block, otherwise it might get
 // the wrong idea about the shape of each/if blocks
-childKeys.EachBlock = [
-	'children',
-	'else'
-];
-
-childKeys.IfBlock = [
-	'children',
-	'else'
-];
+childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
+childKeys.Attribute = ['value'];
 
 export default class Generator {
 	ast: Parsed;
@@ -536,6 +529,9 @@ export default class Generator {
 							(param: Node) =>
 								param.type === 'AssignmentPattern' ? param.left.name : param.name
 						);
+						deps.forEach(dep => {
+							this.expectedProperties.add(dep);
+						});
 						dependencies.set(key, deps);
 					});
 
@@ -760,6 +756,11 @@ export default class Generator {
 					node.expression.arguments.forEach((arg: Node) => {
 						arg.metadata = contextualise(arg, contextDependencies, indexes);
 					});
+					this.skip();
+				}
+
+				if (node.type === 'Transition' && node.expression) {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 					this.skip();
 				}
 			},

@@ -1,5 +1,19 @@
 # Svelte changelog
 
+## 1.43.1
+
+* Fix parameterised transitions ([#962](https://github.com/sveltejs/svelte/issues/962))
+* Prevent boolean attributes breaking estree-walker expectations ([#961](https://github.com/sveltejs/svelte/issues/961))
+* Throw error on cyclical store computations ([#964](https://github.com/sveltejs/svelte/pull/964))
+
+## 1.43.0
+
+* Export `Store` class to manage global state ([#930](https://github.com/sveltejs/svelte/issues/930))
+* Recognise `aria-current` ([#953](https://github.com/sveltejs/svelte/pull/953))
+* Support SSR register options including `extensions` ([#939](https://github.com/sveltejs/svelte/issues/939))
+* Friendlier error for illegal contexts ([#934](https://github.com/sveltejs/svelte/issues/934))
+* Remove whitespace around `<:Window>` components ([#943](https://github.com/sveltejs/svelte/issues/943))
+
 ## 1.42.1
 
 * Correctly append items inside a slotted `each` block ([#932](https://github.com/sveltejs/svelte/pull/932))

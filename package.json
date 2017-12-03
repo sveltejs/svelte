@@ -1,12 +1,13 @@
 {
   "name": "svelte",
-  "version": "1.42.1",
+  "version": "1.43.1",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
     "compiler",
     "ssr",
     "shared.js",
+    "store.js",
     "README.md"
   ],
   "scripts": {

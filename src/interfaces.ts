@@ -1,3 +1,5 @@
+import {SourceMap} from 'magic-string';
+
 export interface Node {
 	start: number;
 	end: number;
@@ -56,6 +58,7 @@ export interface CompileOptions {
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
+	store?: boolean;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
@@ -78,3 +81,11 @@ export interface CustomElementOptions {
 	tag?: string;
 	props?: string[];
 }
+
+export interface PreprocessOptions {
+	markup?: (options: {content: string}) => { code: string, map?: SourceMap | string };
+	style?: Preprocessor;
+	script?: Preprocessor;
+}
+
+export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>}) => { code: string, map?: SourceMap | string };

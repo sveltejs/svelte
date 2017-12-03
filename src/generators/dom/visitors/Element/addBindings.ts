@@ -195,12 +195,18 @@ export default function addBindings(
 
 		const usesContext = group.bindings.some(binding => binding.handler.usesContext);
 		const usesState = group.bindings.some(binding => binding.handler.usesState);
+		const usesStore = group.bindings.some(binding => binding.handler.usesStore);
 		const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
 
 		const props = new Set();
+		const storeProps = new Set();
 		group.bindings.forEach(binding => {
 			binding.handler.props.forEach(prop => {
 				props.add(prop);
+			});
+
+			binding.handler.storeProps.forEach(prop => {
+				storeProps.add(prop);
 			});
 		}); // TODO use stringifyProps here, once indenting is fixed
 
@@ -222,9 +228,11 @@ export default function addBindings(
 				}
 				${usesContext && `var context = ${node.var}._svelte;`}
 				${usesState && `var state = #component.get();`}
+				${usesStore && `var $ = #component.store.get();`}
 				${needsLock && `${lock} = true;`}
 				${mutations.length > 0 && mutations}
-				#component.set({ ${Array.from(props).join(', ')} });
+				${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
+				${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
 				${needsLock && `${lock} = false;`}
 			}
 		`);
@@ -307,6 +315,13 @@ function getEventHandler(
 	dependencies: string[],
 	value: string,
 ) {
+	let storeDependencies = [];
+
+	if (generator.options.store) {
+		storeDependencies = dependencies.filter(prop => prop[0] === '$').map(prop => prop.slice(1));
+		dependencies = dependencies.filter(prop => prop[0] !== '$');
+	}
+
 	if (block.contexts.has(name)) {
 		const tail = attribute.value.type === 'MemberExpression'
 			? getTailSnippet(attribute.value)
@@ -318,8 +333,10 @@ function getEventHandler(
 		return {
 			usesContext: true,
 			usesState: true,
+			usesStore: storeDependencies.length > 0,
 			mutation: `${list}[${index}]${tail} = ${value};`,
-			props: dependencies.map(prop => `${prop}: state.${prop}`)
+			props: dependencies.map(prop => `${prop}: state.${prop}`),
+			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};
 	}
 
@@ -336,16 +353,31 @@ function getEventHandler(
 		return {
 			usesContext: false,
 			usesState: true,
+			usesStore: storeDependencies.length > 0,
 			mutation: `${snippet} = ${value}`,
-			props: dependencies.map((prop: string) => `${prop}: state.${prop}`)
+			props: dependencies.map((prop: string) => `${prop}: state.${prop}`),
+			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};
+	}
+
+	let props;
+	let storeProps;
+
+	if (generator.options.store && name[0] === '$') {
+		props = [];
+		storeProps = [`${name.slice(1)}: ${value}`];
+	} else {
+		props = [`${name}: ${value}`];
+		storeProps = [];
 	}
 
 	return {
 		usesContext: false,
 		usesState: false,
+		usesStore: false,
 		mutation: null,
-		props: [`${name}: ${value}`]
+		props,
+		storeProps
 	};
 }
 
