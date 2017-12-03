@@ -4,7 +4,7 @@ export default {
 	cascade: false,
 	style: ({ content, attributes }) => {
 		if (attributes.type !== 'text/scss') {
-			return {code: content};
+			return null;
 		}
 
 		if (attributes['aria-hidden'] !== true) {

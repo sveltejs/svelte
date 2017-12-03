@@ -1,164 +1,147 @@
 import assert from 'assert';
-import * as fs from 'fs';
-import {parse} from 'acorn';
-import {addLineNumbers, env, normalizeHtml, svelte} from '../helpers.js';
-
-function tryRequire(file) {
-	try {
-		const mod = require(file);
-		return mod.default || mod;
-	} catch (err) {
-		if (err.code !== 'MODULE_NOT_FOUND') throw err;
-		return null;
-	}
-}
-
-function normalizeWarning(warning) {
-	warning.frame = warning.frame.replace(/^\n/, '').
-		replace(/^\t+/gm, '').
-		replace(/\s+$/gm, '');
-	delete warning.filename;
-	delete warning.toString;
-	return warning;
-}
-
-function checkCodeIsValid(code) {
-	try {
-		parse(code);
-	} catch (err) {
-		console.error(addLineNumbers(code));
-		throw new Error(err.message);
-	}
-}
+import {svelte} from '../helpers.js';
 
 describe.only('preprocess', () => {
-	fs.readdirSync('test/preprocess/samples').forEach(dir => {
-		if (dir[0] === '.') return;
+	it('preprocesses entire component', () => {
+		const source = `
+			<h1>Hello __NAME__!</h1>
+		`;
 
-		// add .solo to a sample directory name to only run that test
-		const solo = /\.solo/.test(dir);
-		const skip = /\.skip/.test(dir);
+		const expected = `
+			<h1>Hello world!</h1>
+		`;
 
-		if (solo && process.env.CI) {
-			throw new Error('Forgot to remove `solo: true` from test');
-		}
+		return svelte.preprocess(source, {
+			markup: ({ content }) => {
+				return {
+					code: content.replace('__NAME__', 'world')
+				};
+			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
+		});
+	});
 
-		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const config = tryRequire(`./samples/${dir}/_config.js`) || {};
-			const input = fs.existsSync(`test/preprocess/samples/${dir}/input.pug`) ?
-				read(`test/preprocess/samples/${dir}/input.pug`) :
-				read(`test/preprocess/samples/${dir}/input.html`);
+	it('preprocesses style', () => {
+		const source = `
+			<div class='brand-color'>$brand</div>
 
-			return svelte.preprocess(input, config)
-				.then(processed => processed.toString())
-				.then(processed => {
-					const expectedWarnings = (config.warnings || []).map(
-						normalizeWarning);
-					const domWarnings = [];
-					const ssrWarnings = [];
+			<style>
+				.brand-color {
+					color: $brand;
+				}
+			</style>
+		`;
 
-					const dom = svelte.compile(
-						processed,
-						Object.assign(config, {
-							format: 'iife',
-							name: 'SvelteComponent',
-							onwarn: warning => {
-								domWarnings.push(warning);
-							},
-						})
-					);
+		const expected = `
+			<div class='brand-color'>$brand</div>
 
-					const ssr = svelte.compile(
-						processed,
-						Object.assign(config, {
-							format: 'iife',
-							generate: 'ssr',
-							name: 'SvelteComponent',
-							onwarn: warning => {
-								ssrWarnings.push(warning);
-							},
-						})
-					);
+			<style>
+				.brand-color {
+					color: purple;
+				}
+			</style>
+		`;
 
-					// check the code is valid
-					checkCodeIsValid(dom.code);
-					checkCodeIsValid(ssr.code);
+		return svelte.preprocess(source, {
+			style: ({ content }) => {
+				return {
+					code: content.replace('$brand', 'purple')
+				};
+			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
+		});
+	});
 
-					assert.equal(dom.css, ssr.css);
+	it('preprocesses style asynchronously', () => {
+		const source = `
+			<div class='brand-color'>$brand</div>
 
-					assert.deepEqual(
-						domWarnings.map(normalizeWarning),
-						ssrWarnings.map(normalizeWarning)
-					);
-					assert.deepEqual(domWarnings.map(normalizeWarning), expectedWarnings);
+			<style>
+				.brand-color {
+					color: $brand;
+				}
+			</style>
+		`;
 
-					const expected = {
-						html: read(`test/preprocess/samples/${dir}/expected.html`),
-						css: read(`test/preprocess/samples/${dir}/expected.css`),
-					};
+		const expected = `
+			<div class='brand-color'>$brand</div>
 
-					if (expected.css !== null) {
-						fs.writeFileSync(`test/preprocess/samples/${dir}/_actual.css`,
-							dom.css);
-						assert.equal(dom.css.replace(/svelte-\d+/g, 'svelte-xyz'),
-							expected.css);
-					}
+			<style>
+				.brand-color {
+					color: purple;
+				}
+			</style>
+		`;
 
-					// verify that the right elements have scoping selectors
-					if (expected.html !== null) {
-						const window = env();
-
-						// dom
-						try {
-							const Component = eval(
-								`(function () { ${dom.code}; return SvelteComponent; }())`
-							);
-							const target = window.document.querySelector('main');
-
-							new Component({target, data: config.data});
-							const html = target.innerHTML;
-
-							fs.writeFileSync(`test/preprocess/samples/${dir}/_actual.html`,
-								html);
-
-							assert.equal(
-								normalizeHtml(window,
-									html.replace(/svelte-\d+/g, 'svelte-xyz')),
-								normalizeHtml(window, expected.html)
-							);
-						} catch (err) {
-							console.log(dom.code);
-							throw err;
-						}
-
-						// ssr
-						try {
-							const component = eval(
-								`(function () { ${ssr.code}; return SvelteComponent; }())`
-							);
-
-							assert.equal(
-								normalizeHtml(
-									window,
-									component.render(config.data).
-										replace(/svelte-\d+/g, 'svelte-xyz')
-								),
-								normalizeHtml(window, expected.html)
-							);
-						} catch (err) {
-							console.log(ssr.code);
-							throw err;
-						}
-					}
+		return svelte.preprocess(source, {
+			style: ({ content }) => {
+				return Promise.resolve({
+					code: content.replace('$brand', 'purple')
 				});
+			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
+		});
+	});
+
+	it('preprocesses script', () => {
+		const source = `
+			<script>
+				console.log(__THE_ANSWER__);
+			</script>
+		`;
+
+		const expected = `
+			<script>
+				console.log(42);
+			</script>
+		`;
+
+		return svelte.preprocess(source, {
+			script: ({ content }) => {
+				return {
+					code: content.replace('__THE_ANSWER__', '42')
+				};
+			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
+		});
+	});
+
+	it('parses attributes', () => {
+		const source = `
+			<style type='text/scss' bool></style>
+		`;
+
+		return svelte.preprocess(source, {
+			style: ({ attributes }) => {
+				assert.deepEqual(attributes, {
+					type: 'text/scss',
+					bool: true
+				});
+			}
+		});
+	});
+
+	it('ignores null/undefined returned from preprocessor', () => {
+		const source = `
+			<script>
+				console.log('ignore me');
+			</script>
+		`;
+
+		const expected = `
+			<script>
+				console.log('ignore me');
+			</script>
+		`;
+
+		return svelte.preprocess(source, {
+			script: () => null
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
 		});
 	});
 });
-
-function read(file) {
-	try {
-		return fs.readFileSync(file, 'utf-8');
-	} catch (err) {
-		return null;
-	}
-}
