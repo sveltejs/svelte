@@ -189,6 +189,14 @@ export default function ssr(
 				}
 			`
 		}
+
+		${
+			/__missingComponent/.test(generator.renderCode) && deindent`
+				var __missingComponent = {
+					render: () => ''
+				};
+			`
+		}
 	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 		if (sigil === '@') return generator.alias(name);
 		if (sigil === '%') return generator.templateVars.get(name);

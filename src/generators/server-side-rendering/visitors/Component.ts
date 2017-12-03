@@ -71,7 +71,14 @@ export default function visitComponent(
 		)
 		.join(', ');
 
-	const expression = node.name === ':Self' ? generator.name : `%components-${node.name}`;
+	const isSwitch = node.name === ':Switch';
+	if (isSwitch) block.contextualise(node.expression);
+
+	const expression = (
+		node.name === ':Self' ? generator.name :
+		isSwitch ? `((${node.metadata.snippet}) || __missingComponent)` :
+		`%components-${node.name}`
+	);
 
 	bindings.forEach(binding => {
 		block.addBinding(binding, expression);
