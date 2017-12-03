@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.44.0
+
+* Add `svelte.preprocess` ([#181](https://github.com/sveltejs/svelte/issues/181), [#876](https://github.com/sveltejs/svelte/issues/876))
+* Add `{{#await ...}}` blocks ([#654](https://github.com/sveltejs/svelte/issues/654))
+
 ## 1.43.1
 
 * Fix parameterised transitions ([#962](https://github.com/sveltejs/svelte/issues/962))
