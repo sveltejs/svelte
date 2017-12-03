@@ -51,7 +51,12 @@ export default class CodeBuilder {
 		this.last = ChunkType.Block;
 	}
 
-	addLine(line: string) {
+	addLine(line: string | CodeBuilder) {
+		if (line instanceof CodeBuilder) {
+			if (!line.isEmpty()) this.addLine(line.toString());
+			return;
+		}
+
 		this.reifyConditions();
 
 		if (this.lastCondition) {
@@ -71,7 +76,12 @@ export default class CodeBuilder {
 		if (!this.first) this.first = ChunkType.Line;
 	}
 
-	addLineAtStart(line: string) {
+	addLineAtStart(line: string | CodeBuilder) {
+		if (line instanceof CodeBuilder) {
+			if (!line.isEmpty()) this.addLineAtStart(line.toString());
+			return;
+		}
+
 		this.reifyConditions();
 
 		if (this.first === ChunkType.Block) {
@@ -86,7 +96,12 @@ export default class CodeBuilder {
 		if (!this.last) this.last = ChunkType.Line;
 	}
 
-	addBlock(block: string) {
+	addBlock(block: string | CodeBuilder) {
+		if (block instanceof CodeBuilder) {
+			if (!block.isEmpty()) this.addBlock(block.toString());
+			return;
+		}
+
 		this.reifyConditions();
 
 		if (this.indent) block = block.replace(/^/gm, `${this.indent}`);
@@ -106,7 +121,12 @@ export default class CodeBuilder {
 		if (!this.first) this.first = ChunkType.Block;
 	}
 
-	addBlockAtStart(block: string) {
+	addBlockAtStart(block: string | CodeBuilder) {
+		if (block instanceof CodeBuilder) {
+			if (!block.isEmpty()) this.addBlockAtStart(block.toString());
+			return;
+		}
+
 		this.reifyConditions();
 
 		if (this.result) {

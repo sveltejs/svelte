@@ -13,8 +13,10 @@ function assign(target) {
 	return target;
 }
 
-function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+function insertAll(parent, next, children) {
+	for (var i = 0; i < children.length; i += 1) {
+		parent.insertBefore(children[i], next);
+	}
 }
 
 function detachNode(node) {
@@ -202,9 +204,7 @@ function create_main_fragment(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(div, target, anchor);
-			insertNode(text, target, anchor);
-			insertNode(div_1, target, anchor);
+			insertAll(target, anchor, [div, text, div_1]);
 		},
 
 		p: function update(changed, state) {

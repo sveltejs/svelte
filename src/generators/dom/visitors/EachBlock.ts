@@ -2,6 +2,7 @@ import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import mountChildren from '../mountChildren';
 import isDomNode from './shared/isDomNode';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
@@ -80,11 +81,11 @@ export default function visitEachBlock(
 			}
 		`);
 
-		block.builders.mount.addBlock(deindent`
+		node.mountStatement += '\n\n' + deindent`
 			if (${each_block_else}) {
 				${each_block_else}.${mountOrIntro}(${state.parentNode || '#target'}, null);
 			}
-		`);
+		`;
 
 		const parentNode = state.parentNode || `${anchor}.parentNode`;
 
@@ -127,14 +128,23 @@ export default function visitEachBlock(
 		`);
 	}
 
+	// TODO do this elsewhere?
+	if (needsAnchor) node.mountStatement += '\n\n' + (
+		state.parentNode ? `@append(${state.parentNode}, ${anchor});` : `@insert(#target, anchor, ${anchor});`
+	);
+
 	node.children.forEach((child: Node) => {
 		visit(generator, node._block, node._state, child, elementStack, componentStack);
 	});
+
+	node._block.builders.mount.addBlock(mountChildren(node));
 
 	if (node.else) {
 		node.else.children.forEach((child: Node) => {
 			visit(generator, node.else._block, node.else._state, child, elementStack, componentStack);
 		});
+
+		node.else._block.builders.mount.addBlock(mountChildren(node.else));
 	}
 }
 
@@ -164,6 +174,8 @@ function keyed(
 	block.addVariable(lookup, `@blankObject()`);
 	block.addVariable(head);
 	block.addVariable(last);
+
+	let first;
 
 	if (node.children[0] && node.children[0].type === 'Element' && !generator.components.has(node.children[0].name)) {
 		// TODO or text/tag/raw
@@ -210,13 +222,13 @@ function keyed(
 		}
 	`);
 
-	block.builders.mount.addBlock(deindent`
+	node.mountStatement = deindent`
 		var ${iteration} = ${head};
 		while (${iteration}) {
 			${iteration}.${mountOrIntro}(${targetNode}, ${anchorNode});
 			${iteration} = ${iteration}.next;
 		}
-	`);
+	`;
 
 	const dynamic = node._block.hasUpdateMethod;
 	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
@@ -397,11 +409,11 @@ function unkeyed(
 		}
 	`);
 
-	block.builders.mount.addBlock(deindent`
+	node.mountStatement = deindent`
 		for (var #i = 0; #i < ${iterations}.length; #i += 1) {
 			${iterations}[#i].${mountOrIntro}(${targetNode}, ${anchorNode});
 		}
-	`);
+	`;
 
 	const allDependencies = new Set(node._block.dependencies);
 	const { dependencies } = node.metadata;

@@ -13,12 +13,12 @@ function assign(target) {
 	return target;
 }
 
-function appendNode(node, target) {
-	target.appendChild(node);
+function append(parent, child) {
+	parent.appendChild(child);
 }
 
-function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+function insert(parent, next, child) {
+	parent.insertBefore(child, next);
 }
 
 function detachNode(node) {
@@ -197,7 +197,7 @@ function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-2363328337-style';
 	style.textContent = "@media(min-width: 1px){div[svelte-2363328337],[svelte-2363328337] div{color:red}}";
-	appendNode(style, document.head);
+	append(document.head, style);
 }
 
 function create_main_fragment(state, component) {
@@ -214,7 +214,7 @@ function create_main_fragment(state, component) {
 		},
 
 		m: function mount(target, anchor) {
-			insertNode(div, target, anchor);
+			insert(target, anchor, div);
 		},
 
 		p: noop,

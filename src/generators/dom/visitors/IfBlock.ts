@@ -2,6 +2,7 @@ import deindent from '../../../utils/deindent';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import mountChildren from '../mountChildren';
 import isDomNode from './shared/isDomNode';
 import { Node } from '../../../interfaces';
 import { State } from '../interfaces';
@@ -70,6 +71,8 @@ function visitChildren(
 	node.children.forEach((child: Node) => {
 		visit(generator, node._block, node._state, child, elementStack, componentStack);
 	});
+
+	node._block.builders.mount.addBlock(mountChildren(node));
 }
 
 export default function visitIfBlock(
@@ -129,6 +132,11 @@ export default function visitIfBlock(
 			`@createComment()`,
 			state.parentNode
 		);
+
+		// TODO do this elsewhere?
+		node.mountStatement += '\n\n' + (
+			state.parentNode ? `@append(${state.parentNode}, ${anchor})` : `@insert(#target, anchor, ${anchor})`
+		);
 	}
 }
 
@@ -149,7 +157,7 @@ function simple(
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
-	block.builders.mount.addLine(
+	node.mountStatement = (
 		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
@@ -251,7 +259,8 @@ function compound(
 
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
-	block.builders.mount.addLine(
+
+	node.mountStatement = (
 		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
@@ -349,7 +358,7 @@ function compoundWithOutros(
 	const targetNode = state.parentNode || '#target';
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
-	block.builders.mount.addLine(
+	node.mountStatement = (
 		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 

@@ -1,9 +1,13 @@
-export function appendNode(node, target) {
-	target.appendChild(node);
+export function append(parent) {
+	for (var i = 1; i < arguments.length; i += 1) {
+		parent.appendChild(arguments[i]);
+	}
 }
 
-export function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+export function insert(parent, next) {
+	for (var i = 2; i < arguments.length; i += 1) {
+		parent.insertBefore(arguments[i], next);
+	}
 }
 
 export function detachNode(node) {

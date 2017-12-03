@@ -14,6 +14,7 @@ import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
 import preprocess from './preprocess';
 import Block from './Block';
+import mountChildren from './mountChildren';
 import { test } from '../../config';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
 
@@ -104,6 +105,8 @@ export default function dom(
 		visit(generator, block, state, node, [], []);
 	});
 
+	block.builders.mount.addBlock(mountChildren(parsed.html));
+
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();
 	const computationDeps = new Set();
@@ -156,7 +159,7 @@ export default function dom(
 				var style = @createElement("style");
 				style.id = '${generator.stylesheet.id}-style';
 				style.textContent = ${styles};
-				@appendNode(style, document.head);
+				@append(document.head, style);
 			}
 		`);
 	}

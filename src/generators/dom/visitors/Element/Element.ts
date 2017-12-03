@@ -13,6 +13,7 @@ import isVoidElementName from '../../../../utils/isVoidElementName';
 import addTransitions from './addTransitions';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
+import mountChildren from '../../mountChildren';
 import { Node } from '../../../../interfaces';
 import { State } from '../../interfaces';
 import reservedNames from '../../../../utils/reservedNames';
@@ -71,16 +72,10 @@ export default function visitElement(
 		`);
 	}
 
-	if (parentNode) {
-		block.builders.mount.addLine(
-			`@appendNode(${name}, ${parentNode});`
-		);
-	} else {
-		block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
-
-		// TODO we eventually need to consider what happens to elements
-		// that belong to the same outgroup as an outroing element...
-		block.builders.unmount.addLine(`@detachNode(${name});`);
+	// TODO this is kinda messy — this is a hack to prevent the mount statement
+	// going in the usual place
+	if (node.slotted) {
+		node.mountStatement = `@append(${parentNode}, ${node.var});`;
 	}
 
 	// add CSS encapsulation attribute
@@ -270,6 +265,8 @@ export default function visitElement(
 				`${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};`
 			);
 		});
+
+		block.builders.mount.addBlock(mountChildren(node, node.var));
 
 		if (initialProps.length) {
 			block.builders.hydrate.addBlock(deindent`

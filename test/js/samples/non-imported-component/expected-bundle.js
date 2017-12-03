@@ -15,8 +15,8 @@ function assign(target) {
 	return target;
 }
 
-function insertNode(node, target, anchor) {
-	target.insertBefore(node, anchor);
+function insert(parent, next, child) {
+	parent.insertBefore(child, next);
 }
 
 function detachNode(node) {
@@ -203,7 +203,7 @@ function create_main_fragment(state, component) {
 
 		m: function mount(target, anchor) {
 			imported._mount(target, anchor);
-			insertNode(text, target, anchor);
+			insert(target, anchor, text);
 			nonimported._mount(target, anchor);
 		},
 
