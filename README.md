@@ -64,9 +64,10 @@ The Svelte compiler exposes the following API:
 
 * `compile( source [, options ] ) => { code, map, ast, css }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
 * `create( source [, options ] ) => function` - Compile the component and return the component itself.
+* `preprocess( source, options ) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
-### Options
+### Compiler options
 
 The Svelte compiler optionally takes a second argument, an object of configuration options:
 
@@ -90,6 +91,35 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | | | |
 | `onerror` | `function` | Specify a callback for when Svelte encounters an error while compiling the component. Passed two arguments: the error object, and another function that is Svelte's default onerror handling. | (exception is thrown) |
 | `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. Passed two arguments: the warning object, and another function that is Svelte's default onwarn handling. | (warning is logged to console) |
+
+### Preprocessor options
+
+`svelte.preprocess` returns a Promise that resolves to an object with a `toString` method (other properties will be added in future). It takes an options object with `markup`, `style` or `script` properties:
+
+```js
+const processed = await svelte.preprocess(source, {
+	markup: ({ content }) => {
+		// `content` is the entire component string
+		return { code: '...', map: {...} };
+	},
+
+	style: ({ content, attributes }) => {
+		// `content` is what's inside the <style> element, if present
+		// `attributes` is a map of attributes on the element
+		if (attributes.type !== 'text/scss') return;
+		return { code: '...', map: {...} };
+	},
+
+	script: ({ content, attributes }) => {
+		// `content` is what's inside the <script> element, if present
+		// `attributes` is a map of attributes on the element
+		if (attributes.type !== 'text/coffeescript') return;
+		return { code: '...', map: {...} };
+	}
+});
+```
+
+The `style` and `script` preprocessors will run *after* the `markup` preprocessor. Each preprocessor can return a) nothing (in which case no transformation takes place), b) a `{ code, map }` object, or c) a Promise that resolves to a) or b). Note that sourcemaps are currently discarded, but will be used in future versions of Svelte.
 
 ## Example/starter repos
 
