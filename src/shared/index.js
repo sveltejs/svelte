@@ -65,12 +65,13 @@ export function get(key) {
 }
 
 export function init(component, options) {
-	component.options = options;
-
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._root = options._root || component;
 	component._bind = options._bind;
+
+	component.options = options;
+	component.store = component._root.options.store;
 }
 
 export function observe(key, callback, options) {
@@ -194,6 +195,10 @@ export function isPromise(value) {
 export var PENDING = {};
 export var SUCCESS = {};
 export var FAILURE = {};
+
+export function removeFromStore() {
+	this.store._remove(this);
+}
 
 export var proto = {
 	destroy: destroy,

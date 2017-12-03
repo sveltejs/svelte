@@ -67,12 +67,13 @@ function get(key) {
 }
 
 function init(component, options) {
-	component.options = options;
-
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._root = options._root || component;
 	component._bind = options._bind;
+
+	component.options = options;
+	component.store = component._root.options.store;
 }
 
 function observe(key, callback, options) {
