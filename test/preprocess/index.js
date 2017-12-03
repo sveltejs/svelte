@@ -112,13 +112,14 @@ describe.only('preprocess', () => {
 
 	it('parses attributes', () => {
 		const source = `
-			<style type='text/scss' bool></style>
+			<style type='text/scss' data-foo="bar" bool></style>
 		`;
 
 		return svelte.preprocess(source, {
 			style: ({ attributes }) => {
 				assert.deepEqual(attributes, {
 					type: 'text/scss',
+					'data-foo': 'bar',
 					bool: true
 				});
 			}

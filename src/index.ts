@@ -35,19 +35,17 @@ function defaultOnerror(error: Error) {
 	throw error;
 }
 
-function parseAttributeValue(value: string | boolean) {
-	const curated = (<string>value).replace(/"/ig, '');
-	if (curated === 'true' || curated === 'false') {
-		return curated === 'true';
-	}
-	return curated;
+function parseAttributeValue(value: string) {
+	return /^['"]/.test(value) ?
+		value.slice(1, -1) :
+		value;
 }
 
 function parseAttributes(str: string) {
 	const attrs = {};
 	str.split(/\s+/).filter(Boolean).forEach(attr => {
 		const [name, value] = attr.split('=');
-		attrs[name] = parseAttributeValue(value);
+		attrs[name] = value ? parseAttributeValue(value) : true;
 	});
 	return attrs;
 }
