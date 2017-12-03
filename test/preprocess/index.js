@@ -46,15 +46,12 @@ describe.only('preprocess', () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = tryRequire(`./samples/${dir}/_config.js`) || {};
 			const input = fs.existsSync(`test/preprocess/samples/${dir}/input.pug`) ?
-				fs.readFileSync(`test/preprocess/samples/${dir}/input.pug`,
-					'utf-8').replace(/\s+$/, '') :
-				fs.readFileSync(`test/preprocess/samples/${dir}/input.html`,
-					'utf-8').replace(/\s+$/, '');
+				read(`test/preprocess/samples/${dir}/input.pug`) :
+				read(`test/preprocess/samples/${dir}/input.html`);
 
 			return svelte.preprocess(input, config)
 				.then(processed => processed.toString())
 				.then(processed => {
-
 					const expectedWarnings = (config.warnings || []).map(
 						normalizeWarning);
 					const domWarnings = [];
