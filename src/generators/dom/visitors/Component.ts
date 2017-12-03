@@ -3,6 +3,7 @@ import CodeBuilder from '../../../utils/CodeBuilder';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import isDomNode from './shared/isDomNode';
 import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
 import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
@@ -66,6 +67,9 @@ export default function visitComponent(
 	const bindings = node.attributes
 		.filter((a: Node) => a.type === 'Binding')
 		.map((a: Node) => mungeBinding(a, block));
+
+	const ref = node.attributes.find((a: Node) => a.type === 'Ref');
+	if (ref) generator.usesRefs = true;
 
 	if (attributes.length || bindings.length) {
 		const initialProps = attributes
@@ -205,30 +209,122 @@ export default function visitComponent(
 		}
 	}
 
-	const expression = node.name === ':Self' ? generator.name : `%components-${node.name}`;
+	const isSwitch = node.name === ':Switch';
 
-	block.builders.init.addBlock(deindent`
-		${statements.join('\n')}
-		var ${name} = new ${expression}({
-			${componentInitProperties.join(',\n')}
-		});
+	const switch_vars = isSwitch && {
+		value: block.getUniqueName('switch_value'),
+		props: block.getUniqueName('switch_props')
+	};
 
-		${beforecreate}
-	`);
-
-	block.builders.create.addLine(`${name}._fragment.c();`);
-
-	block.builders.claim.addLine(
-		`${name}._fragment.l(${state.parentNodes});`
+	const expression = (
+		node.name === ':Self' ? generator.name :
+		isSwitch ? switch_vars.value :
+		`%components-${node.name}`
 	);
 
-	block.builders.mount.addLine(
-		`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
-	);
+	if (isSwitch) {
+		block.contextualise(node.expression);
+		const { dependencies, snippet } = node.metadata;
 
-	if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
+		const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode || !isDomNode(node.parent, generator);
+		const anchor = needsAnchor
+			? block.getUniqueName(`${name}_anchor`)
+			: (node.next && node.next.var) || 'null';
 
-	block.builders.destroy.addLine(`${name}.destroy(false);`);
+		if (needsAnchor) {
+			block.addElement(
+				anchor,
+				`@createComment()`,
+				`@createComment()`,
+				state.parentNode
+			);
+		}
+
+		const params = block.params.join(', ');
+
+		block.builders.init.addBlock(deindent`
+			var ${switch_vars.value} = ${snippet};
+		`);
+
+		block.builders.init.addBlock(deindent`
+			function ${switch_vars.props}(${params}) {
+				return {
+					${componentInitProperties.join(',\n')}
+				};
+			}
+
+			if (${switch_vars.value}) {
+				${statements.length > 0 && statements.join('\n')}
+				var ${name} = new ${expression}(${switch_vars.props}(${params}));
+
+				${beforecreate}
+			}
+		`);
+
+		block.builders.create.addLine(
+			`if (${name}) ${name}._fragment.c();`
+		);
+
+		block.builders.claim.addLine(
+			`if (${name}) ${name}._fragment.l(${state.parentNodes});`
+		);
+
+		block.builders.mount.addLine(
+			`if (${name}) ${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
+		);
+
+		block.builders.update.addBlock(deindent`
+			if (${switch_vars.value} !== (${switch_vars.value} = ${snippet})) {
+				if (${name}) ${name}.destroy();
+
+				if (${switch_vars.value}) {
+					${name} = new ${switch_vars.value}(${switch_vars.props}(${params}));
+					${name}._fragment.c();
+					${name}._mount(${anchor}.parentNode, ${anchor});
+					${ref && `#component.refs.${ref.name} = ${name};`}
+				}
+
+				${ref && deindent`
+					else if (#component.refs.${ref.name} === ${name}) {
+						#component.refs.${ref.name} = null;
+					}`}
+			} else {
+				// normal update
+			}
+		`);
+
+		if (!state.parentNode) block.builders.unmount.addLine(`if (${name}) ${name}._unmount();`);
+
+		block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
+	} else {
+		block.builders.init.addBlock(deindent`
+			${statements.join('\n')}
+			var ${name} = new ${expression}({
+				${componentInitProperties.join(',\n')}
+			});
+
+			${beforecreate}
+
+			${ref && `#component.refs.${ref.name} = ${name};`}
+		`);
+
+		block.builders.create.addLine(`${name}._fragment.c();`);
+
+		block.builders.claim.addLine(
+			`${name}._fragment.l(${state.parentNodes});`
+		);
+
+		block.builders.mount.addLine(
+			`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
+		);
+
+		if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
+
+		block.builders.destroy.addLine(deindent`
+			${name}.destroy(false);
+			${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
+		`);
+	}
 
 	// event handlers
 	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((handler: Node) => {
@@ -271,17 +367,6 @@ export default function visitComponent(
 			${name}.on("${handler.name}", function(event) {
 				${handlerBody}
 			});
-		`);
-	});
-
-	// refs
-	node.attributes.filter((a: Node) => a.type === 'Ref').forEach((ref: Node) => {
-		generator.usesRefs = true;
-
-		block.builders.init.addLine(`#component.refs.${ref.name} = ${name};`);
-
-		block.builders.destroy.addLine(deindent`
-			if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;
 		`);
 	});
 
