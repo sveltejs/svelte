@@ -31,7 +31,7 @@ function checkCodeIsValid(code) {
 	}
 }
 
-describe('preprocess', () => {
+describe.only('preprocess', () => {
 	fs.readdirSync('test/preprocess/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
@@ -51,9 +51,9 @@ describe('preprocess', () => {
 				fs.readFileSync(`test/preprocess/samples/${dir}/input.html`,
 					'utf-8').replace(/\s+$/, '');
 
-			svelte.preprocess(input, config).
-				then(processed => processed.toString()).
-				then(processed => {
+			return svelte.preprocess(input, config)
+				.then(processed => processed.toString())
+				.then(processed => {
 
 					const expectedWarnings = (config.warnings || []).map(
 						normalizeWarning);
@@ -153,8 +153,6 @@ describe('preprocess', () => {
 							throw err;
 						}
 					}
-				}).catch(error => {
-					throw error;
 				});
 		});
 	});
