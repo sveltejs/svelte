@@ -74,7 +74,6 @@
     "rollup-watch": "^4.3.1",
     "source-map": "^0.5.6",
     "source-map-support": "^0.4.8",
-    "stylus": "^0.54.5",
     "ts-node": "^3.3.0",
     "tslib": "^1.8.0",
     "typescript": "^2.6.1"
