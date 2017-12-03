@@ -22,16 +22,4 @@ SvelteComponent.renderCss = function() {
 	};
 };
 
-var escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;'
-};
-
-function __escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
-}
-
 module.exports = SvelteComponent;

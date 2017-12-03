@@ -3,6 +3,7 @@ import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
+import reservedNames from '../utils/reservedNames';
 import hash from './utils/hash';
 import { Node, Parsed } from '../interfaces';
 import CompileError from '../utils/CompileError';
@@ -137,6 +138,17 @@ export class Parser {
 		this.index += match[0].length;
 
 		return match[0];
+	}
+
+	readIdentifier() {
+		const start = this.index;
+		const identifier = this.read(/[a-zA-Z_$][a-zA-Z0-9_$]*/);
+
+		if (reservedNames.has(identifier)) {
+			this.error(`'${identifier}' is a reserved word in JavaScript and cannot be used here`, start);
+		}
+
+		return identifier;
 	}
 
 	readUntil(pattern: RegExp) {
