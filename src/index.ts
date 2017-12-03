@@ -35,7 +35,7 @@ function defaultOnerror(error: Error) {
 	throw error;
 }
 
-function _parseAttributeValue(value: string | boolean) {
+function parseAttributeValue(value: string | boolean) {
 	const curated = (<string>value).replace(/"/ig, '');
 	if (curated === 'true' || curated === 'false') {
 		return curated === 'true';
@@ -43,26 +43,26 @@ function _parseAttributeValue(value: string | boolean) {
 	return curated;
 }
 
-function _parseStyleAttributes(str: string) {
+function parseAttributes(str: string) {
 	const attrs = {};
 	str.split(/\s+/).filter(Boolean).forEach(attr => {
 		const [name, value] = attr.split('=');
-		attrs[name] = _parseAttributeValue(value);
+		attrs[name] = parseAttributeValue(value);
 	});
 	return attrs;
 }
 
-async function _doPreprocess(source, type: 'script' | 'style', preprocessor: Preprocessor) {
+async function replaceTagContents(source, type: 'script' | 'style', preprocessor: Preprocessor) {
 	const exp = new RegExp(`<${type}([\\S\\s]*?)>([\\S\\s]*?)<\\/${type}>`, 'ig');
 	const match = exp.exec(source);
 	if (match) {
-		const attributes: Record<string, string | boolean> = _parseStyleAttributes(match[1]);
+		const attributes: Record<string, string | boolean> = parseAttributes(match[1]);
 		const content: string = match[2];
 		const processed: { code: string, map?: SourceMap | string } = await preprocessor({
 			content,
 			attributes
 		});
-		return source.replace(content, processed.code || content);
+		return source.slice(0, match.index) + (processed.code || content) + source.slice(0, match.index + match[0].length);
 	}
 }
 
@@ -74,11 +74,11 @@ export async function preprocess(source: string, options: PreprocessOptions) {
 	}
 
 	if (!!style) {
-		source = await _doPreprocess(source, 'style', style);
+		source = await replaceTagContents(source, 'style', style);
 	}
 
 	if (!!script) {
-		source = await _doPreprocess(source, 'script', script);
+		source = await replaceTagContents(source, 'script', script);
 	}
 
 	return {
