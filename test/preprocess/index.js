@@ -1,7 +1,7 @@
 import assert from 'assert';
 import {svelte} from '../helpers.js';
 
-describe.only('preprocess', () => {
+describe('preprocess', () => {
 	it('preprocesses entire component', () => {
 		const source = `
 			<h1>Hello __NAME__!</h1>
