@@ -16,6 +16,7 @@ export function destroy(detach) {
 	if (detach !== false) this._fragment.u();
 	this._fragment.d();
 	this._fragment = this._state = null;
+	this.destroyed = true;
 }
 
 export function destroyDev(detach) {
@@ -201,6 +202,7 @@ export function removeFromStore() {
 }
 
 export var proto = {
+	destroyed: false,
 	destroy: destroy,
 	get: get,
 	fire: fire,
@@ -215,6 +217,7 @@ export var proto = {
 };
 
 export var protoDev = {
+	destroyed: false,
 	destroy: destroyDev,
 	get: get,
 	fire: fire,
