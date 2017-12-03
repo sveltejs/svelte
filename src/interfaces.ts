@@ -62,7 +62,6 @@ export interface CompileOptions {
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
-	preprocessor?: ((raw: string) => string) | false ;
 }
 
 export interface GenerateOptions {

@@ -10,7 +10,7 @@ import { SourceMap } from 'magic-string';
 const version = '__VERSION__';
 
 function normalizeOptions(options: CompileOptions): CompileOptions {
-	let normalizedOptions = assign({ generate: 'dom', preprocessor: false }, options);
+	let normalizedOptions = assign({ generate: 'dom' }, options);
 	const { onwarn, onerror } = normalizedOptions;
 	normalizedOptions.onwarn = onwarn
 		? (warning: Warning) => onwarn(warning, defaultOnwarn)
