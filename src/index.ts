@@ -67,8 +67,8 @@ async function replaceTagContents(source, type: 'script' | 'style', preprocessor
 		if (processed && processed.code) {
 			return (
 				source.slice(0, match.index) +
-				processed.code +
-				source.slice(0, match.index + match[0].length)
+				`<${type}>\n${processed.code}</${type}>` +
+				source.slice(match.index + match[0].length)
 			);
 		}
 	}
