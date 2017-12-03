@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.44.1
+
+* Fix bidirectional transitions that reference state ([#962](https://github.com/sveltejs/svelte/issues962))
+
 ## 1.44.0
 
 * Add `svelte.preprocess` ([#181](https://github.com/sveltejs/svelte/issues/181), [#876](https://github.com/sveltejs/svelte/issues/876))
