@@ -69,28 +69,16 @@ async function _doPreprocess(source, type: 'script' | 'style', preprocessor: Pre
 export async function preprocess(source: string, options: PreprocessOptions) {
 	const { markup, style, script } = options;
 	if (!!markup) {
-		try {
-			const processed: { code: string, map?: SourceMap | string } = await markup({ content: source });
-			source = processed.code;
-		} catch (error) {
-			defaultOnerror(error);
-		}
+		const processed: { code: string, map?: SourceMap | string } = await markup({ content: source });
+		source = processed.code;
 	}
 
 	if (!!style) {
-		try {
-			source = await _doPreprocess(source, 'style', style);
-		} catch (error) {
-			defaultOnerror(error);
-		}
+		source = await _doPreprocess(source, 'style', style);
 	}
 
 	if (!!script) {
-		try {
-			source = await _doPreprocess(source, 'script', script);
-		} catch (error) {
-			defaultOnerror(error);
-		}
+		source = await _doPreprocess(source, 'script', script);
 	}
 
 	return {
