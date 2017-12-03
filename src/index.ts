@@ -55,6 +55,7 @@ function parseAttributes(str: string) {
 async function replaceTagContents(source, type: 'script' | 'style', preprocessor: Preprocessor) {
 	const exp = new RegExp(`<${type}([\\S\\s]*?)>([\\S\\s]*?)<\\/${type}>`, 'ig');
 	const match = exp.exec(source);
+
 	if (match) {
 		const attributes: Record<string, string | boolean> = parseAttributes(match[1]);
 		const content: string = match[2];
@@ -62,8 +63,17 @@ async function replaceTagContents(source, type: 'script' | 'style', preprocessor
 			content,
 			attributes
 		});
-		return source.slice(0, match.index) + (processed.code || content) + source.slice(0, match.index + match[0].length);
+
+		if (processed && processed.code) {
+			return (
+				source.slice(0, match.index) +
+				processed.code +
+				source.slice(0, match.index + match[0].length)
+			);
+		}
 	}
+
+	return source;
 }
 
 export async function preprocess(source: string, options: PreprocessOptions) {
