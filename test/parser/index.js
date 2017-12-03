@@ -41,7 +41,8 @@ describe('parse', () => {
 					assert.deepEqual(err.loc, expected.loc);
 					assert.equal(err.pos, expected.pos);
 				} catch (err2) {
-					throw err2.code === 'MODULE_NOT_FOUND' ? err : err2;
+					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
+					throw e;
 				}
 			}
 		});

@@ -165,16 +165,29 @@ export default function ssr(
 			};
 		};
 
-		var escaped = {
-			'"': '&quot;',
-			"'": '&##39;',
-			'&': '&amp;',
-			'<': '&lt;',
-			'>': '&gt;'
-		};
+		${
+			// TODO this is a bit hacky
+			/__escape/.test(generator.renderCode) && deindent`
+				var escaped = {
+					'"': '&quot;',
+					"'": '&##39;',
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;'
+				};
 
-		function __escape(html) {
-			return String(html).replace(/["'&<>]/g, match => escaped[match]);
+				function __escape(html) {
+					return String(html).replace(/["'&<>]/g, match => escaped[match]);
+				}
+			`
+		}
+
+		${
+			/__isPromise/.test(generator.renderCode) && deindent`
+				function __isPromise(value) {
+					return value && typeof value.then === 'function';
+				}
+			`
 		}
 	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 		if (sigil === '@') return generator.alias(name);
