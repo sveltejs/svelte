@@ -110,7 +110,7 @@ export default function visitAwaitBlock(
 	const anchorNode = state.parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addBlock(deindent`
-		${await_block}.m(${targetNode}, ${anchor});
+		${await_block}.m(${targetNode}, ${anchorNode});
 	`);
 
 	const conditions = [];
