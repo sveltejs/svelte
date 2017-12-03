@@ -61,12 +61,16 @@ export default function visitComponent(
 	let beforecreate: string = null;
 
 	const attributes = node.attributes
-		.filter((a: Node) => a.type === 'Attribute')
-		.map((a: Node) => mungeAttribute(a, block));
+		.filter(a => a.type === 'Attribute')
+		.map(a => mungeAttribute(a, block));
 
 	const bindings = node.attributes
-		.filter((a: Node) => a.type === 'Binding')
-		.map((a: Node) => mungeBinding(a, block));
+		.filter(a => a.type === 'Binding')
+		.map(a => mungeBinding(a, block));
+
+	const eventHandlers = node.attributes
+		.filter((a: Node) => a.type === 'EventHandler')
+		.map(a => mungeEventHandler(generator, node, a, block, name_context, allContexts));
 
 	const ref = node.attributes.find((a: Node) => a.type === 'Ref');
 	if (ref) generator.usesRefs = true;
@@ -244,9 +248,7 @@ export default function visitComponent(
 
 		block.builders.init.addBlock(deindent`
 			var ${switch_vars.value} = ${snippet};
-		`);
 
-		block.builders.init.addBlock(deindent`
 			function ${switch_vars.props}(${params}) {
 				return {
 					${componentInitProperties.join(',\n')}
@@ -259,6 +261,14 @@ export default function visitComponent(
 
 				${beforecreate}
 			}
+
+			${eventHandlers.map(handler => deindent`
+				function ${handler.var}(event) {
+					${handler.body}
+				}
+
+				if (${name}) ${name}.on("${handler.name}", ${handler.var});
+			`)}
 		`);
 
 		block.builders.create.addLine(
@@ -281,6 +291,11 @@ export default function visitComponent(
 					${name} = new ${switch_vars.value}(${switch_vars.props}(${params}));
 					${name}._fragment.c();
 					${name}._mount(${anchor}.parentNode, ${anchor});
+
+					${eventHandlers.map(handler => deindent`
+						${name}.on("${handler.name}", ${handler.var});
+					`)}
+
 					${ref && `#component.refs.${ref.name} = ${name};`}
 				}
 
@@ -305,6 +320,12 @@ export default function visitComponent(
 
 			${beforecreate}
 
+			${eventHandlers.map(handler => deindent`
+				${name}.on("${handler.name}", function(event) {
+					${handler.body}
+				});
+			`)}
+
 			${ref && `#component.refs.${ref.name} = ${name};`}
 		`);
 
@@ -325,50 +346,6 @@ export default function visitComponent(
 			${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
 		`);
 	}
-
-	// event handlers
-	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((handler: Node) => {
-		const usedContexts: string[] = [];
-
-		if (handler.expression) {
-			generator.addSourcemapLocations(handler.expression);
-			generator.code.prependRight(
-				handler.expression.start,
-				`${block.alias('component')}.`
-			);
-
-			handler.expression.arguments.forEach((arg: Node) => {
-				const { contexts } = block.contextualise(arg, null, true);
-
-				contexts.forEach(context => {
-					if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-					allContexts.add(context);
-				});
-			});
-		}
-
-		// TODO hoist event handlers? can do `this.__component.method(...)`
-		const declarations = usedContexts.map(name => {
-			if (name === 'state') return `var state = ${name_context}.state;`;
-
-			const listName = block.listNames.get(name);
-			const indexName = block.indexNames.get(name);
-
-			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
-		});
-
-		const handlerBody =
-			(declarations.length ? declarations.join('\n') + '\n\n' : '') +
-			(handler.expression ?
-				`[✂${handler.expression.start}-${handler.expression.end}✂];` :
-				`${block.alias('component')}.fire('${handler.name}', event);`);
-
-		block.builders.init.addBlock(deindent`
-			${name}.on("${handler.name}", function(event) {
-				${handlerBody}
-			});
-		`);
-	});
 
 	// maintain component context
 	if (allContexts.size) {
@@ -509,6 +486,55 @@ function mungeBinding(binding: Node, block: Block): Binding {
 		obj,
 		prop,
 		dependencies
+	};
+}
+
+function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, name_context: string, allContexts: Set<string>) {
+	let body;
+
+	if (handler.expression) {
+		generator.addSourcemapLocations(handler.expression);
+		generator.code.prependRight(
+			handler.expression.start,
+			`${block.alias('component')}.`
+		);
+
+		const usedContexts: string[] = [];
+
+		handler.expression.arguments.forEach((arg: Node) => {
+			const { contexts } = block.contextualise(arg, null, true);
+
+			contexts.forEach(context => {
+				if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+				allContexts.add(context);
+			});
+		});
+
+		// TODO hoist event handlers? can do `this.__component.method(...)`
+		const declarations = usedContexts.map(name => {
+			if (name === 'state') return `var state = ${name_context}.state;`;
+
+			const listName = block.listNames.get(name);
+			const indexName = block.indexNames.get(name);
+
+			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
+		});
+
+		body = deindent`
+			${declarations}
+
+			[✂${handler.expression.start}-${handler.expression.end}✂];
+		`;
+	} else {
+		body = deindent`
+			${block.alias('component')}.fire('${handler.name}', event);
+		`;
+	}
+
+	return {
+		name: handler.name,
+		var: block.getUniqueName(`${node.var}_${handler.name}`),
+		body
 	};
 }
 
