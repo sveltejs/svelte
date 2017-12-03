@@ -15,10 +15,9 @@ export default function addTransitions(
 
 	if (!intro && !outro) return;
 
-	if (intro) block.contextualise(intro.expression); // TODO remove all these
-	if (outro) block.contextualise(outro.expression);
-
 	if (intro === outro) {
+		block.contextualise(intro.expression); // TODO remove all these
+
 		const name = block.getUniqueName(`${node.var}_transition`);
 		const snippet = intro.expression
 			? intro.metadata.snippet
@@ -49,6 +48,8 @@ export default function addTransitions(
 		const outroName = outro && block.getUniqueName(`${node.var}_outro`);
 
 		if (intro) {
+			block.contextualise(intro.expression);
+
 			block.addVariable(introName);
 			const snippet = intro.expression
 				? intro.metadata.snippet
@@ -74,6 +75,8 @@ export default function addTransitions(
 		}
 
 		if (outro) {
+			block.contextualise(outro.expression);
+
 			block.addVariable(outroName);
 			const snippet = outro.expression
 				? outro.metadata.snippet
