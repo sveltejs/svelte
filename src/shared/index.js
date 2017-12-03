@@ -188,6 +188,14 @@ export function _unmount() {
 	this._fragment.u();
 }
 
+export function isPromise(value) {
+	return value && typeof value.then === 'function';
+}
+
+export var PENDING = {};
+export var SUCCESS = {};
+export var FAILURE = {};
+
 export function removeFromStore() {
 	this.store._remove(this);
 }

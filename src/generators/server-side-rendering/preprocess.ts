@@ -10,6 +10,16 @@ const preprocessors = {
 	RawMustacheTag: noop,
 	Text: noop,
 
+	AwaitBlock: (
+		generator: SsrGenerator,
+		node: Node,
+		elementStack: Node[]
+	) => {
+		preprocessChildren(generator, node.pending, elementStack);
+		preprocessChildren(generator, node.then, elementStack);
+		preprocessChildren(generator, node.catch, elementStack);
+	},
+
 	IfBlock: (
 		generator: SsrGenerator,
 		node: Node,
