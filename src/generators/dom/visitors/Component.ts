@@ -75,13 +75,13 @@ export default function visitComponent(
 	const ref = node.attributes.find((a: Node) => a.type === 'Ref');
 	if (ref) generator.usesRefs = true;
 
+	const updates: string[] = [];
+
 	if (attributes.length || bindings.length) {
 		const initialProps = attributes
 			.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`);
 
 		const initialPropString = stringifyProps(initialProps);
-
-		const updates: string[] = [];
 
 		attributes
 			.filter((attribute: Attribute) => attribute.dynamic)
@@ -202,15 +202,6 @@ export default function visitComponent(
 		} else if (initialProps.length) {
 			componentInitProperties.push(`data: ${initialPropString}`);
 		}
-
-		if (updates.length) {
-			block.builders.update.addBlock(deindent`
-				var ${name}_changes = {};
-				${updates.join('\n')}
-				${name}._set(${name}_changes);
-				${bindings.length && `${name_updating} = {};`}
-			`);
-		}
 	}
 
 	const isSwitch = node.name === ':Switch';
@@ -303,10 +294,19 @@ export default function visitComponent(
 					else if (#component.refs.${ref.name} === ${name}) {
 						#component.refs.${ref.name} = null;
 					}`}
-			} else {
-				// normal update
 			}
 		`);
+
+		if (updates.length) {
+			block.builders.update.addBlock(deindent`
+				else {
+					var ${name}_changes = {};
+					${updates.join('\n')}
+					${name}._set(${name}_changes);
+					${bindings.length && `${name_updating} = {};`}
+				}
+			`);
+		}
 
 		if (!state.parentNode) block.builders.unmount.addLine(`if (${name}) ${name}._unmount();`);
 
@@ -338,6 +338,15 @@ export default function visitComponent(
 		block.builders.mount.addLine(
 			`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
 		);
+
+		if (updates.length) {
+			block.builders.update.addBlock(deindent`
+				var ${name}_changes = {};
+				${updates.join('\n')}
+				${name}._set(${name}_changes);
+				${bindings.length && `${name_updating} = {};`}
+			`);
+		}
 
 		if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
 
