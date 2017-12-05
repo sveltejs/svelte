@@ -4,7 +4,7 @@ import Generator from '../../Generator';
 export default function isChildOfComponent(node: Node, generator: Generator) {
 	while (node = node.parent) {
 		if (node.type !== 'Element') continue;
-		if (generator.components.has(node.name)) return true;
+		if (node.name === ':Self' || node.name === ':Switch' || generator.components.has(node.name)) return true; // TODO extract this out into a helper
 		if (/-/.test(node.name)) return false;
 	}
 }

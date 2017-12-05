@@ -7,6 +7,7 @@ import isDomNode from './shared/isDomNode';
 import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
 import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
+import getStaticAttributeValue from '../../../utils/getStaticAttributeValue';
 import { stringify } from '../../../utils/stringify';
 import stringifyProps from '../../../utils/stringifyProps';
 import { Node } from '../../../interfaces';
@@ -281,6 +282,8 @@ export default function visitComponent(
 				if (${switch_vars.value}) {
 					${name} = new ${switch_vars.value}(${switch_vars.props}(${params}));
 					${name}._fragment.c();
+
+					${node.children.map(child => remount(generator, child, name))}
 					${name}._mount(${anchor}.parentNode, ${anchor});
 
 					${eventHandlers.map(handler => deindent`
@@ -554,4 +557,32 @@ function isComputed(node: Node) {
 	}
 
 	return false;
+}
+
+function remount(generator: DomGenerator, node: Node, name: string) {
+	// TODO make this a method of the nodes
+
+	if (node.type === 'Element') {
+		if (node.name === ':Self' || node.name === ':Switch' || generator.components.has(node.name)) {
+			return `${node.var}._mount(${name}._slotted.default, null);`;
+		}
+
+		const slot = node.attributes.find(attribute => attribute.name === 'slot');
+		if (slot) {
+			return `@appendNode(${node.var}, ${name}._slotted.${getStaticAttributeValue(node, 'slot')});`;
+		}
+
+		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+	}
+
+	if (node.type === 'Text' || node.type === 'MustacheTag' || node.type === 'RawMustacheTag') {
+		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+	}
+
+	if (node.type === 'EachBlock') {
+		// TODO consider keyed blocks
+		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted.default, null);`;
+	}
+
+	return `${node.var}.m(${name}._slotted.default, null);`;
 }

@@ -230,7 +230,7 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 		const parent = stack[i];
 		if (parent.type === 'Element') {
 			// if we're inside a component or a custom element, gravy
-			if (validator.components.has(parent.name)) return;
+			if (parent.name === ':Self' || parent.name === ':Switch' || validator.components.has(parent.name)) return;
 			if (/-/.test(parent.name)) return;
 		}
 
