@@ -256,6 +256,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
+		node.iterations = block.getUniqueName(`${node.var}_blocks`);
 
 		const { dependencies } = node.metadata;
 		block.addDependencies(dependencies);
