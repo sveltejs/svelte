@@ -15,7 +15,7 @@ import { Node } from '../../interfaces';
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const SELF = ':Self';
-const SWITCH = ':Switch';
+const SWITCH = ':Component';
 
 const metaTags = {
 	':Window': true

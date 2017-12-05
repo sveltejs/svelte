@@ -764,7 +764,7 @@ export default class Generator {
 					this.skip();
 				}
 
-				if (node.type === 'Element' && node.name === ':Switch') {
+				if (node.type === 'Element' && node.name === ':Component') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 				}
 			},

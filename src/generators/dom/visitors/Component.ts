@@ -205,7 +205,7 @@ export default function visitComponent(
 		}
 	}
 
-	const isSwitch = node.name === ':Switch';
+	const isSwitch = node.name === ':Component';
 
 	const switch_vars = isSwitch && {
 		value: block.getUniqueName('switch_value'),
@@ -563,7 +563,7 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 	// TODO make this a method of the nodes
 
 	if (node.type === 'Element') {
-		if (node.name === ':Self' || node.name === ':Switch' || generator.components.has(node.name)) {
+		if (node.name === ':Self' || node.name === ':Component' || generator.components.has(node.name)) {
 			return `${node.var}._mount(${name}._slotted.default, null);`;
 		}
 
