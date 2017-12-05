@@ -205,20 +205,20 @@ export default function visitComponent(
 		}
 	}
 
-	const isSwitch = node.name === ':Component';
+	const isDynamicComponent = node.name === ':Component';
 
-	const switch_vars = isSwitch && {
+	const switch_vars = isDynamicComponent && {
 		value: block.getUniqueName('switch_value'),
 		props: block.getUniqueName('switch_props')
 	};
 
 	const expression = (
 		node.name === ':Self' ? generator.name :
-		isSwitch ? switch_vars.value :
+		isDynamicComponent ? switch_vars.value :
 		`%components-${node.name}`
 	);
 
-	if (isSwitch) {
+	if (isDynamicComponent) {
 		block.contextualise(node.expression);
 		const { dependencies, snippet } = node.metadata;
 

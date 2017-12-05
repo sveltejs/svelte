@@ -1,37 +1,37 @@
 {
-	"hash": 755548012,
+	"hash": 410218696,
 	"html": {
 		"start": 0,
-		"end": 37,
+		"end": 43,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 37,
+				"end": 43,
 				"type": "Element",
-				"name": ":Switch",
+				"name": ":Component",
 				"attributes": [],
 				"children": [],
 				"expression": {
 					"type": "ConditionalExpression",
-					"start": 10,
-					"end": 25,
+					"start": 13,
+					"end": 28,
 					"test": {
 						"type": "Identifier",
-						"start": 10,
-						"end": 13,
+						"start": 13,
+						"end": 16,
 						"name": "foo"
 					},
 					"consequent": {
 						"type": "Identifier",
-						"start": 16,
-						"end": 19,
+						"start": 19,
+						"end": 22,
 						"name": "Foo"
 					},
 					"alternate": {
 						"type": "Identifier",
-						"start": 22,
-						"end": 25,
+						"start": 25,
+						"end": 28,
 						"name": "Bar"
 					}
 				}

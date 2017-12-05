@@ -1,4 +1,4 @@
-<:Switch { x ? Foo : Bar } x='{{x}}'>
+<:Component { x ? Foo : Bar } x='{{x}}'>
 	<p>element</p>
 
 	{{tag}}
@@ -20,7 +20,7 @@
 	<Baz/>
 
 	<div slot='other'>what goes up must come down</div>
-</:Switch>
+</:Component>
 
 <script>
 	import Foo from './Foo.html';
