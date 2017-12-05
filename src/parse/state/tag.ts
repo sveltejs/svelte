@@ -15,7 +15,7 @@ import { Node } from '../../interfaces';
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const SELF = ':Self';
-const SWITCH = ':Component';
+const COMPONENT = ':Component';
 
 const metaTags = {
 	':Window': true
@@ -166,7 +166,7 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	if (name === SWITCH) {
+	if (name === COMPONENT) {
 		parser.eat('{', true);
 		element.expression = readExpression(parser);
 		parser.allowWhitespace();
@@ -248,7 +248,7 @@ function readTagName(parser: Parser) {
 		return SELF;
 	}
 
-	if (parser.eat(SWITCH)) return SWITCH;
+	if (parser.eat(COMPONENT)) return COMPONENT;
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 

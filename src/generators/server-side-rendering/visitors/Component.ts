@@ -71,12 +71,12 @@ export default function visitComponent(
 		)
 		.join(', ');
 
-	const isSwitch = node.name === ':Component';
-	if (isSwitch) block.contextualise(node.expression);
+	const isDynamicComponent = node.name === ':Component';
+	if (isDynamicComponent) block.contextualise(node.expression);
 
 	const expression = (
 		node.name === ':Self' ? generator.name :
-		isSwitch ? `((${node.metadata.snippet}) || __missingComponent)` :
+		isDynamicComponent ? `((${node.metadata.snippet}) || __missingComponent)` :
 		`%components-${node.name}`
 	);
 
