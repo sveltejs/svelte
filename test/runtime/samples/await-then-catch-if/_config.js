@@ -1,6 +1,6 @@
 let fulfil;
 
-let thePromise = new Promise(f => {
+const thePromise = new Promise(f => {
 	fulfil = f;
 });
 
@@ -35,9 +35,11 @@ export default {
 					show: true
 				});
 
-				assert.htmlEqual(target.innerHTML, `
-					<p>the value is 42</p>
-				`);
+				return thePromise.then(() => {
+					assert.htmlEqual(target.innerHTML, `
+						<p>the value is 42</p>
+					`);
+				});
 			});
 	}
 };
