@@ -67,7 +67,7 @@ export default function visitAwaitBlock(
 				${old_block}.u();
 				${old_block}.d();
 				${await_block}.c();
-				${await_block}.m(${anchor}.parentNode, ${anchor});
+				${await_block}.m(${state.parentNode || `${anchor}.parentNode`}, ${anchor});
 			}
 		}
 
@@ -141,6 +141,10 @@ export default function visitAwaitBlock(
 			}
 		`);
 	}
+
+	block.builders.unmount.addBlock(deindent`
+		${await_block}.u();
+	`);
 
 	block.builders.destroy.addBlock(deindent`
 		${await_token} = null;
