@@ -1,8 +1,13 @@
 # Svelte changelog
 
+## 1.44.2
+
+* Fix `await` blocks with siblings ([#974](https://github.com/sveltejs/svelte/issues/974))
+* Fix `await` blocks inside `if` blocks ([#975](https://github.com/sveltejs/svelte/issues/975))
+
 ## 1.44.1
 
-* Fix bidirectional transitions that reference state ([#962](https://github.com/sveltejs/svelte/issues962))
+* Fix bidirectional transitions that reference state ([#962](https://github.com/sveltejs/svelte/issues/962))
 
 ## 1.44.0
 
