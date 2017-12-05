@@ -14,7 +14,7 @@ export default function validateElement(
 	elementStack: Node[]
 ) {
 	const isComponent =
-		node.name === ':Self' || node.name === ':Switch' || validator.components.has(node.name);
+		node.name === ':Self' || node.name === ':Component' || validator.components.has(node.name);
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
@@ -230,7 +230,7 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 		const parent = stack[i];
 		if (parent.type === 'Element') {
 			// if we're inside a component or a custom element, gravy
-			if (parent.name === ':Self' || parent.name === ':Switch' || validator.components.has(parent.name)) return;
+			if (parent.name === ':Self' || parent.name === ':Component' || validator.components.has(parent.name)) return;
 			if (/-/.test(parent.name)) return;
 		}
 

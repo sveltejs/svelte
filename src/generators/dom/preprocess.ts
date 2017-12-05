@@ -437,7 +437,7 @@ const preprocessors = {
 		}
 
 		const isComponent =
-			generator.components.has(node.name) || node.name === ':Self' || node.name === ':Switch';
+			generator.components.has(node.name) || node.name === ':Self' || node.name === ':Component';
 
 		if (isComponent) {
 			cannotUseInnerHTML(node);
@@ -445,7 +445,7 @@ const preprocessors = {
 			node.var = block.getUniqueName(
 				(
 					node.name === ':Self' ? generator.name :
-					node.name === ':Switch' ? 'switch_instance' :
+					node.name === ':Component' ? 'switch_instance' :
 					node.name
 				).toLowerCase()
 			);

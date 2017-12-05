@@ -71,7 +71,7 @@ export default function visitComponent(
 		)
 		.join(', ');
 
-	const isSwitch = node.name === ':Switch';
+	const isSwitch = node.name === ':Component';
 	if (isSwitch) block.contextualise(node.expression);
 
 	const expression = (
