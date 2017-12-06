@@ -12,7 +12,6 @@ import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
-import preprocess from './preprocess';
 import Block from './Block';
 import { test } from '../../config';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
@@ -96,7 +95,8 @@ export default function dom(
 		namespace,
 	} = generator;
 
-	const { block, state } = preprocess(generator, namespace, parsed.html);
+	parsed.html.init();
+	const { block, state } = parsed.html;
 
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
