@@ -562,11 +562,11 @@ function isComputed(node: Node) {
 function remount(generator: DomGenerator, node: Node, name: string) {
 	// TODO make this a method of the nodes
 
-	if (node.type === 'Element') {
-		if (node.name === ':Self' || node.name === ':Component' || generator.components.has(node.name)) {
-			return `${node.var}._mount(${name}._slotted.default, null);`;
-		}
+	if (node.type === 'Component') {
+		return `${node.var}._mount(${name}._slotted.default, null);`;
+	}
 
+	if (node.type === 'Element') {
 		const slot = node.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
 			return `@appendNode(${node.var}, ${name}._slotted.${getStaticAttributeValue(node, 'slot')});`;

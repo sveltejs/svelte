@@ -57,37 +57,38 @@ const preprocessors = {
 		node: Node,
 		elementStack: Node[]
 	) => {
-		const isComponent =
-			generator.components.has(node.name) || node.name === ':Self';
+		generator.stylesheet.apply(node, elementStack);
 
-		if (!isComponent) {
-			generator.stylesheet.apply(node, elementStack);
+		const slot = getStaticAttributeValue(node, 'slot');
+		if (slot && node.isChildOfComponent()) {
+			node.slotted = true;
+		}
 
-			const slot = getStaticAttributeValue(node, 'slot');
-			if (slot && isChildOfComponent(node, generator)) {
-				node.slotted = true;
-			}
+		// Treat these the same way:
+		//   <option>{{foo}}</option>
+		//   <option value='{{foo}}'>{{foo}}</option>
+		const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
 
-			// Treat these the same way:
-			//   <option>{{foo}}</option>
-			//   <option value='{{foo}}'>{{foo}}</option>
-			const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
-
-			if (node.name === 'option' && !valueAttribute) {
-				node.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: node.children
-				});
-			}
+		if (node.name === 'option' && !valueAttribute) {
+			node.attributes.push({
+				type: 'Attribute',
+				name: 'value',
+				value: node.children
+			});
 		}
 
 		if (node.children.length) {
-			if (isComponent) {
-				preprocessChildren(generator, node, elementStack);
-			} else {
-				preprocessChildren(generator, node, elementStack.concat(node));
-			}
+			preprocessChildren(generator, node, elementStack.concat(node));
+		}
+	},
+
+	Component: (
+		generator: SsrGenerator,
+		node: Node,
+		elementStack: Node[]
+	) => {
+		if (node.children.length) {
+			preprocessChildren(generator, node, elementStack);
 		}
 	},
 };

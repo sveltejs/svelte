@@ -40,11 +40,6 @@ export default function visitElement(
 		return;
 	}
 
-	if (generator.components.has(node.name) || node.name === ':Self' || node.name === ':Component') {
-		visitComponent(generator, block, node);
-		return;
-	}
-
 	let openingTag = `<${node.name}`;
 	let textareaContents; // awkward special case
 

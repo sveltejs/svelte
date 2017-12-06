@@ -17,6 +17,7 @@ import DomBlock from './dom/Block';
 import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
+import nodes from './nodes/index';
 import { Node, GenerateOptions, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -638,6 +639,7 @@ export default class Generator {
 	}
 
 	walkTemplate() {
+		const generator = this;
 		const {
 			code,
 			expectedProperties,
@@ -703,7 +705,20 @@ export default class Generator {
 		const indexesStack: Set<string>[] = [indexes];
 
 		walk(html, {
-			enter(node: Node, parent: Node) {
+			enter(node: Node, parent: Node, key: string) {
+				// TODO this is hacky as hell
+				if (key === 'parent') return this.skip();
+				node.parent = parent;
+
+				node.generator = generator;
+
+				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || generator.components.has(node.name))) {
+					node.type = 'Component';
+					node.__proto__ = nodes.Component.prototype;
+				} else if (node.type in nodes) {
+					node.__proto__ = nodes[node.type].prototype;
+				}
+
 				if (node.type === 'EachBlock') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 
@@ -764,7 +779,7 @@ export default class Generator {
 					this.skip();
 				}
 
-				if (node.type === 'Element' && node.name === ':Component') {
+				if (node.type === 'Component' && node.name === ':Component') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 				}
 			},

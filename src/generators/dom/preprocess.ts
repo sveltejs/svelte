@@ -48,20 +48,6 @@ function cannotUseInnerHTML(node: Node) {
 	}
 }
 
-// Whitespace inside one of these elements will not result in
-// a whitespace node being created in any circumstances. (This
-// list is almost certainly very incomplete)
-const elementsWithoutText = new Set([
-	'audio',
-	'datalist',
-	'dl',
-	'ol',
-	'optgroup',
-	'select',
-	'ul',
-	'video',
-]);
-
 const preprocessors = {
 	MustacheTag: (
 		generator: DomGenerator,
@@ -72,9 +58,7 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
-		cannotUseInnerHTML(node);
-		node.var = block.getUniqueName('text');
-		block.addDependencies(node.metadata.dependencies);
+		node.init(block);
 	},
 
 	RawMustacheTag: (
@@ -86,9 +70,7 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
-		cannotUseInnerHTML(node);
-		node.var = block.getUniqueName('raw');
-		block.addDependencies(node.metadata.dependencies);
+		node.init(block);
 	},
 
 	Text: (
@@ -100,12 +82,7 @@ const preprocessors = {
 		componentStack: Node[],
 		stripWhitespace: boolean
 	) => {
-		if (!/\S/.test(node.data) && (state.namespace || elementsWithoutText.has(state.parentNodeName))) {
-			node.shouldSkip = true;
-			return;
-		}
-
-		node.var = block.getUniqueName(`text`);
+		node.init(block, state);
 	},
 
 	AwaitBlock: (
@@ -537,7 +514,6 @@ function preprocessChildren(
 	lastChild = null;
 
 	cleaned.forEach((child: Node, i: number) => {
-		child.parent = node;
 		child.canUseInnerHTML = !generator.hydratable;
 
 		const preprocessor = preprocessors[child.type];
@@ -577,31 +553,35 @@ export default function preprocess(
 	namespace: string,
 	node: Node
 ) {
-	const block = new Block({
-		generator,
-		name: '@create_main_fragment',
-		key: null,
+	// const block = new Block({
+	// 	generator,
+	// 	name: '@create_main_fragment',
+	// 	key: null,
 
-		contexts: new Map(),
-		indexes: new Map(),
-		changeableIndexes: new Map(),
+	// 	contexts: new Map(),
+	// 	indexes: new Map(),
+	// 	changeableIndexes: new Map(),
 
-		params: ['state'],
-		indexNames: new Map(),
-		listNames: new Map(),
+	// 	params: ['state'],
+	// 	indexNames: new Map(),
+	// 	listNames: new Map(),
 
-		dependencies: new Set(),
-	});
+	// 	dependencies: new Set(),
+	// });
 
-	const state: State = {
-		namespace,
-		parentNode: null,
-		parentNodes: 'nodes'
-	};
+	// const state: State = {
+	// 	namespace,
+	// 	parentNode: null,
+	// 	parentNodes: 'nodes'
+	// };
 
-	generator.blocks.push(block);
-	preprocessChildren(generator, block, state, node, false, [], [], true, null);
-	block.hasUpdateMethod = true;
+	// generator.blocks.push(block);
+	// preprocessChildren(generator, block, state, node, false, [], [], true, null);
+	// block.hasUpdateMethod = true;
 
-	return { block, state };
+	node.init(
+		namespace
+	);
+
+	return node;
 }

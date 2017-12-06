@@ -43,10 +43,6 @@ export default function visitElement(
 		}
 	}
 
-	if (generator.components.has(node.name) || node.name === ':Self' || node.name === ':Component') {
-		return visitComponent(generator, block, state, node, elementStack, componentStack);
-	}
-
 	const childState = node._state;
 	const name = childState.parentNode;
 
