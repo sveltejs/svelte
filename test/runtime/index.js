@@ -1,4 +1,5 @@
 import assert from "assert";
+import chalk from 'chalk';
 import * as path from "path";
 import * as fs from "fs";
 import * as acorn from "acorn";
@@ -89,6 +90,9 @@ describe("runtime", () => {
 					}
 				} catch (err) {
 					failed.add(dir);
+					if (err.frame) {
+						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
+					}
 					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
 					throw err;
 				}

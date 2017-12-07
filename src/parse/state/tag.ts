@@ -15,9 +15,10 @@ import { Node } from '../../interfaces';
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const SELF = ':Self';
+const COMPONENT = ':Component';
 
 const metaTags = {
-	':Window': true,
+	':Window': true
 };
 
 const specials = new Map([
@@ -104,6 +105,15 @@ export default function tag(parser: Parser) {
 		}
 	}
 
+	const element: Node = {
+		start,
+		end: null, // filled in later
+		type: 'Element',
+		name,
+		attributes: [],
+		children: [],
+	};
+
 	parser.allowWhitespace();
 
 	if (isClosingTag) {
@@ -156,16 +166,21 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	const attributes = [];
+	if (name === COMPONENT) {
+		parser.eat('{', true);
+		element.expression = readExpression(parser);
+		parser.allowWhitespace();
+		parser.eat('}', true);
+		parser.allowWhitespace();
+	}
+
 	const uniqueNames = new Set();
 
 	let attribute;
 	while ((attribute = readAttribute(parser, uniqueNames))) {
-		attributes.push(attribute);
+		element.attributes.push(attribute);
 		parser.allowWhitespace();
 	}
-
-	parser.allowWhitespace();
 
 	// special cases – top-level <script> and <style>
 	if (specials.has(name) && parser.stack.length === 1) {
@@ -179,18 +194,9 @@ export default function tag(parser: Parser) {
 		}
 
 		parser.eat('>', true);
-		parser[special.property] = special.read(parser, start, attributes);
+		parser[special.property] = special.read(parser, start, element.attributes);
 		return;
 	}
-
-	const element: Node = {
-		start,
-		end: null, // filled in later
-		type: 'Element',
-		name,
-		attributes,
-		children: [],
-	};
 
 	parser.current().children.push(element);
 
@@ -241,6 +247,8 @@ function readTagName(parser: Parser) {
 
 		return SELF;
 	}
+
+	if (parser.eat(COMPONENT)) return COMPONENT;
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 

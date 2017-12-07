@@ -3,9 +3,11 @@ import CodeBuilder from '../../../utils/CodeBuilder';
 import visit from '../visit';
 import { DomGenerator } from '../index';
 import Block from '../Block';
+import isDomNode from './shared/isDomNode';
 import getTailSnippet from '../../../utils/getTailSnippet';
 import getObject from '../../../utils/getObject';
 import getExpressionPrecedence from '../../../utils/getExpressionPrecedence';
+import getStaticAttributeValue from '../../../utils/getStaticAttributeValue';
 import { stringify } from '../../../utils/stringify';
 import stringifyProps from '../../../utils/stringifyProps';
 import { Node } from '../../../interfaces';
@@ -60,20 +62,27 @@ export default function visitComponent(
 	let beforecreate: string = null;
 
 	const attributes = node.attributes
-		.filter((a: Node) => a.type === 'Attribute')
-		.map((a: Node) => mungeAttribute(a, block));
+		.filter(a => a.type === 'Attribute')
+		.map(a => mungeAttribute(a, block));
 
 	const bindings = node.attributes
-		.filter((a: Node) => a.type === 'Binding')
-		.map((a: Node) => mungeBinding(a, block));
+		.filter(a => a.type === 'Binding')
+		.map(a => mungeBinding(a, block));
+
+	const eventHandlers = node.attributes
+		.filter((a: Node) => a.type === 'EventHandler')
+		.map(a => mungeEventHandler(generator, node, a, block, name_context, allContexts));
+
+	const ref = node.attributes.find((a: Node) => a.type === 'Ref');
+	if (ref) generator.usesRefs = true;
+
+	const updates: string[] = [];
 
 	if (attributes.length || bindings.length) {
 		const initialProps = attributes
 			.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`);
 
 		const initialPropString = stringifyProps(initialProps);
-
-		const updates: string[] = [];
 
 		attributes
 			.filter((attribute: Attribute) => attribute.dynamic)
@@ -194,6 +203,144 @@ export default function visitComponent(
 		} else if (initialProps.length) {
 			componentInitProperties.push(`data: ${initialPropString}`);
 		}
+	}
+
+	const isDynamicComponent = node.name === ':Component';
+
+	const switch_vars = isDynamicComponent && {
+		value: block.getUniqueName('switch_value'),
+		props: block.getUniqueName('switch_props')
+	};
+
+	const expression = (
+		node.name === ':Self' ? generator.name :
+		isDynamicComponent ? switch_vars.value :
+		`%components-${node.name}`
+	);
+
+	if (isDynamicComponent) {
+		block.contextualise(node.expression);
+		const { dependencies, snippet } = node.metadata;
+
+		const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode || !isDomNode(node.parent, generator);
+		const anchor = needsAnchor
+			? block.getUniqueName(`${name}_anchor`)
+			: (node.next && node.next.var) || 'null';
+
+		if (needsAnchor) {
+			block.addElement(
+				anchor,
+				`@createComment()`,
+				`@createComment()`,
+				state.parentNode
+			);
+		}
+
+		const params = block.params.join(', ');
+
+		block.builders.init.addBlock(deindent`
+			var ${switch_vars.value} = ${snippet};
+
+			function ${switch_vars.props}(${params}) {
+				return {
+					${componentInitProperties.join(',\n')}
+				};
+			}
+
+			if (${switch_vars.value}) {
+				${statements.length > 0 && statements.join('\n')}
+				var ${name} = new ${expression}(${switch_vars.props}(${params}));
+
+				${beforecreate}
+			}
+
+			${eventHandlers.map(handler => deindent`
+				function ${handler.var}(event) {
+					${handler.body}
+				}
+
+				if (${name}) ${name}.on("${handler.name}", ${handler.var});
+			`)}
+		`);
+
+		block.builders.create.addLine(
+			`if (${name}) ${name}._fragment.c();`
+		);
+
+		block.builders.claim.addLine(
+			`if (${name}) ${name}._fragment.l(${state.parentNodes});`
+		);
+
+		block.builders.mount.addLine(
+			`if (${name}) ${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
+		);
+
+		block.builders.update.addBlock(deindent`
+			if (${switch_vars.value} !== (${switch_vars.value} = ${snippet})) {
+				if (${name}) ${name}.destroy();
+
+				if (${switch_vars.value}) {
+					${name} = new ${switch_vars.value}(${switch_vars.props}(${params}));
+					${name}._fragment.c();
+
+					${node.children.map(child => remount(generator, child, name))}
+					${name}._mount(${anchor}.parentNode, ${anchor});
+
+					${eventHandlers.map(handler => deindent`
+						${name}.on("${handler.name}", ${handler.var});
+					`)}
+
+					${ref && `#component.refs.${ref.name} = ${name};`}
+				}
+
+				${ref && deindent`
+					else if (#component.refs.${ref.name} === ${name}) {
+						#component.refs.${ref.name} = null;
+					}`}
+			}
+		`);
+
+		if (updates.length) {
+			block.builders.update.addBlock(deindent`
+				else {
+					var ${name}_changes = {};
+					${updates.join('\n')}
+					${name}._set(${name}_changes);
+					${bindings.length && `${name_updating} = {};`}
+				}
+			`);
+		}
+
+		if (!state.parentNode) block.builders.unmount.addLine(`if (${name}) ${name}._unmount();`);
+
+		block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
+	} else {
+		block.builders.init.addBlock(deindent`
+			${statements.join('\n')}
+			var ${name} = new ${expression}({
+				${componentInitProperties.join(',\n')}
+			});
+
+			${beforecreate}
+
+			${eventHandlers.map(handler => deindent`
+				${name}.on("${handler.name}", function(event) {
+					${handler.body}
+				});
+			`)}
+
+			${ref && `#component.refs.${ref.name} = ${name};`}
+		`);
+
+		block.builders.create.addLine(`${name}._fragment.c();`);
+
+		block.builders.claim.addLine(
+			`${name}._fragment.l(${state.parentNodes});`
+		);
+
+		block.builders.mount.addLine(
+			`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
+		);
 
 		if (updates.length) {
 			block.builders.update.addBlock(deindent`
@@ -203,87 +350,14 @@ export default function visitComponent(
 				${bindings.length && `${name_updating} = {};`}
 			`);
 		}
-	}
 
-	const expression = node.name === ':Self' ? generator.name : `%components-${node.name}`;
-
-	block.builders.init.addBlock(deindent`
-		${statements.join('\n')}
-		var ${name} = new ${expression}({
-			${componentInitProperties.join(',\n')}
-		});
-
-		${beforecreate}
-	`);
-
-	block.builders.create.addLine(`${name}._fragment.c();`);
-
-	block.builders.claim.addLine(
-		`${name}._fragment.l(${state.parentNodes});`
-	);
-
-	block.builders.mount.addLine(
-		`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
-	);
-
-	if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
-
-	block.builders.destroy.addLine(`${name}.destroy(false);`);
-
-	// event handlers
-	node.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((handler: Node) => {
-		const usedContexts: string[] = [];
-
-		if (handler.expression) {
-			generator.addSourcemapLocations(handler.expression);
-			generator.code.prependRight(
-				handler.expression.start,
-				`${block.alias('component')}.`
-			);
-
-			handler.expression.arguments.forEach((arg: Node) => {
-				const { contexts } = block.contextualise(arg, null, true);
-
-				contexts.forEach(context => {
-					if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-					allContexts.add(context);
-				});
-			});
-		}
-
-		// TODO hoist event handlers? can do `this.__component.method(...)`
-		const declarations = usedContexts.map(name => {
-			if (name === 'state') return `var state = ${name_context}.state;`;
-
-			const listName = block.listNames.get(name);
-			const indexName = block.indexNames.get(name);
-
-			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
-		});
-
-		const handlerBody =
-			(declarations.length ? declarations.join('\n') + '\n\n' : '') +
-			(handler.expression ?
-				`[✂${handler.expression.start}-${handler.expression.end}✂];` :
-				`${block.alias('component')}.fire('${handler.name}', event);`);
-
-		block.builders.init.addBlock(deindent`
-			${name}.on("${handler.name}", function(event) {
-				${handlerBody}
-			});
-		`);
-	});
-
-	// refs
-	node.attributes.filter((a: Node) => a.type === 'Ref').forEach((ref: Node) => {
-		generator.usesRefs = true;
-
-		block.builders.init.addLine(`#component.refs.${ref.name} = ${name};`);
+		if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
 
 		block.builders.destroy.addLine(deindent`
-			if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;
+			${name}.destroy(false);
+			${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
 		`);
-	});
+	}
 
 	// maintain component context
 	if (allContexts.size) {
@@ -427,6 +501,55 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	};
 }
 
+function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, name_context: string, allContexts: Set<string>) {
+	let body;
+
+	if (handler.expression) {
+		generator.addSourcemapLocations(handler.expression);
+		generator.code.prependRight(
+			handler.expression.start,
+			`${block.alias('component')}.`
+		);
+
+		const usedContexts: string[] = [];
+
+		handler.expression.arguments.forEach((arg: Node) => {
+			const { contexts } = block.contextualise(arg, null, true);
+
+			contexts.forEach(context => {
+				if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+				allContexts.add(context);
+			});
+		});
+
+		// TODO hoist event handlers? can do `this.__component.method(...)`
+		const declarations = usedContexts.map(name => {
+			if (name === 'state') return `var state = ${name_context}.state;`;
+
+			const listName = block.listNames.get(name);
+			const indexName = block.indexNames.get(name);
+
+			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
+		});
+
+		body = deindent`
+			${declarations}
+
+			[✂${handler.expression.start}-${handler.expression.end}✂];
+		`;
+	} else {
+		body = deindent`
+			${block.alias('component')}.fire('${handler.name}', event);
+		`;
+	}
+
+	return {
+		name: handler.name,
+		var: block.getUniqueName(`${node.var}_${handler.name}`),
+		body
+	};
+}
+
 function isComputed(node: Node) {
 	while (node.type === 'MemberExpression') {
 		if (node.computed) return true;
@@ -434,4 +557,32 @@ function isComputed(node: Node) {
 	}
 
 	return false;
+}
+
+function remount(generator: DomGenerator, node: Node, name: string) {
+	// TODO make this a method of the nodes
+
+	if (node.type === 'Element') {
+		if (node.name === ':Self' || node.name === ':Component' || generator.components.has(node.name)) {
+			return `${node.var}._mount(${name}._slotted.default, null);`;
+		}
+
+		const slot = node.attributes.find(attribute => attribute.name === 'slot');
+		if (slot) {
+			return `@appendNode(${node.var}, ${name}._slotted.${getStaticAttributeValue(node, 'slot')});`;
+		}
+
+		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+	}
+
+	if (node.type === 'Text' || node.type === 'MustacheTag' || node.type === 'RawMustacheTag') {
+		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+	}
+
+	if (node.type === 'EachBlock') {
+		// TODO consider keyed blocks
+		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted.default, null);`;
+	}
+
+	return `${node.var}.m(${name}._slotted.default, null);`;
 }
