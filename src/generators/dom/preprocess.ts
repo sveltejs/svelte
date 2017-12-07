@@ -256,6 +256,7 @@ const preprocessors = {
 	) => {
 		cannotUseInnerHTML(node);
 		node.var = block.getUniqueName(`each`);
+		node.iterations = block.getUniqueName(`${node.var}_blocks`);
 
 		const { dependencies } = node.metadata;
 		block.addDependencies(dependencies);
@@ -436,13 +437,17 @@ const preprocessors = {
 		}
 
 		const isComponent =
-			generator.components.has(node.name) || node.name === ':Self';
+			generator.components.has(node.name) || node.name === ':Self' || node.name === ':Component';
 
 		if (isComponent) {
 			cannotUseInnerHTML(node);
 
 			node.var = block.getUniqueName(
-				(node.name === ':Self' ? generator.name : node.name).toLowerCase()
+				(
+					node.name === ':Self' ? generator.name :
+					node.name === ':Component' ? 'switch_instance' :
+					node.name
+				).toLowerCase()
 			);
 
 			node._state = getChildState(state, {
