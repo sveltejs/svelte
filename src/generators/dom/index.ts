@@ -100,9 +100,10 @@ export default function dom(
 
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
-	parsed.html.children.forEach((node: Node) => {
-		visit(generator, block, state, node, [], []);
-	});
+	// parsed.html.children.forEach((node: Node) => {
+	// 	visit(generator, block, state, node, [], []);
+	// });
+	parsed.html.build();
 
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();

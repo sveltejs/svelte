@@ -15,6 +15,10 @@ export default class Node {
 	canUseInnerHTML: boolean;
 	var: string;
 
+	constructor(data: Record<string, any>) {
+		Object.assign(this, data);
+	}
+
 	cannotUseInnerHTML() {
 		if (this.canUseInnerHTML !== false) {
 			this.canUseInnerHTML = false;
@@ -111,6 +115,16 @@ export default class Node {
 
 		this.children = cleaned;
 		if (windowComponent) cleaned.unshift(windowComponent);
+	}
+
+	build(
+		block: Block,
+		state: State,
+		node: Node,
+		elementStack: Node[],
+		componentStack: Node[]
+	) {
+		// implemented by subclasses
 	}
 
 	isChildOfComponent() {

@@ -38,4 +38,17 @@ export default class Fragment extends Node {
 
 		this.block.hasUpdateMethod = true;
 	}
+
+	build(
+		generator: DomGenerator,
+		block: Block,
+		state: State,
+		node: Node,
+		elementStack: Node[],
+		componentStack: Node[]
+	) {
+		this.children.forEach(child => {
+			child.build(block, state, node, elementStack, componentStack);
+		});
+	}
 }
