@@ -126,6 +126,41 @@ describe('preprocess', () => {
 		});
 	});
 
+	it('provides filename to processing hooks', () => {
+		const source = `
+			<h1>Hello __MARKUP_FILENAME__!</h1>
+			<style>.red { color: __STYLE_FILENAME__; }</style>
+			<script>console.log('__SCRIPT_FILENAME__');</script>
+		`;
+
+		const expected = `
+			<h1>Hello file.html!</h1>
+			<style>.red { color: file.html; }</style>
+			<script>console.log('file.html');</script>
+		`;
+
+		return svelte.preprocess(source, {
+			filename: 'file.html',
+			markup: ({ content, filename }) => {
+				return {
+					code: content.replace('__MARKUP_FILENAME__', filename)
+				};
+			},
+			style: ({ content, filename }) => {
+				return {
+					code: content.replace('__STYLE_FILENAME__', filename)
+				};
+			},
+			script: ({ content, filename }) => {
+				return {
+					code: content.replace('__SCRIPT_FILENAME__', filename)
+				};
+			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
+		});
+	});
+
 	it('ignores null/undefined returned from preprocessor', () => {
 		const source = `
 			<script>
