@@ -60,7 +60,7 @@ async function replaceTagContents(source, type: 'script' | 'style', preprocessor
 		const processed: { code: string, map?: SourceMap | string } = await preprocessor({
 			content,
 			attributes,
-			options
+			filename : options.filename
 		});
 
 		if (processed && processed.code) {
@@ -80,7 +80,7 @@ export async function preprocess(source: string, options: PreprocessOptions) {
 	if (!!markup) {
 		const processed: { code: string, map?: SourceMap | string } = await markup({
 			content: source,
-			options
+			filename: options.filename
 		});
 		source = processed.code;
 	}

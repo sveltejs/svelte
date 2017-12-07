@@ -86,7 +86,7 @@ export interface PreprocessOptions {
 	markup?: (options: {content: string, options: PreprocessOptions}) => { code: string, map?: SourceMap | string };
 	style?: Preprocessor;
 	script?: Preprocessor;
-	id?: string
+	filename?: string
 }
 
-export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, options: PreprocessOptions}) => { code: string, map?: SourceMap | string };
+export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
