@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.45.0
+
+* Dynamic components ([#971](https://github.com/sveltejs/svelte/pull/971))
+
 ## 1.44.2
 
 * Fix `await` blocks with siblings ([#974](https://github.com/sveltejs/svelte/issues/974))
