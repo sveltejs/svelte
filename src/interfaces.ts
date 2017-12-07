@@ -83,7 +83,7 @@ export interface CustomElementOptions {
 }
 
 export interface PreprocessOptions {
-	markup?: (options: {content: string, options: PreprocessOptions}) => { code: string, map?: SourceMap | string };
+	markup?: (options: {content: string, filename: string}) => { code: string, map?: SourceMap | string };
 	style?: Preprocessor;
 	script?: Preprocessor;
 	filename?: string
