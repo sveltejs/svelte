@@ -14,7 +14,6 @@ export default class Slot extends Element {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -33,7 +32,7 @@ export default class Slot extends Element {
 		});
 
 		if (this.children.length) {
-			this.initChildren(block, this._state, inEachBlock, stripWhitespace, nextSibling);
+			this.initChildren(block, this._state, stripWhitespace, nextSibling);
 		}
 	}
 

@@ -8,6 +8,8 @@ import visitEachBlock from '../dom/visitors/EachBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
 export default class EachBlock extends Node {
+	type: 'EachBlock';
+
 	_block: Block;
 	_state: State;
 	expression: Node;
@@ -24,7 +26,6 @@ export default class EachBlock extends Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -83,12 +84,10 @@ export default class EachBlock extends Node {
 			params: block.params.concat(listName, context, indexName),
 		});
 
-		this._state = state.child({
-			inEachBlock: true,
-		});
+		this._state = state.child();
 
 		this.generator.blocks.push(this._block);
-		this.initChildren(this._block, this._state, true, stripWhitespace, nextSibling);
+		this.initChildren(this._block, this._state, stripWhitespace, nextSibling);
 		block.addDependencies(this._block.dependencies);
 		this._block.hasUpdateMethod = this._block.dependencies.size > 0;
 
@@ -104,7 +103,6 @@ export default class EachBlock extends Node {
 			this.else.initChildren(
 				this.else._block,
 				this.else._state,
-				inEachBlock,
 				stripWhitespace,
 				nextSibling
 			);

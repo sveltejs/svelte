@@ -27,7 +27,6 @@ export default class Element extends Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -158,7 +157,7 @@ export default class Element extends Node {
 
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
-			this.initChildren(block, this._state, inEachBlock, stripWhitespace, nextSibling);
+			this.initChildren(block, this._state, stripWhitespace, nextSibling);
 		}
 	}
 
@@ -249,7 +248,7 @@ export default class Element extends Node {
 		// event handlers
 		this.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((attribute: Node) => {
 			const isCustomEvent = generator.events.has(attribute.name);
-			const shouldHoist = !isCustomEvent && state.inEachBlock;
+			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
 
 			const context = shouldHoist ? null : name;
 			const usedContexts: string[] = [];
@@ -279,7 +278,7 @@ export default class Element extends Node {
 				});
 			}
 
-			const _this = context || 'this';
+			const ctx = context || 'this';
 			const declarations = usedContexts.map(name => {
 				if (name === 'state') {
 					if (shouldHoist) childState.usesComponent = true;
@@ -290,7 +289,7 @@ export default class Element extends Node {
 				const indexName = block.indexNames.get(name);
 				const contextName = block.contexts.get(name);
 
-				return `var ${listName} = ${_this}._svelte.${listName}, ${indexName} = ${_this}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
+				return `var ${listName} = ${ctx}._svelte.${listName}, ${indexName} = ${ctx}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
 			});
 
 			// get a name for the event handler that is globally unique
@@ -302,7 +301,7 @@ export default class Element extends Node {
 			// create the handler body
 			const handlerBody = deindent`
 				${childState.usesComponent &&
-					`var ${block.alias('component')} = ${_this}._svelte.component;`}
+					`var ${block.alias('component')} = ${ctx}._svelte.component;`}
 				${declarations}
 				${attribute.expression ?
 					`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :

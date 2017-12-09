@@ -34,7 +34,6 @@ export default class Window extends Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {

@@ -26,7 +26,6 @@ export default class IfBlock extends Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -52,7 +51,7 @@ export default class IfBlock extends Node {
 			node._state = state.child();
 
 			blocks.push(node._block);
-			node.initChildren(node._block, node._state, inEachBlock, stripWhitespace, nextSibling);
+			node.initChildren(node._block, node._state, stripWhitespace, nextSibling);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -76,7 +75,6 @@ export default class IfBlock extends Node {
 				node.else.initChildren(
 					node.else._block,
 					node.else._state,
-					inEachBlock,
 					stripWhitespace,
 					nextSibling
 				);

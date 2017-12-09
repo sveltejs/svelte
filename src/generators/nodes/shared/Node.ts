@@ -37,7 +37,6 @@ export default class Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -47,7 +46,6 @@ export default class Node {
 	initChildren(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -87,7 +85,7 @@ export default class Node {
 		cleaned.forEach((child: Node, i: number) => {
 			child.canUseInnerHTML = !this.generator.hydratable;
 
-			child.init(block, state, inEachBlock, stripWhitespace, cleaned[i + 1] || nextSibling);
+			child.init(block, state, stripWhitespace, cleaned[i + 1] || nextSibling);
 
 			if (child.shouldSkip) return;
 
@@ -101,7 +99,7 @@ export default class Node {
 		// *unless* there is no whitespace between this node and its next sibling
 		if (stripWhitespace && lastChild && lastChild.type === 'Text') {
 			const shouldTrim = (
-				nextSibling ?  (nextSibling.type === 'Text' && /^\s/.test(nextSibling.data)) : !inEachBlock
+				nextSibling ?  (nextSibling.type === 'Text' && /^\s/.test(nextSibling.data)) : !this.hasAncestor('EachBlock')
 			);
 
 			if (shouldTrim) {
@@ -126,13 +124,18 @@ export default class Node {
 	}
 
 	isChildOfComponent() {
-		return this.parent ?
-			this.parent.type === 'Component' || this.parent.isChildOfComponent() :
-			false;
+		// TODO remove this method
+		return this.hasAncestor('Component');
 	}
 
 	isDomNode() {
 		return this.type === 'Element' || this.type === 'Text' || this.type === 'MustacheTag';
+	}
+
+	hasAncestor(type: string) {
+		return this.parent ?
+			this.parent.type === type || this.parent.hasAncestor(type) :
+			false;
 	}
 
 	nearestComponent() {

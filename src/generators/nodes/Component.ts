@@ -20,7 +20,6 @@ export default class Component extends Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -61,7 +60,7 @@ export default class Component extends Node {
 			this._slots = new Set(['default']);
 
 			this.children.forEach(child => {
-				child.init(block, state, inEachBlock, stripWhitespace, nextSibling);
+				child.init(block, state, stripWhitespace, nextSibling);
 			});
 		}
 	}

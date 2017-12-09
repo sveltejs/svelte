@@ -20,7 +20,6 @@ export default class AwaitBlock extends Node {
 	init(
 		block: Block,
 		state: State,
-		inEachBlock: boolean,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -52,7 +51,7 @@ export default class AwaitBlock extends Node {
 
 			child._state = state.child();
 
-			child.initChildren(child._block, child._state, inEachBlock, stripWhitespace, nextSibling);
+			child.initChildren(child._block, child._state, stripWhitespace, nextSibling);
 			this.generator.blocks.push(child._block);
 
 			if (child._block.dependencies.size > 0) {

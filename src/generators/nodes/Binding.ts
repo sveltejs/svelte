@@ -15,7 +15,7 @@ const readOnlyMediaAttributes = new Set([
 
 export default class Binding extends Node {
 	name: string;
-	value: Node[]
+	value: Node;
 	expression: Node;
 
 	munge(

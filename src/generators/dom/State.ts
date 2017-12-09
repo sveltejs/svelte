@@ -5,7 +5,6 @@ interface StateData {
 	parentNode?: string;
 	parentNodes?: string;
 	parentNodeName?: string;
-	inEachBlock?: boolean;
 	allUsedContexts?: string[];
 	usesComponent?: boolean;
 	selectBindingDependencies?: string[];
@@ -16,7 +15,6 @@ export default class State {
 	parentNode?: string;
 	parentNodes?: string;
 	parentNodeName?: string;
-	inEachBlock?: boolean;
 	allUsedContexts?: string[];
 	usesComponent?: boolean;
 	selectBindingDependencies?: string[];
