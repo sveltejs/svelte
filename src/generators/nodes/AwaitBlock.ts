@@ -5,7 +5,6 @@ import Block from '../dom/Block';
 import PendingBlock from './PendingBlock';
 import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
-import State from '../dom/State';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
 export default class AwaitBlock extends Node {

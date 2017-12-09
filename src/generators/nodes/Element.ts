@@ -6,7 +6,6 @@ import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
-import State from '../dom/State';
 import Attribute from './Attribute';
 import Binding from './Binding';
 import EventHandler from './EventHandler';

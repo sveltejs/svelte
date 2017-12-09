@@ -1,7 +1,5 @@
-import deindent from '../../utils/deindent';
 import Node from './Node';
 import Block from '../../dom/Block';
-import State from '../../dom/State';
 
 export default class Tag extends Node {
 	renameThisMethod(

@@ -3,7 +3,6 @@ import Node from './shared/Node';
 import Element from './Element';
 import Attribute from './Attribute';
 import Block from '../dom/Block';
-import State from '../dom/State';
 
 export default class Slot extends Element {
 	type: 'Element';

@@ -5,7 +5,6 @@ import { DomGenerator } from '../dom/index';
 import Node from './shared/Node';
 import Element from './Element';
 import Block from '../dom/Block';
-import State from '../dom/State';
 
 export interface StyleProp {
 	key: string;

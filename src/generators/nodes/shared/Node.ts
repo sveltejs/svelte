@@ -1,6 +1,5 @@
 import { DomGenerator } from '../../dom/index';
 import Block from '../../dom/Block';
-import State from '../../dom/State';
 import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {

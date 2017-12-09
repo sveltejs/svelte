@@ -1,7 +1,6 @@
 import Node from './shared/Node';
 import Tag from './shared/Tag';
 import Block from '../dom/Block';
-import State from '../dom/State';
 
 export default class MustacheTag extends Tag {
 	init(block: Block) {

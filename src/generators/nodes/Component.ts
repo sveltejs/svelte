@@ -7,9 +7,7 @@ import getObject from '../../utils/getObject';
 import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
 import Node from './shared/Node';
 import Block from '../dom/Block';
-import State from '../dom/State';
 import Attribute from './Attribute';
-import visitComponent from '../dom/visitors/Component';
 
 export default class Component extends Node {
 	type: 'Component'; // TODO fix this?

@@ -1,7 +1,6 @@
 import Node from './shared/Node';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
-import State from '../dom/State';
 
 export default class Fragment extends Node {
 	block: Block;

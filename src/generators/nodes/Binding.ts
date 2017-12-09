@@ -5,7 +5,6 @@ import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
-import State from '../dom/State';
 
 const readOnlyMediaAttributes = new Set([
 	'duration',
