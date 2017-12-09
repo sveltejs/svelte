@@ -19,7 +19,6 @@ export default class Component extends Node {
 
 	init(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -52,15 +51,11 @@ export default class Component extends Node {
 			).toLowerCase()
 		);
 
-		this._state = state.child({
-			parentNode: `${this.var}._slotted.default`
-		});
-
 		if (this.children.length) {
 			this._slots = new Set(['default']);
 
 			this.children.forEach(child => {
-				child.init(block, state, stripWhitespace, nextSibling);
+				child.init(block, stripWhitespace, nextSibling);
 			});
 		}
 	}
@@ -80,8 +75,12 @@ export default class Component extends Node {
 			const slots = Array.from(this._slots).map(name => `${name}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
+			const childState = state.child({
+				parentNode: `${this.var}._slotted.default`
+			});
+
 			this.children.forEach((child: Node) => {
-				child.build(block, this._state);
+				child.build(block, childState);
 			});
 		}
 

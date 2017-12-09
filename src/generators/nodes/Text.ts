@@ -22,8 +22,10 @@ export default class Text extends Node {
 	data: string;
 	shouldSkip: boolean;
 
-	init(block: Block, state: State) {
-		if (!/\S/.test(this.data) && (state.namespace || elementsWithoutText.has(state.parentNodeName))) {
+	init(block: Block) {
+		const parentElement = this.findNearest('Element');
+
+		if (!/\S/.test(this.data) && parentElement && (parentElement.namespace || elementsWithoutText.has(parentElement.name))) {
 			this.shouldSkip = true;
 			return;
 		}

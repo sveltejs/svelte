@@ -10,7 +10,6 @@ export default class EachBlock extends Node {
 	type: 'EachBlock';
 
 	_block: Block;
-	_state: State;
 	expression: Node;
 
 	iterations: string;
@@ -24,7 +23,6 @@ export default class EachBlock extends Node {
 
 	init(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -83,10 +81,8 @@ export default class EachBlock extends Node {
 			params: block.params.concat(listName, context, indexName),
 		});
 
-		this._state = state.child();
-
 		this.generator.blocks.push(this._block);
-		this.initChildren(this._block, this._state, stripWhitespace, nextSibling);
+		this.initChildren(this._block, stripWhitespace, nextSibling);
 		block.addDependencies(this._block.dependencies);
 		this._block.hasUpdateMethod = this._block.dependencies.size > 0;
 
@@ -96,12 +92,9 @@ export default class EachBlock extends Node {
 				name: this.generator.getUniqueName(`${this._block.name}_else`),
 			});
 
-			this.else._state = state.child();
-
 			this.generator.blocks.push(this.else._block);
 			this.else.initChildren(
 				this.else._block,
-				this.else._state,
 				stripWhitespace,
 				nextSibling
 			);
@@ -228,13 +221,15 @@ export default class EachBlock extends Node {
 			`);
 		}
 
+		const childState = state.child(); // TODO is this necessary? reuse state?
 		this.children.forEach((child: Node) => {
-			child.build(this._block, this._state);
+			child.build(this._block, childState);
 		});
 
 		if (this.else) {
+			const childState = state.child(); // TODO is this necessary? reuse state?
 			this.else.children.forEach((child: Node) => {
-				child.build(this.else._block, this.else._state);
+				child.build(this.else._block, childState);
 			});
 		}
 	}
@@ -269,7 +264,7 @@ function keyed(
 
 	if (node.children[0] && node.children[0].type === 'Element' && !generator.components.has(node.children[0].name)) {
 		// TODO or text/tag/raw
-		node._block.first = node.children[0]._state.parentNode; // TODO this is highly confusing
+		node._block.first = node.children[0].var; // TODO this is highly confusing
 	} else {
 		node._block.first = node._block.getUniqueName('first');
 		node._block.addElement(

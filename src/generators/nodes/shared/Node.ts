@@ -38,7 +38,6 @@ export default class Node {
 
 	init(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -47,7 +46,6 @@ export default class Node {
 
 	initChildren(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -87,7 +85,7 @@ export default class Node {
 		cleaned.forEach((child: Node, i: number) => {
 			child.canUseInnerHTML = !this.generator.hydratable;
 
-			child.init(block, state, stripWhitespace, cleaned[i + 1] || nextSibling);
+			child.init(block, stripWhitespace, cleaned[i + 1] || nextSibling);
 
 			if (child.shouldSkip) return;
 
@@ -140,7 +138,13 @@ export default class Node {
 			false;
 	}
 
-	nearestComponent() {
-		if (this.parent) return this.parent.nearestComponent();
+	nearestComponent() { // TODO remove this method
+		return this.findNearest('Component');
+		// if (this.parent) return this.parent.nearestComponent();
+	}
+
+	findNearest(type: string) {
+		if (this.type === type) return this;
+		if (this.parent) return this.parent.findNearest(type);
 	}
 }

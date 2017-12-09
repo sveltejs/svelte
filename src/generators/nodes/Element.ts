@@ -26,7 +26,6 @@ export default class Element extends Node {
 
 	init(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -34,8 +33,19 @@ export default class Element extends Node {
 			this.cannotUseInnerHTML();
 		}
 
+		const parentElement = this.findNearest('Element');
+		this.namespace = this.name === 'svg' ?
+			namespaces.svg :
+			parentElement.namespace;
+
 		this.attributes.forEach(attribute => {
 			if (attribute.type === 'Attribute' && attribute.value !== true) {
+				// special case — xmlns
+				if (attribute.name === 'xmlns') {
+					// TODO this attribute must be static – enforce at compile time
+					this.namespace = attribute.value[0].data;
+				}
+
 				attribute.value.forEach((chunk: Node) => {
 					if (chunk.type !== 'Text') {
 						if (this.parent) this.parent.cannotUseInnerHTML();
@@ -46,14 +56,18 @@ export default class Element extends Node {
 						// special case — <option value='{{foo}}'> — see below
 						if (
 							this.name === 'option' &&
-							attribute.name === 'value' &&
-							state.selectBindingDependencies
+							attribute.name === 'value'
 						) {
-							state.selectBindingDependencies.forEach(prop => {
-								dependencies.forEach((dependency: string) => {
-									this.generator.indirectDependencies.get(prop).add(dependency);
+							let select = this.parent;
+							while (select && select.type !== 'Element' || select.name !== 'select') select = select.parent;
+
+							if (select && select.selectBindingDependencies) {
+								select.selectBindingDependencies.forEach(prop => {
+									dependencies.forEach((dependency: string) => {
+										this.generator.indirectDependencies.get(prop).add(dependency);
+									});
 								});
-							});
+							}
 						}
 					}
 				});
@@ -121,12 +135,12 @@ export default class Element extends Node {
 			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 				const dependencies = binding.metadata.dependencies;
-				state.selectBindingDependencies = dependencies;
+				this.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					this.generator.indirectDependencies.set(prop, new Set());
 				});
 			} else {
-				state.selectBindingDependencies = null;
+				this.selectBindingDependencies = null;
 			}
 		}
 
@@ -143,21 +157,11 @@ export default class Element extends Node {
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
 
-		this._state = state.child({
-			parentNode: this.var,
-			parentNodes: block.getUniqueName(`${this.var}_nodes`),
-			parentNodeName: this.name,
-			namespace: this.name === 'svg'
-				? 'http://www.w3.org/2000/svg'
-				: state.namespace,
-			allUsedContexts: [],
-		});
-
 		this.generator.stylesheet.apply(this);
 
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
-			this.initChildren(block, this._state, stripWhitespace, nextSibling);
+			this.initChildren(block, stripWhitespace, nextSibling);
 		}
 	}
 
@@ -172,7 +176,16 @@ export default class Element extends Node {
 			this.generator.slots.add(slotName);
 		}
 
-		const childState = this._state;
+		const childState = state.child({
+			parentNode: this.var,
+			parentNodes: block.getUniqueName(`${this.var}_nodes`),
+			parentNodeName: this.name,
+			namespace: this.name === 'svg'
+				? 'http://www.w3.org/2000/svg'
+				: state.namespace,
+			allUsedContexts: [],
+		});
+
 		const name = childState.parentNode;
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');

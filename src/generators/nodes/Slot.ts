@@ -13,7 +13,6 @@ export default class Slot extends Element {
 
 	init(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -21,18 +20,8 @@ export default class Slot extends Element {
 
 		this.var = block.getUniqueName('slot');
 
-		this._state = state.child({
-			parentNode: this.var,
-			parentNodes: block.getUniqueName(`${this.var}_nodes`),
-			parentNodeName: this.name,
-			namespace: this.name === 'svg'
-				? 'http://www.w3.org/2000/svg'
-				: state.namespace,
-			allUsedContexts: [],
-		});
-
 		if (this.children.length) {
-			this.initChildren(block, this._state, stripWhitespace, nextSibling);
+			this.initChildren(block, stripWhitespace, nextSibling);
 		}
 	}
 
@@ -67,6 +56,16 @@ export default class Slot extends Element {
 		block.builders.mount.pushCondition(`!${content_name}`);
 		block.builders.unmount.pushCondition(`!${content_name}`);
 		block.builders.destroy.pushCondition(`!${content_name}`);
+
+		// const childState = state.child({
+		// 	parentNode: this.var,
+		// 	parentNodes: block.getUniqueName(`${this.var}_nodes`),
+		// 	parentNodeName: this.name,
+		// 	namespace: this.name === 'svg'
+		// 		? 'http://www.w3.org/2000/svg'
+		// 		: state.namespace,
+		// 	allUsedContexts: [],
+		// });
 
 		this.children.forEach((child: Node) => {
 			child.build(block, state);

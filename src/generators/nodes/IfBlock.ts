@@ -21,11 +21,9 @@ export default class IfBlock extends Node {
 	else: ElseBlock;
 
 	_block: Block;
-	_state: State;
 
 	init(
 		block: Block,
-		state: State,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -48,10 +46,8 @@ export default class IfBlock extends Node {
 				name: generator.getUniqueName(`create_if_block`),
 			});
 
-			node._state = state.child();
-
 			blocks.push(node._block);
-			node.initChildren(node._block, node._state, stripWhitespace, nextSibling);
+			node.initChildren(node._block, stripWhitespace, nextSibling);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -69,12 +65,9 @@ export default class IfBlock extends Node {
 					name: generator.getUniqueName(`create_if_block`),
 				});
 
-				node.else._state = state.child();
-
 				blocks.push(node.else._block);
 				node.else.initChildren(
 					node.else._block,
-					node.else._state,
 					stripWhitespace,
 					nextSibling
 				);
@@ -207,8 +200,9 @@ function visitChildren(
 	state: State,
 	node: Node
 ) {
+	const childState = state.child(); // TODO necessary?
 	node.children.forEach((child: Node) => {
-		child.build(node._block, node._state);
+		child.build(node._block, childState);
 	});
 }
 

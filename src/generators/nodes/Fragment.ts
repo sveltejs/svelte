@@ -25,14 +25,8 @@ export default class Fragment extends Node {
 			dependencies: new Set(),
 		});
 
-		this.state = new State({
-			namespace: this.generator.namespace,
-			parentNode: null,
-			parentNodes: 'nodes'
-		});
-
 		this.generator.blocks.push(this.block);
-		this.initChildren(this.block, this.state, true, null);
+		this.initChildren(this.block, true, null);
 
 		this.block.hasUpdateMethod = true;
 	}
@@ -40,8 +34,14 @@ export default class Fragment extends Node {
 	build() {
 		this.init();
 
+		const state = new State({
+			namespace: this.generator.namespace,
+			parentNode: null,
+			parentNodes: 'nodes'
+		});
+
 		this.children.forEach(child => {
-			child.build(this.block, this.state);
+			child.build(this.block, state);
 		});
 	}
 }
