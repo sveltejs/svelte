@@ -39,7 +39,7 @@ export default class AwaitBlock extends Node {
 			const contexts = new Map(block.contexts);
 			contexts.set(arg, context);
 
-			child._block = block.child({
+			child.block = block.child({
 				comment: createDebuggingComment(child, this.generator),
 				name: this.generator.getUniqueName(`create_${status}_block`),
 				params: block.params.concat(context),
@@ -47,18 +47,18 @@ export default class AwaitBlock extends Node {
 				contexts
 			});
 
-			child.initChildren(child._block, stripWhitespace, nextSibling);
-			this.generator.blocks.push(child._block);
+			child.initChildren(child.block, stripWhitespace, nextSibling);
+			this.generator.blocks.push(child.block);
 
-			if (child._block.dependencies.size > 0) {
+			if (child.block.dependencies.size > 0) {
 				dynamic = true;
-				block.addDependencies(child._block.dependencies);
+				block.addDependencies(child.block.dependencies);
 			}
 		});
 
-		this.pending._block.hasUpdateMethod = dynamic;
-		this.then._block.hasUpdateMethod = dynamic;
-		this.catch._block.hasUpdateMethod = dynamic;
+		this.pending.block.hasUpdateMethod = dynamic;
+		this.then.block.hasUpdateMethod = dynamic;
+		this.catch.block.hasUpdateMethod = dynamic;
 	}
 
 	build(
@@ -86,9 +86,9 @@ export default class AwaitBlock extends Node {
 		const old_block = block.getUniqueName(`old_block`);
 		const value = block.getUniqueName(`value`);
 		const error = block.getUniqueName(`error`);
-		const create_pending_block = this.pending._block.name;
-		const create_then_block = this.then._block.name;
-		const create_catch_block = this.catch._block.name;
+		const create_pending_block = this.pending.block.name;
+		const create_then_block = this.then.block.name;
+		const create_catch_block = this.catch.block.name;
 
 		block.addVariable(await_block);
 		block.addVariable(await_block_type);
@@ -165,7 +165,7 @@ export default class AwaitBlock extends Node {
 			`${handle_promise}(${promise}, ${params})`
 		);
 
-		if (this.pending._block.hasUpdateMethod) {
+		if (this.pending.block.hasUpdateMethod) {
 			block.builders.update.addBlock(deindent`
 				if (${conditions.join(' && ')}) {
 					// nothing
@@ -193,7 +193,7 @@ export default class AwaitBlock extends Node {
 
 		[this.pending, this.then, this.catch].forEach(status => {
 			status.children.forEach(child => {
-				child.build(status._block, null,'nodes');
+				child.build(status.block, null,'nodes');
 			});
 		});
 	}

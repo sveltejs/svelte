@@ -8,7 +8,7 @@ import createDebuggingComment from '../../utils/createDebuggingComment';
 export default class EachBlock extends Node {
 	type: 'EachBlock';
 
-	_block: Block;
+	block: Block;
 	expression: Node;
 
 	iterations: string;
@@ -62,7 +62,7 @@ export default class EachBlock extends Node {
 			}
 		}
 
-		this._block = block.child({
+		this.block = block.child({
 			comment: createDebuggingComment(this, this.generator),
 			name: this.generator.getUniqueName('create_each_block'),
 			context: this.context,
@@ -80,24 +80,24 @@ export default class EachBlock extends Node {
 			params: block.params.concat(listName, context, indexName),
 		});
 
-		this.generator.blocks.push(this._block);
-		this.initChildren(this._block, stripWhitespace, nextSibling);
-		block.addDependencies(this._block.dependencies);
-		this._block.hasUpdateMethod = this._block.dependencies.size > 0;
+		this.generator.blocks.push(this.block);
+		this.initChildren(this.block, stripWhitespace, nextSibling);
+		block.addDependencies(this.block.dependencies);
+		this.block.hasUpdateMethod = this.block.dependencies.size > 0;
 
 		if (this.else) {
-			this.else._block = block.child({
+			this.else.block = block.child({
 				comment: '// TODO', // createDebuggingComment(this.else, generator),
-				name: this.generator.getUniqueName(`${this._block.name}_else`),
+				name: this.generator.getUniqueName(`${this.block.name}_else`),
 			});
 
-			this.generator.blocks.push(this.else._block);
+			this.generator.blocks.push(this.else.block);
 			this.else.initChildren(
-				this.else._block,
+				this.else.block,
 				stripWhitespace,
 				nextSibling
 			);
-			this.else._block.hasUpdateMethod = this.else._block.dependencies.size > 0;
+			this.else.block.hasUpdateMethod = this.else.block.dependencies.size > 0;
 		}
 	}
 
@@ -110,8 +110,8 @@ export default class EachBlock extends Node {
 
 		const each = this.var;
 
-		const create_each_block = this._block.name;
-		const each_block_value = this._block.listName;
+		const create_each_block = this.block.name;
+		const each_block_value = this.block.listName;
 		const iterations = this.iterations;
 		const params = block.params.join(', ');
 
@@ -127,7 +127,7 @@ export default class EachBlock extends Node {
 		generator.code.overwrite(c, c + 4, 'length');
 		const length = `[✂${c}-${c+4}✂]`;
 
-		const mountOrIntro = this._block.hasIntroMethod ? 'i' : 'm';
+		const mountOrIntro = this.block.hasIntroMethod ? 'i' : 'm';
 		const vars = {
 			each,
 			create_each_block,
@@ -167,7 +167,7 @@ export default class EachBlock extends Node {
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.addBlock(deindent`
 				if (!${each_block_value}.${length}) {
-					${each_block_else} = ${this.else._block.name}(${params}, #component);
+					${each_block_else} = ${this.else.block.name}(${params}, #component);
 					${each_block_else}.c();
 				}
 			`);
@@ -180,12 +180,12 @@ export default class EachBlock extends Node {
 
 			const initialMountNode = parentNode || `${anchor}.parentNode`;
 
-			if (this.else._block.hasUpdateMethod) {
+			if (this.else.block.hasUpdateMethod) {
 				block.builders.update.addBlock(deindent`
 					if (!${each_block_value}.${length} && ${each_block_else}) {
 						${each_block_else}.p( changed, ${params} );
 					} else if (!${each_block_value}.${length}) {
-						${each_block_else} = ${this.else._block.name}(${params}, #component);
+						${each_block_else} = ${this.else.block.name}(${params}, #component);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					} else if (${each_block_else}) {
@@ -203,7 +203,7 @@ export default class EachBlock extends Node {
 							${each_block_else} = null;
 						}
 					} else if (!${each_block_else}) {
-						${each_block_else} = ${this.else._block.name}(${params}, #component);
+						${each_block_else} = ${this.else.block.name}(${params}, #component);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					}
@@ -220,12 +220,12 @@ export default class EachBlock extends Node {
 		}
 
 		this.children.forEach((child: Node) => {
-			child.build(this._block, null, 'nodes');
+			child.build(this.block, null, 'nodes');
 		});
 
 		if (this.else) {
 			this.else.children.forEach((child: Node) => {
-				child.build(this.else._block, null, 'nodes');
+				child.build(this.else.block, null, 'nodes');
 			});
 		}
 	}
@@ -258,11 +258,11 @@ export default class EachBlock extends Node {
 
 		if (this.children[0] && this.children[0].type === 'Element') {
 			// TODO or text/tag/raw
-			this._block.first = this.children[0].var; // TODO this is highly confusing
+			this.block.first = this.children[0].var; // TODO this is highly confusing
 		} else {
-			this._block.first = this._block.getUniqueName('first');
-			this._block.addElement(
-				this._block.first,
+			this.block.first = this.block.getUniqueName('first');
+			this.block.addElement(
+				this.block.first,
 				`@createComment()`,
 				`@createComment()`,
 				null
@@ -310,10 +310,10 @@ export default class EachBlock extends Node {
 			}
 		`);
 
-		const dynamic = this._block.hasUpdateMethod;
+		const dynamic = this.block.hasUpdateMethod;
 
 		let destroy;
-		if (this._block.hasOutroMethod) {
+		if (this.block.hasOutroMethod) {
 			const fn = block.getUniqueName(`${each}_outro`);
 			block.builders.init.addBlock(deindent`
 				function ${fn}(iteration) {
@@ -419,7 +419,7 @@ export default class EachBlock extends Node {
 
 				if (${last}) ${last}.next = ${iteration};
 				${iteration}.last = ${last};
-				${this._block.hasIntroMethod && `${iteration}.i(${updateMountNode}, ${anchor});`}
+				${this.block.hasIntroMethod && `${iteration}.i(${updateMountNode}, ${anchor});`}
 				${last} = ${iteration};
 			}
 
@@ -494,7 +494,7 @@ export default class EachBlock extends Node {
 			}
 		`);
 
-		const allDependencies = new Set(this._block.dependencies);
+		const allDependencies = new Set(this.block.dependencies);
 		const { dependencies } = this.metadata;
 		dependencies.forEach((dependency: string) => {
 			allDependencies.add(dependency);
@@ -506,8 +506,8 @@ export default class EachBlock extends Node {
 			.join(' || ');
 
 		if (condition !== '') {
-			const forLoopBody = this._block.hasUpdateMethod
-				? this._block.hasIntroMethod
+			const forLoopBody = this.block.hasUpdateMethod
+				? this.block.hasIntroMethod
 					? deindent`
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
@@ -532,10 +532,10 @@ export default class EachBlock extends Node {
 					${iterations}[#i].${mountOrIntro}(${updateMountNode}, ${anchor});
 				`;
 
-			const start = this._block.hasUpdateMethod ? '0' : `${iterations}.length`;
+			const start = this.block.hasUpdateMethod ? '0' : `${iterations}.length`;
 
 			const outro = block.getUniqueName('outro');
-			const destroy = this._block.hasOutroMethod
+			const destroy = this.block.hasOutroMethod
 				? deindent`
 					function ${outro}(i) {
 						if (${iterations}[i]) {

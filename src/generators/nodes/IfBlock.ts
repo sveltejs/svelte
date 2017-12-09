@@ -19,7 +19,7 @@ export default class IfBlock extends Node {
 	type: 'IfBlock';
 	else: ElseBlock;
 
-	_block: Block;
+	block: Block;
 
 	init(
 		block: Block,
@@ -40,40 +40,40 @@ export default class IfBlock extends Node {
 
 			block.addDependencies(node.metadata.dependencies);
 
-			node._block = block.child({
+			node.block = block.child({
 				comment: createDebuggingComment(node, generator),
 				name: generator.getUniqueName(`create_if_block`),
 			});
 
-			blocks.push(node._block);
-			node.initChildren(node._block, stripWhitespace, nextSibling);
+			blocks.push(node.block);
+			node.initChildren(node.block, stripWhitespace, nextSibling);
 
-			if (node._block.dependencies.size > 0) {
+			if (node.block.dependencies.size > 0) {
 				dynamic = true;
-				block.addDependencies(node._block.dependencies);
+				block.addDependencies(node.block.dependencies);
 			}
 
-			if (node._block.hasIntroMethod) hasIntros = true;
-			if (node._block.hasOutroMethod) hasOutros = true;
+			if (node.block.hasIntroMethod) hasIntros = true;
+			if (node.block.hasOutroMethod) hasOutros = true;
 
 			if (isElseIf(node.else)) {
 				attachBlocks(node.else.children[0]);
 			} else if (node.else) {
-				node.else._block = block.child({
+				node.else.block = block.child({
 					comment: createDebuggingComment(node.else, generator),
 					name: generator.getUniqueName(`create_if_block`),
 				});
 
-				blocks.push(node.else._block);
+				blocks.push(node.else.block);
 				node.else.initChildren(
-					node.else._block,
+					node.else.block,
 					stripWhitespace,
 					nextSibling
 				);
 
-				if (node.else._block.dependencies.size > 0) {
+				if (node.else.block.dependencies.size > 0) {
 					dynamic = true;
-					block.addDependencies(node.else._block.dependencies);
+					block.addDependencies(node.else.block.dependencies);
 				}
 			}
 		}
@@ -166,10 +166,10 @@ function getBranches(
 	const branches = [
 		{
 			condition: node.metadata.snippet,
-			block: node._block.name,
-			hasUpdateMethod: node._block.hasUpdateMethod,
-			hasIntroMethod: node._block.hasIntroMethod,
-			hasOutroMethod: node._block.hasOutroMethod,
+			block: node.block.name,
+			hasUpdateMethod: node.block.hasUpdateMethod,
+			hasIntroMethod: node.block.hasIntroMethod,
+			hasOutroMethod: node.block.hasOutroMethod,
 		},
 	];
 
@@ -182,10 +182,10 @@ function getBranches(
 	} else {
 		branches.push({
 			condition: null,
-			block: node.else ? node.else._block.name : null,
-			hasUpdateMethod: node.else ? node.else._block.hasUpdateMethod : false,
-			hasIntroMethod: node.else ? node.else._block.hasIntroMethod : false,
-			hasOutroMethod: node.else ? node.else._block.hasOutroMethod : false,
+			block: node.else ? node.else.block.name : null,
+			hasUpdateMethod: node.else ? node.else.block.hasUpdateMethod : false,
+			hasIntroMethod: node.else ? node.else.block.hasIntroMethod : false,
+			hasOutroMethod: node.else ? node.else.block.hasOutroMethod : false,
 		});
 
 		if (node.else) {
@@ -202,7 +202,7 @@ function visitChildren(
 	node: Node
 ) {
 	node.children.forEach((child: Node) => {
-		child.build(node._block, null, 'nodes');
+		child.build(node.block, null, 'nodes');
 	});
 }
 

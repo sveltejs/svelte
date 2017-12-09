@@ -4,5 +4,5 @@ import Block from '../dom/Block';
 export default class ElseBlock extends Node {
 	type: 'ElseBlock';
 	children: Node[];
-	_block: Block;
+	block: Block;
 }
