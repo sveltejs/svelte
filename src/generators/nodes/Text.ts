@@ -18,6 +18,7 @@ const elementsWithoutText = new Set([
 ]);
 
 export default class Text extends Node {
+	type: 'Text';
 	data: string;
 	shouldSkip: boolean;
 

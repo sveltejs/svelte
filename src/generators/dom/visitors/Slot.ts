@@ -41,7 +41,7 @@ export default function visitSlot(
 	block.builders.destroy.pushCondition(`!${content_name}`);
 
 	node.children.forEach((child: Node) => {
-		visit(generator, block, state, child, elementStack, componentStack);
+		child.build(block, state, elementStack, componentStack);
 	});
 
 	block.builders.create.popCondition();

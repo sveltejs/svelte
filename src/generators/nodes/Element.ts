@@ -8,6 +8,7 @@ import Node from './shared/Node';
 import Block from '../dom/Block';
 import State from '../dom/State';
 import Attribute from './Attribute';
+import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 
 // temp - move this logic in here
@@ -299,7 +300,7 @@ export default class Element extends Node {
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
-			const handlerName = (shouldHoist ? this.generator : block).getUniqueName(
+			const handlerName = (shouldHoist ? generator : block).getUniqueName(
 				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
@@ -333,7 +334,7 @@ export default class Element extends Node {
 				`;
 
 				if (shouldHoist) {
-					this.generator.blocks.push(handler);
+					generator.blocks.push(handler);
 				} else {
 					block.builders.init.addBlock(handler);
 				}
@@ -360,10 +361,10 @@ export default class Element extends Node {
 				`if (${ref} === ${name}) ${ref} = null;`
 			);
 
-			this.generator.usesRefs = true; // so component.refs object is created
+			generator.usesRefs = true; // so component.refs object is created
 		});
 
-		addTransitions(this.generator, block, childState, this);
+		addTransitions(generator, block, childState, this);
 
 		if (childState.allUsedContexts.length || childState.usesComponent) {
 			const initialProps: string[] = [];
@@ -408,7 +409,7 @@ export default class Element extends Node {
 			`${childState.parentNodes}.forEach(@detachNode);`
 		);
 
-		function toHTML(node: Node) {
+		function toHTML(node: Element | Text) {
 			if (node.type === 'Text') return node.data;
 
 			let open = `<${node.name}`;

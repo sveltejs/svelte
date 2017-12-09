@@ -4,11 +4,14 @@ import State from '../../dom/State';
 import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {
+	type: string;
+	start: number;
+	end: number;
+
 	metadata: {
 		dependencies: string[];
 	};
 
-	type: string;
 	parent: Node;
 	prev?: Node;
 	next?: Node;

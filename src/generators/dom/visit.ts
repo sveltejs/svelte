@@ -12,6 +12,7 @@ export default function visit(
 	elementStack: Node[],
 	componentStack: Node[]
 ) {
+	throw new Error('do not use visit')
 	const visitor = visitors[node.type];
 	visitor(generator, block, state, node, elementStack, componentStack);
 }
