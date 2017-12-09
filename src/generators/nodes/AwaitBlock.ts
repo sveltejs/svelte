@@ -2,7 +2,6 @@ import deindent from '../../utils/deindent';
 import Node from './shared/Node';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
-import visitAwaitBlock from '../dom/visitors/AwaitBlock';
 import PendingBlock from './PendingBlock';
 import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
@@ -12,6 +11,7 @@ import createDebuggingComment from '../../utils/createDebuggingComment';
 export default class AwaitBlock extends Node {
 	value: string;
 	error: string;
+	expression: Node;
 
 	pending: PendingBlock;
 	then: ThenBlock;

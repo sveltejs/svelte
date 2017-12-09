@@ -5,4 +5,5 @@ import State from '../dom/State';
 export default class ThenBlock extends Node {
 	_block: Block;
 	_state: State;
+	children: Node[];
 }

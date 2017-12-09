@@ -3,6 +3,7 @@ import Element from './Element';
 import getObject from '../../utils/getObject';
 import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
+import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
 import State from '../dom/State';
 

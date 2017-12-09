@@ -7,9 +7,11 @@ export default class Node {
 	type: string;
 	start: number;
 	end: number;
+	[key: string]: any;
 
-	metadata: {
+	metadata?: {
 		dependencies: string[];
+		snippet: string;
 	};
 
 	parent: Node;

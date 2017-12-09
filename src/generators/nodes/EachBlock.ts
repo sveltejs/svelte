@@ -4,7 +4,6 @@ import ElseBlock from './ElseBlock';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
 import State from '../dom/State';
-import visitEachBlock from '../dom/visitors/EachBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
 export default class EachBlock extends Node {
