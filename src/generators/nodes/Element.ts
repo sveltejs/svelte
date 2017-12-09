@@ -33,10 +33,10 @@ export default class Element extends Node {
 			this.cannotUseInnerHTML();
 		}
 
-		const parentElement = this.findNearest('Element');
+		const parentElement = this.parent && this.parent.findNearest('Element');
 		this.namespace = this.name === 'svg' ?
 			namespaces.svg :
-			parentElement.namespace;
+			parentElement ? parentElement.namespace : this.generator.namespace;
 
 		this.attributes.forEach(attribute => {
 			if (attribute.type === 'Attribute' && attribute.value !== true) {
@@ -179,9 +179,6 @@ export default class Element extends Node {
 		const childState = state.child({
 			parentNode: this.var,
 			parentNodes: block.getUniqueName(`${this.var}_nodes`),
-			namespace: this.name === 'svg'
-				? 'http://www.w3.org/2000/svg'
-				: state.namespace,
 			allUsedContexts: [],
 		});
 
@@ -196,14 +193,14 @@ export default class Element extends Node {
 		block.builders.create.addLine(
 			`${name} = ${getRenderStatement(
 				this.generator,
-				childState.namespace,
+				this.namespace,
 				this.name
 			)};`
 		);
 
 		if (this.generator.hydratable) {
 			block.builders.claim.addBlock(deindent`
-				${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, this)};
+				${name} = ${getClaimStatement(generator, this.namespace, state.parentNodes, this)};
 				var ${childState.parentNodes} = @children(${name});
 			`);
 		}
@@ -235,7 +232,7 @@ export default class Element extends Node {
 		}
 
 		// insert static children with textContent or innerHTML
-		if (!childState.namespace && this.canUseInnerHTML && this.children.length > 0) {
+		if (!this.namespace && this.canUseInnerHTML && this.children.length > 0) {
 			if (this.children.length === 1 && this.children[0].type === 'Text') {
 				block.builders.create.addLine(
 					`${name}.textContent = ${stringify(this.children[0].data)};`

@@ -1,7 +1,6 @@
 import { assign } from '../../shared/index.js';
 
 interface StateData {
-	namespace?: string;
 	parentNode?: string;
 	parentNodes?: string;
 	allUsedContexts?: string[];
@@ -9,7 +8,6 @@ interface StateData {
 }
 
 export default class State {
-	namespace?: string;
 	parentNode?: string;
 	parentNodes?: string;
 	allUsedContexts?: string[];

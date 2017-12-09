@@ -35,7 +35,6 @@ export default class Fragment extends Node {
 		this.init();
 
 		const state = new State({
-			namespace: this.generator.namespace,
 			parentNode: null,
 			parentNodes: 'nodes'
 		});

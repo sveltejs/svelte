@@ -57,7 +57,7 @@ export default class Attribute {
 			}
 		}
 
-		let metadata = state.namespace ? null : attributeLookup[name];
+		let metadata = node.namespace ? null : attributeLookup[name];
 		if (metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf(node.name))
 			metadata = null;
 
@@ -251,12 +251,6 @@ export default class Attribute {
 			// special case – autofocus. has to be handled in a bit of a weird way
 			if (this.value === true && name === 'autofocus') {
 				block.autofocus = state.parentNode;
-			}
-
-			// special case — xmlns
-			if (name === 'xmlns') {
-				// TODO this attribute must be static – enforce at compile time
-				state.namespace = this.value[0].data;
 			}
 		}
 
