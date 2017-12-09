@@ -21,7 +21,8 @@ export default class Binding extends Node {
 
 	munge(
 		block: Block,
-		state: State
+		state: State,
+		allUsedContexts: Set<string>
 	) {
 		const node: Element = this.parent;
 
@@ -50,8 +51,7 @@ export default class Binding extends Node {
 		});
 
 		contexts.forEach(context => {
-			if (!~state.allUsedContexts.indexOf(context))
-				state.allUsedContexts.push(context);
+			allUsedContexts.add(context);
 		});
 
 		// view to model

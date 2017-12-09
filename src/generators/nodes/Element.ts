@@ -15,9 +15,6 @@ import Transition from './Transition';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 
-// temp - move this logic in here
-import addBindings from '../dom/visitors/Element/addBindings';
-
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -178,11 +175,11 @@ export default class Element extends Node {
 
 		const childState = state.child({
 			parentNode: this.var,
-			parentNodes: block.getUniqueName(`${this.var}_nodes`),
-			allUsedContexts: [],
+			parentNodes: block.getUniqueName(`${this.var}_nodes`)
 		});
 
 		const name = childState.parentNode;
+		const allUsedContexts: Set<string> = new Set();
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const parentNode = this.slotted ?
@@ -248,7 +245,7 @@ export default class Element extends Node {
 			});
 		}
 
-		this.addBindings(block, childState);
+		this.addBindings(block, childState, allUsedContexts);
 
 		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
 			attribute.render(block, childState);
@@ -283,8 +280,7 @@ export default class Element extends Node {
 
 					contexts.forEach(context => {
 						if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-						if (!~childState.allUsedContexts.indexOf(context))
-							childState.allUsedContexts.push(context);
+						allUsedContexts.add(context);
 					});
 				});
 			}
@@ -371,7 +367,7 @@ export default class Element extends Node {
 
 		this.addTransitions(block);
 
-		if (childState.allUsedContexts.length || eventHandlerUsesComponent) {
+		if (allUsedContexts.size || eventHandlerUsesComponent) {
 			const initialProps: string[] = [];
 			const updates: string[] = [];
 
@@ -379,7 +375,7 @@ export default class Element extends Node {
 				initialProps.push(`component: #component`);
 			}
 
-			childState.allUsedContexts.forEach((contextName: string) => {
+			allUsedContexts.forEach((contextName: string) => {
 				if (contextName === 'state') return;
 
 				const listName = block.listNames.get(contextName);
@@ -439,7 +435,8 @@ export default class Element extends Node {
 
 	addBindings(
 		block: Block,
-		state: State
+		state: State,
+		allUsedContexts: Set<string>
 	) {
 		const bindings: Binding[] = this.attributes.filter((a: Binding) => a.type === 'Binding');
 		if (bindings.length === 0) return;
@@ -448,7 +445,7 @@ export default class Element extends Node {
 
 		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
-		const mungedBindings = bindings.map(binding => binding.munge(block, state));
+		const mungedBindings = bindings.map(binding => binding.munge(block, state, allUsedContexts));
 
 		const lock = mungedBindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
