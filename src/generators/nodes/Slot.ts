@@ -15,7 +15,6 @@ export default class Slot extends Element {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -34,14 +33,13 @@ export default class Slot extends Element {
 		});
 
 		if (this.children.length) {
-			this.initChildren(block, this._state, inEachBlock, componentStack, stripWhitespace, nextSibling);
+			this.initChildren(block, this._state, inEachBlock, stripWhitespace, nextSibling);
 		}
 	}
 
 	build(
 		block: Block,
-		state: State,
-		componentStack: Node[]
+		state: State
 	) {
 		const { generator } = this;
 
@@ -72,7 +70,7 @@ export default class Slot extends Element {
 		block.builders.destroy.pushCondition(`!${content_name}`);
 
 		this.children.forEach((child: Node) => {
-			child.build(block, state, componentStack);
+			child.build(block, state);
 		});
 
 		block.builders.create.popCondition();

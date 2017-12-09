@@ -5,8 +5,7 @@ import { Node } from '../../interfaces';
 export type Visitor = (
 	generator: SsrGenerator,
 	block: Block,
-	node: Node,
-	componentStack: Node[]
+	node: Node
 ) => void;
 
 export interface AppendTarget {

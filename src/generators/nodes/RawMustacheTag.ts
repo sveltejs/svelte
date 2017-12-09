@@ -13,8 +13,7 @@ export default class RawMustacheTag extends Tag {
 
 	build(
 		block: Block,
-		state: State,
-		componentStack: Node[]
+		state: State
 	) {
 		const name = this.var;
 

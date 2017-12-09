@@ -32,7 +32,7 @@ export default class Fragment extends Node {
 		});
 
 		this.generator.blocks.push(this.block);
-		this.initChildren(this.block, this.state, false, [], true, null);
+		this.initChildren(this.block, this.state, false, true, null);
 
 		this.block.hasUpdateMethod = true;
 	}
@@ -41,7 +41,7 @@ export default class Fragment extends Node {
 		this.init();
 
 		this.children.forEach(child => {
-			child.build(this.block, this.state, []);
+			child.build(this.block, this.state);
 		});
 	}
 }

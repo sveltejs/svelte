@@ -28,7 +28,6 @@ export default class Element extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -137,7 +136,7 @@ export default class Element extends Node {
 			this.cannotUseInnerHTML();
 			this.slotted = true;
 			// TODO validate slots — no nesting, no dynamic names...
-			const component = componentStack[componentStack.length - 1];
+			const component = this.nearestComponent();
 			component._slots.add(slot);
 		}
 
@@ -159,14 +158,13 @@ export default class Element extends Node {
 
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
-			this.initChildren(block, this._state, inEachBlock, componentStack, stripWhitespace, nextSibling);
+			this.initChildren(block, this._state, inEachBlock, stripWhitespace, nextSibling);
 		}
 	}
 
 	build(
 		block: Block,
-		state: State,
-		componentStack: Node[]
+		state: State
 	) {
 		const { generator } = this;
 
@@ -180,7 +178,7 @@ export default class Element extends Node {
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const parentNode = this.slotted ?
-			`${componentStack[componentStack.length - 1].var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
+			`${this.nearestComponent().var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 			state.parentNode;
 
 		block.addVariable(name);
@@ -238,7 +236,7 @@ export default class Element extends Node {
 			}
 		} else {
 			this.children.forEach((child: Node) => {
-				child.build(block, childState, componentStack);
+				child.build(block, childState);
 			});
 		}
 

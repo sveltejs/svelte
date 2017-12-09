@@ -25,7 +25,6 @@ export default class EachBlock extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
@@ -89,7 +88,7 @@ export default class EachBlock extends Node {
 		});
 
 		this.generator.blocks.push(this._block);
-		this.initChildren(this._block, this._state, true, componentStack, stripWhitespace, nextSibling);
+		this.initChildren(this._block, this._state, true, stripWhitespace, nextSibling);
 		block.addDependencies(this._block.dependencies);
 		this._block.hasUpdateMethod = this._block.dependencies.size > 0;
 
@@ -106,7 +105,6 @@ export default class EachBlock extends Node {
 				this.else._block,
 				this.else._state,
 				inEachBlock,
-				componentStack,
 				stripWhitespace,
 				nextSibling
 			);
@@ -116,8 +114,7 @@ export default class EachBlock extends Node {
 
 	build(
 		block: Block,
-		state: State,
-		componentStack: Node[]
+		state: State
 	) {
 		const { generator } = this;
 
@@ -235,12 +232,12 @@ export default class EachBlock extends Node {
 		}
 
 		this.children.forEach((child: Node) => {
-			child.build(this._block, this._state, componentStack);
+			child.build(this._block, this._state);
 		});
 
 		if (this.else) {
 			this.else.children.forEach((child: Node) => {
-				child.build(this.else._block, this.else._state, componentStack);
+				child.build(this.else._block, this.else._state);
 			});
 		}
 	}
