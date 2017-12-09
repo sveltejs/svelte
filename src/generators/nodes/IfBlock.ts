@@ -110,7 +110,7 @@ export default class IfBlock extends Node {
 		const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
 		const hasOutros = branches[0].hasOutroMethod;
 
-		const vars = { name, needsAnchor, anchor, params, if_name, hasElse };
+		const vars = { name, anchor, params, if_name, hasElse };
 
 		if (this.else) {
 			if (hasOutros) {
@@ -216,7 +216,7 @@ function simple(
 	node: Node,
 	branch,
 	dynamic,
-	{ name, needsAnchor, anchor, params, if_name }
+	{ name, anchor, params, if_name }
 ) {
 	block.builders.init.addBlock(deindent`
 		var ${name} = (${branch.condition}) && ${branch.block}(${params}, #component);
@@ -306,7 +306,7 @@ function compound(
 	node: Node,
 	branches,
 	dynamic,
-	{ name, needsAnchor, anchor, params, hasElse, if_name }
+	{ name, anchor, params, hasElse, if_name }
 ) {
 	const select_block_type = generator.getUniqueName(`select_block_type`);
 	const current_block_type = block.getUniqueName(`current_block_type`);
@@ -382,7 +382,7 @@ function compoundWithOutros(
 	node: Node,
 	branches,
 	dynamic,
-	{ name, needsAnchor, anchor, params, hasElse }
+	{ name, anchor, params, hasElse }
 ) {
 	const select_block_type = block.getUniqueName(`select_block_type`);
 	const current_block_type_index = block.getUniqueName(`current_block_type_index`);

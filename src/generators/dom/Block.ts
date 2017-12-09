@@ -130,15 +130,13 @@ export default class Block {
 		claimStatement: string,
 		parentNode: string
 	) {
-		const isToplevel = !parentNode;
-
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
 		this.builders.claim.addLine(`${name} = ${claimStatement};`);
 
 		this.mount(name, parentNode);
 
-		if (isToplevel) {
+		if (!parentNode) {
 			this.builders.unmount.addLine(`@detachNode(${name});`);
 		}
 	}

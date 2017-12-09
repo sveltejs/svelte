@@ -149,6 +149,8 @@ export default class Node {
 	}
 
 	getOrCreateAnchor(block: Block, parentNode: string) {
+		// TODO use this in EachBlock and IfBlock — tricky because
+		// children need to be created first
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
 		const anchor = needsAnchor
 			? block.getUniqueName(`${this.var}_anchor`)
