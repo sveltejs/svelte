@@ -34,10 +34,7 @@ export default class Fragment extends Node {
 		this.init();
 
 		this.children.forEach(child => {
-			child.build(this.block, {
-				parentNode: null,
-				parentNodes: 'nodes'
-			});
+			child.build(this.block, null, 'nodes');
 		});
 	}
 }

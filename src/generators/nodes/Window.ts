@@ -41,7 +41,8 @@ export default class Window extends Node {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const { generator } = this;
 

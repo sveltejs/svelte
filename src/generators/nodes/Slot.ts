@@ -27,7 +27,8 @@ export default class Slot extends Element {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const { generator } = this;
 
@@ -37,8 +38,8 @@ export default class Slot extends Element {
 		const content_name = block.getUniqueName(`slot_content_${slotName}`);
 		block.addVariable(content_name, `#component._slotted.${slotName}`);
 
-		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !state.parentNode;
-		const needsAnchorAfter = this.next ? this.next.type !== 'Element' : !state.parentNode;
+		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !parentNode;
+		const needsAnchorAfter = this.next ? this.next.type !== 'Element' : !parentNode;
 
 		const anchorBefore = needsAnchorBefore
 			? block.getUniqueName(`${content_name}_before`)
@@ -58,7 +59,7 @@ export default class Slot extends Element {
 		block.builders.destroy.pushCondition(`!${content_name}`);
 
 		this.children.forEach((child: Node) => {
-			child.build(block, state);
+			child.build(block, parentNode, parentNodes);
 		});
 
 		block.builders.create.popCondition();
@@ -68,12 +69,12 @@ export default class Slot extends Element {
 		block.builders.destroy.popCondition();
 
 		// TODO can we use an else here?
-		if (state.parentNode) {
+		if (parentNode) {
 			block.builders.mount.addBlock(deindent`
 				if (${content_name}) {
-					${needsAnchorBefore && `@appendNode(${anchorBefore} || (${anchorBefore} = @createComment()), ${state.parentNode});`}
-					@appendNode(${content_name}, ${state.parentNode});
-					${needsAnchorAfter && `@appendNode(${anchorAfter} || (${anchorAfter} = @createComment()), ${state.parentNode});`}
+					${needsAnchorBefore && `@appendNode(${anchorBefore} || (${anchorBefore} = @createComment()), ${parentNode});`}
+					@appendNode(${content_name}, ${parentNode});
+					${needsAnchorAfter && `@appendNode(${anchorAfter} || (${anchorAfter} = @createComment()), ${parentNode});`}
 				}
 			`);
 		} else {
@@ -94,7 +95,7 @@ export default class Slot extends Element {
 		if (anchorBefore === 'null' && anchorAfter === 'null') {
 			block.builders.unmount.addBlock(deindent`
 				if (${content_name}) {
-					@reinsertChildren(${state.parentNode}, ${content_name});
+					@reinsertChildren(${parentNode}, ${content_name});
 				}
 			`);
 		} else if (anchorBefore === 'null') {

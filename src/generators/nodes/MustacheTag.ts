@@ -12,7 +12,8 @@ export default class MustacheTag extends Tag {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const { init } = this.renameThisMethod(
 			block,
@@ -22,8 +23,8 @@ export default class MustacheTag extends Tag {
 		block.addElement(
 			this.var,
 			`@createText(${init})`,
-			`@claimText(${state.parentNodes}, ${init})`,
-			state.parentNode
+			`@claimText(${parentNodes}, ${init})`,
+			parentNode
 		);
 	}
 }

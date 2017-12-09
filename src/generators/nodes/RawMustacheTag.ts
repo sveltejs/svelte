@@ -2,7 +2,6 @@ import deindent from '../../utils/deindent';
 import Node from './shared/Node';
 import Tag from './shared/Tag';
 import Block from '../dom/Block';
-import State from '../dom/State';
 
 export default class RawMustacheTag extends Tag {
 	init(block: Block) {
@@ -13,12 +12,13 @@ export default class RawMustacheTag extends Tag {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const name = this.var;
 
-		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !state.parentNode;
-		const needsAnchorAfter = this.next ? this.next.type !== 'Element' : !state.parentNode;
+		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !parentNode;
+		const needsAnchorAfter = this.next ? this.next.type !== 'Element' : !parentNode;
 
 		const anchorBefore = needsAnchorBefore
 			? block.getUniqueName(`${name}_before`)
@@ -34,8 +34,8 @@ export default class RawMustacheTag extends Tag {
 
 		if (anchorBefore === 'null' && anchorAfter === 'null') {
 			useInnerHTML = true;
-			detach = `${state.parentNode}.innerHTML = '';`;
-			insert = content => `${state.parentNode}.innerHTML = ${content};`;
+			detach = `${parentNode}.innerHTML = '';`;
+			insert = content => `${parentNode}.innerHTML = ${content};`;
 		} else if (anchorBefore === 'null') {
 			detach = `@detachBefore(${anchorAfter});`;
 			insert = content => `${anchorAfter}.insertAdjacentHTML("beforebegin", ${content});`;
@@ -62,7 +62,7 @@ export default class RawMustacheTag extends Tag {
 				anchorBefore,
 				`@createElement('noscript')`,
 				`@createElement('noscript')`,
-				state.parentNode
+				parentNode
 			);
 		}
 
@@ -71,7 +71,7 @@ export default class RawMustacheTag extends Tag {
 				anchorAfter,
 				`@createElement('noscript')`,
 				`@createElement('noscript')`,
-				state.parentNode
+				parentNode
 			);
 		}
 

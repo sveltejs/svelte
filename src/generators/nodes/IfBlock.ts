@@ -3,7 +3,6 @@ import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
-import State from '../dom/State';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
 function isElseIf(node: ElseBlock) {
@@ -92,17 +91,18 @@ export default class IfBlock extends Node {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const name = this.var;
 
-		const needsAnchor = this.next ? !this.next.isDomNode() : !state.parentNode || !this.parent.isDomNode();
+		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
 		const anchor = needsAnchor
 			? block.getUniqueName(`${name}_anchor`)
 			: (this.next && this.next.var) || 'null';
 		const params = block.params.join(', ');
 
-		const branches = getBranches(this.generator, block, state, this);
+		const branches = getBranches(this.generator, block, parentNode, parentNodes, this);
 
 		const hasElse = isElseBranch(branches[branches.length - 1]);
 		const if_name = hasElse ? '' : `if (${name}) `;
@@ -117,23 +117,24 @@ export default class IfBlock extends Node {
 				compoundWithOutros(
 					this.generator,
 					block,
-					state,
+					parentNode,
+					parentNodes,
 					this,
 					branches,
 					dynamic,
 					vars
 				);
 			} else {
-				compound(this.generator, block, state, this, branches, dynamic, vars);
+				compound(this.generator, block, parentNode, parentNodes, this, branches, dynamic, vars);
 			}
 		} else {
-			simple(this.generator, block, state, this, branches[0], dynamic, vars);
+			simple(this.generator, block, parentNode, parentNodes, this, branches[0], dynamic, vars);
 		}
 
 		block.builders.create.addLine(`${if_name}${name}.c();`);
 
 		block.builders.claim.addLine(
-			`${if_name}${name}.l(${state.parentNodes});`
+			`${if_name}${name}.l(${parentNodes});`
 		);
 
 		if (needsAnchor) {
@@ -141,7 +142,7 @@ export default class IfBlock extends Node {
 				anchor,
 				`@createComment()`,
 				`@createComment()`,
-				state.parentNode
+				parentNode
 			);
 		}
 	}
@@ -156,7 +157,8 @@ export default class IfBlock extends Node {
 function getBranches(
 	generator: DomGenerator,
 	block: Block,
-	state: { parentNode: string, parentNodes: string },
+	parentNode: string,
+	parentNodes: string,
 	node: Node
 ) {
 	block.contextualise(node.expression); // TODO remove
@@ -175,7 +177,7 @@ function getBranches(
 
 	if (isElseIf(node.else)) {
 		branches.push(
-			...getBranches(generator, block, state, node.else.children[0])
+			...getBranches(generator, block, parentNode, parentNodes, node.else.children[0])
 		);
 	} else {
 		branches.push({
@@ -200,10 +202,7 @@ function visitChildren(
 	node: Node
 ) {
 	node.children.forEach((child: Node) => {
-		child.build(node._block, {
-			parentNode: null,
-			parentNodes: 'nodes'
-		});
+		child.build(node._block, null, 'nodes');
 	});
 }
 
@@ -212,7 +211,8 @@ function visitChildren(
 function simple(
 	generator: DomGenerator,
 	block: Block,
-	state: { parentNode: string, parentNodes: string },
+	parentNode: string,
+	parentNodes: string,
 	node: Node,
 	branch,
 	dynamic,
@@ -223,14 +223,14 @@ function simple(
 	`);
 
 	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	const targetNode = parentNode || '#target';
+	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
 		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const mountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 
 	const enter = dynamic
 		? branch.hasIntroMethod
@@ -242,7 +242,7 @@ function simple(
 					if (${name}) ${name}.c();
 				}
 
-				${name}.i(${parentNode}, ${anchor});
+				${name}.i(${mountNode}, ${anchor});
 			`
 			: deindent`
 				if (${name}) {
@@ -250,7 +250,7 @@ function simple(
 				} else {
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
-					${name}.m(${parentNode}, ${anchor});
+					${name}.m(${mountNode}, ${anchor});
 				}
 			`
 		: branch.hasIntroMethod
@@ -259,13 +259,13 @@ function simple(
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
 				}
-				${name}.i(${parentNode}, ${anchor});
+				${name}.i(${mountNode}, ${anchor});
 			`
 			: deindent`
 				if (!${name}) {
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
-					${name}.m(${parentNode}, ${anchor});
+					${name}.m(${mountNode}, ${anchor});
 				}
 			`;
 
@@ -301,7 +301,8 @@ function simple(
 function compound(
 	generator: DomGenerator,
 	block: Block,
-	state: { parentNode: string, parentNodes: string },
+	parentNode: string,
+		parentNodes: string,
 	node: Node,
 	branches,
 	dynamic,
@@ -326,13 +327,13 @@ function compound(
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	const targetNode = parentNode || '#target';
+	const anchorNode = parentNode ? 'null' : 'anchor';
 	block.builders.mount.addLine(
 		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const mountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
 		${hasElse
@@ -347,7 +348,7 @@ function compound(
 				}`}
 		${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
 		${if_name}${name}.c();
-		${if_name}${name}.${mountOrIntro}(${parentNode}, ${anchor});
+		${if_name}${name}.${mountOrIntro}(${mountNode}, ${anchor});
 	`;
 
 	if (dynamic) {
@@ -376,7 +377,8 @@ function compound(
 function compoundWithOutros(
 	generator: DomGenerator,
 	block: Block,
-	state: { parentNode: string, parentNodes: string },
+	parentNode: string,
+	parentNodes: string,
 	node: Node,
 	branches,
 	dynamic,
@@ -423,14 +425,14 @@ function compoundWithOutros(
 	}
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	const targetNode = parentNode || '#target';
+	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
 		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${targetNode}, ${anchorNode});`
 	);
 
-	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
+	const mountNode = (parentNode && !needsAnchor) ? parentNode : `${anchor}.parentNode`;
 
 	const destroyOldBlock = deindent`
 		${name}.o(function() {
@@ -446,7 +448,7 @@ function compoundWithOutros(
 			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
 			${name}.c();
 		}
-		${name}.${mountOrIntro}(${parentNode}, ${anchor});
+		${name}.${mountOrIntro}(${mountNode}, ${anchor});
 	`;
 
 	const changeBlock = hasElse

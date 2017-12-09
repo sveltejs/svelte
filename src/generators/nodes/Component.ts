@@ -62,7 +62,8 @@ export default class Component extends Node {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const { generator } = this;
 		generator.hasComponents = true;
@@ -76,10 +77,7 @@ export default class Component extends Node {
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, {
-					parentNode: `${this.var}._slotted.default`,
-					parentNodes: 'nodes'
-				});
+				child.build(block, `${this.var}._slotted.default`, 'nodes');
 			});
 		}
 
@@ -252,7 +250,7 @@ export default class Component extends Node {
 			block.contextualise(this.expression);
 			const { dependencies, snippet } = this.metadata;
 
-			const needsAnchor = this.next ? !this.next.isDomNode() : !state.parentNode || !this.parent.isDomNode();
+			const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
 			const anchor = needsAnchor
 				? block.getUniqueName(`${name}_anchor`)
 				: (this.next && this.next.var) || 'null';
@@ -262,7 +260,7 @@ export default class Component extends Node {
 					anchor,
 					`@createComment()`,
 					`@createComment()`,
-					state.parentNode
+					parentNode
 				);
 			}
 
@@ -298,11 +296,11 @@ export default class Component extends Node {
 			);
 
 			block.builders.claim.addLine(
-				`if (${name}) ${name}._fragment.l(${state.parentNodes});`
+				`if (${name}) ${name}._fragment.l(${parentNodes});`
 			);
 
 			block.builders.mount.addLine(
-				`if (${name}) ${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
+				`if (${name}) ${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
 			block.builders.update.addBlock(deindent`
@@ -341,7 +339,7 @@ export default class Component extends Node {
 				`);
 			}
 
-			if (!state.parentNode) block.builders.unmount.addLine(`if (${name}) ${name}._unmount();`);
+			if (!parentNode) block.builders.unmount.addLine(`if (${name}) ${name}._unmount();`);
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
@@ -365,11 +363,11 @@ export default class Component extends Node {
 			block.builders.create.addLine(`${name}._fragment.c();`);
 
 			block.builders.claim.addLine(
-				`${name}._fragment.l(${state.parentNodes});`
+				`${name}._fragment.l(${parentNodes});`
 			);
 
 			block.builders.mount.addLine(
-				`${name}._mount(${state.parentNode || '#target'}, ${state.parentNode ? 'null' : 'anchor'});`
+				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
 			if (updates.length) {
@@ -381,7 +379,7 @@ export default class Component extends Node {
 				`);
 			}
 
-			if (!state.parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
+			if (!parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
 
 			block.builders.destroy.addLine(deindent`
 				${name}.destroy(false);

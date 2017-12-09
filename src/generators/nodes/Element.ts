@@ -164,7 +164,8 @@ export default class Element extends Node {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const { generator } = this;
 
@@ -182,9 +183,9 @@ export default class Element extends Node {
 		const allUsedContexts: Set<string> = new Set();
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
-		const parentNode = this.slotted ?
+		const targetNode = this.slotted ?
 			`${this.nearestComponent().var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
-			state.parentNode;
+			parentNode;
 
 		block.addVariable(name);
 		block.builders.create.addLine(
@@ -197,14 +198,14 @@ export default class Element extends Node {
 
 		if (this.generator.hydratable) {
 			block.builders.claim.addBlock(deindent`
-				${name} = ${getClaimStatement(generator, this.namespace, state.parentNodes, this)};
+				${name} = ${getClaimStatement(generator, this.namespace, parentNodes, this)};
 				var ${childState.parentNodes} = @children(${name});
 			`);
 		}
 
-		if (parentNode) {
+		if (targetNode) {
 			block.builders.mount.addLine(
-				`@appendNode(${name}, ${parentNode});`
+				`@appendNode(${name}, ${targetNode});`
 			);
 		} else {
 			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
@@ -241,7 +242,7 @@ export default class Element extends Node {
 			}
 		} else {
 			this.children.forEach((child: Node) => {
-				child.build(block, childState);
+				child.build(block, childState.parentNode, childState.parentNodes);
 			});
 		}
 

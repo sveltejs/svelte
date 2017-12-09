@@ -64,11 +64,12 @@ export default class AwaitBlock extends Node {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		const name = this.var;
 
-		const needsAnchor = this.next ? !this.next.isDomNode() : !state.parentNode || !this.parent.isDomNode();
+		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
 		const anchor = needsAnchor
 			? block.getUniqueName(`${name}_anchor`)
 			: (this.next && this.next.var) || 'null';
@@ -83,7 +84,7 @@ export default class AwaitBlock extends Node {
 				anchor,
 				`@createComment()`,
 				`@createComment()`,
-				state.parentNode
+				parentNode
 			);
 		}
 
@@ -119,7 +120,7 @@ export default class AwaitBlock extends Node {
 					${old_block}.u();
 					${old_block}.d();
 					${await_block}.c();
-					${await_block}.m(${state.parentNode || `${anchor}.parentNode`}, ${anchor});
+					${await_block}.m(${parentNode || `${anchor}.parentNode`}, ${anchor});
 				}
 			}
 
@@ -155,11 +156,11 @@ export default class AwaitBlock extends Node {
 		`);
 
 		block.builders.claim.addBlock(deindent`
-			${await_block}.l(${state.parentNodes});
+			${await_block}.l(${parentNodes});
 		`);
 
-		const targetNode = state.parentNode || '#target';
-		const anchorNode = state.parentNode ? 'null' : 'anchor';
+		const targetNode = parentNode || '#target';
+		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addBlock(deindent`
 			${await_block}.m(${targetNode}, ${anchorNode});
@@ -205,10 +206,7 @@ export default class AwaitBlock extends Node {
 
 		[this.pending, this.then, this.catch].forEach(status => {
 			status.children.forEach(child => {
-				child.build(status._block, {
-					parentNode: null,
-					parentNodes: 'nodes'
-				});
+				child.build(status._block, null,'nodes');
 			});
 		});
 	}

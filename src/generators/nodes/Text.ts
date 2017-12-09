@@ -35,15 +35,16 @@ export default class Text extends Node {
 
 	build(
 		block: Block,
-		state: { parentNode: string, parentNodes: string }
+		parentNode: string,
+		parentNodes: string
 	) {
 		if (this.shouldSkip) return;
 
 		block.addElement(
 			this.var,
 			`@createText(${stringify(this.data)})`,
-			`@claimText(${state.parentNodes}, ${stringify(this.data)})`,
-			state.parentNode
+			`@claimText(${parentNodes}, ${stringify(this.data)})`,
+			parentNode
 		);
 	}
 }
