@@ -8,18 +8,20 @@ import Node from './shared/Node';
 import Block from '../dom/Block';
 import State from '../dom/State';
 import Attribute from './Attribute';
+import Binding from './Binding';
+import EventHandler from './EventHandler';
+import Ref from './Ref';
+import Transition from './Transition';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 
 // temp - move this logic in here
 import addBindings from '../dom/visitors/Element/addBindings';
-import addTransitions from '../dom/visitors/Element/addTransitions';
-import visitAttribute from '../dom/visitors/Element/Attribute';
 
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
-	attributes: Attribute[]; // TODO have more specific Attribute type
+	attributes: (Attribute | Binding | EventHandler | Ref | Transition)[]; // TODO split these up sooner
 	children: Node[];
 
 	init(
@@ -242,7 +244,7 @@ export default class Element extends Node {
 			});
 		}
 
-		addBindings(this.generator, block, childState, this);
+		this.addBindings(block, childState);
 
 		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
 			attribute.render(block, childState);
@@ -361,7 +363,7 @@ export default class Element extends Node {
 			generator.usesRefs = true; // so component.refs object is created
 		});
 
-		addTransitions(generator, block, childState, this);
+		this.addTransitions(block);
 
 		if (childState.allUsedContexts.length || childState.usesComponent) {
 			const initialProps: string[] = [];
@@ -429,6 +431,210 @@ export default class Element extends Node {
 		}
 	}
 
+	addBindings(
+		block: Block,
+		state: State
+	) {
+		const bindings: Binding[] = this.attributes.filter((a: Binding) => a.type === 'Binding');
+		if (bindings.length === 0) return;
+
+		if (this.name === 'select' || this.isMediaNode()) this.generator.hasComplexBindings = true;
+
+		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
+
+		const mungedBindings = bindings.map(binding => binding.munge(block, state));
+
+		const lock = mungedBindings.some(binding => binding.needsLock) ?
+			block.getUniqueName(`${this.var}_updating`) :
+			null;
+
+		if (lock) block.addVariable(lock, 'false');
+
+		const groups = events
+			.map(event => {
+				return {
+					events: event.eventNames,
+					bindings: mungedBindings.filter(binding => event.filter(this, binding.name))
+				};
+			})
+			.filter(group => group.bindings.length);
+
+		groups.forEach(group => {
+			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
+
+			const needsLock = group.bindings.some(binding => binding.needsLock);
+
+			group.bindings.forEach(binding => {
+				if (!binding.updateDom) return;
+
+				const updateConditions = needsLock ? [`!${lock}`] : [];
+				if (binding.updateCondition) updateConditions.push(binding.updateCondition);
+
+				block.builders.update.addLine(
+					updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
+				);
+			});
+
+			const usesContext = group.bindings.some(binding => binding.handler.usesContext);
+			const usesState = group.bindings.some(binding => binding.handler.usesState);
+			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
+			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
+
+			const props = new Set();
+			const storeProps = new Set();
+			group.bindings.forEach(binding => {
+				binding.handler.props.forEach(prop => {
+					props.add(prop);
+				});
+
+				binding.handler.storeProps.forEach(prop => {
+					storeProps.add(prop);
+				});
+			}); // TODO use stringifyProps here, once indenting is fixed
+
+			// media bindings — awkward special case. The native timeupdate events
+			// fire too infrequently, so we need to take matters into our
+			// own hands
+			let animation_frame;
+			if (group.events[0] === 'timeupdate') {
+				animation_frame = block.getUniqueName(`${this.var}_animationframe`);
+				block.addVariable(animation_frame);
+			}
+
+			block.builders.init.addBlock(deindent`
+				function ${handler}() {
+					${
+						animation_frame && deindent`
+							cancelAnimationFrame(${animation_frame});
+							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+					}
+					${usesContext && `var context = ${this.var}._svelte;`}
+					${usesState && `var state = #component.get();`}
+					${usesStore && `var $ = #component.store.get();`}
+					${needsLock && `${lock} = true;`}
+					${mutations.length > 0 && mutations}
+					${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
+					${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
+					${needsLock && `${lock} = false;`}
+				}
+			`);
+
+			group.events.forEach(name => {
+				block.builders.hydrate.addLine(
+					`@addListener(${this.var}, "${name}", ${handler});`
+				);
+
+				block.builders.destroy.addLine(
+					`@removeListener(${this.var}, "${name}", ${handler});`
+				);
+			});
+
+			const allInitialStateIsDefined = group.bindings
+				.map(binding => `'${binding.object}' in state`)
+				.join(' && ');
+
+			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
+				this.generator.hasComplexBindings = true;
+
+				block.builders.hydrate.addLine(
+					`if (!(${allInitialStateIsDefined})) #component._root._beforecreate.push(${handler});`
+				);
+			}
+		});
+
+		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
+	}
+
+	addTransitions(
+		block: Block
+	) {
+		const intro = this.attributes.find((a: Transition) => a.type === 'Transition' && a.intro);
+		const outro = this.attributes.find((a: Transition) => a.type === 'Transition' && a.outro);
+
+		if (!intro && !outro) return;
+
+		if (intro === outro) {
+			block.contextualise(intro.expression); // TODO remove all these
+
+			const name = block.getUniqueName(`${this.var}_transition`);
+			const snippet = intro.expression
+				? intro.metadata.snippet
+				: '{}';
+
+			block.addVariable(name);
+
+			const fn = `%transitions-${intro.name}`;
+
+			block.builders.intro.addBlock(deindent`
+				#component._root._aftercreate.push(function() {
+					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
+					${name}.run(true, function() {
+						#component.fire("intro.end", { node: ${this.var} });
+					});
+				});
+			`);
+
+			block.builders.outro.addBlock(deindent`
+				${name}.run(false, function() {
+					#component.fire("outro.end", { node: ${this.var} });
+					if (--#outros === 0) #outrocallback();
+					${name} = null;
+				});
+			`);
+		} else {
+			const introName = intro && block.getUniqueName(`${this.var}_intro`);
+			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
+
+			if (intro) {
+				block.contextualise(intro.expression);
+
+				block.addVariable(introName);
+				const snippet = intro.expression
+					? intro.metadata.snippet
+					: '{}';
+
+				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
+
+				if (outro) {
+					block.builders.intro.addBlock(deindent`
+						if (${introName}) ${introName}.abort();
+						if (${outroName}) ${outroName}.abort();
+					`);
+				}
+
+				block.builders.intro.addBlock(deindent`
+					#component._root._aftercreate.push(function() {
+						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
+						${introName}.run(true, function() {
+							#component.fire("intro.end", { node: ${this.var} });
+						});
+					});
+				`);
+			}
+
+			if (outro) {
+				block.contextualise(outro.expression);
+
+				block.addVariable(outroName);
+				const snippet = outro.expression
+					? outro.metadata.snippet
+					: '{}';
+
+				const fn = `%transitions-${outro.name}`;
+
+				// TODO hide elements that have outro'd (unless they belong to a still-outroing
+				// group) prior to their removal from the DOM
+				block.builders.outro.addBlock(deindent`
+					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false, null);
+					${outroName}.run(false, function() {
+						#component.fire("outro.end", { node: ${this.var} });
+						if (--#outros === 0) #outrocallback();
+					});
+				`);
+			}
+		}
+	}
+
 	getStaticAttributeValue(name: string) {
 		const attribute = this.attributes.find(
 			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
@@ -444,6 +650,10 @@ export default class Element extends Node {
 		}
 
 		return null;
+	}
+
+	isMediaNode() {
+		return this.name === 'audio' || this.name === 'video';
 	}
 }
 
@@ -495,3 +705,50 @@ function stringifyAttributeValue(value: Node | true) {
 	const data = value[0].data;
 	return `=${JSON.stringify(data)}`;
 }
+
+const events = [
+	{
+		eventNames: ['input'],
+		filter: (node: Element, name: string) =>
+			node.name === 'textarea' ||
+			node.name === 'input' && !/radio|checkbox/.test(node.getStaticAttributeValue('type'))
+	},
+	{
+		eventNames: ['change'],
+		filter: (node: Element, name: string) =>
+			node.name === 'select' ||
+			node.name === 'input' && /radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
+	},
+
+	// media events
+	{
+		eventNames: ['timeupdate'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			(name === 'currentTime' || name === 'played')
+	},
+	{
+		eventNames: ['durationchange'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'duration'
+	},
+	{
+		eventNames: ['play', 'pause'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'paused'
+	},
+	{
+		eventNames: ['progress'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'buffered'
+	},
+	{
+		eventNames: ['loadedmetadata'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			(name === 'buffered' || name === 'seekable')
+	}
+];
