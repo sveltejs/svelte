@@ -129,11 +129,11 @@ export default class Element extends Node {
 		}
 
 		const slot = this.getStaticAttributeValue('slot');
-		if (slot && this.isChildOfComponent()) {
+		if (slot && this.hasAncestor('Component')) {
 			this.cannotUseInnerHTML();
 			this.slotted = true;
 			// TODO validate slots — no nesting, no dynamic names...
-			const component = this.nearestComponent();
+			const component = this.findNearest('Component');
 			component._slots.add(slot);
 		}
 
@@ -171,7 +171,7 @@ export default class Element extends Node {
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const initialMountNode = this.slotted ?
-			`${this.nearestComponent().var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
+			`${this.findNearest('Component').var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 			parentNode;
 
 		block.addVariable(name);

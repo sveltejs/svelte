@@ -123,11 +123,6 @@ export default class Node {
 		// implemented by subclasses
 	}
 
-	isChildOfComponent() {
-		// TODO remove this method
-		return this.hasAncestor('Component');
-	}
-
 	isDomNode() {
 		return this.type === 'Element' || this.type === 'Text' || this.type === 'MustacheTag';
 	}
@@ -136,11 +131,6 @@ export default class Node {
 		return this.parent ?
 			this.parent.type === type || this.parent.hasAncestor(type) :
 			false;
-	}
-
-	nearestComponent() { // TODO remove this method
-		return this.findNearest('Component');
-		// if (this.parent) return this.parent.nearestComponent();
 	}
 
 	findNearest(type: string) {

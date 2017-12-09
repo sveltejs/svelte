@@ -8,7 +8,6 @@ export default function visitSlot(
 	block: Block,
 	node: Node
 ) {
-	// TODO named slots
 	const name = node.attributes.find((attribute: Node) => attribute.name);
 	const slotName = name && name.value[0].data || 'default';
 

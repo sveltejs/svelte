@@ -9,7 +9,7 @@ import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
-import wrapModule from './shared/utils/wrapModule';
+import wrapModule from './wrapModule';
 import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import clone from '../utils/clone';

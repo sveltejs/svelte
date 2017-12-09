@@ -10,7 +10,7 @@ import Block from '../dom/Block';
 import Attribute from './Attribute';
 
 export default class Component extends Node {
-	type: 'Component'; // TODO fix this?
+	type: 'Component';
 	name: string;
 	attributes: Attribute[];
 	children: Node[];
@@ -407,10 +407,6 @@ export default class Component extends Node {
 
 			block.builders.update.addBlock(updates);
 		}
-	}
-
-	nearestComponent() {
-		return this;
 	}
 }
 

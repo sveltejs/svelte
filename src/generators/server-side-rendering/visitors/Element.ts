@@ -36,7 +36,7 @@ export default function visitElement(
 	let textareaContents; // awkward special case
 
 	const slot = node.getStaticAttributeValue('slot');
-	if (slot && node.isChildOfComponent()) {
+	if (slot && node.hasAncestor('Component')) {
 		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const slotName = slot.value[0].data;
 		const appendTarget = generator.appendTargets[generator.appendTargets.length - 1];

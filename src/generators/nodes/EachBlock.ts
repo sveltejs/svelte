@@ -87,7 +87,7 @@ export default class EachBlock extends Node {
 
 		if (this.else) {
 			this.else.block = block.child({
-				comment: '// TODO', // createDebuggingComment(this.else, generator),
+				comment: createDebuggingComment(this.else, this.generator),
 				name: this.generator.getUniqueName(`${this.block.name}_else`),
 			});
 
@@ -256,9 +256,8 @@ export default class EachBlock extends Node {
 		block.addVariable(head);
 		block.addVariable(last);
 
-		if (this.children[0] && this.children[0].type === 'Element') {
-			// TODO or text/tag/raw
-			this.block.first = this.children[0].var; // TODO this is highly confusing
+		if (this.children[0].isDomNode()) {
+			this.block.first = this.children[0].var;
 		} else {
 			this.block.first = this.block.getUniqueName('first');
 			this.block.addElement(
