@@ -92,7 +92,7 @@ export default class IfBlock extends Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		const name = this.var;
 
@@ -156,7 +156,7 @@ export default class IfBlock extends Node {
 function getBranches(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	state: { parentNode: string, parentNodes: string },
 	node: Node
 ) {
 	block.contextualise(node.expression); // TODO remove
@@ -171,7 +171,7 @@ function getBranches(
 		},
 	];
 
-	visitChildren(generator, block, state, node);
+	visitChildren(generator, block, node);
 
 	if (isElseIf(node.else)) {
 		branches.push(
@@ -187,7 +187,7 @@ function getBranches(
 		});
 
 		if (node.else) {
-			visitChildren(generator, block, state, node.else);
+			visitChildren(generator, block, node.else);
 		}
 	}
 
@@ -197,12 +197,13 @@ function getBranches(
 function visitChildren(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
 	node: Node
 ) {
-	const childState = state.child(); // TODO necessary?
 	node.children.forEach((child: Node) => {
-		child.build(node._block, childState);
+		child.build(node._block, {
+			parentNode: null,
+			parentNodes: 'nodes'
+		});
 	});
 }
 
@@ -211,7 +212,7 @@ function visitChildren(
 function simple(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	state: { parentNode: string, parentNodes: string },
 	node: Node,
 	branch,
 	dynamic,
@@ -300,7 +301,7 @@ function simple(
 function compound(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	state: { parentNode: string, parentNodes: string },
 	node: Node,
 	branches,
 	dynamic,
@@ -375,7 +376,7 @@ function compound(
 function compoundWithOutros(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	state: { parentNode: string, parentNodes: string },
 	node: Node,
 	branches,
 	dynamic,

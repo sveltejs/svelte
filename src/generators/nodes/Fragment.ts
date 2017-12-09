@@ -5,7 +5,6 @@ import State from '../dom/State';
 
 export default class Fragment extends Node {
 	block: Block;
-	state: State;
 	children: Node[];
 
 	init() {
@@ -34,13 +33,11 @@ export default class Fragment extends Node {
 	build() {
 		this.init();
 
-		const state = new State({
-			parentNode: null,
-			parentNodes: 'nodes'
-		});
-
 		this.children.forEach(child => {
-			child.build(this.block, state);
+			child.build(this.block, {
+				parentNode: null,
+				parentNodes: 'nodes'
+			});
 		});
 	}
 }

@@ -62,7 +62,7 @@ export default class Component extends Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		const { generator } = this;
 		generator.hasComponents = true;
@@ -75,12 +75,11 @@ export default class Component extends Node {
 			const slots = Array.from(this._slots).map(name => `${name}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
-			const childState = state.child({
-				parentNode: `${this.var}._slotted.default`
-			});
-
 			this.children.forEach((child: Node) => {
-				child.build(block, childState);
+				child.build(block, {
+					parentNode: `${this.var}._slotted.default`,
+					parentNodes: 'nodes'
+				});
 			});
 		}
 

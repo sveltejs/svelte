@@ -35,7 +35,7 @@ export default class Text extends Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		if (this.shouldSkip) return;
 

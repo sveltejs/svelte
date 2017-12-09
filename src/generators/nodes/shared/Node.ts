@@ -118,7 +118,7 @@ export default class Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		// implemented by subclasses
 	}

@@ -104,7 +104,7 @@ export default class EachBlock extends Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		const { generator } = this;
 
@@ -221,15 +221,19 @@ export default class EachBlock extends Node {
 			`);
 		}
 
-		const childState = state.child(); // TODO is this necessary? reuse state?
 		this.children.forEach((child: Node) => {
-			child.build(this._block, childState);
+			child.build(this._block, {
+				parentNode: null,
+				parentNodes: 'nodes'
+			});
 		});
 
 		if (this.else) {
-			const childState = state.child(); // TODO is this necessary? reuse state?
 			this.else.children.forEach((child: Node) => {
-				child.build(this.else._block, childState);
+				child.build(this.else._block, {
+					parentNode: null,
+					parentNodes: 'nodes'
+				});
 			});
 		}
 	}
@@ -238,7 +242,7 @@ export default class EachBlock extends Node {
 function keyed(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	state: { parentNode: string, parentNodes: string },
 	node: EachBlock,
 	snippet: string,
 	{
@@ -458,7 +462,7 @@ function keyed(
 function unkeyed(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	state: { parentNode: string, parentNodes: string },
 	node: EachBlock,
 	snippet: string,
 	{

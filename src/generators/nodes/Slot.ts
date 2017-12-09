@@ -27,7 +27,7 @@ export default class Slot extends Element {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		const { generator } = this;
 

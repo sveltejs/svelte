@@ -164,7 +164,7 @@ export default class Element extends Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		const { generator } = this;
 
@@ -173,12 +173,12 @@ export default class Element extends Node {
 			this.generator.slots.add(slotName);
 		}
 
-		const childState = state.child({
+		const childState = {
 			parentNode: this.var,
 			parentNodes: block.getUniqueName(`${this.var}_nodes`)
-		});
+		};
 
-		const name = childState.parentNode;
+		const name = this.var;
 		const allUsedContexts: Set<string> = new Set();
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
@@ -245,10 +245,10 @@ export default class Element extends Node {
 			});
 		}
 
-		this.addBindings(block, childState, allUsedContexts);
+		this.addBindings(block, allUsedContexts);
 
 		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
-			attribute.render(block, childState);
+			attribute.render(block);
 		});
 
 		// event handlers
@@ -435,7 +435,6 @@ export default class Element extends Node {
 
 	addBindings(
 		block: Block,
-		state: State,
 		allUsedContexts: Set<string>
 	) {
 		const bindings: Binding[] = this.attributes.filter((a: Binding) => a.type === 'Binding');
@@ -445,7 +444,7 @@ export default class Element extends Node {
 
 		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
-		const mungedBindings = bindings.map(binding => binding.munge(block, state, allUsedContexts));
+		const mungedBindings = bindings.map(binding => binding.munge(block, allUsedContexts));
 
 		const lock = mungedBindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :

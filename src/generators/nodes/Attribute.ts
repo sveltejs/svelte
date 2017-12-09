@@ -42,10 +42,7 @@ export default class Attribute {
 		this.value = value;
 	}
 
-	render(
-		block: Block,
-		state: State
-	) {
+	render(block: Block) {
 		const node = this.parent;
 		const name = this.name;
 
@@ -151,7 +148,7 @@ export default class Attribute {
 				name === 'value' && node.name === 'select';
 
 			const last = (shouldCache || isSelectValueAttribute) && block.getUniqueName(
-				`${state.parentNode}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+				`${node.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
 			);
 
 			if (shouldCache || isSelectValueAttribute) block.addVariable(last);
@@ -161,9 +158,9 @@ export default class Attribute {
 
 			if (isLegacyInputType) {
 				block.builders.hydrate.addLine(
-					`@setInputType(${state.parentNode}, ${init});`
+					`@setInputType(${node.var}, ${init});`
 				);
-				updater = `@setInputType(${state.parentNode}, ${shouldCache ? last : value});`;
+				updater = `@setInputType(${node.var}, ${shouldCache ? last : value});`;
 			} else if (isSelectValueAttribute) {
 				// annoying special case
 				const isMultipleSelect =
@@ -184,8 +181,8 @@ export default class Attribute {
 						}`;
 
 				updater = deindent`
-					for (var ${i} = 0; ${i} < ${state.parentNode}.options.length; ${i} += 1) {
-						var ${option} = ${state.parentNode}.options[${i}];
+					for (var ${i} = 0; ${i} < ${node.var}.options.length; ${i} += 1) {
+						var ${option} = ${node.var}.options[${i}];
 
 						${ifStatement}
 					}
@@ -199,19 +196,19 @@ export default class Attribute {
 				block.builders.update.addLine(`${last} = ${value};`);
 			} else if (propertyName) {
 				block.builders.hydrate.addLine(
-					`${state.parentNode}.${propertyName} = ${init};`
+					`${node.var}.${propertyName} = ${init};`
 				);
-				updater = `${state.parentNode}.${propertyName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
+				updater = `${node.var}.${propertyName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
 			} else if (isDataSet) {
 				block.builders.hydrate.addLine(
-					`${state.parentNode}.dataset.${camelCaseName} = ${init};`
+					`${node.var}.dataset.${camelCaseName} = ${init};`
 				);
-				updater = `${state.parentNode}.dataset.${camelCaseName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
+				updater = `${node.var}.dataset.${camelCaseName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
 			} else {
 				block.builders.hydrate.addLine(
-					`${method}(${state.parentNode}, "${name}", ${init});`
+					`${method}(${node.var}, "${name}", ${init});`
 				);
-				updater = `${method}(${state.parentNode}, "${name}", ${shouldCache || isSelectValueAttribute ? last : value});`;
+				updater = `${method}(${node.var}, "${name}", ${shouldCache || isSelectValueAttribute ? last : value});`;
 			}
 
 			if (allDependencies.size || hasChangeableIndex || isSelectValueAttribute) {
@@ -240,22 +237,22 @@ export default class Attribute {
 					: stringify(this.value[0].data);
 
 			const statement = (
-				isLegacyInputType ? `@setInputType(${state.parentNode}, ${value});` :
-				propertyName ? `${state.parentNode}.${propertyName} = ${value};` :
-					isDataSet ? `${state.parentNode}.dataset.${camelCaseName} = ${value};` :
-				`${method}(${state.parentNode}, "${name}", ${value});`
+				isLegacyInputType ? `@setInputType(${node.var}, ${value});` :
+				propertyName ? `${node.var}.${propertyName} = ${value};` :
+					isDataSet ? `${node.var}.dataset.${camelCaseName} = ${value};` :
+				`${method}(${node.var}, "${name}", ${value});`
 			);
 
 			block.builders.hydrate.addLine(statement);
 
 			// special case – autofocus. has to be handled in a bit of a weird way
 			if (this.value === true && name === 'autofocus') {
-				block.autofocus = state.parentNode;
+				block.autofocus = node.var;
 			}
 		}
 
 		if (isIndirectlyBoundValue) {
-			const updateValue = `${state.parentNode}.value = ${state.parentNode}.__value;`;
+			const updateValue = `${node.var}.value = ${node.var}.__value;`;
 
 			block.builders.hydrate.addLine(updateValue);
 			if (isDynamic) block.builders.update.addLine(updateValue);

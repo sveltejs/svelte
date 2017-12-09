@@ -21,7 +21,6 @@ export default class Binding extends Node {
 
 	munge(
 		block: Block,
-		state: State,
 		allUsedContexts: Set<string>
 	) {
 		const node: Element = this.parent;

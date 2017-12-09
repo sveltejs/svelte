@@ -64,7 +64,7 @@ export default class AwaitBlock extends Node {
 
 	build(
 		block: Block,
-		state: State
+		state: { parentNode: string, parentNodes: string }
 	) {
 		const name = this.var;
 
@@ -204,10 +204,11 @@ export default class AwaitBlock extends Node {
 		`);
 
 		[this.pending, this.then, this.catch].forEach(status => {
-			const childState = state.child(); // TODO is this necessary?
-
 			status.children.forEach(child => {
-				child.build(status._block, childState);
+				child.build(status._block, {
+					parentNode: null,
+					parentNodes: 'nodes'
+				});
 			});
 		});
 	}
