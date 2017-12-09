@@ -179,7 +179,6 @@ export default class Element extends Node {
 		const childState = state.child({
 			parentNode: this.var,
 			parentNodes: block.getUniqueName(`${this.var}_nodes`),
-			parentNodeName: this.name,
 			namespace: this.name === 'svg'
 				? 'http://www.w3.org/2000/svg'
 				: state.namespace,

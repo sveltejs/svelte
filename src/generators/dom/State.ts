@@ -4,20 +4,16 @@ interface StateData {
 	namespace?: string;
 	parentNode?: string;
 	parentNodes?: string;
-	parentNodeName?: string;
 	allUsedContexts?: string[];
 	usesComponent?: boolean;
-	selectBindingDependencies?: string[];
 }
 
 export default class State {
 	namespace?: string;
 	parentNode?: string;
 	parentNodes?: string;
-	parentNodeName?: string;
 	allUsedContexts?: string[];
 	usesComponent?: boolean;
-	selectBindingDependencies?: string[];
 
 	constructor(data: StateData = {}) {
 		assign(this, data)

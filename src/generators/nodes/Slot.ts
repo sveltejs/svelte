@@ -57,16 +57,6 @@ export default class Slot extends Element {
 		block.builders.unmount.pushCondition(`!${content_name}`);
 		block.builders.destroy.pushCondition(`!${content_name}`);
 
-		// const childState = state.child({
-		// 	parentNode: this.var,
-		// 	parentNodes: block.getUniqueName(`${this.var}_nodes`),
-		// 	parentNodeName: this.name,
-		// 	namespace: this.name === 'svg'
-		// 		? 'http://www.w3.org/2000/svg'
-		// 		: state.namespace,
-		// 	allUsedContexts: [],
-		// });
-
 		this.children.forEach((child: Node) => {
 			child.build(block, state);
 		});

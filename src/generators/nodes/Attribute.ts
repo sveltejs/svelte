@@ -148,7 +148,7 @@ export default class Attribute {
 			}
 
 			const isSelectValueAttribute =
-				name === 'value' && state.parentNodeName === 'select';
+				name === 'value' && node.name === 'select';
 
 			const last = (shouldCache || isSelectValueAttribute) && block.getUniqueName(
 				`${state.parentNode}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
