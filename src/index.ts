@@ -50,7 +50,7 @@ function parseAttributes(str: string) {
 	return attrs;
 }
 
-async function replaceTagContents(source, type: 'script' | 'style', preprocessor: Preprocessor) {
+async function replaceTagContents(source, type: 'script' | 'style', preprocessor: Preprocessor, options: PreprocessOptions) {
 	const exp = new RegExp(`<${type}([\\S\\s]*?)>([\\S\\s]*?)<\\/${type}>`, 'ig');
 	const match = exp.exec(source);
 
@@ -59,7 +59,8 @@ async function replaceTagContents(source, type: 'script' | 'style', preprocessor
 		const content: string = match[2];
 		const processed: { code: string, map?: SourceMap | string } = await preprocessor({
 			content,
-			attributes
+			attributes,
+			filename : options.filename
 		});
 
 		if (processed && processed.code) {
@@ -77,16 +78,19 @@ async function replaceTagContents(source, type: 'script' | 'style', preprocessor
 export async function preprocess(source: string, options: PreprocessOptions) {
 	const { markup, style, script } = options;
 	if (!!markup) {
-		const processed: { code: string, map?: SourceMap | string } = await markup({ content: source });
+		const processed: { code: string, map?: SourceMap | string } = await markup({
+			content: source,
+			filename: options.filename
+		});
 		source = processed.code;
 	}
 
 	if (!!style) {
-		source = await replaceTagContents(source, 'style', style);
+		source = await replaceTagContents(source, 'style', style, options);
 	}
 
 	if (!!script) {
-		source = await replaceTagContents(source, 'script', script);
+		source = await replaceTagContents(source, 'script', script, options);
 	}
 
 	return {
