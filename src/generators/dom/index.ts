@@ -8,7 +8,6 @@ import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
 import reservedNames from '../../utils/reservedNames';
-import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
