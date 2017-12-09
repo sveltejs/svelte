@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.46.0
+
+* Pass `filename` through to preprocessors ([#983](https://github.com/sveltejs/svelte/issues/983))
+
 ## 1.45.0
 
 * Dynamic components ([#971](https://github.com/sveltejs/svelte/pull/971))
