@@ -1,8 +1,21 @@
 # Svelte changelog
 
+## 1.46.0
+
+* Pass `filename` through to preprocessors ([#983](https://github.com/sveltejs/svelte/issues/983))
+
+## 1.45.0
+
+* Dynamic components ([#971](https://github.com/sveltejs/svelte/pull/971))
+
+## 1.44.2
+
+* Fix `await` blocks with siblings ([#974](https://github.com/sveltejs/svelte/issues/974))
+* Fix `await` blocks inside `if` blocks ([#975](https://github.com/sveltejs/svelte/issues/975))
+
 ## 1.44.1
 
-* Fix bidirectional transitions that reference state ([#962](https://github.com/sveltejs/svelte/issues962))
+* Fix bidirectional transitions that reference state ([#962](https://github.com/sveltejs/svelte/issues/962))
 
 ## 1.44.0
 
