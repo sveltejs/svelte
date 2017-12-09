@@ -83,9 +83,10 @@ export interface CustomElementOptions {
 }
 
 export interface PreprocessOptions {
-	markup?: (options: {content: string}) => { code: string, map?: SourceMap | string };
+	markup?: (options: {content: string, filename: string}) => { code: string, map?: SourceMap | string };
 	style?: Preprocessor;
 	script?: Preprocessor;
+	filename?: string
 }
 
-export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>}) => { code: string, map?: SourceMap | string };
+export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
