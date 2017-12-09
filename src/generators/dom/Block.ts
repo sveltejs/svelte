@@ -134,9 +134,10 @@ export default class Block {
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
 		this.builders.claim.addLine(`${name} = ${claimStatement};`);
 
-		this.mount(name, parentNode);
-
-		if (!parentNode) {
+		if (parentNode) {
+			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
+		} else {
+			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 			this.builders.unmount.addLine(`@detachNode(${name});`);
 		}
 	}
@@ -165,14 +166,6 @@ export default class Block {
 
 	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
 		return this.generator.contextualise(this.contexts, this.indexes, expression, context, isEventHandler);
-	}
-
-	mount(name: string, parentNode: string) {
-		if (parentNode) {
-			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
-		} else {
-			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
-		}
 	}
 
 	toString() {

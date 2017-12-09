@@ -13,8 +13,6 @@ import wrapModule from './wrapModule';
 import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import clone from '../utils/clone';
-import DomBlock from './dom/Block';
-import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import nodes from './nodes/index';
