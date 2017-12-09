@@ -159,11 +159,11 @@ export default class AwaitBlock extends Node {
 			${await_block}.l(${parentNodes});
 		`);
 
-		const targetNode = parentNode || '#target';
+		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addBlock(deindent`
-			${await_block}.m(${targetNode}, ${anchorNode});
+			${await_block}.m(${initialMountNode}, ${anchorNode});
 		`);
 
 		const conditions = [];

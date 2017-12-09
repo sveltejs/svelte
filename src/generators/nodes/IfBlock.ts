@@ -223,14 +223,14 @@ function simple(
 	`);
 
 	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
-	const targetNode = parentNode || '#target';
+	const initialMountNode = parentNode || '#target';
 	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
+		`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const mountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 
 	const enter = dynamic
 		? branch.hasIntroMethod
@@ -242,7 +242,7 @@ function simple(
 					if (${name}) ${name}.c();
 				}
 
-				${name}.i(${mountNode}, ${anchor});
+				${name}.i(${updateMountNode}, ${anchor});
 			`
 			: deindent`
 				if (${name}) {
@@ -250,7 +250,7 @@ function simple(
 				} else {
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
-					${name}.m(${mountNode}, ${anchor});
+					${name}.m(${updateMountNode}, ${anchor});
 				}
 			`
 		: branch.hasIntroMethod
@@ -259,13 +259,13 @@ function simple(
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
 				}
-				${name}.i(${mountNode}, ${anchor});
+				${name}.i(${updateMountNode}, ${anchor});
 			`
 			: deindent`
 				if (!${name}) {
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
-					${name}.m(${mountNode}, ${anchor});
+					${name}.m(${updateMountNode}, ${anchor});
 				}
 			`;
 
@@ -327,13 +327,13 @@ function compound(
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 
-	const targetNode = parentNode || '#target';
+	const initialMountNode = parentNode || '#target';
 	const anchorNode = parentNode ? 'null' : 'anchor';
 	block.builders.mount.addLine(
-		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
+		`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const mountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 
 	const changeBlock = deindent`
 		${hasElse
@@ -348,7 +348,7 @@ function compound(
 				}`}
 		${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
 		${if_name}${name}.c();
-		${if_name}${name}.${mountOrIntro}(${mountNode}, ${anchor});
+		${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 	`;
 
 	if (dynamic) {
@@ -425,14 +425,14 @@ function compoundWithOutros(
 	}
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
-	const targetNode = parentNode || '#target';
+	const initialMountNode = parentNode || '#target';
 	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${targetNode}, ${anchorNode});`
+		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const mountNode = (parentNode && !needsAnchor) ? parentNode : `${anchor}.parentNode`;
+	const updateMountNode = (parentNode && !needsAnchor) ? parentNode : `${anchor}.parentNode`;
 
 	const destroyOldBlock = deindent`
 		${name}.o(function() {
@@ -448,7 +448,7 @@ function compoundWithOutros(
 			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
 			${name}.c();
 		}
-		${name}.${mountOrIntro}(${mountNode}, ${anchor});
+		${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 	`;
 
 	const changeBlock = hasElse

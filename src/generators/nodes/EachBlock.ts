@@ -180,7 +180,7 @@ export default class EachBlock extends Node {
 				}
 			`);
 
-			const targetNode = parentNode || `${anchor}.parentNode`;
+			const initialMountNode = parentNode || `${anchor}.parentNode`;
 
 			if (this.else._block.hasUpdateMethod) {
 				block.builders.update.addBlock(deindent`
@@ -189,7 +189,7 @@ export default class EachBlock extends Node {
 					} else if (!${each_block_value}.${length}) {
 						${each_block_else} = ${this.else._block.name}(${params}, #component);
 						${each_block_else}.c();
-						${each_block_else}.${mountOrIntro}(${targetNode}, ${anchor});
+						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					} else if (${each_block_else}) {
 						${each_block_else}.u();
 						${each_block_else}.d();
@@ -207,7 +207,7 @@ export default class EachBlock extends Node {
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else._block.name}(${params}, #component);
 						${each_block_else}.c();
-						${each_block_else}.${mountOrIntro}(${targetNode}, ${anchor});
+						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					}
 				`);
 			}
@@ -287,7 +287,8 @@ function keyed(
 		}
 	`);
 
-	const targetNode = parentNode || '#target';
+	const initialMountNode = parentNode || '#target';
+	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addBlock(deindent`
@@ -309,13 +310,12 @@ function keyed(
 	block.builders.mount.addBlock(deindent`
 		var ${iteration} = ${head};
 		while (${iteration}) {
-			${iteration}.${mountOrIntro}(${targetNode}, ${anchorNode});
+			${iteration}.${mountOrIntro}(${initialMountNode}, ${anchorNode});
 			${iteration} = ${iteration}.next;
 		}
 	`);
 
 	const dynamic = node._block.hasUpdateMethod;
-	const mountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 
 	let destroy;
 	if (node._block.hasOutroMethod) {
@@ -398,12 +398,12 @@ function keyed(
 						${iteration}.discard = false;
 						${iteration}.last = ${last};
 
-						if (!${expected}) ${iteration}.m(${mountNode}, ${anchor});
+						if (!${expected}) ${iteration}.m(${updateMountNode}, ${anchor});
 					} else {
 						// key is being inserted
 						${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
 						${iteration}.c();
-						${iteration}.${mountOrIntro}(${mountNode}, ${expected}.first);
+						${iteration}.${mountOrIntro}(${updateMountNode}, ${expected}.first);
 
 						${expected}.last = ${iteration};
 						${iteration}.next = ${expected};
@@ -414,17 +414,17 @@ function keyed(
 				if (${iteration}) {
 					${iteration}.discard = false;
 					${iteration}.next = null;
-					${iteration}.m(${mountNode}, ${anchor});
+					${iteration}.m(${updateMountNode}, ${anchor});
 				} else {
 					${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
 					${iteration}.c();
-					${iteration}.${mountOrIntro}(${mountNode}, ${anchor});
+					${iteration}.${mountOrIntro}(${updateMountNode}, ${anchor});
 				}
 			}
 
 			if (${last}) ${last}.next = ${iteration};
 			${iteration}.last = ${last};
-			${node._block.hasIntroMethod && `${iteration}.i(${mountNode}, ${anchor});`}
+			${node._block.hasIntroMethod && `${iteration}.i(${updateMountNode}, ${anchor});`}
 			${last} = ${iteration};
 		}
 
@@ -479,7 +479,8 @@ function unkeyed(
 		}
 	`);
 
-	const targetNode = parentNode || '#target';
+	const initialMountNode = parentNode || '#target';
+	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
 	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addBlock(deindent`
@@ -496,7 +497,7 @@ function unkeyed(
 
 	block.builders.mount.addBlock(deindent`
 		for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-			${iterations}[#i].${mountOrIntro}(${targetNode}, ${anchorNode});
+			${iterations}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode});
 		}
 	`);
 
@@ -511,8 +512,6 @@ function unkeyed(
 		.map(dependency => `changed.${dependency}`)
 		.join(' || ');
 
-	const mountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
-
 	if (condition !== '') {
 		const forLoopBody = node._block.hasUpdateMethod
 			? node._block.hasIntroMethod
@@ -523,7 +522,7 @@ function unkeyed(
 						${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
 						${iterations}[#i].c();
 					}
-					${iterations}[#i].i(${mountNode}, ${anchor});
+					${iterations}[#i].i(${updateMountNode}, ${anchor});
 				`
 				: deindent`
 					if (${iterations}[#i]) {
@@ -531,13 +530,13 @@ function unkeyed(
 					} else {
 						${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
 						${iterations}[#i].c();
-						${iterations}[#i].m(${mountNode}, ${anchor});
+						${iterations}[#i].m(${updateMountNode}, ${anchor});
 					}
 				`
 			: deindent`
 				${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
 				${iterations}[#i].c();
-				${iterations}[#i].${mountOrIntro}(${mountNode}, ${anchor});
+				${iterations}[#i].${mountOrIntro}(${updateMountNode}, ${anchor});
 			`;
 
 		const start = node._block.hasUpdateMethod ? '0' : `${iterations}.length`;

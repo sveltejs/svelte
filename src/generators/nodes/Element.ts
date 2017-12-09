@@ -183,7 +183,7 @@ export default class Element extends Node {
 		const allUsedContexts: Set<string> = new Set();
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
-		const targetNode = this.slotted ?
+		const initialMountNode = this.slotted ?
 			`${this.nearestComponent().var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 			parentNode;
 
@@ -203,9 +203,9 @@ export default class Element extends Node {
 			`);
 		}
 
-		if (targetNode) {
+		if (initialMountNode) {
 			block.builders.mount.addLine(
-				`@appendNode(${name}, ${targetNode});`
+				`@appendNode(${name}, ${initialMountNode});`
 			);
 		} else {
 			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
