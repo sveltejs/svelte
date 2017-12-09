@@ -38,7 +38,6 @@ export default class Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -50,7 +49,6 @@ export default class Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -91,7 +89,7 @@ export default class Node {
 		cleaned.forEach((child: Node, i: number) => {
 			child.canUseInnerHTML = !this.generator.hydratable;
 
-			child.init(block, state, inEachBlock, elementStack, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);
+			child.init(block, state, inEachBlock, componentStack, stripWhitespace, cleaned[i + 1] || nextSibling);
 
 			if (child.shouldSkip) return;
 
@@ -125,7 +123,6 @@ export default class Node {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		// implemented by subclasses

@@ -8,9 +8,7 @@ export default class Fragment extends Node {
 	state: State;
 	children: Node[];
 
-	init(
-		namespace: string
-	) {
+	init() {
 		this.block = new Block({
 			generator: this.generator,
 			name: '@create_main_fragment',
@@ -34,17 +32,16 @@ export default class Fragment extends Node {
 		});
 
 		this.generator.blocks.push(this.block);
-		this.initChildren(this.block, this.state, false, [], [], true, null);
+		this.initChildren(this.block, this.state, false, [], true, null);
 
 		this.block.hasUpdateMethod = true;
 	}
 
-	build(
-		block: Block,
-		state: State
-	) {
+	build() {
+		this.init();
+
 		this.children.forEach(child => {
-			child.build(block, state, [], []);
+			child.build(this.block, this.state, []);
 		});
 	}
 }

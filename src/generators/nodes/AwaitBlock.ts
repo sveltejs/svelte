@@ -21,7 +21,6 @@ export default class AwaitBlock extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -54,7 +53,7 @@ export default class AwaitBlock extends Node {
 
 			child._state = state.child();
 
-			child.initChildren(child._block, child._state, inEachBlock, elementStack, componentStack, stripWhitespace, nextSibling);
+			child.initChildren(child._block, child._state, inEachBlock, componentStack, stripWhitespace, nextSibling);
 			this.generator.blocks.push(child._block);
 
 			if (child._block.dependencies.size > 0) {
@@ -71,7 +70,6 @@ export default class AwaitBlock extends Node {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		const name = this.var;
@@ -213,7 +211,7 @@ export default class AwaitBlock extends Node {
 
 		[this.pending, this.then, this.catch].forEach(status => {
 			status.children.forEach(child => {
-				child.build(status._block, status._state, elementStack, componentStack);
+				child.build(status._block, status._state, componentStack);
 			});
 		});
 	}

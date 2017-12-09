@@ -35,7 +35,6 @@ export default class Window extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -46,7 +45,6 @@ export default class Window extends Node {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		const { generator } = this;

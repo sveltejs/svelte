@@ -94,15 +94,10 @@ export default function dom(
 		namespace,
 	} = generator;
 
-	parsed.html.init();
-	const { block, state } = parsed.html;
+	parsed.html.build();
+	const { block } = parsed.html;
 
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
-
-	// parsed.html.children.forEach((node: Node) => {
-	// 	visit(generator, block, state, node, [], []);
-	// });
-	parsed.html.build(block, state);
 
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();

@@ -13,7 +13,6 @@ export default class MustacheTag extends Tag {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		const { init } = this.renameThisMethod(

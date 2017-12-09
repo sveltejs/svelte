@@ -1,5 +1,6 @@
 import getStaticAttributeValue from '../../utils/getStaticAttributeValue';
 import isChildOfComponent from '../shared/utils/isChildOfComponent';
+import Element from '../nodes/Element';
 import { SsrGenerator } from './index';
 import { Node } from '../../interfaces';
 
@@ -54,10 +55,10 @@ const preprocessors = {
 
 	Element: (
 		generator: SsrGenerator,
-		node: Node,
+		node: Element,
 		elementStack: Node[]
 	) => {
-		generator.stylesheet.apply(node, elementStack);
+		generator.stylesheet.apply(node);
 
 		const slot = getStaticAttributeValue(node, 'slot');
 		if (slot && node.isChildOfComponent()) {

@@ -3,6 +3,7 @@ import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
+import Element from '../generators/nodes/Element';
 import { Validator } from '../validate/index';
 import { Node, Parsed, Warning } from '../interfaces';
 
@@ -19,7 +20,7 @@ class Rule {
 		this.declarations = node.block.children.map((node: Node) => new Declaration(node));
 	}
 
-	apply(node: Node, stack: Node[]) {
+	apply(node: Element, stack: Element[]) {
 		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
 	}
 
@@ -159,7 +160,7 @@ class Atrule {
 		this.children = [];
 	}
 
-	apply(node: Node, stack: Node[]) {
+	apply(node: Element, stack: Element[]) {
 		if (this.node.name === 'media') {
 			this.children.forEach(child => {
 				child.apply(node, stack);
@@ -330,8 +331,14 @@ export default class Stylesheet {
 		}
 	}
 
-	apply(node: Node, stack: Node[]) {
+	apply(node: Element) {
 		if (!this.hasStyles) return;
+
+		const stack: Element[] = [];
+		let parent: Node = node;
+		while (parent = parent.parent) {
+			if (parent.type === 'Element') stack.unshift(<Element>parent);
+		}
 
 		if (this.cascade) {
 			if (stack.length === 0) node._needsCssAttribute = true;

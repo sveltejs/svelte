@@ -27,7 +27,6 @@ export default class IfBlock extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -54,7 +53,7 @@ export default class IfBlock extends Node {
 			node._state = state.child();
 
 			blocks.push(node._block);
-			node.initChildren(node._block, node._state, inEachBlock, elementStack, componentStack, stripWhitespace, nextSibling);
+			node.initChildren(node._block, node._state, inEachBlock, componentStack, stripWhitespace, nextSibling);
 
 			if (node._block.dependencies.size > 0) {
 				dynamic = true;
@@ -79,7 +78,6 @@ export default class IfBlock extends Node {
 					node.else._block,
 					node.else._state,
 					inEachBlock,
-					elementStack,
 					componentStack,
 					stripWhitespace,
 					nextSibling
@@ -106,7 +104,6 @@ export default class IfBlock extends Node {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		const name = this.var;
@@ -117,7 +114,7 @@ export default class IfBlock extends Node {
 			: (this.next && this.next.var) || 'null';
 		const params = block.params.join(', ');
 
-		const branches = getBranches(this.generator, block, state, this, elementStack, componentStack);
+		const branches = getBranches(this.generator, block, state, this, componentStack);
 
 		const hasElse = isElseBranch(branches[branches.length - 1]);
 		const if_name = hasElse ? '' : `if (${name}) `;
@@ -173,7 +170,6 @@ function getBranches(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[],
 	componentStack: Node[]
 ) {
 	block.contextualise(node.expression); // TODO remove
@@ -188,11 +184,11 @@ function getBranches(
 		},
 	];
 
-	visitChildren(generator, block, state, node, elementStack, componentStack);
+	visitChildren(generator, block, state, node, componentStack);
 
 	if (isElseIf(node.else)) {
 		branches.push(
-			...getBranches(generator, block, state, node.else.children[0], elementStack, componentStack)
+			...getBranches(generator, block, state, node.else.children[0], componentStack)
 		);
 	} else {
 		branches.push({
@@ -204,7 +200,7 @@ function getBranches(
 		});
 
 		if (node.else) {
-			visitChildren(generator, block, state, node.else, elementStack, componentStack);
+			visitChildren(generator, block, state, node.else, componentStack);
 		}
 	}
 
@@ -216,11 +212,10 @@ function visitChildren(
 	block: Block,
 	state: State,
 	node: Node,
-	elementStack: Node[],
 	componentStack: Node[]
 ) {
 	node.children.forEach((child: Node) => {
-		child.build(node._block, node._state, elementStack, componentStack);
+		child.build(node._block, node._state, componentStack);
 	});
 }
 

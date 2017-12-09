@@ -34,7 +34,6 @@ export default class Text extends Node {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		if (this.shouldSkip) return;

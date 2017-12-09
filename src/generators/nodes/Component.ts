@@ -21,7 +21,6 @@ export default class Component extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -63,7 +62,7 @@ export default class Component extends Node {
 			this._slots = new Set(['default']);
 
 			this.children.forEach(child => {
-				child.init(block, state, inEachBlock, elementStack, componentStack.concat(this), stripWhitespace, nextSibling);
+				child.init(block, state, inEachBlock, componentStack.concat(this), stripWhitespace, nextSibling);
 			});
 		}
 	}
@@ -71,7 +70,6 @@ export default class Component extends Node {
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		const { generator } = this;
@@ -86,7 +84,7 @@ export default class Component extends Node {
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, this._state, elementStack, componentStack.concat(this));
+				child.build(block, this._state, componentStack.concat(this));
 			});
 		}
 

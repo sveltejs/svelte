@@ -28,7 +28,6 @@ export default class Element extends Node {
 		block: Block,
 		state: State,
 		inEachBlock: boolean,
-		elementStack: Node[],
 		componentStack: Node[],
 		stripWhitespace: boolean,
 		nextSibling: Node
@@ -156,18 +155,17 @@ export default class Element extends Node {
 			allUsedContexts: [],
 		});
 
-		this.generator.stylesheet.apply(this, elementStack);
+		this.generator.stylesheet.apply(this);
 
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
-			this.initChildren(block, this._state, inEachBlock, elementStack.concat(this), componentStack, stripWhitespace, nextSibling);
+			this.initChildren(block, this._state, inEachBlock, componentStack, stripWhitespace, nextSibling);
 		}
 	}
 
 	build(
 		block: Block,
 		state: State,
-		elementStack: Node[],
 		componentStack: Node[]
 	) {
 		const { generator } = this;
@@ -240,7 +238,7 @@ export default class Element extends Node {
 			}
 		} else {
 			this.children.forEach((child: Node) => {
-				child.build(block, childState, elementStack.concat(this), componentStack);
+				child.build(block, childState, componentStack);
 			});
 		}
 
