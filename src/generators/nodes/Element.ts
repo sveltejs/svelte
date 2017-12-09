@@ -255,6 +255,8 @@ export default class Element extends Node {
 		});
 
 		// event handlers
+		let eventHandlerUsesComponent = false;
+
 		this.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((attribute: Node) => {
 			const isCustomEvent = generator.events.has(attribute.name);
 			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
@@ -273,7 +275,7 @@ export default class Element extends Node {
 						attribute.expression.start,
 						`${block.alias('component')}.`
 					);
-					if (shouldHoist) childState.usesComponent = true; // this feels a bit hacky but it works!
+					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
 				}
 
 				attribute.expression.arguments.forEach((arg: Node) => {
@@ -290,7 +292,7 @@ export default class Element extends Node {
 			const ctx = context || 'this';
 			const declarations = usedContexts.map(name => {
 				if (name === 'state') {
-					if (shouldHoist) childState.usesComponent = true;
+					if (shouldHoist) eventHandlerUsesComponent = true;
 					return `var state = ${block.alias('component')}.get();`;
 				}
 
@@ -309,7 +311,7 @@ export default class Element extends Node {
 
 			// create the handler body
 			const handlerBody = deindent`
-				${childState.usesComponent &&
+				${eventHandlerUsesComponent &&
 					`var ${block.alias('component')} = ${ctx}._svelte.component;`}
 				${declarations}
 				${attribute.expression ?
@@ -369,11 +371,11 @@ export default class Element extends Node {
 
 		this.addTransitions(block);
 
-		if (childState.allUsedContexts.length || childState.usesComponent) {
+		if (childState.allUsedContexts.length || eventHandlerUsesComponent) {
 			const initialProps: string[] = [];
 			const updates: string[] = [];
 
-			if (childState.usesComponent) {
+			if (eventHandlerUsesComponent) {
 				initialProps.push(`component: #component`);
 			}
 
