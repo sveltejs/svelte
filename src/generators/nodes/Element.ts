@@ -78,17 +78,33 @@ export default class Element extends Node {
 			}
 		});
 
-		const valueAttribute = this.attributes.find((attribute: Node) => attribute.name === 'value');
+		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
 		// Treat these the same way:
 		//   <option>{{foo}}</option>
 		//   <option value='{{foo}}'>{{foo}}</option>
 		if (this.name === 'option' && !valueAttribute) {
 			this.attributes.push(new Attribute({
-				type: 'Attribute',
+				generator: this.generator,
 				name: 'value',
-				value: this.children
+				value: this.children,
+				parent: this
 			}));
+		}
+
+		if (this.name === 'textarea') {
+			// this is an egregious hack, but it's the easiest way to get <textarea>
+			// children treated the same way as a value attribute
+			if (this.children.length > 0) {
+				this.attributes.push(new Attribute({
+					generator: this.generator,
+					name: 'value',
+					value: this.children,
+					parent: this
+				}));
+
+				this.children = [];
+			}
 		}
 
 		// special case — in a case like this...
@@ -209,20 +225,6 @@ export default class Element extends Node {
 			}
 		}
 
-		if (this.name === 'textarea') {
-			// this is an egregious hack, but it's the easiest way to get <textarea>
-			// children treated the same way as a value attribute
-			if (this.children.length > 0) {
-				this.attributes.push({
-					type: 'Attribute',
-					name: 'value',
-					value: this.children,
-				});
-
-				this.children = [];
-			}
-		}
-
 		// insert static children with textContent or innerHTML
 		if (!childState.namespace && this.canUseInnerHTML && this.children.length > 0) {
 			if (this.children.length === 1 && this.children[0].type === 'Text') {
@@ -242,8 +244,8 @@ export default class Element extends Node {
 
 		addBindings(this.generator, block, childState, this);
 
-		this.attributes.filter((a: Node) => a.type === 'Attribute').forEach((attribute: Node) => {
-			visitAttribute(this.generator, block, childState, this, attribute);
+		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
+			attribute.render(block, childState);
 		});
 
 		// event handlers
@@ -429,7 +431,7 @@ export default class Element extends Node {
 
 	getStaticAttributeValue(name: string) {
 		const attribute = this.attributes.find(
-			(attr: Node) => attr.name.toLowerCase() === name
+			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
 		);
 
 		if (!attribute) return null;
