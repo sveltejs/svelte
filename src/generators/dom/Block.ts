@@ -164,12 +164,7 @@ export default class Block {
 	}
 
 	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
-		return this.generator.contextualise(
-			this,
-			expression,
-			context,
-			isEventHandler
-		);
+		return this.generator.contextualise(this.contexts, this.indexes, expression, context, isEventHandler);
 	}
 
 	mount(name: string, parentNode: string) {

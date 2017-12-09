@@ -201,7 +201,8 @@ export default class Generator {
 	}
 
 	contextualise(
-		block: DomBlock | SsrBlock,
+		contexts: Map<string, string>,
+		indexes: Map<string, string>,
 		expression: Node,
 		context: string,
 		isEventHandler: boolean
@@ -215,7 +216,6 @@ export default class Generator {
 		const usedIndexes: Set<string> = new Set();
 
 		const { code, helpers } = this;
-		const { contexts, indexes } = block;
 
 		let scope: Scope;
 		let lexicalDepth = 0;
