@@ -15,7 +15,6 @@ import * as namespaces from '../../utils/namespaces';
 import addBindings from '../dom/visitors/Element/addBindings';
 import addTransitions from '../dom/visitors/Element/addTransitions';
 import visitAttribute from '../dom/visitors/Element/Attribute';
-import visitSlot from '../dom/visitors/Slot';
 
 export default class Element extends Node {
 	type: 'Element';
@@ -155,13 +154,9 @@ export default class Element extends Node {
 	) {
 		const { generator } = this;
 
-		if (this.name === 'slot') { // TODO deal with in walkTemplate
-			if (this.generator.customElement) {
-				const slotName = this.getStaticAttributeValue('name') || 'default';
-				this.generator.slots.add(slotName);
-			} else {
-				return visitSlot(this.generator, block, state, this, elementStack, componentStack);
-			}
+		if (this.name === 'slot') {
+			const slotName = this.getStaticAttributeValue('name') || 'default';
+			this.generator.slots.add(slotName);
 		}
 
 		const childState = this._state;

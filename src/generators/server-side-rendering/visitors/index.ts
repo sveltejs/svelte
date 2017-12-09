@@ -6,6 +6,7 @@ import Element from './Element';
 import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
+import Slot from './Slot';
 import Text from './Text';
 import Window from './Window';
 
@@ -18,6 +19,7 @@ export default {
 	IfBlock,
 	MustacheTag,
 	RawMustacheTag,
+	Slot,
 	Text,
 	Window
 };

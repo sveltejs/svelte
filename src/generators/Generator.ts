@@ -163,11 +163,9 @@ export default class Generator {
 
 		this.computations = [];
 		this.templateProperties = {};
+		this.name = this.alias(name);
 
 		this.walkJs(dom);
-		this.walkTemplate();
-
-		this.name = this.alias(name);
 
 		if (options.customElement === true) {
 			this.customElement = {
@@ -181,6 +179,8 @@ export default class Generator {
 		if (this.customElement && !this.customElement.tag) {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
+
+		this.walkTemplate();
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -718,6 +718,9 @@ export default class Generator {
 				} else if (node.name === ':Window') { // TODO do this in parse?
 					node.type = 'Window';
 					node.__proto__ = nodes.Window.prototype;
+				} else if (node.type === 'Element' && node.name === 'slot' && !generator.customElement) {
+					node.type = 'Slot';
+					node.__proto__ = nodes.Slot.prototype;
 				} else if (node.type in nodes) {
 					node.__proto__ = nodes[node.type].prototype;
 				}
