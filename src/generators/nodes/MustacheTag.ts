@@ -1,9 +1,9 @@
 import Node from './shared/Node';
+import Tag from './shared/Tag';
 import Block from '../dom/Block';
 import State from '../dom/State';
-import visitTag from '../dom/visitors/shared/Tag';
 
-export default class MustacheTag extends Node {
+export default class MustacheTag extends Tag {
 	init(block: Block) {
 		this.cannotUseInnerHTML();
 		this.var = block.getUniqueName('text');
@@ -16,12 +16,8 @@ export default class MustacheTag extends Node {
 		elementStack: Node[],
 		componentStack: Node[]
 	) {
-		const { init } = visitTag(
-			this.generator,
+		const { init } = this.renameThisMethod(
 			block,
-			state,
-			this,
-			this.var,
 			value => `${this.var}.data = ${value};`
 		);
 

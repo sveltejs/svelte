@@ -1,10 +1,10 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
+import Tag from './shared/Tag';
 import Block from '../dom/Block';
 import State from '../dom/State';
-import visitTag from '../dom/visitors/shared/Tag';
 
-export default class RawMustacheTag extends Node {
+export default class RawMustacheTag extends Tag {
 	init(block: Block) {
 		this.cannotUseInnerHTML();
 		this.var = block.getUniqueName('raw');
@@ -49,12 +49,8 @@ export default class RawMustacheTag extends Node {
 			insert = content => `${anchorBefore}.insertAdjacentHTML("afterend", ${content});`;
 		}
 
-		const { init } = visitTag(
-			this.generator,
+		const { init } = this.renameThisMethod(
 			block,
-			state,
-			this,
-			name,
 			content => deindent`
 				${!useInnerHTML && detach}
 				${insert(content)}
