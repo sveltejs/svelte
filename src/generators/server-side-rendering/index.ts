@@ -2,7 +2,6 @@ import deindent from '../../utils/deindent';
 import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
 import Block from './Block';
-import preprocess from './preprocess';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import getName from '../../utils/getName';
@@ -27,8 +26,6 @@ export class SsrGenerator extends Generator {
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
-
-		preprocess(this, parsed.html);
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 	}

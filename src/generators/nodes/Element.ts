@@ -89,18 +89,6 @@ export default class Element extends Node {
 
 		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
-		// Treat these the same way:
-		//   <option>{{foo}}</option>
-		//   <option value='{{foo}}'>{{foo}}</option>
-		if (this.name === 'option' && !valueAttribute) {
-			this.attributes.push(new Attribute({
-				generator: this.generator,
-				name: 'value',
-				value: this.children,
-				parent: this
-			}));
-		}
-
 		if (this.name === 'textarea') {
 			// this is an egregious hack, but it's the easiest way to get <textarea>
 			// children treated the same way as a value attribute

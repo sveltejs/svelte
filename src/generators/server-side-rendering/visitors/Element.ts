@@ -3,6 +3,7 @@ import visitSlot from './Slot';
 import isVoidElementName from '../../../utils/isVoidElementName';
 import visit from '../visit';
 import { SsrGenerator } from '../index';
+import Element from '../../nodes/Element';
 import Block from '../Block';
 import { escape } from '../../../utils/stringify';
 import { Node } from '../../../interfaces';
@@ -24,7 +25,7 @@ function stringifyAttributeValue(block: Block, chunks: Node[]) {
 export default function visitElement(
 	generator: SsrGenerator,
 	block: Block,
-	node: Node
+	node: Element
 ) {
 	if (node.name === 'slot') {
 		visitSlot(generator, block, node);
@@ -34,7 +35,8 @@ export default function visitElement(
 	let openingTag = `<${node.name}`;
 	let textareaContents; // awkward special case
 
-	if (node.slotted) {
+	const slot = node.getStaticAttributeValue('slot');
+	if (slot && node.isChildOfComponent()) {
 		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const slotName = slot.value[0].data;
 		const appendTarget = generator.appendTargets[generator.appendTargets.length - 1];

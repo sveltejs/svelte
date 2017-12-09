@@ -162,11 +162,7 @@ export default class Attribute {
 				updater = `@setInputType(${node.var}, ${shouldCache ? last : value});`;
 			} else if (isSelectValueAttribute) {
 				// annoying special case
-				const isMultipleSelect =
-					node.name === 'select' &&
-					node.attributes.find(
-						(attr: Attribute) => attr.name.toLowerCase() === 'multiple'
-					); // TODO use getStaticAttributeValue
+				const isMultipleSelect = node.getStaticAttributeValue('multiple');
 				const i = block.getUniqueName('i');
 				const option = block.getUniqueName('option');
 

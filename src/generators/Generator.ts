@@ -725,6 +725,10 @@ export default class Generator {
 					node.__proto__ = nodes[node.type].prototype;
 				}
 
+				if (node.type === 'Element') {
+					generator.stylesheet.apply(node);
+				}
+
 				if (node.type === 'EachBlock') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 
@@ -798,6 +802,22 @@ export default class Generator {
 					if (node.index) {
 						indexesStack.pop();
 						indexes = indexesStack[indexesStack.length - 1];
+					}
+				}
+
+				if (node.type === 'Element' && node.name === 'option') {
+					// Special case — treat these the same way:
+					//   <option>{{foo}}</option>
+					//   <option value='{{foo}}'>{{foo}}</option>
+					const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
+
+					if (!valueAttribute) {
+						node.attributes.push(new nodes.Attribute({
+							generator,
+							name: 'value',
+							value: node.children,
+							parent: node
+						}));
 					}
 				}
 			}
