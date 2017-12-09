@@ -715,6 +715,9 @@ export default class Generator {
 				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || generator.components.has(node.name))) {
 					node.type = 'Component';
 					node.__proto__ = nodes.Component.prototype;
+				} else if (node.name === ':Window') { // TODO do this in parse?
+					node.type = 'Window';
+					node.__proto__ = nodes.Window.prototype;
 				} else if (node.type in nodes) {
 					node.__proto__ = nodes[node.type].prototype;
 				}

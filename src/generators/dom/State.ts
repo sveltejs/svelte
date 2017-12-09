@@ -25,7 +25,7 @@ export default class State {
 		assign(this, data)
 	}
 
-	child(data: StateData) {
+	child(data?: StateData) {
 		return new State(assign({}, this, {
 			parentNode: null,
 			parentNodes: 'nodes'

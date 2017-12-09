@@ -103,7 +103,7 @@ export default function dom(
 	// parsed.html.children.forEach((node: Node) => {
 	// 	visit(generator, block, state, node, [], []);
 	// });
-	parsed.html.build();
+	parsed.html.build(block, state);
 
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();

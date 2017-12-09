@@ -7,6 +7,7 @@ import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Text from './Text';
+import Window from './Window';
 
 export default {
 	AwaitBlock,
@@ -17,5 +18,6 @@ export default {
 	IfBlock,
 	MustacheTag,
 	RawMustacheTag,
-	Text
+	Text,
+	Window
 };

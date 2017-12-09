@@ -1,10 +1,11 @@
 import Node from './shared/Node';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
+import visitAwaitBlock from '../dom/visitors/AwaitBlock';
 import PendingBlock from './PendingBlock';
 import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
-import { State } from '../dom/interfaces';
+import State from '../dom/State';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
 export default class AwaitBlock extends Node {
@@ -64,5 +65,14 @@ export default class AwaitBlock extends Node {
 		this.pending._block.hasUpdateMethod = dynamic;
 		this.then._block.hasUpdateMethod = dynamic;
 		this.catch._block.hasUpdateMethod = dynamic;
+	}
+
+	build(
+		block: Block,
+		state: State,
+		elementStack: Node[],
+		componentStack: Node[]
+	) {
+		visitAwaitBlock(this.generator, block, state, this, elementStack, componentStack);
 	}
 }

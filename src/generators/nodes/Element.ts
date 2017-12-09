@@ -1,12 +1,20 @@
+import deindent from '../../utils/deindent';
+import { stringify } from '../../utils/stringify';
+import flattenReference from '../../utils/flattenReference';
+import isVoidElementName from '../../utils/isVoidElementName';
+import validCalleeObjects from '../../utils/validCalleeObjects';
+import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import State from '../dom/State';
 import Attribute from './Attribute';
 import * as namespaces from '../../utils/namespaces';
 
-const meta: Record<string, any> = {
-	':Window': {}, // TODO this should be dealt with in walkTemplate
-};
+// temp - move this logic in here
+import addBindings from '../dom/visitors/Element/addBindings';
+import addTransitions from '../dom/visitors/Element/addTransitions';
+import visitAttribute from '../dom/visitors/Element/Attribute';
+import visitSlot from '../dom/visitors/Slot';
 
 export default class Element extends Node {
 	type: 'Element';
@@ -141,17 +149,14 @@ export default class Element extends Node {
 	build(
 		block: Block,
 		state: State,
-		node: Node,
 		elementStack: Node[],
 		componentStack: Node[]
 	) {
-		if (this.name in meta) {
-			return meta[this.name](generator, block, this);
-		}
+		const { generator } = this;
 
 		if (this.name === 'slot') { // TODO deal with in walkTemplate
 			if (this.generator.customElement) {
-				const slotName = getStaticAttributeValue(this, 'name') || 'default';
+				const slotName = this.getStaticAttributeValue('name') || 'default';
 				this.generator.slots.add(slotName);
 			} else {
 				return visitSlot(this.generator, block, state, this, elementStack, componentStack);
@@ -177,7 +182,7 @@ export default class Element extends Node {
 
 		if (this.generator.hydratable) {
 			block.builders.claim.addBlock(deindent`
-				${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, node)};
+				${name} = ${getClaimStatement(generator, childState.namespace, state.parentNodes, this)};
 				var ${childState.parentNodes} = @children(${name});
 			`);
 		}
@@ -195,8 +200,8 @@ export default class Element extends Node {
 		}
 
 		// add CSS encapsulation attribute
-		if (this._needsCssAttribute && !generator.customElement) {
-			generator.needsEncapsulateHelper = true;
+		if (this._needsCssAttribute && !this.generator.customElement) {
+			this.generator.needsEncapsulateHelper = true;
 			block.builders.hydrate.addLine(
 				`@encapsulateStyles(${name});`
 			);
@@ -235,32 +240,32 @@ export default class Element extends Node {
 			}
 		} else {
 			this.children.forEach((child: Node) => {
-				visit(generator, block, childState, child, elementStack.concat(this), componentStack);
+				child.build(block, childState, elementStack.concat(this), componentStack);
 			});
 		}
 
-		addBindings(generator, block, childState, this);
+		addBindings(this.generator, block, childState, this);
 
 		this.attributes.filter((a: Node) => a.type === 'Attribute').forEach((attribute: Node) => {
-			visitAttribute(generator, block, childState, this, attribute);
+			visitAttribute(this.generator, block, childState, this, attribute);
 		});
 
 		// event handlers
 		this.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((attribute: Node) => {
-			const isCustomEvent = this.generator.events.has(attribute.name);
+			const isCustomEvent = generator.events.has(attribute.name);
 			const shouldHoist = !isCustomEvent && state.inEachBlock;
 
 			const context = shouldHoist ? null : name;
 			const usedContexts: string[] = [];
 
 			if (attribute.expression) {
-				this.generator.addSourcemapLocations(attribute.expression);
+				generator.addSourcemapLocations(attribute.expression);
 
 				const flattened = flattenReference(attribute.expression.callee);
 				if (!validCalleeObjects.has(flattened.name)) {
 					// allow event.stopPropagation(), this.select() etc
 					// TODO verify that it's a valid callee (i.e. built-in or declared method)
-					this.generator.code.prependRight(
+					generator.code.prependRight(
 						attribute.expression.start,
 						`${block.alias('component')}.`
 					);
@@ -294,7 +299,7 @@ export default class Element extends Node {
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
-			const handlerName = (shouldHoist ? generator : block).getUniqueName(
+			const handlerName = (shouldHoist ? this.generator : block).getUniqueName(
 				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
@@ -344,7 +349,7 @@ export default class Element extends Node {
 		});
 
 		// refs
-		this.node.attributes.filter((a: Node) => a.type === 'Ref').forEach((attribute: Node) => {
+		this.attributes.filter((a: Node) => a.type === 'Ref').forEach((attribute: Node) => {
 			const ref = `#component.refs.${attribute.name}`;
 
 			block.builders.mount.addLine(
@@ -358,7 +363,7 @@ export default class Element extends Node {
 			this.generator.usesRefs = true; // so component.refs object is created
 		});
 
-		addTransitions(this.generator, block, childState, node);
+		addTransitions(this.generator, block, childState, this);
 
 		if (childState.allUsedContexts.length || childState.usesComponent) {
 			const initialProps: string[] = [];

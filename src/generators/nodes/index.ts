@@ -14,6 +14,7 @@ import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import Text from './Text';
 import ThenBlock from './ThenBlock';
+import Window from './Window';
 
 const nodes: Record<string, any> = {
 	AwaitBlock,
@@ -30,7 +31,8 @@ const nodes: Record<string, any> = {
 	RawMustacheTag,
 	Slot,
 	Text,
-	ThenBlock
+	ThenBlock,
+	Window
 };
 
 export default nodes;

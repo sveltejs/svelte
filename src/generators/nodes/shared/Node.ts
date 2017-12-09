@@ -10,6 +10,8 @@ export default class Node {
 
 	type: string;
 	parent: Node;
+	prev?: Node;
+	next?: Node;
 	generator: DomGenerator;
 
 	canUseInnerHTML: boolean;
@@ -61,7 +63,7 @@ export default class Node {
 
 			// special case — this is an easy way to remove whitespace surrounding
 			// <:Window/>. lil hacky but it works
-			if (child.type === 'Element' && child.name === ':Window') {
+			if (child.type === 'Window') {
 				windowComponent = child;
 				return;
 			}
@@ -120,7 +122,6 @@ export default class Node {
 	build(
 		block: Block,
 		state: State,
-		node: Node,
 		elementStack: Node[],
 		componentStack: Node[]
 	) {
@@ -131,5 +132,9 @@ export default class Node {
 		return this.parent ?
 			this.parent.type === 'Component' || this.parent.isChildOfComponent() :
 			false;
+	}
+
+	isDomNode() {
+		return this.type === 'Element' || this.type === 'Text' || this.type === 'MustacheTag';
 	}
 }

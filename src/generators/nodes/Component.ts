@@ -1,6 +1,7 @@
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import State from '../dom/State';
+import visitComponent from '../dom/visitors/Component';
 
 export default class Component extends Node {
 	type: 'Component'; // TODO fix this?
@@ -57,5 +58,14 @@ export default class Component extends Node {
 				child.init(block, state, inEachBlock, elementStack, componentStack.concat(this), stripWhitespace, nextSibling);
 			});
 		}
+	}
+
+	build(
+		block: Block,
+		state: State,
+		elementStack: Node[],
+		componentStack: Node[]
+	) {
+		visitComponent(this.generator, block, state, this, elementStack, componentStack);
 	}
 }

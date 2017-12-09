@@ -40,15 +40,11 @@ export default class Fragment extends Node {
 	}
 
 	build(
-		generator: DomGenerator,
 		block: Block,
-		state: State,
-		node: Node,
-		elementStack: Node[],
-		componentStack: Node[]
+		state: State
 	) {
 		this.children.forEach(child => {
-			child.build(block, state, node, elementStack, componentStack);
+			child.build(block, state, [], []);
 		});
 	}
 }

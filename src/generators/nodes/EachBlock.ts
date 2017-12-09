@@ -3,6 +3,7 @@ import ElseBlock from './ElseBlock';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
 import State from '../dom/State';
+import visitEachBlock from '../dom/visitors/EachBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
 export default class EachBlock extends Node {
@@ -111,5 +112,14 @@ export default class EachBlock extends Node {
 			);
 			this.else._block.hasUpdateMethod = this.else._block.dependencies.size > 0;
 		}
+	}
+
+	build(
+		block: Block,
+		state: State,
+		elementStack: Node[],
+		componentStack: Node[]
+	) {
+		visitEachBlock(this.generator, block, state, this, elementStack, componentStack);
 	}
 }

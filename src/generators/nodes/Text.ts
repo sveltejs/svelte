@@ -1,3 +1,4 @@
+import { stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import { State } from '../dom/interfaces';
@@ -27,5 +28,21 @@ export default class Text extends Node {
 		}
 
 		this.var = block.getUniqueName(`text`);
+	}
+
+	build(
+		block: Block,
+		state: State,
+		elementStack: Node[],
+		componentStack: Node[]
+	) {
+		if (this.shouldSkip) return;
+
+		block.addElement(
+			this.var,
+			`@createText(${stringify(this.data)})`,
+			`@claimText(${state.parentNodes}, ${stringify(this.data)})`,
+			state.parentNode
+		);
 	}
 }

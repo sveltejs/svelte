@@ -2,7 +2,7 @@ import deindent from '../../../../utils/deindent';
 import { DomGenerator } from '../../index';
 import Block from '../../Block';
 import { Node } from '../../../../interfaces';
-import { State } from '../../interfaces';
+import State from '../../State';
 
 export default function visitTag(
 	generator: DomGenerator,
