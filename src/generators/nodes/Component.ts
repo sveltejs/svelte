@@ -248,19 +248,7 @@ export default class Component extends Node {
 			block.contextualise(this.expression);
 			const { dependencies, snippet } = this.metadata;
 
-			const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
-			const anchor = needsAnchor
-				? block.getUniqueName(`${name}_anchor`)
-				: (this.next && this.next.var) || 'null';
-
-			if (needsAnchor) {
-				block.addElement(
-					anchor,
-					`@createComment()`,
-					`@createComment()`,
-					parentNode
-				);
-			}
+			const anchor = this.getOrCreateAnchor(block, parentNode);
 
 			const params = block.params.join(', ');
 

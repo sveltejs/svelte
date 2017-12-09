@@ -147,4 +147,26 @@ export default class Node {
 		if (this.type === type) return this;
 		if (this.parent) return this.parent.findNearest(type);
 	}
+
+	getOrCreateAnchor(block: Block, parentNode: string) {
+		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
+		const anchor = needsAnchor
+			? block.getUniqueName(`${this.var}_anchor`)
+			: (this.next && this.next.var) || 'null';
+
+		if (needsAnchor) {
+			block.addElement(
+				anchor,
+				`@createComment()`,
+				`@createComment()`,
+				parentNode
+			);
+		}
+
+		return anchor;
+	}
+
+	getUpdateMountNode(anchor: string) {
+		return this.parent.isDomNode() ? this.parent.var : `${anchor}.parentNode`;
+	}
 }

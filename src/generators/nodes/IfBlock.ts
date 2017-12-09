@@ -230,7 +230,7 @@ function simple(
 		`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 
 	const enter = dynamic
 		? branch.hasIntroMethod
@@ -333,7 +333,7 @@ function compound(
 		`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 
 	const changeBlock = deindent`
 		${hasElse
@@ -432,7 +432,7 @@ function compoundWithOutros(
 		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const updateMountNode = (parentNode && !needsAnchor) ? parentNode : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 
 	const destroyOldBlock = deindent`
 		${name}.o(function() {

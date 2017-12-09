@@ -288,7 +288,7 @@ function keyed(
 	`);
 
 	const initialMountNode = parentNode || '#target';
-	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addBlock(deindent`
@@ -480,7 +480,7 @@ function unkeyed(
 	`);
 
 	const initialMountNode = parentNode || '#target';
-	const updateMountNode = node.parent.isDomNode() ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.create.addBlock(deindent`

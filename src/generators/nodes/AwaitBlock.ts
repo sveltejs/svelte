@@ -68,24 +68,12 @@ export default class AwaitBlock extends Node {
 	) {
 		const name = this.var;
 
-		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
-		const anchor = needsAnchor
-			? block.getUniqueName(`${name}_anchor`)
-			: (this.next && this.next.var) || 'null';
+		const anchor = this.getOrCreateAnchor(block, parentNode);
 
 		const params = block.params.join(', ');
 
 		block.contextualise(this.expression);
 		const { snippet } = this.metadata;
-
-		if (needsAnchor) {
-			block.addElement(
-				anchor,
-				`@createComment()`,
-				`@createComment()`,
-				parentNode
-			);
-		}
 
 		const promise = block.getUniqueName(`promise`);
 		const resolved = block.getUniqueName(`resolved`);
