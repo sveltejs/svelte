@@ -83,7 +83,7 @@ export default class Attribute {
 
 		const isLegacyInputType = this.generator.legacy && name === 'type' && this.parent.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !this.generator.legacy;
+		const isDataSet = /^data-/.test(name) && !this.generator.legacy && !node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;
