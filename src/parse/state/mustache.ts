@@ -283,14 +283,22 @@ export default function mustache(parser: Parser) {
 			}
 		}
 
+		let awaitBlockShorthand = type === 'AwaitBlock' && parser.eat('then');
+		if (awaitBlockShorthand) {
+			parser.requireWhitespace();
+			block.value = parser.readIdentifier();
+			parser.allowWhitespace();
+		}
+
 		parser.eat('}}', true);
 
 		parser.current().children.push(block);
 		parser.stack.push(block);
 
 		if (type === 'AwaitBlock') {
-			block.pending.start = parser.index;
-			parser.stack.push(block.pending);
+			const childBlock = awaitBlockShorthand ? block.then : block.pending;
+			childBlock.start = parser.index;
+			parser.stack.push(childBlock);
 		}
 	} else if (parser.eat('yield')) {
 		// {{yield}}
