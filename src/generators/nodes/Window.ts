@@ -30,14 +30,6 @@ export default class Window extends Node {
 	type: 'Window';
 	attributes: Attribute[];
 
-	init(
-		block: Block,
-		stripWhitespace: boolean,
-		nextSibling: Node
-	) {
-
-	}
-
 	build(
 		block: Block,
 		parentNode: string,
