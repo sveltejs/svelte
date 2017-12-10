@@ -1,12 +1,11 @@
-import deindent from '../../../utils/deindent';
-import visit from '../visit';
-import { DomGenerator } from '../index';
-import Block from '../Block';
-import isDomNode from './shared/isDomNode';
-import { Node } from '../../../interfaces';
-import { State } from '../interfaces';
+import deindent from '../../utils/deindent';
+import Node from './shared/Node';
+import ElseBlock from './ElseBlock';
+import { DomGenerator } from '../dom/index';
+import Block from '../dom/Block';
+import createDebuggingComment from '../../utils/createDebuggingComment';
 
-function isElseIf(node: Node) {
+function isElseIf(node: ElseBlock) {
 	return (
 		node && node.children.length === 1 && node.children[0].type === 'IfBlock'
 	);
@@ -16,43 +15,181 @@ function isElseBranch(branch) {
 	return branch.block && !branch.condition;
 }
 
+export default class IfBlock extends Node {
+	type: 'IfBlock';
+	else: ElseBlock;
+
+	block: Block;
+
+	init(
+		block: Block,
+		stripWhitespace: boolean,
+		nextSibling: Node
+	) {
+		const { generator } = this;
+
+		this.cannotUseInnerHTML();
+
+		const blocks: Block[] = [];
+		let dynamic = false;
+		let hasIntros = false;
+		let hasOutros = false;
+
+		function attachBlocks(node: IfBlock) {
+			node.var = block.getUniqueName(`if_block`);
+
+			block.addDependencies(node.metadata.dependencies);
+
+			node.block = block.child({
+				comment: createDebuggingComment(node, generator),
+				name: generator.getUniqueName(`create_if_block`),
+			});
+
+			blocks.push(node.block);
+			node.initChildren(node.block, stripWhitespace, nextSibling);
+
+			if (node.block.dependencies.size > 0) {
+				dynamic = true;
+				block.addDependencies(node.block.dependencies);
+			}
+
+			if (node.block.hasIntroMethod) hasIntros = true;
+			if (node.block.hasOutroMethod) hasOutros = true;
+
+			if (isElseIf(node.else)) {
+				attachBlocks(node.else.children[0]);
+			} else if (node.else) {
+				node.else.block = block.child({
+					comment: createDebuggingComment(node.else, generator),
+					name: generator.getUniqueName(`create_if_block`),
+				});
+
+				blocks.push(node.else.block);
+				node.else.initChildren(
+					node.else.block,
+					stripWhitespace,
+					nextSibling
+				);
+
+				if (node.else.block.dependencies.size > 0) {
+					dynamic = true;
+					block.addDependencies(node.else.block.dependencies);
+				}
+			}
+		}
+
+		attachBlocks(this);
+
+		blocks.forEach(block => {
+			block.hasUpdateMethod = dynamic;
+			block.hasIntroMethod = hasIntros;
+			block.hasOutroMethod = hasOutros;
+		});
+
+		generator.blocks.push(...blocks);
+	}
+
+	build(
+		block: Block,
+		parentNode: string,
+		parentNodes: string
+	) {
+		const name = this.var;
+
+		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
+		const anchor = needsAnchor
+			? block.getUniqueName(`${name}_anchor`)
+			: (this.next && this.next.var) || 'null';
+		const params = block.params.join(', ');
+
+		const branches = getBranches(this.generator, block, parentNode, parentNodes, this);
+
+		const hasElse = isElseBranch(branches[branches.length - 1]);
+		const if_name = hasElse ? '' : `if (${name}) `;
+
+		const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
+		const hasOutros = branches[0].hasOutroMethod;
+
+		const vars = { name, anchor, params, if_name, hasElse };
+
+		if (this.else) {
+			if (hasOutros) {
+				compoundWithOutros(
+					this.generator,
+					block,
+					parentNode,
+					parentNodes,
+					this,
+					branches,
+					dynamic,
+					vars
+				);
+			} else {
+				compound(this.generator, block, parentNode, parentNodes, this, branches, dynamic, vars);
+			}
+		} else {
+			simple(this.generator, block, parentNode, parentNodes, this, branches[0], dynamic, vars);
+		}
+
+		block.builders.create.addLine(`${if_name}${name}.c();`);
+
+		block.builders.claim.addLine(
+			`${if_name}${name}.l(${parentNodes});`
+		);
+
+		if (needsAnchor) {
+			block.addElement(
+				anchor,
+				`@createComment()`,
+				`@createComment()`,
+				parentNode
+			);
+		}
+	}
+}
+
+
+
+
+
+// TODO move all this into the class
+
 function getBranches(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
-	node: Node,
-	elementStack: Node[],
-	componentStack: Node[]
+	parentNode: string,
+	parentNodes: string,
+	node: Node
 ) {
 	block.contextualise(node.expression); // TODO remove
 
 	const branches = [
 		{
 			condition: node.metadata.snippet,
-			block: node._block.name,
-			hasUpdateMethod: node._block.hasUpdateMethod,
-			hasIntroMethod: node._block.hasIntroMethod,
-			hasOutroMethod: node._block.hasOutroMethod,
+			block: node.block.name,
+			hasUpdateMethod: node.block.hasUpdateMethod,
+			hasIntroMethod: node.block.hasIntroMethod,
+			hasOutroMethod: node.block.hasOutroMethod,
 		},
 	];
 
-	visitChildren(generator, block, state, node, elementStack, componentStack);
+	visitChildren(generator, block, node);
 
 	if (isElseIf(node.else)) {
 		branches.push(
-			...getBranches(generator, block, state, node.else.children[0], elementStack, componentStack)
+			...getBranches(generator, block, parentNode, parentNodes, node.else.children[0])
 		);
 	} else {
 		branches.push({
 			condition: null,
-			block: node.else ? node.else._block.name : null,
-			hasUpdateMethod: node.else ? node.else._block.hasUpdateMethod : false,
-			hasIntroMethod: node.else ? node.else._block.hasIntroMethod : false,
-			hasOutroMethod: node.else ? node.else._block.hasOutroMethod : false,
+			block: node.else ? node.else.block.name : null,
+			hasUpdateMethod: node.else ? node.else.block.hasUpdateMethod : false,
+			hasIntroMethod: node.else ? node.else.block.hasIntroMethod : false,
+			hasOutroMethod: node.else ? node.else.block.hasOutroMethod : false,
 		});
 
 		if (node.else) {
-			visitChildren(generator, block, state, node.else, elementStack, componentStack);
+			visitChildren(generator, block, node.else);
 		}
 	}
 
@@ -62,98 +199,38 @@ function getBranches(
 function visitChildren(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
-	node: Node,
-	elementStack: Node[],
-	componentStack: Node[]
+	node: Node
 ) {
 	node.children.forEach((child: Node) => {
-		visit(generator, node._block, node._state, child, elementStack, componentStack);
+		child.build(node.block, null, 'nodes');
 	});
 }
 
-export default function visitIfBlock(
-	generator: DomGenerator,
-	block: Block,
-	state: State,
-	node: Node,
-	elementStack: Node[],
-	componentStack: Node[]
-) {
-	const name = node.var;
 
-	const needsAnchor = node.next ? !isDomNode(node.next, generator) : !state.parentNode || !isDomNode(node.parent, generator);
-	const anchor = needsAnchor
-		? block.getUniqueName(`${name}_anchor`)
-		: (node.next && node.next.var) || 'null';
-	const params = block.params.join(', ');
-
-	const branches = getBranches(generator, block, state, node, elementStack, componentStack);
-
-	const hasElse = isElseBranch(branches[branches.length - 1]);
-	const if_name = hasElse ? '' : `if (${name}) `;
-
-	const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
-	const hasOutros = branches[0].hasOutroMethod;
-
-	const vars = { name, needsAnchor, anchor, params, if_name, hasElse };
-
-	if (node.else) {
-		if (hasOutros) {
-			compoundWithOutros(
-				generator,
-				block,
-				state,
-				node,
-				branches,
-				dynamic,
-				vars
-			);
-		} else {
-			compound(generator, block, state, node, branches, dynamic, vars);
-		}
-	} else {
-		simple(generator, block, state, node, branches[0], dynamic, vars);
-	}
-
-	block.builders.create.addLine(`${if_name}${name}.c();`);
-
-	block.builders.claim.addLine(
-		`${if_name}${name}.l(${state.parentNodes});`
-	);
-
-	if (needsAnchor) {
-		block.addElement(
-			anchor,
-			`@createComment()`,
-			`@createComment()`,
-			state.parentNode
-		);
-	}
-}
 
 function simple(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	parentNode: string,
+	parentNodes: string,
 	node: Node,
 	branch,
 	dynamic,
-	{ name, needsAnchor, anchor, params, if_name }
+	{ name, anchor, params, if_name }
 ) {
 	block.builders.init.addBlock(deindent`
 		var ${name} = (${branch.condition}) && ${branch.block}(${params}, #component);
 	`);
 
 	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	const initialMountNode = parentNode || '#target';
+	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`if (${name}) ${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
+		`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 
 	const enter = dynamic
 		? branch.hasIntroMethod
@@ -165,7 +242,7 @@ function simple(
 					if (${name}) ${name}.c();
 				}
 
-				${name}.i(${parentNode}, ${anchor});
+				${name}.i(${updateMountNode}, ${anchor});
 			`
 			: deindent`
 				if (${name}) {
@@ -173,7 +250,7 @@ function simple(
 				} else {
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
-					${name}.m(${parentNode}, ${anchor});
+					${name}.m(${updateMountNode}, ${anchor});
 				}
 			`
 		: branch.hasIntroMethod
@@ -182,13 +259,13 @@ function simple(
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
 				}
-				${name}.i(${parentNode}, ${anchor});
+				${name}.i(${updateMountNode}, ${anchor});
 			`
 			: deindent`
 				if (!${name}) {
 					${name} = ${branch.block}(${params}, #component);
 					${name}.c();
-					${name}.m(${parentNode}, ${anchor});
+					${name}.m(${updateMountNode}, ${anchor});
 				}
 			`;
 
@@ -224,11 +301,12 @@ function simple(
 function compound(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	parentNode: string,
+		parentNodes: string,
 	node: Node,
 	branches,
 	dynamic,
-	{ name, needsAnchor, anchor, params, hasElse, if_name }
+	{ name, anchor, params, hasElse, if_name }
 ) {
 	const select_block_type = generator.getUniqueName(`select_block_type`);
 	const current_block_type = block.getUniqueName(`current_block_type`);
@@ -249,13 +327,13 @@ function compound(
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	const initialMountNode = parentNode || '#target';
+	const anchorNode = parentNode ? 'null' : 'anchor';
 	block.builders.mount.addLine(
-		`${if_name}${name}.${mountOrIntro}(${targetNode}, ${anchorNode});`
+		`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const parentNode = isDomNode(node.parent, generator) ? node.parent.var : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 
 	const changeBlock = deindent`
 		${hasElse
@@ -270,7 +348,7 @@ function compound(
 				}`}
 		${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
 		${if_name}${name}.c();
-		${if_name}${name}.${mountOrIntro}(${parentNode}, ${anchor});
+		${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 	`;
 
 	if (dynamic) {
@@ -299,11 +377,12 @@ function compound(
 function compoundWithOutros(
 	generator: DomGenerator,
 	block: Block,
-	state: State,
+	parentNode: string,
+	parentNodes: string,
 	node: Node,
 	branches,
 	dynamic,
-	{ name, needsAnchor, anchor, params, hasElse }
+	{ name, anchor, params, hasElse }
 ) {
 	const select_block_type = block.getUniqueName(`select_block_type`);
 	const current_block_type_index = block.getUniqueName(`current_block_type_index`);
@@ -346,14 +425,14 @@ function compoundWithOutros(
 	}
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
-	const targetNode = state.parentNode || '#target';
-	const anchorNode = state.parentNode ? 'null' : 'anchor';
+	const initialMountNode = parentNode || '#target';
+	const anchorNode = parentNode ? 'null' : 'anchor';
 
 	block.builders.mount.addLine(
-		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${targetNode}, ${anchorNode});`
+		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 	);
 
-	const parentNode = (state.parentNode && !needsAnchor) ? state.parentNode : `${anchor}.parentNode`;
+	const updateMountNode = node.getUpdateMountNode(anchor);
 
 	const destroyOldBlock = deindent`
 		${name}.o(function() {
@@ -369,7 +448,7 @@ function compoundWithOutros(
 			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
 			${name}.c();
 		}
-		${name}.${mountOrIntro}(${parentNode}, ${anchor});
+		${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 	`;
 
 	const changeBlock = hasElse

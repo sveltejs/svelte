@@ -2,15 +2,11 @@ import visitComponent from './Component';
 import visitSlot from './Slot';
 import isVoidElementName from '../../../utils/isVoidElementName';
 import visit from '../visit';
-import visitWindow from './meta/Window';
 import { SsrGenerator } from '../index';
+import Element from '../../nodes/Element';
 import Block from '../Block';
 import { escape } from '../../../utils/stringify';
 import { Node } from '../../../interfaces';
-
-const meta = {
-	':Window': visitWindow,
-};
 
 function stringifyAttributeValue(block: Block, chunks: Node[]) {
 	return chunks
@@ -29,26 +25,18 @@ function stringifyAttributeValue(block: Block, chunks: Node[]) {
 export default function visitElement(
 	generator: SsrGenerator,
 	block: Block,
-	node: Node
+	node: Element
 ) {
-	if (node.name in meta) {
-		return meta[node.name](generator, block, node);
-	}
-
 	if (node.name === 'slot') {
 		visitSlot(generator, block, node);
-		return;
-	}
-
-	if (generator.components.has(node.name) || node.name === ':Self' || node.name === ':Component') {
-		visitComponent(generator, block, node);
 		return;
 	}
 
 	let openingTag = `<${node.name}`;
 	let textareaContents; // awkward special case
 
-	if (node.slotted) {
+	const slot = node.getStaticAttributeValue('slot');
+	if (slot && node.hasAncestor('Component')) {
 		const slot = node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const slotName = slot.value[0].data;
 		const appendTarget = generator.appendTargets[generator.appendTargets.length - 1];

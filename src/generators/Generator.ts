@@ -9,14 +9,13 @@ import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
-import wrapModule from './shared/utils/wrapModule';
+import wrapModule from './wrapModule';
 import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import clone from '../utils/clone';
-import DomBlock from './dom/Block';
-import SsrBlock from './server-side-rendering/Block';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
+import nodes from './nodes/index';
 import { Node, GenerateOptions, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -162,11 +161,9 @@ export default class Generator {
 
 		this.computations = [];
 		this.templateProperties = {};
+		this.name = this.alias(name);
 
 		this.walkJs(dom);
-		this.walkTemplate();
-
-		this.name = this.alias(name);
 
 		if (options.customElement === true) {
 			this.customElement = {
@@ -180,6 +177,8 @@ export default class Generator {
 		if (this.customElement && !this.customElement.tag) {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
+
+		this.walkTemplate();
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -200,7 +199,8 @@ export default class Generator {
 	}
 
 	contextualise(
-		block: DomBlock | SsrBlock,
+		contexts: Map<string, string>,
+		indexes: Map<string, string>,
 		expression: Node,
 		context: string,
 		isEventHandler: boolean
@@ -214,7 +214,6 @@ export default class Generator {
 		const usedIndexes: Set<string> = new Set();
 
 		const { code, helpers } = this;
-		const { contexts, indexes } = block;
 
 		let scope: Scope;
 		let lexicalDepth = 0;
@@ -638,6 +637,7 @@ export default class Generator {
 	}
 
 	walkTemplate() {
+		const generator = this;
 		const {
 			code,
 			expectedProperties,
@@ -703,7 +703,30 @@ export default class Generator {
 		const indexesStack: Set<string>[] = [indexes];
 
 		walk(html, {
-			enter(node: Node, parent: Node) {
+			enter(node: Node, parent: Node, key: string) {
+				// TODO this is hacky as hell
+				if (key === 'parent') return this.skip();
+				node.parent = parent;
+
+				node.generator = generator;
+
+				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || generator.components.has(node.name))) {
+					node.type = 'Component';
+					node.__proto__ = nodes.Component.prototype;
+				} else if (node.name === ':Window') { // TODO do this in parse?
+					node.type = 'Window';
+					node.__proto__ = nodes.Window.prototype;
+				} else if (node.type === 'Element' && node.name === 'slot' && !generator.customElement) {
+					node.type = 'Slot';
+					node.__proto__ = nodes.Slot.prototype;
+				} else if (node.type in nodes) {
+					node.__proto__ = nodes[node.type].prototype;
+				}
+
+				if (node.type === 'Element') {
+					generator.stylesheet.apply(node);
+				}
+
 				if (node.type === 'EachBlock') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 
@@ -764,7 +787,7 @@ export default class Generator {
 					this.skip();
 				}
 
-				if (node.type === 'Element' && node.name === ':Component') {
+				if (node.type === 'Component' && node.name === ':Component') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes);
 				}
 			},
@@ -777,6 +800,22 @@ export default class Generator {
 					if (node.index) {
 						indexesStack.pop();
 						indexes = indexesStack[indexesStack.length - 1];
+					}
+				}
+
+				if (node.type === 'Element' && node.name === 'option') {
+					// Special case — treat these the same way:
+					//   <option>{{foo}}</option>
+					//   <option value='{{foo}}'>{{foo}}</option>
+					const valueAttribute = node.attributes.find((attribute: Node) => attribute.name === 'value');
+
+					if (!valueAttribute) {
+						node.attributes.push(new nodes.Attribute({
+							generator,
+							name: 'value',
+							value: node.children,
+							parent: node
+						}));
 					}
 				}
 			}
