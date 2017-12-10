@@ -645,7 +645,11 @@ export default class Generator {
 		} = this;
 		const { html } = this.parsed;
 
-		const contextualise = (node: Node, contextDependencies: Map<string, string[]>, indexes: Set<string>) => {
+		const contextualise = (
+			node: Node, contextDependencies: Map<string, string[]>,
+			indexes: Set<string>,
+			isEventHandler: boolean
+		) => {
 			this.addSourcemapLocations(node); // TODO this involves an additional walk — can we roll it in somewhere else?
 			let scope = annotateWithScopes(node);
 
@@ -663,7 +667,7 @@ export default class Generator {
 
 					if (isReference(node, parent)) {
 						const { name } = flattenReference(node);
-						if (scope && scope.has(name) || helpers.has(name)) return;
+						if (scope && scope.has(name) || helpers.has(name) || (name === 'event' && isEventHandler)) return;
 
 						if (contextDependencies.has(name)) {
 							contextDependencies.get(name).forEach(dependency => {
@@ -728,7 +732,7 @@ export default class Generator {
 				}
 
 				if (node.type === 'EachBlock') {
-					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 
 					contextDependencies = new Map(contextDependencies);
 					contextDependencies.set(node.context, node.metadata.dependencies);
@@ -752,7 +756,7 @@ export default class Generator {
 				}
 
 				if (node.type === 'AwaitBlock') {
-					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 
 					contextDependencies = new Map(contextDependencies);
 					contextDependencies.set(node.value, node.metadata.dependencies);
@@ -762,33 +766,33 @@ export default class Generator {
 				}
 
 				if (node.type === 'IfBlock') {
-					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 				}
 
 				if (node.type === 'MustacheTag' || node.type === 'RawMustacheTag' || node.type === 'AttributeShorthand') {
-					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 					this.skip();
 				}
 
 				if (node.type === 'Binding') {
-					node.metadata = contextualise(node.value, contextDependencies, indexes);
+					node.metadata = contextualise(node.value, contextDependencies, indexes, false);
 					this.skip();
 				}
 
 				if (node.type === 'EventHandler' && node.expression) {
 					node.expression.arguments.forEach((arg: Node) => {
-						arg.metadata = contextualise(arg, contextDependencies, indexes);
+						arg.metadata = contextualise(arg, contextDependencies, indexes, true);
 					});
 					this.skip();
 				}
 
 				if (node.type === 'Transition' && node.expression) {
-					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 					this.skip();
 				}
 
 				if (node.type === 'Component' && node.name === ':Component') {
-					node.metadata = contextualise(node.expression, contextDependencies, indexes);
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 				}
 			},
 
