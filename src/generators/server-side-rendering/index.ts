@@ -61,7 +61,7 @@ export default function ssr(
 		conditions: [],
 	});
 
-	parsed.html.children.forEach((node: Node) => {
+	trim(parsed.html.children).forEach((node: Node) => {
 		visit(generator, mainBlock, node);
 	});
 
@@ -122,7 +122,7 @@ export default function ssr(
 				}
 			`}
 
-			return \`${generator.renderCode}\`.trim();
+			return \`${generator.renderCode}\`;
 		};
 
 		${name}.renderCss = function() {
@@ -201,4 +201,26 @@ export default function ssr(
 	});
 
 	return generator.generate(result, options, { name, format });
+}
+
+function trim(nodes) {
+	let start = 0;
+	for (; start < nodes.length; start += 1) {
+		const node = nodes[start];
+		if (node.type !== 'Text') break;
+
+		node.data = node.data.replace(/^\s+/, '');
+		if (node.data) break;
+	}
+
+	let end = nodes.length;
+	for (; end > start; end -= 1) {
+		const node = nodes[end - 1];
+		if (node.type !== 'Text') break;
+
+		node.data = node.data.replace(/\s+$/, '');
+		if (node.data) break;
+	}
+
+	return nodes.slice(start, end);
 }
