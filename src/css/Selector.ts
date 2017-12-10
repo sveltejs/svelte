@@ -229,6 +229,7 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
 	const value = attr.value[0];
 
+	if (!value) return false;
 	if (value.type === 'Text') return pattern.test(value.data);
 
 	const possibleValues = new Set();
