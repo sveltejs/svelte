@@ -159,8 +159,15 @@ export default function a11y(
 			if (parent.name !== 'figure') {
 				validator.warn(`A11y: <figcaption> must be an immediate child of <figure>`, node.start);
 			} else {
-				const index = parent.children.indexOf(node);
-				if (index !== 0 && index !== parent.children.length - 1) {
+				const children = parent.children.filter(node => {
+					if (node.type === 'Comment') return false;
+					if (node.type === 'Text') return /\S/.test(node.data);
+					return true;
+				});
+
+				const index = children.indexOf(node);
+
+				if (index !== 0 && index !== children.length - 1) {
 					validator.warn(`A11y: <figcaption> must be first or last child of <figure>`, node.start);
 				}
 			}
