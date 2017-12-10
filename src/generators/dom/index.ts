@@ -8,11 +8,9 @@ import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
 import reservedNames from '../../utils/reservedNames';
-import visit from './visit';
 import shared from './shared';
 import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
-import preprocess from './preprocess';
 import Block from './Block';
 import { test } from '../../config';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
@@ -96,13 +94,10 @@ export default function dom(
 		namespace,
 	} = generator;
 
-	const { block, state } = preprocess(generator, namespace, parsed.html);
+	parsed.html.build();
+	const { block } = parsed.html;
 
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
-
-	parsed.html.children.forEach((node: Node) => {
-		visit(generator, block, state, node, [], []);
-	});
 
 	const builder = new CodeBuilder();
 	const computationBuilder = new CodeBuilder();

@@ -1,6 +1,6 @@
-import deindent from '../../../utils/deindent';
-import list from '../../../utils/list';
-import { CompileOptions, ModuleFormat, Node } from '../../../interfaces';
+import deindent from '../utils/deindent';
+import list from '../utils/list';
+import { CompileOptions, ModuleFormat, Node } from '../interfaces';
 
 interface Dependency {
 	name: string;
