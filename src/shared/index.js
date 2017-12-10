@@ -165,15 +165,15 @@ export function _set(newState) {
 	}
 }
 
-export function _setDev(newState) {
+export function setDev(newState) {
 	if (typeof newState !== 'object') {
 		throw new Error(
-			this._debugName + ' .set was called without an object of data key-values to update.'
+			this._debugName + '.set was called without an object of data key-values to update.'
 		);
 	}
 
 	this._checkReadOnly(newState);
-	_set.call(this, newState);
+	set.call(this, newState);
 }
 
 export function callAll(fns) {
@@ -220,10 +220,10 @@ export var protoDev = {
 	fire: fire,
 	observe: observeDev,
 	on: onDev,
-	set: set,
+	set: setDev,
 	teardown: destroyDev,
 	_recompute: noop,
-	_set: _setDev,
+	_set: _set,
 	_mount: _mount,
 	_unmount: _unmount
 };
