@@ -289,6 +289,8 @@ export default class Component extends Node {
 				`if (${name}) ${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
+			const updateMountNode = this.getUpdateMountNode(anchor);
+
 			block.builders.update.addBlock(deindent`
 				if (${switch_vars.value} !== (${switch_vars.value} = ${snippet})) {
 					if (${name}) ${name}.destroy();
@@ -298,7 +300,7 @@ export default class Component extends Node {
 						${name}._fragment.c();
 
 						${this.children.map(child => remount(generator, child, name))}
-						${name}._mount(${anchor}.parentNode, ${anchor});
+						${name}._mount(${updateMountNode}, ${anchor});
 
 						${eventHandlers.map(handler => deindent`
 							${name}.on("${handler.name}", ${handler.var});
