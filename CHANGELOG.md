@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 1.46.1
+
+* `await...then` shorthand ([#957](https://github.com/sveltejs/svelte/issues/957))
+* Allow dynamic components inside elements ([#993](https://github.com/sveltejs/svelte/issues/993))
+* Don't use `dataset` on SVG nodes ([#982](https://github.com/sveltejs/svelte/issues/982))
+* Fix erroneous `<figcaption>` a11y warning ([#991](https://github.com/sveltejs/svelte/issues/991))
+* Handle empty classes when pruning unused selectors ([#978](https://github.com/sveltejs/svelte/issues/978))
+* Better trimming of SSR'd output ([#976](https://github.com/sveltejs/svelte/issues/976))
+* Don't add `event` to `expectedProperties` ([#972](https://github.com/sveltejs/svelte/issues/972))
+* Emit error on bad `set` arguments in dev mode ([#990](https://github.com/sveltejs/svelte/issues/990))
+
 ## 1.46.0
 
 * Pass `filename` through to preprocessors ([#983](https://github.com/sveltejs/svelte/issues/983))
