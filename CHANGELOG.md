@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.47.1
+
+* Sanitize filenames in SSR mode ([#1005](https://github.com/sveltejs/svelte/issues/1005))
+
 ## 1.47.0
 
 * Support dynamic `import(...)` inside `<script>` tags ([#1003](https://github.com/sveltejs/svelte/issues/1003))
