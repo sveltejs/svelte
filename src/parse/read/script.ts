@@ -1,9 +1,12 @@
-import { parse } from 'acorn';
+import * as acorn from 'acorn';
+import injectDynamicImport from 'acorn-dynamic-import/src/inject';
 import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
 const scriptClosingTag = '</script>';
+
+injectDynamicImport(acorn);
 
 export default function readScript(parser: Parser, start: number, attributes: Node[]) {
 	const scriptStart = parser.index;
@@ -18,9 +21,12 @@ export default function readScript(parser: Parser, start: number, attributes: No
 	let ast;
 
 	try {
-		ast = parse(source, {
+		ast = acorn.parse(source, {
 			ecmaVersion: 8,
 			sourceType: 'module',
+			plugins: {
+				dynamicImport: true
+			}
 		});
 	} catch (err) {
 		parser.acornError(err);
