@@ -175,11 +175,17 @@ function capitalise(str) {
 export function showOutput(cwd, options = {}, s = svelte) {
 	glob.sync('**/*.html', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
+
+		const name = path.basename(file)
+			.slice(0, -path.extname(file).length)
+			.replace(/^\d/, '_$&')
+			.replace(/[^a-zA-Z0-9_$]/g, '');
+
 		const { code } = s.compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
 				filename: file,
-				name: capitalise(path.basename(file).replace(/\.html$/, ''))
+				name: capitalise(name)
 			})
 		);
 

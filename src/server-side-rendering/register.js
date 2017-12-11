@@ -26,10 +26,14 @@ function _deregister(extension) {
 
 function _register(extension) {
 	require.extensions[extension] = function(module, filename) {
+		const name = path.basename(filename)
+			.slice(0, -path.extname(filename).length)
+			.replace(/^\d/, '_$&')
+			.replace(/[^a-zA-Z0-9_$]/g, '');
+
 		const options = Object.assign({}, compileOptions, {
 			filename,
-			name: capitalise(path.basename(filename)
-				.replace(new RegExp(`${extension.replace('.', '\\.')}$`), '')),
+			name: capitalise(name),
 			generate: 'ssr'
 		});
 
