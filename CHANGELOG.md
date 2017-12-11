@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.47.0
+
+* Support dynamic `import(...)` inside `<script>` tags ([#1003](https://github.com/sveltejs/svelte/issues/1003))
+
 ## 1.46.1
 
 * `await...then` shorthand ([#957](https://github.com/sveltejs/svelte/issues/957))
