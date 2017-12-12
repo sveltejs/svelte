@@ -19,6 +19,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
 * [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
+* [sveltejs-brunch](https://github.com/StarpTech/sveltejs-brunch) – Brunch build plugin
 * More to come!
 
 
