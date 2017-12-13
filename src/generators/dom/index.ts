@@ -204,7 +204,7 @@ export default function dom(
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
-			`if (!options || (!options.target && !options._root)) throw new Error("'target' is a required option");`}
+			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
@@ -239,13 +239,13 @@ export default function dom(
 		${templateProperties.oncreate && `var _oncreate = %oncreate.bind(this);`}
 
 		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
-			if (!options._root) {
+			if (!options.root) {
 				this._oncreate = [${templateProperties.oncreate && `_oncreate`}];
 				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
 				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
 			} ${templateProperties.oncreate && deindent`
 				else {
-					this._root._oncreate.push(_oncreate);
+					this.root._oncreate.push(_oncreate);
 				}
 			`}
 		`}

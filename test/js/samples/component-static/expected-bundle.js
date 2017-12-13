@@ -69,11 +69,11 @@ function get(key) {
 function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
-	component._root = options._root || component;
 	component._bind = options._bind;
 
 	component.options = options;
-	component.store = component._root.options.store;
+	component.root = options.root || component;
+	component.store = component.root.options.store;
 }
 
 function observe(key, callback, options) {
@@ -113,12 +113,12 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
-	if (this._root._lock) return;
-	this._root._lock = true;
-	callAll(this._root._beforecreate);
-	callAll(this._root._oncreate);
-	callAll(this._root._aftercreate);
-	this._root._lock = false;
+	if (this.root._lock) return;
+	this.root._lock = true;
+	callAll(this.root._beforecreate);
+	callAll(this.root._oncreate);
+	callAll(this.root._aftercreate);
+	this.root._lock = false;
 }
 
 function _set(newState) {
@@ -174,7 +174,7 @@ var Nested = window.Nested;
 function create_main_fragment(state, component) {
 
 	var nested = new Nested({
-		_root: component._root,
+		root: component.root,
 		data: { foo: "bar" }
 	});
 
@@ -203,7 +203,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	if (!options._root) {
+	if (!options.root) {
 		this._oncreate = [];
 		this._beforecreate = [];
 		this._aftercreate = [];
