@@ -1,5 +1,9 @@
 "use strict";
 
+function preload(input) {
+	return output;
+};
+
 var SvelteComponent = {};;
 
 SvelteComponent.data = function() {
@@ -21,5 +25,7 @@ SvelteComponent.renderCss = function() {
 		components
 	};
 };
+
+SvelteComponent.preload = preload;
 
 module.exports = SvelteComponent;

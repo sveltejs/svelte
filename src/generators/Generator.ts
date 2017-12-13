@@ -598,6 +598,10 @@ export default class Generator {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);
 				}
 
+				if (templateProperties.preload) {
+					addDeclaration('preload', templateProperties.preload.value);
+				}
+
 				if (templateProperties.props) {
 					this.props = templateProperties.props.value.elements.map((element: Node) => element.value);
 				}

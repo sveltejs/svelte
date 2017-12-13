@@ -162,6 +162,8 @@ export default function ssr(
 			};
 		};
 
+		${templateProperties.preload && `${name}.preload = %preload;`}
+
 		${
 			// TODO this is a bit hacky
 			/__escape/.test(generator.renderCode) && deindent`

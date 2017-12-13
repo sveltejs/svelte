@@ -358,6 +358,8 @@ export default function dom(
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
 
 		${templateProperties.setup && `%setup(${name});`}
+
+		${templateProperties.preload && `${name}.preload = %preload;`}
 	`);
 
 	const usedHelpers = new Set();
