@@ -203,7 +203,7 @@ export default class Block {
 			this.builders.hydrate.addLine(`this.first = ${this.first};`);
 		}
 
-		if (this.builders.create.isEmpty()) {
+		if (this.builders.create.isEmpty() && this.builders.hydrate.isEmpty()) {
 			properties.addBlock(`c: @noop,`);
 		} else {
 			properties.addBlock(deindent`
@@ -215,7 +215,7 @@ export default class Block {
 		}
 
 		if (this.generator.hydratable) {
-			if (this.builders.claim.isEmpty()) {
+			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
 				properties.addBlock(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`

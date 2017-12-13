@@ -17,9 +17,10 @@ const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const SELF = ':Self';
 const COMPONENT = ':Component';
 
-const metaTags = {
-	':Window': true
-};
+const metaTags = new Set([
+	':Window',
+	':Document'
+]);
 
 const specials = new Map([
 	[
@@ -86,7 +87,7 @@ export default function tag(parser: Parser) {
 
 	const name = readTagName(parser);
 
-	if (name in metaTags) {
+	if (metaTags.has(name)) {
 		if (name in parser.metaTags) {
 			if (isClosingTag && parser.current().children.length) {
 				parser.error(
@@ -252,7 +253,7 @@ function readTagName(parser: Parser) {
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 
-	if (name in metaTags) return name;
+	if (metaTags.has(name)) return name;
 
 	if (!validTagName.test(name)) {
 		parser.error(`Expected valid tag name`, start);
