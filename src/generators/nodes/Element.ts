@@ -29,7 +29,7 @@ export default class Element extends Node {
 			this.cannotUseInnerHTML();
 		}
 
-		const parentElement = this.parent && this.parent.findNearest('Element');
+		const parentElement = this.parent && this.parent.findNearest(/^Element/);
 		this.namespace = this.name === 'svg' ?
 			namespaces.svg :
 			parentElement ? parentElement.namespace : this.generator.namespace;
@@ -133,7 +133,7 @@ export default class Element extends Node {
 			this.cannotUseInnerHTML();
 			this.slotted = true;
 			// TODO validate slots — no nesting, no dynamic names...
-			const component = this.findNearest('Component');
+			const component = this.findNearest(/^Component/);
 			component._slots.add(slot);
 		}
 
@@ -171,7 +171,7 @@ export default class Element extends Node {
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const initialMountNode = this.slotted ?
-			`${this.findNearest('Component').var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
+			`${this.findNearest(/^Component/).var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
 			parentNode;
 
 		block.addVariable(name);
