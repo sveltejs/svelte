@@ -8,11 +8,11 @@ function create_main_fragment(state, component) {
 	var text;
 
 	var imported = new Imported({
-		_root: component._root
+		root: component.root
 	});
 
 	var nonimported = new NonImported({
-		_root: component._root
+		root: component.root
 	});
 
 	return {
@@ -47,7 +47,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	if (!options._root) {
+	if (!options.root) {
 		this._oncreate = [];
 		this._beforecreate = [];
 		this._aftercreate = [];

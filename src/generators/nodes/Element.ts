@@ -527,7 +527,7 @@ export default class Element extends Node {
 				this.generator.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`if (!(${allInitialStateIsDefined})) #component._root._beforecreate.push(${handler});`
+					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
 				);
 			}
 		});
@@ -556,7 +556,7 @@ export default class Element extends Node {
 			const fn = `%transitions-${intro.name}`;
 
 			block.builders.intro.addBlock(deindent`
-				#component._root._aftercreate.push(function() {
+				#component.root._aftercreate.push(function() {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
 					${name}.run(true, function() {
 						#component.fire("intro.end", { node: ${this.var} });
@@ -593,7 +593,7 @@ export default class Element extends Node {
 				}
 
 				block.builders.intro.addBlock(deindent`
-					#component._root._aftercreate.push(function() {
+					#component.root._aftercreate.push(function() {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
 						${introName}.run(true, function() {
 							#component.fire("intro.end", { node: ${this.var} });

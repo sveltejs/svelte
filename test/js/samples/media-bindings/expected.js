@@ -38,15 +38,15 @@ function create_main_fragment(state, component) {
 
 		h: function hydrate() {
 			addListener(audio, "timeupdate", audio_timeupdate_handler);
-			if (!('played' in state && 'currentTime' in state)) component._root._beforecreate.push(audio_timeupdate_handler);
+			if (!('played' in state && 'currentTime' in state)) component.root._beforecreate.push(audio_timeupdate_handler);
 			addListener(audio, "durationchange", audio_durationchange_handler);
-			if (!('duration' in state)) component._root._beforecreate.push(audio_durationchange_handler);
+			if (!('duration' in state)) component.root._beforecreate.push(audio_durationchange_handler);
 			addListener(audio, "play", audio_play_pause_handler);
 			addListener(audio, "pause", audio_play_pause_handler);
 			addListener(audio, "progress", audio_progress_handler);
-			if (!('buffered' in state)) component._root._beforecreate.push(audio_progress_handler);
+			if (!('buffered' in state)) component.root._beforecreate.push(audio_progress_handler);
 			addListener(audio, "loadedmetadata", audio_loadedmetadata_handler);
-			if (!('buffered' in state && 'seekable' in state)) component._root._beforecreate.push(audio_loadedmetadata_handler);
+			if (!('buffered' in state && 'seekable' in state)) component.root._beforecreate.push(audio_loadedmetadata_handler);
 		},
 
 		m: function mount(target, anchor) {
@@ -77,7 +77,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	if (!options._root) {
+	if (!options.root) {
 		this._oncreate = [];
 		this._beforecreate = [];
 	}

@@ -6,7 +6,7 @@ var Nested = window.Nested;
 function create_main_fragment(state, component) {
 
 	var nested = new Nested({
-		_root: component._root,
+		root: component.root,
 		data: { foo: "bar" }
 	});
 
@@ -35,7 +35,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	if (!options._root) {
+	if (!options.root) {
 		this._oncreate = [];
 		this._beforecreate = [];
 		this._aftercreate = [];
