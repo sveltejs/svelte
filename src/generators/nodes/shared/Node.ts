@@ -133,9 +133,9 @@ export default class Node {
 			false;
 	}
 
-	findNearest(type: string) {
-		if (this.type === type) return this;
-		if (this.parent) return this.parent.findNearest(type);
+	findNearest(selector: RegExp) {
+		if (selector.test(this.type)) return this;
+		if (this.parent) return this.parent.findNearest(selector);
 	}
 
 	getOrCreateAnchor(block: Block, parentNode: string) {
