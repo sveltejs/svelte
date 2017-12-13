@@ -91,6 +91,7 @@ export default function ssr(
 
 	initialState.push('state');
 
+	// TODO concatenate CSS maps
 	const result = deindent`
 		${generator.javascript}
 
@@ -103,6 +104,30 @@ export default function ssr(
 		};
 
 		${name}.render = function(state, options = {}) {
+			var components = new Set();
+
+			function addComponent(component) {
+				components.add(component);
+			}
+
+			var result = { title: null, addComponent };
+			var html = ${name}._render(result, state, options);
+
+			var cssCode = Array.from(components).map(c => c.css && c.css.code).filter(Boolean).join('\\n');
+
+			return {
+				html,
+				title: result.title,
+				css: { code: cssCode, map: null },
+				toString() {
+					return result.html;
+				}
+			};
+		}
+
+		${name}._render = function(__result, state, options) {
+			__result.addComponent(${name});
+
 			state = Object.assign(${initialState.join(', ')});
 
 			${computations.map(
@@ -125,6 +150,11 @@ export default function ssr(
 			return \`${generator.renderCode}\`;
 		};
 
+		${name}.css = {
+			code: ${css ? stringify(css) : `''`},
+			map: ${cssMap ? stringify(cssMap.toString()) : 'null'}
+		};
+
 		${name}.renderCss = function() {
 			var components = [];
 
@@ -132,8 +162,8 @@ export default function ssr(
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${stringify(css)},
-					map: ${stringify(cssMap.toString())}
+					css: ${name}.css && ${name}.css.code,
+					map: ${name}.css && ${name}.css.map
 				});
 			`}
 
