@@ -155,7 +155,13 @@ export default function ssr(
 			map: ${cssMap ? stringify(cssMap.toString()) : 'null'}
 		};
 
+		var warned = false;
 		${name}.renderCss = function() {
+			if (!warned) {
+				console.error('Component.renderCss(...) is deprecated and will be removed in v2 — use Component.render(...).css instead');
+				warned = true;
+			}
+
 			var components = [];
 
 			${generator.stylesheet.hasStyles &&
