@@ -59,15 +59,14 @@ describe("ssr", () => {
 
 				const data = tryToLoadJson(`${dir}/data.json`);
 
-				const html = component.render(data);
-				const css = component.renderCss().css;
+				const { html, css } = component.render(data);
 
 				fs.writeFileSync(`${dir}/_actual.html`, html);
-				if (css) fs.writeFileSync(`${dir}/_actual.css`, css);
+				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 				assert.htmlEqual(html, expectedHtml);
 				assert.equal(
-					css.replace(/^\s+/gm, ""),
+					css.code.replace(/^\s+/gm, ""),
 					expectedCss.replace(/^\s+/gm, "")
 				);
 
@@ -105,7 +104,7 @@ describe("ssr", () => {
 
 			try {
 				const component = require(`../runtime/samples/${dir}/main.html`);
-				const html = component.render(config.data, {
+				const { html } = component.render(config.data, {
 					store: config.store
 				});
 

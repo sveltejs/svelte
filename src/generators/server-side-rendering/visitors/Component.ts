@@ -84,7 +84,7 @@ export default function visitComponent(
 		block.addBinding(binding, expression);
 	});
 
-	let open = `\${${expression}.render({${props}}`;
+	let open = `\${${expression}._render(__result, {${props}}`;
 
 	const options = [];
 	if (generator.options.store) {
