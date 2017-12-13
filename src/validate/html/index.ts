@@ -1,12 +1,16 @@
 import validateElement from './validateElement';
 import validateWindow from './validateWindow';
+import validateDocument from './validateDocument';
 import a11y from './a11y';
 import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
-const meta = new Map([[':Window', validateWindow]]);
+const meta = new Map([
+	[':Window', validateWindow],
+	[':Document', validateDocument]
+]);
 
 export default function validateHtml(validator: Validator, html: Node) {
 	const refs = new Map();

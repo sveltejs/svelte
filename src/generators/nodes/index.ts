@@ -5,6 +5,7 @@ import Binding from './Binding';
 import CatchBlock from './CatchBlock';
 import Comment from './Comment';
 import Component from './Component';
+import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import ElseBlock from './ElseBlock';
@@ -28,6 +29,7 @@ const nodes: Record<string, any> = {
 	CatchBlock,
 	Comment,
 	Component,
+	Document,
 	EachBlock,
 	Element,
 	ElseBlock,
