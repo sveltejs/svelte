@@ -485,7 +485,7 @@ export default class Generator {
 					`);
 				};
 
-				const addDeclaration = (key: string, node: Node, disambiguator?: string) => {
+				const addDeclaration = (key: string, node: Node, disambiguator?: string, conflicts?: Record<string, boolean>) => {
 					const qualified = disambiguator ? `${disambiguator}-${key}` : key;
 
 					if (node.type === 'Identifier' && node.name === key) {
@@ -493,7 +493,10 @@ export default class Generator {
 						return;
 					}
 
-					let name = this.getUniqueName(key);
+					let deconflicted = key;
+					if (conflicts) while (deconflicted in conflicts) deconflicted += '_'
+
+					let name = this.getUniqueName(deconflicted);
 					this.templateVars.set(qualified, name);
 
 					// deindent
@@ -548,7 +551,11 @@ export default class Generator {
 						computations.push({ key, deps });
 
 						const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
-						addDeclaration(key, prop.value, 'computed');
+
+						addDeclaration(key, prop.value, 'computed', {
+							state: true,
+							changed: true
+						});
 					};
 
 					templateProperties.computed.value.properties.forEach((prop: Node) =>
