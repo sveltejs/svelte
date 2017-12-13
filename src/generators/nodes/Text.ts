@@ -1,7 +1,6 @@
 import { stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
-import { State } from '../dom/interfaces';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
