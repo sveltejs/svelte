@@ -9,6 +9,7 @@ import methods from './methods';
 import components from './components';
 import events from './events';
 import namespace from './namespace';
+import preload from './preload';
 import props from './props';
 import tag from './tag';
 import transitions from './transitions';
@@ -26,6 +27,7 @@ export default {
 	components,
 	events,
 	namespace,
+	preload,
 	props,
 	tag,
 	transitions,
