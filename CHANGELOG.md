@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.47.2
+
+* Deconflict computed properties against arguments to `_recompute` ([#1012](https://github.com/sveltejs/svelte/issues/1012))
+* Allow `await` blocks in slots ([#1018](https://github.com/sveltejs/svelte/issues/1018))
+* Allow components without slots to have whitespace as only child ([#1007](https://github.com/sveltejs/svelte/issues/1007))
+* Correctly set `toString` on `CompileError` ([#1016](https://github.com/sveltejs/svelte/pull/1016))
+
 ## 1.47.1
 
 * Sanitize filenames in SSR mode ([#1005](https://github.com/sveltejs/svelte/issues/1005))
