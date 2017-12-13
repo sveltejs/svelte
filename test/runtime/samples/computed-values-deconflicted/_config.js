@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	html: '<span>waiting</span>',
 
 	test(assert, component, target) {
