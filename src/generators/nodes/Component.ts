@@ -68,7 +68,7 @@ export default class Component extends Node {
 
 		const name = this.var;
 
-		const componentInitProperties = [`_root: #component._root`];
+		const componentInitProperties = [`root: #component.root`];
 
 		if (this.children.length > 0) {
 			const slots = Array.from(this._slots).map(name => `${name}: @createFragment()`);
@@ -217,7 +217,7 @@ export default class Component extends Node {
 				`);
 
 				beforecreate = deindent`
-					#component._root._beforecreate.push(function() {
+					#component.root._beforecreate.push(function() {
 						var state = #component.get(), childState = ${name}.get(), newState = {};
 						if (!childState) return;
 						${setParentFromChildOnInit}

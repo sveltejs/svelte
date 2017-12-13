@@ -28,10 +28,10 @@ function SvelteComponent(options) {
 
 	var _oncreate = oncreate.bind(this);
 
-	if (!options._root) {
+	if (!options.root) {
 		this._oncreate = [_oncreate];
 	} else {
-	 	this._root._oncreate.push(_oncreate);
+	 	this.root._oncreate.push(_oncreate);
 	 }
 
 	this._fragment = create_main_fragment(this._state, this);

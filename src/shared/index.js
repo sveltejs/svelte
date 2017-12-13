@@ -67,11 +67,11 @@ export function get(key) {
 export function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
-	component._root = options._root || component;
 	component._bind = options._bind;
 
 	component.options = options;
-	component.store = component._root.options.store;
+	component.root = options.root || component;
+	component.store = component.root.options.store;
 }
 
 export function observe(key, callback, options) {
@@ -136,12 +136,12 @@ export function onDev(eventName, handler) {
 
 export function set(newState) {
 	this._set(assign({}, newState));
-	if (this._root._lock) return;
-	this._root._lock = true;
-	callAll(this._root._beforecreate);
-	callAll(this._root._oncreate);
-	callAll(this._root._aftercreate);
-	this._root._lock = false;
+	if (this.root._lock) return;
+	this.root._lock = true;
+	callAll(this.root._beforecreate);
+	callAll(this.root._oncreate);
+	callAll(this.root._aftercreate);
+	this.root._lock = false;
 }
 
 export function _set(newState) {
