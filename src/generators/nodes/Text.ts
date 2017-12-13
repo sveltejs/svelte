@@ -17,15 +17,26 @@ const elementsWithoutText = new Set([
 	'video',
 ]);
 
+function shouldSkip(node: Text) {
+	if (/\S/.test(node.data)) return false;
+
+	const parentElement = node.findNearest(/(?:Element|Component)/);
+	if (!parentElement) return false;
+
+	if (parentElement.type === 'Component') return parentElement.children.length === 1 && node === parentElement.children[0];
+
+	return parentElement.namespace || elementsWithoutText.has(parentElement.name);
+}
+
 export default class Text extends Node {
 	type: 'Text';
 	data: string;
 	shouldSkip: boolean;
 
 	init(block: Block) {
-		const parentElement = this.findNearest('Element');
+		const parentElement = this.findNearest(/(?:Element|Component)/);
 
-		if (!/\S/.test(this.data) && parentElement && (parentElement.namespace || elementsWithoutText.has(parentElement.name))) {
+		if (shouldSkip(this)) {
 			this.shouldSkip = true;
 			return;
 		}
