@@ -59,7 +59,7 @@ describe("ssr", () => {
 
 				const data = tryToLoadJson(`${dir}/data.json`);
 
-				const { html, css } = component.render(data);
+				const { html, css, title } = component.render(data);
 
 				fs.writeFileSync(`${dir}/_actual.html`, html);
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
@@ -69,6 +69,13 @@ describe("ssr", () => {
 					css.code.replace(/^\s+/gm, ""),
 					expectedCss.replace(/^\s+/gm, "")
 				);
+
+				if (fs.existsSync(`${dir}/title.txt`)) {
+					assert.equal(
+						title,
+						fs.readFileSync(`${dir}/title.txt`, 'utf-8')
+					);
+				}
 
 				if (show) showOutput(dir, { generate: 'ssr' });
 			} catch (err) {

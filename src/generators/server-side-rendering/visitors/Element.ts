@@ -5,22 +5,8 @@ import visit from '../visit';
 import { SsrGenerator } from '../index';
 import Element from '../../nodes/Element';
 import Block from '../Block';
-import { escape } from '../../../utils/stringify';
 import { Node } from '../../../interfaces';
-
-function stringifyAttributeValue(block: Block, chunks: Node[]) {
-	return chunks
-		.map((chunk: Node) => {
-			if (chunk.type === 'Text') {
-				return escape(chunk.data).replace(/"/g, '&quot;');
-			}
-
-			block.contextualise(chunk.expression);
-			const { snippet } = chunk.metadata;
-			return '${' + snippet + '}';
-		})
-		.join('');
-}
+import stringifyAttributeValue from './shared/stringifyAttributeValue';
 
 export default function visitElement(
 	generator: SsrGenerator,
