@@ -97,11 +97,11 @@ function get(key) {
 function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
-	component._root = options._root || component;
 	component._bind = options._bind;
 
 	component.options = options;
-	component.store = component._root.options.store;
+	component.root = options.root || component;
+	component.store = component.root.options.store;
 }
 
 function observe(key, callback, options) {
@@ -141,12 +141,12 @@ function on(eventName, handler) {
 
 function set(newState) {
 	this._set(assign({}, newState));
-	if (this._root._lock) return;
-	this._root._lock = true;
-	callAll(this._root._beforecreate);
-	callAll(this._root._oncreate);
-	callAll(this._root._aftercreate);
-	this._root._lock = false;
+	if (this.root._lock) return;
+	this.root._lock = true;
+	callAll(this.root._beforecreate);
+	callAll(this.root._oncreate);
+	callAll(this.root._aftercreate);
+	this.root._lock = false;
 }
 
 function _set(newState) {
@@ -234,15 +234,15 @@ function create_main_fragment(state, component) {
 
 		h: function hydrate() {
 			addListener(audio, "timeupdate", audio_timeupdate_handler);
-			if (!('played' in state && 'currentTime' in state)) component._root._beforecreate.push(audio_timeupdate_handler);
+			if (!('played' in state && 'currentTime' in state)) component.root._beforecreate.push(audio_timeupdate_handler);
 			addListener(audio, "durationchange", audio_durationchange_handler);
-			if (!('duration' in state)) component._root._beforecreate.push(audio_durationchange_handler);
+			if (!('duration' in state)) component.root._beforecreate.push(audio_durationchange_handler);
 			addListener(audio, "play", audio_play_pause_handler);
 			addListener(audio, "pause", audio_play_pause_handler);
 			addListener(audio, "progress", audio_progress_handler);
-			if (!('buffered' in state)) component._root._beforecreate.push(audio_progress_handler);
+			if (!('buffered' in state)) component.root._beforecreate.push(audio_progress_handler);
 			addListener(audio, "loadedmetadata", audio_loadedmetadata_handler);
-			if (!('buffered' in state && 'seekable' in state)) component._root._beforecreate.push(audio_loadedmetadata_handler);
+			if (!('buffered' in state && 'seekable' in state)) component.root._beforecreate.push(audio_loadedmetadata_handler);
 		},
 
 		m: function mount(target, anchor) {
@@ -273,7 +273,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	if (!options._root) {
+	if (!options.root) {
 		this._oncreate = [];
 		this._beforecreate = [];
 	}
