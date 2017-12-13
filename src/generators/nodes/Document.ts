@@ -4,14 +4,6 @@ import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
 
-const readonly = new Set([
-	'innerWidth',
-	'innerHeight',
-	'outerWidth',
-	'outerHeight',
-	'online',
-]);
-
 export default class Document extends Node {
 	type: 'Document';
 	attributes: Attribute[];
