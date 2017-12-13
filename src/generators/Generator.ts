@@ -161,9 +161,9 @@ export default class Generator {
 
 		this.computations = [];
 		this.templateProperties = {};
-		this.name = this.alias(name);
 
 		this.walkJs(dom);
+		this.name = this.alias(name);
 
 		if (options.customElement === true) {
 			this.customElement = {
