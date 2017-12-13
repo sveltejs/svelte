@@ -40,6 +40,7 @@ describe('parse', () => {
 					assert.equal(err.message, expected.message);
 					assert.deepEqual(err.loc, expected.loc);
 					assert.equal(err.pos, expected.pos);
+					assert.equal(err.toString().split('\n')[0], `${expected.message} (${expected.loc.line}:${expected.loc.column})`);
 				} catch (err2) {
 					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
 					throw e;

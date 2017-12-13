@@ -24,7 +24,7 @@ export default class CompileError extends Error {
 		this.frame = getCodeFrame(template, line, column);
 	}
 
-	toString() {
+	public toString = () => {
 		return `${this.message} (${this.loc.line}:${this.loc.column})\n${this
 			.frame}`;
 	}
