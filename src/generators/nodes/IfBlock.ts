@@ -133,15 +133,17 @@ export default class IfBlock extends Node {
 
 		block.builders.create.addLine(`${if_name}${name}.c();`);
 
-		block.builders.claim.addLine(
-			`${if_name}${name}.l(${parentNodes});`
-		);
+		if (parentNodes) {
+			block.builders.claim.addLine(
+				`${if_name}${name}.l(${parentNodes});`
+			);
+		}
 
 		if (needsAnchor) {
 			block.addElement(
 				anchor,
 				`@createComment()`,
-				`@createComment()`,
+				parentNodes && `@createComment()`,
 				parentNode
 			);
 		}

@@ -22,7 +22,7 @@ export default class MustacheTag extends Tag {
 		block.addElement(
 			this.var,
 			`@createText(${init})`,
-			`@claimText(${parentNodes}, ${init})`,
+			parentNodes && `@claimText(${parentNodes}, ${init})`,
 			parentNode
 		);
 	}

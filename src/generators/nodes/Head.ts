@@ -4,9 +4,17 @@ import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
 
-export default class Document extends Node {
-	type: 'Document';
+export default class Head extends Node {
+	type: 'Head';
 	attributes: Attribute[];
+
+	init(
+		block: Block,
+		stripWhitespace: boolean,
+		nextSibling: Node
+	) {
+		this.initChildren(block, true, null);
+	}
 
 	build(
 		block: Block,
@@ -15,12 +23,10 @@ export default class Document extends Node {
 	) {
 		const { generator } = this;
 
-		this.var = 'document';
+		this.var = 'document.head';
 
-		this.attributes.forEach((attribute: Attribute) => {
-			if (attribute.name === 'title') {
-				attribute.render(block);
-			}
+		this.children.forEach((child: Node) => {
+			child.build(block, 'document.head', null);
 		});
 	}
 }

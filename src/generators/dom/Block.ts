@@ -132,9 +132,9 @@ export default class Block {
 	) {
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
-		this.builders.claim.addLine(`${name} = ${claimStatement};`);
+		this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
 
-		if (parentNode) {
+		if (parentNode && parentNode !== 'document.head') {
 			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
 		} else {
 			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);

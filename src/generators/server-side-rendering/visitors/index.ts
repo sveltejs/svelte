@@ -1,9 +1,9 @@
 import AwaitBlock from './AwaitBlock';
 import Comment from './Comment';
 import Component from './Component';
-import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element';
+import Head from './Head';
 import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
@@ -15,9 +15,9 @@ export default {
 	AwaitBlock,
 	Comment,
 	Component,
-	Document,
 	EachBlock,
 	Element,
+	Head,
 	IfBlock,
 	MustacheTag,
 	RawMustacheTag,

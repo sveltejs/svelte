@@ -1,6 +1,6 @@
 import validateElement from './validateElement';
 import validateWindow from './validateWindow';
-import validateDocument from './validateDocument';
+import validateHead from './validateHead';
 import a11y from './a11y';
 import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
@@ -9,7 +9,7 @@ import { Node } from '../../interfaces';
 
 const meta = new Map([
 	[':Window', validateWindow],
-	[':Document', validateDocument]
+	[':Head', validateHead]
 ]);
 
 export default function validateHtml(validator: Validator, html: Node) {
