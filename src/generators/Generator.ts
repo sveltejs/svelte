@@ -161,9 +161,9 @@ export default class Generator {
 
 		this.computations = [];
 		this.templateProperties = {};
-		this.name = this.alias(name);
 
 		this.walkJs(dom);
+		this.name = this.alias(name);
 
 		if (options.customElement === true) {
 			this.customElement = {
@@ -731,6 +731,9 @@ export default class Generator {
 				} else if (node.name === ':Window') { // TODO do this in parse?
 					node.type = 'Window';
 					node.__proto__ = nodes.Window.prototype;
+				} else if (node.name === ':Head') { // TODO do this in parse?
+					node.type = 'Head';
+					node.__proto__ = nodes.Head.prototype;
 				} else if (node.type === 'Element' && node.name === 'slot' && !generator.customElement) {
 					node.type = 'Slot';
 					node.__proto__ = nodes.Slot.prototype;

@@ -77,10 +77,7 @@ export default class Attribute {
 			? '@setXlinkAttribute'
 			: '@setAttribute';
 
-		const isDynamic =
-			(this.value !== true && this.value.length > 1) ||
-			(this.value.length === 1 && this.value[0].type !== 'Text');
-
+		const isDynamic = this.isDynamic();
 		const isLegacyInputType = this.generator.legacy && name === 'type' && this.parent.name === 'input';
 
 		const isDataSet = /^data-/.test(name) && !this.generator.legacy && !node.namespace;
@@ -309,6 +306,12 @@ export default class Attribute {
 				`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
 			);
 		});
+	}
+
+	isDynamic() {
+		if (this.value === true || this.value.length === 0) return false;
+		if (this.value.length > 1) return true;
+		return this.value[0].type !== 'Text';
 	}
 }
 

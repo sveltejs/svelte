@@ -248,7 +248,7 @@ export default class Component extends Node {
 			block.contextualise(this.expression);
 			const { dependencies, snippet } = this.metadata;
 
-			const anchor = this.getOrCreateAnchor(block, parentNode);
+			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 
 			const params = block.params.join(', ');
 
@@ -281,9 +281,11 @@ export default class Component extends Node {
 				`if (${name}) ${name}._fragment.c();`
 			);
 
-			block.builders.claim.addLine(
-				`if (${name}) ${name}._fragment.l(${parentNodes});`
-			);
+			if (parentNodes) {
+				block.builders.claim.addLine(
+					`if (${name}) ${name}._fragment.l(${parentNodes});`
+				);
+			}
 
 			block.builders.mount.addLine(
 				`if (${name}) ${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
@@ -350,9 +352,11 @@ export default class Component extends Node {
 
 			block.builders.create.addLine(`${name}._fragment.c();`);
 
-			block.builders.claim.addLine(
-				`${name}._fragment.l(${parentNodes});`
-			);
+			if (parentNodes) {
+				block.builders.claim.addLine(
+					`${name}._fragment.l(${parentNodes});`
+				);
+			}
 
 			block.builders.mount.addLine(
 				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`

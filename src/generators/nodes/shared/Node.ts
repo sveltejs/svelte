@@ -138,7 +138,7 @@ export default class Node {
 		if (this.parent) return this.parent.findNearest(selector);
 	}
 
-	getOrCreateAnchor(block: Block, parentNode: string) {
+	getOrCreateAnchor(block: Block, parentNode: string, parentNodes: string) {
 		// TODO use this in EachBlock and IfBlock — tricky because
 		// children need to be created first
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
@@ -150,7 +150,7 @@ export default class Node {
 			block.addElement(
 				anchor,
 				`@createComment()`,
-				`@createComment()`,
+				parentNodes && `@createComment()`,
 				parentNode
 			);
 		}

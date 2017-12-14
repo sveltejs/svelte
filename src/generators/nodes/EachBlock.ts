@@ -154,7 +154,7 @@ export default class EachBlock extends Node {
 			block.addElement(
 				anchor,
 				`@createComment()`,
-				`@createComment()`,
+				parentNodes && `@createComment()`,
 				parentNode
 			);
 		}
@@ -263,7 +263,7 @@ export default class EachBlock extends Node {
 			this.block.addElement(
 				this.block.first,
 				`@createComment()`,
-				`@createComment()`,
+				parentNodes && `@createComment()`,
 				null
 			);
 		}
@@ -293,13 +293,15 @@ export default class EachBlock extends Node {
 			}
 		`);
 
-		block.builders.claim.addBlock(deindent`
-			var ${iteration} = ${head};
-			while (${iteration}) {
-				${iteration}.l(${parentNodes});
-				${iteration} = ${iteration}.next;
-			}
-		`);
+		if (parentNodes) {
+			block.builders.claim.addBlock(deindent`
+				var ${iteration} = ${head};
+				while (${iteration}) {
+					${iteration}.l(${parentNodes});
+					${iteration} = ${iteration}.next;
+				}
+			`);
+		}
 
 		block.builders.mount.addBlock(deindent`
 			var ${iteration} = ${head};
@@ -481,11 +483,13 @@ export default class EachBlock extends Node {
 			}
 		`);
 
-		block.builders.claim.addBlock(deindent`
-			for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-				${iterations}[#i].l(${parentNodes});
-			}
-		`);
+		if (parentNodes) {
+			block.builders.claim.addBlock(deindent`
+				for (var #i = 0; #i < ${iterations}.length; #i += 1) {
+					${iterations}[#i].l(${parentNodes});
+				}
+			`);
+		}
 
 		block.builders.mount.addBlock(deindent`
 			for (var #i = 0; #i < ${iterations}.length; #i += 1) {
