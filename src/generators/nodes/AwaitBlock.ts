@@ -68,7 +68,7 @@ export default class AwaitBlock extends Node {
 	) {
 		const name = this.var;
 
-		const anchor = this.getOrCreateAnchor(block, parentNode);
+		const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const params = block.params.join(', ');
@@ -143,9 +143,11 @@ export default class AwaitBlock extends Node {
 			${await_block}.c();
 		`);
 
-		block.builders.claim.addBlock(deindent`
-			${await_block}.l(${parentNodes});
-		`);
+		if (parentNodes) {
+			block.builders.claim.addBlock(deindent`
+				${await_block}.l(${parentNodes});
+			`);
+		}
 
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';

@@ -8,9 +8,11 @@ export default function visitDocument(
 	block: Block,
 	node: Node
 ) {
-	const title = node.attributes.find(attribute => attribute.type === 'Attribute' && attribute.name === 'title');
+	throw new Error('TODO');
 
-	if (title) {
-		generator.append('${(__result.title = `' + stringifyAttributeValue(block, title.value) + '`, "")}');
-	}
+	// const title = node.attributes.find(attribute => attribute.type === 'Attribute' && attribute.name === 'title');
+
+	// if (title) {
+	// 	generator.append('${(__result.title = `' + stringifyAttributeValue(block, title.value) + '`, "")}');
+	// }
 }

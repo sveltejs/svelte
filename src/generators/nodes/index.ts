@@ -5,12 +5,12 @@ import Binding from './Binding';
 import CatchBlock from './CatchBlock';
 import Comment from './Comment';
 import Component from './Component';
-import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import ElseBlock from './ElseBlock';
 import EventHandler from './EventHandler';
 import Fragment from './Fragment';
+import Head from './Head';
 import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import PendingBlock from './PendingBlock';
@@ -29,12 +29,12 @@ const nodes: Record<string, any> = {
 	CatchBlock,
 	Comment,
 	Component,
-	Document,
 	EachBlock,
 	Element,
 	ElseBlock,
 	EventHandler,
 	Fragment,
+	Head,
 	IfBlock,
 	MustacheTag,
 	PendingBlock,

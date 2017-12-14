@@ -19,7 +19,7 @@ const COMPONENT = ':Component';
 
 const metaTags = new Set([
 	':Window',
-	':Document'
+	':Head'
 ]);
 
 const specials = new Map([
@@ -88,21 +88,24 @@ export default function tag(parser: Parser) {
 	const name = readTagName(parser);
 
 	if (metaTags.has(name)) {
-		if (name in parser.metaTags) {
-			if (isClosingTag && parser.current().children.length) {
+		if (isClosingTag) {
+			if (name === ':Window' && parser.current().children.length) {
 				parser.error(
-					`<${name}> cannot have children`,
+					`<:Window> cannot have children`,
 					parser.current().children[0].start
 				);
 			}
+		} else {
+			if (name in parser.metaTags) {
+				parser.error(`A component can only have one <${name}> tag`, start);
+			}
 
-			parser.error(`A component can only have one <${name}> tag`, start);
-		}
+			if (parser.stack.length > 1) {
+				console.log(parser.stack);
+				parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
+			}
 
-		parser.metaTags[name] = true;
-
-		if (parser.stack.length > 1) {
-			parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
+			parser.metaTags[name] = true;
 		}
 	}
 
