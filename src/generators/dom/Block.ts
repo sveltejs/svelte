@@ -134,8 +134,9 @@ export default class Block {
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
 		this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
 
-		if (parentNode && parentNode !== 'document.head') {
+		if (parentNode) {
 			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
+			if (parentNode === 'document.head') this.builders.unmount.addLine(`@detachNode(${name});`);
 		} else {
 			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 			this.builders.unmount.addLine(`@detachNode(${name});`);

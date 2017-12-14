@@ -193,10 +193,14 @@ export default class Element extends Node {
 			}
 		}
 
-		if (initialMountNode && initialMountNode !== 'document.head') {
+		if (initialMountNode) {
 			block.builders.mount.addLine(
 				`@appendNode(${name}, ${initialMountNode});`
 			);
+
+			if (initialMountNode === 'document.head') {
+				block.builders.unmount.addLine(`@detachNode(${name});`);
+			}
 		} else {
 			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 
