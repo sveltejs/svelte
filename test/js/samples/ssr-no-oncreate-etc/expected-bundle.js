@@ -11,14 +11,14 @@ SvelteComponent.render = function(state, options = {}) {
 		components.add(component);
 	}
 
-	var result = { title: null, addComponent };
+	var result = { head: '', addComponent };
 	var html = SvelteComponent._render(result, state, options);
 
 	var cssCode = Array.from(components).map(c => c.css && c.css.code).filter(Boolean).join('\n');
 
 	return {
 		html,
-		title: result.title,
+		head: result.head,
 		css: { code: cssCode, map: null },
 		toString() {
 			return result.html;

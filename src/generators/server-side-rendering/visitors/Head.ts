@@ -2,17 +2,18 @@ import { SsrGenerator } from '../index';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
 import stringifyAttributeValue from './shared/stringifyAttributeValue';
+import visit from '../visit';
 
 export default function visitDocument(
 	generator: SsrGenerator,
 	block: Block,
 	node: Node
 ) {
-	throw new Error('TODO');
+	generator.append('${(__result.head += `');
 
-	// const title = node.attributes.find(attribute => attribute.type === 'Attribute' && attribute.name === 'title');
+	node.children.forEach((child: Node) => {
+		visit(generator, block, child);
+	});
 
-	// if (title) {
-	// 	generator.append('${(__result.title = `' + stringifyAttributeValue(block, title.value) + '`, "")}');
-	// }
+	generator.append('`, "")}');
 }
