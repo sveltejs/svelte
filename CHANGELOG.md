@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.48.0
+
+* Added `<:Head>` component for injecting contents into document head ([#1013](https://github.com/sveltejs/svelte/issues/1013)))
+* SSR `render(...)` method now returns a `{ html, css: { code, map }, head }` object ([#1013](https://github.com/sveltejs/svelte/issues/1013))
+* SSR `renderCss(...)` method is deprecated ([#1013](https://github.com/sveltejs/svelte/issues/1013))
+* Add a `preload` function to components ([#1015](https://github.com/sveltejs/svelte/issues/1015))
+* Expose `this.root` on nested components ([#1023](https://github.com/sveltejs/svelte/pull/1023))
+
 ## 1.47.2
 
 * Deconflict computed properties against arguments to `_recompute` ([#1012](https://github.com/sveltejs/svelte/issues/1012))
