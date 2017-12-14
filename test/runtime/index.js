@@ -52,7 +52,7 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers)`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ' , hydration' : ''})`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -183,7 +183,9 @@ describe("runtime", () => {
 					}
 
 					if (config.test) {
-						return config.test(assert, component, target, window, raf);
+						return Promise.resolve(config.test(assert, component, target, window, raf)).then(() => {
+							component.destroy();
+						});
 					} else {
 						component.destroy();
 						assert.equal(target.innerHTML, "");

@@ -61,7 +61,7 @@ export default class RawMustacheTag extends Tag {
 			block.addElement(
 				anchorBefore,
 				`@createElement('noscript')`,
-				`@createElement('noscript')`,
+				parentNodes && `@createElement('noscript')`,
 				parentNode
 			);
 		}
@@ -70,7 +70,7 @@ export default class RawMustacheTag extends Tag {
 			block.addElement(
 				anchorAfter,
 				`@createElement('noscript')`,
-				`@createElement('noscript')`,
+				parentNodes && `@createElement('noscript')`,
 				parentNode
 			);
 		}

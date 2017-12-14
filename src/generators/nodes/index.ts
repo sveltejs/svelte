@@ -10,6 +10,7 @@ import Element from './Element';
 import ElseBlock from './ElseBlock';
 import EventHandler from './EventHandler';
 import Fragment from './Fragment';
+import Head from './Head';
 import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import PendingBlock from './PendingBlock';
@@ -33,6 +34,7 @@ const nodes: Record<string, any> = {
 	ElseBlock,
 	EventHandler,
 	Fragment,
+	Head,
 	IfBlock,
 	MustacheTag,
 	PendingBlock,

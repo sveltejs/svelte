@@ -17,9 +17,10 @@ const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const SELF = ':Self';
 const COMPONENT = ':Component';
 
-const metaTags = {
-	':Window': true
-};
+const metaTags = new Set([
+	':Window',
+	':Head'
+]);
 
 const specials = new Map([
 	[
@@ -86,22 +87,25 @@ export default function tag(parser: Parser) {
 
 	const name = readTagName(parser);
 
-	if (name in metaTags) {
-		if (name in parser.metaTags) {
-			if (isClosingTag && parser.current().children.length) {
+	if (metaTags.has(name)) {
+		if (isClosingTag) {
+			if (name === ':Window' && parser.current().children.length) {
 				parser.error(
-					`<${name}> cannot have children`,
+					`<:Window> cannot have children`,
 					parser.current().children[0].start
 				);
 			}
+		} else {
+			if (name in parser.metaTags) {
+				parser.error(`A component can only have one <${name}> tag`, start);
+			}
 
-			parser.error(`A component can only have one <${name}> tag`, start);
-		}
+			if (parser.stack.length > 1) {
+				console.log(parser.stack);
+				parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
+			}
 
-		parser.metaTags[name] = true;
-
-		if (parser.stack.length > 1) {
-			parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
+			parser.metaTags[name] = true;
 		}
 	}
 
@@ -252,7 +256,7 @@ function readTagName(parser: Parser) {
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 
-	if (name in metaTags) return name;
+	if (metaTags.has(name)) return name;
 
 	if (!validTagName.test(name)) {
 		parser.error(`Expected valid tag name`, start);

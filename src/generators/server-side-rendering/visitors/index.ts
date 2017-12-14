@@ -3,6 +3,7 @@ import Comment from './Comment';
 import Component from './Component';
 import EachBlock from './EachBlock';
 import Element from './Element';
+import Head from './Head';
 import IfBlock from './IfBlock';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
@@ -16,6 +17,7 @@ export default {
 	Component,
 	EachBlock,
 	Element,
+	Head,
 	IfBlock,
 	MustacheTag,
 	RawMustacheTag,

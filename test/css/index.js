@@ -131,7 +131,7 @@ describe('css', () => {
 					assert.equal(
 						normalizeHtml(
 							window,
-							component.render(config.data).replace(/svelte-\d+/g, 'svelte-xyz')
+							component.render(config.data).html.replace(/svelte-\d+/g, 'svelte-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);

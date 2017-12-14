@@ -53,7 +53,7 @@ export default class Text extends Node {
 		block.addElement(
 			this.var,
 			`@createText(${stringify(this.data)})`,
-			`@claimText(${parentNodes}, ${stringify(this.data)})`,
+			parentNodes && `@claimText(${parentNodes}, ${stringify(this.data)})`,
 			parentNode
 		);
 	}

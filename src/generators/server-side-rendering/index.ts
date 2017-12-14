@@ -91,6 +91,7 @@ export default function ssr(
 
 	initialState.push('state');
 
+	// TODO concatenate CSS maps
 	const result = deindent`
 		${generator.javascript}
 
@@ -103,6 +104,30 @@ export default function ssr(
 		};
 
 		${name}.render = function(state, options = {}) {
+			var components = new Set();
+
+			function addComponent(component) {
+				components.add(component);
+			}
+
+			var result = { head: '', addComponent };
+			var html = ${name}._render(result, state, options);
+
+			var cssCode = Array.from(components).map(c => c.css && c.css.code).filter(Boolean).join('\\n');
+
+			return {
+				html,
+				head: result.head,
+				css: { code: cssCode, map: null },
+				toString() {
+					return result.html;
+				}
+			};
+		}
+
+		${name}._render = function(__result, state, options) {
+			__result.addComponent(${name});
+
 			state = Object.assign(${initialState.join(', ')});
 
 			${computations.map(
@@ -125,15 +150,26 @@ export default function ssr(
 			return \`${generator.renderCode}\`;
 		};
 
+		${name}.css = {
+			code: ${css ? stringify(css) : `''`},
+			map: ${cssMap ? stringify(cssMap.toString()) : 'null'}
+		};
+
+		var warned = false;
 		${name}.renderCss = function() {
+			if (!warned) {
+				console.error('Component.renderCss(...) is deprecated and will be removed in v2 — use Component.render(...).css instead');
+				warned = true;
+			}
+
 			var components = [];
 
 			${generator.stylesheet.hasStyles &&
 				deindent`
 				components.push({
 					filename: ${name}.filename,
-					css: ${stringify(css)},
-					map: ${stringify(cssMap.toString())}
+					css: ${name}.css && ${name}.css.code,
+					map: ${name}.css && ${name}.css.map
 				});
 			`}
 

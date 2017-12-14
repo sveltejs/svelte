@@ -186,7 +186,7 @@ function _mount(target, anchor) {
 }
 
 function _unmount() {
-	this._fragment.u();
+	if (this._fragment) this._fragment.u();
 }
 
 var proto = {

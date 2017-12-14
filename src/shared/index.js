@@ -185,7 +185,7 @@ export function _mount(target, anchor) {
 }
 
 export function _unmount() {
-	this._fragment.u();
+	if (this._fragment) this._fragment.u();
 }
 
 export function isPromise(value) {

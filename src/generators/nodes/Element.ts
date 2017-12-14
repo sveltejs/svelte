@@ -163,7 +163,7 @@ export default class Element extends Node {
 
 		const childState = {
 			parentNode: this.var,
-			parentNodes: block.getUniqueName(`${this.var}_nodes`)
+			parentNodes: parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
 		};
 
 		const name = this.var;
@@ -175,25 +175,32 @@ export default class Element extends Node {
 			parentNode;
 
 		block.addVariable(name);
+		const renderStatement = getRenderStatement(this.generator, this.namespace, this.name);
 		block.builders.create.addLine(
-			`${name} = ${getRenderStatement(
-				this.generator,
-				this.namespace,
-				this.name
-			)};`
+			`${name} = ${renderStatement};`
 		);
 
 		if (this.generator.hydratable) {
-			block.builders.claim.addBlock(deindent`
-				${name} = ${getClaimStatement(generator, this.namespace, parentNodes, this)};
-				var ${childState.parentNodes} = @children(${name});
-			`);
+			if (parentNodes) {
+				block.builders.claim.addBlock(deindent`
+					${name} = ${getClaimStatement(generator, this.namespace, parentNodes, this)};
+					var ${childState.parentNodes} = @children(${name});
+				`);
+			} else {
+				block.builders.claim.addLine(
+					`${name} = ${renderStatement};`
+				);
+			}
 		}
 
 		if (initialMountNode) {
 			block.builders.mount.addLine(
 				`@appendNode(${name}, ${initialMountNode});`
 			);
+
+			if (initialMountNode === 'document.head') {
+				block.builders.unmount.addLine(`@detachNode(${name});`);
+			}
 		} else {
 			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 
@@ -394,9 +401,11 @@ export default class Element extends Node {
 			block.builders.mount.addBlock(this.initialUpdate);
 		}
 
-		block.builders.claim.addLine(
-			`${childState.parentNodes}.forEach(@detachNode);`
-		);
+		if (childState.parentNodes) {
+			block.builders.claim.addLine(
+				`${childState.parentNodes}.forEach(@detachNode);`
+			);
+		}
 
 		function toHTML(node: Element | Text) {
 			if (node.type === 'Text') return node.data;
