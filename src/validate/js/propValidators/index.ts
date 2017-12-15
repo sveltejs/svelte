@@ -14,6 +14,7 @@ import props from './props';
 import tag from './tag';
 import transitions from './transitions';
 import setup from './setup';
+import store from './store';
 
 export default {
 	data,
@@ -32,4 +33,5 @@ export default {
 	tag,
 	transitions,
 	setup,
+	store,
 };

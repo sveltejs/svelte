@@ -72,7 +72,7 @@ export default function ssr(
 	// generate initial state object
 	const expectedProperties = Array.from(generator.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = options.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
+	const storeProps = options.store || templateProperties.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
 
 	const initialState = [];
 	if (globals.length > 0) {
@@ -80,7 +80,12 @@ export default function ssr(
 	}
 
 	if (storeProps.length > 0) {
-		initialState.push(`options.store._init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`);
+		const initialize = `_init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`
+		if (options.store) {
+			initialState.push(`options.store.${initialize}`);
+		} else if (templateProperties.store) {
+			initialState.push(`%store().${initialize}`);
+		}
 	}
 
 	if (templateProperties.data) {
