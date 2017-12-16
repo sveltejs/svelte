@@ -181,8 +181,7 @@ export default function dom(
 	// generate initial state object
 	const expectedProperties = Array.from(generator.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = options.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
-
+	const storeProps = options.store || templateProperties.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
 	const initialState = [];
 
 	if (globals.length > 0) {
@@ -206,6 +205,7 @@ export default function dom(
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
+		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}

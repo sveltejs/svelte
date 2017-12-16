@@ -610,6 +610,10 @@ export default class Generator {
 					addDeclaration('setup', templateProperties.setup.value);
 				}
 
+				if (templateProperties.store) {
+					addDeclaration('store', templateProperties.store.value);
+				}
+
 				if (templateProperties.tag) {
 					this.tag = templateProperties.tag.value.value;
 				}
