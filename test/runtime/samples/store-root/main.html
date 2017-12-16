@@ -1,11 +1,19 @@
 <h1>Hello {{$name}}!</h1>
+<Nested/>
+
 <script>
-import { Store } from '../../../../store.js';
-export default {
-	store () {
-		return new Store({
-			name: 'world'
-		});
-	}
-}
+	import { Store } from '../../../../store.js';
+	import Nested from './Nested.html';
+
+	export default {
+		store () {
+			return new Store({
+				name: 'world'
+			});
+		},
+
+		components: {
+			Nested
+		}
+	};
 </script>

@@ -81,10 +81,8 @@ export default function ssr(
 
 	if (storeProps.length > 0) {
 		const initialize = `_init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`
-		if (options.store) {
+		if (options.store || templateProperties.store) {
 			initialState.push(`options.store.${initialize}`);
-		} else if (templateProperties.store) {
-			initialState.push(`%store().${initialize}`);
 		}
 	}
 
@@ -116,6 +114,7 @@ export default function ssr(
 			}
 
 			var result = { head: '', addComponent };
+			${templateProperties.store && `options.store = %store();`}
 			var html = ${name}._render(result, state, options);
 
 			var cssCode = Array.from(components).map(c => c.css && c.css.code).filter(Boolean).join('\\n');

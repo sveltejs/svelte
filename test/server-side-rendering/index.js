@@ -113,7 +113,7 @@ describe("ssr", () => {
 			try {
 				const component = require(`../runtime/samples/${dir}/main.html`);
 				const { html } = component.render(config.data, {
-					store: config.store
+					store: (config.store !== true) && config.store
 				});
 
 				if (config.html) {
