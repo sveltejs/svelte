@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.49.1
+
+* Pass `store` to children in SSR mode ([#1029](https://github.com/sveltejs/svelte/pull/1029))
+
 ## 1.49.0
 
 * Support `store` as a component property ([#1028](https://github.com/sveltejs/svelte/pull/1028))
