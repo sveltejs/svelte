@@ -159,7 +159,7 @@ describe("runtime", () => {
 						target,
 						hydrate,
 						data: config.data,
-					  store: config.store
+						store: (config.store !== true && config.store)
 					}, config.options || {});
 
 					const component = new SvelteComponent(options);
