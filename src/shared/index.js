@@ -71,7 +71,7 @@ export function init(component, options) {
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.options.store;
+	component.store = component.root.store || component.root.options.store;
 }
 
 export function observe(key, callback, options) {
