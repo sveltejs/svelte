@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.49.0
+
+* Support `store` as a component property ([#1028](https://github.com/sveltejs/svelte/pull/1028))
+
 ## 1.48.0
 
 * Added `<:Head>` component for injecting contents into document head ([#1013](https://github.com/sveltejs/svelte/issues/1013)))
