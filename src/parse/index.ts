@@ -159,7 +159,6 @@ export class Parser {
 		const match = pattern.exec(this.template.slice(start));
 
 		if (match) {
-			const start = this.index;
 			this.index = start + match.index;
 			return this.template.slice(start, this.index);
 		}
