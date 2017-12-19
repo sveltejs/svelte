@@ -1,0 +1,8 @@
+[{
+  "message": "Cannot use this.get(...) — it must be passed into the computed function as an argument",
+  "pos": 73,
+  "loc": {
+    "line": 7,
+    "column": 11
+  }
+}]
