@@ -3,6 +3,8 @@ import checkForComputedKeys from '../utils/checkForComputedKeys';
 import { walk } from 'estree-walker';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
+import walkThroughTopFunctionScope from '../../../utils/walkThroughTopFunctionScope';
+import isThisGetCallExpression from '../../../utils/isThisGetCallExpression';
 
 export default function helpers(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
@@ -18,45 +20,24 @@ export default function helpers(validator: Validator, prop: Node) {
 	prop.value.properties.forEach((prop: Node) => {
 		if (!/FunctionExpression/.test(prop.value.type)) return;
 
-		let lexicalDepth = 0;
 		let usesArguments = false;
 
-		walk(prop.value.body, {
-			enter(node: Node) {
-				if (/^Function/.test(node.type)) {
-					lexicalDepth += 1;
-				} else if (lexicalDepth === 0) {
-					// handle special case that's caused some people confusion — using `this.get(...)` instead of passing argument
-					// TODO do the same thing for computed values?
-					if (
-						node.type === 'CallExpression' &&
-						node.callee.type === 'MemberExpression' &&
-						node.callee.object.type === 'ThisExpression' &&
-						node.callee.property.name === 'get' &&
-						!node.callee.property.computed
-					) {
-						validator.error(
-							`Cannot use this.get(...) — it must be passed into the helper function as an argument`,
-							node.start
-						);
-					}
+		walkThroughTopFunctionScope(prop.value.body, (node: Node) => {
+			if (isThisGetCallExpression(node) && !node.callee.property.computed) {
+				validator.error(
+					`Cannot use this.get(...) — it must be passed into the helper function as an argument`,
+					node.start
+				);
+			}
 
-					if (node.type === 'ThisExpression') {
-						validator.error(
-							`Helpers should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?`,
-							node.start
-						);
-					} else if (node.type === 'Identifier' && node.name === 'arguments') {
-						usesArguments = true;
-					}
-				}
-			},
-
-			leave(node: Node) {
-				if (/^Function/.test(node.type)) {
-					lexicalDepth -= 1;
-				}
-			},
+			if (node.type === 'ThisExpression') {
+				validator.error(
+					`Helpers should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?`,
+					node.start
+				);
+			} else if (node.type === 'Identifier' && node.name === 'arguments') {
+				usesArguments = true;
+			}
 		});
 
 		if (prop.value.params.length === 0 && !usesArguments) {

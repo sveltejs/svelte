@@ -1,8 +1,8 @@
-{{foo()}}
+{{foo}}
 
 <script>
 	export default {
-		helpers: {
+		computed: {
 			foo () {
 				return this.get( 'bar' );
 			}
