@@ -46,6 +46,9 @@ export default class EachBlock extends Node {
 		);
 		listNames.set(this.context, listName);
 
+		const contextTypes = new Map(block.contextTypes);
+		contextTypes.set(this.context, 'each');
+
 		const context = block.getUniqueName(this.context);
 		const contexts = new Map(block.contexts);
 		contexts.set(this.context, context);
@@ -69,6 +72,7 @@ export default class EachBlock extends Node {
 			key: this.key,
 
 			contexts,
+			contextTypes,
 			indexes,
 			changeableIndexes,
 
