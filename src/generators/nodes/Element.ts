@@ -55,7 +55,7 @@ export default class Element extends Node {
 							attribute.name === 'value'
 						) {
 							let select = this.parent;
-							while (select && select.type !== 'Element' || select.name !== 'select') select = select.parent;
+							while (select && (select.type !== 'Element' || select.name !== 'select')) select = select.parent;
 
 							if (select && select.selectBindingDependencies) {
 								select.selectBindingDependencies.forEach(prop => {
