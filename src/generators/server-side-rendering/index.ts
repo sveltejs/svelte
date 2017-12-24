@@ -124,7 +124,7 @@ export default function ssr(
 				head: result.head,
 				css: { code: cssCode, map: null },
 				toString() {
-					return result.html;
+					return html;
 				}
 			};
 		}
