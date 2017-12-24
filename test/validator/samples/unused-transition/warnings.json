@@ -1,0 +1,8 @@
+[{
+	"message": "The 'spin' transition is unused",
+	"loc": {
+		"line": 4,
+		"column": 3
+	},
+	"pos": 47
+}]

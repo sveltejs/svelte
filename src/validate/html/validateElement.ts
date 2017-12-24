@@ -138,11 +138,14 @@ export default function validateElement(
 				);
 			}
 		} else if (attribute.type === 'EventHandler') {
+			validator.used.events.add(attribute.name);
 			validateEventHandler(validator, attribute, refCallees);
 		} else if (attribute.type === 'Transition') {
 			if (isComponent) {
 				validator.error(`Transitions can only be applied to DOM elements, not components`, attribute.start);
 			}
+
+			validator.used.transitions.add(attribute.name);
 
 			const bidi = attribute.intro && attribute.outro;
 
