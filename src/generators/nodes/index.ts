@@ -19,6 +19,7 @@ import Ref from './Ref';
 import Slot from './Slot';
 import Text from './Text';
 import ThenBlock from './ThenBlock';
+import Title from './Title';
 import Transition from './Transition';
 import Window from './Window';
 
@@ -43,6 +44,7 @@ const nodes: Record<string, any> = {
 	Slot,
 	Text,
 	ThenBlock,
+	Title,
 	Transition,
 	Window
 };
