@@ -17,3 +17,4 @@ src/generators/dom/shared.ts
 package-lock.json
 .idea/
 *.iml
+store.umd.js
