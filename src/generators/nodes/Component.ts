@@ -256,13 +256,13 @@ export default class Component extends Node {
 				var ${switch_vars.value} = ${snippet};
 
 				function ${switch_vars.props}(${params}) {
+					${statements.length > 0 && statements.join('\n')}
 					return {
 						${componentInitProperties.join(',\n')}
 					};
 				}
 
 				if (${switch_vars.value}) {
-					${statements.length > 0 && statements.join('\n')}
 					var ${name} = new ${expression}(${switch_vars.props}(${params}));
 
 					${beforecreate}
