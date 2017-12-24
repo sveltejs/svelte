@@ -16,6 +16,10 @@ export default function validateElement(
 	const isComponent =
 		node.name === ':Self' || node.name === ':Component' || validator.components.has(node.name);
 
+	if (isComponent) {
+		validator.used.components.add(node.name);
+	}
+
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
 		validator.warn(`${node.name} component is not defined`, node.start);
