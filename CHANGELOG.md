@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.49.2
+
+* Add `store.umd.js` ([#967](https://github.com/sveltejs/svelte/issues/967))
+* Warn on use of `this` inside computed properties ([#1033](https://github.com/sveltejs/svelte/pull/1033))
+
 ## 1.49.1
 
 * Pass `store` to children in SSR mode ([#1029](https://github.com/sveltejs/svelte/pull/1029))
