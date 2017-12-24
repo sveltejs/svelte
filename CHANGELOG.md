@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.49.3
+
+* Return `html` from SSR compiler `render().toString()` methods ([#1044](https://github.com/sveltejs/svelte/issues/1044))
+* Correctly reinitialise dynamic components ([#1040](https://github.com/sveltejs/svelte/issues/1040))
+* Allow `<option>` outside `<select>` ([#1022](https://github.com/sveltejs/svelte/issues/1022))
+* Fix data references in await-block event handlers ([#1032](https://github.com/sveltejs/svelte/issues/1032))
+
 ## 1.49.2
 
 * Add `store.umd.js` ([#967](https://github.com/sveltejs/svelte/issues/967))
