@@ -8,6 +8,7 @@
     "ssr",
     "shared.js",
     "store.js",
+    "store.umd.js",
     "README.md"
   ],
   "scripts": {
