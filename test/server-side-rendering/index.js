@@ -59,7 +59,11 @@ describe("ssr", () => {
 
 				const data = tryToLoadJson(`${dir}/data.json`);
 
-				const { html, css, head } = component.render(data);
+				const rendered = component.render(data);
+				const { html, css, head } = rendered;
+
+				// rendered.toString() === rendered.html
+				assert.equal(rendered, html);
 
 				fs.writeFileSync(`${dir}/_actual.html`, html);
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
