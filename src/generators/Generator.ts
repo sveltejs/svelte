@@ -738,6 +738,9 @@ export default class Generator {
 				} else if (node.name === ':Head') { // TODO do this in parse?
 					node.type = 'Head';
 					node.__proto__ = nodes.Head.prototype;
+				} else if (node.type === 'Element' && node.name === 'title') { // TODO do this in parse?
+					node.type = 'Title';
+					node.__proto__ = nodes.Title.prototype;
 				} else if (node.type === 'Element' && node.name === 'slot' && !generator.customElement) {
 					node.type = 'Slot';
 					node.__proto__ = nodes.Slot.prototype;
