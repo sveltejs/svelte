@@ -1,8 +1,0 @@
-[{
-  "message": "Computed should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?",
-  "pos": 83,
-  "loc": {
-    "line": 7,
-    "column": 4
-  }
-}]

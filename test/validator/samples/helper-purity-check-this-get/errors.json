@@ -1,5 +1,5 @@
 [{
-	"message": "Cannot use this.get(...) — it must be passed into the helper function as an argument",
+	"message": "Cannot use this.get(...) — values must be passed into the helper function as arguments",
 	"pos": 74,
 	"loc": {
 		"line": 7,
