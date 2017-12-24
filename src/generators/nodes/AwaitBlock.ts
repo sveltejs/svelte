@@ -35,16 +35,20 @@ export default class AwaitBlock extends Node {
 		].forEach(([status, arg]) => {
 			const child = this[status];
 
-			const context = block.getUniqueName(arg || '_');
+			const context = block.getUniqueName(arg || '_'); // TODO can we remove the extra param from pending blocks?
 			const contexts = new Map(block.contexts);
 			contexts.set(arg, context);
+
+			const contextTypes = new Map(block.contextTypes);
+			contextTypes.set(arg, status);
 
 			child.block = block.child({
 				comment: createDebuggingComment(child, this.generator),
 				name: this.generator.getUniqueName(`create_${status}_block`),
 				params: block.params.concat(context),
 				context,
-				contexts
+				contexts,
+				contextTypes
 			});
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
