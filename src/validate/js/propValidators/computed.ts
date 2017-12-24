@@ -34,14 +34,14 @@ export default function computed(validator: Validator, prop: Node) {
 		walkThroughTopFunctionScope(body, (node: Node) => {
 			if (isThisGetCallExpression(node) && !node.callee.property.computed) {
 				validator.error(
-					`Cannot use this.get(...) — it must be passed into the computed function as an argument`,
+					`Cannot use this.get(...) — values must be passed into the function as arguments`,
 					node.start
 				);
 			}
 
 			if (node.type === 'ThisExpression') {
 				validator.error(
-					`Computed should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?`,
+					`Computed properties should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?`,
 					node.start
 				);
 			}

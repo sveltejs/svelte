@@ -25,7 +25,7 @@ export default function helpers(validator: Validator, prop: Node) {
 		walkThroughTopFunctionScope(prop.value.body, (node: Node) => {
 			if (isThisGetCallExpression(node) && !node.callee.property.computed) {
 				validator.error(
-					`Cannot use this.get(...) — it must be passed into the helper function as an argument`,
+					`Cannot use this.get(...) — values must be passed into the helper function as arguments`,
 					node.start
 				);
 			}
