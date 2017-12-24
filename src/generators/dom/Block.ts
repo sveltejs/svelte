@@ -14,6 +14,7 @@ export interface BlockOptions {
 	comment?: string;
 	key?: string;
 	contexts?: Map<string, string>;
+	contextTypes?: Map<string, string>;
 	indexes?: Map<string, string>;
 	changeableIndexes?: Map<string, boolean>;
 	params?: string[];
@@ -36,6 +37,7 @@ export default class Block {
 	first: string;
 
 	contexts: Map<string, string>;
+	contextTypes: Map<string, string>;
 	indexes: Map<string, string>;
 	changeableIndexes: Map<string, boolean>;
 	dependencies: Set<string>;
@@ -83,6 +85,7 @@ export default class Block {
 		this.first = null;
 
 		this.contexts = options.contexts;
+		this.contextTypes = options.contextTypes;
 		this.indexes = options.indexes;
 		this.changeableIndexes = options.changeableIndexes;
 		this.dependencies = new Set();

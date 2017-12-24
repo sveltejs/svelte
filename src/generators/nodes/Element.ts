@@ -281,18 +281,23 @@ export default class Element extends Node {
 			}
 
 			const ctx = context || 'this';
-			const declarations = usedContexts.map(name => {
-				if (name === 'state') {
-					if (shouldHoist) eventHandlerUsesComponent = true;
-					return `var state = ${block.alias('component')}.get();`;
-				}
+			const declarations = usedContexts
+				.map(name => {
+					if (name === 'state') {
+						if (shouldHoist) eventHandlerUsesComponent = true;
+						return `var state = ${block.alias('component')}.get();`;
+					}
 
-				const listName = block.listNames.get(name);
-				const indexName = block.indexNames.get(name);
-				const contextName = block.contexts.get(name);
+					const contextType = block.contextTypes.get(name);
+					if (contextType === 'each') {
+						const listName = block.listNames.get(name);
+						const indexName = block.indexNames.get(name);
+						const contextName = block.contexts.get(name);
 
-				return `var ${listName} = ${ctx}._svelte.${listName}, ${indexName} = ${ctx}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
-			});
+						return `var ${listName} = ${ctx}._svelte.${listName}, ${indexName} = ${ctx}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
+					}
+				})
+				.filter(Boolean);
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
@@ -372,6 +377,7 @@ export default class Element extends Node {
 
 			allUsedContexts.forEach((contextName: string) => {
 				if (contextName === 'state') return;
+				if (block.contextTypes.get(contextName) !== 'each') return;
 
 				const listName = block.listNames.get(contextName);
 				const indexName = block.indexNames.get(contextName);
