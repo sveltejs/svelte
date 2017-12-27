@@ -1,5 +1,6 @@
 import assert from 'assert';
 import fs from 'fs';
+import path from 'path';
 import { svelte } from '../helpers.js';
 
 describe('parse', () => {
@@ -20,8 +21,13 @@ describe('parse', () => {
 				.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8')
 				.replace(/\s+$/, '');
 
+			const optionsPath = `test/parser/samples/${dir}/options.json`;
+			const options = fs.existsSync(optionsPath) ?
+				JSON.parse(fs.readFileSync(optionsPath, 'utf-8')) :
+				{};
+
 			try {
-				const actual = svelte.parse(input);
+				const actual = svelte.parse(input, options);
 				fs.writeFileSync(
 					`test/parser/samples/${dir}/_actual.json`,
 					JSON.stringify(actual, null, '\t')
