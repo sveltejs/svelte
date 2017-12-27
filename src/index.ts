@@ -109,6 +109,12 @@ export function compile(source: string, _options: CompileOptions) {
 	const options = normalizeOptions(_options);
 	let parsed: Parsed;
 
+	if (options.bind === false) {
+		options.onwarn({
+			message: `You have disabled two-way binding for your components! It is highly recommended to enable it!`
+		})
+	}
+
 	try {
 		parsed = parse(source, options);
 	} catch (err) {
