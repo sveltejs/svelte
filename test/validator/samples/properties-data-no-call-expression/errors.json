@@ -1,0 +1,8 @@
+[{
+	"message": "'data' must be a function",
+	"loc": {
+		"line": 10,
+		"column": 8
+	},
+	"pos": 131
+}]
