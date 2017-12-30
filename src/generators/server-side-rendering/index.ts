@@ -232,7 +232,7 @@ export default function ssr(
 		${
 			/__missingComponent/.test(generator.renderCode) && deindent`
 				var __missingComponent = {
-					render: () => ''
+					_render: () => ''
 				};
 			`
 		}

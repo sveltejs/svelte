@@ -212,10 +212,12 @@ export default function dom(
 		${generator.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
-			Array.from(generator.expectedProperties).map(
-				prop =>
-					`if (!('${prop}' in this._state)) console.warn("${debugName} was created without expected data property '${prop}'");`
-			)}
+			Array.from(generator.expectedProperties).map(prop => {
+				const message = generator.components.has(prop) ?
+					`${debugName} expected to find '${prop}' in \`data\`, but found it in \`components\` instead` :
+					`${debugName} was created without expected data property '${prop}'`;
+				return `if (!('${prop}' in this._state)) console.warn("${message}");`
+			})}
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
 

@@ -35,6 +35,10 @@ export class Validator {
 	transitions: Map<string, Node>;
 	slots: Set<string>;
 
+	used: {
+		components: Set<string>
+	};
+
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
 		this.source = source;
 		this.filename = options.filename;
@@ -50,6 +54,10 @@ export class Validator {
 		this.helpers = new Map();
 		this.transitions = new Map();
 		this.slots = new Set();
+
+		this.used = {
+			components: new Set()
+		};
 	}
 
 	error(message: string, pos: number) {
@@ -113,6 +121,22 @@ export default function validate(
 
 		if (parsed.html) {
 			validateHtml(validator, parsed.html);
+		}
+
+		// need to do a second pass of the JS, now that we've analysed the markup
+		if (parsed.js && validator.defaultExport) {
+			const components = validator.defaultExport.declaration.properties.find(prop => prop.key.name === 'components');
+			if (components) {
+				components.value.properties.forEach(prop => {
+					const { name } = prop.key;
+					if (!validator.used.components.has(name)) {
+						validator.warn(
+							`The ${name} component is unused`,
+							prop.start
+						);
+					}
+				});
+			}
 		}
 	} catch (err) {
 		if (onerror) {
