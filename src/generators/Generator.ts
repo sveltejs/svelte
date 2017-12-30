@@ -721,6 +721,14 @@ export default class Generator {
 		let indexes = new Set();
 		const indexesStack: Set<string>[] = [indexes];
 
+		function parentIsHead(node) {
+			if (!node) return false;
+			if (node.type === 'Component' || node.type === 'Element') return false;
+			if (node.type === 'Head') return true;
+
+			return parentIsHead(node.parent);
+		}
+
 		walk(html, {
 			enter(node: Node, parent: Node, key: string) {
 				// TODO this is hacky as hell
@@ -738,7 +746,7 @@ export default class Generator {
 				} else if (node.name === ':Head') { // TODO do this in parse?
 					node.type = 'Head';
 					Object.setPrototypeOf(node, nodes.Head.prototype);
-				} else if (node.type === 'Element' && node.name === 'title') { // TODO do this in parse?
+				} else if (node.type === 'Element' && node.name === 'title' && parentIsHead(parent)) { // TODO do this in parse?
 					node.type = 'Title';
 					Object.setPrototypeOf(node, nodes.Title.prototype);
 				} else if (node.type === 'Element' && node.name === 'slot' && !generator.customElement) {
