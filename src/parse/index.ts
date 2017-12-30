@@ -22,6 +22,7 @@ class ParseError extends CompileError {
 
 interface ParserOptions {
 	filename?: string;
+	bind?: boolean;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -38,6 +39,8 @@ export class Parser {
 	js: Node;
 	metaTags: {};
 
+	allowBindings: boolean;
+
 	constructor(template: string, options: ParserOptions) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
@@ -45,6 +48,8 @@ export class Parser {
 
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
+
+		this.allowBindings = options.bind !== false;
 
 		this.index = 0;
 		this.stack = [];
