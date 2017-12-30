@@ -182,6 +182,10 @@ export default function tag(parser: Parser) {
 
 	let attribute;
 	while ((attribute = readAttribute(parser, uniqueNames))) {
+		if (attribute.type === 'Binding' && !parser.allowBindings) {
+			parser.error(`Two-way binding is disabled`, attribute.start);
+		}
+
 		element.attributes.push(attribute);
 		parser.allowWhitespace();
 	}
