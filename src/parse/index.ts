@@ -22,6 +22,7 @@ class ParseError extends CompileError {
 
 interface ParserOptions {
 	filename?: string;
+	bind?: boolean;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -29,6 +30,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
+	readonly bind: boolean;
 
 	index: number;
 	stack: Array<Node>;
@@ -45,6 +47,7 @@ export class Parser {
 
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
+		this.bind = options.bind !== false;
 
 		this.index = 0;
 		this.stack = [];

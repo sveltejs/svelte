@@ -182,7 +182,9 @@ export default function tag(parser: Parser) {
 
 	let attribute;
 	while ((attribute = readAttribute(parser, uniqueNames))) {
-		element.attributes.push(attribute);
+		if (attribute.type !== 'Binding' || parser.bind) {
+			element.attributes.push(attribute);
+		}
 		parser.allowWhitespace();
 	}
 

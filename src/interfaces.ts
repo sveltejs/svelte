@@ -47,6 +47,7 @@ export interface CompileOptions {
 	amd?: {
 		id?: string;
 	};
+	bind?: boolean;
 
 	outputFilename?: string;
 	cssOutputFilename?: string;
