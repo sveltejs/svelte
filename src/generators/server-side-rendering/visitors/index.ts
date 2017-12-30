@@ -9,6 +9,7 @@ import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import Text from './Text';
+import Title from './Title';
 import Window from './Window';
 
 export default {
@@ -23,5 +24,6 @@ export default {
 	RawMustacheTag,
 	Slot,
 	Text,
+	Title,
 	Window
 };

@@ -59,6 +59,7 @@ describe("runtime", () => {
 			}
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
+			global.document.title = '';
 
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;

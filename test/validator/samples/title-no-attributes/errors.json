@@ -1,0 +1,8 @@
+[{
+	"message": "<title> cannot have attributes",
+	"loc": {
+		"line": 2,
+		"column": 8
+	},
+	"pos": 16
+}]
