@@ -1,0 +1,12 @@
+<div></div>
+
+<script>
+	function data (foo) {
+		return function () {
+			return { foo, bar: 'baz' }
+		}
+	}
+	export default {
+		data: data('hello')
+	};
+</script>
