@@ -19,9 +19,10 @@ const elementsWithoutText = new Set([
 function shouldSkip(node: Text) {
 	if (/\S/.test(node.data)) return false;
 
-	const parentElement = node.findNearest(/(?:Element|Component)/);
+	const parentElement = node.findNearest(/(?:Element|Component|Head)/);
 	if (!parentElement) return false;
 
+	if (parentElement.type === 'Head') return true;
 	if (parentElement.type === 'Component') return parentElement.children.length === 1 && node === parentElement.children[0];
 
 	return parentElement.namespace || elementsWithoutText.has(parentElement.name);
