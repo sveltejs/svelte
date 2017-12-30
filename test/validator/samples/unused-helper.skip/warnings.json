@@ -1,0 +1,8 @@
+[{
+	"message": "The 'uppercase' helper is unused",
+	"loc": {
+		"line": 4,
+		"column": 3
+	},
+	"pos": 43
+}]

@@ -731,21 +731,21 @@ export default class Generator {
 
 				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || generator.components.has(node.name))) {
 					node.type = 'Component';
-					node.__proto__ = nodes.Component.prototype;
+					Object.setPrototypeOf(node, nodes.Component.prototype);
 				} else if (node.name === ':Window') { // TODO do this in parse?
 					node.type = 'Window';
-					node.__proto__ = nodes.Window.prototype;
+					Object.setPrototypeOf(node, nodes.Window.prototype);
 				} else if (node.name === ':Head') { // TODO do this in parse?
 					node.type = 'Head';
-					node.__proto__ = nodes.Head.prototype;
+					Object.setPrototypeOf(node, nodes.Head.prototype);
 				} else if (node.type === 'Element' && node.name === 'title') { // TODO do this in parse?
 					node.type = 'Title';
-					node.__proto__ = nodes.Title.prototype;
+					Object.setPrototypeOf(node, nodes.Title.prototype);
 				} else if (node.type === 'Element' && node.name === 'slot' && !generator.customElement) {
 					node.type = 'Slot';
-					node.__proto__ = nodes.Slot.prototype;
+					Object.setPrototypeOf(node, nodes.Slot.prototype);
 				} else if (node.type in nodes) {
-					node.__proto__ = nodes[node.type].prototype;
+					Object.setPrototypeOf(node, nodes[node.type].prototype);
 				}
 
 				if (node.type === 'Element') {
