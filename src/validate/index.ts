@@ -36,7 +36,10 @@ export class Validator {
 	slots: Set<string>;
 
 	used: {
-		components: Set<string>
+		components: Set<string>;
+		helpers: Set<string>;
+		events: Set<string>;
+		transitions: Set<string>;
 	};
 
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
@@ -56,7 +59,10 @@ export class Validator {
 		this.slots = new Set();
 
 		this.used = {
-			components: new Set()
+			components: new Set(),
+			helpers: new Set(),
+			events: new Set(),
+			transitions: new Set()
 		};
 	}
 
@@ -125,18 +131,28 @@ export default function validate(
 
 		// need to do a second pass of the JS, now that we've analysed the markup
 		if (parsed.js && validator.defaultExport) {
-			const components = validator.defaultExport.declaration.properties.find(prop => prop.key.name === 'components');
-			if (components) {
-				components.value.properties.forEach(prop => {
-					const { name } = prop.key;
-					if (!validator.used.components.has(name)) {
-						validator.warn(
-							`The ${name} component is unused`,
-							prop.start
-						);
-					}
-				});
-			}
+			const categories = {
+				components: 'component',
+				// TODO helpers require a bit more work — need to analyse all expressions
+				// helpers: 'helper',
+				events: 'event definition',
+				transitions: 'transition'
+			};
+
+			Object.keys(categories).forEach(category => {
+				const definitions = validator.defaultExport.declaration.properties.find(prop => prop.key.name === category);
+				if (definitions) {
+					definitions.value.properties.forEach(prop => {
+						const { name } = prop.key;
+						if (!validator.used[category].has(name)) {
+							validator.warn(
+								`The '${name}' ${categories[category]} is unused`,
+								prop.start
+							);
+						}
+					});
+				}
+			});
 		}
 	} catch (err) {
 		if (onerror) {
