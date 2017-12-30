@@ -93,6 +93,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | | | |
 | `onerror` | `function` | Specify a callback for when Svelte encounters an error while compiling the component. Passed two arguments: the error object, and another function that is Svelte's default onerror handling. | (exception is thrown) |
 | `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. Passed two arguments: the warning object, and another function that is Svelte's default onwarn handling. | (warning is logged to console) |
+| `bind` | `boolean` | If `false`, disallows `bind:` directives |
 
 ### Preprocessor options
 
