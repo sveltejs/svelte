@@ -1,6 +1,6 @@
 [
 	{
-		"message": "The Foo component is unused",
+		"message": "The 'Foo' component is unused",
 		"loc": {
 			"line": 7,
 			"column": 3
@@ -8,7 +8,7 @@
 		"pos": 109
 	},
 	{
-		"message": "The Bar component is unused",
+		"message": "The 'Bar' component is unused",
 		"loc": {
 			"line": 8,
 			"column": 3
