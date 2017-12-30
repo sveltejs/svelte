@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.50.0
+
+* Detect unused/misplaced components ([#1039](https://github.com/sveltejs/svelte/issues/1039))
+* Warn on unused event definitions/transitions ([#1051](https://github.com/sveltejs/svelte/issues/1051))
+* Remove whitespace inside `<:Head>` ([#1026](https://github.com/sveltejs/svelte/issues/1026))
+* Optimise `<title>` ([#1027](https://github.com/sveltejs/svelte/issues/1027))
+* Add `bind: false` option to disable two-way binding ([#54](https://github.com/sveltejs/svelte/issues/54))
+
 ## 1.49.3
 
 * Return `html` from SSR compiler `render().toString()` methods ([#1044](https://github.com/sveltejs/svelte/issues/1044))
