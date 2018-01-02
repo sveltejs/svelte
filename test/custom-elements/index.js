@@ -19,6 +19,10 @@ describe('custom-elements', function() {
 
 	const nightmare = new Nightmare({ show: false });
 
+	nightmare.on('console', (type, ...args) => {
+		console[type](...args);
+	});
+
 	let svelte;
 	let server;
 	let bundle;
