@@ -1,0 +1,13 @@
+<button on:click='set({ count: count + 1 })'>count: {{count}}</button>
+
+<script>
+	export default {
+		tag: 'my-counter',
+
+		data() {
+			return {
+				count: 0
+			};
+		}
+	};
+</script>

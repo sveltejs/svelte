@@ -97,6 +97,9 @@ export default function dom(
 	parsed.html.build();
 	const { block } = parsed.html;
 
+	// prevent fragment being created twice (#1063)
+	if (options.customElement) block.builders.create.addLine(`this.c = @noop;`);
+
 	generator.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 	const builder = new CodeBuilder();
