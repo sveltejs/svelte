@@ -1,0 +1,12 @@
+<Counter bind:count/>
+<p>clicked {{count}} times</p>
+
+<script>
+	import Counter from './Counter.html';
+
+	export default {
+		tag: 'my-app',
+
+		components: { Counter }
+	};
+</script>

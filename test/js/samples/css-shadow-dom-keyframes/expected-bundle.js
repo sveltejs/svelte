@@ -188,6 +188,7 @@ function create_main_fragment(state, component) {
 		c: function create() {
 			div = createElement("div");
 			div.textContent = "fades in";
+			this.c = noop;
 		},
 
 		m: function mount(target, anchor) {
