@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.50.1
+
+* Prevent main fragment being created twice in custom elements ([#1064](https://github.com/sveltejs/svelte/pull/1064))
+
 ## 1.50.0
 
 * Detect unused/misplaced components ([#1039](https://github.com/sveltejs/svelte/issues/1039))
