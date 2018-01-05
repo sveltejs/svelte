@@ -106,14 +106,21 @@ export default function a11y(
 		}
 	}
 
+	function shouldHaveValidHref (attribute) {
+		const href = attributeMap.get(attribute);
+		const value = getStaticAttributeValue(node, attribute);
+		if (value === '' || value === '#') {
+			validator.warn(`A11y: '${value}' is not a valid ${attribute} attribute`, href.start);
+		}
+	}
+
 	if (node.name === 'a') {
-		// anchor-is-valid
-		const href = attributeMap.get('href');
 		if (attributeMap.has('href')) {
-			const value = getStaticAttributeValue(node, 'href');
-			if (value === '' || value === '#') {
-				validator.warn(`A11y: '${value}' is not a valid href attribute`, href.start);
-			}
+			// anchor-is-valid
+			shouldHaveValidHref('href')
+		} else if (attributeMap.has('xlink:href')) {
+			// anchor-in-svg-is-valid
+			shouldHaveValidHref('xlink:href')
 		} else {
 			validator.warn(`A11y: <a> element should have an href attribute`, node.start);
 		}
