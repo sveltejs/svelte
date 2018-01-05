@@ -1,5 +1,5 @@
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
+import { stringify, escapeHTML } from '../../utils/stringify';
 import flattenReference from '../../utils/flattenReference';
 import isVoidElementName from '../../utils/isVoidElementName';
 import validCalleeObjects from '../../utils/validCalleeObjects';
@@ -414,7 +414,7 @@ export default class Element extends Node {
 		}
 
 		function toHTML(node: Element | Text) {
-			if (node.type === 'Text') return node.data;
+			if (node.type === 'Text') return escapeHTML(node.data);
 
 			let open = `<${node.name}`;
 
