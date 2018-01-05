@@ -1,0 +1,42 @@
+{
+	"hash": 488075009,
+	"html": {
+		"start": 0,
+		"end": 93,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 93,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 3,
+						"end": 43,
+						"type": "Text",
+						"data": "this &lt;em&gt;should&lt;/em&gt; not be "
+					},
+					{
+						"start": 43,
+						"end": 89,
+						"type": "Element",
+						"name": "span",
+						"attributes": [],
+						"children": [
+							{
+								"start": 49,
+								"end": 82,
+								"type": "Text",
+								"data": "&lt;strong&gt;bold&lt;/strong&gt;"
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
