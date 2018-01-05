@@ -2,7 +2,7 @@
 import { appendNode, assign, createElement, createText, detachNode, init, insertNode, proto } from "svelte/shared.js";
 
 function create_main_fragment(state, component) {
-	var window_updating = false, window_updating_timeout, p, text, text_1;
+	var window_updating = false, clear_window_updating = function() { window_updating = false; }, window_updating_timeout, p, text, text_1;
 
 	function onwindowscroll(event) {
 		if (window_updating) return;
@@ -19,7 +19,7 @@ function create_main_fragment(state, component) {
 		window_updating = true;
 		clearTimeout(window_updating_timeout);
 		window.scrollTo(window.scrollX, y);
-		window_updating_timeout = setTimeout(function() { window_updating = false; }, 100);
+		window_updating_timeout = setTimeout(clear_window_updating, 100);
 	});
 
 	return {

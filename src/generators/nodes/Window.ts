@@ -107,6 +107,7 @@ export default class Window extends Node {
 		});
 
 		const lock = block.getUniqueName(`window_updating`);
+		const clear = block.getUniqueName(`clear_window_updating`);
 		const timeout = block.getUniqueName(`window_updating_timeout`);
 
 		Object.keys(events).forEach(event => {
@@ -116,7 +117,8 @@ export default class Window extends Node {
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
 				block.addVariable(lock, 'false');
-				block.addVariable(timeout,);
+				block.addVariable(clear, `function() { ${lock} = false; }`);
+				block.addVariable(timeout);
 			}
 
 			const handlerBody = deindent`
@@ -161,7 +163,7 @@ export default class Window extends Node {
 						? `#component.get("${bindings.scrollY}")`
 						: `window.scrollY`};
 					window.scrollTo(x, y);
-					${timeout} = setTimeout(function() { ${lock} = false; }, 100);
+					${timeout} = setTimeout(${clear}, 100);
 				}
 			`);
 
@@ -181,7 +183,7 @@ export default class Window extends Node {
 					${lock} = true;
 					clearTimeout(${timeout});
 					window.scrollTo(${isX ? 'x, window.scrollY' : 'window.scrollX, y'});
-					${timeout} = setTimeout(function() { ${lock} = false; }, 100);
+					${timeout} = setTimeout(${clear}, 100);
 				});
 			`);
 		}
