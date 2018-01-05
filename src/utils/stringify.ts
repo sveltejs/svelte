@@ -7,3 +7,15 @@ export function escape(data: string, { onlyEscapeAtSymbol = false } = {}) {
 		return match + match[0];
 	});
 }
+
+const escaped = {
+	'"': '&quot;',
+	"'": '&##39;',
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;'
+};
+
+export function escapeHTML(html) {
+	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+}
