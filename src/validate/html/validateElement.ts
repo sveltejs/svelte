@@ -79,6 +79,17 @@ export default function validateElement(
 		});
 	}
 
+	if (node.name === 'svg') {
+		node.attributes.forEach(attribute => {
+			if (attribute.name === 'viewbox') {
+				validator.warn(
+					`<svg> has an invalid viewbox attribute – did you mean viewBox?`,
+					node.start
+				)
+			}
+		})
+	}
+
 	let hasIntro: boolean;
 	let hasOutro: boolean;
 	let hasTransition: boolean;
