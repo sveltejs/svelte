@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.51.0
+
+* Lock `scroll` bindings ([#1071](https://github.com/sveltejs/svelte/issues/1071))
+* Escape HTML entities when compiling to static HTML ([#1066](https://github.com/sveltejs/svelte/issues/1066))
+* Apply a11y warnings to SVG `<a>` attributes with `xlink:href` ([#1008](https://github.com/sveltejs/svelte/issues/1008))
+
 ## 1.50.1
 
 * Prevent main fragment being created twice in custom elements ([#1064](https://github.com/sveltejs/svelte/pull/1064))
