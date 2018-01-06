@@ -1,3 +1,4 @@
+import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { stringify } from '../../utils/stringify';
 import flattenReference from '../../utils/flattenReference';
@@ -106,6 +107,8 @@ export default class Window extends Node {
 		});
 
 		const lock = block.getUniqueName(`window_updating`);
+		const clear = block.getUniqueName(`clear_window_updating`);
+		const timeout = block.getUniqueName(`window_updating_timeout`);
 
 		Object.keys(events).forEach(event => {
 			const handlerName = block.getUniqueName(`onwindow${event}`);
@@ -114,10 +117,15 @@ export default class Window extends Node {
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
 				block.addVariable(lock, 'false');
+				block.addVariable(clear, `function() { ${lock} = false; }`);
+				block.addVariable(timeout);
 			}
 
 			const handlerBody = deindent`
-				${event === 'scroll' && `${lock} = true;`}
+				${event === 'scroll' && deindent`
+					if (${lock}) return;
+					${lock} = true;
+				`}
 				${generator.options.dev && `component._updatingReadonlyProperty = true;`}
 
 				#component.set({
@@ -146,7 +154,8 @@ export default class Window extends Node {
 
 			block.builders.init.addBlock(deindent`
 				function ${observerCallback}() {
-					if (${lock}) return;
+					${lock} = true;
+					clearTimeout(${timeout});
 					var x = ${bindings.scrollX
 						? `#component.get("${bindings.scrollX}")`
 						: `window.scrollX`};
@@ -154,6 +163,7 @@ export default class Window extends Node {
 						? `#component.get("${bindings.scrollY}")`
 						: `window.scrollY`};
 					window.scrollTo(x, y);
+					${timeout} = setTimeout(${clear}, 100);
 				}
 			`);
 
@@ -170,8 +180,10 @@ export default class Window extends Node {
 
 			block.builders.init.addBlock(deindent`
 				#component.observe("${bindings.scrollX || bindings.scrollY}", function(${isX ? 'x' : 'y'}) {
-					if (${lock}) return;
+					${lock} = true;
+					clearTimeout(${timeout});
 					window.scrollTo(${isX ? 'x, window.scrollY' : 'window.scrollX, y'});
+					${timeout} = setTimeout(${clear}, 100);
 				});
 			`);
 		}
