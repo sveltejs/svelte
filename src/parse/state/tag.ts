@@ -213,6 +213,7 @@ export default function tag(parser: Parser) {
 	parser.eat('>', true);
 
 	if (selfClosing) {
+		// don't push self-closing elements onto the stack
 		element.end = parser.index;
 	} else if (name === 'textarea') {
 		// special case
@@ -223,8 +224,14 @@ export default function tag(parser: Parser) {
 		);
 		parser.read(/<\/textarea>/);
 		element.end = parser.index;
+	} else if (name === 'script' || name === 'style') {
+		// special case
+		const start = parser.index;
+		const data = parser.readUntil(new RegExp(`</${name}>`));
+		const end = parser.index;
+		element.children.push({ start, end, type: 'Text', data });
+		parser.eat(`</${name}>`, true);
 	} else {
-		// don't push self-closing elements onto the stack
 		parser.stack.push(element);
 	}
 }
