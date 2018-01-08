@@ -9,13 +9,11 @@ export function escape(data: string, { onlyEscapeAtSymbol = false } = {}) {
 }
 
 const escaped = {
-	'"': '&quot;',
-	"'": '&##39;',
 	'&': '&amp;',
 	'<': '&lt;',
-	'>': '&gt;'
+	'>': '&gt;',
 };
 
 export function escapeHTML(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+	return String(html).replace(/[&<>]/g, match => escaped[match]);
 }
