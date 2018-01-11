@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.51.1
+
+* Only escape <, > and & characters ([#1082](https://github.com/sveltejs/svelte/issues/1082))
+
 ## 1.51.0
 
 * Lock `scroll` bindings ([#1071](https://github.com/sveltejs/svelte/issues/1071))
