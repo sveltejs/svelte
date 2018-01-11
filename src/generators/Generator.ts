@@ -1,6 +1,7 @@
 import MagicString, { Bundle } from 'magic-string';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
+import detectGlobals from 'acorn-globals';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -412,6 +413,9 @@ export default class Generator {
 
 			const scope = annotateWithScopes(js.content);
 			scope.declarations.forEach(name => {
+				this.userVars.add(name);
+			});
+			detectGlobals(js.content).forEach(({ name }) => {
 				this.userVars.add(name);
 			});
 
