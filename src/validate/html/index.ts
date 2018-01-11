@@ -54,6 +54,12 @@ export default function validateHtml(validator: Validator, html: Node) {
 		if (node.else) {
 			visit(node.else);
 		}
+
+		if (node.type === 'AwaitBlock') {
+			visit(node.pending);
+			visit(node.then);
+			visit(node.catch);
+		}
 	}
 
 	html.children.forEach(visit);
