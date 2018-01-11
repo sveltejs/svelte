@@ -407,7 +407,7 @@ export default function dom(
 			const code = new MagicString(str);
 			const expression = parseExpressionAt(str, 0);
 
-			let scope = annotateWithScopes(expression);
+			let { scope } = annotateWithScopes(expression);
 
 			walk(expression, {
 				enter(node: Node, parent: Node) {

@@ -410,8 +410,13 @@ export default class Generator {
 			const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
 			const indentExclusionRanges = getIndentExclusionRanges(js.content);
 
-			const scope = annotateWithScopes(js.content);
+			const { scope, globals } = annotateWithScopes(js.content);
+
 			scope.declarations.forEach(name => {
+				this.userVars.add(name);
+			});
+
+			globals.forEach(name => {
 				this.userVars.add(name);
 			});
 
@@ -666,7 +671,7 @@ export default class Generator {
 			isEventHandler: boolean
 		) => {
 			this.addSourcemapLocations(node); // TODO this involves an additional walk — can we roll it in somewhere else?
-			let scope = annotateWithScopes(node);
+			let { scope } = annotateWithScopes(node);
 
 			const dependencies: Set<string> = new Set();
 
