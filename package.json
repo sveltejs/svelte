@@ -87,5 +87,8 @@
     ],
     "sourceMap": true,
     "instrument": true
+  },
+  "dependencies": {
+    "is-reference": "^1.1.0"
   }
 }

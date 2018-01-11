@@ -1,11 +1,13 @@
 import { walk } from 'estree-walker';
+import isReference from 'is-reference';
 import { Node } from '../interfaces';
 
 export default function annotateWithScopes(expression: Node) {
+	const globals = new Set();
 	let scope = new Scope(null, false);
 
 	walk(expression, {
-		enter(node: Node) {
+		enter(node: Node, parent: Node) {
 			if (/Function/.test(node.type)) {
 				if (node.type === 'FunctionDeclaration') {
 					scope.declarations.add(node.id.name);
@@ -25,6 +27,10 @@ export default function annotateWithScopes(expression: Node) {
 				node._scope = scope = new Scope(scope, true);
 			} else if (/(Function|Class|Variable)Declaration/.test(node.type)) {
 				scope.addDeclaration(node);
+			} else if (isReference(node, parent)) {
+				if (!scope.has(node.name)) {
+					globals.add(node.name);
+				}
 			}
 		},
 
@@ -35,7 +41,7 @@ export default function annotateWithScopes(expression: Node) {
 		},
 	});
 
-	return scope;
+	return { scope, globals };
 }
 
 export class Scope {
