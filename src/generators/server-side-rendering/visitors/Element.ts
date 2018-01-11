@@ -7,6 +7,7 @@ import Element from '../../nodes/Element';
 import Block from '../Block';
 import { Node } from '../../../interfaces';
 import stringifyAttributeValue from './shared/stringifyAttributeValue';
+import { escape } from '../../../utils/stringify';
 
 export default function visitElement(
 	generator: SsrGenerator,
@@ -61,7 +62,7 @@ export default function visitElement(
 	if (node.name === 'textarea' && textareaContents !== undefined) {
 		generator.append(textareaContents);
 	} else if (node.name === 'script' || node.name === 'style') {
-		generator.append(node.data);
+		generator.append(escape(node.data));
 	} else {
 		node.children.forEach((child: Node) => {
 			visit(generator, block, child);
