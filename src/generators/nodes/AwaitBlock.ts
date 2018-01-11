@@ -101,6 +101,10 @@ export default class AwaitBlock extends Node {
 		block.addVariable(promise);
 		block.addVariable(resolved);
 
+		// the `#component.root.set({})` below is just a cheap way to flush
+		// any oncreate handlers. We could have a dedicated `flush()` method
+		// but it's probably not worth it
+
 		block.builders.init.addBlock(deindent`
 			function ${replace_await_block}(${token}, type, ${value}, ${params}) {
 				if (${token} !== ${await_token}) return;
@@ -113,6 +117,8 @@ export default class AwaitBlock extends Node {
 					${old_block}.d();
 					${await_block}.c();
 					${await_block}.m(${updateMountNode}, ${anchor});
+
+					#component.root.set({});
 				}
 			}
 
