@@ -1,5 +1,6 @@
 import checkForDupes from '../utils/checkForDupes';
 import checkForComputedKeys from '../utils/checkForComputedKeys';
+import checkForValidIdentifiers from '../utils/checkForValidIdentifiers';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
 import walkThroughTopFunctionScope from '../../../utils/walkThroughTopFunctionScope';
@@ -20,6 +21,7 @@ export default function computed(validator: Validator, prop: Node) {
 
 	checkForDupes(validator, prop.value.properties);
 	checkForComputedKeys(validator, prop.value.properties);
+  checkForValidIdentifiers(validator, prop.value.properties);
 
 	prop.value.properties.forEach((computation: Node) => {
 		if (!isFunctionExpression.has(computation.value.type)) {
