@@ -185,14 +185,20 @@ export class Parser {
 	}
 }
 
+function getHashSource (parser: Parser, options: ParserOptions) {
+	if (options.css === false || !parser.css) {
+		return parser.template;
+	}
+	return parser.css.content.styles;
+}
+
 export default function parse(
 	template: string,
 	options: ParserOptions = {}
 ): Parsed {
 	const parser = new Parser(template, options);
-
 	return {
-		hash: hash(parser.template),
+		hash: hash(getHashSource(parser, options)),
 		html: parser.html,
 		css: parser.css,
 		js: parser.js,
