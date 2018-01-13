@@ -1,0 +1,13 @@
+{{#await promise then value}}
+	<Foo :value />
+{{/await}}
+
+<script>
+	import Foo from './Foo.html';
+
+	export default {
+		components: {
+			Foo
+		}
+	};
+</script>

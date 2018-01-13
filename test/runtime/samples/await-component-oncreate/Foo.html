@@ -1,0 +1,14 @@
+<p>{{value}}</p>
+<p>{{called}}</p>
+
+<script>
+	export default {
+		data() {
+			return { called: false };
+		},
+
+		oncreate() {
+			this.set({ called: true });
+		}
+	};
+</script>
