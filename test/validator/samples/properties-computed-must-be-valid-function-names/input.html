@@ -1,0 +1,17 @@
+<p>
+  The hour is
+  <strong>{{hours}}</strong>
+</p>
+
+<script>
+  export default {
+    data() {
+      return {
+        time: new Date()
+      };
+    },
+    computed: {
+      "hours-hyphen": time => time.getHours()
+    }
+  };
+</script>
