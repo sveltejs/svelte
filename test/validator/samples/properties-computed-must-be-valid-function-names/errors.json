@@ -1,8 +1,8 @@
 [{
-	"message": "Computed property name 'hours-hyphen' is invalid — must be a valid identifier such as hours_hyphen",
+	"message": "Computed property name 'with-hyphen' is invalid — must be a valid identifier such as with_hyphen",
 	"loc": {
-		"line": 14,
+		"line": 9,
 		"column": 3
 	},
-	"pos": 150
+	"pos": 87
 }]

@@ -1,0 +1,9 @@
+[{
+	"message":
+		"Computed property name 'new' is invalid — cannot be a JavaScript reserved word",
+	"loc": {
+		"line": 9,
+		"column": 3
+	},
+	"pos": 87
+}]
