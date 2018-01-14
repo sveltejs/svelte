@@ -1,8 +1,8 @@
 [{
-	"message": "Computed property name \"hours-hyphen\" is invalid. Character '-' at position 14 is illegal in function identifiers",
+	"message": "Computed property name 'hours-hyphen' is invalid — must be a valid identifier such as hours_hyphen",
 	"loc": {
 		"line": 14,
-		"column": 6
+		"column": 3
 	},
-	"pos": 172
+	"pos": 150
 }]
