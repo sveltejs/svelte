@@ -8,14 +8,18 @@ export default function checkForValidIdentifiers(
 	properties: Node[]
 ) {
 	properties.forEach(prop => {
-    const name = getName(prop.key);
-    const functionDefinitionString = `function ${name}() {}`;
-    try {
-      parse(functionDefinitionString);
-    } catch(exception) {
-      const invalidCharacter = functionDefinitionString[exception.pos]
-      validator.error(`Computed property name "${name}" is invalid. Character '${invalidCharacter}' at position ${exception.pos} is illegal in function identifiers`, prop.start);
-    }
-
+		const name = getName(prop.key);
+		const functionDefinitionString = `function ${name}() {}`;
+		try {
+			parse(functionDefinitionString);
+		} catch (exception) {
+			const invalidCharacter = functionDefinitionString[exception.pos];
+			validator.error(
+				`Computed property name "${name}" is invalid. Character '${
+					invalidCharacter
+				}' at position ${exception.pos} is illegal in function identifiers`,
+				prop.start
+			);
+		}
 	});
 }

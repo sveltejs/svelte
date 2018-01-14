@@ -21,7 +21,7 @@ export default function computed(validator: Validator, prop: Node) {
 
 	checkForDupes(validator, prop.value.properties);
 	checkForComputedKeys(validator, prop.value.properties);
-  checkForValidIdentifiers(validator, prop.value.properties);
+	checkForValidIdentifiers(validator, prop.value.properties);
 
 	prop.value.properties.forEach((computation: Node) => {
 		if (!isFunctionExpression.has(computation.value.type)) {
