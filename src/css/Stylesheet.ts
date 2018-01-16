@@ -292,7 +292,7 @@ export default class Stylesheet {
 						// possibly other future constructs)
 						if (last && !(last instanceof Atrule)) return;
 
-						if (currentAtrule) {
+						if (currentAtrule && currentAtrule.children) {
 							currentAtrule.children.push(atrule);
 						} else {
 							this.children.push(atrule);
@@ -313,7 +313,7 @@ export default class Stylesheet {
 						const rule = new Rule(node, currentAtrule);
 						stack.push(rule);
 
-						if (currentAtrule) {
+						if (currentAtrule && currentAtrule.children) {
 							currentAtrule.children.push(rule);
 						} else {
 							this.children.push(rule);
