@@ -1,0 +1,10 @@
+[
+	{
+		"message": "A11y: Avoid using autofocus",
+		"loc": {
+			"column": 8,
+			"line": 2
+		},
+		"pos": 29
+	}
+]

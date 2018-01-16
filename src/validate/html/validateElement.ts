@@ -11,11 +11,9 @@ export default function validateElement(
 	refs: Map<string, Node[]>,
 	refCallees: Node[],
 	stack: Node[],
-	elementStack: Node[]
+	elementStack: Node[],
+	isComponent: Boolean
 ) {
-	const isComponent =
-		node.name === ':Self' || node.name === ':Component' || validator.components.has(node.name);
-
 	if (isComponent) {
 		validator.used.components.add(node.name);
 	}

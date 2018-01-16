@@ -19,14 +19,29 @@ export default function validateHtml(validator: Validator, html: Node) {
 	const elementStack: Node[] = [];
 
 	function visit(node: Node) {
-		a11y(validator, node, elementStack);
-
 		if (node.type === 'Element') {
 			if (meta.has(node.name)) {
 				return meta.get(node.name)(validator, node, refs, refCallees);
 			}
 
-			validateElement(validator, node, refs, refCallees, stack, elementStack);
+			const isComponent =
+				node.name === ':Self' ||
+				node.name === ':Component' ||
+				validator.components.has(node.name);
+
+			validateElement(
+				validator,
+				node,
+				refs,
+				refCallees,
+				stack,
+				elementStack,
+				isComponent
+			);
+
+			if (!isComponent) {
+				a11y(validator, node, elementStack);
+			}
 		} else if (node.type === 'EachBlock') {
 			if (validator.helpers.has(node.context)) {
 				let c = node.expression.end;
