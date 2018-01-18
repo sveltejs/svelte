@@ -1,9 +1,11 @@
+import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import { locate, Location } from 'locate-character';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
 import reservedNames from '../utils/reservedNames';
+import fullCharCodeAt from '../utils/fullCharCodeAt';
 import hash from './utils/hash';
 import { Node, Parsed } from '../interfaces';
 import CompileError from '../utils/CompileError';
@@ -147,7 +149,22 @@ export class Parser {
 
 	readIdentifier() {
 		const start = this.index;
-		const identifier = this.read(/[a-zA-Z_$][a-zA-Z0-9_$]*/);
+
+		let i = this.index;
+
+		const code = fullCharCodeAt(this.template, i);
+		if (!isIdentifierStart(code, true)) return null;
+
+		i += code <= 0xffff ? 1 : 2;
+
+		while (i < this.template.length) {
+			const code = fullCharCodeAt(this.template, i);
+
+			if (!isIdentifierChar(code, true)) break;
+			i += code <= 0xffff ? 1 : 2;
+		}
+
+		const identifier = this.template.slice(this.index, this.index = i);
 
 		if (reservedNames.has(identifier)) {
 			this.error(`'${identifier}' is a reserved word in JavaScript and cannot be used here`, start);
