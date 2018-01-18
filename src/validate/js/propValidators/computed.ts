@@ -1,5 +1,8 @@
 import checkForDupes from '../utils/checkForDupes';
 import checkForComputedKeys from '../utils/checkForComputedKeys';
+import getName from '../../../utils/getName';
+import isValidIdentifier from '../../../utils/isValidIdentifier';
+import reservedNames from '../../../utils/reservedNames';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
 import walkThroughTopFunctionScope from '../../../utils/walkThroughTopFunctionScope';
@@ -22,6 +25,23 @@ export default function computed(validator: Validator, prop: Node) {
 	checkForComputedKeys(validator, prop.value.properties);
 
 	prop.value.properties.forEach((computation: Node) => {
+		const name = getName(computation.key);
+
+		if (!isValidIdentifier(name)) {
+			const suggestion = name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
+			validator.error(
+				`Computed property name '${name}' is invalid — must be a valid identifier such as ${suggestion}`,
+				computation.start
+			);
+		}
+
+		if (reservedNames.has(name)) {
+			validator.error(
+				`Computed property name '${name}' is invalid — cannot be a JavaScript reserved word`,
+				computation.start
+			);
+		}
+
 		if (!isFunctionExpression.has(computation.value.type)) {
 			validator.error(
 				`Computed properties can be function expressions or arrow function expressions`,

@@ -1,0 +1,8 @@
+[{
+	"message": "Computed property name 'with-hyphen' is invalid — must be a valid identifier such as with_hyphen",
+	"loc": {
+		"line": 9,
+		"column": 3
+	},
+	"pos": 87
+}]
