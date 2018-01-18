@@ -1,0 +1,41 @@
+{
+	"hash": 2991613308,
+	"html": {
+		"start": 0,
+		"end": 43,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 43,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 8,
+					"end": 14,
+					"name": "things"
+				},
+				"children": [
+					{
+						"start": 24,
+						"end": 33,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 27,
+								"end": 29,
+								"type": "Text",
+								"data": "𐊧"
+							}
+						]
+					}
+				],
+				"context": "𐊧"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
