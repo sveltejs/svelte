@@ -1,10 +1,14 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
+import fullCharCodeAt from './fullCharCodeAt';
 
 export default function isValidIdentifier(str: string): boolean {
-	if (!isIdentifierStart(str.charCodeAt(0), true)) return false;
+	let i = 0;
 
-	for (let i = 0; i < str.length; i += 1) {
-		if (!isIdentifierChar(str.charCodeAt(i), true)) return false;
+	while (i < str.length) {
+		const code = fullCharCodeAt(str, i);
+		if (!(i === 0 ? isIdentifierStart : isIdentifierChar)(code, true)) return false;
+
+		i += code <= 0xffff ? 1 : 2;
 	}
 
 	return true;
