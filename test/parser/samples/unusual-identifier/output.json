@@ -1,13 +1,13 @@
 {
-	"hash": 2991613308,
+	"hash": 795130236,
 	"html": {
 		"start": 0,
-		"end": 43,
+		"end": 47,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 43,
+				"end": 47,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
@@ -18,16 +18,21 @@
 				"children": [
 					{
 						"start": 24,
-						"end": 33,
+						"end": 37,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
 								"start": 27,
-								"end": 29,
-								"type": "Text",
-								"data": "𐊧"
+								"end": 33,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 29,
+									"end": 31,
+									"name": "𐊧"
+								}
 							}
 						]
 					}
