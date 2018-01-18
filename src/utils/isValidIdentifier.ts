@@ -1,6 +1,6 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 
-export default function isValidIdentifier(str) {
+export default function isValidIdentifier(str: string): boolean {
 	if (!isIdentifierStart(str.charCodeAt(0), true)) return false;
 
 	for (let i = 0; i < str.length; i += 1) {
