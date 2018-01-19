@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 1.52.0
+
+* Deconflict referenced globals ([#1079](https://github.com/sveltejs/svelte/issues/1079))
+* Validate contents of `await` blocks ([#1061](https://github.com/sveltejs/svelte/issues/1061))
+* Fire `oncreate` for components in `await` blocks ([#1061](https://github.com/sveltejs/svelte/issues/1061))
+* Automatically fix attribute casing ([#1062](https://github.com/sveltejs/svelte/issues/1062))
+* Fix escaping in `<script>` and `<style>` ([#1082](https://github.com/sveltejs/svelte/issues/1082))
+* Error if invalid characters are used in computed properties, and allow any valid identifier in props ([#1083](https://github.com/sveltejs/svelte/issues/1083))
+* Don't run a11y tests on components ([#1110](https://github.com/sveltejs/svelte/issues/1110))
+* Respect `store` option in SSR mode ([#1107](https://github.com/sveltejs/svelte/issues/1107))
+
 ## 1.51.1
 
 * Only escape <, > and & characters ([#1082](https://github.com/sveltejs/svelte/issues/1082))
