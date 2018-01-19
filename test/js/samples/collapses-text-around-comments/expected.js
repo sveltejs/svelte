@@ -6,13 +6,13 @@ function data() {
 };
 
 function encapsulateStyles(node) {
-	setAttribute(node, "svelte-3590263702", "");
+	setAttribute(node, "svelte-2794052100", "");
 }
 
 function add_css() {
 	var style = createElement("style");
-	style.id = 'svelte-3590263702-style';
-	style.textContent = "p[svelte-3590263702],[svelte-3590263702] p{color:red}";
+	style.id = 'svelte-2794052100-style';
+	style.textContent = "p[svelte-2794052100],[svelte-2794052100] p{color:red}";
 	appendNode(style, document.head);
 }
 
@@ -53,7 +53,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign(data(), options.data);
 
-	if (!document.getElementById("svelte-3590263702-style")) add_css();
+	if (!document.getElementById("svelte-2794052100-style")) add_css();
 
 	this._fragment = create_main_fragment(this._state, this);
 
