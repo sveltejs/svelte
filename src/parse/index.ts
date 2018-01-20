@@ -6,7 +6,7 @@ import { trimStart, trimEnd } from '../utils/trim';
 import getCodeFrame from '../utils/getCodeFrame';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import hash from './utils/hash';
+import hash from '../utils/hash';
 import { Node, Parsed } from '../interfaces';
 import CompileError from '../utils/CompileError';
 
@@ -207,7 +207,6 @@ export default function parse(
 	options: ParserOptions = {}
 ): Parsed {
 	const parser = new Parser(template, options);
-
 	return {
 		hash: hash(parser.template),
 		html: parser.html,

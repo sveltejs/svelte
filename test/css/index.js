@@ -117,6 +117,8 @@ describe('css', () => {
 						normalizeHtml(window, html.replace(/svelte-\d+/g, 'svelte-xyz')),
 						normalizeHtml(window, expected.html)
 					);
+
+					window.document.head.innerHTML = ''; // remove added styles
 				} catch (err) {
 					console.log(dom.code);
 					throw err;
