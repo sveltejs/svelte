@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.53.0
+
+* Base scoping selectors on `<style>` contents alone ([#1091](https://github.com/sveltejs/svelte/issues/1091))
+
 ## 1.52.0
 
 * Deconflict referenced globals ([#1079](https://github.com/sveltejs/svelte/issues/1079))
