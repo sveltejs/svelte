@@ -143,7 +143,7 @@ function _set(newState) {
 }
 
 function callAll(fns) {
-	while (fns && fns.length) fns.pop()();
+	while (fns && fns.length) fns.shift()();
 }
 
 function _mount(target, anchor) {
@@ -201,12 +201,12 @@ function SvelteComponent(options) {
 	var _oncreate = oncreate.bind(this);
 
 	if (!options.root) {
-		this._oncreate = [_oncreate];
-	} else {
-	 	this.root._oncreate.push(_oncreate);
-	 }
+		this._oncreate = [];
+	}
 
 	this._fragment = create_main_fragment(this._state, this);
+
+	this.root._oncreate.push(_oncreate);
 
 	if (options.target) {
 		this._fragment.c();
