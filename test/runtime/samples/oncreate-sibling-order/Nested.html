@@ -1,0 +1,11 @@
+<p>{{name}}</p>
+
+<script>
+	import result from './result.js';
+
+	export default {
+		oncreate() {
+			result.push(`oncreate ${this.get('name')}`);
+		}
+	};
+</script>
