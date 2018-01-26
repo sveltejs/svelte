@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.54.0
+
+* Run `oncreate` hooks depth-first, top-to-bottom ([#1135](https://github.com/sveltejs/svelte/issues/1135))
+* Render boolean attributes correctly in SSR mode ([#1109](https://github.com/sveltejs/svelte/issues/1109))
+* Add `feed` aria role to expected roles when doing a11y checks ([#1124](https://github.com/sveltejs/svelte/pull/1124))
+* More complete fix for case sensitive attributes ([#1062](https://github.com/sveltejs/svelte/issues/1062))
+* Handle CLRF line endings in await block comments ([#1132](https://github.com/sveltejs/svelte/issues/1132))
+
 ## 1.53.0
 
 * Base scoping selectors on `<style>` contents alone ([#1091](https://github.com/sveltejs/svelte/issues/1091))
