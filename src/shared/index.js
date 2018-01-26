@@ -177,7 +177,7 @@ export function setDev(newState) {
 }
 
 export function callAll(fns) {
-	while (fns && fns.length) fns.pop()();
+	while (fns && fns.length) fns.shift()();
 }
 
 export function _mount(target, anchor) {

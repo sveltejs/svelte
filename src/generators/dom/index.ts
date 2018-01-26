@@ -245,19 +245,19 @@ export default function dom(
 
 		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
 			if (!options.root) {
-				this._oncreate = [${templateProperties.oncreate && `_oncreate`}];
+				this._oncreate = [];
 				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
 				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
-			} ${templateProperties.oncreate && deindent`
-				else {
-					this.root._oncreate.push(_oncreate);
-				}
-			`}
+			}
 		`}
 
 		${generator.slots.size && `this.slots = {};`}
 
 		this._fragment = @create_main_fragment(this._state, this);
+
+		${(templateProperties.oncreate) && deindent`
+			this.root._oncreate.push(_oncreate);
+		`}
 
 		${generator.customElement ? deindent`
 			this._fragment.c();
