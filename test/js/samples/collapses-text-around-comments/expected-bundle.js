@@ -167,7 +167,7 @@ function _set(newState) {
 }
 
 function callAll(fns) {
-	while (fns && fns.length) fns.pop()();
+	while (fns && fns.length) fns.shift()();
 }
 
 function _mount(target, anchor) {
