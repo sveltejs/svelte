@@ -4,6 +4,7 @@ import flattenReference from '../../utils/flattenReference';
 import isVoidElementName from '../../utils/isVoidElementName';
 import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
+import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -427,7 +428,7 @@ export default class Element extends Node {
 			}
 
 			node.attributes.forEach((attr: Node) => {
-				open += ` ${attr.name}${stringifyAttributeValue(attr.value)}`
+				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.value)}`
 			});
 
 			if (isVoidElementName(node.name)) return open + '>';
