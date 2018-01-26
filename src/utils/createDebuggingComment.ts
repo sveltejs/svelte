@@ -17,5 +17,5 @@ export default function createDebuggingComment(node: Node, generator: DomGenerat
 	const start = locate(c);
 	const loc = `(${start.line + 1}:${start.column})`;
 
-	return `${loc} ${source.slice(c, d)}`.replace(/\n/g, ' ');
+	return `${loc} ${source.slice(c, d)}`.replace(/\s/g, ' ');
 }
