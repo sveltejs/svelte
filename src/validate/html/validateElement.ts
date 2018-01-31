@@ -111,12 +111,15 @@ export default function validateElement(
 					);
 				}
 
-				if (checkTypeAttribute(validator, node) !== 'checkbox') {
+				const type = checkTypeAttribute(validator, node);
+
+				if (type !== 'checkbox' && type !== 'radio') {
 					validator.error(
-						`'${name}' binding can only be used with <input type="checkbox">`,
+						`'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`,
 						attribute.start
 					);
 				}
+
 			} else if (name === 'group') {
 				if (node.name !== 'input') {
 					validator.error(
@@ -129,7 +132,7 @@ export default function validateElement(
 
 				if (type !== 'checkbox' && type !== 'radio') {
 					validator.error(
-						`'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`,
+						`'group' binding can only be used with <input type="checkbox"> or <input type="radio">`,
 						attribute.start
 					);
 				}

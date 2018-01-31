@@ -1,0 +1,8 @@
+[{
+	"message": "'group' binding can only be used with <input type=\"checkbox\"> or <input type=\"radio\">",
+	"loc": {
+		"line": 1,
+		"column": 7
+	},
+	"pos": 7
+}]
