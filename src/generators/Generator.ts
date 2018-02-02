@@ -779,11 +779,9 @@ export default class Generator {
 					contextDependencies.set(node.context, node.metadata.dependencies);
 
 					if (node.destructuredContexts) {
-						for (let i = 0; i < node.destructuredContexts.length; i += 1) {
-							const name = node.destructuredContexts[i];
-
+						node.destructuredContexts.forEach((name: string) => {
 							contextDependencies.set(name, node.metadata.dependencies);
-						}
+						});
 					}
 
 					contextDependenciesStack.push(contextDependencies);
