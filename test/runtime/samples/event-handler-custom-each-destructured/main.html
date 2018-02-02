@@ -1,0 +1,36 @@
+{{#each items as [item0, item1]}}
+	<button on:tap='set({ first: item0, second: item1 })'>
+		{{item0}}: {{item1}}
+	</button>
+{{/each}}
+
+<p>first: {{first}}</p>
+<p>second: {{second}}</p>
+
+<script>
+	export default {
+		data: () => ({
+			x: 0,
+			y: 0,
+			first: '',
+			second: '',
+			items: [ [0, 'foo'], [1, 'bar'], [2, 'baz'] ]
+		}),
+
+		events: {
+			tap ( node, callback ) {
+				function clickHandler ( event ) {
+					callback();
+				}
+
+				node.addEventListener( 'click', clickHandler, false );
+
+				return {
+					teardown () {
+						node.addEventListener( 'click', clickHandler, false );
+					}
+				};
+			}
+		}
+	};
+</script>
