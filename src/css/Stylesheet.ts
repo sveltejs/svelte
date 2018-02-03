@@ -25,12 +25,13 @@ class Rule {
 		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
 	}
 
-	isUsed() {
+	isUsed(dev: boolean) {
 		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
+		if (this.declarations.length === 0) return dev;
 		return this.selectors.some(s => s.used);
 	}
 
-	minify(code: MagicString, cascade: boolean) {
+	minify(code: MagicString, cascade: boolean, dev: boolean) {
 		let c = this.node.start;
 		let started = false;
 
@@ -177,11 +178,11 @@ class Atrule {
 		}
 	}
 
-	isUsed() {
+	isUsed(dev: boolean) {
 		return true; // TODO
 	}
 
-	minify(code: MagicString, cascade: boolean) {
+	minify(code: MagicString, cascade: boolean, dev: boolean) {
 		if (this.node.name === 'media') {
 			const expressionChar = code.original[this.node.expression.start];
 			let c = this.node.start + (expressionChar === '(' ? 6 : 7);
@@ -206,9 +207,9 @@ class Atrule {
 			let c = this.node.block.start + 1;
 
 			this.children.forEach(child => {
-				if (cascade || child.isUsed()) {
+				if (cascade || child.isUsed(dev)) {
 					code.remove(c, child.node.start);
-					child.minify(code, cascade);
+					child.minify(code, cascade, dev);
 					c = child.node.end;
 				}
 			});
@@ -257,6 +258,7 @@ export default class Stylesheet {
 	parsed: Parsed;
 	cascade: boolean;
 	filename: string;
+	dev: boolean;
 
 	hasStyles: boolean;
 	id: string;
@@ -264,11 +266,12 @@ export default class Stylesheet {
 	children: (Rule|Atrule)[];
 	keyframes: Map<string, string>;
 
-	constructor(source: string, parsed: Parsed, filename: string, cascade: boolean) {
+	constructor(source: string, parsed: Parsed, filename: string, cascade: boolean, dev: boolean) {
 		this.source = source;
 		this.parsed = parsed;
 		this.cascade = cascade;
 		this.filename = filename;
+		this.dev = dev;
 
 		this.children = [];
 		this.keyframes = new Map();
@@ -374,9 +377,9 @@ export default class Stylesheet {
 
 		let c = 0;
 		this.children.forEach(child => {
-			if (this.cascade || child.isUsed()) {
+			if (this.cascade || child.isUsed(this.dev)) {
 				code.remove(c, child.node.start);
-				child.minify(code, this.cascade);
+				child.minify(code, this.cascade, this.dev);
 				c = child.node.end;
 			}
 		});
