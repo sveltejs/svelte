@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.54.1
+
+* Hoist destructured references ([#1139](https://github.com/sveltejs/svelte/issues/1139))
+* Add `bind:volume` for media elements ([#1143](https://github.com/sveltejs/svelte/issues/1143))
+
 ## 1.54.0
 
 * Run `oncreate` hooks depth-first, top-to-bottom ([#1135](https://github.com/sveltejs/svelte/issues/1135))
