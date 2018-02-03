@@ -254,6 +254,8 @@ function create_main_fragment(state, component) {
 
 		m: function mount(target, anchor) {
 			insertNode(audio, target, anchor);
+
+			audio.volume = state.volume;
 		},
 
 		p: function update(changed, state) {
