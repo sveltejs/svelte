@@ -244,13 +244,20 @@ export default class Generator {
 					} else if (contexts.has(name)) {
 						const contextName = contexts.get(name);
 						if (contextName !== name) {
-							// this is true for 'reserved' names like `state` and `component`
+							// this is true for 'reserved' names like `state` and `component`,
+							// also destructured contexts
 							code.overwrite(
 								node.start,
 								node.start + name.length,
 								contextName,
 								{ storeName: true, contentOnly: false }
 							);
+
+							const destructuredName = contextName.replace(/\[\d+\]/, '');
+							if (destructuredName !== contextName) {
+								// so that hoisting the context works correctly
+								usedContexts.add(destructuredName);
+							}
 						}
 
 						usedContexts.add(name);
@@ -772,12 +779,9 @@ export default class Generator {
 					contextDependencies.set(node.context, node.metadata.dependencies);
 
 					if (node.destructuredContexts) {
-						for (let i = 0; i < node.destructuredContexts.length; i += 1) {
-							const name = node.destructuredContexts[i];
-							const value = `${node.context}[${i}]`;
-
+						node.destructuredContexts.forEach((name: string) => {
 							contextDependencies.set(name, node.metadata.dependencies);
-						}
+						});
 					}
 
 					contextDependenciesStack.push(contextDependencies);
