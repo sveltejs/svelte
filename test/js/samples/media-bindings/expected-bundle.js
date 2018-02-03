@@ -226,6 +226,12 @@ function create_main_fragment(state, component) {
 		component.set({ buffered: timeRangesToArray(audio.buffered), seekable: timeRangesToArray(audio.seekable) });
 	}
 
+	function audio_volumechange_handler() {
+		audio_updating = true;
+		component.set({ volume: audio.volume });
+		audio_updating = false;
+	}
+
 	return {
 		c: function create() {
 			audio = createElement("audio");
@@ -243,15 +249,19 @@ function create_main_fragment(state, component) {
 			if (!('buffered' in state)) component.root._beforecreate.push(audio_progress_handler);
 			addListener(audio, "loadedmetadata", audio_loadedmetadata_handler);
 			if (!('buffered' in state && 'seekable' in state)) component.root._beforecreate.push(audio_loadedmetadata_handler);
+			addListener(audio, "volumechange", audio_volumechange_handler);
 		},
 
 		m: function mount(target, anchor) {
 			insertNode(audio, target, anchor);
+
+			audio.volume = state.volume;
 		},
 
 		p: function update(changed, state) {
 			if (!audio_updating && !isNaN(state.currentTime )) audio.currentTime = state.currentTime ;
-			if (!audio_updating && audio_is_paused !== (audio_is_paused = state.paused)) audio[audio_is_paused ? "pause" : "play"]();
+			if (!audio_updating && audio_is_paused !== (audio_is_paused = state.paused )) audio[audio_is_paused ? "pause" : "play"]();
+			if (!audio_updating && !isNaN(state.volume)) audio.volume = state.volume;
 		},
 
 		u: function unmount() {
@@ -265,6 +275,7 @@ function create_main_fragment(state, component) {
 			removeListener(audio, "pause", audio_play_pause_handler);
 			removeListener(audio, "progress", audio_progress_handler);
 			removeListener(audio, "loadedmetadata", audio_loadedmetadata_handler);
+			removeListener(audio, "volumechange", audio_volumechange_handler);
 		}
 	};
 }

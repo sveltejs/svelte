@@ -139,7 +139,8 @@ export default function validateElement(
 				name === 'paused' ||
 				name === 'buffered' ||
 				name === 'seekable' ||
-				name === 'played'
+				name === 'played' ||
+				name === 'volume'
 			) {
 				if (node.name !== 'audio' && node.name !== 'video') {
 					validator.error(

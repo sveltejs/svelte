@@ -760,5 +760,11 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.isMediaNode() &&
 			(name === 'buffered' || name === 'seekable')
+	},
+	{
+		eventNames: ['volumechange'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'volume'
 	}
 ];
