@@ -540,6 +540,7 @@ const attributeLookup = {
 			'textarea',
 		],
 	},
+	volume: { appliesTo: ['audio', 'video'] },
 	width: {
 		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},
