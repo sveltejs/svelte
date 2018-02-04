@@ -140,40 +140,47 @@ export default class Component extends Node {
 				const setParentFromChildOnChange = new CodeBuilder();
 				const setParentFromChildOnInit = new CodeBuilder();
 
+				const setStoreFromChildOnChange = new CodeBuilder();
+				const setStoreFromChildOnInit = new CodeBuilder();
+
 				bindings.forEach((binding: Binding) => {
-					let setParentFromChild;
+					let { name: key } = getObject(binding.value);
+
+					const isStoreProp = generator.options.store && key[0] === '$';
+					if (isStoreProp) key = key.slice(1);
+					const newState = isStoreProp ? 'newStoreState' : 'newState';
 
 					binding.contexts.forEach(context => {
 						allContexts.add(context);
 					});
 
-					const { name: key } = getObject(binding.value);
+					let setFromChild;
 
-					if (block.contexts.has(key)) {
+					if (!isStoreProp && block.contexts.has(key)) {
 						const prop = binding.dependencies[0];
 						const computed = isComputed(binding.value);
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
-						setParentFromChild = deindent`
+						setFromChild = deindent`
 							var list = ${name_context}.${block.listNames.get(key)};
 							var index = ${name_context}.${block.indexNames.get(key)};
 							list[index]${tail} = childState.${binding.name};
 
 							${binding.dependencies
-								.map((prop: string) => `newState.${prop} = state.${prop};`)
+								.map((prop: string) => `${newState}.${prop} = state.${prop};`)
 								.join('\n')}
 						`;
 					}
 
 					else if (binding.value.type === 'MemberExpression') {
-						setParentFromChild = deindent`
+						setFromChild = deindent`
 							${binding.snippet} = childState.${binding.name};
-							${binding.dependencies.map((prop: string) => `newState.${prop} = state.${prop};`).join('\n')}
+							${binding.dependencies.map((prop: string) => `${newState}.${prop} = state.${prop};`).join('\n')}
 						`;
 					}
 
 					else {
-						setParentFromChild = `newState.${binding.value.name} = childState.${binding.name};`;
+						setFromChild = `${newState}.${key} = childState.${binding.name};`;
 					}
 
 					statements.push(deindent`
@@ -183,14 +190,14 @@ export default class Component extends Node {
 						}`
 					);
 
-					setParentFromChildOnChange.addConditional(
+					(isStoreProp ? setStoreFromChildOnChange : setParentFromChildOnChange).addConditional(
 						`!${name_updating}.${binding.name} && changed.${binding.name}`,
-						setParentFromChild
+						setFromChild
 					);
 
-					setParentFromChildOnInit.addConditional(
+					(isStoreProp ? setStoreFromChildOnInit : setParentFromChildOnInit).addConditional(
 						`!${name_updating}.${binding.name}`,
-						setParentFromChild
+						setFromChild
 					);
 
 					// TODO could binding.dependencies.length ever be 0?
@@ -206,23 +213,45 @@ export default class Component extends Node {
 
 				componentInitProperties.push(`data: ${name_initial_data}`);
 
+				const initialisers = [
+					'state = #component.get()',
+					!setParentFromChildOnChange.isEmpty() && 'newState = {}',
+					!setStoreFromChildOnChange.isEmpty() && 'newStoreState = {}',
+				].filter(Boolean).join(', ');
+
 				componentInitProperties.push(deindent`
 					_bind: function(changed, childState) {
-						var state = #component.get(), newState = {};
-						${setParentFromChildOnChange}
-						${name_updating} = @assign({}, changed);
-						#component._set(newState);
+						var ${initialisers};
+						${!setStoreFromChildOnChange.isEmpty() && deindent`
+							${setStoreFromChildOnChange}
+							${name_updating} = @assign({}, changed);
+							#component.store.set(newStoreState);
+						`}
+						${!setParentFromChildOnChange.isEmpty() && deindent`
+							${setParentFromChildOnChange}
+							${name_updating} = @assign({}, changed);
+							#component._set(newState);
+						`}
 						${name_updating} = {};
 					}
 				`);
 
+				// TODO can `!childState` ever be true?
 				beforecreate = deindent`
 					#component.root._beforecreate.push(function() {
-						var state = #component.get(), childState = ${name}.get(), newState = {};
+						var childState = ${name}.get(), ${initialisers};
 						if (!childState) return;
 						${setParentFromChildOnInit}
-						${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
-						#component._set(newState);
+						${!setStoreFromChildOnInit.isEmpty() && deindent`
+							${setStoreFromChildOnInit}
+							${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
+							#component.store.set(newStoreState);
+						`}
+						${!setParentFromChildOnInit.isEmpty() && deindent`
+							${setParentFromChildOnInit}
+							${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
+							#component._set(newState);
+						`}
 						${name_updating} = {};
 					});
 				`;
