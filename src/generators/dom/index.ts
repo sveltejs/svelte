@@ -219,7 +219,11 @@ export default function dom(
 				const message = generator.components.has(prop) ?
 					`${debugName} expected to find '${prop}' in \`data\`, but found it in \`components\` instead` :
 					`${debugName} was created without expected data property '${prop}'`;
-				return `if (!('${prop}' in this._state)) console.warn("${message}");`
+
+				const conditions = [`!('${prop}' in this._state)`];
+				if (generator.customElement) conditions.push(`!('${prop}' in this.attributes)`);
+
+				return `if (${conditions.join(' && ')}) console.warn("${message}");`
 			})}
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
