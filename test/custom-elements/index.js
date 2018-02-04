@@ -3,7 +3,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from 'rollup-plugin-virtual';
 import Nightmare from 'nightmare';
-import { loadSvelte } from "../helpers.js";
+import { addLineNumbers, loadSvelte } from "../helpers.js";
 
 const page = `
 <body>
@@ -93,6 +93,7 @@ describe('custom-elements', function() {
 							if (result) console.log(result);
 						})
 						.catch(message => {
+							console.log(addLineNumbers(bundle));
 							throw new Error(message);
 						});
 				});
