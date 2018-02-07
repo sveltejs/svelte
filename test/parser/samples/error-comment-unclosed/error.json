@@ -1,8 +1,8 @@
 {
-	"message": "comment was left open",
+	"message": "comment was left open, expected -->",
 	"loc": {
 		"line": 1,
-		"column": 0
+		"column": 24
 	},
-	"pos": 0
+	"pos": 24
 }
