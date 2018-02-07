@@ -31,7 +31,7 @@ export default class Slot extends Element {
 	) {
 		const { generator } = this;
 
-		const slotName = this.getStaticAttributeValue('name') || 'default';
+		const slotName = this.getStaticAttributeValue('name') || 'base';
 		generator.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${slotName}`);

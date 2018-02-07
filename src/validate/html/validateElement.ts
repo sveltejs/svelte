@@ -38,8 +38,8 @@ export default function validateElement(
 			}
 
 			const slotName = nameAttribute.value[0].data;
-			if (slotName === 'default') {
-				validator.error(`default is a reserved word — it cannot be used as a slot name`, nameAttribute.start);
+			if (slotName === 'default' || slotName === 'base') {
+				validator.error(`${slotName} is a reserved word — it cannot be used as a slot name`, nameAttribute.start);
 			}
 
 			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
