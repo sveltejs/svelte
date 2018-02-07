@@ -11,7 +11,7 @@ export default function stringifyAttributeValue(block: Block, chunks: Node[]) {
 
 			block.contextualise(chunk.expression);
 			const { snippet } = chunk.metadata;
-			return '${' + snippet + '}';
+			return '${__escape(' + snippet + ')}';
 		})
 		.join('');
 }
