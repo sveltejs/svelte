@@ -1,8 +1,11 @@
 {{#each foos as foo @id}}
 {{/each}}
-
 <script>
-	export default {
-		data: () => ({ foos: [] })
-	}
+  export default {
+    data: () => ({
+      foos: [
+        { "id": 5 }
+      ]
+    })
+  };
 </script>
