@@ -433,8 +433,8 @@ export default class Element extends Node {
 
 			if (isVoidElementName(node.name)) return open + '>';
 
-			if (node.name === 'script' || node.name === 'style') {
-				return `${open}>${node.data}</${node.name}>`;
+			if (node.name === 'script') {
+				return `${open}>${node.children[0].data}</script>`;
 			}
 
 			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;

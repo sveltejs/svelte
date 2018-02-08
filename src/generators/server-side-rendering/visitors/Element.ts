@@ -68,8 +68,8 @@ export default function visitElement(
 
 	if (node.name === 'textarea' && textareaContents !== undefined) {
 		generator.append(textareaContents);
-	} else if (node.name === 'script' || node.name === 'style') {
-		generator.append(escape(node.data));
+	} else if (node.name === 'script') {
+		generator.append(node.children[0].data);
 	} else {
 		node.children.forEach((child: Node) => {
 			visit(generator, block, child);
