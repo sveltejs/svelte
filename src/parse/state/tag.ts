@@ -226,8 +226,11 @@ export default function tag(parser: Parser) {
 		element.end = parser.index;
 	} else if (name === 'script') {
 		// special case
-		element.data = parser.readUntil(new RegExp(`</${name}>`));
-		parser.eat(`</${name}>`, true);
+		const start = parser.index;
+		const data = parser.readUntil(/<\/script>/);
+		const end = parser.index;
+		element.children.push({ start, end, type: 'Text', data });
+		parser.eat('</script>', true);
 		element.end = parser.index;
 	} else if (name === 'style') {
 		// special case
