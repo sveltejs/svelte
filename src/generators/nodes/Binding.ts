@@ -73,9 +73,11 @@ export default class Binding extends Node {
 			);
 		}
 
-		if (this.name === 'currentTime') {
+		if (this.name === 'currentTime' || this.name === 'volume') {
 			updateCondition = `!isNaN(${snippet})`;
-			initialUpdate = null;
+
+			if (this.name === 'currentTime')
+				initialUpdate = null;
 		}
 
 		if (this.name === 'paused') {

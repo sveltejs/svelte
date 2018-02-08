@@ -4,6 +4,7 @@ import flattenReference from '../../utils/flattenReference';
 import isVoidElementName from '../../utils/isVoidElementName';
 import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
+import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -427,12 +428,12 @@ export default class Element extends Node {
 			}
 
 			node.attributes.forEach((attr: Node) => {
-				open += ` ${attr.name}${stringifyAttributeValue(attr.value)}`
+				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.value)}`
 			});
 
 			if (isVoidElementName(node.name)) return open + '>';
 
-			if (node.name === 'script' || node.name === 'style') {
+			if (node.name === 'script') {
 				return `${open}>${node.data}</${node.name}>`;
 			}
 
@@ -759,5 +760,11 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.isMediaNode() &&
 			(name === 'buffered' || name === 'seekable')
+	},
+	{
+		eventNames: ['volumechange'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'volume'
 	}
 ];

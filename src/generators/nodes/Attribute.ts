@@ -1,5 +1,6 @@
 import deindent from '../../utils/deindent';
 import { stringify } from '../../utils/stringify';
+import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
 import { DomGenerator } from '../dom/index';
 import Node from './shared/Node';
@@ -43,7 +44,7 @@ export default class Attribute {
 
 	render(block: Block) {
 		const node = this.parent;
-		const name = this.name;
+		const name = fixAttributeCasing(this.name);
 
 		if (name === 'style') {
 			const styleProps = optimizeStyle(this.value);
@@ -539,6 +540,7 @@ const attributeLookup = {
 			'textarea',
 		],
 	},
+	volume: { appliesTo: ['audio', 'video'] },
 	width: {
 		appliesTo: ['canvas', 'embed', 'iframe', 'img', 'input', 'object', 'video'],
 	},

@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "1.51.0",
+  "version": "1.54.1",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
@@ -56,7 +56,8 @@
     "eslint-plugin-import": "^2.2.0",
     "estree-walker": "^0.5.1",
     "glob": "^7.1.1",
-    "jsdom": "^11.1.0",
+    "is-reference": "^1.1.0",
+    "jsdom": "^11.6.1",
     "locate-character": "^2.0.0",
     "magic-string": "^0.22.3",
     "mocha": "^3.2.0",

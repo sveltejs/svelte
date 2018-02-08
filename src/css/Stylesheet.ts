@@ -3,6 +3,7 @@ import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
+import hash from '../utils/hash';
 import Element from '../generators/nodes/Element';
 import { Validator } from '../validate/index';
 import { Node, Parsed, Warning } from '../interfaces';
@@ -269,12 +270,12 @@ export default class Stylesheet {
 		this.cascade = cascade;
 		this.filename = filename;
 
-		this.id = `svelte-${parsed.hash}`;
-
 		this.children = [];
 		this.keyframes = new Map();
 
 		if (parsed.css && parsed.css.children.length) {
+			this.id = `svelte-${hash(parsed.css.content.styles)}`;
+
 			this.hasStyles = true;
 
 			const stack: (Rule | Atrule)[] = [];

@@ -1,5 +1,37 @@
 # Svelte changelog
 
+## 1.54.1
+
+* Hoist destructured references ([#1139](https://github.com/sveltejs/svelte/issues/1139))
+* Add `bind:volume` for media elements ([#1143](https://github.com/sveltejs/svelte/issues/1143))
+
+## 1.54.0
+
+* Run `oncreate` hooks depth-first, top-to-bottom ([#1135](https://github.com/sveltejs/svelte/issues/1135))
+* Render boolean attributes correctly in SSR mode ([#1109](https://github.com/sveltejs/svelte/issues/1109))
+* Add `feed` aria role to expected roles when doing a11y checks ([#1124](https://github.com/sveltejs/svelte/pull/1124))
+* More complete fix for case sensitive attributes ([#1062](https://github.com/sveltejs/svelte/issues/1062))
+* Handle CLRF line endings in await block comments ([#1132](https://github.com/sveltejs/svelte/issues/1132))
+
+## 1.53.0
+
+* Base scoping selectors on `<style>` contents alone ([#1091](https://github.com/sveltejs/svelte/issues/1091))
+
+## 1.52.0
+
+* Deconflict referenced globals ([#1079](https://github.com/sveltejs/svelte/issues/1079))
+* Validate contents of `await` blocks ([#1061](https://github.com/sveltejs/svelte/issues/1061))
+* Fire `oncreate` for components in `await` blocks ([#1061](https://github.com/sveltejs/svelte/issues/1061))
+* Automatically fix attribute casing ([#1062](https://github.com/sveltejs/svelte/issues/1062))
+* Fix escaping in `<script>` and `<style>` ([#1082](https://github.com/sveltejs/svelte/issues/1082))
+* Error if invalid characters are used in computed properties, and allow any valid identifier in props ([#1083](https://github.com/sveltejs/svelte/issues/1083))
+* Don't run a11y tests on components ([#1110](https://github.com/sveltejs/svelte/issues/1110))
+* Respect `store` option in SSR mode ([#1107](https://github.com/sveltejs/svelte/issues/1107))
+
+## 1.51.1
+
+* Only escape <, > and & characters ([#1082](https://github.com/sveltejs/svelte/issues/1082))
+
 ## 1.51.0
 
 * Lock `scroll` bindings ([#1071](https://github.com/sveltejs/svelte/issues/1071))
