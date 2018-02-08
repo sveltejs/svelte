@@ -8,5 +8,14 @@ export default function visitText(
 	block: Block,
 	node: Node
 ) {
-	generator.append(escapeHTML(escape(node.data).replace(/(\${|`|\\)/g, '\\$1')));
+	let text = escape(node.data).replace(/(\${|`|\\)/g, '\\$1');
+	if (
+		!node.parent ||
+		node.parent.type !== 'Element' ||
+		(node.parent.name !== 'script' && node.parent.name !== 'style')
+	) {
+		// unless this Text node is inside a <script> or <style> element, escape &,<,>
+		text = escapeHTML(text);
+	}
+	generator.append(text);
 }

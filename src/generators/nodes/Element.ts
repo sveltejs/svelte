@@ -232,7 +232,7 @@ export default class Element extends Node {
 				);
 			} else {
 				block.builders.create.addLine(
-					`${name}.innerHTML = ${stringify(this.children.map(toHTML).join(''))};`
+					`${name}.innerHTML = ${stringify(this.children.map(node => toHTML(node, false)).join(''))};`
 				);
 			}
 		} else {
@@ -414,8 +414,10 @@ export default class Element extends Node {
 			);
 		}
 
-		function toHTML(node: Element | Text) {
-			if (node.type === 'Text') return escapeHTML(node.data);
+		function toHTML(node: Element | Text, dontEscapeText: Boolean) {
+			if (node.type === 'Text') {
+				return dontEscapeText ? node.data : escapeHTML(node.data);
+			}
 
 			let open = `<${node.name}`;
 
@@ -433,11 +435,9 @@ export default class Element extends Node {
 
 			if (isVoidElementName(node.name)) return open + '>';
 
-			if (node.name === 'script' || node.name === 'style') {
-				return `${open}>${node.data}</${node.name}>`;
-			}
+			const shouldNotEscapeText = node.name === 'script' || node.name === 'style';
 
-			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
+			return `${open}>${node.children.map(node => toHTML(node, shouldNotEscapeText)).join('')}</${node.name}>`;
 		}
 	}
 
