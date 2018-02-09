@@ -10,5 +10,11 @@ export default function visitMustacheTag(
 	block.contextualise(node.expression);
 	const { snippet } = node.metadata;
 
-	generator.append('${__escape(' + snippet + ')}');
+	generator.append(
+		node.parent &&
+		node.parent.type === 'Element' &&
+		node.parent.name === 'style'
+			? '${' + snippet + '}'
+			: '${__escape(' + snippet + ')}'
+	);
 }
