@@ -3,7 +3,7 @@ import * as http from 'http';
 import { rollup } from 'rollup';
 import virtual from 'rollup-plugin-virtual';
 import Nightmare from 'nightmare';
-import { addLineNumbers, loadSvelte } from "../helpers.js";
+import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
 
 const page = `
 <body>
@@ -57,6 +57,8 @@ describe('custom-elements', function() {
 		const solo = /\.solo$/.test(dir);
 
 		(solo ? it.only : it)(dir, () => {
+			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
+
 			return rollup({
 				input: `test/custom-elements/samples/${dir}/test.js`,
 				plugins: [
@@ -64,7 +66,8 @@ describe('custom-elements', function() {
 						transform(code, id) {
 							if (id.endsWith('.html')) {
 								const compiled = svelte.compile(code, {
-									customElement: true
+									customElement: true,
+									dev: config.dev
 								});
 
 								return {

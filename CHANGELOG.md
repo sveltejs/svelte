@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 1.54.2
+
+* Prevent `await` blocks using stale state ([#1131](https://github.com/sveltejs/svelte/issues/1131))
+* Prevent erroneous missing data warnings for custom elements ([#1065](https://github.com/sveltejs/svelte/issues/1065))
+* Remove empty selectors in prod mode ([#1138](https://github.com/sveltejs/svelte/issues/1138))
+* Escape attribute values in SSR mode ([#1155](https://github.com/sveltejs/svelte/pull/1155))
+* Remove `<noscript>` elements in DOM mode ([#1108](https://github.com/sveltejs/svelte/issues/1108))
+* Allow hydration of non-root `<script>`/`<style>` tags ([#1163](https://github.com/sveltejs/svelte/pull/1163))
+
 ## 1.54.1
 
 * Hoist destructured references ([#1139](https://github.com/sveltejs/svelte/issues/1139))
