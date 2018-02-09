@@ -2,12 +2,13 @@ import {
 	assign,
 	blankObject,
 	differs,
+	differsImmutable,
 	dispatchObservers,
 	get,
 	observe
 } from './shared.js';
 
-function Store(state) {
+function Store(state, options) {
 	this._observers = { pre: blankObject(), post: blankObject() };
 	this._changeHandlers = [];
 	this._dependents = [];
@@ -16,6 +17,7 @@ function Store(state) {
 	this._sortedComputedProperties = [];
 
 	this._state = assign({}, state);
+	this._differs = options && options.immutable ? differsImmutable : differs;
 }
 
 assign(Store.prototype, {
@@ -88,7 +90,7 @@ assign(Store.prototype, {
 
 				if (dirty) {
 					var newValue = fn.apply(null, values);
-					if (differs(newValue, value)) {
+					if (store._differs(newValue, value)) {
 						value = newValue;
 						changed[key] = true;
 						state[key] = value;
@@ -124,7 +126,7 @@ assign(Store.prototype, {
 
 		for (var key in newState) {
 			if (this._computed[key]) throw new Error("'" + key + "' is a read-only property");
-			if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+			if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 		}
 		if (!dirty) return;
 

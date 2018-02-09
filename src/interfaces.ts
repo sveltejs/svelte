@@ -52,6 +52,7 @@ export interface CompileOptions {
 	cssOutputFilename?: string;
 
 	dev?: boolean;
+	immutable?: boolean;
 	shared?: boolean | string;
 	cascade?: boolean;
 	hydratable?: boolean;

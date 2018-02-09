@@ -375,6 +375,7 @@ export default function dom(
 			if (sigil === '@') {
 				if (name in shared) {
 					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+					else if (options.immutable && `${name}Immutable` in shared) name = `${name}Immutable`;
 					usedHelpers.add(name);
 				}
 
