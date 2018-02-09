@@ -1,12 +1,13 @@
 export default {
 	data: {
 		color: 'red',
+		foo: '/* < & > */',
 	},
 
 	html: `
 		<div>
 			<style>
-			/* something with < and > */
+				/* something with < and > */
 				div {
 					color: blue;
 				}
@@ -27,7 +28,8 @@ export default {
 
 		<div>
 			<style>
-			/* something with < and > */
+				/* something with < and > */
+				/* < & > */
 				div {
 					color: red;
 				}
@@ -38,6 +40,7 @@ export default {
 		<div>
 			<div>
 				<style>
+					/* < & > */
 					div > div {
 						color: red;
 					}
