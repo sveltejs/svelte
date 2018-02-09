@@ -158,7 +158,7 @@ export default class Element extends Node {
 		const { generator } = this;
 
 		if (this.name === 'slot') {
-			const slotName = this.getStaticAttributeValue('name') || 'default';
+			const slotName = this.getStaticAttributeValue('name') || 'base';
 			this.generator.slots.add(slotName);
 		}
 

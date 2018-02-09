@@ -93,8 +93,8 @@ export default function visitComponent(
 
 	if (node.children.length) {
 		const appendTarget: AppendTarget = {
-			slots: { default: '' },
-			slotStack: ['default']
+			slots: { base: '' },
+			slotStack: ['base']
 		};
 
 		generator.appendTargets.push(appendTarget);

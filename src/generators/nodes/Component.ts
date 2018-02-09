@@ -50,7 +50,7 @@ export default class Component extends Node {
 		);
 
 		if (this.children.length) {
-			this._slots = new Set(['default']);
+			this._slots = new Set(['base']);
 
 			this.children.forEach(child => {
 				child.init(block, stripWhitespace, nextSibling);
@@ -75,7 +75,7 @@ export default class Component extends Node {
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, `${this.var}._slotted.default`, 'nodes');
+				child.build(block, `${this.var}._slotted.base`, 'nodes');
 			});
 		}
 
@@ -584,7 +584,7 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 	// TODO make this a method of the nodes
 
 	if (node.type === 'Component') {
-		return `${node.var}._mount(${name}._slotted.default, null);`;
+		return `${node.var}._mount(${name}._slotted.base, null);`;
 	}
 
 	if (node.type === 'Element') {
@@ -593,17 +593,17 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 			return `@appendNode(${node.var}, ${name}._slotted.${node.getStaticAttributeValue('slot')});`;
 		}
 
-		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+		return `@appendNode(${node.var}, ${name}._slotted.base);`;
 	}
 
 	if (node.type === 'Text' || node.type === 'MustacheTag' || node.type === 'RawMustacheTag') {
-		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+		return `@appendNode(${node.var}, ${name}._slotted.base);`;
 	}
 
 	if (node.type === 'EachBlock') {
 		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted.default, null);`;
+		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted.base, null);`;
 	}
 
-	return `${node.var}.m(${name}._slotted.default, null);`;
+	return `${node.var}.m(${name}._slotted.base, null);`;
 }
