@@ -232,7 +232,7 @@ export default class Element extends Node {
 				);
 			} else {
 				block.builders.create.addLine(
-					`${name}.innerHTML = ${stringify(this.children.map(node => toHTML(node, false)).join(''))};`
+					`${name}.innerHTML = ${stringify(this.children.map(toHTML).join(''))};`
 				);
 			}
 		} else {
@@ -414,9 +414,13 @@ export default class Element extends Node {
 			);
 		}
 
-		function toHTML(node: Element | Text, dontEscapeText: Boolean) {
+		function toHTML(node: Element | Text) {
 			if (node.type === 'Text') {
-				return dontEscapeText ? node.data : escapeHTML(node.data);
+				return node.parent &&
+					node.parent.type === 'Element' &&
+					(node.parent.name === 'script' || node.parent.name === 'style')
+					? node.data
+					: escapeHTML(node.data);
 			}
 
 			let open = `<${node.name}`;
@@ -435,9 +439,7 @@ export default class Element extends Node {
 
 			if (isVoidElementName(node.name)) return open + '>';
 
-			const shouldNotEscapeText = node.name === 'script' || node.name === 'style';
-
-			return `${open}>${node.children.map(node => toHTML(node, shouldNotEscapeText)).join('')}</${node.name}>`;
+			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
 		}
 	}
 
