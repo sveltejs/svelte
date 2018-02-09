@@ -1,12 +1,12 @@
 import Block from '../../Block';
-import { escape } from '../../../../utils/stringify';
+import { escape, escapeTemplate } from '../../../../utils/stringify';
 import { Node } from '../../../../interfaces';
 
 export default function stringifyAttributeValue(block: Block, chunks: Node[]) {
 	return chunks
 		.map((chunk: Node) => {
 			if (chunk.type === 'Text') {
-				return escape(chunk.data).replace(/"/g, '&quot;');
+				return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
 			}
 
 			block.contextualise(chunk.expression);
