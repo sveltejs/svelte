@@ -3,17 +3,13 @@
 
 <script>
 	import { Store } from '../../../../store.js';
-	import Nested from './Nested.html';
+	import './Nested.html';
 
 	export default {
 		store () {
 			return new Store({
 				name: 'world'
 			});
-		},
-
-		components: {
-			Nested
 		}
 	};
 </script>
