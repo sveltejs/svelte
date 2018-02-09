@@ -224,10 +224,22 @@ export default function tag(parser: Parser) {
 		);
 		parser.read(/<\/textarea>/);
 		element.end = parser.index;
-	} else if (name === 'script' || name === 'style') {
+	} else if (name === 'script') {
 		// special case
-		element.data = parser.readUntil(new RegExp(`</${name}>`));
-		parser.eat(`</${name}>`, true);
+		const start = parser.index;
+		const data = parser.readUntil(/<\/script>/);
+		const end = parser.index;
+		element.children.push({ start, end, type: 'Text', data });
+		parser.eat('</script>', true);
+		element.end = parser.index;
+	} else if (name === 'style') {
+		// special case
+		element.children = readSequence(
+			parser,
+			() =>
+				parser.template.slice(parser.index, parser.index + 8) === '</style>'
+		);
+		parser.read(/<\/style>/);
 		element.end = parser.index;
 	} else {
 		parser.stack.push(element);
