@@ -162,6 +162,8 @@ export default class Element extends Node {
 			this.generator.slots.add(slotName);
 		}
 
+		if (this.name === 'noscript') return;
+
 		const childState = {
 			parentNode: this.var,
 			parentNodes: parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
@@ -422,6 +424,8 @@ export default class Element extends Node {
 					? node.data
 					: escapeHTML(node.data);
 			}
+
+			if (node.name === 'noscript') return '';
 
 			let open = `<${node.name}`;
 
