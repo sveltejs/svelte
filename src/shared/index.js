@@ -26,7 +26,25 @@ export function destroyDev(detach) {
 }
 
 export function differs(a, b) {
-	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	if (a == null || b == null) return a !== b;
+	if (a.constructor !== b.constructor) return true;
+	if (a.valueOf && b.valueOf) {
+		a = a.valueOf();
+		b = b.valueOf();
+	}
+	if (typeof a === 'number' && isNaN(a) && isNaN(b)) return false;
+	return a !== b || typeof a === 'object' || typeof a === 'function';
+}
+
+export function differsImmutable(a, b) {
+	if (a == null || b == null) return a !== b;
+	if (a.constructor !== b.constructor) return true;
+	if (a.valueOf && b.valueOf) {
+		a = a.valueOf();
+		b = b.valueOf();
+	}
+	if (typeof a === 'number' && isNaN(a) && isNaN(b)) return false;
+	return a !== b;
 }
 
 export function dispatchObservers(component, group, changed, newState, oldState) {
@@ -151,6 +169,27 @@ export function _set(newState) {
 
 	for (var key in newState) {
 		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+	}
+	if (!dirty) return;
+
+	this._state = assign({}, oldState, newState);
+	this._recompute(changed, this._state);
+	if (this._bind) this._bind(changed, this._state);
+
+	if (this._fragment) {
+		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this._fragment.p(changed, this._state);
+		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+	}
+}
+
+export function _setImmutable(newState) {
+	var oldState = this._state,
+		changed = {},
+		dirty = false;
+
+	for (var key in newState) {
+		if (differsImmutable(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
 	if (!dirty) return;
 

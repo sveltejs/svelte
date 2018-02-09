@@ -48,7 +48,14 @@ function destroy(detach) {
 }
 
 function differs(a, b) {
-	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	if (a == null || b == null) return a !== b;
+	if (a.constructor !== b.constructor) return true;
+	if (a.valueOf && b.valueOf) {
+		a = a.valueOf();
+		b = b.valueOf();
+	}
+	if (typeof a === 'number' && isNaN(a) && isNaN(b)) return false;
+	return a !== b || typeof a === 'object' || typeof a === 'function';
 }
 
 function dispatchObservers(component, group, changed, newState, oldState) {
