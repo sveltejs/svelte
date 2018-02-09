@@ -162,6 +162,8 @@ export default class Element extends Node {
 			this.generator.slots.add(slotName);
 		}
 
+		if (this.name === 'noscript') return;
+
 		const childState = {
 			parentNode: this.var,
 			parentNodes: parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
@@ -415,7 +417,15 @@ export default class Element extends Node {
 		}
 
 		function toHTML(node: Element | Text) {
-			if (node.type === 'Text') return escapeHTML(node.data);
+			if (node.type === 'Text') {
+				return node.parent &&
+					node.parent.type === 'Element' &&
+					(node.parent.name === 'script' || node.parent.name === 'style')
+					? node.data
+					: escapeHTML(node.data);
+			}
+
+			if (node.name === 'noscript') return '';
 
 			let open = `<${node.name}`;
 
@@ -432,10 +442,6 @@ export default class Element extends Node {
 			});
 
 			if (isVoidElementName(node.name)) return open + '>';
-
-			if (node.name === 'script' || node.name === 'style') {
-				return `${open}>${node.data}</${node.name}>`;
-			}
 
 			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
 		}
