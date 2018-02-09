@@ -6,7 +6,7 @@ import { AppendTarget } from '../interfaces';
 import { Node } from '../../../interfaces';
 import getObject from '../../../utils/getObject';
 import getTailSnippet from '../../../utils/getTailSnippet';
-import { stringify } from '../../../utils/stringify';
+import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
 
 export default function visitComponent(
 	generator: SsrGenerator,
@@ -14,7 +14,9 @@ export default function visitComponent(
 	node: Node
 ) {
 	function stringifyAttribute(chunk: Node) {
-		if (chunk.type === 'Text') return chunk.data;
+		if (chunk.type === 'Text') {
+			return escapeTemplate(escape(chunk.data));
+		}
 		if (chunk.type === 'MustacheTag') {
 			block.contextualise(chunk.expression);
 			const { snippet } = chunk.metadata;
