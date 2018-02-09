@@ -116,7 +116,7 @@ export function compile(source: string, _options: CompileOptions) {
 		return;
 	}
 
-	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false);
+	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false, options.dev);
 
 	validate(parsed, source, stylesheet, options);
 

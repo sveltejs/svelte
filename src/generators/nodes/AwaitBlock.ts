@@ -127,8 +127,10 @@ export default class AwaitBlock extends Node {
 
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
+						var state = #component.get();
 						${replace_await_block}(${token}, ${create_then_block}, ${value}, ${params});
 					}, function (${error}) {
+						var state = #component.get();
 						${replace_await_block}(${token}, ${create_catch_block}, ${error}, ${params});
 					});
 
