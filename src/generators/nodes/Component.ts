@@ -5,9 +5,16 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
 import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
+import isValidIdentifier from '../../utils/isValidIdentifier';
+import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
+
+function quoteIfNecessary(name, legacy) {
+	if (!isValidIdentifier || (legacy && reservedNames.has(name))) return `"${name}"`;
+	return name;
+}
 
 export default class Component extends Node {
 	type: 'Component';
@@ -71,11 +78,11 @@ export default class Component extends Node {
 		const componentInitProperties = [`root: #component.root`];
 
 		if (this.children.length > 0) {
-			const slots = Array.from(this._slots).map(name => `${name}: @createFragment()`);
+			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name, generator.legacy)}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, `${this.var}._slotted.default`, 'nodes');
+				child.build(block, `${this.var}._slotted${generator.legacy ? `["default"]` : `.default`}`, 'nodes');
 			});
 		}
 
@@ -584,7 +591,7 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 	// TODO make this a method of the nodes
 
 	if (node.type === 'Component') {
-		return `${node.var}._mount(${name}._slotted.default, null);`;
+		return `${node.var}._mount(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 	}
 
 	if (node.type === 'Element') {
@@ -593,17 +600,17 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 			return `@appendNode(${node.var}, ${name}._slotted.${node.getStaticAttributeValue('slot')});`;
 		}
 
-		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+		return `@appendNode(${node.var}, ${name}._slotted${generator.legacy ? `["default"]` : `.default`});`;
 	}
 
 	if (node.type === 'Text' || node.type === 'MustacheTag' || node.type === 'RawMustacheTag') {
-		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+		return `@appendNode(${node.var}, ${name}._slotted${generator.legacy ? `["default"]` : `.default`});`;
 	}
 
 	if (node.type === 'EachBlock') {
 		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted.default, null);`;
+		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 	}
 
-	return `${node.var}.m(${name}._slotted.default, null);`;
+	return `${node.var}.m(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 }
