@@ -3,6 +3,8 @@ import { assign, callAll, init, noop, proto } from "svelte/shared.js";
 
 var Nested = window.Nested;
 
+var immutable = true;
+
 function create_main_fragment(state, component) {
 
 	var nested = new Nested({
@@ -32,6 +34,7 @@ function create_main_fragment(state, component) {
 }
 
 function SvelteComponent(options) {
+	if (!('immutable' in options)) options = assign({ immutable: immutable }, options);
 	init(this, options);
 	this._state = assign({}, options.data);
 

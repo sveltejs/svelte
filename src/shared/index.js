@@ -76,6 +76,8 @@ export function init(component, options) {
 	component.options = options;
 	component.root = options.root || component;
 	component.store = component.root.store || options.store;
+	var immutable = options.immutable !== undefined ? options.immutable : component.root.options.immutable;
+	component._differs = immutable ? differsImmutable : differs;
 }
 
 export function observe(key, callback, options) {

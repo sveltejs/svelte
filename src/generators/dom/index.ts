@@ -207,8 +207,8 @@ export default function dom(
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
+		${templateProperties.immutable && `if (!('immutable' in options)) options = assign({ immutable: %immutable }, options);`}
 		@init(this, options);
-		this._differs = @differs;
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
@@ -376,7 +376,6 @@ export default function dom(
 			if (sigil === '@') {
 				if (name in shared) {
 					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
-					else if (options.immutable && `${name}Immutable` in shared) name = `${name}Immutable`;
 					usedHelpers.add(name);
 				}
 
