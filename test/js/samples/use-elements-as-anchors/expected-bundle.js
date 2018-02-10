@@ -52,14 +52,7 @@ function destroy(detach) {
 }
 
 function differs(a, b) {
-	if (a == null || b == null) return a !== b;
-	if (a.constructor !== b.constructor) return true;
-	if (a.valueOf && b.valueOf) {
-		a = a.valueOf();
-		b = b.valueOf();
-	}
-	if (typeof a === 'number' && isNaN(a) && isNaN(b)) return false;
-	return a !== b || typeof a === 'object' || typeof a === 'function';
+	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
 function dispatchObservers(component, group, changed, newState, oldState) {
@@ -158,7 +151,7 @@ function _set(newState) {
 		dirty = false;
 
 	for (var key in newState) {
-		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
 	if (!dirty) return;
 
@@ -447,6 +440,7 @@ function create_if_block_4(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
+	this._differs = differs;
 	this._state = assign({}, options.data);
 
 	this._fragment = create_main_fragment(this._state, this);

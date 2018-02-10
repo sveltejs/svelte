@@ -1,14 +1,23 @@
-import { assign } from './utils.js';
-import { noop } from './utils.js';
-export * from './dom.js';
-export * from './transitions.js';
-export * from './utils.js';
+function noop() {}
 
-export function blankObject() {
+function assign(target) {
+	var k,
+		source,
+		i = 1,
+		len = arguments.length;
+	for (; i < len; i++) {
+		source = arguments[i];
+		for (k in source) target[k] = source[k];
+	}
+
+	return target;
+}
+
+function blankObject() {
 	return Object.create(null);
 }
 
-export function destroy(detach) {
+function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
 	this.set = this.get = noop;
@@ -18,22 +27,11 @@ export function destroy(detach) {
 	this._fragment = this._state = null;
 }
 
-export function destroyDev(detach) {
-	destroy.call(this, detach);
-	this.destroy = function() {
-		console.warn('Component was already destroyed');
-	};
-}
-
-export function differs(a, b) {
-	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
-}
-
-export function differsImmutable(a, b) {
+function differsImmutable(a, b) {
 	return a != a ? b == b : a !== b;
 }
 
-export function dispatchObservers(component, group, changed, newState, oldState) {
+function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
 		if (!changed[key]) continue;
 
@@ -54,7 +52,7 @@ export function dispatchObservers(component, group, changed, newState, oldState)
 	}
 }
 
-export function fire(eventName, data) {
+function fire(eventName, data) {
 	var handlers =
 		eventName in this._handlers && this._handlers[eventName].slice();
 	if (!handlers) return;
@@ -64,11 +62,11 @@ export function fire(eventName, data) {
 	}
 }
 
-export function get(key) {
+function get(key) {
 	return key ? this._state[key] : this._state;
 }
 
-export function init(component, options) {
+function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
@@ -78,7 +76,7 @@ export function init(component, options) {
 	component.store = component.root.store || options.store;
 }
 
-export function observe(key, callback, options) {
+function observe(key, callback, options) {
 	var group = options && options.defer
 		? this._observers.post
 		: this._observers.pre;
@@ -99,21 +97,7 @@ export function observe(key, callback, options) {
 	};
 }
 
-export function observeDev(key, callback, options) {
-	var c = (key = '' + key).search(/[^\w]/);
-	if (c > -1) {
-		var message =
-			'The first argument to component.observe(...) must be the name of a top-level property';
-		if (c > 0)
-			message += ", i.e. '" + key.slice(0, c) + "' rather than '" + key + "'";
-
-		throw new Error(message);
-	}
-
-	return observe.call(this, key, callback, options);
-}
-
-export function on(eventName, handler) {
+function on(eventName, handler) {
 	if (eventName === 'teardown') return this.on('destroy', handler);
 
 	var handlers = this._handlers[eventName] || (this._handlers[eventName] = []);
@@ -127,18 +111,7 @@ export function on(eventName, handler) {
 	};
 }
 
-export function onDev(eventName, handler) {
-	if (eventName === 'teardown') {
-		console.warn(
-			"Use component.on('destroy', ...) instead of component.on('teardown', ...) which has been deprecated and will be unsupported in Svelte 2"
-		);
-		return this.on('destroy', handler);
-	}
-
-	return on.call(this, eventName, handler);
-}
-
-export function set(newState) {
+function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
 	this.root._lock = true;
@@ -148,7 +121,7 @@ export function set(newState) {
 	this.root._lock = false;
 }
 
-export function _set(newState) {
+function _set(newState) {
 	var oldState = this._state,
 		changed = {},
 		dirty = false;
@@ -169,42 +142,19 @@ export function _set(newState) {
 	}
 }
 
-export function setDev(newState) {
-	if (typeof newState !== 'object') {
-		throw new Error(
-			this._debugName + '.set was called without an object of data key-values to update.'
-		);
-	}
-
-	this._checkReadOnly(newState);
-	set.call(this, newState);
-}
-
-export function callAll(fns) {
+function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
 
-export function _mount(target, anchor) {
+function _mount(target, anchor) {
 	this._fragment.m(target, anchor);
 }
 
-export function _unmount() {
+function _unmount() {
 	if (this._fragment) this._fragment.u();
 }
 
-export function isPromise(value) {
-	return value && typeof value.then === 'function';
-}
-
-export var PENDING = {};
-export var SUCCESS = {};
-export var FAILURE = {};
-
-export function removeFromStore() {
-	this.store._remove(this);
-}
-
-export var proto = {
+var proto = {
 	destroy: destroy,
 	get: get,
 	fire: fire,
@@ -218,16 +168,51 @@ export var proto = {
 	_unmount: _unmount
 };
 
-export var protoDev = {
-	destroy: destroyDev,
-	get: get,
-	fire: fire,
-	observe: observeDev,
-	on: onDev,
-	set: setDev,
-	teardown: destroyDev,
-	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount
+/* generated by Svelte vX.Y.Z */
+function a(x) {
+	return x * 2;
+}
+
+function b(x) {
+	return x * 3;
+}
+
+function create_main_fragment(state, component) {
+
+	return {
+		c: noop,
+
+		m: noop,
+
+		p: noop,
+
+		u: noop,
+
+		d: noop
+	};
+}
+
+function SvelteComponent(options) {
+	init(this, options);
+	this._differs = differsImmutable;
+	this._state = assign({}, options.data);
+	this._recompute({ x: 1 }, this._state);
+
+	this._fragment = create_main_fragment(this._state, this);
+
+	if (options.target) {
+		this._fragment.c();
+		this._fragment.m(options.target, options.anchor || null);
+	}
+}
+
+assign(SvelteComponent.prototype, proto);
+
+SvelteComponent.prototype._recompute = function _recompute(changed, state) {
+	if (changed.x) {
+		if (this._differs(state.a, (state.a = a(state.x)))) changed.a = true;
+		if (this._differs(state.b, (state.b = b(state.x)))) changed.b = true;
+	}
 };
+
+export default SvelteComponent;
