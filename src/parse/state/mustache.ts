@@ -5,13 +5,6 @@ import reservedNames from '../../utils/reservedNames';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
-function isEmpty(nodes: Node[]) {
-	if (!nodes || nodes.length > 1) return false;
-	if (nodes.length === 0) return true;
-	if (nodes.length > 1) return false;
-	return nodes[0].type === 'Text' && !/\S/.test(nodes[0].data);
-}
-
 function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
 	if (!block.children) return; // AwaitBlock
 
@@ -81,8 +74,6 @@ export default function mustache(parser: Parser) {
 		}
 
 		// strip leading/trailing whitespace as necessary
-		if (isEmpty(block.children)) parser.error(`Empty block`, block.start);
-
 		const charBefore = parser.template[block.start - 1];
 		const charAfter = parser.template[parser.index];
 		const trimBefore = !charBefore || whitespace.test(charBefore);
