@@ -187,4 +187,44 @@ describe('store', () => {
 			}, /Cyclical dependency detected/);
 		});
 	});
+
+	describe('immutable', () => {
+		it('observing state only changes on immutable updates', () => {
+			let newFoo;
+			let oldFoo;
+			let callCount = 0;
+			let value1 = {};
+			let value2 = {};
+
+			const store = new Store({
+				foo: value1
+			}, { immutable: true });
+
+			store.observe('foo', (n, o) => {
+				callCount++;
+				newFoo = n;
+				oldFoo = o;
+			});
+
+			assert.equal(callCount, 1);
+			assert.equal(newFoo, value1);
+			assert.equal(oldFoo, undefined);
+
+			store.set({
+				foo: value1
+			});
+
+			assert.equal(callCount, 1);
+			assert.equal(newFoo, value1);
+			assert.equal(oldFoo, undefined);
+
+			store.set({
+				foo: value2
+			});
+
+			assert.equal(callCount, 2);
+			assert.equal(newFoo, value2);
+			assert.equal(oldFoo, value1);
+		});
+	});
 });

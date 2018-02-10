@@ -26,6 +26,7 @@ function create_main_fragment(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
+	this._differs = differs;
 	this._state = assign({}, options.data);
 	this._recompute({ x: 1 }, this._state);
 
@@ -41,8 +42,8 @@ assign(SvelteComponent.prototype, proto);
 
 SvelteComponent.prototype._recompute = function _recompute(changed, state) {
 	if (changed.x) {
-		if (differs(state.a, (state.a = a(state.x)))) changed.a = true;
-		if (differs(state.b, (state.b = b(state.x)))) changed.b = true;
+		if (this._differs(state.a, (state.a = a(state.x)))) changed.a = true;
+		if (this._differs(state.b, (state.b = b(state.x)))) changed.b = true;
 	}
 }
 export default SvelteComponent;

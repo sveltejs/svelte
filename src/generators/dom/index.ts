@@ -123,7 +123,7 @@ export default function dom(
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const statement = `if (@differs(state.${key}, (state.${key} = %computed-${key}(${deps
+			const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(${deps
 				.map(dep => `state.${dep}`)
 				.join(', ')})))) changed.${key} = true;`;
 
@@ -208,6 +208,7 @@ export default function dom(
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
+		this._differs = @differs;
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
