@@ -43,6 +43,10 @@ function differs(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
+function differsImmutable(a, b) {
+	return a != a ? b == b : a !== b;
+}
+
 function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
 		if (!changed[key]) continue;
@@ -86,6 +90,8 @@ function init(component, options) {
 	component.options = options;
 	component.root = options.root || component;
 	component.store = component.root.store || options.store;
+	var immutable = options.immutable !== undefined ? options.immutable : component.root.options.immutable;
+	component._differs = immutable ? differsImmutable : differs;
 }
 
 function observe(key, callback, options) {
@@ -216,7 +222,6 @@ function create_main_fragment(state, component) {
 
 function SvelteComponent(options) {
 	init(this, options);
-	this._differs = differs;
 	this._state = assign({}, options.data);
 
 	this._fragment = create_main_fragment(this._state, this);
