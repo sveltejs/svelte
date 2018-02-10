@@ -1,4 +1,6 @@
 import deindent from '../../utils/deindent';
+import isValidIdentifier from '../../utils/isValidIdentifier';
+import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Element from './Element';
 import Attribute from './Attribute';
@@ -35,7 +37,8 @@ export default class Slot extends Element {
 		generator.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${slotName}`);
-		block.addVariable(content_name, `#component._slotted.${slotName}`);
+		const prop = !isValidIdentifier(slotName) || (generator.legacy && reservedNames.has(slotName)) ? `["${slotName}"]` : `.${slotName}`;
+		block.addVariable(content_name, `#component._slotted${prop}`);
 
 		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !parentNode;
 		const needsAnchorAfter = this.next ? this.next.type !== 'Element' : !parentNode;
