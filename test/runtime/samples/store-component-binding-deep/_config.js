@@ -1,7 +1,9 @@
 import { Store } from '../../../../store.js';
 
 const store = new Store({
-	name: 'world'
+	name: {
+		value: 'world'
+	}
 });
 
 export default {
@@ -24,7 +26,7 @@ export default {
 		input.value = 'everybody';
 		input.dispatchEvent(event);
 
-		assert.equal(store.get('name'), 'everybody');
+		assert.equal(store.get('name').value, 'everybody');
 		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello everybody!</h1>
 			<input>
@@ -32,7 +34,7 @@ export default {
 
 		assert.deepEqual(changeRecord, [
 			{
-				state: { name: 'everybody' },
+				state: { name: { value: 'everybody' } },
 				changes: { name: true }
 			}
 		]);
