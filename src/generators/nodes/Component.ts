@@ -157,7 +157,6 @@ export default class Component extends Node {
 					let setFromChild;
 
 					if (!isStoreProp && block.contexts.has(key)) {
-						const prop = binding.dependencies[0];
 						const computed = isComputed(binding.value);
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
@@ -175,7 +174,7 @@ export default class Component extends Node {
 					else if (binding.value.type === 'MemberExpression') {
 						setFromChild = deindent`
 							${binding.snippet} = childState.${binding.name};
-							${binding.dependencies.map((prop: string) => `${newState}.${prop} = state.${prop};`).join('\n')}
+							${newState}.${key} = state.${key};
 						`;
 					}
 
