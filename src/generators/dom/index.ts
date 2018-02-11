@@ -50,7 +50,7 @@ export class DomGenerator extends Generator {
 	}
 
 	getUniqueNameMaker(params: string[]) {
-		const localUsedNames = new Set(params);
+		const localUsedNames = new Set(params); // TODO is this ever called with params?
 
 		function add(name: string) {
 			localUsedNames.add(name);
@@ -257,7 +257,7 @@ export default function dom(
 
 		${generator.slots.size && `this.slots = {};`}
 
-		this._fragment = @create_main_fragment(this._state, this);
+		this._fragment = @create_main_fragment(this, this._state);
 
 		${(templateProperties.oncreate) && deindent`
 			this.root._oncreate.push(_oncreate);

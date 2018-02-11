@@ -17,7 +17,6 @@ export interface BlockOptions {
 	contextTypes?: Map<string, string>;
 	indexes?: Map<string, string>;
 	changeableIndexes?: Map<string, boolean>;
-	params?: string[];
 	indexNames?: Map<string, string>;
 	listNames?: Map<string, string>;
 	indexName?: string;
@@ -41,7 +40,6 @@ export default class Block {
 	indexes: Map<string, string>;
 	changeableIndexes: Map<string, boolean>;
 	dependencies: Set<string>;
-	params: string[];
 	indexNames: Map<string, string>;
 	listNames: Map<string, string>;
 	indexName: string;
@@ -90,10 +88,10 @@ export default class Block {
 		this.changeableIndexes = options.changeableIndexes;
 		this.dependencies = new Set();
 
-		this.params = options.params;
 		this.indexNames = options.indexNames;
 		this.listNames = options.listNames;
 
+		this.indexName = options.indexName;
 		this.listName = options.listName;
 
 		this.builders = {
@@ -116,7 +114,7 @@ export default class Block {
 
 		this.aliases = new Map();
 		this.variables = new Map();
-		this.getUniqueName = this.generator.getUniqueNameMaker(options.params);
+		this.getUniqueName = this.generator.getUniqueNameMaker([]); // TODO this is wrong... we probably don't need this any more
 
 		this.hasUpdateMethod = false; // determined later
 	}
@@ -254,7 +252,7 @@ export default class Block {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					p: function update(changed, ${this.params.join(', ')}) {
+					p: function update(changed, state) {
 						${this.builders.update}
 					},
 				`);
@@ -328,7 +326,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(${this.params.join(', ')}, #component${this.key ? `, ${localKey}` : ''}) {
+			function ${this.name}(#component, state${this.key ? `, ${localKey}` : ''}) {
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())
 						.map(key => {
