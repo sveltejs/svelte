@@ -12,6 +12,13 @@ const meta = new Map([
 	[':Head', validateHead]
 ]);
 
+function isEmptyBlock(node: Node) {
+	if (!/Block$/.test(node.type) || !node.children) return false;
+	if (node.children.length > 1) return false;
+	const child = node.children[0];
+	return !child || (child.type === 'Text' && !/\S/.test(child.data));
+}
+
 export default function validateHtml(validator: Validator, html: Node) {
 	const refs = new Map();
 	const refCallees: Node[] = [];
@@ -56,6 +63,10 @@ export default function validateHtml(validator: Validator, html: Node) {
 					c
 				);
 			}
+		}
+
+		if (validator.options.dev && isEmptyBlock(node)) {
+			validator.warn('Empty block', node.start);
 		}
 
 		if (node.children) {
