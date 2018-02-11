@@ -114,7 +114,12 @@ export default class Block {
 
 		this.aliases = new Map();
 		this.variables = new Map();
-		this.getUniqueName = this.generator.getUniqueNameMaker([]); // TODO this is wrong... we probably don't need this any more
+		// this.getUniqueName = this.generator.getUniqueNameMaker([]); // TODO this is wrong... we probably don't need this any more
+
+		const getUniqueName = this.generator.getUniqueNameMaker([]); // TODO this is wrong... we probably don't need this any more
+		this.getUniqueName = name => {
+			return getUniqueName(name);
+		}
 
 		this.hasUpdateMethod = false; // determined later
 	}
@@ -189,6 +194,19 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
+		// TODO `this.contexts` is possibly redundant post-#1122
+		const initializers = [];
+		const updaters = [];
+		this.contexts.forEach((alias, name) => {
+			// TODO only the ones that are actually used in this block...
+			const assignment = `${alias} = state.${name}`;
+
+			initializers.push(assignment);
+			updaters.push(`${assignment};`);
+
+			this.hasUpdateMethod = true;
+		});
+
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
 		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
 
@@ -248,11 +266,12 @@ export default class Block {
 		}
 
 		if (this.hasUpdateMethod) {
-			if (this.builders.update.isEmpty()) {
+			if (this.builders.update.isEmpty() && updaters.length === 0) {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					p: function update(changed, state) {
+						${updaters}
 						${this.builders.update}
 					},
 				`);
@@ -327,6 +346,8 @@ export default class Block {
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
 			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, state) {
+				${initializers.length > 0 &&
+					`var ${initializers.join(', ')};`}
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())
 						.map(key => {

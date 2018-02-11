@@ -34,66 +34,56 @@ export default class EachBlock extends Node {
 		const { dependencies } = this.metadata;
 		block.addDependencies(dependencies);
 
-		const indexNames = new Map(block.indexNames);
-		const indexName = this.index || `${this.context}_index`;
-		indexNames.set(this.context, indexName);
-
-		const listNames = new Map(block.listNames);
-		const listName = (
-			(this.expression.type === 'MemberExpression' && !this.expression.computed) ? this.expression.property.name :
-			this.expression.type === 'Identifier' ? this.expression.name :
-			`each_value`
-		);
-		listNames.set(this.context, listName);
-
-		const contextTypes = new Map(block.contextTypes);
-		contextTypes.set(this.context, 'each');
-
-		const context = this.context;
-		const contexts = new Map(block.contexts);
-		contexts.set(this.context, context); // TODO this is now redundant
-
-		const indexes = new Map(block.indexes);
-		if (this.index) indexes.set(this.index, this.context);
-
-		const changeableIndexes = new Map(block.changeableIndexes);
-		if (this.index) changeableIndexes.set(this.index, this.key);
-
-		if (this.destructuredContexts) {
-			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
-			}
-		}
-
 		this.block = block.child({
 			comment: createDebuggingComment(this, this.generator),
 			name: this.generator.getUniqueName('create_each_block'),
 			context: this.context,
 			key: this.key,
 
-			contexts,
-			contextTypes,
-			indexes,
-			changeableIndexes,
+			contexts: new Map(block.contexts),
+			contextTypes: new Map(block.contextTypes),
+			indexes: new Map(block.indexes),
+			changeableIndexes: new Map(block.changeableIndexes),
 
-			listName,
-			indexName,
+			listName: (
+				(this.expression.type === 'MemberExpression' && !this.expression.computed) ? this.expression.property.name :
+				this.expression.type === 'Identifier' ? this.expression.name :
+				`each_value`
+			),
+			indexName: this.index || `${this.context}_index`,
 
-			indexNames,
-			listNames
+			indexNames: new Map(block.indexNames),
+			listNames: new Map(block.listNames)
 		});
 
-		this.contextProps = [
-			`${context}: ${listName}[#i]`,
-			`${indexName}: #i`
-		];
+		this.block.contextTypes.set(this.context, 'each');
+		this.block.indexNames.set(this.context, this.block.indexName);
+		this.block.listNames.set(this.context, this.block.listName);
+		if (this.index) {
+			this.block.indexes.set(this.index, this.context);
+			this.block.changeableIndexes.set(this.index, this.key)
+		}
+
+		const context = this.block.getUniqueName(this.context);
+		this.block.contexts.set(this.context, context); // TODO this is now redundant?
 
 		if (this.destructuredContexts) {
 			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
-				this.contextProps.push(`${this.destructuredContexts[i]}: ${listName}[#i][${i}]`);
+				this.block.contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
 			}
 		}
+
+		this.contextProps = [
+			`${this.context}: ${this.block.listName}[#i]`,
+			`${this.block.indexName}: #i`
+		];
+
+		// if (this.destructuredContexts) {
+		// 	for (let i = 0; i < this.destructuredContexts.length; i += 1) {
+		// 		contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
+		// 		this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listName}[#i][${i}]`);
+		// 	}
+		// }
 
 		this.generator.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
