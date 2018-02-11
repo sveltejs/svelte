@@ -123,7 +123,7 @@ export default function dom(
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const statement = `if (@differs(state.${key}, (state.${key} = %computed-${key}(${deps
+			const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(${deps
 				.map(dep => `state.${dep}`)
 				.join(', ')})))) changed.${key} = true;`;
 
@@ -174,7 +174,7 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount']
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount', '_differs']
 				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
@@ -360,6 +360,8 @@ export default function dom(
 		`);
 	}
 
+	const immutable = templateProperties.immutable ? templateProperties.immutable.value.value : options.immutable;
+
 	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
@@ -379,6 +381,8 @@ export default function dom(
 		${templateProperties.setup && `%setup(${name});`}
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
+
+		${immutable && `${name}.prototype._differs = @_differsImmutable;`}
 	`);
 
 	const usedHelpers = new Set();

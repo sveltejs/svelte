@@ -66,6 +66,7 @@ describe("runtime", () => {
 			compileOptions.hydratable = hydrate;
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
+			compileOptions.immutable = config.immutable;
 
 			// check that no ES2015+ syntax slipped in
 			if (!config.allowES2015) {

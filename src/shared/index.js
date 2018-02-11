@@ -25,8 +25,12 @@ export function destroyDev(detach) {
 	};
 }
 
-export function differs(a, b) {
-	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+export function _differs(a, b) {
+	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+}
+
+export function _differsImmutable(a, b) {
+	return a != a ? b == b : a !== b;
 }
 
 export function dispatchObservers(component, group, changed, newState, oldState) {
@@ -150,7 +154,7 @@ export function _set(newState) {
 		dirty = false;
 
 	for (var key in newState) {
-		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
 	if (!dirty) return;
 
@@ -211,7 +215,8 @@ export var proto = {
 	_recompute: noop,
 	_set: _set,
 	_mount: _mount,
-	_unmount: _unmount
+	_unmount: _unmount,
+	_differs: _differs
 };
 
 export var protoDev = {
@@ -225,5 +230,6 @@ export var protoDev = {
 	_recompute: noop,
 	_set: _set,
 	_mount: _mount,
-	_unmount: _unmount
+	_unmount: _unmount,
+	_differs: _differs
 };
