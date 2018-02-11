@@ -29,6 +29,7 @@ export default class EachBlock extends Node {
 
 		this.var = block.getUniqueName(`each`);
 		this.iterations = block.getUniqueName(`${this.var}_blocks`);
+		this.each_context = block.getUniqueName(`${this.var}_context`);
 
 		const { dependencies } = this.metadata;
 		block.addDependencies(dependencies);
@@ -80,8 +81,7 @@ export default class EachBlock extends Node {
 			indexName,
 
 			indexNames,
-			listNames,
-			params: block.params.concat(listName, context, indexName),
+			listNames
 		});
 
 		this.generator.blocks.push(this.block);
@@ -117,7 +117,6 @@ export default class EachBlock extends Node {
 		const create_each_block = this.block.name;
 		const each_block_value = this.block.listName;
 		const iterations = this.iterations;
-		const params = block.params.join(', ');
 
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
 		const anchor = needsAnchor
@@ -138,7 +137,6 @@ export default class EachBlock extends Node {
 			each_block_value,
 			length,
 			iterations,
-			params,
 			anchor,
 			mountOrIntro,
 		};
@@ -171,7 +169,7 @@ export default class EachBlock extends Node {
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.addBlock(deindent`
 				if (!${each_block_value}.${length}) {
-					${each_block_else} = ${this.else.block.name}(${params}, #component);
+					${each_block_else} = ${this.else.block.name}(#component, state);
 					${each_block_else}.c();
 				}
 			`);
@@ -187,9 +185,9 @@ export default class EachBlock extends Node {
 			if (this.else.block.hasUpdateMethod) {
 				block.builders.update.addBlock(deindent`
 					if (!${each_block_value}.${length} && ${each_block_else}) {
-						${each_block_else}.p( changed, ${params} );
+						${each_block_else}.p(changed, state);
 					} else if (!${each_block_value}.${length}) {
-						${each_block_else} = ${this.else.block.name}(${params}, #component);
+						${each_block_else} = ${this.else.block.name}(#component, state);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					} else if (${each_block_else}) {
@@ -207,7 +205,7 @@ export default class EachBlock extends Node {
 							${each_block_else} = null;
 						}
 					} else if (!${each_block_else}) {
-						${each_block_else} = ${this.else.block.name}(${params}, #component);
+						${each_block_else} = ${this.else.block.name}(#component, state);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					}
@@ -244,7 +242,6 @@ export default class EachBlock extends Node {
 			create_each_block,
 			each_block_value,
 			length,
-			params,
 			anchor,
 			mountOrIntro,
 		}
@@ -275,7 +272,7 @@ export default class EachBlock extends Node {
 		block.builders.init.addBlock(deindent`
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
-				var ${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
+				var ${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, state, ${key});
 
 				if (${last}) ${last}.next = ${iteration};
 				${iteration}.last = ${last};
@@ -380,7 +377,7 @@ export default class EachBlock extends Node {
 				var ${iteration} = ${lookup}[${key}];
 
 				${dynamic &&
-					`if (${iteration}) ${iteration}.p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);`}
+					`if (${iteration}) ${iteration}.p(changed, state);`}
 
 				if (${expected}) {
 					if (${key} === ${expected}.key) {
@@ -401,7 +398,7 @@ export default class EachBlock extends Node {
 							if (!${expected}) ${iteration}.m(${updateMountNode}, ${anchor});
 						} else {
 							// key is being inserted
-							${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
+							${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, state, ${key});
 							${iteration}.c();
 							${iteration}.${mountOrIntro}(${updateMountNode}, ${expected}.first);
 
@@ -416,7 +413,7 @@ export default class EachBlock extends Node {
 						${iteration}.next = null;
 						${iteration}.m(${updateMountNode}, ${anchor});
 					} else {
-						${iteration} = ${lookup}[${key}] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component, ${key});
+						${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, state, ${key});
 						${iteration}.c();
 						${iteration}.${mountOrIntro}(${updateMountNode}, ${anchor});
 					}
@@ -464,7 +461,6 @@ export default class EachBlock extends Node {
 			each_block_value,
 			length,
 			iterations,
-			params,
 			anchor,
 			mountOrIntro,
 		}
@@ -473,7 +469,10 @@ export default class EachBlock extends Node {
 			var ${iterations} = [];
 
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
+				${iterations}[#i] = ${create_each_block}(#component, @assign({}, state, {
+					${this.context}: ${each_block_value}[#i],
+					${this.block.indexName}: #i
+				}));
 			}
 		`);
 
@@ -517,24 +516,24 @@ export default class EachBlock extends Node {
 				? this.block.hasIntroMethod
 					? deindent`
 						if (${iterations}[#i]) {
-							${iterations}[#i].p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
+							${iterations}[#i].p(changed, ${this.each_context});
 						} else {
-							${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
+							${iterations}[#i] = ${create_each_block}(#component, ${this.each_context});
 							${iterations}[#i].c();
 						}
 						${iterations}[#i].i(${updateMountNode}, ${anchor});
 					`
 					: deindent`
 						if (${iterations}[#i]) {
-							${iterations}[#i].p(changed, ${params}, ${each_block_value}, ${each_block_value}[#i], #i);
+							${iterations}[#i].p(changed, ${this.each_context});
 						} else {
-							${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
+							${iterations}[#i] = ${create_each_block}(#component, ${this.each_context});
 							${iterations}[#i].c();
 							${iterations}[#i].m(${updateMountNode}, ${anchor});
 						}
 					`
 				: deindent`
-					${iterations}[#i] = ${create_each_block}(${params}, ${each_block_value}, ${each_block_value}[#i], #i, #component);
+					${iterations}[#i] = ${create_each_block}(#component, ${this.each_context});
 					${iterations}[#i].c();
 					${iterations}[#i].${mountOrIntro}(${updateMountNode}, ${anchor});
 				`;
@@ -569,6 +568,11 @@ export default class EachBlock extends Node {
 
 				if (${condition}) {
 					for (var #i = ${start}; #i < ${each_block_value}.${length}; #i += 1) {
+						var ${this.each_context} = @assign({}, state, {
+							${this.context}: ${each_block_value}[#i],
+							${this.block.indexName}: #i
+						});
+
 						${forLoopBody}
 					}
 

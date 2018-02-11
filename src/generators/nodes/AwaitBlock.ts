@@ -45,7 +45,6 @@ export default class AwaitBlock extends Node {
 			child.block = block.child({
 				comment: createDebuggingComment(child, this.generator),
 				name: this.generator.getUniqueName(`create_${status}_block`),
-				params: block.params.concat(context),
 				context,
 				contexts,
 				contextTypes
@@ -74,8 +73,6 @@ export default class AwaitBlock extends Node {
 
 		const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 		const updateMountNode = this.getUpdateMountNode(anchor);
-
-		const params = block.params.join(', ');
 
 		block.contextualise(this.expression);
 		const { snippet } = this.metadata;
@@ -106,11 +103,11 @@ export default class AwaitBlock extends Node {
 		// but it's probably not worth it
 
 		block.builders.init.addBlock(deindent`
-			function ${replace_await_block}(${token}, type, ${value}, ${params}) {
+			function ${replace_await_block}(${token}, type, ${value}, state) {
 				if (${token} !== ${await_token}) return;
 
 				var ${old_block} = ${await_block};
-				${await_block} = (${await_block_type} = type)(${params}, ${resolved} = ${value}, #component);
+				${await_block} = (${await_block_type} = type)(state, ${resolved} = ${value}, #component);
 
 				if (${old_block}) {
 					${old_block}.u();
@@ -122,33 +119,33 @@ export default class AwaitBlock extends Node {
 				}
 			}
 
-			function ${handle_promise}(${promise}, ${params}) {
+			function ${handle_promise}(${promise}, state) {
 				var ${token} = ${await_token} = {};
 
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
 						var state = #component.get();
-						${replace_await_block}(${token}, ${create_then_block}, ${value}, ${params});
+						${replace_await_block}(${token}, ${create_then_block}, ${value}, state);
 					}, function (${error}) {
 						var state = #component.get();
-						${replace_await_block}(${token}, ${create_catch_block}, ${error}, ${params});
+						${replace_await_block}(${token}, ${create_catch_block}, ${error}, state);
 					});
 
 					// if we previously had a then/catch block, destroy it
 					if (${await_block_type} !== ${create_pending_block}) {
-						${replace_await_block}(${token}, ${create_pending_block}, null, ${params});
+						${replace_await_block}(${token}, ${create_pending_block}, null, state);
 						return true;
 					}
 				} else {
 					${resolved} = ${promise};
 					if (${await_block_type} !== ${create_then_block}) {
-						${replace_await_block}(${token}, ${create_then_block}, ${resolved}, ${params});
+						${replace_await_block}(${token}, ${create_then_block}, ${resolved}, state);
 						return true;
 					}
 				}
 			}
 
-			${handle_promise}(${promise} = ${snippet}, ${params});
+			${handle_promise}(${promise} = ${snippet}, state);
 		`);
 
 		block.builders.create.addBlock(deindent`
@@ -177,7 +174,7 @@ export default class AwaitBlock extends Node {
 
 		conditions.push(
 			`${promise} !== (${promise} = ${snippet})`,
-			`${handle_promise}(${promise}, ${params})`
+			`${handle_promise}(${promise}, state)`
 		);
 
 		if (this.pending.block.hasUpdateMethod) {
@@ -185,7 +182,7 @@ export default class AwaitBlock extends Node {
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
-					${await_block}.p(changed, ${params}, ${resolved});
+					${await_block}.p(changed, state, ${resolved});
 				}
 			`);
 		} else {

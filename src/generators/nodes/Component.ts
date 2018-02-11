@@ -279,12 +279,10 @@ export default class Component extends Node {
 
 			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 
-			const params = block.params.join(', ');
-
 			block.builders.init.addBlock(deindent`
 				var ${switch_vars.value} = ${snippet};
 
-				function ${switch_vars.props}(${params}) {
+				function ${switch_vars.props}(state) {
 					${statements.length > 0 && statements.join('\n')}
 					return {
 						${componentInitProperties.join(',\n')}
@@ -292,7 +290,7 @@ export default class Component extends Node {
 				}
 
 				if (${switch_vars.value}) {
-					var ${name} = new ${expression}(${switch_vars.props}(${params}));
+					var ${name} = new ${expression}(${switch_vars.props}(state));
 
 					${beforecreate}
 				}
@@ -327,7 +325,7 @@ export default class Component extends Node {
 					if (${name}) ${name}.destroy();
 
 					if (${switch_vars.value}) {
-						${name} = new ${switch_vars.value}(${switch_vars.props}(${params}));
+						${name} = new ${switch_vars.value}(${switch_vars.props}(state));
 						${name}._fragment.c();
 
 						${this.children.map(child => remount(generator, child, name))}
