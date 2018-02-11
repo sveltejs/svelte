@@ -174,7 +174,7 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount']
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount', '_differs']
 				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
@@ -208,10 +208,6 @@ export default function dom(
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
-		${options.immutable && deindent`
-			if (options.immutable !== undefined ? options.immutable : ${templateProperties.immutable && '%immutable' || 'this.root.options.immutable'}) {
-				this._differs = @differsImmutable;
-			}`}
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
@@ -364,6 +360,8 @@ export default function dom(
 		`);
 	}
 
+	const immutable = templateProperties.immutable ? templateProperties.immutable.value.value : options.immutable;
+
 	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
@@ -383,6 +381,8 @@ export default function dom(
 		${templateProperties.setup && `%setup(${name});`}
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
+
+		${immutable && `${name}.prototype._differs = @_differsImmutable;`}
 	`);
 
 	const usedHelpers = new Set();

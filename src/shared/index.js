@@ -25,11 +25,11 @@ export function destroyDev(detach) {
 	};
 }
 
-export function differs(a, b) {
+export function _differs(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-export function differsImmutable(a, b) {
+export function _differsImmutable(a, b) {
 	return a != a ? b == b : a !== b;
 }
 
@@ -72,7 +72,6 @@ export function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
-	component._differs = differs;
 
 	component.options = options;
 	component.root = options.root || component;
@@ -216,7 +215,8 @@ export var proto = {
 	_recompute: noop,
 	_set: _set,
 	_mount: _mount,
-	_unmount: _unmount
+	_unmount: _unmount,
+	_differs: _differs
 };
 
 export var protoDev = {
@@ -230,5 +230,6 @@ export var protoDev = {
 	_recompute: noop,
 	_set: _set,
 	_mount: _mount,
-	_unmount: _unmount
+	_unmount: _unmount,
+	_differs: _differs
 };

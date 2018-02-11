@@ -626,10 +626,6 @@ export default class Generator {
 					addDeclaration('store', templateProperties.store.value);
 				}
 
-				if (templateProperties.immutable) {
-					addDeclaration('immutable', templateProperties.immutable.value);
-				}
-
 				if (templateProperties.tag) {
 					this.tag = templateProperties.tag.value.value;
 				}
