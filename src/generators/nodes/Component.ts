@@ -156,7 +156,7 @@ export default class Component extends Node {
 
 					let setFromChild;
 
-					if (!isStoreProp && block.contexts.has(key)) {
+					if (block.contexts.has(key)) {
 						const computed = isComputed(binding.value);
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
@@ -171,15 +171,17 @@ export default class Component extends Node {
 						`;
 					}
 
-					else if (binding.value.type === 'MemberExpression') {
-						setFromChild = deindent`
-							${binding.snippet} = childState.${binding.name};
-							${newState}.${key} = state.${key};
-						`;
-					}
-
 					else {
-						setFromChild = `${newState}.${key} = childState.${binding.name};`;
+						if (binding.value.type === 'MemberExpression') {
+							setFromChild = deindent`
+								${binding.snippet} = childState.${binding.name};
+								${newState}.${key} = state.${key};
+							`;
+						}
+
+						else {
+							setFromChild = `${newState}.${key} = childState.${binding.name};`;
+						}
 					}
 
 					statements.push(deindent`
@@ -223,32 +225,25 @@ export default class Component extends Node {
 						var ${initialisers};
 						${!setStoreFromChildOnChange.isEmpty() && deindent`
 							${setStoreFromChildOnChange}
-							${name_updating} = @assign({}, changed);
 							#component.store.set(newStoreState);
 						`}
 						${!setParentFromChildOnChange.isEmpty() && deindent`
 							${setParentFromChildOnChange}
-							${name_updating} = @assign({}, changed);
 							#component._set(newState);
 						`}
 						${name_updating} = {};
 					}
 				`);
 
-				// TODO can `!childState` ever be true?
 				beforecreate = deindent`
 					#component.root._beforecreate.push(function() {
 						var childState = ${name}.get(), ${initialisers};
-						if (!childState) return;
-						${setParentFromChildOnInit}
 						${!setStoreFromChildOnInit.isEmpty() && deindent`
 							${setStoreFromChildOnInit}
-							${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
 							#component.store.set(newStoreState);
 						`}
 						${!setParentFromChildOnInit.isEmpty() && deindent`
 							${setParentFromChildOnInit}
-							${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
 							#component._set(newState);
 						`}
 						${name_updating} = {};
