@@ -93,7 +93,7 @@ export default class Component extends Node {
 
 		const bindings = this.attributes
 			.filter(a => a.type === 'Binding')
-			.map(a => mungeBinding(a, block));
+			.map(a => mungeBinding(a, block, name_context));
 
 		const eventHandlers = this.attributes
 			.filter((a: Node) => a.type === 'EventHandler')
@@ -220,8 +220,10 @@ export default class Component extends Node {
 
 				componentInitProperties.push(`data: ${name_initial_data}`);
 
+				block.addVariable('__state__TODO', 'state');
+				block.builders.update.addLine(`__state__TODO = state`);
 				const initialisers = [
-					'state = #component.get()',
+					'state = __state__TODO',
 					hasLocalBindings && 'newState = {}',
 					hasStoreBindings && 'newStoreState = {}',
 				].filter(Boolean).join(', ');
@@ -244,6 +246,41 @@ export default class Component extends Node {
 			} else if (initialProps.length) {
 				componentInitProperties.push(`data: ${initialPropString}`);
 			}
+		}
+
+		// maintain component context
+		if (allContexts.size) {
+			const contexts = Array.from(allContexts);
+
+			const initialProps = contexts
+				.map(contextName => {
+					if (contextName === 'state') return `state: state`;
+
+					const listName = block.listNames.get(contextName);
+					const indexName = block.indexNames.get(contextName);
+
+					return `${listName}: state.${listName},\n${indexName}: state.${indexName}`;
+				})
+				.join(',\n');
+
+			const updates = contexts
+				.map(contextName => {
+					if (contextName === 'state') return `${name_context}.state = state;`;
+
+					const listName = block.listNames.get(contextName);
+					const indexName = block.indexNames.get(contextName);
+
+					return `${name_context}.${listName} = state.${listName};\n${name_context}.${indexName} = state.${indexName};`;
+				})
+				.join('\n');
+
+			block.builders.init.addBlock(deindent`
+				var ${name_context} = {
+					${initialProps}
+				};
+			`);
+
+			block.builders.update.addBlock(updates);
 		}
 
 		const isDynamicComponent = this.name === ':Component';
@@ -391,41 +428,6 @@ export default class Component extends Node {
 				${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
 			`);
 		}
-
-		// maintain component context
-		if (allContexts.size) {
-			const contexts = Array.from(allContexts);
-
-			const initialProps = contexts
-				.map(contextName => {
-					if (contextName === 'state') return `state: state`;
-
-					const listName = block.listNames.get(contextName);
-					const indexName = block.indexNames.get(contextName);
-
-					return `${listName}: state.${listName},\n${indexName}: state.${indexName}`;
-				})
-				.join(',\n');
-
-			const updates = contexts
-				.map(contextName => {
-					if (contextName === 'state') return `${name_context}.state = state;`;
-
-					const listName = block.listNames.get(contextName);
-					const indexName = block.indexNames.get(contextName);
-
-					return `${name_context}.${listName} = state.${listName};\n${name_context}.${indexName} = state.${indexName};`;
-				})
-				.join('\n');
-
-			block.builders.init.addBlock(deindent`
-				var ${name_context} = {
-					${initialProps}
-				};
-			`);
-
-			block.builders.update.addBlock(updates);
-		}
 	}
 }
 
@@ -502,7 +504,7 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 	};
 }
 
-function mungeBinding(binding: Node, block: Block): Binding {
+function mungeBinding(binding: Node, block: Block, name_context: string): Binding {
 	const { name } = getObject(binding.value);
 	const { contexts } = block.contextualise(binding.value);
 	const { dependencies, snippet } = binding.metadata;
@@ -513,8 +515,8 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	let prop;
 
 	if (contextual) {
-		obj = `state.${block.listNames.get(name)}`;
-		prop = `state.${block.indexNames.get(name)}`;
+		obj = `${name_context}.${block.listNames.get(name)}`;
+		prop = `${name_context}.${block.indexNames.get(name)}`;
 	} else if (binding.value.type === 'MemberExpression') {
 		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
 		if (!binding.value.computed) prop = `'${prop}'`;
