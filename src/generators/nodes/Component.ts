@@ -138,10 +138,7 @@ export default class Component extends Node {
 				statements.push(`var ${name_initial_data} = ${initialPropString};`);
 
 				const setParentFromChildOnChange = new CodeBuilder();
-				const setParentFromChildOnInit = new CodeBuilder();
-
 				const setStoreFromChildOnChange = new CodeBuilder();
-				const setStoreFromChildOnInit = new CodeBuilder();
 
 				bindings.forEach((binding: Binding) => {
 					let { name: key } = getObject(binding.value);
@@ -196,11 +193,6 @@ export default class Component extends Node {
 						setFromChild
 					);
 
-					(isStoreProp ? setStoreFromChildOnInit : setParentFromChildOnInit).addConditional(
-						`!${name_updating}.${binding.name}`,
-						setFromChild
-					);
-
 					// TODO could binding.dependencies.length ever be 0?
 					if (binding.dependencies.length) {
 						updates.push(deindent`
@@ -237,16 +229,7 @@ export default class Component extends Node {
 
 				beforecreate = deindent`
 					#component.root._beforecreate.push(function() {
-						var childState = ${name}.get(), ${initialisers};
-						${!setStoreFromChildOnInit.isEmpty() && deindent`
-							${setStoreFromChildOnInit}
-							#component.store.set(newStoreState);
-						`}
-						${!setParentFromChildOnInit.isEmpty() && deindent`
-							${setParentFromChildOnInit}
-							#component._set(newState);
-						`}
-						${name_updating} = {};
+						${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
 					});
 				`;
 			} else if (initialProps.length) {
