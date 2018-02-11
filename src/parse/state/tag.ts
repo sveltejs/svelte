@@ -71,7 +71,7 @@ export default function tag(parser: Parser) {
 
 	if (parser.eat('!--')) {
 		const data = parser.readUntil(/-->/);
-		parser.eat('-->');
+		parser.eat('-->', true, 'comment was left open, expected -->');
 
 		parser.current().children.push({
 			start,

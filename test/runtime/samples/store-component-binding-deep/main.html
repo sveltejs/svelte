@@ -1,0 +1,10 @@
+<h1>Hello {{$name.value}}!</h1>
+<TextInput bind:value=$name.value/>
+
+<script>
+	import TextInput from './TextInput.html';
+
+	export default {
+		components: { TextInput }
+	};
+</script>
