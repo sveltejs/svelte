@@ -246,7 +246,6 @@ export default class Generator {
 						if (contextName !== name) {
 							// this is true for 'reserved' names like `state` and `component`,
 							// also destructured contexts
-
 							code.overwrite(
 								node.start,
 								node.start + name.length,

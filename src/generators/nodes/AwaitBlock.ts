@@ -35,20 +35,18 @@ export default class AwaitBlock extends Node {
 		].forEach(([status, arg]) => {
 			const child = this[status];
 
-			const context = arg || '_';
-			const contexts = new Map(block.contexts);
-			contexts.set(arg, context);
-
-			const contextTypes = new Map(block.contextTypes);
-			contextTypes.set(arg, status);
-
 			child.block = block.child({
 				comment: createDebuggingComment(child, this.generator),
 				name: this.generator.getUniqueName(`create_${status}_block`),
-				context,
-				contexts,
-				contextTypes
+				contexts: new Map(block.contexts),
+				contextTypes: new Map(block.contextTypes)
 			});
+
+			if (arg) {
+				child.block.context = arg;
+				child.block.contexts.set(arg, arg); // TODO should be using getUniqueName
+				child.block.contextTypes.set(arg, status);
+			}
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
 			this.generator.blocks.push(child.block);
@@ -107,7 +105,7 @@ export default class AwaitBlock extends Node {
 				if (${token} !== ${await_token}) return;
 
 				var ${old_block} = ${await_block};
-				${await_block} = (${await_block_type} = type)(#component, state);
+				${await_block} = type && (${await_block_type} = type)(#component, state);
 
 				if (${old_block}) {
 					${old_block}.u();
@@ -124,13 +122,21 @@ export default class AwaitBlock extends Node {
 
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
-						var state = #component.get();
-						${resolved} = { ${this.then.block.context}: ${value} };
-						${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, ${resolved}));
+						${this.then.block.context ? deindent`
+							var state = #component.get();
+							${resolved} = { ${this.then.block.context}: ${value} };
+							${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, ${resolved}));
+						` : deindent`
+							${replace_await_block}(${token}, null, null);
+						`}
 					}, function (${error}) {
-						var state = #component.get();
-						${resolved} = { ${this.catch.block.context}: ${error} };
-						${replace_await_block}(${token}, ${create_catch_block}, @assign({}, state, ${resolved}));
+						${this.catch.block.context ? deindent`
+							var state = #component.get();
+							${resolved} = { ${this.catch.block.context}: ${error} };
+							${replace_await_block}(${token}, ${create_catch_block}, @assign({}, state, ${resolved}));
+						` : deindent`
+							${replace_await_block}(${token}, null, null);
+						`}
 					});
 
 					// if we previously had a then/catch block, destroy it
