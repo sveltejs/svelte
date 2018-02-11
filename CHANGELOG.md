@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.55.0
+
+* Add `immutable` compiler option for Svelte and runtime option for `Store` ([#1146](https://github.com/sveltejs/svelte/issues/1146))
+* Fix component store bindings ([#1100](https://github.com/sveltejs/svelte/issues/1100))
+* Fire `oncreate` when custom element is attached ([#1117](https://github.com/sveltejs/svelte/issues/1117))
+* Downgrade empty blocks to a warning ([#1156](https://github.com/sveltejs/svelte/pull/1156))
+* Error on unclosed comment ([#1156](https://github.com/sveltejs/svelte/pull/1156))
+
 ## 1.54.2
 
 * Prevent `await` blocks using stale state ([#1131](https://github.com/sveltejs/svelte/issues/1131))
