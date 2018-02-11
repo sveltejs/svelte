@@ -74,12 +74,11 @@ function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
+	component._differs = differs;
 
 	component.options = options;
 	component.root = options.root || component;
 	component.store = component.root.store || options.store;
-	var immutable = options.immutable !== undefined ? options.immutable : component.root.options.immutable;
-	component._differs = immutable ? differsImmutable : differs;
 }
 
 function observe(key, callback, options) {
@@ -208,8 +207,10 @@ function create_main_fragment(state, component) {
 }
 
 function SvelteComponent(options) {
-	if (!('immutable' in options)) options = assign({ immutable: immutable }, options);
 	init(this, options);
+	if (options.immutable !== undefined ? options.immutable : immutable) {
+		this._differs = differsImmutable;
+	}
 	this._state = assign({}, options.data);
 
 	if (!options.root) {

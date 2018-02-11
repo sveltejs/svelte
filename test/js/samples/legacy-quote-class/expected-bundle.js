@@ -66,10 +66,6 @@ function differs(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-function differsImmutable(a, b) {
-	return a != a ? b == b : a !== b;
-}
-
 function dispatchObservers(component, group, changed, newState, oldState) {
 	for (var key in group) {
 		if (!changed[key]) continue;
@@ -109,12 +105,11 @@ function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
+	component._differs = differs;
 
 	component.options = options;
 	component.root = options.root || component;
 	component.store = component.root.store || options.store;
-	var immutable = options.immutable !== undefined ? options.immutable : component.root.options.immutable;
-	component._differs = immutable ? differsImmutable : differs;
 }
 
 function observe(key, callback, options) {

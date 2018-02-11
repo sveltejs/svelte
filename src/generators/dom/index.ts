@@ -207,8 +207,11 @@ export default function dom(
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
-		${templateProperties.immutable && `if (!('immutable' in options)) options = assign({ immutable: %immutable }, options);`}
 		@init(this, options);
+		${options.immutable && deindent`
+			if (options.immutable !== undefined ? options.immutable : ${templateProperties.immutable && '%immutable' || 'this.root.options.immutable'}) {
+				this._differs = @differsImmutable;
+			}`}
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = @assign(${initialState.join(', ')});
