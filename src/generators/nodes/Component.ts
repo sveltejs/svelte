@@ -527,8 +527,8 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	let prop;
 
 	if (contextual) {
-		obj = block.listNames.get(name);
-		prop = block.indexNames.get(name);
+		obj = `state.${block.listNames.get(name)}`;
+		prop = `state.${block.indexNames.get(name)}`;
 	} else if (binding.value.type === 'MemberExpression') {
 		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
 		if (!binding.value.computed) prop = `'${prop}'`;
