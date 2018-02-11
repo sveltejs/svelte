@@ -69,7 +69,8 @@ export default class EachBlock extends Node {
 
 		if (this.destructuredContexts) {
 			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				this.block.contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
+				const context = this.block.getUniqueName(this.destructuredContexts[i]);
+				this.block.contexts.set(this.destructuredContexts[i], context);
 			}
 		}
 
@@ -78,12 +79,11 @@ export default class EachBlock extends Node {
 			`${this.block.indexName}: #i`
 		];
 
-		// if (this.destructuredContexts) {
-		// 	for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-		// 		contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
-		// 		this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listName}[#i][${i}]`);
-		// 	}
-		// }
+		if (this.destructuredContexts) {
+			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
+				this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listName}[#i][${i}]`);
+			}
+		}
 
 		this.generator.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
