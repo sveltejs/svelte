@@ -1,8 +1,8 @@
 import {
 	assign,
 	blankObject,
-	differs,
-	differsImmutable,
+	_differs,
+	_differsImmutable,
 	dispatchObservers,
 	get,
 	observe
@@ -17,7 +17,7 @@ function Store(state, options) {
 	this._sortedComputedProperties = [];
 
 	this._state = assign({}, state);
-	this._differs = options && options.immutable ? differsImmutable : differs;
+	this._differs = options && options.immutable ? _differsImmutable : _differs;
 }
 
 assign(Store.prototype, {
