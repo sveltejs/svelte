@@ -6,7 +6,7 @@ import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
 function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
-	if (!block.children) return; // AwaitBlock
+	if (!block.children || block.children.length === 0) return; // AwaitBlock
 
 	const firstChild = block.children[0];
 	const lastChild = block.children[block.children.length - 1];
