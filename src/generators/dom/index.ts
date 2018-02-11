@@ -49,8 +49,8 @@ export class DomGenerator extends Generator {
 		this.metaBindings = [];
 	}
 
-	getUniqueNameMaker(params: string[]) {
-		const localUsedNames = new Set(params); // TODO is this ever called with params?
+	getUniqueNameMaker() {
+		const localUsedNames = new Set();
 
 		function add(name: string) {
 			localUsedNames.add(name);

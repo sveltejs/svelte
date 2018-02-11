@@ -242,29 +242,24 @@ export default class Generator {
 					if (name === 'event' && isEventHandler) {
 						// noop
 					} else if (contexts.has(name)) {
-						// if (self.constructor.name === 'DomGenerator') { // TODO filthy, temporary hack
-							const contextName = contexts.get(name);
-							if (contextName !== name) {
-								// this is true for 'reserved' names like `state` and `component`,
-								// also destructured contexts
+						const contextName = contexts.get(name);
+						if (contextName !== name) {
+							// this is true for 'reserved' names like `state` and `component`,
+							// also destructured contexts
 
-								code.overwrite(
-									node.start,
-									node.start + name.length,
-									contextName,
-									{ storeName: true, contentOnly: false }
-								);
+							code.overwrite(
+								node.start,
+								node.start + name.length,
+								contextName,
+								{ storeName: true, contentOnly: false }
+							);
 
-								const destructuredName = contextName.replace(/\[\d+\]/, '');
-								if (destructuredName !== contextName) {
-									// so that hoisting the context works correctly
-									usedContexts.add(destructuredName);
-								}
+							const destructuredName = contextName.replace(/\[\d+\]/, '');
+							if (destructuredName !== contextName) {
+								// so that hoisting the context works correctly
+								usedContexts.add(destructuredName);
 							}
-
-							// TODO filthy, temporary hack
-							// if (!isEventHandler) code.prependRight(node.start, `state.`);
-						// }
+						}
 
 						usedContexts.add(name);
 					} else if (helpers.has(name)) {
@@ -274,8 +269,6 @@ export default class Generator {
 						const alias = self.templateVars.get(`helpers-${name}`);
 						if (alias !== name) code.overwrite(object.start, object.end, alias);
 					} else if (indexes.has(name)) {
-						if (self.constructor.name === 'DomGenerator' && !isEventHandler) code.prependRight(node.start, `state.`);
-
 						const context = indexes.get(name);
 						usedContexts.add(context); // TODO is this right?
 						usedIndexes.add(name);
@@ -381,8 +374,8 @@ export default class Generator {
 		return alias;
 	}
 
-	getUniqueNameMaker(params: string[]) {
-		const localUsedNames = new Set(params);
+	getUniqueNameMaker() {
+		const localUsedNames = new Set();
 
 		function add(name: string) {
 			localUsedNames.add(name);

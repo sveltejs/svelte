@@ -114,7 +114,7 @@ export default class Block {
 
 		this.aliases = new Map();
 		this.variables = new Map();
-		this.getUniqueName = this.generator.getUniqueNameMaker([]); // TODO this is wrong... we probably don't need this any more
+		this.getUniqueName = this.generator.getUniqueNameMaker();
 
 		this.hasUpdateMethod = false; // determined later
 	}

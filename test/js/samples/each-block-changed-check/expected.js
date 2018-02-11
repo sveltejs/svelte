@@ -91,7 +91,7 @@ function create_each_block(component, state) {
 		c: function create() {
 			div = createElement("div");
 			strong = createElement("strong");
-			text = createText(state.i);
+			text = createText(i);
 			text_1 = createText("\n\n\t\t");
 			span = createElement("span");
 			text_2 = createText(text_2_value);
