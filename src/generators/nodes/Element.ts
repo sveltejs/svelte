@@ -386,10 +386,10 @@ export default class Element extends Node {
 				const indexName = block.indexNames.get(contextName);
 
 				initialProps.push(
-					`${listName}: ${listName},\n${indexName}: ${indexName}`
+					`${listName}: state.${listName},\n${indexName}: state.${indexName}`
 				);
 				updates.push(
-					`${name}._svelte.${listName} = ${listName};\n${name}._svelte.${indexName} = ${indexName};`
+					`${name}._svelte.${listName} = state.${listName};\n${name}._svelte.${indexName} = state.${indexName};`
 				);
 			});
 

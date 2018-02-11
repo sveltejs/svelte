@@ -35,7 +35,7 @@ export default class AwaitBlock extends Node {
 		].forEach(([status, arg]) => {
 			const child = this[status];
 
-			const context = block.getUniqueName(arg || '_'); // TODO can we remove the extra param from pending blocks?
+			const context = arg || '_';
 			const contexts = new Map(block.contexts);
 			contexts.set(arg, context);
 
@@ -103,11 +103,11 @@ export default class AwaitBlock extends Node {
 		// but it's probably not worth it
 
 		block.builders.init.addBlock(deindent`
-			function ${replace_await_block}(${token}, type, ${value}, state) {
+			function ${replace_await_block}(${token}, type, state) {
 				if (${token} !== ${await_token}) return;
 
 				var ${old_block} = ${await_block};
-				${await_block} = (${await_block_type} = type)(state, ${resolved} = ${value}, #component);
+				${await_block} = (${await_block_type} = type)(#component, state);
 
 				if (${old_block}) {
 					${old_block}.u();
@@ -125,21 +125,21 @@ export default class AwaitBlock extends Node {
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
 						var state = #component.get();
-						${replace_await_block}(${token}, ${create_then_block}, ${value}, state);
+						${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, { ${this.then.block.context}: ${value} }));
 					}, function (${error}) {
 						var state = #component.get();
-						${replace_await_block}(${token}, ${create_catch_block}, ${error}, state);
+						${replace_await_block}(${token}, ${create_catch_block}, @assign({}, state, { ${this.catch.block.context}: ${error} }));
 					});
 
 					// if we previously had a then/catch block, destroy it
 					if (${await_block_type} !== ${create_pending_block}) {
-						${replace_await_block}(${token}, ${create_pending_block}, null, state);
+						${replace_await_block}(${token}, ${create_pending_block}, state);
 						return true;
 					}
 				} else {
 					${resolved} = ${promise};
 					if (${await_block_type} !== ${create_then_block}) {
-						${replace_await_block}(${token}, ${create_then_block}, ${resolved}, state);
+						${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, { ${this.then.block.context}: ${resolved} }));
 						return true;
 					}
 				}
@@ -182,7 +182,7 @@ export default class AwaitBlock extends Node {
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
-					${await_block}.p(changed, state, ${resolved});
+					${await_block}.p(changed, state);
 				}
 			`);
 		} else {
