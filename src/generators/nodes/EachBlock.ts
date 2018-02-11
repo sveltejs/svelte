@@ -83,6 +83,18 @@ export default class EachBlock extends Node {
 			listNames
 		});
 
+		this.contextProps = [
+			`${context}: ${listName}[#i]`,
+			`${indexName}: #i`
+		];
+
+		if (this.destructuredContexts) {
+			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
+				contexts.set(this.destructuredContexts[i], `${context}[${i}]`);
+				this.contextProps.push(`${this.destructuredContexts[i]}: ${listName}[#i][${i}]`);
+			}
+		}
+
 		this.generator.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
 		block.addDependencies(this.block.dependencies);
@@ -272,8 +284,7 @@ export default class EachBlock extends Node {
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
 				var ${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign({}, state, {
-					${this.context}: ${each_block_value}[#i],
-					${this.block.indexName}: #i
+					${this.contextProps.join(',\n')}
 				}));
 
 				if (${last}) ${last}.next = ${iteration};
@@ -379,8 +390,7 @@ export default class EachBlock extends Node {
 				var ${iteration} = ${lookup}[${key}];
 
 				var ${this.each_context} = @assign({}, state, {
-					${this.context}: ${each_block_value}[#i],
-					${this.block.indexName}: #i
+					${this.contextProps.join(',\n')}
 				});
 
 				${dynamic &&
@@ -477,8 +487,7 @@ export default class EachBlock extends Node {
 
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				${iterations}[#i] = ${create_each_block}(#component, @assign({}, state, {
-					${this.context}: ${each_block_value}[#i],
-					${this.block.indexName}: #i
+					${this.contextProps.join(',\n')}
 				}));
 			}
 		`);
@@ -576,8 +585,7 @@ export default class EachBlock extends Node {
 				if (${condition}) {
 					for (var #i = ${start}; #i < ${each_block_value}.${length}; #i += 1) {
 						var ${this.each_context} = @assign({}, state, {
-							${this.context}: ${each_block_value}[#i],
-							${this.block.indexName}: #i
+							${this.contextProps.join(',\n')}
 						});
 
 						${forLoopBody}
