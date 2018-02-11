@@ -81,7 +81,6 @@ export default class Component extends Node {
 
 		const allContexts = new Set();
 		const statements: string[] = [];
-		const name_context = block.getUniqueName(`${name}_context`);
 
 		let name_updating: string;
 		let name_initial_data: string;
@@ -93,11 +92,11 @@ export default class Component extends Node {
 
 		const bindings = this.attributes
 			.filter(a => a.type === 'Binding')
-			.map(a => mungeBinding(a, block, name_context));
+			.map(a => mungeBinding(a, block));
 
 		const eventHandlers = this.attributes
 			.filter((a: Node) => a.type === 'EventHandler')
-			.map(a => mungeEventHandler(generator, this, a, block, name_context, allContexts));
+			.map(a => mungeEventHandler(generator, this, a, block, allContexts));
 
 		const ref = this.attributes.find((a: Node) => a.type === 'Ref');
 		if (ref) generator.usesRefs = true;
@@ -156,8 +155,8 @@ export default class Component extends Node {
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
 						setFromChild = deindent`
-							var list = ${name_context}.${block.listNames.get(key)};
-							var index = ${name_context}.${block.indexNames.get(key)};
+							var list = state.${block.listNames.get(key)};
+							var index = ${block.indexNames.get(key)};
 							list[index]${tail} = childState.${binding.name};
 
 							${binding.dependencies
@@ -246,41 +245,6 @@ export default class Component extends Node {
 			} else if (initialProps.length) {
 				componentInitProperties.push(`data: ${initialPropString}`);
 			}
-		}
-
-		// maintain component context
-		if (allContexts.size) {
-			const contexts = Array.from(allContexts);
-
-			const initialProps = contexts
-				.map(contextName => {
-					if (contextName === 'state') return `state: state`;
-
-					const listName = block.listNames.get(contextName);
-					const indexName = block.indexNames.get(contextName);
-
-					return `${listName}: state.${listName},\n${indexName}: state.${indexName}`;
-				})
-				.join(',\n');
-
-			const updates = contexts
-				.map(contextName => {
-					if (contextName === 'state') return `${name_context}.state = state;`;
-
-					const listName = block.listNames.get(contextName);
-					const indexName = block.indexNames.get(contextName);
-
-					return `${name_context}.${listName} = state.${listName};\n${name_context}.${indexName} = state.${indexName};`;
-				})
-				.join('\n');
-
-			block.builders.init.addBlock(deindent`
-				var ${name_context} = {
-					${initialProps}
-				};
-			`);
-
-			block.builders.update.addBlock(updates);
 		}
 
 		const isDynamicComponent = this.name === ':Component';
@@ -504,7 +468,7 @@ function mungeAttribute(attribute: Node, block: Block): Attribute {
 	};
 }
 
-function mungeBinding(binding: Node, block: Block, name_context: string): Binding {
+function mungeBinding(binding: Node, block: Block): Binding {
 	const { name } = getObject(binding.value);
 	const { contexts } = block.contextualise(binding.value);
 	const { dependencies, snippet } = binding.metadata;
@@ -515,8 +479,8 @@ function mungeBinding(binding: Node, block: Block, name_context: string): Bindin
 	let prop;
 
 	if (contextual) {
-		obj = `${name_context}.${block.listNames.get(name)}`;
-		prop = `${name_context}.${block.indexNames.get(name)}`;
+		obj = `state.${block.listNames.get(name)}`;
+		prop = `${block.indexNames.get(name)}`;
 	} else if (binding.value.type === 'MemberExpression') {
 		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
 		if (!binding.value.computed) prop = `'${prop}'`;
@@ -537,7 +501,7 @@ function mungeBinding(binding: Node, block: Block, name_context: string): Bindin
 	};
 }
 
-function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, name_context: string, allContexts: Set<string>) {
+function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, allContexts: Set<string>) {
 	let body;
 
 	if (handler.expression) {
@@ -547,30 +511,15 @@ function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, b
 			`${block.alias('component')}.`
 		);
 
-		const usedContexts: string[] = [];
-
 		handler.expression.arguments.forEach((arg: Node) => {
 			const { contexts } = block.contextualise(arg, null, true);
 
 			contexts.forEach(context => {
-				if (!~usedContexts.indexOf(context)) usedContexts.push(context);
 				allContexts.add(context);
 			});
 		});
 
-		// TODO hoist event handlers? can do `this.__component.method(...)`
-		const declarations = usedContexts.map(name => {
-			if (name === 'state') return `var state = ${name_context}.state;`;
-
-			const listName = block.listNames.get(name);
-			const indexName = block.indexNames.get(name);
-
-			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
-		});
-
 		body = deindent`
-			${declarations}
-
 			[✂${handler.expression.start}-${handler.expression.end}✂];
 		`;
 	} else {

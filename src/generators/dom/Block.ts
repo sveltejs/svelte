@@ -207,6 +207,16 @@ export default class Block {
 			this.hasUpdateMethod = true;
 		});
 
+		this.indexNames.forEach((alias, name) => {
+			// TODO only the ones that are actually used in this block...
+			const assignment = `${alias} = state.${alias}`; // TODO this is wrong!!!
+
+			initializers.push(assignment);
+			updaters.push(`${assignment};`);
+
+			this.hasUpdateMethod = true;
+		});
+
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
 		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
 
