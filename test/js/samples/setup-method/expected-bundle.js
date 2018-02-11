@@ -185,7 +185,7 @@ function setup(Component) {
 	Component.prototype.foo( 'baz' );
 }
 
-function create_main_fragment(state, component) {
+function create_main_fragment(component, state) {
 
 	return {
 		c: noop,
@@ -204,7 +204,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	this._fragment = create_main_fragment(this._state, this);
+	this._fragment = create_main_fragment(this, this._state);
 
 	if (options.target) {
 		this._fragment.c();

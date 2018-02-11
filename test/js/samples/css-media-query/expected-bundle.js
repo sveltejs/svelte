@@ -200,7 +200,7 @@ function add_css() {
 	appendNode(style, document.head);
 }
 
-function create_main_fragment(state, component) {
+function create_main_fragment(component, state) {
 	var div;
 
 	return {
@@ -233,7 +233,7 @@ function SvelteComponent(options) {
 
 	if (!document.getElementById("svelte-3905933315-style")) add_css();
 
-	this._fragment = create_main_fragment(this._state, this);
+	this._fragment = create_main_fragment(this, this._state);
 
 	if (options.target) {
 		this._fragment.c();

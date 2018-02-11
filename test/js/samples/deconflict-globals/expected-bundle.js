@@ -179,7 +179,7 @@ function oncreate() {
 	alert(JSON.stringify(data()));
 }
 
-function create_main_fragment(state, component) {
+function create_main_fragment(component, state) {
 
 	return {
 		c: noop,
@@ -204,7 +204,7 @@ function SvelteComponent(options) {
 		this._oncreate = [];
 	}
 
-	this._fragment = create_main_fragment(this._state, this);
+	this._fragment = create_main_fragment(this, this._state);
 
 	this.root._oncreate.push(_oncreate);
 
