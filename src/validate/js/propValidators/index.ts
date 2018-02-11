@@ -15,6 +15,7 @@ import tag from './tag';
 import transitions from './transitions';
 import setup from './setup';
 import store from './store';
+import immutable from './immutable';
 
 export default {
 	data,
@@ -34,4 +35,5 @@ export default {
 	transitions,
 	setup,
 	store,
+	immutable,
 };
