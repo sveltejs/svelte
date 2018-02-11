@@ -1,0 +1,18 @@
+[
+	{
+		"message": "Empty block",
+		"loc": {
+			"line": 1,
+			"column": 0
+		},
+		"pos": 0
+	},
+	{
+		"message": "Empty block",
+		"loc": {
+			"line": 5,
+			"column": 0
+		},
+		"pos": 38
+	}
+]

@@ -137,18 +137,13 @@ export default class Component extends Node {
 				block.addVariable(name_updating, '{}');
 				statements.push(`var ${name_initial_data} = ${initialPropString};`);
 
-				const setParentFromChildOnChange = new CodeBuilder();
-				const setParentFromChildOnInit = new CodeBuilder();
+				let hasLocalBindings = false;
+				let hasStoreBindings = false;
 
-				const setStoreFromChildOnChange = new CodeBuilder();
-				const setStoreFromChildOnInit = new CodeBuilder();
+				const builder = new CodeBuilder();
 
 				bindings.forEach((binding: Binding) => {
 					let { name: key } = getObject(binding.value);
-
-					const isStoreProp = generator.options.store && key[0] === '$';
-					if (isStoreProp) key = key.slice(1);
-					const newState = isStoreProp ? 'newStoreState' : 'newState';
 
 					binding.contexts.forEach(context => {
 						allContexts.add(context);
@@ -156,8 +151,7 @@ export default class Component extends Node {
 
 					let setFromChild;
 
-					if (!isStoreProp && block.contexts.has(key)) {
-						const prop = binding.dependencies[0];
+					if (block.contexts.has(key)) {
 						const computed = isComputed(binding.value);
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
@@ -167,20 +161,38 @@ export default class Component extends Node {
 							list[index]${tail} = childState.${binding.name};
 
 							${binding.dependencies
-								.map((prop: string) => `${newState}.${prop} = state.${prop};`)
+								.map((name: string) => {
+									const isStoreProp = generator.options.store && name[0] === '$';
+									const prop = isStoreProp ? name.slice(1) : name;
+									const newState = isStoreProp ? 'newStoreState' : 'newState';
+
+									if (isStoreProp) hasStoreBindings = true;
+									else hasLocalBindings = true;
+
+									return `${newState}.${prop} = state.${name};`;
+								})
 								.join('\n')}
 						`;
 					}
 
-					else if (binding.value.type === 'MemberExpression') {
-						setFromChild = deindent`
-							${binding.snippet} = childState.${binding.name};
-							${binding.dependencies.map((prop: string) => `${newState}.${prop} = state.${prop};`).join('\n')}
-						`;
-					}
-
 					else {
-						setFromChild = `${newState}.${key} = childState.${binding.name};`;
+						const isStoreProp = generator.options.store && key[0] === '$';
+						const prop = isStoreProp ? key.slice(1) : key;
+						const newState = isStoreProp ? 'newStoreState' : 'newState';
+
+						if (isStoreProp) hasStoreBindings = true;
+						else hasLocalBindings = true;
+
+						if (binding.value.type === 'MemberExpression') {
+							setFromChild = deindent`
+								${binding.snippet} = childState.${binding.name};
+								${newState}.${prop} = state.${key};
+							`;
+						}
+
+						else {
+							setFromChild = `${newState}.${prop} = childState.${binding.name};`;
+						}
 					}
 
 					statements.push(deindent`
@@ -190,13 +202,8 @@ export default class Component extends Node {
 						}`
 					);
 
-					(isStoreProp ? setStoreFromChildOnChange : setParentFromChildOnChange).addConditional(
+					builder.addConditional(
 						`!${name_updating}.${binding.name} && changed.${binding.name}`,
-						setFromChild
-					);
-
-					(isStoreProp ? setStoreFromChildOnInit : setParentFromChildOnInit).addConditional(
-						`!${name_updating}.${binding.name}`,
 						setFromChild
 					);
 
@@ -215,44 +222,23 @@ export default class Component extends Node {
 
 				const initialisers = [
 					'state = #component.get()',
-					!setParentFromChildOnChange.isEmpty() && 'newState = {}',
-					!setStoreFromChildOnChange.isEmpty() && 'newStoreState = {}',
+					hasLocalBindings && 'newState = {}',
+					hasStoreBindings && 'newStoreState = {}',
 				].filter(Boolean).join(', ');
 
 				componentInitProperties.push(deindent`
 					_bind: function(changed, childState) {
 						var ${initialisers};
-						${!setStoreFromChildOnChange.isEmpty() && deindent`
-							${setStoreFromChildOnChange}
-							${name_updating} = @assign({}, changed);
-							#component.store.set(newStoreState);
-						`}
-						${!setParentFromChildOnChange.isEmpty() && deindent`
-							${setParentFromChildOnChange}
-							${name_updating} = @assign({}, changed);
-							#component._set(newState);
-						`}
+						${builder}
+						${hasStoreBindings && `#component.store.set(newStoreState);`}
+						${hasLocalBindings && `#component._set(newState);`}
 						${name_updating} = {};
 					}
 				`);
 
-				// TODO can `!childState` ever be true?
 				beforecreate = deindent`
 					#component.root._beforecreate.push(function() {
-						var childState = ${name}.get(), ${initialisers};
-						if (!childState) return;
-						${setParentFromChildOnInit}
-						${!setStoreFromChildOnInit.isEmpty() && deindent`
-							${setStoreFromChildOnInit}
-							${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
-							#component.store.set(newStoreState);
-						`}
-						${!setParentFromChildOnInit.isEmpty() && deindent`
-							${setParentFromChildOnInit}
-							${name_updating} = { ${bindings.map((binding: Binding) => `${binding.name}: true`).join(', ')} };
-							#component._set(newState);
-						`}
-						${name_updating} = {};
+						${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
 					});
 				`;
 			} else if (initialProps.length) {

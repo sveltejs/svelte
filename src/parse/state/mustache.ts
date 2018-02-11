@@ -6,7 +6,7 @@ import { Parser } from '../index';
 import { Node } from '../../interfaces';
 
 function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
-	if (!block.children) return; // AwaitBlock
+	if (!block.children || block.children.length === 0) return; // AwaitBlock
 
 	const firstChild = block.children[0];
 	const lastChild = block.children[block.children.length - 1];
@@ -74,8 +74,6 @@ export default function mustache(parser: Parser) {
 		}
 
 		// strip leading/trailing whitespace as necessary
-		if (block.children && !block.children.length) parser.error(`Empty block`, block.start);
-
 		const charBefore = parser.template[block.start - 1];
 		const charAfter = parser.template[parser.index];
 		const trimBefore = !charBefore || whitespace.test(charBefore);
