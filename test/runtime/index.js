@@ -66,6 +66,7 @@ describe("runtime", () => {
 			compileOptions.hydratable = hydrate;
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
+			compileOptions.immutable = config.immutable;
 
 			// check that no ES2015+ syntax slipped in
 			if (!config.allowES2015) {
@@ -160,7 +161,8 @@ describe("runtime", () => {
 						target,
 						hydrate,
 						data: config.data,
-						store: (config.store !== true && config.store)
+						store: (config.store !== true && config.store),
+						immutable: config.immutable
 					}, config.options || {});
 
 					const component = new SvelteComponent(options);

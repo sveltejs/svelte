@@ -48,7 +48,7 @@ function destroy(detach) {
 }
 
 function differs(a, b) {
-	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
 function dispatchObservers(component, group, changed, newState, oldState) {
@@ -90,6 +90,7 @@ function init(component, options) {
 	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
+	component._differs = differs;
 
 	component.options = options;
 	component.root = options.root || component;
@@ -147,7 +148,7 @@ function _set(newState) {
 		dirty = false;
 
 	for (var key in newState) {
-		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
 	if (!dirty) return;
 
