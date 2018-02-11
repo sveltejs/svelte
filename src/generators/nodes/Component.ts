@@ -219,10 +219,8 @@ export default class Component extends Node {
 
 				componentInitProperties.push(`data: ${name_initial_data}`);
 
-				block.addVariable('__state__TODO', 'state');
-				block.builders.update.addLine(`__state__TODO = state`);
 				const initialisers = [
-					'state = __state__TODO',
+					'state = #component.get()',
 					hasLocalBindings && 'newState = {}',
 					hasStoreBindings && 'newStoreState = {}',
 				].filter(Boolean).join(', ');
