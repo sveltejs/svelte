@@ -93,7 +93,7 @@ export default function validate(
 	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
-	const { onwarn, onerror, name, filename, store } = options;
+	const { onwarn, onerror, name, filename, store, dev } = options;
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
@@ -114,7 +114,8 @@ export default function validate(
 			onwarn,
 			name,
 			filename,
-			store
+			store,
+			dev
 		});
 
 		if (parsed.js) {

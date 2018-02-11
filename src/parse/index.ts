@@ -112,14 +112,14 @@ export class Parser {
 		throw new ParseError(message, this.template, index, this.filename);
 	}
 
-	eat(str: string, required?: boolean) {
+	eat(str: string, required?: boolean, message?: string) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
 		if (required) {
-			this.error(`Expected ${str}`);
+			this.error(message || `Expected ${str}`);
 		}
 
 		return false;

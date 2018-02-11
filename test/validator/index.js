@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import assert from "assert";
-import { svelte, tryToLoadJson } from "../helpers.js";
+import { svelte, loadConfig, tryToLoadJson } from "../helpers.js";
 
 describe("validate", () => {
 	fs.readdirSync("test/validator/samples").forEach(dir => {
@@ -15,6 +15,7 @@ describe("validate", () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
+			const config = loadConfig(`./validator/samples/${dir}/_config.js`);
 			const filename = `test/validator/samples/${dir}/input.html`;
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
 
@@ -32,7 +33,8 @@ describe("validate", () => {
 							pos: warning.pos,
 							loc: warning.loc
 						});
-					}
+					},
+					dev: config.dev
 				});
 
 				assert.deepEqual(warnings, expectedWarnings);
