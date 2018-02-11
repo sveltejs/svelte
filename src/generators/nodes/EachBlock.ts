@@ -35,12 +35,11 @@ export default class EachBlock extends Node {
 		block.addDependencies(dependencies);
 
 		const indexNames = new Map(block.indexNames);
-		const indexName =
-			this.index || block.getUniqueName(`${this.context}_index`);
+		const indexName = this.index || `${this.context}_index`;
 		indexNames.set(this.context, indexName);
 
 		const listNames = new Map(block.listNames);
-		const listName = block.getUniqueName(
+		const listName = (
 			(this.expression.type === 'MemberExpression' && !this.expression.computed) ? this.expression.property.name :
 			this.expression.type === 'Identifier' ? this.expression.name :
 			`each_value`
@@ -50,9 +49,9 @@ export default class EachBlock extends Node {
 		const contextTypes = new Map(block.contextTypes);
 		contextTypes.set(this.context, 'each');
 
-		const context = block.getUniqueName(this.context);
+		const context = this.context;
 		const contexts = new Map(block.contexts);
-		contexts.set(this.context, context);
+		contexts.set(this.context, context); // TODO this is now redundant
 
 		const indexes = new Map(block.indexes);
 		if (this.index) indexes.set(this.index, this.context);
@@ -272,7 +271,10 @@ export default class EachBlock extends Node {
 		block.builders.init.addBlock(deindent`
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
-				var ${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, state, ${key});
+				var ${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign({}, state, {
+					${this.context}: ${each_block_value}[#i],
+					${this.block.indexName}: #i
+				}));
 
 				if (${last}) ${last}.next = ${iteration};
 				${iteration}.last = ${last};
@@ -376,8 +378,13 @@ export default class EachBlock extends Node {
 				var ${key} = ${each_block_value}[#i].${this.key};
 				var ${iteration} = ${lookup}[${key}];
 
+				var ${this.each_context} = @assign({}, state, {
+					${this.context}: ${each_block_value}[#i],
+					${this.block.indexName}: #i
+				});
+
 				${dynamic &&
-					`if (${iteration}) ${iteration}.p(changed, state);`}
+					`if (${iteration}) ${iteration}.p(changed, ${this.each_context});`}
 
 				if (${expected}) {
 					if (${key} === ${expected}.key) {
@@ -398,7 +405,7 @@ export default class EachBlock extends Node {
 							if (!${expected}) ${iteration}.m(${updateMountNode}, ${anchor});
 						} else {
 							// key is being inserted
-							${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, state, ${key});
+							${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
 							${iteration}.c();
 							${iteration}.${mountOrIntro}(${updateMountNode}, ${expected}.first);
 
@@ -413,7 +420,7 @@ export default class EachBlock extends Node {
 						${iteration}.next = null;
 						${iteration}.m(${updateMountNode}, ${anchor});
 					} else {
-						${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, state, ${key});
+						${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
 						${iteration}.c();
 						${iteration}.${mountOrIntro}(${updateMountNode}, ${anchor});
 					}

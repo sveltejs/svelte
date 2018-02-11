@@ -326,7 +326,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(#component, state${this.key ? `, ${localKey}` : ''}) {
+			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, state) {
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())
 						.map(key => {

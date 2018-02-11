@@ -417,7 +417,7 @@ export default class Component extends Node {
 					const listName = block.listNames.get(contextName);
 					const indexName = block.indexNames.get(contextName);
 
-					return `${listName}: ${listName},\n${indexName}: ${indexName}`;
+					return `${listName}: state.${listName},\n${indexName}: state.${indexName}`;
 				})
 				.join(',\n');
 
@@ -428,7 +428,7 @@ export default class Component extends Node {
 					const listName = block.listNames.get(contextName);
 					const indexName = block.indexNames.get(contextName);
 
-					return `${name_context}.${listName} = ${listName};\n${name_context}.${indexName} = ${indexName};`;
+					return `${name_context}.${listName} = state.${listName};\n${name_context}.${indexName} = state.${indexName};`;
 				})
 				.join('\n');
 
