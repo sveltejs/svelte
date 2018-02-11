@@ -11,7 +11,9 @@ export default function visitEachBlock(
 	block.contextualise(node.expression);
 	const { dependencies, snippet } = node.metadata;
 
-	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}${snippet}.map(${node.index ? `(${node.context}, ${node.index})` : node.context} => \``;
+	const context = node.destructuredContexts ? `[${node.destructuredContexts.join(', ')}]` : node.context;
+
+	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}${snippet}.map(${node.index ? `(${context}, ${node.index})` : `(${context})`} => \``;
 	generator.append(open);
 
 	// TODO should this be the generator's job? It's duplicated between
