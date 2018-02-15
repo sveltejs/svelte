@@ -158,10 +158,10 @@ export default class Window extends Node {
 					clearTimeout(${timeout});
 					var x = ${bindings.scrollX
 						? `#component.get("${bindings.scrollX}")`
-						: `window.scrollX`};
+						: `window.pageXOffset || window.scrollX`};
 					var y = ${bindings.scrollY
 						? `#component.get("${bindings.scrollY}")`
-						: `window.scrollY`};
+						: `window.pageYOffset || window.scrollY`};
 					window.scrollTo(x, y);
 					${timeout} = setTimeout(${clear}, 100);
 				}
@@ -182,7 +182,7 @@ export default class Window extends Node {
 				#component.observe("${bindings.scrollX || bindings.scrollY}", function(${isX ? 'x' : 'y'}) {
 					${lock} = true;
 					clearTimeout(${timeout});
-					window.scrollTo(${isX ? 'x, window.scrollY' : 'window.scrollX, y'});
+					window.scrollTo(${isX ? 'x, window.pageYOffset || window.scrollY' : 'window.pageXOffset || window.scrollX, y'});
 					${timeout} = setTimeout(${clear}, 100);
 				});
 			`);
