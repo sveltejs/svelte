@@ -115,7 +115,7 @@ assign(Store.prototype, {
 			cancel: function() {
 				var index = this._changeHandlers.indexOf(callback);
 				if (~index) this._changeHandlers.splice(index, 1);
-			}
+			}.bind(this)
 		};
 	},
 
