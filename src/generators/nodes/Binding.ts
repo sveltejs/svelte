@@ -54,7 +54,7 @@ export default class Binding extends Node {
 
 		// view to model
 		const valueFromDom = getValueFromDom(this.generator, node, this);
-		const handler = getEventHandler(this.generator, block, name, snippet, this, dependencies, valueFromDom);
+		const handler = getEventHandler(this.generator, block, name, snippet, this, dependencies, valueFromDom, node);
 
 		// model to view
 		let updateDom = getDomUpdater(node, this, snippet);
@@ -129,6 +129,7 @@ function getDomUpdater(
 
 		return `${node.var}.checked = ${condition};`
 	}
+	
 
 	return `${node.var}.${binding.name} = ${snippet};`;
 }
@@ -156,6 +157,7 @@ function getEventHandler(
 	attribute: Node,
 	dependencies: string[],
 	value: string,
+	node: Element,
 ) {
 	let storeDependencies = [];
 
@@ -213,11 +215,25 @@ function getEventHandler(
 		storeProps = [];
 	}
 
+	let mutation = null;
+	const type =	node.getStaticAttributeValue('type');
+	if(attribute.name === 'checked' && node.name === 'input' && type === 'radio'){
+		var last_radio = `#component._last_radio_${node.getStaticAttributeValue('name')}`;
+
+		mutation = `
+			if(${value}){
+				if(${last_radio}){
+					#component.set(JSON.parse('{"'+${last_radio}+'": false}'));
+				}
+				${last_radio} = '${name}';
+			}`
+	}
+
 	return {
 		usesContext: false,
 		usesState: false,
 		usesStore: false,
-		mutation: null,
+		mutation: mutation, 
 		props,
 		storeProps
 	};
@@ -246,6 +262,10 @@ function getValueFromDom(
 
 		return `${node.var}.__value`;
 	}
+	if (binding.name === 'checked' && node.name === 'input' && type === 'radio') {
+		return 'true';
+	}
+	
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
