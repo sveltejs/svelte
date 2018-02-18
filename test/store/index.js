@@ -113,6 +113,15 @@ describe('store', () => {
 		});
 	});
 
+	it('allows user to cancel state change callback', () => {
+		const store = new Store();
+		const handler = store.onchange(() => {});
+
+		assert.doesNotThrow(() => {
+			handler.cancel();
+		}, TypeError, 'this._changeHandlers is undefined');
+	});
+
 	describe('computed', () => {
 		it('computes a property based on data', () => {
 			const store = new Store({
