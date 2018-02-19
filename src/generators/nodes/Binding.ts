@@ -5,6 +5,7 @@ import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
+import deindent from '../../utils/deindent';
 
 const readOnlyMediaAttributes = new Set([
 	'duration',
@@ -220,13 +221,11 @@ function getEventHandler(
 	if(attribute.name === 'checked' && node.name === 'input' && type === 'radio'){
 		var last_radio = `#component._last_radio_${node.getStaticAttributeValue('name')}`;
 
-		mutation = `
-			if(${value}){
-				if(${last_radio}){
-					#component.set(JSON.parse('{"'+${last_radio}+'": false}'));
-				}
-				${last_radio} = '${name}';
-			}`
+		mutation = deindent`
+			if(${last_radio}){
+				#component.set(JSON.parse('{"'+${last_radio}+'": false}'));
+			}
+			${last_radio} = '${name}';`
 	}
 
 	return {
