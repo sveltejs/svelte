@@ -70,9 +70,9 @@ function create_main_fragment(state, component) {
 
 			insertNode(text, target, anchor);
 			insertNode(input_1, target, anchor);
-      
+
 			input_1.checked = state.baz;
-      
+
 			insertNode(text_1, target, anchor);
 			insertNode(input_2, target, anchor);
 
