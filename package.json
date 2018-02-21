@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/mocha": "^2.2.41",
     "@types/node": "^8.0.17",
-    "acorn": "^5.1.1",
+    "acorn": "^5.4.1",
     "acorn-dynamic-import": "^2.0.2",
     "chalk": "^2.0.1",
     "codecov": "^2.2.0",
