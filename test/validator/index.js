@@ -88,4 +88,19 @@ describe("validate", () => {
 			}
 		]);
 	});
+
+	it("does not warn if options.name begins with non-alphabetic character", () => {
+		const warnings = [];
+		svelte.compile("<div></div>", {
+			name: "_",
+			onwarn(warning) {
+				warnings.push({
+					message: warning.message,
+					pos: warning.pos,
+					loc: warning.loc
+				});
+			}
+		});
+		assert.deepEqual(warnings, []);
+	});
 });
