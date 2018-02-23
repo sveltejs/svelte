@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.55.1
+
+* Fix cancellation of store `onchange` handlers ([#1177](https://github.com/sveltejs/svelte/issues/1177))
+* Write `["default"]` instead of `.default` in legacy mode ([#1166](https://github.com/sveltejs/svelte/issues/1166))
+* Upgrade Acorn ([#1182](https://github.com/sveltejs/svelte/pull/1182))
+* Don't warn about capitalisation if `options.name` begins with non-alphabetical character ([#1179](https://github.com/sveltejs/svelte/pull/1179))
+
 ## 1.55.0
 
 * Add `immutable` compiler option for Svelte and runtime option for `Store` ([#1146](https://github.com/sveltejs/svelte/issues/1146))
