@@ -7,28 +7,11 @@ import typescript from 'rollup-plugin-typescript';
 import buble from 'rollup-plugin-buble';
 import pkg from './package.json';
 
-const src = path.resolve('src');
-
 export default [
 	/* compiler/svelte.js */
 	{
 		input: 'src/index.ts',
 		plugins: [
-			{
-				resolveId(importee, importer) {
-					// bit of a hack — TypeScript only really works if it can resolve imports,
-					// but they misguidedly chose to reject imports with file extensions. This
-					// means we need to resolve them here
-					if (
-						importer &&
-						importer.startsWith(src) &&
-						importee[0] === '.' &&
-						path.extname(importee) === ''
-					) {
-						return path.resolve(path.dirname(importer), `${importee}.ts`);
-					}
-				}
-			},
 			replace({
 				__VERSION__: pkg.version
 			}),
