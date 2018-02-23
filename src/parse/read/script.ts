@@ -22,7 +22,7 @@ export default function readScript(parser: Parser, start: number, attributes: No
 
 	try {
 		ast = acorn.parse(source, {
-			ecmaVersion: 8,
+			ecmaVersion: 9,
 			sourceType: 'module',
 			plugins: {
 				dynamicImport: true
