@@ -31,7 +31,9 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 		}
 	}
 
-	const expression = parseExpressionAt(repeat(' ', start) + str, start);
+	const expression = parseExpressionAt(repeat(' ', start) + str, start, {
+		ecmaVersion: 9,
+	});
 	parser.index = expression.end;
 
 	parser.allowWhitespace();
@@ -102,7 +104,7 @@ export function readBindingDirective(
 		}
 
 		const source = repeat(' ', a) + parser.template.slice(a, b);
-		value = parseExpressionAt(source, a);
+		value = parseExpressionAt(source, a, { ecmaVersion: 9 });
 
 		if (value.type !== 'Identifier' && value.type !== 'MemberExpression') {
 			parser.error(`Cannot bind to rvalue`, value.start);
