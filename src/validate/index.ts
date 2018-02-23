@@ -101,7 +101,7 @@ export default function validate(
 			throw error;
 		}
 
-		if (name && !/^[A-Z]/.test(name)) {
+		if (name && /^[a-z]/.test(name)) {
 			const message = `options.name should be capitalised`;
 			onwarn({
 				message,
