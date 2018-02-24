@@ -12,7 +12,7 @@ function encapsulateStyles(node) {
 function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-2794052100-style';
-	style.textContent = "p[svelte-2794052100],[svelte-2794052100] p{color:red}";
+	style.textContent = "p.svelte-2794052100,.svelte-2794052100 p{color:red}";
 	appendNode(style, document.head);
 }
 
