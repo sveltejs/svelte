@@ -17,7 +17,6 @@ export interface BlockOptions {
 	contextTypes?: Map<string, string>;
 	indexes?: Map<string, string>;
 	changeableIndexes?: Map<string, boolean>;
-	params?: string[];
 	indexNames?: Map<string, string>;
 	listNames?: Map<string, string>;
 	indexName?: string;
@@ -41,7 +40,6 @@ export default class Block {
 	indexes: Map<string, string>;
 	changeableIndexes: Map<string, boolean>;
 	dependencies: Set<string>;
-	params: string[];
 	indexNames: Map<string, string>;
 	listNames: Map<string, string>;
 	indexName: string;
@@ -90,10 +88,10 @@ export default class Block {
 		this.changeableIndexes = options.changeableIndexes;
 		this.dependencies = new Set();
 
-		this.params = options.params;
 		this.indexNames = options.indexNames;
 		this.listNames = options.listNames;
 
+		this.indexName = options.indexName;
 		this.listName = options.listName;
 
 		this.builders = {
@@ -116,7 +114,7 @@ export default class Block {
 
 		this.aliases = new Map();
 		this.variables = new Map();
-		this.getUniqueName = this.generator.getUniqueNameMaker(options.params);
+		this.getUniqueName = this.generator.getUniqueNameMaker();
 
 		this.hasUpdateMethod = false; // determined later
 	}
@@ -191,6 +189,29 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
+		// TODO `this.contexts` is possibly redundant post-#1122
+		const initializers = [];
+		const updaters = [];
+		this.contexts.forEach((alias, name) => {
+			// TODO only the ones that are actually used in this block...
+			const assignment = `${alias} = state.${name}`;
+
+			initializers.push(assignment);
+			updaters.push(`${assignment};`);
+
+			this.hasUpdateMethod = true;
+		});
+
+		this.indexNames.forEach((alias, name) => {
+			// TODO only the ones that are actually used in this block...
+			const assignment = `${alias} = state.${alias}`; // TODO this is wrong!!!
+
+			initializers.push(assignment);
+			updaters.push(`${assignment};`);
+
+			this.hasUpdateMethod = true;
+		});
+
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
 		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
 
@@ -250,11 +271,12 @@ export default class Block {
 		}
 
 		if (this.hasUpdateMethod) {
-			if (this.builders.update.isEmpty()) {
+			if (this.builders.update.isEmpty() && updaters.length === 0) {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					p: function update(changed, ${this.params.join(', ')}) {
+					p: function update(changed, state) {
+						${updaters}
 						${this.builders.update}
 					},
 				`);
@@ -328,7 +350,9 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(${this.params.join(', ')}, #component${this.key ? `, ${localKey}` : ''}) {
+			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, state) {
+				${initializers.length > 0 &&
+					`var ${initializers.join(', ')};`}
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())
 						.map(key => {
