@@ -33,10 +33,6 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
-function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
-}
-
 function blankObject() {
 	return Object.create(null);
 }
@@ -198,10 +194,6 @@ function data() {
 	return { foo: 42 }
 }
 
-function encapsulateStyles(node) {
-	setAttribute(node, "svelte-2794052100", "");
-}
-
 function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-2794052100-style';
@@ -220,7 +212,7 @@ function create_main_fragment(component, state) {
 		},
 
 		h: function hydrate() {
-			encapsulateStyles(p);
+			p.className = "svelte-2794052100";
 		},
 
 		m: function mount(target, anchor) {
