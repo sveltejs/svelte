@@ -141,6 +141,10 @@ export default class Attribute {
 				shouldCache = true;
 			}
 
+			if (node._needsCssAttribute && propertyName === 'className') {
+				value = `(${value}) + " ${this.generator.stylesheet.id}"`;
+			}
+
 			const isSelectValueAttribute =
 				name === 'value' && node.name === 'select';
 
@@ -191,17 +195,17 @@ export default class Attribute {
 				block.builders.hydrate.addLine(
 					`${node.var}.${propertyName} = ${init};`
 				);
-				updater = `${node.var}.${propertyName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
+				updater = `${node.var}.${propertyName} = ${shouldCache ? last : value};`;
 			} else if (isDataSet) {
 				block.builders.hydrate.addLine(
 					`${node.var}.dataset.${camelCaseName} = ${init};`
 				);
-				updater = `${node.var}.dataset.${camelCaseName} = ${shouldCache || isSelectValueAttribute ? last : value};`;
+				updater = `${node.var}.dataset.${camelCaseName} = ${shouldCache ? last : value};`;
 			} else {
 				block.builders.hydrate.addLine(
 					`${method}(${node.var}, "${name}", ${init});`
 				);
-				updater = `${method}(${node.var}, "${name}", ${shouldCache || isSelectValueAttribute ? last : value});`;
+				updater = `${method}(${node.var}, "${name}", ${shouldCache ? last : value});`;
 			}
 
 			if (allDependencies.size || hasChangeableIndex || isSelectValueAttribute) {
@@ -223,17 +227,30 @@ export default class Attribute {
 				);
 			}
 		} else {
-			const value = this.value === true
-				? 'true'
-				: this.value.length === 0
-					? `''`
-					: stringify(this.value[0].data);
+			const isScopedClassAttribute = (
+				propertyName === 'className' &&
+				this.parent._needsCssAttribute &&
+				!this.generator.customElement
+			);
+
+			const value = isScopedClassAttribute && this.value !== true
+				? this.value.length === 0
+					? `'${this.generator.stylesheet.id}'`
+					: stringify(this.value[0].data.concat(` ${this.generator.stylesheet.id}`))
+				: this.value === true
+					? 'true'
+					: this.value.length === 0
+						? `''`
+						: stringify(this.value[0].data);
 
 			const statement = (
-				isLegacyInputType ? `@setInputType(${node.var}, ${value});` :
-				propertyName ? `${node.var}.${propertyName} = ${value};` :
-					isDataSet ? `${node.var}.dataset.${camelCaseName} = ${value};` :
-				`${method}(${node.var}, "${name}", ${value});`
+				isLegacyInputType
+					? `@setInputType(${node.var}, ${value});`
+					: propertyName
+						? `${node.var}.${propertyName} = ${value};`
+						: isDataSet
+							? `${node.var}.dataset.${camelCaseName} = ${value};`
+							: `${method}(${node.var}, "${name}", ${value});`
 			);
 
 			block.builders.hydrate.addLine(statement);
