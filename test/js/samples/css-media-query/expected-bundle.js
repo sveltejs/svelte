@@ -197,7 +197,7 @@ function encapsulateStyles(node) {
 function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-3905933315-style';
-	style.textContent = "@media(min-width: 1px){div[svelte-3905933315],[svelte-3905933315] div{color:red}}";
+	style.textContent = "@media(min-width: 1px){div.svelte-3905933315,.svelte-3905933315 div{color:red}}";
 	appendNode(style, document.head);
 }
 
