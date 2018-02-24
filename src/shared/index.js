@@ -100,7 +100,7 @@ export function observe(key, callback, options) {
 }
 
 export function observeDev(key, callback, options) {
-	var c = (key = '' + key).search(/[^\w]/);
+	var c = (key = '' + key).search(/[.[]/);
 	if (c > -1) {
 		var message =
 			'The first argument to component.observe(...) must be the name of a top-level property';
