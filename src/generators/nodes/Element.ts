@@ -214,11 +214,13 @@ export default class Element extends Node {
 
 		// add CSS encapsulation attribute
 		if (this._needsCssAttribute && !this.generator.customElement) {
-			this.generator.needsEncapsulateHelper = true;
-			block.builders.hydrate.addLine(
-				`@encapsulateStyles(${name});`
-			);
+			if (!this.attributes.find(a => a.type === 'Attribute' && a.name === 'class')) {
+				block.builders.hydrate.addLine(
+					`${name}.className = "${this.generator.stylesheet.id}";`
+				);
+			}
 
+			// TODO move this into a class as well?
 			if (this._cssRefAttribute) {
 				block.builders.hydrate.addLine(
 					`@setAttribute(${name}, "svelte-ref-${this._cssRefAttribute}", "");`
@@ -429,17 +431,21 @@ export default class Element extends Node {
 
 			let open = `<${node.name}`;
 
-			if (node._needsCssAttribute) {
-				open += ` ${generator.stylesheet.id}`;
-			}
-
 			if (node._cssRefAttribute) {
 				open += ` svelte-ref-${node._cssRefAttribute}`;
 			}
 
 			node.attributes.forEach((attr: Node) => {
-				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.value)}`
+				const value = node._needsCssAttribute && attr.name === 'class'
+					? attr.value.concat({ type: 'Text', data: ` ${generator.stylesheet.id}` })
+					: attr.value;
+
+				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(value)}`
 			});
+
+			if (node._needsCssAttribute && !node.attributes.find(a => a.name === 'class')) {
+				open += ` class="${generator.stylesheet.id}"`;
+			}
 
 			if (isVoidElementName(node.name)) return open + '>';
 
