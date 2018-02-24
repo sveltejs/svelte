@@ -35,21 +35,18 @@ export default class AwaitBlock extends Node {
 		].forEach(([status, arg]) => {
 			const child = this[status];
 
-			const context = block.getUniqueName(arg || '_'); // TODO can we remove the extra param from pending blocks?
-			const contexts = new Map(block.contexts);
-			contexts.set(arg, context);
-
-			const contextTypes = new Map(block.contextTypes);
-			contextTypes.set(arg, status);
-
 			child.block = block.child({
 				comment: createDebuggingComment(child, this.generator),
 				name: this.generator.getUniqueName(`create_${status}_block`),
-				params: block.params.concat(context),
-				context,
-				contexts,
-				contextTypes
+				contexts: new Map(block.contexts),
+				contextTypes: new Map(block.contextTypes)
 			});
+
+			if (arg) {
+				child.block.context = arg;
+				child.block.contexts.set(arg, arg); // TODO should be using getUniqueName
+				child.block.contextTypes.set(arg, status);
+			}
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
 			this.generator.blocks.push(child.block);
@@ -74,8 +71,6 @@ export default class AwaitBlock extends Node {
 
 		const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 		const updateMountNode = this.getUpdateMountNode(anchor);
-
-		const params = block.params.join(', ');
 
 		block.contextualise(this.expression);
 		const { snippet } = this.metadata;
@@ -106,11 +101,11 @@ export default class AwaitBlock extends Node {
 		// but it's probably not worth it
 
 		block.builders.init.addBlock(deindent`
-			function ${replace_await_block}(${token}, type, ${value}, ${params}) {
+			function ${replace_await_block}(${token}, type, state) {
 				if (${token} !== ${await_token}) return;
 
 				var ${old_block} = ${await_block};
-				${await_block} = (${await_block_type} = type)(${params}, ${resolved} = ${value}, #component);
+				${await_block} = type && (${await_block_type} = type)(#component, state);
 
 				if (${old_block}) {
 					${old_block}.u();
@@ -122,33 +117,43 @@ export default class AwaitBlock extends Node {
 				}
 			}
 
-			function ${handle_promise}(${promise}, ${params}) {
+			function ${handle_promise}(${promise}, state) {
 				var ${token} = ${await_token} = {};
 
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
-						var state = #component.get();
-						${replace_await_block}(${token}, ${create_then_block}, ${value}, ${params});
+						${this.then.block.context ? deindent`
+							var state = #component.get();
+							${resolved} = { ${this.then.block.context}: ${value} };
+							${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, ${resolved}));
+						` : deindent`
+							${replace_await_block}(${token}, null, null);
+						`}
 					}, function (${error}) {
-						var state = #component.get();
-						${replace_await_block}(${token}, ${create_catch_block}, ${error}, ${params});
+						${this.catch.block.context ? deindent`
+							var state = #component.get();
+							${resolved} = { ${this.catch.block.context}: ${error} };
+							${replace_await_block}(${token}, ${create_catch_block}, @assign({}, state, ${resolved}));
+						` : deindent`
+							${replace_await_block}(${token}, null, null);
+						`}
 					});
 
 					// if we previously had a then/catch block, destroy it
 					if (${await_block_type} !== ${create_pending_block}) {
-						${replace_await_block}(${token}, ${create_pending_block}, null, ${params});
+						${replace_await_block}(${token}, ${create_pending_block}, state);
 						return true;
 					}
 				} else {
-					${resolved} = ${promise};
+					${resolved} = { ${this.then.block.context}: ${promise} };
 					if (${await_block_type} !== ${create_then_block}) {
-						${replace_await_block}(${token}, ${create_then_block}, ${resolved}, ${params});
+						${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, ${resolved}));
 						return true;
 					}
 				}
 			}
 
-			${handle_promise}(${promise} = ${snippet}, ${params});
+			${handle_promise}(${promise} = ${snippet}, state);
 		`);
 
 		block.builders.create.addBlock(deindent`
@@ -177,7 +182,7 @@ export default class AwaitBlock extends Node {
 
 		conditions.push(
 			`${promise} !== (${promise} = ${snippet})`,
-			`${handle_promise}(${promise}, ${params})`
+			`${handle_promise}(${promise}, state)`
 		);
 
 		if (this.pending.block.hasUpdateMethod) {
@@ -185,7 +190,7 @@ export default class AwaitBlock extends Node {
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
-					${await_block}.p(changed, ${params}, ${resolved});
+					${await_block}.p(changed, @assign({}, state, ${resolved}));
 				}
 			`);
 		} else {

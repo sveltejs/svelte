@@ -100,7 +100,6 @@ export default class IfBlock extends Node {
 		const anchor = needsAnchor
 			? block.getUniqueName(`${name}_anchor`)
 			: (this.next && this.next.var) || 'null';
-		const params = block.params.join(', ');
 
 		const branches = getBranches(this.generator, block, parentNode, parentNodes, this);
 
@@ -110,7 +109,7 @@ export default class IfBlock extends Node {
 		const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
 		const hasOutros = branches[0].hasOutroMethod;
 
-		const vars = { name, anchor, params, if_name, hasElse };
+		const vars = { name, anchor, if_name, hasElse };
 
 		if (this.else) {
 			if (hasOutros) {
@@ -218,10 +217,10 @@ function simple(
 	node: Node,
 	branch,
 	dynamic,
-	{ name, anchor, params, if_name }
+	{ name, anchor, if_name }
 ) {
 	block.builders.init.addBlock(deindent`
-		var ${name} = (${branch.condition}) && ${branch.block}(${params}, #component);
+		var ${name} = (${branch.condition}) && ${branch.block}(#component, state);
 	`);
 
 	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
@@ -238,9 +237,9 @@ function simple(
 		? branch.hasIntroMethod
 			? deindent`
 				if (${name}) {
-					${name}.p(changed, ${params});
+					${name}.p(changed, state);
 				} else {
-					${name} = ${branch.block}(${params}, #component);
+					${name} = ${branch.block}(#component, state);
 					if (${name}) ${name}.c();
 				}
 
@@ -248,9 +247,9 @@ function simple(
 			`
 			: deindent`
 				if (${name}) {
-					${name}.p(changed, ${params});
+					${name}.p(changed, state);
 				} else {
-					${name} = ${branch.block}(${params}, #component);
+					${name} = ${branch.block}(#component, state);
 					${name}.c();
 					${name}.m(${updateMountNode}, ${anchor});
 				}
@@ -258,14 +257,14 @@ function simple(
 		: branch.hasIntroMethod
 			? deindent`
 				if (!${name}) {
-					${name} = ${branch.block}(${params}, #component);
+					${name} = ${branch.block}(#component, state);
 					${name}.c();
 				}
 				${name}.i(${updateMountNode}, ${anchor});
 			`
 			: deindent`
 				if (!${name}) {
-					${name} = ${branch.block}(${params}, #component);
+					${name} = ${branch.block}(#component, state);
 					${name}.c();
 					${name}.m(${updateMountNode}, ${anchor});
 				}
@@ -308,14 +307,14 @@ function compound(
 	node: Node,
 	branches,
 	dynamic,
-	{ name, anchor, params, hasElse, if_name }
+	{ name, anchor, hasElse, if_name }
 ) {
 	const select_block_type = generator.getUniqueName(`select_block_type`);
 	const current_block_type = block.getUniqueName(`current_block_type`);
 	const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
 	generator.blocks.push(deindent`
-		function ${select_block_type}(${params}) {
+		function ${select_block_type}(state) {
 			${branches
 				.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
 				.join('\n')}
@@ -323,8 +322,8 @@ function compound(
 	`);
 
 	block.builders.init.addBlock(deindent`
-		var ${current_block_type} = ${select_block_type}(${params});
-		var ${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
+		var ${current_block_type} = ${select_block_type}(state);
+		var ${name} = ${current_block_type_and}${current_block_type}(#component, state);
 	`);
 
 	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
@@ -348,22 +347,22 @@ function compound(
 					${name}.u();
 					${name}.d();
 				}`}
-		${name} = ${current_block_type_and}${current_block_type}(${params}, #component);
+		${name} = ${current_block_type_and}${current_block_type}(#component, state);
 		${if_name}${name}.c();
 		${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 	`;
 
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
-			if (${current_block_type} === (${current_block_type} = ${select_block_type}(${params})) && ${name}) {
-				${name}.p(changed, ${params});
+			if (${current_block_type} === (${current_block_type} = ${select_block_type}(state)) && ${name}) {
+				${name}.p(changed, state);
 			} else {
 				${changeBlock}
 			}
 		`);
 	} else {
 		block.builders.update.addBlock(deindent`
-			if (${current_block_type} !== (${current_block_type} = ${select_block_type}(${params}))) {
+			if (${current_block_type} !== (${current_block_type} = ${select_block_type}(state))) {
 				${changeBlock}
 			}
 		`);
@@ -384,7 +383,7 @@ function compoundWithOutros(
 	node: Node,
 	branches,
 	dynamic,
-	{ name, anchor, params, hasElse }
+	{ name, anchor, hasElse }
 ) {
 	const select_block_type = block.getUniqueName(`select_block_type`);
 	const current_block_type_index = block.getUniqueName(`current_block_type_index`);
@@ -406,7 +405,7 @@ function compoundWithOutros(
 
 		var ${if_blocks} = [];
 
-		function ${select_block_type}(${params}) {
+		function ${select_block_type}(state) {
 			${branches
 				.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
 				.join('\n')}
@@ -415,13 +414,13 @@ function compoundWithOutros(
 
 	if (hasElse) {
 		block.builders.init.addBlock(deindent`
-			${current_block_type_index} = ${select_block_type}(${params});
-			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
+			${current_block_type_index} = ${select_block_type}(state);
+			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
 		`);
 	} else {
 		block.builders.init.addBlock(deindent`
-			if (~(${current_block_type_index} = ${select_block_type}(${params}))) {
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
+			if (~(${current_block_type_index} = ${select_block_type}(state))) {
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
 			}
 		`);
 	}
@@ -447,7 +446,7 @@ function compoundWithOutros(
 	const createNewBlock = deindent`
 		${name} = ${if_blocks}[${current_block_type_index}];
 		if (!${name}) {
-			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${params}, #component);
+			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
 			${name}.c();
 		}
 		${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
@@ -474,9 +473,9 @@ function compoundWithOutros(
 	if (dynamic) {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_type_index};
-			${current_block_type_index} = ${select_block_type}(${params});
+			${current_block_type_index} = ${select_block_type}(state);
 			if (${current_block_type_index} === ${previous_block_index}) {
-				${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, ${params});
+				${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, state);
 			} else {
 				${changeBlock}
 			}
@@ -484,7 +483,7 @@ function compoundWithOutros(
 	} else {
 		block.builders.update.addBlock(deindent`
 			var ${previous_block_index} = ${current_block_type_index};
-			${current_block_type_index} = ${select_block_type}(${params});
+			${current_block_type_index} = ${select_block_type}(state);
 			if (${current_block_type_index} !== ${previous_block_index}) {
 				${changeBlock}
 			}

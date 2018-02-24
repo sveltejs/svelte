@@ -4,7 +4,7 @@ import Imported from 'Imported.html';
 
 
 
-function create_main_fragment(state, component) {
+function create_main_fragment(component, state) {
 	var text;
 
 	var imported = new Imported({
@@ -53,7 +53,7 @@ function SvelteComponent(options) {
 		this._aftercreate = [];
 	}
 
-	this._fragment = create_main_fragment(this._state, this);
+	this._fragment = create_main_fragment(this, this._state);
 
 	if (options.target) {
 		this._fragment.c();
