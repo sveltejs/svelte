@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.56.0
+
+* Internal refactor ([#1122](https://github.com/sveltejs/svelte/issues/1122))
+* Use correct context for component events ([#1184](https://github.com/sveltejs/svelte/issues/1184))
+* Allow observing `$foo` in dev mode ([#1181](https://github.com/sveltejs/svelte/issues/1181))
+* Handle dynamic data in default slot ([#1144](https://github.com/sveltejs/svelte/issues/1144))
+
 ## 1.55.1
 
 * Fix cancellation of store `onchange` handlers ([#1177](https://github.com/sveltejs/svelte/issues/1177))
