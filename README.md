@@ -21,6 +21,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [svelte-hot-loader](https://github.com/ekhaled/svelte-hot-loader) – Webpack loader addon to support HMR
 * [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
 * [sveltejs-brunch](https://github.com/StarpTech/sveltejs-brunch) – Brunch build plugin
+* [svelte-dev-store](https://github.com/GarethOates/svelte-dev-store) - Use Redux tools to visualise Svelte store
 * More to come!
 
 
