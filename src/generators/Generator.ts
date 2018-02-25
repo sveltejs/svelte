@@ -1,10 +1,10 @@
 import MagicString, { Bundle } from 'magic-string';
+import isReference from 'is-reference';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
-import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';

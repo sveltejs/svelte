@@ -1,5 +1,5 @@
 import { walk } from 'estree-walker';
-import isReference from '../../../utils/isReference';
+import isReference from 'is-reference';
 import { Node } from '../../../interfaces';
 
 export default function usesThisOrArguments(node: Node) {
