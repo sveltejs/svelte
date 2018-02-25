@@ -320,7 +320,7 @@ export default class Component extends Node {
 						${name} = new ${switch_vars.value}(${switch_vars.props}(state));
 						${name}._fragment.c();
 
-						${this.children.map(child => remount(generator, child, name))}
+						${this.children.map(child => child.remount(name))}
 						${name}._mount(${updateMountNode}, ${anchor});
 
 						${eventHandlers.map(handler => deindent`
@@ -397,6 +397,10 @@ export default class Component extends Node {
 				${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
 			`);
 		}
+	}
+
+	remount(name: string) {
+		return `${this.var}._mount(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
 	}
 }
 
@@ -547,32 +551,4 @@ function isComputed(node: Node) {
 	}
 
 	return false;
-}
-
-function remount(generator: DomGenerator, node: Node, name: string) {
-	// TODO make this a method of the nodes
-
-	if (node.type === 'Component') {
-		return `${node.var}._mount(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
-	}
-
-	if (node.type === 'Element') {
-		const slot = node.attributes.find(attribute => attribute.name === 'slot');
-		if (slot) {
-			return `@appendNode(${node.var}, ${name}._slotted.${node.getStaticAttributeValue('slot')});`;
-		}
-
-		return `@appendNode(${node.var}, ${name}._slotted${generator.legacy ? `["default"]` : `.default`});`;
-	}
-
-	if (node.type === 'Text' || node.type === 'MustacheTag' || node.type === 'RawMustacheTag') {
-		return `@appendNode(${node.var}, ${name}._slotted${generator.legacy ? `["default"]` : `.default`});`;
-	}
-
-	if (node.type === 'EachBlock') {
-		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
-	}
-
-	return `${node.var}.m(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 }

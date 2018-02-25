@@ -89,4 +89,8 @@ export default class RawMustacheTag extends Tag {
 			addAnchorAfter();
 		}
 	}
+
+	remount(name: string) {
+		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+	}
 }
