@@ -198,7 +198,7 @@ function create_main_fragment(state, component) {
 		window_updating = true;
 
 		component.set({
-			y: this.pageYOffset || this.scrollY
+			y: this.pageYOffset
 		});
 		window_updating = false;
 	}
@@ -207,7 +207,7 @@ function create_main_fragment(state, component) {
 	component.observe("y", function(y) {
 		window_updating = true;
 		clearTimeout(window_updating_timeout);
-		window.scrollTo(window.pageXOffset || window.scrollX, y);
+		window.scrollTo(window.pageXOffset, y);
 		window_updating_timeout = setTimeout(clear_window_updating, 100);
 	});
 
@@ -243,7 +243,7 @@ function create_main_fragment(state, component) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
-	this._state.y = window.pageYOffset || window.scrollY;
+	this._state.y = window.pageYOffset;
 
 	this._fragment = create_main_fragment(this._state, this);
 

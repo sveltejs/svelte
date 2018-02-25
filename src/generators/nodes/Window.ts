@@ -19,6 +19,11 @@ const associatedEvents = {
 	scrollY: 'scroll',
 };
 
+const properties = {
+	scrollX: 'pageXOffset',
+	scrollY: 'pageYOffset'
+};
+
 const readonly = new Set([
 	'innerWidth',
 	'innerHeight',
@@ -93,15 +98,16 @@ export default class Window extends Node {
 				if (attribute.name === 'online') return;
 
 				const associatedEvent = associatedEvents[attribute.name];
+				const property = properties[attribute.name] || attribute.name;
 
 				if (!events[associatedEvent]) events[associatedEvent] = [];
 				events[associatedEvent].push(
-					`${attribute.value.name}: this.${attribute.name}`
+					`${attribute.value.name}: this.${property}`
 				);
 
 				// add initial value
 				generator.metaBindings.push(
-					`this._state.${attribute.value.name} = window.${attribute.name};`
+					`this._state.${attribute.value.name} = window.${property};`
 				);
 			}
 		});
@@ -158,10 +164,10 @@ export default class Window extends Node {
 					clearTimeout(${timeout});
 					var x = ${bindings.scrollX
 						? `#component.get("${bindings.scrollX}")`
-						: `window.pageXOffset || window.scrollX`};
+						: `window.pageXOffset`};
 					var y = ${bindings.scrollY
 						? `#component.get("${bindings.scrollY}")`
-						: `window.pageYOffset || window.scrollY`};
+						: `window.pageYOffset`};
 					window.scrollTo(x, y);
 					${timeout} = setTimeout(${clear}, 100);
 				}
@@ -182,7 +188,7 @@ export default class Window extends Node {
 				#component.observe("${bindings.scrollX || bindings.scrollY}", function(${isX ? 'x' : 'y'}) {
 					${lock} = true;
 					clearTimeout(${timeout});
-					window.scrollTo(${isX ? 'x, window.pageYOffset || window.scrollY' : 'window.pageXOffset || window.scrollX, y'});
+					window.scrollTo(${isX ? 'x, window.pageYOffset' : 'window.pageXOffset, y'});
 					${timeout} = setTimeout(${clear}, 100);
 				});
 			`);
