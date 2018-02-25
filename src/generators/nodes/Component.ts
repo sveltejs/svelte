@@ -5,9 +5,16 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
 import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
+import isValidIdentifier from '../../utils/isValidIdentifier';
+import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
+
+function quoteIfNecessary(name, legacy) {
+	if (!isValidIdentifier || (legacy && reservedNames.has(name))) return `"${name}"`;
+	return name;
+}
 
 export default class Component extends Node {
 	type: 'Component';
@@ -71,17 +78,16 @@ export default class Component extends Node {
 		const componentInitProperties = [`root: #component.root`];
 
 		if (this.children.length > 0) {
-			const slots = Array.from(this._slots).map(name => `${name}: @createFragment()`);
+			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name, generator.legacy)}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, `${this.var}._slotted.default`, 'nodes');
+				child.build(block, `${this.var}._slotted${generator.legacy ? `["default"]` : `.default`}`, 'nodes');
 			});
 		}
 
 		const allContexts = new Set();
 		const statements: string[] = [];
-		const name_context = block.getUniqueName(`${name}_context`);
 
 		let name_updating: string;
 		let name_initial_data: string;
@@ -97,7 +103,7 @@ export default class Component extends Node {
 
 		const eventHandlers = this.attributes
 			.filter((a: Node) => a.type === 'EventHandler')
-			.map(a => mungeEventHandler(generator, this, a, block, name_context, allContexts));
+			.map(a => mungeEventHandler(generator, this, a, block, allContexts));
 
 		const ref = this.attributes.find((a: Node) => a.type === 'Ref');
 		if (ref) generator.usesRefs = true;
@@ -156,8 +162,8 @@ export default class Component extends Node {
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
 						setFromChild = deindent`
-							var list = ${name_context}.${block.listNames.get(key)};
-							var index = ${name_context}.${block.indexNames.get(key)};
+							var list = state.${block.listNames.get(key)};
+							var index = ${block.indexNames.get(key)};
 							list[index]${tail} = childState.${binding.name};
 
 							${binding.dependencies
@@ -265,12 +271,10 @@ export default class Component extends Node {
 
 			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 
-			const params = block.params.join(', ');
-
 			block.builders.init.addBlock(deindent`
 				var ${switch_vars.value} = ${snippet};
 
-				function ${switch_vars.props}(${params}) {
+				function ${switch_vars.props}(state) {
 					${statements.length > 0 && statements.join('\n')}
 					return {
 						${componentInitProperties.join(',\n')}
@@ -278,7 +282,7 @@ export default class Component extends Node {
 				}
 
 				if (${switch_vars.value}) {
-					var ${name} = new ${expression}(${switch_vars.props}(${params}));
+					var ${name} = new ${expression}(${switch_vars.props}(state));
 
 					${beforecreate}
 				}
@@ -313,7 +317,7 @@ export default class Component extends Node {
 					if (${name}) ${name}.destroy();
 
 					if (${switch_vars.value}) {
-						${name} = new ${switch_vars.value}(${switch_vars.props}(${params}));
+						${name} = new ${switch_vars.value}(${switch_vars.props}(state));
 						${name}._fragment.c();
 
 						${this.children.map(child => remount(generator, child, name))}
@@ -392,41 +396,6 @@ export default class Component extends Node {
 				${name}.destroy(false);
 				${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
 			`);
-		}
-
-		// maintain component context
-		if (allContexts.size) {
-			const contexts = Array.from(allContexts);
-
-			const initialProps = contexts
-				.map(contextName => {
-					if (contextName === 'state') return `state: state`;
-
-					const listName = block.listNames.get(contextName);
-					const indexName = block.indexNames.get(contextName);
-
-					return `${listName}: ${listName},\n${indexName}: ${indexName}`;
-				})
-				.join(',\n');
-
-			const updates = contexts
-				.map(contextName => {
-					if (contextName === 'state') return `${name_context}.state = state;`;
-
-					const listName = block.listNames.get(contextName);
-					const indexName = block.indexNames.get(contextName);
-
-					return `${name_context}.${listName} = ${listName};\n${name_context}.${indexName} = ${indexName};`;
-				})
-				.join('\n');
-
-			block.builders.init.addBlock(deindent`
-				var ${name_context} = {
-					${initialProps}
-				};
-			`);
-
-			block.builders.update.addBlock(updates);
 		}
 	}
 }
@@ -515,8 +484,8 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	let prop;
 
 	if (contextual) {
-		obj = block.listNames.get(name);
-		prop = block.indexNames.get(name);
+		obj = `state.${block.listNames.get(name)}`;
+		prop = `${block.indexNames.get(name)}`;
 	} else if (binding.value.type === 'MemberExpression') {
 		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
 		if (!binding.value.computed) prop = `'${prop}'`;
@@ -537,7 +506,7 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	};
 }
 
-function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, name_context: string, allContexts: Set<string>) {
+function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, allContexts: Set<string>) {
 	let body;
 
 	if (handler.expression) {
@@ -547,30 +516,15 @@ function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, b
 			`${block.alias('component')}.`
 		);
 
-		const usedContexts: string[] = [];
-
 		handler.expression.arguments.forEach((arg: Node) => {
 			const { contexts } = block.contextualise(arg, null, true);
 
 			contexts.forEach(context => {
-				if (!~usedContexts.indexOf(context)) usedContexts.push(context);
 				allContexts.add(context);
 			});
 		});
 
-		// TODO hoist event handlers? can do `this.__component.method(...)`
-		const declarations = usedContexts.map(name => {
-			if (name === 'state') return `var state = ${name_context}.state;`;
-
-			const listName = block.listNames.get(name);
-			const indexName = block.indexNames.get(name);
-
-			return `var ${listName} = ${name_context}.${listName}, ${indexName} = ${name_context}.${indexName}, ${name} = ${listName}[${indexName}]`;
-		});
-
 		body = deindent`
-			${declarations}
-
 			[✂${handler.expression.start}-${handler.expression.end}✂];
 		`;
 	} else {
@@ -599,7 +553,7 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 	// TODO make this a method of the nodes
 
 	if (node.type === 'Component') {
-		return `${node.var}._mount(${name}._slotted.default, null);`;
+		return `${node.var}._mount(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 	}
 
 	if (node.type === 'Element') {
@@ -608,17 +562,17 @@ function remount(generator: DomGenerator, node: Node, name: string) {
 			return `@appendNode(${node.var}, ${name}._slotted.${node.getStaticAttributeValue('slot')});`;
 		}
 
-		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+		return `@appendNode(${node.var}, ${name}._slotted${generator.legacy ? `["default"]` : `.default`});`;
 	}
 
 	if (node.type === 'Text' || node.type === 'MustacheTag' || node.type === 'RawMustacheTag') {
-		return `@appendNode(${node.var}, ${name}._slotted.default);`;
+		return `@appendNode(${node.var}, ${name}._slotted${generator.legacy ? `["default"]` : `.default`});`;
 	}
 
 	if (node.type === 'EachBlock') {
 		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted.default, null);`;
+		return `for (var #i = 0; #i < ${node.iterations}.length; #i += 1) ${node.iterations}[#i].m(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 	}
 
-	return `${node.var}.m(${name}._slotted.default, null);`;
+	return `${node.var}.m(${name}._slotted${generator.legacy ? `["default"]` : `.default`}, null);`;
 }

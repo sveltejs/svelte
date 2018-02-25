@@ -373,8 +373,8 @@ export default class Generator {
 		return alias;
 	}
 
-	getUniqueNameMaker(params: string[]) {
-		const localUsedNames = new Set(params);
+	getUniqueNameMaker() {
+		const localUsedNames = new Set();
 
 		function add(name: string) {
 			localUsedNames.add(name);

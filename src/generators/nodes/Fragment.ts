@@ -16,7 +16,6 @@ export default class Fragment extends Node {
 			indexes: new Map(),
 			changeableIndexes: new Map(),
 
-			params: ['state'],
 			indexNames: new Map(),
 			listNames: new Map(),
 

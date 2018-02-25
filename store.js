@@ -111,10 +111,13 @@ assign(Store.prototype, {
 
 	onchange: function(callback) {
 		this._changeHandlers.push(callback);
+
+		var store = this;
+
 		return {
 			cancel: function() {
-				var index = this._changeHandlers.indexOf(callback);
-				if (~index) this._changeHandlers.splice(index, 1);
+				var index = store._changeHandlers.indexOf(callback);
+				if (~index) store._changeHandlers.splice(index, 1);
 			}
 		};
 	},
