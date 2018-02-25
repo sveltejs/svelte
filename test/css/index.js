@@ -95,7 +95,7 @@ describe('css', () => {
 				css: read(`test/css/samples/${dir}/expected.css`)
 			};
 
-			assert.equal(dom.css.replace(/svelte-\d+/g, 'svelte-xyz'), expected.css);
+			assert.equal(dom.css.replace(/sveltecomponent-[a-z0-9]+/g, 'sveltecomponent-xyz'), expected.css);
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
@@ -114,7 +114,7 @@ describe('css', () => {
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
 
 					assert.equal(
-						normalizeHtml(window, html.replace(/svelte-\d+/g, 'svelte-xyz')),
+						normalizeHtml(window, html.replace(/sveltecomponent-[a-z0-9]+/g, 'sveltecomponent-xyz')),
 						normalizeHtml(window, expected.html)
 					);
 
@@ -133,7 +133,7 @@ describe('css', () => {
 					assert.equal(
 						normalizeHtml(
 							window,
-							component.render(config.data).html.replace(/svelte-\d+/g, 'svelte-xyz')
+							component.render(config.data).html.replace(/sveltecomponent-[a-z0-9]+/g, 'sveltecomponent-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);
