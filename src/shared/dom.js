@@ -169,15 +169,15 @@ export function selectOptions(select, value) {
 }
 
 export function selectValue(select) {
-  var selectedOption = select.options[select.selectedIndex >= 0 ? select.selectedIndex : 0];
-  return selectedOption && selectedOption.__value;
+	var selectedOption = select.options[select.selectedIndex >= 0 ? select.selectedIndex : 0];
+	return selectedOption && selectedOption.__value;
 }
 
 export function selectMultipleValue(select) {
-  var values = [];
+	var values = [];
 	for (var i = 0; i < select.options.length; i += 1) {
 		var option = select.options[i];
-    option.selected && values.push(option.__value);
-  }
-  return values;
+		option.selected && values.push(option.__value);
+	}
+	return values;
 }
