@@ -189,6 +189,10 @@ var proto = {
 function create_main_fragment(component, state) {
 	var if_block_anchor;
 
+	function select_block_type(state) {
+		if (state.foo) return create_if_block;
+		return create_if_block_1;
+	}
 	var current_block_type = select_block_type(state);
 	var if_block = current_block_type(component, state);
 
@@ -266,11 +270,6 @@ function create_if_block_1(component, state) {
 
 		d: noop
 	};
-}
-
-function select_block_type(state) {
-	if (state.foo) return create_if_block;
-	return create_if_block_1;
 }
 
 function SvelteComponent(options) {
