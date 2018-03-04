@@ -163,7 +163,7 @@ class Atrule {
 	}
 
 	apply(node: Element, stack: Element[]) {
-		if (this.node.name === 'media') {
+		if (this.node.name === 'media' || this.node.name === 'supports') {
 			this.children.forEach(child => {
 				child.apply(node, stack);
 			});
@@ -199,6 +199,14 @@ class Atrule {
 			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
 			c = this.node.expression.end;
 			if (this.node.block.start - c > 0) code.remove(c, this.node.block.start);
+		} else if (this.node.name === 'supports') {
+			let c = this.node.start + 9;
+			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
+			this.node.expression.children.forEach((query: Node) => {
+				// TODO minify queries
+				c = query.end;
+			});
+			code.remove(c, this.node.block.start);
 		}
 
 		// TODO other atrules
