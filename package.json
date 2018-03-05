@@ -9,6 +9,7 @@
     "shared.js",
     "store.js",
     "store.umd.js",
+    "store.d.ts",
     "README.md"
   ],
   "scripts": {
