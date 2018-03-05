@@ -313,15 +313,12 @@ function compound(
 	const current_block_type = block.getUniqueName(`current_block_type`);
 	const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
-	generator.blocks.push(deindent`
+	block.builders.init.addBlock(deindent`
 		function ${select_block_type}(state) {
 			${branches
 				.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
 				.join('\n')}
 		}
-	`);
-
-	block.builders.init.addBlock(deindent`
 		var ${current_block_type} = ${select_block_type}(state);
 		var ${name} = ${current_block_type_and}${current_block_type}(#component, state);
 	`);
