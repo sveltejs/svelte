@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.56.1
+
+* Fix if-in-each bug ([#1195](https://github.com/sveltejs/svelte/issues/1195))
+* Cross-browser `scrollX`/`scrollY` support ([#1175](https://github.com/sveltejs/svelte/issues/1175))
+
 ## 1.56.0
 
 * Internal refactor ([#1122](https://github.com/sveltejs/svelte/issues/1122))
