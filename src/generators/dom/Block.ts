@@ -163,7 +163,7 @@ export default class Block {
 	}
 
 	child(options: BlockOptions) {
-		return new Block(Object.assign({}, this, options, { parent: this }));
+		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
 	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {

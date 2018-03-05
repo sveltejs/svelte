@@ -66,7 +66,7 @@
     "nyc": "^11.1.0",
     "prettier": "^1.7.0",
     "reify": "^0.12.3",
-    "rollup": "^0.48.2",
+    "rollup": "^0.56.4",
     "rollup-plugin-buble": "^0.15.0",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-json": "^2.1.0",

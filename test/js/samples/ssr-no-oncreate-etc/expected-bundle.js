@@ -1,9 +1,7 @@
 function preload(input) {
 	return output;
 }
-
 var SvelteComponent = {};
-
 SvelteComponent.data = function() {
 	return {};
 };
