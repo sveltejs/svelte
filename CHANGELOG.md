@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.56.2
+
+* Null out `key` for children of keyed each blocks ([#1202](https://github.com/sveltejs/svelte/issues/1202))
+
 ## 1.56.1
 
 * Fix if-in-each bug ([#1195](https://github.com/sveltejs/svelte/issues/1195))
