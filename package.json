@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "1.56.1",
+  "version": "1.56.2",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
