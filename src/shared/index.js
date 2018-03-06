@@ -185,7 +185,7 @@ export function callAll(fns) {
 }
 
 export function _mount(target, anchor) {
-	this._fragment.m(target, anchor);
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor);
 }
 
 export function _unmount() {
