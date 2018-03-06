@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.56.3
+
+* Top-level transitions work inside nested components ([#1188](https://github.com/sveltejs/svelte/issues/1188))
+* Always use internal `_mount` method ([#1201](https://github.com/sveltejs/svelte/issues/1201))
+
 ## 1.56.2
 
 * Null out `key` for children of keyed each blocks ([#1202](https://github.com/sveltejs/svelte/issues/1202))
