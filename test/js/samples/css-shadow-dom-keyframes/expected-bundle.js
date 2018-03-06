@@ -159,7 +159,7 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.m(target, anchor);
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor);
 }
 
 function _unmount() {

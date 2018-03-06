@@ -182,7 +182,7 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment.m(target, anchor);
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor);
 }
 
 function _unmount() {
@@ -251,7 +251,7 @@ function SvelteComponent(options) {
 		var nodes = children(options.target);
 		options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
 		nodes.forEach(detachNode);
-		this._fragment.m(options.target, options.anchor || null);
+		this._mount(options.target, options.anchor || null);
 	}
 }
 
