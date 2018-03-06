@@ -46,7 +46,7 @@ function SvelteComponent(options) {
 		var nodes = children(options.target);
 		options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
 		nodes.forEach(detachNode);
-		this._mount(options.target, options.anchor || null);
+		this._mount(options.target, options.anchor);
 	}
 }
 
