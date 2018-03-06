@@ -182,7 +182,7 @@ function callAll(fns) {
 }
 
 function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor);
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
 function _unmount() {
