@@ -112,9 +112,13 @@ export default class Block {
 		this.hasOutroMethod = false;
 		this.outros = 0;
 
-		this.aliases = new Map();
-		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker();
+		this.variables = new Map();
+
+		this.aliases = new Map()
+			.set('component', this.getUniqueName('component'))
+			.set('state', this.getUniqueName('state'));
+		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
 	}
