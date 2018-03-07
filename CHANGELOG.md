@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.56.4
+
+* Allow `component` and `state` to be context names ([#1213](https://github.com/sveltejs/svelte/issues/1213))
+* Don't remove `@supports` rules when `cascade: false` ([#1215](https://github.com/sveltejs/svelte/issues/1215))
+
 ## 1.56.3
 
 * Top-level transitions work inside nested components ([#1188](https://github.com/sveltejs/svelte/issues/1188))
