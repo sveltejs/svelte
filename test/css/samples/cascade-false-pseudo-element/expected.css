@@ -1,1 +1,1 @@
-span[svelte-xyz]::after{content:'i am a pseudo-element'}span[svelte-xyz]:first-child{color:red}span[svelte-xyz]:last-child::after{color:blue}
+span.svelte-xyz::after{content:'i am a pseudo-element'}span.svelte-xyz:first-child{color:red}span.svelte-xyz:last-child::after{color:blue}

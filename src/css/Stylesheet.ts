@@ -69,7 +69,7 @@ class Rule {
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, cascade: boolean) {
 		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
 
-		const attr = `[${id}]`;
+		const attr = `.${id}`;
 
 		if (cascade) {
 			this.selectors.forEach(selector => {
