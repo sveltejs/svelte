@@ -151,7 +151,7 @@ export default class IfBlock extends Node {
 		const current_block_type = block.getUniqueName(`current_block_type`);
 		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
-		this.generator.blocks.push(deindent`
+		block.builders.init.addBlock(deindent`
 			function ${select_block_type}(state) {
 				${branches
 					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
