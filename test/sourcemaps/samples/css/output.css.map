@@ -8,5 +8,5 @@
     "<p class='foo'>red</p>\n\n<style>\n\t.foo {\n\t\tcolor: red;\n\t}\n</style>"
   ],
   "names": [],
-  "mappings": "AAGC,gDAAK,CAAC,AACL,KAAK,CAAE,GAAG,AACX,CAAC"
+  "mappings": "AAGC,sCAAK,CAAC,AACL,KAAK,CAAE,GAAG,AACX,CAAC"
 }

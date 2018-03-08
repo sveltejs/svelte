@@ -33,10 +33,6 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
-function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
-}
-
 function blankObject() {
 	return Object.create(null);
 }
@@ -198,14 +194,10 @@ var proto = {
 function data() {
 	return { foo: 42 }
 }
-function encapsulateStyles(node) {
-	setAttribute(node, "svelte-2794052100", "");
-}
-
 function add_css() {
 	var style = createElement("style");
-	style.id = 'svelte-2794052100-style';
-	style.textContent = "p[svelte-2794052100],[svelte-2794052100] p{color:red}";
+	style.id = 'svelte-1a7i8ec-style';
+	style.textContent = "p.svelte-1a7i8ec,.svelte-1a7i8ec p{color:red}";
 	appendNode(style, document.head);
 }
 
@@ -220,7 +212,7 @@ function create_main_fragment(component, state) {
 		},
 
 		h: function hydrate() {
-			encapsulateStyles(p);
+			p.className = "svelte-1a7i8ec";
 		},
 
 		m: function mount(target, anchor) {
@@ -246,7 +238,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign(data(), options.data);
 
-	if (!document.getElementById("svelte-2794052100-style")) add_css();
+	if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
 
 	this._fragment = create_main_fragment(this, this._state);
 

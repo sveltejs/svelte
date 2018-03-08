@@ -135,14 +135,6 @@ export default function dom(
 		builder.addBlock(generator.javascript);
 	}
 
-	if (generator.needsEncapsulateHelper) {
-		builder.addBlock(deindent`
-			function @encapsulateStyles(node) {
-				@setAttribute(node, "${generator.stylesheet.id}", "");
-			}
-		`);
-	}
-
 	const { css, cssMap } = generator.stylesheet.render(options.filename, !generator.customElement);
 	const styles = generator.stylesheet.hasStyles && stringify(options.dev ?
 		`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :

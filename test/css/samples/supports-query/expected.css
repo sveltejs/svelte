@@ -1,1 +1,1 @@
-@supports (display: grid){.maybe-grid[svelte-xyz]{display:grid}}
+@supports (display: grid){.maybe-grid.svelte-xyz{display:grid}}
