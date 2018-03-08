@@ -671,6 +671,15 @@ export default class Element extends Node {
 	isMediaNode() {
 		return this.name === 'audio' || this.name === 'video';
 	}
+
+	remount(name: string) {
+		const slot = this.attributes.find(attribute => attribute.name === 'slot');
+		if (slot) {
+			return `@appendNode(${this.var}, ${name}._slotted.${this.getStaticAttributeValue('slot')});`;
+		}
+
+		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+	}
 }
 
 function getRenderStatement(

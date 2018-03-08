@@ -26,4 +26,8 @@ export default class MustacheTag extends Tag {
 			parentNode
 		);
 	}
+
+	remount(name: string) {
+		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+	}
 }

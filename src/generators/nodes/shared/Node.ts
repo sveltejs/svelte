@@ -161,4 +161,8 @@ export default class Node {
 	getUpdateMountNode(anchor: string) {
 		return this.parent.isDomNode() ? this.parent.var : `${anchor}.parentNode`;
 	}
+
+	remount(name: string) {
+		return `${this.var}.m(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
+	}
 }
