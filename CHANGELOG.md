@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.57.0
+
+* Use classes (not attributes) for style encapsulation, and base36-encode hashes ([#1118](https://github.com/sveltejs/svelte/issues/1118))
+
 ## 1.56.4
 
 * Allow `component` and `state` to be context names ([#1213](https://github.com/sveltejs/svelte/issues/1213))
