@@ -58,4 +58,8 @@ export default class Text extends Node {
 			parentNode
 		);
 	}
+
+	remount(name: string) {
+		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+	}
 }
