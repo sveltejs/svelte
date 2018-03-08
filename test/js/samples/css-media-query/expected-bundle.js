@@ -189,8 +189,8 @@ var proto = {
 
 function add_css() {
 	var style = createElement("style");
-	style.id = 'svelte-3905933315-style';
-	style.textContent = "@media(min-width: 1px){div.svelte-3905933315,.svelte-3905933315 div{color:red}}";
+	style.id = 'svelte-1slhpfn-style';
+	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn,.svelte-1slhpfn div{color:red}}";
 	appendNode(style, document.head);
 }
 
@@ -204,7 +204,7 @@ function create_main_fragment(component, state) {
 		},
 
 		h: function hydrate() {
-			div.className = "svelte-3905933315";
+			div.className = "svelte-1slhpfn";
 		},
 
 		m: function mount(target, anchor) {
@@ -225,7 +225,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
-	if (!document.getElementById("svelte-3905933315-style")) add_css();
+	if (!document.getElementById("svelte-1slhpfn-style")) add_css();
 
 	this._fragment = create_main_fragment(this, this._state);
 

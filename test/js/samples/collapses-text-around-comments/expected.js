@@ -7,8 +7,8 @@ function data() {
 
 function add_css() {
 	var style = createElement("style");
-	style.id = 'svelte-2794052100-style';
-	style.textContent = "p.svelte-2794052100,.svelte-2794052100 p{color:red}";
+	style.id = 'svelte-1a7i8ec-style';
+	style.textContent = "p.svelte-1a7i8ec,.svelte-1a7i8ec p{color:red}";
 	appendNode(style, document.head);
 }
 
@@ -23,7 +23,7 @@ function create_main_fragment(component, state) {
 		},
 
 		h: function hydrate() {
-			p.className = "svelte-2794052100";
+			p.className = "svelte-1a7i8ec";
 		},
 
 		m: function mount(target, anchor) {
@@ -49,7 +49,7 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign(data(), options.data);
 
-	if (!document.getElementById("svelte-2794052100-style")) add_css();
+	if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
 
 	this._fragment = create_main_fragment(this, this._state);
 
