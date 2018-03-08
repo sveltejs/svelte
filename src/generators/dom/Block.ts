@@ -312,22 +312,19 @@ export default class Block {
 		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
-					o: function outro(${this.alias('outrocallback')}) {
+					o: function outro(#outrocallback) {
 						if (${outroing}) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
 
-						var ${this.alias('outros')} = ${this.outros};
+						var #outros = ${this.outros};
 
 						${this.builders.outro}
 					},
 				`);
 			} else {
-				// TODO should this be a helper?
 				properties.addBlock(deindent`
-					o: function outro(outrocallback) {
-						outrocallback();
-					},
+					o: @run,
 				`);
 			}
 		}

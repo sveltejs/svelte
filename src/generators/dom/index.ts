@@ -1,7 +1,7 @@
 import MagicString from 'magic-string';
+import isReference from 'is-reference';
 import { parseExpressionAt } from 'acorn';
 import annotateWithScopes from '../../utils/annotateWithScopes';
-import isReference from '../../utils/isReference';
 import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
