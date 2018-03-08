@@ -101,7 +101,7 @@ export default class IfBlock extends Node {
 			? block.getUniqueName(`${name}_anchor`)
 			: (this.next && this.next.var) || 'null';
 
-		const branches = getBranches(this.generator, block, parentNode, parentNodes, this);
+		const branches = this.getBranches(block, parentNode, parentNodes, this);
 
 		const hasElse = isElseBranch(branches[branches.length - 1]);
 		const if_name = hasElse ? '' : `if (${name}) `;
@@ -113,21 +113,12 @@ export default class IfBlock extends Node {
 
 		if (this.else) {
 			if (hasOutros) {
-				compoundWithOutros(
-					this.generator,
-					block,
-					parentNode,
-					parentNodes,
-					this,
-					branches,
-					dynamic,
-					vars
-				);
+				this.buildCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
 			} else {
-				compound(this.generator, block, parentNode, parentNodes, this, branches, dynamic, vars);
+				this.buildCompound(block, parentNode, parentNodes, branches, dynamic, vars);
 			}
 		} else {
-			simple(this.generator, block, parentNode, parentNodes, this, branches[0], dynamic, vars);
+			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
 		}
 
 		block.builders.create.addLine(`${if_name}${name}.c();`);
@@ -147,353 +138,334 @@ export default class IfBlock extends Node {
 			);
 		}
 	}
-}
 
+	buildCompound(
+		block: Block,
+		parentNode: string,
+		parentNodes: string,
+		branches,
+		dynamic,
+		{ name, anchor, hasElse, if_name }
+	) {
+		const select_block_type = this.generator.getUniqueName(`select_block_type`);
+		const current_block_type = block.getUniqueName(`current_block_type`);
+		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
+		block.builders.init.addBlock(deindent`
+			function ${select_block_type}(state) {
+				${branches
+					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
+					.join('\n')}
+			}
+		`);
 
+		block.builders.init.addBlock(deindent`
+			var ${current_block_type} = ${select_block_type}(state);
+			var ${name} = ${current_block_type_and}${current_block_type}(#component, state);
+		`);
 
+		const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 
-// TODO move all this into the class
-
-function getBranches(
-	generator: DomGenerator,
-	block: Block,
-	parentNode: string,
-	parentNodes: string,
-	node: Node
-) {
-	block.contextualise(node.expression); // TODO remove
-
-	const branches = [
-		{
-			condition: node.metadata.snippet,
-			block: node.block.name,
-			hasUpdateMethod: node.block.hasUpdateMethod,
-			hasIntroMethod: node.block.hasIntroMethod,
-			hasOutroMethod: node.block.hasOutroMethod,
-		},
-	];
-
-	visitChildren(generator, block, node);
-
-	if (isElseIf(node.else)) {
-		branches.push(
-			...getBranches(generator, block, parentNode, parentNodes, node.else.children[0])
+		const initialMountNode = parentNode || '#target';
+		const anchorNode = parentNode ? 'null' : 'anchor';
+		block.builders.mount.addLine(
+			`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
 		);
-	} else {
-		branches.push({
-			condition: null,
-			block: node.else ? node.else.block.name : null,
-			hasUpdateMethod: node.else ? node.else.block.hasUpdateMethod : false,
-			hasIntroMethod: node.else ? node.else.block.hasIntroMethod : false,
-			hasOutroMethod: node.else ? node.else.block.hasOutroMethod : false,
-		});
 
-		if (node.else) {
-			visitChildren(generator, block, node.else);
+		const updateMountNode = this.getUpdateMountNode(anchor);
+
+		const changeBlock = deindent`
+			${hasElse
+				? deindent`
+					${name}.u();
+					${name}.d();
+				`
+				: deindent`
+					if (${name}) {
+						${name}.u();
+						${name}.d();
+					}`}
+			${name} = ${current_block_type_and}${current_block_type}(#component, state);
+			${if_name}${name}.c();
+			${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
+		`;
+
+		if (dynamic) {
+			block.builders.update.addBlock(deindent`
+				if (${current_block_type} === (${current_block_type} = ${select_block_type}(state)) && ${name}) {
+					${name}.p(changed, state);
+				} else {
+					${changeBlock}
+				}
+			`);
+		} else {
+			block.builders.update.addBlock(deindent`
+				if (${current_block_type} !== (${current_block_type} = ${select_block_type}(state))) {
+					${changeBlock}
+				}
+			`);
 		}
+
+		block.builders.unmount.addLine(`${if_name}${name}.u();`);
+
+		block.builders.destroy.addLine(`${if_name}${name}.d();`);
 	}
 
-	return branches;
-}
+	// if any of the siblings have outros, we need to keep references to the blocks
+	// (TODO does this only apply to bidi transitions?)
+	buildCompoundWithOutros(
+		block: Block,
+		parentNode: string,
+		parentNodes: string,
+		branches,
+		dynamic,
+		{ name, anchor, hasElse }
+	) {
+		const select_block_type = block.getUniqueName(`select_block_type`);
+		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
+		const previous_block_index = block.getUniqueName(`previous_block_index`);
+		const if_block_creators = block.getUniqueName(`if_block_creators`);
+		const if_blocks = block.getUniqueName(`if_blocks`);
 
-function visitChildren(
-	generator: DomGenerator,
-	block: Block,
-	node: Node
-) {
-	node.children.forEach((child: Node) => {
-		child.build(node.block, null, 'nodes');
-	});
-}
+		const if_current_block_type_index = hasElse
+			? ''
+			: `if (~${current_block_type_index}) `;
 
+		block.addVariable(current_block_type_index);
+		block.addVariable(name);
 
+		block.builders.init.addBlock(deindent`
+			var ${if_block_creators} = [
+				${branches.map(branch => branch.block).join(',\n')}
+			];
 
-function simple(
-	generator: DomGenerator,
-	block: Block,
-	parentNode: string,
-	parentNodes: string,
-	node: Node,
-	branch,
-	dynamic,
-	{ name, anchor, if_name }
-) {
-	block.builders.init.addBlock(deindent`
-		var ${name} = (${branch.condition}) && ${branch.block}(#component, state);
-	`);
+			var ${if_blocks} = [];
 
-	const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
-	const initialMountNode = parentNode || '#target';
-	const anchorNode = parentNode ? 'null' : 'anchor';
+			function ${select_block_type}(state) {
+				${branches
+					.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
+					.join('\n')}
+			}
+		`);
 
-	block.builders.mount.addLine(
-		`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
-	);
-
-	const updateMountNode = node.getUpdateMountNode(anchor);
-
-	const enter = dynamic
-		? branch.hasIntroMethod
-			? deindent`
-				if (${name}) {
-					${name}.p(changed, state);
-				} else {
-					${name} = ${branch.block}(#component, state);
-					if (${name}) ${name}.c();
+		if (hasElse) {
+			block.builders.init.addBlock(deindent`
+				${current_block_type_index} = ${select_block_type}(state);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
+			`);
+		} else {
+			block.builders.init.addBlock(deindent`
+				if (~(${current_block_type_index} = ${select_block_type}(state))) {
+					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
 				}
+			`);
+		}
 
-				${name}.i(${updateMountNode}, ${anchor});
+		const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
+		const initialMountNode = parentNode || '#target';
+		const anchorNode = parentNode ? 'null' : 'anchor';
+
+		block.builders.mount.addLine(
+			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+		);
+
+		const updateMountNode = this.getUpdateMountNode(anchor);
+
+		const destroyOldBlock = deindent`
+			${name}.o(function() {
+				${if_blocks}[ ${previous_block_index} ].u();
+				${if_blocks}[ ${previous_block_index} ].d();
+				${if_blocks}[ ${previous_block_index} ] = null;
+			});
+		`;
+
+		const createNewBlock = deindent`
+			${name} = ${if_blocks}[${current_block_type_index}];
+			if (!${name}) {
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
+				${name}.c();
+			}
+			${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
+		`;
+
+		const changeBlock = hasElse
+			? deindent`
+				${destroyOldBlock}
+
+				${createNewBlock}
 			`
 			: deindent`
 				if (${name}) {
-					${name}.p(changed, state);
+					${destroyOldBlock}
+				}
+
+				if (~${current_block_type_index}) {
+					${createNewBlock}
 				} else {
-					${name} = ${branch.block}(#component, state);
-					${name}.c();
-					${name}.m(${updateMountNode}, ${anchor});
-				}
-			`
-		: branch.hasIntroMethod
-			? deindent`
-				if (!${name}) {
-					${name} = ${branch.block}(#component, state);
-					${name}.c();
-				}
-				${name}.i(${updateMountNode}, ${anchor});
-			`
-			: deindent`
-				if (!${name}) {
-					${name} = ${branch.block}(#component, state);
-					${name}.c();
-					${name}.m(${updateMountNode}, ${anchor});
+					${name} = null;
 				}
 			`;
 
-	// no `p()` here — we don't want to update outroing nodes,
-	// as that will typically result in glitching
-	const exit = branch.hasOutroMethod
-		? deindent`
-			${name}.o(function() {
-				${name}.u();
-				${name}.d();
-				${name} = null;
-			});
-		`
-		: deindent`
-			${name}.u();
-			${name}.d();
-			${name} = null;
-		`;
-
-	block.builders.update.addBlock(deindent`
-		if (${branch.condition}) {
-			${enter}
-		} else if (${name}) {
-			${exit}
+		if (dynamic) {
+			block.builders.update.addBlock(deindent`
+				var ${previous_block_index} = ${current_block_type_index};
+				${current_block_type_index} = ${select_block_type}(state);
+				if (${current_block_type_index} === ${previous_block_index}) {
+					${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, state);
+				} else {
+					${changeBlock}
+				}
+			`);
+		} else {
+			block.builders.update.addBlock(deindent`
+				var ${previous_block_index} = ${current_block_type_index};
+				${current_block_type_index} = ${select_block_type}(state);
+				if (${current_block_type_index} !== ${previous_block_index}) {
+					${changeBlock}
+				}
+			`);
 		}
-	`);
 
-	block.builders.unmount.addLine(`${if_name}${name}.u();`);
+		block.builders.destroy.addLine(deindent`
+			${if_current_block_type_index}{
+				${if_blocks}[${current_block_type_index}].u();
+				${if_blocks}[${current_block_type_index}].d();
+			}
+		`);
+	}
 
-	block.builders.destroy.addLine(`${if_name}${name}.d();`);
-}
-
-function compound(
-	generator: DomGenerator,
-	block: Block,
-	parentNode: string,
+	buildSimple(
+		block: Block,
+		parentNode: string,
 		parentNodes: string,
-	node: Node,
-	branches,
-	dynamic,
-	{ name, anchor, hasElse, if_name }
-) {
-	const select_block_type = generator.getUniqueName(`select_block_type`);
-	const current_block_type = block.getUniqueName(`current_block_type`);
-	const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
+		branch,
+		dynamic,
+		{ name, anchor, if_name }
+	) {
+		block.builders.init.addBlock(deindent`
+			var ${name} = (${branch.condition}) && ${branch.block}(#component, state);
+		`);
 
-	generator.blocks.push(deindent`
-		function ${select_block_type}(state) {
-			${branches
-				.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
-				.join('\n')}
-		}
-	`);
+		const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
+		const initialMountNode = parentNode || '#target';
+		const anchorNode = parentNode ? 'null' : 'anchor';
 
-	block.builders.init.addBlock(deindent`
-		var ${current_block_type} = ${select_block_type}(state);
-		var ${name} = ${current_block_type_and}${current_block_type}(#component, state);
-	`);
+		block.builders.mount.addLine(
+			`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+		);
 
-	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
+		const updateMountNode = this.getUpdateMountNode(anchor);
 
-	const initialMountNode = parentNode || '#target';
-	const anchorNode = parentNode ? 'null' : 'anchor';
-	block.builders.mount.addLine(
-		`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
-	);
+		const enter = dynamic
+			? branch.hasIntroMethod
+				? deindent`
+					if (${name}) {
+						${name}.p(changed, state);
+					} else {
+						${name} = ${branch.block}(#component, state);
+						if (${name}) ${name}.c();
+					}
 
-	const updateMountNode = node.getUpdateMountNode(anchor);
+					${name}.i(${updateMountNode}, ${anchor});
+				`
+				: deindent`
+					if (${name}) {
+						${name}.p(changed, state);
+					} else {
+						${name} = ${branch.block}(#component, state);
+						${name}.c();
+						${name}.m(${updateMountNode}, ${anchor});
+					}
+				`
+			: branch.hasIntroMethod
+				? deindent`
+					if (!${name}) {
+						${name} = ${branch.block}(#component, state);
+						${name}.c();
+					}
+					${name}.i(${updateMountNode}, ${anchor});
+				`
+				: deindent`
+					if (!${name}) {
+						${name} = ${branch.block}(#component, state);
+						${name}.c();
+						${name}.m(${updateMountNode}, ${anchor});
+					}
+				`;
 
-	const changeBlock = deindent`
-		${hasElse
+		// no `p()` here — we don't want to update outroing nodes,
+		// as that will typically result in glitching
+		const exit = branch.hasOutroMethod
 			? deindent`
-				${name}.u();
-				${name}.d();
-			`
-			: deindent`
-				if (${name}) {
+				${name}.o(function() {
 					${name}.u();
 					${name}.d();
-				}`}
-		${name} = ${current_block_type_and}${current_block_type}(#component, state);
-		${if_name}${name}.c();
-		${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
-	`;
+					${name} = null;
+				});
+			`
+			: deindent`
+				${name}.u();
+				${name}.d();
+				${name} = null;
+			`;
 
-	if (dynamic) {
 		block.builders.update.addBlock(deindent`
-			if (${current_block_type} === (${current_block_type} = ${select_block_type}(state)) && ${name}) {
-				${name}.p(changed, state);
-			} else {
-				${changeBlock}
+			if (${branch.condition}) {
+				${enter}
+			} else if (${name}) {
+				${exit}
 			}
 		`);
-	} else {
-		block.builders.update.addBlock(deindent`
-			if (${current_block_type} !== (${current_block_type} = ${select_block_type}(state))) {
-				${changeBlock}
-			}
-		`);
+
+		block.builders.unmount.addLine(`${if_name}${name}.u();`);
+
+		block.builders.destroy.addLine(`${if_name}${name}.d();`);
 	}
 
-	block.builders.unmount.addLine(`${if_name}${name}.u();`);
+	getBranches(
+		block: Block,
+		parentNode: string,
+		parentNodes: string,
+		node: Node
+	) {
+		block.contextualise(node.expression); // TODO remove
 
-	block.builders.destroy.addLine(`${if_name}${name}.d();`);
-}
-
-// if any of the siblings have outros, we need to keep references to the blocks
-// (TODO does this only apply to bidi transitions?)
-function compoundWithOutros(
-	generator: DomGenerator,
-	block: Block,
-	parentNode: string,
-	parentNodes: string,
-	node: Node,
-	branches,
-	dynamic,
-	{ name, anchor, hasElse }
-) {
-	const select_block_type = block.getUniqueName(`select_block_type`);
-	const current_block_type_index = block.getUniqueName(`current_block_type_index`);
-	const previous_block_index = block.getUniqueName(`previous_block_index`);
-	const if_block_creators = block.getUniqueName(`if_block_creators`);
-	const if_blocks = block.getUniqueName(`if_blocks`);
-
-	const if_current_block_type_index = hasElse
-		? ''
-		: `if (~${current_block_type_index}) `;
-
-	block.addVariable(current_block_type_index);
-	block.addVariable(name);
-
-	block.builders.init.addBlock(deindent`
-		var ${if_block_creators} = [
-			${branches.map(branch => branch.block).join(',\n')}
+		const branches = [
+			{
+				condition: node.metadata.snippet,
+				block: node.block.name,
+				hasUpdateMethod: node.block.hasUpdateMethod,
+				hasIntroMethod: node.block.hasIntroMethod,
+				hasOutroMethod: node.block.hasOutroMethod,
+			},
 		];
 
-		var ${if_blocks} = [];
+		this.visitChildren(block, node);
 
-		function ${select_block_type}(state) {
-			${branches
-				.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
-				.join('\n')}
-		}
-	`);
+		if (isElseIf(node.else)) {
+			branches.push(
+				...this.getBranches(block, parentNode, parentNodes, node.else.children[0])
+			);
+		} else {
+			branches.push({
+				condition: null,
+				block: node.else ? node.else.block.name : null,
+				hasUpdateMethod: node.else ? node.else.block.hasUpdateMethod : false,
+				hasIntroMethod: node.else ? node.else.block.hasIntroMethod : false,
+				hasOutroMethod: node.else ? node.else.block.hasOutroMethod : false,
+			});
 
-	if (hasElse) {
-		block.builders.init.addBlock(deindent`
-			${current_block_type_index} = ${select_block_type}(state);
-			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
-		`);
-	} else {
-		block.builders.init.addBlock(deindent`
-			if (~(${current_block_type_index} = ${select_block_type}(state))) {
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
+			if (node.else) {
+				this.visitChildren(block, node.else);
 			}
-		`);
+		}
+
+		return branches;
 	}
 
-	const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
-	const initialMountNode = parentNode || '#target';
-	const anchorNode = parentNode ? 'null' : 'anchor';
-
-	block.builders.mount.addLine(
-		`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
-	);
-
-	const updateMountNode = node.getUpdateMountNode(anchor);
-
-	const destroyOldBlock = deindent`
-		${name}.o(function() {
-			${if_blocks}[ ${previous_block_index} ].u();
-			${if_blocks}[ ${previous_block_index} ].d();
-			${if_blocks}[ ${previous_block_index} ] = null;
+	visitChildren(block: Block, node: Node) {
+		node.children.forEach((child: Node) => {
+			child.build(node.block, null, 'nodes');
 		});
-	`;
-
-	const createNewBlock = deindent`
-		${name} = ${if_blocks}[${current_block_type_index}];
-		if (!${name}) {
-			${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
-			${name}.c();
-		}
-		${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
-	`;
-
-	const changeBlock = hasElse
-		? deindent`
-			${destroyOldBlock}
-
-			${createNewBlock}
-		`
-		: deindent`
-			if (${name}) {
-				${destroyOldBlock}
-			}
-
-			if (~${current_block_type_index}) {
-				${createNewBlock}
-			} else {
-				${name} = null;
-			}
-		`;
-
-	if (dynamic) {
-		block.builders.update.addBlock(deindent`
-			var ${previous_block_index} = ${current_block_type_index};
-			${current_block_type_index} = ${select_block_type}(state);
-			if (${current_block_type_index} === ${previous_block_index}) {
-				${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, state);
-			} else {
-				${changeBlock}
-			}
-		`);
-	} else {
-		block.builders.update.addBlock(deindent`
-			var ${previous_block_index} = ${current_block_type_index};
-			${current_block_type_index} = ${select_block_type}(state);
-			if (${current_block_type_index} !== ${previous_block_index}) {
-				${changeBlock}
-			}
-		`);
 	}
-
-	block.builders.destroy.addLine(deindent`
-		${if_current_block_type_index}{
-			${if_blocks}[${current_block_type_index}].u();
-			${if_blocks}[${current_block_type_index}].d();
-		}
-	`);
 }

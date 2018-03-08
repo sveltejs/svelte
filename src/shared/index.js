@@ -138,6 +138,10 @@ export function onDev(eventName, handler) {
 	return on.call(this, eventName, handler);
 }
 
+export function run(fn) {
+	fn();
+}
+
 export function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
@@ -185,7 +189,7 @@ export function callAll(fns) {
 }
 
 export function _mount(target, anchor) {
-	this._fragment.m(target, anchor);
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
 export function _unmount() {

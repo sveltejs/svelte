@@ -4,6 +4,11 @@ import { assign, createComment, createElement, detachNode, init, insertNode, noo
 function create_main_fragment(component, state) {
 	var if_block_anchor;
 
+	function select_block_type(state) {
+		if (state.foo) return create_if_block;
+		return create_if_block_1;
+	}
+
 	var current_block_type = select_block_type(state);
 	var if_block = current_block_type(component, state);
 
@@ -83,11 +88,6 @@ function create_if_block_1(component, state) {
 	};
 }
 
-function select_block_type(state) {
-	if (state.foo) return create_if_block;
-	return create_if_block_1;
-}
-
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
@@ -96,7 +96,7 @@ function SvelteComponent(options) {
 
 	if (options.target) {
 		this._fragment.c();
-		this._fragment.m(options.target, options.anchor || null);
+		this._mount(options.target, options.anchor);
 	}
 }
 
