@@ -7,11 +7,6 @@ import flattenReference from '../../utils/flattenReference';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
 
-const meta = new Map([
-	[':Window', validateWindow],
-	[':Head', validateHead]
-]);
-
 function isEmptyBlock(node: Node) {
 	if (!/Block$/.test(node.type) || !node.children) return false;
 	if (node.children.length > 1) return false;
@@ -26,11 +21,15 @@ export default function validateHtml(validator: Validator, html: Node) {
 	const elementStack: Node[] = [];
 
 	function visit(node: Node) {
-		if (node.type === 'Element') {
-			if (meta.has(node.name)) {
-				return meta.get(node.name)(validator, node, refs, refCallees);
-			}
+		if (node.type === 'Window') {
+			validateWindow(validator, node, refs, refCallees);
+		}
 
+		else if (node.type === 'Head') {
+			validateHead(validator, node, refs, refCallees);
+		}
+
+		else if (node.type === 'Element') {
 			const isComponent =
 				node.name === ':Self' ||
 				node.name === ':Component' ||
@@ -49,7 +48,9 @@ export default function validateHtml(validator: Validator, html: Node) {
 			if (!isComponent) {
 				a11y(validator, node, elementStack);
 			}
-		} else if (node.type === 'EachBlock') {
+		}
+
+		else if (node.type === 'EachBlock') {
 			if (validator.helpers.has(node.context)) {
 				let c = node.expression.end;
 
