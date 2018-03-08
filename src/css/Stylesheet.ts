@@ -274,7 +274,7 @@ export default class Stylesheet {
 	children: (Rule|Atrule)[];
 	keyframes: Map<string, string>;
 
-	constructor(source: string, parsed: Parsed, name: string, filename: string, cascade: boolean, dev: boolean) {
+	constructor(source: string, parsed: Parsed, filename: string, cascade: boolean, dev: boolean) {
 		this.source = source;
 		this.parsed = parsed;
 		this.cascade = cascade;
@@ -285,7 +285,7 @@ export default class Stylesheet {
 		this.keyframes = new Map();
 
 		if (parsed.css && parsed.css.children.length) {
-			this.id = `${name ? name.toLowerCase() : 'svelte'}-${hash(parsed.css.content.styles)}`;
+			this.id = `svelte-${hash(parsed.css.content.styles)}`;
 
 			this.hasStyles = true;
 
