@@ -9,7 +9,7 @@ import Block from '../dom/Block';
 export default class Slot extends Element {
 	type: 'Element';
 	name: string;
-	attributes: Attribute[]; // TODO have more specific Attribute type
+	attributes: Attribute[];
 	children: Node[];
 
 	init(
@@ -54,6 +54,9 @@ export default class Slot extends Element {
 		if (needsAnchorBefore) block.addVariable(anchorBefore);
 		if (needsAnchorAfter) block.addVariable(anchorAfter);
 
+		let mountBefore = block.builders.mount.toString();
+		let unmountBefore = block.builders.unmount.toString();
+
 		block.builders.create.pushCondition(`!${content_name}`);
 		block.builders.hydrate.pushCondition(`!${content_name}`);
 		block.builders.mount.pushCondition(`!${content_name}`);
@@ -72,10 +75,13 @@ export default class Slot extends Element {
 		block.builders.unmount.popCondition();
 		block.builders.destroy.popCondition();
 
-		// TODO can we use an else here?
+		const mountLeadin = block.builders.mount.toString() !== mountBefore
+			? `else`
+			: `if (${content_name})`;
+
 		if (parentNode) {
 			block.builders.mount.addBlock(deindent`
-				if (${content_name}) {
+				${mountLeadin} {
 					${needsAnchorBefore && `@appendNode(${anchorBefore} || (${anchorBefore} = @createComment()), ${parentNode});`}
 					@appendNode(${content_name}, ${parentNode});
 					${needsAnchorAfter && `@appendNode(${anchorAfter} || (${anchorAfter} = @createComment()), ${parentNode});`}
@@ -83,7 +89,7 @@ export default class Slot extends Element {
 			`);
 		} else {
 			block.builders.mount.addBlock(deindent`
-				if (${content_name}) {
+				${mountLeadin} {
 					${needsAnchorBefore && `@insertNode(${anchorBefore} || (${anchorBefore} = @createComment()), #target, anchor);`}
 					@insertNode(${content_name}, #target, anchor);
 					${needsAnchorAfter && `@insertNode(${anchorAfter} || (${anchorAfter} = @createComment()), #target, anchor);`}
@@ -95,28 +101,31 @@ export default class Slot extends Element {
 		// so that it can be reinserted later
 		// TODO so that this can work with public API, component._slotted should
 		// be all fragments, derived from options.slots. Not === options.slots
-		// TODO can we use an else here?
+		const unmountLeadin = block.builders.unmount.toString() !== unmountBefore
+			? `else`
+			: `if (${content_name})`;
+
 		if (anchorBefore === 'null' && anchorAfter === 'null') {
 			block.builders.unmount.addBlock(deindent`
-				if (${content_name}) {
+				${unmountLeadin} {
 					@reinsertChildren(${parentNode}, ${content_name});
 				}
 			`);
 		} else if (anchorBefore === 'null') {
 			block.builders.unmount.addBlock(deindent`
-				if (${content_name}) {
+				${unmountLeadin} {
 					@reinsertBefore(${anchorAfter}, ${content_name});
 				}
 			`);
 		} else if (anchorAfter === 'null') {
 			block.builders.unmount.addBlock(deindent`
-				if (${content_name}) {
+				${unmountLeadin} {
 					@reinsertAfter(${anchorBefore}, ${content_name});
 				}
 			`);
 		} else {
 			block.builders.unmount.addBlock(deindent`
-				if (${content_name}) {
+				${unmountLeadin} {
 					@reinsertBetween(${anchorBefore}, ${anchorAfter}, ${content_name});
 					@detachNode(${anchorBefore});
 					@detachNode(${anchorAfter});

@@ -112,9 +112,13 @@ export default class Block {
 		this.hasOutroMethod = false;
 		this.outros = 0;
 
-		this.aliases = new Map();
-		this.variables = new Map();
 		this.getUniqueName = this.generator.getUniqueNameMaker();
+		this.variables = new Map();
+
+		this.aliases = new Map()
+			.set('component', this.getUniqueName('component'))
+			.set('state', this.getUniqueName('state'));
+		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
 	}
@@ -163,7 +167,7 @@ export default class Block {
 	}
 
 	child(options: BlockOptions) {
-		return new Block(Object.assign({}, this, options, { parent: this }));
+		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
 	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
@@ -308,22 +312,19 @@ export default class Block {
 		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
-					o: function outro(${this.alias('outrocallback')}) {
+					o: function outro(#outrocallback) {
 						if (${outroing}) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
 
-						var ${this.alias('outros')} = ${this.outros};
+						var #outros = ${this.outros};
 
 						${this.builders.outro}
 					},
 				`);
 			} else {
-				// TODO should this be a helper?
 				properties.addBlock(deindent`
-					o: function outro(outrocallback) {
-						outrocallback();
-					},
+					o: @run,
 				`);
 			}
 		}

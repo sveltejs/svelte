@@ -1,10 +1,10 @@
 import MagicString, { Bundle } from 'magic-string';
+import isReference from 'is-reference';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
-import isReference from '../utils/isReference';
 import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
@@ -168,7 +168,7 @@ export default class Generator {
 		if (options.customElement === true) {
 			this.customElement = {
 				tag: this.tag,
-				props: this.props // TODO autofill this in
+				props: this.props
 			}
 		} else {
 			this.customElement = options.customElement;
@@ -752,12 +752,6 @@ export default class Generator {
 				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || generator.components.has(node.name))) {
 					node.type = 'Component';
 					Object.setPrototypeOf(node, nodes.Component.prototype);
-				} else if (node.name === ':Window') { // TODO do this in parse?
-					node.type = 'Window';
-					Object.setPrototypeOf(node, nodes.Window.prototype);
-				} else if (node.name === ':Head') { // TODO do this in parse?
-					node.type = 'Head';
-					Object.setPrototypeOf(node, nodes.Head.prototype);
 				} else if (node.type === 'Element' && node.name === 'title' && parentIsHead(parent)) { // TODO do this in parse?
 					node.type = 'Title';
 					Object.setPrototypeOf(node, nodes.Title.prototype);

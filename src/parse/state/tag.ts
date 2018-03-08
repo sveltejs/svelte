@@ -109,10 +109,14 @@ export default function tag(parser: Parser) {
 		}
 	}
 
+	const type = metaTags.has(name)
+		? name.slice(1)
+		: 'Element'; // TODO in v2, capitalised name means 'Component'
+
 	const element: Node = {
 		start,
 		end: null, // filled in later
-		type: 'Element',
+		type,
 		name,
 		attributes: [],
 		children: [],
