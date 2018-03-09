@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.57.1
+
+* Add each_value to contextProps ([#1206](https://github.com/sveltejs/svelte/issues/1206))
+
 ## 1.57.0
 
 * Use classes (not attributes) for style encapsulation, and base36-encode hashes ([#1118](https://github.com/sveltejs/svelte/issues/1118))
