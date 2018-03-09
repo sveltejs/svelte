@@ -75,6 +75,7 @@ export default class EachBlock extends Node {
 		}
 
 		this.contextProps = [
+			`${this.block.listName}: ${this.block.listName}`,
 			`${this.context}: ${this.block.listName}[#i]`,
 			`${this.block.indexName}: #i`
 		];

@@ -212,6 +212,7 @@ function create_main_fragment(component, state) {
 
 	for (var i = 0; i < comments.length; i += 1) {
 		each_blocks[i] = create_each_block(component, assign({}, state, {
+			comments: comments,
 			comment: comments[i],
 			i: i
 		}));
@@ -244,6 +245,7 @@ function create_main_fragment(component, state) {
 			if (changed.comments || changed.elapsed || changed.time) {
 				for (var i = 0; i < comments.length; i += 1) {
 					var each_context = assign({}, state, {
+						comments: comments,
 						comment: comments[i],
 						i: i
 					});
