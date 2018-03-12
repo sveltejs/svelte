@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.57.2
+
+* Fix scoped CSS on SVG elements ([#1224](https://github.com/sveltejs/svelte/issues/1224))
+
 ## 1.57.1
 
 * Add each_value to contextProps ([#1206](https://github.com/sveltejs/svelte/issues/1206))
