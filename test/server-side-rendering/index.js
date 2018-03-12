@@ -110,9 +110,11 @@ describe("ssr", () => {
 				delete require.cache[resolved];
 			});
 
-			require("../../ssr/register")({
+			const compileOptions = Object.assign(config.compileOptions || {}, {
 				store: !!config.store
 			});
+
+			require("../../ssr/register")(compileOptions);
 
 			try {
 				const component = require(`../runtime/samples/${dir}/main.html`);
