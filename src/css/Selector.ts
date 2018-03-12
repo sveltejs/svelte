@@ -1,16 +1,19 @@
 import MagicString from 'magic-string';
+import Stylesheet from './Stylesheet';
 import { gatherPossibleValues, UNKNOWN } from './gatherPossibleValues';
 import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
 export default class Selector {
 	node: Node;
+	stylesheet: Stylesheet;
 	blocks: Block[];
 	localBlocks: Block[];
 	used: boolean;
 
-	constructor(node: Node) {
+	constructor(node: Node, stylesheet: Stylesheet) {
 		this.node = node;
+		this.stylesheet = stylesheet;
 
 		this.blocks = groupSelectors(node);
 
@@ -31,7 +34,7 @@ export default class Selector {
 
 		if (toEncapsulate.length > 0) {
 			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
-				node.addCssClass();
+				this.stylesheet.nodesWithCssClass.add(node);
 				block.shouldEncapsulate = true;
 			});
 

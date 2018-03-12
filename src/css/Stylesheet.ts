@@ -14,10 +14,10 @@ class Rule {
 	node: Node;
 	parent: Atrule;
 
-	constructor(node: Node, parent?: Atrule) {
+	constructor(node: Node, stylesheet, parent?: Atrule) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.selector.children.map((node: Node) => new Selector(node));
+		this.selectors = node.selector.children.map((node: Node) => new Selector(node, stylesheet));
 		this.declarations = node.block.children.map((node: Node) => new Declaration(node));
 	}
 
@@ -274,6 +274,8 @@ export default class Stylesheet {
 	children: (Rule|Atrule)[];
 	keyframes: Map<string, string>;
 
+	nodesWithCssClass: Set<Node>;
+
 	constructor(source: string, parsed: Parsed, filename: string, cascade: boolean, dev: boolean) {
 		this.source = source;
 		this.parsed = parsed;
@@ -283,6 +285,8 @@ export default class Stylesheet {
 
 		this.children = [];
 		this.keyframes = new Map();
+
+		this.nodesWithCssClass = new Set();
 
 		if (parsed.css && parsed.css.children.length) {
 			this.id = `svelte-${hash(parsed.css.content.styles)}`;
@@ -322,7 +326,7 @@ export default class Stylesheet {
 					}
 
 					if (node.type === 'Rule') {
-						const rule = new Rule(node, currentAtrule);
+						const rule = new Rule(node, this, currentAtrule);
 						stack.push(rule);
 
 						if (currentAtrule) {
@@ -353,7 +357,7 @@ export default class Stylesheet {
 		}
 
 		if (this.cascade) {
-			if (stack.length === 0) node.addCssClass();
+			if (stack.length === 0) this.nodesWithCssClass.add(node);
 			return;
 		}
 
@@ -361,6 +365,12 @@ export default class Stylesheet {
 			const child = this.children[i];
 			child.apply(node, stack);
 		}
+	}
+
+	reify() {
+		this.nodesWithCssClass.forEach((node: Node) => {
+			node.addCssClass();
+		});
 	}
 
 	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {
