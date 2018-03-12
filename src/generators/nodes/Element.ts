@@ -438,8 +438,8 @@ export default class Element extends Node {
 			}
 
 			node.attributes.forEach((attr: Node) => {
-				const value = node._needsCssAttribute && attr.name === 'class'
-					? attr.value.concat({ type: 'Text', data: ` ${generator.stylesheet.id}` })
+				const value = (node._needsCssAttribute && attr.name === 'class')
+					? [{ type: 'Text', data: `${attr.value[0].data} ${generator.stylesheet.id}` }]
 					: attr.value;
 
 				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(value)}`
