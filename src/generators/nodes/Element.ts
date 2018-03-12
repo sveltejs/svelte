@@ -216,7 +216,7 @@ export default class Element extends Node {
 		if (this._needsCssAttribute && !this.generator.customElement) {
 			if (!this.attributes.find(a => a.type === 'Attribute' && a.name === 'class')) {
 				block.builders.hydrate.addLine(
-					this.namespace === namespaces.svg
+					this.namespace
 						? `@setAttribute(${name}, "class", "${this.generator.stylesheet.id}");`
 						: `${name}.className = "${this.generator.stylesheet.id}";`
 				);
