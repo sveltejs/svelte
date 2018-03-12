@@ -353,7 +353,7 @@ export default class Stylesheet {
 		}
 
 		if (this.cascade) {
-			if (stack.length === 0) node._needsCssAttribute = true;
+			if (stack.length === 0) node.addCssClass();
 			return;
 		}
 

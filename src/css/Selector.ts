@@ -31,7 +31,7 @@ export default class Selector {
 
 		if (toEncapsulate.length > 0) {
 			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
-				node._needsCssAttribute = true;
+				node.addCssClass();
 				block.shouldEncapsulate = true;
 			});
 

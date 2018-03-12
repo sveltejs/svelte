@@ -50,25 +50,12 @@ export default function visitElement(
 			block.contextualise(attribute.value[0].expression);
 			openingTag += '${' + attribute.value[0].metadata.snippet + ' ? " ' + attribute.name + '" : "" }';
 		} else {
-			const value = attribute.name === 'class' && node._needsCssAttribute
-				? attribute.value.concat({
-					type: 'Text',
-					data: ` ${generator.stylesheet.id}`
-				})
-				: attribute.value;
-
-			openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, value)}"`;
+			openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.value)}"`;
 		}
 	});
 
-	if (node._needsCssAttribute && !node.attributes.find(a => a.type === 'Attribute' && a.name === 'class')) {
-		openingTag += ` class="${generator.stylesheet.id}"`;
-	}
-
-	if (node._needsCssAttribute) {
-		if (node._cssRefAttribute) {
-			openingTag += ` svelte-ref-${node._cssRefAttribute}`;
-		}
+	if (node._cssRefAttribute) {
+		openingTag += ` svelte-ref-${node._cssRefAttribute}`;
 	}
 
 	openingTag += '>';
