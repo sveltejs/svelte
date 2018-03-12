@@ -141,7 +141,7 @@ export default class Attribute {
 				shouldCache = true;
 			}
 
-			if (node._needsCssAttribute && propertyName === 'className') {
+			if (node._needsCssAttribute && name === 'class') {
 				value = `(${value}) + " ${this.generator.stylesheet.id}"`;
 			}
 
@@ -228,7 +228,7 @@ export default class Attribute {
 			}
 		} else {
 			const isScopedClassAttribute = (
-				propertyName === 'className' &&
+				name === 'class' &&
 				this.parent._needsCssAttribute &&
 				!this.generator.customElement
 			);

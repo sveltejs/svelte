@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { compile } from '../index.ts';
 
-const compileOptions = {};
+let compileOptions = {};
 
 function capitalise(name) {
 	return name[0].toUpperCase() + name.slice(1);
@@ -17,7 +17,7 @@ export default function register(options) {
 	}
 
 	// TODO make this the default and remove in v2
-	if ('store' in options) compileOptions.store = options.store;
+	if (options) compileOptions = options;
 }
 
 function _deregister(extension) {
