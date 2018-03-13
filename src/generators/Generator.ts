@@ -179,7 +179,7 @@ export default class Generator {
 		}
 
 		this.walkTemplate();
-		this.stylesheet.reify();
+		if (!this.customElement) this.stylesheet.reify();
 	}
 
 	addSourcemapLocations(node: Node) {
