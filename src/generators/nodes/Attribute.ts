@@ -141,10 +141,6 @@ export default class Attribute {
 				shouldCache = true;
 			}
 
-			if (node._needsCssAttribute && name === 'class') {
-				value = `(${value}) + " ${this.generator.stylesheet.id}"`;
-			}
-
 			const isSelectValueAttribute =
 				name === 'value' && node.name === 'select';
 
@@ -227,21 +223,10 @@ export default class Attribute {
 				);
 			}
 		} else {
-			const isScopedClassAttribute = (
-				name === 'class' &&
-				this.parent._needsCssAttribute &&
-				!this.generator.customElement
-			);
-
-			const value = isScopedClassAttribute && this.value !== true
-				? this.value.length === 0
-					? `'${this.generator.stylesheet.id}'`
-					: stringify(this.value[0].data.concat(` ${this.generator.stylesheet.id}`))
-				: this.value === true
-					? 'true'
-					: this.value.length === 0
-						? `''`
-						: stringify(this.value[0].data);
+		const value =
+			this.value === true
+				? 'true'
+				: this.value.length === 0 ? `''` : stringify(this.value[0].data);
 
 			const statement = (
 				isLegacyInputType
