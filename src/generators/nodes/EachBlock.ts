@@ -374,7 +374,14 @@ export default class EachBlock extends Node {
 			var ${expected} = ${head};
 			var ${last} = null;
 
-			var discard_pile = [];
+			var rendered = {};
+			var all = {};
+
+			var each_all = ${head};
+		      while(each_all) {
+		        all[each_all.key] = each_all;
+		        each_all = each_all.next;
+		      }
 
 			for (#i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
@@ -392,18 +399,21 @@ export default class EachBlock extends Node {
 						${expected} = ${expected}.next;
 					} else {
 						if (${iteration}) {
-							// probably a deletion
-							while (${expected} && ${expected}.key !== ${key}) {
-								${expected}.discard = true;
-								discard_pile.push(${expected});
-								${expected} = ${expected}.next;
-							};
 
-							${expected} = ${expected} && ${expected}.next;
-							${iteration}.discard = false;
-							${iteration}.last = ${last};
+						  var next_data = ${each_block_value}[#i+1];
+			              var next = next_data && ${lookup}[next_data.id];
+			              var first = ${iteration}.first;
+			              var first_next = next && next.first;
+			              ///insertNode(first, tbody, first_next);
+			              ${updateMountNode}.insertBefore(first, first_next);
+			              ${expected} = next;
+			              ${iteration}.next = ${expected};
+			              var prev_data = ${each_block_value}[#i-1];
+			              var prev = prev_data && ${lookup}[prev_data.id];
+			              if (prev) {
+			              	prev.next = ${iteration};
+			              	}
 
-							if (!${expected}) ${iteration}.m(${updateMountNode}, ${anchor});
 						} else {
 							// key is being inserted
 							${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
@@ -417,7 +427,6 @@ export default class EachBlock extends Node {
 				} else {
 					// we're appending from this point forward
 					if (${iteration}) {
-						${iteration}.discard = false;
 						${iteration}.next = null;
 						${iteration}.m(${updateMountNode}, ${anchor});
 					} else {
@@ -426,6 +435,9 @@ export default class EachBlock extends Node {
 						${iteration}.${mountOrIntro}(${updateMountNode}, ${anchor});
 					}
 				}
+				if (${iteration}) {
+		          rendered[${iteration}.key] = ${iteration};
+		        }
 
 				if (${last}) ${last}.next = ${iteration};
 				${iteration}.last = ${last};
@@ -435,7 +447,11 @@ export default class EachBlock extends Node {
 
 			if (${last}) ${last}.next = null;
 
-			${destroy}
+			for (var key_all in all) {
+		        if (!rendered[key_all]) all[key_all].d();
+		      }
+
+
 
 			${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${this.key}];
 		`);
