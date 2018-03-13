@@ -209,7 +209,7 @@ export default class Component extends Node {
 					);
 
 					builder.addConditional(
-						`!${name_updating}.${binding.name} && changed.${binding.name}`,
+						`changed.${binding.name}`,
 						setFromChild
 					);
 

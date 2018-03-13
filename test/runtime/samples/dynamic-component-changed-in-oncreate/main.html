@@ -1,0 +1,20 @@
+<:Component {Child} bind:text=text />
+<p>Text: {{text}}</p>
+
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		data: () => ({
+			text: 'incorrect',
+			Child: null,
+		}),
+
+		oncreate() {
+			this.set({
+				Child: Nested
+			});
+		},
+	};
+</script>
