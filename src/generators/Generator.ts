@@ -179,6 +179,7 @@ export default class Generator {
 		}
 
 		this.walkTemplate();
+		if (!this.customElement) this.stylesheet.reify();
 	}
 
 	addSourcemapLocations(node: Node) {

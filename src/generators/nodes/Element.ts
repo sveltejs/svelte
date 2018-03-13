@@ -142,8 +142,6 @@ export default class Element extends Node {
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
 
-		this.generator.stylesheet.apply(this);
-
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
 			this.initChildren(block, stripWhitespace, nextSibling);
@@ -212,22 +210,11 @@ export default class Element extends Node {
 			block.builders.unmount.addLine(`@detachNode(${name});`);
 		}
 
-		// add CSS encapsulation attribute
-		if (this._needsCssAttribute && !this.generator.customElement) {
-			if (!this.attributes.find(a => a.type === 'Attribute' && a.name === 'class')) {
-				block.builders.hydrate.addLine(
-					this.namespace
-						? `@setAttribute(${name}, "class", "${this.generator.stylesheet.id}");`
-						: `${name}.className = "${this.generator.stylesheet.id}";`
-				);
-			}
-
-			// TODO move this into a class as well?
-			if (this._cssRefAttribute) {
-				block.builders.hydrate.addLine(
-					`@setAttribute(${name}, "svelte-ref-${this._cssRefAttribute}", "");`
-				)
-			}
+		// TODO move this into a class as well?
+		if (this._cssRefAttribute) {
+			block.builders.hydrate.addLine(
+				`@setAttribute(${name}, "svelte-ref-${this._cssRefAttribute}", "");`
+			)
 		}
 
 		// insert static children with textContent or innerHTML
@@ -438,16 +425,8 @@ export default class Element extends Node {
 			}
 
 			node.attributes.forEach((attr: Node) => {
-				const value = node._needsCssAttribute && attr.name === 'class'
-					? attr.value.concat({ type: 'Text', data: ` ${generator.stylesheet.id}` })
-					: attr.value;
-
-				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(value)}`
+				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.value)}`
 			});
-
-			if (node._needsCssAttribute && !node.attributes.find(a => a.name === 'class')) {
-				open += ` class="${generator.stylesheet.id}"`;
-			}
 
 			if (isVoidElementName(node.name)) return open + '>';
 
@@ -687,6 +666,28 @@ export default class Element extends Node {
 		}
 
 		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+	}
+
+	addCssClass() {
+		const classAttribute = this.attributes.find(a => a.name === 'class');
+		if (classAttribute && classAttribute.value !== true) {
+			if (classAttribute.value.length === 1 && classAttribute.value[0].type === 'Text') {
+				classAttribute.value[0].data += ` ${this.generator.stylesheet.id}`;
+			} else {
+				(<Node[]>classAttribute.value).push(
+					new Node({ type: 'Text', data: ` ${this.generator.stylesheet.id}` })
+				);
+			}
+		} else {
+			this.attributes.push(
+				new Attribute({
+					generator: this.generator,
+					name: 'class',
+					value: [new Node({ type: 'Text', data: `${this.generator.stylesheet.id}` })],
+					parent: this,
+				})
+			);
+		}
 	}
 }
 
