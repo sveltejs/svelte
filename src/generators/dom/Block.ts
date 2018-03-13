@@ -121,6 +121,10 @@ export default class Block {
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
+
+		if (this.generator.templateProperties.onunmount) {
+			this.builders.unmount.addLine(`%onunmount.call(#component${this.key ? `, ${this.getUniqueName('key')}` : ''})`);
+		}
 	}
 
 	addDependencies(dependencies: string[]) {

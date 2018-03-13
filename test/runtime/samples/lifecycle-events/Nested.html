@@ -1,0 +1,17 @@
+<div ref:div></div>
+
+<script>
+  export default {
+    oncreate() {
+      this.events = {create: this.refs.div.parentNode === null};
+    },
+
+    onunmount() {
+      this.events.unmount = this.refs.div.parentNode === null;
+    },
+
+    ondestroy() {
+      this.events.destroy = this.refs.div.parentNode === null;
+    }
+  }
+</script>

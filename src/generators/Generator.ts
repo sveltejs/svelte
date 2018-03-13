@@ -605,7 +605,9 @@ export default class Generator {
 				if (templateProperties.oncreate && dom) {
 					addDeclaration('oncreate', templateProperties.oncreate.value);
 				}
-
+				if (templateProperties.onunmount && dom) {
+					addDeclaration('onunmount', templateProperties.onunmount.value);
+				}
 				if (templateProperties.onteardown) templateProperties.ondestroy = templateProperties.onteardown; // remove after v2
 				if (templateProperties.ondestroy && dom) {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);

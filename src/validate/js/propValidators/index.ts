@@ -1,6 +1,7 @@
 import data from './data';
 import computed from './computed';
 import oncreate from './oncreate';
+import onunmount from './onunmount';
 import ondestroy from './ondestroy';
 import onrender from './onrender';
 import onteardown from './onteardown';
@@ -21,6 +22,7 @@ export default {
 	data,
 	computed,
 	oncreate,
+	onunmount,
 	ondestroy,
 	onrender,
 	onteardown,

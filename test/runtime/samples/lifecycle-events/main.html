@@ -1,9 +1,17 @@
-<div></div>
+<Nested ref:nested />
 
 <script>
+	import Nested from './Nested.html';
 	export default {
+		components: {
+			Nested,
+		},
 		oncreate() {
 			this.events = ['create'];
+		},
+
+		onunmount() {
+			this.events.push('unmount');
 		},
 
 		ondestroy() {
