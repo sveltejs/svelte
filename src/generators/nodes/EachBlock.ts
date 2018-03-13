@@ -75,14 +75,14 @@ export default class EachBlock extends Node {
 		}
 
 		this.contextProps = [
-			`${this.block.listName}: ${this.block.listName}`,
-			`${this.context}: ${this.block.listName}[#i]`,
+			`${this.block.listName}: ${this.block.listAlias}`,
+			`${this.context}: ${this.block.listAlias}[#i]`,
 			`${this.block.indexName}: #i`
 		];
 
 		if (this.destructuredContexts) {
 			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listName}[#i][${i}]`);
+				this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listAlias}[#i][${i}]`);
 			}
 		}
 
@@ -117,7 +117,7 @@ export default class EachBlock extends Node {
 		const each = this.var;
 
 		const create_each_block = this.block.name;
-		const each_block_value = this.block.listName;
+		const each_block_value = this.block.listAlias;
 		const iterations = this.iterations;
 
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
