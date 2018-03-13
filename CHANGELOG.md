@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.57.3
+
+* Fix scoped CSS on static child elements ([#1223](https://github.com/sveltejs/svelte/issues/1223))
+
 ## 1.57.2
 
 * Fix scoped CSS on SVG elements ([#1224](https://github.com/sveltejs/svelte/issues/1224))
