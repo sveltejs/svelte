@@ -142,8 +142,6 @@ export default class Element extends Node {
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
 
-		this.generator.stylesheet.apply(this);
-
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
 			this.initChildren(block, stripWhitespace, nextSibling);
@@ -671,8 +669,6 @@ export default class Element extends Node {
 	}
 
 	addCssClass() {
-		if (this._addedCssClass || this.generator.customElement) return;
-		this._addedCssClass = true;
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && classAttribute.value !== true) {
 			if (classAttribute.value.length === 1 && classAttribute.value[0].type === 'Text') {
