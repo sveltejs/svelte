@@ -35,22 +35,25 @@ export default function visitElement(
 	}
 
 	node.attributes.forEach((attribute: Node) => {
-		if (attribute.type !== 'Attribute') return;
-
-		if (attribute.name === 'value' && node.name === 'textarea') {
-			textareaContents = stringifyAttributeValue(block, attribute.value);
-		} else if (attribute.value === true) {
-			openingTag += ` ${attribute.name}`;
-		} else if (
-			booleanAttributes.has(attribute.name) &&
-			attribute.value.length === 1 &&
-			attribute.value[0].type !== 'Text'
-		) {
-			// a boolean attribute with one non-Text chunk
-			block.contextualise(attribute.value[0].expression);
-			openingTag += '${' + attribute.value[0].metadata.snippet + ' ? " ' + attribute.name + '" : "" }';
-		} else {
-			openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.value)}"`;
+		if (attribute.type === 'Attribute') {
+			if (attribute.name === 'value' && node.name === 'textarea') {
+				textareaContents = stringifyAttributeValue(block, attribute.value);
+			} else if (attribute.value === true) {
+				openingTag += ` ${attribute.name}`;
+			} else if (
+				booleanAttributes.has(attribute.name) &&
+				attribute.value.length === 1 &&
+				attribute.value[0].type !== 'Text'
+			) {
+				// a boolean attribute with one non-Text chunk
+				block.contextualise(attribute.value[0].expression);
+				openingTag += '${' + attribute.value[0].metadata.snippet + ' ? " ' + attribute.name + '" : "" }';
+			} else {
+				openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.value)}"`;
+			}
+		} else if (attribute.type === 'Binding') {
+			block.contextualise(attribute.value); // TODO gah this is hacky, contextualise everything upfront
+			openingTag += '${' + attribute.metadata.snippet + ' === false ? "" : " ' + attribute.name + '" + (' + attribute.metadata.snippet + ' === true ? "" : "=" + JSON.stringify(' + attribute.metadata.snippet + '))}';
 		}
 	});
 
