@@ -31,7 +31,8 @@ describe("validate", () => {
 						warnings.push({
 							message: warning.message,
 							pos: warning.pos,
-							loc: warning.loc
+							loc: warning.loc,
+							end: warning.end,
 						});
 					},
 					dev: config.dev

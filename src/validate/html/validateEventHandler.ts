@@ -30,7 +30,10 @@ export default function validateEventHandlerCallee(
 
 	if (name === 'store' && attribute.expression.callee.type === 'MemberExpression') {
 		if (!validator.options.store) {
-			validator.warn('compile with `store: true` in order to call store methods', attribute.expression.start);
+			validator.warn(
+				'compile with `store: true` in order to call store methods',
+				{ start: attribute.expression.start, end: attribute.expression.end }
+			);
 		}
 		return;
 	}
@@ -56,5 +59,5 @@ export default function validateEventHandlerCallee(
 		message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
 	}
 
-	validator.warn(message, start);
+	validator.warn(message, { start: attribute.expression.start, end: attribute.expression.end });
 }

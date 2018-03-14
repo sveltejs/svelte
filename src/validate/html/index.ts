@@ -52,7 +52,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 
 		else if (node.type === 'EachBlock') {
 			if (validator.helpers.has(node.context)) {
-				let c = node.expression.end;
+				let c: number = node.expression.end;
 
 				// find start of context
 				while (/\s/.test(validator.source[c])) c += 1;
@@ -61,13 +61,13 @@ export default function validateHtml(validator: Validator, html: Node) {
 
 				validator.warn(
 					`Context clashes with a helper. Rename one or the other to eliminate any ambiguity`,
-					c
+					{ start: c, end: c + node.context.length }
 				);
 			}
 		}
 
 		if (validator.options.dev && isEmptyBlock(node)) {
-			validator.warn('Empty block', node.start);
+			validator.warn('Empty block', { start: node.start, end: node.end });
 		}
 
 		if (node.children) {
