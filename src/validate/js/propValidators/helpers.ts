@@ -43,7 +43,7 @@ export default function helpers(validator: Validator, prop: Node) {
 		if (prop.value.params.length === 0 && !usesArguments) {
 			validator.warn(
 				`Helpers should be pure functions, with at least one argument`,
-				prop.start
+				{ start: prop.start, end: prop.end }
 			);
 		}
 	});
