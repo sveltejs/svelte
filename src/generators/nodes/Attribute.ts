@@ -518,7 +518,6 @@ const attributeLookup = {
 	type: {
 		appliesTo: [
 			'button',
-			'input',
 			'command',
 			'embed',
 			'object',
