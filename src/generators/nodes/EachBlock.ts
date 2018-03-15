@@ -45,11 +45,7 @@ export default class EachBlock extends Node {
 			indexes: new Map(block.indexes),
 			changeableIndexes: new Map(block.changeableIndexes),
 
-			listName: (
-				(this.expression.type === 'MemberExpression' && !this.expression.computed) ? this.expression.property.name :
-				this.expression.type === 'Identifier' ? this.expression.name :
-				`each_value`
-			),
+			listName: this.generator.getUniqueName('each_value'),
 			indexName: this.index || `${this.context}_index`,
 
 			indexNames: new Map(block.indexNames),
@@ -75,14 +71,14 @@ export default class EachBlock extends Node {
 		}
 
 		this.contextProps = [
-			`${this.block.listName}: ${this.block.listAlias}`,
-			`${this.context}: ${this.block.listAlias}[#i]`,
+			`${this.block.listName}: ${this.block.listName}`,
+			`${this.context}: ${this.block.listName}[#i]`,
 			`${this.block.indexName}: #i`
 		];
 
 		if (this.destructuredContexts) {
 			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listAlias}[#i][${i}]`);
+				this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listName}[#i][${i}]`);
 			}
 		}
 
@@ -117,7 +113,7 @@ export default class EachBlock extends Node {
 		const each = this.var;
 
 		const create_each_block = this.block.name;
-		const each_block_value = this.block.listAlias;
+		const each_block_value = this.block.listName;
 		const iterations = this.iterations;
 
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
