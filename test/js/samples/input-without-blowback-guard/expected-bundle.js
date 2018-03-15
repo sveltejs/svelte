@@ -33,6 +33,10 @@ function removeListener(node, event, handler) {
 	node.removeEventListener(event, handler, false);
 }
 
+function setAttribute(node, attribute, value) {
+	node.setAttribute(attribute, value);
+}
+
 function blankObject() {
 	return Object.create(null);
 }
@@ -206,7 +210,7 @@ function create_main_fragment(component, state) {
 
 		h: function hydrate() {
 			addListener(input, "change", input_change_handler);
-			input.type = "checkbox";
+			setAttribute(input, "type", "checkbox");
 		},
 
 		m: function mount(target, anchor) {
