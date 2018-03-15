@@ -1,0 +1,18 @@
+{{#if visible}}
+	<div transition:foo></div>
+{{/if}}
+
+<script>
+	export default {
+		transitions: {
+			foo() {
+				return {
+					duration: 100,
+					css: t => {
+						return `opacity: ${t}`;
+					}
+				};
+			}
+		}
+	};
+</script>
