@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.57.4
+
+* Deconflict context names ([#1229](https://github.com/sveltejs/svelte/issues/1229))
+* Use `setAttribute` to set input types ([#1209](https://github.com/sveltejs/svelte/issues/1209))
+* Scale transition duration correctly ([#1221](https://github.com/sveltejs/svelte/issues/1221))
+
 ## 1.57.3
 
 * Fix scoped CSS on static child elements ([#1223](https://github.com/sveltejs/svelte/issues/1223))
