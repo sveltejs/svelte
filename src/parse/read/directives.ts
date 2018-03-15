@@ -4,53 +4,52 @@ import { Parser } from '../index';
 
 const DIRECTIVES = {
 	Ref: {
-		names: [ 'ref' ],
+		names: ['ref'],
 		attribute(start, end, type, name) {
 			return { start, end, type, name };
-		}
+		},
+		allowedExpressionTypes: [],
+		error: 'ref directives cannot have a value'
 	},
 
 	EventHandler: {
-		names: [ 'on' ],
-		allowedExpressionTypes: [ 'CallExpression' ],
+		names: ['on'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['CallExpression'],
+		error: 'Expected a method call'
 	},
 
 	Binding: {
-		names: [ '', 'bind' ],
-		allowedExpressionTypes: [ 'Identifier', 'MemberExpression' ],
-		attribute(start, end, type, name, expression, directiveName) {
-			let value;
-
-			// :foo is shorthand for foo='{{foo}}'
-			if (!directiveName) {
-				const valueStart = start + 1;
-				const valueEnd = start + name.length;
-				type = 'Attribute';
-				value = getShorthandValue(start + 1, name);
-			} else {
-				value = expression || {
+		names: ['bind'],
+		attribute(start, end, type, name, expression) {
+			return {
+				start, end, type, name,
+				value: expression || {
 					type: 'Identifier',
 					start: start + 5,
 					end,
 					name,
-				};
-			}
-
-			return { start, end, type, name, value };
+				}
+			};
 		},
+		allowedExpressionTypes: ['Identifier', 'MemberExpression'],
+		error: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	},
 
 	Transition: {
-		names: [ 'in', 'out', 'transition' ],
-		allowedExpressionTypes: [ 'ObjectExpression' ],
+		names: ['in', 'out', 'transition'],
 		attribute(start, end, type, name, expression, directiveName) {
 			return {
 				start, end, type, name, expression,
 				intro: directiveName === 'in' || directiveName === 'transition',
 				outro: directiveName === 'out' || directiveName === 'transition',
-			}
+			};
 		},
-	},
+		allowedExpressionTypes: ['ObjectExpression'],
+		error: 'Transition argument must be an object literal, e.g. `{ duration: 400 }`'
+	}
 };
 
 
@@ -83,7 +82,7 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 			} else {
 				str += char;
 			}
-		} else if (/[\s\r\n\/>]/.test(char)) {
+		} else if (/[\s\/>]/.test(char)) {
 			break;
 		} else {
 			str += char;
@@ -106,12 +105,23 @@ export function readDirective(
 	start: number,
 	attrName: string
 ) {
-	const [ directiveName, name ] = attrName.split(':');
+	const [directiveName, name] = attrName.split(':');
 	if (name === undefined) return; // No colon in the name
-	
+
+	if (directiveName === '') {
+		// not a directive — :foo is short for foo={{foo}}
+		return {
+			start: start,
+			end: start + name.length + 1,
+			type: 'Attribute',
+			name,
+			value: getShorthandValue(start + 1, name)
+		};
+	}
+
 	const type = lookupByName[directiveName];
 	if (!type) return; // not a registered directive
-	
+
 	const directive = DIRECTIVES[type];
 	let expression = null;
 
@@ -133,21 +143,11 @@ export function readDirective(
 
 		expression = readExpression(parser, expressionStart, quoteMark);
 		if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
-			parser.error(`Expected ${directive.allowedExpressionTypes.join(' or ')}`, expressionStart);
+			parser.error(directive.error, expressionStart);
 		}
 	}
 
-	if (directive.attribute) {
-		return directive.attribute(start, parser.index, type, name, expression, directiveName);
-	} else {
-		return {
-			start,
-			end: parser.index,
-			type: type,
-			name,
-			expression,
-		};
-	}
+	return directive.attribute(start, parser.index, type, name, expression, directiveName);
 }
 
 
