@@ -2,6 +2,65 @@ import { parseExpressionAt } from 'acorn';
 import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 
+const DIRECTIVES = {
+	Ref: {
+		names: [ 'ref' ],
+		attribute(start, end, type, name) {
+			return { start, end, type, name };
+		}
+	},
+
+	EventHandler: {
+		names: [ 'on' ],
+		allowedExpressionTypes: [ 'CallExpression' ],
+	},
+
+	Binding: {
+		names: [ '', 'bind' ],
+		allowedExpressionTypes: [ 'Identifier', 'MemberExpression' ],
+		attribute(start, end, type, name, expression, directiveName) {
+			let value;
+
+			// :foo is shorthand for foo='{{foo}}'
+			if (!directiveName) {
+				const valueStart = start + 1;
+				const valueEnd = start + name.length;
+				type = 'Attribute';
+				value = getShorthandValue(start + 1, name);
+			} else {
+				value = expression || {
+					type: 'Identifier',
+					start: start + 5,
+					end,
+					name,
+				};
+			}
+
+			return { start, end, type, name, value };
+		},
+	},
+
+	Transition: {
+		names: [ 'in', 'out', 'transition' ],
+		allowedExpressionTypes: [ 'ObjectExpression' ],
+		attribute(start, end, type, name, expression, directiveName) {
+			return {
+				start, end, type, name, expression,
+				intro: directiveName === 'in' || directiveName === 'transition',
+				outro: directiveName === 'out' || directiveName === 'transition',
+			}
+		},
+	},
+};
+
+
+const lookupByName = {};
+
+Object.keys(DIRECTIVES).forEach(name => {
+	const directive = DIRECTIVES[name];
+	directive.names.forEach(type => lookupByName[type] = name);
+});
+
 function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 	let str = '';
 	let escaped = false;
@@ -24,7 +83,7 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 			} else {
 				str += char;
 			}
-		} else if (/\s/.test(char)) {
+		} else if (/[\s\r\n\/>]/.test(char)) {
 			break;
 		} else {
 			str += char;
@@ -42,104 +101,18 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 	return expression;
 }
 
-export function readEventHandlerDirective(
+export function readDirective(
 	parser: Parser,
 	start: number,
-	name: string,
-	hasValue: boolean
+	attrName: string
 ) {
-	let expression;
-
-	if (hasValue) {
-		const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
-
-		const expressionStart = parser.index;
-
-		expression = readExpression(parser, expressionStart, quoteMark);
-
-		if (expression.type !== 'CallExpression') {
-			parser.error(`Expected call expression`, expressionStart);
-		}
-	}
-
-	return {
-		start,
-		end: parser.index,
-		type: 'EventHandler',
-		name,
-		expression,
-	};
-}
-
-export function readBindingDirective(
-	parser: Parser,
-	start: number,
-	name: string
-) {
-	let value;
-
-	if (parser.eat('=')) {
-		const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
-
-		const a = parser.index;
-
-		if (parser.eat('{{')) {
-			let message = 'bound values should not be wrapped';
-			const b = parser.template.indexOf('}}', a);
-			if (b !== -1) {
-				const value = parser.template.slice(parser.index, b);
-				message += ` — use '${value}', not '{{${value}}}'`;
-			}
-
-			parser.error(message, a);
-		}
-
-		// this is a bit of a hack so that we can give Acorn something parseable
-		let b;
-		if (quoteMark) {
-			b = parser.index = parser.template.indexOf(quoteMark, parser.index);
-		} else {
-			parser.readUntil(/[\s\r\n\/>]/);
-			b = parser.index;
-		}
-
-		const source = repeat(' ', a) + parser.template.slice(a, b);
-		value = parseExpressionAt(source, a, { ecmaVersion: 9 });
-
-		if (value.type !== 'Identifier' && value.type !== 'MemberExpression') {
-			parser.error(`Cannot bind to rvalue`, value.start);
-		}
-
-		parser.allowWhitespace();
-
-		if (quoteMark) {
-			parser.eat(quoteMark, true);
-		}
-	} else {
-		// shorthand – bind:foo equivalent to bind:foo='foo'
-		value = {
-			type: 'Identifier',
-			start: start + 5,
-			end: parser.index,
-			name,
-		};
-	}
-
-	return {
-		start,
-		end: parser.index,
-		type: 'Binding',
-		name,
-		value,
-	};
-}
-
-export function readTransitionDirective(
-	parser: Parser,
-	start: number,
-	name: string,
-	type: string
-) {
+	const [ directiveName, name ] = attrName.split(':');
+	if (name === undefined) return; // No colon in the name
+	
+	const type = lookupByName[directiveName];
+	if (!type) return; // not a registered directive
+	
+	const directive = DIRECTIVES[type];
 	let expression = null;
 
 	if (parser.eat('=')) {
@@ -147,20 +120,51 @@ export function readTransitionDirective(
 
 		const expressionStart = parser.index;
 
-		expression = readExpression(parser, expressionStart, quoteMark);
+		if (parser.eat('{{')) {
+			let message = 'directive values should not be wrapped';
+			const expressionEnd = parser.template.indexOf('}}', expressionStart);
+			if (expressionEnd !== -1) {
+				const value = parser.template.slice(parser.index, expressionEnd);
+				message += ` — use '${value}', not '{{${value}}}'`;
+			}
 
-		if (expression.type !== 'ObjectExpression') {
-			parser.error(`Expected object expression`, expressionStart);
+			parser.error(message, expressionStart);
+		}
+
+		expression = readExpression(parser, expressionStart, quoteMark);
+		if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
+			parser.error(`Expected ${directive.allowedExpressionTypes.join(' or ')}`, expressionStart);
 		}
 	}
 
-	return {
-		start,
-		end: parser.index,
-		type: 'Transition',
-		name,
-		intro: type === 'in' || type === 'transition',
-		outro: type === 'out' || type === 'transition',
-		expression,
-	};
+	if (directive.attribute) {
+		return directive.attribute(start, parser.index, type, name, expression, directiveName);
+	} else {
+		return {
+			start,
+			end: parser.index,
+			type: type,
+			name,
+			expression,
+		};
+	}
+}
+
+
+function getShorthandValue(start: number, name: string) {
+	const end = start + name.length;
+
+	return [
+		{
+			type: 'AttributeShorthand',
+			start,
+			end,
+			expression: {
+				type: 'Identifier',
+				start,
+				end,
+				name,
+			},
+		},
+	];
 }

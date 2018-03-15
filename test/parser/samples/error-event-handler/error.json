@@ -1,5 +1,5 @@
 {
-	"message": "Expected call expression",
+	"message": "Expected CallExpression",
 	"loc": {
 		"line": 1,
 		"column": 15

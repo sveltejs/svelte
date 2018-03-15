@@ -1,5 +1,5 @@
 {
-	"message": "Cannot bind to rvalue",
+	"message": "Expected Identifier or MemberExpression",
 	"pos": 19,
 	"loc": {
 		"line": 1,
