@@ -44,7 +44,6 @@ export default class Block {
 	listNames: Map<string, string>;
 	indexName: string;
 	listName: string;
-	listAlias: string;
 
 	builders: {
 		init: CodeBuilder;
@@ -120,8 +119,6 @@ export default class Block {
 			.set('component', this.getUniqueName('component'))
 			.set('state', this.getUniqueName('state'));
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
-
-		this.listAlias = this.getUniqueName(this.listName);
 
 		this.hasUpdateMethod = false; // determined later
 	}
