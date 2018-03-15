@@ -1,11 +1,7 @@
 import readExpression from '../read/expression';
 import readScript from '../read/script';
 import readStyle from '../read/style';
-import {
-	readEventHandlerDirective,
-	readBindingDirective,
-	readTransitionDirective,
-} from '../read/directives';
+import { readDirective } from '../read/directives';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
@@ -303,42 +299,10 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	parser.allowWhitespace();
 
-	if (/^on:/.test(name)) {
-		return readEventHandlerDirective(parser, start, name.slice(3), parser.eat('='));
-	}
+	const attribute = readDirective(parser, start, name);
+	if (attribute) return attribute;
 
-	if (/^bind:/.test(name)) {
-		return readBindingDirective(parser, start, name.slice(5));
-	}
-
-	if (/^ref:/.test(name)) {
-		return {
-			start,
-			end: parser.index,
-			type: 'Ref',
-			name: name.slice(4),
-		};
-	}
-
-	const match = /^(in|out|transition):/.exec(name);
-	if (match) {
-		return readTransitionDirective(
-			parser,
-			start,
-			name.slice(match[0].length),
-			match[1]
-		);
-	}
-
-	let value;
-
-	// :foo is shorthand for foo='{{foo}}'
-	if (/^:\w+$/.test(name)) {
-		name = name.slice(1);
-		value = getShorthandValue(start + 1, name);
-	} else {
-		value = parser.eat('=') ? readAttributeValue(parser) : true;
-	}
+	let value = parser.eat('=') ? readAttributeValue(parser) : true;
 
 	return {
 		start,
@@ -362,24 +326,6 @@ function readAttributeValue(parser: Parser) {
 
 	if (quoteMark) parser.index += 1;
 	return value;
-}
-
-function getShorthandValue(start: number, name: string) {
-	const end = start + name.length;
-
-	return [
-		{
-			type: 'AttributeShorthand',
-			start,
-			end,
-			expression: {
-				type: 'Identifier',
-				start,
-				end,
-				name,
-			},
-		},
-	];
 }
 
 function readSequence(parser: Parser, done: () => boolean) {
