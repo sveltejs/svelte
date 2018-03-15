@@ -4,53 +4,47 @@ import { Parser } from '../index';
 
 const DIRECTIVES = {
 	Ref: {
-		names: [ 'ref' ],
+		names: ['ref'],
 		attribute(start, end, type, name) {
 			return { start, end, type, name };
 		}
 	},
 
 	EventHandler: {
-		names: [ 'on' ],
-		allowedExpressionTypes: [ 'CallExpression' ],
+		names: ['on'],
+		allowedExpressionTypes: ['CallExpression'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		}
 	},
 
 	Binding: {
-		names: [ '', 'bind' ],
-		allowedExpressionTypes: [ 'Identifier', 'MemberExpression' ],
-		attribute(start, end, type, name, expression, directiveName) {
-			let value;
-
-			// :foo is shorthand for foo='{{foo}}'
-			if (!directiveName) {
-				const valueStart = start + 1;
-				const valueEnd = start + name.length;
-				type = 'Attribute';
-				value = getShorthandValue(start + 1, name);
-			} else {
-				value = expression || {
+		names: ['bind'],
+		allowedExpressionTypes: ['Identifier', 'MemberExpression'],
+		attribute(start, end, type, name, expression) {
+			return {
+				start, end, type, name,
+				value: expression || {
 					type: 'Identifier',
 					start: start + 5,
 					end,
 					name,
-				};
-			}
-
-			return { start, end, type, name, value };
-		},
+				}
+			};
+		}
 	},
 
 	Transition: {
-		names: [ 'in', 'out', 'transition' ],
-		allowedExpressionTypes: [ 'ObjectExpression' ],
+		names: ['in', 'out', 'transition'],
+		allowedExpressionTypes: ['ObjectExpression'],
 		attribute(start, end, type, name, expression, directiveName) {
 			return {
 				start, end, type, name, expression,
 				intro: directiveName === 'in' || directiveName === 'transition',
 				outro: directiveName === 'out' || directiveName === 'transition',
-			}
-		},
-	},
+			};
+		}
+	}
 };
 
 
@@ -83,7 +77,7 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 			} else {
 				str += char;
 			}
-		} else if (/[\s\r\n\/>]/.test(char)) {
+		} else if (/[\s\/>]/.test(char)) {
 			break;
 		} else {
 			str += char;
@@ -106,12 +100,23 @@ export function readDirective(
 	start: number,
 	attrName: string
 ) {
-	const [ directiveName, name ] = attrName.split(':');
+	const [directiveName, name] = attrName.split(':');
 	if (name === undefined) return; // No colon in the name
-	
+
+	if (directiveName === '') {
+		// not a directive — :foo is short for foo={{foo}}
+		return {
+			start: start,
+			end: start + name.length + 1,
+			type: 'Attribute',
+			name,
+			value: getShorthandValue(start + 1, name)
+		};
+	}
+
 	const type = lookupByName[directiveName];
 	if (!type) return; // not a registered directive
-	
+
 	const directive = DIRECTIVES[type];
 	let expression = null;
 
@@ -137,17 +142,7 @@ export function readDirective(
 		}
 	}
 
-	if (directive.attribute) {
-		return directive.attribute(start, parser.index, type, name, expression, directiveName);
-	} else {
-		return {
-			start,
-			end: parser.index,
-			type: type,
-			name,
-			expression,
-		};
-	}
+	return directive.attribute(start, parser.index, type, name, expression, directiveName);
 }
 
 
