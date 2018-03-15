@@ -1,5 +1,6 @@
 import { parseExpressionAt } from 'acorn';
 import repeat from '../../utils/repeat';
+import list from '../../utils/list';
 import { Parser } from '../index';
 
 const DIRECTIVES = {
@@ -137,8 +138,12 @@ export function readDirective(
 		}
 
 		expression = readExpression(parser, expressionStart, quoteMark);
-		if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
-			parser.error(`Expected ${directive.allowedExpressionTypes.join(' or ')}`, expressionStart);
+		if (directive.allowedExpressionTypes) {
+			if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
+				parser.error(`Expected ${list(directive.allowedExpressionTypes)}`, expressionStart);
+			}
+		} else {
+			parser.error(`${directiveName} directives cannot have a value`, expressionStart);
 		}
 	}
 
