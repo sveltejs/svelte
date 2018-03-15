@@ -106,7 +106,7 @@ export function wrapTransition(component, node, fn, params, intro, outgroup) {
 						// when introing, discard old animations if there are any
 						return anim && (program.delta < 0 || !/__svelte/.test(anim));
 					})
-					.concat(program.name + ' ' + duration + 'ms linear 1 forwards')
+					.concat(program.name + ' ' + program.duration + 'ms linear 1 forwards')
 					.join(', ');
 			}
 
