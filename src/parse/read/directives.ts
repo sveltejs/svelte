@@ -1,6 +1,5 @@
 import { parseExpressionAt } from 'acorn';
 import repeat from '../../utils/repeat';
-import list from '../../utils/list';
 import { Parser } from '../index';
 
 const DIRECTIVES = {
@@ -8,20 +7,22 @@ const DIRECTIVES = {
 		names: ['ref'],
 		attribute(start, end, type, name) {
 			return { start, end, type, name };
-		}
+		},
+		allowedExpressionTypes: [],
+		error: 'ref directives cannot have a value'
 	},
 
 	EventHandler: {
 		names: ['on'],
-		allowedExpressionTypes: ['CallExpression'],
 		attribute(start, end, type, name, expression) {
 			return { start, end, type, name, expression };
-		}
+		},
+		allowedExpressionTypes: ['CallExpression'],
+		error: 'Expected a method call'
 	},
 
 	Binding: {
 		names: ['bind'],
-		allowedExpressionTypes: ['Identifier', 'MemberExpression'],
 		attribute(start, end, type, name, expression) {
 			return {
 				start, end, type, name,
@@ -32,19 +33,22 @@ const DIRECTIVES = {
 					name,
 				}
 			};
-		}
+		},
+		allowedExpressionTypes: ['Identifier', 'MemberExpression'],
+		error: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	},
 
 	Transition: {
 		names: ['in', 'out', 'transition'],
-		allowedExpressionTypes: ['ObjectExpression'],
 		attribute(start, end, type, name, expression, directiveName) {
 			return {
 				start, end, type, name, expression,
 				intro: directiveName === 'in' || directiveName === 'transition',
 				outro: directiveName === 'out' || directiveName === 'transition',
 			};
-		}
+		},
+		allowedExpressionTypes: ['ObjectExpression'],
+		error: 'Transition argument must be an object literal, e.g. `{ duration: 400 }`'
 	}
 };
 
@@ -138,12 +142,8 @@ export function readDirective(
 		}
 
 		expression = readExpression(parser, expressionStart, quoteMark);
-		if (directive.allowedExpressionTypes) {
-			if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
-				parser.error(`Expected ${list(directive.allowedExpressionTypes)}`, expressionStart);
-			}
-		} else {
-			parser.error(`${directiveName} directives cannot have a value`, expressionStart);
+		if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
+			parser.error(directive.error, expressionStart);
 		}
 	}
 
