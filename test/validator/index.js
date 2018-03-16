@@ -56,6 +56,7 @@ describe("validate", () => {
 
 				assert.equal(error.message, expected.message);
 				assert.deepEqual(error.loc, expected.loc);
+				assert.deepEqual(error.end, expected.end);
 				assert.equal(error.pos, expected.pos);
 			}
 		});

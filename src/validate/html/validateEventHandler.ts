@@ -13,10 +13,10 @@ export default function validateEventHandlerCallee(
 ) {
 	if (!attribute.expression) return;
 
-	const { callee, start, type } = attribute.expression;
+	const { callee, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {
-		validator.error(`Expected a call expression`, start);
+		validator.error(`Expected a call expression`, { start: attribute.expression.start, end: attribute.expression.end });
 	}
 
 	const { name } = flattenReference(callee);

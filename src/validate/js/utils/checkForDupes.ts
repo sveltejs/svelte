@@ -12,7 +12,7 @@ export default function checkForDupes(
 		const name = getName(prop.key);
 
 		if (seen.has(name)) {
-			validator.error(`Duplicate property '${name}'`, prop.start);
+			validator.error(`Duplicate property '${name}'`, { start: prop.start, end: prop.end });
 		}
 
 		seen.add(name);

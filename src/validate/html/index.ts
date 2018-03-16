@@ -103,7 +103,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 			let message = `'refs.${ref}' does not exist`;
 			if (match) message += ` (did you mean 'refs.${match}'?)`;
 
-			validator.error(message, callee.start);
+			validator.error(message, { start: callee.start, end: callee.end });
 		}
 	});
 }

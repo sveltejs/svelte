@@ -8,7 +8,7 @@ export default function components(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'components' property must be an object literal`,
-			prop.start
+			{ start: prop.start, end: prop.end }
 		);
 	}
 
@@ -21,7 +21,7 @@ export default function components(validator: Validator, prop: Node) {
 		if (name === 'state') {
 			validator.error(
 				`Component constructors cannot be called 'state' due to technical limitations`,
-				component.start
+				{ start: component.start, end: component.end }
 			);
 		}
 
