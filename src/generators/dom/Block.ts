@@ -195,23 +195,17 @@ export default class Block {
 
 		// TODO `this.contexts` is possibly redundant post-#1122
 		const initializers = [];
-		const updaters = [];
-		this.contexts.forEach((alias, name) => {
+
+		this.contexts.forEach((name, context) => {
 			// TODO only the ones that are actually used in this block...
-			const assignment = `${alias} = state.${name}`;
+			const listName = this.listNames.get(context);
+			const indexName = this.indexNames.get(context);
 
-			initializers.push(assignment);
-			updaters.push(`${assignment};`);
-
-			this.hasUpdateMethod = true;
-		});
-
-		this.indexNames.forEach((alias, name) => {
-			// TODO only the ones that are actually used in this block...
-			const assignment = `${alias} = state.${alias}`; // TODO this is wrong!!!
-
-			initializers.push(assignment);
-			updaters.push(`${assignment};`);
+			initializers.push(
+				`${name} = state.${context}`,
+				`${listName} = state.${listName}`,
+				`${indexName} = state.${indexName}`
+			);
 
 			this.hasUpdateMethod = true;
 		});
@@ -275,12 +269,12 @@ export default class Block {
 		}
 
 		if (this.hasUpdateMethod) {
-			if (this.builders.update.isEmpty() && updaters.length === 0) {
+			if (this.builders.update.isEmpty() && initializers.length === 0) {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					p: function update(changed, state) {
-						${updaters}
+						${initializers.map(str => `${str};`)}
 						${this.builders.update}
 					},
 				`);
