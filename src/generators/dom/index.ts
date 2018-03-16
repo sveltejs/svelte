@@ -208,6 +208,9 @@ export default function dom(
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(prop => {
+				if (globalWhitelist.has(prop)) return;
+				if (computations.find(c => c.key === prop)) return;
+
 				const message = generator.components.has(prop) ?
 					`${debugName} expected to find '${prop}' in \`data\`, but found it in \`components\` instead` :
 					`${debugName} was created without expected data property '${prop}'`;
