@@ -1,4 +1,4 @@
-<div {{...props}}>{{color}}</div>
+<div {{...props}} data-named="value">{{color}}</div>
 
 <script>
 	export default {
@@ -6,6 +6,7 @@
 			color: 'red',
 			props: {
 				'data-foo': 'bar',
+				'data-named': 'qux'
 			}
 		})
 	};

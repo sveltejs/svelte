@@ -62,9 +62,16 @@ export default class Spread {
 
 		const changes = block.getUniqueName(`${node.var}_spread_changes`);
 
+		const namedAttributes = block.getUniqueName(`${node.var}_attributes`);
+		block.builders.init.addBlock(deindent`
+			var ${namedAttributes} = [${node.attributes.map(attr => `'${attr.name}'`).join(', ')}];
+		`)
+
 		block.builders.hydrate.addBlock(deindent`
 			var ${changes} = ${init};
 			for (var key in ${changes}) {
+				if (${namedAttributes}.indexOf(key) !== -1) continue;
+
 				@setAttribute(${node.var}, key, ${changes}[key]);
 				${activeKeys}[key] = true;
 			}
@@ -90,9 +97,12 @@ export default class Spread {
 
 				var ${changes} = ${shouldCache ? last : value};
 				for (var key in ${changes}) {
+					if (${namedAttributes}.indexOf(key) !== -1) continue;
+
+					@setAttribute(${node.var}, key, ${changes}[key]);
+
 					${activeKeys}[key] = true;
 					delete ${oldKeys}[key];
-					@setAttribute(${node.var}, key, ${changes}[key]);
 				}
 
 				for (var key in ${oldKeys}) {
@@ -135,6 +145,11 @@ export default class Spread {
 
 		const changes = block.getUniqueName(`${node.var}_spread_changes`);
 
+		const namedAttributes = block.getUniqueName(`${node.var}_attributes`);
+		block.builders.init.addBlock(deindent`
+			var ${namedAttributes} = [${node.attributes.map(attr => `'${attr.name}'`).join(', ')}];
+		`)
+
 		if (dependencies.length || hasChangeableIndex) {
 			const changedCheck = (
 				( block.hasOutroMethod ? `#outroing || ` : '' ) +
@@ -156,9 +171,12 @@ export default class Spread {
 
 					var ${changes} = ${shouldCache ? last : value};
 					for (var key in ${changes}) {
+						if (${namedAttributes}.indexOf(key) !== -1) continue;
+
+						${node.var}_changes[key] = ${changes}[key];
+
 						${activeKeys}[key] = true;
 						delete ${oldKeys}[key];
-						${node.var}_changes[key] = ${changes}[key];
 					}
 
 					for (var key in ${oldKeys}) {
