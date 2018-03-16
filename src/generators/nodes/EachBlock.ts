@@ -45,16 +45,16 @@ export default class EachBlock extends Node {
 			indexes: new Map(block.indexes),
 			changeableIndexes: new Map(block.changeableIndexes),
 
-			listName: this.generator.getUniqueName('each_value'),
-			indexName: this.index || `${this.context}_index`,
-
 			indexNames: new Map(block.indexNames),
 			listNames: new Map(block.listNames)
 		});
 
+		const listName = this.generator.getUniqueName('each_value');
+		const indexName = this.index || this.generator.getUniqueName(`${this.context}_index`);
+
 		this.block.contextTypes.set(this.context, 'each');
-		this.block.indexNames.set(this.context, this.block.indexName);
-		this.block.listNames.set(this.context, this.block.listName);
+		this.block.indexNames.set(this.context, indexName);
+		this.block.listNames.set(this.context, listName);
 		if (this.index) {
 			this.block.indexes.set(this.index, this.context);
 			this.block.changeableIndexes.set(this.index, this.key)
@@ -71,14 +71,14 @@ export default class EachBlock extends Node {
 		}
 
 		this.contextProps = [
-			`${this.block.listName}: ${this.block.listName}`,
-			`${this.context}: ${this.block.listName}[#i]`,
-			`${this.block.indexName}: #i`
+			`${listName}: ${listName}`,
+			`${this.context}: ${listName}[#i]`,
+			`${indexName}: #i`
 		];
 
 		if (this.destructuredContexts) {
 			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				this.contextProps.push(`${this.destructuredContexts[i]}: ${this.block.listName}[#i][${i}]`);
+				this.contextProps.push(`${this.destructuredContexts[i]}: ${listName}[#i][${i}]`);
 			}
 		}
 
@@ -113,7 +113,7 @@ export default class EachBlock extends Node {
 		const each = this.var;
 
 		const create_each_block = this.block.name;
-		const each_block_value = this.block.listName;
+		const each_block_value = this.block.listNames.get(this.context);
 		const iterations = this.iterations;
 
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();

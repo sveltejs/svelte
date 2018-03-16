@@ -19,8 +19,6 @@ export interface BlockOptions {
 	changeableIndexes?: Map<string, boolean>;
 	indexNames?: Map<string, string>;
 	listNames?: Map<string, string>;
-	indexName?: string;
-	listName?: string;
 	dependencies?: Set<string>;
 }
 
@@ -42,8 +40,6 @@ export default class Block {
 	dependencies: Set<string>;
 	indexNames: Map<string, string>;
 	listNames: Map<string, string>;
-	indexName: string;
-	listName: string;
 
 	builders: {
 		init: CodeBuilder;
@@ -90,9 +86,6 @@ export default class Block {
 
 		this.indexNames = options.indexNames;
 		this.listNames = options.listNames;
-
-		this.indexName = options.indexName;
-		this.listName = options.listName;
 
 		this.builders = {
 			init: new CodeBuilder(),
