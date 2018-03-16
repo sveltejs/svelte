@@ -33,6 +33,7 @@ export class Validator {
 	methods: Map<string, Node>;
 	helpers: Map<string, Node>;
 	transitions: Map<string, Node>;
+	actions: Map<string, Node>;
 	slots: Set<string>;
 
 	used: {
@@ -40,6 +41,7 @@ export class Validator {
 		helpers: Set<string>;
 		events: Set<string>;
 		transitions: Set<string>;
+		actions: Set<string>;
 	};
 
 	constructor(parsed: Parsed, source: string, options: CompileOptions) {
@@ -56,13 +58,15 @@ export class Validator {
 		this.methods = new Map();
 		this.helpers = new Map();
 		this.transitions = new Map();
+		this.actions = new Map();
 		this.slots = new Set();
 
 		this.used = {
 			components: new Set(),
 			helpers: new Set(),
 			events: new Set(),
-			transitions: new Set()
+			transitions: new Set(),
+			actions: new Set(),
 		};
 	}
 
@@ -139,7 +143,8 @@ export default function validate(
 				// TODO helpers require a bit more work — need to analyse all expressions
 				// helpers: 'helper',
 				events: 'event definition',
-				transitions: 'transition'
+				transitions: 'transition',
+				actions: 'actions',
 			};
 
 			Object.keys(categories).forEach(category => {

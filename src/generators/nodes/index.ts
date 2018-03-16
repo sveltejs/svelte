@@ -1,6 +1,7 @@
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import AwaitBlock from './AwaitBlock';
+import Action from './Action';
 import Binding from './Binding';
 import CatchBlock from './CatchBlock';
 import Comment from './Comment';
@@ -26,6 +27,7 @@ import Window from './Window';
 const nodes: Record<string, any> = {
 	Attribute,
 	AwaitBlock,
+	Action,
 	Binding,
 	CatchBlock,
 	Comment,
