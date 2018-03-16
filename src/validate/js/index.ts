@@ -13,14 +13,14 @@ export default function validateJs(validator: Validator, js: Node) {
 	js.content.body.forEach((node: Node) => {
 		// check there are no named exports
 		if (node.type === 'ExportNamedDeclaration') {
-			validator.error(`A component can only have a default export`, node.start);
+			validator.error(`A component can only have a default export`, { start: node.start, end: node.start });
 		}
 
 		if (node.type === 'ExportDefaultDeclaration') {
 			if (node.declaration.type !== 'ObjectExpression') {
 				return validator.error(
 					`Default export must be an object literal`,
-					node.declaration.start
+					{ start: node.declaration.start, end: node.declaration.end }
 				);
 			}
 
@@ -35,16 +35,18 @@ export default function validateJs(validator: Validator, js: Node) {
 
 			// Remove these checks in version 2
 			if (props.has('oncreate') && props.has('onrender')) {
+				const onrender = props.get('onrender');
 				validator.error(
 					'Cannot have both oncreate and onrender',
-					props.get('onrender').start
+					{ start: onrender.start, end: onrender.end }
 				);
 			}
 
 			if (props.has('ondestroy') && props.has('onteardown')) {
+				const onteardown = props.get('onteardown');
 				validator.error(
 					'Cannot have both ondestroy and onteardown',
-					props.get('onteardown').start
+					{ start: onteardown.start, end: onteardown.end }
 				);
 			}
 
@@ -60,17 +62,17 @@ export default function validateJs(validator: Validator, js: Node) {
 					if (match) {
 						validator.error(
 							`Unexpected property '${name}' (did you mean '${match}'?)`,
-							prop.start
+							{ start: prop.start, end: prop.end }
 						);
 					} else if (/FunctionExpression/.test(prop.value.type)) {
 						validator.error(
 							`Unexpected property '${name}' (did you mean to include it in 'methods'?)`,
-							prop.start
+							{ start: prop.start, end: prop.end }
 						);
 					} else {
 						validator.error(
 							`Unexpected property '${name}'`,
-							prop.start
+							{ start: prop.start, end: prop.end }
 						);
 					}
 				}

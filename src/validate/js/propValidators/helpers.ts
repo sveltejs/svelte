@@ -10,7 +10,7 @@ export default function helpers(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'helpers' property must be an object literal`,
-			prop.start
+			{ start: prop.start, end: prop.end }
 		);
 	}
 
@@ -26,14 +26,14 @@ export default function helpers(validator: Validator, prop: Node) {
 			if (isThisGetCallExpression(node) && !node.callee.property.computed) {
 				validator.error(
 					`Cannot use this.get(...) — values must be passed into the helper function as arguments`,
-					node.start
+					{ start: node.start, end: node.end }
 				);
 			}
 
 			if (node.type === 'ThisExpression') {
 				validator.error(
 					`Helpers should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?`,
-					node.start
+					{ start: node.start, end: node.end }
 				);
 			} else if (node.type === 'Identifier' && node.name === 'arguments') {
 				usesArguments = true;

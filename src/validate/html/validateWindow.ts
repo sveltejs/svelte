@@ -25,7 +25,7 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 					`Bindings on <:Window/> must be to top-level properties, e.g. '${parts[
 						parts.length - 1
 					]}' rather than '${parts.join('.')}'`,
-					attribute.value.start
+					{ start: attribute.value.start, end: attribute.value.end }
 				);
 			}
 
@@ -41,12 +41,12 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 				if (match) {
 					validator.error(
 						`${message} (did you mean '${match}'?)`,
-						attribute.start
+						{ start: attribute.start, end: attribute.end }
 					);
 				} else {
 					validator.error(
 						`${message} — valid bindings are ${list(validBindings)}`,
-						attribute.start
+						{ start: attribute.start, end: attribute.end }
 					);
 				}
 			}

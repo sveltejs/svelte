@@ -10,10 +10,10 @@ class ValidationError extends CompileError {
 	constructor(
 		message: string,
 		template: string,
-		index: number,
-		filename: string
+		pos: { start: number, end: number },
+		filename: string,
 	) {
-		super(message, template, index, filename);
+		super(message, template, pos.start, filename, pos.end);
 		this.name = 'ValidationError';
 	}
 }
@@ -66,7 +66,7 @@ export class Validator {
 		};
 	}
 
-	error(message: string, pos: number) {
+	error(message: string, pos: { start: number, end: number }) {
 		throw new ValidationError(message, this.source, pos, this.filename);
 	}
 

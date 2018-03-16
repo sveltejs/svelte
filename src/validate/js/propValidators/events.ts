@@ -7,7 +7,7 @@ export default function events(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'events' property must be an object literal`,
-			prop.start
+			{ start: prop.start, end: prop.end }
 		);
 	}
 
