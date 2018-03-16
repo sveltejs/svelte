@@ -62,15 +62,19 @@ export default class Spread {
 
 		const changes = block.getUniqueName(`${node.var}_spread_changes`);
 
+		const hasNamedAttributes = node.attributes.length;
 		const namedAttributes = block.getUniqueName(`${node.var}_attributes`);
-		block.builders.init.addBlock(deindent`
-			var ${namedAttributes} = [${node.attributes.map(attr => `'${attr.name}'`).join(', ')}];
-		`)
+
+		if (hasNamedAttributes) {
+			block.builders.init.addBlock(deindent`
+				var ${namedAttributes} = [${node.attributes.map(attr => `'${attr.name}'`).join(', ')}];
+			`)
+		}
 
 		block.builders.hydrate.addBlock(deindent`
 			var ${changes} = ${init};
 			for (var key in ${changes}) {
-				if (${namedAttributes}.indexOf(key) !== -1) continue;
+				${hasNamedAttributes ? `if (${namedAttributes}.indexOf(key) !== -1) continue;` : ''}
 
 				@setAttribute(${node.var}, key, ${changes}[key]);
 				${activeKeys}[key] = true;
@@ -97,7 +101,7 @@ export default class Spread {
 
 				var ${changes} = ${shouldCache ? last : value};
 				for (var key in ${changes}) {
-					if (${namedAttributes}.indexOf(key) !== -1) continue;
+					${hasNamedAttributes ? `if (${namedAttributes}.indexOf(key) !== -1) continue;` : ''}
 
 					@setAttribute(${node.var}, key, ${changes}[key]);
 
@@ -119,6 +123,7 @@ export default class Spread {
 
 	renderForComponent(block: Block, updates: string[]) {
 		const node = this.parent;
+
 
 		const { expression } = this;
 		const { indexes } = block.contextualise(expression);
@@ -145,10 +150,14 @@ export default class Spread {
 
 		const changes = block.getUniqueName(`${node.var}_spread_changes`);
 
+		const hasNamedAttributes = node.attributes.length;
 		const namedAttributes = block.getUniqueName(`${node.var}_attributes`);
-		block.builders.init.addBlock(deindent`
-			var ${namedAttributes} = [${node.attributes.map(attr => `'${attr.name}'`).join(', ')}];
-		`)
+
+		if (hasNamedAttributes) {
+			block.builders.init.addBlock(deindent`
+				var ${namedAttributes} = [${node.attributes.map(attr => `'${attr.name}'`).join(', ')}];
+			`)
+		}
 
 		if (dependencies.length || hasChangeableIndex) {
 			const changedCheck = (
@@ -171,7 +180,7 @@ export default class Spread {
 
 					var ${changes} = ${shouldCache ? last : value};
 					for (var key in ${changes}) {
-						if (${namedAttributes}.indexOf(key) !== -1) continue;
+						${hasNamedAttributes ? `if (${namedAttributes}.indexOf(key) !== -1) continue;` : ''}
 
 						${node.var}_changes[key] = ${changes}[key];
 
