@@ -217,6 +217,19 @@ export default function validateElement(
 			if (attribute.name === 'slot' && !isComponent) {
 				checkSlotAttribute(validator, node, attribute, stack);
 			}
+		} else if (attribute.type === 'Action') {
+			if (isComponent) {
+				validator.error(`Actions can only be applied to DOM elements, not components`, attribute);
+			}
+
+			validator.used.actions.add(attribute.name);
+
+			if (!validator.actions.has(attribute.name)) {
+				validator.error(
+					`Missing action '${attribute.name}'`,
+					attribute
+				);
+			}
 		}
 	});
 }

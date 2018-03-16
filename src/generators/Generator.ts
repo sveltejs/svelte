@@ -91,6 +91,7 @@ export default class Generator {
 	components: Set<string>;
 	events: Set<string>;
 	transitions: Set<string>;
+	actions: Set<string>;
 	importedComponents: Map<string, string>;
 	namespace: string;
 	hasComponents: boolean;
@@ -134,6 +135,7 @@ export default class Generator {
 		this.components = new Set();
 		this.events = new Set();
 		this.transitions = new Set();
+		this.actions = new Set();
 		this.importedComponents = new Map();
 		this.slots = new Set();
 
@@ -452,7 +454,7 @@ export default class Generator {
 					templateProperties[getName(prop.key)] = prop;
 				});
 
-				['helpers', 'events', 'components', 'transitions'].forEach(key => {
+				['helpers', 'events', 'components', 'transitions', 'actions'].forEach(key => {
 					if (templateProperties[key]) {
 						templateProperties[key].value.properties.forEach((prop: Node) => {
 							this[key].add(getName(prop.key));
@@ -634,6 +636,12 @@ export default class Generator {
 				if (templateProperties.transitions) {
 					templateProperties.transitions.value.properties.forEach((property: Node) => {
 						addDeclaration(getName(property.key), property.value, 'transitions');
+					});
+				}
+
+				if (templateProperties.actions) {
+					templateProperties.actions.value.properties.forEach((property: Node) => {
+						addDeclaration(getName(property.key), property.value, 'actions');
 					});
 				}
 			}
@@ -821,6 +829,16 @@ export default class Generator {
 
 				if (node.type === 'Transition' && node.expression) {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
+					this.skip();
+				}
+
+				if (node.type === 'Action' && node.expression) {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
+					if (node.expression.type === 'CallExpression') {
+						node.expression.arguments.forEach((arg: Node) => {
+							arg.metadata = contextualise(arg, contextDependencies, indexes, true);
+						});
+					}
 					this.skip();
 				}
 
