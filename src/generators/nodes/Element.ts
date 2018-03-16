@@ -138,6 +138,10 @@ export default class Element extends Node {
 			component._slots.add(slot);
 		}
 
+		if (this.spread) {
+			block.addDependencies(this.spread.metadata.dependencies);
+		}
+
 		this.var = block.getUniqueName(
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
@@ -239,6 +243,10 @@ export default class Element extends Node {
 		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
 			attribute.render(block);
 		});
+
+		if (this.spread) {
+			this.spread.renderForElement(block);
+		}
 
 		// event handlers
 		let eventHandlerUsesComponent = false;

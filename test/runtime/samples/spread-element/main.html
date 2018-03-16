@@ -1,0 +1,12 @@
+<div {{...props}}>{{color}}</div>
+
+<script>
+	export default {
+		data: () => ({
+			color: 'red',
+			props: {
+				'data-foo': 'bar',
+			}
+		})
+	};
+</script>
