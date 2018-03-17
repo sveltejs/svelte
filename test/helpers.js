@@ -1,3 +1,4 @@
+import jsdom from 'jsdom';
 import { JSDOM } from 'jsdom';
 import assert from 'assert';
 import glob from 'glob';
@@ -45,7 +46,8 @@ export function tryToReadFile(file) {
 	}
 }
 
-const { window } = new JSDOM('<main></main>');
+export const virtualConsole = new jsdom.VirtualConsole();
+const { window } = new JSDOM('<main></main>', {virtualConsole});
 global.document = window.document;
 
 export function env() {
