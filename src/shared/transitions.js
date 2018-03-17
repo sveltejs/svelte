@@ -1,4 +1,3 @@
-import { assign, noop } from './utils.js';
 import { createElement } from './dom.js';
 
 export function linear(t) {
