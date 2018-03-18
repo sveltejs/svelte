@@ -161,10 +161,11 @@ export default class Component extends Node {
 						const computed = isComputed(binding.value);
 						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
+						const list = block.listNames.get(key);
+						const index = block.indexNames.get(key);
+
 						setFromChild = deindent`
-							var list = state.${block.listNames.get(key)};
-							var index = ${block.indexNames.get(key)};
-							list[index]${tail} = childState.${binding.name};
+							${list}[${index}]${tail} = childState.${binding.name};
 
 							${binding.dependencies
 								.map((name: string) => {
