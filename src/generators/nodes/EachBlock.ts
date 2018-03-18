@@ -315,108 +315,16 @@ export default class EachBlock extends Node {
 		`);
 
 		const dynamic = this.block.hasUpdateMethod;
-		let fn_destroy;
-		if (this.block.hasOutroMethod) {
-			fn_destroy = block.getUniqueName(`${each}_outro`);
-			block.builders.init.addBlock(deindent`
-				function ${fn_destroy}(iteration) {
-					iteration.o(function() {
-						iteration.u();
-						iteration.d();
-						${lookup}[iteration.key] = null;
-					});
-				}
-			`);
-		} else {
-			fn_destroy = block.getUniqueName(`${each}_destroy`);
-			block.builders.init.addBlock(deindent`
-				function ${fn_destroy}(iteration) {
-					var first = iteration.first
-					if (first && first.parentNode) {
-						iteration.u();
-					}
-					iteration.d();
-					${lookup}[iteration.key] = null;
-				}
-			`);
-		}
-		const destroy = deindent`
-		${iteration} = ${head};
-		while(${iteration}) {
-			if (!${keep}[${iteration}.key]) {
-				${fn_destroy}(${iteration});
-			}
-			${iteration} = ${iteration}.next;
-		}
-		`;
 
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
-			var ${expected} = ${head};
-			var ${last} = null;
 
-			var ${keep} = {};
-			var ${mounts} = {};
-			var ${next_iteration} = null;
-
-			for (#i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				var ${key} = ${each_block_value}[#i].${this.key};
-				var ${iteration} = ${lookup}[${key}];
-				var next_data = ${each_block_value}[#i+1];
-				var next = next_data && ${lookup}[next_data.${this.key}];
-
-				var ${this.each_context} = @assign({}, state, {
+			@updateKeyedEach(#component, ${key}, changed, "${this.key}", ${dynamic}, ${each_block_value}, ${head}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, function(#i) {
+				return @assign({}, state, {
 					${this.contextProps.join(',\n')}
 				});
+			});
 
-				${dynamic &&
-					`if (${iteration}) ${iteration}.p(changed, ${this.each_context});`}
-				if (${expected} && (${key} === ${expected}.key)) {
-					var first = ${iteration} && ${iteration}.first;
-					var parentNode = first && first.parentNode
-					if (!parentNode || (${iteration} && ${iteration}.next) != next) ${mounts}[${key}] = ${iteration};
-					${expected} = ${iteration}.next;
-				} else if (${iteration}) {
-					${mounts}[${key}] = ${iteration};
-					${expected} = ${iteration}.next;
-				} else {
-					// key is being inserted
-					${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
-					${iteration}.c();
-					${mounts}[${key}] = ${iteration};
-				}
-				${lookup}[${key}] = ${iteration};
-				${keep}[${iteration}.key] = ${iteration};
-				${last} = ${iteration};
-			}
-			${destroy}
-
-			// Work backwards due to DOM api having insertBefore
-			for (#i = ${each_block_value}.${length} - 1; #i >= 0; #i -= 1) {
-				var data = ${each_block_value}[#i];
-				var ${key} = data.${this.key};
-				${iteration} = ${lookup}[${key}];
-				if (${mounts}[${key}]) {
-					var anchor;
-					${this.block.hasOutroMethod
-						? deindent`
-							var key_next_iteration = ${next_iteration} && ${next_iteration}.key;
-							var iteration_anchor = ${iteration}.next;
-							var key_anchor;
-							do {
-								anchor = iteration_anchor && iteration_anchor.first;
-								iteration_anchor = iteration_anchor && iteration_anchor.next;
-								key_anchor = iteration_anchor && iteration_anchor.key;
-							} while(iteration_anchor && key_anchor != key_next_iteration && !${keep}[key_anchor])`
-						: deindent`
-							anchor = ${next_iteration} && ${next_iteration}.first;
-							` }
-					${mounts}[${key}].${mountOrIntro}(${updateMountNode}, anchor);
-				}
-				${iteration}.next = ${next_iteration};
-				if (${next_iteration}) ${next_iteration}.last = ${iteration};
-				${next_iteration} = ${iteration};
-			}
 			${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${this.key}];
 		`);
 
