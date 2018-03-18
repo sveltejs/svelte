@@ -1,0 +1,24 @@
+<div>
+	{{#each tagList as tag, i}}
+		<i on:click='remove(i)'>
+			{{tag}}
+		</i>
+	{{/each}}
+</div>
+
+<script>
+	export default {
+		data() {
+			return {
+				inProgress: false,
+				tagList: ['one']
+			};
+		},
+
+		methods: {
+			remove(index) {
+				// ...
+			}
+		}
+	};
+</script>
