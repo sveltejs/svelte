@@ -102,7 +102,7 @@ export default class Selector {
 			while (i-- > 1) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					validator.error(`:global(...) must be the first element in a compound selector`, { start: selector.start, end: selector.end });
+					validator.error(`:global(...) must be the first element in a compound selector`, selector);
 				}
 			}
 		});
@@ -120,8 +120,7 @@ export default class Selector {
 
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
-				const selector = this.blocks[i].selectors[0];
-				validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, { start: selector.start, end: selector.end });
+				validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, this.blocks[i].selectors[0]);
 			}
 		}
 	}

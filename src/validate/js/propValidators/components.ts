@@ -8,7 +8,7 @@ export default function components(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'components' property must be an object literal`,
-			{ start: prop.start, end: prop.end }
+			prop
 		);
 	}
 
@@ -21,12 +21,12 @@ export default function components(validator: Validator, prop: Node) {
 		if (name === 'state') {
 			validator.error(
 				`Component constructors cannot be called 'state' due to technical limitations`,
-				{ start: component.start, end: component.end }
+				component
 			);
 		}
 
 		if (!/^[A-Z]/.test(name)) {
-			validator.warn(`Component names should be capitalised`, { start: component.start, end: component.end });
+			validator.warn(`Component names should be capitalised`, component);
 		}
 	});
 }

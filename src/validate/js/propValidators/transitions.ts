@@ -7,7 +7,7 @@ export default function transitions(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'transitions' property must be an object literal`,
-			{ start: prop.start, end: prop.end }
+			prop
 		);
 	}
 

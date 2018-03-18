@@ -12,7 +12,7 @@ export default function methods(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'methods' property must be an object literal`,
-			{ start: prop.start, end: prop.end }
+			prop
 		);
 	}
 
@@ -26,7 +26,7 @@ export default function methods(validator: Validator, prop: Node) {
 		if (builtin.has(name)) {
 			validator.error(
 				`Cannot overwrite built-in method '${name}'`,
-				{ start: prop.start, end: prop.end }
+				prop
 			);
 		}
 
@@ -35,7 +35,7 @@ export default function methods(validator: Validator, prop: Node) {
 				validator.error(
 					`Method '${prop.key
 						.name}' should be a function expression, not an arrow function expression`,
-					{ start: prop.start, end: prop.end }
+					prop
 				);
 			}
 		}
