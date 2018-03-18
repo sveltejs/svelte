@@ -4,14 +4,14 @@ import { appendNode, assign, createComment, createElement, createText, destroyEa
 function create_main_fragment(component, state) {
 	var each_anchor;
 
-	var createElement_1 = state.createElement;
+	var each_value = state.createElement;
 
 	var each_blocks = [];
 
-	for (var i = 0; i < createElement_1.length; i += 1) {
+	for (var i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(component, assign({}, state, {
-			createElement: createElement_1,
-			node: createElement_1[i],
+			each_value: each_value,
+			node: each_value[i],
 			node_index: i
 		}));
 	}
@@ -34,13 +34,13 @@ function create_main_fragment(component, state) {
 		},
 
 		p: function update(changed, state) {
-			var createElement_1 = state.createElement;
+			var each_value = state.createElement;
 
 			if (changed.createElement) {
-				for (var i = 0; i < createElement_1.length; i += 1) {
+				for (var i = 0; i < each_value.length; i += 1) {
 					var each_context = assign({}, state, {
-						createElement: createElement_1,
-						node: createElement_1[i],
+						each_value: each_value,
+						node: each_value[i],
 						node_index: i
 					});
 
@@ -57,7 +57,7 @@ function create_main_fragment(component, state) {
 					each_blocks[i].u();
 					each_blocks[i].d();
 				}
-				each_blocks.length = createElement_1.length;
+				each_blocks.length = each_value.length;
 			}
 		},
 
@@ -77,7 +77,7 @@ function create_main_fragment(component, state) {
 
 // (1:0) {{#each createElement as node}}
 function create_each_block(component, state) {
-	var node = state.node, node_index = state.node_index;
+	var node = state.node, each_value = state.each_value, node_index = state.node_index;
 	var span, text_value = node, text;
 
 	return {
@@ -93,6 +93,7 @@ function create_each_block(component, state) {
 
 		p: function update(changed, state) {
 			node = state.node;
+			each_value = state.each_value;
 			node_index = state.node_index;
 			if ((changed.createElement) && text_value !== (text_value = node)) {
 				text.data = text_value;

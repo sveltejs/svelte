@@ -4,14 +4,14 @@ import { appendNode, assign, createElement, createText, destroyEach, detachAfter
 function create_main_fragment(component, state) {
 	var text, p, text_1;
 
-	var comments = state.comments;
+	var each_value = state.comments;
 
 	var each_blocks = [];
 
-	for (var i = 0; i < comments.length; i += 1) {
+	for (var i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(component, assign({}, state, {
-			comments: comments,
-			comment: comments[i],
+			each_value: each_value,
+			comment: each_value[i],
 			i: i
 		}));
 	}
@@ -38,13 +38,13 @@ function create_main_fragment(component, state) {
 		},
 
 		p: function update(changed, state) {
-			var comments = state.comments;
+			var each_value = state.comments;
 
 			if (changed.comments || changed.elapsed || changed.time) {
-				for (var i = 0; i < comments.length; i += 1) {
+				for (var i = 0; i < each_value.length; i += 1) {
 					var each_context = assign({}, state, {
-						comments: comments,
-						comment: comments[i],
+						each_value: each_value,
+						comment: each_value[i],
 						i: i
 					});
 
@@ -61,7 +61,7 @@ function create_main_fragment(component, state) {
 					each_blocks[i].u();
 					each_blocks[i].d();
 				}
-				each_blocks.length = comments.length;
+				each_blocks.length = each_value.length;
 			}
 
 			if (changed.foo) {
@@ -86,7 +86,7 @@ function create_main_fragment(component, state) {
 
 // (1:0) {{#each comments as comment, i}}
 function create_each_block(component, state) {
-	var comment = state.comment, i = state.i;
+	var comment = state.comment, each_value = state.each_value, i = state.i;
 	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before;
 
 	return {
@@ -127,6 +127,7 @@ function create_each_block(component, state) {
 
 		p: function update(changed, state) {
 			comment = state.comment;
+			each_value = state.each_value;
 			i = state.i;
 			if ((changed.comments) && text_2_value !== (text_2_value = comment.author)) {
 				text_2.data = text_2_value;
