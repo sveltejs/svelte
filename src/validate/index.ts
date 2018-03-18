@@ -150,7 +150,7 @@ export default function validate(
 						if (!validator.used[category].has(name)) {
 							validator.warn(
 								`The '${name}' ${categories[category]} is unused`,
-								{ start: prop.start, end: prop.end }
+								prop
 							);
 						}
 					});

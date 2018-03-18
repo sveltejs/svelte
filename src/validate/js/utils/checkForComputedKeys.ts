@@ -7,7 +7,7 @@ export default function checkForComputedKeys(
 ) {
 	properties.forEach(prop => {
 		if (prop.key.computed) {
-			validator.error(`Cannot use computed keys`, { start: prop.start, end: prop.end });
+			validator.error(`Cannot use computed keys`, prop);
 		}
 	});
 }

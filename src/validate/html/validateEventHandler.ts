@@ -16,7 +16,7 @@ export default function validateEventHandlerCallee(
 	const { callee, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {
-		validator.error(`Expected a call expression`, { start: attribute.expression.start, end: attribute.expression.end });
+		validator.error(`Expected a call expression`, attribute.expression);
 	}
 
 	const { name } = flattenReference(callee);
@@ -32,7 +32,7 @@ export default function validateEventHandlerCallee(
 		if (!validator.options.store) {
 			validator.warn(
 				'compile with `store: true` in order to call store methods',
-				{ start: attribute.expression.start, end: attribute.expression.end }
+				attribute.expression
 			);
 		}
 		return;
@@ -59,5 +59,5 @@ export default function validateEventHandlerCallee(
 		message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
 	}
 
-	validator.warn(message, { start: attribute.expression.start, end: attribute.expression.end });
+	validator.warn(message, attribute.expression);
 }

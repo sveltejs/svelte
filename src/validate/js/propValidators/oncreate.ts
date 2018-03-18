@@ -7,7 +7,7 @@ export default function oncreate(validator: Validator, prop: Node) {
 		if (usesThisOrArguments(prop.value.body)) {
 			validator.error(
 				`'oncreate' should be a function expression, not an arrow function expression`,
-				{ start: prop.start, end: prop.end }
+				prop
 			);
 		}
 	}

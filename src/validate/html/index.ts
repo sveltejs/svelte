@@ -67,7 +67,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 		}
 
 		if (validator.options.dev && isEmptyBlock(node)) {
-			validator.warn('Empty block', { start: node.start, end: node.end });
+			validator.warn('Empty block', node);
 		}
 
 		if (node.children) {
@@ -103,7 +103,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 			let message = `'refs.${ref}' does not exist`;
 			if (match) message += ` (did you mean 'refs.${match}'?)`;
 
-			validator.error(message, { start: callee.start, end: callee.end });
+			validator.error(message, callee);
 		}
 	});
 }
