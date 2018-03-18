@@ -14,9 +14,11 @@ import {
 	spaces
 } from "../helpers.js";
 
+let svelte$;
 let svelte;
 
 let compileOptions = null;
+let compile = null;
 
 function getName(filename) {
 	const base = path.basename(filename).replace(".html", "");
@@ -25,7 +27,8 @@ function getName(filename) {
 
 describe("runtime", () => {
 	before(() => {
-		svelte = loadSvelte(true);
+		svelte$ = loadSvelte(true);
+		svelte = loadSvelte(false);
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
@@ -33,7 +36,7 @@ describe("runtime", () => {
 				compileOptions
 			);
 
-			const { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
+			const { code } = compile(fs.readFileSync(filename, "utf-8"), options);
 
 			return module._compile(code, filename);
 		};
@@ -58,6 +61,8 @@ describe("runtime", () => {
 				throw new Error('skipping test, already failed');
 			}
 
+			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
+
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 			global.document.title = '';
 
@@ -75,7 +80,7 @@ describe("runtime", () => {
 						`test/runtime/samples/${dir}/main.html`,
 						"utf-8"
 					);
-					const { code } = svelte.compile(source, compileOptions);
+					const { code } = compile(source, compileOptions);
 					const startIndex = code.indexOf("function create_main_fragment"); // may change!
 					if (startIndex === -1) throw new Error("missing create_main_fragment");
 					const endIndex = code.lastIndexOf("export default");
@@ -95,7 +100,7 @@ describe("runtime", () => {
 					if (err.frame) {
 						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
 					}
-					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, svelte$); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -140,7 +145,7 @@ describe("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte$); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -198,12 +203,12 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte$); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte$);
 				});
 		});
 	}
@@ -216,7 +221,7 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.target is missing in dev mode", () => {
-		const { code } = svelte.compile(`<div></div>`, {
+		const { code } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
@@ -232,7 +237,7 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.hydrate is true but the component is non-hydratable", () => {
-		const { code } = svelte.compile(`<div></div>`, {
+		const { code } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
