@@ -1,7 +1,4 @@
 export default {
-	solo: true,
-	show: true,
-
 	html: `
 		<div>
 			<i>one</i>

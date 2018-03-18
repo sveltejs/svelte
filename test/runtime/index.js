@@ -27,8 +27,8 @@ function getName(filename) {
 
 describe("runtime", () => {
 	before(() => {
-		svelte$ = loadSvelte(true);
 		svelte = loadSvelte(false);
+		svelte$ = loadSvelte(true);
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
@@ -100,7 +100,7 @@ describe("runtime", () => {
 					if (err.frame) {
 						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
 					}
-					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, svelte$); // eslint-disable-line no-console
+					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -145,7 +145,7 @@ describe("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte$); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -203,12 +203,12 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte$); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte$);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile);
 				});
 		});
 	}
