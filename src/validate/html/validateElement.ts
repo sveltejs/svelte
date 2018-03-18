@@ -20,13 +20,13 @@ export default function validateElement(
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
-		validator.warn(`${node.name} component is not defined`, node.start);
+		validator.warn(`${node.name} component is not defined`, node);
 	}
 
 	if (elementStack.length === 0 && validator.namespace !== namespaces.svg && svg.test(node.name)) {
 		validator.warn(
 			`<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`,
-			node.start
+			node
 		);
 	}
 
@@ -34,12 +34,12 @@ export default function validateElement(
 		const nameAttribute = node.attributes.find((attribute: Node) => attribute.name === 'name');
 		if (nameAttribute) {
 			if (nameAttribute.value.length !== 1 || nameAttribute.value[0].type !== 'Text') {
-				validator.error(`<slot> name cannot be dynamic`, nameAttribute.start);
+				validator.error(`<slot> name cannot be dynamic`, nameAttribute);
 			}
 
 			const slotName = nameAttribute.value[0].data;
 			if (slotName === 'default') {
-				validator.error(`default is a reserved word — it cannot be used as a slot name`, nameAttribute.start);
+				validator.error(`default is a reserved word — it cannot be used as a slot name`, nameAttribute);
 			}
 
 			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
@@ -63,7 +63,7 @@ export default function validateElement(
 		if (node.attributes.length > 0) {
 			validator.error(
 				`<title> cannot have attributes`,
-				node.attributes[0].start
+				node.attributes[0]
 			);
 		}
 
@@ -71,7 +71,7 @@ export default function validateElement(
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
 				validator.error(
 					`<title> can only contain text and {{tags}}`,
-					child.start
+					child
 				);
 			}
 		});
@@ -98,7 +98,7 @@ export default function validateElement(
 				) {
 					validator.error(
 						`'value' is not a valid binding on <${node.name}> elements`,
-						attribute.start
+						attribute
 					);
 				}
 
@@ -107,21 +107,21 @@ export default function validateElement(
 				if (node.name !== 'input') {
 					validator.error(
 						`'${name}' is not a valid binding on <${node.name}> elements`,
-						attribute.start
+						attribute
 					);
 				}
 
 				if (checkTypeAttribute(validator, node) !== 'checkbox') {
 					validator.error(
 						`'${name}' binding can only be used with <input type="checkbox">`,
-						attribute.start
+						attribute
 					);
 				}
 			} else if (name === 'group') {
 				if (node.name !== 'input') {
 					validator.error(
 						`'group' is not a valid binding on <${node.name}> elements`,
-						attribute.start
+						attribute
 					);
 				}
 
@@ -130,7 +130,7 @@ export default function validateElement(
 				if (type !== 'checkbox' && type !== 'radio') {
 					validator.error(
 						`'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`,
-						attribute.start
+						attribute
 					);
 				}
 			} else if (
@@ -145,13 +145,13 @@ export default function validateElement(
 				if (node.name !== 'audio' && node.name !== 'video') {
 					validator.error(
 						`'${name}' binding can only be used with <audio> or <video>`,
-						attribute.start
+						attribute
 					);
 				}
 			} else {
 				validator.error(
 					`'${attribute.name}' is not a valid binding`,
-					attribute.start
+					attribute
 				);
 			}
 		} else if (attribute.type === 'EventHandler') {
@@ -159,7 +159,7 @@ export default function validateElement(
 			validateEventHandler(validator, attribute, refCallees);
 		} else if (attribute.type === 'Transition') {
 			if (isComponent) {
-				validator.error(`Transitions can only be applied to DOM elements, not components`, attribute.start);
+				validator.error(`Transitions can only be applied to DOM elements, not components`, attribute);
 			}
 
 			validator.used.transitions.add(attribute.name);
@@ -170,13 +170,13 @@ export default function validateElement(
 				if (bidi)
 					validator.error(
 						`An element can only have one 'transition' directive`,
-						attribute.start
+						attribute
 					);
 				validator.error(
 					`An element cannot have both a 'transition' directive and an '${attribute.intro
 						? 'in'
 						: 'out'}' directive`,
-					attribute.start
+					attribute
 				);
 			}
 
@@ -186,11 +186,11 @@ export default function validateElement(
 						`An element cannot have both an '${hasIntro
 							? 'in'
 							: 'out'}' directive and a 'transition' directive`,
-						attribute.start
+						attribute
 					);
 				validator.error(
 					`An element can only have one '${hasIntro ? 'in' : 'out'}' directive`,
-					attribute.start
+					attribute
 				);
 			}
 
@@ -201,7 +201,7 @@ export default function validateElement(
 			if (!validator.transitions.has(attribute.name)) {
 				validator.error(
 					`Missing transition '${attribute.name}'`,
-					attribute.start
+					attribute
 				);
 			}
 		} else if (attribute.type === 'Attribute') {
@@ -209,7 +209,7 @@ export default function validateElement(
 				if (node.children.length) {
 					validator.error(
 						`A <textarea> can have either a value attribute or (equivalently) child content, but not both`,
-						attribute.start
+						attribute
 					);
 				}
 			}
@@ -228,13 +228,13 @@ function checkTypeAttribute(validator: Validator, node: Node) {
 	if (!attribute) return null;
 
 	if (attribute.value === true) {
-		validator.error(`'type' attribute must be specified`, attribute.start);
+		validator.error(`'type' attribute must be specified`, attribute);
 	}
 
 	if (isDynamic(attribute)) {
 		validator.error(
 			`'type' attribute cannot be dynamic if input uses two-way binding`,
-			attribute.start
+			attribute
 		);
 	}
 
@@ -245,7 +245,7 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 	if (isDynamic(attribute)) {
 		validator.error(
 			`slot attribute cannot have a dynamic value`,
-			attribute.start
+			attribute
 		);
 	}
 
@@ -260,11 +260,11 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 
 		if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
 			const message = `Cannot place slotted elements inside an ${parent.type === 'IfBlock' ? 'if' : 'each'}-block`;
-			validator.error(message, attribute.start);
+			validator.error(message, attribute);
 		}
 	}
 
-	validator.error(`Element with a slot='...' attribute must be a descendant of a component or custom element`, attribute.start);
+	validator.error(`Element with a slot='...' attribute must be a descendant of a component or custom element`, attribute);
 }
 
 function isDynamic(attribute: Node) {

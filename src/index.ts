@@ -146,4 +146,4 @@ export function create(source: string, _options: CompileOptions = {}) {
 	}
 }
 
-export { parse, validate, version as VERSION };
+export { parse, validate, Stylesheet, version as VERSION };

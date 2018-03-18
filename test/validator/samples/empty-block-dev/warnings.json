@@ -5,6 +5,10 @@
 			"line": 1,
 			"column": 0
 		},
+		"end": {
+			"line": 3,
+			"column": 9
+		},
 		"pos": 0
 	},
 	{
@@ -12,6 +16,10 @@
 		"loc": {
 			"line": 5,
 			"column": 0
+		},
+		"end": {
+			"line": 5,
+			"column": 34
 		},
 		"pos": 38
 	}

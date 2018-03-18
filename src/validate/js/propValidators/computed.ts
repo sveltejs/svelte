@@ -17,7 +17,7 @@ export default function computed(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(
 			`The 'computed' property must be an object literal`,
-			prop.start
+			prop
 		);
 	}
 
@@ -31,21 +31,21 @@ export default function computed(validator: Validator, prop: Node) {
 			const suggestion = name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
 			validator.error(
 				`Computed property name '${name}' is invalid — must be a valid identifier such as ${suggestion}`,
-				computation.start
+				computation
 			);
 		}
 
 		if (reservedNames.has(name)) {
 			validator.error(
 				`Computed property name '${name}' is invalid — cannot be a JavaScript reserved word`,
-				computation.start
+				computation
 			);
 		}
 
 		if (!isFunctionExpression.has(computation.value.type)) {
 			validator.error(
 				`Computed properties can be function expressions or arrow function expressions`,
-				computation.value.start
+				computation.value
 			);
 		}
 
@@ -55,14 +55,14 @@ export default function computed(validator: Validator, prop: Node) {
 			if (isThisGetCallExpression(node) && !node.callee.property.computed) {
 				validator.error(
 					`Cannot use this.get(...) — values must be passed into the function as arguments`,
-					node.start
+					node
 				);
 			}
 
 			if (node.type === 'ThisExpression') {
 				validator.error(
 					`Computed properties should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?`,
-					node.start
+					node
 				);
 			}
 		});
@@ -70,7 +70,7 @@ export default function computed(validator: Validator, prop: Node) {
 		if (params.length === 0) {
 			validator.error(
 				`A computed value must depend on at least one property`,
-				computation.value.start
+				computation.value
 			);
 		}
 
@@ -83,7 +83,7 @@ export default function computed(validator: Validator, prop: Node) {
 			if (!valid) {
 				validator.error(
 					`Computed properties cannot use destructuring in function parameters`,
-					param.start
+					param
 				);
 			}
 		});

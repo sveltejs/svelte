@@ -7,7 +7,7 @@ export default function ondestroy(validator: Validator, prop: Node) {
 		if (usesThisOrArguments(prop.value.body)) {
 			validator.error(
 				`'ondestroy' should be a function expression, not an arrow function expression`,
-				prop.start
+				prop
 			);
 		}
 	}
