@@ -31,7 +31,8 @@ describe("validate", () => {
 						warnings.push({
 							message: warning.message,
 							pos: warning.pos,
-							loc: warning.loc
+							loc: warning.loc,
+							end: warning.end,
 						});
 					},
 					dev: config.dev
@@ -55,6 +56,7 @@ describe("validate", () => {
 
 				assert.equal(error.message, expected.message);
 				assert.deepEqual(error.loc, expected.loc);
+				assert.deepEqual(error.end, expected.end);
 				assert.equal(error.pos, expected.pos);
 			}
 		});
