@@ -41,6 +41,8 @@ export default {
 		test( 'g' );
 		test( '' );
 		test( 'abc' );
+		test( 'duqbmineapjhtlofrskcg' );
+		test( 'hdnkjougmrvftewsqpailcb' );
 
 		// then, we party
 		for ( let i = 0; i < 100; i += 1 ) test( permute() );
