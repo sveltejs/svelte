@@ -5,7 +5,7 @@ const acorn = require('acorn');
 const declarations = {};
 
 fs.readdirSync(__dirname).forEach(file => {
-	if (!/^[a-z]+\.js$/.test(file)) return;
+	if (!/^[a-z\-]+\.js$/.test(file)) return;
 
 	const source = fs.readFileSync(path.join(__dirname, file), 'utf-8');
 	const ast = acorn.parse(source, {
