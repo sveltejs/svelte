@@ -29,6 +29,7 @@ export interface Parsed {
 
 export interface Warning {
 	loc?: { line: number; column: number; pos?: number };
+	end?: { line: number; column: number; };
 	pos?: number;
 	message: string;
 	filename?: string;

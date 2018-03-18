@@ -4,6 +4,10 @@
 		"line": 1,
 		"column": 0
 	},
+	"end": {
+		"line": 1,
+		"column": 65
+	},
 	"pos": 0
 },
 {
@@ -11,6 +15,10 @@
 	"loc": {
 		"column": 1,
 		"line": 5
+	},
+	"end": {
+		"line": 5,
+		"column": 66
 	},
 	"pos": 90
 },
@@ -20,6 +28,10 @@
 		"column": 2,
 		"line": 10
 	},
+	"end": {
+		"line": 10,
+		"column": 67
+	},
 	"pos": 191
 },
 {
@@ -28,6 +40,10 @@
 		"column": 2,
 		"line": 20
 	},
+	"end": {
+		"line": 20,
+		"column": 67
+	},
 	"pos": 333
 },
 {
@@ -35,6 +51,10 @@
 	"loc": {
 		"column": 2,
 		"line": 26
+	},
+	"end": {
+		"line": 26,
+		"column": 67
 	},
 	"pos": 445
 }]

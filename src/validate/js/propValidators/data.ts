@@ -7,6 +7,6 @@ export default function data(validator: Validator, prop: Node) {
 	while (prop.type === 'ParenthesizedExpression') prop = prop.expression;
 
 	if (disallowed.has(prop.value.type)) {
-		validator.error(`'data' must be a function`, prop.value.start);
+		validator.error(`'data' must be a function`, prop.value);
 	}
 }

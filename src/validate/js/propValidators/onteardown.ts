@@ -5,7 +5,7 @@ import { Node } from '../../../interfaces';
 export default function onteardown(validator: Validator, prop: Node) {
 	validator.warn(
 		`'onteardown' has been deprecated in favour of 'ondestroy', and will cause an error in Svelte 2.x`,
-		prop.start
+		prop
 	);
 	ondestroy(validator, prop);
 }
