@@ -4,5 +4,9 @@
 	"loc": {
 		"line": 6,
 		"column": 3
+	},
+	"end": {
+		"line": 8,
+		"column": 4
 	}
 }]

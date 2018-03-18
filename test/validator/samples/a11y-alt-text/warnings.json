@@ -5,6 +5,10 @@
 			"line": 1,
 			"column": 0
 		},
+		"end": {
+			"line": 1,
+			"column": 19
+		},
 		"pos": 0
 	},
 
@@ -13,6 +17,10 @@
 		"loc": {
 			"line": 4,
 			"column": 1
+		},
+		"end": {
+			"line": 4,
+			"column": 7
 		},
 		"pos": 28
 	},
@@ -23,6 +31,10 @@
 			"line": 7,
 			"column": 0
 		},
+		"end": {
+			"line": 7,
+			"column": 17
+		},
 		"pos": 43
 	},
 
@@ -31,6 +43,10 @@
 		"loc": {
 			"line": 9,
 			"column": 0
+		},
+		"end": {
+			"line": 9,
+			"column": 20
 		},
 		"pos": 62
 	}

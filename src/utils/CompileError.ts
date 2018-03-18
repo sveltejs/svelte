@@ -4,24 +4,28 @@ import getCodeFrame from '../utils/getCodeFrame';
 export default class CompileError extends Error {
 	frame: string;
 	loc: { line: number; column: number };
+	end: { line: number; column: number };
 	pos: number;
 	filename: string;
 
 	constructor(
 		message: string,
 		template: string,
-		index: number,
-		filename: string
+		startPos: number,
+		filename: string,
+		endPos: number = startPos
 	) {
 		super(message);
 
-		const { line, column } = locate(template, index);
+		const start = locate(template, startPos);
+		const end = locate(template, endPos);
 
-		this.loc = { line: line + 1, column };
-		this.pos = index;
+		this.loc = { line: start.line + 1, column: start.column };
+		this.end = { line: end.line + 1, column: end.column };
+		this.pos = startPos;
 		this.filename = filename;
 
-		this.frame = getCodeFrame(template, line, column);
+		this.frame = getCodeFrame(template, start.line, start.column);
 	}
 
 	public toString = () => {

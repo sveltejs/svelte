@@ -4,5 +4,9 @@
 		"line": 9,
 		"column": 2
 	},
+	"end": {
+		"line": 11,
+		"column": 3
+	},
 	"pos": 74
 }]

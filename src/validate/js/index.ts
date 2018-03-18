@@ -13,14 +13,14 @@ export default function validateJs(validator: Validator, js: Node) {
 	js.content.body.forEach((node: Node) => {
 		// check there are no named exports
 		if (node.type === 'ExportNamedDeclaration') {
-			validator.error(`A component can only have a default export`, node.start);
+			validator.error(`A component can only have a default export`, node);
 		}
 
 		if (node.type === 'ExportDefaultDeclaration') {
 			if (node.declaration.type !== 'ObjectExpression') {
 				return validator.error(
 					`Default export must be an object literal`,
-					node.declaration.start
+					node.declaration
 				);
 			}
 
@@ -37,14 +37,14 @@ export default function validateJs(validator: Validator, js: Node) {
 			if (props.has('oncreate') && props.has('onrender')) {
 				validator.error(
 					'Cannot have both oncreate and onrender',
-					props.get('onrender').start
+					props.get('onrender')
 				);
 			}
 
 			if (props.has('ondestroy') && props.has('onteardown')) {
 				validator.error(
 					'Cannot have both ondestroy and onteardown',
-					props.get('onteardown').start
+					props.get('onteardown')
 				);
 			}
 
@@ -60,17 +60,17 @@ export default function validateJs(validator: Validator, js: Node) {
 					if (match) {
 						validator.error(
 							`Unexpected property '${name}' (did you mean '${match}'?)`,
-							prop.start
+							prop
 						);
 					} else if (/FunctionExpression/.test(prop.value.type)) {
 						validator.error(
 							`Unexpected property '${name}' (did you mean to include it in 'methods'?)`,
-							prop.start
+							prop
 						);
 					} else {
 						validator.error(
 							`Unexpected property '${name}'`,
-							prop.start
+							prop
 						);
 					}
 				}

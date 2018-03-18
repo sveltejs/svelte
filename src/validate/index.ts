@@ -10,10 +10,10 @@ class ValidationError extends CompileError {
 	constructor(
 		message: string,
 		template: string,
-		index: number,
-		filename: string
+		pos: { start: number, end: number },
+		filename: string,
 	) {
-		super(message, template, index, filename);
+		super(message, template, pos.start, filename, pos.end);
 		this.name = 'ValidationError';
 	}
 }
@@ -66,23 +66,25 @@ export class Validator {
 		};
 	}
 
-	error(message: string, pos: number) {
+	error(message: string, pos: { start: number, end: number }) {
 		throw new ValidationError(message, this.source, pos, this.filename);
 	}
 
-	warn(message: string, pos: number) {
+	warn(message: string, pos: { start: number, end: number }) {
 		if (!this.locator) this.locator = getLocator(this.source);
-		const { line, column } = this.locator(pos);
+		const start = this.locator(pos.start);
+		const end = this.locator(pos.end);
 
-		const frame = getCodeFrame(this.source, line, column);
+		const frame = getCodeFrame(this.source, start.line, start.column);
 
 		this.onwarn({
 			message,
 			frame,
-			loc: { line: line + 1, column },
-			pos,
+			loc: { line: start.line + 1, column: start.column },
+			end: { line: end.line + 1, column: end.column },
+			pos: pos.start,
 			filename: this.filename,
-			toString: () => `${message} (${line + 1}:${column})\n${frame}`,
+			toString: () => `${message} (${start.line + 1}:${start.column})\n${frame}`,
 		});
 	}
 }
@@ -148,7 +150,7 @@ export default function validate(
 						if (!validator.used[category].has(name)) {
 							validator.warn(
 								`The '${name}' ${categories[category]} is unused`,
-								prop.start
+								prop
 							);
 						}
 					});

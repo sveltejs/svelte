@@ -5,6 +5,10 @@
       "line": 1,
       "column": 11
     },
+		"end": {
+			"line": 1,
+			"column": 37
+		},
     "pos": 11
   },
   {
@@ -13,6 +17,10 @@
       "line": 2,
       "column": 14
     },
+		"end": {
+			"line": 2,
+			"column": 27
+		},
     "pos": 65
   },
   {
@@ -21,6 +29,10 @@
       "line": 3,
       "column": 14
     },
+		"end": {
+			"line": 3,
+			"column": 28
+		},
     "pos": 130
   }
 ]

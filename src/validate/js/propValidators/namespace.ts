@@ -11,7 +11,7 @@ export default function namespace(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'Literal' || typeof ns !== 'string') {
 		validator.error(
 			`The 'namespace' property must be a string literal representing a valid namespace`,
-			prop.start
+			prop
 		);
 	}
 
@@ -20,10 +20,10 @@ export default function namespace(validator: Validator, prop: Node) {
 		if (match) {
 			validator.error(
 				`Invalid namespace '${ns}' (did you mean '${match}'?)`,
-				prop.start
+				prop
 			);
 		} else {
-			validator.error(`Invalid namespace '${ns}'`, prop.start);
+			validator.error(`Invalid namespace '${ns}'`, prop);
 		}
 	}
 }
