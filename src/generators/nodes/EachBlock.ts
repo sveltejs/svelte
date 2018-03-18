@@ -1,7 +1,6 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
-import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 
@@ -250,6 +249,9 @@ export default class EachBlock extends Node {
 		const head = block.getUniqueName(`${each}_head`);
 		const last = block.getUniqueName(`${each}_last`);
 		const expected = block.getUniqueName(`${each}_expected`);
+		const keep = block.getUniqueName(`${each}_keep`);
+		const mounts = block.getUniqueName(`${each}_mounts`);
+		const next_iteration = block.getUniqueName(`${each}_next_iteration`);
 
 		block.addVariable(lookup, `@blankObject()`);
 		block.addVariable(head);
@@ -313,12 +315,11 @@ export default class EachBlock extends Node {
 		`);
 
 		const dynamic = this.block.hasUpdateMethod;
-
-		let destroy;
+		let fn_destroy;
 		if (this.block.hasOutroMethod) {
-			const fn = block.getUniqueName(`${each}_outro`);
+			fn_destroy = block.getUniqueName(`${each}_outro`);
 			block.builders.init.addBlock(deindent`
-				function ${fn}(iteration) {
+				function ${fn_destroy}(iteration) {
 					iteration.o(function() {
 						iteration.u();
 						iteration.d();
@@ -326,55 +327,43 @@ export default class EachBlock extends Node {
 					});
 				}
 			`);
-
-			destroy = deindent`
-				while (${expected}) {
-					${fn}(${expected});
-					${expected} = ${expected}.next;
-				}
-
-				for (#i = 0; #i < discard_pile.length; #i += 1) {
-					if (discard_pile[#i].discard) {
-						${fn}(discard_pile[#i]);
-					}
-				}
-			`;
 		} else {
-			const fn = block.getUniqueName(`${each}_destroy`);
+			fn_destroy = block.getUniqueName(`${each}_destroy`);
 			block.builders.init.addBlock(deindent`
-				function ${fn}(iteration) {
-					iteration.u();
+				function ${fn_destroy}(iteration) {
+					var first = iteration.first
+					if (first && first.parentNode) {
+						iteration.u();
+					}
 					iteration.d();
 					${lookup}[iteration.key] = null;
 				}
 			`);
-
-			destroy = deindent`
-				while (${expected}) {
-					${fn}(${expected});
-					${expected} = ${expected}.next;
-				}
-
-				for (#i = 0; #i < discard_pile.length; #i += 1) {
-					var ${iteration} = discard_pile[#i];
-					if (${iteration}.discard) {
-						${fn}(${iteration});
-					}
-				}
-			`;
 		}
+		const destroy = deindent`
+		${iteration} = ${head};
+		while(${iteration}) {
+			if (!${keep}[${iteration}.key]) {
+				${fn_destroy}(${iteration});
+			}
+			${iteration} = ${iteration}.next;
+		}
+		`;
 
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
-
 			var ${expected} = ${head};
 			var ${last} = null;
 
-			var discard_pile = [];
+			var ${keep} = {};
+			var ${mounts} = {};
+			var ${next_iteration} = null;
 
 			for (#i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
 				var ${iteration} = ${lookup}[${key}];
+				var next_data = ${each_block_value}[#i+1];
+				var next = next_data && ${lookup}[next_data.${this.key}];
 
 				var ${this.each_context} = @assign({}, state, {
 					${this.contextProps.join(',\n')}
@@ -382,57 +371,52 @@ export default class EachBlock extends Node {
 
 				${dynamic &&
 					`if (${iteration}) ${iteration}.p(changed, ${this.each_context});`}
-
-				if (${expected}) {
-					if (${key} === ${expected}.key) {
-						${expected} = ${expected}.next;
-					} else {
-						if (${iteration}) {
-							// probably a deletion
-							while (${expected} && ${expected}.key !== ${key}) {
-								${expected}.discard = true;
-								discard_pile.push(${expected});
-								${expected} = ${expected}.next;
-							};
-
-							${expected} = ${expected} && ${expected}.next;
-							${iteration}.discard = false;
-							${iteration}.last = ${last};
-
-							if (!${expected}) ${iteration}.m(${updateMountNode}, ${anchor});
-						} else {
-							// key is being inserted
-							${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
-							${iteration}.c();
-							${iteration}.${mountOrIntro}(${updateMountNode}, ${expected}.first);
-
-							${expected}.last = ${iteration};
-							${iteration}.next = ${expected};
-						}
-					}
+				if (${expected} && (${key} === ${expected}.key)) {
+					var first = ${iteration} && ${iteration}.first;
+					var parentNode = first && first.parentNode
+					if (!parentNode || (${iteration} && ${iteration}.next) != next) ${mounts}[${key}] = ${iteration};
+					${expected} = ${iteration}.next;
+				} else if (${iteration}) {
+					${mounts}[${key}] = ${iteration};
+					${expected} = ${iteration}.next;
 				} else {
-					// we're appending from this point forward
-					if (${iteration}) {
-						${iteration}.discard = false;
-						${iteration}.next = null;
-						${iteration}.m(${updateMountNode}, ${anchor});
-					} else {
-						${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
-						${iteration}.c();
-						${iteration}.${mountOrIntro}(${updateMountNode}, ${anchor});
-					}
+					// key is being inserted
+					${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, ${this.each_context});
+					${iteration}.c();
+					${mounts}[${key}] = ${iteration};
 				}
-
-				if (${last}) ${last}.next = ${iteration};
-				${iteration}.last = ${last};
-				${this.block.hasIntroMethod && `${iteration}.i(${updateMountNode}, ${anchor});`}
+				${lookup}[${key}] = ${iteration};
+				${keep}[${iteration}.key] = ${iteration};
 				${last} = ${iteration};
 			}
-
-			if (${last}) ${last}.next = null;
-
 			${destroy}
 
+			// Work backwards due to DOM api having insertBefore
+			for (#i = ${each_block_value}.${length} - 1; #i >= 0; #i -= 1) {
+				var data = ${each_block_value}[#i];
+				var ${key} = data.${this.key};
+				${iteration} = ${lookup}[${key}];
+				if (${mounts}[${key}]) {
+					var anchor;
+					${this.block.hasOutroMethod
+						? deindent`
+							var key_next_iteration = ${next_iteration} && ${next_iteration}.key;
+							var iteration_anchor = ${iteration}.next;
+							var key_anchor;
+							do {
+								anchor = iteration_anchor && iteration_anchor.first;
+								iteration_anchor = iteration_anchor && iteration_anchor.next;
+								key_anchor = iteration_anchor && iteration_anchor.key;
+							} while(iteration_anchor && key_anchor != key_next_iteration && !${keep}[key_anchor])`
+						: deindent`
+							anchor = ${next_iteration} && ${next_iteration}.first;
+							` }
+					${mounts}[${key}].${mountOrIntro}(${updateMountNode}, anchor);
+				}
+				${iteration}.next = ${next_iteration};
+				if (${next_iteration}) ${next_iteration}.last = ${iteration};
+				${next_iteration} = ${iteration};
+			}
 			${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${this.key}];
 		`);
 
