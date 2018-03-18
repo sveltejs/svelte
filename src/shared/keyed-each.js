@@ -17,7 +17,9 @@ export function outroAndDestroyIteration(iteration, lookup) {
 	});
 }
 
-export function updateKeyedEach(component, key, changed, key_prop, dynamic, list, head, lookup, updateMountNode, hasOutroMethod, create_each_block, get_context) {
+// TODO is it possible to avoid mounting iterations that are
+// already in the right place?
+export function updateKeyedEach(component, key, changed, key_prop, dynamic, list, head, lookup, node, has_outro, create_each_block, intro_method, get_context) {
 	var keep = {};
 
 	var i = list.length;
@@ -36,7 +38,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 		keep[key] = 1;
 	}
 
-	var destroy = hasOutroMethod
+	var destroy = has_outro
 		? outroAndDestroyIteration
 		: destroyIteration;
 
@@ -55,7 +57,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 
 		var anchor;
 
-		if (hasOutroMethod) {
+		if (has_outro) {
 			var next_key = next && next.key;
 			var neighbour = iteration.next;
 			var anchor_key;
@@ -69,7 +71,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 			anchor = next && next.first;
 		}
 
-		iteration[iteration.i ? 'i' : 'm'](updateMountNode, anchor);
+		iteration[intro_method](node, anchor);
 
 		iteration.next = next;
 		if (next) next.last = iteration;

@@ -319,7 +319,7 @@ export default class EachBlock extends Node {
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
 
-			@updateKeyedEach(#component, ${key}, changed, "${this.key}", ${dynamic}, ${each_block_value}, ${head}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, function(#i) {
+			@updateKeyedEach(#component, ${key}, changed, "${this.key}", ${dynamic}, ${each_block_value}, ${head}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", function(#i) {
 				return @assign({}, state, {
 					${this.contextProps.join(',\n')}
 				});
