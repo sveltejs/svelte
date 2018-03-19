@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 1.58.0
+
+* Fast row swapping ([#588](https://github.com/sveltejs/svelte/issues/588))
+* Better error messages for invalid directives ([#1242](https://github.com/sveltejs/svelte/pull/1242))
+* Fix local context variable bugs ([#1240](https://github.com/sveltejs/svelte/pull/1243), [#1254](https://github.com/sveltejs/svelte/pull/1254))
+* Skip missing property warnings for computed/global properties in dev mode ([#1246](https://github.com/sveltejs/svelte/pull/1246))
+* Add end position to warnings ([#1250](https://github.com/sveltejs/svelte/pull/1250))
+
 ## 1.57.4
 
 * Deconflict context names ([#1229](https://github.com/sveltejs/svelte/issues/1229))
