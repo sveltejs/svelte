@@ -111,9 +111,10 @@ export default function validateElement(
 					);
 				}
 
-				if (checkTypeAttribute(validator, node) !== 'checkbox') {
+				const checkTypeAttribute__ = checkTypeAttribute(validator, node);
+				if (checkTypeAttribute__ !== 'checkbox' && checkTypeAttribute__ !== 'radio') {
 					validator.error(
-						`'${name}' binding can only be used with <input type="checkbox">`,
+						`'${name}' binding can only be used with <input type="checkbox"> or <input type="radio">`,
 						attribute
 					);
 				}
