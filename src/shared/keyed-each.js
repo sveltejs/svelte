@@ -74,14 +74,15 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 			var anchor;
 
 			if (has_outro) {
-				var key_next_iteration = next_iteration && next_iteration.key;
-				var iteration_anchor = iteration.next;
-				var key_anchor;
-				do {
-					anchor = iteration_anchor && iteration_anchor.first;
-					iteration_anchor = iteration_anchor && iteration_anchor.next;
-					key_anchor = iteration_anchor && iteration_anchor.key;
-				} while(iteration_anchor && key_anchor != key_next_iteration && !keep[key_anchor])
+				var next_key = next && next.key;
+				var neighbour = iteration.next;
+				var anchor_key;
+
+				while (neighbour && anchor_key != next_key && !keep[anchor_key]) {
+					anchor = neighbour && neighbour.first;
+					neighbour = neighbour.next;
+					anchor_key = neighbour && neighbour.key;
+				}
 			} else {
 				anchor = next_iteration && next_iteration.first;
 			}
