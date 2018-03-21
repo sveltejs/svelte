@@ -17,39 +17,39 @@ export function outroAndDestroyIteration(iteration, lookup) {
 	});
 }
 
-// TODO is it possible to avoid mounting iterations that are
-// already in the right place?
 export function updateKeyedEach(component, key, changed, key_prop, dynamic, list, head, lookup, node, has_outro, create_each_block, intro_method, get_context) {
 	var expected = head;
 
 	var keep = {};
-	var mounts = {};
+	var should_remount = {};
 
 	for (var i = 0; i < list.length; i += 1) {
 		var key = list[i][key_prop];
 		var iteration = lookup[key];
-		var next_data = list[i+1];
-		var next = next_data && lookup[next_data[key_prop]];
 
-		if (dynamic && iteration) iteration.p(changed, get_context(i)); // TODO should this be deferred? could it be redundant?
+		if (dynamic && iteration) iteration.p(changed, get_context(i));
 
 		if (expected && (key === expected.key)) {
 			var first = iteration && iteration.first;
-			var parentNode = first && first.parentNode
-			if (!parentNode || (iteration && iteration.next) != next) mounts[key] = iteration;
+			var parentNode = first && first.parentNode;
+
+			var next_item = list[i + 1];
+			var next = next_item && lookup[next_item[key_prop]];
+
+			if (!parentNode || (iteration && iteration.next) != next) should_remount[key] = 1;
 			expected = iteration.next;
 		} else if (iteration) {
-			mounts[key] = iteration;
+			should_remount[key] = 1;
 			expected = iteration.next;
 		} else {
 			// key is being inserted
 			iteration = lookup[key] = create_each_block(component, key, get_context(i));
 			iteration.c();
-			mounts[key] = iteration;
+			should_remount[key] = 1;
 		}
+
 		lookup[key] = iteration;
-		keep[iteration.key] = iteration;
-		// last = iteration;
+		keep[iteration.key] = 1;
 	}
 
 	var destroy = has_outro
@@ -70,8 +70,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 		var key = data[key_prop];
 		iteration = lookup[key];
 
-		var block = mounts[key];
-		if (block) {
+		if (key in should_remount) {
 			var anchor;
 
 			if (has_outro) {
@@ -87,7 +86,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 				anchor = next_iteration && next_iteration.first;
 			}
 
-			block[intro_method](node, anchor);
+			iteration[intro_method](node, anchor);
 		}
 
 		iteration.next = next_iteration;
