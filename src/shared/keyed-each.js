@@ -56,20 +56,12 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 	var will_move = {};
 	var did_move = {};
 
-	var r = 100;
-
-	console.log('deltas', deltas);
-
 	while (o && n) {
-		if (!--r) throw new Error('hmm');
-
 		var item = list[n - 1];
 		var new_key = item[key_prop];
 		var old_key = old_keys[o - 1];
-		console.log(`${old_keys.slice(0, o - 1).join('')}[${old_key}]${old_keys.slice(o).join('')} ${new_keys.slice(0, n - 1)}[${new_key}]${new_keys.slice(n)}`);
 
 		if (new_key === old_key) {
-			console.log('SAME SAME');
 			o--;
 			n--;
 
@@ -78,14 +70,12 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 
 		else if (lookup[old_key] && !new_blocks[old_key]) {
 			// removing
-			console.log(`removing ${old_key}`);
 			destroyIteration(lookup[old_key], lookup);
 			o--;
 		}
 
 		else if (!lookup[new_key]) {
 			// creating
-			console.log(`adding ${new_key}`);
 			new_blocks[new_key][intro_method](node, next && next.first);
 			next = new_blocks[new_key];
 			lookup[new_key] = new_blocks[new_key];
@@ -93,41 +83,27 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 		}
 
 		else if (lookup[old_key] && lookup[new_key]) {
-			console.log('both previously existed');
 			if (did_move[old_key]) {
-				console.log('did move', old_key);
 				o--;
-				// next = new_blocks[old_key];
 
 			} else if (will_move[new_key]) {
-				console.log('moving', new_key);
 				new_blocks[new_key][intro_method](node, next && next.first);
+				next = new_blocks[new_key];
 				n--;
 
 			} else if (deltas[new_key] > deltas[old_key]) {
 				// we already have both blocks, but they're out of order
-				console.log('inserting', new_key);
 				new_blocks[new_key][intro_method](node, next && next.first);
 				next = new_blocks[new_key];
 				did_move[new_key] = true;
 				n--;
 
 			} else {
-				console.log('will move', old_key);
 				will_move[old_key] = true;
 				o--;
 			}
 		}
-
-		else {
-			throw new Error('???');
-		}
-
-		console.log(document.body.textContent);
-		console.log(`next is ${next && next.key}\n`);
 	}
-
-	console.log({ will_move: Object.keys(will_move) });
 
 	while (o--) {
 		var old_key = old_keys[o];
