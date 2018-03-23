@@ -17,9 +17,9 @@ fs.readdirSync(__dirname).forEach(file => {
 		if (node.type !== 'ExportNamedDeclaration') return;
 
 		// check no ES6+ slipped in
-		acorn.parse(source.slice(node.declaration.start, node.end), {
-			ecmaVersion: 5
-		});
+		// acorn.parse(source.slice(node.declaration.start, node.end), {
+		// 	ecmaVersion: 5
+		// });
 
 		const declaration = node.declaration;
 		if (!declaration) return;

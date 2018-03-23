@@ -18,43 +18,52 @@ function permute() {
 }
 
 export default {
+	solo: true,
+	allowES2015: true,
+
 	data: {
-		values: toObjects('abc'),
+		values: toObjects('duqbmineapjhtlofrskcg'),
 	},
 
-	html: `(a)(b)(c)`,
+	// html: `(a)(b)(c)`,
 
 	test(assert, component, target) {
 		function test(sequence) {
 			const previous = target.textContent;
+			console.group(`${previous.replace(/[()]/g, '')} -> ${sequence}`);
 			const expected = sequence.split('').map(x => `(${x})`).join('');
 			component.set({ values: toObjects(sequence) });
+			console.log(`result: ${target.textContent.replace(/[()]/g, '')}`);
 			assert.htmlEqual(
 				target.innerHTML,
 				expected,
 				`\n${previous} -> ${expected}\n${target.textContent}`
 			);
+			console.groupEnd();
 		}
 
 		// first, some fixed tests so that we can debug them
-		test('abc');
-		test('abcd');
-		test('abecd');
-		test('fabecd');
-		test('fabed');
-		test('beadf');
-		test('ghbeadf');
-		test('gf');
-		test('gc');
-		test('g');
-		test('');
-		test('abc');
-		test('duqbmineapjhtlofrskcg');
+		// test('abc');
+		// test('abcd');
+		// test('abecd');
+		// test('fabecd');
+		// test('fabed');
+		// test('beadf');
+		// test('ghbeadf');
+		// test('gf');
+		// test('gc');
+		// test('g');
+		// test('');
+		// test('abc');
+		// test('duqbmineapjhtlofrskcg');
 		test('hdnkjougmrvftewsqpailcb');
 		test('bidhfacge');
 		test('kgjnempcboaflidh');
+		test('fekbijachgd');
+		test('kdmlgfbicheja');
+		return;
 
 		// then, we party
-		for (let i = 0; i < 100; i += 1) test(permute());
+		for (let i = 0; i < 1000; i += 1) test(permute());
 	}
 };
