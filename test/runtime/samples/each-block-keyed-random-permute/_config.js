@@ -18,9 +18,6 @@ function permute() {
 }
 
 export default {
-	solo: true,
-	allowES2015: true,
-
 	data: {
 		values: toObjects('abc'),
 	},

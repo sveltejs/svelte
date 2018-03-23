@@ -28,13 +28,12 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 		head = head.next;
 	}
 
-	var new_keys = list.map(item => item[key_prop]).join(''); // TODO this is temporary
-
 	var o = old_keys.length;
 	var n = list.length;
 
 	var new_blocks = {};
 	var deltas = {};
+
 	var i = n;
 	while (i--) {
 		var key = list[i][key_prop];
@@ -43,7 +42,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 			block = create_each_block(component, key, get_context(i));
 			block.c();
 		} else if (dynamic) {
-			// TODO update
+			block.p(changed, get_context(i));
 		}
 
 		new_blocks[key] = block;
@@ -55,6 +54,8 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 
 	var will_move = {};
 	var did_move = {};
+
+	var destroy = has_outro ? outroAndDestroyIteration : destroyIteration;
 
 	while (o && n) {
 		var item = list[n - 1];
@@ -70,7 +71,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 
 		else if (lookup[old_key] && !new_blocks[old_key]) {
 			// removing
-			destroyIteration(lookup[old_key], lookup);
+			destroy(lookup[old_key], lookup);
 			o--;
 		}
 
@@ -91,7 +92,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 				next = new_blocks[new_key];
 				n--;
 
-			} else if (deltas[new_key] > deltas[old_key]) {
+			} else if (deltas[new_key] > deltas[old_key]) { // TODO does this make a difference?
 				// we already have both blocks, but they're out of order
 				new_blocks[new_key][intro_method](node, next && next.first);
 				next = new_blocks[new_key];
@@ -107,7 +108,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 
 	while (o--) {
 		var old_key = old_keys[o];
-		if (!new_blocks[old_key]) destroyIteration(lookup[old_key], lookup);
+		if (!new_blocks[old_key]) destroy(lookup[old_key], lookup);
 	}
 
 	while (n--) {
