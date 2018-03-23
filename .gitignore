@@ -18,3 +18,4 @@ package-lock.json
 .idea/
 *.iml
 store.umd.js
+yarn-error.log
