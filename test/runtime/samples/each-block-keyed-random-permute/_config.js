@@ -57,6 +57,6 @@ export default {
 		test('kdmlgfbicheja');
 
 		// then, we party
-		for (let i = 0; i < 1000; i += 1) test(permute());
+		for (let i = 0; i < 100; i += 1) test(permute());
 	}
 };
