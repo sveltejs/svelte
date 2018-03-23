@@ -92,7 +92,7 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 				next = new_blocks[new_key];
 				n--;
 
-			} else if (deltas[new_key] > deltas[old_key]) { // TODO does this make a difference?
+			} else if (deltas[new_key] > deltas[old_key]) {
 				// we already have both blocks, but they're out of order
 				new_blocks[new_key][intro_method](node, next && next.first);
 				next = new_blocks[new_key];
