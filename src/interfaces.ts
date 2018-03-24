@@ -62,6 +62,10 @@ export interface CompileOptions {
 	css?: boolean;
 	store?: boolean;
 
+	ssr?: {
+		preserveComments?: boolean | false;
+	};
+
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
 }
