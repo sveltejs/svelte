@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.58.2
+
+* (1.58.1 failed to publish)
+
 ## 1.58.1
 
 * Actions ([#1247](https://github.com/sveltejs/svelte/pull/1247))
