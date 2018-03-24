@@ -1,80 +1,99 @@
-import { assign } from './utils.js';
-
-export function destroyIteration(iteration, lookup) {
-	var first = iteration.first
-	if (first && first.parentNode) {
-		iteration.u();
-	}
-	iteration.d();
-	lookup[iteration.key] = null;
+export function destroyBlock(block, lookup) {
+	block.u();
+	block.d();
+	lookup[block.key] = null;
 }
 
-export function outroAndDestroyIteration(iteration, lookup) {
-	iteration.o(function() {
-		iteration.u();
-		iteration.d();
-		lookup[iteration.key] = null;
+export function outroAndDestroyBlock(block, lookup) {
+	block.o(function() {
+		destroyBlock(block, lookup);
 	});
 }
 
-// TODO is it possible to avoid mounting iterations that are
-// already in the right place?
-export function updateKeyedEach(component, key, changed, key_prop, dynamic, list, head, lookup, node, has_outro, create_each_block, intro_method, get_context) {
-	var keep = {};
+export function updateKeyedEach(old_blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
+	var o = old_blocks.length;
+	var n = list.length;
 
-	var i = list.length;
+	var i = o;
+	var old_indexes = {};
+	while (i--) old_indexes[old_blocks[i].key] = i;
+
+	var new_blocks = [];
+	var new_lookup = {};
+	var deltas = {};
+
+	var i = n;
 	while (i--) {
 		var key = list[i][key_prop];
-		var iteration = lookup[key];
+		var block = lookup[key];
 
-		if (iteration) {
-			if (dynamic) iteration.p(changed, get_context(i));
-		} else {
-			iteration = lookup[key] = create_each_block(component, key, get_context(i));
-			iteration.c();
+		if (!block) {
+			block = create_each_block(component, key, get_context(i));
+			block.c();
+		} else if (dynamic) {
+			block.p(changed, get_context(i));
 		}
 
-		lookup[key] = iteration;
-		keep[key] = 1;
-	}
+		new_blocks[i] = new_lookup[key] = block;
 
-	var destroy = has_outro
-		? outroAndDestroyIteration
-		: destroyIteration;
-
-	iteration = head;
-	while (iteration) {
-		if (!keep[iteration.key]) destroy(iteration, lookup);
-		iteration = iteration.next;
+		if (key in old_indexes) deltas[key] = Math.abs(i - old_indexes[key]);
 	}
 
 	var next = null;
 
-	i = list.length;
-	while (i--) {
-		key = list[i][key_prop];
-		iteration = lookup[key];
+	var will_move = {};
+	var did_move = {};
 
-		var anchor;
+	var destroy = has_outro ? outroAndDestroyBlock : destroyBlock;
 
-		if (has_outro) {
-			var next_key = next && next.key;
-			var neighbour = iteration.next;
-			var anchor_key;
+	function insert(block) {
+		block[intro_method](node, next && next.first);
+		next = lookup[block.key] = block;
+		n--;
+	}
 
-			while (neighbour && anchor_key != next_key && !keep[anchor_key]) {
-				anchor = neighbour && neighbour.first;
-				neighbour = neighbour.next;
-				anchor_key = neighbour && neighbour.key;
-			}
-		} else {
-			anchor = next && next.first;
+	while (o && n) {
+		var new_block = new_blocks[n - 1];
+		var old_block = old_blocks[o - 1];
+		var new_key = new_block.key;
+		var old_key = old_block.key;
+
+		if (new_block === old_block) {
+			// do nothing
+			next = new_block;
+			o--;
+			n--;
 		}
 
-		iteration[intro_method](node, anchor);
+		else if (!new_lookup[old_key]) {
+			// remove old block
+			destroy(old_block, lookup);
+			o--;
+		}
 
-		iteration.next = next;
-		if (next) next.last = iteration;
-		next = iteration;
+		else if (!lookup[new_key] || will_move[new_key]) {
+			insert(new_block);
+		}
+
+		else if (did_move[old_key]) {
+			o--;
+
+		} else if (deltas[new_key] > deltas[old_key]) {
+			did_move[new_key] = true;
+			insert(new_block);
+
+		} else {
+			will_move[old_key] = true;
+			o--;
+		}
 	}
+
+	while (o--) {
+		var old_block = old_blocks[o];
+		if (!new_lookup[old_block.key]) destroy(old_block, lookup);
+	}
+
+	while (n) insert(new_blocks[n - 1]);
+
+	return new_blocks;
 }

@@ -246,18 +246,11 @@ export default class EachBlock extends Node {
 		}
 	) {
 		const key = block.getUniqueName('key');
+		const blocks = block.getUniqueName(`${each}_blocks`);
 		const lookup = block.getUniqueName(`${each}_lookup`);
-		const iteration = block.getUniqueName(`${each}_iteration`);
-		const head = block.getUniqueName(`${each}_head`);
-		const last = block.getUniqueName(`${each}_last`);
-		const expected = block.getUniqueName(`${each}_expected`);
-		const keep = block.getUniqueName(`${each}_keep`);
-		const mounts = block.getUniqueName(`${each}_mounts`);
-		const next_iteration = block.getUniqueName(`${each}_next_iteration`);
 
+		block.addVariable(blocks, '[]');
 		block.addVariable(lookup, `@blankObject()`);
-		block.addVariable(head);
-		block.addVariable(last);
 
 		if (this.children[0].isDomNode()) {
 			this.block.first = this.children[0].var;
@@ -274,15 +267,9 @@ export default class EachBlock extends Node {
 		block.builders.init.addBlock(deindent`
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
-				var ${iteration} = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign({}, state, {
+				${blocks}[#i] = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign({}, state, {
 					${this.contextProps.join(',\n')}
 				}));
-
-				if (${last}) ${last}.next = ${iteration};
-				${iteration}.last = ${last};
-				${last} = ${iteration};
-
-				if (#i === 0) ${head} = ${iteration};
 			}
 		`);
 
@@ -291,29 +278,17 @@ export default class EachBlock extends Node {
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.create.addBlock(deindent`
-			var ${iteration} = ${head};
-			while (${iteration}) {
-				${iteration}.c();
-				${iteration} = ${iteration}.next;
-			}
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].c();
 		`);
 
 		if (parentNodes) {
 			block.builders.claim.addBlock(deindent`
-				var ${iteration} = ${head};
-				while (${iteration}) {
-					${iteration}.l(${parentNodes});
-					${iteration} = ${iteration}.next;
-				}
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].l(${parentNodes});
 			`);
 		}
 
 		block.builders.mount.addBlock(deindent`
-			var ${iteration} = ${head};
-			while (${iteration}) {
-				${iteration}.${mountOrIntro}(${initialMountNode}, ${anchorNode});
-				${iteration} = ${iteration}.next;
-			}
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode});
 		`);
 
 		const dynamic = this.block.hasUpdateMethod;
@@ -321,31 +296,21 @@ export default class EachBlock extends Node {
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
 
-			@updateKeyedEach(#component, ${key}, changed, "${this.key}", ${dynamic}, ${each_block_value}, ${head}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", function(#i) {
+			${blocks} = @updateKeyedEach(${blocks}, #component, changed, "${this.key}", ${dynamic}, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", function(#i) {
 				return @assign({}, state, {
 					${this.contextProps.join(',\n')}
 				});
 			});
-
-			${head} = ${lookup}[${each_block_value}[0] && ${each_block_value}[0].${this.key}];
 		`);
 
 		if (!parentNode) {
 			block.builders.unmount.addBlock(deindent`
-				var ${iteration} = ${head};
-				while (${iteration}) {
-					${iteration}.u();
-					${iteration} = ${iteration}.next;
-				}
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].u();
 			`);
 		}
 
 		block.builders.destroy.addBlock(deindent`
-			var ${iteration} = ${head};
-			while (${iteration}) {
-				${iteration}.d();
-				${iteration} = ${iteration}.next;
-			}
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].d();
 		`);
 	}
 

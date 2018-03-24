@@ -53,6 +53,8 @@ export default {
 		test('hdnkjougmrvftewsqpailcb');
 		test('bidhfacge');
 		test('kgjnempcboaflidh');
+		test('fekbijachgd');
+		test('kdmlgfbicheja');
 
 		// then, we party
 		for (let i = 0; i < 100; i += 1) test(permute());
