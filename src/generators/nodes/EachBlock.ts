@@ -250,10 +250,6 @@ export default class EachBlock extends Node {
 		const iteration = block.getUniqueName(`${each}_iteration`);
 		const head = block.getUniqueName(`${each}_head`);
 		const last = block.getUniqueName(`${each}_last`);
-		const expected = block.getUniqueName(`${each}_expected`);
-		const keep = block.getUniqueName(`${each}_keep`);
-		const mounts = block.getUniqueName(`${each}_mounts`);
-		const next_iteration = block.getUniqueName(`${each}_next_iteration`);
 
 		block.addVariable(lookup, `@blankObject()`);
 		block.addVariable(head);
@@ -279,7 +275,6 @@ export default class EachBlock extends Node {
 				}));
 
 				if (${last}) ${last}.next = ${iteration};
-				${iteration}.last = ${last};
 				${last} = ${iteration};
 
 				if (#i === 0) ${head} = ${iteration};
