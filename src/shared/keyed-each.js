@@ -17,18 +17,19 @@ export function outroAndDestroyIteration(iteration, lookup) {
 	});
 }
 
-export function updateKeyedEach(blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
+export function updateKeyedEach(old_blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
 	var old_indexes = {};
 	var i = 0;
 
-	var old_keys = blocks.map(function(block) {
+	var old_keys = old_blocks.map(function(block) {
 		return block.key;
 	});
 
-	var o = old_keys.length;
+	var o = old_blocks.length;
 	var n = list.length;
 
-	var new_blocks = {};
+	var new_blocks = [];
+	var new_lookup = {};
 	var deltas = {};
 
 	var i = n;
@@ -42,7 +43,7 @@ export function updateKeyedEach(blocks, component, changed, key_prop, dynamic, l
 			block.p(changed, get_context(i));
 		}
 
-		new_blocks[key] = block;
+		new_blocks[i] = new_lookup[key] = block;
 
 		if (key in old_indexes) deltas[key] = Math.abs(i - old_indexes[key]);
 	}
@@ -55,44 +56,45 @@ export function updateKeyedEach(blocks, component, changed, key_prop, dynamic, l
 	var destroy = has_outro ? outroAndDestroyIteration : destroyIteration;
 
 	while (o && n) {
-		var item = list[n - 1];
-		var new_key = item[key_prop];
-		var old_key = old_keys[o - 1];
+		var new_block = new_blocks[n - 1];
+		var old_block = old_blocks[o - 1];
+		var new_key = new_block.key;
+		var old_key = old_block.key;
 
-		if (new_key === old_key) {
+		if (new_block === old_block) {
 			o--;
 			n--;
 
-			next = new_blocks[new_key];
+			next = new_block;
 		}
 
-		else if (lookup[old_key] && !new_blocks[old_key]) {
+		else if (!new_lookup[old_key]) {
 			// removing
-			destroy(lookup[old_key], lookup);
+			destroy(old_block, lookup);
 			o--;
 		}
 
 		else if (!lookup[new_key]) {
 			// creating
-			new_blocks[new_key][intro_method](node, next && next.first);
-			next = new_blocks[new_key];
-			lookup[new_key] = new_blocks[new_key];
+			new_block[intro_method](node, next && next.first);
+			next = lookup[new_key] = new_block;
 			n--;
 		}
 
-		else if (lookup[old_key] && lookup[new_key]) {
+		else {
+			// moving
 			if (did_move[old_key]) {
 				o--;
 
 			} else if (will_move[new_key]) {
-				new_blocks[new_key][intro_method](node, next && next.first);
-				next = new_blocks[new_key];
+				new_block[intro_method](node, next && next.first);
+				next = new_block;
 				n--;
 
 			} else if (deltas[new_key] > deltas[old_key]) {
 				// we already have both blocks, but they're out of order
-				new_blocks[new_key][intro_method](node, next && next.first);
-				next = new_blocks[new_key];
+				new_block[intro_method](node, next && next.first);
+				next = new_block;
 				did_move[new_key] = true;
 				n--;
 
@@ -104,17 +106,17 @@ export function updateKeyedEach(blocks, component, changed, key_prop, dynamic, l
 	}
 
 	while (o--) {
-		var old_key = old_keys[o];
-		if (!new_blocks[old_key]) destroy(lookup[old_key], lookup);
+		var old_block = old_blocks[o];
+		if (!new_lookup[old_block.key]) destroy(old_block, lookup);
 	}
 
 	while (n--) {
 		var key = list[n][key_prop];
-		new_blocks[key][intro_method](node, next && next.first);
-		next = lookup[key] = new_blocks[key];
+		new_lookup[key][intro_method](node, next && next.first);
+		next = lookup[key] = new_lookup[key];
 	}
 
 	return list.map(function(item) {
-		return new_blocks[item[key_prop]];
+		return new_lookup[item[key_prop]];
 	});
 }
