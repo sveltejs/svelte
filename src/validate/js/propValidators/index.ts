@@ -1,4 +1,5 @@
 import data from './data';
+import actions from './actions';
 import computed from './computed';
 import oncreate from './oncreate';
 import ondestroy from './ondestroy';
@@ -19,6 +20,7 @@ import immutable from './immutable';
 
 export default {
 	data,
+	actions,
 	computed,
 	oncreate,
 	ondestroy,

@@ -12,13 +12,14 @@ import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Ref from './Ref';
 import Transition from './Transition';
+import Action from './Action';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
-	attributes: (Attribute | Binding | EventHandler | Ref | Transition)[]; // TODO split these up sooner
+	attributes: (Attribute | Binding | EventHandler | Ref | Transition | Action)[]; // TODO split these up sooner
 	children: Node[];
 
 	init(
@@ -84,6 +85,8 @@ export default class Element extends Node {
 						this.generator.hasOutroTransitions = block.hasOutroMethod = true;
 						block.outros += 1;
 					}
+				} else if (attribute.type === 'Action' && attribute.expression) {
+					block.addDependencies(attribute.metadata.dependencies);
 				}
 			}
 		});
@@ -235,131 +238,11 @@ export default class Element extends Node {
 		}
 
 		this.addBindings(block, allUsedContexts);
-
-		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
-			attribute.render(block);
-		});
-
-		// event handlers
-		let eventHandlerUsesComponent = false;
-
-		this.attributes.filter((a: Node) => a.type === 'EventHandler').forEach((attribute: Node) => {
-			const isCustomEvent = generator.events.has(attribute.name);
-			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
-
-			const context = shouldHoist ? null : name;
-			const usedContexts: string[] = [];
-
-			if (attribute.expression) {
-				generator.addSourcemapLocations(attribute.expression);
-
-				const flattened = flattenReference(attribute.expression.callee);
-				if (!validCalleeObjects.has(flattened.name)) {
-					// allow event.stopPropagation(), this.select() etc
-					// TODO verify that it's a valid callee (i.e. built-in or declared method)
-					generator.code.prependRight(
-						attribute.expression.start,
-						`${block.alias('component')}.`
-					);
-					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
-				}
-
-				attribute.expression.arguments.forEach((arg: Node) => {
-					const { contexts } = block.contextualise(arg, context, true);
-
-					contexts.forEach(context => {
-						if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-						allUsedContexts.add(context);
-					});
-				});
-			}
-
-			const ctx = context || 'this';
-			const declarations = usedContexts
-				.map(name => {
-					if (name === 'state') {
-						if (shouldHoist) eventHandlerUsesComponent = true;
-						return `var state = ${block.alias('component')}.get();`;
-					}
-
-					const contextType = block.contextTypes.get(name);
-					if (contextType === 'each') {
-						const listName = block.listNames.get(name);
-						const indexName = block.indexNames.get(name);
-						const contextName = block.contexts.get(name);
-
-						return `var ${listName} = ${ctx}._svelte.${listName}, ${indexName} = ${ctx}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
-					}
-				})
-				.filter(Boolean);
-
-			// get a name for the event handler that is globally unique
-			// if hoisted, locally unique otherwise
-			const handlerName = (shouldHoist ? generator : block).getUniqueName(
-				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
-			);
-
-			// create the handler body
-			const handlerBody = deindent`
-				${eventHandlerUsesComponent &&
-					`var ${block.alias('component')} = ${ctx}._svelte.component;`}
-				${declarations}
-				${attribute.expression ?
-					`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
-					`${block.alias('component')}.fire("${attribute.name}", event);`}
-			`;
-
-			if (isCustomEvent) {
-				block.addVariable(handlerName);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${attribute.name}.call(#component, ${name}, function(event) {
-						${handlerBody}
-					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handlerName}.teardown();
-				`);
-			} else {
-				const handler = deindent`
-					function ${handlerName}(event) {
-						${handlerBody}
-					}
-				`;
-
-				if (shouldHoist) {
-					generator.blocks.push(handler);
-				} else {
-					block.builders.init.addBlock(handler);
-				}
-
-				block.builders.hydrate.addLine(
-					`@addListener(${name}, "${attribute.name}", ${handlerName});`
-				);
-
-				block.builders.destroy.addLine(
-					`@removeListener(${name}, "${attribute.name}", ${handlerName});`
-				);
-			}
-		});
-
-		// refs
-		this.attributes.filter((a: Node) => a.type === 'Ref').forEach((attribute: Node) => {
-			const ref = `#component.refs.${attribute.name}`;
-
-			block.builders.mount.addLine(
-				`${ref} = ${name};`
-			);
-
-			block.builders.destroy.addLine(
-				`if (${ref} === ${name}) ${ref} = null;`
-			);
-
-			generator.usesRefs = true; // so component.refs object is created
-		});
-
+		this.addAttributes(block);
+		const eventHandlerUsesComponent = this.addEventHandlers(block, allUsedContexts);
+		this.addRefs(block);
 		this.addTransitions(block);
+		this.addActions(block);
 
 		if (allUsedContexts.size || eventHandlerUsesComponent) {
 			const initialProps: string[] = [];
@@ -548,6 +431,135 @@ export default class Element extends Node {
 		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 	}
 
+	addAttributes(block: Block) {
+		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
+			attribute.render(block);
+		});
+	}
+
+	addEventHandlers(block: Block, allUsedContexts) {
+		const { generator } = this;
+		let eventHandlerUsesComponent = false;
+
+		this.attributes.filter((a: EventHandler) => a.type === 'EventHandler').forEach((attribute: EventHandler) => {
+			const isCustomEvent = generator.events.has(attribute.name);
+			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
+
+			const context = shouldHoist ? null : this.var;
+			const usedContexts: string[] = [];
+
+			if (attribute.expression) {
+				generator.addSourcemapLocations(attribute.expression);
+
+				const flattened = flattenReference(attribute.expression.callee);
+				if (!validCalleeObjects.has(flattened.name)) {
+					// allow event.stopPropagation(), this.select() etc
+					// TODO verify that it's a valid callee (i.e. built-in or declared method)
+					generator.code.prependRight(
+						attribute.expression.start,
+						`${block.alias('component')}.`
+					);
+					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
+				}
+
+				attribute.expression.arguments.forEach((arg: Node) => {
+					const { contexts } = block.contextualise(arg, context, true);
+
+					contexts.forEach(context => {
+						if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+						allUsedContexts.add(context);
+					});
+				});
+			}
+
+			const ctx = context || 'this';
+			const declarations = usedContexts
+				.map(name => {
+					if (name === 'state') {
+						if (shouldHoist) eventHandlerUsesComponent = true;
+						return `var state = ${block.alias('component')}.get();`;
+					}
+
+					const contextType = block.contextTypes.get(name);
+					if (contextType === 'each') {
+						const listName = block.listNames.get(name);
+						const indexName = block.indexNames.get(name);
+						const contextName = block.contexts.get(name);
+
+						return `var ${listName} = ${ctx}._svelte.${listName}, ${indexName} = ${ctx}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
+					}
+				})
+				.filter(Boolean);
+
+			// get a name for the event handler that is globally unique
+			// if hoisted, locally unique otherwise
+			const handlerName = (shouldHoist ? generator : block).getUniqueName(
+				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+			);
+
+			// create the handler body
+			const handlerBody = deindent`
+				${eventHandlerUsesComponent &&
+					`var ${block.alias('component')} = ${ctx}._svelte.component;`}
+				${declarations}
+				${attribute.expression ?
+					`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
+					`${block.alias('component')}.fire("${attribute.name}", event);`}
+			`;
+
+			if (isCustomEvent) {
+				block.addVariable(handlerName);
+
+				block.builders.hydrate.addBlock(deindent`
+					${handlerName} = %events-${attribute.name}.call(#component, ${this.var}, function(event) {
+						${handlerBody}
+					});
+				`);
+
+				block.builders.destroy.addLine(deindent`
+					${handlerName}.teardown();
+				`);
+			} else {
+				const handler = deindent`
+					function ${handlerName}(event) {
+						${handlerBody}
+					}
+				`;
+
+				if (shouldHoist) {
+					generator.blocks.push(handler);
+				} else {
+					block.builders.init.addBlock(handler);
+				}
+
+				block.builders.hydrate.addLine(
+					`@addListener(${this.var}, "${attribute.name}", ${handlerName});`
+				);
+
+				block.builders.destroy.addLine(
+					`@removeListener(${this.var}, "${attribute.name}", ${handlerName});`
+				);
+			}
+		});
+		return eventHandlerUsesComponent;
+	}
+
+	addRefs(block: Block) {
+		this.attributes.filter((a: Ref) => a.type === 'Ref').forEach((attribute: Ref) => {
+			const ref = `#component.refs.${attribute.name}`;
+
+			block.builders.mount.addLine(
+				`${ref} = ${this.var};`
+			);
+
+			block.builders.destroy.addLine(
+				`if (${ref} === ${this.var}) ${ref} = null;`
+			);
+
+			this.generator.usesRefs = true; // so component.refs object is created
+		});
+	}
+
 	addTransitions(
 		block: Block
 	) {
@@ -636,6 +648,45 @@ export default class Element extends Node {
 				`);
 			}
 		}
+	}
+
+	addActions(block: Block) {
+		this.attributes.filter((a: Action) => a.type === 'Action').forEach((attribute:Action) => {
+			const { expression } = attribute;
+			let snippet, dependencies;
+			if (expression) {
+				this.generator.addSourcemapLocations(expression);
+				block.contextualise(expression);
+				snippet = attribute.metadata.snippet;
+				dependencies = attribute.metadata.dependencies;
+			}
+			
+			const name = block.getUniqueName(
+				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
+			);
+
+			block.addVariable(name);
+			const fn = `%actions-${attribute.name}`;
+
+			block.builders.hydrate.addLine(
+				`${name} = ${fn}(${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
+			);
+
+			if (dependencies && dependencies.length) {
+				let conditional = `typeof ${name}.update === 'function' && `;
+				const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
+				conditional += dependencies.length > 1 ? `(${deps})` : deps;
+				
+				block.builders.update.addConditional(
+					conditional,
+					`${name}.update(${snippet});`
+				);
+			}
+
+			block.builders.destroy.addLine(
+				`if (typeof ${name}.destroy === 'function') ${name}.destroy();`
+			);
+		});
 	}
 
 	getStaticAttributeValue(name: string) {
