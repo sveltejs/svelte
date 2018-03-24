@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.58.1
+
+* Actions ([#1247](https://github.com/sveltejs/svelte/pull/1247))
+* Support `preserveComments` option in SSR mode ([#1265](https://github.com/sveltejs/svelte/issues/1265))
+* Fix performance regression ([#1274](https://github.com/sveltejs/svelte/pull/1274))
+
 ## 1.58.0
 
 * Fast row swapping ([#588](https://github.com/sveltejs/svelte/issues/588))
