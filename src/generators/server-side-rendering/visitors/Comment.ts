@@ -1,3 +1,7 @@
+import { SsrGenerator } from '../index';
+import Block from '../Block';
+import { Node } from '../../../interfaces';
+
 export default function visitComment(
 	generator: SsrGenerator,
 	block: Block,
