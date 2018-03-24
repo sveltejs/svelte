@@ -1,32 +1,22 @@
-import { assign } from './utils.js';
-
-export function destroyIteration(iteration, lookup) {
-	var first = iteration.first;
-	if (first && first.parentNode) {
-		iteration.u();
-	}
-	iteration.d();
-	lookup[iteration.key] = null;
+export function destroyBlock(block, lookup) {
+	block.u();
+	block.d();
+	lookup[block.key] = null;
 }
 
-export function outroAndDestroyIteration(iteration, lookup) {
-	iteration.o(function() {
-		iteration.u();
-		iteration.d();
-		lookup[iteration.key] = null;
+export function outroAndDestroyBlock(block, lookup) {
+	block.o(function() {
+		destroyBlock(block, lookup);
 	});
 }
 
 export function updateKeyedEach(old_blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
-	var old_indexes = {};
-	var i = 0;
-
-	var old_keys = old_blocks.map(function(block) {
-		return block.key;
-	});
-
 	var o = old_blocks.length;
 	var n = list.length;
+
+	var i = o;
+	var old_indexes = {};
+	while (i--) old_indexes[old_blocks[i].key] = i;
 
 	var new_blocks = [];
 	var new_lookup = {};
@@ -36,6 +26,7 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 	while (i--) {
 		var key = list[i][key_prop];
 		var block = lookup[key];
+
 		if (!block) {
 			block = create_each_block(component, key, get_context(i));
 			block.c();
@@ -53,7 +44,13 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 	var will_move = {};
 	var did_move = {};
 
-	var destroy = has_outro ? outroAndDestroyIteration : destroyIteration;
+	var destroy = has_outro ? outroAndDestroyBlock : destroyBlock;
+
+	function insert(block) {
+		block[intro_method](node, next && next.first);
+		next = lookup[block.key] = block;
+		n--;
+	}
 
 	while (o && n) {
 		var new_block = new_blocks[n - 1];
@@ -62,46 +59,32 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 		var old_key = old_block.key;
 
 		if (new_block === old_block) {
+			// do nothing
+			next = new_block;
 			o--;
 			n--;
-
-			next = new_block;
 		}
 
 		else if (!new_lookup[old_key]) {
-			// removing
+			// remove old block
 			destroy(old_block, lookup);
 			o--;
 		}
 
-		else if (!lookup[new_key]) {
-			// creating
-			new_block[intro_method](node, next && next.first);
-			next = lookup[new_key] = new_block;
-			n--;
+		else if (!lookup[new_key] || will_move[new_key]) {
+			insert(new_block);
 		}
 
-		else {
-			// moving
-			if (did_move[old_key]) {
-				o--;
+		else if (did_move[old_key]) {
+			o--;
 
-			} else if (will_move[new_key]) {
-				new_block[intro_method](node, next && next.first);
-				next = new_block;
-				n--;
+		} else if (deltas[new_key] > deltas[old_key]) {
+			did_move[new_key] = true;
+			insert(new_block);
 
-			} else if (deltas[new_key] > deltas[old_key]) {
-				// we already have both blocks, but they're out of order
-				new_block[intro_method](node, next && next.first);
-				next = new_block;
-				did_move[new_key] = true;
-				n--;
-
-			} else {
-				will_move[old_key] = true;
-				o--;
-			}
+		} else {
+			will_move[old_key] = true;
+			o--;
 		}
 	}
 
@@ -110,13 +93,7 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 		if (!new_lookup[old_block.key]) destroy(old_block, lookup);
 	}
 
-	while (n--) {
-		var key = list[n][key_prop];
-		new_lookup[key][intro_method](node, next && next.first);
-		next = lookup[key] = new_lookup[key];
-	}
+	while (n) insert(new_blocks[n - 1]);
 
-	return list.map(function(item) {
-		return new_lookup[item[key_prop]];
-	});
+	return new_blocks;
 }
