@@ -17,16 +17,13 @@ export function outroAndDestroyIteration(iteration, lookup) {
 	});
 }
 
-export function updateKeyedEach(component, key, changed, key_prop, dynamic, list, head, lookup, node, has_outro, create_each_block, intro_method, get_context) {
+export function updateKeyedEach(blocks, component, key, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
 	var old_indexes = {};
 	var i = 0;
 
-	var old_keys = [];
-	while (head) {
-		old_keys.push(head.key);
-		old_indexes[head.key] = i++;
-		head = head.next;
-	}
+	var old_keys = blocks.map(function(block) {
+		return block.key;
+	});
 
 	var o = old_keys.length;
 	var n = list.length;
@@ -114,17 +111,10 @@ export function updateKeyedEach(component, key, changed, key_prop, dynamic, list
 	while (n--) {
 		var key = list[n][key_prop];
 		new_blocks[key][intro_method](node, next && next.first);
-		next = new_blocks[key];
+		next = lookup[key] = new_blocks[key];
 	}
 
-	// TODO keep track of keys, so this is unnecessary
-	var next = null;
-	var i = list.length;
-	while (i--) {
-		var key = list[i][key_prop];
-		var block = lookup[key] = new_blocks[key];
-
-		block.next = next;
-		next = block;
-	}
+	return list.map(function(item) {
+		return new_blocks[item[key_prop]];
+	});
 }
