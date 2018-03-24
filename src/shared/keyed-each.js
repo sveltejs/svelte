@@ -17,7 +17,7 @@ export function outroAndDestroyIteration(iteration, lookup) {
 	});
 }
 
-export function updateKeyedEach(blocks, component, key, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
+export function updateKeyedEach(blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
 	var old_indexes = {};
 	var i = 0;
 
