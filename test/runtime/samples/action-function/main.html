@@ -1,0 +1,46 @@
+<button use:tooltip="t(actionTransKey)">action</button>
+
+<script>
+	const translations = {
+		perform_action: 'Perform an Action'
+	};
+
+	function t(key) {
+		return translations[key] || `{{${key}}}`;
+	}
+
+	export default {
+		data() {
+			return { t, actionTransKey: 'perform_action' };
+		},
+
+		actions: {
+			tooltip(node, text) {
+				let tooltip = null;
+
+				function onMouseEnter() {
+					tooltip = document.createElement('div');
+					tooltip.classList.add('tooltip');
+					tooltip.textContent = text;
+					node.parentNode.appendChild(tooltip);
+				}
+
+				function onMouseLeave() {
+					if (!tooltip) return;
+					tooltip.remove();
+					tooltip = null;
+				}
+
+				node.addEventListener('mouseenter', onMouseEnter);
+				node.addEventListener('mouseleave', onMouseLeave);
+				
+				return {
+					destroy() {
+						node.removeEventListener('mouseenter', onMouseEnter);
+						node.removeEventListener('mouseleave', onMouseLeave);
+					}
+				}
+			}
+		}
+	}
+</script>

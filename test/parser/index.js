@@ -71,8 +71,7 @@ describe('parse', () => {
 	});
 
 	it('includes AST in svelte.compile output', () => {
-		const dir = fs.readdirSync('test/parser/samples')[0];
-		const source = fs.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8');
+		const source = fs.readFileSync(`test/parser/samples/attribute-dynamic/input.html`, 'utf-8');
 
 		const { ast } = svelte.compile(source);
 		const parsed = svelte.parse(source);

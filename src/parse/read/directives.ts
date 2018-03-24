@@ -49,7 +49,17 @@ const DIRECTIVES = {
 		},
 		allowedExpressionTypes: ['ObjectExpression'],
 		error: 'Transition argument must be an object literal, e.g. `{ duration: 400 }`'
-	}
+	},
+
+	Action: {
+		names: [ 'use' ],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: [ 'Identifier', 'MemberExpression', 'ObjectExpression', 'Literal', 'CallExpression' ],
+		error: 'Data passed to actions must be an identifier (e.g. `foo`), a member expression ' +
+			'(e.g. `foo.bar` or `foo[baz]`), a method call (e.g. `foo()`), or a literal (e.g. `true` or `\'a string\'`'
+	},
 };
 
 
