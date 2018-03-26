@@ -660,7 +660,7 @@ export default class Element extends Node {
 				snippet = attribute.metadata.snippet;
 				dependencies = attribute.metadata.dependencies;
 			}
-			
+
 			const name = block.getUniqueName(
 				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 			);
@@ -669,22 +669,22 @@ export default class Element extends Node {
 			const fn = `%actions-${attribute.name}`;
 
 			block.builders.hydrate.addLine(
-				`${name} = ${fn}(${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
+				`${name} = ${fn}.call(#component, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
 			);
 
 			if (dependencies && dependencies.length) {
 				let conditional = `typeof ${name}.update === 'function' && `;
 				const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
 				conditional += dependencies.length > 1 ? `(${deps})` : deps;
-				
+
 				block.builders.update.addConditional(
 					conditional,
-					`${name}.update(${snippet});`
+					`${name}.update.call(#component, ${snippet});`
 				);
 			}
 
 			block.builders.destroy.addLine(
-				`if (typeof ${name}.destroy === 'function') ${name}.destroy();`
+				`if (typeof ${name}.destroy === 'function') ${name}.destroy.call(#component);`
 			);
 		});
 	}
