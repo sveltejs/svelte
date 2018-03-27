@@ -335,7 +335,7 @@ export default function dom(
 			}
 
 			customElements.define("${generator.tag}", ${name});
-			@assign(${prototypeBase}, ${proto}, {
+			@assign(@assign(${prototypeBase}, ${proto}), {
 				_mount(target, anchor) {
 					target.insertBefore(this, anchor);
 				},

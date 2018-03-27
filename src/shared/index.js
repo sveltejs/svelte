@@ -163,7 +163,7 @@ export function _set(newState) {
 	}
 	if (!dirty) return;
 
-	this._state = assign({}, oldState, newState);
+	this._state = assign(assign({}, oldState), newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 
