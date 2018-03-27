@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.58.3
+
+* Actions run in the context of the component ([#1279](https://github.com/sveltejs/svelte/pull/1279))
+* Set refs when mounting dynamic components ([#1280](https://github.com/sveltejs/svelte/pull/1280))
+
 ## 1.58.2
 
 * (1.58.1 failed to publish)
