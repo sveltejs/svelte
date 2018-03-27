@@ -159,9 +159,9 @@ export default function dom(
 		? 'svelte/shared.js'
 		: options.shared || '';
 
-	const prototypeBase =
-		`${name}.prototype` +
-		(templateProperties.methods ? `, %methods` : '');
+	let prototypeBase = `${name}.prototype`;
+	templateProperties.methods && (prototypeBase = `@assign(${prototypeBase}, %methods)`);
+
 	const proto = sharedPath
 		? `@proto`
 		: deindent`
@@ -335,7 +335,7 @@ export default function dom(
 			}
 
 			customElements.define("${generator.tag}", ${name});
-			@assign(${prototypeBase}, ${proto}, {
+			@assign(@assign(${prototypeBase}, ${proto}), {
 				_mount(target, anchor) {
 					target.insertBefore(this, anchor);
 				},

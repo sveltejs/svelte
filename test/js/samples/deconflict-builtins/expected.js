@@ -9,7 +9,7 @@ function create_main_fragment(component, state) {
 	var each_blocks = [];
 
 	for (var i = 0; i < each_value.length; i += 1) {
-		each_blocks[i] = create_each_block(component, assign({}, state, {
+		each_blocks[i] = create_each_block(component, assign(assign({}, state), {
 			each_value: each_value,
 			node: each_value[i],
 			node_index: i
@@ -38,7 +38,7 @@ function create_main_fragment(component, state) {
 
 			if (changed.createElement) {
 				for (var i = 0; i < each_value.length; i += 1) {
-					var each_context = assign({}, state, {
+					var each_context = assign(assign({}, state), {
 						each_value: each_value,
 						node: each_value[i],
 						node_index: i
