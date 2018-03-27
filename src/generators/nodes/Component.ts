@@ -307,9 +307,12 @@ export default class Component extends Node {
 				);
 			}
 
-			block.builders.mount.addLine(
-				`if (${name}) ${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
-			);
+			block.builders.mount.addBlock(deindent`
+				if (${name}) {
+					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					${ref && `#component.refs.${ref.name} = ${name};`}
+				}
+			`);
 
 			const updateMountNode = this.getUpdateMountNode(anchor);
 
