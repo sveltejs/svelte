@@ -1,16 +1,8 @@
 function noop() {}
 
-function assign(target) {
-	var k,
-		source,
-		i = 1,
-		len = arguments.length;
-	for (; i < len; i++) {
-		source = arguments[i];
-		for (k in source) target[k] = source[k];
-	}
-
-	return target;
+function assign(tar, src) {
+	for (var k in src) tar[k] = src[k];
+	return tar;
 }
 
 function appendNode(node, target) {
@@ -161,7 +153,7 @@ function _set(newState) {
 	}
 	if (!dirty) return;
 
-	this._state = assign({}, oldState, newState);
+	this._state = assign(assign({}, oldState), newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 
@@ -209,7 +201,7 @@ function create_main_fragment(component, state) {
 	var each_blocks = [];
 
 	for (var i = 0; i < each_value.length; i += 1) {
-		each_blocks[i] = create_each_block(component, assign({}, state, {
+		each_blocks[i] = create_each_block(component, assign(assign({}, state), {
 			each_value: each_value,
 			node: each_value[i],
 			node_index: i
@@ -238,7 +230,7 @@ function create_main_fragment(component, state) {
 
 			if (changed.createElement) {
 				for (var i = 0; i < each_value.length; i += 1) {
-					var each_context = assign({}, state, {
+					var each_context = assign(assign({}, state), {
 						each_value: each_value,
 						node: each_value[i],
 						node_index: i

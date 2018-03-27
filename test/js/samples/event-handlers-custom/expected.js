@@ -56,5 +56,5 @@ function SvelteComponent(options) {
 	}
 }
 
-assign(SvelteComponent.prototype, methods, proto);
+assign(assign(SvelteComponent.prototype, methods), proto);
 export default SvelteComponent;

@@ -1,16 +1,8 @@
 function noop() {}
 
-function assign(target) {
-	var k,
-		source,
-		i = 1,
-		len = arguments.length;
-	for (; i < len; i++) {
-		source = arguments[i];
-		for (k in source) target[k] = source[k];
-	}
-
-	return target;
+function assign(tar, src) {
+	for (var k in src) tar[k] = src[k];
+	return tar;
 }
 
 function appendNode(node, target) {
@@ -143,7 +135,7 @@ function _set(newState) {
 	}
 	if (!dirty) return;
 
-	this._state = assign({}, oldState, newState);
+	this._state = assign(assign({}, oldState), newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 

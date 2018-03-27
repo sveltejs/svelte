@@ -52,7 +52,7 @@ class SvelteComponent extends HTMLElement {
 }
 
 customElements.define("custom-element", SvelteComponent);
-assign(SvelteComponent.prototype, proto, {
+assign(assign(SvelteComponent.prototype, proto), {
 	_mount(target, anchor) {
 		target.insertBefore(this, anchor);
 	},
