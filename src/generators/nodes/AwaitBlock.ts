@@ -125,7 +125,7 @@ export default class AwaitBlock extends Node {
 						${this.then.block.context ? deindent`
 							var state = #component.get();
 							${resolved} = { ${this.then.block.context}: ${value} };
-							${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, ${resolved}));
+							${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, state), ${resolved}));
 						` : deindent`
 							${replace_await_block}(${token}, null, null);
 						`}
@@ -133,7 +133,7 @@ export default class AwaitBlock extends Node {
 						${this.catch.block.context ? deindent`
 							var state = #component.get();
 							${resolved} = { ${this.catch.block.context}: ${error} };
-							${replace_await_block}(${token}, ${create_catch_block}, @assign({}, state, ${resolved}));
+							${replace_await_block}(${token}, ${create_catch_block}, @assign(@assign({}, state), ${resolved}));
 						` : deindent`
 							${replace_await_block}(${token}, null, null);
 						`}
@@ -147,7 +147,7 @@ export default class AwaitBlock extends Node {
 				} else {
 					${resolved} = { ${this.then.block.context}: ${promise} };
 					if (${await_block_type} !== ${create_then_block}) {
-						${replace_await_block}(${token}, ${create_then_block}, @assign({}, state, ${resolved}));
+						${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, state), ${resolved}));
 						return true;
 					}
 				}
@@ -190,7 +190,7 @@ export default class AwaitBlock extends Node {
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
-					${await_block}.p(changed, @assign({}, state, ${resolved}));
+					${await_block}.p(changed, @assign(@assign({}, state), ${resolved}));
 				}
 			`);
 		} else {

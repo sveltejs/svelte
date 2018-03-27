@@ -267,7 +267,7 @@ export default class EachBlock extends Node {
 		block.builders.init.addBlock(deindent`
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
 				var ${key} = ${each_block_value}[#i].${this.key};
-				${blocks}[#i] = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign({}, state, {
+				${blocks}[#i] = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign(@assign({}, state), {
 					${this.contextProps.join(',\n')}
 				}));
 			}
@@ -297,7 +297,7 @@ export default class EachBlock extends Node {
 			var ${each_block_value} = ${snippet};
 
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, "${this.key}", ${dynamic}, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", function(#i) {
-				return @assign({}, state, {
+				return @assign(@assign({}, state), {
 					${this.contextProps.join(',\n')}
 				});
 			});
@@ -332,7 +332,7 @@ export default class EachBlock extends Node {
 			var ${iterations} = [];
 
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(#component, @assign({}, state, {
+				${iterations}[#i] = ${create_each_block}(#component, @assign(@assign({}, state), {
 					${this.contextProps.join(',\n')}
 				}));
 			}
@@ -430,7 +430,7 @@ export default class EachBlock extends Node {
 
 				if (${condition}) {
 					for (var #i = ${start}; #i < ${each_block_value}.${length}; #i += 1) {
-						var ${this.each_context} = @assign({}, state, {
+						var ${this.each_context} = @assign(@assign({}, state), {
 							${this.contextProps.join(',\n')}
 						});
 
