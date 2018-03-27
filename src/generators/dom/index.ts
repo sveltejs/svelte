@@ -159,9 +159,9 @@ export default function dom(
 		? 'svelte/shared.js'
 		: options.shared || '';
 
-	const prototypeBase =
-		`${name}.prototype` +
-		(templateProperties.methods ? `, %methods` : '');
+	let prototypeBase = `${name}.prototype`;
+	templateProperties.methods && (prototypeBase = `@assign(${prototypeBase}, %methods)`);
+
 	const proto = sharedPath
 		? `@proto`
 		: deindent`
