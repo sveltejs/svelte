@@ -307,7 +307,7 @@ export default class Component extends Node {
 				);
 			}
 
-			block.builders.mount.addLine(deindent`
+			block.builders.mount.addBlock(deindent`
 				if (${name}) {
 					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
 					${ref && `#component.refs.${ref.name} = ${name};`}
