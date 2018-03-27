@@ -133,7 +133,7 @@ assign(Store.prototype, {
 		}
 		if (!dirty) return;
 
-		this._state = assign({}, oldState, newState);
+		this._state = assign(assign({}, oldState), newState);
 
 		for (var i = 0; i < this._sortedComputedProperties.length; i += 1) {
 			this._sortedComputedProperties[i].update(this._state, changed);

@@ -44,7 +44,7 @@ function SvelteComponent(options) {
 	}
 }
 
-assign(SvelteComponent.prototype, methods, proto);
+assign(assign(SvelteComponent.prototype, methods), proto);
 
 setup(SvelteComponent);
 export default SvelteComponent;
