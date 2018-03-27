@@ -202,7 +202,7 @@ function create_main_fragment(component, state) {
 
 		h: function hydrate() {
 			a.href = "#";
-			link_action = link(a) || {};
+			link_action = link.call(component, a) || {};
 		},
 
 		m: function mount(target, anchor) {
@@ -216,7 +216,7 @@ function create_main_fragment(component, state) {
 		},
 
 		d: function destroy$$1() {
-			if (typeof link_action.destroy === 'function') link_action.destroy();
+			if (typeof link_action.destroy === 'function') link_action.destroy.call(component);
 		}
 	};
 }
