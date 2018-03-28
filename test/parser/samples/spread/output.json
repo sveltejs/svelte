@@ -1,0 +1,31 @@
+{
+	"hash": "phg0l6",
+	"html": {
+		"start": 0,
+		"end": 24,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 24,
+				"type": "Element",
+				"name": "div",
+				"attributes": [],
+				"children": [],
+				"spread": {
+					"start": 5,
+					"end": 17,
+					"type": "Spread",
+					"expression": {
+						"type": "Identifier",
+						"start": 10,
+						"end": 15,
+						"name": "props"
+					}
+				}
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

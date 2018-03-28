@@ -85,6 +85,10 @@ export function setAttribute(node, attribute, value) {
 	node.setAttribute(attribute, value);
 }
 
+export function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
+}
+
 export function setXlinkAttribute(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }

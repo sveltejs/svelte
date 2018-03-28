@@ -178,6 +178,8 @@ export default function tag(parser: Parser) {
 		parser.allowWhitespace();
 	}
 
+	element.spread = readSpread(parser);
+
 	const uniqueNames = new Set();
 
 	let attribute;
@@ -383,4 +385,28 @@ function readSequence(parser: Parser, done: () => boolean) {
 	}
 
 	parser.error(`Unexpected end of input`);
+}
+
+function readSpread(parser: Parser) {
+	const start = parser.index;
+
+	if (parser.eat('{{...')) {
+		const expression = readExpression(parser);
+		parser.allowWhitespace();
+
+		if (!parser.eat('}}')) {
+			parser.error(`Expected }}`);
+		}
+
+		parser.allowWhitespace();
+
+		return {
+			start,
+			end: parser.index,
+			type: 'Spread',
+			expression,
+		};
+	}
+
+	return null;
 }
