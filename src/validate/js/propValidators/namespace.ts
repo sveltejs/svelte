@@ -7,7 +7,7 @@ import { Node } from '../../../interfaces';
 const valid = new Set(namespaces.validNamespaces);
 
 export default function namespace(validator: Validator, prop: Node) {
-	const ns = nodeToString(prop);
+	const ns = nodeToString(prop.value);
 
 	if (typeof ns !== 'string') {
 		validator.error(
