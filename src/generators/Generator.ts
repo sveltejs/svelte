@@ -600,7 +600,7 @@ export default class Generator {
 				}
 
 				if (templateProperties.namespace) {
-					const ns = nodeToString(templateProperties.namespace);
+					const ns = nodeToString(templateProperties.namespace.value);
 					this.namespace = namespaces[ns] || ns;
 				}
 
@@ -619,7 +619,7 @@ export default class Generator {
 				}
 
 				if (templateProperties.props) {
-					this.props = templateProperties.props.value.elements.map((element: Node) => element.value);
+					this.props = templateProperties.props.value.elements.map((element: Node) => nodeToString(element));
 				}
 
 				if (templateProperties.setup) {
@@ -631,7 +631,7 @@ export default class Generator {
 				}
 
 				if (templateProperties.tag) {
-					this.tag = templateProperties.tag.value.value;
+					this.tag = nodeToString(templateProperties.tag.value);
 				}
 
 				if (templateProperties.transitions) {

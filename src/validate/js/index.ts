@@ -78,7 +78,7 @@ export default function validateJs(validator: Validator, js: Node) {
 			});
 
 			if (props.has('namespace')) {
-				const ns = nodeToString(props.get('namespace'));
+				const ns = nodeToString(props.get('namespace').value);
 				validator.namespace = namespaces[ns] || ns;
 			}
 
