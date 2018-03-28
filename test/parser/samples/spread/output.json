@@ -10,19 +10,20 @@
 				"end": 24,
 				"type": "Element",
 				"name": "div",
-				"attributes": [],
-				"children": [],
-				"spread": {
-					"start": 5,
-					"end": 17,
-					"type": "Spread",
-					"expression": {
-						"type": "Identifier",
-						"start": 10,
-						"end": 15,
-						"name": "props"
+				"attributes": [
+					{
+						"start": 5,
+						"end": 17,
+						"type": "Spread",
+						"expression": {
+							"type": "Identifier",
+							"start": 10,
+							"end": 15,
+							"name": "props"
+						}
 					}
-				}
+				],
+				"children": []
 			}
 		]
 	},

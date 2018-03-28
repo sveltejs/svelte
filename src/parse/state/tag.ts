@@ -178,8 +178,6 @@ export default function tag(parser: Parser) {
 		parser.allowWhitespace();
 	}
 
-	element.spread = readSpread(parser);
-
 	const uniqueNames = new Set();
 
 	let attribute;
@@ -291,6 +289,23 @@ function readTagName(parser: Parser) {
 function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
+	if (parser.eat('{{')) {
+		parser.allowWhitespace();
+		parser.eat('...', true, 'Expected spread operator (...)');
+
+		const expression = readExpression(parser);
+
+		parser.allowWhitespace();
+		parser.eat('}}', true);
+
+		return {
+			start,
+			end: parser.index,
+			type: 'Spread',
+			expression
+		};
+	}
+
 	let name = parser.readUntil(/(\s|=|\/|>)/);
 	if (!name) return null;
 	if (uniqueNames.has(name)) {
@@ -385,28 +400,4 @@ function readSequence(parser: Parser, done: () => boolean) {
 	}
 
 	parser.error(`Unexpected end of input`);
-}
-
-function readSpread(parser: Parser) {
-	const start = parser.index;
-
-	if (parser.eat('{{...')) {
-		const expression = readExpression(parser);
-		parser.allowWhitespace();
-
-		if (!parser.eat('}}')) {
-			parser.error(`Expected }}`);
-		}
-
-		parser.allowWhitespace();
-
-		return {
-			start,
-			end: parser.index,
-			type: 'Spread',
-			expression,
-		};
-	}
-
-	return null;
 }
