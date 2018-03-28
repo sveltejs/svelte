@@ -48,6 +48,10 @@ export default class Component extends Node {
 			}
 		});
 
+		if (this.spread) {
+			block.addDependencies(this.spread.metadata.dependencies);
+		}
+
 		this.var = block.getUniqueName(
 			(
 				this.name === ':Self' ? this.generator.name :
@@ -76,6 +80,7 @@ export default class Component extends Node {
 		const name = this.var;
 
 		const componentInitProperties = [`root: #component.root`];
+		let componentInitialData = null;
 
 		if (this.children.length > 0) {
 			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name, generator.legacy)}: @createFragment()`);
@@ -225,7 +230,7 @@ export default class Component extends Node {
 					}
 				});
 
-				componentInitProperties.push(`data: ${name_initial_data}`);
+				componentInitialData = name_initial_data;
 
 				const initialisers = [
 					'state = #component.get()',
@@ -249,8 +254,19 @@ export default class Component extends Node {
 					});
 				`;
 			} else if (initialProps.length) {
-				componentInitProperties.push(`data: ${initialPropString}`);
+				componentInitialData = initialPropString;
 			}
+		}
+
+		if (this.spread) {
+			const initialData = this.spread.renderForComponent(block, updates);
+			componentInitialData = componentInitialData ?
+				`@assign({}, ${initialData}, ${componentInitialData})` :
+				initialData;
+		}
+
+		if (componentInitialData) {
+			componentInitProperties.push(`data: ${componentInitialData}`);
 		}
 
 		const isDynamicComponent = this.name === ':Component';

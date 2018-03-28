@@ -141,6 +141,10 @@ export default class Element extends Node {
 			component._slots.add(slot);
 		}
 
+		if (this.spread) {
+			block.addDependencies(this.spread.metadata.dependencies);
+		}
+
 		this.var = block.getUniqueName(
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
@@ -243,6 +247,10 @@ export default class Element extends Node {
 		this.addRefs(block);
 		this.addTransitions(block);
 		this.addActions(block);
+
+		if (this.spread) {
+			this.spread.renderForElement(block);
+		}
 
 		if (allUsedContexts.size || eventHandlerUsesComponent) {
 			const initialProps: string[] = [];

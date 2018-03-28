@@ -845,6 +845,10 @@ export default class Generator {
 				if (node.type === 'Component' && node.name === ':Component') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 				}
+
+				if (node.type === 'Spread') {
+					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
+				}
 			},
 
 			leave(node: Node, parent: Node) {
