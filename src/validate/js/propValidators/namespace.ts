@@ -1,4 +1,5 @@
 import * as namespaces from '../../../utils/namespaces';
+import nodeToString from '../../../utils/nodeToString'
 import fuzzymatch from '../../utils/fuzzymatch';
 import { Validator } from '../../';
 import { Node } from '../../../interfaces';
@@ -6,9 +7,9 @@ import { Node } from '../../../interfaces';
 const valid = new Set(namespaces.validNamespaces);
 
 export default function namespace(validator: Validator, prop: Node) {
-	const ns = prop.value.value;
+	const ns = nodeToString(prop);
 
-	if (prop.value.type !== 'Literal' || typeof ns !== 'string') {
+	if (typeof ns !== 'string') {
 		validator.error(
 			`The 'namespace' property must be a string literal representing a valid namespace`,
 			prop
