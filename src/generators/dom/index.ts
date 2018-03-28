@@ -202,7 +202,7 @@ export default function dom(
 		@init(this, options);
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
-		this._state = @assign(${initialState.join(', ')});
+		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
 		${generator.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
