@@ -9,6 +9,7 @@ import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode, removeObjectKey } from '../utils/removeNode';
+import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
 import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
@@ -599,7 +600,7 @@ export default class Generator {
 				}
 
 				if (templateProperties.namespace) {
-					const ns = templateProperties.namespace.value.value;
+					const ns = nodeToString(templateProperties.namespace);
 					this.namespace = namespaces[ns] || ns;
 				}
 
