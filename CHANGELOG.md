@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.58.4
+
+* Fix initial state regression ([#1283](https://github.com/sveltejs/svelte/pull/1283))
+
 ## 1.58.3
 
 * Actions run in the context of the component ([#1279](https://github.com/sveltejs/svelte/pull/1279))
