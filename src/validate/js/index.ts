@@ -3,6 +3,7 @@ import fuzzymatch from '../utils/fuzzymatch';
 import checkForDupes from './utils/checkForDupes';
 import checkForComputedKeys from './utils/checkForComputedKeys';
 import namespaces from '../../utils/namespaces';
+import nodeToString from '../../utils/nodeToString';
 import getName from '../../utils/getName';
 import { Validator } from '../';
 import { Node } from '../../interfaces';
@@ -77,7 +78,7 @@ export default function validateJs(validator: Validator, js: Node) {
 			});
 
 			if (props.has('namespace')) {
-				const ns = props.get('namespace').value.value;
+				const ns = nodeToString(props.get('namespace').value);
 				validator.namespace = namespaces[ns] || ns;
 			}
 
