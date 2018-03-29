@@ -27,6 +27,8 @@ export default function a11y(
 
 	const attributeMap = new Map();
 	node.attributes.forEach((attribute: Node) => {
+		if (attribute.type === 'Spread') return;
+
 		const name = attribute.name.toLowerCase();
 
 		// aria-props
