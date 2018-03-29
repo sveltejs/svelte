@@ -18,7 +18,6 @@ import PendingBlock from './PendingBlock';
 import RawMustacheTag from './RawMustacheTag';
 import Ref from './Ref';
 import Slot from './Slot';
-import Spread from './Spread';
 import Text from './Text';
 import ThenBlock from './ThenBlock';
 import Title from './Title';
@@ -45,7 +44,6 @@ const nodes: Record<string, any> = {
 	RawMustacheTag,
 	Ref,
 	Slot,
-	Spread,
 	Text,
 	ThenBlock,
 	Title,

@@ -242,14 +242,15 @@ export default class Element extends Node {
 		}
 
 		this.addBindings(block, allUsedContexts);
-		this.addAttributes(block);
 		const eventHandlerUsesComponent = this.addEventHandlers(block, allUsedContexts);
 		this.addRefs(block);
 		this.addTransitions(block);
 		this.addActions(block);
 
-		if (this.spread) {
-			this.spread.renderForElement(block);
+		if (this.attributes.find(attr => attr.type === 'Spread')) {
+			this.addSpreadAttributes(block);
+		} else {
+			this.addAttributes(block);
 		}
 
 		if (allUsedContexts.size || eventHandlerUsesComponent) {
