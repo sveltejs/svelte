@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.58.5
+
+* Allow backtick string literals for `svg`, `tag`, and `props` properties ([#1284](https://github.com/sveltejs/svelte/issues/1284))
+* Fix removal of transition styles under Firefox ([#1288](https://github.com/sveltejs/svelte/pull/1288))
+
 ## 1.58.4
 
 * Fix initial state regression ([#1283](https://github.com/sveltejs/svelte/pull/1283))
