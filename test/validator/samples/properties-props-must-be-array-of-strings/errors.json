@@ -1,0 +1,12 @@
+[{
+	"message": "'props' must be an array of string literals",
+	"loc": {
+		"line": 5,
+		"column": 10
+	},
+	"end": {
+		"line": 5,
+		"column": 12
+	},
+	"pos": 50
+}]
