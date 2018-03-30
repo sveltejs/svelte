@@ -517,7 +517,7 @@ export default class Element extends Node {
 				`);
 
 				block.builders.destroy.addLine(deindent`
-					${handlerName}.teardown();
+					${handlerName}[${handlerName}.destroy ? 'destroy' : 'teardown']();
 				`);
 			} else {
 				const handler = deindent`

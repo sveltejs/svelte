@@ -212,7 +212,7 @@ function create_main_fragment(component, state) {
 		},
 
 		d: function destroy$$1() {
-			foo_handler.teardown();
+			foo_handler[foo_handler.destroy ? 'destroy' : 'teardown']();
 		}
 	};
 }
