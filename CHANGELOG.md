@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 1.59.0
+
+* Deprecate `teardown` in custom event handlers ([#531](https://github.com/sveltejs/svelte/issues/531))
+* Allow static content in keyed `each` block ([#1291](https://github.com/sveltejs/svelte/issues/1291))
+* Allow empty content in keyed `each` block ([#1295](https://github.com/sveltejs/svelte/issues/1295))
+* Only delete applicable transitions ([#1290](https://github.com/sveltejs/svelte/issues/1290))
+
 ## 1.58.5
 
 * Allow backtick string literals for `svg`, `tag`, and `props` properties ([#1284](https://github.com/sveltejs/svelte/issues/1284))
