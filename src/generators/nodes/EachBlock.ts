@@ -109,6 +109,8 @@ export default class EachBlock extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
+		if (this.children.length === 0) return;
+
 		const { generator } = this;
 
 		const each = this.var;
