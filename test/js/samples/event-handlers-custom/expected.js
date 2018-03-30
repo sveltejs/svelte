@@ -26,10 +26,6 @@ function create_main_fragment(component, state) {
 				var state = component.get();
 				component.foo( state.bar );
 			});
-
-			if (foo_handler.teardown) {
-				foo_handler.destroy = foo_handler.teardown;
-			}
 		},
 
 		m: function mount(target, anchor) {
@@ -43,7 +39,7 @@ function create_main_fragment(component, state) {
 		},
 
 		d: function destroy() {
-			foo_handler.destroy();
+			foo_handler[foo_handler.destroy ? 'destroy' : 'teardown']();
 		}
 	};
 }
