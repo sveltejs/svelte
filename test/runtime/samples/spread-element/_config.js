@@ -10,12 +10,12 @@ export default {
 		assert.equal( div.dataset.named, 'value' );
 
 		component.set({ color: 'blue', props: { 'data-foo': 'baz', 'data-named': 'qux' } });
-		assert.equal( target.innerHTML, `<div data-named="value" data-foo="baz">blue</div>` );
+		assert.htmlEqual( target.innerHTML, `<div data-named="value" data-foo="baz">blue</div>` );
 		assert.equal( div.dataset.foo, 'baz' );
 		assert.equal( div.dataset.named, 'value' );
 
 		component.set({ color: 'blue', props: {} });
-		assert.equal( target.innerHTML, `<div data-named="value">blue</div>` );
+		assert.htmlEqual( target.innerHTML, `<div data-named="value">blue</div>` );
 		assert.equal( div.dataset.foo, undefined );
 	}
 };

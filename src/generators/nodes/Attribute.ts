@@ -223,10 +223,9 @@ export default class Attribute {
 				);
 			}
 		} else {
-		const value =
-			this.value === true
+			const value = this.value === true
 				? 'true'
-				: this.value.length === 0 ? `''` : stringify(this.value[0].data);
+				: this.value.length === 0 ? `""` : stringify(this.value[0].data);
 
 			const statement = (
 				isLegacyInputType
