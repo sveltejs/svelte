@@ -8,19 +8,7 @@ import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
 import hash from '../utils/hash';
 import { Node, Parsed } from '../interfaces';
-import CompileError from '../utils/CompileError';
-
-class ParseError extends CompileError {
-	constructor(
-		message: string,
-		template: string,
-		index: number,
-		filename: string
-	) {
-		super(message, template, index, filename);
-		this.name = 'ParseError';
-	}
-}
+import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
@@ -109,7 +97,12 @@ export class Parser {
 	}
 
 	error(message: string, index = this.index) {
-		throw new ParseError(message, this.template, index, this.filename);
+		error(message, {
+			name: 'ParseError',
+			source: this.template,
+			start: index,
+			filename: this.filename
+		});
 	}
 
 	eat(str: string, required?: boolean, message?: string) {
