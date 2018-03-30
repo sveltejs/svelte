@@ -199,7 +199,7 @@ export var transitionManager = {
 		node.style.animation = node.style.animation
 			.split(', ')
 			.filter(function(anim) {
-				return !/__svelte/.test(anim);
+				return anim.indexOf(name) === -1;
 			})
 			.join(', ');
 	}
