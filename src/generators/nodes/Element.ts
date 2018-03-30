@@ -516,8 +516,16 @@ export default class Element extends Node {
 					});
 				`);
 
+
+				block.builders.hydrate.addBlock(deindent`
+					if (${handlerName}.teardown) {
+						${handlerName}.destroy = ${handlerName}.teardown;
+						${generator.options.dev && `console.warn("Return 'destroy()' from custom event handlers. Returning 'teardown()' has been deprecated and will be unsupported in Svelte 2");`}
+					}
+				`);
+
 				block.builders.destroy.addLine(deindent`
-					${handlerName}.teardown();
+					${handlerName}.destroy();
 				`);
 			} else {
 				const handler = deindent`
