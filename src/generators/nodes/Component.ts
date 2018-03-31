@@ -247,37 +247,27 @@ export default class Component extends Node {
 			}
 		}
 
-		const isDynamicComponent = this.name === ':Component';
+		if (this.name === ':Component') {
+			const switch_value = block.getUniqueName('switch_value');
+			const switch_props = block.getUniqueName('switch_props');
 
-		const switch_vars = isDynamicComponent && {
-			value: block.getUniqueName('switch_value'),
-			props: block.getUniqueName('switch_props')
-		};
-
-		const expression = (
-			this.name === ':Self' ? generator.name :
-			isDynamicComponent ? switch_vars.value :
-			`%components-${this.name}`
-		);
-
-		if (isDynamicComponent) {
 			block.contextualise(this.expression);
 			const { dependencies, snippet } = this.metadata;
 
 			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 
 			block.builders.init.addBlock(deindent`
-				var ${switch_vars.value} = ${snippet};
+				var ${switch_value} = ${snippet};
 
-				function ${switch_vars.props}(state) {
+				function ${switch_props}(state) {
 					${statements.length > 0 && statements.join('\n')}
 					return {
 						${componentInitProperties.join(',\n')}
 					};
 				}
 
-				if (${switch_vars.value}) {
-					var ${name} = new ${expression}(${switch_vars.props}(state));
+				if (${switch_value}) {
+					var ${name} = new ${switch_value}(${switch_props}(state));
 
 					${beforecreate}
 				}
@@ -311,11 +301,11 @@ export default class Component extends Node {
 			const updateMountNode = this.getUpdateMountNode(anchor);
 
 			block.builders.update.addBlock(deindent`
-				if (${switch_vars.value} !== (${switch_vars.value} = ${snippet})) {
+				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) ${name}.destroy();
 
-					if (${switch_vars.value}) {
-						${name} = new ${switch_vars.value}(${switch_vars.props}(state));
+					if (${switch_value}) {
+						${name} = new ${switch_value}(${switch_props}(state));
 						${name}._fragment.c();
 
 						${this.children.map(child => child.remount(name))}
@@ -350,6 +340,10 @@ export default class Component extends Node {
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
+			const expression = this.name === ':Self'
+				? generator.name
+				: `%components-${this.name}`;
+
 			block.builders.init.addBlock(deindent`
 				${statements.join('\n')}
 				var ${name} = new ${expression}({
