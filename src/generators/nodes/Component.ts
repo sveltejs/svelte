@@ -83,6 +83,7 @@ export default class Component extends Node {
 		const statements: string[] = [];
 
 		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
+		const name_changes = block.getUniqueName(`${name}_changes`);
 		let name_updating: string;
 		let beforecreate: string = null;
 
@@ -103,17 +104,62 @@ export default class Component extends Node {
 
 		const updates: string[] = [];
 
-		const attributeObject = stringifyProps(
-			attributes.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`)
-		);
+		const usesSpread = !!attributes.find(a => a.spread);
+
+		const attributeObject = usesSpread
+			? '{}'
+			: stringifyProps(
+				attributes.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`)
+			);
 
 		if (attributes.length || bindings.length) {
 			componentInitProperties.push(`data: ${name_initial_data}`);
 		}
 
+		if ((!usesSpread && attributes.filter(a => a.dynamic).length) || bindings.length) {
+			updates.push(`var ${name_changes} = {};`);
+		}
+
 		if (attributes.length) {
-			if (attributes.find(a => a.type === 'Spread')) {
-				// TODO
+			if (usesSpread) {
+				const levels = block.getUniqueName(`${this.var}_spread_levels`);
+
+				const initialProps = [];
+				const changes = [];
+
+				attributes
+					.forEach(munged => {
+						const { spread, name, dynamic, value, dependencies } = munged;
+
+						if (spread) {
+							initialProps.push(value);
+
+							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
+							changes.push(condition ? `${condition} && ${value}` : value);
+						} else {
+							const obj = `{ ${quoteIfNecessary(name, this.generator.legacy)}: ${value} }`;
+							initialProps.push(obj);
+
+							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
+							changes.push(condition ? `${condition} && ${obj}` : obj);
+						}
+					});
+
+				statements.push(deindent`
+					var ${levels} = [
+						${initialProps.join(',\n')}
+					];
+
+					for (var #i = 0; #i < ${levels}.length; #i += 1) {
+						${name_initial_data} = @assign(${name_initial_data}, ${levels}[#i]);
+					}
+				`);
+
+				updates.push(deindent`
+					var ${name_changes} = @getSpreadUpdate(${levels}, [
+						${changes.join(',\n')}
+					]);
+				`);
 			} else {
 				attributes
 					.filter((attribute: Attribute) => attribute.dynamic)
@@ -122,14 +168,14 @@ export default class Component extends Node {
 							updates.push(deindent`
 								if (${attribute.dependencies
 									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name}_changes.${attribute.name} = ${attribute.value};
+									.join(' || ')}) ${name_changes}.${attribute.name} = ${attribute.value};
 							`);
 						}
 
 						else {
 							// TODO this is an odd situation to encounter – I *think* it should only happen with
 							// each block indices, in which case it may be possible to optimise this
-							updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
+							updates.push(`${name_changes}.${attribute.name} = ${attribute.value};`);
 						}
 					});
 				}
@@ -213,7 +259,7 @@ export default class Component extends Node {
 
 				updates.push(deindent`
 					if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-						${name}_changes.${binding.name} = ${binding.snippet};
+						${name_changes}.${binding.name} = ${binding.snippet};
 						${name_updating}.${binding.name} = true;
 					}
 				`);
@@ -327,9 +373,8 @@ export default class Component extends Node {
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					else {
-						var ${name}_changes = {};
 						${updates}
-						${name}._set(${name}_changes);
+						${name}._set(${name_changes});
 						${bindings.length && `${name_updating} = {};`}
 					}
 				`);
@@ -376,9 +421,9 @@ export default class Component extends Node {
 
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
-					var ${name}_changes = {};
+					var ${name_changes} = {};
 					${updates}
-					${name}._set(${name}_changes);
+					${name}._set(${name_changes});
 					${bindings.length && `${name_updating} = {};`}
 				`);
 			}
