@@ -56,7 +56,7 @@ export default function visitElement(
 					block.contextualise(attribute.value[0].expression);
 					args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.value[0].metadata.snippet} }`);
 				} else {
-					args.push(`{ ${quoteIfNecessary(attribute.name)}: "${stringifyAttributeValue(block, attribute.value)}" }`);
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${stringifyAttributeValue(block, attribute.value)}\` }`);
 				}
 			}
 		});
