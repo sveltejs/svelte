@@ -36,6 +36,7 @@ export default function visitElement(
 	}
 
 	if (node.attributes.find(attr => attr.type === 'Spread')) {
+		// TODO dry this out
 		const args = [];
 		node.attributes.forEach((attribute: Node) => {
 			if (attribute.type === 'Spread') {
