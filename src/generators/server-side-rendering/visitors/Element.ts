@@ -1,6 +1,7 @@
 import visitComponent from './Component';
 import visitSlot from './Slot';
 import isVoidElementName from '../../../utils/isVoidElementName';
+import quoteIfNecessary from '../../../utils/quoteIfNecessary';
 import visit from '../visit';
 import { SsrGenerator } from '../index';
 import Element from '../../nodes/Element';
@@ -34,25 +35,53 @@ export default function visitElement(
 		appendTarget.slots[slotName] = '';
 	}
 
-	node.attributes.forEach((attribute: Node) => {
-		if (attribute.type !== 'Attribute') return;
+	if (node.attributes.find(attr => attr.type === 'Spread')) {
+		const args = [];
+		node.attributes.forEach((attribute: Node) => {
+			if (attribute.type === 'Spread') {
+				block.contextualise(attribute.expression);
+				args.push(attribute.metadata.snippet);
+			} else if (attribute.type === 'Attribute') {
+				if (attribute.name === 'value' && node.name === 'textarea') {
+					textareaContents = stringifyAttributeValue(block, attribute.value);
+				} else if (attribute.value === true) {
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: true }`);
+				} else if (
+					booleanAttributes.has(attribute.name) &&
+					attribute.value.length === 1 &&
+					attribute.value[0].type !== 'Text'
+				) {
+					// a boolean attribute with one non-Text chunk
+					block.contextualise(attribute.value[0].expression);
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.value[0].metadata.snippet} }`);
+				} else {
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: "${stringifyAttributeValue(block, attribute.value)}" }`);
+				}
+			}
+		});
 
-		if (attribute.name === 'value' && node.name === 'textarea') {
-			textareaContents = stringifyAttributeValue(block, attribute.value);
-		} else if (attribute.value === true) {
-			openingTag += ` ${attribute.name}`;
-		} else if (
-			booleanAttributes.has(attribute.name) &&
-			attribute.value.length === 1 &&
-			attribute.value[0].type !== 'Text'
-		) {
-			// a boolean attribute with one non-Text chunk
-			block.contextualise(attribute.value[0].expression);
-			openingTag += '${' + attribute.value[0].metadata.snippet + ' ? " ' + attribute.name + '" : "" }';
-		} else {
-			openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.value)}"`;
-		}
-	});
+		openingTag += "${__spread([" + args.join(', ') + "])}";
+	} else {
+		node.attributes.forEach((attribute: Node) => {
+			if (attribute.type !== 'Attribute') return;
+
+			if (attribute.name === 'value' && node.name === 'textarea') {
+				textareaContents = stringifyAttributeValue(block, attribute.value);
+			} else if (attribute.value === true) {
+				openingTag += ` ${attribute.name}`;
+			} else if (
+				booleanAttributes.has(attribute.name) &&
+				attribute.value.length === 1 &&
+				attribute.value[0].type !== 'Text'
+			) {
+				// a boolean attribute with one non-Text chunk
+				block.contextualise(attribute.value[0].expression);
+				openingTag += '${' + attribute.value[0].metadata.snippet + ' ? " ' + attribute.name + '" : "" }';
+			} else {
+				openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.value)}"`;
+			}
+		});
+	}
 
 	if (node._cssRefAttribute) {
 		openingTag += ` svelte-ref-${node._cssRefAttribute}`;
