@@ -69,7 +69,6 @@ export default class Component extends Node {
 		const name = this.var;
 
 		const componentInitProperties = [`root: #component.root`];
-		let componentInitialData = null;
 
 		if (this.children.length > 0) {
 			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name, generator.legacy)}: @createFragment()`);
@@ -83,12 +82,12 @@ export default class Component extends Node {
 		const allContexts = new Set();
 		const statements: string[] = [];
 
+		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
 		let name_updating: string;
-		let name_initial_data: string;
 		let beforecreate: string = null;
 
 		const attributes = this.attributes
-			.filter(a => a.type === 'Attribute')
+			.filter(a => a.type === 'Attribute' || a.type === 'Spread')
 			.map(a => mungeAttribute(a, block));
 
 		const bindings = this.attributes
@@ -104,147 +103,145 @@ export default class Component extends Node {
 
 		const updates: string[] = [];
 
+		const attributeObject = stringifyProps(
+			attributes.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`)
+		);
+
 		if (attributes.length || bindings.length) {
-			const initialProps = attributes
-				.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`);
+			componentInitProperties.push(`data: ${name_initial_data}`);
+		}
 
-			const initialPropString = stringifyProps(initialProps);
+		if (attributes.length) {
+			if (attributes.find(a => a.type === 'Spread')) {
+				// TODO
+			} else {
+				attributes
+					.filter((attribute: Attribute) => attribute.dynamic)
+					.forEach((attribute: Attribute) => {
+						if (attribute.dependencies.length) {
+							updates.push(deindent`
+								if (${attribute.dependencies
+									.map(dependency => `changed.${dependency}`)
+									.join(' || ')}) ${name}_changes.${attribute.name} = ${attribute.value};
+							`);
+						}
 
-			attributes
-				.filter((attribute: Attribute) => attribute.dynamic)
-				.forEach((attribute: Attribute) => {
-					if (attribute.dependencies.length) {
-						updates.push(deindent`
-							if (${attribute.dependencies
-								.map(dependency => `changed.${dependency}`)
-								.join(' || ')}) ${name}_changes.${attribute.name} = ${attribute.value};
-						`);
-					}
+						else {
+							// TODO this is an odd situation to encounter – I *think* it should only happen with
+							// each block indices, in which case it may be possible to optimise this
+							updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
+						}
+					});
+				}
+		}
 
-					else {
-						// TODO this is an odd situation to encounter – I *think* it should only happen with
-						// each block indices, in which case it may be possible to optimise this
-						updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
-					}
+		if (bindings.length) {
+			generator.hasComplexBindings = true;
+
+			name_updating = block.alias(`${name}_updating`);
+			block.addVariable(name_updating, '{}');
+
+			let hasLocalBindings = false;
+			let hasStoreBindings = false;
+
+			const builder = new CodeBuilder();
+
+			bindings.forEach((binding: Binding) => {
+				let { name: key } = getObject(binding.value);
+
+				binding.contexts.forEach(context => {
+					allContexts.add(context);
 				});
 
-			if (bindings.length) {
-				generator.hasComplexBindings = true;
+				let setFromChild;
 
-				name_updating = block.alias(`${name}_updating`);
-				name_initial_data = block.getUniqueName(`${name}_initial_data`);
+				if (block.contexts.has(key)) {
+					const computed = isComputed(binding.value);
+					const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
 
-				block.addVariable(name_updating, '{}');
-				statements.push(`var ${name_initial_data} = ${initialPropString};`);
+					const list = block.listNames.get(key);
+					const index = block.indexNames.get(key);
 
-				let hasLocalBindings = false;
-				let hasStoreBindings = false;
+					setFromChild = deindent`
+						${list}[${index}]${tail} = childState.${binding.name};
 
-				const builder = new CodeBuilder();
+						${binding.dependencies
+							.map((name: string) => {
+								const isStoreProp = generator.options.store && name[0] === '$';
+								const prop = isStoreProp ? name.slice(1) : name;
+								const newState = isStoreProp ? 'newStoreState' : 'newState';
 
-				bindings.forEach((binding: Binding) => {
-					let { name: key } = getObject(binding.value);
+								if (isStoreProp) hasStoreBindings = true;
+								else hasLocalBindings = true;
 
-					binding.contexts.forEach(context => {
-						allContexts.add(context);
-					});
+								return `${newState}.${prop} = state.${name};`;
+							})}
+					`;
+				}
 
-					let setFromChild;
+				else {
+					const isStoreProp = generator.options.store && key[0] === '$';
+					const prop = isStoreProp ? key.slice(1) : key;
+					const newState = isStoreProp ? 'newStoreState' : 'newState';
 
-					if (block.contexts.has(key)) {
-						const computed = isComputed(binding.value);
-						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+					if (isStoreProp) hasStoreBindings = true;
+					else hasLocalBindings = true;
 
-						const list = block.listNames.get(key);
-						const index = block.indexNames.get(key);
-
+					if (binding.value.type === 'MemberExpression') {
 						setFromChild = deindent`
-							${list}[${index}]${tail} = childState.${binding.name};
-
-							${binding.dependencies
-								.map((name: string) => {
-									const isStoreProp = generator.options.store && name[0] === '$';
-									const prop = isStoreProp ? name.slice(1) : name;
-									const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-									if (isStoreProp) hasStoreBindings = true;
-									else hasLocalBindings = true;
-
-									return `${newState}.${prop} = state.${name};`;
-								})
-								.join('\n')}
+							${binding.snippet} = childState.${binding.name};
+							${newState}.${prop} = state.${key};
 						`;
 					}
 
 					else {
-						const isStoreProp = generator.options.store && key[0] === '$';
-						const prop = isStoreProp ? key.slice(1) : key;
-						const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-						if (isStoreProp) hasStoreBindings = true;
-						else hasLocalBindings = true;
-
-						if (binding.value.type === 'MemberExpression') {
-							setFromChild = deindent`
-								${binding.snippet} = childState.${binding.name};
-								${newState}.${prop} = state.${key};
-							`;
-						}
-
-						else {
-							setFromChild = `${newState}.${prop} = childState.${binding.name};`;
-						}
+						setFromChild = `${newState}.${prop} = childState.${binding.name};`;
 					}
+				}
 
-					statements.push(deindent`
-						if (${binding.prop} in ${binding.obj}) {
-							${name_initial_data}.${binding.name} = ${binding.snippet};
-							${name_updating}.${binding.name} = true;
-						}`
-					);
+				statements.push(deindent`
+					if (${binding.prop} in ${binding.obj}) {
+						${name_initial_data}.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
+					}`
+				);
 
-					builder.addConditional(
-						`!${name_updating}.${binding.name} && changed.${binding.name}`,
-						setFromChild
-					);
+				builder.addConditional(
+					`!${name_updating}.${binding.name} && changed.${binding.name}`,
+					setFromChild
+				);
 
-					// TODO could binding.dependencies.length ever be 0?
-					if (binding.dependencies.length) {
-						updates.push(deindent`
-							if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-								${name}_changes.${binding.name} = ${binding.snippet};
-								${name_updating}.${binding.name} = true;
-							}
-						`);
-					}
-				});
-
-				componentInitProperties.push(`data: ${name_initial_data}`);
-
-				const initialisers = [
-					'state = #component.get()',
-					hasLocalBindings && 'newState = {}',
-					hasStoreBindings && 'newStoreState = {}',
-				].filter(Boolean).join(', ');
-
-				componentInitProperties.push(deindent`
-					_bind: function(changed, childState) {
-						var ${initialisers};
-						${builder}
-						${hasStoreBindings && `#component.store.set(newStoreState);`}
-						${hasLocalBindings && `#component._set(newState);`}
-						${name_updating} = {};
+				updates.push(deindent`
+					if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+						${name}_changes.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
 					}
 				`);
+			});
 
-				beforecreate = deindent`
-					#component.root._beforecreate.push(function() {
-						${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
-					});
-				`;
-			} else if (initialProps.length) {
-				componentInitProperties.push(`data: ${initialPropString}`);
-			}
+			componentInitProperties.push(`data: ${name_initial_data}`);
+
+			const initialisers = [
+				'state = #component.get()',
+				hasLocalBindings && 'newState = {}',
+				hasStoreBindings && 'newStoreState = {}',
+			].filter(Boolean).join(', ');
+
+			componentInitProperties.push(deindent`
+				_bind: function(changed, childState) {
+					var ${initialisers};
+					${builder}
+					${hasStoreBindings && `#component.store.set(newStoreState);`}
+					${hasLocalBindings && `#component._set(newState);`}
+					${name_updating} = {};
+				}
+			`);
+
+			beforecreate = deindent`
+				#component.root._beforecreate.push(function() {
+					${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
+				});
+			`;
 		}
 
 		if (this.name === ':Component') {
@@ -260,7 +257,9 @@ export default class Component extends Node {
 				var ${switch_value} = ${snippet};
 
 				function ${switch_props}(state) {
-					${statements.length > 0 && statements.join('\n')}
+					${(attributes.length || bindings.length) && deindent`
+					var ${name_initial_data} = ${attributeObject};`}
+					${statements}
 					return {
 						${componentInitProperties.join(',\n')}
 					};
@@ -329,7 +328,7 @@ export default class Component extends Node {
 				block.builders.update.addBlock(deindent`
 					else {
 						var ${name}_changes = {};
-						${updates.join('\n')}
+						${updates}
 						${name}._set(${name}_changes);
 						${bindings.length && `${name_updating} = {};`}
 					}
@@ -345,7 +344,9 @@ export default class Component extends Node {
 				: `%components-${this.name}`;
 
 			block.builders.init.addBlock(deindent`
-				${statements.join('\n')}
+				${(attributes.length || bindings.length) && deindent`
+				var ${name_initial_data} = ${attributeObject};`}
+				${statements}
 				var ${name} = new ${expression}({
 					${componentInitProperties.join(',\n')}
 				});
@@ -376,7 +377,7 @@ export default class Component extends Node {
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					var ${name}_changes = {};
-					${updates.join('\n')}
+					${updates}
 					${name}._set(${name}_changes);
 					${bindings.length && `${name_updating} = {};`}
 				`);
