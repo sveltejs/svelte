@@ -146,6 +146,10 @@ export function run(fn) {
 export function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
+	this.root._flush();
+}
+
+export function _flush() {
 	this.root._lock = true;
 	callAll(this.root._beforecreate);
 	callAll(this.root._oncreate);
@@ -221,7 +225,8 @@ export var proto = {
 	_set: _set,
 	_mount: _mount,
 	_unmount: _unmount,
-	_differs: _differs
+	_differs: _differs,
+	_flush: _flush
 };
 
 export var protoDev = {
@@ -236,5 +241,6 @@ export var protoDev = {
 	_set: _set,
 	_mount: _mount,
 	_unmount: _unmount,
-	_differs: _differs
+	_differs: _differs,
+	_flush: _flush
 };

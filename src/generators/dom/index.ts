@@ -166,7 +166,7 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount', '_differs']
+			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount', '_differs', '_flush']
 				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
 				.join(',\n')}
 		}`;
@@ -278,11 +278,7 @@ export default function dom(
 				this._mount(options.target, options.anchor);
 
 				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
-					${generator.hasComponents && `this._lock = true;`}
-					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-					${generator.hasComponents && `this._lock = false;`}
+					this._flush();
 				`}
 			}
 		`}
