@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	data: {
 		props: {
 			foo: 'lol',

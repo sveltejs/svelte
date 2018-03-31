@@ -1,6 +1,4 @@
 export default {
-	solo: true,
-
 	html: `<div data-named="value" data-foo="bar">red</div>`,
 
 	test ( assert, component, target ) {

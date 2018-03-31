@@ -246,14 +246,9 @@ export default class Element extends Node {
 		this.addBindings(block, allUsedContexts);
 		const eventHandlerUsesComponent = this.addEventHandlers(block, allUsedContexts);
 		this.addRefs(block);
+		this.addAttributes(block);
 		this.addTransitions(block);
 		this.addActions(block);
-
-		if (this.attributes.find(attr => attr.type === 'Spread')) {
-			this.addSpreadAttributes(block);
-		} else {
-			this.addAttributes(block);
-		}
 
 		if (allUsedContexts.size || eventHandlerUsesComponent) {
 			const initialProps: string[] = [];
@@ -443,6 +438,11 @@ export default class Element extends Node {
 	}
 
 	addAttributes(block: Block) {
+		if (this.attributes.find(attr => attr.type === 'Spread')) {
+			this.addSpreadAttributes(block);
+			return;
+		}
+
 		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
 			attribute.render(block);
 		});
@@ -609,6 +609,7 @@ export default class Element extends Node {
 	}
 
 	addRefs(block: Block) {
+		// TODO it should surely be an error to have more than one ref
 		this.attributes.filter((a: Ref) => a.type === 'Ref').forEach((attribute: Ref) => {
 			const ref = `#component.refs.${attribute.name}`;
 
