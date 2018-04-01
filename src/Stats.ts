@@ -1,4 +1,4 @@
-import { Node } from './interfaces';
+import { Node, Warning } from './interfaces';
 import Generator from './generators/Generator';
 
 const now = (typeof process !== 'undefined' && process.hrtime)
@@ -31,11 +31,14 @@ export default class Stats {
 	currentChildren: Timing[];
 	timings: Timing[];
 	stack: Timing[];
+	warnings: Warning[];
 
 	constructor() {
 		this.startTime = now();
 		this.stack = [];
 		this.currentChildren = this.timings = [];
+
+		this.warnings = [];
 	}
 
 	start(label) {
@@ -91,7 +94,7 @@ export default class Stats {
 
 		return {
 			timings,
-			warnings: [], // TODO
+			warnings: this.warnings,
 			imports,
 			hooks
 		};

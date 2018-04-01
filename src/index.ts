@@ -126,6 +126,14 @@ export function compile(source: string, _options: CompileOptions) {
 	stats.stop('stylesheet');
 
 	stats.start('validate');
+	// TODO remove this when we remove svelte.validate from public API — we
+	// can use the stats object instead
+	const onwarn = options.onwarn;
+	options.onwarn = warning => {
+		stats.warnings.push(warning);
+		onwarn(warning);
+	};
+
 	validate(parsed, source, stylesheet, options);
 	stats.stop('validate');
 
