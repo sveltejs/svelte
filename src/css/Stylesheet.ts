@@ -375,7 +375,7 @@ export default class Stylesheet {
 
 	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {
 		if (!this.hasStyles) {
-			return { css: null, cssMap: null };
+			return { code: null, map: null };
 		}
 
 		const code = new MagicString(this.source);
@@ -405,8 +405,8 @@ export default class Stylesheet {
 		code.remove(c, this.source.length);
 
 		return {
-			css: code.toString(),
-			cssMap: code.generateMap({
+			code: code.toString(),
+			map: code.generateMap({
 				includeContent: true,
 				source: this.filename,
 				file: cssOutputFilename

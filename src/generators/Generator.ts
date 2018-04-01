@@ -347,19 +347,40 @@ export default class Generator {
 
 		addString(finalChunk);
 
-		const { css, cssMap } = this.customElement ?
-			{ css: null, cssMap: null } :
+		const css = this.customElement ?
+			{ code: null, map: null } :
 			this.stylesheet.render(options.cssOutputFilename, true);
 
-		return {
-			ast: this.ast,
+		const js = {
 			code: compiled.toString(),
 			map: compiled.generateMap({
 				includeContent: true,
 				file: options.outputFilename,
-			}),
+			})
+		};
+
+		Object.getOwnPropertyNames(String.prototype).forEach(name => {
+			const descriptor = Object.getOwnPropertyDescriptor(String.prototype, name);
+			if (typeof descriptor.value === 'function') {
+				Object.defineProperty(css, name, {
+					value: (...args) => {
+						return css.code === null
+							? null
+							: css.code[name].call(css.code, ...args);
+					}
+				});
+			}
+		});
+
+		return {
+			ast: this.ast,
+			js,
 			css,
-			cssMap
+
+			// TODO deprecate
+			code: js.code,
+			map: js.map,
+			cssMap: css.map
 		};
 	}
 
