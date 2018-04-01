@@ -1,3 +1,5 @@
+import { Node } from './interfaces';
+
 const now = (typeof process !== 'undefined' && process.hrtime)
 	? () => {
 		const t = process.hrtime();
@@ -61,13 +63,31 @@ export default class Stats {
 		this.currentChildren = this.currentTiming ? this.currentTiming.children : this.timings;
 	}
 
-	toJSON() {
+	render({ imports }: {
+		imports: Node[]
+	}) {
 		const timings = Object.assign({
 			total: now() - this.startTime
 		}, collapseTimings(this.timings));
 
 		return {
-			timings
+			timings,
+			warnings: [], // TODO
+			imports: imports.map(node => {
+				return {
+					source: node.source.value,
+					specifiers: node.specifiers.map(specifier => {
+						return {
+							name: (
+								specifier.type === 'ImportDefaultSpecifier' ? 'default' :
+								specifier.type === 'ImportNamespaceSpecifier' ? '*' :
+								specifier.imported.name
+							),
+							as: specifier.local.name
+						};
+					})
+				}
+			})
 		};
 	}
 }

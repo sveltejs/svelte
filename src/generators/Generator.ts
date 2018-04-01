@@ -385,7 +385,9 @@ export default class Generator {
 			ast: this.ast,
 			js,
 			css,
-			stats: this.stats.toJSON(),
+			stats: this.stats.render({
+				imports: this.imports
+			}),
 
 			// TODO deprecate
 			code: js.code,
