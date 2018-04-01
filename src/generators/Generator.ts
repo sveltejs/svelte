@@ -359,8 +359,8 @@ export default class Generator {
 			})
 		};
 
-		const stringMethods = Object.getOwnPropertyDescriptors(String.prototype);
-		Object.entries(stringMethods).forEach(([name, descriptor]) => {
+		Object.getOwnPropertyNames(String.prototype).forEach(name => {
+			const descriptor = Object.getOwnPropertyDescriptor(String.prototype, name);
 			if (typeof descriptor.value === 'function') {
 				Object.defineProperty(css, name, {
 					value: (...args) => {
