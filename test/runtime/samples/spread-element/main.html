@@ -1,0 +1,13 @@
+<div {{...props}} data-named="value">{{color}}</div>
+
+<script>
+	export default {
+		data: () => ({
+			color: 'red',
+			props: {
+				'data-foo': 'bar',
+				'data-named': 'qux'
+			}
+		})
+	};
+</script>
