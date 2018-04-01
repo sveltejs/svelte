@@ -167,9 +167,10 @@ var Nested = window.Nested;
 
 function create_main_fragment(component, state) {
 
+	var nested_initial_data = { foo: "bar" };
 	var nested = new Nested({
 		root: component.root,
-		data: { foo: "bar" }
+		data: nested_initial_data
 	});
 
 	return {

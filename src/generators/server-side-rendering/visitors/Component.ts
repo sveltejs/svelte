@@ -27,51 +27,65 @@ export default function visitComponent(
 	const attributes: Node[] = [];
 	const bindings: Node[] = [];
 
+	let usesSpread;
+
 	node.attributes.forEach((attribute: Node) => {
-		if (attribute.type === 'Attribute') {
+		if (attribute.type === 'Attribute' || attribute.type === 'Spread') {
+			if (attribute.type === 'Spread') usesSpread = true;
 			attributes.push(attribute);
 		} else if (attribute.type === 'Binding') {
 			bindings.push(attribute);
 		}
 	});
 
-	const props = attributes
-		.map(attribute => {
-			let value;
+	const bindingProps = bindings.map(binding => {
+		const { name } = getObject(binding.value);
+		const tail = binding.value.type === 'MemberExpression'
+			? getTailSnippet(binding.value)
+			: '';
 
-			if (attribute.value === true) {
-				value = `true`;
-			} else if (attribute.value.length === 0) {
-				value = `''`;
-			} else if (attribute.value.length === 1) {
-				const chunk = attribute.value[0];
-				if (chunk.type === 'Text') {
-					value = isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
-				} else {
-					block.contextualise(chunk.expression);
-					const { snippet } = chunk.metadata;
-					value = snippet;
-				}
-			} else {
-				value = '`' + attribute.value.map(stringifyAttribute).join('') + '`';
+		const keypath = block.contexts.has(name)
+			? `${name}${tail}`
+			: `state.${name}${tail}`;
+		return `${binding.name}: ${keypath}`;
+	});
+
+	function getAttributeValue(attribute) {
+		if (attribute.value === true) return `true`;
+		if (attribute.value.length === 0) return `''`;
+
+		if (attribute.value.length === 1) {
+			const chunk = attribute.value[0];
+			if (chunk.type === 'Text') {
+				return isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
 			}
 
-			return `${attribute.name}: ${value}`;
-		})
-		.concat(
-			bindings.map(binding => {
-				const { name } = getObject(binding.value);
-				const tail = binding.value.type === 'MemberExpression'
-					? getTailSnippet(binding.value)
-					: '';
+			block.contextualise(chunk.expression);
+			const { snippet } = chunk.metadata;
+			return snippet;
+		}
 
-				const keypath = block.contexts.has(name)
-					? `${name}${tail}`
-					: `state.${name}${tail}`;
-				return `${binding.name}: ${keypath}`;
-			})
-		)
-		.join(', ');
+		return '`' + attribute.value.map(stringifyAttribute).join('') + '`';
+	}
+
+	const props = usesSpread
+		? `Object.assign(${
+			attributes
+				.map(attribute => {
+					if (attribute.type === 'Spread') {
+						block.contextualise(attribute.expression);
+						return attribute.metadata.snippet;
+					} else {
+						return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
+					}
+				})
+				.concat(bindingProps.map(p => `{ ${p} }`))
+				.join(', ')
+		})`
+		: `{ ${attributes
+			.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
+			.concat(bindingProps)
+			.join(', ')} }`;
 
 	const isDynamicComponent = node.name === ':Component';
 	if (isDynamicComponent) block.contextualise(node.expression);
@@ -86,7 +100,7 @@ export default function visitComponent(
 		block.addBinding(binding, expression);
 	});
 
-	let open = `\${${expression}._render(__result, {${props}}`;
+	let open = `\${${expression}._render(__result, ${props}`;
 
 	const options = [];
 	if (generator.options.store) {

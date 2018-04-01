@@ -1,20 +1,13 @@
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
 import stringifyProps from '../../utils/stringifyProps';
 import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
-import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
-import isValidIdentifier from '../../utils/isValidIdentifier';
-import reservedNames from '../../utils/reservedNames';
+import quoteIfNecessary from '../../utils/quoteIfNecessary';
+import mungeAttribute from './shared/mungeAttribute';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
-
-function quoteIfNecessary(name, legacy) {
-	if (!isValidIdentifier || (legacy && reservedNames.has(name))) return `"${name}"`;
-	return name;
-}
 
 export default class Component extends Node {
 	type: 'Component';
@@ -89,12 +82,13 @@ export default class Component extends Node {
 		const allContexts = new Set();
 		const statements: string[] = [];
 
+		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
+		const name_changes = block.getUniqueName(`${name}_changes`);
 		let name_updating: string;
-		let name_initial_data: string;
 		let beforecreate: string = null;
 
 		const attributes = this.attributes
-			.filter(a => a.type === 'Attribute')
+			.filter(a => a.type === 'Attribute' || a.type === 'Spread')
 			.map(a => mungeAttribute(a, block));
 
 		const bindings = this.attributes
@@ -110,180 +104,215 @@ export default class Component extends Node {
 
 		const updates: string[] = [];
 
+		const usesSpread = !!attributes.find(a => a.spread);
+
+		const attributeObject = usesSpread
+			? '{}'
+			: stringifyProps(
+				attributes.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`)
+			);
+
 		if (attributes.length || bindings.length) {
-			const initialProps = attributes
-				.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`);
+			componentInitProperties.push(`data: ${name_initial_data}`);
+		}
 
-			const initialPropString = stringifyProps(initialProps);
+		if ((!usesSpread && attributes.filter(a => a.dynamic).length) || bindings.length) {
+			updates.push(`var ${name_changes} = {};`);
+		}
 
-			attributes
-				.filter((attribute: Attribute) => attribute.dynamic)
-				.forEach((attribute: Attribute) => {
-					if (attribute.dependencies.length) {
-						updates.push(deindent`
-							if (${attribute.dependencies
-								.map(dependency => `changed.${dependency}`)
-								.join(' || ')}) ${name}_changes.${attribute.name} = ${attribute.value};
-						`);
-					}
+		if (attributes.length) {
+			if (usesSpread) {
+				const levels = block.getUniqueName(`${this.var}_spread_levels`);
 
-					else {
-						// TODO this is an odd situation to encounter – I *think* it should only happen with
-						// each block indices, in which case it may be possible to optimise this
-						updates.push(`${name}_changes.${attribute.name} = ${attribute.value};`);
-					}
-				});
+				const initialProps = [];
+				const changes = [];
 
-			if (bindings.length) {
-				generator.hasComplexBindings = true;
+				attributes
+					.forEach(munged => {
+						const { spread, name, dynamic, value, dependencies } = munged;
 
-				name_updating = block.alias(`${name}_updating`);
-				name_initial_data = block.getUniqueName(`${name}_initial_data`);
+						if (spread) {
+							initialProps.push(value);
 
-				block.addVariable(name_updating, '{}');
-				statements.push(`var ${name_initial_data} = ${initialPropString};`);
+							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
+							changes.push(condition ? `${condition} && ${value}` : value);
+						} else {
+							const obj = `{ ${quoteIfNecessary(name, this.generator.legacy)}: ${value} }`;
+							initialProps.push(obj);
 
-				let hasLocalBindings = false;
-				let hasStoreBindings = false;
-
-				const builder = new CodeBuilder();
-
-				bindings.forEach((binding: Binding) => {
-					let { name: key } = getObject(binding.value);
-
-					binding.contexts.forEach(context => {
-						allContexts.add(context);
+							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
+							changes.push(condition ? `${condition} && ${obj}` : obj);
+						}
 					});
 
-					let setFromChild;
+				statements.push(deindent`
+					var ${levels} = [
+						${initialProps.join(',\n')}
+					];
 
-					if (block.contexts.has(key)) {
-						const computed = isComputed(binding.value);
-						const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+					for (var #i = 0; #i < ${levels}.length; #i += 1) {
+						${name_initial_data} = @assign(${name_initial_data}, ${levels}[#i]);
+					}
+				`);
 
-						const list = block.listNames.get(key);
-						const index = block.indexNames.get(key);
+				updates.push(deindent`
+					var ${name_changes} = @getSpreadUpdate(${levels}, [
+						${changes.join(',\n')}
+					]);
+				`);
+			} else {
+				attributes
+					.filter((attribute: Attribute) => attribute.dynamic)
+					.forEach((attribute: Attribute) => {
+						if (attribute.dependencies.length) {
+							updates.push(deindent`
+								if (${attribute.dependencies
+									.map(dependency => `changed.${dependency}`)
+									.join(' || ')}) ${name_changes}.${attribute.name} = ${attribute.value};
+							`);
+						}
 
+						else {
+							// TODO this is an odd situation to encounter – I *think* it should only happen with
+							// each block indices, in which case it may be possible to optimise this
+							updates.push(`${name_changes}.${attribute.name} = ${attribute.value};`);
+						}
+					});
+				}
+		}
+
+		if (bindings.length) {
+			generator.hasComplexBindings = true;
+
+			name_updating = block.alias(`${name}_updating`);
+			block.addVariable(name_updating, '{}');
+
+			let hasLocalBindings = false;
+			let hasStoreBindings = false;
+
+			const builder = new CodeBuilder();
+
+			bindings.forEach((binding: Binding) => {
+				let { name: key } = getObject(binding.value);
+
+				binding.contexts.forEach(context => {
+					allContexts.add(context);
+				});
+
+				let setFromChild;
+
+				if (block.contexts.has(key)) {
+					const computed = isComputed(binding.value);
+					const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+
+					const list = block.listNames.get(key);
+					const index = block.indexNames.get(key);
+
+					setFromChild = deindent`
+						${list}[${index}]${tail} = childState.${binding.name};
+
+						${binding.dependencies
+							.map((name: string) => {
+								const isStoreProp = generator.options.store && name[0] === '$';
+								const prop = isStoreProp ? name.slice(1) : name;
+								const newState = isStoreProp ? 'newStoreState' : 'newState';
+
+								if (isStoreProp) hasStoreBindings = true;
+								else hasLocalBindings = true;
+
+								return `${newState}.${prop} = state.${name};`;
+							})}
+					`;
+				}
+
+				else {
+					const isStoreProp = generator.options.store && key[0] === '$';
+					const prop = isStoreProp ? key.slice(1) : key;
+					const newState = isStoreProp ? 'newStoreState' : 'newState';
+
+					if (isStoreProp) hasStoreBindings = true;
+					else hasLocalBindings = true;
+
+					if (binding.value.type === 'MemberExpression') {
 						setFromChild = deindent`
-							${list}[${index}]${tail} = childState.${binding.name};
-
-							${binding.dependencies
-								.map((name: string) => {
-									const isStoreProp = generator.options.store && name[0] === '$';
-									const prop = isStoreProp ? name.slice(1) : name;
-									const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-									if (isStoreProp) hasStoreBindings = true;
-									else hasLocalBindings = true;
-
-									return `${newState}.${prop} = state.${name};`;
-								})
-								.join('\n')}
+							${binding.snippet} = childState.${binding.name};
+							${newState}.${prop} = state.${key};
 						`;
 					}
 
 					else {
-						const isStoreProp = generator.options.store && key[0] === '$';
-						const prop = isStoreProp ? key.slice(1) : key;
-						const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-						if (isStoreProp) hasStoreBindings = true;
-						else hasLocalBindings = true;
-
-						if (binding.value.type === 'MemberExpression') {
-							setFromChild = deindent`
-								${binding.snippet} = childState.${binding.name};
-								${newState}.${prop} = state.${key};
-							`;
-						}
-
-						else {
-							setFromChild = `${newState}.${prop} = childState.${binding.name};`;
-						}
+						setFromChild = `${newState}.${prop} = childState.${binding.name};`;
 					}
+				}
 
-					statements.push(deindent`
-						if (${binding.prop} in ${binding.obj}) {
-							${name_initial_data}.${binding.name} = ${binding.snippet};
-							${name_updating}.${binding.name} = true;
-						}`
-					);
+				statements.push(deindent`
+					if (${binding.prop} in ${binding.obj}) {
+						${name_initial_data}.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
+					}`
+				);
 
-					builder.addConditional(
-						`!${name_updating}.${binding.name} && changed.${binding.name}`,
-						setFromChild
-					);
+				builder.addConditional(
+					`!${name_updating}.${binding.name} && changed.${binding.name}`,
+					setFromChild
+				);
 
-					// TODO could binding.dependencies.length ever be 0?
-					if (binding.dependencies.length) {
-						updates.push(deindent`
-							if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-								${name}_changes.${binding.name} = ${binding.snippet};
-								${name_updating}.${binding.name} = true;
-							}
-						`);
-					}
-				});
-
-				componentInitProperties.push(`data: ${name_initial_data}`);
-
-				const initialisers = [
-					'state = #component.get()',
-					hasLocalBindings && 'newState = {}',
-					hasStoreBindings && 'newStoreState = {}',
-				].filter(Boolean).join(', ');
-
-				componentInitProperties.push(deindent`
-					_bind: function(changed, childState) {
-						var ${initialisers};
-						${builder}
-						${hasStoreBindings && `#component.store.set(newStoreState);`}
-						${hasLocalBindings && `#component._set(newState);`}
-						${name_updating} = {};
+				updates.push(deindent`
+					if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+						${name_changes}.${binding.name} = ${binding.snippet};
+						${name_updating}.${binding.name} = true;
 					}
 				`);
+			});
 
-				beforecreate = deindent`
-					#component.root._beforecreate.push(function() {
-						${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
-					});
-				`;
-			} else if (initialProps.length) {
-				componentInitProperties.push(`data: ${initialPropString}`);
-			}
+			componentInitProperties.push(`data: ${name_initial_data}`);
+
+			const initialisers = [
+				'state = #component.get()',
+				hasLocalBindings && 'newState = {}',
+				hasStoreBindings && 'newStoreState = {}',
+			].filter(Boolean).join(', ');
+
+			componentInitProperties.push(deindent`
+				_bind: function(changed, childState) {
+					var ${initialisers};
+					${builder}
+					${hasStoreBindings && `#component.store.set(newStoreState);`}
+					${hasLocalBindings && `#component._set(newState);`}
+					${name_updating} = {};
+				}
+			`);
+
+			beforecreate = deindent`
+				#component.root._beforecreate.push(function() {
+					${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
+				});
+			`;
 		}
 
-		const isDynamicComponent = this.name === ':Component';
+		if (this.name === ':Component') {
+			const switch_value = block.getUniqueName('switch_value');
+			const switch_props = block.getUniqueName('switch_props');
 
-		const switch_vars = isDynamicComponent && {
-			value: block.getUniqueName('switch_value'),
-			props: block.getUniqueName('switch_props')
-		};
-
-		const expression = (
-			this.name === ':Self' ? generator.name :
-			isDynamicComponent ? switch_vars.value :
-			`%components-${this.name}`
-		);
-
-		if (isDynamicComponent) {
 			block.contextualise(this.expression);
 			const { dependencies, snippet } = this.metadata;
 
 			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 
 			block.builders.init.addBlock(deindent`
-				var ${switch_vars.value} = ${snippet};
+				var ${switch_value} = ${snippet};
 
-				function ${switch_vars.props}(state) {
-					${statements.length > 0 && statements.join('\n')}
+				function ${switch_props}(state) {
+					${(attributes.length || bindings.length) && deindent`
+					var ${name_initial_data} = ${attributeObject};`}
+					${statements}
 					return {
 						${componentInitProperties.join(',\n')}
 					};
 				}
 
-				if (${switch_vars.value}) {
-					var ${name} = new ${expression}(${switch_vars.props}(state));
+				if (${switch_value}) {
+					var ${name} = new ${switch_value}(${switch_props}(state));
 
 					${beforecreate}
 				}
@@ -317,11 +346,11 @@ export default class Component extends Node {
 			const updateMountNode = this.getUpdateMountNode(anchor);
 
 			block.builders.update.addBlock(deindent`
-				if (${switch_vars.value} !== (${switch_vars.value} = ${snippet})) {
+				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) ${name}.destroy();
 
-					if (${switch_vars.value}) {
-						${name} = new ${switch_vars.value}(${switch_vars.props}(state));
+					if (${switch_value}) {
+						${name} = new ${switch_value}(${switch_props}(state));
 						${name}._fragment.c();
 
 						${this.children.map(child => child.remount(name))}
@@ -344,9 +373,8 @@ export default class Component extends Node {
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					else {
-						var ${name}_changes = {};
-						${updates.join('\n')}
-						${name}._set(${name}_changes);
+						${updates}
+						${name}._set(${name_changes});
 						${bindings.length && `${name_updating} = {};`}
 					}
 				`);
@@ -356,8 +384,14 @@ export default class Component extends Node {
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
+			const expression = this.name === ':Self'
+				? generator.name
+				: `%components-${this.name}`;
+
 			block.builders.init.addBlock(deindent`
-				${statements.join('\n')}
+				${(attributes.length || bindings.length) && deindent`
+				var ${name_initial_data} = ${attributeObject};`}
+				${statements}
 				var ${name} = new ${expression}({
 					${componentInitProperties.join(',\n')}
 				});
@@ -387,9 +421,9 @@ export default class Component extends Node {
 
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
-					var ${name}_changes = {};
-					${updates.join('\n')}
-					${name}._set(${name}_changes);
+					var ${name_changes} = {};
+					${updates}
+					${name}._set(${name_changes});
 					${bindings.length && `${name_updating} = {};`}
 				`);
 			}
@@ -406,79 +440,6 @@ export default class Component extends Node {
 	remount(name: string) {
 		return `${this.var}._mount(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
 	}
-}
-
-function mungeAttribute(attribute: Node, block: Block): Attribute {
-	if (attribute.value === true) {
-		// attributes without values, e.g. <textarea readonly>
-		return {
-			name: attribute.name,
-			value: true,
-			dynamic: false
-		};
-	}
-
-	if (attribute.value.length === 0) {
-		return {
-			name: attribute.name,
-			value: `''`,
-			dynamic: false
-		};
-	}
-
-	if (attribute.value.length === 1) {
-		const value = attribute.value[0];
-
-		if (value.type === 'Text') {
-			// static attributes
-			return {
-				name: attribute.name,
-				value: isNaN(value.data) ? stringify(value.data) : value.data,
-				dynamic: false
-			};
-		}
-
-		// simple dynamic attributes
-		block.contextualise(value.expression); // TODO remove
-		const { dependencies, snippet } = value.metadata;
-
-		// TODO only update attributes that have changed
-		return {
-			name: attribute.name,
-			value: snippet,
-			dependencies,
-			dynamic: true
-		};
-	}
-
-	// otherwise we're dealing with a complex dynamic attribute
-	const allDependencies = new Set();
-
-	const value =
-		(attribute.value[0].type === 'Text' ? '' : `"" + `) +
-		attribute.value
-			.map((chunk: Node) => {
-				if (chunk.type === 'Text') {
-					return stringify(chunk.data);
-				} else {
-					block.contextualise(chunk.expression); // TODO remove
-					const { dependencies, snippet } = chunk.metadata;
-
-					dependencies.forEach((dependency: string) => {
-						allDependencies.add(dependency);
-					});
-
-					return getExpressionPrecedence(chunk.expression) <= 13 ? `(${snippet})` : snippet;
-				}
-			})
-			.join(' + ');
-
-	return {
-		name: attribute.name,
-		value,
-		dependencies: Array.from(allDependencies),
-		dynamic: true
-	};
 }
 
 function mungeBinding(binding: Node, block: Block): Binding {

@@ -5,6 +5,8 @@ import isVoidElementName from '../../utils/isVoidElementName';
 import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
+import quoteIfNecessary from '../../utils/quoteIfNecessary';
+import mungeAttribute from './shared/mungeAttribute';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -141,6 +143,10 @@ export default class Element extends Node {
 			component._slots.add(slot);
 		}
 
+		if (this.spread) {
+			block.addDependencies(this.spread.metadata.dependencies);
+		}
+
 		this.var = block.getUniqueName(
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
@@ -238,9 +244,9 @@ export default class Element extends Node {
 		}
 
 		this.addBindings(block, allUsedContexts);
-		this.addAttributes(block);
 		const eventHandlerUsesComponent = this.addEventHandlers(block, allUsedContexts);
 		this.addRefs(block);
+		this.addAttributes(block);
 		this.addTransitions(block);
 		this.addActions(block);
 
@@ -432,9 +438,67 @@ export default class Element extends Node {
 	}
 
 	addAttributes(block: Block) {
+		if (this.attributes.find(attr => attr.type === 'Spread')) {
+			this.addSpreadAttributes(block);
+			return;
+		}
+
 		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
 			attribute.render(block);
 		});
+	}
+
+	addSpreadAttributes(block: Block) {
+		const levels = block.getUniqueName(`${this.var}_levels`);
+		const data = block.getUniqueName(`${this.var}_data`);
+
+		const initialProps = [];
+		const updates = [];
+
+		this.attributes
+			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
+			.forEach(attr => {
+				if (attr.type === 'Attribute') {
+					const { dynamic, value, dependencies } = mungeAttribute(attr, block);
+
+					const snippet = `{ ${quoteIfNecessary(attr.name, this.generator.legacy)}: ${value} }`;
+					initialProps.push(snippet);
+
+					const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
+					updates.push(condition ? `${condition} && ${snippet}` : snippet);
+				}
+
+				else {
+					block.contextualise(attr.expression); // TODO gah
+					const { snippet, dependencies } = attr.metadata;
+
+					initialProps.push(snippet);
+
+					const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
+					updates.push(condition ? `${condition} && ${snippet}` : snippet);
+				}
+			});
+
+		block.builders.init.addBlock(deindent`
+			var ${levels} = [
+				${initialProps.join(',\n')}
+			];
+
+			var ${data} = {};
+			for (var #i = 0; #i < ${levels}.length; #i += 1) {
+				${data} = @assign(${data}, ${levels}[#i]);
+			}
+		`);
+
+		block.builders.hydrate.addLine(
+			`@setAttributes(${this.var}, ${data});`
+		);
+
+		block.builders.update.addBlock(deindent`
+			@setAttributes(${this.var}, @getSpreadUpdate(${levels}, [
+				${updates.join(',\n')}
+			]));
+		`);
 	}
 
 	addEventHandlers(block: Block, allUsedContexts) {
@@ -553,6 +617,7 @@ export default class Element extends Node {
 	}
 
 	addRefs(block: Block) {
+		// TODO it should surely be an error to have more than one ref
 		this.attributes.filter((a: Ref) => a.type === 'Ref').forEach((attribute: Ref) => {
 			const ref = `#component.refs.${attribute.name}`;
 
