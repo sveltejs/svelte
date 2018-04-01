@@ -81,7 +81,7 @@ describe('css', () => {
 			checkCodeIsValid(dom.code);
 			checkCodeIsValid(ssr.code);
 
-			assert.equal(dom.css, ssr.css);
+			assert.equal(dom.css.toString(), ssr.css.toString());
 
 			assert.deepEqual(
 				domWarnings.map(normalizeWarning),

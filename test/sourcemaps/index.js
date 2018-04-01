@@ -45,7 +45,7 @@ describe("sourcemaps", () => {
 				JSON.stringify(map, null, "  ")
 			);
 
-			if (css) {
+			if (css.code) {
 				fs.writeFileSync(
 					`${outputFilename}.css`,
 					`${css}\n/*# sourceMappingURL=output.css.map */`
@@ -67,7 +67,7 @@ describe("sourcemaps", () => {
 			const locateInGenerated = getLocator(_code);
 
 			const smcCss = cssMap && new SourceMapConsumer(cssMap);
-			const locateInGeneratedCss = getLocator(css || '');
+			const locateInGeneratedCss = getLocator(css.code || '');
 
 			test({ assert, code: _code, map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });
 		});
