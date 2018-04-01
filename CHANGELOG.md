@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.60.0
+
+* Spread properties ([#195](https://github.com/sveltejs/svelte/issues/195))
+* `svelte.compile` returns an object with `{ js, css, ast }` properties, where `js` and `css` are `{ code, map }` objects ([#1298](https://github.com/sveltejs/svelte/pull/1298))
+* Fixed broken compile errors when using Rollup ([#1296](https://github.com/sveltejs/svelte/pull/1296))
+
 ## 1.59.0
 
 * Deprecate `teardown` in custom event handlers ([#531](https://github.com/sveltejs/svelte/issues/531))
