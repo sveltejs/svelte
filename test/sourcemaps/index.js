@@ -45,7 +45,7 @@ describe("sourcemaps", () => {
 				JSON.stringify(map, null, "  ")
 			);
 
-			if (css) {
+			if (css.code) {
 				fs.writeFileSync(
 					`${outputFilename}.css`,
 					`${css}\n/*# sourceMappingURL=output.css.map */`
