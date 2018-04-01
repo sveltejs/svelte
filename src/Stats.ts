@@ -1,4 +1,5 @@
 import { Node } from './interfaces';
+import Generator from './generators/Generator';
 
 const now = (typeof process !== 'undefined' && process.hrtime)
 	? () => {
@@ -63,31 +64,36 @@ export default class Stats {
 		this.currentChildren = this.currentTiming ? this.currentTiming.children : this.timings;
 	}
 
-	render({ imports }: {
-		imports: Node[]
-	}) {
+	render(generator: Generator) {
 		const timings = Object.assign({
 			total: now() - this.startTime
 		}, collapseTimings(this.timings));
 
+		const imports = generator.imports.map(node => {
+			return {
+				source: node.source.value,
+				specifiers: node.specifiers.map(specifier => {
+					return {
+						name: (
+							specifier.type === 'ImportDefaultSpecifier' ? 'default' :
+							specifier.type === 'ImportNamespaceSpecifier' ? '*' :
+							specifier.imported.name
+						),
+						as: specifier.local.name
+					};
+				})
+			}
+		});
+
+		const hooks: Record<string, boolean> = {};
+		if (generator.templateProperties.oncreate) hooks.oncreate = true;
+		if (generator.templateProperties.ondestroy) hooks.ondestroy = true;
+
 		return {
 			timings,
 			warnings: [], // TODO
-			imports: imports.map(node => {
-				return {
-					source: node.source.value,
-					specifiers: node.specifiers.map(specifier => {
-						return {
-							name: (
-								specifier.type === 'ImportDefaultSpecifier' ? 'default' :
-								specifier.type === 'ImportNamespaceSpecifier' ? '*' :
-								specifier.imported.name
-							),
-							as: specifier.local.name
-						};
-					})
-				}
-			})
+			imports,
+			hooks
 		};
 	}
 }
