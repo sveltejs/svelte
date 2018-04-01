@@ -3,6 +3,7 @@ import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
 import CompileError from '../utils/CompileError';
+import Stats from '../Stats';
 import Stylesheet from '../css/Stylesheet';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 
