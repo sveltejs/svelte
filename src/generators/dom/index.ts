@@ -135,10 +135,10 @@ export default function dom(
 		builder.addBlock(generator.javascript);
 	}
 
-	const { css, cssMap } = generator.stylesheet.render(options.filename, !generator.customElement);
+	const css = generator.stylesheet.render(options.filename, !generator.customElement);
 	const styles = generator.stylesheet.hasStyles && stringify(options.dev ?
-		`${css}\n/*# sourceMappingURL=${cssMap.toUrl()} */` :
-		css, { onlyEscapeAtSymbol: true });
+		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
+		css.code, { onlyEscapeAtSymbol: true });
 
 	if (styles && generator.options.css !== false && !generator.customElement) {
 		builder.addBlock(deindent`
@@ -234,7 +234,7 @@ export default function dom(
 		${generator.customElement ?
 			deindent`
 				this.attachShadow({ mode: 'open' });
-				${css && `this.shadowRoot.innerHTML = \`<style>${escape(css, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${cssMap.toUrl()} */` : ''}</style>\`;`}
+				${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 			` :
 			(generator.stylesheet.hasStyles && options.css !== false &&
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)

@@ -65,8 +65,8 @@ export default function ssr(
 		visit(generator, mainBlock, node);
 	});
 
-	const { css, cssMap } = generator.customElement ?
-		{ css: null, cssMap: null } :
+	const css = generator.customElement ?
+		{ code: null, map: null } :
 		generator.stylesheet.render(options.filename, true);
 
 	// generate initial state object
@@ -155,8 +155,8 @@ export default function ssr(
 		};
 
 		${name}.css = {
-			code: ${css ? stringify(css) : `''`},
-			map: ${cssMap ? stringify(cssMap.toString()) : 'null'}
+			code: ${css.code ? stringify(css.code) : `''`},
+			map: ${css.map ? stringify(css.map.toString()) : 'null'}
 		};
 
 		var warned = false;
