@@ -2,22 +2,10 @@ import validateJs from './js/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
-import CompileError from '../utils/CompileError';
 import Stats from '../Stats';
+import error from '../utils/error';
 import Stylesheet from '../css/Stylesheet';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
-
-class ValidationError extends CompileError {
-	constructor(
-		message: string,
-		template: string,
-		pos: { start: number, end: number },
-		filename: string,
-	) {
-		super(message, template, pos.start, filename, pos.end);
-		this.name = 'ValidationError';
-	}
-}
 
 export class Validator {
 	readonly source: string;
@@ -72,7 +60,13 @@ export class Validator {
 	}
 
 	error(message: string, pos: { start: number, end: number }) {
-		throw new ValidationError(message, this.source, pos, this.filename);
+		error(message, {
+			name: 'ValidationError',
+			source: this.source,
+			start: pos.start,
+			end: pos.end,
+			filename: this.filename
+		});
 	}
 
 	warn(message: string, pos: { start: number, end: number }) {

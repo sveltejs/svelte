@@ -85,6 +85,21 @@ export function setAttribute(node, attribute, value) {
 	node.setAttribute(attribute, value);
 }
 
+export function setAttributes(node, attributes) {
+	for (var key in attributes) {
+		if (key in node) {
+			node[key] = attributes[key];
+		} else {
+			if (attributes[key] === undefined) removeAttribute(node, key);
+			else setAttribute(node, key, attributes[key]);
+		}
+	}
+}
+
+export function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
+}
+
 export function setXlinkAttribute(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
