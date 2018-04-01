@@ -239,6 +239,24 @@ export default function ssr(
 				};
 			`
 		}
+
+		${
+			/__spread/.test(generator.renderCode) && deindent`
+				function __spread(args) {
+					const attributes = Object.assign({}, ...args);
+					let str = '';
+
+					Object.keys(attributes).forEach(name => {
+						const value = attributes[name];
+						if (value === undefined) return;
+						if (value === true) str += " " + name;
+						str += " " + name + "=" + JSON.stringify(value);
+					});
+
+					return str;
+				}
+			`
+		}
 	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 		if (sigil === '@') return generator.alias(name);
 		if (sigil === '%') return generator.templateVars.get(name);

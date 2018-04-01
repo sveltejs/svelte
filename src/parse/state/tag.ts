@@ -289,6 +289,23 @@ function readTagName(parser: Parser) {
 function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
+	if (parser.eat('{{')) {
+		parser.allowWhitespace();
+		parser.eat('...', true, 'Expected spread operator (...)');
+
+		const expression = readExpression(parser);
+
+		parser.allowWhitespace();
+		parser.eat('}}', true);
+
+		return {
+			start,
+			end: parser.index,
+			type: 'Spread',
+			expression
+		};
+	}
+
 	let name = parser.readUntil(/(\s|=|\/|>)/);
 	if (!name) return null;
 	if (uniqueNames.has(name)) {
