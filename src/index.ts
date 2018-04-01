@@ -2,6 +2,7 @@ import parse from './parse/index';
 import validate from './validate/index';
 import generate from './generators/dom/index';
 import generateSSR from './generators/server-side-rendering/index';
+import Stats from './Stats';
 import { assign } from './shared/index.js';
 import Stylesheet from './css/Stylesheet';
 import { Parsed, CompileOptions, Warning, PreprocessOptions, Preprocessor } from './interfaces';
@@ -109,20 +110,28 @@ export function compile(source: string, _options: CompileOptions) {
 	const options = normalizeOptions(_options);
 	let parsed: Parsed;
 
+	const stats = new Stats();
+
 	try {
+		stats.start('parse');
 		parsed = parse(source, options);
+		stats.stop('parse');
 	} catch (err) {
 		options.onerror(err);
 		return;
 	}
 
+	stats.start('stylesheet');
 	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false, options.dev);
+	stats.stop('stylesheet');
 
+	stats.start('validate');
 	validate(parsed, source, stylesheet, options);
+	stats.stop('validate');
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
-	return compiler(parsed, source, stylesheet, options);
+	return compiler(parsed, source, stylesheet, options, stats);
 };
 
 export function create(source: string, _options: CompileOptions = {}) {
