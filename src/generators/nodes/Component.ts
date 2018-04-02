@@ -265,8 +265,6 @@ export default class Component extends Node {
 				`);
 			});
 
-			componentInitProperties.push(`data: ${name_initial_data}`);
-
 			const initialisers = [
 				'state = #component.get()',
 				hasLocalBindings && 'newState = {}',
