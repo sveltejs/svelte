@@ -145,8 +145,10 @@ export default class Component extends Node {
 						}
 					});
 
+				block.addVariable(levels);
+
 				statements.push(deindent`
-					var ${levels} = [
+					${levels} = [
 						${initialProps.join(',\n')}
 					];
 
