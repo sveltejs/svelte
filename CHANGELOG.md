@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.60.1
+
+* Fix spread updates on dynamic components ([#1307](https://github.com/sveltejs/svelte/issues/1307))
+
 ## 1.60.0
 
 * Spread properties ([#195](https://github.com/sveltejs/svelte/issues/195))
