@@ -167,7 +167,8 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 		}
 
 		else if (selector.type === 'TypeSelector') {
-			if (node.name !== selector.name && selector.name !== '*') return false;
+			// remove toLowerCase() in v2, when uppercase elements will be forbidden
+			if (node.name.toLowerCase() !== selector.name.toLowerCase() && selector.name !== '*') return false;
 		}
 
 		else if (selector.type === 'RefSelector') {
