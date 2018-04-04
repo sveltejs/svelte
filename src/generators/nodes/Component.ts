@@ -421,7 +421,6 @@ export default class Component extends Node {
 
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
-					var ${name_changes} = {};
 					${updates}
 					${name}._set(${name_changes});
 					${bindings.length && `${name_updating} = {};`}
