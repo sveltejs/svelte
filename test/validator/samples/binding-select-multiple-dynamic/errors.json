@@ -1,0 +1,12 @@
+[{
+	"message": "'multiple' attribute cannot be dynamic if select uses two-way binding",
+	"loc": {
+		"line": 1,
+		"column": 19
+	},
+	"end": {
+		"line": 1,
+		"column": 28
+	},
+	"pos": 19
+}]
