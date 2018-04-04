@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## 1.60.2
+
+* Fix order of insertions for keyed each blocks with siblings ([#1306](https://github.com/sveltejs/svelte/issues/1306))
+* Bail out of CSS DCE if element has spread attribute ([#1300](https://github.com/sveltejs/svelte/issues/1300))
+* Allow `console` etc in component events ([#1278](https://github.com/sveltejs/svelte/issues/1278))
+* Deconflict against inherited contexts ([#1275](https://github.com/sveltejs/svelte/issues/1275))
+* Make CSS DCE case insensitive ([#1269](https://github.com/sveltejs/svelte/issues/1269))
+* Error on dynamic `multiple` attribute for bound select ([#1270](https://github.com/sveltejs/svelte/issues/1270))
+* Allow custom events on `<:Window>` ([#1268](https://github.com/sveltejs/svelte/issues/1268))
+
 ## 1.60.1
 
 * Fix spread updates on dynamic components ([#1307](https://github.com/sveltejs/svelte/issues/1307))
