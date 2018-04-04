@@ -223,6 +223,9 @@ const operators = {
 };
 
 function attributeMatches(node: Node, name: string, expectedValue: string, operator: string, caseInsensitive: boolean) {
+	const spread = node.attributes.find(attr => attr.type === 'Spread');
+	if (spread) return true;
+
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
 	if (attr.value === true) return operator === null;
