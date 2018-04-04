@@ -102,7 +102,20 @@ export default function validateElement(
 					);
 				}
 
-				checkTypeAttribute(validator, node);
+				if (node.name === 'select') {
+					const attribute = node.attributes.find(
+						(attribute: Node) => attribute.name === 'multiple'
+					);
+
+					if (attribute && isDynamic(attribute)) {
+						validator.error(
+							`'multiple' attribute cannot be dynamic if select uses two-way binding`,
+							attribute
+						);
+					}
+				} else {
+					checkTypeAttribute(validator, node);
+				}
 			} else if (name === 'checked' || name === 'indeterminate') {
 				if (node.name !== 'input') {
 					validator.error(
