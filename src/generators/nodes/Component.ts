@@ -1,4 +1,6 @@
 import deindent from '../../utils/deindent';
+import flattenReference from '../../utils/flattenReference';
+import validCalleeObjects from '../../utils/validCalleeObjects';
 import stringifyProps from '../../utils/stringifyProps';
 import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
@@ -479,10 +481,17 @@ function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, b
 
 	if (handler.expression) {
 		generator.addSourcemapLocations(handler.expression);
-		generator.code.prependRight(
-			handler.expression.start,
-			`${block.alias('component')}.`
-		);
+
+		// TODO try out repetition between this and element counterpart
+		const flattened = flattenReference(handler.expression.callee);
+			if (!validCalleeObjects.has(flattened.name)) {
+				// allow event.stopPropagation(), this.select() etc
+				// TODO verify that it's a valid callee (i.e. built-in or declared method)
+				generator.code.prependRight(
+					handler.expression.start,
+					`${block.alias('component')}.`
+				);
+			}
 
 		handler.expression.arguments.forEach((arg: Node) => {
 			const { contexts } = block.contextualise(arg, null, true);
