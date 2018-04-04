@@ -51,6 +51,8 @@ export default class Window extends Node {
 				// TODO verify that it's a valid callee (i.e. built-in or declared method)
 				generator.addSourcemapLocations(attribute.expression);
 
+				const isCustomEvent = generator.events.has(attribute.name);
+
 				let usesState = false;
 
 				attribute.expression.arguments.forEach((arg: Node) => {
@@ -74,16 +76,39 @@ export default class Window extends Node {
 					[✂${attribute.expression.start}-${attribute.expression.end}✂];
 				`;
 
-				block.builders.init.addBlock(deindent`
-					function ${handlerName}(event) {
-						${handlerBody}
-					}
-					window.addEventListener("${attribute.name}", ${handlerName});
-				`);
+				if (isCustomEvent) {
+					// TODO dry this out
+					block.addVariable(handlerName);
 
-				block.builders.destroy.addBlock(deindent`
-					window.removeEventListener("${attribute.name}", ${handlerName});
-				`);
+					block.builders.hydrate.addBlock(deindent`
+						${handlerName} = %events-${attribute.name}.call(#component, window, function(event) {
+							${handlerBody}
+						});
+					`);
+
+					if (generator.options.dev) {
+						block.builders.hydrate.addBlock(deindent`
+							if (${handlerName}.teardown) {
+								console.warn("Return 'destroy()' from custom event handlers. Returning 'teardown()' has been deprecated and will be unsupported in Svelte 2");
+							}
+						`);
+					}
+
+					block.builders.destroy.addLine(deindent`
+						${handlerName}[${handlerName}.destroy ? 'destroy' : 'teardown']();
+					`);
+				} else {
+					block.builders.init.addBlock(deindent`
+						function ${handlerName}(event) {
+							${handlerBody}
+						}
+						window.addEventListener("${attribute.name}", ${handlerName});
+					`);
+
+					block.builders.destroy.addBlock(deindent`
+						window.removeEventListener("${attribute.name}", ${handlerName});
+					`);
+				}
 			}
 
 			if (attribute.type === 'Binding') {
