@@ -51,6 +51,7 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 				}
 			}
 		} else if (attribute.type === 'EventHandler') {
+			validator.used.events.add(attribute.name);
 			validateEventHandler(validator, attribute, refCallees);
 		}
 	});
