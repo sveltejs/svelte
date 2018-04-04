@@ -10,7 +10,7 @@ export function outroAndDestroyBlock(block, lookup) {
 	});
 }
 
-export function updateKeyedEach(old_blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, get_context) {
+export function updateKeyedEach(old_blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
@@ -39,16 +39,15 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 		if (key in old_indexes) deltas[key] = Math.abs(i - old_indexes[key]);
 	}
 
-	var next = null;
-
 	var will_move = {};
 	var did_move = {};
 
 	var destroy = has_outro ? outroAndDestroyBlock : destroyBlock;
 
 	function insert(block) {
-		block[intro_method](node, next && next.first);
-		next = lookup[block.key] = block;
+		block[intro_method](node, next);
+		lookup[block.key] = block;
+		next = block.first;
 		n--;
 	}
 
@@ -60,7 +59,7 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 
 		if (new_block === old_block) {
 			// do nothing
-			next = new_block;
+			next = new_block.first;
 			o--;
 			n--;
 		}
