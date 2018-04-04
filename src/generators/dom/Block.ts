@@ -105,7 +105,7 @@ export default class Block {
 		this.hasOutroMethod = false;
 		this.outros = 0;
 
-		this.getUniqueName = this.generator.getUniqueNameMaker();
+		this.getUniqueName = this.generator.getUniqueNameMaker([...this.contexts.values()]);
 		this.variables = new Map();
 
 		this.aliases = new Map()
