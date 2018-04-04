@@ -398,7 +398,7 @@ export default class Generator {
 		return alias;
 	}
 
-	getUniqueNameMaker() {
+	getUniqueNameMaker(names: string[]) {
 		const localUsedNames = new Set();
 
 		function add(name: string) {
@@ -407,6 +407,7 @@ export default class Generator {
 
 		reservedNames.forEach(add);
 		this.userVars.forEach(add);
+		names.forEach(add);
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
