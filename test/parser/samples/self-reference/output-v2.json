@@ -1,0 +1,79 @@
+{
+	"hash": 216762188,
+	"html": {
+		"start": 0,
+		"end": 57,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 57,
+				"type": "IfBlock",
+				"expression": {
+					"type": "BinaryExpression",
+					"start": 6,
+					"end": 15,
+					"left": {
+						"type": "Identifier",
+						"start": 6,
+						"end": 11,
+						"name": "depth"
+					},
+					"operator": ">",
+					"right": {
+						"type": "Literal",
+						"start": 14,
+						"end": 15,
+						"value": 1,
+						"raw": "1"
+					}
+				},
+				"children": [
+					{
+						"start": 19,
+						"end": 49,
+						"type": "Element",
+						"name": ":Self",
+						"attributes": [
+							{
+								"start": 26,
+								"end": 47,
+								"type": "Attribute",
+								"name": "depth",
+								"value": [
+									{
+										"start": 33,
+										"end": 46,
+										"type": "MustacheTag",
+										"expression": {
+											"type": "BinaryExpression",
+											"start": 35,
+											"end": 44,
+											"left": {
+												"type": "Identifier",
+												"start": 35,
+												"end": 40,
+												"name": "depth"
+											},
+											"operator": "-",
+											"right": {
+												"type": "Literal",
+												"start": 43,
+												"end": 44,
+												"value": 1,
+												"raw": "1"
+											}
+										}
+									}
+								]
+							}
+						],
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

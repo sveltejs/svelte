@@ -1,0 +1,128 @@
+{
+	"hash": 1378757574,
+	"html": {
+		"start": 0,
+		"end": 24,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 24,
+				"type": "Element",
+				"name": "h1",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 10,
+						"type": "Text",
+						"data": "Hello "
+					},
+					{
+						"start": 10,
+						"end": 18,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 12,
+							"end": 16,
+							"name": "name"
+						}
+					},
+					{
+						"start": 18,
+						"end": 19,
+						"type": "Text",
+						"data": "!"
+					}
+				]
+			},
+			{
+				"start": 24,
+				"end": 26,
+				"type": "Text",
+				"data": "\n\n"
+			}
+		]
+	},
+	"css": null,
+	"js": {
+		"start": 26,
+		"end": 143,
+		"attributes": [],
+		"content": {
+			"type": "Program",
+			"start": 34,
+			"end": 134,
+			"body": [
+				{
+					"type": "ExportDefaultDeclaration",
+					"start": 36,
+					"end": 95,
+					"declaration": {
+						"type": "ObjectExpression",
+						"start": 51,
+						"end": 94,
+						"properties": [
+							{
+								"type": "Property",
+								"start": 55,
+								"end": 91,
+								"method": false,
+								"shorthand": false,
+								"computed": false,
+								"key": {
+									"type": "Identifier",
+									"start": 55,
+									"end": 59,
+									"name": "data"
+								},
+								"value": {
+									"type": "ArrowFunctionExpression",
+									"start": 61,
+									"end": 91,
+									"id": null,
+									"generator": false,
+									"expression": true,
+									"async": false,
+									"params": [],
+									"body": {
+										"type": "ObjectExpression",
+										"start": 68,
+										"end": 90,
+										"properties": [
+											{
+												"type": "Property",
+												"start": 73,
+												"end": 86,
+												"method": false,
+												"shorthand": false,
+												"computed": false,
+												"key": {
+													"type": "Identifier",
+													"start": 73,
+													"end": 77,
+													"name": "name"
+												},
+												"value": {
+													"type": "Literal",
+													"start": 79,
+													"end": 86,
+													"value": "world",
+													"raw": "'world'"
+												},
+												"kind": "init"
+											}
+										]
+									}
+								},
+								"kind": "init"
+							}
+						]
+					}
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

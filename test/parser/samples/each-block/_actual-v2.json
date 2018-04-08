@@ -1,0 +1,39 @@
+{
+	"hash": "mzeq0s",
+	"html": {
+		"start": 0,
+		"end": 50,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 27,
+				"type": "Text",
+				"data": "{#each animals as animal}\n\t"
+			},
+			{
+				"start": 27,
+				"end": 42,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 30,
+						"end": 38,
+						"type": "Text",
+						"data": "{animal}"
+					}
+				]
+			},
+			{
+				"start": 42,
+				"end": 50,
+				"type": "Text",
+				"data": "\n{/each}"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

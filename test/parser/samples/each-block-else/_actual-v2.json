@@ -1,0 +1,60 @@
+{
+	"hash": "ljl07n",
+	"html": {
+		"start": 0,
+		"end": 77,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 27,
+				"type": "Text",
+				"data": "{#each animals as animal}\n\t"
+			},
+			{
+				"start": 27,
+				"end": 42,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 30,
+						"end": 38,
+						"type": "Text",
+						"data": "{animal}"
+					}
+				]
+			},
+			{
+				"start": 42,
+				"end": 52,
+				"type": "Text",
+				"data": "\n{:else}\n\t"
+			},
+			{
+				"start": 52,
+				"end": 69,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 55,
+						"end": 65,
+						"type": "Text",
+						"data": "no animals"
+					}
+				]
+			},
+			{
+				"start": 69,
+				"end": 77,
+				"type": "Text",
+				"data": "\n{/each}"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

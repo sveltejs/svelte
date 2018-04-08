@@ -1,0 +1,81 @@
+{
+	"hash": "1rt0tho",
+	"html": {
+		"start": 0,
+		"end": 149,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 21,
+				"type": "Text",
+				"data": "{#await thePromise}\n\t"
+			},
+			{
+				"start": 21,
+				"end": 38,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 24,
+						"end": 34,
+						"type": "Text",
+						"data": "loading..."
+					}
+				]
+			},
+			{
+				"start": 38,
+				"end": 57,
+				"type": "Text",
+				"data": "\n{:then theValue}\n\t"
+			},
+			{
+				"start": 57,
+				"end": 87,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 60,
+						"end": 83,
+						"type": "Text",
+						"data": "the value is {theValue}"
+					}
+				]
+			},
+			{
+				"start": 87,
+				"end": 107,
+				"type": "Text",
+				"data": "\n{:catch theError}\n\t"
+			},
+			{
+				"start": 107,
+				"end": 140,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 110,
+						"end": 136,
+						"type": "Text",
+						"data": "oh no! {theError.message}}"
+					}
+				]
+			},
+			{
+				"start": 140,
+				"end": 149,
+				"type": "Text",
+				"data": "\n{/await}"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

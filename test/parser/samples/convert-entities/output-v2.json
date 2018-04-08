@@ -1,0 +1,18 @@
+{
+	"hash": 156753432,
+	"html": {
+		"start": 0,
+		"end": 17,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 17,
+				"type": "Text",
+				"data": "Hello & World"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

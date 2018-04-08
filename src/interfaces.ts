@@ -66,6 +66,8 @@ export interface CompileOptions {
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
+
+	parser?: 'v2';
 }
 
 export interface GenerateOptions {

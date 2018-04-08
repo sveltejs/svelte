@@ -1,0 +1,28 @@
+{
+	"hash": 606864228,
+	"html": {
+		"start": 0,
+		"end": 30,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 30,
+				"type": "Element",
+				"name": "textarea",
+				"attributes": [
+					{
+						"start": 10,
+						"end": 18,
+						"type": "Attribute",
+						"name": "readonly",
+						"value": true
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

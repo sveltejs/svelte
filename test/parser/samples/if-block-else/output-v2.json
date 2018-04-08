@@ -1,0 +1,62 @@
+{
+	"hash": 3134964533,
+	"html": {
+		"start": 0,
+		"end": 56,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 56,
+				"type": "IfBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 6,
+					"end": 9,
+					"name": "foo"
+				},
+				"children": [
+					{
+						"start": 13,
+						"end": 23,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 16,
+								"end": 19,
+								"type": "Text",
+								"data": "foo"
+							}
+						]
+					}
+				],
+				"else": {
+					"start": 32,
+					"end": 49,
+					"type": "ElseBlock",
+					"children": [
+						{
+							"start": 34,
+							"end": 48,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 37,
+									"end": 44,
+									"type": "Text",
+									"data": "not foo"
+								}
+							]
+						}
+					]
+				}
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

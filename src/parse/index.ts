@@ -13,11 +13,13 @@ import error from '../utils/error';
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
+	parser?: 'v2';
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
 export class Parser {
+	readonly v2: boolean;
 	readonly template: string;
 	readonly filename?: string;
 
@@ -32,6 +34,8 @@ export class Parser {
 	allowBindings: boolean;
 
 	constructor(template: string, options: ParserOptions) {
+		this.v2 = options.parser === 'v2';
+
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}

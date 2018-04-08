@@ -1,0 +1,27 @@
+{
+	"hash": "1uyqul7",
+	"html": {
+		"start": 0,
+		"end": 61,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 61,
+				"type": "Element",
+				"name": "textarea",
+				"attributes": [],
+				"children": [
+					{
+						"start": 10,
+						"end": 50,
+						"type": "Text",
+						"data": "\n\t<p>not actually an element. {foo}</p>\n"
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

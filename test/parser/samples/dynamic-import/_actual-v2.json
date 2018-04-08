@@ -1,0 +1,182 @@
+{
+	"hash": "uvuf1h",
+	"html": {
+		"start": null,
+		"end": null,
+		"type": "Fragment",
+		"children": []
+	},
+	"css": null,
+	"js": {
+		"start": 0,
+		"end": 131,
+		"attributes": [],
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 122,
+			"body": [
+				{
+					"type": "ExportDefaultDeclaration",
+					"start": 10,
+					"end": 121,
+					"declaration": {
+						"type": "ObjectExpression",
+						"start": 25,
+						"end": 121,
+						"properties": [
+							{
+								"type": "Property",
+								"start": 29,
+								"end": 118,
+								"method": true,
+								"shorthand": false,
+								"computed": false,
+								"key": {
+									"type": "Identifier",
+									"start": 29,
+									"end": 37,
+									"name": "oncreate"
+								},
+								"kind": "init",
+								"value": {
+									"type": "FunctionExpression",
+									"start": 37,
+									"end": 118,
+									"id": null,
+									"generator": false,
+									"expression": false,
+									"async": false,
+									"params": [],
+									"body": {
+										"type": "BlockStatement",
+										"start": 40,
+										"end": 118,
+										"body": [
+											{
+												"type": "ExpressionStatement",
+												"start": 45,
+												"end": 114,
+												"expression": {
+													"type": "CallExpression",
+													"start": 45,
+													"end": 113,
+													"callee": {
+														"type": "MemberExpression",
+														"start": 45,
+														"end": 68,
+														"object": {
+															"type": "CallExpression",
+															"start": 45,
+															"end": 63,
+															"callee": {
+																"type": "Import",
+																"start": 45,
+																"end": 51
+															},
+															"arguments": [
+																{
+																	"type": "Literal",
+																	"start": 52,
+																	"end": 62,
+																	"value": "./foo.js",
+																	"raw": "'./foo.js'"
+																}
+															]
+														},
+														"property": {
+															"type": "Identifier",
+															"start": 64,
+															"end": 68,
+															"name": "then"
+														},
+														"computed": false
+													},
+													"arguments": [
+														{
+															"type": "ArrowFunctionExpression",
+															"start": 69,
+															"end": 112,
+															"id": null,
+															"generator": false,
+															"expression": false,
+															"async": false,
+															"params": [
+																{
+																	"type": "Identifier",
+																	"start": 69,
+																	"end": 72,
+																	"name": "foo"
+																}
+															],
+															"body": {
+																"type": "BlockStatement",
+																"start": 76,
+																"end": 112,
+																"body": [
+																	{
+																		"type": "ExpressionStatement",
+																		"start": 82,
+																		"end": 107,
+																		"expression": {
+																			"type": "CallExpression",
+																			"start": 82,
+																			"end": 106,
+																			"callee": {
+																				"type": "MemberExpression",
+																				"start": 82,
+																				"end": 93,
+																				"object": {
+																					"type": "Identifier",
+																					"start": 82,
+																					"end": 89,
+																					"name": "console"
+																				},
+																				"property": {
+																					"type": "Identifier",
+																					"start": 90,
+																					"end": 93,
+																					"name": "log"
+																				},
+																				"computed": false
+																			},
+																			"arguments": [
+																				{
+																					"type": "MemberExpression",
+																					"start": 94,
+																					"end": 105,
+																					"object": {
+																						"type": "Identifier",
+																						"start": 94,
+																						"end": 97,
+																						"name": "foo"
+																					},
+																					"property": {
+																						"type": "Identifier",
+																						"start": 98,
+																						"end": 105,
+																						"name": "default"
+																					},
+																					"computed": false
+																				}
+																			]
+																		}
+																	}
+																]
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							}
+						]
+					}
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

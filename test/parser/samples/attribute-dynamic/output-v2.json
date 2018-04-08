@@ -1,0 +1,64 @@
+{
+	"hash": 804348386,
+	"html": {
+		"start": 0,
+		"end": 46,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 46,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 30,
+						"type": "Attribute",
+						"name": "style",
+						"value": [
+							{
+								"start": 12,
+								"end": 19,
+								"type": "Text",
+								"data": "color: "
+							},
+							{
+								"start": 19,
+								"end": 28,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 21,
+									"end": 26,
+									"name": "color"
+								}
+							},
+							{
+								"start": 28,
+								"end": 29,
+								"type": "Text",
+								"data": ";"
+							}
+						]
+					}
+				],
+				"children": [
+					{
+						"start": 31,
+						"end": 40,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 33,
+							"end": 38,
+							"name": "color"
+						}
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

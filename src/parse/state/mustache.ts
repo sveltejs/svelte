@@ -32,7 +32,7 @@ function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
-	parser.index += 2;
+	parser.index += parser.v2 ? 1 : 2;
 
 	parser.allowWhitespace();
 
@@ -329,7 +329,7 @@ export default function mustache(parser: Parser) {
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		parser.current().children.push({
 			start,

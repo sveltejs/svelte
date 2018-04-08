@@ -1,0 +1,35 @@
+{
+	"hash": "op11m5",
+	"html": {
+		"start": 0,
+		"end": 23,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 23,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 16,
+						"type": "Attribute",
+						"name": "class",
+						"value": [
+							{
+								"start": 12,
+								"end": 15,
+								"type": "Text",
+								"data": "foo"
+							}
+						]
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

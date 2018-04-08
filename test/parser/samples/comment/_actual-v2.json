@@ -1,0 +1,18 @@
+{
+	"hash": "1ihizni",
+	"html": {
+		"start": 0,
+		"end": 18,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 18,
+				"type": "Comment",
+				"data": " a comment "
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

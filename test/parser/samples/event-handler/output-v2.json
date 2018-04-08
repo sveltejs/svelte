@@ -1,0 +1,116 @@
+{
+	"hash": 4260626221,
+	"html": {
+		"start": 0,
+		"end": 101,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 61,
+				"type": "Element",
+				"name": "button",
+				"attributes": [
+					{
+						"start": 8,
+						"end": 45,
+						"type": "EventHandler",
+						"name": "click",
+						"expression": {
+							"type": "CallExpression",
+							"start": 18,
+							"end": 44,
+							"callee": {
+								"type": "Identifier",
+								"start": 18,
+								"end": 21,
+								"name": "set"
+							},
+							"arguments": [
+								{
+									"type": "ObjectExpression",
+									"start": 22,
+									"end": 43,
+									"properties": [
+										{
+											"type": "Property",
+											"start": 24,
+											"end": 41,
+											"method": false,
+											"shorthand": false,
+											"computed": false,
+											"key": {
+												"type": "Identifier",
+												"start": 24,
+												"end": 31,
+												"name": "visible"
+											},
+											"value": {
+												"type": "UnaryExpression",
+												"start": 33,
+												"end": 41,
+												"operator": "!",
+												"prefix": true,
+												"argument": {
+													"type": "Identifier",
+													"start": 34,
+													"end": 41,
+													"name": "visible"
+												}
+											},
+											"kind": "init"
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"children": [
+					{
+						"start": 46,
+						"end": 52,
+						"type": "Text",
+						"data": "toggle"
+					}
+				]
+			},
+			{
+				"start": 61,
+				"end": 63,
+				"type": "Text",
+				"data": "\n\n"
+			},
+			{
+				"start": 63,
+				"end": 101,
+				"type": "IfBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 69,
+					"end": 76,
+					"name": "visible"
+				},
+				"children": [
+					{
+						"start": 80,
+						"end": 93,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 83,
+								"end": 89,
+								"type": "Text",
+								"data": "hello!"
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

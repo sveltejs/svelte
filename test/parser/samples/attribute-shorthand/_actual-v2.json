@@ -1,0 +1,40 @@
+{
+	"hash": "s7nwuc",
+	"html": {
+		"start": 0,
+		"end": 10,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 10,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 8,
+						"type": "Attribute",
+						"name": "id",
+						"value": [
+							{
+								"type": "AttributeShorthand",
+								"start": 6,
+								"end": 8,
+								"expression": {
+									"type": "Identifier",
+									"start": 6,
+									"end": 8,
+									"name": "id"
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
