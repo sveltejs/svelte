@@ -11,6 +11,7 @@ import reservedNames from '../../utils/reservedNames';
 import shared from './shared';
 import Generator from '../Generator';
 import Stylesheet from '../../css/Stylesheet';
+import Stats from '../../Stats';
 import Block from './Block';
 import { test } from '../../config';
 import { Parsed, CompileOptions, Node } from '../../interfaces';
@@ -34,9 +35,10 @@ export class DomGenerator extends Generator {
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
-		options: CompileOptions
+		options: CompileOptions,
+		stats: Stats
 	) {
-		super(parsed, source, name, stylesheet, options, true);
+		super(parsed, source, name, stylesheet, options, stats, true);
 		this.blocks = [];
 
 		this.readonly = new Set();
@@ -54,11 +56,12 @@ export default function dom(
 	parsed: Parsed,
 	source: string,
 	stylesheet: Stylesheet,
-	options: CompileOptions
+	options: CompileOptions,
+	stats: Stats
 ) {
 	const format = options.format || 'es';
 
-	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
+	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options, stats);
 
 	const {
 		computations,

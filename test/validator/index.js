@@ -26,7 +26,7 @@ describe("validate", () => {
 			try {
 				const warnings = [];
 
-				svelte.compile(input, {
+				const { stats } = svelte.compile(input, {
 					onwarn(warning) {
 						warnings.push({
 							message: warning.message,
@@ -36,6 +36,17 @@ describe("validate", () => {
 						});
 					},
 					dev: config.dev
+				});
+
+				assert.equal(stats.warnings.length, warnings.length);
+				stats.warnings.forEach((full, i) => {
+					const lite = warnings[i];
+					assert.deepEqual({
+						message: full.message,
+						pos: full.pos,
+						loc: full.loc,
+						end: full.end
+					}, lite);
 				});
 
 				assert.deepEqual(warnings, expectedWarnings);

@@ -2,6 +2,7 @@ import validateJs from './js/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
+import Stats from '../Stats';
 import error from '../utils/error';
 import Stylesheet from '../css/Stylesheet';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
