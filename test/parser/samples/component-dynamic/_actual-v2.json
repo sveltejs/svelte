@@ -1,0 +1,68 @@
+{
+	"hash": "7yh2k2",
+	"html": {
+		"start": 0,
+		"end": 55,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 55,
+				"type": "Element",
+				"name": "svelte:component",
+				"attributes": [
+					{
+						"start": 18,
+						"end": 23,
+						"type": "Attribute",
+						"name": "{foo",
+						"value": true
+					},
+					{
+						"start": 23,
+						"end": 25,
+						"type": "Attribute",
+						"name": "?",
+						"value": true
+					},
+					{
+						"start": 25,
+						"end": 29,
+						"type": "Attribute",
+						"name": "Foo",
+						"value": true
+					},
+					{
+						"start": 29,
+						"end": 30,
+						"type": "Attribute",
+						"name": "",
+						"value": [
+							{
+								"type": "AttributeShorthand",
+								"start": 30,
+								"end": 30,
+								"expression": {
+									"type": "Identifier",
+									"start": 30,
+									"end": 30,
+									"name": ""
+								}
+							}
+						]
+					},
+					{
+						"start": 31,
+						"end": 35,
+						"type": "Attribute",
+						"name": "Bar}",
+						"value": true
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

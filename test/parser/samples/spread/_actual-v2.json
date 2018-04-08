@@ -1,0 +1,28 @@
+{
+	"hash": "z82kse",
+	"html": {
+		"start": 0,
+		"end": 22,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 22,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 15,
+						"type": "Attribute",
+						"name": "{...props}",
+						"value": true
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

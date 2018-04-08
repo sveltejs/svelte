@@ -1,0 +1,44 @@
+{
+	"hash": 2992234421,
+	"html": {
+		"start": 0,
+		"end": 63,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 63,
+				"type": "Element",
+				"name": "textarea",
+				"attributes": [],
+				"children": [
+					{
+						"start": 10,
+						"end": 40,
+						"type": "Text",
+						"data": "\n\t<p>not actually an element. "
+					},
+					{
+						"start": 40,
+						"end": 47,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 42,
+							"end": 45,
+							"name": "foo"
+						}
+					},
+					{
+						"start": 47,
+						"end": 52,
+						"type": "Text",
+						"data": "</p>\n"
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

@@ -1,0 +1,96 @@
+{
+	"hash": "i9aush",
+	"html": {
+		"start": 0,
+		"end": 14,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 14,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 12,
+						"type": "Ref",
+						"name": "foo"
+					}
+				],
+				"children": []
+			},
+			{
+				"start": 14,
+				"end": 16,
+				"type": "Text",
+				"data": "\n\n"
+			}
+		]
+	},
+	"css": {
+		"start": 16,
+		"end": 60,
+		"attributes": [],
+		"children": [
+			{
+				"type": "Rule",
+				"selector": {
+					"type": "SelectorList",
+					"children": [
+						{
+							"type": "Selector",
+							"children": [
+								{
+									"type": "RefSelector",
+									"start": 25,
+									"end": 32,
+									"name": "foo"
+								}
+							],
+							"start": 25,
+							"end": 32
+						}
+					],
+					"start": 25,
+					"end": 32
+				},
+				"block": {
+					"type": "Block",
+					"children": [
+						{
+							"type": "Declaration",
+							"important": false,
+							"property": "color",
+							"value": {
+								"type": "Value",
+								"children": [
+									{
+										"type": "Identifier",
+										"name": "red",
+										"start": 44,
+										"end": 47
+									}
+								],
+								"start": 43,
+								"end": 47
+							},
+							"start": 37,
+							"end": 47
+						}
+					],
+					"start": 33,
+					"end": 51
+				},
+				"start": 25,
+				"end": 51
+			}
+		],
+		"content": {
+			"start": 23,
+			"end": 52,
+			"styles": "\n\tref:foo {\n\t\tcolor: red;\n\t}\n"
+		}
+	},
+	"js": null
+}

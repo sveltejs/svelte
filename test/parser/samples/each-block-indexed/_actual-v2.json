@@ -1,0 +1,39 @@
+{
+	"hash": "1143n2g",
+	"html": {
+		"start": 0,
+		"end": 58,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 30,
+				"type": "Text",
+				"data": "{#each animals as animal, i}\n\t"
+			},
+			{
+				"start": 30,
+				"end": 50,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 33,
+						"end": 46,
+						"type": "Text",
+						"data": "{i}: {animal}"
+					}
+				]
+			},
+			{
+				"start": 50,
+				"end": 58,
+				"type": "Text",
+				"data": "\n{/each}"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

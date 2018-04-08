@@ -1,0 +1,20 @@
+{
+	"hash": 3659433152,
+	"html": {
+		"start": 0,
+		"end": 9,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 9,
+				"type": "Element",
+				"name": "slot",
+				"attributes": [],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

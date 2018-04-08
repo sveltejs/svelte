@@ -1,0 +1,27 @@
+{
+	"hash": "e2azib",
+	"html": {
+		"start": 0,
+		"end": 25,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 25,
+				"type": "Element",
+				"name": "canvas",
+				"attributes": [
+					{
+						"start": 8,
+						"end": 15,
+						"type": "Ref",
+						"name": "foo"
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

@@ -1,0 +1,1 @@
+{#if foo}bar{/if}

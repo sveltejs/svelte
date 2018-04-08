@@ -1,0 +1,42 @@
+{
+	"hash": "ehtsx6",
+	"html": {
+		"start": 0,
+		"end": 42,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 42,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 28,
+						"type": "Attribute",
+						"name": "style",
+						"value": [
+							{
+								"start": 12,
+								"end": 27,
+								"type": "Text",
+								"data": "color: {color};"
+							}
+						]
+					}
+				],
+				"children": [
+					{
+						"start": 29,
+						"end": 36,
+						"type": "Text",
+						"data": "{color}"
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

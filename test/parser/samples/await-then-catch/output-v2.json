@@ -1,0 +1,161 @@
+{
+	"hash": 1040536517,
+	"html": {
+		"start": 0,
+		"end": 158,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 158,
+				"type": "AwaitBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 9,
+					"end": 19,
+					"name": "thePromise"
+				},
+				"value": "theValue",
+				"error": "theError",
+				"pending": {
+					"start": 21,
+					"end": 41,
+					"type": "PendingBlock",
+					"children": [
+						{
+							"start": 21,
+							"end": 23,
+							"type": "Text",
+							"data": "\n\t"
+						},
+						{
+							"start": 23,
+							"end": 40,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 26,
+									"end": 36,
+									"type": "Text",
+									"data": "loading..."
+								}
+							]
+						},
+						{
+							"start": 40,
+							"end": 41,
+							"type": "Text",
+							"data": "\n"
+						}
+					]
+				},
+				"then": {
+					"start": 41,
+					"end": 93,
+					"type": "ThenBlock",
+					"children": [
+						{
+							"start": 58,
+							"end": 60,
+							"type": "Text",
+							"data": "\n\t"
+						},
+						{
+							"start": 60,
+							"end": 92,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 63,
+									"end": 76,
+									"type": "Text",
+									"data": "the value is "
+								},
+								{
+									"start": 76,
+									"end": 88,
+									"type": "MustacheTag",
+									"expression": {
+										"type": "Identifier",
+										"start": 78,
+										"end": 86,
+										"name": "theValue"
+									}
+								}
+							]
+						},
+						{
+							"start": 92,
+							"end": 93,
+							"type": "Text",
+							"data": "\n"
+						}
+					]
+				},
+				"catch": {
+					"start": 93,
+					"end": 148,
+					"type": "CatchBlock",
+					"children": [
+						{
+							"start": 111,
+							"end": 113,
+							"type": "Text",
+							"data": "\n\t"
+						},
+						{
+							"start": 113,
+							"end": 147,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 116,
+									"end": 123,
+									"type": "Text",
+									"data": "oh no! "
+								},
+								{
+									"start": 123,
+									"end": 143,
+									"type": "MustacheTag",
+									"expression": {
+										"type": "MemberExpression",
+										"start": 125,
+										"end": 141,
+										"object": {
+											"type": "Identifier",
+											"start": 125,
+											"end": 133,
+											"name": "theError"
+										},
+										"property": {
+											"type": "Identifier",
+											"start": 134,
+											"end": 141,
+											"name": "message"
+										},
+										"computed": false
+									}
+								}
+							]
+						},
+						{
+							"start": 147,
+							"end": 148,
+							"type": "Text",
+							"data": "\n"
+						}
+					]
+				}
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

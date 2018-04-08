@@ -1,0 +1,57 @@
+{
+	"hash": "1827l8g",
+	"html": {
+		"start": 0,
+		"end": 65,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 65,
+				"type": "Element",
+				"name": "h1",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 10,
+						"type": "Text",
+						"data": "Hello "
+					},
+					{
+						"start": 10,
+						"end": 35,
+						"type": "Element",
+						"name": "strong",
+						"attributes": [],
+						"children": [
+							{
+								"start": 18,
+								"end": 26,
+								"type": "Text",
+								"data": "{name}! "
+							}
+						]
+					},
+					{
+						"start": 35,
+						"end": 60,
+						"type": "Element",
+						"name": "span",
+						"attributes": [],
+						"children": [
+							{
+								"start": 41,
+								"end": 53,
+								"type": "Text",
+								"data": "How are you?"
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

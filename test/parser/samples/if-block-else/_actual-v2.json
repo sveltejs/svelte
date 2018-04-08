@@ -1,0 +1,60 @@
+{
+	"hash": "dbh411",
+	"html": {
+		"start": 0,
+		"end": 51,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 11,
+				"type": "Text",
+				"data": "{#if foo}\n\t"
+			},
+			{
+				"start": 11,
+				"end": 21,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 14,
+						"end": 17,
+						"type": "Text",
+						"data": "foo"
+					}
+				]
+			},
+			{
+				"start": 21,
+				"end": 31,
+				"type": "Text",
+				"data": "\n{:else}\n\t"
+			},
+			{
+				"start": 31,
+				"end": 45,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 34,
+						"end": 41,
+						"type": "Text",
+						"data": "not foo"
+					}
+				]
+			},
+			{
+				"start": 45,
+				"end": 51,
+				"type": "Text",
+				"data": "\n{/if}"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

@@ -1,0 +1,61 @@
+{
+	"hash": 183399343,
+	"html": {
+		"start": 0,
+		"end": 30,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 30,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 3,
+						"end": 4,
+						"type": "Text",
+						"data": " "
+					},
+					{
+						"start": 4,
+						"end": 14,
+						"type": "RawMustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 7,
+							"end": 11,
+							"name": "raw1"
+						}
+					},
+					{
+						"start": 14,
+						"end": 15,
+						"type": "Text",
+						"data": " "
+					},
+					{
+						"start": 15,
+						"end": 25,
+						"type": "RawMustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 18,
+							"end": 22,
+							"name": "raw2"
+						}
+					},
+					{
+						"start": 25,
+						"end": 26,
+						"type": "Text",
+						"data": " "
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

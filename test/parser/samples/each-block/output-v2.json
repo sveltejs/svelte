@@ -1,0 +1,46 @@
+{
+	"hash": 220340986,
+	"html": {
+		"start": 0,
+		"end": 56,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 56,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 8,
+					"end": 15,
+					"name": "animals"
+				},
+				"children": [
+					{
+						"start": 29,
+						"end": 46,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 32,
+								"end": 42,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 34,
+									"end": 40,
+									"name": "animal"
+								}
+							}
+						]
+					}
+				],
+				"context": "animal"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

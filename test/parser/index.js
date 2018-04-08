@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import { svelte, tryToLoadJson } from '../helpers.js';
 
-describe('parse', () => {
+describe.only('parse', () => {
 	fs.readdirSync('test/parser/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
@@ -20,19 +20,37 @@ describe('parse', () => {
 				.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8')
 				.replace(/\s+$/, '');
 
+			const input_v2 = fs
+				.readFileSync(`test/parser/samples/${dir}/input-v2.html`, 'utf-8')
+				.replace(/\s+$/, '');
+
 			const options = tryToLoadJson(`test/parser/samples/${dir}/options.json`) || {};
 
 			try {
 				const actual = svelte.parse(input, options);
+				const expected = require(`./samples/${dir}/output.json`);
+
 				fs.writeFileSync(
 					`test/parser/samples/${dir}/_actual.json`,
 					JSON.stringify(actual, null, '\t')
 				);
-				const expected = require(`./samples/${dir}/output.json`);
 
 				assert.deepEqual(actual.html, expected.html);
 				assert.deepEqual(actual.css, expected.css);
 				assert.deepEqual(actual.js, expected.js);
+
+				// TODO remove v1 tests
+				const actual_v2 = svelte.parse(input_v2, Object.assign({ parser: 'v2' }, options));
+				const expected_v2 = require(`./samples/${dir}/output-v2.json`);
+
+				fs.writeFileSync(
+					`test/parser/samples/${dir}/_actual-v2.json`,
+					JSON.stringify(actual_v2, null, '\t')
+				);
+
+				assert.deepEqual(actual_v2.html, expected_v2.html);
+				assert.deepEqual(actual_v2.css, expected_v2.css);
+				assert.deepEqual(actual_v2.js, expected_v2.js);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 

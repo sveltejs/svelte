@@ -1,0 +1,39 @@
+{
+	"hash": "3sm0ec",
+	"html": {
+		"start": 0,
+		"end": 56,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 35,
+				"type": "Text",
+				"data": "{#each todos as todo key todo.id}\n\t"
+			},
+			{
+				"start": 35,
+				"end": 48,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 38,
+						"end": 44,
+						"type": "Text",
+						"data": "{todo}"
+					}
+				]
+			},
+			{
+				"start": 48,
+				"end": 56,
+				"type": "Text",
+				"data": "\n{/each}"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}
