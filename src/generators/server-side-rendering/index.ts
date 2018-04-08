@@ -1,5 +1,6 @@
 import deindent from '../../utils/deindent';
 import Generator from '../Generator';
+import Stats from '../../Stats';
 import Stylesheet from '../../css/Stylesheet';
 import Block from './Block';
 import visit from './visit';
@@ -20,9 +21,10 @@ export class SsrGenerator extends Generator {
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
-		options: CompileOptions
+		options: CompileOptions,
+		stats: Stats
 	) {
-		super(parsed, source, name, stylesheet, options, false);
+		super(parsed, source, name, stylesheet, options, stats, false);
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
@@ -45,11 +47,12 @@ export default function ssr(
 	parsed: Parsed,
 	source: string,
 	stylesheet: Stylesheet,
-	options: CompileOptions
+	options: CompileOptions,
+	stats: Stats
 ) {
 	const format = options.format || 'cjs';
 
-	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options);
+	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options, stats);
 
 	const { computations, name, templateProperties } = generator;
 

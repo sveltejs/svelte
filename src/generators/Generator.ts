@@ -2,6 +2,7 @@ import MagicString, { Bundle } from 'magic-string';
 import isReference from 'is-reference';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
+import Stats from '../Stats';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -76,6 +77,8 @@ childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 
 export default class Generator {
+	stats: Stats;
+
 	ast: Parsed;
 	parsed: Parsed;
 	source: string;
@@ -123,8 +126,12 @@ export default class Generator {
 		name: string,
 		stylesheet: Stylesheet,
 		options: CompileOptions,
+		stats: Stats,
 		dom: boolean
 	) {
+		stats.start('compile');
+		this.stats = stats;
+
 		this.ast = clone(parsed);
 
 		this.parsed = parsed;
@@ -372,10 +379,13 @@ export default class Generator {
 			}
 		});
 
+		this.stats.stop('compile');
+
 		return {
 			ast: this.ast,
 			js,
 			css,
+			stats: this.stats.render(this),
 
 			// TODO deprecate
 			code: js.code,
