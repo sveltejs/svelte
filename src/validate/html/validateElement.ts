@@ -112,8 +112,10 @@ export default function validateElement(
 							`'multiple' attribute cannot be dynamic if select uses two-way binding`,
 							attribute
 						);
+					} else { // not dynamic
+						checkTypeAttribute(validator, node);
 					}
-				} else {
+				} else { // not select
 					checkTypeAttribute(validator, node);
 				}
 			} else if (name === 'checked' || name === 'indeterminate') {
