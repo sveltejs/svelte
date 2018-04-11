@@ -10,56 +10,31 @@
 				"end": 55,
 				"type": "Element",
 				"name": "svelte:component",
-				"attributes": [
-					{
-						"start": 18,
-						"end": 23,
-						"type": "Attribute",
-						"name": "{foo",
-						"value": true
+				"attributes": [],
+				"children": [],
+				"expression": {
+					"type": "ConditionalExpression",
+					"start": 19,
+					"end": 34,
+					"test": {
+						"type": "Identifier",
+						"start": 19,
+						"end": 22,
+						"name": "foo"
 					},
-					{
-						"start": 23,
-						"end": 25,
-						"type": "Attribute",
-						"name": "?",
-						"value": true
-					},
-					{
+					"consequent": {
+						"type": "Identifier",
 						"start": 25,
-						"end": 29,
-						"type": "Attribute",
-						"name": "Foo",
-						"value": true
+						"end": 28,
+						"name": "Foo"
 					},
-					{
-						"start": 29,
-						"end": 30,
-						"type": "Attribute",
-						"name": "",
-						"value": [
-							{
-								"type": "AttributeShorthand",
-								"start": 30,
-								"end": 30,
-								"expression": {
-									"type": "Identifier",
-									"start": 30,
-									"end": 30,
-									"name": ""
-								}
-							}
-						]
-					},
-					{
+					"alternate": {
+						"type": "Identifier",
 						"start": 31,
-						"end": 35,
-						"type": "Attribute",
-						"name": "Bar}",
-						"value": true
+						"end": 34,
+						"name": "Bar"
 					}
-				],
-				"children": []
+				}
 			}
 		]
 	},

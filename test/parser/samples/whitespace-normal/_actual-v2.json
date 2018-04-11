@@ -27,9 +27,20 @@
 						"children": [
 							{
 								"start": 18,
+								"end": 24,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 19,
+									"end": 23,
+									"name": "name"
+								}
+							},
+							{
+								"start": 24,
 								"end": 26,
 								"type": "Text",
-								"data": "{name}! "
+								"data": "! "
 							}
 						]
 					},

@@ -19,9 +19,26 @@
 						"value": [
 							{
 								"start": 12,
+								"end": 19,
+								"type": "Text",
+								"data": "color: "
+							},
+							{
+								"start": 19,
+								"end": 26,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 20,
+									"end": 25,
+									"name": "color"
+								}
+							},
+							{
+								"start": 26,
 								"end": 27,
 								"type": "Text",
-								"data": "color: {color};"
+								"data": ";"
 							}
 						]
 					}
@@ -30,8 +47,13 @@
 					{
 						"start": 29,
 						"end": 36,
-						"type": "Text",
-						"data": "{color}"
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 30,
+							"end": 35,
+							"name": "color"
+						}
 					}
 				]
 			}

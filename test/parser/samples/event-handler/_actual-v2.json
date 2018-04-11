@@ -77,30 +77,37 @@
 			},
 			{
 				"start": 61,
-				"end": 78,
+				"end": 63,
 				"type": "Text",
-				"data": "\n\n{#if visible}\n\t"
+				"data": "\n\n"
 			},
 			{
-				"start": 78,
-				"end": 91,
-				"type": "Element",
-				"name": "p",
-				"attributes": [],
+				"start": 63,
+				"end": 97,
+				"type": "IfBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 68,
+					"end": 75,
+					"name": "visible"
+				},
 				"children": [
 					{
-						"start": 81,
-						"end": 87,
-						"type": "Text",
-						"data": "hello!"
+						"start": 78,
+						"end": 91,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 81,
+								"end": 87,
+								"type": "Text",
+								"data": "hello!"
+							}
+						]
 					}
 				]
-			},
-			{
-				"start": 91,
-				"end": 97,
-				"type": "Text",
-				"data": "\n{/if}"
 			}
 		]
 	},

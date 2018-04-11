@@ -7,30 +7,58 @@
 		"children": [
 			{
 				"start": 0,
-				"end": 33,
-				"type": "Text",
-				"data": "{#each animals as [key, value]}\n\t"
-			},
-			{
-				"start": 33,
-				"end": 54,
-				"type": "Element",
-				"name": "p",
-				"attributes": [],
+				"end": 62,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 14,
+					"name": "animals"
+				},
 				"children": [
 					{
-						"start": 36,
-						"end": 50,
-						"type": "Text",
-						"data": "{key}: {value}"
+						"start": 33,
+						"end": 54,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 36,
+								"end": 41,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 37,
+									"end": 40,
+									"name": "key"
+								}
+							},
+							{
+								"start": 41,
+								"end": 43,
+								"type": "Text",
+								"data": ": "
+							},
+							{
+								"start": 43,
+								"end": 50,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 44,
+									"end": 49,
+									"name": "value"
+								}
+							}
+						]
 					}
-				]
-			},
-			{
-				"start": 54,
-				"end": 62,
-				"type": "Text",
-				"data": "\n{/each}"
+				],
+				"destructuredContexts": [
+					"key",
+					"value"
+				],
+				"context": "key_value"
 			}
 		]
 	},

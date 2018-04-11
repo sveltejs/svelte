@@ -14,9 +14,13 @@
 					{
 						"start": 5,
 						"end": 15,
-						"type": "Attribute",
-						"name": "{...props}",
-						"value": true
+						"type": "Spread",
+						"expression": {
+							"type": "Identifier",
+							"start": 9,
+							"end": 14,
+							"name": "props"
+						}
 					}
 				],
 				"children": []
