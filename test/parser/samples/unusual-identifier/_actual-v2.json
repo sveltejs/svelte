@@ -7,30 +7,37 @@
 		"children": [
 			{
 				"start": 0,
-				"end": 22,
-				"type": "Text",
-				"data": "{#each things as 𐊧}\n\t"
-			},
-			{
-				"start": 22,
-				"end": 33,
-				"type": "Element",
-				"name": "p",
-				"attributes": [],
+				"end": 41,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 13,
+					"name": "things"
+				},
 				"children": [
 					{
-						"start": 25,
-						"end": 29,
-						"type": "Text",
-						"data": "{𐊧}"
+						"start": 22,
+						"end": 33,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 25,
+								"end": 29,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 26,
+									"end": 28,
+									"name": "𐊧"
+								}
+							}
+						]
 					}
-				]
-			},
-			{
-				"start": 33,
-				"end": 41,
-				"type": "Text",
-				"data": "\n{/each}"
+				],
+				"context": "𐊧"
 			}
 		]
 	},

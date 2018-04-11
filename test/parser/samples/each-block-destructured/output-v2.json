@@ -1,53 +1,53 @@
 {
-	"hash": 2621498076,
+	"hash": "gtdm5e",
 	"html": {
 		"start": 0,
-		"end": 70,
+		"end": 62,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 70,
+				"end": 62,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 8,
-					"end": 15,
+					"start": 7,
+					"end": 14,
 					"name": "animals"
 				},
 				"children": [
 					{
-						"start": 35,
-						"end": 60,
+						"start": 33,
+						"end": 54,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 38,
-								"end": 45,
+								"start": 36,
+								"end": 41,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 40,
-									"end": 43,
+									"start": 37,
+									"end": 40,
 									"name": "key"
 								}
 							},
 							{
-								"start": 45,
-								"end": 47,
+								"start": 41,
+								"end": 43,
 								"type": "Text",
 								"data": ": "
 							},
 							{
-								"start": 47,
-								"end": 56,
+								"start": 43,
+								"end": 50,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 49,
-									"end": 54,
+									"start": 44,
+									"end": 49,
 									"name": "value"
 								}
 							}

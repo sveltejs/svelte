@@ -1,30 +1,30 @@
 {
-	"hash": 2788845841,
+	"hash": "l0cddf",
 	"html": {
 		"start": 0,
-		"end": 29,
+		"end": 25,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 29,
+				"end": 25,
 				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 5,
-						"end": 22,
+						"end": 18,
 						"type": "Attribute",
 						"name": "class",
 						"value": [
 							{
-								"start": 12,
-								"end": 21,
+								"start": 11,
+								"end": 18,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 14,
-									"end": 19,
+									"start": 12,
+									"end": 17,
 									"name": "class"
 								}
 							}

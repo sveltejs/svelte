@@ -1,17 +1,20 @@
 {
-	"hash": 3659433152,
+	"hash": "1na2f8c",
 	"html": {
 		"start": 0,
-		"end": 9,
+		"end": 7,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 9,
-				"type": "Element",
-				"name": "slot",
-				"attributes": [],
-				"children": []
+				"end": 7,
+				"type": "MustacheTag",
+				"expression": {
+					"start": 1,
+					"end": 6,
+					"type": "Identifier",
+					"name": "yield"
+				}
 			}
 		]
 	},

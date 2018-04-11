@@ -1,37 +1,37 @@
 {
-	"hash": 410218696,
+	"hash": "7yh2k2",
 	"html": {
 		"start": 0,
-		"end": 43,
+		"end": 55,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 43,
+				"end": 55,
 				"type": "Element",
-				"name": ":Component",
+				"name": "svelte:component",
 				"attributes": [],
 				"children": [],
 				"expression": {
 					"type": "ConditionalExpression",
-					"start": 13,
-					"end": 28,
+					"start": 19,
+					"end": 34,
 					"test": {
 						"type": "Identifier",
-						"start": 13,
-						"end": 16,
+						"start": 19,
+						"end": 22,
 						"name": "foo"
 					},
 					"consequent": {
 						"type": "Identifier",
-						"start": 19,
-						"end": 22,
+						"start": 25,
+						"end": 28,
 						"name": "Foo"
 					},
 					"alternate": {
 						"type": "Identifier",
-						"start": 25,
-						"end": 28,
+						"start": 31,
+						"end": 34,
 						"name": "Bar"
 					}
 				}

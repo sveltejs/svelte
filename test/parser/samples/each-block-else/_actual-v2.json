@@ -7,51 +7,59 @@
 		"children": [
 			{
 				"start": 0,
-				"end": 27,
-				"type": "Text",
-				"data": "{#each animals as animal}\n\t"
-			},
-			{
-				"start": 27,
-				"end": 42,
-				"type": "Element",
-				"name": "p",
-				"attributes": [],
-				"children": [
-					{
-						"start": 30,
-						"end": 38,
-						"type": "Text",
-						"data": "{animal}"
-					}
-				]
-			},
-			{
-				"start": 42,
-				"end": 52,
-				"type": "Text",
-				"data": "\n{:else}\n\t"
-			},
-			{
-				"start": 52,
-				"end": 69,
-				"type": "Element",
-				"name": "p",
-				"attributes": [],
-				"children": [
-					{
-						"start": 55,
-						"end": 65,
-						"type": "Text",
-						"data": "no animals"
-					}
-				]
-			},
-			{
-				"start": 69,
 				"end": 77,
-				"type": "Text",
-				"data": "\n{/each}"
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 14,
+					"name": "animals"
+				},
+				"children": [
+					{
+						"start": 27,
+						"end": 42,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 30,
+								"end": 38,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 31,
+									"end": 37,
+									"name": "animal"
+								}
+							}
+						]
+					}
+				],
+				"context": "animal",
+				"else": {
+					"start": 50,
+					"end": 70,
+					"type": "ElseBlock",
+					"children": [
+						{
+							"start": 52,
+							"end": 69,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 55,
+									"end": 65,
+									"type": "Text",
+									"data": "no animals"
+								}
+							]
+						}
+					]
+				}
 			}
 		]
 	},

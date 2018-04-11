@@ -170,7 +170,7 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	if (name === COMPONENT) {
+	if (name === (parser.v2 ? 'svelte:component' : ':Component')) {
 		parser.eat('{', true);
 		element.expression = readExpression(parser);
 		parser.allowWhitespace();
@@ -249,6 +249,10 @@ export default function tag(parser: Parser) {
 function readTagName(parser: Parser) {
 	const start = parser.index;
 
+	// TODO hoist these back to the top, post-v2
+	const SELF = parser.v2 ? 'svelte:self' : ':Self';
+	const COMPONENT = parser.v2 ? 'svelte:component' : ':Component';
+
 	if (parser.eat(SELF)) {
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
@@ -289,14 +293,14 @@ function readTagName(parser: Parser) {
 function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
-	if (parser.eat('{{')) {
+	if (parser.eat(parser.v2 ? '{' : '{{')) {
 		parser.allowWhitespace();
 		parser.eat('...', true, 'Expected spread operator (...)');
 
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		return {
 			start,
@@ -369,7 +373,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 			});
 
 			return chunks;
-		} else if (parser.eat('{{')) {
+		} else if (parser.eat(parser.v2 ? '{' : '{{')) {
 			if (currentChunk.data) {
 				currentChunk.end = index;
 				chunks.push(currentChunk);
@@ -377,9 +381,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 
 			const expression = readExpression(parser);
 			parser.allowWhitespace();
-			if (!parser.eat('}}')) {
-				parser.error(`Expected }}`);
-			}
+			parser.eat(parser.v2 ? '}' : '}}', true);
 
 			chunks.push({
 				start: index,

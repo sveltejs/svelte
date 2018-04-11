@@ -20,8 +20,13 @@
 							{
 								"start": 11,
 								"end": 18,
-								"type": "Text",
-								"data": "{class}"
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 12,
+									"end": 17,
+									"name": "class"
+								}
 							}
 						]
 					}

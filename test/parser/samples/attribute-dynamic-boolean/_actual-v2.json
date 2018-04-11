@@ -20,8 +20,13 @@
 							{
 								"start": 19,
 								"end": 29,
-								"type": "Text",
-								"data": "{readonly}"
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 20,
+									"end": 28,
+									"name": "readonly"
+								}
 							}
 						]
 					}
