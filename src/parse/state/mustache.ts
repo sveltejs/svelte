@@ -274,7 +274,25 @@ export default function mustache(parser: Parser) {
 				parser.allowWhitespace();
 			}
 
-			if (parser.eat('@')) {
+			if (parser.eat('key')) {
+				parser.requireWhitespace();
+
+				const expression = readExpression(parser);
+
+				// TODO eventually, we should accept any expression, and turn
+				// it into a function. For now, assume that every expression
+				// follows the `foo.id` pattern, and equates to `@id`
+				if (
+					expression.type !== 'MemberExpression' ||
+					expression.property.computed ||
+					expression.property.type !== 'Identifier'
+				) {
+					parser.error('invalid key', expression.start);
+				}
+
+				block.key = expression.property.name;
+				parser.allowWhitespace();
+			} else if (parser.eat('@')) {
 				block.key = parser.readIdentifier();
 				if (!block.key) parser.error(`Expected name`);
 				parser.allowWhitespace();
