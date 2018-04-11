@@ -7,30 +7,38 @@
 		"children": [
 			{
 				"start": 0,
-				"end": 35,
-				"type": "Text",
-				"data": "{#each todos as todo key todo.id}\n\t"
-			},
-			{
-				"start": 35,
-				"end": 48,
-				"type": "Element",
-				"name": "p",
-				"attributes": [],
+				"end": 56,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 12,
+					"name": "todos"
+				},
 				"children": [
 					{
-						"start": 38,
-						"end": 44,
-						"type": "Text",
-						"data": "{todo}"
+						"start": 35,
+						"end": 48,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 38,
+								"end": 44,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 39,
+									"end": 43,
+									"name": "todo"
+								}
+							}
+						]
 					}
-				]
-			},
-			{
-				"start": 48,
-				"end": 56,
-				"type": "Text",
-				"data": "\n{/each}"
+				],
+				"context": "todo",
+				"key": "id"
 			}
 		]
 	},

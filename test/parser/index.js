@@ -2,7 +2,7 @@ import assert from 'assert';
 import fs from 'fs';
 import { svelte, tryToLoadJson } from '../helpers.js';
 
-describe.only('parse', () => {
+describe('parse', () => {
 	fs.readdirSync('test/parser/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
