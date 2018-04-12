@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.60.3
+
+* Fix validation of `multiple` attributes on bound `<select>` elements ([#1331](https://github.com/sveltejs/svelte/issues/1331))
+
 ## 1.60.2
 
 * Fix order of insertions for keyed each blocks with siblings ([#1306](https://github.com/sveltejs/svelte/issues/1306))
