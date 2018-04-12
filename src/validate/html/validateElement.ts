@@ -294,5 +294,6 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 }
 
 function isDynamic(attribute: Node) {
+	if (attribute.value === true) return false;
 	return attribute.value.length > 1 || attribute.value[0].type !== 'Text';
 }
