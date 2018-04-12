@@ -132,6 +132,7 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 * [charpeni/svelte-example](https://github.com/charpeni/svelte-example) - Some Svelte examples with configured Rollup, Babel, ESLint, directives, Two-Way binding, and nested components
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
 * [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
+* [khtdr/svelte-redux-shopping-cart](https://github.com/khtdr/svelte-redux-shopping-cart) – Redux Shopping Cart example (with devtools and hot-reloading)
 
 ## BrowserStack
 <img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">
