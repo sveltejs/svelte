@@ -12,7 +12,7 @@ export default function createDebuggingComment(node: Node, generator: DomGenerat
 
 	let d = node.expression ? node.expression.end : c;
 	while (source[d] !== '}') d += 1;
-	d += 2;
+	while (source[d] === '}') d += 1;
 
 	const start = locate(c);
 	const loc = `(${start.line + 1}:${start.column})`;
