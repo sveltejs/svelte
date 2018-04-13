@@ -1,0 +1,8 @@
+{
+	"message": "Unexpected end of input",
+	"loc": {
+		"line": 1,
+		"column": 1
+	},
+	"pos": 1
+}
