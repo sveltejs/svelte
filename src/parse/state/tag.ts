@@ -296,8 +296,6 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	if (parser.eat(parser.v2 ? '{' : '{{')) {
 		parser.allowWhitespace();
 
-		const spread = parser.eat('...');
-
 		if (parser.eat('...')) {
 			const expression = readExpression(parser);
 
