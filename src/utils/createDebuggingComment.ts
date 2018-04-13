@@ -6,8 +6,8 @@ export default function createDebuggingComment(node: Node, generator: DomGenerat
 
 	let c = node.start;
 	if (node.type === 'ElseBlock') {
-		while (source[c] !== '{') c -= 1;
-		c -= 1;
+		while (source[c - 1] !== '{') c -= 1;
+		while (source[c - 1] === '{') c -= 1;
 	}
 
 	let d = node.expression ? node.expression.end : c;
