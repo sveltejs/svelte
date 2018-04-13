@@ -10,11 +10,11 @@ import { Node } from '../../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
-const metaTags = new Set([
-	':Window',
-	':Head',
-	'svelte:window',
-	'svelte:head'
+const metaTags = new Map([
+	[':Window', 'Window'],
+	[':Head', 'Head'],
+	['svelte:window', 'Window'],
+	['svelte:head', 'Head']
 ]);
 
 const specials = new Map([
@@ -105,7 +105,7 @@ export default function tag(parser: Parser) {
 	}
 
 	const type = metaTags.has(name)
-		? name.slice(1)
+		? metaTags.get(name)
 		: 'Element'; // TODO in v2, capitalised name means 'Component'
 
 	const element: Node = {
