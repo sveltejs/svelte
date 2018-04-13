@@ -126,7 +126,7 @@ export default class EachBlock extends Node {
 
 		// hack the sourcemap, so that if data is missing the bug
 		// is easy to find
-		let c = this.start + 3;
+		let c = this.start + 2;
 		while (generator.source[c] !== 'e') c += 1;
 		generator.code.overwrite(c, c + 4, 'length');
 		const length = `[✂${c}-${c+4}✂]`;
