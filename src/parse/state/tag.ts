@@ -295,19 +295,50 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	if (parser.eat(parser.v2 ? '{' : '{{')) {
 		parser.allowWhitespace();
-		parser.eat('...', true, 'Expected spread operator (...)');
 
-		const expression = readExpression(parser);
+		const spread = parser.eat('...');
 
-		parser.allowWhitespace();
-		parser.eat(parser.v2 ? '}' : '}}', true);
+		if (parser.eat('...')) {
+			const expression = readExpression(parser);
 
-		return {
-			start,
-			end: parser.index,
-			type: 'Spread',
-			expression
-		};
+			parser.allowWhitespace();
+			parser.eat(parser.v2 ? '}' : '}}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Spread',
+				expression
+			};
+		} else {
+			if (!parser.v2) {
+				parser.error('Expected spread operator (...)');
+			}
+
+			const valueStart = parser.index;
+
+			const name = parser.readIdentifier();
+			parser.allowWhitespace();
+			parser.eat('}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Attribute',
+				name,
+				value: [{
+					start: valueStart,
+					end: valueStart + name.length,
+					type: 'AttributeShorthand',
+					expression: {
+						start: valueStart,
+						end: valueStart + name.length,
+						type: 'Identifier',
+						name
+					}
+				}]
+			};
+		}
 	}
 
 	let name = parser.readUntil(/(\s|=|\/|>)/);
