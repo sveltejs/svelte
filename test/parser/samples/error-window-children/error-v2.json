@@ -1,0 +1,8 @@
+{
+	"message": "<svelte:window> cannot have children",
+	"loc": {
+		"line": 1,
+		"column": 15
+	},
+	"pos": 15
+}

@@ -10,12 +10,11 @@ import { Node } from '../../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
-const SELF = ':Self';
-const COMPONENT = ':Component';
-
 const metaTags = new Set([
 	':Window',
-	':Head'
+	':Head',
+	'svelte:window',
+	'svelte:head'
 ]);
 
 const specials = new Map([
@@ -85,9 +84,9 @@ export default function tag(parser: Parser) {
 
 	if (metaTags.has(name)) {
 		if (isClosingTag) {
-			if (name === ':Window' && parser.current().children.length) {
+			if ((name === ':Window' || name === 'svelte:window') && parser.current().children.length) {
 				parser.error(
-					`<:Window> cannot have children`,
+					`<${name}> cannot have children`,
 					parser.current().children[0].start
 				);
 			}

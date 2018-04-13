@@ -91,7 +91,7 @@ export default function visitComponent(
 	if (isDynamicComponent) block.contextualise(node.expression);
 
 	const expression = (
-		node.name === ':Self' ? generator.name :
+		(node.name === ':Self' || node.name === 'svelte:self') ? generator.name :
 		isDynamicComponent ? `((${node.metadata.snippet}) || __missingComponent)` :
 		`%components-${node.name}`
 	);

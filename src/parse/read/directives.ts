@@ -140,20 +140,25 @@ export function readDirective(
 
 		const expressionStart = parser.index;
 
-		if (parser.eat('{{')) {
-			let message = 'directive values should not be wrapped';
-			const expressionEnd = parser.template.indexOf('}}', expressionStart);
-			if (expressionEnd !== -1) {
-				const value = parser.template.slice(parser.index, expressionEnd);
-				message += ` — use '${value}', not '{{${value}}}'`;
+		try {
+			expression = readExpression(parser, expressionStart, quoteMark);
+			if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
+				parser.error(directive.error, expressionStart);
+			}
+		} catch (err) {
+			if (parser.template[expressionStart] === '{') {
+				// assume the mistake was wrapping the directive arguments.
+				// this could yield false positives! but hopefully not too many
+				let message = 'directive values should not be wrapped';
+				const expressionEnd = parser.template.indexOf((parser.v2 ? '}' : '}}'), expressionStart);
+				if (expressionEnd !== -1) {
+					const value = parser.template.slice(expressionStart + (parser.v2 ? 1 : 2), expressionEnd);
+					message += ` — use '${value}', not '${parser.v2 ? `{${value}}` : `{{${value}}}`}'`;
+				}
+				parser.error(message, expressionStart);
 			}
 
-			parser.error(message, expressionStart);
-		}
-
-		expression = readExpression(parser, expressionStart, quoteMark);
-		if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
-			parser.error(directive.error, expressionStart);
+			throw err;
 		}
 	}
 

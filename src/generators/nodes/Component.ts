@@ -45,8 +45,8 @@ export default class Component extends Node {
 
 		this.var = block.getUniqueName(
 			(
-				this.name === ':Self' ? this.generator.name :
-				this.name === ':Component' ? 'switch_instance' :
+				(this.name === ':Self' || this.name === 'svelte:self') ? this.generator.name :
+				(this.name === ':Component' || this.name === 'svelte:component') ? 'switch_instance' :
 				this.name
 			).toLowerCase()
 		);
@@ -386,7 +386,7 @@ export default class Component extends Node {
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
-			const expression = this.name === ':Self'
+			const expression = (this.name === ':Self' || this.name === 'svelte:self')
 				? generator.name
 				: `%components-${this.name}`;
 
