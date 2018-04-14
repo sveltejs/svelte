@@ -1,0 +1,64 @@
+{
+	"hash": "1143n2g",
+	"html": {
+		"start": 0,
+		"end": 58,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 58,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 14,
+					"name": "animals"
+				},
+				"children": [
+					{
+						"start": 30,
+						"end": 50,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 33,
+								"end": 36,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 34,
+									"end": 35,
+									"name": "i"
+								}
+							},
+							{
+								"start": 36,
+								"end": 38,
+								"type": "Text",
+								"data": ": "
+							},
+							{
+								"start": 38,
+								"end": 46,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 39,
+									"end": 45,
+									"name": "animal"
+								}
+							}
+						]
+					}
+				],
+				"context": "animal",
+				"index": "i"
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

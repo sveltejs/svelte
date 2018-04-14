@@ -1,0 +1,40 @@
+{
+	"hash": "7xolfv",
+	"html": {
+		"start": 0,
+		"end": 41,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 41,
+				"type": "Element",
+				"name": "textarea",
+				"attributes": [
+					{
+						"start": 10,
+						"end": 29,
+						"type": "Attribute",
+						"name": "readonly",
+						"value": [
+							{
+								"start": 19,
+								"end": 29,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 20,
+									"end": 28,
+									"name": "readonly"
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

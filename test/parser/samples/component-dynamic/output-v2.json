@@ -1,0 +1,43 @@
+{
+	"hash": "2u5ec3",
+	"html": {
+		"start": 0,
+		"end": 62,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 62,
+				"type": "Element",
+				"name": "svelte:component",
+				"attributes": [],
+				"children": [],
+				"expression": {
+					"type": "ConditionalExpression",
+					"start": 25,
+					"end": 40,
+					"test": {
+						"type": "Identifier",
+						"start": 25,
+						"end": 28,
+						"name": "foo"
+					},
+					"consequent": {
+						"type": "Identifier",
+						"start": 31,
+						"end": 34,
+						"name": "Foo"
+					},
+					"alternate": {
+						"type": "Identifier",
+						"start": 37,
+						"end": 40,
+						"name": "Bar"
+					}
+				}
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

@@ -1,0 +1,8 @@
+{
+	"message": "A component can only have one <svelte:window> tag",
+	"loc": {
+		"line": 2,
+		"column": 0
+	},
+	"pos": 17
+}
