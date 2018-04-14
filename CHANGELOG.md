@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.61.0
+
+* Support v2 syntax with `parser: 'v2'` option ([#1318](https://github.com/sveltejs/svelte/issues/1318))
+
 ## 1.60.3
 
 * Fix validation of `multiple` attributes on bound `<select>` elements ([#1331](https://github.com/sveltejs/svelte/issues/1331))

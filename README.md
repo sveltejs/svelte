@@ -30,7 +30,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 ```js
 import * as svelte from 'svelte';
 
-const { code, map } = svelte.compile( source, {
+const { code, map } = svelte.compile(source, {
 	// the target module format – defaults to 'es' (ES2015 modules), can
 	// also be 'amd', 'cjs', 'umd', 'iife' or 'eval'
 	format: 'umd',
@@ -65,9 +65,9 @@ const { code, map } = svelte.compile( source, {
 
 The Svelte compiler exposes the following API:
 
-* `compile( source [, options ] ) => { code, map, ast, css }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
-* `create( source [, options ] ) => function` - Compile the component and return the component itself.
-* `preprocess( source, options ) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
+* `compile(source [, options]) => { js, css, ast }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
+* `create(source [, options]) => function` - Compile the component and return the component itself.
+* `preprocess(source, options) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
 ### Compiler options
@@ -83,6 +83,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `hydratable` | `true`, `false` | Whether to support hydration on the compiled component. | `false` |
 | `customElement` | `true`, `false`, `{ tag, props }` | Whether to compile this component to a custom element. If `tag`/`props` are passed, compiles to a custom element and overrides the values exported by the component. | `false` |
 | `cascade` | `true`, `false` | Whether to cascade all of the component's styles to child components. If `false`, only selectors wrapped in `:global(...)` and keyframe IDs beginning with `-global-` are cascaded. | `true` |
+| `parser` | `v2` | Opt in to [v2 syntax](https://github.com/sveltejs/svelte-upgrade#svelte-v2-syntax-changes). | `undefined` |
 | `bind` | `boolean` | If `false`, disallows `bind:` directives | `true` |
 | | | |
 | `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
