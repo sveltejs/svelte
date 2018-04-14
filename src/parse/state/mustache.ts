@@ -274,8 +274,8 @@ export default function mustache(parser: Parser) {
 				parser.allowWhitespace();
 			}
 
-			if (parser.eat('key')) {
-				parser.requireWhitespace();
+			if (parser.eat('(')) {
+				parser.allowWhitespace();
 
 				const expression = readExpression(parser);
 
@@ -291,6 +291,8 @@ export default function mustache(parser: Parser) {
 				}
 
 				block.key = expression.property.name;
+				parser.allowWhitespace();
+				parser.eat(')', true);
 				parser.allowWhitespace();
 			} else if (parser.eat('@')) {
 				block.key = parser.readIdentifier();
