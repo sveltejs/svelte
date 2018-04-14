@@ -169,7 +169,7 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	if (name === (parser.v2 ? 'svelte:component' : ':Component')) {
+	if (name === ':Component') {
 		parser.eat('{', true);
 		element.expression = readExpression(parser);
 		parser.allowWhitespace();
@@ -187,6 +187,21 @@ export default function tag(parser: Parser) {
 
 		element.attributes.push(attribute);
 		parser.allowWhitespace();
+	}
+
+	if (parser.v2 && name === 'svelte:component') {
+		// TODO post v2, treat this just as any other attribute
+		const index = element.attributes.findIndex(attr => attr.name === 'this');
+		if (!~index) {
+			parser.error(`<svelte:component> must have a 'this' attribute`, start);
+		}
+
+		const definition = element.attributes.splice(index, 1)[0];
+		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
+			parser.error(`invalid component definition`, definition.start);
+		}
+
+		element.expression = definition.value[0].expression;
 	}
 
 	// special cases – top-level <script> and <style>
@@ -348,8 +363,8 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	parser.allowWhitespace();
 
-	const attribute = readDirective(parser, start, name);
-	if (attribute) return attribute;
+	const directive = readDirective(parser, start, name);
+	if (directive) return directive;
 
 	let value = parser.eat('=') ? readAttributeValue(parser) : true;
 

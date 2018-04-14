@@ -1,0 +1,15 @@
+<svelte:component this="{x ? Green : Red}" bind:foo />
+
+<script>
+	import Green from './Green-v2.html';
+	import Red from './Red-v2.html';
+
+	export default {
+		data() {
+			return {
+				Green,
+				Red
+			};
+		}
+	};
+</script>

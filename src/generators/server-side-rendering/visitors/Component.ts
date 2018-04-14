@@ -87,7 +87,7 @@ export default function visitComponent(
 			.concat(bindingProps)
 			.join(', ')} }`;
 
-	const isDynamicComponent = node.name === ':Component';
+	const isDynamicComponent = node.name === ':Component' || node.name === 'svelte:component';
 	if (isDynamicComponent) block.contextualise(node.expression);
 
 	const expression = (
