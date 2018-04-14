@@ -1,0 +1,8 @@
+{
+	"message": "</div> attempted to close an element that was not open",
+	"loc": {
+		"line": 1,
+		"column": 0
+	},
+	"pos": 0
+}

@@ -1,0 +1,27 @@
+{
+	"hash": 4049070444,
+	"html": {
+		"start": 0,
+		"end": 19,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 19,
+				"type": "Element",
+				"name": "span",
+				"attributes": [],
+				"children": [
+					{
+						"start": 6,
+						"end": 12,
+						"type": "Text",
+						"data": " "
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

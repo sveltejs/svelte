@@ -10,12 +10,11 @@ import { Node } from '../../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
-const SELF = ':Self';
-const COMPONENT = ':Component';
-
-const metaTags = new Set([
-	':Window',
-	':Head'
+const metaTags = new Map([
+	[':Window', 'Window'],
+	[':Head', 'Head'],
+	['svelte:window', 'Window'],
+	['svelte:head', 'Head']
 ]);
 
 const specials = new Map([
@@ -85,9 +84,9 @@ export default function tag(parser: Parser) {
 
 	if (metaTags.has(name)) {
 		if (isClosingTag) {
-			if (name === ':Window' && parser.current().children.length) {
+			if ((name === ':Window' || name === 'svelte:window') && parser.current().children.length) {
 				parser.error(
-					`<:Window> cannot have children`,
+					`<${name}> cannot have children`,
 					parser.current().children[0].start
 				);
 			}
@@ -106,7 +105,7 @@ export default function tag(parser: Parser) {
 	}
 
 	const type = metaTags.has(name)
-		? name.slice(1)
+		? metaTags.get(name)
 		: 'Element'; // TODO in v2, capitalised name means 'Component'
 
 	const element: Node = {
@@ -170,7 +169,7 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	if (name === COMPONENT) {
+	if (name === ':Component') {
 		parser.eat('{', true);
 		element.expression = readExpression(parser);
 		parser.allowWhitespace();
@@ -188,6 +187,21 @@ export default function tag(parser: Parser) {
 
 		element.attributes.push(attribute);
 		parser.allowWhitespace();
+	}
+
+	if (parser.v2 && name === 'svelte:component') {
+		// TODO post v2, treat this just as any other attribute
+		const index = element.attributes.findIndex(attr => attr.name === 'this');
+		if (!~index) {
+			parser.error(`<svelte:component> must have a 'this' attribute`, start);
+		}
+
+		const definition = element.attributes.splice(index, 1)[0];
+		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
+			parser.error(`invalid component definition`, definition.start);
+		}
+
+		element.expression = definition.value[0].expression;
 	}
 
 	// special cases – top-level <script> and <style>
@@ -249,6 +263,10 @@ export default function tag(parser: Parser) {
 function readTagName(parser: Parser) {
 	const start = parser.index;
 
+	// TODO hoist these back to the top, post-v2
+	const SELF = parser.v2 ? 'svelte:self' : ':Self';
+	const COMPONENT = parser.v2 ? 'svelte:component' : ':Component';
+
 	if (parser.eat(SELF)) {
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
@@ -289,21 +307,50 @@ function readTagName(parser: Parser) {
 function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
-	if (parser.eat('{{')) {
+	if (parser.eat(parser.v2 ? '{' : '{{')) {
 		parser.allowWhitespace();
-		parser.eat('...', true, 'Expected spread operator (...)');
 
-		const expression = readExpression(parser);
+		if (parser.eat('...')) {
+			const expression = readExpression(parser);
 
-		parser.allowWhitespace();
-		parser.eat('}}', true);
+			parser.allowWhitespace();
+			parser.eat(parser.v2 ? '}' : '}}', true);
 
-		return {
-			start,
-			end: parser.index,
-			type: 'Spread',
-			expression
-		};
+			return {
+				start,
+				end: parser.index,
+				type: 'Spread',
+				expression
+			};
+		} else {
+			if (!parser.v2) {
+				parser.error('Expected spread operator (...)');
+			}
+
+			const valueStart = parser.index;
+
+			const name = parser.readIdentifier();
+			parser.allowWhitespace();
+			parser.eat('}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Attribute',
+				name,
+				value: [{
+					start: valueStart,
+					end: valueStart + name.length,
+					type: 'AttributeShorthand',
+					expression: {
+						start: valueStart,
+						end: valueStart + name.length,
+						type: 'Identifier',
+						name
+					}
+				}]
+			};
+		}
 	}
 
 	let name = parser.readUntil(/(\s|=|\/|>)/);
@@ -316,8 +363,8 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	parser.allowWhitespace();
 
-	const attribute = readDirective(parser, start, name);
-	if (attribute) return attribute;
+	const directive = readDirective(parser, start, name);
+	if (directive) return directive;
 
 	let value = parser.eat('=') ? readAttributeValue(parser) : true;
 
@@ -369,7 +416,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 			});
 
 			return chunks;
-		} else if (parser.eat('{{')) {
+		} else if (parser.eat(parser.v2 ? '{' : '{{')) {
 			if (currentChunk.data) {
 				currentChunk.end = index;
 				chunks.push(currentChunk);
@@ -377,9 +424,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 
 			const expression = readExpression(parser);
 			parser.allowWhitespace();
-			if (!parser.eat('}}')) {
-				parser.error(`Expected }}`);
-			}
+			parser.eat(parser.v2 ? '}' : '}}', true);
 
 			chunks.push({
 				start: index,

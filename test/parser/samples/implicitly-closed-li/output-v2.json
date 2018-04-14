@@ -1,0 +1,72 @@
+{
+	"hash": 126082492,
+	"html": {
+		"start": 0,
+		"end": 31,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 31,
+				"type": "Element",
+				"name": "ul",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 6,
+						"type": "Text",
+						"data": "\n\t"
+					},
+					{
+						"start": 6,
+						"end": 13,
+						"type": "Element",
+						"name": "li",
+						"attributes": [],
+						"children": [
+							{
+								"start": 10,
+								"end": 13,
+								"type": "Text",
+								"data": "a\n\t"
+							}
+						]
+					},
+					{
+						"start": 13,
+						"end": 20,
+						"type": "Element",
+						"name": "li",
+						"attributes": [],
+						"children": [
+							{
+								"start": 17,
+								"end": 20,
+								"type": "Text",
+								"data": "b\n\t"
+							}
+						]
+					},
+					{
+						"start": 20,
+						"end": 26,
+						"type": "Element",
+						"name": "li",
+						"attributes": [],
+						"children": [
+							{
+								"start": 24,
+								"end": 26,
+								"type": "Text",
+								"data": "c\n"
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

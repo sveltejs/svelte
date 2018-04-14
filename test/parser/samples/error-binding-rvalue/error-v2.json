@@ -1,0 +1,8 @@
+{
+	"message": "Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)",
+	"pos": 19,
+	"loc": {
+		"line": 1,
+		"column": 19
+	}
+}

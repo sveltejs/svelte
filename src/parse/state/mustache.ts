@@ -32,7 +32,7 @@ function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
-	parser.index += 2;
+	parser.index += parser.v2 ? 1 : 2;
 
 	parser.allowWhitespace();
 
@@ -61,7 +61,7 @@ export default function mustache(parser: Parser) {
 
 		parser.eat(expected, true);
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		while (block.elseif) {
 			block.end = parser.index;
@@ -83,7 +83,7 @@ export default function mustache(parser: Parser) {
 
 		block.end = parser.index;
 		parser.stack.pop();
-	} else if (parser.eat('elseif')) {
+	} else if (parser.eat(parser.v2 ? ':elseif' : 'elseif')) {
 		const block = parser.current();
 		if (block.type !== 'IfBlock')
 			parser.error(
@@ -95,7 +95,7 @@ export default function mustache(parser: Parser) {
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		block.else = {
 			start: parser.index,
@@ -114,7 +114,7 @@ export default function mustache(parser: Parser) {
 		};
 
 		parser.stack.push(block.else.children[0]);
-	} else if (parser.eat('else')) {
+	} else if (parser.eat(parser.v2 ? ':else' : 'else')) {
 		const block = parser.current();
 		if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 			parser.error(
@@ -123,7 +123,7 @@ export default function mustache(parser: Parser) {
 		}
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		block.else = {
 			start: parser.index,
@@ -133,7 +133,7 @@ export default function mustache(parser: Parser) {
 		};
 
 		parser.stack.push(block.else);
-	} else if (parser.eat('then')) {
+	} else if (parser.eat(parser.v2 ? ':then' : 'then')) {
 		// TODO DRY out this and the next section
 		const pendingBlock = parser.current();
 		if (pendingBlock.type === 'PendingBlock') {
@@ -145,7 +145,7 @@ export default function mustache(parser: Parser) {
 			awaitBlock.value = parser.readIdentifier();
 
 			parser.allowWhitespace();
-			parser.eat('}}', true);
+			parser.eat(parser.v2 ? '}' : '}}', true);
 
 			const thenBlock: Node = {
 				start,
@@ -157,7 +157,7 @@ export default function mustache(parser: Parser) {
 			awaitBlock.then = thenBlock;
 			parser.stack.push(thenBlock);
 		}
-	} else if (parser.eat('catch')) {
+	} else if (parser.eat(parser.v2 ? ':catch' : 'catch')) {
 		const thenBlock = parser.current();
 		if (thenBlock.type === 'ThenBlock') {
 			thenBlock.end = start;
@@ -168,7 +168,7 @@ export default function mustache(parser: Parser) {
 			awaitBlock.error = parser.readIdentifier();
 
 			parser.allowWhitespace();
-			parser.eat('}}', true);
+			parser.eat(parser.v2 ? '}' : '}}', true);
 
 			const catchBlock: Node = {
 				start,
@@ -274,7 +274,27 @@ export default function mustache(parser: Parser) {
 				parser.allowWhitespace();
 			}
 
-			if (parser.eat('@')) {
+			if (parser.eat('(')) {
+				parser.allowWhitespace();
+
+				const expression = readExpression(parser);
+
+				// TODO eventually, we should accept any expression, and turn
+				// it into a function. For now, assume that every expression
+				// follows the `foo.id` pattern, and equates to `@id`
+				if (
+					expression.type !== 'MemberExpression' ||
+					expression.property.computed ||
+					expression.property.type !== 'Identifier'
+				) {
+					parser.error('invalid key', expression.start);
+				}
+
+				block.key = expression.property.name;
+				parser.allowWhitespace();
+				parser.eat(')', true);
+				parser.allowWhitespace();
+			} else if (parser.eat('@')) {
 				block.key = parser.readIdentifier();
 				if (!block.key) parser.error(`Expected name`);
 				parser.allowWhitespace();
@@ -288,7 +308,7 @@ export default function mustache(parser: Parser) {
 			parser.allowWhitespace();
 		}
 
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		parser.current().children.push(block);
 		parser.stack.push(block);
@@ -302,22 +322,40 @@ export default function mustache(parser: Parser) {
 		// {{yield}}
 		// TODO deprecate
 		parser.allowWhitespace();
-		parser.eat('}}', true);
 
-		parser.current().children.push({
-			start,
-			end: parser.index,
-			type: 'Element',
-			name: 'slot',
-			attributes: [],
-			children: []
-		});
-	} else if (parser.eat('{')) {
+		if (parser.v2) {
+			const expressionEnd = parser.index;
+
+			parser.eat('}', true);
+			parser.current().children.push({
+				start,
+				end: parser.index,
+				type: 'MustacheTag',
+				expression: {
+					start: expressionEnd - 5,
+					end: expressionEnd,
+					type: 'Identifier',
+					name: 'yield'
+				}
+			});
+		} else {
+			parser.eat('}}', true);
+
+			parser.current().children.push({
+				start,
+				end: parser.index,
+				type: 'Element',
+				name: 'slot',
+				attributes: [],
+				children: []
+			});
+		}
+	} else if (parser.eat(parser.v2 ? '@html' : '{')) {
 		// {{{raw}}} mustache
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}}', true);
+		parser.eat(parser.v2 ? '}' : '}}}', true);
 
 		parser.current().children.push({
 			start,
@@ -329,7 +367,7 @@ export default function mustache(parser: Parser) {
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat(parser.v2 ? '}' : '}}', true);
 
 		parser.current().children.push({
 			start,

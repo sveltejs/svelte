@@ -1,0 +1,78 @@
+{
+	"hash": "1n7rpsi",
+	"html": {
+		"start": 0,
+		"end": 24,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 24,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 3,
+						"end": 4,
+						"type": "Text",
+						"data": " "
+					},
+					{
+						"start": 4,
+						"end": 7,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 5,
+							"end": 6,
+							"name": "a"
+						}
+					},
+					{
+						"start": 7,
+						"end": 8,
+						"type": "Text",
+						"data": " "
+					},
+					{
+						"start": 8,
+						"end": 11,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 9,
+							"end": 10,
+							"name": "b"
+						}
+					},
+					{
+						"start": 11,
+						"end": 14,
+						"type": "Text",
+						"data": " : "
+					},
+					{
+						"start": 14,
+						"end": 17,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 15,
+							"end": 16,
+							"name": "c"
+						}
+					},
+					{
+						"start": 17,
+						"end": 20,
+						"type": "Text",
+						"data": " : "
+					}
+				]
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

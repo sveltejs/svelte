@@ -87,11 +87,11 @@ export default function visitComponent(
 			.concat(bindingProps)
 			.join(', ')} }`;
 
-	const isDynamicComponent = node.name === ':Component';
+	const isDynamicComponent = node.name === ':Component' || node.name === 'svelte:component';
 	if (isDynamicComponent) block.contextualise(node.expression);
 
 	const expression = (
-		node.name === ':Self' ? generator.name :
+		(node.name === ':Self' || node.name === 'svelte:self') ? generator.name :
 		isDynamicComponent ? `((${node.metadata.snippet}) || __missingComponent)` :
 		`%components-${node.name}`
 	);

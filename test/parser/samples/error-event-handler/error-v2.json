@@ -1,0 +1,8 @@
+{
+	"message": "Expected a method call",
+	"loc": {
+		"line": 1,
+		"column": 15
+	},
+	"pos": 15
+}

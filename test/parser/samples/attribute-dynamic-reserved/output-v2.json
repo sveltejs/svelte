@@ -1,0 +1,40 @@
+{
+	"hash": "l0cddf",
+	"html": {
+		"start": 0,
+		"end": 25,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 25,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 18,
+						"type": "Attribute",
+						"name": "class",
+						"value": [
+							{
+								"start": 11,
+								"end": 18,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 12,
+									"end": 17,
+									"name": "class"
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

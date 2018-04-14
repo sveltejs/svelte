@@ -1,0 +1,8 @@
+{
+	"message": "You can only have one top-level <style> tag per component",
+	"loc": {
+		"line": 9,
+		"column": 0
+	},
+	"pos": 58
+}
