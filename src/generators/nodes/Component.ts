@@ -292,7 +292,7 @@ export default class Component extends Node {
 			`;
 		}
 
-		if (this.name === ':Component') {
+		if (this.name === ':Component' || this.name === 'svelte:component') {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 

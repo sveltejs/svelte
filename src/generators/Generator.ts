@@ -875,7 +875,7 @@ export default class Generator {
 					this.skip();
 				}
 
-				if (node.type === 'Component' && node.name === ':Component') {
+				if (node.type === 'Component' && (node.name === ':Component' || node.name === 'svelte:component')) {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 				}
 

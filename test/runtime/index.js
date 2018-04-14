@@ -21,7 +21,7 @@ let compileOptions = null;
 let compile = null;
 
 function getName(filename) {
-	const base = path.basename(filename).replace(".html", "");
+	const base = path.basename(filename).replace('-v2', '').replace(".html", "");
 	return base[0].toUpperCase() + base.slice(1);
 }
 
@@ -46,7 +46,7 @@ describe("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, shared, hydrate) {
+	function runTest(dir, shared, hydrate, v2) {
 		if (dir[0] === ".") return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
@@ -55,7 +55,7 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ' , hydration' : ''})`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''}${v2 ? ', v2' : ''})`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -72,12 +72,13 @@ describe("runtime", () => {
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
+			compileOptions.parser = v2 ? 'v2' : 'v1';
 
 			// check that no ES2015+ syntax slipped in
 			if (!config.allowES2015) {
 				try {
 					const source = fs.readFileSync(
-						`test/runtime/samples/${dir}/main.html`,
+						`test/runtime/samples/${dir}/main${v2 ? '-v2' : ''}.html`,
 						"utf-8"
 					);
 					const { code } = compile(source, compileOptions);
@@ -100,7 +101,7 @@ describe("runtime", () => {
 					if (err.frame) {
 						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
 					}
-					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, compile); // eslint-disable-line no-console
+					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store, v2 }, compile); // eslint-disable-line no-console
 					throw err;
 				}
 			}
@@ -143,7 +144,7 @@ describe("runtime", () => {
 					};
 
 					try {
-						SvelteComponent = require(`./samples/${dir}/main.html`);
+						SvelteComponent = require(`./samples/${dir}/main${v2 ? '-v2' : ''}.html`);
 					} catch (err) {
 						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
@@ -203,12 +204,12 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2 }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2 }, compile);
 				});
 		});
 	}
@@ -218,6 +219,10 @@ describe("runtime", () => {
 		runTest(dir, shared, false);
 		runTest(dir, shared, true);
 		runTest(dir, null, false);
+
+		if (fs.existsSync(`test/runtime/samples/${dir}/main-v2.html`)) {
+			runTest(dir, shared, false, true);
+		}
 	});
 
 	it("fails if options.target is missing in dev mode", () => {
