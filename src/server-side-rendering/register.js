@@ -37,9 +37,9 @@ function _register(extension) {
 			generate: 'ssr'
 		});
 
-		const {code} = compile(fs.readFileSync(filename, 'utf-8'), options);
+		const { js } = compile(fs.readFileSync(filename, 'utf-8'), options);
 
-		return module._compile(code, filename);
+		return module._compile(js.code, filename);
 	};
 }
 

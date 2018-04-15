@@ -147,12 +147,12 @@ export function create(source: string, _options: CompileOptions = {}) {
 
 	const compiled = compile(source, _options);
 
-	if (!compiled || !compiled.code) {
+	if (!compiled || !compiled.js.code) {
 		return;
 	}
 
 	try {
-		return (0, eval)(compiled.code);
+		return (0, eval)(compiled.js.code);
 	} catch (err) {
 		if (_options.onerror) {
 			_options.onerror(err);

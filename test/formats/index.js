@@ -98,12 +98,12 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "amd",
 				amd: { id: "foo" }
 			});
 
-			return testAmd(code, "foo", { answer: 42 }, `<div>42</div>`);
+			return testAmd(js.code, "foo", { answer: 42 }, `<div>42</div>`);
 		});
 	});
 
@@ -123,11 +123,11 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "cjs"
 			});
 
-			return testCjs(code, { answer: 42 }, `<div>42</div>`);
+			return testCjs(js.code, { answer: 42 }, `<div>42</div>`);
 		});
 	});
 
@@ -147,7 +147,7 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "iife",
 				name: "Foo",
 				globals: {
@@ -155,7 +155,7 @@ describe("formats", () => {
 				}
 			});
 
-			return testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
+			return testIife(js.code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 
 		it('requires options.name', () => {
@@ -221,7 +221,7 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "umd",
 				name: "Foo",
 				globals: {
@@ -232,9 +232,9 @@ describe("formats", () => {
 				}
 			});
 
-			testAmd(code, "foo", { answer: 42 }, `<div>42</div>`);
-			testCjs(code, { answer: 42 }, `<div>42</div>`);
-			testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
+			testAmd(js.code, "foo", { answer: 42 }, `<div>42</div>`);
+			testCjs(js.code, { answer: 42 }, `<div>42</div>`);
+			testIife(js.code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 
 		it('requires options.name', () => {
@@ -262,14 +262,14 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "eval",
 				globals: {
 					answer: "answer"
 				}
 			});
 
-			return testEval(code, "Foo", { answer: 42 }, `<div>42</div>`);
+			return testEval(js.code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 	});
 
