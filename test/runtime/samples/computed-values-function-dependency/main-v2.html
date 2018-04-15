@@ -1,0 +1,28 @@
+<p>{x}</p>
+
+<script>
+	let _x;
+
+	function getX () {
+		return _x;
+	}
+
+	export default {
+		data () {
+			return {
+				y: 1
+			};
+		},
+
+		computed: {
+			xGetter ({ y }) {
+				_x = y * 2;
+				return getX;
+			},
+
+			x ({ xGetter }) {
+				return xGetter();
+			}
+		}
+	};
+</script>

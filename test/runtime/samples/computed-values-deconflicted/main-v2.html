@@ -1,0 +1,14 @@
+<span>{state}</span>
+
+<script>
+	export default {
+		data() {
+			return {
+				x: 'waiting'
+			};
+		},
+		computed: {
+			state: ({ x }) => x
+		}
+	};
+</script>
