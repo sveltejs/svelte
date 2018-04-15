@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-components-property",
 	"message": "The 'components' property must be an object literal",
 	"loc": {
 		"line": 3,

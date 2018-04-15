@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-data-property",
 	"message": "'data' must be a function",
 	"loc": {
 		"line": 5,

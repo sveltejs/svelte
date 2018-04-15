@@ -1,4 +1,5 @@
 {
+	"code": "parse-error",
 	"message": "Assigning to rvalue",
 	"loc": {
 		"line": 1,

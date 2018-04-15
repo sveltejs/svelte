@@ -11,7 +11,7 @@ export default function namespace(validator: Validator, prop: Node) {
 
 	if (typeof ns !== 'string') {
 		validator.error(prop, {
-			code: `invalid-property`,
+			code: `invalid-namespace-property`,
 			message: `The 'namespace' property must be a string literal representing a valid namespace`
 		});
 	}
@@ -20,12 +20,12 @@ export default function namespace(validator: Validator, prop: Node) {
 		const match = fuzzymatch(ns, namespaces.validNamespaces);
 		if (match) {
 			validator.error(prop, {
-				code: `invalid-property`,
+				code: `invalid-namespace-property`,
 				message: `Invalid namespace '${ns}' (did you mean '${match}'?)`
 			});
 		} else {
 			validator.error(prop, {
-				code: `invalid-property`,
+				code: `invalid-namespace-property`,
 				message: `Invalid namespace '${ns}'`
 			});
 		}

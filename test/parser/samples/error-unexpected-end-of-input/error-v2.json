@@ -1,4 +1,5 @@
 {
+	"code": "unclosed-element",
 	"message": "<div> was left open",
 	"loc": {
 		"line": 1,

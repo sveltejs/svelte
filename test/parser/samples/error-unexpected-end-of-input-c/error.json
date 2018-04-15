@@ -1,4 +1,5 @@
 {
+	"code": "unexpected-eof",
 	"message": "Unexpected end of input",
 	"loc": {
 		"line": 1,

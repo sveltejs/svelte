@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-namespace-property",
 	"message": "Invalid namespace 'lol'",
 	"pos": 29,
 	"loc": {

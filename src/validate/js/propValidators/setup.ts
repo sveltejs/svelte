@@ -8,7 +8,7 @@ export default function setup(validator: Validator, prop: Node) {
 
 	if (disallowed.has(prop.value.type)) {
 		validator.error(prop.value, {
-			code: `invalid-property`,
+			code: `invalid-setup-property`,
 			message: `'setup' must be a function`
 		});
 	}

@@ -1,4 +1,5 @@
 {
+	"code": "unclosed-script",
 	"message": "<script> must have a closing tag",
 	"loc": {
 		"line": 3,

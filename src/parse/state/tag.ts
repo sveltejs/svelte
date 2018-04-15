@@ -83,21 +83,27 @@ export default function tag(parser: Parser) {
 	const name = readTagName(parser);
 
 	if (metaTags.has(name)) {
+		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
 			if ((name === ':Window' || name === 'svelte:window') && parser.current().children.length) {
-				parser.error(
-					`<${name}> cannot have children`,
-					parser.current().children[0].start
-				);
+				parser.error({
+					code: `invalid-window-content`,
+					message: `<${name}> cannot have children`
+				}, parser.current().children[0].start);
 			}
 		} else {
 			if (name in parser.metaTags) {
-				parser.error(`A component can only have one <${name}> tag`, start);
+				parser.error({
+					code: `duplicate-${slug}`,
+					message: `A component can only have one <${name}> tag`
+				}, start);
 			}
 
 			if (parser.stack.length > 1) {
-				console.log(parser.stack);
-				parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
+				parser.error({
+					code: `invalid-${slug}-placement`,
+					message: `<${name}> tags cannot be inside elements or blocks`
+				}, start);
 			}
 
 			parser.metaTags[name] = true;
@@ -121,21 +127,21 @@ export default function tag(parser: Parser) {
 
 	if (isClosingTag) {
 		if (isVoidElementName(name)) {
-			parser.error(
-				`<${name}> is a void element and cannot have children, or a closing tag`,
-				start
-			);
+			parser.error({
+				code: `invalid-void-content`,
+				message: `<${name}> is a void element and cannot have children, or a closing tag`
+			}, start);
 		}
 
-		if (!parser.eat('>')) parser.error(`Expected '>'`);
+		parser.eat('>', true);
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
 			if (parent.type !== 'Element')
-				parser.error(
-					`</${name}> attempted to close an element that was not open`,
-					start
-				);
+				parser.error({
+					code: `invalid-closing-tag`,
+					message: `</${name}> attempted to close an element that was not open`
+				}, start);
 
 			parent.end = start;
 			parser.stack.pop();
@@ -161,10 +167,10 @@ export default function tag(parser: Parser) {
 		while (i--) {
 			const item = parser.stack[i];
 			if (item.type === 'EachBlock') {
-				parser.error(
-					`<slot> cannot be a child of an each-block`,
-					start
-				);
+				parser.error({
+					code: `invalid-slot-placement`,
+					message: `<slot> cannot be a child of an each-block`
+				}, start);
 			}
 		}
 	}
@@ -182,7 +188,10 @@ export default function tag(parser: Parser) {
 	let attribute;
 	while ((attribute = readAttribute(parser, uniqueNames))) {
 		if (attribute.type === 'Binding' && !parser.allowBindings) {
-			parser.error(`Two-way binding is disabled`, attribute.start);
+			parser.error({
+				code: `binding-disabled`,
+				message: `Two-way binding is disabled`
+			}, attribute.start);
 		}
 
 		element.attributes.push(attribute);
@@ -193,12 +202,18 @@ export default function tag(parser: Parser) {
 		// TODO post v2, treat this just as any other attribute
 		const index = element.attributes.findIndex(attr => attr.name === 'this');
 		if (!~index) {
-			parser.error(`<svelte:component> must have a 'this' attribute`, start);
+			parser.error({
+				code: `missing-component-definition`,
+				message: `<svelte:component> must have a 'this' attribute`
+			}, start);
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
 		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
-			parser.error(`invalid component definition`, definition.start);
+			parser.error({
+				code: `invalid-component-definition`,
+				message: `invalid component definition`
+			}, definition.start);
 		}
 
 		element.expression = definition.value[0].expression;
@@ -210,9 +225,10 @@ export default function tag(parser: Parser) {
 
 		if (parser[special.property]) {
 			parser.index = start;
-			parser.error(
-				`You can only have one top-level <${name}> tag per component`
-			);
+			parser.error({
+				code: `duplicate-${name}`,
+				message: `You can only have one top-level <${name}> tag per component`
+			});
 		}
 
 		parser.eat('>', true);
@@ -282,10 +298,10 @@ function readTagName(parser: Parser) {
 		}
 
 		if (!legal) {
-			parser.error(
-				`<${SELF}> components can only exist inside if-blocks or each-blocks`,
-				start
-			);
+			parser.error({
+				code: `invalid-self-placement`,
+				message: `<${SELF}> components can only exist inside if-blocks or each-blocks`
+			}, start);
 		}
 
 		return SELF;
@@ -298,7 +314,10 @@ function readTagName(parser: Parser) {
 	if (metaTags.has(name)) return name;
 
 	if (!validTagName.test(name)) {
-		parser.error(`Expected valid tag name`, start);
+		parser.error({
+			code: `invalid-tag-name`,
+			message: `Expected valid tag name`
+		}, start);
 	}
 
 	return name;
@@ -324,7 +343,10 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 			};
 		} else {
 			if (!parser.v2) {
-				parser.error('Expected spread operator (...)');
+				parser.error({
+					code: `expected-spread`,
+					message: 'Expected spread operator (...)'
+				});
 			}
 
 			const valueStart = parser.index;
@@ -356,7 +378,10 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	let name = parser.readUntil(/(\s|=|\/|>)/);
 	if (!name) return null;
 	if (uniqueNames.has(name)) {
-		parser.error('Attributes need to be unique', start);
+		parser.error({
+			code: `duplicate-attribute`,
+			message: 'Attributes need to be unique'
+		}, start);
 	}
 
 	uniqueNames.add(name);
@@ -444,5 +469,8 @@ function readSequence(parser: Parser, done: () => boolean) {
 		}
 	}
 
-	parser.error(`Unexpected end of input`);
+	parser.error({
+		code: `unexpected-eof`,
+		message: `Unexpected end of input`
+	});
 }

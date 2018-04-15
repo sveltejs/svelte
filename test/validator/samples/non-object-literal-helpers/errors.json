@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-helpers-property",
 	"message": "The 'helpers' property must be an object literal",
 	"loc": {
 		"line": 3,

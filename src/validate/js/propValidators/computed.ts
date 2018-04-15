@@ -16,7 +16,7 @@ const isFunctionExpression = new Set([
 export default function computed(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(prop, {
-			code: `invalid-property`,
+			code: `invalid-computed-property`,
 			message: `The 'computed' property must be an object literal`
 		});
 	}

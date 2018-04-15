@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-computed-property",
 	"message": "The 'computed' property must be an object literal",
 	"loc": {
 		"line": 5,
