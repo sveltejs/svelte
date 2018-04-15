@@ -171,6 +171,8 @@ export default function dom(
 
 	initialState.push(`options.data`);
 
+	const hasInitHooks = !!(templateProperties.oncreate || templateProperties.onstate || templateProperties.onupdate);
+
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
@@ -199,6 +201,9 @@ export default function dom(
 		${generator.bindingGroups.length &&
 			`this._bindingGroups = [${Array(generator.bindingGroups.length).fill('[]').join(', ')}];`}
 
+		${templateProperties.onstate && `this._handlers.state = [%onstate];`}
+		${templateProperties.onupdate && `this._handlers.update = [%onupdate];`}
+
 		${(templateProperties.ondestroy || storeProps.length) && (
 			`this._handlers.destroy = [${
 				[templateProperties.ondestroy && `%ondestroy`, storeProps.length && `@removeFromStore`].filter(Boolean).join(', ')
@@ -216,9 +221,17 @@ export default function dom(
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
 		}
 
-		${templateProperties.oncreate && `var _oncreate = %oncreate.bind(this);`}
+		${hasInitHooks && deindent`
+			var self = this;
+			var _oncreate = function() {
+				var changed = { ${expectedProperties.map(p => `${p}: 1`).join(', ')} };
+				${templateProperties.onstate && `%onstate.call(self, { changed: changed, current: self._state });`}
+				${templateProperties.oncreate && `%oncreate.call(self);`}
+				self.fire("update", { changed: changed, current: self._state });
+			};
+		`}
 
-		${(templateProperties.oncreate || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
+		${(hasInitHooks || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
 			if (!options.root) {
 				this._oncreate = [];
 				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
@@ -230,7 +243,7 @@ export default function dom(
 
 		this._fragment = @create_main_fragment(this, this._state);
 
-		${(templateProperties.oncreate) && deindent`
+		${hasInitHooks && deindent`
 			this.root._oncreate.push(_oncreate);
 		`}
 
@@ -253,10 +266,10 @@ export default function dom(
 					`}
 				this._mount(options.target, options.anchor);
 
-				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+				${(generator.hasComponents || generator.hasComplexBindings || hasInitHooks || generator.hasIntroTransitions) && deindent`
 					${generator.hasComponents && `this._lock = true;`}
 					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+					${(generator.hasComponents || hasInitHooks) && `@callAll(this._oncreate);`}
 					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
 					${generator.hasComponents && `this._lock = false;`}
 				`}

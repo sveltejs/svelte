@@ -1,0 +1,16 @@
+<script>
+	export default {
+		onstate() {
+			this.onstateRan = true;
+		},
+
+		onupdate() {
+			this.onupdateRan = true;
+		},
+
+		oncreate() {
+			this.onstateRanBeforeOncreate = this.onstateRan;
+			this.onupdateRanBeforeOncreate = this.onupdateRan;
+		}
+	};
+</script>
