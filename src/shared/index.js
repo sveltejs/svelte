@@ -35,27 +35,6 @@ export function _differsImmutable(a, b) {
 	return a != a ? b == b : a !== b;
 }
 
-export function dispatchObservers(component, group, changed, newState, oldState) {
-	for (var key in group) {
-		if (!changed[key]) continue;
-
-		var newValue = newState[key];
-		var oldValue = oldState[key];
-
-		var callbacks = group[key];
-		if (!callbacks) continue;
-
-		for (var i = 0; i < callbacks.length; i += 1) {
-			var callback = callbacks[i];
-			if (callback.__calling) continue;
-
-			callback.__calling = true;
-			callback.call(component, newValue, oldValue);
-			callback.__calling = false;
-		}
-	}
-}
-
 export function fire(eventName, data) {
 	var handlers =
 		eventName in this._handlers && this._handlers[eventName].slice();
