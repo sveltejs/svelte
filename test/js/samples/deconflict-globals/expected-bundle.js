@@ -168,9 +168,9 @@ function SvelteComponent(options) {
 
 	var self = this;
 	var _oncreate = function() {
-		var initial = { changed: {  }, current: self._state, previous: undefined };
+		var changed = {  };
 		oncreate.call(self);
-		self.fire("update", initial);
+		self.fire("update", { changed: changed, current: self._state });
 	};
 
 	if (!options.root) {
