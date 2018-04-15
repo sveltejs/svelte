@@ -28,7 +28,8 @@ describe("validate", () => {
 							const { code, message, pos, loc, end } = warning;
 							warnings.push({ code, message, pos, loc, end });
 						},
-						dev: config.dev
+						dev: config.dev,
+						generate: false
 					});
 
 					assert.equal(stats.warnings.length, warnings.length);
@@ -87,7 +88,8 @@ describe("validate", () => {
 	it("errors if options.name is illegal", () => {
 		assert.throws(() => {
 			svelte.compile("<div></div>", {
-				name: "not.valid"
+				name: "not.valid",
+				generate: false
 			});
 		}, /options\.name must be a valid identifier/);
 	});
@@ -103,7 +105,8 @@ describe("validate", () => {
 					pos: warning.pos,
 					loc: warning.loc
 				});
-			}
+			},
+			generate: false
 		});
 		assert.deepEqual(warnings, [
 			{
@@ -126,7 +129,8 @@ describe("validate", () => {
 					pos: warning.pos,
 					loc: warning.loc
 				});
-			}
+			},
+			generate: false
 		});
 		assert.deepEqual(warnings, []);
 	});

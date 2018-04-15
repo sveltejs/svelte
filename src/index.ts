@@ -106,11 +106,13 @@ export async function preprocess(source: string, options: PreprocessOptions) {
 	};
 }
 
-export function compile(source: string, _options: CompileOptions) {
+function compile(source: string, _options: CompileOptions) {
 	const options = normalizeOptions(_options);
 	let parsed: Parsed;
 
-	const stats = new Stats();
+	const stats = new Stats({
+		onwarn: options.onwarn
+	});
 
 	try {
 		stats.start('parse');
@@ -126,23 +128,19 @@ export function compile(source: string, _options: CompileOptions) {
 	stats.stop('stylesheet');
 
 	stats.start('validate');
-	// TODO remove this when we remove svelte.validate from public API — we
-	// can use the stats object instead
-	const onwarn = options.onwarn;
-	options.onwarn = warning => {
-		stats.warnings.push(warning);
-		onwarn(warning);
-	};
-
-	validate(parsed, source, stylesheet, options);
+	validate(parsed, source, stylesheet, stats, options);
 	stats.stop('validate');
+
+	if (options.generate === false) {
+		return { ast: parsed, stats, js: null, css: null };
+	}
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
 	return compiler(parsed, source, stylesheet, options, stats);
 };
 
-export function create(source: string, _options: CompileOptions = {}) {
+function create(source: string, _options: CompileOptions = {}) {
 	_options.format = 'eval';
 
 	const compiled = compile(source, _options);
@@ -163,4 +161,4 @@ export function create(source: string, _options: CompileOptions = {}) {
 	}
 }
 
-export { parse, validate, Stylesheet, version as VERSION };
+export { parse, create, compile, version as VERSION };

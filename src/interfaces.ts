@@ -44,7 +44,7 @@ export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: string;
+	generate?: string | false;
 	globals?: ((id: string) => string) | object;
 	amd?: {
 		id?: string;
