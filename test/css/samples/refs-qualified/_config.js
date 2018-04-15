@@ -6,6 +6,7 @@ export default {
 	},
 
 	warnings: [{
+		code: `css-unused-selector`,
 		message: 'Unused CSS selector',
 		loc: {
 			column: 1,

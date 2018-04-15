@@ -2,6 +2,7 @@ export default {
 	cascade: false,
 
 	warnings: [{
+		code: `css-unused-selector`,
 		message: 'Unused CSS selector',
 		loc: {
 			line: 8,
@@ -9,7 +10,7 @@ export default {
 		},
 		pos: 74,
 		frame: `
-			 6: 
+			 6:
 			 7: <style>
 			 8:   div > p {
 			      ^
