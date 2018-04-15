@@ -7,6 +7,7 @@ export default {
 
 	warnings: [{
 		filename: "SvelteComponent.html",
+		code: `css-unused-selector`,
 		message: "Unused CSS selector",
 		loc: {
 			line: 12,

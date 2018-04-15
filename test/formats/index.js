@@ -184,6 +184,7 @@ describe("formats", () => {
 			);
 
 			assert.deepEqual(warnings, [{
+				code: `options-missing-globals`,
 				message: `No name was supplied for imported module 'lodash'. Guessing '_', but you should use options.globals`
 			}]);
 		});
