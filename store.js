@@ -5,12 +5,14 @@ import {
 	_differsImmutable,
 	dispatchObservers,
 	get,
-	observe
+	observe,
+	on,
+	fire
 } from './shared.js';
 
 function Store(state, options) {
 	this._observers = { pre: blankObject(), post: blankObject() };
-	this._changeHandlers = [];
+	this._handlers = {};
 	this._dependents = [];
 
 	this._computed = blankObject();
@@ -105,21 +107,20 @@ assign(Store.prototype, {
 		this._sortComputedProperties();
 	},
 
+	fire: fire,
+
 	get: get,
 
+	// TODO remove this method
 	observe: observe,
 
+	on: on,
+
 	onchange: function(callback) {
-		this._changeHandlers.push(callback);
-
-		var store = this;
-
-		return {
-			cancel: function() {
-				var index = store._changeHandlers.indexOf(callback);
-				if (~index) store._changeHandlers.splice(index, 1);
-			}
-		};
+		// TODO remove this method
+		return this.on('state', function(event) {
+			callback(event.current, event.changed);
+		});
 	},
 
 	set: function(newState) {
@@ -139,11 +140,11 @@ assign(Store.prototype, {
 			this._sortedComputedProperties[i].update(this._state, changed);
 		}
 
-		for (var i = 0; i < this._changeHandlers.length; i += 1) {
-			this._changeHandlers[i](this._state, changed);
-		}
-
-		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this.fire('state', {
+			changed: changed,
+			current: this._state,
+			previous: oldState
+		});
 
 		var dependents = this._dependents.slice(); // guard against mutations
 		for (var i = 0; i < dependents.length; i += 1) {
@@ -162,7 +163,11 @@ assign(Store.prototype, {
 			if (dirty) dependent.component.set(componentState);
 		}
 
-		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+		this.fire('update', {
+			changed: changed,
+			current: this._state,
+			previous: oldState
+		});
 	}
 });
 

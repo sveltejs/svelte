@@ -3,6 +3,8 @@ import actions from './actions';
 import computed from './computed';
 import oncreate from './oncreate';
 import ondestroy from './ondestroy';
+import onstate from './onstate';
+import onupdate from './onupdate';
 import onrender from './onrender';
 import onteardown from './onteardown';
 import helpers from './helpers';
@@ -24,6 +26,8 @@ export default {
 	computed,
 	oncreate,
 	ondestroy,
+	onstate,
+	onupdate,
 	onrender,
 	onteardown,
 	helpers,
