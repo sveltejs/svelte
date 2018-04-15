@@ -1,5 +1,6 @@
 [
   {
+    "code": "a11y-missing-attribute",
     "message": "A11y: <a> element should have an href attribute",
     "loc": {
       "line": 1,
@@ -12,6 +13,7 @@
     "pos": 11
   },
   {
+    "code": "a11y-invalid-attribute",
     "message": "A11y: '' is not a valid xlink:href attribute",
     "loc": {
       "line": 2,
@@ -24,6 +26,7 @@
     "pos": 65
   },
   {
+    "code": "a11y-invalid-attribute",
     "message": "A11y: '#' is not a valid xlink:href attribute",
     "loc": {
       "line": 3,

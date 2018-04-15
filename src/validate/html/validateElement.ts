@@ -20,14 +20,17 @@ export default function validateElement(
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
 		// TODO upgrade to validator.error in v2
-		validator.warn(`${node.name} component is not defined`, node);
+		validator.warn(node, {
+			code: `missing-component`,
+			message: `${node.name} component is not defined`
+		});
 	}
 
 	if (elementStack.length === 0 && validator.namespace !== namespaces.svg && svg.test(node.name)) {
-		validator.warn(
-			`<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`,
-			node
-		);
+		validator.warn(node, {
+			code: `missing-namespace`,
+			message: `<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
+		});
 	}
 
 	if (node.name === 'slot') {

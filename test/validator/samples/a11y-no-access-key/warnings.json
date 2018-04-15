@@ -1,4 +1,5 @@
 [{
+	"code": "a11y-accesskey",
 	"message": "A11y: Avoid using accesskey",
 	"loc": {
 		"line": 1,

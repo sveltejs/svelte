@@ -69,7 +69,7 @@ export class Validator {
 		});
 	}
 
-	warn(message: string, pos: { start: number, end: number }) {
+	warn(pos: { start: number, end: number }, { code, message }: { code: string, message: string }) {
 		if (!this.locator) this.locator = getLocator(this.source);
 		const start = this.locator(pos.start);
 		const end = this.locator(pos.end);
@@ -77,6 +77,7 @@ export class Validator {
 		const frame = getCodeFrame(this.source, start.line, start.column);
 
 		this.onwarn({
+			code,
 			message,
 			frame,
 			loc: { line: start.line + 1, column: start.column },
@@ -105,6 +106,7 @@ export default function validate(
 		if (name && /^[a-z]/.test(name)) {
 			const message = `options.name should be capitalised`;
 			onwarn({
+				code: `options-lowercase-name`,
 				message,
 				filename,
 				toString: () => message,
@@ -148,10 +150,10 @@ export default function validate(
 					definitions.value.properties.forEach(prop => {
 						const { name } = prop.key;
 						if (!validator.used[category].has(name)) {
-							validator.warn(
-								`The '${name}' ${categories[category]} is unused`,
-								prop
-							);
+							validator.warn(prop, {
+								code: `unused-${category.slice(0, -1)}`,
+								message: `The '${name}' ${categories[category]} is unused`
+							});
 						}
 					});
 				}

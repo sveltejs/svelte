@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-aria-attributes",
 		"message": "A11y: <meta> should not have aria-* attributes",
 		"loc": {
 			"line": 1,
@@ -13,6 +14,7 @@
 	},
 
 	{
+		"code": "a11y-misplaced-role",
 		"message": "A11y: <meta> should not have role attribute",
 		"loc": {
 			"line": 2,

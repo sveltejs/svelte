@@ -1,4 +1,5 @@
 [{
+	"code": "options-missing-store",
 	"message": "compile with `store: true` in order to call store methods",
 	"loc": {
 		"line": 1,

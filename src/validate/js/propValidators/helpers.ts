@@ -41,10 +41,10 @@ export default function helpers(validator: Validator, prop: Node) {
 		});
 
 		if (prop.value.params.length === 0 && !usesArguments) {
-			validator.warn(
-				`Helpers should be pure functions, with at least one argument`,
-				prop
-			);
+			validator.warn(prop, {
+				code: `impure-helper`,
+				message: `Helpers should be pure functions, with at least one argument`
+			});
 		}
 	});
 }
