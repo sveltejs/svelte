@@ -143,8 +143,8 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount', '_differs']
-				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
+			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_unmount', '_differs']
+				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
 
