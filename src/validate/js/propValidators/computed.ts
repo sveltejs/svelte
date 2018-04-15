@@ -7,6 +7,7 @@ import { Validator } from '../../index';
 import { Node } from '../../../interfaces';
 import walkThroughTopFunctionScope from '../../../utils/walkThroughTopFunctionScope';
 import isThisGetCallExpression from '../../../utils/isThisGetCallExpression';
+import validCalleeObjects from '../../../utils/validCalleeObjects';
 
 const isFunctionExpression = new Set([
 	'FunctionExpression',
@@ -74,19 +75,37 @@ export default function computed(validator: Validator, prop: Node) {
 			});
 		}
 
-		params.forEach((param: Node) => {
-			const valid =
-				param.type === 'Identifier' ||
-				(param.type === 'AssignmentPattern' &&
-					param.left.type === 'Identifier');
-
-			if (!valid) {
-				// TODO change this for v2
-				validator.error(param, {
+		if (validator.v2) {
+			if (params.length > 1) {
+				validator.error(computation.value, {
 					code: `invalid-computed-arguments`,
-					message: `Computed properties cannot use destructuring in function parameters`
+					message: `Computed properties must take a single argument`
 				});
 			}
-		});
+
+			const param = params[0];
+			if (param.type !== 'ObjectPattern') {
+				// TODO in v2, allow the entire object to be passed in
+				validator.error(computation.value, {
+					code: `invalid-computed-argument`,
+					message: `Computed property argument must be a destructured object pattern`
+				});
+			}
+		} else {
+			params.forEach((param: Node) => {
+				const valid =
+					param.type === 'Identifier' ||
+					(param.type === 'AssignmentPattern' &&
+						param.left.type === 'Identifier');
+
+				if (!valid) {
+					// TODO change this for v2
+					validator.error(param, {
+						code: `invalid-computed-arguments`,
+						message: `Computed properties cannot use destructuring in function parameters`
+					});
+				}
+			});
+		}
 	});
 }
