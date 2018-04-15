@@ -294,7 +294,7 @@ export default function dom(
 
 				${props.map(prop => deindent`
 					get ${prop}() {
-						return this.get('${prop}');
+						return this.get().${prop};
 					}
 
 					set ${prop}(value) {

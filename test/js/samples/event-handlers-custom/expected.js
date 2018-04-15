@@ -39,7 +39,7 @@ function create_main_fragment(component, state) {
 		},
 
 		d: function destroy() {
-			foo_handler[foo_handler.destroy ? 'destroy' : 'teardown']();
+			foo_handler.destroy();
 		}
 	};
 }

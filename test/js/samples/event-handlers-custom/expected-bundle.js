@@ -65,8 +65,6 @@ function init(component, options) {
 }
 
 function on(eventName, handler) {
-	if (eventName === 'teardown') return this.on('destroy', handler);
-
 	var handlers = this._handlers[eventName] || (this._handlers[eventName] = []);
 	handlers.push(handler);
 
@@ -173,7 +171,7 @@ function create_main_fragment(component, state) {
 		},
 
 		d: function destroy$$1() {
-			foo_handler[foo_handler.destroy ? 'destroy' : 'teardown']();
+			foo_handler.destroy();
 		}
 	};
 }
