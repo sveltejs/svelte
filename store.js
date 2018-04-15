@@ -4,13 +4,11 @@ import {
 	_differs,
 	_differsImmutable,
 	get,
-	observe,
 	on,
 	fire
 } from './shared.js';
 
 function Store(state, options) {
-	this._observers = { pre: blankObject(), post: blankObject() };
 	this._handlers = {};
 	this._dependents = [];
 
@@ -110,19 +108,7 @@ assign(Store.prototype, {
 
 	get: get,
 
-	// TODO remove this method
-	observe: observe,
-
 	on: on,
-
-	onchange: function(callback) {
-		// TODO remove this method
-		console.warn("store.onchange is deprecated in favour of store.on('state', event => {...})");
-
-		return this.on('state', function(event) {
-			callback(event.current, event.changed);
-		});
-	},
 
 	set: function(newState) {
 		var oldState = this._state,
