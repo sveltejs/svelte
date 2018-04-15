@@ -1,4 +1,5 @@
 [{
+	"code": "impure-helper",
 	"message": "Helpers should be pure functions, with at least one argument",
 	"pos": 54,
 	"loc": {

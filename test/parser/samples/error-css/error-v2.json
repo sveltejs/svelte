@@ -1,4 +1,5 @@
 {
+	"code": "css-syntax-error",
 	"message": "LeftCurlyBracket is expected",
 	"loc": {
 		"line": 2,

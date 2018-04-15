@@ -1,5 +1,7 @@
 [
 	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <html> element should have a lang attribute",
 		"loc": {
 			"column": 0,
 			"line": 5
@@ -8,7 +10,6 @@
 			"line": 5,
 			"column": 13
 		},
-		"message": "A11y: <html> element should have a lang attribute",
 		"pos": 84
 	}
 ]

@@ -1,5 +1,6 @@
 [
 	{
+		"code": "empty-block",
 		"message": "Empty block",
 		"loc": {
 			"line": 1,
@@ -12,6 +13,7 @@
 		"pos": 0
 	},
 	{
+		"code": "empty-block",
 		"message": "Empty block",
 		"loc": {
 			"line": 5,

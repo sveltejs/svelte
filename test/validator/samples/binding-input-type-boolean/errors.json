@@ -1,4 +1,5 @@
 [{
+	"code": "missing-type",
 	"message": "'type' attribute must be specified",
 	"loc": {
 		"line": 1,

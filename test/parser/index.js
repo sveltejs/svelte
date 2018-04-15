@@ -32,6 +32,7 @@ describe('parse', () => {
 					if (!expectedError) throw err;
 
 					try {
+						assert.equal(err.code, expectedError.code);
 						assert.equal(err.message, expectedError.message);
 						assert.deepEqual(err.loc, expectedError.loc);
 						assert.equal(err.pos, expectedError.pos);

@@ -1,4 +1,5 @@
 [{
+	"code": "illegal-accessor",
 	"message": "Methods cannot use getters and setters",
 	"loc": {
 		"line": 4,

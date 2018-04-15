@@ -35,7 +35,10 @@ export default function a11y(
 		if (name.startsWith('aria-')) {
 			if (invisibleElements.has(node.name)) {
 				// aria-unsupported-elements
-				validator.warn(`A11y: <${node.name}> should not have aria-* attributes`, attribute);
+				validator.warn(attribute, {
+					code: `a11y-aria-attributes`,
+					message: `A11y: <${node.name}> should not have aria-* attributes`
+				});
 			}
 
 			const type = name.slice(5);
@@ -44,7 +47,10 @@ export default function a11y(
 				let message = `A11y: Unknown aria attribute 'aria-${type}'`;
 				if (match) message += ` (did you mean '${match}'?)`;
 
-				validator.warn(message, attribute);
+				validator.warn(attribute, {
+					code: `a11y-unknown-aria-attribute`,
+					message
+				});
 			}
 		}
 
@@ -52,7 +58,10 @@ export default function a11y(
 		if (name === 'role') {
 			if (invisibleElements.has(node.name)) {
 				// aria-unsupported-elements
-				validator.warn(`A11y: <${node.name}> should not have role attribute`, attribute);
+				validator.warn(attribute, {
+					code: `a11y-misplaced-role`,
+					message: `A11y: <${node.name}> should not have role attribute`
+				});
 			}
 
 			const value = getStaticAttributeValue(node, 'role');
@@ -61,30 +70,45 @@ export default function a11y(
 				let message = `A11y: Unknown role '${value}'`;
 				if (match) message += ` (did you mean '${match}'?)`;
 
-				validator.warn(message, attribute);
+				validator.warn(attribute, {
+					code: `a11y-unknown-role`,
+					message
+				});
 			}
 		}
 
 		// no-access-key
 		if (name === 'accesskey') {
-			validator.warn(`A11y: Avoid using accesskey`, attribute);
+			validator.warn(attribute, {
+				code: `a11y-accesskey`,
+				message: `A11y: Avoid using accesskey`
+			});
 		}
 
 		// no-autofocus
 		if (name === 'autofocus') {
-			validator.warn(`A11y: Avoid using autofocus`, attribute);
+			validator.warn(attribute, {
+				code: `a11y-autofocus`,
+				message: `A11y: Avoid using autofocus`
+			});
 		}
 
 		// scope
 		if (name === 'scope' && node.name !== 'th') {
-			validator.warn(`A11y: The scope attribute should only be used with <th> elements`, attribute);
+			validator.warn(attribute, {
+				code: `a11y-misplaced-scope`,
+				message: `A11y: The scope attribute should only be used with <th> elements`
+			});
 		}
 
 		// tabindex-no-positive
 		if (name === 'tabindex') {
 			const value = getStaticAttributeValue(node, 'tabindex');
 			if (!isNaN(value) && +value > 0) {
-				validator.warn(`A11y: avoid tabindex values above zero`, attribute);
+				validator.warn(attribute, {
+					code: `a11y-positive-tabindex`,
+					message: `A11y: avoid tabindex values above zero`
+				});
 			}
 		}
 
@@ -98,13 +122,19 @@ export default function a11y(
 				attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 				attributes[0];
 
-			validator.warn(`A11y: <${name}> element should have ${article} ${sequence} attribute`, node);
+			validator.warn(node, {
+				code: `a11y-missing-attribute`,
+				message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
+			});
 		}
 	}
 
 	function shouldHaveContent() {
 		if (node.children.length === 0) {
-			validator.warn(`A11y: <${node.name}> element should have child content`, node);
+			validator.warn(node, {
+				code: `a11y-missing-content`,
+				message: `A11y: <${node.name}> element should have child content`
+			});
 		}
 	}
 
@@ -112,7 +142,10 @@ export default function a11y(
 		const href = attributeMap.get(attribute);
 		const value = getStaticAttributeValue(node, attribute);
 		if (value === '' || value === '#') {
-			validator.warn(`A11y: '${value}' is not a valid ${attribute} attribute`, href);
+			validator.warn(href, {
+				code: `a11y-invalid-attribute`,
+				message: `A11y: '${value}' is not a valid ${attribute} attribute`
+			});
 		}
 	}
 
@@ -124,7 +157,10 @@ export default function a11y(
 			// anchor-in-svg-is-valid
 			shouldHaveValidHref('xlink:href')
 		} else {
-			validator.warn(`A11y: <a> element should have an href attribute`, node);
+			validator.warn(node, {
+				code: `a11y-missing-attribute`,
+				message: `A11y: <a> element should have an href attribute`
+			});
 		}
 
 		// anchor-has-content
@@ -143,7 +179,10 @@ export default function a11y(
 		shouldHaveContent();
 
 		if (attributeMap.has('aria-hidden')) {
-			validator.warn(`A11y: <${node.name}> element should not be hidden`, attributeMap.get('aria-hidden'));
+			validator.warn(attributeMap.get('aria-hidden'), {
+				code: `a11y-hidden`,
+				message: `A11y: <${node.name}> element should not be hidden`
+			});
 		}
 	}
 
@@ -159,14 +198,20 @@ export default function a11y(
 
 	// no-distracting-elements
 	if (node.name === 'marquee' || node.name === 'blink') {
-		validator.warn(`A11y: Avoid <${node.name}> elements`, node);
+		validator.warn(node, {
+			code: `a11y-distracting-elements`,
+			message: `A11y: Avoid <${node.name}> elements`
+		});
 	}
 
 	if (node.name === 'figcaption') {
 		const parent = elementStack[elementStack.length - 1];
 		if (parent) {
 			if (parent.name !== 'figure') {
-				validator.warn(`A11y: <figcaption> must be an immediate child of <figure>`, node);
+				validator.warn(node, {
+					code: `a11y-structure`,
+					message: `A11y: <figcaption> must be an immediate child of <figure>`
+				});
 			} else {
 				const children = parent.children.filter(node => {
 					if (node.type === 'Comment') return false;
@@ -177,7 +222,10 @@ export default function a11y(
 				const index = children.indexOf(node);
 
 				if (index !== 0 && index !== children.length - 1) {
-					validator.warn(`A11y: <figcaption> must be first or last child of <figure>`, node);
+					validator.warn(node, {
+						code: `a11y-structure`,
+						message: `A11y: <figcaption> must be first or last child of <figure>`
+					});
 				}
 			}
 		}

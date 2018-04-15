@@ -1,4 +1,5 @@
 [{
+	"code": "each-context-clash",
 	"message": "Context clashes with a helper. Rename one or the other to eliminate any ambiguity",
 	"loc": {
 		"line": 1,

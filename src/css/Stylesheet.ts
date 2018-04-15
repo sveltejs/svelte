@@ -435,6 +435,7 @@ export default class Stylesheet {
 			const message = `Unused CSS selector`;
 
 			onwarn({
+				code: `css-unused-selector`,
 				message,
 				frame,
 				loc: { line: line + 1, column },

@@ -1,4 +1,5 @@
 [{
+	"code": "dynamic-slot-name",
 	"message": "<slot> name cannot be dynamic",
 	"loc": {
 		"line": 1,

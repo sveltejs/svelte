@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-default-export",
 	"message": "Default export must be an object literal",
 	"pos": 25,
 	"loc": {

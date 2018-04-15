@@ -2,7 +2,19 @@ import { parseExpressionAt } from 'acorn';
 import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 
-const DIRECTIVES = {
+const DIRECTIVES: Record<string, {
+	names: string[];
+	attribute: (
+		start: number,
+		end: number,
+		type: string,
+		name: string,
+		expression?: any,
+		directiveName?: string
+	) => { start: number, end: number, type: string, name: string, value?: any, expression?: any };
+	allowedExpressionTypes: string[];
+	error: string;
+}> = {
 	Ref: {
 		names: ['ref'],
 		attribute(start, end, type, name) {
@@ -143,7 +155,10 @@ export function readDirective(
 		try {
 			expression = readExpression(parser, expressionStart, quoteMark);
 			if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
-				parser.error(directive.error, expressionStart);
+				parser.error({
+					code: `invalid-directive-value`,
+					message: directive.error
+				}, expressionStart);
 			}
 		} catch (err) {
 			if (parser.template[expressionStart] === '{') {
@@ -155,7 +170,10 @@ export function readDirective(
 					const value = parser.template.slice(expressionStart + (parser.v2 ? 1 : 2), expressionEnd);
 					message += ` — use '${value}', not '${parser.v2 ? `{${value}}` : `{{${value}}}`}'`;
 				}
-				parser.error(message, expressionStart);
+				parser.error({
+					code: `invalid-directive-value`,
+					message
+				}, expressionStart);
 			}
 
 			throw err;

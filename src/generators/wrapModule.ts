@@ -276,6 +276,7 @@ function getGlobals(dependencies: Dependency[], options: CompileOptions) {
 				onerror(error);
 			} else {
 				const warning = {
+					code: `options-missing-globals`,
 					message: `No name was supplied for imported module '${d.source}'. Guessing '${d.name}', but you should use options.globals`,
 				};
 
