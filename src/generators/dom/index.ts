@@ -138,7 +138,6 @@ export default function dom(
 		: options.shared || '';
 
 	let prototypeBase = `${name}.prototype`;
-	templateProperties.methods && (prototypeBase = `@assign(${prototypeBase}, %methods)`);
 
 	const proto = sharedPath
 		? `@proto`
@@ -343,6 +342,7 @@ export default function dom(
 			}
 
 			@assign(${prototypeBase}, ${proto});
+			${templateProperties.methods && `@assign(${prototypeBase}, %methods);`}
 		`);
 	}
 
