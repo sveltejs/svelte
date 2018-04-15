@@ -1,4 +1,5 @@
 [{
+	"code": "textarea-duplicate-value",
 	"message": "A <textarea> can have either a value attribute or (equivalently) child content, but not both",
 	"loc": {
 		"line": 1,

@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-binding",
 	"message": "'whatever' is not a valid binding",
 	"pos": 5,
 	"loc": {

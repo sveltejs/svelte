@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-computed-name",
 	"message":
 		"Computed property name 'new' is invalid — cannot be a JavaScript reserved word",
 	"loc": {

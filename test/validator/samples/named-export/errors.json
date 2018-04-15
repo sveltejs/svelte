@@ -1,4 +1,5 @@
 [{
+	"code": "named-export",
 	"message": "A component can only have a default export",
 	"pos": 10,
 	"loc": {

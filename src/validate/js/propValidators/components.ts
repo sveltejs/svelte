@@ -1,15 +1,15 @@
 import checkForDupes from '../utils/checkForDupes';
 import checkForComputedKeys from '../utils/checkForComputedKeys';
 import getName from '../../../utils/getName';
-import { Validator } from '../../';
+import { Validator } from '../../index';
 import { Node } from '../../../interfaces';
 
 export default function components(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
-		validator.error(
-			`The 'components' property must be an object literal`,
-			prop
-		);
+		validator.error(prop, {
+			code: `invalid-property`,
+			message: `The 'components' property must be an object literal`
+		});
 	}
 
 	checkForDupes(validator, prop.value.properties);
@@ -19,10 +19,11 @@ export default function components(validator: Validator, prop: Node) {
 		const name = getName(component.key);
 
 		if (name === 'state') {
-			validator.error(
-				`Component constructors cannot be called 'state' due to technical limitations`,
-				component
-			);
+			// TODO is this still true?
+			validator.error(component, {
+				code: `invalid-name`,
+				message: `Component constructors cannot be called 'state' due to technical limitations`
+			});
 		}
 
 		if (!/^[A-Z]/.test(name)) {

@@ -14,15 +14,18 @@ export default function validateJs(validator: Validator, js: Node) {
 	js.content.body.forEach((node: Node) => {
 		// check there are no named exports
 		if (node.type === 'ExportNamedDeclaration') {
-			validator.error(`A component can only have a default export`, node);
+			validator.error(node, {
+				code: `named-export`,
+				message: `A component can only have a default export`
+			});
 		}
 
 		if (node.type === 'ExportDefaultDeclaration') {
 			if (node.declaration.type !== 'ObjectExpression') {
-				return validator.error(
-					`Default export must be an object literal`,
-					node.declaration
-				);
+				validator.error(node.declaration, {
+					code: `invalid-default-export`,
+					message: `Default export must be an object literal`
+				});
 			}
 
 			checkForComputedKeys(validator, node.declaration.properties);
@@ -36,17 +39,17 @@ export default function validateJs(validator: Validator, js: Node) {
 
 			// Remove these checks in version 2
 			if (props.has('oncreate') && props.has('onrender')) {
-				validator.error(
-					'Cannot have both oncreate and onrender',
-					props.get('onrender')
-				);
+				validator.error(props.get('onrender'), {
+					code: `duplicate-oncreate`,
+					message: 'Cannot have both oncreate and onrender'
+				});
 			}
 
 			if (props.has('ondestroy') && props.has('onteardown')) {
-				validator.error(
-					'Cannot have both ondestroy and onteardown',
-					props.get('onteardown')
-				);
+				validator.error(props.get('onteardown'), {
+					code: `duplicate-ondestroy`,
+					message: 'Cannot have both ondestroy and onteardown'
+				});
 			}
 
 			// ensure all exported props are valid
@@ -59,20 +62,20 @@ export default function validateJs(validator: Validator, js: Node) {
 				} else {
 					const match = fuzzymatch(name, validPropList);
 					if (match) {
-						validator.error(
-							`Unexpected property '${name}' (did you mean '${match}'?)`,
-							prop
-						);
+						validator.error(prop, {
+							code: `unexpected-property`,
+							message: `Unexpected property '${name}' (did you mean '${match}'?)`
+						});
 					} else if (/FunctionExpression/.test(prop.value.type)) {
-						validator.error(
-							`Unexpected property '${name}' (did you mean to include it in 'methods'?)`,
-							prop
-						);
+						validator.error(prop, {
+							code: `unexpected-property`,
+							message: `Unexpected property '${name}' (did you mean to include it in 'methods'?)`
+						});
 					} else {
-						validator.error(
-							`Unexpected property '${name}'`,
-							prop
-						);
+						validator.error(prop, {
+							code: `unexpected-property`,
+							message: `Unexpected property '${name}'`
+						});
 					}
 				}
 			});

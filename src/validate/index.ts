@@ -59,9 +59,10 @@ export class Validator {
 		};
 	}
 
-	error(message: string, pos: { start: number, end: number }) {
+	error(pos: { start: number, end: number }, { code, message } : { code: string, message: string }) {
 		error(message, {
 			name: 'ValidationError',
+			code,
 			source: this.source,
 			start: pos.start,
 			end: pos.end,

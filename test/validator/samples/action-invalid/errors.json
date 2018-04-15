@@ -1,4 +1,5 @@
 [{
+	"code": "missing-action",
 	"message": "Missing action 'whatever'",
 	"pos": 5,
 	"loc": {

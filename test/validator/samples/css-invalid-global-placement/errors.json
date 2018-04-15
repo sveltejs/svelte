@@ -1,4 +1,5 @@
 [{
+	"code": "css-invalid-global",
 	"message": ":global(...) can be at the start or end of a selector sequence, but not in the middle",
 	"loc": {
 		"line": 2,

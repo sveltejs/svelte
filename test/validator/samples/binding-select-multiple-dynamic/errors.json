@@ -1,4 +1,5 @@
 [{
+	"code": "dynamic-multiple-attribute",
 	"message": "'multiple' attribute cannot be dynamic if select uses two-way binding",
 	"loc": {
 		"line": 1,

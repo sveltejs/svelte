@@ -21,12 +21,10 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 			if (attribute.value.type !== 'Identifier') {
 				const { parts } = flattenReference(attribute.value);
 
-				validator.error(
-					`Bindings on <:Window/> must be to top-level properties, e.g. '${parts[
-						parts.length - 1
-					]}' rather than '${parts.join('.')}'`,
-					attribute.value
-				);
+				validator.error(attribute.value, {
+					code: `invalid-binding`,
+					message: `Bindings on <:Window/> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
+				});
 			}
 
 			if (!~validBindings.indexOf(attribute.name)) {
@@ -39,15 +37,15 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 				const message = `'${attribute.name}' is not a valid binding on <:Window>`;
 
 				if (match) {
-					validator.error(
-						`${message} (did you mean '${match}'?)`,
-						attribute
-					);
+					validator.error(attribute, {
+						code: `invalid-binding`,
+						message: `${message} (did you mean '${match}'?)`
+					});
 				} else {
-					validator.error(
-						`${message} — valid bindings are ${list(validBindings)}`,
-						attribute
-					);
+					validator.error(attribute, {
+						code: `invalid-binding`,
+						message: `${message} — valid bindings are ${list(validBindings)}`
+					});
 				}
 			}
 		} else if (attribute.type === 'EventHandler') {

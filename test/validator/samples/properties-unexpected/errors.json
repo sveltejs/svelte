@@ -1,4 +1,5 @@
 [{
+	"code": "unexpected-property",
 	"message": "Unexpected property 'dada' (did you mean 'data'?)",
 	"loc": {
 		"line": 5,
