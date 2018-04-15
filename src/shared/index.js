@@ -51,13 +51,8 @@ export function fire(eventName, data) {
 	}
 }
 
-export function getDev(key) {
-	if (key) console.warn("`let x = component.get('x')` is deprecated. Use `let { x } = component.get()` instead");
-	return get.call(this, key);
-}
-
-export function get(key) {
-	return key ? this._state[key] : this._state;
+export function get() {
+	return this._state;
 }
 
 export function init(component, options) {
@@ -67,34 +62,6 @@ export function init(component, options) {
 	component.options = options;
 	component.root = options.root || component;
 	component.store = component.root.store || options.store;
-}
-
-export function observe(key, callback, options) {
-	var fn = callback.bind(this);
-
-	if (!options || options.init !== false) {
-		fn(this.get()[key], undefined);
-	}
-
-	return this.on(options && options.defer ? 'update' : 'state', function(event) {
-		if (event.changed[key]) fn(event.current[key], event.previous && event.previous[key]);
-	});
-}
-
-export function observeDev(key, callback, options) {
-	console.warn("this.observe(key, (newValue, oldValue) => {...}) is deprecated. Use\n\n  // runs before DOM updates\n  this.on('state', ({ changed, current, previous }) => {...});\n\n  // runs after DOM updates\n  this.on('update', ...);\n\n...or add the observe method from the svelte-extras package");
-
-	var c = (key = '' + key).search(/[.[]/);
-	if (c > -1) {
-		var message =
-			'The first argument to component.observe(...) must be the name of a top-level property';
-		if (c > 0)
-			message += ", i.e. '" + key.slice(0, c) + "' rather than '" + key + "'";
-
-		throw new Error(message);
-	}
-
-	return observe.call(this, key, callback, options);
 }
 
 export function on(eventName, handler) {
@@ -193,31 +160,27 @@ export function removeFromStore() {
 }
 
 export var proto = {
-	destroy: destroy,
-	get: get,
-	fire: fire,
-	observe: observe,
-	on: on,
-	set: set,
-	teardown: destroy,
+	destroy,
+	get,
+	fire,
+	on,
+	set,
 	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount,
-	_differs: _differs
+	_set,
+	_mount,
+	_unmount,
+	_differs
 };
 
 export var protoDev = {
 	destroy: destroyDev,
-	get: getDev,
-	fire: fire,
-	observe: observeDev,
+	get,
+	fire,
 	on: onDev,
 	set: setDev,
-	teardown: destroyDev,
 	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount,
-	_differs: _differs
+	_set,
+	_mount,
+	_unmount,
+	_differs
 };
