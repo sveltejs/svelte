@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 1.62.0
+
+* Add a `code` field to errors and warnings ([#474](https://github.com/sveltejs/svelte/issues/474))
+* When using v2 syntax, do not use interpolation in non-root `<style>` tags ([#1339](https://github.com/sveltejs/svelte/issues/1339))
+
 ## 1.61.0
 
 * Support v2 syntax with `parser: 'v2'` option ([#1318](https://github.com/sveltejs/svelte/issues/1318))
