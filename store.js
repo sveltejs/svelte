@@ -3,7 +3,6 @@ import {
 	blankObject,
 	_differs,
 	_differsImmutable,
-	dispatchObservers,
 	get,
 	observe,
 	on,

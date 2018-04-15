@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.63.1
+
+* Allow `observe` method to be overwritten
+
 ## 1.63.0
 
 * Add `onstate` and `onupdate` lifecycle hooks and deprecate `component.observe` ([#1197](https://github.com/sveltejs/svelte/issues/1197))
