@@ -30,7 +30,12 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign(data_1(), options.data);
 
-	var _oncreate = oncreate.bind(this);
+	var self = this;
+	var _oncreate = function() {
+		var changed = {  };
+		oncreate.call(self);
+		self.fire("update", { changed: changed, current: self._state });
+	};
 
 	if (!options.root) {
 		this._oncreate = [];

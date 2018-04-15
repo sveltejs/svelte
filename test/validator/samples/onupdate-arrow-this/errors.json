@@ -1,0 +1,13 @@
+[{
+	"code": "invalid-onupdate-property",
+	"message": "'onupdate' should be a function expression, not an arrow function expression",
+	"pos": 29,
+	"loc": {
+		"line": 3,
+		"column": 2
+	},
+	"end": {
+		"line": 5,
+		"column": 3
+	}
+}]
