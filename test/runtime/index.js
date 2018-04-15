@@ -74,38 +74,6 @@ describe("runtime", () => {
 			compileOptions.immutable = config.immutable;
 			compileOptions.parser = v2 ? 'v2' : 'v1';
 
-			// check that no ES2015+ syntax slipped in
-			if (!config.allowES2015) {
-				try {
-					const source = fs.readFileSync(
-						`test/runtime/samples/${dir}/main${v2 ? '-v2' : ''}.html`,
-						"utf-8"
-					);
-					const { code } = compile(source, compileOptions);
-					const startIndex = code.indexOf("function create_main_fragment"); // may change!
-					if (startIndex === -1) throw new Error("missing create_main_fragment");
-					const endIndex = code.lastIndexOf("export default");
-					const es5 =
-						code.slice(0, startIndex).split('\n').map(x => spaces(x.length)).join('\n') +
-						code.slice(startIndex, endIndex);
-
-					acorn.parse(es5, { ecmaVersion: 5 });
-
-					if (/Object\.assign/.test(es5)) {
-						throw new Error(
-							"cannot use Object.assign in generated code, as it is not supported everywhere"
-						);
-					}
-				} catch (err) {
-					failed.add(dir);
-					if (err.frame) {
-						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
-					}
-					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store, v2 }, compile); // eslint-disable-line no-console
-					throw err;
-				}
-			}
-
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
 				.forEach(file => {
