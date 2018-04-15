@@ -13,7 +13,7 @@ export default {
 		input.dispatchEvent( event );
 
 		assert.equal( input.value, '43' );
-		assert.equal( component.get( 'a' ), 43 );
+		assert.equal( component.get().a, 43 );
 
 		component.destroy();
 	}

@@ -1,6 +1,6 @@
 export default {
 	test ( assert, component, target ) {
-		const items = component.get( 'items' );
+		const items = component.get().items;
 		items.forEach( item => item.completed = false );
 
 		component.set({ currentFilter: 'all' });

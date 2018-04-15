@@ -24,8 +24,8 @@ export default {
 			<p>fromState: bar</p>
 		` );
 
-		assert.equal( component.get( 'fromDom' ), 'bar' );
-		assert.equal( component.get( 'fromState' ), 'bar' );
+		assert.equal( component.get().fromDom, 'bar' );
+		assert.equal( component.get().fromState, 'bar' );
 
 		component.destroy();
 	}

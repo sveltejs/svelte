@@ -42,7 +42,7 @@ export default {
 		input.checked = true;
 		input.dispatchEvent(change);
 
-		assert.ok(component.get('tasks')[0].done);
+		assert.ok(component.get().tasks[0].done);
 		assert.htmlEqual(target.innerHTML, `
 			<select>
 				<option value='[object Object]'>put your left leg in</option>
@@ -63,13 +63,13 @@ export default {
 
 		options[1].selected = true;
 		select.dispatchEvent(change);
-		assert.equal(component.get('selected'), tasks[1]);
+		assert.equal(component.get().selected, tasks[1]);
 		assert.ok(!input.checked);
 
 		input.checked = true;
 		input.dispatchEvent(change);
 
-		assert.ok(component.get('tasks')[1].done);
+		assert.ok(component.get().tasks[1].done);
 		assert.htmlEqual(target.innerHTML, `
 			<select>
 				<option value='[object Object]'>put your left leg in</option>

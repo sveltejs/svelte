@@ -19,14 +19,14 @@ export default {
 		const options = [...target.querySelectorAll('option')];
 
 		assert.ok(options[1].selected);
-		assert.equal(component.get('foo'), 2);
+		assert.equal(component.get().foo, 2);
 
 		const change = new window.Event('change');
 
 		options[2].selected = true;
 		select.dispatchEvent(change);
 
-		assert.equal(component.get('foo'), 3);
+		assert.equal(component.get().foo, 3);
 		assert.htmlEqual( target.innerHTML, `
 			<select>
 				<option value='1'>1</option>

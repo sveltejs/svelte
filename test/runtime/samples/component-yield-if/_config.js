@@ -4,7 +4,7 @@ export default {
 	test ( assert, component, target ) {
 		const widget = component.refs.widget;
 
-		assert.equal( widget.get( 'show' ), false );
+		assert.equal( widget.get().show, false );
 
 		widget.set({show: true});
 		assert.htmlEqual( target.innerHTML, '<div><p>Hello</p></div>' );

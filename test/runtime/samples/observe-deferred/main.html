@@ -3,11 +3,11 @@
 
 <script>
 	export default {
-		oncreate () {
-			this.observe( 'value', () => {
-				this.refs.b.textContent = this.refs.a.textContent;
-			}, {
-				defer: true
+		oncreate() {
+			this.on('update', ({ changed }) => {
+				if (changed.value) {
+					this.refs.b.textContent = this.refs.a.textContent;
+				}
 			});
 		}
 	};

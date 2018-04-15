@@ -6,7 +6,7 @@ export default {
 		allow.dispatchEvent( new window.MouseEvent( 'click', { bubbles: true }) );
 		stop.dispatchEvent( new window.MouseEvent( 'click', { bubbles: true }) );
 
-		assert.equal( component.get( 'foo' ), true );
-		assert.equal( component.get( 'bar' ), false );
+		assert.equal( component.get().foo, true );
+		assert.equal( component.get().bar, false );
 	}
 };

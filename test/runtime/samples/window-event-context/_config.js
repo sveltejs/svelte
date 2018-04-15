@@ -12,11 +12,11 @@ export default {
 		const event = new window.Event( 'click' );
 
 		window.dispatchEvent( event );
-		assert.equal( component.get( 'foo' ), false );
+		assert.equal( component.get().foo, false );
 		assert.htmlEqual( target.innerHTML, `false` );
 
 		window.dispatchEvent( event );
-		assert.equal( component.get( 'foo' ), true );
+		assert.equal( component.get().foo, true );
 		assert.htmlEqual( target.innerHTML, `true` );
 
 		component.destroy();

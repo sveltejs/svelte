@@ -22,8 +22,8 @@ export default {
 		input.indeterminate = false;
 		input.dispatchEvent(event);
 
-		assert.equal(component.get('indeterminate'), false);
-		assert.equal(component.get('checked'), true);
+		assert.equal(component.get().indeterminate, false);
+		assert.equal(component.get().checked, true);
 		assert.htmlEqual(target.innerHTML, `
 			<input type="checkbox">
 			<p>checked? true</p>

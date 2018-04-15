@@ -86,16 +86,8 @@ export default class Window extends Node {
 						});
 					`);
 
-					if (generator.options.dev) {
-						block.builders.hydrate.addBlock(deindent`
-							if (${handlerName}.teardown) {
-								console.warn("Return 'destroy()' from custom event handlers. Returning 'teardown()' has been deprecated and will be unsupported in Svelte 2");
-							}
-						`);
-					}
-
 					block.builders.destroy.addLine(deindent`
-						${handlerName}[${handlerName}.destroy ? 'destroy' : 'teardown']();
+						${handlerName}.destroy();
 					`);
 				} else {
 					block.builders.init.addBlock(deindent`

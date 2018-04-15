@@ -65,8 +65,6 @@ export function init(component, options) {
 }
 
 export function on(eventName, handler) {
-	if (eventName === 'teardown') return this.on('destroy', handler);
-
 	var handlers = this._handlers[eventName] || (this._handlers[eventName] = []);
 	handlers.push(handler);
 
@@ -76,17 +74,6 @@ export function on(eventName, handler) {
 			if (~index) handlers.splice(index, 1);
 		}
 	};
-}
-
-export function onDev(eventName, handler) {
-	if (eventName === 'teardown') {
-		console.warn(
-			"Use component.on('destroy', ...) instead of component.on('teardown', ...) which has been deprecated and will be unsupported in Svelte 2"
-		);
-		return this.on('destroy', handler);
-	}
-
-	return on.call(this, eventName, handler);
 }
 
 export function run(fn) {
@@ -176,7 +163,7 @@ export var protoDev = {
 	destroy: destroyDev,
 	get,
 	fire,
-	on: onDev,
+	on,
 	set: setDev,
 	_recompute: noop,
 	_set,

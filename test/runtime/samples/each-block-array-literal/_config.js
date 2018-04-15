@@ -14,6 +14,6 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		button.dispatchEvent(event);
-		assert.equal(component.get('clicked'), 'racoon');
+		assert.equal(component.get().clicked, 'racoon');
 	},
 };

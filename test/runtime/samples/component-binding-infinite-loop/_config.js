@@ -31,7 +31,7 @@ export default {
 
 		spans[0].dispatchEvent( click );
 
-		assert.equal( component.get( 'currentIdentifier' ), 1 );
+		assert.equal( component.get().currentIdentifier, 1 );
 		assert.htmlEqual( target.innerHTML, `
 			<p><span class='selected'>1</span></p>
 			<p><span class=''>2</span></p>
@@ -60,7 +60,7 @@ export default {
 
 		spans[0].dispatchEvent( click );
 
-		assert.equal( component.get( 'currentIdentifier' ), null );
+		assert.equal( component.get().currentIdentifier, null );
 		assert.htmlEqual( target.innerHTML, `
 			<p><span class=''>1</span></p>
 			<p><span class=''>2</span></p>

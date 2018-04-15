@@ -11,10 +11,10 @@
 			}
 		},
 
-		oncreate () {
-			this.observe( 'foo', foo => {
-				this.set({ bar: foo });
-			});
+		onstate({ changed, current }) {
+			if (changed.foo) {
+				this.set({ bar: current.foo });
+			}
 		},
 
 		components: {
