@@ -118,6 +118,8 @@ assign(Store.prototype, {
 
 	onchange: function(callback) {
 		// TODO remove this method
+		console.warn("store.onchange is deprecated in favour of store.on('state', event => {...})");
+
 		return this.on('state', function(event) {
 			callback(event.current, event.changed);
 		});
