@@ -1,4 +1,5 @@
 [{
+	"code": "missing-ref",
 	"message": "'refs.inputx' does not exist (did you mean 'refs.input'?)",
 	"pos": 36,
 	"loc": {

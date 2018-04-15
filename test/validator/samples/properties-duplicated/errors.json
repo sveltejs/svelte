@@ -1,4 +1,5 @@
 [{
+	"code": "duplicate-property",
 	"message": "Duplicate property 'methods'",
 	"loc": {
 		"line": 9,

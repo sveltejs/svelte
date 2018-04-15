@@ -1,4 +1,4 @@
-import { Validator } from '../../';
+import { Validator } from '../../index';
 import { Node } from '../../../interfaces';
 import getName from '../../../utils/getName';
 
@@ -12,7 +12,10 @@ export default function checkForDupes(
 		const name = getName(prop.key);
 
 		if (seen.has(name)) {
-			validator.error(`Duplicate property '${name}'`, prop);
+			validator.error(prop, {
+				code: `duplicate-property`,
+				message: `Duplicate property '${name}'`
+			});
 		}
 
 		seen.add(name);

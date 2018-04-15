@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-slot-attribute",
 	"message": "slot attribute cannot have a dynamic value",
 	"loc": {
 		"line": 2,

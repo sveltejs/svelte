@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-binding",
 	"message": "'value' is not a valid binding on <div> elements",
 	"pos": 5,
 	"loc": {

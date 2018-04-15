@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-computed-name",
 	"message": "Computed property name 'with-hyphen' is invalid — must be a valid identifier such as with_hyphen",
 	"loc": {
 		"line": 9,

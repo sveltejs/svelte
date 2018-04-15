@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-slotted-content",
 	"message": "Element with a slot='...' attribute must be a descendant of a component or custom element",
 	"loc": {
 		"line": 1,

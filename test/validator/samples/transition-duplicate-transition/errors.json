@@ -1,4 +1,5 @@
 [{
+	"code": "duplicate-transition",
 	"message": "An element can only have one 'transition' directive",
 	"loc": {
 		"line": 1,

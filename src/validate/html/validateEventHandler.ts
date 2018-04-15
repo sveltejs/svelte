@@ -16,7 +16,10 @@ export default function validateEventHandlerCallee(
 	const { callee, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {
-		validator.error(`Expected a call expression`, attribute.expression);
+		validator.error(attribute.expression, {
+			code: `invalid-event-handler`,
+			message: `Expected a call expression`
+		});
 	}
 
 	const { name } = flattenReference(callee);

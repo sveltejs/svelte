@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-property",
 	"message": "'props' must be an array expression, if specified",
 	"loc": {
 		"line": 5,
