@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 1.63.0
+
+* Add `onstate` and `onupdate` lifecycle hooks and deprecate `component.observe` ([#1197](https://github.com/sveltejs/svelte/issues/1197))
+* Add `on` and `fire` to `Store`, deprecate `onchange` and `observe` ([#1344](https://github.com/sveltejs/svelte/pull/1344))
+* Require computed properties to have destructured argument in v2 mode ([#1069](https://github.com/sveltejs/svelte/issues/1069))
+
 ## 1.62.0
 
 * Add a `code` field to errors and warnings ([#474](https://github.com/sveltejs/svelte/issues/474))
