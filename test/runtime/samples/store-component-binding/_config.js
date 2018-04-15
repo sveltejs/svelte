@@ -17,14 +17,14 @@ export default {
 		const event = new window.Event('input');
 
 		const changeRecord = [];
-		store.onchange((state, changes) => {
-			changeRecord.push({ state, changes });
+		store.on('state', ({ changed, current }) => {
+			changeRecord.push({ changed, current });
 		});
 
 		input.value = 'everybody';
 		input.dispatchEvent(event);
 
-		assert.equal(store.get('name'), 'everybody');
+		assert.equal(store.get().name, 'everybody');
 		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello everybody!</h1>
 			<input>
@@ -32,8 +32,8 @@ export default {
 
 		assert.deepEqual(changeRecord, [
 			{
-				state: { name: 'everybody' },
-				changes: { name: true }
+				current: { name: 'everybody' },
+				changed: { name: true }
 			}
 		]);
 	}

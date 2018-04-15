@@ -24,13 +24,13 @@ export default {
 		inputs[1].checked = true;
 		inputs[1].dispatchEvent( event );
 
-		assert.equal( component.get( 'numCompleted' ), 2 );
+		assert.equal( component.get().numCompleted, 2 );
 		assert.htmlEqual( target.innerHTML, `
 			<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>
 			<p>2 completed</p>
 		` );
 
-		const items = component.get( 'items' );
+		const items = component.get().items;
 		items[2].completed = true;
 
 		component.set({ items });

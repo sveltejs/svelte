@@ -1,6 +1,6 @@
 <div>
 	{{#if visible}}
-		<Widget on:teardown='fire("widgetTornDown")'/>
+		<Widget on:destroy='fire("widgetTornDown")'/>
 	{{/if}}
 </div>
 

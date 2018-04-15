@@ -7,10 +7,10 @@
 			foo: 1
 		}),
 
-		oncreate () {
-			this.observe( 'foo', foo => {
-				this.set({ bar: foo * 2 });
-			});
+		onstate({ changed, current }) {
+			if (changed.foo) {
+				this.set({ bar: current.foo * 2 });
+			}
 		}
 	};
 </script>

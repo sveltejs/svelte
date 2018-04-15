@@ -23,7 +23,7 @@ export default {
 
 		select.options[2].selected = true;
 		select.dispatchEvent(change);
-		assert.equal(component.get('letter'), 'c');
+		assert.equal(component.get().letter, 'c');
 
 		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
 			false,

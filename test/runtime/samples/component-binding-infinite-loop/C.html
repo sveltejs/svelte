@@ -12,10 +12,10 @@ export default {
 	},
 	methods: {
 		toggle() {
-			const isCurrentlySelected = this.get('isCurrentlySelected')
+			const isCurrentlySelected = this.get().isCurrentlySelected
 
 			this.set({
-				currentIdentifier: isCurrentlySelected ? null : this.get('identifier')
+				currentIdentifier: isCurrentlySelected ? null : this.get().identifier
 			})
 		}
 	}

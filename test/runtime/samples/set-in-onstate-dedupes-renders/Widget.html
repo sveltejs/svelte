@@ -1,0 +1,13 @@
+<div>{{foo.x}}</div>
+
+<script>
+	export default {
+		onstate({ current, changed }) {
+			if (changed.foo || changed.bar) {
+				if (current.foo.x !== current.bar.x) {
+					throw new Error('mismatch');
+				}
+			}
+		}
+	};
+</script>

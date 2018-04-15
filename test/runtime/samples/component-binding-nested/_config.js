@@ -21,7 +21,7 @@ export default {
 
 		buttons[0].dispatchEvent( click );
 
-		assert.equal( component.get( 'x' ), 'p' );
+		assert.equal( component.get().x, 'p' );
 		assert.htmlEqual( target.innerHTML, `
 			<p>x: p</p>
 			<button class="foo">foo</button>
@@ -34,7 +34,7 @@ export default {
 
 		buttons[1].dispatchEvent( click );
 
-		assert.equal( component.get( 'x' ), 'q' );
+		assert.equal( component.get().x, 'q' );
 		assert.htmlEqual( target.innerHTML, `
 			<p>x: q</p>
 			<button class="foo">foo</button>
@@ -47,7 +47,7 @@ export default {
 
 		buttons[2].dispatchEvent( click );
 
-		assert.equal( component.get( 'x' ), 'r' );
+		assert.equal( component.get().x, 'r' );
 		assert.htmlEqual( target.innerHTML, `
 			<p>x: r</p>
 			<button class="foo">foo</button>

@@ -19,7 +19,7 @@
 				node.addEventListener( 'click', clickHandler, false );
 
 				return {
-					teardown () {
+					destroy () {
 						node.addEventListener( 'click', clickHandler, false );
 					}
 				};

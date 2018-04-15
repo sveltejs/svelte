@@ -11,7 +11,7 @@ export default {
 		const click = new window.MouseEvent('click');
 
 		target.querySelector('button').dispatchEvent(click);
-		assert.equal(component.get('selected'), 'foo');
+		assert.equal(component.get().selected, 'foo');
 
 		component.set({
 			x: false
@@ -22,6 +22,6 @@ export default {
 		`);
 
 		target.querySelector('button').dispatchEvent(click);
-		assert.equal(component.get('selected'), 'bar');
+		assert.equal(component.get().selected, 'bar');
 	}
 };
