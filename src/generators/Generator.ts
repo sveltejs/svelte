@@ -369,31 +369,13 @@ export default class Generator {
 			})
 		};
 
-		Object.getOwnPropertyNames(String.prototype).forEach(name => {
-			const descriptor = Object.getOwnPropertyDescriptor(String.prototype, name);
-			if (typeof descriptor.value === 'function') {
-				Object.defineProperty(css, name, {
-					value: (...args) => {
-						return css.code === null
-							? null
-							: css.code[name].call(css.code, ...args);
-					}
-				});
-			}
-		});
-
 		this.stats.stop('compile');
 
 		return {
 			ast: this.ast,
 			js,
 			css,
-			stats: this.stats.render(this),
-
-			// TODO deprecate
-			code: js.code,
-			map: js.map,
-			cssMap: css.map
+			stats: this.stats.render(this)
 		};
 	}
 

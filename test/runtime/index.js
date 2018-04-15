@@ -36,9 +36,9 @@ describe("runtime", () => {
 				compileOptions
 			);
 
-			const { code } = compile(fs.readFileSync(filename, "utf-8"), options);
+			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
 
-			return module._compile(code, filename);
+			return module._compile(js.code, filename);
 		};
 
 		return setupHtmlEqual();
@@ -194,14 +194,14 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.target is missing in dev mode", () => {
-		const { code } = svelte$.compile(`<div></div>`, {
+		const { js } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
 		});
 
 		const SvelteComponent = eval(
-			`(function () { ${code}; return SvelteComponent; }())`
+			`(function () { ${js.code}; return SvelteComponent; }())`
 		);
 
 		assert.throws(() => {
@@ -210,14 +210,14 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.hydrate is true but the component is non-hydratable", () => {
-		const { code } = svelte$.compile(`<div></div>`, {
+		const { js } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
 		});
 
 		const SvelteComponent = eval(
-			`(function () { ${code}; return SvelteComponent; }())`
+			`(function () { ${js.code}; return SvelteComponent; }())`
 		);
 
 		assert.throws(() => {
