@@ -11,7 +11,7 @@ const builtin = new Set(['set', 'get', 'on', 'fire', 'observe', 'destroy']);
 export default function methods(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(prop, {
-			code: `invalid-property`,
+			code: `invalid-methods-property`,
 			message: `The 'methods' property must be an object literal`
 		});
 	}

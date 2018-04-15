@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-methods-property",
 	"message": "The 'methods' property must be an object literal",
 	"loc": {
 		"line": 3,

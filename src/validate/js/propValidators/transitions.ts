@@ -6,7 +6,7 @@ import { Node } from '../../../interfaces';
 export default function transitions(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(prop, {
-			code: `invalid-property`,
+			code: `invalid-transitions-property`,
 			message: `The 'transitions' property must be an object literal`
 		});
 	}

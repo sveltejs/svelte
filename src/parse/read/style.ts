@@ -17,7 +17,10 @@ export default function readStyle(parser: Parser, start: number, attributes: Nod
 		});
 	} catch (err) {
 		if (err.name === 'CssSyntaxError') {
-			parser.error(err.message, err.offset);
+			parser.error({
+				code: `css-syntax-error`,
+				message: err.message
+			}, err.offset);
 		} else {
 			throw err;
 		}

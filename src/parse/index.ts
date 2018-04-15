@@ -71,11 +71,19 @@ export class Parser {
 			const current = this.current();
 
 			const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
-			this.error(`${type} was left open`, current.start);
+			const slug = current.type === 'Element' ? 'element' : 'block';
+
+			this.error({
+				code: `unclosed-${slug}`,
+				message: `${type} was left open`
+			}, current.start);
 		}
 
 		if (state !== fragment) {
-			this.error('Unexpected end of input');
+			this.error({
+				code: `unexpected-eof`,
+				message: 'Unexpected end of input'
+			});
 		}
 
 		if (this.html.children.length) {
@@ -97,12 +105,16 @@ export class Parser {
 	}
 
 	acornError(err: any) {
-		this.error(err.message.replace(/ \(\d+:\d+\)$/, ''), err.pos);
+		this.error({
+			code: `parse-error`,
+			message: err.message.replace(/ \(\d+:\d+\)$/, '')
+		}, err.pos);
 	}
 
-	error(message: string, index = this.index) {
+	error({ code, message }: { code: string, message: string }, index = this.index) {
 		error(message, {
 			name: 'ParseError',
+			code,
 			source: this.template,
 			start: index,
 			filename: this.filename
@@ -116,7 +128,10 @@ export class Parser {
 		}
 
 		if (required) {
-			this.error(message || `Expected ${str}`);
+			this.error({
+				code: `unexpected-${this.index === this.template.length ? 'eof' : 'token'}`,
+				message: message || `Expected ${str}`
+			});
 		}
 
 		return false;
@@ -164,7 +179,10 @@ export class Parser {
 		const identifier = this.template.slice(this.index, this.index = i);
 
 		if (reservedNames.has(identifier)) {
-			this.error(`'${identifier}' is a reserved word in JavaScript and cannot be used here`, start);
+			this.error({
+				code: `unexpected-reserved-word`,
+				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
+			}, start);
 		}
 
 		return identifier;
@@ -172,7 +190,10 @@ export class Parser {
 
 	readUntil(pattern: RegExp) {
 		if (this.index >= this.template.length)
-			this.error('Unexpected end of input');
+			this.error({
+				code: `unexpected-eof`,
+				message: 'Unexpected end of input'
+			});
 
 		const start = this.index;
 		const match = pattern.exec(this.template.slice(start));
@@ -192,7 +213,10 @@ export class Parser {
 
 	requireWhitespace() {
 		if (!whitespace.test(this.template[this.index])) {
-			this.error(`Expected whitespace`);
+			this.error({
+				code: `missing-whitespace`,
+				message: `Expected whitespace`
+			});
 		}
 
 		this.allowWhitespace();

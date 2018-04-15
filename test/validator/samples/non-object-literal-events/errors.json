@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-property",
+	"code": "invalid-events-property",
 	"message": "The 'events' property must be an object literal",
 	"loc": {
 		"line": 3,

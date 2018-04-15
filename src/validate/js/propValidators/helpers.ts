@@ -9,7 +9,7 @@ import isThisGetCallExpression from '../../../utils/isThisGetCallExpression';
 export default function helpers(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
 		validator.error(prop, {
-			code: `invalid-property`,
+			code: `invalid-helpers-property`,
 			message: `The 'helpers' property must be an object literal`
 		});
 	}

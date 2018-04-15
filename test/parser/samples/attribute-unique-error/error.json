@@ -1,4 +1,5 @@
 {
+	"code": "duplicate-attribute",
 	"message": "Attributes need to be unique",
 	"loc": {
 		"line": 1,

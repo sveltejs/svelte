@@ -6,7 +6,7 @@ export default function ondestroy(validator: Validator, prop: Node) {
 	if (prop.value.type === 'ArrowFunctionExpression') {
 		if (usesThisOrArguments(prop.value.body)) {
 			validator.error(prop, {
-				code: `invalid-property`,
+				code: `invalid-ondestroy-property`,
 				message: `'ondestroy' should be a function expression, not an arrow function expression`
 			});
 		}

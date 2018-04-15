@@ -8,7 +8,7 @@ export default function data(validator: Validator, prop: Node) {
 
 	if (disallowed.has(prop.value.type)) {
 		validator.error(prop.value, {
-			code: `invalid-property`,
+			code: `invalid-data-property`,
 			message: `'data' must be a function`
 		});
 	}
