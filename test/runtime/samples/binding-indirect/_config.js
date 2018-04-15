@@ -7,7 +7,6 @@ const tasks = [
 
 export default {
 	'skip-ssr': true,
-	allowES2015: true,
 
 	data: {
 		tasks,
