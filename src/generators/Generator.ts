@@ -84,6 +84,7 @@ export default class Generator {
 	source: string;
 	name: string;
 	options: CompileOptions;
+	v2: boolean;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -131,6 +132,8 @@ export default class Generator {
 	) {
 		stats.start('compile');
 		this.stats = stats;
+
+		this.v2 = options.parser === 'v2';
 
 		this.ast = clone(parsed);
 
@@ -575,10 +578,10 @@ export default class Generator {
 						const key = getName(prop.key);
 						const value = prop.value;
 
-						const deps = value.params.map(
-							(param: Node) =>
-								param.type === 'AssignmentPattern' ? param.left.name : param.name
-						);
+						const deps = this.v2
+							? value.params[0].properties.map(prop => prop.key.name)
+							: value.params.map(param => param.type === 'AssignmentPattern' ? param.left.name : param.name);
+
 						deps.forEach(dep => {
 							this.expectedProperties.add(dep);
 						});

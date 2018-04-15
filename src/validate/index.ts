@@ -10,6 +10,7 @@ import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 export class Validator {
 	readonly source: string;
 	readonly filename: string;
+	readonly v2: boolean;
 
 	options: CompileOptions;
 	onwarn: ({}) => void;
@@ -38,6 +39,7 @@ export class Validator {
 		this.filename = options.filename;
 		this.onwarn = options.onwarn;
 		this.options = options;
+		this.v2 = options.parser === 'v2';
 
 		this.namespace = null;
 		this.defaultExport = null;
@@ -96,7 +98,7 @@ export default function validate(
 	stylesheet: Stylesheet,
 	options: CompileOptions
 ) {
-	const { onwarn, onerror, name, filename, store, dev } = options;
+	const { onwarn, onerror, name, filename, store, dev, parser } = options;
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
@@ -119,7 +121,8 @@ export default function validate(
 			name,
 			filename,
 			store,
-			dev
+			dev,
+			parser
 		});
 
 		if (parsed.js) {
