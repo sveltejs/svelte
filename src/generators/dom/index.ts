@@ -224,11 +224,10 @@ export default function dom(
 		${hasInitHooks && deindent`
 			var self = this;
 			var _oncreate = function() {
-				var initial = { changed: { ${expectedProperties.map(p => `${p}: 1`).join(', ')} }, current: self._state, previous: undefined };
-				${templateProperties.onstate && `%onstate.call(self, initial);`}
+				var changed = { ${expectedProperties.map(p => `${p}: 1`).join(', ')} };
+				${templateProperties.onstate && `%onstate.call(self, { changed: changed, current: self._state });`}
 				${templateProperties.oncreate && `%oncreate.call(self);`}
-				${templateProperties.onupdate && `%onupdate.call(self, initial);`}
-				self.fire("update", initial);
+				self.fire("update", { changed: changed, current: self._state });
 			};
 		`}
 
