@@ -275,6 +275,7 @@ export default class Component extends Node {
 				hasStoreBindings && 'newStoreState = {}',
 			].filter(Boolean).join(', ');
 
+			// TODO use component.on('state', ...) instead of _bind
 			componentInitProperties.push(deindent`
 				_bind: function(changed, childState) {
 					var ${initialisers};
