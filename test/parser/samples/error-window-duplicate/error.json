@@ -1,4 +1,5 @@
 {
+	"code": "duplicate-window",
 	"message": "A component can only have one <:Window> tag",
 	"loc": {
 		"line": 2,

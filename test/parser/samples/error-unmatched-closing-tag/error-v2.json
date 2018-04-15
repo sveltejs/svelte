@@ -1,4 +1,5 @@
 {
+	"code": "invalid-closing-tag",
 	"message": "</div> attempted to close an element that was not open",
 	"loc": {
 		"line": 1,

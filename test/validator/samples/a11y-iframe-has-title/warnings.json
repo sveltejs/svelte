@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-missing-attribute",
 		"message": "A11y: <iframe> element should have a title attribute",
 		"loc": {
 			"line": 1,

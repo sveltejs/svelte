@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-autofocus",
 		"message": "A11y: Avoid using autofocus",
 		"loc": {
 			"column": 8,

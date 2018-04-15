@@ -1,4 +1,4 @@
-import { Validator } from '../../';
+import { Validator } from '../../index';
 import { Node } from '../../../interfaces';
 
 export default function preload(validator: Validator, prop: Node) {

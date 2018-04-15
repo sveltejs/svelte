@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-props-property",
 	"message": "'props' must be an array of string literals",
 	"loc": {
 		"line": 5,

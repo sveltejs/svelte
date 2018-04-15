@@ -1,4 +1,5 @@
 [{
+	"code": "parse-error",
 	"message": "Duplicate export 'default'",
 	"pos": 37,
 	"loc": {

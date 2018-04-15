@@ -1,4 +1,5 @@
 {
+	"code": "invalid-directive-value",
 	"message": "Expected a method call",
 	"loc": {
 		"line": 1,

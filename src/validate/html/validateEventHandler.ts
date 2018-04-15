@@ -16,7 +16,10 @@ export default function validateEventHandlerCallee(
 	const { callee, type } = attribute.expression;
 
 	if (type !== 'CallExpression') {
-		validator.error(`Expected a call expression`, attribute.expression);
+		validator.error(attribute.expression, {
+			code: `invalid-event-handler`,
+			message: `Expected a call expression`
+		});
 	}
 
 	const { name } = flattenReference(callee);
@@ -30,10 +33,10 @@ export default function validateEventHandlerCallee(
 
 	if (name === 'store' && attribute.expression.callee.type === 'MemberExpression') {
 		if (!validator.options.store) {
-			validator.warn(
-				'compile with `store: true` in order to call store methods',
-				attribute.expression
-			);
+			validator.warn(attribute.expression, {
+				code: `options-missing-store`,
+				message: 'compile with `store: true` in order to call store methods'
+			});
 		}
 		return;
 	}
@@ -59,5 +62,8 @@ export default function validateEventHandlerCallee(
 		message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
 	}
 
-	validator.warn(message, attribute.expression);
+	validator.warn(attribute.expression, {
+		code: `invalid-callee`,
+		message
+	});
 }

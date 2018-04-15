@@ -1,4 +1,5 @@
 [{
+	"code": "impure-helper",
 	"message": "Helpers should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?",
 	"pos": 95,
 	"loc": {

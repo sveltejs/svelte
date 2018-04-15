@@ -1,4 +1,5 @@
 [{
+	"code": "illegal-structure",
 	"message": "<title> can only contain text and {{tags}}",
 	"loc": {
 		"line": 2,
