@@ -25,12 +25,8 @@ describe("validate", () => {
 
 					const { stats } = svelte.compile(input, {
 						onwarn(warning) {
-							warnings.push({
-								message: warning.message,
-								pos: warning.pos,
-								loc: warning.loc,
-								end: warning.end,
-							});
+							const { code, message, pos, loc, end } = warning;
+							warnings.push({ code, message, pos, loc, end });
 						},
 						dev: config.dev
 					});
@@ -39,6 +35,7 @@ describe("validate", () => {
 					stats.warnings.forEach((full, i) => {
 						const lite = warnings[i];
 						assert.deepEqual({
+							code: full.code,
 							message: full.message,
 							pos: full.pos,
 							loc: full.loc,
@@ -62,6 +59,7 @@ describe("validate", () => {
 						throw new Error(`Expected an error: ${expected.message}`);
 					}
 
+					assert.equal(error.code, expected.code);
 					assert.equal(error.message, expected.message);
 					assert.deepEqual(error.loc, expected.loc);
 					assert.deepEqual(error.end, expected.end);
@@ -100,6 +98,7 @@ describe("validate", () => {
 			name: "lowercase",
 			onwarn(warning) {
 				warnings.push({
+					code: warning.code,
 					message: warning.message,
 					pos: warning.pos,
 					loc: warning.loc
@@ -108,6 +107,7 @@ describe("validate", () => {
 		});
 		assert.deepEqual(warnings, [
 			{
+				code: `options-lowercase-name`,
 				message: "options.name should be capitalised",
 				pos: undefined,
 				loc: undefined
@@ -121,6 +121,7 @@ describe("validate", () => {
 			name: "_",
 			onwarn(warning) {
 				warnings.push({
+					code: warning.code,
 					message: warning.message,
 					pos: warning.pos,
 					loc: warning.loc

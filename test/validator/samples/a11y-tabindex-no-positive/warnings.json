@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-positive-tabindex",
 		"message": "A11y: avoid tabindex values above zero",
 		"loc": {
 			"line": 3,

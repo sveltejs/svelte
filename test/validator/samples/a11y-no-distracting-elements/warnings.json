@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-distracting-elements",
 		"message": "A11y: Avoid <marquee> elements",
 		"loc": {
 			"line": 1,
@@ -13,6 +14,7 @@
 	},
 
 	{
+		"code": "a11y-distracting-elements",
 		"message": "A11y: Avoid <blink> elements",
 		"loc": {
 			"line": 2,

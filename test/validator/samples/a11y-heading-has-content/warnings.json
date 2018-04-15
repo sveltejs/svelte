@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-missing-content",
 		"message": "A11y: <h1> element should have child content",
 		"loc": {
 			"line": 1,
@@ -13,6 +14,7 @@
 	},
 
 	{
+		"code": "a11y-hidden",
 		"message": "A11y: <h2> element should not be hidden",
 		"loc": {
 			"line": 2,

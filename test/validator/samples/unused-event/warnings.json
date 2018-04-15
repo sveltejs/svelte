@@ -1,4 +1,5 @@
 [{
+	"code": "unused-event",
 	"message": "The 'drag' event definition is unused",
 	"loc": {
 		"line": 4,

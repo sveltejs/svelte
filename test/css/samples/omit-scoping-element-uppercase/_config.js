@@ -2,6 +2,7 @@ export default {
 	cascade: false,
 
 	warnings: [{
+		code: 'missing-component',
 		message: 'P component is not defined',
 		loc: {
 			line: 2,

@@ -56,7 +56,10 @@ export default function mustache(parser: Parser) {
 		} else if (block.type === 'AwaitBlock') {
 			expected = 'await';
 		} else {
-			parser.error(`Unexpected block closing tag`);
+			parser.error({
+				code: `unexpected-block-close`,
+				message: `Unexpected block closing tag`
+			});
 		}
 
 		parser.eat(expected, true);
@@ -86,9 +89,10 @@ export default function mustache(parser: Parser) {
 	} else if (parser.eat(parser.v2 ? ':elseif' : 'elseif')) {
 		const block = parser.current();
 		if (block.type !== 'IfBlock')
-			parser.error(
-				'Cannot have an {{elseif ...}} block outside an {{#if ...}} block'
-			);
+			parser.error({
+				code: `invalid-elseif-placement`,
+				message: 'Cannot have an {{elseif ...}} block outside an {{#if ...}} block'
+			});
 
 		parser.requireWhitespace();
 
@@ -117,9 +121,10 @@ export default function mustache(parser: Parser) {
 	} else if (parser.eat(parser.v2 ? ':else' : 'else')) {
 		const block = parser.current();
 		if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
-			parser.error(
-				'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block'
-			);
+			parser.error({
+				code: `invalid-else-placement`,
+				message: 'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block'
+			});
 		}
 
 		parser.allowWhitespace();
@@ -191,7 +196,10 @@ export default function mustache(parser: Parser) {
 		} else if (parser.eat('await')) {
 			type = 'AwaitBlock';
 		} else {
-			parser.error(`Expected if, each or await`);
+			parser.error({
+				code: `expected-block-type`,
+				message: `Expected if, each or await`
+			});
 		}
 
 		parser.requireWhitespace();
@@ -249,20 +257,30 @@ export default function mustache(parser: Parser) {
 					parser.allowWhitespace();
 
 					const destructuredContext = parser.readIdentifier();
-					if (!destructuredContext) parser.error(`Expected name`);
+					if (!destructuredContext) parser.error({
+						code: `expected-name`,
+						message: `Expected name`
+					});
 
 					block.destructuredContexts.push(destructuredContext);
 					parser.allowWhitespace();
 				} while (parser.eat(','));
 
-				if (!block.destructuredContexts.length) parser.error(`Expected name`);
+				if (!block.destructuredContexts.length) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
+
 				block.context = block.destructuredContexts.join('_');
 
 				parser.allowWhitespace();
 				parser.eat(']', true);
 			} else {
 				block.context = parser.readIdentifier();
-				if (!block.context) parser.error(`Expected name`);
+				if (!block.context) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
 			}
 
 			parser.allowWhitespace();
@@ -270,7 +288,11 @@ export default function mustache(parser: Parser) {
 			if (parser.eat(',')) {
 				parser.allowWhitespace();
 				block.index = parser.readIdentifier();
-				if (!block.index) parser.error(`Expected name`);
+				if (!block.index) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
+
 				parser.allowWhitespace();
 			}
 
@@ -287,7 +309,10 @@ export default function mustache(parser: Parser) {
 					expression.property.computed ||
 					expression.property.type !== 'Identifier'
 				) {
-					parser.error('invalid key', expression.start);
+					parser.error({
+						code: `invalid-key`,
+						message: 'invalid key'
+					}, expression.start);
 				}
 
 				block.key = expression.property.name;
@@ -296,7 +321,10 @@ export default function mustache(parser: Parser) {
 				parser.allowWhitespace();
 			} else if (parser.eat('@')) {
 				block.key = parser.readIdentifier();
-				if (!block.key) parser.error(`Expected name`);
+				if (!block.key) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
 				parser.allowWhitespace();
 			}
 		}

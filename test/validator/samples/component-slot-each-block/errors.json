@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-slot-placement",
 	"message": "<slot> cannot be a child of an each-block",
 	"loc": {
 		"line": 2,

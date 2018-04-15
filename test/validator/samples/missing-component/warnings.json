@@ -1,4 +1,5 @@
 [{
+	"code": "missing-component",
 	"message": "Widget component is not defined",
 	"loc": {
 		"line": 2,

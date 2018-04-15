@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-transition",
 	"message": "Transitions can only be applied to DOM elements, not components",
 	"loc": {
 		"line": 1,

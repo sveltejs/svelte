@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-computed-arguments",
 	"message": "Computed properties cannot use destructuring in function parameters",
 	"loc": {
 		"line": 6,

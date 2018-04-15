@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-method-value",
 	"message": "Method 'foo' should be a function expression, not an arrow function expression",
 	"pos": 79,
 	"loc": {
