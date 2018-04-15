@@ -77,6 +77,8 @@ export function observe(key, callback, options) {
 }
 
 export function observeDev(key, callback, options) {
+	console.warn("this.observe(key, (newValue, oldValue) => {...}) is deprecated. Use\n\n  // runs before DOM updates\n  this.on('state', ({ changed, current, previous }) => {...});\n\n  // runs after DOM updates\n  this.on('update', ...);\n\n...or add the observe method from the svelte-extras package");
+
 	var c = (key = '' + key).search(/[.[]/);
 	if (c > -1) {
 		var message =
