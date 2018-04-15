@@ -14,12 +14,12 @@ export default {
 	test(assert, component) {
 		const names = [];
 
-		component.observe('$name', name => {
-			names.push(name);
+		component.on('state', ({ current }) => {
+			names.push(current.$name);
 		});
 
 		store.set({ name: 'everybody' });
 
-		assert.deepEqual(names, ['world', 'everybody']);
+		assert.deepEqual(names, ['everybody']);
 	}
 };
