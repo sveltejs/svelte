@@ -6,14 +6,6 @@ import { Store } from '../../store.js';
 
 describe('store', () => {
 	describe('get', () => {
-		it('gets a specific key', () => {
-			const store = new Store({
-				foo: 'bar'
-			});
-
-			assert.equal(store.get('foo'), 'bar');
-		});
-
 		it('gets the entire state object', () => {
 			const store = new Store({
 				foo: 'bar'
@@ -31,12 +23,12 @@ describe('store', () => {
 				foo: 'bar'
 			});
 
-			assert.equal(store.get('foo'), 'bar');
+			assert.equal(store.get().foo, 'bar');
 		});
 	});
 
-	describe('observe', () => {
-		it('observes state', () => {
+	describe('on', () => {
+		it('listens to an event', () => {
 			let newFoo;
 			let oldFoo;
 
@@ -44,65 +36,39 @@ describe('store', () => {
 				foo: 'bar'
 			});
 
-			store.observe('foo', (n, o) => {
-				newFoo = n;
-				oldFoo = o;
+			store.on('state', ({ changed, current, previous }) => {
+				newFoo = current.foo;
+				oldFoo = previous.foo;
 			});
 
-			assert.equal(newFoo, 'bar');
-			assert.equal(oldFoo, undefined);
-
-			store.set({
-				foo: 'baz'
-			});
+			store.set({ foo: 'baz' });
 
 			assert.equal(newFoo, 'baz');
 			assert.equal(oldFoo, 'bar');
 		});
 	});
 
-	describe('onchange', () => {
-		it('fires a callback when state changes', () => {
-			const store = new Store();
+	describe('fire', () => {
+		let answer;
 
-			let count = 0;
-			let args;
+		const store = new Store();
 
-			store.onchange((state, changed) => {
-				count += 1;
-				args = { state, changed };
-			});
-
-			store.set({ foo: 'bar' });
-
-			assert.equal(count, 1);
-			assert.deepEqual(args, {
-				state: { foo: 'bar' },
-				changed: { foo: true }
-			});
-
-			// this should be a noop
-			store.set({ foo: 'bar' });
-			assert.equal(count, 1);
-
-			// this shouldn't
-			store.set({ foo: 'baz' });
-
-			assert.equal(count, 2);
-			assert.deepEqual(args, {
-				state: { foo: 'baz' },
-				changed: { foo: true }
-			});
+		store.on('custom', event => {
+			answer = event.answer;
 		});
+
+		store.fire('custom', { answer: 42 });
+
+		assert.equal(answer, 42);
 	});
 
 	it('allows user to cancel state change callback', () => {
 		const store = new Store();
-		const handler = store.onchange(() => {});
+		const handler = store.on('state', () => {});
 
 		assert.doesNotThrow(() => {
 			handler.cancel();
-		}, TypeError, 'this._changeHandlers is undefined');
+		}, TypeError, 'this._handlers is undefined');
 	});
 
 	describe('computed', () => {
@@ -112,16 +78,16 @@ describe('store', () => {
 			});
 
 			store.compute('bar', ['foo'], foo => foo * 2);
-			assert.equal(store.get('bar'), 2);
+			assert.equal(store.get().bar, 2);
 
 			const values = [];
 
-			store.observe('bar', bar => {
-				values.push(bar);
+			store.on('state', ({ current }) => {
+				values.push(current.bar);
 			});
 
 			store.set({ foo: 2 });
-			assert.deepEqual(values, [2, 4]);
+			assert.deepEqual(values, [4]);
 		});
 
 		it('computes a property based on another computed property', () => {
@@ -131,16 +97,16 @@ describe('store', () => {
 
 			store.compute('bar', ['foo'], foo => foo * 2);
 			store.compute('baz', ['bar'], bar => bar * 2);
-			assert.equal(store.get('baz'), 4);
+			assert.equal(store.get().baz, 4);
 
 			const values = [];
 
-			store.observe('baz', baz => {
-				values.push(baz);
+			store.on('state', ({ current }) => {
+				values.push(current.baz);
 			});
 
 			store.set({ foo: 2 });
-			assert.deepEqual(values, [4, 8]);
+			assert.deepEqual(values, [8]);
 		});
 
 		it('prevents computed properties from being set', () => {
@@ -192,29 +158,19 @@ describe('store', () => {
 				foo: value1
 			}, { immutable: true });
 
-			store.observe('foo', (n, o) => {
+			store.on('state', ({ current, previous }) => {
 				callCount++;
-				newFoo = n;
-				oldFoo = o;
+				newFoo = current.foo;
+				oldFoo = previous.foo;
 			});
+
+			store.set({ foo: value1 });
+
+			assert.equal(callCount, 0);
+
+			store.set({ foo: value2 });
 
 			assert.equal(callCount, 1);
-			assert.equal(newFoo, value1);
-			assert.equal(oldFoo, undefined);
-
-			store.set({
-				foo: value1
-			});
-
-			assert.equal(callCount, 1);
-			assert.equal(newFoo, value1);
-			assert.equal(oldFoo, undefined);
-
-			store.set({
-				foo: value2
-			});
-
-			assert.equal(callCount, 2);
 			assert.equal(newFoo, value2);
 			assert.equal(oldFoo, value1);
 		});
