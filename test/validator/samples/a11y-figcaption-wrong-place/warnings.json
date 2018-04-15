@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-structure",
 		"message": "A11y: <figcaption> must be first or last child of <figure>",
 		"loc": {
 			"line": 4,
@@ -12,6 +13,7 @@
 		"pos": 57
 	},
 	{
+		"code": "a11y-structure",
 		"message": "A11y: <figcaption> must be an immediate child of <figure>",
 		"loc": {
 			"line": 15,
