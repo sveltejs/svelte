@@ -62,7 +62,13 @@ export function fire(eventName, data) {
 	if (!handlers) return;
 
 	for (var i = 0; i < handlers.length; i += 1) {
-		handlers[i].call(this, data);
+		var handler = handlers[i];
+
+		if (!handler.__calling) {
+			handler.__calling = true;
+			handler.call(this, data);
+			handler.__calling = false;
+		}
 	}
 }
 
@@ -71,7 +77,6 @@ export function get(key) {
 }
 
 export function init(component, options) {
-	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
 
@@ -81,24 +86,15 @@ export function init(component, options) {
 }
 
 export function observe(key, callback, options) {
-	var group = options && options.defer
-		? this._observers.post
-		: this._observers.pre;
-
-	(group[key] || (group[key] = [])).push(callback);
+	var fn = callback.bind(this);
 
 	if (!options || options.init !== false) {
-		callback.__calling = true;
-		callback.call(this, this._state[key]);
-		callback.__calling = false;
+		fn(this.get()[key], undefined);
 	}
 
-	return {
-		cancel: function() {
-			var index = group[key].indexOf(callback);
-			if (~index) group[key].splice(index, 1);
-		}
-	};
+	return this.on(options && options.defer ? 'update' : 'state', function(event) {
+		if (event.changed[key]) fn(event.current[key], event.previous && event.previous[key]);
+	});
 }
 
 export function observeDev(key, callback, options) {
@@ -169,9 +165,9 @@ export function _set(newState) {
 	if (this._bind) this._bind(changed, this._state);
 
 	if (this._fragment) {
-		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this.fire("state", { changed: changed, current: this._state, previous: oldState });
 		this._fragment.p(changed, this._state);
-		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
 }
 

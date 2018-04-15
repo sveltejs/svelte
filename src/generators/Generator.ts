@@ -646,6 +646,14 @@ export default class Generator {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);
 				}
 
+				if (templateProperties.onstate && dom) {
+					addDeclaration('onstate', templateProperties.onstate.value);
+				}
+
+				if (templateProperties.onupdate && dom) {
+					addDeclaration('onupdate', templateProperties.onupdate.value);
+				}
+
 				if (templateProperties.preload) {
 					addDeclaration('preload', templateProperties.preload.value);
 				}
