@@ -6,7 +6,7 @@ import getName from '../../../utils/getName';
 import { Validator } from '../../index';
 import { Node } from '../../../interfaces';
 
-const builtin = new Set(['set', 'get', 'on', 'fire', 'observe', 'destroy']);
+const builtin = new Set(['set', 'get', 'on', 'fire', 'destroy']);
 
 export default function methods(validator: Validator, prop: Node) {
 	if (prop.value.type !== 'ObjectExpression') {
