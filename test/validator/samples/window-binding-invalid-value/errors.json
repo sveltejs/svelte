@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-binding",
 	"message": "Bindings on <:Window/> must be to top-level properties, e.g. 'baz' rather than 'foo.bar.baz'",
 	"loc": {
 		"line": 1,

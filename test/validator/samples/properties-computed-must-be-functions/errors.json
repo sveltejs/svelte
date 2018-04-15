@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-computed-value",
 	"message": "Computed properties can be function expressions or arrow function expressions",
 	"loc": {
 		"line": 6,

@@ -61,15 +61,18 @@ export default function validateHtml(validator: Validator, html: Node) {
 				c += 2;
 				while (/\s/.test(validator.source[c])) c += 1;
 
-				validator.warn(
-					`Context clashes with a helper. Rename one or the other to eliminate any ambiguity`,
-					{ start: c, end: c + node.context.length }
-				);
+				validator.warn({ start: c, end: c + node.context.length }, {
+					code: `each-context-clash`,
+					message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
+				});
 			}
 		}
 
 		if (validator.options.dev && isEmptyBlock(node)) {
-			validator.warn('Empty block', node);
+			validator.warn(node, {
+				code: `empty-block`,
+				message: 'Empty block'
+			});
 		}
 
 		if (node.children) {
@@ -105,7 +108,10 @@ export default function validateHtml(validator: Validator, html: Node) {
 			let message = `'refs.${ref}' does not exist`;
 			if (match) message += ` (did you mean 'refs.${match}'?)`;
 
-			validator.error(message, callee);
+			validator.error(callee, {
+				code: `missing-ref`,
+				message
+			});
 		}
 	});
 }

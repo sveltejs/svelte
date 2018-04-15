@@ -1,4 +1,5 @@
 [{
+	"code": "a11y-missing-content",
 	"message": "A11y: <a> element should have child content",
 	"loc": {
 		"line": 1,

@@ -1,4 +1,5 @@
 {
+	"code": "unclosed-block",
 	"message": "Block was left open",
 	"loc": {
 		"line": 1,

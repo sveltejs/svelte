@@ -31,6 +31,7 @@ export interface Warning {
 	loc?: { line: number; column: number; pos?: number };
 	end?: { line: number; column: number; };
 	pos?: number;
+	code: string;
 	message: string;
 	filename?: string;
 	frame?: string;

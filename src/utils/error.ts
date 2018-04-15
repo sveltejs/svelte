@@ -2,6 +2,7 @@ import { locate } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
 
 class CompileError extends Error {
+	code: string;
 	loc: { line: number, column: number };
 	end: { line: number, column: number };
 	pos: number;
@@ -15,6 +16,7 @@ class CompileError extends Error {
 
 export default function error(message: string, props: {
 	name: string,
+	code: string,
 	source: string,
 	filename: string,
 	start: number,
@@ -26,6 +28,7 @@ export default function error(message: string, props: {
 	const start = locate(props.source, props.start);
 	const end = locate(props.source, props.end || props.start);
 
+	error.code = props.code;
 	error.loc = { line: start.line + 1, column: start.column };
 	error.end = { line: end.line + 1, column: end.column };
 	error.pos = props.start;

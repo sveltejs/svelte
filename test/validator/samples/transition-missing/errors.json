@@ -1,4 +1,5 @@
 [{
+	"code": "missing-transition",
 	"message": "Missing transition 'foo'",
 	"loc": {
 		"line": 1,

@@ -1,4 +1,5 @@
 [{
+	"code": "illegal-attribute",
 	"message": "<title> cannot have attributes",
 	"loc": {
 		"line": 2,

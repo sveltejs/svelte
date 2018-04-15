@@ -1,4 +1,5 @@
 [{
+	"code": "css-invalid-global",
 	"message": ":global(...) must be the first element in a compound selector",
 	"loc": {
 		"line": 2,

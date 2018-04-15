@@ -1,4 +1,5 @@
 [{
+	"code": "impure-computed",
 	"message": "A computed value must depend on at least one property",
 	"pos": 49,
 	"loc": {

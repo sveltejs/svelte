@@ -1,5 +1,6 @@
 [
 	{
+		"code": "a11y-unknown-role",
 		"message": "A11y: Unknown role 'toooltip' (did you mean 'tooltip'?)",
 		"loc": {
 			"line": 1,

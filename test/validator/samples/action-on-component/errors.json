@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-action",
 	"message": "Actions can only be applied to DOM elements, not components",
 	"pos": 8,
 	"loc": {

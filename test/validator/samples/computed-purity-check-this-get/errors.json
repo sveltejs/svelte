@@ -1,4 +1,5 @@
 [{
+	"code": "impure-computed",
 	"message": "Cannot use this.get(...) — values must be passed into the function as arguments",
 	"pos": 73,
 	"loc": {

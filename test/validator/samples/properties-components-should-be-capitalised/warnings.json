@@ -1,4 +1,5 @@
 [{
+	"code": "component-lowercase",
 	"message": "Component names should be capitalised",
 	"loc": {
 		"line": 6,

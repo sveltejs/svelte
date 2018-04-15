@@ -1,4 +1,5 @@
 [{
+	"code": "invalid-binding",
 	"message": "'checked' binding can only be used with <input type=\"checkbox\">",
 	"loc": {
 		"line": 1,
