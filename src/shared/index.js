@@ -51,6 +51,11 @@ export function fire(eventName, data) {
 	}
 }
 
+export function getDev(key) {
+	if (key) console.warn("`let x = component.get('x')` is deprecated. Use `let { x } = component.get()` instead");
+	return get.call(this, key);
+}
+
 export function get(key) {
 	return key ? this._state[key] : this._state;
 }
@@ -204,7 +209,7 @@ export var proto = {
 
 export var protoDev = {
 	destroy: destroyDev,
-	get: get,
+	get: getDev,
 	fire: fire,
 	observe: observeDev,
 	on: onDev,
