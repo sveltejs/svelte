@@ -101,7 +101,7 @@ export default function validate(
 	stats: Stats,
 	options: CompileOptions
 ) {
-	const { onerror, name, filename, store, dev, parser } = options;
+	const { onerror, name, filename, dev, parser } = options;
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
@@ -122,7 +122,6 @@ export default function validate(
 		const validator = new Validator(parsed, source, stats, {
 			name,
 			filename,
-			store,
 			dev,
 			parser
 		});

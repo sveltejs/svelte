@@ -217,7 +217,7 @@ export default class Component extends Node {
 
 						${binding.dependencies
 							.map((name: string) => {
-								const isStoreProp = generator.options.store && name[0] === '$';
+								const isStoreProp = name[0] === '$';
 								const prop = isStoreProp ? name.slice(1) : name;
 								const newState = isStoreProp ? 'newStoreState' : 'newState';
 
@@ -230,7 +230,7 @@ export default class Component extends Node {
 				}
 
 				else {
-					const isStoreProp = generator.options.store && key[0] === '$';
+					const isStoreProp = key[0] === '$';
 					const prop = isStoreProp ? key.slice(1) : key;
 					const newState = isStoreProp ? 'newStoreState' : 'newState';
 

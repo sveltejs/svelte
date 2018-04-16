@@ -56,12 +56,10 @@ export interface CompileOptions {
 	dev?: boolean;
 	immutable?: boolean;
 	shared?: boolean | string;
-	cascade?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
-	store?: boolean;
 
 	preserveComments?: boolean | false;
 
