@@ -1,6 +1,8 @@
 // import counter from './counter.js';
 
 export default {
+	skip: true, // TODO
+
 	'skip-ssr': true,
 
 	html: `
