@@ -6,7 +6,7 @@ export default function validateHead(validator: Validator, node: Node, refs: Map
 	if (node.attributes.length) {
 		validator.error(node.attributes[0], {
 			code: `invalid-attribute`,
-			message: `<:Head> should not have any attributes or directives`
+			message: `<svelte:head> should not have any attributes or directives`
 		});
 	}
 

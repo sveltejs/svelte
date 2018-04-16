@@ -47,7 +47,7 @@ export class DomGenerator extends Generator {
 		this.legacy = options.legacy;
 		this.needsEncapsulateHelper = false;
 
-		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
+		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 		this.metaBindings = [];
 	}
 }
@@ -89,7 +89,7 @@ export default function dom(
 			});
 
 			if (generator.readonly.has(key)) {
-				// <:Window> bindings
+				// <svelte:window> bindings
 				throw new Error(
 					`Cannot have a computed value '${key}' that clashes with a read-only property`
 				);

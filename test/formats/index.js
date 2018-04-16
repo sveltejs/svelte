@@ -85,7 +85,7 @@ describe("formats", () => {
 	describe("amd", () => {
 		it("generates an AMD module", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -110,7 +110,7 @@ describe("formats", () => {
 	describe("cjs", () => {
 		it("generates a CommonJS module", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -134,7 +134,7 @@ describe("formats", () => {
 	describe("iife", () => {
 		it("generates a self-executing script", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -208,7 +208,7 @@ describe("formats", () => {
 	describe("umd", () => {
 		it("generates a UMD build", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -249,7 +249,7 @@ describe("formats", () => {
 	describe("eval", () => {
 		it("generates a self-executing script that returns the component on eval", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
