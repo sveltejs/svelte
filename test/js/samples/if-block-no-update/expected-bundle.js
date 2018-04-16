@@ -181,7 +181,7 @@ function create_main_fragment(component, state) {
 	};
 }
 
-// (1:0) {{#if foo}}
+// (1:0) {#if foo}
 function create_if_block(component, state) {
 	var p;
 
@@ -203,7 +203,7 @@ function create_if_block(component, state) {
 	};
 }
 
-// (3:0) {{else}}
+// (3:0) {:else}
 function create_if_block_1(component, state) {
 	var p;
 

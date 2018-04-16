@@ -136,7 +136,7 @@ function create_main_fragment(component, state) {
 	};
 }
 
-// (2:1) {{#if a}}
+// (2:1) {#if a}
 function create_if_block(component, state) {
 	var p;
 
@@ -158,7 +158,7 @@ function create_if_block(component, state) {
 	};
 }
 
-// (8:1) {{#if b}}
+// (8:1) {#if b}
 function create_if_block_1(component, state) {
 	var p;
 
@@ -180,7 +180,7 @@ function create_if_block_1(component, state) {
 	};
 }
 
-// (12:1) {{#if c}}
+// (12:1) {#if c}
 function create_if_block_2(component, state) {
 	var p;
 
@@ -202,7 +202,7 @@ function create_if_block_2(component, state) {
 	};
 }
 
-// (18:1) {{#if d}}
+// (18:1) {#if d}
 function create_if_block_3(component, state) {
 	var p;
 
@@ -224,7 +224,7 @@ function create_if_block_3(component, state) {
 	};
 }
 
-// (25:0) {{#if e}}
+// (25:0) {#if e}
 function create_if_block_4(component, state) {
 	var p;
 
