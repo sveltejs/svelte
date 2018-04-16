@@ -13,7 +13,7 @@ export default {
 			line: 12,
 			column: 1
 		},
-		pos: 125,
+		pos: 123,
 		frame: `
 			10:   }
 			11:
