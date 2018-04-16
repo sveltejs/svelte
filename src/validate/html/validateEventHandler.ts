@@ -31,24 +31,13 @@ export default function validateEventHandlerCallee(
 		return;
 	}
 
-	if (name === 'store' && attribute.expression.callee.type === 'MemberExpression') {
-		if (!validator.options.store) {
-			validator.warn(attribute.expression, {
-				code: `options-missing-store`,
-				message: 'compile with `store: true` in order to call store methods'
-			});
-		}
-		return;
-	}
-
 	if (
 		(callee.type === 'Identifier' && validBuiltins.has(callee.name)) ||
 		validator.methods.has(callee.name)
 	)
 		return;
 
-	const validCallees = ['this.*', 'event.*', 'options.*', 'console.*'].concat(
-		validator.options.store ? 'store.*' : [],
+	const validCallees = ['this.*', 'event.*', 'options.*', 'console.*', 'store.*'].concat(
 		Array.from(validBuiltins),
 		Array.from(validator.methods.keys())
 	);

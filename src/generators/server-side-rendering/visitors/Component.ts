@@ -103,9 +103,7 @@ export default function visitComponent(
 	let open = `\${${expression}._render(__result, ${props}`;
 
 	const options = [];
-	if (generator.options.store) {
-		options.push(`store: options.store`);
-	}
+	options.push(`store: options.store`);
 
 	if (node.children.length) {
 		const appendTarget: AppendTarget = {

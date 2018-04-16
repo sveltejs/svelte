@@ -153,7 +153,7 @@ export default function dom(
 	// generate initial state object
 	const expectedProperties = Array.from(generator.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = options.store || templateProperties.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
+	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
 	const initialState = [];
 
 	if (globals.length > 0) {

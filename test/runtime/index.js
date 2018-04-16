@@ -172,12 +172,12 @@ describe.only("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2: true }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2: true }, compile);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile);
 				});
 		});
 	}
