@@ -57,7 +57,7 @@ export default function visitComponent(
 		if (attribute.value.length === 1) {
 			const chunk = attribute.value[0];
 			if (chunk.type === 'Text') {
-				return isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
+				return stringify(chunk.data);
 			}
 
 			block.contextualise(chunk.expression);
