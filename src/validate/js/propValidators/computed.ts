@@ -30,14 +30,14 @@ export default function computed(validator: Validator, prop: Node) {
 
 		if (!isValidIdentifier(name)) {
 			const suggestion = name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
-			validator.error(computation, {
+			validator.error(computation.key, {
 				code: `invalid-computed-name`,
 				message: `Computed property name '${name}' is invalid — must be a valid identifier such as ${suggestion}`
 			});
 		}
 
 		if (reservedNames.has(name)) {
-			validator.error(computation, {
+			validator.error(computation.key, {
 				code: `invalid-computed-name`,
 				message: `Computed property name '${name}' is invalid — cannot be a JavaScript reserved word`
 			});
