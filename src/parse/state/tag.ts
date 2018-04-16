@@ -11,8 +11,6 @@ import { Node } from '../../interfaces';
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const metaTags = new Map([
-	[':Window', 'Window'],
-	[':Head', 'Head'],
 	['svelte:window', 'Window'],
 	['svelte:head', 'Head']
 ]);
@@ -33,6 +31,9 @@ const specials = new Map([
 		},
 	],
 ]);
+
+const SELF = 'svelte:self';
+const COMPONENT = 'svelte:component';
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 const disallowedContents = new Map([
@@ -198,7 +199,7 @@ export default function tag(parser: Parser) {
 		parser.allowWhitespace();
 	}
 
-	if (parser.v2 && name === 'svelte:component') {
+	if (name === 'svelte:component') {
 		// TODO post v2, treat this just as any other attribute
 		const index = element.attributes.findIndex(attr => attr.name === 'this');
 		if (!~index) {
@@ -264,21 +265,11 @@ export default function tag(parser: Parser) {
 		element.end = parser.index;
 	} else if (name === 'style') {
 		// special case
-		if (parser.v2) {
-			const start = parser.index;
-			const data = parser.readUntil(/<\/style>/);
-			const end = parser.index;
-			element.children.push({ start, end, type: 'Text', data });
-			parser.eat('</style>', true);
-		} else {
-			element.children = readSequence(
-				parser,
-				() =>
-					parser.template.slice(parser.index, parser.index + 8) === '</style>'
-			);
-			parser.read(/<\/style>/);
-			element.end = parser.index;
-		}
+		const start = parser.index;
+		const data = parser.readUntil(/<\/style>/);
+		const end = parser.index;
+		element.children.push({ start, end, type: 'Text', data });
+		parser.eat('</style>', true);
 	} else {
 		parser.stack.push(element);
 	}
@@ -286,10 +277,6 @@ export default function tag(parser: Parser) {
 
 function readTagName(parser: Parser) {
 	const start = parser.index;
-
-	// TODO hoist these back to the top, post-v2
-	const SELF = parser.v2 ? 'svelte:self' : ':Self';
-	const COMPONENT = parser.v2 ? 'svelte:component' : ':Component';
 
 	if (parser.eat(SELF)) {
 		// check we're inside a block, otherwise this
@@ -334,14 +321,14 @@ function readTagName(parser: Parser) {
 function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
-	if (parser.eat(parser.v2 ? '{' : '{{')) {
+	if (parser.eat('{')) {
 		parser.allowWhitespace();
 
 		if (parser.eat('...')) {
 			const expression = readExpression(parser);
 
 			parser.allowWhitespace();
-			parser.eat(parser.v2 ? '}' : '}}', true);
+			parser.eat('}', true);
 
 			return {
 				start,
@@ -350,13 +337,6 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 				expression
 			};
 		} else {
-			if (!parser.v2) {
-				parser.error({
-					code: `expected-spread`,
-					message: 'Expected spread operator (...)'
-				});
-			}
-
 			const valueStart = parser.index;
 
 			const name = parser.readIdentifier();
@@ -449,7 +429,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 			});
 
 			return chunks;
-		} else if (parser.eat(parser.v2 ? '{' : '{{')) {
+		} else if (parser.eat('{')) {
 			if (currentChunk.data) {
 				currentChunk.end = index;
 				chunks.push(currentChunk);
@@ -457,7 +437,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 
 			const expression = readExpression(parser);
 			parser.allowWhitespace();
-			parser.eat(parser.v2 ? '}' : '}}', true);
+			parser.eat('}', true);
 
 			chunks.push({
 				start: index,

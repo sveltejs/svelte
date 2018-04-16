@@ -6,7 +6,7 @@ const literals = new Map([['true', true], ['false', false], ['null', null]]);
 export default function readExpression(parser: Parser) {
 	const start = parser.index;
 
-	const name = parser.readUntil(parser.v2 ? /\s*}/ : /\s*}}/);
+	const name = parser.readUntil(/\s*}/);
 	if (name && /^[a-z]+$/.test(name)) {
 		const end = start + name.length;
 
