@@ -1,9 +1,9 @@
 {
 	"code": "invalid-window-placement",
-	"message": "<:Window> tags cannot be inside elements or blocks",
+	"message": "<svelte:window> tags cannot be inside elements or blocks",
 	"loc": {
 		"line": 2,
 		"column": 1
 	},
-	"pos": 13
+	"pos": 11
 }

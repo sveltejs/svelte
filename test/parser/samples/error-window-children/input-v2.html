@@ -1,1 +1,0 @@
-<svelte:window>contents</svelte:window>

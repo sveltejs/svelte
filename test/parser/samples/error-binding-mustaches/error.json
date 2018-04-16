@@ -1,6 +1,6 @@
 {
 	"code": "invalid-directive-value",
-	"message": "directive values should not be wrapped — use 'foo', not '{{foo}}'",
+	"message": "directive values should not be wrapped — use 'foo', not '{foo}'",
 	"loc": {
 		"line": 1,
 		"column": 19

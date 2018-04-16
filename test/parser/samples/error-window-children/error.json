@@ -1,9 +1,9 @@
 {
 	"code": "invalid-window-content",
-	"message": "<:Window> cannot have children",
+	"message": "<svelte:window> cannot have children",
 	"loc": {
 		"line": 1,
-		"column": 9
+		"column": 15
 	},
-	"pos": 9
+	"pos": 15
 }

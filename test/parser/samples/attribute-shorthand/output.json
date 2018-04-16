@@ -2,18 +2,18 @@
 	"hash": 1705925892,
 	"html": {
 		"start": 0,
-		"end": 10,
+		"end": 11,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 10,
+				"end": 11,
 				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 5,
-						"end": 8,
+						"end": 9,
 						"type": "Attribute",
 						"name": "id",
 						"value": [

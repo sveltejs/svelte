@@ -1,13 +1,13 @@
 {
-	"hash": 2961389466,
+	"hash": "1827l8g",
 	"html": {
 		"start": 0,
-		"end": 67,
+		"end": 65,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 67,
+				"end": 65,
 				"type": "Element",
 				"name": "h1",
 				"attributes": [],
@@ -20,40 +20,40 @@
 					},
 					{
 						"start": 10,
-						"end": 37,
+						"end": 35,
 						"type": "Element",
 						"name": "strong",
 						"attributes": [],
 						"children": [
 							{
 								"start": 18,
-								"end": 26,
+								"end": 24,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 20,
-									"end": 24,
+									"start": 19,
+									"end": 23,
 									"name": "name"
 								}
 							},
 							{
-								"start": 26,
-								"end": 28,
+								"start": 24,
+								"end": 26,
 								"type": "Text",
 								"data": "! "
 							}
 						]
 					},
 					{
-						"start": 37,
-						"end": 62,
+						"start": 35,
+						"end": 60,
 						"type": "Element",
 						"name": "span",
 						"attributes": [],
 						"children": [
 							{
-								"start": 43,
-								"end": 55,
+								"start": 41,
+								"end": 53,
 								"type": "Text",
 								"data": "How are you?"
 							}
