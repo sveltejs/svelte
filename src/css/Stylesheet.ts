@@ -31,18 +31,18 @@ class Rule {
 		return this.selectors.some(s => s.used);
 	}
 
-	minify(code: MagicString, cascade: boolean, dev: boolean) {
+	minify(code: MagicString, dev: boolean) {
 		let c = this.node.start;
 		let started = false;
 
 		this.selectors.forEach((selector, i) => {
-			if (cascade || selector.used) {
+			if (selector.used) {
 				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
 					code.overwrite(c, selector.node.start, separator);
 				}
 
-				if (!cascade) selector.minify(code);
+				selector.minify(code);
 				c = selector.node.end;
 
 				started = true;
@@ -66,39 +66,12 @@ class Rule {
 		code.remove(c, this.node.block.end - 1);
 	}
 
-	transform(code: MagicString, id: string, keyframes: Map<string, string>, cascade: boolean) {
+	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
 		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
 
 		const attr = `.${id}`;
 
-		if (cascade) {
-			this.selectors.forEach(selector => {
-				// TODO disable cascading (without :global(...)) in v2
-				const { start, end, children } = selector.node;
-
-				const css = code.original;
-				const selectorString = css.slice(start, end);
-
-				const firstToken = children[0];
-
-				let transformed;
-
-				if (firstToken.type === 'TypeSelector') {
-					const insert = firstToken.end;
-					const head = firstToken.name === '*' ? '' : css.slice(start, insert);
-					const tail = css.slice(insert, end);
-
-					transformed = `${head}${attr}${tail},${attr} ${selectorString}`;
-				} else {
-					transformed = `${attr}${selectorString},${attr} ${selectorString}`;
-				}
-
-				code.overwrite(start, end, transformed);
-			});
-		} else {
-			this.selectors.forEach(selector => selector.transform(code, attr));
-		}
-
+		this.selectors.forEach(selector => selector.transform(code, attr));
 		this.declarations.forEach(declaration => declaration.transform(code, keyframes));
 	}
 
@@ -182,7 +155,7 @@ class Atrule {
 		return true; // TODO
 	}
 
-	minify(code: MagicString, cascade: boolean, dev: boolean) {
+	minify(code: MagicString, dev: boolean) {
 		if (this.node.name === 'media') {
 			const expressionChar = code.original[this.node.expression.start];
 			let c = this.node.start + (expressionChar === '(' ? 6 : 7);
@@ -215,9 +188,9 @@ class Atrule {
 			let c = this.node.block.start + 1;
 
 			this.children.forEach(child => {
-				if (cascade || child.isUsed(dev)) {
+				if (child.isUsed(dev)) {
 					code.remove(c, child.node.start);
-					child.minify(code, cascade, dev);
+					child.minify(code, dev);
 					c = child.node.end;
 				}
 			});
@@ -226,7 +199,7 @@ class Atrule {
 		}
 	}
 
-	transform(code: MagicString, id: string, keyframes: Map<string, string>, cascade: boolean) {
+	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
 		if (this.node.name === 'keyframes') {
 			this.node.expression.children.forEach(({ type, name, start, end }: Node) => {
 				if (type === 'Identifier') {
@@ -240,7 +213,7 @@ class Atrule {
 		}
 
 		this.children.forEach(child => {
-			child.transform(code, id, keyframes, cascade);
+			child.transform(code, id, keyframes);
 		})
 	}
 
@@ -264,7 +237,6 @@ const keys = {};
 export default class Stylesheet {
 	source: string;
 	parsed: Parsed;
-	cascade: boolean;
 	filename: string;
 	dev: boolean;
 
@@ -276,10 +248,9 @@ export default class Stylesheet {
 
 	nodesWithCssClass: Set<Node>;
 
-	constructor(source: string, parsed: Parsed, filename: string, cascade: boolean, dev: boolean) {
+	constructor(source: string, parsed: Parsed, filename: string, dev: boolean) {
 		this.source = source;
 		this.parsed = parsed;
-		this.cascade = cascade;
 		this.filename = filename;
 		this.dev = dev;
 
@@ -356,11 +327,6 @@ export default class Stylesheet {
 			if (parent.type === 'Element') stack.unshift(<Element>parent);
 		}
 
-		if (this.cascade) {
-			if (stack.length === 0) this.nodesWithCssClass.add(node);
-			return;
-		}
-
 		for (let i = 0; i < this.children.length; i += 1) {
 			const child = this.children[i];
 			child.apply(node, stack);
@@ -389,15 +355,15 @@ export default class Stylesheet {
 
 		if (shouldTransformSelectors) {
 			this.children.forEach((child: (Atrule|Rule)) => {
-				child.transform(code, this.id, this.keyframes, this.cascade);
+				child.transform(code, this.id, this.keyframes);
 			});
 		}
 
 		let c = 0;
 		this.children.forEach(child => {
-			if (this.cascade || child.isUsed(this.dev)) {
+			if (child.isUsed(this.dev)) {
 				code.remove(c, child.node.start);
-				child.minify(code, this.cascade, this.dev);
+				child.minify(code, this.dev);
 				c = child.node.end;
 			}
 		});
@@ -421,8 +387,6 @@ export default class Stylesheet {
 	}
 
 	warnOnUnusedSelectors(onwarn: (warning: Warning) => void) {
-		if (this.cascade) return;
-
 		let locator;
 
 		const handler = (selector: Selector) => {

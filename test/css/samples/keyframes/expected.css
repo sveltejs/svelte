@@ -1,1 +1,1 @@
-@keyframes svelte-xyz-why{0%{color:red}100%{color:blue}}.svelte-xyz.animated,.svelte-xyz .animated{animation:svelte-xyz-why 2s}
+@keyframes svelte-xyz-why{0%{color:red}100%{color:blue}}.animated.svelte-xyz{animation:svelte-xyz-why 2s}.also-animated.svelte-xyz{animation:not-defined-here 2s}

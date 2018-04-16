@@ -1,6 +1,4 @@
 export default {
-	cascade: false,
-
 	warnings: [
 		{
 			filename: "SvelteComponent.html",

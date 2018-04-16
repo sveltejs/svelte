@@ -1,6 +1,4 @@
 export default {
-	cascade: false,
-
 	warnings: [{
 		code: `css-unused-selector`,
 		message: 'Unused CSS selector',
