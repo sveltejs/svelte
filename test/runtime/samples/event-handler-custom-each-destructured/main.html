@@ -1,11 +1,11 @@
-{{#each items as [item0, item1]}}
+{#each items as [item0, item1]}
 	<button on:tap='set({ first: item0, second: item1 })'>
-		{{item0}}: {{item1}}
+		{item0}: {item1}
 	</button>
-{{/each}}
+{/each}
 
-<p>first: {{first}}</p>
-<p>second: {{second}}</p>
+<p>first: {first}</p>
+<p>second: {second}</p>
 
 <script>
 	export default {

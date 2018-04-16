@@ -1,9 +1,9 @@
-{{#each items as item}}
-	<button on:tap='set({ fromDom: this.textContent, fromState: item })'>{{item}}</button>
-{{/each}}
+{#each items as item}
+	<button on:tap='set({ fromDom: this.textContent, fromState: item })'>{item}</button>
+{/each}
 
-<p>fromDom: {{fromDom}}</p>
-<p>fromState: {{fromState}}</p>
+<p>fromDom: {fromDom}</p>
+<p>fromState: {fromState}</p>
 
 <script>
 	export default {

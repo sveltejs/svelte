@@ -1,6 +1,6 @@
-{{#await promise then value}}
-	<Foo :value />
-{{/await}}
+{#await promise then value}
+	<Foo {value} />
+{/await}
 
 <script>
 	import Foo from './Foo.html';

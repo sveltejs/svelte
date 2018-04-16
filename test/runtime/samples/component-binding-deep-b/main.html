@@ -1,8 +1,8 @@
-<ComponentSelector :components bind:selectedComponent/>
+<ComponentSelector {components} bind:selectedComponent/>
 <Editor bind:code='selectedComponent.source' />
 
 <pre>
-{{compiled}}
+{compiled}
 </pre>
 
 <script>

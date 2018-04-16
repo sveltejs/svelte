@@ -1,9 +1,9 @@
 <Modal ref:modal>
-	<span>{{letter}}</span>
+	<span>{letter}</span>
 	<select bind:value='letter'>
-		{{#each letters as letter}}
-			<option value="{{letter}}">{{letter}}</option>
-		{{/each}}
+		{#each letters as letter}
+			<option value="{letter}">{letter}</option>
+		{/each}
 	</select>
 </Modal>
 

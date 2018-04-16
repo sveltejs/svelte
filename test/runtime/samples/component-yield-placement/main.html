@@ -1,10 +1,10 @@
-{{#if showModal}}
+{#if showModal}
 	<Modal on:destroy='set({ showModal: false })'>
 		<h2>Hello!</h2>
 	</Modal>
-{{else}}
+{:else}
 	<button on:click='set({ showModal: true })'>show modal</button>
-{{/if}}
+{/if}
 
 <script>
 	import Modal from './Modal.html';

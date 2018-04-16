@@ -1,6 +1,6 @@
-{{#each ['racoon', 'eagle'] as animal}}
-	<button on:click="set({clicked: animal})">{{animal}}</button>
-{{/each}}
+{#each ['racoon', 'eagle'] as animal}
+	<button on:click="set({clicked: animal})">{animal}</button>
+{/each}
 
 <script>
 	export default {

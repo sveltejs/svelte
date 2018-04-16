@@ -1,6 +1,6 @@
-{{#each fields as field}}
-	<Nested :field bind:value='values[field]'/>
-{{/each}}
+{#each fields as field}
+	<Nested {field} bind:value='values[field]'/>
+{/each}
 
 <script>
 	import Nested from './Nested.html';
