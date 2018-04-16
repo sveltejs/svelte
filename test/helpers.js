@@ -190,7 +190,7 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 			.replace(/^\d/, '_$&')
 			.replace(/[^a-zA-Z0-9_$]/g, '');
 
-		const { code } = compile(
+		const { js } = compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
 				filename: file,
@@ -200,7 +200,7 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 		);
 
 		console.log( // eslint-disable-line no-console
-			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(code)}\n<< ${chalk.cyan.bold(file)}`
+			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(js.code)}\n<< ${chalk.cyan.bold(file)}`
 		);
 	});
 }
