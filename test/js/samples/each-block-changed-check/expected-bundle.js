@@ -237,7 +237,7 @@ function create_main_fragment(component, state) {
 	};
 }
 
-// (1:0) {{#each comments as comment, i}}
+// (1:0) {#each comments as comment, i}
 function create_each_block(component, state) {
 	var comment = state.comment, each_value = state.each_value, i = state.i;
 	var div, strong, text, text_1, span, text_2_value = comment.author, text_2, text_3, text_4_value = state.elapsed(comment.time, state.time), text_4, text_5, text_6, raw_value = comment.html, raw_before;

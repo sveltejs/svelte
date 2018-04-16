@@ -226,7 +226,7 @@ function create_main_fragment(component, state) {
 	};
 }
 
-// (1:0) {{#each createElement as node}}
+// (1:0) {#each createElement as node}
 function create_each_block(component, state) {
 	var node = state.node, each_value = state.each_value, node_index = state.node_index;
 	var span, text_value = node, text;
