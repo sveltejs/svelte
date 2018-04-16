@@ -18,8 +18,6 @@ describe('parse', () => {
 		(solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`test/parser/samples/${dir}/options.json`) || {};
 
-			options.parser = 'v2'; // TODO remove
-
 			const input = fs.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8').replace(/\s+$/, '');
 			const expectedOutput = tryToLoadJson(`test/parser/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`test/parser/samples/${dir}/error.json`);

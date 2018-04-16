@@ -32,8 +32,7 @@ describe("validate", () => {
 						warnings.push({ code, message, pos, loc, end });
 					},
 					dev: config.dev,
-					generate: false,
-					parser: 'v2' // TODO remove
+					generate: false
 				});
 
 				assert.equal(stats.warnings.length, warnings.length);

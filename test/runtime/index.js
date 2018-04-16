@@ -72,7 +72,6 @@ describe("runtime", () => {
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
-			compileOptions.parser = 'v2'; // TODO remove
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
