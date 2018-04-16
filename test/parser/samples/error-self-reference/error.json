@@ -1,6 +1,6 @@
 {
 	"code": "invalid-self-placement",
-	"message": "<:Self> components can only exist inside if-blocks or each-blocks",
+	"message": "<svelte:self> components can only exist inside if-blocks or each-blocks",
 	"loc": {
 		"line": 1,
 		"column": 1

@@ -1,9 +1,0 @@
-{
-	"code": "invalid-directive-value",
-	"message": "ref directives cannot have a value",
-	"loc": {
-		"line": 1,
-		"column": 14
-	},
-	"pos": 14
-}

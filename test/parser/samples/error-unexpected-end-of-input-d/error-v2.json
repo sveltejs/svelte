@@ -1,9 +1,0 @@
-{
-	"code": "unclosed-block",
-	"message": "Block was left open",
-	"loc": {
-		"line": 1,
-		"column": 0
-	},
-	"pos": 0
-}

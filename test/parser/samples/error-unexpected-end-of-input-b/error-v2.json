@@ -1,9 +1,0 @@
-{
-	"code": "unexpected-eof",
-	"message": "Unexpected end of input",
-	"loc": {
-		"line": 1,
-		"column": 2
-	},
-	"pos": 2
-}
