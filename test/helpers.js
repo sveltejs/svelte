@@ -187,8 +187,7 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
 				filename: file,
-				name: capitalise(name),
-				parser: 'v2' // TODO remove
+				name: capitalise(name)
 			})
 		);
 
