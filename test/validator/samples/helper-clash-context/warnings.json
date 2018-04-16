@@ -3,11 +3,11 @@
 	"message": "Context clashes with a helper. Rename one or the other to eliminate any ambiguity",
 	"loc": {
 		"line": 1,
-		"column": 18
+		"column": 17
 	},
 	"end": {
 		"line": 1,
-		"column": 23
+		"column": 22
 	},
-	"pos": 18
+	"pos": 17
 }]

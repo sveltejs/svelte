@@ -1,7 +1,7 @@
 [{
 	"code": "impure-computed",
 	"message": "Computed properties should be pure functions — they do not have access to the component instance and cannot use 'this'. Did you mean to put this in 'methods'?",
-	"pos": 83,
+	"pos": 81,
 	"loc": {
 		"line": 7,
 		"column": 4

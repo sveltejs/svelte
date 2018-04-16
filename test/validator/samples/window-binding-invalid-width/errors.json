@@ -3,11 +3,11 @@
 	"message": "'width' is not a valid binding on <:Window> (did you mean 'innerWidth'?)",
 	"loc": {
 		"line": 1,
-		"column": 9
+		"column": 15
 	},
 	"end": {
 		"line": 1,
-		"column": 23
+		"column": 29
 	},
-	"pos": 9
+	"pos": 15
 }]

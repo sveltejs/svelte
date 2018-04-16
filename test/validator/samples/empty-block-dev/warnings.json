@@ -8,7 +8,7 @@
 		},
 		"end": {
 			"line": 3,
-			"column": 9
+			"column": 7
 		},
 		"pos": 0
 	},
@@ -21,8 +21,8 @@
 		},
 		"end": {
 			"line": 5,
-			"column": 34
+			"column": 30
 		},
-		"pos": 38
+		"pos": 34
 	}
 ]
