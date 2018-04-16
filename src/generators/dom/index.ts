@@ -99,11 +99,7 @@ export default function dom(
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const call = generator.v2
-				? `%computed-${key}(state)`
-				: `%computed-${key}(${deps.map(dep => `state.${dep}`).join(', ')})`;
-
-			const statement = `if (this._differs(state.${key}, (state.${key} = ${call}))) changed.${key} = true;`;
+			const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`;
 
 			computationBuilder.addConditional(condition, statement);
 		});

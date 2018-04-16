@@ -11,7 +11,6 @@ import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 export class Validator {
 	readonly source: string;
 	readonly filename: string;
-	readonly v2: boolean;
 	readonly stats: Stats;
 
 	options: CompileOptions;
@@ -41,7 +40,6 @@ export class Validator {
 
 		this.filename = options.filename;
 		this.options = options;
-		this.v2 = options.parser === 'v2';
 
 		this.namespace = null;
 		this.defaultExport = null;

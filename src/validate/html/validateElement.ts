@@ -19,8 +19,7 @@ export default function validateElement(
 	}
 
 	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
-		// TODO upgrade to validator.error in v2
-		validator.warn(node, {
+		validator.error(node, {
 			code: `missing-component`,
 			message: `${node.name} component is not defined`
 		});

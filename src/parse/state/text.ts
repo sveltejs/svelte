@@ -9,7 +9,7 @@ export default function text(parser: Parser) {
 	while (
 		parser.index < parser.template.length &&
 		!parser.match('<') &&
-		!parser.match(parser.v2 ? '{' : '{{')
+		!parser.match('{')
 	) {
 		data += parser.template[parser.index++];
 	}

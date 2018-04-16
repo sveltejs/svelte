@@ -137,7 +137,7 @@ export default function ssr(
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = %computed-${key}(${deps.map(dep => `state.${dep}`).join(', ')});`
+					`state.${key} = %computed-${key}(state);`
 			)}
 
 			${generator.bindings.length &&
