@@ -1,8 +1,4 @@
 export default {
-	compileOptions: {
-		cascade: false
-	},
-
 	data: {
 		x: 'bar'
 	},

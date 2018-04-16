@@ -30,8 +30,7 @@ describe("sourcemaps", () => {
 			const { js, css } = svelte.compile(input, {
 				filename,
 				outputFilename: `${outputFilename}.js`,
-				cssOutputFilename: `${outputFilename}.css`,
-				cascade: config.cascade
+				cssOutputFilename: `${outputFilename}.css`
 			});
 
 			const _code = js.code.replace(/Svelte v\d+\.\d+\.\d+/, match => match.replace(/\d/g, 'x'));

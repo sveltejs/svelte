@@ -124,7 +124,7 @@ function compile(source: string, _options: CompileOptions) {
 	}
 
 	stats.start('stylesheet');
-	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false, options.dev);
+	const stylesheet = new Stylesheet(source, parsed, options.filename, options.dev);
 	stats.stop('stylesheet');
 
 	stats.start('validate');

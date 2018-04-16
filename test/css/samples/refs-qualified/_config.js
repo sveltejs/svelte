@@ -1,6 +1,4 @@
 export default {
-	cascade: false,
-
 	data: {
 		active: true
 	},
