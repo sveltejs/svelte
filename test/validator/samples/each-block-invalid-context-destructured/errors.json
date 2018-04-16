@@ -3,11 +3,11 @@
 	"message": "'case' is a reserved word in JavaScript and cannot be used here",
 	"loc": {
 		"line": 1,
-		"column": 18
+		"column": 17
 	},
 	"end": {
 		"line": 1,
-		"column": 18
+		"column": 17
 	},
-	"pos": 18
+	"pos": 17
 }]

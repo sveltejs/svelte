@@ -3,11 +3,11 @@
 	"message": "Bindings on <:Window/> must be to top-level properties, e.g. 'baz' rather than 'foo.bar.baz'",
 	"loc": {
 		"line": 1,
-		"column": 26
+		"column": 32
 	},
 	"end": {
 		"line": 1,
-		"column": 37
+		"column": 43
 	},
-	"pos": 26
+	"pos": 32
 }]

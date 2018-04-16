@@ -1,6 +1,6 @@
 [{
 	"code": "invalid-callee",
-	"message": "'foo' is an invalid callee (should be one of this.*, event.*, options.*, console.*, set, fire, destroy or bar)",
+	"message": "'foo' is an invalid callee (should be one of this.*, event.*, options.*, console.*, store.*, set, fire, destroy or bar)",
 	"pos": 18,
 	"loc": {
 		"line": 1,
