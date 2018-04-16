@@ -17,70 +17,58 @@ describe("validate", () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./validator/samples/${dir}/_config.js`);
 
-			function test(input, expectedWarnings, expectedErrors) {
-				let error;
+			const input = fs.readFileSync(`test/validator/samples/${dir}/input.html`, "utf-8").replace(/\s+$/, "");
+			const expectedWarnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
+			const expectedErrors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
 
-				try {
-					const warnings = [];
+			let error;
 
-					const { stats } = svelte.compile(input, {
-						onwarn(warning) {
-							const { code, message, pos, loc, end } = warning;
-							warnings.push({ code, message, pos, loc, end });
-						},
-						dev: config.dev,
-						generate: false
-					});
+			try {
+				const warnings = [];
 
-					assert.equal(stats.warnings.length, warnings.length);
-					stats.warnings.forEach((full, i) => {
-						const lite = warnings[i];
-						assert.deepEqual({
-							code: full.code,
-							message: full.message,
-							pos: full.pos,
-							loc: full.loc,
-							end: full.end
-						}, lite);
-					});
+				const { stats } = svelte.compile(input, {
+					onwarn(warning) {
+						const { code, message, pos, loc, end } = warning;
+						warnings.push({ code, message, pos, loc, end });
+					},
+					dev: config.dev,
+					generate: false,
+					parser: 'v2' // TODO remove
+				});
 
-					assert.deepEqual(warnings, expectedWarnings);
-				} catch (e) {
-					error = e;
-				}
+				assert.equal(stats.warnings.length, warnings.length);
+				stats.warnings.forEach((full, i) => {
+					const lite = warnings[i];
+					assert.deepEqual({
+						code: full.code,
+						message: full.message,
+						pos: full.pos,
+						loc: full.loc,
+						end: full.end
+					}, lite);
+				});
 
-				const expected = expectedErrors && expectedErrors[0];
-
-				if (error || expected) {
-					if (error && !expected) {
-						throw error;
-					}
-
-					if (expected && !error) {
-						throw new Error(`Expected an error: ${expected.message}`);
-					}
-
-					assert.equal(error.code, expected.code);
-					assert.equal(error.message, expected.message);
-					assert.deepEqual(error.loc, expected.loc);
-					assert.deepEqual(error.end, expected.end);
-					assert.equal(error.pos, expected.pos);
-				}
+				assert.deepEqual(warnings, expectedWarnings);
+			} catch (e) {
+				error = e;
 			}
 
-			// TODO remove the v1 tests
-			test(
-				fs.readFileSync(`test/validator/samples/${dir}/input.html`, "utf-8").replace(/\s+$/, ""),
-				tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [],
-				tryToLoadJson(`test/validator/samples/${dir}/errors.json`)
-			);
+			const expected = expectedErrors && expectedErrors[0];
 
-			if (fs.existsSync(`test/validator/samples/${dir}/input-v2.html`)) {
-				test(
-					fs.readFileSync(`test/validator/samples/${dir}/input-v2.html`, "utf-8").replace(/\s+$/, ""),
-					tryToLoadJson(`test/validator/samples/${dir}/warnings-v2.json`) || [],
-					tryToLoadJson(`test/validator/samples/${dir}/errors-v2.json`)
-				);
+			if (error || expected) {
+				if (error && !expected) {
+					throw error;
+				}
+
+				if (expected && !error) {
+					throw new Error(`Expected an error: ${expected.message}`);
+				}
+
+				assert.equal(error.code, expected.code);
+				assert.equal(error.message, expected.message);
+				assert.deepEqual(error.loc, expected.loc);
+				assert.deepEqual(error.end, expected.end);
+				assert.equal(error.pos, expected.pos);
 			}
 		});
 	});
