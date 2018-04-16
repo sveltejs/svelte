@@ -1,6 +1,6 @@
 [{
 	"code": "invalid-binding",
-	"message": "'potato' is not a valid binding on <:Window> — valid bindings are innerWidth, innerHeight, outerWidth, outerHeight, scrollX, scrollY or online",
+	"message": "'potato' is not a valid binding on <svelte:window> — valid bindings are innerWidth, innerHeight, outerWidth, outerHeight, scrollX, scrollY or online",
 	"loc": {
 		"line": 1,
 		"column": 15

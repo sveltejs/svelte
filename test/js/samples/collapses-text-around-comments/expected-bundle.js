@@ -148,7 +148,7 @@ function data() {
 function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-1a7i8ec-style';
-	style.textContent = "p.svelte-1a7i8ec,.svelte-1a7i8ec p{color:red}";
+	style.textContent = "p.svelte-1a7i8ec{color:red}";
 	appendNode(style, document.head);
 }
 
