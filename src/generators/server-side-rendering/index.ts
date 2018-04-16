@@ -163,47 +163,6 @@ export default function ssr(
 		};
 
 		var warned = false;
-		${name}.renderCss = function() {
-			if (!warned) {
-				console.error('Component.renderCss(...) is deprecated and will be removed in v2 — use Component.render(...).css instead');
-				warned = true;
-			}
-
-			var components = [];
-
-			${generator.stylesheet.hasStyles &&
-				deindent`
-				components.push({
-					filename: ${name}.filename,
-					css: ${name}.css && ${name}.css.code,
-					map: ${name}.css && ${name}.css.map
-				});
-			`}
-
-			${templateProperties.components &&
-				deindent`
-				var seen = {};
-
-				function addComponent(component) {
-					var result = component.renderCss();
-					result.components.forEach(x => {
-						if (seen[x.filename]) return;
-						seen[x.filename] = true;
-						components.push(x);
-					});
-				}
-
-				${templateProperties.components.value.properties.map((prop: Node) => {
-					return `addComponent(%components-${getName(prop.key)});`;
-				})}
-			`}
-
-			return {
-				css: components.map(x => x.css).join('\\n'),
-				map: null,
-				components
-			};
-		};
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
 
