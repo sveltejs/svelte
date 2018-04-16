@@ -1,11 +1,11 @@
-{{#if isVisible}}
-	<div class='{{todo.done ? "done": "pending"}}'>{{todo.description}}</div>
-{{/if}}
+{#if isVisible}
+	<div class='{todo.done ? "done": "pending"}'>{todo.description}</div>
+{/if}
 
 <script>
 	export default {
 		computed: {
-			isVisible: ($filter, todo) => {
+			isVisible: ({ $filter, todo }) => {
 				if ($filter === 'all') return true;
 				if ($filter === 'done') return todo.done;
 				if ($filter === 'pending') return !todo.done;

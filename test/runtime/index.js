@@ -21,11 +21,11 @@ let compileOptions = null;
 let compile = null;
 
 function getName(filename) {
-	const base = path.basename(filename).replace('-v2', '').replace(".html", "");
+	const base = path.basename(filename).replace(".html", "");
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-describe("runtime", () => {
+describe.only("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
@@ -46,7 +46,7 @@ describe("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, shared, hydrate, v2) {
+	function runTest(dir, shared, hydrate) {
 		if (dir[0] === ".") return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
@@ -55,7 +55,7 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''}${v2 ? ', v2' : ''})`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''})`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -72,7 +72,7 @@ describe("runtime", () => {
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
-			compileOptions.parser = v2 ? 'v2' : 'v1';
+			compileOptions.parser = 'v2'; // TODO remove
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -112,7 +112,7 @@ describe("runtime", () => {
 					};
 
 					try {
-						SvelteComponent = require(`./samples/${dir}/main${v2 ? '-v2' : ''}.html`);
+						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
 						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
@@ -172,12 +172,12 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2 }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2: true }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2 }, compile);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2: true }, compile);
 				});
 		});
 	}
@@ -187,10 +187,6 @@ describe("runtime", () => {
 		runTest(dir, shared, false);
 		runTest(dir, shared, true);
 		runTest(dir, null, false);
-
-		if (fs.existsSync(`test/runtime/samples/${dir}/main-v2.html`)) {
-			runTest(dir, shared, false, true);
-		}
 	});
 
 	it("fails if options.target is missing in dev mode", () => {

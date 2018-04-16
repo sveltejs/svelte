@@ -1,8 +1,8 @@
-{{#each things as thing}}
+{#each things as thing}
 	<Visibility bind:isVisible="visibilityMap[thing]">
-		<p>{{thing}} ({{visibilityMap[thing]}})</p>
+		<p>{thing} ({visibilityMap[thing]})</p>
 	</Visibility>
-{{/each}}
+{/each}
 
 <script>
 	import Visibility from './Visibility.html';
@@ -17,7 +17,7 @@
 		},
 
 		computed: {
-			visibleThings: (things, visibilityMap) => {
+			visibleThings: ({ things, visibilityMap }) => {
 				counter.count += 1;
 				return things.filter(text => visibilityMap[text]);
 			}

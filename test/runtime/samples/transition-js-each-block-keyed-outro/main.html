@@ -1,6 +1,6 @@
-{{#each things as thing @name}}
-	<div out:foo>{{thing.name}}</div>
-{{/each}}
+{#each things as thing (thing.name)}
+	<div out:foo>{thing.name}</div>
+{/each}
 
 <script>
 	export default {

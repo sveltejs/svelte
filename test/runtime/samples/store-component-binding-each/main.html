@@ -1,8 +1,8 @@
-{{#each $a as x}}
+{#each $a as x}
 	<Widget bind:value='x'/>
-{{/each}}
+{/each}
 
-<p>{{$a.join(', ')}}</p>
+<p>{$a.join(', ')}</p>
 
 <script>
 	import Widget from './Widget.html';

@@ -1,11 +1,11 @@
-<article class='file {{file.type}}'>
-	<span class='name'>{{file.name}}</span>
+<article class='file {file.type}'>
+	<span class='name'>{file.name}</span>
 
-	{{#if file.type === 'folder'}}
+	{#if file.type === 'folder'}
 		<ul>
-			{{#each file.children as child}}
-				<li><:Self file='{{child}}'/></li>
-			{{/each}}
+			{#each file.children as child}
+				<li><svelte:self file='{child}'/></li>
+			{/each}
 		</ul>
-	{{/if}}
+	{/if}
 </article>

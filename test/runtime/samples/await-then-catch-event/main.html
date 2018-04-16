@@ -1,7 +1,7 @@
-{{#await thePromise}}
+{#await thePromise}
 	<p>loading...</p>
-{{then theValue}}
+{:then theValue}
 	<button ref:button on:click='set({ clicked: theValue })'>click me</button>
-{{catch theError}}
-	<p>oh no! {{theError.message}}</p>
-{{/await}}
+{:catch theError}
+	<p>oh no! {theError.message}</p>
+{/await}

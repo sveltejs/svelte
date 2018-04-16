@@ -1,4 +1,4 @@
-{{compute}}
+{compute}
 <script>
 	import { addCss, addedCss, applyComputations, renderMainFragment } from './module.js';
 
@@ -9,7 +9,7 @@
 			};
 		},
 		computed: {
-			compute: value => value.toUpperCase()
+			compute: ({ value }) => value.toUpperCase()
 		}
 	};
 </script>

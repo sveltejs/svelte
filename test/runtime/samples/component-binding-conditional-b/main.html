@@ -1,12 +1,12 @@
-<p>y: {{y}}</p>
+<p>y: {y}</p>
 
 <Baz bind:x/>
 
-{{#if x}}
+{#if x}
 	<Foo bind:y/>
-{{else}}
+{:else}
 	<Bar bind:y/>
-{{/if}}
+{/if}
 
 <script>
 	import Foo from './Foo.html';

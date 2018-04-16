@@ -1,8 +1,8 @@
-{{#each things as thing}}
-	{{#if visible}}
-		<div in:foo out:bar>{{thing}}</div>
-	{{/if}}
-{{/each}}
+{#each things as thing}
+	{#if visible}
+		<div in:foo out:bar>{thing}</div>
+	{/if}
+{/each}
 
 <script>
 	export default {

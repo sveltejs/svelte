@@ -1,5 +1,5 @@
 <button use:tooltip="tooltip">action</button>
-<:Window on:keydown="checkForCtrl(event)" on:keyup="checkForCtrl(event)"/>
+<svelte:window on:keydown="checkForCtrl(event)" on:keyup="checkForCtrl(event)"/>
 
 <script>
 	export default {
@@ -36,7 +36,7 @@
 
 				node.addEventListener('mouseenter', onMouseEnter);
 				node.addEventListener('mouseleave', onMouseLeave);
-				
+
 				return {
 					update(text) {
 						if (tooltip) tooltip.textContent = text;
