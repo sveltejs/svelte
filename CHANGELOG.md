@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.64.0
+
+* Deprecate passing a string argument to `component.get` ([#1347](https://github.com/sveltejs/svelte/pull/1347))
+
 ## 1.63.1
 
 * Allow `observe` method to be overwritten
