@@ -777,7 +777,7 @@ export default class Generator {
 
 				node.generator = generator;
 
-				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || node.name === 'svelte:component' || node.name === 'svelte:self' || generator.components.has(node.name))) {
+				if (node.type === 'Element' && (node.name === 'svelte:component' || node.name === 'svelte:self' || generator.components.has(node.name))) {
 					node.type = 'Component';
 					Object.setPrototypeOf(node, nodes.Component.prototype);
 				} else if (node.type === 'Element' && node.name === 'title' && parentIsHead(parent)) { // TODO do this in parse?
@@ -861,7 +861,7 @@ export default class Generator {
 					this.skip();
 				}
 
-				if (node.type === 'Component' && (node.name === ':Component' || node.name === 'svelte:component')) {
+				if (node.type === 'Component' && node.name === 'svelte:component') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 				}
 
