@@ -1,6 +1,6 @@
 [{
 	"code": "component-lowercase",
-	"message": "Component names should be capitalised",
+	"message": "Component names must be capitalised",
 	"loc": {
 		"line": 6,
 		"column": 3
