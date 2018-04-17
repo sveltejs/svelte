@@ -1,10 +1,10 @@
 export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 	const expected = locateInSource( '42' );
-	const loc = locateInGenerated( '42' );
+	const start = locateInGenerated( '42' );
 
 	const actual = smc.originalPositionFor({
-		line: loc.line + 1,
-		column: loc.column
+		line: start.line + 1,
+		column: start.column
 	});
 
 	assert.deepEqual( actual, {

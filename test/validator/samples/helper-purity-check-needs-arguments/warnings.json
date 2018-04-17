@@ -2,12 +2,14 @@
 	"code": "impure-helper",
 	"message": "Helpers should be pure functions, with at least one argument",
 	"pos": 52,
-	"loc": {
+	"start": {
 		"line": 6,
-		"column": 3
+		"column": 3,
+		"character": 52
 	},
 	"end": {
 		"line": 8,
-		"column": 4
+		"column": 4,
+		"character": 91
 	}
 }]

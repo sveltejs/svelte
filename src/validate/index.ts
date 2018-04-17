@@ -73,18 +73,18 @@ export class Validator {
 	}
 
 	warn(pos: { start: number, end: number }, { code, message }: { code: string, message: string }) {
-		if (!this.locator) this.locator = getLocator(this.source);
+		if (!this.locator) this.locator = getLocator(this.source, { offsetLine: 1 });
 		const start = this.locator(pos.start);
 		const end = this.locator(pos.end);
 
-		const frame = getCodeFrame(this.source, start.line, start.column);
+		const frame = getCodeFrame(this.source, start.line - 1, start.column);
 
 		this.stats.warn({
 			code,
 			message,
 			frame,
-			loc: { line: start.line + 1, column: start.column },
-			end: { line: end.line + 1, column: end.column },
+			start,
+			end,
 			pos: pos.start,
 			filename: this.filename,
 			toString: () => `${message} (${start.line + 1}:${start.column})\n${frame}`,

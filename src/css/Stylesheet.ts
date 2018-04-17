@@ -392,20 +392,22 @@ export default class Stylesheet {
 		const handler = (selector: Selector) => {
 			const pos = selector.node.start;
 
-			if (!locator) locator = getLocator(this.source);
-			const { line, column } = locator(pos);
+			if (!locator) locator = getLocator(this.source, { offsetLine: 1 });
+			const start = locator(pos);
+			const end = locator(selector.node.end);
 
-			const frame = getCodeFrame(this.source, line, column);
+			const frame = getCodeFrame(this.source, start.line - 1, start.column);
 			const message = `Unused CSS selector`;
 
 			onwarn({
 				code: `css-unused-selector`,
 				message,
 				frame,
-				loc: { line: line + 1, column },
+				start,
+				end,
 				pos,
 				filename: this.filename,
-				toString: () => `${message} (${line + 1}:${column})\n${frame}`,
+				toString: () => `${message} (${start.line}:${start.column})\n${frame}`,
 			});
 		};
 

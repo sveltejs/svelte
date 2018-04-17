@@ -2,13 +2,15 @@
 	{
 		"code": "a11y-autofocus",
 		"message": "A11y: Avoid using autofocus",
-		"loc": {
+		"start": {
 			"column": 8,
-			"line": 2
+			"line": 2,
+			"character": 29
 		},
 		"end": {
 			"line": 2,
-			"column": 17
+			"column": 17,
+			"character": 38
 		},
 		"pos": 29
 	}

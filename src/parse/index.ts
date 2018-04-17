@@ -3,7 +3,6 @@ import { locate, Location } from 'locate-character';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
-import getCodeFrame from '../utils/getCodeFrame';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
 import hash from '../utils/hash';

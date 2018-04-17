@@ -1,13 +1,15 @@
 [{
 	"code": "unexpected-property",
 	"message": "Unexpected property 'dada' (did you mean 'data'?)",
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 2
+		"column": 2,
+		"character": 42
 	},
 	"end": {
 		"line": 9,
-		"column": 3
+		"column": 3,
+		"character": 84
 	},
 	"pos": 42
 }]

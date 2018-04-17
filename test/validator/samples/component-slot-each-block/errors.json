@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-slot-placement",
 	"message": "<slot> cannot be a child of an each-block",
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 1
+		"column": 1,
+		"character": 25
 	},
 	"end": {
 		"line": 2,
-		"column": 1
+		"column": 1,
+		"character": 25
 	},
 	"pos": 25
 }]

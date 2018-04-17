@@ -1,13 +1,15 @@
 [{
 	"code": "unexpected-reserved-word",
 	"message": "'case' is a reserved word in JavaScript and cannot be used here",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 16
+		"column": 16,
+		"character": 16
 	},
 	"end": {
 		"line": 1,
-		"column": 16
+		"column": 16,
+		"character": 16
 	},
 	"pos": 16
 }]

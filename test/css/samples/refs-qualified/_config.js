@@ -6,9 +6,15 @@ export default {
 	warnings: [{
 		code: `css-unused-selector`,
 		message: 'Unused CSS selector',
-		loc: {
+		start: {
 			column: 1,
-			line: 12
+			line: 12,
+			character: 169
+		},
+		end: {
+			column: 20,
+			line: 12,
+			character: 188
 		},
 		pos: 169,
 		frame: `

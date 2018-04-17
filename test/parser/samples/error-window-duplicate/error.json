@@ -1,9 +1,10 @@
 {
 	"code": "duplicate-window",
 	"message": "A component can only have one <svelte:window> tag",
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 0
+		"column": 0,
+		"character": 17
 	},
 	"pos": 17
 }

@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-callee",
 	"message": "'resize' is an invalid callee (should be one of this.*, event.*, options.*, console.*, store.*, set, fire or destroy)",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 26
+		"column": 26,
+		"character": 26
 	},
 	"end": {
 		"line": 1,
-		"column": 34
+		"column": 34,
+		"character": 34
 	},
 	"pos": 26
 }]

@@ -5,7 +5,6 @@ import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
-import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';

@@ -1,13 +1,15 @@
 [{
 	"code": "illegal-attribute",
 	"message": "<title> cannot have attributes",
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 8
+		"column": 8,
+		"character": 22
 	},
 	"end": {
 		"line": 2,
-		"column": 25
+		"column": 25,
+		"character": 39
 	},
 	"pos": 22
 }]

@@ -28,8 +28,8 @@ describe("validate", () => {
 
 				const { stats } = svelte.compile(input, {
 					onwarn(warning) {
-						const { code, message, pos, loc, end } = warning;
-						warnings.push({ code, message, pos, loc, end });
+						const { code, message, pos, start, end } = warning;
+						warnings.push({ code, message, pos, start, end });
 					},
 					dev: config.dev,
 					generate: false
@@ -42,7 +42,7 @@ describe("validate", () => {
 						code: full.code,
 						message: full.message,
 						pos: full.pos,
-						loc: full.loc,
+						start: full.start,
 						end: full.end
 					}, lite);
 				});
@@ -65,7 +65,7 @@ describe("validate", () => {
 
 				assert.equal(error.code, expected.code);
 				assert.equal(error.message, expected.message);
-				assert.deepEqual(error.loc, expected.loc);
+				assert.deepEqual(error.start, expected.start);
 				assert.deepEqual(error.end, expected.end);
 				assert.equal(error.pos, expected.pos);
 			}
@@ -90,7 +90,7 @@ describe("validate", () => {
 					code: warning.code,
 					message: warning.message,
 					pos: warning.pos,
-					loc: warning.loc
+					start: warning.start
 				});
 			},
 			generate: false
@@ -100,7 +100,7 @@ describe("validate", () => {
 				code: `options-lowercase-name`,
 				message: "options.name should be capitalised",
 				pos: undefined,
-				loc: undefined
+				start: undefined
 			}
 		]);
 	});
@@ -114,7 +114,7 @@ describe("validate", () => {
 					code: warning.code,
 					message: warning.message,
 					pos: warning.pos,
-					loc: warning.loc
+					start: warning.start
 				});
 			},
 			generate: false
