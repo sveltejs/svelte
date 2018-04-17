@@ -23,9 +23,9 @@ function normalizeOptions(options: CompileOptions): CompileOptions {
 }
 
 function defaultOnwarn(warning: Warning) {
-	if (warning.loc) {
+	if (warning.start) {
 		console.warn(
-			`(${warning.loc.line}:${warning.loc.column}) – ${warning.message}`
+			`(${warning.start.line}:${warning.start.column}) – ${warning.message}`
 		); // eslint-disable-line no-console
 	} else {
 		console.warn(warning.message); // eslint-disable-line no-console

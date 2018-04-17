@@ -71,7 +71,7 @@ describe("js", () => {
 					expectedBundle.trim().replace(/^[ \t]+$/gm, "")
 				);
 			}).catch(err => {
-				if (err.loc) console.error(err.loc);
+				if (err.start) console.error(err.start);
 				throw err;
 			});
 		});

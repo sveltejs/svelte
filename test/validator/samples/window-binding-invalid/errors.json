@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-binding",
 	"message": "'potato' is not a valid binding on <svelte:window> — valid bindings are innerWidth, innerHeight, outerWidth, outerHeight, scrollX, scrollY or online",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 15
+		"column": 15,
+		"character": 15
 	},
 	"end": {
 		"line": 1,
-		"column": 32
+		"column": 32,
+		"character": 32
 	},
 	"pos": 15
 }]

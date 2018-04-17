@@ -2,13 +2,15 @@
 	"code": "invalid-computed-name",
 	"message":
 		"Computed property name 'new' is invalid — cannot be a JavaScript reserved word",
-	"loc": {
+	"start": {
 		"line": 9,
-		"column": 3
+		"column": 3,
+		"character": 87
 	},
 	"end": {
 		"line": 9,
-		"column": 6
+		"column": 6,
+		"character": 90
 	},
 	"pos": 87
 }]

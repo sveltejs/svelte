@@ -2,12 +2,14 @@
 	"code": "invalid-method-value",
 	"message": "Method 'foo' should be a function expression, not an arrow function expression",
 	"pos": 79,
-	"loc": {
+	"start": {
 		"line": 6,
-		"column": 3
+		"column": 3,
+		"character": 79
 	},
 	"end": {
 		"line": 8,
-		"column": 4
+		"column": 4,
+		"character": 120
 	}
 }]

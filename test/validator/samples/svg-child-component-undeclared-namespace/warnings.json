@@ -1,13 +1,15 @@
 [{
 	"code": "missing-namespace",
 	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 0
+		"column": 0,
+		"character": 0
 	},
 	"end": {
 		"line": 1,
-		"column": 57
+		"column": 57,
+		"character": 57
 	},
 	"pos": 0
 }]

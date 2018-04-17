@@ -1,9 +1,10 @@
 {
 	"code": "parse-error",
 	"message": "Assigning to rvalue",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 1
+		"column": 1,
+		"character": 1
 	},
 	"pos": 1
 }
