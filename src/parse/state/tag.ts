@@ -86,7 +86,7 @@ export default function tag(parser: Parser) {
 	if (metaTags.has(name)) {
 		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
-			if ((name === ':Window' || name === 'svelte:window') && parser.current().children.length) {
+			if (name === 'svelte:window' && parser.current().children.length) {
 				parser.error({
 					code: `invalid-window-content`,
 					message: `<${name}> cannot have children`
@@ -174,14 +174,6 @@ export default function tag(parser: Parser) {
 				}, start);
 			}
 		}
-	}
-
-	if (name === ':Component') {
-		parser.eat('{', true);
-		element.expression = readExpression(parser);
-		parser.allowWhitespace();
-		parser.eat('}', true);
-		parser.allowWhitespace();
 	}
 
 	const uniqueNames = new Set();

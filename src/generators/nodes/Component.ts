@@ -45,8 +45,8 @@ export default class Component extends Node {
 
 		this.var = block.getUniqueName(
 			(
-				(this.name === ':Self' || this.name === 'svelte:self') ? this.generator.name :
-				(this.name === ':Component' || this.name === 'svelte:component') ? 'switch_instance' :
+				this.name === 'svelte:self' ? this.generator.name :
+				this.name === 'svelte:component' ? 'switch_instance' :
 				this.name
 			).toLowerCase()
 		);
@@ -293,7 +293,7 @@ export default class Component extends Node {
 			`;
 		}
 
-		if (this.name === ':Component' || this.name === 'svelte:component') {
+		if (this.name === 'svelte:component') {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
@@ -387,7 +387,7 @@ export default class Component extends Node {
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
-			const expression = (this.name === ':Self' || this.name === 'svelte:self')
+			const expression = this.name === 'svelte:self'
 				? generator.name
 				: `%components-${this.name}`;
 
