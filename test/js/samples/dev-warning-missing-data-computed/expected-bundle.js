@@ -66,6 +66,11 @@ function fire(eventName, data) {
 	}
 }
 
+function getDev(key) {
+	if (key) console.warn("`let x = component.get('x')` is deprecated. Use `let { x } = component.get()` instead");
+	return get.call(this, key);
+}
+
 function get(key) {
 	return key ? this._state[key] : this._state;
 }
@@ -188,7 +193,7 @@ function _unmount() {
 
 var protoDev = {
 	destroy: destroyDev,
-	get: get,
+	get: getDev,
 	fire: fire,
 	observe: observeDev,
 	on: onDev,
