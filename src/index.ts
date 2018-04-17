@@ -150,7 +150,7 @@ function create(source: string, _options: CompileOptions = {}) {
 	}
 
 	try {
-		return (0, eval)(compiled.js.code);
+		return (new Function(compiled.js.code))();
 	} catch (err) {
 		if (_options.onerror) {
 			_options.onerror(err);
