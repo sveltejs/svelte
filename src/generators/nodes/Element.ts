@@ -461,7 +461,7 @@ export default class Element extends Node {
 				if (attr.type === 'Attribute') {
 					const { dynamic, value, dependencies } = mungeAttribute(attr, block);
 
-					const snippet = `{ ${quoteIfNecessary(attr.name, this.generator.legacy)}: ${value} }`;
+					const snippet = `{ ${quoteIfNecessary(attr.name)}: ${value} }`;
 					initialProps.push(snippet);
 
 					const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
@@ -781,7 +781,7 @@ export default class Element extends Node {
 			return `@appendNode(${this.var}, ${name}._slotted.${this.getStaticAttributeValue('slot')});`;
 		}
 
-		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
 	addCssClass() {
@@ -831,7 +831,7 @@ function getClaimStatement(
 ) {
 	const attributes = node.attributes
 		.filter((attr: Node) => attr.type === 'Attribute')
-		.map((attr: Node) => `${quoteProp(attr.name, generator.legacy)}: true`)
+		.map((attr: Node) => `${quoteIfNecessary(attr.name)}: true`)
 		.join(', ');
 
 	const name = namespace ? node.name : node.name.toUpperCase();
@@ -839,13 +839,6 @@ function getClaimStatement(
 	return `@claimElement(${nodes}, "${name}", ${attributes
 		? `{ ${attributes} }`
 		: `{}`}, ${namespace === namespaces.svg ? true : false})`;
-}
-
-function quoteProp(name: string, legacy: boolean) {
-	const isLegacyPropName = legacy && reservedNames.has(name);
-
-	if (/[^a-zA-Z_$0-9]/.test(name) || isLegacyPropName) return `"${name}"`;
-	return name;
 }
 
 function stringifyAttributeValue(value: Node | true) {
