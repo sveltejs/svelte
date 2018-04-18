@@ -24,7 +24,7 @@ export default function validateEventHandlerCallee(
 
 	const { name } = flattenReference(callee);
 
-	if (validCalleeObjects.has(name) || name === 'options') return;
+	if (validCalleeObjects.has(name) || name === 'options' || name === 'store') return;
 
 	if (name === 'refs') {
 		refCallees.push(callee);
