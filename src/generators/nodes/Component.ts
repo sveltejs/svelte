@@ -73,11 +73,11 @@ export default class Component extends Node {
 		const componentInitProperties = [`root: #component.root`];
 
 		if (this.children.length > 0) {
-			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name, generator.legacy)}: @createFragment()`);
+			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name)}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, `${this.var}._slotted${generator.legacy ? `["default"]` : `.default`}`, 'nodes');
+				child.build(block, `${this.var}._slotted.default`, 'nodes');
 			});
 		}
 
@@ -139,7 +139,7 @@ export default class Component extends Node {
 							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
 							changes.push(condition ? `${condition} && ${value}` : value);
 						} else {
-							const obj = `{ ${quoteIfNecessary(name, this.generator.legacy)}: ${value} }`;
+							const obj = `{ ${quoteIfNecessary(name)}: ${value} }`;
 							initialProps.push(obj);
 
 							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
@@ -440,7 +440,7 @@ export default class Component extends Node {
 	}
 
 	remount(name: string) {
-		return `${this.var}._mount(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
+		return `${this.var}._mount(${name}._slotted.default, null);`;
 	}
 }
 

@@ -37,7 +37,7 @@ export default class Slot extends Element {
 		generator.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${slotName}`);
-		const prop = !isValidIdentifier(slotName) || (generator.legacy && reservedNames.has(slotName)) ? `["${slotName}"]` : `.${slotName}`;
+		const prop = !isValidIdentifier(slotName) ? `["${slotName}"]` : `.${slotName}`;
 		block.addVariable(content_name, `#component._slotted${prop}`);
 
 		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !parentNode;

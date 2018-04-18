@@ -455,6 +455,6 @@ export default class EachBlock extends Node {
 
 	remount(name: string) {
 		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${this.iterations}.length; #i += 1) ${this.iterations}[#i].m(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
+		return `for (var #i = 0; #i < ${this.iterations}.length; #i += 1) ${this.iterations}[#i].m(${name}._slotted.default, null);`;
 	}
 }
