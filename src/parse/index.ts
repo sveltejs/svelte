@@ -5,7 +5,6 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import hash from '../utils/hash';
 import { Node, Parsed } from '../interfaces';
 import error from '../utils/error';
 
@@ -224,7 +223,6 @@ export default function parse(
 ): Parsed {
 	const parser = new Parser(template, options);
 	return {
-		hash: hash(parser.template),
 		html: parser.html,
 		css: parser.css,
 		js: parser.js,

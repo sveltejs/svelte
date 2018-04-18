@@ -21,7 +21,6 @@ export interface Parser {
 }
 
 export interface Parsed {
-	hash: number;
 	html: Node;
 	css: Node;
 	js: Node;
