@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 1.64.1
+
+* Fix computed properties in SSR renderer ([#1349](https://github.com/sveltejs/svelte/issues/1349))
+
 ## 1.64.0
 
 * Deprecate passing a string argument to `component.get` ([#1347](https://github.com/sveltejs/svelte/pull/1347))
