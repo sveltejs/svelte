@@ -11,7 +11,5 @@ export default {
 		});
 
 		assert.equal( target.innerHTML, `<div><p>foo: 99</p></div>` );
-
-		component.teardown();
 	}
 };

@@ -14,11 +14,15 @@
 			Nested
 		},
 
-		oncreate() {
-			this.snapshots = [];
-			this.observe('visibleThings', things => {
-				this.snapshots.push(things);
-			});
+		onstate({ current, changed, previous }) {
+			if (!this.snapshots) {
+				// first run
+				this.snapshots = [];
+			}
+
+			if (changed.visibleThings) {
+				this.snapshots.push(current.visibleThings);
+			}
 		}
 	};
 </script>

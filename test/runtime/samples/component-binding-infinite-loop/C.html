@@ -1,21 +1,21 @@
 <span
 	on:click="toggle()"
-	class="{{isCurrentlySelected ? 'selected' : ''}}"
+	class="{isCurrentlySelected ? 'selected' : ''}"
 >
-	{{yield}}
+	<slot></slot>
 </span>
 
 <script>
 export default {
 	computed: {
-		isCurrentlySelected: (currentIdentifier, identifier) => currentIdentifier === identifier
+		isCurrentlySelected: ({ currentIdentifier, identifier }) => currentIdentifier === identifier
 	},
 	methods: {
 		toggle() {
-			const isCurrentlySelected = this.get('isCurrentlySelected')
+			const isCurrentlySelected = this.get().isCurrentlySelected
 
 			this.set({
-				currentIdentifier: isCurrentlySelected ? null : this.get('identifier')
+				currentIdentifier: isCurrentlySelected ? null : this.get().identifier
 			})
 		}
 	}

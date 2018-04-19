@@ -1,9 +1,10 @@
 {
 	"code": "unclosed-script",
 	"message": "<script> must have a closing tag",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 8
+		"column": 8,
+		"character": 32
 	},
-	"pos": 34
+	"pos": 32
 }

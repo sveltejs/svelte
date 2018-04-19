@@ -15,11 +15,13 @@ function create_main_fragment(component, state) {
 	}
 	window.addEventListener("scroll", onwindowscroll);
 
-	component.observe("y", function(y) {
-		window_updating = true;
-		clearTimeout(window_updating_timeout);
-		window.scrollTo(window.pageXOffset, y);
-		window_updating_timeout = setTimeout(clear_window_updating, 100);
+	component.on("state", ({ changed, current }) => {
+		if (changed["y"]) {
+			window_updating = true;
+			clearTimeout(window_updating_timeout);
+			window.scrollTo(window.pageXOffset, current["y"]);
+			window_updating_timeout = setTimeout(clear_window_updating, 100);
+		}
 	});
 
 	return {

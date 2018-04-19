@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-tag-property",
 	"message": "'tag' must be a string literal",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 7
+		"column": 7,
+		"character": 34
 	},
 	"end": {
 		"line": 3,
-		"column": 9
+		"column": 9,
+		"character": 36
 	},
 	"pos": 34
 }]

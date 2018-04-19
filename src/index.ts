@@ -23,9 +23,9 @@ function normalizeOptions(options: CompileOptions): CompileOptions {
 }
 
 function defaultOnwarn(warning: Warning) {
-	if (warning.loc) {
+	if (warning.start) {
 		console.warn(
-			`(${warning.loc.line}:${warning.loc.column}) – ${warning.message}`
+			`(${warning.start.line}:${warning.start.column}) – ${warning.message}`
 		); // eslint-disable-line no-console
 	} else {
 		console.warn(warning.message); // eslint-disable-line no-console
@@ -106,11 +106,13 @@ export async function preprocess(source: string, options: PreprocessOptions) {
 	};
 }
 
-export function compile(source: string, _options: CompileOptions) {
+function compile(source: string, _options: CompileOptions) {
 	const options = normalizeOptions(_options);
 	let parsed: Parsed;
 
-	const stats = new Stats();
+	const stats = new Stats({
+		onwarn: options.onwarn
+	});
 
 	try {
 		stats.start('parse');
@@ -122,37 +124,33 @@ export function compile(source: string, _options: CompileOptions) {
 	}
 
 	stats.start('stylesheet');
-	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false, options.dev);
+	const stylesheet = new Stylesheet(source, parsed, options.filename, options.dev);
 	stats.stop('stylesheet');
 
 	stats.start('validate');
-	// TODO remove this when we remove svelte.validate from public API — we
-	// can use the stats object instead
-	const onwarn = options.onwarn;
-	options.onwarn = warning => {
-		stats.warnings.push(warning);
-		onwarn(warning);
-	};
-
-	validate(parsed, source, stylesheet, options);
+	validate(parsed, source, stylesheet, stats, options);
 	stats.stop('validate');
+
+	if (options.generate === false) {
+		return { ast: parsed, stats, js: null, css: null };
+	}
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
 	return compiler(parsed, source, stylesheet, options, stats);
 };
 
-export function create(source: string, _options: CompileOptions = {}) {
+function create(source: string, _options: CompileOptions = {}) {
 	_options.format = 'eval';
 
 	const compiled = compile(source, _options);
 
-	if (!compiled || !compiled.code) {
+	if (!compiled || !compiled.js.code) {
 		return;
 	}
 
 	try {
-		return (0, eval)(compiled.code);
+		return (new Function(`return ${compiled.js.code}`))();
 	} catch (err) {
 		if (_options.onerror) {
 			_options.onerror(err);
@@ -163,4 +161,4 @@ export function create(source: string, _options: CompileOptions = {}) {
 	}
 }
 
-export { parse, validate, Stylesheet, version as VERSION };
+export { parse, create, compile, version as VERSION };

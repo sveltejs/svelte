@@ -1,13 +1,17 @@
 export default {
-	cascade: false,
-
 	warnings: [{
 		filename: "SvelteComponent.html",
 		code: `css-unused-selector`,
 		message: "Unused CSS selector",
-		loc: {
+		start: {
 			line: 8,
-			column: 1
+			column: 1,
+			character: 60
+		},
+		end: {
+			line: 8,
+			column: 5,
+			character: 64
 		},
 		pos: 60,
 		frame: `

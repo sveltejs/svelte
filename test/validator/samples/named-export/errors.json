@@ -2,12 +2,14 @@
 	"code": "named-export",
 	"message": "A component can only have a default export",
 	"pos": 10,
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 1
+		"column": 1,
+		"character": 10
 	},
 	"end": {
 		"line": 2,
-		"column": 21
+		"column": 21,
+		"character": 30
 	}
 }]

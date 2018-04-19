@@ -5,7 +5,6 @@ import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
-import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
@@ -84,7 +83,6 @@ export default class Generator {
 	source: string;
 	name: string;
 	options: CompileOptions;
-	v2: boolean;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -95,6 +93,7 @@ export default class Generator {
 	helpers: Set<string>;
 	components: Set<string>;
 	events: Set<string>;
+	methods: Set<string>;
 	transitions: Set<string>;
 	actions: Set<string>;
 	importedComponents: Map<string, string>;
@@ -133,8 +132,6 @@ export default class Generator {
 		stats.start('compile');
 		this.stats = stats;
 
-		this.v2 = options.parser === 'v2';
-
 		this.ast = clone(parsed);
 
 		this.parsed = parsed;
@@ -145,6 +142,7 @@ export default class Generator {
 		this.helpers = new Set();
 		this.components = new Set();
 		this.events = new Set();
+		this.methods = new Set();
 		this.transitions = new Set();
 		this.actions = new Set();
 		this.importedComponents = new Map();
@@ -369,31 +367,13 @@ export default class Generator {
 			})
 		};
 
-		Object.getOwnPropertyNames(String.prototype).forEach(name => {
-			const descriptor = Object.getOwnPropertyDescriptor(String.prototype, name);
-			if (typeof descriptor.value === 'function') {
-				Object.defineProperty(css, name, {
-					value: (...args) => {
-						return css.code === null
-							? null
-							: css.code[name].call(css.code, ...args);
-					}
-				});
-			}
-		});
-
 		this.stats.stop('compile');
 
 		return {
 			ast: this.ast,
 			js,
 			css,
-			stats: this.stats.render(this),
-
-			// TODO deprecate
-			code: js.code,
-			map: js.map,
-			cssMap: css.map
+			stats: this.stats.render(this)
 		};
 	}
 
@@ -441,6 +421,7 @@ export default class Generator {
 			code,
 			source,
 			computations,
+			methods,
 			templateProperties,
 			imports
 		} = this;
@@ -578,9 +559,7 @@ export default class Generator {
 						const key = getName(prop.key);
 						const value = prop.value;
 
-						const deps = this.v2
-							? value.params[0].properties.map(prop => prop.key.name)
-							: value.params.map(param => param.type === 'AssignmentPattern' ? param.left.name : param.name);
+						const deps = value.params[0].properties.map(prop => prop.key.name);
 
 						deps.forEach(dep => {
 							this.expectedProperties.add(dep);
@@ -632,6 +611,10 @@ export default class Generator {
 
 				if (templateProperties.methods && dom) {
 					addDeclaration('methods', templateProperties.methods.value);
+
+					templateProperties.methods.value.properties.forEach(prop => {
+						this.methods.add(prop.key.name);
+					});
 				}
 
 				if (templateProperties.namespace) {
@@ -639,12 +622,10 @@ export default class Generator {
 					this.namespace = namespaces[ns] || ns;
 				}
 
-				if (templateProperties.onrender) templateProperties.oncreate = templateProperties.onrender; // remove after v2
 				if (templateProperties.oncreate && dom) {
 					addDeclaration('oncreate', templateProperties.oncreate.value);
 				}
 
-				if (templateProperties.onteardown) templateProperties.ondestroy = templateProperties.onteardown; // remove after v2
 				if (templateProperties.ondestroy && dom) {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);
 				}
@@ -802,7 +783,7 @@ export default class Generator {
 
 				node.generator = generator;
 
-				if (node.type === 'Element' && (node.name === ':Component' || node.name === ':Self' || node.name === 'svelte:component' || node.name === 'svelte:self' || generator.components.has(node.name))) {
+				if (node.type === 'Element' && (node.name === 'svelte:component' || node.name === 'svelte:self' || generator.components.has(node.name))) {
 					node.type = 'Component';
 					Object.setPrototypeOf(node, nodes.Component.prototype);
 				} else if (node.type === 'Element' && node.name === 'title' && parentIsHead(parent)) { // TODO do this in parse?
@@ -886,7 +867,7 @@ export default class Generator {
 					this.skip();
 				}
 
-				if (node.type === 'Component' && (node.name === ':Component' || node.name === 'svelte:component')) {
+				if (node.type === 'Component' && node.name === 'svelte:component') {
 					node.metadata = contextualise(node.expression, contextDependencies, indexes, false);
 				}
 

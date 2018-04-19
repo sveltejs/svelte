@@ -165,10 +165,10 @@ export function readDirective(
 				// assume the mistake was wrapping the directive arguments.
 				// this could yield false positives! but hopefully not too many
 				let message = 'directive values should not be wrapped';
-				const expressionEnd = parser.template.indexOf((parser.v2 ? '}' : '}}'), expressionStart);
+				const expressionEnd = parser.template.indexOf('}', expressionStart);
 				if (expressionEnd !== -1) {
-					const value = parser.template.slice(expressionStart + (parser.v2 ? 1 : 2), expressionEnd);
-					message += ` — use '${value}', not '${parser.v2 ? `{${value}}` : `{{${value}}}`}'`;
+					const value = parser.template.slice(expressionStart + 1, expressionEnd);
+					message += ` — use '${value}', not '{${value}}'`;
 				}
 				parser.error({
 					code: `invalid-directive-value`,

@@ -55,7 +55,7 @@ export default function mungeAttribute(attribute: Node, block: Block): MungedAtt
 			return {
 				spread: false,
 				name: attribute.name,
-				value: isNaN(value.data) ? stringify(value.data) : value.data,
+				value: stringify(value.data),
 				dynamic: false,
 				dependencies: []
 			};

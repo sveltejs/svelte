@@ -58,7 +58,7 @@
     "glob": "^7.1.1",
     "is-reference": "^1.1.0",
     "jsdom": "^11.6.1",
-    "locate-character": "^2.0.0",
+    "locate-character": "^2.0.5",
     "magic-string": "^0.22.3",
     "mocha": "^3.2.0",
     "nightmare": "^2.10.0",

@@ -27,9 +27,9 @@ describe('hydration', () => {
 				compileOptions
 			);
 
-			const { code } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
+			const { js } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
 
-			return module._compile(code, filename);
+			return module._compile(js.code, filename);
 		};
 
 		return setupHtmlEqual();

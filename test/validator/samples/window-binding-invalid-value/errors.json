@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-binding",
-	"message": "Bindings on <:Window/> must be to top-level properties, e.g. 'baz' rather than 'foo.bar.baz'",
-	"loc": {
+	"message": "Bindings on <svelte:window> must be to top-level properties, e.g. 'baz' rather than 'foo.bar.baz'",
+	"start": {
 		"line": 1,
-		"column": 26
+		"column": 32,
+		"character": 32
 	},
 	"end": {
 		"line": 1,
-		"column": 37
+		"column": 43,
+		"character": 43
 	},
-	"pos": 26
+	"pos": 32
 }]

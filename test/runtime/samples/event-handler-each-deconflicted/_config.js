@@ -16,7 +16,7 @@ export default {
 		const event = new window.MouseEvent( 'click' );
 
 		buttons[0].dispatchEvent( event );
-		assert.equal( component.get( 'clicked' ), 'foo' );
+		assert.equal( component.get().clicked, 'foo' );
 		assert.htmlEqual( target.innerHTML, `
 			<button>foo</button>
 			<button>bar</button>
@@ -24,7 +24,7 @@ export default {
 		` );
 
 		buttons[1].dispatchEvent( event );
-		assert.equal( component.get( 'clicked' ), 'bar' );
+		assert.equal( component.get().clicked, 'bar' );
 		assert.htmlEqual( target.innerHTML, `
 			<button>foo</button>
 			<button>bar</button>

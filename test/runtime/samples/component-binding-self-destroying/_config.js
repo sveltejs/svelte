@@ -12,14 +12,14 @@ export default {
 
 		target.querySelector('button').dispatchEvent(click);
 
-		assert.equal(component.get('show'), false);
+		assert.equal(component.get().show, false);
 		assert.htmlEqual(target.innerHTML, `
 			<button>Show</button>
 		`);
 
 		target.querySelector('button').dispatchEvent(click);
 
-		assert.equal(component.get('show'), true);
+		assert.equal(component.get().show, true);
 		assert.htmlEqual(target.innerHTML, `
 			<button>Hide</button>
 		`);
