@@ -1,6 +1,6 @@
 import { Node } from '../interfaces';
 
-export default function flatten(node: Node) {
+export default function flattenReference(node: Node) {
 	const parts = [];
 	const propEnd = node.end;
 
