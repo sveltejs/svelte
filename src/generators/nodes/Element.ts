@@ -519,10 +519,19 @@ export default class Element extends Node {
 				if (!validCalleeObjects.has(flattened.name)) {
 					// allow event.stopPropagation(), this.select() etc
 					// TODO verify that it's a valid callee (i.e. built-in or declared method)
-					generator.code.prependRight(
-						attribute.expression.start,
-						`${block.alias('component')}.`
-					);
+					if (flattened.name[0] === '$' && !generator.methods.has(flattened.name)) {
+						generator.code.overwrite(
+							attribute.expression.start,
+							attribute.expression.start + 1,
+							`${block.alias('component')}.store.`
+						);
+					} else {
+						generator.code.prependRight(
+							attribute.expression.start,
+							`${block.alias('component')}.`
+						);
+					}
+
 					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
 				}
 

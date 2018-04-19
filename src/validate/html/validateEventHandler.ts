@@ -24,7 +24,7 @@ export default function validateEventHandlerCallee(
 
 	const { name } = flattenReference(callee);
 
-	if (validCalleeObjects.has(name) || name === 'options' || name === 'store') return;
+	if (validCalleeObjects.has(name) || name === 'options') return;
 
 	if (name === 'refs') {
 		refCallees.push(callee);
@@ -34,21 +34,30 @@ export default function validateEventHandlerCallee(
 	if (
 		(callee.type === 'Identifier' && validBuiltins.has(callee.name)) ||
 		validator.methods.has(callee.name)
-	)
+	) {
 		return;
+	}
 
-	const validCallees = ['this.*', 'event.*', 'options.*', 'console.*', 'store.*'].concat(
+	if (name[0] === '$') {
+		// assume it's a store method
+		return;
+	}
+
+	const validCallees = ['this.*', 'event.*', 'options.*', 'console.*'].concat(
 		Array.from(validBuiltins),
 		Array.from(validator.methods.keys())
 	);
 
-	let message = `'${validator.source.slice(
-		callee.start,
-		callee.end
-	)}' is an invalid callee (should be one of ${list(validCallees)})`;
+	let message = `'${validator.source.slice(callee.start, callee.end)}' is an invalid callee ` ;
 
-	if (callee.type === 'Identifier' && validator.helpers.has(callee.name)) {
-		message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
+	if (name === 'store') {
+		message += `(did you mean '$${validator.source.slice(callee.start + 6, callee.end)}(...)'?)`;
+	} else {
+		message += `(should be one of ${list(validCallees)})`;
+
+		if (callee.type === 'Identifier' && validator.helpers.has(callee.name)) {
+			message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
+		}
 	}
 
 	validator.warn(attribute.expression, {

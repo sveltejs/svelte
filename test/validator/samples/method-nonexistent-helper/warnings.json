@@ -1,6 +1,6 @@
 [{
 	"code": "invalid-callee",
-	"message": "'foo' is an invalid callee (should be one of this.*, event.*, options.*, console.*, store.*, set, fire, destroy or bar). 'foo' exists on 'helpers', did you put it in the wrong place?",
+	"message": "'foo' is an invalid callee (should be one of this.*, event.*, options.*, console.*, set, fire, destroy or bar). 'foo' exists on 'helpers', did you put it in the wrong place?",
 	"pos": 18,
 	"start": {
 		"line": 1,
