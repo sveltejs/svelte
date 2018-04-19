@@ -10,14 +10,14 @@ export default {
 
 		inputs[0].value = 'Ada';
 		inputs[0].dispatchEvent(input);
-		assert.deepEqual(component.get('values'), {
+		assert.deepEqual(component.get().values, {
 			firstname: 'Ada',
 			lastname: ''
 		});
 
 		inputs[1].value = 'Lovelace';
 		inputs[1].dispatchEvent(input);
-		assert.deepEqual(component.get('values'), {
+		assert.deepEqual(component.get().values, {
 			firstname: 'Ada',
 			lastname: 'Lovelace'
 		});

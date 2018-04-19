@@ -1,9 +1,0 @@
-{
-	"code": "css-syntax-error",
-	"message": "LeftCurlyBracket is expected",
-	"loc": {
-		"line": 2,
-		"column": 16
-	},
-	"pos": 24
-}

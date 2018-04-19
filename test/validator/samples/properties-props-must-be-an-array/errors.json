@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-props-property",
 	"message": "'props' must be an array expression, if specified",
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 9
+		"column": 9,
+		"character": 49
 	},
 	"end": {
 		"line": 5,
-		"column": 11
+		"column": 11,
+		"character": 51
 	},
 	"pos": 49
 }]

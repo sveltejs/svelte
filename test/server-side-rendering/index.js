@@ -110,9 +110,7 @@ describe("ssr", () => {
 				delete require.cache[resolved];
 			});
 
-			const compileOptions = Object.assign(config.compileOptions || {}, {
-				store: !!config.store
-			});
+			const compileOptions = config.compileOptions || {};
 
 			require("../../ssr/register")(compileOptions);
 

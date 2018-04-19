@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-data-property",
 	"message": "'data' must be a function",
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 8
+		"column": 8,
+		"character": 48
 	},
 	"end": {
 		"line": 7,
-		"column": 3
+		"column": 3,
+		"character": 64
 	},
 	"pos": 48
 }]

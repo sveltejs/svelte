@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-transition",
 	"message": "Transitions can only be applied to DOM elements, not components",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 8
+		"column": 8,
+		"character": 8
 	},
 	"end": {
 		"line": 1,
-		"column": 14
+		"column": 14,
+		"character": 14
 	},
 	"pos": 8
 }]

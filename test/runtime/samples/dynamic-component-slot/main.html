@@ -1,26 +1,26 @@
-<:Component { x ? Foo : Bar } x='{{x}}'>
+<svelte:component this="{ x ? Foo : Bar }" x='{x}'>
 	<p>element</p>
 
-	{{tag}}
+	{tag}
 
-	{{#if foo}}
+	{#if foo}
 		<p>foo</p>
-	{{elseif bar}}
+	{:elseif bar}
 		<p>bar</p>
-	{{else}}
+	{:else}
 		<p>neither foo nor bar</p>
-	{{/if}}
+	{/if}
 
 	text
 
-	{{#each things as thing}}
-		<span>{{thing}}</span>
-	{{/each}}
+	{#each things as thing}
+		<span>{thing}</span>
+	{/each}
 
 	<Baz/>
 
 	<div slot='other'>what goes up must come down</div>
-</:Component>
+</svelte:component>
 
 <script>
 	import Foo from './Foo.html';

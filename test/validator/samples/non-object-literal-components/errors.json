@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-components-property",
 	"message": "The 'components' property must be an object literal",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 2
+		"column": 2,
+		"character": 29
 	},
 	"end": {
 		"line": 3,
-		"column": 37
+		"column": 37,
+		"character": 64
 	},
 	"pos": 29
 }]

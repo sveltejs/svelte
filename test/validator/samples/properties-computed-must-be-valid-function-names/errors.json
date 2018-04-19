@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-computed-name",
 	"message": "Computed property name 'with-hyphen' is invalid — must be a valid identifier such as with_hyphen",
-	"loc": {
+	"start": {
 		"line": 9,
-		"column": 3
+		"column": 3,
+		"character": 87
 	},
 	"end": {
 		"line": 9,
-		"column": 28
+		"column": 16,
+		"character": 100
 	},
 	"pos": 87
 }]

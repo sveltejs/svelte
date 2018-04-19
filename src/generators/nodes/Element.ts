@@ -461,7 +461,7 @@ export default class Element extends Node {
 				if (attr.type === 'Attribute') {
 					const { dynamic, value, dependencies } = mungeAttribute(attr, block);
 
-					const snippet = `{ ${quoteIfNecessary(attr.name, this.generator.legacy)}: ${value} }`;
+					const snippet = `{ ${quoteIfNecessary(attr.name)}: ${value} }`;
 					initialProps.push(snippet);
 
 					const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
@@ -519,10 +519,19 @@ export default class Element extends Node {
 				if (!validCalleeObjects.has(flattened.name)) {
 					// allow event.stopPropagation(), this.select() etc
 					// TODO verify that it's a valid callee (i.e. built-in or declared method)
-					generator.code.prependRight(
-						attribute.expression.start,
-						`${block.alias('component')}.`
-					);
+					if (flattened.name[0] === '$' && !generator.methods.has(flattened.name)) {
+						generator.code.overwrite(
+							attribute.expression.start,
+							attribute.expression.start + 1,
+							`${block.alias('component')}.store.`
+						);
+					} else {
+						generator.code.prependRight(
+							attribute.expression.start,
+							`${block.alias('component')}.`
+						);
+					}
+
 					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
 				}
 
@@ -580,16 +589,8 @@ export default class Element extends Node {
 					});
 				`);
 
-				if (generator.options.dev) {
-					block.builders.hydrate.addBlock(deindent`
-						if (${handlerName}.teardown) {
-							console.warn("Return 'destroy()' from custom event handlers. Returning 'teardown()' has been deprecated and will be unsupported in Svelte 2");
-						}
-					`);
-				}
-
 				block.builders.destroy.addLine(deindent`
-					${handlerName}[${handlerName}.destroy ? 'destroy' : 'teardown']();
+					${handlerName}.destroy();
 				`);
 			} else {
 				const handler = deindent`
@@ -789,7 +790,7 @@ export default class Element extends Node {
 			return `@appendNode(${this.var}, ${name}._slotted.${this.getStaticAttributeValue('slot')});`;
 		}
 
-		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
 	addCssClass() {
@@ -839,7 +840,7 @@ function getClaimStatement(
 ) {
 	const attributes = node.attributes
 		.filter((attr: Node) => attr.type === 'Attribute')
-		.map((attr: Node) => `${quoteProp(attr.name, generator.legacy)}: true`)
+		.map((attr: Node) => `${quoteIfNecessary(attr.name)}: true`)
 		.join(', ');
 
 	const name = namespace ? node.name : node.name.toUpperCase();
@@ -847,13 +848,6 @@ function getClaimStatement(
 	return `@claimElement(${nodes}, "${name}", ${attributes
 		? `{ ${attributes} }`
 		: `{}`}, ${namespace === namespaces.svg ? true : false})`;
-}
-
-function quoteProp(name: string, legacy: boolean) {
-	const isLegacyPropName = legacy && reservedNames.has(name);
-
-	if (/[^a-zA-Z_$0-9]/.test(name) || isLegacyPropName) return `"${name}"`;
-	return name;
 }
 
 function stringifyAttributeValue(value: Node | true) {

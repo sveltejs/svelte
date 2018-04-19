@@ -20,7 +20,7 @@ export default {
 
 		assert.equal( target.innerHTML, `<input>\n<p>hello bob</p>` );
 
-		const user = component.get( 'user' );
+		const user = component.get().user;
 		user.name = 'carol';
 
 		component.set({ user });

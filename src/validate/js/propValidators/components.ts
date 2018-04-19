@@ -27,9 +27,9 @@ export default function components(validator: Validator, prop: Node) {
 		}
 
 		if (!/^[A-Z]/.test(name)) {
-			validator.warn(component, {
+			validator.error(component, {
 				code: `component-lowercase`,
-				message: `Component names should be capitalised`
+				message: `Component names must be capitalised`
 			});
 		}
 	});

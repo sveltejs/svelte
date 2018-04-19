@@ -1,9 +1,0 @@
-{
-	"code": "unclosed-script",
-	"message": "<script> must have a closing tag",
-	"loc": {
-		"line": 3,
-		"column": 8
-	},
-	"pos": 32
-}

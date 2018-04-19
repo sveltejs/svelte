@@ -23,7 +23,7 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 
 				validator.error(attribute.value, {
 					code: `invalid-binding`,
-					message: `Bindings on <:Window/> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
+					message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
 				});
 			}
 
@@ -34,7 +34,7 @@ export default function validateWindow(validator: Validator, node: Node, refs: M
 						? 'innerHeight'
 						: fuzzymatch(attribute.name, validBindings);
 
-				const message = `'${attribute.name}' is not a valid binding on <:Window>`;
+				const message = `'${attribute.name}' is not a valid binding on <svelte:window>`;
 
 				if (match) {
 					validator.error(attribute, {

@@ -178,29 +178,21 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	glob.sync('**/*.html', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
-		// TODO remove this post-v2
-		if (/-v2\.html$/.test(file)) {
-			if (!options.v2) return;
-		} else if (options.v2 && fs.existsSync(`${cwd}/${file.replace('.html', '-v2.html')}`)) {
-			return;
-		}
-
 		const name = path.basename(file)
 			.slice(0, -path.extname(file).length)
 			.replace(/^\d/, '_$&')
 			.replace(/[^a-zA-Z0-9_$]/g, '');
 
-		const { code } = compile(
+		const { js } = compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
 				filename: file,
-				name: capitalise(name),
-				parser: options.v2 ? 'v2' : 'v1'
+				name: capitalise(name)
 			})
 		);
 
 		console.log( // eslint-disable-line no-console
-			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(code)}\n<< ${chalk.cyan.bold(file)}`
+			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(js.code)}\n<< ${chalk.cyan.bold(file)}`
 		);
 	});
 }

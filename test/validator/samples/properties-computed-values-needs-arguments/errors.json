@@ -2,12 +2,14 @@
 	"code": "impure-computed",
 	"message": "A computed value must depend on at least one property",
 	"pos": 49,
-	"loc": {
+	"start": {
 		"line": 4,
-		"column": 8
+		"column": 8,
+		"character": 49
 	},
 	"end": {
 		"line": 4,
-		"column": 16
+		"column": 16,
+		"character": 57
 	}
 }]
