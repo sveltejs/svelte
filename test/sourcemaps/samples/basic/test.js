@@ -1,14 +1,14 @@
 export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 	const expected = locateInSource( 'foo.bar.baz' );
 
-	let loc;
+	let start;
 	let actual;
 
-	loc = locateInGenerated( 'foo.bar.baz' );
+	start = locateInGenerated( 'foo.bar.baz' );
 
 	actual = smc.originalPositionFor({
-		line: loc.line + 1,
-		column: loc.column
+		line: start.line + 1,
+		column: start.column
 	});
 
 	assert.deepEqual( actual, {
@@ -18,11 +18,11 @@ export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 		column: expected.column
 	});
 
-	loc = locateInGenerated( 'foo.bar.baz', loc.character + 1 );
+	start = locateInGenerated( 'foo.bar.baz', start.character + 1 );
 
 	actual = smc.originalPositionFor({
-		line: loc.line + 1,
-		column: loc.column
+		line: start.line + 1,
+		column: start.column
 	});
 
 	assert.deepEqual( actual, {

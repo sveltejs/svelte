@@ -21,14 +21,13 @@ export interface Parser {
 }
 
 export interface Parsed {
-	hash: number;
 	html: Node;
 	css: Node;
 	js: Node;
 }
 
 export interface Warning {
-	loc?: { line: number; column: number; pos?: number };
+	start?: { line: number; column: number; pos?: number };
 	end?: { line: number; column: number; };
 	pos?: number;
 	code: string;
@@ -44,7 +43,7 @@ export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: string;
+	generate?: string | false;
 	globals?: ((id: string) => string) | object;
 	amd?: {
 		id?: string;
@@ -56,19 +55,15 @@ export interface CompileOptions {
 	dev?: boolean;
 	immutable?: boolean;
 	shared?: boolean | string;
-	cascade?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
-	store?: boolean;
 
 	preserveComments?: boolean | false;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
-
-	parser?: 'v2';
 }
 
 export interface GenerateOptions {

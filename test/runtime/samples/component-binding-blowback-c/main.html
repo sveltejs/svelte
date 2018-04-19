@@ -1,11 +1,11 @@
 <input type='number' bind:value='count'>
 
 <ol>
-	{{#each ids as object @id}}
-		<Nested bind:value='idToValue[object.id]' id='{{object.id}}'>
-			{{object.id}}: value is {{idToValue[object.id]}}
+	{#each ids as object (object.id)}
+		<Nested bind:value='idToValue[object.id]' id='{object.id}'>
+			{object.id}: value is {idToValue[object.id]}
 		</Nested>
-	{{/each}}
+	{/each}
 </ol>
 
 <script>
@@ -19,7 +19,7 @@
 		},
 
 		computed: {
-			ids(count) {
+			ids({ count }) {
 				return new Array(count)
 					.fill(null)
 					.map((_, i) => ({ id: 'id-' + i}))

@@ -1,24 +1,24 @@
 {
-	"hash": "phg0l6",
+	"hash": "z82kse",
 	"html": {
 		"start": 0,
-		"end": 24,
+		"end": 22,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 24,
+				"end": 22,
 				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 5,
-						"end": 17,
+						"end": 15,
 						"type": "Spread",
 						"expression": {
 							"type": "Identifier",
-							"start": 10,
-							"end": 15,
+							"start": 9,
+							"end": 14,
 							"name": "props"
 						}
 					}

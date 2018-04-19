@@ -1,13 +1,15 @@
 [{
 	"code": "missing-type",
 	"message": "'type' attribute must be specified",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 24
+		"column": 24,
+		"character": 24
 	},
 	"end": {
 		"line": 1,
-		"column": 28
+		"column": 28,
+		"character": 28
 	},
 	"pos": 24
 }]

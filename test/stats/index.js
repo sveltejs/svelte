@@ -50,7 +50,7 @@ describe('stats', () => {
 				}
 
 				assert.equal(error.message, expectedError.message);
-				assert.deepEqual(error.loc, expectedError.loc);
+				assert.deepEqual(error.start, expectedError.start);
 				assert.deepEqual(error.end, expectedError.end);
 				assert.equal(error.pos, expectedError.pos);
 			}

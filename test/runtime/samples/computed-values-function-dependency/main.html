@@ -1,4 +1,4 @@
-<p>{{x}}</p>
+<p>{x}</p>
 
 <script>
 	let _x;
@@ -15,12 +15,12 @@
 		},
 
 		computed: {
-			xGetter ( y ) {
+			xGetter ({ y }) {
 				_x = y * 2;
 				return getX;
 			},
 
-			x ( xGetter ) {
+			x ({ xGetter }) {
 				return xGetter();
 			}
 		}

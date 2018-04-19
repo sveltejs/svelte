@@ -1,9 +1,10 @@
 {
 	"code": "invalid-directive-value",
 	"message": "Expected a method call",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 15
+		"column": 15,
+		"character": 15
 	},
 	"pos": 15
 }

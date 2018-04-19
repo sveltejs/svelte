@@ -4,7 +4,7 @@ import { appendNode, assign, createElement, detachNode, init, insertNode, noop, 
 function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-1slhpfn-style';
-	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn,.svelte-1slhpfn div{color:red}}";
+	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}";
 	appendNode(style, document.head);
 }
 

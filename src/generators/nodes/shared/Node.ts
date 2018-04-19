@@ -58,7 +58,7 @@ export default class Node {
 			if (child.type === 'Comment') return;
 
 			// special case — this is an easy way to remove whitespace surrounding
-			// <:Window/>. lil hacky but it works
+			// <svelte:window/>. lil hacky but it works
 			if (child.type === 'Window') {
 				windowComponent = child;
 				return;
@@ -163,6 +163,6 @@ export default class Node {
 	}
 
 	remount(name: string) {
-		return `${this.var}.m(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
+		return `${this.var}.m(${name}._slotted.default, null);`;
 	}
 }

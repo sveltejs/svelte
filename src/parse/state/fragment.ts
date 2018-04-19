@@ -8,7 +8,7 @@ export default function fragment(parser: Parser) {
 		return tag;
 	}
 
-	if (parser.match(parser.v2 ? '{' : '{{')) {
+	if (parser.match('{')) {
 		return mustache;
 	}
 

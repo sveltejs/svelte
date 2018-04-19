@@ -1,13 +1,15 @@
 [{
 	"code": "illegal-accessor",
 	"message": "Methods cannot use getters and setters",
-	"loc": {
+	"start": {
 		"line": 4,
-		"column": 3
+		"column": 3,
+		"character": 43
 	},
 	"end": {
 		"line": 6,
-		"column": 4
+		"column": 4,
+		"character": 61
 	},
 	"pos": 43
 }]

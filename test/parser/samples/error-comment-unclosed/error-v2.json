@@ -1,9 +1,0 @@
-{
-	"code": "unexpected-eof",
-	"message": "comment was left open, expected -->",
-	"loc": {
-		"line": 1,
-		"column": 24
-	},
-	"pos": 24
-}

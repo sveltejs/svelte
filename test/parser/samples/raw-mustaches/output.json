@@ -1,13 +1,13 @@
 {
-	"hash": 183399343,
+	"hash": "9m9gjd",
 	"html": {
 		"start": 0,
-		"end": 30,
+		"end": 34,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 30,
+				"end": 34,
 				"type": "Element",
 				"name": "p",
 				"attributes": [],
@@ -20,35 +20,35 @@
 					},
 					{
 						"start": 4,
-						"end": 14,
+						"end": 16,
 						"type": "RawMustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 7,
-							"end": 11,
+							"start": 11,
+							"end": 15,
 							"name": "raw1"
 						}
 					},
 					{
-						"start": 14,
-						"end": 15,
+						"start": 16,
+						"end": 17,
 						"type": "Text",
 						"data": " "
 					},
 					{
-						"start": 15,
-						"end": 25,
+						"start": 17,
+						"end": 29,
 						"type": "RawMustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 18,
-							"end": 22,
+							"start": 24,
+							"end": 28,
 							"name": "raw2"
 						}
 					},
 					{
-						"start": 25,
-						"end": 26,
+						"start": 29,
+						"end": 30,
 						"type": "Text",
 						"data": " "
 					}

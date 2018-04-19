@@ -91,6 +91,6 @@ export default class RawMustacheTag extends Tag {
 	}
 
 	remount(name: string) {
-		return `@appendNode(${this.var}, ${name}._slotted${this.generator.legacy ? `["default"]` : `.default`});`;
+		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 }

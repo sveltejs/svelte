@@ -2,39 +2,45 @@
 	{
 		"code": "a11y-missing-attribute",
 		"message": "A11y: <a> element should have an href attribute",
-		"loc": {
+		"start": {
 			"line": 1,
-			"column": 0
+			"column": 0,
+			"character": 0
 		},
 		"end": {
 			"line": 1,
-			"column": 26
+			"column": 26,
+			"character": 26
 		},
 		"pos": 0
 	},
 	{
 		"code": "a11y-invalid-attribute",
 		"message": "A11y: '' is not a valid href attribute",
-		"loc": {
+		"start": {
 			"line": 2,
-			"column": 3
+			"column": 3,
+			"character": 30
 		},
 		"end": {
 			"line": 2,
-			"column": 10
+			"column": 10,
+			"character": 37
 		},
 		"pos": 30
 	},
 	{
 		"code": "a11y-invalid-attribute",
 		"message": "A11y: '#' is not a valid href attribute",
-		"loc": {
+		"start": {
 			"line": 3,
-			"column": 3
+			"column": 3,
+			"character": 53
 		},
 		"end": {
 			"line": 3,
-			"column": 11
+			"column": 11,
+			"character": 61
 		},
 		"pos": 53
 	}

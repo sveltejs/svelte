@@ -24,7 +24,7 @@ export default {
 		options[1].selected = false;
 		select.dispatchEvent( change );
 
-		assert.deepEqual( component.get( 'selected' ), [ 'three' ] );
+		assert.deepEqual( component.get().selected, [ 'three' ] );
 		assert.htmlEqual( target.innerHTML, `
 			<select multiple>
 				<option>one</option>
@@ -38,7 +38,7 @@ export default {
 		options[0].selected = true;
 		select.dispatchEvent( change );
 
-		assert.deepEqual( component.get( 'selected' ), [ 'one', 'three' ] );
+		assert.deepEqual( component.get().selected, [ 'one', 'three' ] );
 		assert.htmlEqual( target.innerHTML, `
 			<select multiple>
 				<option>one</option>

@@ -7,7 +7,7 @@ class MyStore extends Store {
 
 	toggleTodo(todo) {
 		todo.done = !todo.done;
-		this.set({ todos: this.get('todos') });
+		this.set({ todos: this.get().todos });
 	}
 }
 

@@ -45,8 +45,8 @@ export default class Component extends Node {
 
 		this.var = block.getUniqueName(
 			(
-				(this.name === ':Self' || this.name === 'svelte:self') ? this.generator.name :
-				(this.name === ':Component' || this.name === 'svelte:component') ? 'switch_instance' :
+				this.name === 'svelte:self' ? this.generator.name :
+				this.name === 'svelte:component' ? 'switch_instance' :
 				this.name
 			).toLowerCase()
 		);
@@ -73,11 +73,11 @@ export default class Component extends Node {
 		const componentInitProperties = [`root: #component.root`];
 
 		if (this.children.length > 0) {
-			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name, generator.legacy)}: @createFragment()`);
+			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name)}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
-				child.build(block, `${this.var}._slotted${generator.legacy ? `["default"]` : `.default`}`, 'nodes');
+				child.build(block, `${this.var}._slotted.default`, 'nodes');
 			});
 		}
 
@@ -139,7 +139,7 @@ export default class Component extends Node {
 							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
 							changes.push(condition ? `${condition} && ${value}` : value);
 						} else {
-							const obj = `{ ${quoteIfNecessary(name, this.generator.legacy)}: ${value} }`;
+							const obj = `{ ${quoteIfNecessary(name)}: ${value} }`;
 							initialProps.push(obj);
 
 							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
@@ -217,7 +217,7 @@ export default class Component extends Node {
 
 						${binding.dependencies
 							.map((name: string) => {
-								const isStoreProp = generator.options.store && name[0] === '$';
+								const isStoreProp = name[0] === '$';
 								const prop = isStoreProp ? name.slice(1) : name;
 								const newState = isStoreProp ? 'newStoreState' : 'newState';
 
@@ -230,7 +230,7 @@ export default class Component extends Node {
 				}
 
 				else {
-					const isStoreProp = generator.options.store && key[0] === '$';
+					const isStoreProp = key[0] === '$';
 					const prop = isStoreProp ? key.slice(1) : key;
 					const newState = isStoreProp ? 'newStoreState' : 'newState';
 
@@ -293,7 +293,7 @@ export default class Component extends Node {
 			`;
 		}
 
-		if (this.name === ':Component' || this.name === 'svelte:component') {
+		if (this.name === 'svelte:component') {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
@@ -387,7 +387,7 @@ export default class Component extends Node {
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
-			const expression = (this.name === ':Self' || this.name === 'svelte:self')
+			const expression = this.name === 'svelte:self'
 				? generator.name
 				: `%components-${this.name}`;
 
@@ -440,7 +440,7 @@ export default class Component extends Node {
 	}
 
 	remount(name: string) {
-		return `${this.var}._mount(${name}._slotted${this.generator.legacy ? `["default"]` : `.default`}, null);`;
+		return `${this.var}._mount(${name}._slotted.default, null);`;
 	}
 }
 

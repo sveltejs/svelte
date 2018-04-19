@@ -1,5 +1,5 @@
 <li>
-	{{yield}}
+	<slot></slot>
 </li>
 
 <script>
@@ -12,7 +12,7 @@
 
 	export default {
 		oncreate() {
-			this.set({ value: initialValues[this.get('id')] });
+			this.set({ value: initialValues[this.get().id] });
 		}
 	};
 </script>

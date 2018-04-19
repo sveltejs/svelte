@@ -1,16 +1,14 @@
-<span>{{foo}}</span>
+<span>{foo}</span>
 
 <script>
 	export default {
-		data () {
+		data() {
 			return {
 				foo: 'XX'
 			};
 		},
-		oncreate () {
-			this.observe( 'item', item => {
-				this.set({ foo: item });
-			});
+		onstate({ changed, current }) {
+			this.set({ foo: current.item });
 		}
 	};
 </script>

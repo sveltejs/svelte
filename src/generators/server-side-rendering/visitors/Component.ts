@@ -57,7 +57,7 @@ export default function visitComponent(
 		if (attribute.value.length === 1) {
 			const chunk = attribute.value[0];
 			if (chunk.type === 'Text') {
-				return isNaN(chunk.data) ? stringify(chunk.data) : chunk.data;
+				return stringify(chunk.data);
 			}
 
 			block.contextualise(chunk.expression);
@@ -87,11 +87,11 @@ export default function visitComponent(
 			.concat(bindingProps)
 			.join(', ')} }`;
 
-	const isDynamicComponent = node.name === ':Component' || node.name === 'svelte:component';
+	const isDynamicComponent = node.name === 'svelte:component';
 	if (isDynamicComponent) block.contextualise(node.expression);
 
 	const expression = (
-		(node.name === ':Self' || node.name === 'svelte:self') ? generator.name :
+		node.name === 'svelte:self' ? generator.name :
 		isDynamicComponent ? `((${node.metadata.snippet}) || __missingComponent)` :
 		`%components-${node.name}`
 	);
@@ -103,9 +103,7 @@ export default function visitComponent(
 	let open = `\${${expression}._render(__result, ${props}`;
 
 	const options = [];
-	if (generator.options.store) {
-		options.push(`store: options.store`);
-	}
+	options.push(`store: options.store`);
 
 	if (node.children.length) {
 		const appendTarget: AppendTarget = {

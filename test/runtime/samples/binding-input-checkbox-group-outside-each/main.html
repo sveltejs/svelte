@@ -1,13 +1,13 @@
 <label>
-	<input type="checkbox" value="{{values[0]}}" bind:group='selected' /> {{values[0].name}}
+	<input type="checkbox" value="{values[0]}" bind:group='selected' /> {values[0].name}
 </label>
 
 <label>
-	<input type="checkbox" value="{{values[1]}}" bind:group='selected' /> {{values[1].name}}
+	<input type="checkbox" value="{values[1]}" bind:group='selected' /> {values[1].name}
 </label>
 
 <label>
-	<input type="checkbox" value="{{values[2]}}" bind:group='selected' /> {{values[2].name}}
+	<input type="checkbox" value="{values[2]}" bind:group='selected' /> {values[2].name}
 </label>
 
-<p>{{selected.map( function ( value ) { return value.name; }).join( ', ' ) }}</p>
+<p>{selected.map( function ( value ) { return value.name; }).join( ', ' ) }</p>

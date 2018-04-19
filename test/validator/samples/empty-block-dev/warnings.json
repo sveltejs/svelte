@@ -2,27 +2,31 @@
 	{
 		"code": "empty-block",
 		"message": "Empty block",
-		"loc": {
+		"start": {
 			"line": 1,
-			"column": 0
+			"column": 0,
+			"character": 0
 		},
 		"end": {
 			"line": 3,
-			"column": 9
+			"column": 7,
+			"character": 32
 		},
 		"pos": 0
 	},
 	{
 		"code": "empty-block",
 		"message": "Empty block",
-		"loc": {
+		"start": {
 			"line": 5,
-			"column": 0
+			"column": 0,
+			"character": 34
 		},
 		"end": {
 			"line": 5,
-			"column": 34
+			"column": 30,
+			"character": 64
 		},
-		"pos": 38
+		"pos": 34
 	}
 ]

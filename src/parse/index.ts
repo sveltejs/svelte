@@ -3,23 +3,19 @@ import { locate, Location } from 'locate-character';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
-import getCodeFrame from '../utils/getCodeFrame';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import hash from '../utils/hash';
 import { Node, Parsed } from '../interfaces';
 import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
-	parser?: 'v2';
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
 
 export class Parser {
-	readonly v2: boolean;
 	readonly template: string;
 	readonly filename?: string;
 
@@ -34,8 +30,6 @@ export class Parser {
 	allowBindings: boolean;
 
 	constructor(template: string, options: ParserOptions) {
-		this.v2 = options.parser === 'v2';
-
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
@@ -229,7 +223,6 @@ export default function parse(
 ): Parsed {
 	const parser = new Parser(template, options);
 	return {
-		hash: hash(parser.template),
 		html: parser.html,
 		css: parser.css,
 		js: parser.js,
