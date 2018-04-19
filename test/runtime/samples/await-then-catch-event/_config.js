@@ -26,7 +26,7 @@ export default {
 				const click = new window.MouseEvent('click');
 				button.dispatchEvent(click);
 
-				assert.equal(component.get('clicked'), 42);
+				assert.equal(component.get().clicked, 42);
 
 				thePromise = Promise.resolve(43);
 				component.set({ thePromise });
@@ -39,7 +39,7 @@ export default {
 				const click = new window.MouseEvent('click');
 				button.dispatchEvent(click);
 
-				assert.equal(component.get('clicked'), 43);
+				assert.equal(component.get().clicked, 43);
 			});
 	}
 };

@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-props-property",
 	"message": "'props' must be an array of string literals",
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 10
+		"column": 10,
+		"character": 50
 	},
 	"end": {
 		"line": 5,
-		"column": 12
+		"column": 12,
+		"character": 52
 	},
 	"pos": 50
 }]

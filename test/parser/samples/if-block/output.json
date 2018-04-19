@@ -1,24 +1,24 @@
 {
-	"hash": 2374871934,
+	"hash": "w7ju0y",
 	"html": {
 		"start": 0,
-		"end": 21,
+		"end": 17,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 21,
+				"end": 17,
 				"type": "IfBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 6,
-					"end": 9,
+					"start": 5,
+					"end": 8,
 					"name": "foo"
 				},
 				"children": [
 					{
-						"start": 11,
-						"end": 14,
+						"start": 9,
+						"end": 12,
 						"type": "Text",
 						"data": "bar"
 					}

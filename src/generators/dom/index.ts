@@ -47,7 +47,7 @@ export class DomGenerator extends Generator {
 		this.legacy = options.legacy;
 		this.needsEncapsulateHelper = false;
 
-		// initial values for e.g. window.innerWidth, if there's a <:Window> meta tag
+		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 		this.metaBindings = [];
 	}
 }
@@ -89,7 +89,7 @@ export default function dom(
 			});
 
 			if (generator.readonly.has(key)) {
-				// <:Window> bindings
+				// <svelte:window> bindings
 				throw new Error(
 					`Cannot have a computed value '${key}' that clashes with a read-only property`
 				);
@@ -99,11 +99,7 @@ export default function dom(
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
-			const call = generator.v2
-				? `%computed-${key}(state)`
-				: `%computed-${key}(${deps.map(dep => `state.${dep}`).join(', ')})`;
-
-			const statement = `if (this._differs(state.${key}, (state.${key} = ${call}))) changed.${key} = true;`;
+			const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`;
 
 			computationBuilder.addConditional(condition, statement);
 		});
@@ -143,8 +139,8 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'observe', 'on', 'set', 'teardown', '_set', '_mount', '_unmount', '_differs']
-				.map(n => `${n}: @${n === 'teardown' ? 'destroy' : n}`)
+			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_unmount', '_differs']
+				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
 
@@ -153,7 +149,7 @@ export default function dom(
 	// generate initial state object
 	const expectedProperties = Array.from(generator.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = options.store || templateProperties.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
+	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
 	const initialState = [];
 
 	if (globals.length > 0) {
@@ -294,7 +290,7 @@ export default function dom(
 
 				${props.map(prop => deindent`
 					get ${prop}() {
-						return this.get('${prop}');
+						return this.get().${prop};
 					}
 
 					set ${prop}(value) {

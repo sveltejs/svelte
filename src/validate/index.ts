@@ -5,15 +5,15 @@ import getCodeFrame from '../utils/getCodeFrame';
 import Stats from '../Stats';
 import error from '../utils/error';
 import Stylesheet from '../css/Stylesheet';
+import Stats from '../Stats';
 import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
 
 export class Validator {
 	readonly source: string;
 	readonly filename: string;
-	readonly v2: boolean;
+	readonly stats: Stats;
 
 	options: CompileOptions;
-	onwarn: ({}) => void;
 	locator?: (pos: number) => Location;
 
 	namespace: string;
@@ -34,12 +34,12 @@ export class Validator {
 		actions: Set<string>;
 	};
 
-	constructor(parsed: Parsed, source: string, options: CompileOptions) {
+	constructor(parsed: Parsed, source: string, stats: Stats, options: CompileOptions) {
 		this.source = source;
+		this.stats = stats;
+
 		this.filename = options.filename;
-		this.onwarn = options.onwarn;
 		this.options = options;
-		this.v2 = options.parser === 'v2';
 
 		this.namespace = null;
 		this.defaultExport = null;
@@ -73,18 +73,18 @@ export class Validator {
 	}
 
 	warn(pos: { start: number, end: number }, { code, message }: { code: string, message: string }) {
-		if (!this.locator) this.locator = getLocator(this.source);
+		if (!this.locator) this.locator = getLocator(this.source, { offsetLine: 1 });
 		const start = this.locator(pos.start);
 		const end = this.locator(pos.end);
 
-		const frame = getCodeFrame(this.source, start.line, start.column);
+		const frame = getCodeFrame(this.source, start.line - 1, start.column);
 
-		this.onwarn({
+		this.stats.warn({
 			code,
 			message,
 			frame,
-			loc: { line: start.line + 1, column: start.column },
-			end: { line: end.line + 1, column: end.column },
+			start,
+			end,
 			pos: pos.start,
 			filename: this.filename,
 			toString: () => `${message} (${start.line + 1}:${start.column})\n${frame}`,
@@ -96,9 +96,10 @@ export default function validate(
 	parsed: Parsed,
 	source: string,
 	stylesheet: Stylesheet,
+	stats: Stats,
 	options: CompileOptions
 ) {
-	const { onwarn, onerror, name, filename, store, dev, parser } = options;
+	const { onerror, name, filename, dev, parser } = options;
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
@@ -108,7 +109,7 @@ export default function validate(
 
 		if (name && /^[a-z]/.test(name)) {
 			const message = `options.name should be capitalised`;
-			onwarn({
+			stats.warn({
 				code: `options-lowercase-name`,
 				message,
 				filename,
@@ -116,11 +117,9 @@ export default function validate(
 			});
 		}
 
-		const validator = new Validator(parsed, source, {
-			onwarn,
+		const validator = new Validator(parsed, source, stats, {
 			name,
 			filename,
-			store,
 			dev,
 			parser
 		});

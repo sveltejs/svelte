@@ -1,44 +1,44 @@
 {
-	"hash": 985817334,
+	"hash": "tzpuwu",
 	"html": {
 		"start": 0,
-		"end": 93,
+		"end": 88,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 93,
+				"end": 88,
 				"type": "IfBlock",
 				"expression": {
 					"type": "BinaryExpression",
-					"start": 6,
-					"end": 12,
+					"start": 5,
+					"end": 11,
 					"left": {
 						"type": "Identifier",
-						"start": 6,
-						"end": 7,
+						"start": 5,
+						"end": 6,
 						"name": "x"
 					},
 					"operator": ">",
 					"right": {
 						"type": "Literal",
-						"start": 10,
-						"end": 12,
+						"start": 9,
+						"end": 11,
 						"value": 10,
 						"raw": "10"
 					}
 				},
 				"children": [
 					{
-						"start": 16,
-						"end": 43,
+						"start": 14,
+						"end": 41,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 19,
-								"end": 39,
+								"start": 17,
+								"end": 37,
 								"type": "Text",
 								"data": "x is greater than 10"
 							}
@@ -46,45 +46,45 @@
 					}
 				],
 				"else": {
-					"start": 60,
-					"end": 86,
+					"start": 57,
+					"end": 83,
 					"type": "ElseBlock",
 					"children": [
 						{
-							"start": 60,
-							"end": 93,
+							"start": 57,
+							"end": 88,
 							"type": "IfBlock",
 							"elseif": true,
 							"expression": {
 								"type": "BinaryExpression",
-								"start": 53,
-								"end": 58,
+								"start": 51,
+								"end": 56,
 								"left": {
 									"type": "Identifier",
-									"start": 53,
-									"end": 54,
+									"start": 51,
+									"end": 52,
 									"name": "x"
 								},
 								"operator": "<",
 								"right": {
 									"type": "Literal",
-									"start": 57,
-									"end": 58,
+									"start": 55,
+									"end": 56,
 									"value": 5,
 									"raw": "5"
 								}
 							},
 							"children": [
 								{
-									"start": 62,
-									"end": 85,
+									"start": 59,
+									"end": 82,
 									"type": "Element",
 									"name": "p",
 									"attributes": [],
 									"children": [
 										{
-											"start": 65,
-											"end": 81,
+											"start": 62,
+											"end": 78,
 											"type": "Text",
 											"data": "x is less than 5"
 										}

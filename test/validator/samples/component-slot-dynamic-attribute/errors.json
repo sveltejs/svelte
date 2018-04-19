@@ -1,13 +1,15 @@
 [{
 	"code": "invalid-slot-attribute",
 	"message": "slot attribute cannot have a dynamic value",
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 9
+		"column": 9,
+		"character": 18
 	},
 	"end": {
 		"line": 2,
-		"column": 23
+		"column": 21,
+		"character": 30
 	},
 	"pos": 18
 }]

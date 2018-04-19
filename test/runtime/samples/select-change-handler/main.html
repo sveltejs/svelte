@@ -1,7 +1,7 @@
 <select bind:value="selected" on:change="updateLastChangedTo(selected)">
-	{{#each options as option}}
-		<option value="{{option.id}}">{{option.id}}</option>
-	{{/each}}
+	{#each options as option}
+		<option value="{option.id}">{option.id}</option>
+	{/each}
 </select>
 
 <script>

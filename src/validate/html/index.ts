@@ -31,8 +31,6 @@ export default function validateHtml(validator: Validator, html: Node) {
 
 		else if (node.type === 'Element') {
 			const isComponent =
-				node.name === ':Self' ||
-				node.name === ':Component' ||
 				node.name === 'svelte:self' ||
 				node.name === 'svelte:component' ||
 				validator.components.has(node.name);

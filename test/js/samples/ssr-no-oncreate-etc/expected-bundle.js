@@ -41,22 +41,6 @@ SvelteComponent.css = {
 	map: null
 };
 
-var warned = false;
-SvelteComponent.renderCss = function() {
-	if (!warned) {
-		console.error('Component.renderCss(...) is deprecated and will be removed in v2 — use Component.render(...).css instead');
-		warned = true;
-	}
-
-	var components = [];
-
-	return {
-		css: components.map(x => x.css).join('\n'),
-		map: null,
-		components
-	};
-};
-
 SvelteComponent.preload = preload;
 
 module.exports = SvelteComponent;

@@ -159,12 +159,8 @@ function getEventHandler(
 	dependencies: string[],
 	value: string,
 ) {
-	let storeDependencies = [];
-
-	if (generator.options.store) {
-		storeDependencies = dependencies.filter(prop => prop[0] === '$').map(prop => prop.slice(1));
-		dependencies = dependencies.filter(prop => prop[0] !== '$');
-	}
+	const storeDependencies = dependencies.filter(prop => prop[0] === '$').map(prop => prop.slice(1));
+	dependencies = dependencies.filter(prop => prop[0] !== '$');
 
 	if (block.contexts.has(name)) {
 		const tail = attribute.value.type === 'MemberExpression'
@@ -207,7 +203,7 @@ function getEventHandler(
 	let props;
 	let storeProps;
 
-	if (generator.options.store && name[0] === '$') {
+	if (name[0] === '$') {
 		props = [];
 		storeProps = [`${name.slice(1)}: ${value}`];
 	} else {

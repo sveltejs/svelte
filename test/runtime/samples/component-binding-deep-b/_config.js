@@ -37,7 +37,7 @@ export default {
 		textarea.value = 'one source changed';
 		textarea.dispatchEvent( event );
 
-		assert.equal( component.get( 'compiled' ), 'ONE SOURCE CHANGED\nTWO SOURCE' );
+		assert.equal( component.get().compiled, 'ONE SOURCE CHANGED\nTWO SOURCE' );
 		assert.htmlEqual( target.innerHTML, `
 			<select>
 				<option value='[object Object]'>One.html</option>
@@ -67,7 +67,7 @@ export default {
 		textarea.value = 'two source changed';
 		textarea.dispatchEvent( event );
 
-		assert.equal( component.get( 'compiled' ), 'ONE SOURCE CHANGED\nTWO SOURCE CHANGED' );
+		assert.equal( component.get().compiled, 'ONE SOURCE CHANGED\nTWO SOURCE CHANGED' );
 		assert.htmlEqual( target.innerHTML, `
 			<select>
 				<option value='[object Object]'>One.html</option>

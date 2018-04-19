@@ -1,12 +1,12 @@
 <p>
-	{{Math.max(0, foo)}}
-	{{bar}}
+	{Math.max(0, foo)}
+	{bar}
 </p>
 
 <script>
 	export default {
 		computed: {
-			bar: foo => foo * 2
+			bar: ({ foo }) => foo * 2
 		}
 	};
 </script>

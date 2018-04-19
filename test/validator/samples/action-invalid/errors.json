@@ -2,12 +2,14 @@
 	"code": "missing-action",
 	"message": "Missing action 'whatever'",
 	"pos": 5,
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 5
+		"column": 5,
+		"character": 5
 	},
 	"end": {
 		"line": 1,
-		"column": 17
+		"column": 17,
+		"character": 17
 	}
 }]

@@ -86,16 +86,8 @@ export default class Window extends Node {
 						});
 					`);
 
-					if (generator.options.dev) {
-						block.builders.hydrate.addBlock(deindent`
-							if (${handlerName}.teardown) {
-								console.warn("Return 'destroy()' from custom event handlers. Returning 'teardown()' has been deprecated and will be unsupported in Svelte 2");
-							}
-						`);
-					}
-
 					block.builders.destroy.addLine(deindent`
-						${handlerName}[${handlerName}.destroy ? 'destroy' : 'teardown']();
+						${handlerName}.destroy();
 					`);
 				} else {
 					block.builders.init.addBlock(deindent`
@@ -180,41 +172,23 @@ export default class Window extends Node {
 		});
 
 		// special case... might need to abstract this out if we add more special cases
-		if (bindings.scrollX && bindings.scrollY) {
-			const observerCallback = block.getUniqueName(`scrollobserver`);
-
+		if (bindings.scrollX || bindings.scrollY) {
 			block.builders.init.addBlock(deindent`
-				function ${observerCallback}() {
-					${lock} = true;
-					clearTimeout(${timeout});
-					var x = ${bindings.scrollX
-						? `#component.get("${bindings.scrollX}")`
-						: `window.pageXOffset`};
-					var y = ${bindings.scrollY
-						? `#component.get("${bindings.scrollY}")`
-						: `window.pageYOffset`};
-					window.scrollTo(x, y);
-					${timeout} = setTimeout(${clear}, 100);
-				}
-			`);
-
-			if (bindings.scrollX)
-				block.builders.init.addLine(
-					`#component.observe("${bindings.scrollX}", ${observerCallback});`
-				);
-			if (bindings.scrollY)
-				block.builders.init.addLine(
-					`#component.observe("${bindings.scrollY}", ${observerCallback});`
-				);
-		} else if (bindings.scrollX || bindings.scrollY) {
-			const isX = !!bindings.scrollX;
-
-			block.builders.init.addBlock(deindent`
-				#component.observe("${bindings.scrollX || bindings.scrollY}", function(${isX ? 'x' : 'y'}) {
-					${lock} = true;
-					clearTimeout(${timeout});
-					window.scrollTo(${isX ? 'x, window.pageYOffset' : 'window.pageXOffset, y'});
-					${timeout} = setTimeout(${clear}, 100);
+				#component.on("state", ({ changed, current }) => {
+					if (${
+						[bindings.scrollX, bindings.scrollY].map(
+							binding => binding && `changed["${binding}"]`
+						).filter(Boolean).join(' || ')
+					}) {
+						${lock} = true;
+						clearTimeout(${timeout});
+						window.scrollTo(${
+							bindings.scrollX ? `current["${bindings.scrollX}"]` : `window.pageXOffset`
+						}, ${
+							bindings.scrollY ? `current["${bindings.scrollY}"]` : `window.pageYOffset`
+						});
+						${timeout} = setTimeout(${clear}, 100);
+					}
 				});
 			`);
 		}

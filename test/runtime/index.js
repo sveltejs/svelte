@@ -21,7 +21,7 @@ let compileOptions = null;
 let compile = null;
 
 function getName(filename) {
-	const base = path.basename(filename).replace('-v2', '').replace(".html", "");
+	const base = path.basename(filename).replace(".html", "");
 	return base[0].toUpperCase() + base.slice(1);
 }
 
@@ -36,9 +36,9 @@ describe("runtime", () => {
 				compileOptions
 			);
 
-			const { code } = compile(fs.readFileSync(filename, "utf-8"), options);
+			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
 
-			return module._compile(code, filename);
+			return module._compile(js.code, filename);
 		};
 
 		return setupHtmlEqual();
@@ -46,7 +46,7 @@ describe("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, shared, hydrate, v2) {
+	function runTest(dir, shared, hydrate) {
 		if (dir[0] === ".") return;
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
@@ -55,7 +55,7 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''}${v2 ? ', v2' : ''})`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''})`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -72,39 +72,6 @@ describe("runtime", () => {
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
-			compileOptions.parser = v2 ? 'v2' : 'v1';
-
-			// check that no ES2015+ syntax slipped in
-			if (!config.allowES2015) {
-				try {
-					const source = fs.readFileSync(
-						`test/runtime/samples/${dir}/main${v2 ? '-v2' : ''}.html`,
-						"utf-8"
-					);
-					const { code } = compile(source, compileOptions);
-					const startIndex = code.indexOf("function create_main_fragment"); // may change!
-					if (startIndex === -1) throw new Error("missing create_main_fragment");
-					const endIndex = code.lastIndexOf("export default");
-					const es5 =
-						code.slice(0, startIndex).split('\n').map(x => spaces(x.length)).join('\n') +
-						code.slice(startIndex, endIndex);
-
-					acorn.parse(es5, { ecmaVersion: 5 });
-
-					if (/Object\.assign/.test(es5)) {
-						throw new Error(
-							"cannot use Object.assign in generated code, as it is not supported everywhere"
-						);
-					}
-				} catch (err) {
-					failed.add(dir);
-					if (err.frame) {
-						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
-					}
-					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store, v2 }, compile); // eslint-disable-line no-console
-					throw err;
-				}
-			}
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -144,7 +111,7 @@ describe("runtime", () => {
 					};
 
 					try {
-						SvelteComponent = require(`./samples/${dir}/main${v2 ? '-v2' : ''}.html`);
+						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
 						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
@@ -204,12 +171,12 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2 }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, v2 }, compile);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile);
 				});
 		});
 	}
@@ -219,21 +186,17 @@ describe("runtime", () => {
 		runTest(dir, shared, false);
 		runTest(dir, shared, true);
 		runTest(dir, null, false);
-
-		if (fs.existsSync(`test/runtime/samples/${dir}/main-v2.html`)) {
-			runTest(dir, shared, false, true);
-		}
 	});
 
 	it("fails if options.target is missing in dev mode", () => {
-		const { code } = svelte$.compile(`<div></div>`, {
+		const { js } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
 		});
 
 		const SvelteComponent = eval(
-			`(function () { ${code}; return SvelteComponent; }())`
+			`(function () { ${js.code}; return SvelteComponent; }())`
 		);
 
 		assert.throws(() => {
@@ -242,14 +205,14 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.hydrate is true but the component is non-hydratable", () => {
-		const { code } = svelte$.compile(`<div></div>`, {
+		const { js } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
 		});
 
 		const SvelteComponent = eval(
-			`(function () { ${code}; return SvelteComponent; }())`
+			`(function () { ${js.code}; return SvelteComponent; }())`
 		);
 
 		assert.throws(() => {

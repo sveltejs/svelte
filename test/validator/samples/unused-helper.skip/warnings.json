@@ -1,6 +1,6 @@
 [{
 	"message": "The 'uppercase' helper is unused",
-	"loc": {
+	"start": {
 		"line": 4,
 		"column": 3
 	},

@@ -1,4 +1,4 @@
-<span>{{state}}</span>
+<span>{state}</span>
 
 <script>
 	export default {
@@ -8,7 +8,7 @@
 			};
 		},
 		computed: {
-			state: x => x
+			state: ({ x }) => x
 		}
 	};
 </script>

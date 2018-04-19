@@ -30,14 +30,14 @@ export default function computed(validator: Validator, prop: Node) {
 
 		if (!isValidIdentifier(name)) {
 			const suggestion = name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
-			validator.error(computation, {
+			validator.error(computation.key, {
 				code: `invalid-computed-name`,
 				message: `Computed property name '${name}' is invalid — must be a valid identifier such as ${suggestion}`
 			});
 		}
 
 		if (reservedNames.has(name)) {
-			validator.error(computation, {
+			validator.error(computation.key, {
 				code: `invalid-computed-name`,
 				message: `Computed property name '${name}' is invalid — cannot be a JavaScript reserved word`
 			});
@@ -75,36 +75,19 @@ export default function computed(validator: Validator, prop: Node) {
 			});
 		}
 
-		if (validator.v2) {
-			if (params.length > 1) {
-				validator.error(computation.value, {
-					code: `invalid-computed-arguments`,
-					message: `Computed properties must take a single argument`
-				});
-			}
+		if (params.length > 1) {
+			validator.error(computation.value, {
+				code: `invalid-computed-arguments`,
+				message: `Computed properties must take a single argument`
+			});
+		}
 
-			const param = params[0];
-			if (param.type !== 'ObjectPattern') {
-				// TODO in v2, allow the entire object to be passed in
-				validator.error(computation.value, {
-					code: `invalid-computed-argument`,
-					message: `Computed property argument must be a destructured object pattern`
-				});
-			}
-		} else {
-			params.forEach((param: Node) => {
-				const valid =
-					param.type === 'Identifier' ||
-					(param.type === 'AssignmentPattern' &&
-						param.left.type === 'Identifier');
-
-				if (!valid) {
-					// TODO change this for v2
-					validator.error(param, {
-						code: `invalid-computed-arguments`,
-						message: `Computed properties cannot use destructuring in function parameters`
-					});
-				}
+		const param = params[0];
+		if (param.type !== 'ObjectPattern') {
+			// TODO post-v2, allow the entire object to be passed in
+			validator.error(computation.value, {
+				code: `invalid-computed-argument`,
+				message: `Computed property argument must be a destructured object pattern`
 			});
 		}
 	});

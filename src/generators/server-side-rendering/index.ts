@@ -75,7 +75,7 @@ export default function ssr(
 	// generate initial state object
 	const expectedProperties = Array.from(generator.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = options.store || templateProperties.store ? expectedProperties.filter(prop => prop[0] === '$') : [];
+	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
 
 	const initialState = [];
 	if (globals.length > 0) {
@@ -84,9 +84,7 @@ export default function ssr(
 
 	if (storeProps.length > 0) {
 		const initialize = `_init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`
-		if (options.store || templateProperties.store) {
-			initialState.push(`options.store.${initialize}`);
-		}
+		initialState.push(`options.store.${initialize}`);
 	}
 
 	if (templateProperties.data) {
@@ -139,7 +137,7 @@ export default function ssr(
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = %computed-${key}(${generator.v2 ? 'state' :  deps.map(dep => `state.${dep}`).join(', ')});`
+					`state.${key} = %computed-${key}(state);`
 			)}
 
 			${generator.bindings.length &&
@@ -163,47 +161,6 @@ export default function ssr(
 		};
 
 		var warned = false;
-		${name}.renderCss = function() {
-			if (!warned) {
-				console.error('Component.renderCss(...) is deprecated and will be removed in v2 — use Component.render(...).css instead');
-				warned = true;
-			}
-
-			var components = [];
-
-			${generator.stylesheet.hasStyles &&
-				deindent`
-				components.push({
-					filename: ${name}.filename,
-					css: ${name}.css && ${name}.css.code,
-					map: ${name}.css && ${name}.css.map
-				});
-			`}
-
-			${templateProperties.components &&
-				deindent`
-				var seen = {};
-
-				function addComponent(component) {
-					var result = component.renderCss();
-					result.components.forEach(x => {
-						if (seen[x.filename]) return;
-						seen[x.filename] = true;
-						components.push(x);
-					});
-				}
-
-				${templateProperties.components.value.properties.map((prop: Node) => {
-					return `addComponent(%components-${getName(prop.key)});`;
-				})}
-			`}
-
-			return {
-				css: components.map(x => x.css).join('\\n'),
-				map: null,
-				components
-			};
-		};
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
 

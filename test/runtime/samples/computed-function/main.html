@@ -1,4 +1,4 @@
-<p>{{scale(x)}}</p>
+<p>{scale(x)}</p>
 
 <script>
 	export default {
@@ -9,7 +9,7 @@
 		}),
 
 		computed: {
-			scale: ( domain, range ) => {
+			scale: ({ domain, range }) => {
 				return num => {
 					const t = domain[0] + ( num - domain[0] ) / ( domain[1] - domain[0] );
 					return range[0] + t * ( range[1] - range[0] );

@@ -1,8 +1,8 @@
-{{#each list as nested}}
-	{{#if true}}
-		<Nested :nested/>
-	{{/if}}
-{{/each}}
+{#each list as nested}
+	{#if true}
+		<Nested {nested}/>
+	{/if}
+{/each}
 
 <script>
 	import Nested from './Nested.html';

@@ -19,7 +19,7 @@ export default {
 
 		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>three</p></div><!---->` );
 
-		const items = component.get( 'items' );
+		const items = component.get().items;
 		items[2].description = 'five';
 
 		component.set({ items });
