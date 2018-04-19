@@ -1,6 +1,6 @@
 [{
 	"code": "invalid-callee",
-	"message": "'resize' is an invalid callee (should be one of this.*, event.*, options.*, console.*, store.*, set, fire or destroy)",
+	"message": "'resize' is an invalid callee (should be one of this.*, event.*, options.*, console.*, set, fire or destroy)",
 	"start": {
 		"line": 1,
 		"column": 26,

@@ -93,6 +93,7 @@ export default class Generator {
 	helpers: Set<string>;
 	components: Set<string>;
 	events: Set<string>;
+	methods: Set<string>;
 	transitions: Set<string>;
 	actions: Set<string>;
 	importedComponents: Map<string, string>;
@@ -141,6 +142,7 @@ export default class Generator {
 		this.helpers = new Set();
 		this.components = new Set();
 		this.events = new Set();
+		this.methods = new Set();
 		this.transitions = new Set();
 		this.actions = new Set();
 		this.importedComponents = new Map();
@@ -419,6 +421,7 @@ export default class Generator {
 			code,
 			source,
 			computations,
+			methods,
 			templateProperties,
 			imports
 		} = this;
@@ -608,6 +611,10 @@ export default class Generator {
 
 				if (templateProperties.methods && dom) {
 					addDeclaration('methods', templateProperties.methods.value);
+
+					templateProperties.methods.value.properties.forEach(prop => {
+						this.methods.add(prop.key.name);
+					});
 				}
 
 				if (templateProperties.namespace) {
