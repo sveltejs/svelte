@@ -1,5 +1,20 @@
 # Svelte changelog
 
+## 2.0.0
+
+*See [the blog post](https://svelte.technology/blog/version-2) for information on how to upgrade your apps*
+
+* New template syntax ([#1318](https://github.com/sveltejs/svelte/issues/1318))
+* Emit ES2015 code, not ES5 ([#1348](https://github.com/sveltejs/svelte/pull/1348))
+* Add `onstate` and `onupdate` hooks, remove `component.observe` method ([#1197](https://github.com/sveltejs/svelte/issues/1197))
+* Use destructuring syntax for computed properties ([#1069](https://github.com/sveltejs/svelte/issues/1069)
+* Change signature of `svelte.compile` ([#1298](https://github.com/sveltejs/svelte/pull/1298))
+* Remove `validate` and `Stylesheet` from public API ([#1348](https://github.com/sveltejs/svelte/pull/1348))
+* Don't typecast numeric attributes ([#657](https://github.com/sveltejs/svelte/issues/657))
+* Always compile with `Store` support, and cascading disabled ([#1348](https://github.com/sveltejs/svelte/pull/1348))
+* Remove unused `hash` property from AST ([#1348](https://github.com/sveltejs/svelte/pull/1348))
+* Rename `loc` property to `start` in warnings and errors ([#1348](https://github.com/sveltejs/svelte/pull/1348))
+
 ## 1.64.1
 
 * Fix computed properties in SSR renderer ([#1349](https://github.com/sveltejs/svelte/issues/1349))
