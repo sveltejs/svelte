@@ -37,7 +37,7 @@ export default class Component extends Node {
 					attribute.expression.arguments.forEach((arg: Node) => {
 						block.addDependencies(arg.metadata.dependencies);
 					});
-				} else if (attribute.type === 'Binding') {
+				} else if (attribute.type === 'Binding' || attribute.type === 'Spread') {
 					block.addDependencies(attribute.metadata.dependencies);
 				}
 			}
