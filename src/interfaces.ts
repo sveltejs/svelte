@@ -74,6 +74,11 @@ export interface GenerateOptions {
 	helpers?: { name: string, alias: string }[];
 }
 
+export interface ShorthandImport {
+	name: string;
+	source: string;
+};
+
 export interface Visitor {
 	enter: (node: Node) => void;
 	leave?: (node: Node) => void;
