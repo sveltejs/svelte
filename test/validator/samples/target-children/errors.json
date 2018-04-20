@@ -1,0 +1,15 @@
+[{
+	"code": "illegal-structure",
+	"message": "<svelte:target> cannot have children",
+	"start": {
+		"line": 1,
+		"column": 15,
+		"character": 15
+	},
+	"end": {
+		"line": 3,
+		"column": 0,
+		"character": 22
+	},
+	"pos": 15
+}]

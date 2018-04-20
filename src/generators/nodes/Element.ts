@@ -147,6 +147,8 @@ export default class Element extends Node {
 			block.addDependencies(this.spread.metadata.dependencies);
 		}
 
+		this.isComponentTarget = this.name === 'svelte:target';
+
 		this.var = block.getUniqueName(
 			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 		);
@@ -185,7 +187,9 @@ export default class Element extends Node {
 			parentNode;
 
 		block.addVariable(name);
-		const renderStatement = getRenderStatement(this.generator, this.namespace, this.name);
+		const renderStatement = this.isComponentTarget ?
+			`#component.options.target` :
+			getRenderStatement(this.generator, this.namespace, this.name);
 		block.builders.create.addLine(
 			`${name} = ${renderStatement};`
 		);
@@ -203,20 +207,22 @@ export default class Element extends Node {
 			}
 		}
 
-		if (initialMountNode) {
-			block.builders.mount.addLine(
-				`@appendNode(${name}, ${initialMountNode});`
-			);
+		if (!this.isComponentTarget) {
+			if (initialMountNode) {
+				block.builders.mount.addLine(
+					`@appendNode(${name}, ${initialMountNode});`
+				);
 
-			if (initialMountNode === 'document.head') {
+				if (initialMountNode === 'document.head') {
+					block.builders.unmount.addLine(`@detachNode(${name});`);
+				}
+			} else {
+				block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
+
+				// TODO we eventually need to consider what happens to elements
+				// that belong to the same outgroup as an outroing element...
 				block.builders.unmount.addLine(`@detachNode(${name});`);
 			}
-		} else {
-			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
-
-			// TODO we eventually need to consider what happens to elements
-			// that belong to the same outgroup as an outroing element...
-			block.builders.unmount.addLine(`@detachNode(${name});`);
 		}
 
 		// TODO move this into a class as well?
@@ -785,6 +791,10 @@ export default class Element extends Node {
 	}
 
 	remount(name: string) {
+		if (this.isComponentTarget) {
+			return '';
+		}
+
 		const slot = this.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
 			return `@appendNode(${this.var}, ${name}._slotted.${this.getStaticAttributeValue('slot')});`;

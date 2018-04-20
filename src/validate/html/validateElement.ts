@@ -85,6 +85,15 @@ export default function validateElement(
 		});
 	}
 
+	if (node.name === 'svelte:target') {
+		if (node.children.length > 0) {
+			validator.error(node.children[0], {
+				code: `illegal-structure`,
+				message: `<svelte:target> cannot have children`
+			});
+		}
+	}
+
 	let hasIntro: boolean;
 	let hasOutro: boolean;
 	let hasTransition: boolean;
