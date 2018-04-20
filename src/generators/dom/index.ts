@@ -2,7 +2,7 @@ import MagicString from 'magic-string';
 import isReference from 'is-reference';
 import { parseExpressionAt } from 'acorn';
 import annotateWithScopes from '../../utils/annotateWithScopes';
-import { walk } from 'estree-walker';
+import { walk, childKeys } from 'estree-walker';
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
@@ -136,7 +136,7 @@ export default function dom(
 	let prototypeBase = `${name}.prototype`;
 
 	const proto = sharedPath
-		? `@proto`
+		? `@Component.prototype`
 		: deindent`
 		{
 			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_unmount', '_differs']
@@ -174,7 +174,6 @@ export default function dom(
 		${options.dev && `this._debugName = '${debugName}';`}
 		${options.dev && !generator.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
-		@init(this, options);
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
@@ -332,13 +331,16 @@ export default function dom(
 			});
 		`);
 	} else {
+		// TODO put methods in class body
 		builder.addBlock(deindent`
-			function ${name}(options) {
-				${constructorBody}
+			class ${name} extends @Component {
+				constructor(options) {
+					super(options);
+					${constructorBody}
+				}
 			}
 
-			@assign(${prototypeBase}, ${proto});
-			${templateProperties.methods && `@assign(${prototypeBase}, %methods);`}
+			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
 		`);
 	}
 
@@ -402,6 +404,10 @@ export default function dom(
 	} else {
 		let inlineHelpers = '';
 
+		// super gross hack to ensure Component isn't declared before its superclass
+		usedHelpers.delete('Component');
+		usedHelpers.add('Thing').add('Component');
+
 		usedHelpers.forEach(key => {
 			const str = shared[key];
 			const code = new MagicString(str);
@@ -424,8 +430,9 @@ export default function dom(
 							usedHelpers.add(dependency);
 
 							const alias = generator.alias(dependency);
-							if (alias !== node.name)
+							if (alias !== node.name) {
 								code.overwrite(node.start, node.end, alias);
+							}
 						}
 					}
 				},
@@ -439,17 +446,17 @@ export default function dom(
 				// special case
 				const global = `_svelteTransitionManager`;
 
-				inlineHelpers += `\n\nvar ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
+				inlineHelpers += `var ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
 			} else {
 				const alias = generator.alias(expression.id.name);
 				if (alias !== expression.id.name)
 					code.overwrite(expression.id.start, expression.id.end, alias);
 
-				inlineHelpers += `\n\n${code}`;
+				inlineHelpers += `${code}\n\n`;
 			}
 		});
 
-		result += inlineHelpers;
+		result = inlineHelpers + result;
 	}
 
 	const filename = options.filename && (

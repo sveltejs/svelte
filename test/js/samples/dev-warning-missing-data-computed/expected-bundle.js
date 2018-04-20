@@ -29,134 +29,136 @@ function blankObject() {
 	return Object.create(null);
 }
 
-function destroy(detach) {
-	this.destroy = noop;
-	this.fire('destroy');
-	this.set = this.get = noop;
+// TODO need to think of a suitable name for this
+class Thing {
+	constructor() {
+		this._handlers = blankObject();
+	}
 
-	if (detach !== false) this._fragment.u();
-	this._fragment.d();
-	this._fragment = this._state = null;
-}
+	fire(eventName, data) {
+		const handlers = eventName in this._handlers && this._handlers[eventName].slice();
+		if (!handlers) return;
 
-function destroyDev(detach) {
-	destroy.call(this, detach);
-	this.destroy = function() {
-		console.warn('Component was already destroyed');
-	};
-}
+		for (let i = 0; i < handlers.length; i += 1) {
+			const handler = handlers[i];
 
-function _differs(a, b) {
-	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
-}
-
-function fire(eventName, data) {
-	var handlers =
-		eventName in this._handlers && this._handlers[eventName].slice();
-	if (!handlers) return;
-
-	for (var i = 0; i < handlers.length; i += 1) {
-		var handler = handlers[i];
-
-		if (!handler.__calling) {
-			handler.__calling = true;
-			handler.call(this, data);
-			handler.__calling = false;
+			if (!handler.__calling) {
+				handler.__calling = true;
+				handler.call(this, data);
+				handler.__calling = false;
+			}
 		}
 	}
+
+	get() {
+		return this._state;
+	}
+
+	on(eventName, handler) {
+		const handlers = this._handlers[eventName] || (this._handlers[eventName] = []);
+		handlers.push(handler);
+
+		return {
+			cancel: function() {
+				const index = handlers.indexOf(handler);
+				if (~index) handlers.splice(index, 1);
+			}
+		};
+	}
+
+	_differs(a, b) {
+		return _differsImmutable(a, b) || ((a && typeof a === 'object') || typeof a === 'function');
+	}
 }
 
-function get() {
-	return this._state;
-}
+class Component extends Thing {
+	constructor(options) {
+		super();
+		this._bind = options._bind;
 
-function init(component, options) {
-	component._handlers = blankObject();
-	component._bind = options._bind;
+		this.options = options;
+		this.root = options.root || this;
+		this.store = this.root.store || options.store;
+	}
 
-	component.options = options;
-	component.root = options.root || component;
-	component.store = component.root.store || options.store;
-}
+	destroy(detach) {
+		this.destroy = noop;
+		this.fire('destroy');
+		this.set = this.get = noop;
 
-function on(eventName, handler) {
-	var handlers = this._handlers[eventName] || (this._handlers[eventName] = []);
-	handlers.push(handler);
+		if (detach !== false) this._fragment.u();
+		this._fragment.d();
+		this._fragment = this._state = null;
+	}
 
-	return {
-		cancel: function() {
-			var index = handlers.indexOf(handler);
-			if (~index) handlers.splice(index, 1);
+	set(newState) {
+		this._set(assign({}, newState));
+		if (this.root._lock) return;
+		this.root._lock = true;
+		callAll(this.root._beforecreate);
+		callAll(this.root._oncreate);
+		callAll(this.root._aftercreate);
+		this.root._lock = false;
+	}
+
+	_set(newState) {
+		const previous = this._state;
+		const changed = {};
+		let dirty = false;
+
+		for (var key in newState) {
+			if (this._differs(newState[key], previous[key])) changed[key] = dirty = 1;
 		}
-	};
-}
 
-function set(newState) {
-	this._set(assign({}, newState));
-	if (this.root._lock) return;
-	this.root._lock = true;
-	callAll(this.root._beforecreate);
-	callAll(this.root._oncreate);
-	callAll(this.root._aftercreate);
-	this.root._lock = false;
-}
+		if (!dirty) return;
 
-function _set(newState) {
-	var oldState = this._state,
-		changed = {},
-		dirty = false;
+		this._state = assign(assign({}, previous), newState);
+		this._recompute(changed, this._state);
+		if (this._bind) this._bind(changed, this._state);
 
-	for (var key in newState) {
-		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
+		if (this._fragment) {
+			this.fire("state", { changed, current: this._state, previous });
+			this._fragment.p(changed, this._state);
+			this.fire("update", { changed, current: this._state, previous });
+		}
 	}
-	if (!dirty) return;
 
-	this._state = assign(assign({}, oldState), newState);
-	this._recompute(changed, this._state);
-	if (this._bind) this._bind(changed, this._state);
+	_mount(target, anchor) {
+		this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
+	}
 
-	if (this._fragment) {
-		this.fire("state", { changed: changed, current: this._state, previous: oldState });
-		this._fragment.p(changed, this._state);
-		this.fire("update", { changed: changed, current: this._state, previous: oldState });
+	_recompute() {}
+
+	_unmount() {
+		if (this._fragment) this._fragment.u();
 	}
 }
 
-function setDev(newState) {
-	if (typeof newState !== 'object') {
-		throw new Error(
-			this._debugName + '.set was called without an object of data key-values to update.'
-		);
+class ComponentDev extends Component {
+	destroy(detach) {
+		super.destroy(detach);
+		this.destroy = () => {
+			console.warn('Component was already destroyed');
+		};
 	}
 
-	this._checkReadOnly(newState);
-	set.call(this, newState);
+	set(newState) {
+		if (typeof newState !== 'object') {
+			throw new Error(`${this._debugName}.set was called without an object of data key-values to update.`);
+		}
+
+		this._checkReadOnly(newState);
+		super.set(newState);
+	}
+}
+
+function _differsImmutable(a, b) {
+	return a != a ? b == b : a !== b;
 }
 
 function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
-
-function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
-}
-
-function _unmount() {
-	if (this._fragment) this._fragment.u();
-}
-
-var protoDev = {
-	destroy: destroyDev,
-	get,
-	fire,
-	on,
-	set: setDev,
-	_recompute: noop,
-	_set,
-	_mount,
-	_unmount,
-	_differs
-};
 
 /* generated by Svelte vX.Y.Z */
 
@@ -200,24 +202,24 @@ function create_main_fragment(component, state) {
 	};
 }
 
-function SvelteComponent(options) {
-	this._debugName = '<SvelteComponent>';
-	if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
-	init(this, options);
-	this._state = assign({ Math : Math }, options.data);
-	this._recompute({ foo: 1 }, this._state);
-	if (!('foo' in this._state)) console.warn("<SvelteComponent> was created without expected data property 'foo'");
+class SvelteComponent extends ComponentDev {
+	constructor(options) {
+		super(options);
+		this._debugName = '<SvelteComponent>';
+		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
+		this._state = assign({ Math : Math }, options.data);
+		this._recompute({ foo: 1 }, this._state);
+		if (!('foo' in this._state)) console.warn("<SvelteComponent> was created without expected data property 'foo'");
 
-	this._fragment = create_main_fragment(this, this._state);
+		this._fragment = create_main_fragment(this, this._state);
 
-	if (options.target) {
-		if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		this._fragment.c();
-		this._mount(options.target, options.anchor);
+		if (options.target) {
+			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+			this._fragment.c();
+			this._mount(options.target, options.anchor);
+		}
 	}
 }
-
-assign(SvelteComponent.prototype, protoDev);
 
 SvelteComponent.prototype._checkReadOnly = function _checkReadOnly(newState) {
 	if ('bar' in newState && !this._updatingReadonlyProperty) throw new Error("<SvelteComponent>: Cannot set read-only property 'bar'");

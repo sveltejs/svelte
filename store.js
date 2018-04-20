@@ -1,81 +1,24 @@
 import {
+	Thing,
 	assign,
 	blankObject,
-	_differs,
-	_differsImmutable,
-	get,
-	on,
-	fire
+	_differsImmutable
 } from './shared.js';
 
-function Store(state, options) {
-	this._handlers = {};
-	this._dependents = [];
+class Store extends Thing {
+	constructor(state, options) {
+		super();
 
-	this._computed = blankObject();
-	this._sortedComputedProperties = [];
+		this._dependents = [];
 
-	this._state = assign({}, state);
-	this._differs = options && options.immutable ? _differsImmutable : _differs;
-}
+		this._computed = blankObject();
+		this._sortedComputedProperties = [];
 
-assign(Store.prototype, {
-	_add: function(component, props) {
-		this._dependents.push({
-			component: component,
-			props: props
-		});
-	},
+		this._state = assign({}, state);
+		if (options && options.immutable) this._differs = _differsImmutable;
+	}
 
-	_init: function(props) {
-		var state = {};
-		for (var i = 0; i < props.length; i += 1) {
-			var prop = props[i];
-			state['$' + prop] = this._state[prop];
-		}
-		return state;
-	},
-
-	_remove: function(component) {
-		var i = this._dependents.length;
-		while (i--) {
-			if (this._dependents[i].component === component) {
-				this._dependents.splice(i, 1);
-				return;
-			}
-		}
-	},
-
-	_sortComputedProperties: function() {
-		var computed = this._computed;
-		var sorted = this._sortedComputedProperties = [];
-		var cycles;
-		var visited = blankObject();
-
-		function visit(key) {
-			if (cycles[key]) {
-				throw new Error('Cyclical dependency detected');
-			}
-
-			if (visited[key]) return;
-			visited[key] = true;
-
-			var c = computed[key];
-
-			if (c) {
-				cycles[key] = true;
-				c.deps.forEach(visit);
-				sorted.push(c);
-			}
-		}
-
-		for (var key in this._computed) {
-			cycles = blankObject();
-			visit(key);
-		}
-	},
-
-	compute: function(key, deps, fn) {
+	compute(key, deps, fn) {
 		var store = this;
 		var value;
 
@@ -102,15 +45,9 @@ assign(Store.prototype, {
 
 		this._computed[key] = c;
 		this._sortComputedProperties();
-	},
+	}
 
-	fire: fire,
-
-	get: get,
-
-	on: on,
-
-	set: function(newState) {
+	set(newState) {
 		var oldState = this._state,
 			changed = this._changed = {},
 			dirty = false;
@@ -156,6 +93,61 @@ assign(Store.prototype, {
 			previous: oldState
 		});
 	}
-});
+
+	_add(component, props) {
+		this._dependents.push({
+			component: component,
+			props: props
+		});
+	}
+
+	_init(props) {
+		var state = {};
+		for (var i = 0; i < props.length; i += 1) {
+			var prop = props[i];
+			state['$' + prop] = this._state[prop];
+		}
+		return state;
+	}
+
+	_remove(component) {
+		var i = this._dependents.length;
+		while (i--) {
+			if (this._dependents[i].component === component) {
+				this._dependents.splice(i, 1);
+				return;
+			}
+		}
+	}
+
+	_sortComputedProperties() {
+		var computed = this._computed;
+		var sorted = this._sortedComputedProperties = [];
+		var cycles;
+		var visited = blankObject();
+
+		function visit(key) {
+			if (cycles[key]) {
+				throw new Error('Cyclical dependency detected');
+			}
+
+			if (visited[key]) return;
+			visited[key] = true;
+
+			var c = computed[key];
+
+			if (c) {
+				cycles[key] = true;
+				c.deps.forEach(visit);
+				sorted.push(c);
+			}
+		}
+
+		for (var key in this._computed) {
+			cycles = blankObject();
+			visit(key);
+		}
+	}
+}
 
 export { Store };
