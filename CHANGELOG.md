@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.1.0
+
+* Allow shorthand imports ([#1038](https://github.com/sveltejs/svelte/issues/1038))
+* Update spread props inside each blocks ([#1337](https://github.com/sveltejs/svelte/issues/1337))
+
 ## 2.0.0
 
 *See [the blog post](https://svelte.technology/blog/version-2) for information on how to upgrade your apps*
