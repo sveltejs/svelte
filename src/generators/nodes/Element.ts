@@ -89,6 +89,8 @@ export default class Element extends Node {
 					}
 				} else if (attribute.type === 'Action' && attribute.expression) {
 					block.addDependencies(attribute.metadata.dependencies);
+				} else if (attribute.type === 'Spread') {
+					block.addDependencies(attribute.metadata.dependencies);
 				}
 			}
 		});
