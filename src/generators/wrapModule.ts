@@ -1,6 +1,6 @@
 import deindent from '../utils/deindent';
 import list from '../utils/list';
-import { CompileOptions, ModuleFormat, Node } from '../interfaces';
+import { CompileOptions, ModuleFormat, Node, ShorthandImport } from '../interfaces';
 
 interface Dependency {
 	name: string;
@@ -19,9 +19,10 @@ export default function wrapModule(
 	sharedPath: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
+	shorthandImports: ShorthandImport[],
 	source: string
 ): string {
-	if (format === 'es') return es(code, name, options, banner, sharedPath, helpers, imports, source);
+	if (format === 'es') return es(code, name, options, banner, sharedPath, helpers, imports, shorthandImports, source);
 
 	const dependencies = imports.map((declaration, i) => {
 		const defaultImport = declaration.specifiers.find(
@@ -58,7 +59,16 @@ export default function wrapModule(
 		}
 
 		return { name, statements, source: declaration.source.value };
-	});
+	})
+	.concat(
+		shorthandImports.map(({ name, source }) => ({
+			name,
+			statements: [
+				`${name} = (${name} && ${name}.__esModule) ? ${name}["default"] : ${name};`,
+			],
+			source,
+		}))
+	);
 
 	if (format === 'amd') return amd(code, name, options, banner, dependencies);
 	if (format === 'cjs') return cjs(code, name, options, banner, sharedPath, helpers, dependencies);
@@ -77,6 +87,7 @@ function es(
 	sharedPath: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
+	shorthandImports: ShorthandImport[],
 	source: string
 ) {
 	const importHelpers = helpers && (
@@ -89,10 +100,15 @@ function es(
 			.join('\n')
 	);
 
+	const shorthandImportBlock = shorthandImports.length > 0 && (
+		shorthandImports.map(({ name, source }) => `import ${name} from ${JSON.stringify(source)};`).join('\n')
+	);
+
 	return deindent`
 		${banner}
 		${importHelpers}
 		${importBlock}
+		${shorthandImportBlock}
 
 		${code}
 		export default ${name};`;
