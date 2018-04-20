@@ -17,7 +17,7 @@ import clone from '../utils/clone';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import nodes from './nodes/index';
-import { Node, GenerateOptions, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
+import { Node, GenerateOptions, ShorthandImport, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
 	key: string;
@@ -90,6 +90,7 @@ export default class Generator {
 
 	defaultExport: Node[];
 	imports: Node[];
+	shorthandImports: ShorthandImport[];
 	helpers: Set<string>;
 	components: Set<string>;
 	events: Set<string>;
@@ -139,6 +140,7 @@ export default class Generator {
 		this.options = options;
 
 		this.imports = [];
+		this.shorthandImports = [];
 		this.helpers = new Set();
 		this.components = new Set();
 		this.events = new Set();
@@ -315,7 +317,7 @@ export default class Generator {
 	generate(result: string, options: CompileOptions, { banner = '', sharedPath, helpers, name, format }: GenerateOptions ) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
-		const module = wrapModule(result, format, name, options, banner, sharedPath, helpers, this.imports, this.source);
+		const module = wrapModule(result, format, name, options, banner, sharedPath, helpers, this.imports, this.shorthandImports, this.source);
 
 		const parts = module.split('✂]');
 		const finalChunk = parts.pop();
@@ -517,7 +519,7 @@ export default class Generator {
 					`);
 				};
 
-				const addDeclaration = (key: string, node: Node, disambiguator?: string, conflicts?: Record<string, boolean>) => {
+				const addDeclaration = (key: string, node: Node, allowShorthandImport?: boolean, disambiguator?: string, conflicts?: Record<string, boolean>) => {
 					const qualified = disambiguator ? `${disambiguator}-${key}` : key;
 
 					if (node.type === 'Identifier' && node.name === key) {
@@ -530,6 +532,11 @@ export default class Generator {
 
 					let name = this.getUniqueName(deconflicted);
 					this.templateVars.set(qualified, name);
+
+					if (allowShorthandImport && node.type === 'Literal' && typeof node.value === 'string') {
+						this.shorthandImports.push({ name, source: node.value });
+						return;
+					}
 
 					// deindent
 					const indentationLevel = getIndentationLevel(source, node.start);
@@ -548,7 +555,7 @@ export default class Generator {
 
 				if (templateProperties.components) {
 					templateProperties.components.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, 'components');
+						addDeclaration(getName(property.key), property.value, true, 'components');
 					});
 				}
 
@@ -582,7 +589,7 @@ export default class Generator {
 
 						const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
 
-						addDeclaration(key, prop.value, 'computed', {
+						addDeclaration(key, prop.value, false, 'computed', {
 							state: true,
 							changed: true
 						});
@@ -599,13 +606,13 @@ export default class Generator {
 
 				if (templateProperties.events && dom) {
 					templateProperties.events.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, 'events');
+						addDeclaration(getName(property.key), property.value, false, 'events');
 					});
 				}
 
 				if (templateProperties.helpers) {
 					templateProperties.helpers.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, 'helpers');
+						addDeclaration(getName(property.key), property.value, false, 'helpers');
 					});
 				}
 
@@ -660,13 +667,13 @@ export default class Generator {
 
 				if (templateProperties.transitions) {
 					templateProperties.transitions.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, 'transitions');
+						addDeclaration(getName(property.key), property.value, false, 'transitions');
 					});
 				}
 
 				if (templateProperties.actions) {
 					templateProperties.actions.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, 'actions');
+						addDeclaration(getName(property.key), property.value, false, 'actions');
 					});
 				}
 			}
