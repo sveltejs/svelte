@@ -174,7 +174,7 @@ export default class Generator {
 		this.templateProperties = {};
 
 		this.walkJs(dom);
-		this.name = this.alias(name);
+		this.name = this.getUniqueName(name);
 
 		if (options.customElement === true) {
 			this.customElement = {

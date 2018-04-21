@@ -404,9 +404,11 @@ export default function dom(
 	} else {
 		let inlineHelpers = '';
 
-		// super gross hack to ensure Component isn't declared before its superclass
+		// super gross hack to ensure Component isn't declared before Base
 		usedHelpers.delete('Component');
+		usedHelpers.delete('ComponentDev');
 		usedHelpers.add('Base').add('Component');
+		if (generator.options.dev) usedHelpers.add('ComponentDev');
 
 		usedHelpers.forEach(key => {
 			const str = shared[key];
