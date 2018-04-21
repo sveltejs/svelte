@@ -65,11 +65,7 @@ class Base {
 class Component extends Base {
 	constructor(options) {
 		super();
-		this._bind = options._bind;
-
-		this.options = options;
-		this.root = options.root || this;
-		this.store = this.root.store || options.store;
+		this._init(options);
 	}
 
 	destroy(detach) {
@@ -90,6 +86,14 @@ class Component extends Base {
 		callAll(this.root._oncreate);
 		callAll(this.root._aftercreate);
 		this.root._lock = false;
+	}
+
+	_init(options) {
+		this._bind = options._bind;
+
+		this.options = options;
+		this.root = options.root || this;
+		this.store = this.root.store || options.store;
 	}
 
 	_set(newState) {
@@ -162,6 +166,8 @@ function create_main_fragment(component, state) {
 class SvelteComponent extends HTMLElement {
 	constructor(options = {}) {
 		super();
+		this._handlers = {};
+		this._init.call(this, options);
 		this._state = assign({}, options.data);
 
 		this.attachShadow({ mode: 'open' });
@@ -184,8 +190,16 @@ class SvelteComponent extends HTMLElement {
 	}
 }
 
-customElements.define("custom-element", SvelteComponent);
-assign(assign(SvelteComponent.prototype, Component.prototype), {
+Object.getOwnPropertyNames(Component.prototype).forEach(name => {
+	SvelteComponent.prototype[name] = Component.prototype[name];
+});
+
+assign(SvelteComponent.prototype, {
+	fire: Base.prototype.fire,
+	get: Base.prototype.get,
+	on: Base.prototype.on,
+	_differs: Base.prototype._differs,
+
 	_mount(target, anchor) {
 		target.insertBefore(this, anchor);
 	},
@@ -194,5 +208,7 @@ assign(assign(SvelteComponent.prototype, Component.prototype), {
 		this.parentNode.removeChild(this);
 	}
 });
+
+customElements.define("custom-element", SvelteComponent);
 
 export default SvelteComponent;

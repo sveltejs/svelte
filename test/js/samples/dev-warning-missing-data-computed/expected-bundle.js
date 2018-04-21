@@ -73,11 +73,7 @@ class Base {
 class Component extends Base {
 	constructor(options) {
 		super();
-		this._bind = options._bind;
-
-		this.options = options;
-		this.root = options.root || this;
-		this.store = this.root.store || options.store;
+		this._init(options);
 	}
 
 	destroy(detach) {
@@ -98,6 +94,14 @@ class Component extends Base {
 		callAll(this.root._oncreate);
 		callAll(this.root._aftercreate);
 		this.root._lock = false;
+	}
+
+	_init(options) {
+		this._bind = options._bind;
+
+		this.options = options;
+		this.root = options.root || this;
+		this.store = this.root.store || options.store;
 	}
 
 	_set(newState) {
@@ -134,6 +138,14 @@ class Component extends Base {
 }
 
 class ComponentDev extends Component {
+	constructor(options) {
+		if (!options || (!options.target && !options.root)) {
+			throw new Error(`'target' is a required option`);
+		}
+
+		super(options);
+	}
+
 	destroy(detach) {
 		super.destroy(detach);
 		this.destroy = () => {
@@ -205,7 +217,6 @@ class SvelteComponent extends ComponentDev {
 	constructor(options) {
 		super(options);
 		this._debugName = '<SvelteComponent>';
-		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		this._state = assign({ Math : Math }, options.data);
 		this._recompute({ foo: 1 }, this._state);
 		if (!('foo' in this._state)) console.warn("<SvelteComponent> was created without expected data property 'foo'");

@@ -69,11 +69,7 @@ class Base {
 class Component extends Base {
 	constructor(options) {
 		super();
-		this._bind = options._bind;
-
-		this.options = options;
-		this.root = options.root || this;
-		this.store = this.root.store || options.store;
+		this._init(options);
 	}
 
 	destroy(detach) {
@@ -94,6 +90,14 @@ class Component extends Base {
 		callAll(this.root._oncreate);
 		callAll(this.root._aftercreate);
 		this.root._lock = false;
+	}
+
+	_init(options) {
+		this._bind = options._bind;
+
+		this.options = options;
+		this.root = options.root || this;
+		this.store = this.root.store || options.store;
 	}
 
 	_set(newState) {

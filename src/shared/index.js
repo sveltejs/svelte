@@ -54,11 +54,7 @@ export class Base {
 export class Component extends Base {
 	constructor(options) {
 		super();
-		this._bind = options._bind;
-
-		this.options = options;
-		this.root = options.root || this;
-		this.store = this.root.store || options.store;
+		this._init(options);
 	}
 
 	destroy(detach) {
@@ -79,6 +75,14 @@ export class Component extends Base {
 		callAll(this.root._oncreate);
 		callAll(this.root._aftercreate);
 		this.root._lock = false;
+	}
+
+	_init(options) {
+		this._bind = options._bind;
+
+		this.options = options;
+		this.root = options.root || this;
+		this.store = this.root.store || options.store;
 	}
 
 	_set(newState) {
@@ -115,6 +119,14 @@ export class Component extends Base {
 }
 
 export class ComponentDev extends Component {
+	constructor(options) {
+		if (!options || (!options.target && !options.root)) {
+			throw new Error(`'target' is a required option`);
+		}
+
+		super(options);
+	}
+
 	destroy(detach) {
 		super.destroy(detach);
 		this.destroy = () => {

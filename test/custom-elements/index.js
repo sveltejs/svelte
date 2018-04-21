@@ -23,6 +23,10 @@ describe('custom-elements', function() {
 		console[type](...args);
 	});
 
+	nightmare.on('page', (type, message, stack) => {
+		console.error(stack);
+	});
+
 	let svelte;
 	let server;
 	let bundle;

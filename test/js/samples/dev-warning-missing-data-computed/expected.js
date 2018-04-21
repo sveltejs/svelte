@@ -45,7 +45,6 @@ class SvelteComponent extends ComponentDev {
 	constructor(options) {
 		super(options);
 		this._debugName = '<SvelteComponent>';
-		if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 		this._state = assign({ Math : Math }, options.data);
 		this._recompute({ foo: 1 }, this._state);
 		if (!('foo' in this._state)) console.warn("<SvelteComponent> was created without expected data property 'foo'");

@@ -133,17 +133,6 @@ export default function dom(
 		? 'svelte/shared.js'
 		: options.shared || '';
 
-	let prototypeBase = `${name}.prototype`;
-
-	const proto = sharedPath
-		? `@Component.prototype`
-		: deindent`
-		{
-			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_unmount', '_differs']
-				.map(n => `${n}: @${n}`)
-				.join(',\n')}
-		}`;
-
 	const debugName = `<${generator.customElement ? generator.tag : name}>`;
 
 	// generate initial state object
@@ -172,8 +161,6 @@ export default function dom(
 
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
-		${options.dev && !generator.customElement &&
-			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		${templateProperties.store && `this.store = %store();`}
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
@@ -280,6 +267,8 @@ export default function dom(
 			class ${name} extends HTMLElement {
 				constructor(options = {}) {
 					super();
+					this._handlers = {};
+					this._init.call(this, options);
 					${constructorBody}
 				}
 
@@ -319,8 +308,16 @@ export default function dom(
 				`}
 			}
 
-			customElements.define("${generator.tag}", ${name});
-			@assign(@assign(${prototypeBase}, ${proto}), {
+			Object.getOwnPropertyNames(${generator.options.dev ? `Object.getPrototypeOf(@Component.prototype)` : `@Component.prototype`}).forEach(name => {
+				${name}.prototype[name] = @Component.prototype[name];
+			});
+
+			@assign(${name}.prototype, {
+				fire: @Base.prototype.fire,
+				get: @Base.prototype.get,
+				on: @Base.prototype.on,
+				_differs: @Base.prototype._differs,
+
 				_mount(target, anchor) {
 					target.insertBefore(this, anchor);
 				},
@@ -329,6 +326,8 @@ export default function dom(
 					this.parentNode.removeChild(this);
 				}
 			});
+
+			customElements.define("${generator.tag}", ${name});
 		`);
 	} else {
 		// TODO put methods in class body
