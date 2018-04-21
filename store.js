@@ -1,11 +1,11 @@
 import {
-	Thing,
+	Base,
 	assign,
 	blankObject,
 	_differsImmutable
 } from './shared.js';
 
-class Store extends Thing {
+class Store extends Base {
 	constructor(state, options) {
 		super();
 

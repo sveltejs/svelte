@@ -406,7 +406,7 @@ export default function dom(
 
 		// super gross hack to ensure Component isn't declared before its superclass
 		usedHelpers.delete('Component');
-		usedHelpers.add('Thing').add('Component');
+		usedHelpers.add('Base').add('Component');
 
 		usedHelpers.forEach(key => {
 			const str = shared[key];
@@ -449,6 +449,7 @@ export default function dom(
 				inlineHelpers += `var ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
 			} else {
 				const alias = generator.alias(expression.id.name);
+
 				if (alias !== expression.id.name)
 					code.overwrite(expression.id.start, expression.id.end, alias);
 

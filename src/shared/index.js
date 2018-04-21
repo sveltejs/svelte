@@ -10,8 +10,7 @@ export function blankObject() {
 	return Object.create(null);
 }
 
-// TODO need to think of a suitable name for this
-export class Thing {
+export class Base {
 	constructor() {
 		this._handlers = blankObject();
 	}
@@ -52,7 +51,7 @@ export class Thing {
 	}
 }
 
-export class Component extends Thing {
+export class Component extends Base {
 	constructor(options) {
 		super();
 		this._bind = options._bind;

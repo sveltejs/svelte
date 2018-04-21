@@ -29,8 +29,7 @@ function blankObject() {
 	return Object.create(null);
 }
 
-// TODO need to think of a suitable name for this
-class Thing {
+class Base {
 	constructor() {
 		this._handlers = blankObject();
 	}
@@ -71,7 +70,7 @@ class Thing {
 	}
 }
 
-class Component extends Thing {
+class Component extends Base {
 	constructor(options) {
 		super();
 		this._bind = options._bind;
