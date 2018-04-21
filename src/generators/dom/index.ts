@@ -260,6 +260,14 @@ export default function dom(
 		`}
 	`;
 
+	const classMethods = [];
+	if (computations.length) {
+		classMethods.push(deindent`
+		_recompute(changed, state) {
+			${computationBuilder}
+		}`);
+	}
+
 	if (generator.customElement) {
 		const props = generator.props || Array.from(generator.expectedProperties);
 
@@ -277,34 +285,35 @@ export default function dom(
 				}
 
 				${props.map(prop => deindent`
-					get ${prop}() {
-						return this.get().${prop};
-					}
+				get ${prop}() {
+					return this.get().${prop};
+				}
 
-					set ${prop}(value) {
-						this.set({ ${prop}: value });
-					}
-				`).join('\n\n')}
+				set ${prop}(value) {
+					this.set({ ${prop}: value });
+				}`).join('\n\n')}
+
+				${classMethods.length && classMethods.join('\n\n')}
 
 				${generator.slots.size && deindent`
-					connectedCallback() {
-						Object.keys(this._slotted).forEach(key => {
-							this.appendChild(this._slotted[key]);
-						});
-					}`}
+				connectedCallback() {
+					Object.keys(this._slotted).forEach(key => {
+						this.appendChild(this._slotted[key]);
+					});
+				}`}
 
 				attributeChangedCallback(attr, oldValue, newValue) {
 					this.set({ [attr]: newValue });
 				}
 
 				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
-					connectedCallback() {
-						${generator.hasComponents && `this._lock = true;`}
-						${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-						${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-						${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-						${generator.hasComponents && `this._lock = false;`}
-					}
+				connectedCallback() {
+					${generator.hasComponents && `this._lock = true;`}
+					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
+					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+					${generator.hasComponents && `this._lock = false;`}
+				}
 				`}
 			}
 
@@ -337,6 +346,8 @@ export default function dom(
 					super(options);
 					${constructorBody}
 				}
+
+				${classMethods.length && classMethods.join('\n\n')}
 			}
 
 			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
@@ -354,12 +365,6 @@ export default function dom(
 				)}
 			};
 		`}
-
-		${computations.length ? deindent`
-			${name}.prototype._recompute = function _recompute(changed, state) {
-				${computationBuilder}
-			}
-		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
 
 		${templateProperties.setup && `%setup(${name});`}
 

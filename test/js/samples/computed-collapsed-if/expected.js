@@ -37,12 +37,12 @@ class SvelteComponent extends Component {
 			this._mount(options.target, options.anchor);
 		}
 	}
-}
 
-SvelteComponent.prototype._recompute = function _recompute(changed, state) {
-	if (changed.x) {
-		if (this._differs(state.a, (state.a = a(state)))) changed.a = true;
-		if (this._differs(state.b, (state.b = b(state)))) changed.b = true;
+	_recompute(changed, state) {
+		if (changed.x) {
+			if (this._differs(state.a, (state.a = a(state)))) changed.a = true;
+			if (this._differs(state.b, (state.b = b(state)))) changed.b = true;
+		}
 	}
 }
 export default SvelteComponent;
