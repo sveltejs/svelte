@@ -110,12 +110,7 @@ describe.only("runtime", () => {
 						};
 					};
 
-					try {
-						SvelteComponent = require(`./samples/${dir}/main.html`);
-					} catch (err) {
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, compile); // eslint-disable-line no-console
-						throw err;
-					}
+					SvelteComponent = require(`./samples/${dir}/main.html`);
 
 					global.window = window;
 
