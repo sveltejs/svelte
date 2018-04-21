@@ -142,6 +142,8 @@ export class ComponentDev extends Component {
 		this._checkReadOnly(newState);
 		super.set(newState);
 	}
+
+	_checkReadOnly() {}
 }
 
 export function _differsImmutable(a, b) {

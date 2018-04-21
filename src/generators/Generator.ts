@@ -610,8 +610,10 @@ export default class Generator {
 				}
 
 				if (templateProperties.methods && dom) {
-					addDeclaration('methods', templateProperties.methods.value);
-
+					const indentationLevel = getIndentationLevel(source, templateProperties.methods.start);
+					if (indentationLevel) {
+						removeIndentation(code, templateProperties.methods.start, templateProperties.methods.end, indentationLevel, indentExclusionRanges);
+					}
 					templateProperties.methods.value.properties.forEach(prop => {
 						this.methods.add(prop.key.name);
 					});

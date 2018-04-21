@@ -261,11 +261,52 @@ export default function dom(
 	`;
 
 	const classMethods = [];
+	const extraMethods = [];
+
+	if (templateProperties.methods) {
+		templateProperties.methods.value.properties.forEach(prop => {
+			if (/FunctionExpression/.test(prop.value.type)) {
+				const { type, params, body, async, generator: isGenerator, start, end } = prop.value;
+
+				const prefix = async ? `async ` : isGenerator ? `*` : ``;
+				const key = `${prefix}[✂${prop.key.start}-${prop.key.end}✂]`;
+
+				if (type === 'ArrowFunctionExpression') {
+					const paramsSnippet = params.length > 0
+						? `[✂${params[0].start}-${params[params.length - 1].end}✂]`
+						: '';
+
+					let bodySnippet = `[✂${body.start}-${body.end}✂]`;
+					if (body.type !== 'BlockStatement') bodySnippet = `{ return ${bodySnippet}; }`;
+
+					classMethods.push(`${key}(${paramsSnippet}) ${bodySnippet}`)
+				} else if (type === 'FunctionExpression') {
+					let c = start;
+					while (generator.source[c] !== '(') c += 1;
+					classMethods.push(`${key}[✂${c}-${end}✂]`);
+				}
+			} else {
+				extraMethods.push(`[✂${prop.start}-${prop.end}✂]`)
+			}
+		});
+	}
+
 	if (computations.length) {
 		classMethods.push(deindent`
 		_recompute(changed, state) {
 			${computationBuilder}
 		}`);
+	}
+
+	if (options.dev) {
+		const readonly = Array.from(generator.readonly);
+		if (readonly.length > 0) {
+			classMethods.push(deindent`
+			_checkReadOnly(newState) {
+				if (this._updatingReadonlyProperty) return;
+				${readonly.map(prop => `if ('${prop}' in newState) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`)}
+			}`);
+		}
 	}
 
 	if (generator.customElement) {
@@ -339,7 +380,7 @@ export default function dom(
 			customElements.define("${generator.tag}", ${name});
 		`);
 	} else {
-		// TODO put methods in class body
+		// TODO assign non-function-expression methods
 		builder.addBlock(deindent`
 			class ${name} extends @Component {
 				constructor(options) {
@@ -349,21 +390,16 @@ export default function dom(
 
 				${classMethods.length && classMethods.join('\n\n')}
 			}
-
-			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
 		`);
 	}
 
 	const immutable = templateProperties.immutable ? templateProperties.immutable.value.value : options.immutable;
 
 	builder.addBlock(deindent`
-		${options.dev && deindent`
-			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
-				${Array.from(generator.readonly).map(
-					prop =>
-						`if ('${prop}' in newState && !this._updatingReadonlyProperty) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`
-				)}
-			};
+		${extraMethods.length > 0 && deindent`
+		@assign(${name}.prototype, {
+			${extraMethods.join(',\n\n')}
+		});
 		`}
 
 		${templateProperties.setup && `%setup(${name});`}

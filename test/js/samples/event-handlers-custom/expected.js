@@ -5,12 +5,6 @@ function foo( node, callback ) {
 	// code goes here
 };
 
-var methods = {
-	foo ( bar ) {
-		console.log( bar );
-	}
-};
-
 function create_main_fragment(component, state) {
 	var button, foo_handler;
 
@@ -56,7 +50,9 @@ class SvelteComponent extends Component {
 			this._mount(options.target, options.anchor);
 		}
 	}
-}
 
-assign(SvelteComponent.prototype, methods);
+	foo( bar ) {
+		console.log( bar );
+	}
+}
 export default SvelteComponent;

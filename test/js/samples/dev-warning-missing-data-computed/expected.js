@@ -63,9 +63,10 @@ class SvelteComponent extends ComponentDev {
 			if (this._differs(state.bar, (state.bar = bar(state)))) changed.bar = true;
 		}
 	}
-}
 
-SvelteComponent.prototype._checkReadOnly = function _checkReadOnly(newState) {
-	if ('bar' in newState && !this._updatingReadonlyProperty) throw new Error("<SvelteComponent>: Cannot set read-only property 'bar'");
-};
+	_checkReadOnly(newState) {
+		if (this._updatingReadonlyProperty) return;
+		if ('bar' in newState) throw new Error("<SvelteComponent>: Cannot set read-only property 'bar'");
+	}
+}
 export default SvelteComponent;
