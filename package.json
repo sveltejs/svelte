@@ -60,7 +60,7 @@
     "jsdom": "^11.8.0",
     "locate-character": "^2.0.5",
     "magic-string": "^0.24.0",
-    "mocha": "^5.1.1",
+    "mocha": "3",
     "nightmare": "^3.0.1",
     "node-resolve": "^1.3.3",
     "nyc": "^11.7.1",
