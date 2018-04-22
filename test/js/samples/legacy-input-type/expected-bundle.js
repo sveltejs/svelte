@@ -30,11 +30,12 @@ function blankObject() {
 function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
-	this.set = this.get = noop;
+	this.set = noop;
 
 	if (detach !== false) this._fragment.u();
 	this._fragment.d();
-	this._fragment = this._state = null;
+	this._fragment = null;
+	this._state = {};
 }
 
 function _differs(a, b) {
