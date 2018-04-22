@@ -5,12 +5,9 @@ function assign(tar, src) {
 	return tar;
 }
 
-function makePropertyMap(obj) {
-	const map = {};
-	for (const key in obj) {
-		map[key] = 1;
-	}
-	return map;
+function assignTrue(tar, src) {
+	for (var k in src) tar[k] = 1;
+	return tar;
 }
 
 function blankObject() {
@@ -166,7 +163,7 @@ function SvelteComponent(options) {
 
 	this.root._oncreate.push(() => {
 		oncreate.call(this);
-		this.fire("update", { changed: makePropertyMap(this._state), current: this._state });
+		this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
 	});
 
 	if (options.target) {

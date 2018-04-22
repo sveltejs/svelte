@@ -232,9 +232,9 @@ export default function dom(
 
 		${hasInitHooks && deindent`
 			this.root._oncreate.push(() => {
-				${templateProperties.onstate && `%onstate.call(this, { changed: @makePropertyMap(this._state), current: this._state });`}
+				${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
 				${templateProperties.oncreate && `%oncreate.call(this);`}
-				this.fire("update", { changed: @makePropertyMap(this._state), current: this._state });
+				this.fire("update", { changed: @assignTrue({}, this._state), current: this._state });
 			});
 		`}
 
