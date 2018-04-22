@@ -9,18 +9,14 @@ export default function visitAwaitBlock(
 	node: Node
 ) {
 	block.contextualise(node.expression);
-	const { dependencies, snippet } = node.metadata;
+	const { snippet } = node.metadata;
 
 	// TODO should this be the generator's job? It's duplicated between
 	// here and the equivalent DOM compiler visitor
 	const contexts = new Map(block.contexts);
 	contexts.set(node.value, '__value');
 
-	const contextDependencies = new Map(block.contextDependencies);
-	contextDependencies.set(node.value, dependencies);
-
 	const childBlock = block.child({
-		contextDependencies,
 		contexts
 	});
 
