@@ -9,7 +9,7 @@ export default function visitEachBlock(
 	node: Node
 ) {
 	block.contextualise(node.expression);
-	const { dependencies, snippet } = node.metadata;
+	const { snippet } = node.metadata;
 
 	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}${snippet}.map(${node.index ? `(${node.context}, ${node.index})` : `(${node.context})`} => \``;
 	generator.append(open);
