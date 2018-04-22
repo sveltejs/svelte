@@ -1,0 +1,20 @@
+<Button on:click="handleClick()">one</Button>
+<Button on:click="fire('value', {value})">two</Button>
+
+<script>
+	import Button from './Button.html';
+
+	export default {
+		components: {
+			Button
+		},
+
+		methods: {
+			handleClick() {
+				const { value } = this.get();
+				this.fire('value', { value });
+			}
+		}
+
+	}
+</script>
