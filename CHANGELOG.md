@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.1.1
+
+* Report initial `changed` based on state, not expected props ([#1356](https://github.com/sveltejs/svelte/issues/1356))
+* Set state to empty object, not null, on destroy ([#1354](https://github.com/sveltejs/svelte/issues/1354))
+* Prevent stale state in component event handlers ([#1353](https://github.com/sveltejs/svelte/issues/1353))
+
 ## 2.1.0
 
 * Allow shorthand imports ([#1038](https://github.com/sveltejs/svelte/issues/1038))
