@@ -10,6 +10,7 @@ import mungeAttribute from './shared/mungeAttribute';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
+import usesThisOrArguments from '../../validate/js/utils/usesThisOrArguments';
 
 export default class Component extends Node {
 	type: 'Component';
@@ -494,8 +495,11 @@ function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, b
 				);
 			}
 
+		let usesState = false;
+
 		handler.expression.arguments.forEach((arg: Node) => {
 			const { contexts } = block.contextualise(arg, null, true);
+			if (contexts.has('state')) usesState = true;
 
 			contexts.forEach(context => {
 				allContexts.add(context);
@@ -503,11 +507,12 @@ function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, b
 		});
 
 		body = deindent`
+			${usesState && `const state = #component.get();`}
 			[✂${handler.expression.start}-${handler.expression.end}✂];
 		`;
 	} else {
 		body = deindent`
-			${block.alias('component')}.fire('${handler.name}', event);
+			#component.fire('${handler.name}', event);
 		`;
 	}
 
