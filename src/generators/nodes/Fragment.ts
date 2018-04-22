@@ -1,10 +1,17 @@
 import Node from './shared/Node';
 import { DomGenerator } from '../dom/index';
+import Generator from '../Generator';
+import mapChildren from './shared/mapChildren';
 import Block from '../dom/Block';
 
 export default class Fragment extends Node {
 	block: Block;
 	children: Node[];
+
+	constructor(compiler: Generator, info: any) {
+		super(compiler, info);
+		this.children = mapChildren(compiler, this, info.children);
+	}
 
 	init() {
 		this.block = new Block({

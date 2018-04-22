@@ -1,7 +1,15 @@
 import Node from './Node';
+import Expression from './Expression';
 import Block from '../../dom/Block';
 
 export default class Tag extends Node {
+	expression: Expression;
+
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
+		this.expression = new Expression(compiler, info.expression);
+	}
+
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)

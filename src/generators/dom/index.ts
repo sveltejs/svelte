@@ -70,8 +70,8 @@ export default function dom(
 		namespace,
 	} = generator;
 
-	parsed.html.build();
-	const { block } = parsed.html;
+	generator.fragment.build();
+	const { block } = generator.fragment;
 
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.addLine(`this.c = @noop;`);

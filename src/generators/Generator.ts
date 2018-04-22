@@ -17,6 +17,7 @@ import clone from '../utils/clone';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import nodes from './nodes/index';
+import Fragment from './nodes/Fragment';
 import { Node, GenerateOptions, ShorthandImport, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -83,6 +84,7 @@ export default class Generator {
 	source: string;
 	name: string;
 	options: CompileOptions;
+	fragment: Fragment;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -191,6 +193,7 @@ export default class Generator {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
 
+		this.fragment = new Fragment(this, parsed.html);
 		this.walkTemplate();
 		if (!this.customElement) this.stylesheet.reify();
 	}
@@ -711,7 +714,6 @@ export default class Generator {
 			expectedProperties,
 			helpers
 		} = this;
-		const { html } = this.parsed;
 
 		const contextualise = (
 			node: Node, contextDependencies: Map<string, string[]>,
@@ -782,7 +784,7 @@ export default class Generator {
 			return parentIsHead(node.parent);
 		}
 
-		walk(html, {
+		walk(this.fragment, {
 			enter(node: Node, parent: Node, key: string) {
 				// TODO this is hacky as hell
 				if (key === 'parent') return this.skip();

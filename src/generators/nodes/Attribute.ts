@@ -12,34 +12,22 @@ export interface StyleProp {
 	value: Node[];
 }
 
-export default class Attribute {
+export default class Attribute extends Node {
 	type: 'Attribute';
 	start: number;
 	end: number;
 
-	generator: DomGenerator;
+	compiler: DomGenerator;
 	parent: Element;
 	name: string;
 	value: true | Node[]
 	expression: Node;
 
-	constructor({
-		generator,
-		name,
-		value,
-		parent
-	}: {
-		generator: DomGenerator,
-		name: string,
-		value: Node[],
-		parent: Element
-	}) {
-		this.type = 'Attribute';
-		this.generator = generator;
-		this.parent = parent;
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
 
-		this.name = name;
-		this.value = value;
+		this.name = info.name;
+		this.value = info.value;
 	}
 
 	render(block: Block) {

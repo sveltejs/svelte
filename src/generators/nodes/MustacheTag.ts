@@ -6,7 +6,7 @@ export default class MustacheTag extends Tag {
 	init(block: Block) {
 		this.cannotUseInnerHTML();
 		this.var = block.getUniqueName('text');
-		block.addDependencies(this.metadata.dependencies);
+		block.addDependencies(this.expression.dependencies);
 	}
 
 	build(

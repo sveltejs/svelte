@@ -1,28 +1,20 @@
 import { DomGenerator } from '../../dom/index';
+import Generator from './../../Generator';
 import Block from '../../dom/Block';
 import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {
-	type: string;
-	start: number;
-	end: number;
-	[key: string]: any;
-
-	metadata?: {
-		dependencies: string[];
-		snippet: string;
-	};
-
+	compiler: Generator;
 	parent: Node;
 	prev?: Node;
 	next?: Node;
-	generator: DomGenerator;
 
 	canUseInnerHTML: boolean;
 	var: string;
 
-	constructor(data: Record<string, any>) {
-		Object.assign(this, data);
+	constructor(compiler: Generator, parent, info: any) {
+		this.compiler = compiler;
+		this.parent = parent;
 	}
 
 	cannotUseInnerHTML() {
