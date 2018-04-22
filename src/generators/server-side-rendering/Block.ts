@@ -14,7 +14,6 @@ export default class Block {
 
 	contexts: Map<string, string>;
 	indexes: Map<string, string>;
-	contextDependencies: Map<string, string[]>;
 
 	constructor(options: BlockOptions) {
 		Object.assign(this, options);
