@@ -218,16 +218,6 @@ export default function dom(
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
 		}
 
-		${hasInitHooks && deindent`
-			var self = this;
-			var _oncreate = function() {
-				var changed = { ${expectedProperties.map(p => `${p}: 1`).join(', ')} };
-				${templateProperties.onstate && `%onstate.call(self, { changed: changed, current: self._state });`}
-				${templateProperties.oncreate && `%oncreate.call(self);`}
-				self.fire("update", { changed: changed, current: self._state });
-			};
-		`}
-
 		${(hasInitHooks || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
 			if (!options.root) {
 				this._oncreate = [];
@@ -241,7 +231,11 @@ export default function dom(
 		this._fragment = @create_main_fragment(this, this._state);
 
 		${hasInitHooks && deindent`
-			this.root._oncreate.push(_oncreate);
+			this.root._oncreate.push(() => {
+				${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
+				${templateProperties.oncreate && `%oncreate.call(this);`}
+				this.fire("update", { changed: @assignTrue({}, this._state), current: this._state });
+			});
 		`}
 
 		${generator.customElement ? deindent`
