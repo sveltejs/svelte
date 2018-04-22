@@ -357,7 +357,6 @@ export default function dom(
 			customElements.define("${generator.tag}", ${name});
 		`);
 	} else {
-		// TODO assign non-function-expression methods
 		builder.addBlock(deindent`
 			class ${name} extends @Component {
 				constructor(options) {
