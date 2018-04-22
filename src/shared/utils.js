@@ -5,10 +5,7 @@ export function assign(tar, src) {
 	return tar;
 }
 
-export function makePropertyMap(obj) {
-	const map = {};
-	for (const key in obj) {
-		map[key] = 1;
-	}
-	return map;
+export function assignTrue(tar, src) {
+	for (var k in src) tar[k] = 1;
+	return tar;
 }
