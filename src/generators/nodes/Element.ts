@@ -17,12 +17,36 @@ import Transition from './Transition';
 import Action from './Action';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
+import mapChildren from './shared/mapChildren';
 
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
 	attributes: (Attribute | Binding | EventHandler | Ref | Transition | Action)[]; // TODO split these up sooner
 	children: Node[];
+
+	constructor(compiler, parent, info: any) {
+		super(compiler, parent, info);
+		this.name = info.name;
+		this.children = mapChildren(compiler, parent, info.children);
+
+		this.attributes = [];
+		// TODO bindings etc
+
+		info.attributes.forEach(node => {
+			switch (node.type) {
+				case 'Attribute':
+				case 'Spread':
+					this.attributes.push(new Attribute(compiler, this, node));
+					break;
+
+				default:
+					throw new Error(`Not implemented: ${node.type}`);
+			}
+		});
+
+		// TODO break out attributes and directives here
+	}
 
 	init(
 		block: Block,
