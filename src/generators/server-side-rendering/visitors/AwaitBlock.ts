@@ -16,11 +16,7 @@ export default function visitAwaitBlock(
 	const contexts = new Map(block.contexts);
 	contexts.set(node.value, '__value');
 
-	const contextDependencies = new Map(block.contextDependencies);
-	contextDependencies.set(node.value, dependencies);
-
 	const childBlock = block.child({
-		contextDependencies,
 		contexts
 	});
 

@@ -22,20 +22,15 @@ export default function visitEachBlock(
 	const indexes = new Map(block.indexes);
 	if (node.index) indexes.set(node.index, node.context);
 
-	const contextDependencies = new Map(block.contextDependencies);
-	contextDependencies.set(node.context, dependencies);
-
 	if (node.destructuredContexts) {
 		for (let i = 0; i < node.destructuredContexts.length; i += 1) {
 			contexts.set(node.destructuredContexts[i], `${node.context}[${i}]`);
-			contextDependencies.set(node.destructuredContexts[i], dependencies);
 		}
 	}
 
 	const childBlock = block.child({
 		contexts,
-		indexes,
-		contextDependencies,
+		indexes
 	});
 
 	node.children.forEach((child: Node) => {
