@@ -30,9 +30,9 @@ class SvelteComponent extends HTMLElement {
 		super();
 		this._handlers = {};
 		this._init.call(this, options);
+		this.attachShadow({ mode: 'open' });
 		this._state = assign({}, options.data);
 
-		this.attachShadow({ mode: 'open' });
 		this.shadowRoot.innerHTML = `<style>div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}</style>`;
 
 		this._fragment = create_main_fragment(this, this._state);

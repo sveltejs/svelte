@@ -31,20 +31,13 @@ class SvelteComponent extends Component {
 		super(options);
 		this._state = assign(data_1(), options.data);
 
-		var self = this;
-		var _oncreate = function() {
-			var changed = {  };
-			oncreate.call(self);
-			self.fire("update", { changed: changed, current: self._state });
-		};
-
-		if (!options.root) {
-			this._oncreate = [];
-		}
-
 		this._fragment = create_main_fragment(this, this._state);
 
-		this.root._oncreate.push(_oncreate);
+		this.root._oncreate.push(() => {
+			const changed = {  };
+			oncreate.call(this);
+			this.fire("update", { changed, current: this._state });
+		});
 
 		if (options.target) {
 			this._fragment.c();

@@ -102,10 +102,20 @@ class Component extends Base {
 
 	_init(options) {
 		this._bind = options._bind;
+		this._slotted = options.slots || {};
 
 		this.options = options;
 		this.root = options.root || this;
 		this.store = this.root.store || options.store;
+
+		if (!options.root) {
+			this._oncreate = [];
+			this._beforecreate = [];
+			this._aftercreate = [];
+		}
+
+		this.refs = {};
+		this.slots = {};
 	}
 
 	_set(newState) {

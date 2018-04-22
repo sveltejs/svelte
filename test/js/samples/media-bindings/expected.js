@@ -89,11 +89,6 @@ class SvelteComponent extends Component {
 		super(options);
 		this._state = assign({}, options.data);
 
-		if (!options.root) {
-			this._oncreate = [];
-			this._beforecreate = [];
-		}
-
 		this._fragment = create_main_fragment(this, this._state);
 
 		if (options.target) {

@@ -162,7 +162,6 @@ export default function dom(
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
 		${templateProperties.store && `this.store = %store();`}
-		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
 		${generator.metaBindings}
@@ -193,71 +192,51 @@ export default function dom(
 			}];`
 		)}
 
-		${generator.slots.size && `this._slotted = options.slots || {};`}
-
-		${generator.customElement ?
-			deindent`
-				this.attachShadow({ mode: 'open' });
-				${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+		${generator.customElement ? deindent`
+			${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 			` :
 			(generator.stylesheet.hasStyles && options.css !== false &&
-			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
-		}
-
-		${hasInitHooks && deindent`
-			var self = this;
-			var _oncreate = function() {
-				var changed = { ${expectedProperties.map(p => `${p}: 1`).join(', ')} };
-				${templateProperties.onstate && `%onstate.call(self, { changed: changed, current: self._state });`}
-				${templateProperties.oncreate && `%oncreate.call(self);`}
-				self.fire("update", { changed: changed, current: self._state });
-			};
-		`}
-
-		${(hasInitHooks || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
-			if (!options.root) {
-				this._oncreate = [];
-				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
-				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
-			}
-		`}
-
-		${generator.slots.size && `this.slots = {};`}
+			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)}
 
 		this._fragment = @create_main_fragment(this, this._state);
 
 		${hasInitHooks && deindent`
-			this.root._oncreate.push(_oncreate);
-		`}
+		this.root._oncreate.push(() => {
+			const changed = { ${expectedProperties.map(p => `${p}: 1`).join(', ')} };
+			${templateProperties.onstate && `%onstate.call(this, { changed, current: this._state });`}
+			${templateProperties.oncreate && `%oncreate.call(this);`}
+			this.fire("update", { changed, current: this._state });
+		});`}
 
-		${generator.customElement ? deindent`
-			this._fragment.c();
-			this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
+		${generator.customElement ?
+			deindent`
+				this._fragment.c();
+				this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
 
-			if (options.target) this._mount(options.target, options.anchor);
-		` : deindent`
-			if (options.target) {
-				${generator.hydratable
-					? deindent`
-						var nodes = @children(options.target);
-						options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
-						nodes.forEach(@detachNode);
-					` :
-					deindent`
-						${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
-						this._fragment.c();
+				if (options.target) this._mount(options.target, options.anchor);
+			` :
+			deindent`
+				if (options.target) {
+					${generator.hydratable
+						? deindent`
+							var nodes = @children(options.target);
+							options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
+							nodes.forEach(@detachNode);
+						` :
+						deindent`
+							${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
+							this._fragment.c();
+						`}
+					this._mount(options.target, options.anchor);
+
+					${(generator.hasComponents || generator.hasComplexBindings || hasInitHooks || generator.hasIntroTransitions) && deindent`
+						${generator.hasComponents && `this._lock = true;`}
+						${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+						${(generator.hasComponents || hasInitHooks) && `@callAll(this._oncreate);`}
+						${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+						${generator.hasComponents && `this._lock = false;`}
 					`}
-				this._mount(options.target, options.anchor);
-
-				${(generator.hasComponents || generator.hasComplexBindings || hasInitHooks || generator.hasIntroTransitions) && deindent`
-					${generator.hasComponents && `this._lock = true;`}
-					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
-					${(generator.hasComponents || hasInitHooks) && `@callAll(this._oncreate);`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-					${generator.hasComponents && `this._lock = false;`}
-				`}
-			}
-		`}
+				}`}
 	`;
 
 	const classMethods = [];
@@ -318,6 +297,7 @@ export default function dom(
 					super();
 					this._handlers = {};
 					this._init.call(this, options);
+					this.attachShadow({ mode: 'open' });
 					${constructorBody}
 				}
 
@@ -336,19 +316,16 @@ export default function dom(
 
 				${classMethods.length && classMethods.join('\n\n')}
 
-				${generator.slots.size && deindent`
-				connectedCallback() {
-					Object.keys(this._slotted).forEach(key => {
-						this.appendChild(this._slotted[key]);
-					});
-				}`}
-
 				attributeChangedCallback(attr, oldValue, newValue) {
 					this.set({ [attr]: newValue });
 				}
 
-				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+				${(generator.slots.size || generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
 				connectedCallback() {
+					${generator.slots.size && deindent`
+					Object.keys(this._slotted).forEach(key => {
+						this.appendChild(this._slotted[key]);
+					});`}
 					${generator.hasComponents && `this._lock = true;`}
 					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
 					${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
