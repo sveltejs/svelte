@@ -182,6 +182,18 @@ export default function ssr(
 		}
 
 		${
+			/__each/.test(generator.renderCode) && deindent`
+				function __each(items, assign, fn) {
+					let str = '';
+					for (let i = 0; i < items.length; i += 1) {
+						str += fn(assign(items[i], i));
+					}
+					return str;
+				}
+			`
+		}
+
+		${
 			/__isPromise/.test(generator.renderCode) && deindent`
 				function __isPromise(value) {
 					return value && typeof value.then === 'function';
