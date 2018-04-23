@@ -42,7 +42,17 @@ export default class Expression {
 
 				if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
-					if (currentScope && currentScope.has(name) || helpers.has(name) || (name === 'event' && isEventHandler)) return;
+
+					if (currentScope.has(name) || (name === 'event' && isEventHandler)) return;
+
+					if (compiler.helpers.has(name)) {
+						let object = node;
+						while (object.type === 'MemberExpression') object = object.object;
+
+						const alias = compiler.templateVars.get(`helpers-${name}`);
+						if (alias !== name) code.overwrite(object.start, object.end, alias);
+						return;
+					}
 
 					code.prependRight(node.start, 'ctx.');
 
