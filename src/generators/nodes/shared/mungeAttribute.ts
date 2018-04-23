@@ -14,8 +14,7 @@ type MungedAttribute = {
 
 export default function mungeAttribute(attribute: Node, block: Block): MungedAttribute {
 	if (attribute.type === 'Spread') {
-		block.contextualise(attribute.expression); // TODO remove
-		const { dependencies, snippet } = attribute.metadata;
+		const { dependencies, snippet } = attribute.expression;
 
 		return {
 			spread: true,

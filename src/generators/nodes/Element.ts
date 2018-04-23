@@ -57,6 +57,7 @@ export default class Element extends Node {
 					break;
 
 				case 'Attribute':
+				case 'Spread':
 					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
@@ -150,18 +151,6 @@ export default class Element extends Node {
 			this.compiler.hasOutroTransitions = block.hasOutroMethod = true;
 			block.outros += 1;
 		}
-
-		this.attributes.forEach(attribute => {
-			if (attribute.type === 'Attribute' && attribute.value !== true) {
-				// removed
-			} else {
-				if (this.parent) this.parent.cannotUseInnerHTML();
-
-				if (attribute.type === 'Spread') {
-					block.addDependencies(attribute.metadata.dependencies);
-				}
-			}
-		});
 
 		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
@@ -526,23 +515,20 @@ export default class Element extends Node {
 		this.attributes
 			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
 			.forEach(attr => {
-				if (attr.type === 'Attribute') {
-					const { dynamic, value, dependencies } = mungeAttribute(attr, block);
+				const condition = attr.dependencies.size > 0
+					? [...attr.dependencies].map(d => `changed.${d}`).join(' || ')
+					: null;
 
-					const snippet = `{ ${quoteIfNecessary(attr.name)}: ${value} }`;
+				if (attr.isSpread) {
+					const { snippet, dependencies } = attr.expression;
+
 					initialProps.push(snippet);
 
-					const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
-				}
-
-				else {
-					block.contextualise(attr.expression); // TODO gah
-					const { snippet, dependencies } = attr.metadata;
-
+				} else {
+					const snippet = `{ ${quoteIfNecessary(attr.name)}: ${attr.getValue()} }`;
 					initialProps.push(snippet);
 
-					const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
 				}
 			});

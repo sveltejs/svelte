@@ -35,13 +35,12 @@ export default function visitElement(
 		appendTarget.slots[slotName] = '';
 	}
 
-	if (node.attributes.find(attr => attr.type === 'Spread')) {
+	if (node.attributes.find(attr => attr.isSpread)) {
 		// TODO dry this out
 		const args = [];
 		node.attributes.forEach((attribute: Node) => {
 			if (attribute.type === 'Spread') {
-				block.contextualise(attribute.expression);
-				args.push(attribute.metadata.snippet);
+				args.push(attribute.expression.snippet);
 			} else if (attribute.type === 'Attribute') {
 				if (attribute.name === 'value' && node.name === 'textarea') {
 					textareaContents = stringifyAttributeValue(block, attribute.value);
@@ -53,8 +52,7 @@ export default function visitElement(
 					attribute.value[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					block.contextualise(attribute.value[0].expression);
-					args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.value[0].metadata.snippet} }`);
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.value[0].expression.snippet} }`);
 				} else {
 					args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${stringifyAttributeValue(block, attribute.value)}\` }`);
 				}

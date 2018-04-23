@@ -6,6 +6,7 @@ import addToSet from '../../utils/addToSet';
 import { DomGenerator } from '../dom/index';
 import Node from './shared/Node';
 import Element from './Element';
+import Text from './Text';
 import Block from '../dom/Block';
 import Expression from './shared/Expression';
 
@@ -22,37 +23,51 @@ export default class Attribute extends Node {
 	compiler: DomGenerator;
 	parent: Element;
 	name: string;
+	isSpread: boolean;
 	isTrue: boolean;
 	isDynamic: boolean;
-	chunks: Node[];
+	expression?: Expression;
+	chunks: (Text | Expression)[];
 	dependencies: Set<string>;
-	expression: Node;
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
 
-		this.name = info.name;
-		this.isTrue = info.value === true;
+		if (info.type === 'Spread') {
+			this.name = null;
+			this.isSpread = true;
+			this.isTrue = false;
 
-		this.dependencies = new Set();
+			this.expression = new Expression(compiler, this, scope, info.expression);
+			this.dependencies = this.expression.dependencies;
+			this.chunks = null;
 
-		this.chunks = this.isTrue
-			? []
-			: info.value.map(node => {
-				if (node.type === 'Text') return node;
+			this.isDynamic = true; // TODO not necessarily
+		}
 
-				const expression = new Expression(compiler, this, scope, node.expression);
+		else {
+			this.name = info.name;
+			this.isTrue = info.value === true;
 
-				addToSet(this.dependencies, expression.dependencies);
-				return expression;
-			});
+			this.dependencies = new Set();
 
-		this.isDynamic = this.chunks.length === 1
-			? this.chunks[0].type !== 'Text'
-			: this.chunks.length > 1;
+			this.chunks = this.isTrue
+				? []
+				: info.value.map(node => {
+					if (node.type === 'Text') return node;
 
-		// TODO this would be better, but it breaks some stuff
-		// this.isDynamic = this.dependencies.size > 0;
+					const expression = new Expression(compiler, this, scope, node.expression);
+
+					addToSet(this.dependencies, expression.dependencies);
+					return expression;
+				});
+
+			// TODO this would be better, but it breaks some stuff
+			// this.isDynamic = this.dependencies.size > 0;
+			this.isDynamic = this.chunks.length === 1
+				? this.chunks[0].type !== 'Text'
+				: this.chunks.length > 1;
+		}
 	}
 
 	getValue() {
