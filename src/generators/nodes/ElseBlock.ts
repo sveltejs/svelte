@@ -6,8 +6,8 @@ export default class ElseBlock extends Node {
 	type: 'ElseBlock';
 	children: Node[];
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
-		this.children = mapChildren(compiler, this, info.children);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
+		this.children = mapChildren(compiler, this, scope, info.children);
 	}
 }

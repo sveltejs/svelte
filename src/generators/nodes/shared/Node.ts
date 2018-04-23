@@ -16,11 +16,11 @@ export default class Node {
 	canUseInnerHTML: boolean;
 	var: string;
 
-	constructor(compiler: Generator, parent, info: any) {
-		this.start = info.start;
-		this.end = info.end;
+	constructor(compiler: Generator, parent, scope, info: any) {
 		this.compiler = compiler;
 		this.parent = parent;
+		this.start = info.start;
+		this.end = info.end;
 		this.type = info.type;
 	}
 

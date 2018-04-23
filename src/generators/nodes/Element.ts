@@ -33,8 +33,8 @@ export default class Element extends Node {
 	ref: string;
 	namespace: string;
 
-	constructor(compiler, parent, info: any) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info: any) {
+		super(compiler, parent, scope, info);
 		this.name = info.name;
 
 		const parentElement = parent.findNearest(/^Element/);
@@ -53,26 +53,26 @@ export default class Element extends Node {
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
-					this.actions.push(new Action(compiler, this, node));
+					this.actions.push(new Action(compiler, this, scope, node));
 					break;
 
 				case 'Attribute':
 					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
-					this.attributes.push(new Attribute(compiler, this, node));
+					this.attributes.push(new Attribute(compiler, this, scope, node));
 					break;
 
 				case 'Binding':
-					this.bindings.push(new Binding(compiler, this, node));
+					this.bindings.push(new Binding(compiler, this, scope, node));
 					break;
 
 				case 'EventHandler':
-					this.handlers.push(new EventHandler(compiler, this, node));
+					this.handlers.push(new EventHandler(compiler, this, scope, node));
 					break;
 
 				case 'Transition':
-					const transition = new Transition(compiler, this, node);
+					const transition = new Transition(compiler, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
 					break;
@@ -92,7 +92,7 @@ export default class Element extends Node {
 
 		// TODO break out attributes and directives here
 
-		this.children = mapChildren(compiler, this, info.children);
+		this.children = mapChildren(compiler, this, scope, info.children);
 	}
 
 	init(

@@ -145,12 +145,12 @@ function cjs(
 	helpers: { name: string, alias: string }[],
 	dependencies: Dependency[]
 ) {
-	const SHARED = '__shared';
+	const helperDeclarations = helpers && (
+		helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ')
+	);
+
 	const helperBlock = helpers && (
-		`var ${SHARED} = require(${JSON.stringify(sharedPath)});\n` +
-		helpers.map(helper => {
-			return `var ${helper.alias} = ${SHARED}.${helper.name};`;
-		}).join('\n')
+		`var { ${helperDeclarations} } = require(${JSON.stringify(sharedPath)});\n`
 	);
 
 	const requireBlock = dependencies.length > 0 && (

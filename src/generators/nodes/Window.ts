@@ -38,17 +38,17 @@ export default class Window extends Node {
 	handlers: EventHandler[];
 	bindings: Binding[];
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
 		this.handlers = [];
 		this.bindings = [];
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
-				this.handlers.push(new EventHandler(compiler, this, node));
+				this.handlers.push(new EventHandler(compiler, this, scope, node));
 			} else if (node.type === 'Binding') {
-				this.bindings.push(new Binding(compiler, this, node));
+				this.bindings.push(new Binding(compiler, this, scope, node));
 			}
 		});
 	}

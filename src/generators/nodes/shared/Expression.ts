@@ -14,7 +14,7 @@ export default class Expression {
 	contexts: Set<string>;
 	indexes: Set<string>;
 
-	constructor(compiler, parent, info) {
+	constructor(compiler, parent, scope, info) {
 		this.compiler = compiler;
 		this.node = info;
 
@@ -27,7 +27,7 @@ export default class Expression {
 
 		const { code, helpers } = compiler;
 
-		let { map, scope } = createScopes(info);
+		let { map, scope: currentScope } = createScopes(info);
 		const isEventHandler = parent.type === 'EventHandler';
 
 		walk(info, {
@@ -36,22 +36,23 @@ export default class Expression {
 				code.addSourcemapLocation(node.end);
 
 				if (map.has(node)) {
-					scope = map.get(node);
+					currentScope = map.get(node);
 					return;
 				}
 
 				if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
-					if (scope && scope.has(name) || helpers.has(name) || (name === 'event' && isEventHandler)) return;
+					if (currentScope && currentScope.has(name) || helpers.has(name) || (name === 'event' && isEventHandler)) return;
 
 					code.prependRight(node.start, 'ctx.');
 
-					if (contextDependencies.has(name)) {
-						contextDependencies.get(name).forEach(dependency => {
+					if (scope.names.has(name)) {
+						scope.dependenciesForName.get(name).forEach(dependency => {
 							dependencies.add(dependency);
 						});
 					} else if (!indexes.has(name)) {
 						dependencies.add(name);
+						compiler.expectedProperties.add(name);
 					}
 
 					this.skip();
@@ -59,7 +60,7 @@ export default class Expression {
 			},
 
 			leave(node: Node, parent: Node) {
-				if (map.has(node)) scope = scope.parent;
+				if (map.has(node)) currentScope = currentScope.parent;
 			}
 		});
 
