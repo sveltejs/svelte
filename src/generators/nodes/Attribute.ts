@@ -47,7 +47,34 @@ export default class Attribute extends Node {
 				return expression;
 			});
 
-		this.isDynamic = this.dependencies.size > 0;
+		this.isDynamic = this.chunks.length === 1
+			? this.chunks[0].type !== 'Text'
+			: this.chunks.length > 1;
+
+		// TODO this would be better, but it breaks some stuff
+		// this.isDynamic = this.dependencies.size > 0;
+	}
+
+	getValue() {
+		if (this.isTrue) return true;
+		if (this.chunks.length === 0) return `''`;
+
+		if (this.chunks.length === 1) {
+			return this.chunks[0].type === 'Text'
+				? stringify(this.chunks[0].data)
+				: this.chunks[0].snippet;
+		}
+
+		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +
+			this.chunks
+				.map((chunk: Node) => {
+					if (chunk.type === 'Text') {
+						return stringify(chunk.data);
+					} else {
+						return getExpressionPrecedence(chunk) <= 13 ? `(${chunk.snippet})` : snippet;
+					}
+				})
+				.join(' + ');
 	}
 
 	render(block: Block) {
@@ -287,7 +314,7 @@ export default class Attribute extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.expression) <= 13 ? `( ${snippet} )` : snippet;
+								return getExpressionPrecedence(chunk) <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
@@ -295,7 +322,7 @@ export default class Attribute extends Node {
 				if (allDependencies.size || hasChangeableIndex) {
 					const dependencies = Array.from(allDependencies);
 					const condition = (
-						( block.hasOutroMethod ? `#outroing || ` : '' ) +
+						(block.hasOutroMethod ? `#outroing || ` : '') +
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 					);
 

@@ -11,6 +11,8 @@ export default class Expression {
 
 	references: Set<string>;
 	dependencies: Set<string>;
+	contexts: Set<string>;
+	indexes: Set<string>;
 
 	constructor(compiler, parent, info) {
 		this.compiler = compiler;
@@ -26,6 +28,7 @@ export default class Expression {
 		const { code, helpers } = compiler;
 
 		let { map, scope } = createScopes(info);
+		const isEventHandler = parent.type === 'EventHandler';
 
 		walk(info, {
 			enter(node: any, parent: any) {
@@ -38,10 +41,10 @@ export default class Expression {
 				}
 
 				if (isReference(node, parent)) {
-					code.prependRight(node.start, 'ctx.');
-
 					const { name } = flattenReference(node);
 					if (scope && scope.has(name) || helpers.has(name) || (name === 'event' && isEventHandler)) return;
+
+					code.prependRight(node.start, 'ctx.');
 
 					if (contextDependencies.has(name)) {
 						contextDependencies.get(name).forEach(dependency => {

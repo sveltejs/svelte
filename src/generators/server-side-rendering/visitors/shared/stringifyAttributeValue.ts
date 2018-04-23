@@ -9,9 +9,7 @@ export default function stringifyAttributeValue(block: Block, chunks: Node[]) {
 				return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
 			}
 
-			block.contextualise(chunk.expression);
-			const { snippet } = chunk.metadata;
-			return '${__escape(' + snippet + ')}';
+			return '${__escape(' + chunk.snippet + ')}';
 		})
 		.join('');
 }

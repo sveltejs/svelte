@@ -23,6 +23,7 @@ export default class Element extends Node {
 	type: 'Element';
 	name: string;
 	attributes: Attribute[];
+	actions: Action[];
 	bindings: Binding[];
 	handlers: EventHandler[];
 	intro: Transition;
@@ -42,6 +43,7 @@ export default class Element extends Node {
 			parentElement ? parentElement.namespace : this.compiler.namespace;
 
 		this.attributes = [];
+		this.actions = [];
 		this.bindings = [];
 		this.handlers = [];
 
@@ -50,6 +52,10 @@ export default class Element extends Node {
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
+				case 'Action':
+					this.actions.push(new Action(compiler, this, node));
+					break;
+
 				case 'Attribute':
 					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
@@ -119,6 +125,13 @@ export default class Element extends Node {
 			}
 		});
 
+		this.actions.forEach(action => {
+			this.cannotUseInnerHTML();
+			if (action.expression) {
+				block.addDependencies(action.expression.dependencies);
+			}
+		});
+
 		this.bindings.forEach(binding => {
 			this.cannotUseInnerHTML();
 			block.addDependencies(binding.value.dependencies);
@@ -144,9 +157,7 @@ export default class Element extends Node {
 			} else {
 				if (this.parent) this.parent.cannotUseInnerHTML();
 
-				if (attribute.type === 'Action' && attribute.expression) {
-					block.addDependencies(attribute.metadata.dependencies);
-				} else if (attribute.type === 'Spread') {
+				if (attribute.type === 'Spread') {
 					block.addDependencies(attribute.metadata.dependencies);
 				}
 			}
@@ -739,31 +750,29 @@ export default class Element extends Node {
 	}
 
 	addActions(block: Block) {
-		this.attributes.filter((a: Action) => a.type === 'Action').forEach((attribute:Action) => {
-			const { expression } = attribute;
+		this.actions.forEach(action => {
+			const { expression } = action;
 			let snippet, dependencies;
 			if (expression) {
-				this.compiler.addSourcemapLocations(expression);
-				block.contextualise(expression);
-				snippet = attribute.metadata.snippet;
-				dependencies = attribute.metadata.dependencies;
+				snippet = action.expression.snippet;
+				dependencies = action.expression.dependencies;
 			}
 
 			const name = block.getUniqueName(
-				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
+				`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
 			);
 
 			block.addVariable(name);
-			const fn = `%actions-${attribute.name}`;
+			const fn = `%actions-${action.name}`;
 
 			block.builders.hydrate.addLine(
 				`${name} = ${fn}.call(#component, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
 			);
 
-			if (dependencies && dependencies.length) {
+			if (dependencies && dependencies.size > 0) {
 				let conditional = `typeof ${name}.update === 'function' && `;
-				const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
-				conditional += dependencies.length > 1 ? `(${deps})` : deps;
+				const deps = [...dependencies].map(dependency => `changed.${dependency}`).join(' || ');
+				conditional += dependencies.size > 1 ? `(${deps})` : deps;
 
 				block.builders.update.addConditional(
 					conditional,

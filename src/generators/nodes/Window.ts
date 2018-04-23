@@ -71,14 +71,7 @@ export default class Window extends Node {
 
 			let usesState = handler.dependencies.size > 0;
 
-			// const flattened = flattenReference(handler.expression.callee);
-			// if (flattened.name !== 'event' && flattened.name !== 'this') {
-			// 	// allow event.stopPropagation(), this.select() etc
-			// 	compiler.code.prependRight(
-			// 		handler.expression.start,
-			// 		`${block.alias('component')}.`
-			// 	);
-			// }
+			handler.render(compiler, block);
 
 			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
 			const handlerBody = deindent`

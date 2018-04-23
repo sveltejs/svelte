@@ -68,18 +68,17 @@ export default function visitElement(
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
 				textareaContents = stringifyAttributeValue(block, attribute.value);
-			} else if (attribute.value === true) {
+			} else if (attribute.isTrue) {
 				openingTag += ` ${attribute.name}`;
 			} else if (
 				booleanAttributes.has(attribute.name) &&
-				attribute.value.length === 1 &&
-				attribute.value[0].type !== 'Text'
+				attribute.chunks.length === 1 &&
+				attribute.chunks[0].type !== 'Text'
 			) {
 				// a boolean attribute with one non-Text chunk
-				block.contextualise(attribute.value[0].expression);
-				openingTag += '${' + attribute.value[0].metadata.snippet + ' ? " ' + attribute.name + '" : "" }';
+				openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
 			} else {
-				openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.value)}"`;
+				openingTag += ` ${attribute.name}="${stringifyAttributeValue(block, attribute.chunks)}"`;
 			}
 		});
 	}
