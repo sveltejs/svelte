@@ -12,12 +12,17 @@ import Block from '../dom/Block';
 import Attribute from './Attribute';
 import usesThisOrArguments from '../../validate/js/utils/usesThisOrArguments';
 import mapChildren from './shared/mapChildren';
+import Binding from './Binding';
+import EventHandler from './EventHandler';
 
 export default class Component extends Node {
 	type: 'Component';
 	name: string;
 	attributes: Attribute[];
+	bindings: Binding[];
+	handlers: EventHandler[];
 	children: Node[];
+	ref: string;
 
 	constructor(compiler, parent, info) {
 		super(compiler, parent, info);
@@ -27,13 +32,30 @@ export default class Component extends Node {
 		this.name = info.name;
 
 		this.attributes = [];
-		// TODO bindings etc
+		this.bindings = [];
+		this.handlers = [];
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Attribute':
 					// TODO spread
 					this.attributes.push(new Attribute(compiler, this, node));
+					break;
+
+				case 'Binding':
+					this.bindings.push(new Binding(compiler, this, node));
+					break;
+
+				case 'EventHandler':
+					this.handlers.push(new EventHandler(compiler, this, node));
+					break;
+
+				case 'Ref':
+					// TODO catch this in validation
+					if (this.ref) throw new Error(`Duplicate refs`);
+
+					compiler.usesRefs = true
+					this.ref = node.name;
 					break;
 
 				default:
@@ -51,23 +73,16 @@ export default class Component extends Node {
 	) {
 		this.cannotUseInnerHTML();
 
-		this.attributes.forEach((attribute: Node) => {
-			if (attribute.type === 'Attribute' && attribute.value !== true) {
-				attribute.value.forEach((chunk: Node) => {
-					if (chunk.type !== 'Text') {
-						const dependencies = chunk.metadata.dependencies;
-						block.addDependencies(dependencies);
-					}
-				});
-			} else {
-				if (attribute.type === 'EventHandler' && attribute.expression) {
-					attribute.expression.arguments.forEach((arg: Node) => {
-						block.addDependencies(arg.metadata.dependencies);
-					});
-				} else if (attribute.type === 'Binding' || attribute.type === 'Spread') {
-					block.addDependencies(attribute.metadata.dependencies);
-				}
-			}
+		this.attributes.forEach(attr => {
+			block.addDependencies(attr.dependencies);
+		});
+
+		this.bindings.forEach(binding => {
+			block.addDependencies(binding.value.dependencies);
+		});
+
+		this.handlers.forEach(handler => {
+			block.addDependencies(handler.dependencies);
 		});
 
 		this.var = block.getUniqueName(
@@ -115,60 +130,61 @@ export default class Component extends Node {
 		let name_updating: string;
 		let beforecreate: string = null;
 
-		const attributes = this.attributes
-			.filter(a => a.type === 'Attribute' || a.type === 'Spread')
-			.map(a => mungeAttribute(a, block));
+		// const attributes = this.attributes
+		// 	.filter(a => a.type === 'Attribute' || a.type === 'Spread')
+		// 	.map(a => mungeAttribute(a, block));
 
-		const bindings = this.attributes
-			.filter(a => a.type === 'Binding')
-			.map(a => mungeBinding(a, block));
+		// const bindings = this.attributes
+		// 	.filter(a => a.type === 'Binding')
+		// 	.map(a => mungeBinding(a, block));
 
-		const eventHandlers = this.attributes
-			.filter((a: Node) => a.type === 'EventHandler')
-			.map(a => mungeEventHandler(compiler, this, a, block, allContexts));
-
-		const ref = this.attributes.find((a: Node) => a.type === 'Ref');
-		if (ref) compiler.usesRefs = true;
+		// const eventHandlers = this.attributes
+		// 	.filter((a: Node) => a.type === 'EventHandler')
+		// 	.map(a => mungeEventHandler(compiler, this, a, block, allContexts));
 
 		const updates: string[] = [];
 
-		const usesSpread = !!attributes.find(a => a.spread);
+		const usesSpread = !!this.attributes.find(a => a.spread);
 
 		const attributeObject = usesSpread
 			? '{}'
 			: stringifyProps(
-				attributes.map((attribute: Attribute) => `${attribute.name}: ${attribute.value}`)
+				// this.attributes.map(attr => `${attr.name}: ${attr.value}`)
+				this.attributes.map(attr => `${attr.name}: "TODO"`)
 			);
 
-		if (attributes.length || bindings.length) {
+		if (this.attributes.length || this.bindings.length) {
 			componentInitProperties.push(`data: ${name_initial_data}`);
 		}
 
-		if ((!usesSpread && attributes.filter(a => a.dynamic).length) || bindings.length) {
+		if ((!usesSpread && this.attributes.filter(a => a.isDynamic).length) || this.bindings.length) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
-		if (attributes.length) {
+		if (this.attributes.length) {
 			if (usesSpread) {
 				const levels = block.getUniqueName(`${this.var}_spread_levels`);
 
 				const initialProps = [];
 				const changes = [];
 
-				attributes
-					.forEach(munged => {
-						const { spread, name, dynamic, value, dependencies } = munged;
+				this.attributes
+					.forEach(attr => {
+						const { spread, name, dependencies } = attr;
+						const value = attr.getValue();
+
+						const condition = dependencies.size > 0
+							? [...dependencies].map(d => `changed.${d}`).join(' || ')
+							: null;
 
 						if (spread) {
 							initialProps.push(value);
 
-							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
 							changes.push(condition ? `${condition} && ${value}` : value);
 						} else {
 							const obj = `{ ${quoteIfNecessary(name)}: ${value} }`;
 							initialProps.push(obj);
 
-							const condition = dependencies && dependencies.map(d => `changed.${d}`).join(' || ');
 							changes.push(condition ? `${condition} && ${obj}` : obj);
 						}
 					});
@@ -191,27 +207,27 @@ export default class Component extends Node {
 					]);
 				`);
 			} else {
-				attributes
-					.filter((attribute: Attribute) => attribute.dynamic)
+				this.attributes
+					.filter((attribute: Attribute) => attribute.isDynamic)
 					.forEach((attribute: Attribute) => {
-						if (attribute.dependencies.length) {
+						if (attribute.dependencies.size > 0) {
 							updates.push(deindent`
-								if (${attribute.dependencies
+								if (${[...attribute.dependencies]
 									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}.${attribute.name} = ${attribute.value};
+									.join(' || ')}) ${name_changes}.${attribute.name} = ${attribute.getValue()};
 							`);
 						}
 
 						else {
 							// TODO this is an odd situation to encounter – I *think* it should only happen with
 							// each block indices, in which case it may be possible to optimise this
-							updates.push(`${name_changes}.${attribute.name} = ${attribute.value};`);
+							updates.push(`${name_changes}.${attribute.name} = ${attribute.getValue()};`);
 						}
 					});
 				}
 		}
 
-		if (bindings.length) {
+		if (this.bindings.length) {
 			compiler.hasComplexBindings = true;
 
 			name_updating = block.alias(`${name}_updating`);
@@ -222,18 +238,18 @@ export default class Component extends Node {
 
 			const builder = new CodeBuilder();
 
-			bindings.forEach((binding: Binding) => {
-				let { name: key } = getObject(binding.value);
+			this.bindings.forEach((binding: Binding) => {
+				let { name: key } = getObject(binding.value.node);
 
-				binding.contexts.forEach(context => {
+				binding.value.contexts.forEach(context => {
 					allContexts.add(context);
 				});
 
 				let setFromChild;
 
 				if (block.contexts.has(key)) {
-					const computed = isComputed(binding.value);
-					const tail = binding.value.type === 'MemberExpression' ? getTailSnippet(binding.value) : '';
+					const computed = isComputed(binding.value.node);
+					const tail = binding.value.node.type === 'MemberExpression' ? getTailSnippet(binding.value.node) : '';
 
 					const list = block.listNames.get(key);
 					const index = block.indexNames.get(key);
@@ -241,7 +257,7 @@ export default class Component extends Node {
 					setFromChild = deindent`
 						${list}[${index}]${tail} = childState.${binding.name};
 
-						${binding.dependencies
+						${[...binding.value.dependencies]
 							.map((name: string) => {
 								const isStoreProp = name[0] === '$';
 								const prop = isStoreProp ? name.slice(1) : name;
@@ -263,9 +279,9 @@ export default class Component extends Node {
 					if (isStoreProp) hasStoreBindings = true;
 					else hasLocalBindings = true;
 
-					if (binding.value.type === 'MemberExpression') {
+					if (binding.value.node.type === 'MemberExpression') {
 						setFromChild = deindent`
-							${binding.snippet} = childState.${binding.name};
+							${binding.value.snippet} = childState.${binding.name};
 							${newState}.${prop} = state.${key};
 						`;
 					}
@@ -277,7 +293,7 @@ export default class Component extends Node {
 
 				statements.push(deindent`
 					if (${binding.prop} in ${binding.obj}) {
-						${name_initial_data}.${binding.name} = ${binding.snippet};
+						${name_initial_data}.${binding.name} = ${binding.value.snippet};
 						${name_updating}.${binding.name} = true;
 					}`
 				);
@@ -288,8 +304,8 @@ export default class Component extends Node {
 				);
 
 				updates.push(deindent`
-					if (!${name_updating}.${binding.name} && ${binding.dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-						${name_changes}.${binding.name} = ${binding.snippet};
+					if (!${name_updating}.${binding.name} && ${[...binding.value.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+						${name_changes}.${binding.name} = ${binding.value.snippet};
 						${name_updating}.${binding.name} = true;
 					}
 				`);
@@ -314,7 +330,7 @@ export default class Component extends Node {
 
 			beforecreate = deindent`
 				#component.root._beforecreate.push(function() {
-					${name}._bind({ ${bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
+					${name}._bind({ ${this.bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
 				});
 			`;
 		}
@@ -323,8 +339,7 @@ export default class Component extends Node {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
-			block.contextualise(this.expression);
-			const { dependencies, snippet } = this.metadata;
+			const { dependencies, snippet } = this.expression;
 
 			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 
@@ -332,7 +347,7 @@ export default class Component extends Node {
 				var ${switch_value} = ${snippet};
 
 				function ${switch_props}(state) {
-					${(attributes.length || bindings.length) && deindent`
+					${(this.attributes.length || this.bindings.length) && deindent`
 					var ${name_initial_data} = ${attributeObject};`}
 					${statements}
 					return {
@@ -346,7 +361,7 @@ export default class Component extends Node {
 					${beforecreate}
 				}
 
-				${eventHandlers.map(handler => deindent`
+				${this.handlers.map(handler => deindent`
 					function ${handler.var}(event) {
 						${handler.body}
 					}
@@ -368,7 +383,7 @@ export default class Component extends Node {
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
 					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${ref && `#component.refs.${ref.name} = ${name};`}
+					${this.ref && `#component.refs.${this.ref} = ${name};`}
 				}
 			`);
 
@@ -389,12 +404,12 @@ export default class Component extends Node {
 							${name}.on("${handler.name}", ${handler.var});
 						`)}
 
-						${ref && `#component.refs.${ref.name} = ${name};`}
+						${this.ref && `#component.refs.${this.ref} = ${name};`}
 					}
 
-					${ref && deindent`
-						else if (#component.refs.${ref.name} === ${name}) {
-							#component.refs.${ref.name} = null;
+					${this.ref && deindent`
+						else if (#component.refs.${this.ref} === ${name}) {
+							#component.refs.${this.ref} = null;
 						}`}
 				}
 			`);
@@ -418,7 +433,7 @@ export default class Component extends Node {
 				: `%components-${this.name}`;
 
 			block.builders.init.addBlock(deindent`
-				${(attributes.length || bindings.length) && deindent`
+				${(this.attributes.length || this.bindings.length) && deindent`
 				var ${name_initial_data} = ${attributeObject};`}
 				${statements}
 				var ${name} = new ${expression}({
@@ -427,13 +442,13 @@ export default class Component extends Node {
 
 				${beforecreate}
 
-				${eventHandlers.map(handler => deindent`
+				${this.handlers.map(handler => deindent`
 					${name}.on("${handler.name}", function(event) {
 						${handler.body}
 					});
 				`)}
 
-				${ref && `#component.refs.${ref.name} = ${name};`}
+				${this.ref && `#component.refs.${this.ref} = ${name};`}
 			`);
 
 			block.builders.create.addLine(`${name}._fragment.c();`);
@@ -452,7 +467,7 @@ export default class Component extends Node {
 				block.builders.update.addBlock(deindent`
 					${updates}
 					${name}._set(${name_changes});
-					${bindings.length && `${name_updating} = {};`}
+					${this.bindings.length && `${name_updating} = {};`}
 				`);
 			}
 
@@ -460,7 +475,7 @@ export default class Component extends Node {
 
 			block.builders.destroy.addLine(deindent`
 				${name}.destroy(false);
-				${ref && `if (#component.refs.${ref.name} === ${name}) #component.refs.${ref.name} = null;`}
+				${this.ref && `if (#component.refs.${this.ref} === ${name}) #component.refs.${this.ref} = null;`}
 			`);
 		}
 	}
@@ -472,8 +487,7 @@ export default class Component extends Node {
 
 function mungeBinding(binding: Node, block: Block): Binding {
 	const { name } = getObject(binding.value);
-	const { contexts } = block.contextualise(binding.value);
-	const { dependencies, snippet } = binding.metadata;
+	const { dependencies, snippet } = binding.expression;
 
 	const contextual = block.contexts.has(name);
 

@@ -29,12 +29,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 			validateHead(validator, node, refs, refCallees);
 		}
 
-		else if (node.type === 'Element') {
-			const isComponent =
-				node.name === 'svelte:self' ||
-				node.name === 'svelte:component' ||
-				validator.components.has(node.name);
-
+		else if (node.type === 'Component' || node.name === 'svelte:self' || node.name === 'svelte:component') {
 			validateElement(
 				validator,
 				node,
@@ -42,12 +37,22 @@ export default function validateHtml(validator: Validator, html: Node) {
 				refCallees,
 				stack,
 				elementStack,
-				isComponent
+				true
+			);
+		}
+
+		else if (node.type === 'Element') {
+			validateElement(
+				validator,
+				node,
+				refs,
+				refCallees,
+				stack,
+				elementStack,
+				false
 			);
 
-			if (!isComponent) {
-				a11y(validator, node, elementStack);
-			}
+			a11y(validator, node, elementStack);
 		}
 
 		else if (node.type === 'EachBlock') {
