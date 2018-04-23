@@ -5,6 +5,7 @@ import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
+import Expression from './shared/Expression';
 
 const readOnlyMediaAttributes = new Set([
 	'duration',
@@ -15,8 +16,14 @@ const readOnlyMediaAttributes = new Set([
 
 export default class Binding extends Node {
 	name: string;
-	value: Node;
-	expression: Node;
+	value: Expression;
+
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
+
+		this.name = info.name;
+		this.value = new Expression(compiler, this, info.value);
+	}
 
 	munge(
 		block: Block,
@@ -29,21 +36,20 @@ export default class Binding extends Node {
 
 		let updateCondition: string;
 
-		const { name } = getObject(this.value);
-		const { contexts } = block.contextualise(this.value);
-		const { snippet } = this.metadata;
+		const { name } = getObject(this.value.node);
+		const { contexts, snippet } = this.value;
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,
 		// we need to tell the component to update all the values `selected` might be
 		// pointing to
 		// TODO should this happen in preprocess?
-		const dependencies = this.metadata.dependencies.slice();
-		this.metadata.dependencies.forEach((prop: string) => {
-			const indirectDependencies = this.generator.indirectDependencies.get(prop);
+		const dependencies = new Set(this.value.dependencies);
+		this.value.dependencies.forEach((prop: string) => {
+			const indirectDependencies = this.compiler.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
-					if (!~dependencies.indexOf(indirectDependency)) dependencies.push(indirectDependency);
+					dependencies.add(indirectDependency);
 				});
 			}
 		});
@@ -53,8 +59,8 @@ export default class Binding extends Node {
 		});
 
 		// view to model
-		const valueFromDom = getValueFromDom(this.generator, node, this);
-		const handler = getEventHandler(this.generator, block, name, snippet, this, dependencies, valueFromDom);
+		const valueFromDom = getValueFromDom(this.compiler, node, this);
+		const handler = getEventHandler(this.compiler, block, name, snippet, this, dependencies, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(node, this, snippet);
@@ -62,7 +68,7 @@ export default class Binding extends Node {
 
 		// special cases
 		if (this.name === 'group') {
-			const bindingGroup = getBindingGroup(this.generator, this.value);
+			const bindingGroup = getBindingGroup(this.compiler, this.value);
 
 			block.builders.hydrate.addLine(
 				`#component._bindingGroups[${bindingGroup}].push(${node.var});`
@@ -135,23 +141,23 @@ function getDomUpdater(
 	return `${node.var}.${binding.name} = ${snippet};`;
 }
 
-function getBindingGroup(generator: DomGenerator, value: Node) {
+function getBindingGroup(compiler: DomGenerator, value: Node) {
 	const { parts } = flattenReference(value); // TODO handle cases involving computed member expressions
 	const keypath = parts.join('.');
 
 	// TODO handle contextual bindings — `keypath` should include unique ID of
 	// each block that provides context
-	let index = generator.bindingGroups.indexOf(keypath);
+	let index = compiler.bindingGroups.indexOf(keypath);
 	if (index === -1) {
-		index = generator.bindingGroups.length;
-		generator.bindingGroups.push(keypath);
+		index = compiler.bindingGroups.length;
+		compiler.bindingGroups.push(keypath);
 	}
 
 	return index;
 }
 
 function getEventHandler(
-	generator: DomGenerator,
+	compiler: DomGenerator,
 	block: Block,
 	name: string,
 	snippet: string,
@@ -159,8 +165,8 @@ function getEventHandler(
 	dependencies: string[],
 	value: string,
 ) {
-	const storeDependencies = dependencies.filter(prop => prop[0] === '$').map(prop => prop.slice(1));
-	dependencies = dependencies.filter(prop => prop[0] !== '$');
+	const storeDependencies = [...dependencies].filter(prop => prop[0] === '$').map(prop => prop.slice(1));
+	dependencies = [...dependencies].filter(prop => prop[0] !== '$');
 
 	if (block.contexts.has(name)) {
 		const tail = attribute.value.type === 'MemberExpression'
@@ -186,9 +192,9 @@ function getEventHandler(
 		// Svelte tries to `set()` a computed property, which throws an
 		// error in dev mode. a) it's possible that we should be
 		// replacing computations with *their* dependencies, and b)
-		// we should probably populate `generator.readonly` sooner so
+		// we should probably populate `compiler.readonly` sooner so
 		// that we don't have to do the `.some()` here
-		dependencies = dependencies.filter(prop => !generator.computations.some(computation => computation.key === prop));
+		dependencies = dependencies.filter(prop => !compiler.computations.some(computation => computation.key === prop));
 
 		return {
 			usesContext: false,
@@ -222,7 +228,7 @@ function getEventHandler(
 }
 
 function getValueFromDom(
-	generator: DomGenerator,
+	compiler: DomGenerator,
 	node: Element,
 	binding: Node
 ) {
@@ -237,7 +243,7 @@ function getValueFromDom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (binding.name === 'group') {
-		const bindingGroup = getBindingGroup(generator, binding.value);
+		const bindingGroup = getBindingGroup(compiler, binding.value);
 		if (type === 'checkbox') {
 			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
 		}

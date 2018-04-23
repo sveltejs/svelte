@@ -64,7 +64,7 @@ export default function ssr(
 		conditions: [],
 	});
 
-	trim(parsed.html.children).forEach((node: Node) => {
+	trim(generator.fragment.children).forEach((node: Node) => {
 		visit(generator, mainBlock, node);
 	});
 
@@ -93,7 +93,7 @@ export default function ssr(
 		initialState.push('{}');
 	}
 
-	initialState.push('state');
+	initialState.push('ctx');
 
 	// TODO concatenate CSS maps
 	const result = deindent`
@@ -129,15 +129,15 @@ export default function ssr(
 			};
 		}
 
-		${name}._render = function(__result, state, options) {
+		${name}._render = function(__result, ctx, options) {
 			${templateProperties.store && `options.store = %store();`}
 			__result.addComponent(${name});
 
-			state = Object.assign(${initialState.join(', ')});
+			ctx = Object.assign(${initialState.join(', ')});
 
 			${computations.map(
 				({ key, deps }) =>
-					`state.${key} = %computed-${key}(state);`
+					`ctx.${key} = %computed-${key}(ctx);`
 			)}
 
 			${generator.bindings.length &&

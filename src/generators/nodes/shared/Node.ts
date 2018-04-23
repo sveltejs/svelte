@@ -4,8 +4,12 @@ import Block from '../../dom/Block';
 import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {
-	compiler: Generator;
-	parent: Node;
+	readonly start: number;
+	readonly end: number;
+	readonly compiler: Generator;
+	readonly parent: Node;
+	readonly type: string;
+
 	prev?: Node;
 	next?: Node;
 
@@ -13,8 +17,11 @@ export default class Node {
 	var: string;
 
 	constructor(compiler: Generator, parent, info: any) {
+		this.start = info.start;
+		this.end = info.end;
 		this.compiler = compiler;
 		this.parent = parent;
+		this.type = info.type;
 	}
 
 	cannotUseInnerHTML() {
@@ -74,7 +81,7 @@ export default class Node {
 		lastChild = null;
 
 		cleaned.forEach((child: Node, i: number) => {
-			child.canUseInnerHTML = !this.generator.hydratable;
+			child.canUseInnerHTML = !this.compiler.hydratable;
 
 			child.init(block, stripWhitespace, cleaned[i + 1] || nextSibling);
 

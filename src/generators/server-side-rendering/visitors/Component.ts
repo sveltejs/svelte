@@ -18,8 +18,7 @@ export default function visitComponent(
 			return escapeTemplate(escape(chunk.data));
 		}
 		if (chunk.type === 'MustacheTag') {
-			block.contextualise(chunk.expression);
-			const { snippet } = chunk.metadata;
+			const { snippet } = chunk.expression;
 			return '${__escape( ' + snippet + ')}';
 		}
 	}

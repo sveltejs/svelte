@@ -22,22 +22,61 @@ import mapChildren from './shared/mapChildren';
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
-	attributes: (Attribute | Binding | EventHandler | Ref | Transition | Action)[]; // TODO split these up sooner
+	attributes: Attribute[];
+	bindings: Binding[];
+	handlers: EventHandler[];
+	intro: Transition;
+	outro: Transition;
 	children: Node[];
+
+	ref: string;
+	namespace: string;
 
 	constructor(compiler, parent, info: any) {
 		super(compiler, parent, info);
 		this.name = info.name;
-		this.children = mapChildren(compiler, parent, info.children);
+
+		const parentElement = parent.findNearest(/^Element/);
+		this.namespace = this.name === 'svg' ?
+			namespaces.svg :
+			parentElement ? parentElement.namespace : this.compiler.namespace;
 
 		this.attributes = [];
-		// TODO bindings etc
+		this.bindings = [];
+		this.handlers = [];
+
+		this.intro = null;
+		this.outro = null;
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Attribute':
-				case 'Spread':
+					// special case
+					if (node.name === 'xmlns') this.namespace = node.value[0].data;
+
 					this.attributes.push(new Attribute(compiler, this, node));
+					break;
+
+				case 'Binding':
+					this.bindings.push(new Binding(compiler, this, node));
+					break;
+
+				case 'EventHandler':
+					this.handlers.push(new EventHandler(compiler, this, node));
+					break;
+
+				case 'Transition':
+					const transition = new Transition(compiler, this, node);
+					if (node.intro) this.intro = transition;
+					if (node.outro) this.outro = transition;
+					break;
+
+				case 'Ref':
+					// TODO catch this in validation
+					if (this.ref) throw new Error(`Duplicate refs`);
+
+					compiler.usesRefs = true
+					this.ref = node.name;
 					break;
 
 				default:
@@ -46,6 +85,8 @@ export default class Element extends Node {
 		});
 
 		// TODO break out attributes and directives here
+
+		this.children = mapChildren(compiler, this, info.children);
 	}
 
 	init(
@@ -57,61 +98,53 @@ export default class Element extends Node {
 			this.cannotUseInnerHTML();
 		}
 
-		const parentElement = this.parent && this.parent.findNearest(/^Element/);
-		this.namespace = this.name === 'svg' ?
-			namespaces.svg :
-			parentElement ? parentElement.namespace : this.generator.namespace;
+		this.attributes.forEach(attr => {
+			if (attr.dependencies.size) {
+				this.parent.cannotUseInnerHTML();
+				block.addDependencies(attr.dependencies);
+
+				// special case — <option value={foo}> — see below
+				if (this.name === 'option' && attr.name === 'value') {
+					let select = this.parent;
+					while (select && (select.type !== 'Element' || select.name !== 'select')) select = select.parent;
+
+					if (select && select.selectBindingDependencies) {
+						select.selectBindingDependencies.forEach(prop => {
+							dependencies.forEach((dependency: string) => {
+								this.compiler.indirectDependencies.get(prop).add(dependency);
+							});
+						});
+					}
+				}
+			}
+		});
+
+		this.bindings.forEach(binding => {
+			this.cannotUseInnerHTML();
+			block.addDependencies(binding.value.dependencies);
+		});
+
+		this.handlers.forEach(handler => {
+			this.cannotUseInnerHTML();
+			block.addDependencies(handler.dependencies);
+		});
+
+		if (this.intro) {
+			this.compiler.hasIntroTransitions = block.hasIntroMethod = true;
+		}
+
+		if (this.outro) {
+			this.compiler.hasOutroTransitions = block.hasOutroMethod = true;
+			block.outros += 1;
+		}
 
 		this.attributes.forEach(attribute => {
 			if (attribute.type === 'Attribute' && attribute.value !== true) {
-				// special case — xmlns
-				if (attribute.name === 'xmlns') {
-					// TODO this attribute must be static – enforce at compile time
-					this.namespace = attribute.value[0].data;
-				}
-
-				attribute.value.forEach((chunk: Node) => {
-					if (chunk.type !== 'Text') {
-						if (this.parent) this.parent.cannotUseInnerHTML();
-
-						const dependencies = chunk.metadata.dependencies;
-						block.addDependencies(dependencies);
-
-						// special case — <option value='{{foo}}'> — see below
-						if (
-							this.name === 'option' &&
-							attribute.name === 'value'
-						) {
-							let select = this.parent;
-							while (select && (select.type !== 'Element' || select.name !== 'select')) select = select.parent;
-
-							if (select && select.selectBindingDependencies) {
-								select.selectBindingDependencies.forEach(prop => {
-									dependencies.forEach((dependency: string) => {
-										this.generator.indirectDependencies.get(prop).add(dependency);
-									});
-								});
-							}
-						}
-					}
-				});
+				// removed
 			} else {
 				if (this.parent) this.parent.cannotUseInnerHTML();
 
-				if (attribute.type === 'EventHandler' && attribute.expression) {
-					attribute.expression.arguments.forEach((arg: Node) => {
-						block.addDependencies(arg.metadata.dependencies);
-					});
-				} else if (attribute.type === 'Binding') {
-					block.addDependencies(attribute.metadata.dependencies);
-				} else if (attribute.type === 'Transition') {
-					if (attribute.intro)
-						this.generator.hasIntroTransitions = block.hasIntroMethod = true;
-					if (attribute.outro) {
-						this.generator.hasOutroTransitions = block.hasOutroMethod = true;
-						block.outros += 1;
-					}
-				} else if (attribute.type === 'Action' && attribute.expression) {
+				if (attribute.type === 'Action' && attribute.expression) {
 					block.addDependencies(attribute.metadata.dependencies);
 				} else if (attribute.type === 'Spread') {
 					block.addDependencies(attribute.metadata.dependencies);
@@ -125,11 +158,9 @@ export default class Element extends Node {
 			// this is an egregious hack, but it's the easiest way to get <textarea>
 			// children treated the same way as a value attribute
 			if (this.children.length > 0) {
-				this.attributes.push(new Attribute({
-					generator: this.generator,
+				this.attributes.push(new Attribute(this.compiler, this, {
 					name: 'value',
-					value: this.children,
-					parent: this
+					value: this.children
 				}));
 
 				this.children = [];
@@ -153,7 +184,7 @@ export default class Element extends Node {
 				const dependencies = binding.metadata.dependencies;
 				this.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
-					this.generator.indirectDependencies.set(prop, new Set());
+					this.compiler.indirectDependencies.set(prop, new Set());
 				});
 			} else {
 				this.selectBindingDependencies = null;
@@ -188,11 +219,11 @@ export default class Element extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { generator } = this;
+		const { compiler } = this;
 
 		if (this.name === 'slot') {
 			const slotName = this.getStaticAttributeValue('name') || 'default';
-			this.generator.slots.add(slotName);
+			this.compiler.slots.add(slotName);
 		}
 
 		if (this.name === 'noscript') return;
@@ -211,15 +242,15 @@ export default class Element extends Node {
 			parentNode;
 
 		block.addVariable(name);
-		const renderStatement = getRenderStatement(this.generator, this.namespace, this.name);
+		const renderStatement = getRenderStatement(this.compiler, this.namespace, this.name);
 		block.builders.create.addLine(
 			`${name} = ${renderStatement};`
 		);
 
-		if (this.generator.hydratable) {
+		if (this.compiler.hydratable) {
 			if (parentNodes) {
 				block.builders.claim.addBlock(deindent`
-					${name} = ${getClaimStatement(generator, this.namespace, parentNodes, this)};
+					${name} = ${getClaimStatement(compiler, this.namespace, parentNodes, this)};
 					var ${childState.parentNodes} = @children(${name});
 				`);
 			} else {
@@ -271,7 +302,7 @@ export default class Element extends Node {
 
 		this.addBindings(block, allUsedContexts);
 		const eventHandlerUsesComponent = this.addEventHandlers(block, allUsedContexts);
-		this.addRefs(block);
+		if (this.ref) this.addRef(block);
 		this.addAttributes(block);
 		this.addTransitions(block);
 		this.addActions(block);
@@ -353,14 +384,14 @@ export default class Element extends Node {
 		block: Block,
 		allUsedContexts: Set<string>
 	) {
-		const bindings: Binding[] = this.attributes.filter((a: Binding) => a.type === 'Binding');
-		if (bindings.length === 0) return;
+		if (this.bindings.length === 0) return;
 
-		if (this.name === 'select' || this.isMediaNode()) this.generator.hasComplexBindings = true;
+		if (this.name === 'select' || this.isMediaNode()) this.compiler.hasComplexBindings = true;
 
 		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
-		const mungedBindings = bindings.map(binding => binding.munge(block, allUsedContexts));
+		// TODO munge in constructor
+		const mungedBindings = this.bindings.map(binding => binding.munge(block, allUsedContexts));
 
 		const lock = mungedBindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
@@ -452,7 +483,7 @@ export default class Element extends Node {
 				.join(' && ');
 
 			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				this.generator.hasComplexBindings = true;
+				this.compiler.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
 					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
@@ -469,7 +500,7 @@ export default class Element extends Node {
 			return;
 		}
 
-		this.attributes.filter((a: Attribute) => a.type === 'Attribute').forEach((attribute: Attribute) => {
+		this.attributes.forEach((attribute: Attribute) => {
 			attribute.render(block);
 		});
 	}
@@ -528,89 +559,58 @@ export default class Element extends Node {
 	}
 
 	addEventHandlers(block: Block, allUsedContexts) {
-		const { generator } = this;
+		const { compiler } = this;
 		let eventHandlerUsesComponent = false;
 
-		this.attributes.filter((a: EventHandler) => a.type === 'EventHandler').forEach((attribute: EventHandler) => {
-			const isCustomEvent = generator.events.has(attribute.name);
+		this.handlers.forEach(handler => {
+			const isCustomEvent = compiler.events.has(handler.name);
 			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
 
 			const context = shouldHoist ? null : this.var;
 			const usedContexts: string[] = [];
 
-			if (attribute.expression) {
-				generator.addSourcemapLocations(attribute.expression);
+			if (handler.callee) {
+				handler.render(this.compiler, block);
 
-				const flattened = flattenReference(attribute.expression.callee);
-				if (!validCalleeObjects.has(flattened.name)) {
-					// allow event.stopPropagation(), this.select() etc
-					// TODO verify that it's a valid callee (i.e. built-in or declared method)
-					if (flattened.name[0] === '$' && !generator.methods.has(flattened.name)) {
-						generator.code.overwrite(
-							attribute.expression.start,
-							attribute.expression.start + 1,
-							`${block.alias('component')}.store.`
-						);
-					} else {
-						generator.code.prependRight(
-							attribute.expression.start,
-							`${block.alias('component')}.`
-						);
-					}
-
+				if (!validCalleeObjects.has(handler.callee.name)) {
 					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
 				}
 
-				attribute.expression.arguments.forEach((arg: Node) => {
-					const { contexts } = block.contextualise(arg, context, true);
+				// handler.expression.arguments.forEach((arg: Node) => {
+				// 	const { contexts } = block.contextualise(arg, context, true);
 
-					contexts.forEach(context => {
-						if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-						allUsedContexts.add(context);
-					});
-				});
+				// 	contexts.forEach(context => {
+				// 		if (!~usedContexts.indexOf(context)) usedContexts.push(context);
+				// 		allUsedContexts.add(context);
+				// 	});
+				// });
 			}
 
 			const ctx = context || 'this';
-			const declarations = usedContexts
-				.map(name => {
-					if (name === 'state') {
-						if (shouldHoist) eventHandlerUsesComponent = true;
-						return `var state = ${block.alias('component')}.get();`;
-					}
-
-					const contextType = block.contextTypes.get(name);
-					if (contextType === 'each') {
-						const listName = block.listNames.get(name);
-						const indexName = block.indexNames.get(name);
-						const contextName = block.contexts.get(name);
-
-						return `var ${listName} = ${ctx}._svelte.${listName}, ${indexName} = ${ctx}._svelte.${indexName}, ${contextName} = ${listName}[${indexName}];`;
-					}
-				})
-				.filter(Boolean);
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
-			const handlerName = (shouldHoist ? generator : block).getUniqueName(
-				`${attribute.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+			const handlerName = (shouldHoist ? compiler : block).getUniqueName(
+				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
+
+			const component = block.alias('component'); // can't use #component, might be hoisted
 
 			// create the handler body
 			const handlerBody = deindent`
 				${eventHandlerUsesComponent &&
-					`var ${block.alias('component')} = ${ctx}._svelte.component;`}
-				${declarations}
-				${attribute.expression ?
-					`[✂${attribute.expression.start}-${attribute.expression.end}✂];` :
-					`${block.alias('component')}.fire("${attribute.name}", event);`}
+					`var #component = ${ctx}._svelte.component;`}
+				${handler.dependencies.size > 0 && `const ctx = #component.get();`}
+				${handler.snippet ?
+					handler.snippet :
+					`#component.fire("${handler.name}", event);`}
 			`;
 
 			if (isCustomEvent) {
 				block.addVariable(handlerName);
 
 				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${attribute.name}.call(#component, ${this.var}, function(event) {
+					${handlerName} = %events-${handler.name}.call(#component, ${this.var}, function(event) {
 						${handlerBody}
 					});
 				`);
@@ -619,61 +619,53 @@ export default class Element extends Node {
 					${handlerName}.destroy();
 				`);
 			} else {
-				const handler = deindent`
+				const handlerFunction = deindent`
 					function ${handlerName}(event) {
 						${handlerBody}
 					}
 				`;
 
 				if (shouldHoist) {
-					generator.blocks.push(handler);
+					compiler.blocks.push(handlerFunction);
 				} else {
-					block.builders.init.addBlock(handler);
+					block.builders.init.addBlock(handlerFunction);
 				}
 
 				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${attribute.name}", ${handlerName});`
+					`@addListener(${this.var}, "${handler.name}", ${handlerName});`
 				);
 
 				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${attribute.name}", ${handlerName});`
+					`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
 				);
 			}
 		});
 		return eventHandlerUsesComponent;
 	}
 
-	addRefs(block: Block) {
-		// TODO it should surely be an error to have more than one ref
-		this.attributes.filter((a: Ref) => a.type === 'Ref').forEach((attribute: Ref) => {
-			const ref = `#component.refs.${attribute.name}`;
+	addRef(block: Block) {
+		const ref = `#component.refs.${this.ref}`;
 
-			block.builders.mount.addLine(
-				`${ref} = ${this.var};`
-			);
+		block.builders.mount.addLine(
+			`${ref} = ${this.var};`
+		);
 
-			block.builders.destroy.addLine(
-				`if (${ref} === ${this.var}) ${ref} = null;`
-			);
-
-			this.generator.usesRefs = true; // so component.refs object is created
-		});
+		block.builders.destroy.addLine(
+			`if (${ref} === ${this.var}) ${ref} = null;`
+		);
 	}
 
 	addTransitions(
 		block: Block
 	) {
-		const intro = this.attributes.find((a: Transition) => a.type === 'Transition' && a.intro);
-		const outro = this.attributes.find((a: Transition) => a.type === 'Transition' && a.outro);
+		const { intro, outro } = this;
 
 		if (!intro && !outro) return;
 
 		if (intro === outro) {
-			block.contextualise(intro.expression); // TODO remove all these
-
 			const name = block.getUniqueName(`${this.var}_transition`);
 			const snippet = intro.expression
-				? intro.metadata.snippet
+				? intro.expression.snippet
 				: '{}';
 
 			block.addVariable(name);
@@ -701,11 +693,9 @@ export default class Element extends Node {
 			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
 
 			if (intro) {
-				block.contextualise(intro.expression);
-
 				block.addVariable(introName);
 				const snippet = intro.expression
-					? intro.metadata.snippet
+					? intro.expression.snippet
 					: '{}';
 
 				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
@@ -728,11 +718,9 @@ export default class Element extends Node {
 			}
 
 			if (outro) {
-				block.contextualise(outro.expression);
-
 				block.addVariable(outroName);
 				const snippet = outro.expression
-					? outro.metadata.snippet
+					? outro.expression.snippet
 					: '{}';
 
 				const fn = `%transitions-${outro.name}`;
@@ -755,7 +743,7 @@ export default class Element extends Node {
 			const { expression } = attribute;
 			let snippet, dependencies;
 			if (expression) {
-				this.generator.addSourcemapLocations(expression);
+				this.compiler.addSourcemapLocations(expression);
 				block.contextualise(expression);
 				snippet = attribute.metadata.snippet;
 				dependencies = attribute.metadata.dependencies;
@@ -823,18 +811,18 @@ export default class Element extends Node {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && classAttribute.value !== true) {
 			if (classAttribute.value.length === 1 && classAttribute.value[0].type === 'Text') {
-				classAttribute.value[0].data += ` ${this.generator.stylesheet.id}`;
+				classAttribute.value[0].data += ` ${this.compiler.stylesheet.id}`;
 			} else {
 				(<Node[]>classAttribute.value).push(
-					new Node({ type: 'Text', data: ` ${this.generator.stylesheet.id}` })
+					new Node({ type: 'Text', data: ` ${this.compiler.stylesheet.id}` })
 				);
 			}
 		} else {
 			this.attributes.push(
 				new Attribute({
-					generator: this.generator,
+					compiler: this.compiler,
 					name: 'class',
-					value: [new Node({ type: 'Text', data: `${this.generator.stylesheet.id}` })],
+					value: [new Node({ type: 'Text', data: `${this.compiler.stylesheet.id}` })],
 					parent: this,
 				})
 			);
@@ -843,7 +831,7 @@ export default class Element extends Node {
 }
 
 function getRenderStatement(
-	generator: DomGenerator,
+	compiler: DomGenerator,
 	namespace: string,
 	name: string
 ) {
@@ -859,7 +847,7 @@ function getRenderStatement(
 }
 
 function getClaimStatement(
-	generator: DomGenerator,
+	compiler: DomGenerator,
 	namespace: string,
 	nodes: string,
 	node: Node

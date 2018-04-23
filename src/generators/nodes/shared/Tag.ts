@@ -7,15 +7,14 @@ export default class Tag extends Node {
 
 	constructor(compiler, parent, info) {
 		super(compiler, parent, info);
-		this.expression = new Expression(compiler, info.expression);
+		this.expression = new Expression(compiler, this, info.expression);
 	}
 
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)
 	) {
-		const { indexes } = block.contextualise(this.expression);
-		const { dependencies, snippet } = this.metadata;
+		const { snippet, dependencies, indexes } = this.expression;
 
 		const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
 
@@ -30,16 +29,16 @@ export default class Tag extends Node {
 
 		if (shouldCache) block.addVariable(value, snippet);
 
-		if (dependencies.length || hasChangeableIndex) {
+		if (dependencies.size || hasChangeableIndex) {
 			const changedCheck = (
 				(block.hasOutroMethod ? `#outroing || ` : '') +
-				dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')
+				[...dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')
 			);
 
 			const updateCachedValue = `${value} !== (${value} = ${snippet})`;
 
 			const condition = shouldCache ?
-				(dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue) :
+				(dependencies.size ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue) :
 				changedCheck;
 
 			block.builders.update.addConditional(

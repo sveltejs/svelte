@@ -110,13 +110,13 @@ export default class Block {
 
 		this.aliases = new Map()
 			.set('component', this.getUniqueName('component'))
-			.set('state', this.getUniqueName('state'));
+			.set('ctx', this.getUniqueName('ctx'));
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
 	}
 
-	addDependencies(dependencies: string[]) {
+	addDependencies(dependencies: Set<string>) {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
 		});
@@ -163,10 +163,6 @@ export default class Block {
 		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
-	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
-		return this.generator.contextualise(this.contexts, this.indexes, expression, context, isEventHandler);
-	}
-
 	toString() {
 		let introing;
 		const hasIntros = !this.builders.intro.isEmpty();
@@ -195,9 +191,9 @@ export default class Block {
 			const indexName = this.indexNames.get(context);
 
 			initializers.push(
-				`${name} = state.${context}`,
-				`${listName} = state.${listName}`,
-				`${indexName} = state.${indexName}`
+				`${name} = ctx.${context}`,
+				`${listName} = ctx.${listName}`,
+				`${indexName} = ctx.${indexName}`
 			);
 
 			this.hasUpdateMethod = true;
@@ -266,7 +262,7 @@ export default class Block {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					p: function update(changed, state) {
+					p: function update(changed, ctx) {
 						${initializers.map(str => `${str};`)}
 						${this.builders.update}
 					},
@@ -338,7 +334,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, state) {
+			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, ctx) {
 				${initializers.length > 0 &&
 					`var ${initializers.join(', ')};`}
 				${this.variables.size > 0 &&

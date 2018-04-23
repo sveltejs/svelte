@@ -42,7 +42,7 @@ export default class Block {
 		return new Block(Object.assign({}, this, options, { parent: this }));
 	}
 
-	contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
-		return this.generator.contextualise(this.contexts, this.indexes, expression, context, isEventHandler);
-	}
+	// contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
+	// 	return this.generator.contextualise(this.contexts, this.indexes, expression, context, isEventHandler);
+	// }
 }

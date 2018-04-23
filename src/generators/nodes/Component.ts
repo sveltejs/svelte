@@ -11,12 +11,38 @@ import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
 import usesThisOrArguments from '../../validate/js/utils/usesThisOrArguments';
+import mapChildren from './shared/mapChildren';
 
 export default class Component extends Node {
 	type: 'Component';
 	name: string;
 	attributes: Attribute[];
 	children: Node[];
+
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
+
+		compiler.hasComponents = true;
+
+		this.name = info.name;
+
+		this.attributes = [];
+		// TODO bindings etc
+
+		info.attributes.forEach(node => {
+			switch (node.type) {
+				case 'Attribute':
+					// TODO spread
+					this.attributes.push(new Attribute(compiler, this, node));
+					break;
+
+				default:
+					throw new Error(`Not implemented: ${node.type}`);
+			}
+		});
+
+		this.children = mapChildren(compiler, this, info.children);
+	}
 
 	init(
 		block: Block,
@@ -46,7 +72,7 @@ export default class Component extends Node {
 
 		this.var = block.getUniqueName(
 			(
-				this.name === 'svelte:self' ? this.generator.name :
+				this.name === 'svelte:self' ? this.compiler.name :
 				this.name === 'svelte:component' ? 'switch_instance' :
 				this.name
 			).toLowerCase()
@@ -66,8 +92,7 @@ export default class Component extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { generator } = this;
-		generator.hasComponents = true;
+		const { compiler } = this;
 
 		const name = this.var;
 
@@ -100,10 +125,10 @@ export default class Component extends Node {
 
 		const eventHandlers = this.attributes
 			.filter((a: Node) => a.type === 'EventHandler')
-			.map(a => mungeEventHandler(generator, this, a, block, allContexts));
+			.map(a => mungeEventHandler(compiler, this, a, block, allContexts));
 
 		const ref = this.attributes.find((a: Node) => a.type === 'Ref');
-		if (ref) generator.usesRefs = true;
+		if (ref) compiler.usesRefs = true;
 
 		const updates: string[] = [];
 
@@ -187,7 +212,7 @@ export default class Component extends Node {
 		}
 
 		if (bindings.length) {
-			generator.hasComplexBindings = true;
+			compiler.hasComplexBindings = true;
 
 			name_updating = block.alias(`${name}_updating`);
 			block.addVariable(name_updating, '{}');
@@ -389,7 +414,7 @@ export default class Component extends Node {
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
 		} else {
 			const expression = this.name === 'svelte:self'
-				? generator.name
+				? compiler.name
 				: `%components-${this.name}`;
 
 			block.builders.init.addBlock(deindent`
@@ -478,18 +503,18 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	};
 }
 
-function mungeEventHandler(generator: DomGenerator, node: Node, handler: Node, block: Block, allContexts: Set<string>) {
+function mungeEventHandler(compiler: DomGenerator, node: Node, handler: Node, block: Block, allContexts: Set<string>) {
 	let body;
 
 	if (handler.expression) {
-		generator.addSourcemapLocations(handler.expression);
+		compiler.addSourcemapLocations(handler.expression);
 
 		// TODO try out repetition between this and element counterpart
 		const flattened = flattenReference(handler.expression.callee);
 			if (!validCalleeObjects.has(flattened.name)) {
 				// allow event.stopPropagation(), this.select() etc
 				// TODO verify that it's a valid callee (i.e. built-in or declared method)
-				generator.code.prependRight(
+				compiler.code.prependRight(
 					handler.expression.start,
 					`${block.alias('component')}.`
 				);

@@ -7,7 +7,8 @@ import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
-import Attribute from './Attribute';
+import Binding from './Binding';
+import EventHandler from './EventHandler';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -34,99 +35,107 @@ const readonly = new Set([
 
 export default class Window extends Node {
 	type: 'Window';
-	attributes: Attribute[];
+	handlers: EventHandler[];
+	bindings: Binding[];
+
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
+
+		this.handlers = [];
+		this.bindings = [];
+
+		info.attributes.forEach(node => {
+			if (node.type === 'EventHandler') {
+				this.handlers.push(new EventHandler(compiler, this, node));
+			} else if (node.type === 'Binding') {
+				this.bindings.push(new Binding(compiler, this, node));
+			}
+		});
+	}
 
 	build(
 		block: Block,
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { generator } = this;
+		const { compiler } = this;
 
 		const events = {};
 		const bindings: Record<string, string> = {};
 
-		this.attributes.forEach((attribute: Node) => {
-			if (attribute.type === 'EventHandler') {
-				// TODO verify that it's a valid callee (i.e. built-in or declared method)
-				generator.addSourcemapLocations(attribute.expression);
+		this.handlers.forEach(handler => {
+			// TODO verify that it's a valid callee (i.e. built-in or declared method)
+			compiler.addSourcemapLocations(handler.expression);
 
-				const isCustomEvent = generator.events.has(attribute.name);
+			const isCustomEvent = compiler.events.has(handler.name);
 
-				let usesState = false;
+			let usesState = handler.dependencies.size > 0;
 
-				attribute.expression.arguments.forEach((arg: Node) => {
-					block.contextualise(arg, null, true);
-					const { dependencies } = arg.metadata;
-					if (dependencies.length) usesState = true;
-				});
+			// const flattened = flattenReference(handler.expression.callee);
+			// if (flattened.name !== 'event' && flattened.name !== 'this') {
+			// 	// allow event.stopPropagation(), this.select() etc
+			// 	compiler.code.prependRight(
+			// 		handler.expression.start,
+			// 		`${block.alias('component')}.`
+			// 	);
+			// }
 
-				const flattened = flattenReference(attribute.expression.callee);
-				if (flattened.name !== 'event' && flattened.name !== 'this') {
-					// allow event.stopPropagation(), this.select() etc
-					generator.code.prependRight(
-						attribute.expression.start,
-						`${block.alias('component')}.`
-					);
-				}
+			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
+			const handlerBody = deindent`
+				${usesState && `var ctx = #component.get();`}
+				${handler.snippet};
+			`;
 
-				const handlerName = block.getUniqueName(`onwindow${attribute.name}`);
-				const handlerBody = deindent`
-					${usesState && `var state = #component.get();`}
-					[✂${attribute.expression.start}-${attribute.expression.end}✂];
-				`;
+			if (isCustomEvent) {
+				// TODO dry this out
+				block.addVariable(handlerName);
 
-				if (isCustomEvent) {
-					// TODO dry this out
-					block.addVariable(handlerName);
+				block.builders.hydrate.addBlock(deindent`
+					${handlerName} = %events-${handler.name}.call(#component, window, function(event) {
+						${handlerBody}
+					});
+				`);
 
-					block.builders.hydrate.addBlock(deindent`
-						${handlerName} = %events-${attribute.name}.call(#component, window, function(event) {
-							${handlerBody}
-						});
-					`);
+				block.builders.destroy.addLine(deindent`
+					${handlerName}.destroy();
+				`);
+			} else {
+				block.builders.init.addBlock(deindent`
+					function ${handlerName}(event) {
+						${handlerBody}
+					}
+					window.addEventListener("${handler.name}", ${handlerName});
+				`);
 
-					block.builders.destroy.addLine(deindent`
-						${handlerName}.destroy();
-					`);
-				} else {
-					block.builders.init.addBlock(deindent`
-						function ${handlerName}(event) {
-							${handlerBody}
-						}
-						window.addEventListener("${attribute.name}", ${handlerName});
-					`);
+				block.builders.destroy.addBlock(deindent`
+					window.removeEventListener("${handler.name}", ${handlerName});
+				`);
+			}
+		});
 
-					block.builders.destroy.addBlock(deindent`
-						window.removeEventListener("${attribute.name}", ${handlerName});
-					`);
-				}
+		this.bindings.forEach(binding => {
+			// in dev mode, throw if read-only values are written to
+			if (readonly.has(binding.name)) {
+				compiler.readonly.add(binding.value.name);
 			}
 
-			if (attribute.type === 'Binding') {
-				// in dev mode, throw if read-only values are written to
-				if (readonly.has(attribute.name)) {
-					generator.readonly.add(attribute.value.name);
-				}
+			bindings[binding.name] = binding.value.name;
 
-				bindings[attribute.name] = attribute.value.name;
+			// bind:online is a special case, we need to listen for two separate events
+			if (binding.name === 'online') return;
 
-				// bind:online is a special case, we need to listen for two separate events
-				if (attribute.name === 'online') return;
+			const associatedEvent = associatedEvents[binding.name];
+			const property = properties[binding.name] || binding.name;
 
-				const associatedEvent = associatedEvents[attribute.name];
-				const property = properties[attribute.name] || attribute.name;
+			if (!events[associatedEvent]) events[associatedEvent] = [];
+			events[associatedEvent].push(
+				`${binding.value.name}: this.${property}`
+			);
 
-				if (!events[associatedEvent]) events[associatedEvent] = [];
-				events[associatedEvent].push(
-					`${attribute.value.name}: this.${property}`
-				);
-
-				// add initial value
-				generator.metaBindings.push(
-					`this._state.${attribute.value.name} = window.${property};`
-				);
-			}
+			// add initial value
+			compiler.metaBindings.push(
+				`this._state.${binding.value.name} = window.${property};`
+			);
 		});
 
 		const lock = block.getUniqueName(`window_updating`);

@@ -9,13 +9,13 @@ export default class Fragment extends Node {
 	children: Node[];
 
 	constructor(compiler: Generator, info: any) {
-		super(compiler, info);
+		super(compiler, null, info);
 		this.children = mapChildren(compiler, this, info.children);
 	}
 
 	init() {
 		this.block = new Block({
-			generator: this.generator,
+			generator: this.compiler,
 			name: '@create_main_fragment',
 			key: null,
 
@@ -29,7 +29,7 @@ export default class Fragment extends Node {
 			dependencies: new Set(),
 		});
 
-		this.generator.blocks.push(this.block);
+		this.compiler.blocks.push(this.block);
 		this.initChildren(this.block, true, null);
 
 		this.block.hasUpdateMethod = true;
