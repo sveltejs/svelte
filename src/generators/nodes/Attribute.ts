@@ -28,8 +28,8 @@ export default class Attribute extends Node {
 	dependencies: Set<string>;
 	expression: Node;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
 		this.name = info.name;
 		this.isTrue = info.value === true;
@@ -41,7 +41,7 @@ export default class Attribute extends Node {
 			: info.value.map(node => {
 				if (node.type === 'Text') return node;
 
-				const expression = new Expression(compiler, this, node.expression);
+				const expression = new Expression(compiler, this, scope, node.expression);
 
 				addToSet(this.dependencies, expression.dependencies);
 				return expression;

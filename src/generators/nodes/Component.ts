@@ -24,8 +24,8 @@ export default class Component extends Node {
 	children: Node[];
 	ref: string;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
 		compiler.hasComponents = true;
 
@@ -39,15 +39,15 @@ export default class Component extends Node {
 			switch (node.type) {
 				case 'Attribute':
 					// TODO spread
-					this.attributes.push(new Attribute(compiler, this, node));
+					this.attributes.push(new Attribute(compiler, this, scope, node));
 					break;
 
 				case 'Binding':
-					this.bindings.push(new Binding(compiler, this, node));
+					this.bindings.push(new Binding(compiler, this, scope, node));
 					break;
 
 				case 'EventHandler':
-					this.handlers.push(new EventHandler(compiler, this, node));
+					this.handlers.push(new EventHandler(compiler, this, scope, node));
 					break;
 
 				case 'Ref':
@@ -63,7 +63,7 @@ export default class Component extends Node {
 			}
 		});
 
-		this.children = mapChildren(compiler, this, info.children);
+		this.children = mapChildren(compiler, this, scope, info.children);
 	}
 
 	init(
@@ -150,7 +150,7 @@ export default class Component extends Node {
 			? '{}'
 			: stringifyProps(
 				// this.attributes.map(attr => `${attr.name}: ${attr.value}`)
-				this.attributes.map(attr => `${attr.name}: "TODO"`)
+				this.attributes.map(attr => `${attr.name}: ${attr.getValue()}`)
 			);
 
 		if (this.attributes.length || this.bindings.length) {

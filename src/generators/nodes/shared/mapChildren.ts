@@ -2,6 +2,7 @@ import Component from '../Component';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
 import IfBlock from '../IfBlock';
+import Slot from '../Slot';
 import Text from '../Text';
 import MustacheTag from '../MustacheTag';
 import Window from '../Window';
@@ -13,6 +14,7 @@ function getConstructor(type): typeof Node {
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'IfBlock': return IfBlock;
+		case 'Slot': return Slot;
 		case 'Text': return Text;
 		case 'MustacheTag': return MustacheTag;
 		case 'Window': return Window;
@@ -20,11 +22,11 @@ function getConstructor(type): typeof Node {
 	}
 }
 
-export default function mapChildren(compiler, parent, children: any[]) {
+export default function mapChildren(compiler, parent, scope, children: any[]) {
 	let last = null;
 	return children.map(child => {
 		const constructor = getConstructor(child.type);
-		const node = new constructor(compiler, parent, child);
+		const node = new constructor(compiler, parent, scope, child);
 
 		if (last) last.next = node;
 		node.prev = last;

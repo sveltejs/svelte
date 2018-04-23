@@ -5,9 +5,9 @@ import Block from '../../dom/Block';
 export default class Tag extends Node {
 	expression: Expression;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
-		this.expression = new Expression(compiler, this, info.expression);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
+		this.expression = new Expression(compiler, this, scope, info.expression);
 	}
 
 	renameThisMethod(
@@ -19,8 +19,8 @@ export default class Tag extends Node {
 		const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
 
 		const shouldCache = (
-			this.expression.type !== 'Identifier' ||
-			block.contexts.has(this.expression.name) ||
+			this.expression.node.type !== 'Identifier' ||
+			block.contexts.has(this.expression.node.name) ||
 			hasChangeableIndex
 		);
 

@@ -13,8 +13,8 @@ export default class EventHandler extends Node {
 	args: Expression[];
 	snippet: string;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
 		this.name = info.name;
 		this.dependencies = new Set();
@@ -23,7 +23,7 @@ export default class EventHandler extends Node {
 			this.callee = flattenReference(info.expression.callee);
 			this.insertionPoint = info.expression.start;
 			this.args = info.expression.arguments.map(param => {
-				const expression = new Expression(compiler, this, param);
+				const expression = new Expression(compiler, this, scope, param);
 				addToSet(this.dependencies, expression.dependencies);
 				return expression;
 			});

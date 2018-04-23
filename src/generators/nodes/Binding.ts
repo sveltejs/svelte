@@ -20,11 +20,11 @@ export default class Binding extends Node {
 	obj: string;
 	prop: string;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
 		this.name = info.name;
-		this.value = new Expression(compiler, this, info.value);
+		this.value = new Expression(compiler, this, scope, info.value);
 
 		// const contextual = block.contexts.has(name);
 		const contextual = false; // TODO

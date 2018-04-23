@@ -31,10 +31,10 @@ export default class Slot extends Element {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { generator } = this;
+		const { compiler } = this;
 
 		const slotName = this.getStaticAttributeValue('name') || 'default';
-		generator.slots.add(slotName);
+		compiler.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${slotName}`);
 		const prop = !isValidIdentifier(slotName) ? `["${slotName}"]` : `.${slotName}`;

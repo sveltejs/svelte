@@ -6,13 +6,13 @@ export default class Transition extends Node {
 	name: string;
 	expression: Expression;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
 		this.name = info.name;
 
 		this.expression = info.expression
-			? new Expression(compiler, this, info.expression)
+			? new Expression(compiler, this, scope, info.expression)
 			: null;
 	}
 }

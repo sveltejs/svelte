@@ -113,7 +113,8 @@ export default function tag(parser: Parser) {
 
 	const type = metaTags.has(name)
 		? metaTags.get(name)
-		: /[A-Z]/.test(name[0]) ? 'Component' : 'Element';
+		: /[A-Z]/.test(name[0]) ? 'Component'
+		: name === 'slot' ? 'Slot' : 'Element';
 
 	const element: Node = {
 		start,

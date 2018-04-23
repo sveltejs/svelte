@@ -25,14 +25,14 @@ export default class IfBlock extends Node {
 
 	block: Block;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
-		this.expression = new Expression(compiler, this, info.expression);
-		this.children = mapChildren(compiler, this, info.children);
+		this.expression = new Expression(compiler, this, scope, info.expression);
+		this.children = mapChildren(compiler, this, scope, info.children);
 
 		this.else = info.else
-			? new ElseBlock(compiler, this, info.else)
+			? new ElseBlock(compiler, this, scope, info.else)
 			: null;
 	}
 

@@ -50,21 +50,19 @@ export default function visitComponent(
 	});
 
 	function getAttributeValue(attribute) {
-		if (attribute.value === true) return `true`;
-		if (attribute.value.length === 0) return `''`;
+		if (attribute.isTrue) return `true`;
+		if (attribute.chunks.length === 0) return `''`;
 
-		if (attribute.value.length === 1) {
-			const chunk = attribute.value[0];
+		if (attribute.chunks.length === 1) {
+			const chunk = attribute.chunks[0];
 			if (chunk.type === 'Text') {
 				return stringify(chunk.data);
 			}
 
-			block.contextualise(chunk.expression);
-			const { snippet } = chunk.metadata;
-			return snippet;
+			return chunk.snippet;
 		}
 
-		return '`' + attribute.value.map(stringifyAttribute).join('') + '`';
+		return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
 	}
 
 	const props = usesSpread
@@ -72,8 +70,7 @@ export default function visitComponent(
 			attributes
 				.map(attribute => {
 					if (attribute.type === 'Spread') {
-						block.contextualise(attribute.expression);
-						return attribute.metadata.snippet;
+						return attribute.expression.snippet;
 					} else {
 						return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
 					}

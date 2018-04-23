@@ -4,13 +4,39 @@ import Generator from '../Generator';
 import mapChildren from './shared/mapChildren';
 import Block from '../dom/Block';
 
+class TemplateScope {
+	names: Set<string>;
+	indexes: Set<string>;
+	dependenciesForName: Map<string, string>;
+
+	constructor(parent?: TemplateScope) {
+		this.names = new Set(parent ? parent.names : []);
+		this.indexes = new Set(parent ? parent.names : []);
+
+		this.dependenciesForName = new Map(parent ? parent.dependenciesForName : []);
+	}
+
+	add(name, dependencies) {
+		this.names.add(name);
+		this.dependenciesForName.set(name, dependencies);
+	}
+
+	child() {
+		return new TemplateScope(this);
+	}
+}
+
 export default class Fragment extends Node {
 	block: Block;
 	children: Node[];
+	scope: TemplateScope;
 
 	constructor(compiler: Generator, info: any) {
-		super(compiler, null, info);
-		this.children = mapChildren(compiler, this, info.children);
+		const scope = new TemplateScope();
+		super(compiler, null, scope, info);
+
+		this.scope = scope;
+		this.children = mapChildren(compiler, this, scope, info.children);
 	}
 
 	init() {

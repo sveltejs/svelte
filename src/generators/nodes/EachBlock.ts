@@ -21,14 +21,19 @@ export default class EachBlock extends Node {
 	children: Node[];
 	else?: ElseBlock;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 
-		this.expression = new Expression(compiler, this, info.expression);
+		this.expression = new Expression(compiler, this, scope, info.expression);
 		this.context = info.context;
 		this.key = info.key;
 
-		this.children = mapChildren(compiler, this, info.children);
+		this.scope = scope.child();
+
+		// TODO handle indexes and destructuring
+		this.scope.add(this.context, this.expression.dependencies);
+
+		this.children = mapChildren(compiler, this, this.scope, info.children);
 	}
 
 	init(

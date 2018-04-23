@@ -33,8 +33,8 @@ export default class Text extends Node {
 	data: string;
 	shouldSkip: boolean;
 
-	constructor(compiler, parent, info) {
-		super(compiler, parent, info);
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
 		this.data = info.data;
 	}
 
