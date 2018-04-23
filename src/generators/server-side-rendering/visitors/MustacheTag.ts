@@ -7,8 +7,7 @@ export default function visitMustacheTag(
 	block: Block,
 	node: Node
 ) {
-	block.contextualise(node.expression);
-	const { snippet } = node.metadata;
+	const { snippet } = node.expression;
 
 	generator.append(
 		node.parent &&

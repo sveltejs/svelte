@@ -1,13 +1,21 @@
+import Component from '../Component';
+import EachBlock from '../EachBlock';
 import Element from '../Element';
+import IfBlock from '../IfBlock';
 import Text from '../Text';
 import MustacheTag from '../MustacheTag';
+import Window from '../Window';
 import Node from './Node';
 
 function getConstructor(type): typeof Node {
 	switch (type) {
+		case 'Component': return Component;
+		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
+		case 'IfBlock': return IfBlock;
 		case 'Text': return Text;
 		case 'MustacheTag': return MustacheTag;
+		case 'Window': return Window;
 		default: throw new Error(`Not implemented: ${type}`);
 	}
 }

@@ -2,10 +2,12 @@ import deindent from '../../utils/deindent';
 import { stringify } from '../../utils/stringify';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
+import addToSet from '../../utils/addToSet';
 import { DomGenerator } from '../dom/index';
 import Node from './shared/Node';
 import Element from './Element';
 import Block from '../dom/Block';
+import Expression from './shared/Expression';
 
 export interface StyleProp {
 	key: string;
@@ -20,14 +22,32 @@ export default class Attribute extends Node {
 	compiler: DomGenerator;
 	parent: Element;
 	name: string;
-	value: true | Node[]
+	isTrue: boolean;
+	isDynamic: boolean;
+	chunks: Node[];
+	dependencies: Set<string>;
 	expression: Node;
 
 	constructor(compiler, parent, info) {
 		super(compiler, parent, info);
 
 		this.name = info.name;
-		this.value = info.value;
+		this.isTrue = info.value === true;
+
+		this.dependencies = new Set();
+
+		this.chunks = this.isTrue
+			? []
+			: info.value.map(node => {
+				if (node.type === 'Text') return node;
+
+				const expression = new Expression(compiler, this, node.expression);
+
+				addToSet(this.dependencies, expression.dependencies);
+				return expression;
+			});
+
+		this.isDynamic = this.dependencies.size > 0;
 	}
 
 	render(block: Block) {
@@ -35,7 +55,7 @@ export default class Attribute extends Node {
 		const name = fixAttributeCasing(this.name);
 
 		if (name === 'style') {
-			const styleProps = optimizeStyle(this.value);
+			const styleProps = optimizeStyle(this.chunks);
 			if (styleProps) {
 				this.renderStyle(block, styleProps);
 				return;
@@ -66,15 +86,14 @@ export default class Attribute extends Node {
 			? '@setXlinkAttribute'
 			: '@setAttribute';
 
-		const isDynamic = this.isDynamic();
-		const isLegacyInputType = this.generator.legacy && name === 'type' && this.parent.name === 'input';
+		const isLegacyInputType = this.compiler.legacy && name === 'type' && this.parent.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !this.generator.legacy && !node.namespace;
+		const isDataSet = /^data-/.test(name) && !this.compiler.legacy && !node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;
 
-		if (isDynamic) {
+		if (this.isDynamic) {
 			let value;
 
 			const allDependencies = new Set();
@@ -83,11 +102,10 @@ export default class Attribute extends Node {
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
-			if (this.value.length === 1) {
-				// single {{tag}} — may be a non-string
-				const { expression } = this.value[0];
-				const { indexes } = block.contextualise(expression);
-				const { dependencies, snippet } = this.value[0].metadata;
+			if (this.chunks.length === 1) {
+				// single {tag} — may be a non-string
+				const expression = this.chunks[0];
+				const { dependencies, snippet, indexes } = expression;
 
 				value = snippet;
 				dependencies.forEach(d => {
@@ -104,14 +122,13 @@ export default class Attribute extends Node {
 			} else {
 				// '{{foo}} {{bar}}' — treat as string concatenation
 				value =
-					(this.value[0].type === 'Text' ? '' : `"" + `) +
-					this.value
+					(this.chunks[0].type === 'Text' ? '' : `"" + `) +
+					this.chunks
 						.map((chunk: Node) => {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { indexes } = block.contextualise(chunk.expression);
-								const { dependencies, snippet } = chunk.metadata;
+								const { dependencies, snippet, indexes } = chunk;
 
 								if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
 									hasChangeableIndex = true;
@@ -121,7 +138,7 @@ export default class Attribute extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.expression) <= 13 ? `(${snippet})` : snippet;
+								return getExpressionPrecedence(chunk) <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
@@ -211,9 +228,9 @@ export default class Attribute extends Node {
 				);
 			}
 		} else {
-			const value = this.value === true
+			const value = this.isTrue
 				? 'true'
-				: this.value.length === 0 ? `""` : stringify(this.value[0].data);
+				: this.chunks.length === 0 ? `""` : stringify(this.chunks[0].data);
 
 			const statement = (
 				isLegacyInputType
@@ -237,7 +254,7 @@ export default class Attribute extends Node {
 			const updateValue = `${node.var}.value = ${node.var}.__value;`;
 
 			block.builders.hydrate.addLine(updateValue);
-			if (isDynamic) block.builders.update.addLine(updateValue);
+			if (this.isDynamic) block.builders.update.addLine(updateValue);
 		}
 	}
 
@@ -260,8 +277,7 @@ export default class Attribute extends Node {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { indexes } = block.contextualise(chunk.expression);
-								const { dependencies, snippet } = chunk.metadata;
+								const { dependencies, snippet, indexes } = chunk;
 
 								if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
 									hasChangeableIndex = true;
@@ -296,12 +312,6 @@ export default class Attribute extends Node {
 				`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
 			);
 		});
-	}
-
-	isDynamic() {
-		if (this.value === true || this.value.length === 0) return false;
-		if (this.value.length > 1) return true;
-		return this.value[0].type !== 'Text';
 	}
 }
 

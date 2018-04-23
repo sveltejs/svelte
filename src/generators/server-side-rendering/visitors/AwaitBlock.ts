@@ -8,8 +8,7 @@ export default function visitAwaitBlock(
 	block: Block,
 	node: Node
 ) {
-	block.contextualise(node.expression);
-	const { snippet } = node.metadata;
+	const { snippet } = node.expression;
 
 	// TODO should this be the generator's job? It's duplicated between
 	// here and the equivalent DOM compiler visitor

@@ -4,6 +4,8 @@ import ElseBlock from './ElseBlock';
 import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
+import Expression from './shared/Expression';
+import mapChildren from './shared/mapChildren';
 
 function isElseIf(node: ElseBlock) {
 	return (
@@ -17,16 +19,29 @@ function isElseBranch(branch) {
 
 export default class IfBlock extends Node {
 	type: 'IfBlock';
+	expression: Expression;
+	children: any[];
 	else: ElseBlock;
 
 	block: Block;
+
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
+
+		this.expression = new Expression(compiler, this, info.expression);
+		this.children = mapChildren(compiler, this, info.children);
+
+		this.else = info.else
+			? new ElseBlock(compiler, this, info.else)
+			: null;
+	}
 
 	init(
 		block: Block,
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
-		const { generator } = this;
+		const { compiler } = this;
 
 		this.cannotUseInnerHTML();
 
@@ -38,11 +53,11 @@ export default class IfBlock extends Node {
 		function attachBlocks(node: IfBlock) {
 			node.var = block.getUniqueName(`if_block`);
 
-			block.addDependencies(node.metadata.dependencies);
+			block.addDependencies(node.expression.dependencies);
 
 			node.block = block.child({
-				comment: createDebuggingComment(node, generator),
-				name: generator.getUniqueName(`create_if_block`),
+				comment: createDebuggingComment(node, compiler),
+				name: compiler.getUniqueName(`create_if_block`),
 			});
 
 			blocks.push(node.block);
@@ -60,8 +75,8 @@ export default class IfBlock extends Node {
 				attachBlocks(node.else.children[0]);
 			} else if (node.else) {
 				node.else.block = block.child({
-					comment: createDebuggingComment(node.else, generator),
-					name: generator.getUniqueName(`create_if_block`),
+					comment: createDebuggingComment(node.else, compiler),
+					name: compiler.getUniqueName(`create_if_block`),
 				});
 
 				blocks.push(node.else.block);
@@ -86,7 +101,7 @@ export default class IfBlock extends Node {
 			block.hasOutroMethod = hasOutros;
 		});
 
-		generator.blocks.push(...blocks);
+		compiler.blocks.push(...blocks);
 	}
 
 	build(
@@ -147,12 +162,12 @@ export default class IfBlock extends Node {
 		dynamic,
 		{ name, anchor, hasElse, if_name }
 	) {
-		const select_block_type = this.generator.getUniqueName(`select_block_type`);
+		const select_block_type = this.compiler.getUniqueName(`select_block_type`);
 		const current_block_type = block.getUniqueName(`current_block_type`);
 		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
 		block.builders.init.addBlock(deindent`
-			function ${select_block_type}(state) {
+			function ${select_block_type}(ctx) {
 				${branches
 					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
 					.join('\n')}
@@ -160,8 +175,8 @@ export default class IfBlock extends Node {
 		`);
 
 		block.builders.init.addBlock(deindent`
-			var ${current_block_type} = ${select_block_type}(state);
-			var ${name} = ${current_block_type_and}${current_block_type}(#component, state);
+			var ${current_block_type} = ${select_block_type}(ctx);
+			var ${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
 		`);
 
 		const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
@@ -185,22 +200,22 @@ export default class IfBlock extends Node {
 						${name}.u();
 						${name}.d();
 					}`}
-			${name} = ${current_block_type_and}${current_block_type}(#component, state);
+			${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
 			${if_name}${name}.c();
 			${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 		`;
 
 		if (dynamic) {
 			block.builders.update.addBlock(deindent`
-				if (${current_block_type} === (${current_block_type} = ${select_block_type}(state)) && ${name}) {
-					${name}.p(changed, state);
+				if (${current_block_type} === (${current_block_type} = ${select_block_type}(ctx)) && ${name}) {
+					${name}.p(changed, ctx);
 				} else {
 					${changeBlock}
 				}
 			`);
 		} else {
 			block.builders.update.addBlock(deindent`
-				if (${current_block_type} !== (${current_block_type} = ${select_block_type}(state))) {
+				if (${current_block_type} !== (${current_block_type} = ${select_block_type}(ctx))) {
 					${changeBlock}
 				}
 			`);
@@ -241,7 +256,7 @@ export default class IfBlock extends Node {
 
 			var ${if_blocks} = [];
 
-			function ${select_block_type}(state) {
+			function ${select_block_type}(ctx) {
 				${branches
 					.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
 					.join('\n')}
@@ -250,13 +265,13 @@ export default class IfBlock extends Node {
 
 		if (hasElse) {
 			block.builders.init.addBlock(deindent`
-				${current_block_type_index} = ${select_block_type}(state);
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
+				${current_block_type_index} = ${select_block_type}(ctx);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, ctx);
 			`);
 		} else {
 			block.builders.init.addBlock(deindent`
-				if (~(${current_block_type_index} = ${select_block_type}(state))) {
-					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
+				if (~(${current_block_type_index} = ${select_block_type}(ctx))) {
+					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, ctx);
 				}
 			`);
 		}
@@ -282,7 +297,7 @@ export default class IfBlock extends Node {
 		const createNewBlock = deindent`
 			${name} = ${if_blocks}[${current_block_type_index}];
 			if (!${name}) {
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, state);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, ctx);
 				${name}.c();
 			}
 			${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
@@ -309,9 +324,9 @@ export default class IfBlock extends Node {
 		if (dynamic) {
 			block.builders.update.addBlock(deindent`
 				var ${previous_block_index} = ${current_block_type_index};
-				${current_block_type_index} = ${select_block_type}(state);
+				${current_block_type_index} = ${select_block_type}(ctx);
 				if (${current_block_type_index} === ${previous_block_index}) {
-					${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, state);
+					${if_current_block_type_index}${if_blocks}[${current_block_type_index}].p(changed, ctx);
 				} else {
 					${changeBlock}
 				}
@@ -319,7 +334,7 @@ export default class IfBlock extends Node {
 		} else {
 			block.builders.update.addBlock(deindent`
 				var ${previous_block_index} = ${current_block_type_index};
-				${current_block_type_index} = ${select_block_type}(state);
+				${current_block_type_index} = ${select_block_type}(ctx);
 				if (${current_block_type_index} !== ${previous_block_index}) {
 					${changeBlock}
 				}
@@ -343,7 +358,7 @@ export default class IfBlock extends Node {
 		{ name, anchor, if_name }
 	) {
 		block.builders.init.addBlock(deindent`
-			var ${name} = (${branch.condition}) && ${branch.block}(#component, state);
+			var ${name} = (${branch.condition}) && ${branch.block}(#component, ctx);
 		`);
 
 		const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
@@ -360,9 +375,9 @@ export default class IfBlock extends Node {
 			? branch.hasIntroMethod
 				? deindent`
 					if (${name}) {
-						${name}.p(changed, state);
+						${name}.p(changed, ctx);
 					} else {
-						${name} = ${branch.block}(#component, state);
+						${name} = ${branch.block}(#component, ctx);
 						if (${name}) ${name}.c();
 					}
 
@@ -370,9 +385,9 @@ export default class IfBlock extends Node {
 				`
 				: deindent`
 					if (${name}) {
-						${name}.p(changed, state);
+						${name}.p(changed, ctx);
 					} else {
-						${name} = ${branch.block}(#component, state);
+						${name} = ${branch.block}(#component, ctx);
 						${name}.c();
 						${name}.m(${updateMountNode}, ${anchor});
 					}
@@ -380,14 +395,14 @@ export default class IfBlock extends Node {
 			: branch.hasIntroMethod
 				? deindent`
 					if (!${name}) {
-						${name} = ${branch.block}(#component, state);
+						${name} = ${branch.block}(#component, ctx);
 						${name}.c();
 					}
 					${name}.i(${updateMountNode}, ${anchor});
 				`
 				: deindent`
 					if (!${name}) {
-						${name} = ${branch.block}(#component, state);
+						${name} = ${branch.block}(#component, ctx);
 						${name}.c();
 						${name}.m(${updateMountNode}, ${anchor});
 					}
@@ -426,13 +441,11 @@ export default class IfBlock extends Node {
 		block: Block,
 		parentNode: string,
 		parentNodes: string,
-		node: Node
+		node: IfBlock
 	) {
-		block.contextualise(node.expression); // TODO remove
-
 		const branches = [
 			{
-				condition: node.metadata.snippet,
+				condition: node.expression.snippet,
 				block: node.block.name,
 				hasUpdateMethod: node.block.hasUpdateMethod,
 				hasIntroMethod: node.block.hasIntroMethod,

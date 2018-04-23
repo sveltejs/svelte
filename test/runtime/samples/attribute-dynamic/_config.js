@@ -1,5 +1,4 @@
 export default {
-	solo: true,
 	html: `<div style="color: red;">red</div>`,
 
 	test ( assert, component, target ) {

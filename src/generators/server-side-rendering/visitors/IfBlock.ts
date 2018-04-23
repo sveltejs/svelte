@@ -8,8 +8,7 @@ export default function visitIfBlock(
 	block: Block,
 	node: Node
 ) {
-	block.contextualise(node.expression);
-	const { snippet } = node.metadata;
+	const { snippet } = node.expression;
 
 	generator.append('${ ' + snippet + ' ? `');
 

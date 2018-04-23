@@ -33,6 +33,11 @@ export default class Text extends Node {
 	data: string;
 	shouldSkip: boolean;
 
+	constructor(compiler, parent, info) {
+		super(compiler, parent, info);
+		this.data = info.data;
+	}
+
 	init(block: Block) {
 		const parentElement = this.findNearest(/(?:Element|Component)/);
 
