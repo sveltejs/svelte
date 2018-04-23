@@ -5,6 +5,7 @@ import IfBlock from '../IfBlock';
 import Slot from '../Slot';
 import Text from '../Text';
 import MustacheTag from '../MustacheTag';
+import RawMustacheTag from '../RawMustacheTag';
 import Window from '../Window';
 import Node from './Node';
 
@@ -17,6 +18,7 @@ function getConstructor(type): typeof Node {
 		case 'Slot': return Slot;
 		case 'Text': return Text;
 		case 'MustacheTag': return MustacheTag;
+		case 'RawMustacheTag': return RawMustacheTag;
 		case 'Window': return Window;
 		default: throw new Error(`Not implemented: ${type}`);
 	}
