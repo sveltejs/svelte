@@ -7,7 +7,7 @@ export default class RawMustacheTag extends Tag {
 	init(block: Block) {
 		this.cannotUseInnerHTML();
 		this.var = block.getUniqueName('raw');
-		block.addDependencies(this.metadata.dependencies);
+		block.addDependencies(this.expression.dependencies);
 	}
 
 	build(
