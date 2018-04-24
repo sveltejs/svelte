@@ -2,8 +2,17 @@ import { stringify } from '../../utils/stringify';
 import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
 import Node from './shared/Node';
 import Block from '../dom/Block';
+import mapChildren from './shared/mapChildren';
 
 export default class Title extends Node {
+	type: 'Title';
+	children: any[]; // TODO
+
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
+		this.children = mapChildren(compiler, parent, scope, info.children);
+	}
+
 	build(
 		block: Block,
 		parentNode: string,
@@ -22,8 +31,7 @@ export default class Title extends Node {
 			if (this.children.length === 1) {
 				// single {{tag}} — may be a non-string
 				const { expression } = this.children[0];
-				const { indexes } = block.contextualise(expression);
-				const { dependencies, snippet } = this.children[0].metadata;
+				const { dependencies, snippet, indexes } = this.children[0].expression;
 
 				value = snippet;
 				dependencies.forEach(d => {
@@ -43,14 +51,13 @@ export default class Title extends Node {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { indexes } = block.contextualise(chunk.expression);
-								const { dependencies, snippet } = chunk.metadata;
+								const { dependencies, snippet } = chunk.expression;
 
 								dependencies.forEach(d => {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.expression) <= 13 ? `(${snippet})` : snippet;
+								return getExpressionPrecedence(chunk) <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
