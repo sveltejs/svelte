@@ -84,11 +84,10 @@ export default function visitComponent(
 			.join(', ')} }`;
 
 	const isDynamicComponent = node.name === 'svelte:component';
-	if (isDynamicComponent) block.contextualise(node.expression);
 
 	const expression = (
 		node.name === 'svelte:self' ? generator.name :
-		isDynamicComponent ? `((${node.metadata.snippet}) || __missingComponent)` :
+		isDynamicComponent ? `((${node.expression.snippet}) || __missingComponent)` :
 		`%components-${node.name}`
 	);
 
