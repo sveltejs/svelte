@@ -19,6 +19,7 @@ class TemplateScope {
 	add(name, dependencies) {
 		this.names.add(name);
 		this.dependenciesForName.set(name, dependencies);
+		return this;
 	}
 
 	child() {

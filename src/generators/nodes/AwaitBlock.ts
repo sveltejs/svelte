@@ -6,15 +6,30 @@ import PendingBlock from './PendingBlock';
 import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
+import Expression from './shared/Expression';
 
 export default class AwaitBlock extends Node {
+	expression: Expression;
 	value: string;
 	error: string;
-	expression: Node;
 
 	pending: PendingBlock;
 	then: ThenBlock;
 	catch: CatchBlock;
+
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
+
+		this.expression = new Expression(compiler, this, scope, info.expression);
+		const deps = this.expression.dependencies;
+
+		this.value = info.value;
+		this.error = info.error;
+
+		this.pending = new PendingBlock(compiler, this, scope, info.pending);
+		this.then = new ThenBlock(compiler, this, scope.add(this.value, deps), info.then);
+		this.catch = new CatchBlock(compiler, this, scope.add(this.error, deps), info.catch);
+	}
 
 	init(
 		block: Block,
@@ -24,7 +39,7 @@ export default class AwaitBlock extends Node {
 		this.cannotUseInnerHTML();
 
 		this.var = block.getUniqueName('await_block');
-		block.addDependencies(this.metadata.dependencies);
+		block.addDependencies(this.expression.dependencies);
 
 		let dynamic = false;
 
@@ -36,8 +51,8 @@ export default class AwaitBlock extends Node {
 			const child = this[status];
 
 			child.block = block.child({
-				comment: createDebuggingComment(child, this.generator),
-				name: this.generator.getUniqueName(`create_${status}_block`),
+				comment: createDebuggingComment(child, this.compiler),
+				name: this.compiler.getUniqueName(`create_${status}_block`),
 				contexts: new Map(block.contexts),
 				contextTypes: new Map(block.contextTypes)
 			});
@@ -49,7 +64,7 @@ export default class AwaitBlock extends Node {
 			}
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
-			this.generator.blocks.push(child.block);
+			this.compiler.blocks.push(child.block);
 
 			if (child.block.dependencies.size > 0) {
 				dynamic = true;
@@ -72,8 +87,7 @@ export default class AwaitBlock extends Node {
 		const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
-		block.contextualise(this.expression);
-		const { snippet } = this.metadata;
+		const { snippet } = this.expression;
 
 		const promise = block.getUniqueName(`promise`);
 		const resolved = block.getUniqueName(`resolved`);
@@ -101,11 +115,11 @@ export default class AwaitBlock extends Node {
 		// but it's probably not worth it
 
 		block.builders.init.addBlock(deindent`
-			function ${replace_await_block}(${token}, type, state) {
+			function ${replace_await_block}(${token}, type, ctx) {
 				if (${token} !== ${await_token}) return;
 
 				var ${old_block} = ${await_block};
-				${await_block} = type && (${await_block_type} = type)(#component, state);
+				${await_block} = type && (${await_block_type} = type)(#component, ctx);
 
 				if (${old_block}) {
 					${old_block}.u();
@@ -117,23 +131,23 @@ export default class AwaitBlock extends Node {
 				}
 			}
 
-			function ${handle_promise}(${promise}, state) {
+			function ${handle_promise}(${promise}, ctx) {
 				var ${token} = ${await_token} = {};
 
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
-						${this.then.block.context ? deindent`
-							var state = #component.get();
-							${resolved} = { ${this.then.block.context}: ${value} };
-							${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, state), ${resolved}));
+						${this.value ? deindent`
+							var ctx = #component.get();
+							${resolved} = { ${this.value}: ${value} };
+							${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, ctx), ${resolved}));
 						` : deindent`
 							${replace_await_block}(${token}, null, null);
 						`}
 					}, function (${error}) {
-						${this.catch.block.context ? deindent`
-							var state = #component.get();
-							${resolved} = { ${this.catch.block.context}: ${error} };
-							${replace_await_block}(${token}, ${create_catch_block}, @assign(@assign({}, state), ${resolved}));
+						${this.error ? deindent`
+							var ctx = #component.get();
+							${resolved} = { ${this.error}: ${error} };
+							${replace_await_block}(${token}, ${create_catch_block}, @assign(@assign({}, ctx), ${resolved}));
 						` : deindent`
 							${replace_await_block}(${token}, null, null);
 						`}
@@ -141,19 +155,19 @@ export default class AwaitBlock extends Node {
 
 					// if we previously had a then/catch block, destroy it
 					if (${await_block_type} !== ${create_pending_block}) {
-						${replace_await_block}(${token}, ${create_pending_block}, state);
+						${replace_await_block}(${token}, ${create_pending_block}, ctx);
 						return true;
 					}
 				} else {
-					${resolved} = { ${this.then.block.context}: ${promise} };
+					${resolved} = { ${this.value}: ${promise} };
 					if (${await_block_type} !== ${create_then_block}) {
-						${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, state), ${resolved}));
+						${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, ctx), ${resolved}));
 						return true;
 					}
 				}
 			}
 
-			${handle_promise}(${promise} = ${snippet}, state);
+			${handle_promise}(${promise} = ${snippet}, ctx);
 		`);
 
 		block.builders.create.addBlock(deindent`
@@ -174,15 +188,15 @@ export default class AwaitBlock extends Node {
 		`);
 
 		const conditions = [];
-		if (this.metadata.dependencies) {
+		if (this.expression.dependencies.size > 0) {
 			conditions.push(
-				`(${this.metadata.dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
+				`(${[...this.expression.dependencies].map(dep => `'${dep}' in changed`).join(' || ')})`
 			);
 		}
 
 		conditions.push(
 			`${promise} !== (${promise} = ${snippet})`,
-			`${handle_promise}(${promise}, state)`
+			`${handle_promise}(${promise}, ctx)`
 		);
 
 		if (this.pending.block.hasUpdateMethod) {
@@ -190,7 +204,7 @@ export default class AwaitBlock extends Node {
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
-					${await_block}.p(changed, @assign(@assign({}, state), ${resolved}));
+					${await_block}.p(changed, @assign(@assign({}, ctx), ${resolved}));
 				}
 			`);
 		} else {
