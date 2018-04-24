@@ -263,7 +263,6 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					p: function update(changed, ctx) {
-						${initializers.map(str => `${str};`)}
 						${this.builders.update}
 					},
 				`);

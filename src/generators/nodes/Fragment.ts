@@ -3,29 +3,7 @@ import { DomGenerator } from '../dom/index';
 import Generator from '../Generator';
 import mapChildren from './shared/mapChildren';
 import Block from '../dom/Block';
-
-class TemplateScope {
-	names: Set<string>;
-	indexes: Set<string>;
-	dependenciesForName: Map<string, string>;
-
-	constructor(parent?: TemplateScope) {
-		this.names = new Set(parent ? parent.names : []);
-		this.indexes = new Set(parent ? parent.names : []);
-
-		this.dependenciesForName = new Map(parent ? parent.dependenciesForName : []);
-	}
-
-	add(name, dependencies) {
-		this.names.add(name);
-		this.dependenciesForName.set(name, dependencies);
-		return this;
-	}
-
-	child() {
-		return new TemplateScope(this);
-	}
-}
+import TemplateScope from '../dom/TemplateScope';
 
 export default class Fragment extends Node {
 	block: Block;

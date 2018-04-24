@@ -5,6 +5,7 @@ import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
 import mapChildren from './shared/mapChildren';
+import TemplateScope from '../dom/TemplateScope';
 
 export default class EachBlock extends Node {
 	type: 'EachBlock';
@@ -16,6 +17,7 @@ export default class EachBlock extends Node {
 	index: string;
 	context: string;
 	key: string;
+	scope: TemplateScope;
 	destructuredContexts: string[];
 
 	children: Node[];
@@ -26,6 +28,7 @@ export default class EachBlock extends Node {
 
 		this.expression = new Expression(compiler, this, scope, info.expression);
 		this.context = info.context;
+		this.index = info.index;
 		this.key = info.key;
 
 		this.scope = scope.child();
