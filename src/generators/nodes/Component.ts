@@ -331,6 +331,10 @@ export default class Component extends Node {
 			`;
 		}
 
+		this.handlers.forEach(handler => {
+			handler.render(compiler, block);
+		});
+
 		if (this.name === 'svelte:component') {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
@@ -359,7 +363,7 @@ export default class Component extends Node {
 
 				${this.handlers.map(handler => deindent`
 					function ${handler.var}(event) {
-						${handler.body}
+						${handler.snippet}
 					}
 
 					if (${name}) ${name}.on("${handler.name}", ${handler.var});
@@ -440,7 +444,7 @@ export default class Component extends Node {
 
 				${this.handlers.map(handler => deindent`
 					${name}.on("${handler.name}", function(event) {
-						${handler.body}
+						${handler.snippet}
 					});
 				`)}
 
