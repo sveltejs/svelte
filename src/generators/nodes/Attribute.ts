@@ -162,7 +162,7 @@ export default class Attribute extends Node {
 					hasChangeableIndex
 				);
 			} else {
-				// '{{foo}} {{bar}}' — treat as string concatenation
+				// '{foo} {bar}' — treat as string concatenation
 				value =
 					(this.chunks[0].type === 'Text' ? '' : `"" + `) +
 					this.chunks

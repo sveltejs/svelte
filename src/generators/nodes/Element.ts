@@ -21,6 +21,7 @@ import mapChildren from './shared/mapChildren';
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
+	scope: any; // TODO
 	attributes: Attribute[];
 	actions: Action[];
 	bindings: Binding[];
@@ -35,6 +36,7 @@ export default class Element extends Node {
 	constructor(compiler, parent, scope, info: any) {
 		super(compiler, parent, scope, info);
 		this.name = info.name;
+		this.scope = scope;
 
 		const parentElement = parent.findNearest(/^Element/);
 		this.namespace = this.name === 'svg' ?
@@ -93,6 +95,8 @@ export default class Element extends Node {
 		// TODO break out attributes and directives here
 
 		this.children = mapChildren(compiler, this, scope, info.children);
+
+		compiler.stylesheet.apply(this);
 	}
 
 	init(
@@ -803,21 +807,25 @@ export default class Element extends Node {
 
 	addCssClass() {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
-		if (classAttribute && classAttribute.value !== true) {
-			if (classAttribute.value.length === 1 && classAttribute.value[0].type === 'Text') {
-				classAttribute.value[0].data += ` ${this.compiler.stylesheet.id}`;
+		if (classAttribute && !classAttribute.isTrue) {
+			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
+				(<Text>classAttribute.chunks[0]).data += ` ${this.compiler.stylesheet.id}`;
 			} else {
-				(<Node[]>classAttribute.value).push(
-					new Node({ type: 'Text', data: ` ${this.compiler.stylesheet.id}` })
+				(<Node[]>classAttribute.chunks).push(
+					new Text(this.compiler, this, this.scope, {
+						type: 'Text',
+						data: ` ${this.compiler.stylesheet.id}`
+					})
+
+					// new Text({ type: 'Text', data: ` ${this.compiler.stylesheet.id}` })
 				);
 			}
 		} else {
 			this.attributes.push(
-				new Attribute({
-					compiler: this.compiler,
+				new Attribute(this.compiler, this, this.scope, {
+					type: 'Attribute',
 					name: 'class',
-					value: [new Node({ type: 'Text', data: `${this.compiler.stylesheet.id}` })],
-					parent: this,
+					value: [{ type: 'Text', data: `${this.compiler.stylesheet.id}` }]
 				})
 			);
 		}
