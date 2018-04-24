@@ -17,11 +17,20 @@ export default class Node {
 	var: string;
 
 	constructor(compiler: Generator, parent, scope, info: any) {
-		this.compiler = compiler;
-		this.parent = parent;
 		this.start = info.start;
 		this.end = info.end;
 		this.type = info.type;
+
+		// this makes properties non-enumerable, which makes logging
+		// bearable. might have a performance cost. TODO remove in prod?
+		Object.defineProperties(this, {
+			compiler: {
+				value: compiler
+			},
+			parent: {
+				value: parent
+			}
+		});
 	}
 
 	cannotUseInnerHTML() {

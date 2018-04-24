@@ -1,6 +1,7 @@
 import { Node } from '../interfaces';
 
 export default function flattenReference(node: Node) {
+	if (node.type === 'Expression') throw new Error('bad');
 	const parts = [];
 	const propEnd = node.end;
 
