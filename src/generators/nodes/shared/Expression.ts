@@ -15,7 +15,13 @@ export default class Expression {
 	indexes: Set<string>;
 
 	constructor(compiler, parent, scope, info) {
-		this.compiler = compiler;
+		// TODO revert to direct property access in prod?
+		Object.defineProperties(this, {
+			compiler: {
+				value: compiler
+			}
+		});
+
 		this.node = info;
 
 		this.snippet = `[✂${info.start}-${info.end}✂]`;

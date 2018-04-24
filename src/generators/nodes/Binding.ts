@@ -92,7 +92,7 @@ export default class Binding extends Node {
 
 		// special cases
 		if (this.name === 'group') {
-			const bindingGroup = getBindingGroup(this.compiler, this.value);
+			const bindingGroup = getBindingGroup(this.compiler, this.value.node);
 
 			block.builders.hydrate.addLine(
 				`#component._bindingGroups[${bindingGroup}].push(${node.var});`
@@ -267,7 +267,7 @@ function getValueFromDom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (binding.name === 'group') {
-		const bindingGroup = getBindingGroup(compiler, binding.value);
+		const bindingGroup = getBindingGroup(compiler, binding.value.node);
 		if (type === 'checkbox') {
 			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
 		}
