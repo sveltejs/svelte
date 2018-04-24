@@ -3,10 +3,16 @@ import { stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
+import mapChildren from './shared/mapChildren';
 
 export default class Head extends Node {
 	type: 'Head';
-	attributes: Attribute[];
+	children: any[]; // TODO
+
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
+		this.children = mapChildren(compiler, parent, scope, info.children);
+	}
 
 	init(
 		block: Block,
@@ -21,8 +27,6 @@ export default class Head extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { generator } = this;
-
 		this.var = 'document.head';
 
 		this.children.forEach((child: Node) => {
