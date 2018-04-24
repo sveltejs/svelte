@@ -6,7 +6,6 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
 import quoteIfNecessary from '../../utils/quoteIfNecessary';
-import mungeAttribute from './shared/mungeAttribute';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -135,14 +134,6 @@ export default class Component extends Node {
 		const name_changes = block.getUniqueName(`${name}_changes`);
 		let name_updating: string;
 		let beforecreate: string = null;
-
-		// const attributes = this.attributes
-		// 	.filter(a => a.type === 'Attribute' || a.type === 'Spread')
-		// 	.map(a => mungeAttribute(a, block));
-
-		// const bindings = this.attributes
-		// 	.filter(a => a.type === 'Binding')
-		// 	.map(a => mungeBinding(a, block));
 
 		// const eventHandlers = this.attributes
 		// 	.filter((a: Node) => a.type === 'EventHandler')
@@ -488,38 +479,6 @@ export default class Component extends Node {
 	remount(name: string) {
 		return `${this.var}._mount(${name}._slotted.default, null);`;
 	}
-}
-
-function mungeBinding(binding: Node, block: Block): Binding {
-	const { name } = getObject(binding.value);
-	const { dependencies, snippet } = binding.expression;
-
-	const contextual = block.contexts.has(name);
-
-	let obj;
-	let prop;
-
-	if (contextual) {
-		obj = `ctx.${block.listNames.get(name)}`;
-		prop = `${block.indexNames.get(name)}`;
-	} else if (binding.value.type === 'MemberExpression') {
-		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
-		if (!binding.value.computed) prop = `'${prop}'`;
-		obj = `[✂${binding.value.object.start}-${binding.value.object.end}✂]`;
-	} else {
-		obj = 'ctx';
-		prop = `'${name}'`;
-	}
-
-	return {
-		name: binding.name,
-		value: binding.value,
-		contexts,
-		snippet,
-		obj,
-		prop,
-		dependencies
-	};
 }
 
 function mungeEventHandler(compiler: DomGenerator, node: Node, handler: Node, block: Block, allContexts: Set<string>) {
