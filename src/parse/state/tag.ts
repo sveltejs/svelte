@@ -113,7 +113,7 @@ export default function tag(parser: Parser) {
 
 	const type = metaTags.has(name)
 		? metaTags.get(name)
-		: /[A-Z]/.test(name[0]) ? 'Component'
+		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'Component'
 		: name === 'slot' ? 'Slot' : 'Element';
 
 	const element: Node = {

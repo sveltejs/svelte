@@ -14,10 +14,12 @@ import usesThisOrArguments from '../../validate/js/utils/usesThisOrArguments';
 import mapChildren from './shared/mapChildren';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
+import Expression from './shared/Expression';
 
 export default class Component extends Node {
 	type: 'Component';
 	name: string;
+	expression: Expression;
 	attributes: Attribute[];
 	bindings: Binding[];
 	handlers: EventHandler[];
@@ -30,6 +32,10 @@ export default class Component extends Node {
 		compiler.hasComponents = true;
 
 		this.name = info.name;
+
+		this.expression = this.name === 'svelte:component'
+			? new Expression(compiler, this, scope, info.expression)
+			: null;
 
 		this.attributes = [];
 		this.bindings = [];
@@ -266,7 +272,7 @@ export default class Component extends Node {
 								if (isStoreProp) hasStoreBindings = true;
 								else hasLocalBindings = true;
 
-								return `${newState}.${prop} = state.${name};`;
+								return `${newState}.${prop} = ctx.${name};`;
 							})}
 					`;
 				}
@@ -282,7 +288,7 @@ export default class Component extends Node {
 					if (binding.value.node.type === 'MemberExpression') {
 						setFromChild = deindent`
 							${binding.value.snippet} = childState.${binding.name};
-							${newState}.${prop} = state.${key};
+							${newState}.${prop} = ctx.${key};
 						`;
 					}
 
@@ -312,7 +318,7 @@ export default class Component extends Node {
 			});
 
 			const initialisers = [
-				'state = #component.get()',
+				'ctx = #component.get()',
 				hasLocalBindings && 'newState = {}',
 				hasStoreBindings && 'newStoreState = {}',
 			].filter(Boolean).join(', ');
@@ -346,7 +352,7 @@ export default class Component extends Node {
 			block.builders.init.addBlock(deindent`
 				var ${switch_value} = ${snippet};
 
-				function ${switch_props}(state) {
+				function ${switch_props}(ctx) {
 					${(this.attributes.length || this.bindings.length) && deindent`
 					var ${name_initial_data} = ${attributeObject};`}
 					${statements}
@@ -356,7 +362,7 @@ export default class Component extends Node {
 				}
 
 				if (${switch_value}) {
-					var ${name} = new ${switch_value}(${switch_props}(state));
+					var ${name} = new ${switch_value}(${switch_props}(ctx));
 
 					${beforecreate}
 				}
@@ -394,13 +400,13 @@ export default class Component extends Node {
 					if (${name}) ${name}.destroy();
 
 					if (${switch_value}) {
-						${name} = new ${switch_value}(${switch_props}(state));
+						${name} = new ${switch_value}(${switch_props}(ctx));
 						${name}._fragment.c();
 
 						${this.children.map(child => child.remount(name))}
 						${name}._mount(${updateMountNode}, ${anchor});
 
-						${eventHandlers.map(handler => deindent`
+						${this.handlers.map(handler => deindent`
 							${name}.on("${handler.name}", ${handler.var});
 						`)}
 
@@ -419,7 +425,7 @@ export default class Component extends Node {
 					else {
 						${updates}
 						${name}._set(${name_changes});
-						${bindings.length && `${name_updating} = {};`}
+						${this.bindings.length && `${name_updating} = {};`}
 					}
 				`);
 			}
@@ -495,14 +501,14 @@ function mungeBinding(binding: Node, block: Block): Binding {
 	let prop;
 
 	if (contextual) {
-		obj = `state.${block.listNames.get(name)}`;
+		obj = `ctx.${block.listNames.get(name)}`;
 		prop = `${block.indexNames.get(name)}`;
 	} else if (binding.value.type === 'MemberExpression') {
 		prop = `[✂${binding.value.property.start}-${binding.value.property.end}✂]`;
 		if (!binding.value.computed) prop = `'${prop}'`;
 		obj = `[✂${binding.value.object.start}-${binding.value.object.end}✂]`;
 	} else {
-		obj = 'state';
+		obj = 'ctx';
 		prop = `'${name}'`;
 	}
 
@@ -546,7 +552,7 @@ function mungeEventHandler(compiler: DomGenerator, node: Node, handler: Node, bl
 		});
 
 		body = deindent`
-			${usesState && `const state = #component.get();`}
+			${usesState && `const ctx = #component.get();`}
 			[✂${handler.expression.start}-${handler.expression.end}✂];
 		`;
 	} else {
