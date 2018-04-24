@@ -44,7 +44,7 @@ export default class Component extends Node {
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Attribute':
-					// TODO spread
+				case 'Spread':
 					this.attributes.push(new Attribute(compiler, this, scope, node));
 					break;
 
@@ -150,7 +150,7 @@ export default class Component extends Node {
 
 		const updates: string[] = [];
 
-		const usesSpread = !!this.attributes.find(a => a.spread);
+		const usesSpread = !!this.attributes.find(a => a.isSpread);
 
 		const attributeObject = usesSpread
 			? '{}'
@@ -174,26 +174,25 @@ export default class Component extends Node {
 				const initialProps = [];
 				const changes = [];
 
-				this.attributes
-					.forEach(attr => {
-						const { spread, name, dependencies } = attr;
-						const value = attr.getValue();
+				this.attributes.forEach(attr => {
+					const { name, dependencies } = attr;
 
-						const condition = dependencies.size > 0
-							? [...dependencies].map(d => `changed.${d}`).join(' || ')
-							: null;
+					const condition = dependencies.size > 0
+						? [...dependencies].map(d => `changed.${d}`).join(' || ')
+						: null;
 
-						if (spread) {
-							initialProps.push(value);
+					if (attr.isSpread) {
+						const value = attr.expression.snippet;
+						initialProps.push(value);
 
-							changes.push(condition ? `${condition} && ${value}` : value);
-						} else {
-							const obj = `{ ${quoteIfNecessary(name)}: ${value} }`;
-							initialProps.push(obj);
+						changes.push(condition ? `${condition} && ${value}` : value);
+					} else {
+						const obj = `{ ${quoteIfNecessary(name)}: ${attr.getValue()} }`;
+						initialProps.push(obj);
 
-							changes.push(condition ? `${condition} && ${obj}` : obj);
-						}
-					});
+						changes.push(condition ? `${condition} && ${obj}` : obj);
+					}
+				});
 
 				block.addVariable(levels);
 
