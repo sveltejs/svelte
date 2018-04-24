@@ -782,11 +782,11 @@ export default class Element extends Node {
 
 		if (!attribute) return null;
 
-		if (attribute.value === true) return true;
-		if (attribute.value.length === 0) return '';
+		if (attribute.isTrue) return true;
+		if (attribute.chunks.length === 0) return '';
 
-		if (attribute.value.length === 1 && attribute.value[0].type === 'Text') {
-			return attribute.value[0].data;
+		if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Text') {
+			return attribute.chunks[0].data;
 		}
 
 		return null;
