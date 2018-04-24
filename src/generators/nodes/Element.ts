@@ -596,18 +596,18 @@ export default class Element extends Node {
 			// create the handler body
 			const handlerBody = deindent`
 				${eventHandlerUsesComponent &&
-					`var #component = ${ctx}._svelte.component;`}
-				${handler.dependencies.size > 0 && `const ctx = #component.get();`}
+					`var ${component} = ${ctx}._svelte.component;`}
+				${handler.dependencies.size > 0 && `const ctx = ${component}.get();`}
 				${handler.snippet ?
 					handler.snippet :
-					`#component.fire("${handler.name}", event);`}
+					`${component}.fire("${handler.name}", event);`}
 			`;
 
 			if (isCustomEvent) {
 				block.addVariable(handlerName);
 
 				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(#component, ${this.var}, function(event) {
+					${handlerName} = %events-${handler.name}.call(${component}, ${this.var}, function(event) {
 						${handlerBody}
 					});
 				`);
