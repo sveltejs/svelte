@@ -1,3 +1,4 @@
+import AwaitBlock from '../AwaitBlock';
 import Component from '../Component';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
@@ -11,6 +12,7 @@ import Node from './Node';
 
 function getConstructor(type): typeof Node {
 	switch (type) {
+		case 'AwaitBlock': return AwaitBlock;
 		case 'Component': return Component;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
