@@ -6,7 +6,6 @@ import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import quoteIfNecessary from '../../utils/quoteIfNecessary';
-import mungeAttribute from './shared/mungeAttribute';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
