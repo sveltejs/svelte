@@ -17,10 +17,8 @@ export default function visitComponent(
 		if (chunk.type === 'Text') {
 			return escapeTemplate(escape(chunk.data));
 		}
-		if (chunk.type === 'MustacheTag') {
-			const { snippet } = chunk.expression;
-			return '${__escape( ' + snippet + ')}';
-		}
+
+		return '${__escape( ' + chunk.snippet + ')}';
 	}
 
 	const bindingProps = node.bindings.map(binding => {
