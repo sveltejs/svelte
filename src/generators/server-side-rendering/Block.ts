@@ -20,7 +20,7 @@ export default class Block {
 	}
 
 	addBinding(binding: Node, name: string) {
-		const conditions = [`!('${binding.name}' in state)`].concat(
+		const conditions = [`!('${binding.name}' in ctx)`].concat(
 			// TODO handle contextual bindings...
 			this.conditions.map(c => `(${c})`)
 		);
@@ -31,7 +31,7 @@ export default class Block {
 			if (${conditions.join('&&')}) {
 				tmp = ${name}.data();
 				if ('${prop}' in tmp) {
-					state.${binding.name} = tmp.${prop};
+					ctx.${binding.name} = tmp.${prop};
 					settled = false;
 				}
 			}

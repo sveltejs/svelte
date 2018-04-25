@@ -461,7 +461,7 @@ export default class Element extends Node {
 							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 					}
 					${usesContext && `var context = ${this.var}._svelte;`}
-					${usesState && `var state = #component.get();`}
+					${usesState && `var ctx = #component.get();`}
 					${usesStore && `var $ = #component.store.get();`}
 					${needsLock && `${lock} = true;`}
 					${mutations.length > 0 && mutations}
@@ -482,7 +482,7 @@ export default class Element extends Node {
 			});
 
 			const allInitialStateIsDefined = group.bindings
-				.map(binding => `'${binding.object}' in state`)
+				.map(binding => `'${binding.object}' in ctx`)
 				.join(' && ');
 
 			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
