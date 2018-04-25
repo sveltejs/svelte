@@ -109,10 +109,10 @@ export default class Window extends Node {
 		this.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				compiler.readonly.add(binding.value.name);
+				compiler.readonly.add(binding.value.node.name);
 			}
 
-			bindings[binding.name] = binding.value.name;
+			bindings[binding.name] = binding.value.node.name;
 
 			// bind:online is a special case, we need to listen for two separate events
 			if (binding.name === 'online') return;
@@ -122,12 +122,12 @@ export default class Window extends Node {
 
 			if (!events[associatedEvent]) events[associatedEvent] = [];
 			events[associatedEvent].push(
-				`${binding.value.name}: this.${property}`
+				`${binding.value.node.name}: this.${property}`
 			);
 
 			// add initial value
 			compiler.metaBindings.push(
-				`this._state.${binding.value.name} = window.${property};`
+				`this._state.${binding.value.node.name} = window.${property};`
 			);
 		});
 
