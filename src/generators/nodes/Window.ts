@@ -151,13 +151,13 @@ export default class Window extends Node {
 					if (${lock}) return;
 					${lock} = true;
 				`}
-				${generator.options.dev && `component._updatingReadonlyProperty = true;`}
+				${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
 
 				#component.set({
 					${props}
 				});
 
-				${generator.options.dev && `component._updatingReadonlyProperty = false;`}
+				${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
 				${event === 'scroll' && `${lock} = false;`}
 			`;
 
@@ -207,7 +207,7 @@ export default class Window extends Node {
 			`);
 
 			// add initial value
-			generator.metaBindings.push(
+			compiler.metaBindings.push(
 				`this._state.${bindings.online} = navigator.onLine;`
 			);
 
