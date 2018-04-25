@@ -300,48 +300,48 @@ export default class Element extends Node {
 			});
 		}
 
+		let hasHoistedEventHandlerOrBinding = (
+			(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
+			this.handlers.some(handler => handler.shouldHoist)
+		);
+		let eventHandlerOrBindingUsesComponent;
+		let eventHandlerOrBindingUsesContext;
+
+		if (this.bindings.length > 0) {
+			eventHandlerOrBindingUsesComponent = true;
+			eventHandlerOrBindingUsesContext = true;
+		} else {
+			eventHandlerOrBindingUsesComponent = this.handlers.some(handler => handler.usesComponent);
+			eventHandlerOrBindingUsesContext = this.handlers.some(handler => handler.usesContext);
+		}
+
+		if (hasHoistedEventHandlerOrBinding) {
+			const initialProps: string[] = [];
+			const updates: string[] = [];
+
+			if (eventHandlerOrBindingUsesComponent) {
+				const component = block.alias('component');
+				initialProps.push(component === 'component' ? 'component' : `component: ${component}`);
+			}
+
+			if (eventHandlerOrBindingUsesContext) {
+				initialProps.push(`ctx`);
+				block.builders.update.addLine(`${name}._svelte.ctx = ctx;`);
+			}
+
+			if (initialProps.length) {
+				block.builders.hydrate.addBlock(deindent`
+					${name}._svelte = { ${initialProps.join(', ')} };
+				`);
+			}
+		}
+
 		this.addBindings(block, allUsedContexts);
-		const eventHandlerUsesComponent = this.addEventHandlers(block, allUsedContexts);
+		this.addEventHandlers(block, allUsedContexts);
 		if (this.ref) this.addRef(block);
 		this.addAttributes(block);
 		this.addTransitions(block);
 		this.addActions(block);
-
-		if (allUsedContexts.size || eventHandlerUsesComponent) {
-			const initialProps: string[] = [];
-			const updates: string[] = [];
-
-			if (eventHandlerUsesComponent) {
-				initialProps.push(`component: #component`);
-			}
-
-			allUsedContexts.forEach((contextName: string) => {
-				if (contextName === 'state') return;
-				if (block.contextTypes.get(contextName) !== 'each') return;
-
-				const listName = block.listNames.get(contextName);
-				const indexName = block.indexNames.get(contextName);
-
-				initialProps.push(
-					`${listName}: ctx.${listName},\n${indexName}: ctx.${indexName}`
-				);
-				updates.push(
-					`${name}._svelte.${listName} = ctx.${listName};\n${name}._svelte.${indexName} = ctx.${indexName};`
-				);
-			});
-
-			if (initialProps.length) {
-				block.builders.hydrate.addBlock(deindent`
-					${name}._svelte = {
-						${initialProps.join(',\n')}
-					};
-				`);
-			}
-
-			if (updates.length) {
-				block.builders.update.addBlock(updates.join('\n'));
-			}
-		}
 
 		if (this.initialUpdate) {
 			block.builders.mount.addBlock(this.initialUpdate);
@@ -557,33 +557,18 @@ export default class Element extends Node {
 
 	addEventHandlers(block: Block, allUsedContexts) {
 		const { compiler } = this;
-		let eventHandlerUsesComponent = false;
 
 		this.handlers.forEach(handler => {
 			const isCustomEvent = compiler.events.has(handler.name);
 			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
 
 			const context = shouldHoist ? null : this.var;
-			const usedContexts: string[] = [];
 
 			if (handler.callee) {
 				handler.render(this.compiler, block);
-
-				if (!validCalleeObjects.has(handler.callee.name)) {
-					if (shouldHoist) eventHandlerUsesComponent = true; // this feels a bit hacky but it works!
-				}
-
-				// handler.expression.arguments.forEach((arg: Node) => {
-				// 	const { contexts } = block.contextualise(arg, context, true);
-
-				// 	contexts.forEach(context => {
-				// 		if (!~usedContexts.indexOf(context)) usedContexts.push(context);
-				// 		allUsedContexts.add(context);
-				// 	});
-				// });
 			}
 
-			const ctx = context || 'this';
+			const target = context || 'this';
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
@@ -595,9 +580,12 @@ export default class Element extends Node {
 
 			// create the handler body
 			const handlerBody = deindent`
-				${eventHandlerUsesComponent &&
-					`var ${component} = ${ctx}._svelte.component;`}
-				${handler.dependencies.size > 0 && `const ctx = ${component}.get();`}
+				${handler.shouldHoist && (
+					handler.usesComponent || handler.usesContext
+						? `const { ${[handler.usesComponent && 'component', handler.usesContext && 'ctx'].filter(Boolean).join(', ')} } = ${target}._svelte;`
+						: null
+				)}
+
 				${handler.snippet ?
 					handler.snippet :
 					`${component}.fire("${handler.name}", event);`}
@@ -637,7 +625,6 @@ export default class Element extends Node {
 				);
 			}
 		});
-		return eventHandlerUsesComponent;
 	}
 
 	addRef(block: Block) {
