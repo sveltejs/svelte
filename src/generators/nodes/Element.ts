@@ -371,7 +371,7 @@ export default class Element extends Node {
 			}
 
 			node.attributes.forEach((attr: Node) => {
-				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.value)}`
+				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.chunks)}`
 			});
 
 			if (isVoidElementName(node.name)) return open + '>';
@@ -863,7 +863,7 @@ function getClaimStatement(
 		: `{}`}, ${namespace === namespaces.svg ? true : false})`;
 }
 
-function stringifyAttributeValue(value: Node | true) {
+function stringifyAttributeValue(value: Node[] | true) {
 	if (value === true) return '';
 	if (value.length === 0) return `=""`;
 
