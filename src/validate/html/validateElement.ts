@@ -295,9 +295,11 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 	let i = stack.length;
 	while (i--) {
 		const parent = stack[i];
-		if (parent.type === 'Element') {
+
+		if (parent.type === 'Component') {
 			// if we're inside a component or a custom element, gravy
 			if (parent.name === 'svelte:self' || parent.name === 'svelte:component' || validator.components.has(parent.name)) return;
+		} else if (parent.type === 'Element') {
 			if (/-/.test(parent.name)) return;
 		}
 
