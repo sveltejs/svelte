@@ -37,6 +37,10 @@ export default class EachBlock extends Node {
 		this.scope.add(this.context, this.expression.dependencies);
 
 		this.children = mapChildren(compiler, this, this.scope, info.children);
+
+		this.else = info.else
+			? new ElseBlock(compiler, this, this.scope, info.else)
+			: null;
 	}
 
 	init(
