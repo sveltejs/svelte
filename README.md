@@ -18,7 +18,6 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
-* [svelte-hot-loader](https://github.com/ekhaled/svelte-hot-loader) – Webpack loader addon to support HMR
 * [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
 * [sveltejs-brunch](https://github.com/StarpTech/sveltejs-brunch) – Brunch build plugin
 * [svelte-dev-store](https://github.com/GarethOates/svelte-dev-store) - Use Redux tools to visualise Svelte store
