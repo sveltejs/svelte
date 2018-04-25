@@ -198,8 +198,8 @@ function getEventHandler(
 			? getTailSnippet(binding.value.node)
 			: '';
 
-		const list = `context.${block.listNames.get(name)}`;
-		const index = `context.${block.indexNames.get(name)}`;
+		const list = `ctx.${block.listNames.get(name)}`;
+		const index = `ctx.${block.indexNames.get(name)}`;
 
 		return {
 			usesContext: true,

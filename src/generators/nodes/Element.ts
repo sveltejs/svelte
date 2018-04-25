@@ -301,7 +301,7 @@ export default class Element extends Node {
 		}
 
 		let hasHoistedEventHandlerOrBinding = (
-			(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
+			//(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
 			this.handlers.some(handler => handler.shouldHoist)
 		);
 		let eventHandlerOrBindingUsesComponent;
@@ -333,6 +333,10 @@ export default class Element extends Node {
 				block.builders.hydrate.addBlock(deindent`
 					${name}._svelte = { ${initialProps.join(', ')} };
 				`);
+			}
+		} else {
+			if (eventHandlerOrBindingUsesContext) {
+				block.maintainContext = true;
 			}
 		}
 
@@ -457,8 +461,6 @@ export default class Element extends Node {
 							cancelAnimationFrame(${animation_frame});
 							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 					}
-					${usesContext && `var context = ${this.var}._svelte;`}
-					${usesState && `var ctx = #component.get();`}
 					${usesStore && `var $ = #component.store.get();`}
 					${needsLock && `${lock} = true;`}
 					${mutations.length > 0 && mutations}
