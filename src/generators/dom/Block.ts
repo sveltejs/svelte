@@ -182,22 +182,10 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
-		// TODO `this.contexts` is possibly redundant post-#1122
-		const initializers = [];
-
-		this.contexts.forEach((name, context) => {
-			// TODO only the ones that are actually used in this block...
-			const listName = this.listNames.get(context);
-			const indexName = this.indexNames.get(context);
-
-			initializers.push(
-				`${name} = ctx.${context}`,
-				`${listName} = ctx.${listName}`,
-				`${indexName} = ctx.${indexName}`
-			);
-
+		if (this.maintainContext) {
+			this.builders.update.addLineAtStart(`ctx = _ctx;`);
 			this.hasUpdateMethod = true;
-		});
+		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
 		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
@@ -258,11 +246,11 @@ export default class Block {
 		}
 
 		if (this.hasUpdateMethod) {
-			if (this.builders.update.isEmpty() && initializers.length === 0) {
+			if (this.builders.update.isEmpty()) {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					p: function update(changed, ctx) {
+					p: function update(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
 						${this.builders.update}
 					},
 				`);
@@ -334,8 +322,6 @@ export default class Block {
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
 			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, ctx) {
-				${initializers.length > 0 &&
-					`var ${initializers.join(', ')};`}
 				${this.variables.size > 0 &&
 					`var ${Array.from(this.variables.keys())
 						.map(key => {
