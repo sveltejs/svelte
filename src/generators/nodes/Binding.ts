@@ -41,8 +41,9 @@ export default class Binding extends Node {
 			if (!this.value.node.computed) prop = `'${prop}'`;
 			obj = `[✂${this.value.node.object.start}-${this.value.node.object.end}✂]`;
 		} else {
+			const { name } = getObject(this.value.node);
 			obj = 'ctx';
-			prop = `'${this.name}'`;
+			prop = `'${name}'`;
 		}
 
 		this.obj = obj;
