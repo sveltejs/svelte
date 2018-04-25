@@ -23,21 +23,7 @@ export default function visitComponent(
 		}
 	}
 
-	const attributes: Node[] = [];
-	const bindings: Node[] = [];
-
-	let usesSpread;
-
-	node.attributes.forEach((attribute: Node) => {
-		if (attribute.type === 'Attribute' || attribute.type === 'Spread') {
-			if (attribute.type === 'Spread') usesSpread = true;
-			attributes.push(attribute);
-		} else if (attribute.type === 'Binding') {
-			bindings.push(attribute);
-		}
-	});
-
-	const bindingProps = bindings.map(binding => {
+	const bindingProps = node.bindings.map(binding => {
 		const { name } = getObject(binding.value);
 		const tail = binding.value.type === 'MemberExpression'
 			? getTailSnippet(binding.value)
@@ -65,11 +51,13 @@ export default function visitComponent(
 		return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
 	}
 
+	const usesSpread = node.attributes.find(attr => attr.isSpread);
+
 	const props = usesSpread
 		? `Object.assign(${
-			attributes
+			node.attributes
 				.map(attribute => {
-					if (attribute.type === 'Spread') {
+					if (attribute.isSpread) {
 						return attribute.expression.snippet;
 					} else {
 						return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
@@ -78,7 +66,7 @@ export default function visitComponent(
 				.concat(bindingProps.map(p => `{ ${p} }`))
 				.join(', ')
 		})`
-		: `{ ${attributes
+		: `{ ${node.attributes
 			.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
 			.concat(bindingProps)
 			.join(', ')} }`;
@@ -91,7 +79,7 @@ export default function visitComponent(
 		`%components-${node.name}`
 	);
 
-	bindings.forEach(binding => {
+	node.bindings.forEach(binding => {
 		block.addBinding(binding, expression);
 	});
 

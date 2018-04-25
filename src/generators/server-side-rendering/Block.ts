@@ -25,7 +25,7 @@ export default class Block {
 			this.conditions.map(c => `(${c})`)
 		);
 
-		const { name: prop } = getObject(binding.value);
+		const { name: prop } = getObject(binding.value.node);
 
 		this.generator.bindings.push(deindent`
 			if (${conditions.join('&&')}) {
