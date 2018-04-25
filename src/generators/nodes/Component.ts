@@ -332,6 +332,7 @@ export default class Component extends Node {
 		}
 
 		this.handlers.forEach(handler => {
+			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
 			handler.render(compiler, block);
 		});
 
