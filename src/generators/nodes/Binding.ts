@@ -85,7 +85,7 @@ export default class Binding extends Node {
 
 		// view to model
 		const valueFromDom = getValueFromDom(this.compiler, node, this);
-		const handler = getEventHandler(this.compiler, block, name, snippet, this, dependencies, valueFromDom);
+		const handler = getEventHandler(this, this.compiler, block, name, snippet, dependencies, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(node, this, snippet);
@@ -182,11 +182,11 @@ function getBindingGroup(compiler: DomGenerator, value: Node) {
 }
 
 function getEventHandler(
+	binding: Binding,
 	compiler: DomGenerator,
 	block: Block,
 	name: string,
 	snippet: string,
-	attribute: Node,
 	dependencies: string[],
 	value: string,
 ) {
@@ -194,8 +194,8 @@ function getEventHandler(
 	dependencies = [...dependencies].filter(prop => prop[0] !== '$');
 
 	if (block.contexts.has(name)) {
-		const tail = attribute.value.type === 'MemberExpression'
-			? getTailSnippet(attribute.value)
+		const tail = binding.value.node.type === 'MemberExpression'
+			? getTailSnippet(binding.value.node)
 			: '';
 
 		const list = `context.${block.listNames.get(name)}`;
@@ -211,7 +211,7 @@ function getEventHandler(
 		};
 	}
 
-	if (attribute.value.type === 'MemberExpression') {
+	if (binding.value.node.type === 'MemberExpression') {
 		// This is a little confusing, and should probably be tidied up
 		// at some point. It addresses a tricky bug (#893), wherein
 		// Svelte tries to `set()` a computed property, which throws an
