@@ -9,6 +9,12 @@ export default class EventHandler extends Node {
 	dependencies: Set<string>;
 	expression: Node;
 	callee: any; // TODO
+
+	usesComponent: boolean;
+	usesContext: boolean;
+	isCustomEvent: boolean;
+	shouldHoist: boolean;
+
 	insertionPoint: number;
 	args: Expression[];
 	snippet: string;
@@ -22,38 +28,50 @@ export default class EventHandler extends Node {
 		if (info.expression) {
 			this.callee = flattenReference(info.expression.callee);
 			this.insertionPoint = info.expression.start;
+
 			this.args = info.expression.arguments.map(param => {
 				const expression = new Expression(compiler, this, scope, param);
 				addToSet(this.dependencies, expression.dependencies);
 				return expression;
 			});
 
+			this.usesComponent = !validCalleeObjects.has(this.callee.name);
+			this.usesContext = this.dependencies.size > 0;
+
 			this.snippet = `[✂${info.expression.start}-${info.expression.end}✂]`;
 		} else {
 			this.callee = null;
 			this.insertionPoint = null;
+
 			this.args = null;
+			this.usesComponent = true;
+			this.usesContext = false;
 
 			this.snippet = null; // TODO handle shorthand events here?
 		}
+
+		this.isCustomEvent = compiler.events.has(this.name);
+		this.shouldHoist = !this.isCustomEvent && parent.hasAncestor('EachBlock');
 	}
 
 	render(compiler, block) {
 		if (this.insertionPoint === null) return; // TODO handle shorthand events here?
 
 		if (!validCalleeObjects.has(this.callee.name)) {
+			const component = this.shouldHoist ? `component` : block.alias(`component`);
+
 			// allow event.stopPropagation(), this.select() etc
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			if (this.callee.name[0] === '$' && !compiler.methods.has(this.callee.name)) {
 				compiler.code.overwrite(
 					this.insertionPoint,
 					this.insertionPoint + 1,
-					`${block.alias('component')}.store.`
+					`${component}.store.`
 				);
 			} else {
 				compiler.code.prependRight(
 					this.insertionPoint,
-					`${block.alias('component')}.`
+					`${component}.`
 				);
 			}
 		}
