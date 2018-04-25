@@ -51,6 +51,20 @@ export default class Element extends Node {
 		this.intro = null;
 		this.outro = null;
 
+		if (this.name === 'textarea') {
+			// this is an egregious hack, but it's the easiest way to get <textarea>
+			// children treated the same way as a value attribute
+			if (info.children.length > 0) {
+				info.attributes.push({
+					type: 'Attribute',
+					name: 'value',
+					value: info.children
+				});
+
+				info.children = [];
+			}
+		}
+
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
@@ -157,19 +171,6 @@ export default class Element extends Node {
 
 		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
-		if (this.name === 'textarea') {
-			// this is an egregious hack, but it's the easiest way to get <textarea>
-			// children treated the same way as a value attribute
-			if (this.children.length > 0) {
-				this.attributes.push(new Attribute(this.compiler, this, {
-					name: 'value',
-					value: this.children
-				}));
-
-				this.children = [];
-			}
-		}
-
 		// special case — in a case like this...
 		//
 		//   <select bind:value='foo'>
@@ -184,7 +185,7 @@ export default class Element extends Node {
 			const binding = this.attributes.find(node => node.type === 'Binding' && node.name === 'value');
 			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = binding.metadata.dependencies;
+				const dependencies = binding.expression.dependencies;
 				this.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					this.compiler.indirectDependencies.set(prop, new Set());
@@ -201,10 +202,6 @@ export default class Element extends Node {
 			// TODO validate slots — no nesting, no dynamic names...
 			const component = this.findNearest(/^Component/);
 			component._slots.add(slot);
-		}
-
-		if (this.spread) {
-			block.addDependencies(this.spread.metadata.dependencies);
 		}
 
 		this.var = block.getUniqueName(
