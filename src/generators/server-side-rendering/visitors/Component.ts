@@ -45,7 +45,7 @@ export default function visitComponent(
 
 		const keypath = block.contexts.has(name)
 			? `${name}${tail}`
-			: `state.${name}${tail}`;
+			: `ctx.${name}${tail}`;
 		return `${binding.name}: ${keypath}`;
 	});
 
