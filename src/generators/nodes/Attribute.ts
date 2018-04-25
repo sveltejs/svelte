@@ -287,7 +287,7 @@ export default class Attribute extends Node {
 			block.builders.hydrate.addLine(statement);
 
 			// special case – autofocus. has to be handled in a bit of a weird way
-			if (this.value === true && name === 'autofocus') {
+			if (this.isTrue && name === 'autofocus') {
 				block.autofocus = node.var;
 			}
 		}
