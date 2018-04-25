@@ -205,7 +205,7 @@ function getEventHandler(
 			usesState: true,
 			usesStore: storeDependencies.length > 0,
 			mutation: `${list}[${index}]${tail} = ${value};`,
-			props: dependencies.map(prop => `${prop}: state.${prop}`),
+			props: dependencies.map(prop => `${prop}: ctx.${prop}`),
 			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};
 	}
@@ -225,7 +225,7 @@ function getEventHandler(
 			usesState: true,
 			usesStore: storeDependencies.length > 0,
 			mutation: `${snippet} = ${value}`,
-			props: dependencies.map((prop: string) => `${prop}: state.${prop}`),
+			props: dependencies.map((prop: string) => `${prop}: ctx.${prop}`),
 			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};
 	}
