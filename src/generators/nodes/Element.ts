@@ -65,6 +65,21 @@ export default class Element extends Node {
 			}
 		}
 
+		if (this.name === 'option') {
+			// Special case — treat these the same way:
+			//   <option>{foo}</option>
+			//   <option value='{foo}'>{foo}</option>
+			const valueAttribute = info.attributes.find((attribute: Node) => attribute.name === 'value');
+
+			if (!valueAttribute) {
+				info.attributes.push({
+					type: 'Attribute',
+					name: 'value',
+					value: info.children
+				});
+			}
+		}
+
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
@@ -174,8 +189,8 @@ export default class Element extends Node {
 		// special case — in a case like this...
 		//
 		//   <select bind:value='foo'>
-		//     <option value='{{bar}}'>bar</option>
-		//     <option value='{{baz}}'>baz</option>
+		//     <option value='{bar}'>bar</option>
+		//     <option value='{baz}'>baz</option>
 		//   </option>
 		//
 		// ...we need to know that `foo` depends on `bar` and `baz`,

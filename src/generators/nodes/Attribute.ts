@@ -112,9 +112,9 @@ export default class Attribute extends Node {
 			name === 'value' &&
 			(node.name === 'option' || // TODO check it's actually bound
 				(node.name === 'input' &&
-					node.attributes.find(
-						(attribute: Attribute) =>
-							attribute.type === 'Binding' && /checked|group/.test(attribute.name)
+					node.bindings.find(
+						(binding: Binding) =>
+							/checked|group/.test(binding.name)
 						)));
 
 		const propertyName = isIndirectlyBoundValue

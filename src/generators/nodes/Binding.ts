@@ -26,17 +26,10 @@ export default class Binding extends Node {
 		this.name = info.name;
 		this.value = new Expression(compiler, this, scope, info.value);
 
-		// const contextual = block.contexts.has(name);
-		const contextual = false; // TODO
-
 		let obj;
 		let prop;
 
-		if (contextual) {
-			// TODO does this need to go later?
-			obj = `ctx.${block.listNames.get(name)}`;
-			prop = `${block.indexNames.get(name)}`;
-		} else if (this.value.node.type === 'MemberExpression') {
+		if (this.value.node.type === 'MemberExpression') {
 			prop = `[✂${this.value.node.property.start}-${this.value.node.property.end}✂]`;
 			if (!this.value.node.computed) prop = `'${prop}'`;
 			obj = `[✂${this.value.node.object.start}-${this.value.node.object.end}✂]`;

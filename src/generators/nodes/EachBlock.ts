@@ -64,7 +64,6 @@ export default class EachBlock extends Node {
 			key: this.key,
 
 			contexts: new Map(block.contexts),
-			contextTypes: new Map(block.contextTypes),
 			indexes: new Map(block.indexes),
 			changeableIndexes: new Map(block.changeableIndexes),
 
@@ -75,7 +74,6 @@ export default class EachBlock extends Node {
 		const listName = this.compiler.getUniqueName('each_value');
 		const indexName = this.index || this.compiler.getUniqueName(`${this.context}_index`);
 
-		this.block.contextTypes.set(this.context, 'each');
 		this.block.indexNames.set(this.context, indexName);
 		this.block.listNames.set(this.context, listName);
 
