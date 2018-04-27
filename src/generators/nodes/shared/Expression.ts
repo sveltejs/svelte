@@ -42,7 +42,10 @@ export default class Expression {
 		const { thisReferences } = this;
 
 		walk(info, {
-			enter(node: any, parent: any) {
+			enter(node: any, parent: any, key: string) {
+				// don't manipulate shorthand props twice
+				if (key === 'value' && parent.shorthand) return;
+
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
 
@@ -69,7 +72,9 @@ export default class Expression {
 						return;
 					}
 
-					code.prependRight(node.start, 'ctx.');
+					code.prependRight(node.start, key === 'key' && parent.shorthand
+						? `${name}: ctx.`
+						: 'ctx.');
 
 					if (scope.names.has(name)) {
 						scope.dependenciesForName.get(name).forEach(dependency => {
