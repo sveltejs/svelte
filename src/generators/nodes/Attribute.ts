@@ -232,8 +232,6 @@ export default class Attribute extends Node {
 					${last} = ${value};
 					${updater}
 				`);
-
-				block.builders.update.addLine(`${last} = ${value};`);
 			} else if (propertyName) {
 				block.builders.hydrate.addLine(
 					`${node.var}.${propertyName} = ${init};`
