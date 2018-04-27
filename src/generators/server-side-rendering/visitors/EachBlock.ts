@@ -10,9 +10,12 @@ export default function visitEachBlock(
 ) {
 	const { snippet } = node.expression;
 
+	const props = [`${node.context}: item`]
+		.concat(node.destructuredContexts.map((name, i) => `${name}: item[${i}]`));
+
 	const getContext = node.index
-		? `(item, i) => Object.assign({}, ctx, { ${node.context}: item, ${node.index}: i })`
-		: `item => Object.assign({}, ctx, { ${node.context}: item })`;
+		? `(item, i) => Object.assign({}, ctx, { ${props.join(', ')}, ${node.index}: i })`
+		: `item => Object.assign({}, ctx, { ${props.join(', ')} })`;
 
 	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}__each(${snippet}, ${getContext}, ctx => \``;
 	generator.append(open);
