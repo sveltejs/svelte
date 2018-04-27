@@ -75,5 +75,9 @@ export default class EventHandler extends Node {
 				);
 			}
 		}
+
+		this.args.forEach(arg => {
+			arg.overwriteThis(this.parent.var);
+		});
 	}
 }
