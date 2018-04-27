@@ -243,15 +243,19 @@ export default class Component extends Node {
 
 				let setFromChild;
 
-				if (block.contexts.has(key)) {
+				if (block.contexts.has(key)) { // TODO remove block.contexts
 					const computed = isComputed(binding.value.node);
 					const tail = binding.value.node.type === 'MemberExpression' ? getTailSnippet(binding.value.node) : '';
 
 					const list = block.listNames.get(key);
 					const index = block.indexNames.get(key);
 
+					const lhs = binding.value.node.type === 'MemberExpression'
+						? binding.value.snippet
+						: `ctx.${list}[ctx.${index}]${tail} = childState.${binding.name}`;
+
 					setFromChild = deindent`
-						${list}[${index}]${tail} = childState.${binding.name};
+						${lhs} = childState.${binding.name};
 
 						${[...binding.value.dependencies]
 							.map((name: string) => {
@@ -307,8 +311,9 @@ export default class Component extends Node {
 				`);
 			});
 
+			block.maintainContext = true; // TODO put this somewhere more logical
+
 			const initialisers = [
-				'ctx = #component.get()',
 				hasLocalBindings && 'newState = {}',
 				hasStoreBindings && 'newStoreState = {}',
 			].filter(Boolean).join(', ');
