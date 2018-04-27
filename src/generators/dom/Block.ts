@@ -179,11 +179,6 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
-		if (this.maintainContext) {
-			this.builders.update.addLineAtStart(`ctx = _ctx;`);
-			this.hasUpdateMethod = true;
-		}
-
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
 		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
 
@@ -242,12 +237,13 @@ export default class Block {
 			`);
 		}
 
-		if (this.hasUpdateMethod) {
-			if (this.builders.update.isEmpty()) {
+		if (this.hasUpdateMethod || this.maintainContext) {
+			if (this.builders.update.isEmpty() && !this.maintainContext) {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					p: function update(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
+						${this.maintainContext && `ctx = _ctx;`}
 						${this.builders.update}
 					},
 				`);
