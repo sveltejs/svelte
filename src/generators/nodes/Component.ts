@@ -450,7 +450,7 @@ export default class Component extends Node {
 
 				${this.handlers.map(handler => deindent`
 					${name}.on("${handler.name}", function(event) {
-						${handler.snippet}
+						${handler.snippet || `#component.fire("${handler.name}", event);`}
 					});
 				`)}
 
