@@ -36,6 +36,12 @@ export default class EachBlock extends Node {
 		// TODO handle indexes and destructuring
 		this.scope.add(this.context, this.expression.dependencies);
 
+		// TODO more general approach to destructuring
+		this.destructuredContexts = info.destructuredContexts || [];
+		this.destructuredContexts.forEach(name => {
+			this.scope.add(name, this.expression.dependencies);
+		});
+
 		this.children = mapChildren(compiler, this, this.scope, info.children);
 
 		this.else = info.else
