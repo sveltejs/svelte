@@ -235,12 +235,12 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
-	if (attr.value === true) return operator === null;
-	if (attr.value.length > 1) return true;
+	if (attr.isTrue) return operator === null;
+	if (attr.chunks.length > 1) return true;
 	if (!expectedValue) return true;
 
 	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
-	const value = attr.value[0];
+	const value = attr.chunks[0];
 
 	if (!value) return false;
 	if (value.type === 'Text') return pattern.test(value.data);
