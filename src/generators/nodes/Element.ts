@@ -253,7 +253,7 @@ export default class Element extends Node {
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const initialMountNode = this.slotted ?
-			`${this.findNearest(/^Component/).var}._slotted.${slot.value[0].data}` : // TODO this looks bonkers
+			`${this.findNearest(/^Component/).var}._slotted.${slot.chunks[0].data}` : // TODO this looks bonkers
 			parentNode;
 
 		block.addVariable(name);

@@ -14,6 +14,8 @@ export default class Expression {
 	contexts: Set<string>;
 	indexes: Set<string>;
 
+	thisReferences: Array<{ start: number, end: number }>;
+
 	constructor(compiler, parent, scope, info) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
@@ -23,6 +25,7 @@ export default class Expression {
 		});
 
 		this.node = info;
+		this.thisReferences = [];
 
 		this.snippet = `[✂${info.start}-${info.end}✂]`;
 
@@ -34,7 +37,9 @@ export default class Expression {
 		const { code, helpers } = compiler;
 
 		let { map, scope: currentScope } = createScopes(info);
+
 		const isEventHandler = parent.type === 'EventHandler';
+		const { thisReferences } = this;
 
 		walk(info, {
 			enter(node: any, parent: any) {
@@ -44,6 +49,10 @@ export default class Expression {
 				if (map.has(node)) {
 					currentScope = map.get(node);
 					return;
+				}
+
+				if (node.type === 'ThisExpression') {
+					thisReferences.push(node);
 				}
 
 				if (isReference(node, parent)) {
@@ -84,5 +93,13 @@ export default class Expression {
 
 		this.contexts = new Set(); // TODO...
 		this.indexes = new Set(); // TODO...
+	}
+
+	overwriteThis(name) {
+		this.thisReferences.forEach(ref => {
+			this.compiler.code.overwrite(ref.start, ref.end, name, {
+				storeName: true
+			});
+		});
 	}
 }
