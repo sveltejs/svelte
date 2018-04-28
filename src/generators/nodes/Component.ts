@@ -489,7 +489,7 @@ export default class Component extends Node {
 				return escapeTemplate(escape(chunk.data));
 			}
 
-			return '${__escape( ' + chunk.snippet + ')}';
+			return '${@escape( ' + chunk.snippet + ')}';
 		}
 
 		const bindingProps = this.bindings.map(binding => {
@@ -541,7 +541,7 @@ export default class Component extends Node {
 
 		const expression = (
 			this.name === 'svelte:self' ? compiler.name :
-			isDynamicComponent ? `((${this.expression.snippet}) || __missingComponent)` :
+			isDynamicComponent ? `((${this.expression.snippet}) || @missingComponent)` :
 			`%components-${this.name}`
 		);
 

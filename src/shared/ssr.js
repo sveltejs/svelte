@@ -11,3 +11,27 @@ export function spread(args) {
 
 	return str;
 }
+
+export const escaped = {
+	'"': '&quot;',
+	"'": '&#39;',
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;'
+};
+
+export function escape(html) {
+	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+}
+
+export function each(items, assign, fn) {
+	let str = '';
+	for (let i = 0; i < items.length; i += 1) {
+		str += fn(assign(items[i], i));
+	}
+	return str;
+}
+
+export const missingComponent = {
+	_render: () => ''
+};
