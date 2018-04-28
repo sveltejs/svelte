@@ -7,7 +7,7 @@ import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import getName from '../../utils/getName';
 import globalWhitelist from '../../utils/globalWhitelist';
-import { Parsed, Node, CompileOptions } from '../../interfaces';
+import { Ast, Node, CompileOptions } from '../../interfaces';
 import { AppendTarget } from './interfaces';
 import { stringify } from '../../utils/stringify';
 
@@ -17,14 +17,14 @@ export class SsrGenerator extends Generator {
 	appendTargets: AppendTarget[];
 
 	constructor(
-		parsed: Parsed,
+		ast: Ast,
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
 		options: CompileOptions,
 		stats: Stats
 	) {
-		super(parsed, source, name, stylesheet, options, stats, false);
+		super(ast, source, name, stylesheet, options, stats, false);
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
@@ -44,7 +44,7 @@ export class SsrGenerator extends Generator {
 }
 
 export default function ssr(
-	parsed: Parsed,
+	ast: Ast,
 	source: string,
 	stylesheet: Stylesheet,
 	options: CompileOptions,
@@ -52,7 +52,7 @@ export default function ssr(
 ) {
 	const format = options.format || 'cjs';
 
-	const generator = new SsrGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options, stats);
+	const generator = new SsrGenerator(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats);
 
 	const { computations, name, templateProperties } = generator;
 

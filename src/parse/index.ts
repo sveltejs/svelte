@@ -5,7 +5,7 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import { Node, Parsed } from '../interfaces';
+import { Node, Ast } from '../interfaces';
 import error from '../utils/error';
 
 interface ParserOptions {
@@ -223,7 +223,7 @@ export class Parser {
 export default function parse(
 	template: string,
 	options: ParserOptions = {}
-): Parsed {
+): Ast {
 	const parser = new Parser(template, options);
 	return {
 		html: parser.html,
