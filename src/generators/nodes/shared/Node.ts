@@ -36,10 +36,7 @@ export default class Node {
 	cannotUseInnerHTML() {
 		if (this.canUseInnerHTML !== false) {
 			this.canUseInnerHTML = false;
-			if (this.parent) {
-				if (!this.parent.cannotUseInnerHTML) console.log(this.parent.type, this.type);
-				this.parent.cannotUseInnerHTML();
-			}
+			if (this.parent) this.parent.cannotUseInnerHTML();
 		}
 	}
 
