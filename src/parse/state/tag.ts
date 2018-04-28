@@ -125,7 +125,7 @@ export default function tag(parser: Parser) {
 		? metaTags.get(name)
 		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'Component'
 		: name === 'title' && parentIsHead(parser.stack) ? 'Title'
-		: name === 'slot' ? 'Slot' : 'Element';
+		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: Node = {
 		start,
