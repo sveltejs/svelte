@@ -68,14 +68,15 @@ export default class Element extends Node {
 		if (this.name === 'option') {
 			// Special case — treat these the same way:
 			//   <option>{foo}</option>
-			//   <option value='{foo}'>{foo}</option>
+			//   <option value={foo}>{foo}</option>
 			const valueAttribute = info.attributes.find((attribute: Node) => attribute.name === 'value');
 
 			if (!valueAttribute) {
 				info.attributes.push({
 					type: 'Attribute',
 					name: 'value',
-					value: info.children
+					value: info.children,
+					synthetic: true
 				});
 			}
 		}

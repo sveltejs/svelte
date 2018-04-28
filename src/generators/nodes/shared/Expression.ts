@@ -42,6 +42,7 @@ export default class Expression {
 
 		const isEventHandler = parent.type === 'EventHandler';
 		const expression = this;
+		const isSynthetic = parent.isSynthetic;
 
 		walk(info, {
 			enter(node: any, parent: any, key: string) {
@@ -76,9 +77,12 @@ export default class Expression {
 
 					expression.usesContext = true;
 
-					code.prependRight(node.start, key === 'key' && parent.shorthand
-						? `${name}: ctx.`
-						: 'ctx.');
+					if (!isSynthetic) {
+						// <option> value attribute could be synthetic — avoid double editing
+						code.prependRight(node.start, key === 'key' && parent.shorthand
+							? `${name}: ctx.`
+							: 'ctx.');
+					}
 
 					if (scope.names.has(name)) {
 						scope.dependenciesForName.get(name).forEach(dependency => {
