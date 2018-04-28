@@ -5,7 +5,6 @@ import getCodeFrame from '../utils/getCodeFrame';
 import Stats from '../Stats';
 import error from '../utils/error';
 import Stylesheet from '../css/Stylesheet';
-import Stats from '../Stats';
 import { Node, Ast, CompileOptions, Warning } from '../interfaces';
 
 export class Validator {
