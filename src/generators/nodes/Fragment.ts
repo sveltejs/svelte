@@ -25,8 +25,6 @@ export default class Fragment extends Node {
 			key: null,
 
 			contexts: new Map(),
-			indexes: new Map(),
-			changeableIndexes: new Map(),
 
 			indexNames: new Map(),
 			listNames: new Map(),

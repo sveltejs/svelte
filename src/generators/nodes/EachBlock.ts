@@ -33,7 +33,6 @@ export default class EachBlock extends Node {
 
 		this.scope = scope.child();
 
-		// TODO handle indexes and destructuring
 		this.scope.add(this.context, this.expression.dependencies);
 
 		if (this.index) {
@@ -76,8 +75,6 @@ export default class EachBlock extends Node {
 			key: this.key,
 
 			contexts: new Map(block.contexts),
-			indexes: new Map(block.indexes),
-			changeableIndexes: new Map(block.changeableIndexes),
 
 			indexNames: new Map(block.indexNames),
 			listNames: new Map(block.listNames)
@@ -91,8 +88,6 @@ export default class EachBlock extends Node {
 
 		if (this.index) {
 			this.block.getUniqueName(this.index); // this prevents name collisions (#1254)
-			this.block.indexes.set(this.index, this.context);
-			this.block.changeableIndexes.set(this.index, this.key); // TODO is this right?
 		}
 
 		const context = this.block.getUniqueName(this.context);

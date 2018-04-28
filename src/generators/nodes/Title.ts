@@ -30,7 +30,7 @@ export default class Title extends Node {
 			if (this.children.length === 1) {
 				// single {{tag}} — may be a non-string
 				const { expression } = this.children[0];
-				const { dependencies, snippet, indexes } = this.children[0].expression;
+				const { dependencies, snippet } = this.children[0].expression;
 
 				value = snippet;
 				dependencies.forEach(d => {

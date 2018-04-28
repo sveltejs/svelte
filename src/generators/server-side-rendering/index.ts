@@ -60,7 +60,6 @@ export default function ssr(
 	const mainBlock = new Block({
 		generator,
 		contexts: new Map(),
-		indexes: new Map(),
 		conditions: [],
 	});
 

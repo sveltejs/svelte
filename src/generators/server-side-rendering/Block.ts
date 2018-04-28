@@ -13,7 +13,6 @@ export default class Block {
 	conditions: string[];
 
 	contexts: Map<string, string>;
-	indexes: Map<string, string>;
 
 	constructor(options: BlockOptions) {
 		Object.assign(this, options);
@@ -41,8 +40,4 @@ export default class Block {
 	child(options: BlockOptions) {
 		return new Block(Object.assign({}, this, options, { parent: this }));
 	}
-
-	// contextualise(expression: Node, context?: string, isEventHandler?: boolean) {
-	// 	return this.generator.contextualise(this.contexts, this.indexes, expression, context, isEventHandler);
-	// }
 }

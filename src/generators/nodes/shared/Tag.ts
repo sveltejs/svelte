@@ -4,32 +4,30 @@ import Block from '../../dom/Block';
 
 export default class Tag extends Node {
 	expression: Expression;
+	shouldCache: boolean;
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
 		this.expression = new Expression(compiler, this, scope, info.expression);
+
+		this.shouldCache = (
+			info.expression.type !== 'Identifier' ||
+			(this.expression.dependencies.size && scope.names.has(info.expression.name))
+		);
 	}
 
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)
 	) {
-		const { snippet, dependencies, indexes } = this.expression;
+		const { snippet, dependencies } = this.expression;
 
-		const hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
+		const value = this.shouldCache && block.getUniqueName(`${this.var}_value`);
+		const content = this.shouldCache ? value : snippet;
 
-		const shouldCache = (
-			this.expression.node.type !== 'Identifier' ||
-			block.contexts.has(this.expression.node.name) ||
-			hasChangeableIndex
-		);
+		if (this.shouldCache) block.addVariable(value, snippet);
 
-		const value = shouldCache && block.getUniqueName(`${this.var}_value`);
-		const content = shouldCache ? value : snippet;
-
-		if (shouldCache) block.addVariable(value, snippet);
-
-		if (dependencies.size || hasChangeableIndex) {
+		if (dependencies.size) {
 			const changedCheck = (
 				(block.hasOutroMethod ? `#outroing || ` : '') +
 				[...dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')
@@ -37,7 +35,7 @@ export default class Tag extends Node {
 
 			const updateCachedValue = `${value} !== (${value} = ${snippet})`;
 
-			const condition = shouldCache ?
+			const condition = this.shouldCache ?
 				(dependencies.size ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue) :
 				changedCheck;
 
