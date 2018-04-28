@@ -868,7 +868,7 @@ export default class Element extends Node {
 				}
 			});
 
-			openingTag += "${__spread([" + args.join(', ') + "])}";
+			openingTag += "${@spread([" + args.join(', ') + "])}";
 		} else {
 			this.attributes.forEach((attribute: Node) => {
 				if (attribute.type !== 'Attribute') return;

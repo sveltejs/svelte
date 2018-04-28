@@ -90,7 +90,7 @@ function es(
 	shorthandImports: ShorthandImport[],
 	source: string
 ) {
-	const importHelpers = helpers && (
+	const importHelpers = helpers.length > 0 && (
 		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(sharedPath)};`
 	);
 
@@ -145,11 +145,9 @@ function cjs(
 	helpers: { name: string, alias: string }[],
 	dependencies: Dependency[]
 ) {
-	const helperDeclarations = helpers && (
-		helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ')
-	);
+	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ');
 
-	const helperBlock = helpers && (
+	const helperBlock = helpers.length > 0 && (
 		`var { ${helperDeclarations} } = require(${JSON.stringify(sharedPath)});\n`
 	);
 

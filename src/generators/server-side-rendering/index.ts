@@ -93,6 +93,8 @@ export default function ssr(
 
 	initialState.push('ctx');
 
+	const helpers = new Set();
+
 	// TODO concatenate CSS maps
 	const result = deindent`
 		${generator.javascript}
@@ -206,31 +208,17 @@ export default function ssr(
 				};
 			`
 		}
-
-		${
-			/__spread/.test(generator.renderCode) && deindent`
-				function __spread(args) {
-					const attributes = Object.assign({}, ...args);
-					let str = '';
-
-					Object.keys(attributes).forEach(name => {
-						const value = attributes[name];
-						if (value === undefined) return;
-						if (value === true) str += " " + name;
-						str += " " + name + "=" + JSON.stringify(value);
-					});
-
-					return str;
-				}
-			`
-		}
 	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
-		if (sigil === '@') return generator.alias(name);
+		if (sigil === '@') {
+			helpers.add(name);
+			return generator.alias(name);
+		}
+
 		if (sigil === '%') return generator.templateVars.get(name);
 		return sigil.slice(1) + name;
 	});
 
-	return generator.generate(result, options, { name, format });
+	return generator.generate(result, options, { name, format, helpers });
 }
 
 function trim(nodes) {

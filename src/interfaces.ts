@@ -71,7 +71,7 @@ export interface GenerateOptions {
 	format: ModuleFormat;
 	banner?: string;
 	sharedPath?: string;
-	helpers?: { name: string, alias: string }[];
+	helpers: Set<string>;
 }
 
 export interface ShorthandImport {
