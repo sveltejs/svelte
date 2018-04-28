@@ -63,7 +63,7 @@ export default function ssr(
 	});
 
 	trim(generator.fragment.children).forEach((node: Node) => {
-		visit(generator, mainBlock, node);
+		node.ssr(generator, mainBlock);
 	});
 
 	const css = generator.customElement ?

@@ -6,6 +6,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
 import quoteIfNecessary from '../../utils/quoteIfNecessary';
+import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -14,6 +15,7 @@ import mapChildren from './shared/mapChildren';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
+import { AppendTarget } from '../server-side-rendering/interfaces';
 
 export default class Component extends Node {
 	type: 'Component';
@@ -479,6 +481,106 @@ export default class Component extends Node {
 
 	remount(name: string) {
 		return `${this.var}._mount(${name}._slotted.default, null);`;
+	}
+
+	ssr(compiler, block) {
+		function stringifyAttribute(chunk: Node) {
+			if (chunk.type === 'Text') {
+				return escapeTemplate(escape(chunk.data));
+			}
+
+			return '${__escape( ' + chunk.snippet + ')}';
+		}
+
+		const bindingProps = this.bindings.map(binding => {
+			const { name } = getObject(binding.value.node);
+			const tail = binding.value.node.type === 'MemberExpression'
+				? getTailSnippet(binding.value.node)
+				: '';
+
+			return `${binding.name}: ctx.${name}${tail}`;
+		});
+
+		function getAttributeValue(attribute) {
+			if (attribute.isTrue) return `true`;
+			if (attribute.chunks.length === 0) return `''`;
+
+			if (attribute.chunks.length === 1) {
+				const chunk = attribute.chunks[0];
+				if (chunk.type === 'Text') {
+					return stringify(chunk.data);
+				}
+
+				return chunk.snippet;
+			}
+
+			return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
+		}
+
+		const usesSpread = this.attributes.find(attr => attr.isSpread);
+
+		const props = usesSpread
+			? `Object.assign(${
+				this.attributes
+					.map(attribute => {
+						if (attribute.isSpread) {
+							return attribute.expression.snippet;
+						} else {
+							return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
+						}
+					})
+					.concat(bindingProps.map(p => `{ ${p} }`))
+					.join(', ')
+			})`
+			: `{ ${this.attributes
+				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
+				.concat(bindingProps)
+				.join(', ')} }`;
+
+		const isDynamicComponent = this.name === 'svelte:component';
+
+		const expression = (
+			this.name === 'svelte:self' ? compiler.name :
+			isDynamicComponent ? `((${this.expression.snippet}) || __missingComponent)` :
+			`%components-${this.name}`
+		);
+
+		this.bindings.forEach(binding => {
+			block.addBinding(binding, expression);
+		});
+
+		let open = `\${${expression}._render(__result, ${props}`;
+
+		const options = [];
+		options.push(`store: options.store`);
+
+		if (this.children.length) {
+			const appendTarget: AppendTarget = {
+				slots: { default: '' },
+				slotStack: ['default']
+			};
+
+			compiler.appendTargets.push(appendTarget);
+
+			this.children.forEach((child: Node) => {
+				child.ssr(compiler, block);
+			});
+
+			const slotted = Object.keys(appendTarget.slots)
+				.map(name => `${name}: () => \`${appendTarget.slots[name]}\``)
+				.join(', ');
+
+			options.push(`slotted: { ${slotted} }`);
+
+			compiler.appendTargets.pop();
+		}
+
+		if (options.length) {
+			open += `, { ${options.join(', ')} }`;
+		}
+
+		compiler.append(open);
+		compiler.append(')}');
 	}
 }
 

@@ -101,4 +101,14 @@ export default class Title extends Node {
 			block.builders.hydrate.addLine(`document.title = ${value};`);
 		}
 	}
+
+	ssr(compiler, block) {
+		compiler.append(`<title>`);
+
+		this.children.forEach((child: Node) => {
+			child.ssr(compiler, block);
+		});
+
+		compiler.append(`</title>`);
+	}
 }

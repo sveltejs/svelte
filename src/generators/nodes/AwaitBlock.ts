@@ -219,4 +219,24 @@ export default class AwaitBlock extends Node {
 			});
 		});
 	}
+
+	ssr(compiler, block) {
+		const { snippet } = this.expression;
+
+		const childBlock = block.child({});
+
+		compiler.append('${(function(__value) { if(__isPromise(__value)) return `');
+
+		this.pending.children.forEach((child: Node) => {
+			child.ssr(compiler, block);
+		});
+
+		compiler.append('`; return function(ctx) { return `');
+
+		this.then.children.forEach((child: Node) => {
+			child.ssr(compiler, block);
+		});
+
+		compiler.append(`\`;}(Object.assign({}, ctx, { ${this.value}: __value }));}(${snippet})) }`);
+	}
 }

@@ -476,6 +476,30 @@ export default class IfBlock extends Node {
 		return branches;
 	}
 
+	ssr(compiler, block) {
+		const { snippet } = this.expression;
+
+		compiler.append('${ ' + snippet + ' ? `');
+
+		const childBlock = block.child({
+			conditions: block.conditions.concat(snippet),
+		});
+
+		this.children.forEach((child: Node) => {
+			child.ssr(compiler, childBlock);
+		});
+
+		compiler.append('` : `');
+
+		if (this.else) {
+			this.else.children.forEach((child: Node) => {
+				child.ssr(compiler, block);
+			});
+		}
+
+		compiler.append('` }');
+	}
+
 	visitChildren(block: Block, node: Node) {
 		node.children.forEach((child: Node) => {
 			child.build(node.block, null, 'nodes');

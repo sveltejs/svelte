@@ -1,5 +1,5 @@
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
+import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import addToSet from '../../utils/addToSet';
 import { DomGenerator } from '../dom/index';
@@ -331,6 +331,18 @@ export default class Attribute extends Node {
 				`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
 			);
 		});
+	}
+
+	stringifyForSsr() {
+		return this.chunks
+			.map((chunk: Node) => {
+				if (chunk.type === 'Text') {
+					return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
+				}
+
+				return '${__escape(' + chunk.snippet + ')}';
+			})
+			.join('');
 	}
 }
 

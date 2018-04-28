@@ -24,4 +24,14 @@ export default class MustacheTag extends Tag {
 	remount(name: string) {
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
+
+	ssr(compiler) {
+		compiler.append(
+			this.parent &&
+			this.parent.type === 'Element' &&
+			this.parent.name === 'style'
+				? '${' + this.expression.snippet + '}'
+				: '${__escape(' + this.expression.snippet + ')}'
+		);
+	}
 }

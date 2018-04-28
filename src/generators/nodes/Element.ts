@@ -17,6 +17,9 @@ import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
 
+// source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
+const booleanAttributes = new Set('async autocomplete autofocus autoplay border challenge checked compact contenteditable controls default defer disabled formnovalidate frameborder hidden indeterminate ismap loop multiple muted nohref noresize noshade novalidate nowrap open readonly required reversed scoped scrolling seamless selected sortable spellcheck translate'.split(' '));
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -825,6 +828,86 @@ export default class Element extends Node {
 					value: [{ type: 'Text', data: `${this.compiler.stylesheet.id}` }]
 				})
 			);
+		}
+	}
+
+	ssr(compiler, block) {
+		let openingTag = `<${this.name}`;
+		let textareaContents; // awkward special case
+
+		const slot = this.getStaticAttributeValue('slot');
+		if (slot && this.hasAncestor('Component')) {
+			const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
+			const slotName = slot.chunks[0].data;
+			const appendTarget = compiler.appendTargets[compiler.appendTargets.length - 1];
+			appendTarget.slotStack.push(slotName);
+			appendTarget.slots[slotName] = '';
+		}
+
+		if (this.attributes.find(attr => attr.isSpread)) {
+			// TODO dry this out
+			const args = [];
+			this.attributes.forEach(attribute => {
+				if (attribute.isSpread) {
+					args.push(attribute.expression.snippet);
+				} else {
+					if (attribute.name === 'value' && this.name === 'textarea') {
+						textareaContents = attribute.stringifyForSsr();
+					} else if (attribute.isTrue) {
+						args.push(`{ ${quoteIfNecessary(attribute.name)}: true }`);
+					} else if (
+						booleanAttributes.has(attribute.name) &&
+						attribute.chunks.length === 1 &&
+						attribute.chunks[0].type !== 'Text'
+					) {
+						// a boolean attribute with one non-Text chunk
+						args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
+					} else {
+						args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${attribute.stringifyForSsr()}\` }`);
+					}
+				}
+			});
+
+			openingTag += "${__spread([" + args.join(', ') + "])}";
+		} else {
+			this.attributes.forEach((attribute: Node) => {
+				if (attribute.type !== 'Attribute') return;
+
+				if (attribute.name === 'value' && this.name === 'textarea') {
+					textareaContents = attribute.stringifyForSsr();
+				} else if (attribute.isTrue) {
+					openingTag += ` ${attribute.name}`;
+				} else if (
+					booleanAttributes.has(attribute.name) &&
+					attribute.chunks.length === 1 &&
+					attribute.chunks[0].type !== 'Text'
+				) {
+					// a boolean attribute with one non-Text chunk
+					openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
+				} else {
+					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
+				}
+			});
+		}
+
+		if (this._cssRefAttribute) {
+			openingTag += ` svelte-ref-${this._cssRefAttribute}`;
+		}
+
+		openingTag += '>';
+
+		compiler.append(openingTag);
+
+		if (this.name === 'textarea' && textareaContents !== undefined) {
+			compiler.append(textareaContents);
+		} else {
+			this.children.forEach((child: Node) => {
+				child.ssr(compiler, block);
+			});
+		}
+
+		if (!isVoidElementName(this.name)) {
+			compiler.append(`</${this.name}>`);
 		}
 	}
 }
