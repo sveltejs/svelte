@@ -11,7 +11,9 @@ export default class Head extends Node {
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
-		this.children = mapChildren(compiler, parent, scope, info.children);
+		this.children = mapChildren(compiler, parent, scope, info.children.filter(child => {
+			return (child.type !== 'Text' || /\S/.test(child.data));
+		}));
 	}
 
 	init(

@@ -4,7 +4,7 @@ import * as path from "path";
 import { rollup } from "rollup";
 import { loadConfig, svelte } from "../helpers.js";
 
-describe.only("js", () => {
+describe("js", () => {
 	fs.readdirSync("test/js/samples").forEach(dir => {
 		if (dir[0] === ".") return;
 
