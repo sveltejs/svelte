@@ -187,7 +187,7 @@ export default class Block {
 			`);
 		}
 
-		if (this.generator.hydratable) {
+		if (this.generator.options.hydratable) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
 				properties.addBlock(`l: @noop,`);
 			} else {

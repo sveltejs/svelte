@@ -138,9 +138,9 @@ export default class Attribute extends Node {
 			? '@setXlinkAttribute'
 			: '@setAttribute';
 
-		const isLegacyInputType = this.compiler.legacy && name === 'type' && this.parent.name === 'input';
+		const isLegacyInputType = this.compiler.options.legacy && name === 'type' && this.parent.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !this.compiler.legacy && !node.namespace;
+		const isDataSet = /^data-/.test(name) && !this.compiler.options.legacy && !node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;

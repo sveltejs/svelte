@@ -18,6 +18,8 @@ import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
+import { DomTarget } from './dom/index';
+import { SsrTarget } from './server-side-rendering/index';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -84,6 +86,7 @@ export default class Generator {
 	name: string;
 	options: CompileOptions;
 	fragment: Fragment;
+	target: DomTarget | SsrTarget;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -129,7 +132,8 @@ export default class Generator {
 		stylesheet: Stylesheet,
 		options: CompileOptions,
 		stats: Stats,
-		dom: boolean
+		dom: boolean,
+		target: DomTarget | SsrTarget
 	) {
 		stats.start('compile');
 		this.stats = stats;
@@ -137,6 +141,7 @@ export default class Generator {
 		this.ast = ast;
 		this.source = source;
 		this.options = options;
+		this.target = target;
 
 		this.imports = [];
 		this.shorthandImports = [];

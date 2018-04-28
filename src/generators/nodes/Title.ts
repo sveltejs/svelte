@@ -103,12 +103,12 @@ export default class Title extends Node {
 	}
 
 	ssr() {
-		this.compiler.append(`<title>`);
+		this.compiler.target.append(`<title>`);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		this.compiler.append(`</title>`);
+		this.compiler.target.append(`</title>`);
 	}
 }

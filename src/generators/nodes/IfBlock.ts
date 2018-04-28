@@ -101,7 +101,7 @@ export default class IfBlock extends Node {
 			block.hasOutroMethod = hasOutros;
 		});
 
-		compiler.blocks.push(...blocks);
+		compiler.target.blocks.push(...blocks);
 	}
 
 	build(
@@ -480,13 +480,13 @@ export default class IfBlock extends Node {
 		const { compiler } = this;
 		const { snippet } = this.expression;
 
-		compiler.append('${ ' + snippet + ' ? `');
+		compiler.target.append('${ ' + snippet + ' ? `');
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		compiler.append('` : `');
+		compiler.target.append('` : `');
 
 		if (this.else) {
 			this.else.children.forEach((child: Node) => {
@@ -494,7 +494,7 @@ export default class IfBlock extends Node {
 			});
 		}
 
-		compiler.append('` }');
+		compiler.target.append('` }');
 	}
 
 	visitChildren(block: Block, node: Node) {

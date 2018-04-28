@@ -52,7 +52,7 @@ export default class AwaitBlock extends Node {
 			});
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
-			this.compiler.blocks.push(child.block);
+			this.compiler.target.blocks.push(child.block);
 
 			if (child.block.dependencies.size > 0) {
 				isDynamic = true;
@@ -224,18 +224,18 @@ export default class AwaitBlock extends Node {
 		const { compiler } = this;
 		const { snippet } = this.expression;
 
-		compiler.append('${(function(__value) { if(@isPromise(__value)) return `');
+		compiler.target.append('${(function(__value) { if(@isPromise(__value)) return `');
 
 		this.pending.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		compiler.append('`; return function(ctx) { return `');
+		compiler.target.append('`; return function(ctx) { return `');
 
 		this.then.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		compiler.append(`\`;}(Object.assign({}, ctx, { ${this.value}: __value }));}(${snippet})) }`);
+		compiler.target.append(`\`;}(Object.assign({}, ctx, { ${this.value}: __value }));}(${snippet})) }`);
 	}
 }

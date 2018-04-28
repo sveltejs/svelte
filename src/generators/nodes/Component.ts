@@ -220,7 +220,7 @@ export default class Component extends Node {
 		}
 
 		if (this.bindings.length) {
-			compiler.hasComplexBindings = true;
+			compiler.target.hasComplexBindings = true;
 
 			name_updating = block.alias(`${name}_updating`);
 			block.addVariable(name_updating, '{}');
@@ -560,7 +560,7 @@ export default class Component extends Node {
 
 			const { name } = getObject(binding.value.node);
 
-			this.compiler.bindings.push(deindent`
+			this.compiler.target.bindings.push(deindent`
 				if (${conditions.reverse().join('&&')}) {
 					tmp = ${expression}.data();
 					if ('${name}' in tmp) {
@@ -582,7 +582,7 @@ export default class Component extends Node {
 				slotStack: ['default']
 			};
 
-			this.compiler.appendTargets.push(appendTarget);
+			this.compiler.target.appendTargets.push(appendTarget);
 
 			this.children.forEach((child: Node) => {
 				child.ssr();
@@ -594,15 +594,15 @@ export default class Component extends Node {
 
 			options.push(`slotted: { ${slotted} }`);
 
-			this.compiler.appendTargets.pop();
+			this.compiler.target.appendTargets.pop();
 		}
 
 		if (options.length) {
 			open += `, { ${options.join(', ')} }`;
 		}
 
-		this.compiler.append(open);
-		this.compiler.append(')}');
+		this.compiler.target.append(open);
+		this.compiler.target.append(')}');
 	}
 }
 

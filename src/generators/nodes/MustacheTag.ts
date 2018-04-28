@@ -26,7 +26,7 @@ export default class MustacheTag extends Tag {
 	}
 
 	ssr() {
-		this.compiler.append(
+		this.compiler.target.append(
 			this.parent &&
 			this.parent.type === 'Element' &&
 			this.parent.name === 'style'

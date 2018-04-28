@@ -89,6 +89,6 @@ export default class RawMustacheTag extends Tag {
 	}
 
 	ssr() {
-		this.compiler.append('${' + this.expression.snippet + '}');
+		this.compiler.target.append('${' + this.expression.snippet + '}');
 	}
 }

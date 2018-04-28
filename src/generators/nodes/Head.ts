@@ -37,12 +37,12 @@ export default class Head extends Node {
 	}
 
 	ssr() {
-		this.compiler.append('${(__result.head += `');
+		this.compiler.target.append('${(__result.head += `');
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		this.compiler.append('`, "")}');
+		this.compiler.target.append('`, "")}');
 	}
 }

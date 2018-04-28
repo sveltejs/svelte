@@ -12,7 +12,7 @@ export default class Comment extends Node {
 	ssr() {
 		// Allow option to preserve comments, otherwise ignore
 		if (this.compiler.options.preserveComments) {
-			this.compiler.append(`<!--${this.data}-->`);
+			this.compiler.target.append(`<!--${this.data}-->`);
 		}
 	}
 }

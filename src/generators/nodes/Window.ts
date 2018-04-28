@@ -109,7 +109,7 @@ export default class Window extends Node {
 		this.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				compiler.readonly.add(binding.value.node.name);
+				compiler.target.readonly.add(binding.value.node.name);
 			}
 
 			bindings[binding.name] = binding.value.node.name;
@@ -126,7 +126,7 @@ export default class Window extends Node {
 			);
 
 			// add initial value
-			compiler.metaBindings.push(
+			compiler.target.metaBindings.push(
 				`this._state.${binding.value.node.name} = window.${property};`
 			);
 		});
@@ -207,7 +207,7 @@ export default class Window extends Node {
 			`);
 
 			// add initial value
-			compiler.metaBindings.push(
+			compiler.target.metaBindings.push(
 				`this._state.${bindings.online} = navigator.onLine;`
 			);
 
