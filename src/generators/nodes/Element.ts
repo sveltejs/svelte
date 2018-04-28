@@ -160,19 +160,19 @@ export default class Element extends Node {
 		});
 
 		this.actions.forEach(action => {
-			this.cannotUseInnerHTML();
+			this.parent.cannotUseInnerHTML();
 			if (action.expression) {
 				block.addDependencies(action.expression.dependencies);
 			}
 		});
 
 		this.bindings.forEach(binding => {
-			this.cannotUseInnerHTML();
+			this.parent.cannotUseInnerHTML();
 			block.addDependencies(binding.value.dependencies);
 		});
 
 		this.handlers.forEach(handler => {
-			this.cannotUseInnerHTML();
+			this.parent.cannotUseInnerHTML();
 			block.addDependencies(handler.dependencies);
 		});
 

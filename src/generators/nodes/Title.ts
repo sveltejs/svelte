@@ -57,7 +57,7 @@ export default class Title extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk) <= 13 ? `(${snippet})` : snippet;
+								return getExpressionPrecedence(chunk.node) <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');

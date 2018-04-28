@@ -12,13 +12,13 @@ function add_css() {
 	appendNode(style, document.head);
 }
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 	var p, text;
 
 	return {
 		c: function create() {
 			p = createElement("p");
-			text = createText(state.foo);
+			text = createText(ctx.foo);
 			this.h();
 		},
 
@@ -31,9 +31,9 @@ function create_main_fragment(component, state) {
 			appendNode(text, p);
 		},
 
-		p: function update(changed, state) {
+		p: function update(changed, ctx) {
 			if (changed.foo) {
-				text.data = state.foo;
+				text.data = ctx.foo;
 			}
 		},
 

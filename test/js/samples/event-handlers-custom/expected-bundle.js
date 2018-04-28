@@ -144,7 +144,7 @@ var methods = {
 	}
 };
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 	var button, foo_handler;
 
 	return {
@@ -156,8 +156,7 @@ function create_main_fragment(component, state) {
 
 		h: function hydrate() {
 			foo_handler = foo.call(component, button, function(event) {
-				var state = component.get();
-				component.foo( state.bar );
+				component.foo( ctx.bar );
 			});
 		},
 
@@ -165,7 +164,9 @@ function create_main_fragment(component, state) {
 			insertNode(button, target, anchor);
 		},
 
-		p: noop,
+		p: function(changed, _ctx) {
+			ctx = _ctx;
+		},
 
 		u: function unmount() {
 			detachNode(button);
