@@ -35,4 +35,14 @@ export default class Head extends Node {
 			child.build(block, 'document.head', null);
 		});
 	}
+
+	ssr(compiler, block) {
+		compiler.append('${(__result.head += `');
+
+		this.children.forEach((child: Node) => {
+			child.ssr(compiler, block);
+		});
+
+		compiler.append('`, "")}');
+	}
 }

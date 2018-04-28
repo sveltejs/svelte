@@ -8,4 +8,11 @@ export default class Comment extends Node {
 		super(compiler, parent, scope, info);
 		this.data = info.data;
 	}
+
+	ssr(compiler) {
+		// Allow option to preserve comments, otherwise ignore
+		if (compiler.options.preserveComments) {
+			compiler.append(`<!--${this.data}-->`);
+		}
+	}
 }
