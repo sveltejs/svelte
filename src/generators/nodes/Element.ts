@@ -11,7 +11,6 @@ import Block from '../dom/Block';
 import Attribute from './Attribute';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
-import Ref from './Ref';
 import Transition from './Transition';
 import Action from './Action';
 import Text from './Text';
@@ -177,10 +176,12 @@ export default class Element extends Node {
 		});
 
 		if (this.intro) {
+			this.parent.cannotUseInnerHTML();
 			this.compiler.hasIntroTransitions = block.hasIntroMethod = true;
 		}
 
 		if (this.outro) {
+			this.parent.cannotUseInnerHTML();
 			this.compiler.hasOutroTransitions = block.hasOutroMethod = true;
 			block.outros += 1;
 		}

@@ -16,6 +16,12 @@ export default class Tag extends Node {
 		);
 	}
 
+	init(block: Block) {
+		this.cannotUseInnerHTML();
+		this.var = block.getUniqueName(this.type === 'MustacheTag' ? 'text' : 'raw');
+		block.addDependencies(this.expression.dependencies);
+	}
+
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)
