@@ -26,6 +26,7 @@ export default class Attribute extends Node {
 	isTrue: boolean;
 	isDynamic: boolean;
 	isSynthetic: boolean;
+	shouldCache: boolean;
 	expression?: Expression;
 	chunks: (Text | Expression)[];
 	dependencies: Set<string>;
@@ -44,6 +45,7 @@ export default class Attribute extends Node {
 			this.chunks = null;
 
 			this.isDynamic = true; // TODO not necessarily
+			this.shouldCache = false; // TODO does this mean anything here?
 		}
 
 		else {
@@ -69,6 +71,12 @@ export default class Attribute extends Node {
 			this.isDynamic = this.chunks.length === 1
 				? this.chunks[0].type !== 'Text'
 				: this.chunks.length > 1;
+
+			this.shouldCache = this.isDynamic
+				? this.chunks.length === 1
+					? this.chunks[0].node.type !== 'Identifier' || scope.names.has(this.chunks[0].node.name)
+					: true
+				: false;
 		}
 	}
 
@@ -140,21 +148,11 @@ export default class Attribute extends Node {
 		if (this.isDynamic) {
 			let value;
 
-			let shouldCache;
-
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.chunks.length === 1) {
 				// single {tag} — may be a non-string
-				const expression = this.chunks[0];
-				const { snippet } = expression;
-
-				value = snippet;
-
-				shouldCache = (
-					expression.node.type !== 'Identifier' ||
-					block.contexts.has(expression.node.name)
-				);
+				value = this.chunks[0].snippet;
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
@@ -170,14 +168,12 @@ export default class Attribute extends Node {
 							}
 						})
 						.join(' + ');
-
-				shouldCache = true;
 			}
 
 			const isSelectValueAttribute =
 				name === 'value' && node.name === 'select';
 
-			if (isSelectValueAttribute) shouldCache = true;
+			const shouldCache = this.shouldCache || isSelectValueAttribute;
 
 			const last = shouldCache && block.getUniqueName(
 				`${node.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
