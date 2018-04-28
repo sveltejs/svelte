@@ -9,6 +9,7 @@ export default class Expression {
 	node: any;
 	snippet: string;
 
+	usesContext: boolean;
 	references: Set<string>;
 	dependencies: Set<string>;
 	contexts: Set<string>;
@@ -29,6 +30,7 @@ export default class Expression {
 
 		this.snippet = `[✂${info.start}-${info.end}✂]`;
 
+		this.usesContext = false;
 		const contextDependencies = new Map(); // TODO
 		const indexes = new Map();
 
@@ -39,7 +41,7 @@ export default class Expression {
 		let { map, scope: currentScope } = createScopes(info);
 
 		const isEventHandler = parent.type === 'EventHandler';
-		const { thisReferences } = this;
+		const expression = this;
 
 		walk(info, {
 			enter(node: any, parent: any, key: string) {
@@ -55,7 +57,7 @@ export default class Expression {
 				}
 
 				if (node.type === 'ThisExpression') {
-					thisReferences.push(node);
+					expression.thisReferences.push(node);
 				}
 
 				if (isReference(node, parent)) {
@@ -71,6 +73,8 @@ export default class Expression {
 						if (alias !== name) code.overwrite(object.start, object.end, alias);
 						return;
 					}
+
+					expression.usesContext = true;
 
 					code.prependRight(node.start, key === 'key' && parent.shorthand
 						? `${name}: ctx.`

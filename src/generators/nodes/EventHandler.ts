@@ -29,14 +29,15 @@ export default class EventHandler extends Node {
 			this.callee = flattenReference(info.expression.callee);
 			this.insertionPoint = info.expression.start;
 
+			this.usesComponent = !validCalleeObjects.has(this.callee.name);
+			this.usesContext = false;
+
 			this.args = info.expression.arguments.map(param => {
 				const expression = new Expression(compiler, this, scope, param);
 				addToSet(this.dependencies, expression.dependencies);
+				if (expression.usesContext) this.usesContext = true;
 				return expression;
 			});
-
-			this.usesComponent = !validCalleeObjects.has(this.callee.name);
-			this.usesContext = this.dependencies.size > 0;
 
 			this.snippet = `[✂${info.expression.start}-${info.expression.end}✂]`;
 		} else {
