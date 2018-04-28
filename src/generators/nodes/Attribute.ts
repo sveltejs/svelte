@@ -26,6 +26,7 @@ export default class Attribute extends Node {
 	isSpread: boolean;
 	isTrue: boolean;
 	isDynamic: boolean;
+	isSynthetic: boolean;
 	expression?: Expression;
 	chunks: (Text | Expression)[];
 	dependencies: Set<string>;
@@ -37,6 +38,7 @@ export default class Attribute extends Node {
 			this.name = null;
 			this.isSpread = true;
 			this.isTrue = false;
+			this.isSynthetic = false;
 
 			this.expression = new Expression(compiler, this, scope, info.expression);
 			this.dependencies = this.expression.dependencies;
@@ -48,6 +50,7 @@ export default class Attribute extends Node {
 		else {
 			this.name = info.name;
 			this.isTrue = info.value === true;
+			this.isSynthetic = info.synthetic;
 
 			this.dependencies = new Set();
 
