@@ -127,17 +127,12 @@ export default class Component extends Node {
 			});
 		}
 
-		const allContexts = new Set();
 		const statements: string[] = [];
 
 		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
 		const name_changes = block.getUniqueName(`${name}_changes`);
 		let name_updating: string;
 		let beforecreate: string = null;
-
-		// const eventHandlers = this.attributes
-		// 	.filter((a: Node) => a.type === 'EventHandler')
-		// 	.map(a => mungeEventHandler(compiler, this, a, block, allContexts));
 
 		const updates: string[] = [];
 
@@ -146,7 +141,6 @@ export default class Component extends Node {
 		const attributeObject = usesSpread
 			? '{}'
 			: stringifyProps(
-				// this.attributes.map(attr => `${attr.name}: ${attr.value}`)
 				this.attributes.map(attr => `${attr.name}: ${attr.getValue()}`)
 			);
 
@@ -236,10 +230,6 @@ export default class Component extends Node {
 
 			this.bindings.forEach((binding: Binding) => {
 				let { name: key } = getObject(binding.value.node);
-
-				binding.value.contexts.forEach(context => {
-					allContexts.add(context);
-				});
 
 				let setFromChild;
 
@@ -490,51 +480,6 @@ export default class Component extends Node {
 	remount(name: string) {
 		return `${this.var}._mount(${name}._slotted.default, null);`;
 	}
-}
-
-function mungeEventHandler(compiler: DomGenerator, node: Node, handler: Node, block: Block, allContexts: Set<string>) {
-	let body;
-
-	if (handler.expression) {
-		compiler.addSourcemapLocations(handler.expression);
-
-		// TODO try out repetition between this and element counterpart
-		const flattened = flattenReference(handler.expression.callee);
-			if (!validCalleeObjects.has(flattened.name)) {
-				// allow event.stopPropagation(), this.select() etc
-				// TODO verify that it's a valid callee (i.e. built-in or declared method)
-				compiler.code.prependRight(
-					handler.expression.start,
-					`${block.alias('component')}.`
-				);
-			}
-
-		let usesState = false;
-
-		handler.expression.arguments.forEach((arg: Node) => {
-			const { contexts } = block.contextualise(arg, null, true);
-			if (contexts.has('state')) usesState = true;
-
-			contexts.forEach(context => {
-				allContexts.add(context);
-			});
-		});
-
-		body = deindent`
-			${usesState && `const ctx = #component.get();`}
-			[✂${handler.expression.start}-${handler.expression.end}✂];
-		`;
-	} else {
-		body = deindent`
-			#component.fire('${handler.name}', event);
-		`;
-	}
-
-	return {
-		name: handler.name,
-		var: block.getUniqueName(`${node.var}_${handler.name}`),
-		body
-	};
 }
 
 function isComputed(node: Node) {

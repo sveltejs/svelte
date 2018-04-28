@@ -61,7 +61,6 @@ export default class Expression {
 	usesContext: boolean;
 	references: Set<string>;
 	dependencies: Set<string>;
-	contexts: Set<string>;
 
 	thisReferences: Array<{ start: number, end: number }>;
 
@@ -158,8 +157,6 @@ export default class Expression {
 		});
 
 		this.dependencies = dependencies;
-
-		this.contexts = new Set(); // TODO...
 	}
 
 	getPrecedence() {

@@ -250,7 +250,6 @@ export default class Element extends Node {
 		};
 
 		const name = this.var;
-		const allUsedContexts: Set<string> = new Set();
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const initialMountNode = this.slotted ?
@@ -355,8 +354,8 @@ export default class Element extends Node {
 			}
 		}
 
-		this.addBindings(block, allUsedContexts);
-		this.addEventHandlers(block, allUsedContexts);
+		this.addBindings(block);
+		this.addEventHandlers(block);
 		if (this.ref) this.addRef(block);
 		this.addAttributes(block);
 		this.addTransitions(block);
@@ -400,8 +399,7 @@ export default class Element extends Node {
 	}
 
 	addBindings(
-		block: Block,
-		allUsedContexts: Set<string>
+		block: Block
 	) {
 		if (this.bindings.length === 0) return;
 
@@ -410,7 +408,7 @@ export default class Element extends Node {
 		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
 		// TODO munge in constructor
-		const mungedBindings = this.bindings.map(binding => binding.munge(block, allUsedContexts));
+		const mungedBindings = this.bindings.map(binding => binding.munge(block));
 
 		const lock = mungedBindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
@@ -572,7 +570,7 @@ export default class Element extends Node {
 		`);
 	}
 
-	addEventHandlers(block: Block, allUsedContexts) {
+	addEventHandlers(block: Block) {
 		const { compiler } = this;
 
 		this.handlers.forEach(handler => {

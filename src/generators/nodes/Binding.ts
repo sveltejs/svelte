@@ -49,8 +49,7 @@ export default class Binding extends Node {
 	}
 
 	munge(
-		block: Block,
-		allUsedContexts: Set<string>
+		block: Block
 	) {
 		const node: Element = this.parent;
 
@@ -60,7 +59,7 @@ export default class Binding extends Node {
 		let updateCondition: string;
 
 		const { name } = getObject(this.value.node);
-		const { contexts, snippet } = this.value;
+		const { snippet } = this.value;
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,
@@ -75,10 +74,6 @@ export default class Binding extends Node {
 					dependencies.add(indirectDependency);
 				});
 			}
-		});
-
-		contexts.forEach(context => {
-			allUsedContexts.add(context);
 		});
 
 		// view to model
