@@ -38,23 +38,23 @@ export default function visitElement(
 	if (node.attributes.find(attr => attr.isSpread)) {
 		// TODO dry this out
 		const args = [];
-		node.attributes.forEach((attribute: Node) => {
-			if (attribute.type === 'Spread') {
+		node.attributes.forEach(attribute => {
+			if (attribute.isSpread) {
 				args.push(attribute.expression.snippet);
-			} else if (attribute.type === 'Attribute') {
+			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
-					textareaContents = stringifyAttributeValue(block, attribute.value);
-				} else if (attribute.value === true) {
+					textareaContents = stringifyAttributeValue(block, attribute.chunks);
+				} else if (attribute.isTrue) {
 					args.push(`{ ${quoteIfNecessary(attribute.name)}: true }`);
 				} else if (
 					booleanAttributes.has(attribute.name) &&
-					attribute.value.length === 1 &&
-					attribute.value[0].type !== 'Text'
+					attribute.chunks.length === 1 &&
+					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.value[0].expression.snippet} }`);
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
 				} else {
-					args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${stringifyAttributeValue(block, attribute.value)}\` }`);
+					args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${stringifyAttributeValue(block, attribute.chunks)}\` }`);
 				}
 			}
 		});
