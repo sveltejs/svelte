@@ -68,7 +68,7 @@ export default class Text extends Node {
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
-	ssr(compiler) {
+	ssr() {
 		let text = this.data;
 		if (
 			!this.parent ||
@@ -78,6 +78,6 @@ export default class Text extends Node {
 			// unless this Text node is inside a <script> or <style> element, escape &,<,>
 			text = escapeHTML(text);
 		}
-		compiler.append(escape(escapeTemplate(text)));
+		this.compiler.append(escape(escapeTemplate(text)));
 	}
 }

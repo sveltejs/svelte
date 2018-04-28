@@ -2,13 +2,12 @@ import deindent from '../../utils/deindent';
 import Generator from '../Generator';
 import Stats from '../../Stats';
 import Stylesheet from '../../css/Stylesheet';
-import Block from './Block';
 import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import getName from '../../utils/getName';
 import globalWhitelist from '../../utils/globalWhitelist';
 import { Ast, Node, CompileOptions } from '../../interfaces';
-import { AppendTarget } from './interfaces';
+import { AppendTarget } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
 
 export class SsrGenerator extends Generator {
@@ -57,13 +56,8 @@ export default function ssr(
 	const { computations, name, templateProperties } = generator;
 
 	// create main render() function
-	const mainBlock = new Block({
-		generator,
-		conditions: [],
-	});
-
 	trim(generator.fragment.children).forEach((node: Node) => {
-		node.ssr(generator, mainBlock);
+		node.ssr();
 	});
 
 	const css = generator.customElement ?

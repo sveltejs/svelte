@@ -25,8 +25,8 @@ export default class MustacheTag extends Tag {
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
-	ssr(compiler) {
-		compiler.append(
+	ssr() {
+		this.compiler.append(
 			this.parent &&
 			this.parent.type === 'Element' &&
 			this.parent.name === 'style'

@@ -473,7 +473,8 @@ export default class EachBlock extends Node {
 		return `for (var #i = 0; #i < ${this.iterations}.length; #i += 1) ${this.iterations}[#i].m(${name}._slotted.default, null);`;
 	}
 
-	ssr(compiler, block) {
+	ssr() {
+		const { compiler } = this;
 		const { snippet } = this.expression;
 
 		const props = [`${this.context}: item`]
@@ -486,10 +487,8 @@ export default class EachBlock extends Node {
 		const open = `\${ ${this.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${getContext}, ctx => \``;
 		compiler.append(open);
 
-		const childBlock = block.child({});
-
 		this.children.forEach((child: Node) => {
-			child.ssr(compiler, childBlock);
+			child.ssr();
 		});
 
 		const close = `\`)`;
@@ -498,7 +497,7 @@ export default class EachBlock extends Node {
 		if (this.else) {
 			compiler.append(` : \``);
 			this.else.children.forEach((child: Node) => {
-				child.ssr(compiler, block);
+				child.ssr();
 			});
 			compiler.append(`\``);
 		}
