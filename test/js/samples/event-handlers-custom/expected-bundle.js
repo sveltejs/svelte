@@ -164,8 +164,9 @@ function create_main_fragment(component, ctx) {
 			insertNode(button, target, anchor);
 		},
 
-		p: function(changed, _ctx) {
+		p: function update(changed, _ctx) {
 			ctx = _ctx;
+
 		},
 
 		u: function unmount() {
