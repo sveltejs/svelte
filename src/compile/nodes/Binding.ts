@@ -3,9 +3,9 @@ import Element from './Element';
 import getObject from '../../utils/getObject';
 import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
+import Compiler from '../Compiler';
 import Block from '../dom/Block';
 import Expression from './shared/Expression';
-import Compiler from '../../compile/Compiler';
 
 const readOnlyMediaAttributes = new Set([
 	'duration',

@@ -2,7 +2,7 @@ import deindent from '../../utils/deindent';
 import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import addToSet from '../../utils/addToSet';
-import { DomGenerator } from '../dom/index';
+import Compiler from '../Compiler';
 import Node from './shared/Node';
 import Element from './Element';
 import Text from './Text';
@@ -19,7 +19,7 @@ export default class Attribute extends Node {
 	start: number;
 	end: number;
 
-	compiler: DomGenerator;
+	compiler: Compiler;
 	parent: Element;
 	name: string;
 	isSpread: boolean;

@@ -1,6 +1,7 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
+import Compiler from '../Compiler';
 import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';

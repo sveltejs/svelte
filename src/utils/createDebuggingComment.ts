@@ -1,7 +1,7 @@
-import { DomGenerator } from '../generators/dom/index';
+import Compiler from '../compile/Compiler';
 import { Node } from '../interfaces';
 
-export default function createDebuggingComment(node: Node, compiler: DomGenerator) {
+export default function createDebuggingComment(node: Node, compiler: Compiler) {
 	const { locate, source } = compiler;
 
 	let c = node.start;

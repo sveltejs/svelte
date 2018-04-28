@@ -1,12 +1,12 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
-import { DomGenerator } from '../dom/index';
 import Block from '../dom/Block';
 import PendingBlock from './PendingBlock';
 import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
+import { SsrTarget } from '../server-side-rendering';
 
 export default class AwaitBlock extends Node {
 	expression: Expression;
@@ -221,21 +221,21 @@ export default class AwaitBlock extends Node {
 	}
 
 	ssr() {
-		const { compiler } = this;
+		const target: SsrTarget = <SsrTarget>this.compiler.target;
 		const { snippet } = this.expression;
 
-		compiler.target.append('${(function(__value) { if(@isPromise(__value)) return `');
+		target.append('${(function(__value) { if(@isPromise(__value)) return `');
 
 		this.pending.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		compiler.target.append('`; return function(ctx) { return `');
+		target.append('`; return function(ctx) { return `');
 
 		this.then.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		compiler.target.append(`\`;}(Object.assign({}, ctx, { ${this.value}: __value }));}(${snippet})) }`);
+		target.append(`\`;}(Object.assign({}, ctx, { ${this.value}: __value }));}(${snippet})) }`);
 	}
 }

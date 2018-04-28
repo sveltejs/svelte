@@ -6,6 +6,7 @@ import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import quoteIfNecessary from '../../utils/quoteIfNecessary';
+import Compiler from '../Compiler';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -915,7 +916,7 @@ export default class Element extends Node {
 }
 
 function getRenderStatement(
-	compiler: DomGenerator,
+	compiler: Compiler,
 	namespace: string,
 	name: string
 ) {
@@ -931,7 +932,7 @@ function getRenderStatement(
 }
 
 function getClaimStatement(
-	compiler: DomGenerator,
+	compiler: Compiler,
 	namespace: string,
 	nodes: string,
 	node: Node

@@ -1,4 +1,4 @@
-import Generator from '../../Generator';
+import Compiler from '../../Compiler';
 import { walk } from 'estree-walker';
 import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
@@ -54,7 +54,7 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 export default class Expression {
-	compiler: Generator;
+	compiler: Compiler;
 	node: any;
 	snippet: string;
 

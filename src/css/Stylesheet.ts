@@ -4,7 +4,7 @@ import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from '../utils/hash';
-import Element from '../generators/nodes/Element';
+import Element from '../compile/nodes/Element';
 import { Validator } from '../validate/index';
 import { Node, Ast, Warning } from '../interfaces';
 
