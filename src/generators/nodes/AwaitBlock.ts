@@ -225,7 +225,7 @@ export default class AwaitBlock extends Node {
 
 		const childBlock = block.child({});
 
-		compiler.append('${(function(__value) { if(__isPromise(__value)) return `');
+		compiler.append('${(function(__value) { if(@isPromise(__value)) return `');
 
 		this.pending.children.forEach((child: Node) => {
 			child.ssr(compiler, block);

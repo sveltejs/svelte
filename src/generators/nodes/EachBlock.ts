@@ -483,7 +483,7 @@ export default class EachBlock extends Node {
 			? `(item, i) => Object.assign({}, ctx, { ${props.join(', ')}, ${this.index}: i })`
 			: `item => Object.assign({}, ctx, { ${props.join(', ')} })`;
 
-		const open = `\${ ${this.else ? `${snippet}.length ? ` : ''}__each(${snippet}, ${getContext}, ctx => \``;
+		const open = `\${ ${this.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${getContext}, ctx => \``;
 		compiler.append(open);
 
 		const childBlock = block.child({});

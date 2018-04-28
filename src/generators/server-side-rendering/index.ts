@@ -163,51 +163,6 @@ export default function ssr(
 		var warned = false;
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
-
-		${
-			// TODO this is a bit hacky
-			/__escape/.test(generator.renderCode) && deindent`
-				var escaped = {
-					'"': '&quot;',
-					"'": '&##39;',
-					'&': '&amp;',
-					'<': '&lt;',
-					'>': '&gt;'
-				};
-
-				function __escape(html) {
-					return String(html).replace(/["'&<>]/g, match => escaped[match]);
-				}
-			`
-		}
-
-		${
-			/__each/.test(generator.renderCode) && deindent`
-				function __each(items, assign, fn) {
-					let str = '';
-					for (let i = 0; i < items.length; i += 1) {
-						str += fn(assign(items[i], i));
-					}
-					return str;
-				}
-			`
-		}
-
-		${
-			/__isPromise/.test(generator.renderCode) && deindent`
-				function __isPromise(value) {
-					return value && typeof value.then === 'function';
-				}
-			`
-		}
-
-		${
-			/__missingComponent/.test(generator.renderCode) && deindent`
-				var __missingComponent = {
-					_render: () => ''
-				};
-			`
-		}
 	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 		if (sigil === '@') {
 			helpers.add(name);

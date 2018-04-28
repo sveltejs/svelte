@@ -340,7 +340,7 @@ export default class Attribute extends Node {
 					return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
 				}
 
-				return '${__escape(' + chunk.snippet + ')}';
+				return '${@escape(' + chunk.snippet + ')}';
 			})
 			.join('');
 	}

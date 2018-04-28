@@ -272,6 +272,10 @@ export default class Generator {
 					const global = `_svelteTransitionManager`;
 
 					inlineHelpers += `\n\nvar ${this.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
+				} else if (key === 'escaped' || key === 'missingComponent') {
+					// vars are an awkward special case... would be nice to avoid this
+					const alias = this.alias(key);
+					inlineHelpers += `\n\nconst ${alias} = ${code};`
 				} else {
 					const alias = this.alias(expression.id.name);
 					if (alias !== expression.id.name) {

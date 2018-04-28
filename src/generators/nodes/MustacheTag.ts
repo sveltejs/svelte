@@ -31,7 +31,7 @@ export default class MustacheTag extends Tag {
 			this.parent.type === 'Element' &&
 			this.parent.name === 'style'
 				? '${' + this.expression.snippet + '}'
-				: '${__escape(' + this.expression.snippet + ')}'
+				: '${@escape(' + this.expression.snippet + ')}'
 		);
 	}
 }
