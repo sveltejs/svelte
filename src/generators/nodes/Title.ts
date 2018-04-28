@@ -6,10 +6,18 @@ import mapChildren from './shared/mapChildren';
 export default class Title extends Node {
 	type: 'Title';
 	children: any[]; // TODO
+	shouldCache: boolean;
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
 		this.children = mapChildren(compiler, parent, scope, info.children);
+
+		this.shouldCache = info.children.length === 1
+			? (
+				info.children[0].type !== 'Identifier' ||
+				scope.names.has(info.children[0].name)
+			)
+			: true;
 	}
 
 	build(
@@ -23,7 +31,6 @@ export default class Title extends Node {
 			let value;
 
 			const allDependencies = new Set();
-			let shouldCache;
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
@@ -36,11 +43,6 @@ export default class Title extends Node {
 				dependencies.forEach(d => {
 					allDependencies.add(d);
 				});
-
-				shouldCache = (
-					expression.type !== 'Identifier' ||
-					block.contexts.has(expression.name)
-				);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
@@ -60,23 +62,21 @@ export default class Title extends Node {
 							}
 						})
 						.join(' + ');
-
-				shouldCache = true;
 			}
 
-			const last = shouldCache && block.getUniqueName(
+			const last = this.shouldCache && block.getUniqueName(
 				`title_value`
 			);
 
-			if (shouldCache) block.addVariable(last);
+			if (this.shouldCache) block.addVariable(last);
 
 			let updater;
-			const init = shouldCache ? `${last} = ${value}` : value;
+			const init = this.shouldCache ? `${last} = ${value}` : value;
 
 			block.builders.init.addLine(
 				`document.title = ${init};`
 			);
-			updater = `document.title = ${shouldCache ? last : value};`;
+			updater = `document.title = ${this.shouldCache ? last : value};`;
 
 			if (allDependencies.size) {
 				const dependencies = Array.from(allDependencies);
@@ -87,7 +87,7 @@ export default class Title extends Node {
 
 				const updateCachedValue = `${last} !== (${last} = ${value})`;
 
-				const condition = shouldCache ?
+				const condition = this.shouldCache ?
 					( dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue ) :
 					changedCheck;
 

@@ -52,13 +52,8 @@ export default class AwaitBlock extends Node {
 
 			child.block = block.child({
 				comment: createDebuggingComment(child, this.compiler),
-				name: this.compiler.getUniqueName(`create_${status}_block`),
-				contexts: new Map(block.contexts)
+				name: this.compiler.getUniqueName(`create_${status}_block`)
 			});
-
-			if (arg) {
-				child.block.contexts.set(arg, arg); // TODO should be using getUniqueName
-			}
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
 			this.compiler.blocks.push(child.block);

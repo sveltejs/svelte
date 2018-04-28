@@ -59,7 +59,6 @@ export default function ssr(
 	// create main render() function
 	const mainBlock = new Block({
 		generator,
-		contexts: new Map(),
 		conditions: [],
 	});
 

@@ -20,20 +20,7 @@ export default function visitEachBlock(
 	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}__each(${snippet}, ${getContext}, ctx => \``;
 	generator.append(open);
 
-	// TODO should this be the generator's job? It's duplicated between
-	// here and the equivalent DOM compiler visitor
-	const contexts = new Map(block.contexts);
-	contexts.set(node.context, node.context);
-
-	if (node.destructuredContexts) {
-		for (let i = 0; i < node.destructuredContexts.length; i += 1) {
-			contexts.set(node.destructuredContexts[i], `${node.context}[${i}]`);
-		}
-	}
-
-	const childBlock = block.child({
-		contexts
-	});
+	const childBlock = block.child({});
 
 	node.children.forEach((child: Node) => {
 		visit(generator, childBlock, child);

@@ -10,14 +10,7 @@ export default function visitAwaitBlock(
 ) {
 	const { snippet } = node.expression;
 
-	// TODO should this be the generator's job? It's duplicated between
-	// here and the equivalent DOM compiler visitor
-	const contexts = new Map(block.contexts);
-	contexts.set(node.value, '__value');
-
-	const childBlock = block.child({
-		contexts
-	});
+	const childBlock = block.child({});
 
 	generator.append('${(function(__value) { if(__isPromise(__value)) return `');
 
