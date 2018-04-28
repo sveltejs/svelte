@@ -39,7 +39,7 @@ export default class EventHandler extends Node {
 				return expression;
 			});
 
-			this.snippet = `[✂${info.expression.start}-${info.expression.end}✂]`;
+			this.snippet = `[✂${info.expression.start}-${info.expression.end}✂];`;
 		} else {
 			this.callee = null;
 			this.insertionPoint = null;
@@ -55,11 +55,11 @@ export default class EventHandler extends Node {
 		this.shouldHoist = !this.isCustomEvent && parent.hasAncestor('EachBlock');
 	}
 
-	render(compiler, block) {
+	render(compiler, block, hoisted) { // TODO hoist more event handlers
 		if (this.insertionPoint === null) return; // TODO handle shorthand events here?
 
 		if (!validCalleeObjects.has(this.callee.name)) {
-			const component = this.shouldHoist ? `component` : block.alias(`component`);
+			const component = hoisted ? `component` : block.alias(`component`);
 
 			// allow event.stopPropagation(), this.select() etc
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)

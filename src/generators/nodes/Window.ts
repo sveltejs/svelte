@@ -71,7 +71,7 @@ export default class Window extends Node {
 
 			let usesState = handler.dependencies.size > 0;
 
-			handler.render(compiler, block);
+			handler.render(compiler, block, false); // TODO hoist?
 
 			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
 			const handlerBody = deindent`

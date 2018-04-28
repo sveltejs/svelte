@@ -338,7 +338,7 @@ export default class Component extends Node {
 
 		this.handlers.forEach(handler => {
 			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
-			handler.render(compiler, block);
+			handler.render(compiler, block, false); // TODO hoist when possible
 			if (handler.usesContext) block.maintainContext = true; // TODO is there a better place to put this?
 		});
 

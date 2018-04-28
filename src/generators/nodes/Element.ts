@@ -577,19 +577,16 @@ export default class Element extends Node {
 
 		this.handlers.forEach(handler => {
 			const isCustomEvent = compiler.events.has(handler.name);
-			const shouldHoist = !isCustomEvent && this.hasAncestor('EachBlock');
-
-			const context = shouldHoist ? null : this.var;
 
 			if (handler.callee) {
-				handler.render(this.compiler, block);
+				handler.render(this.compiler, block, handler.shouldHoist);
 			}
 
-			const target = context || 'this';
+			const target = handler.shouldHoist ? 'this' : this.var;
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
-			const handlerName = (shouldHoist ? compiler : block).getUniqueName(
+			const handlerName = (handler.shouldHoist ? compiler : block).getUniqueName(
 				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
@@ -627,7 +624,7 @@ export default class Element extends Node {
 					}
 				`;
 
-				if (shouldHoist) {
+				if (handler.shouldHoist) {
 					compiler.blocks.push(handlerFunction);
 				} else {
 					block.builders.init.addBlock(handlerFunction);
