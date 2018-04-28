@@ -25,11 +25,11 @@ export default function visitAwaitBlock(
 		visit(generator, childBlock, child);
 	});
 
-	generator.append('`; return `');
+	generator.append('`; return function(ctx) { return `');
 
 	node.then.children.forEach((child: Node) => {
 		visit(generator, childBlock, child);
 	});
 
-	generator.append(`\`;}(${snippet})) }`);
+	generator.append(`\`;}(Object.assign({}, ctx, { ${node.value}: __value }));}(${snippet})) }`);
 }
