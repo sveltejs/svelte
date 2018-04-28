@@ -17,7 +17,7 @@ import getName from '../utils/getName';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
-import shared from './dom/shared'; // TODO move this file
+import shared from './shared';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -193,6 +193,8 @@ export default class Generator {
 		this.fragment = new Fragment(this, ast.html);
 		// this.walkTemplate();
 		if (!this.customElement) this.stylesheet.reify();
+
+		stylesheet.warnOnUnusedSelectors(options.onwarn);
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -212,8 +214,28 @@ export default class Generator {
 		return this.aliases.get(name);
 	}
 
-	generate(result: string, options: CompileOptions, { banner = '', helpers, name, format }: GenerateOptions ) {
+	generate(result: string, options: CompileOptions, { banner = '', name, format }: GenerateOptions ) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
+
+		const helpers = new Set();
+
+		// TODO use same regex for both
+		result = result.replace(options.generate === 'ssr' ? /(@+|#+|%+)(\w*(?:-\w*)?)/g : /(%+|@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+			if (sigil === '@') {
+				if (name in shared) {
+					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+					helpers.add(name);
+				}
+
+				return this.alias(name);
+			}
+
+			if (sigil === '%') {
+				return this.templateVars.get(name);
+			}
+
+			return sigil.slice(1) + name;
+		});
 
 		let importedHelpers;
 
@@ -233,8 +255,8 @@ export default class Generator {
 
 			importedHelpers = [];
 
-			helpers.forEach(key => {
-				const str = shared[key];
+			helpers.forEach(name => {
+				const str = shared[name];
 				const code = new MagicString(str);
 				const expression = parseExpressionAt(str, 0);
 
@@ -267,14 +289,14 @@ export default class Generator {
 					},
 				});
 
-				if (key === 'transitionManager') {
+				if (name === 'transitionManager') {
 					// special case
 					const global = `_svelteTransitionManager`;
 
 					inlineHelpers += `\n\nvar ${this.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
-				} else if (key === 'escaped' || key === 'missingComponent') {
+				} else if (name === 'escaped' || name === 'missingComponent') {
 					// vars are an awkward special case... would be nice to avoid this
-					const alias = this.alias(key);
+					const alias = this.alias(name);
 					inlineHelpers += `\n\nconst ${alias} = ${code};`
 				} else {
 					const alias = this.alias(expression.id.name);

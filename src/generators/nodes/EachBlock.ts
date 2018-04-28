@@ -5,7 +5,7 @@ import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
 import mapChildren from './shared/mapChildren';
-import TemplateScope from '../dom/TemplateScope';
+import TemplateScope from './shared/TemplateScope';
 
 export default class EachBlock extends Node {
 	type: 'EachBlock';

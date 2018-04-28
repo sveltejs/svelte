@@ -27,8 +27,6 @@ export class SsrGenerator extends Generator {
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
-
-		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 	}
 
 	append(code: string) {
@@ -157,17 +155,9 @@ export default function ssr(
 		var warned = false;
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
-	`.replace(/(@+|#+|%+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
-		if (sigil === '@') {
-			helpers.add(name);
-			return generator.alias(name);
-		}
+	`;
 
-		if (sigil === '%') return generator.templateVars.get(name);
-		return sigil.slice(1) + name;
-	});
-
-	return generator.generate(result, options, { name, format, helpers });
+	return generator.generate(result, options, { name, format });
 }
 
 function trim(nodes) {
