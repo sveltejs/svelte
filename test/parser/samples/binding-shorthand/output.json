@@ -8,7 +8,7 @@
 			{
 				"start": 0,
 				"end": 18,
-				"type": "Element",
+				"type": "Component",
 				"name": "Widget",
 				"attributes": [
 					{
