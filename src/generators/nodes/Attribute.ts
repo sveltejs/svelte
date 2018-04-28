@@ -160,8 +160,8 @@ export default class Attribute extends Node {
 				hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
 
 				shouldCache = (
-					expression.type !== 'Identifier' ||
-					block.contexts.has(expression.name) ||
+					expression.node.type !== 'Identifier' ||
+					block.contexts.has(expression.node.name) ||
 					hasChangeableIndex
 				);
 			} else {

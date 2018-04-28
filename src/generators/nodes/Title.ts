@@ -43,7 +43,7 @@ export default class Title extends Node {
 					block.contexts.has(expression.name)
 				);
 			} else {
-				// '{{foo}} {{bar}}' — treat as string concatenation
+				// '{foo} {bar}' — treat as string concatenation
 				value =
 					(this.children[0].type === 'Text' ? '' : `"" + `) +
 					this.children
@@ -57,7 +57,7 @@ export default class Title extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.node) <= 13 ? `(${snippet})` : snippet;
+								return getExpressionPrecedence(chunk.expression.node) <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
