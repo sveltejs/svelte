@@ -1,3 +1,4 @@
+import validateComponent from './validateComponent';
 import validateElement from './validateElement';
 import validateWindow from './validateWindow';
 import validateHead from './validateHead';
@@ -35,14 +36,13 @@ export default function validateHtml(validator: Validator, html: Node) {
 		}
 
 		else if (node.type === 'Component' || node.name === 'svelte:self' || node.name === 'svelte:component') {
-			validateElement(
+			validateComponent(
 				validator,
 				node,
 				refs,
 				refCallees,
 				stack,
-				elementStack,
-				true
+				elementStack
 			);
 		}
 
@@ -53,8 +53,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 				refs,
 				refCallees,
 				stack,
-				elementStack,
-				false
+				elementStack
 			);
 
 			a11y(validator, node, elementStack);
