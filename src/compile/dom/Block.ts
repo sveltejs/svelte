@@ -1,12 +1,12 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
-import { DomGenerator } from './index';
+import Compiler from '../Compiler';
 import { Node } from '../../interfaces';
 
 export interface BlockOptions {
 	name: string;
-	generator?: DomGenerator;
+	compiler?: Compiler;
 	comment?: string;
 	key?: string;
 	indexNames?: Map<string, string>;
@@ -15,7 +15,7 @@ export interface BlockOptions {
 }
 
 export default class Block {
-	generator: DomGenerator;
+	compiler: Compiler;
 	name: string;
 	comment?: string;
 
@@ -52,7 +52,7 @@ export default class Block {
 	autofocus: string;
 
 	constructor(options: BlockOptions) {
-		this.generator = options.generator;
+		this.compiler = options.compiler;
 		this.name = options.name;
 		this.comment = options.comment;
 
@@ -83,7 +83,7 @@ export default class Block {
 		this.hasOutroMethod = false;
 		this.outros = 0;
 
-		this.getUniqueName = this.generator.getUniqueNameMaker();
+		this.getUniqueName = this.compiler.getUniqueNameMaker();
 		this.variables = new Map();
 
 		this.aliases = new Map()
@@ -187,7 +187,7 @@ export default class Block {
 			`);
 		}
 
-		if (this.generator.options.hydratable) {
+		if (this.compiler.options.hydratable) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
 				properties.addBlock(`l: @noop,`);
 			} else {

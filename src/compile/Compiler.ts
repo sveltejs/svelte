@@ -78,7 +78,7 @@ function removeIndentation(
 childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 
-export default class Generator {
+export default class Compiler {
 	stats: Stats;
 
 	ast: Ast;
