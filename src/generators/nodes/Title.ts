@@ -1,5 +1,4 @@
 import { stringify } from '../../utils/stringify';
-import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import mapChildren from './shared/mapChildren';
@@ -57,7 +56,7 @@ export default class Title extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.expression.node) <= 13 ? `(${snippet})` : snippet;
+								return chunk.expression.getPrecedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
