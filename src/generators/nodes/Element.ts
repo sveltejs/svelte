@@ -150,7 +150,7 @@ export default class Element extends Node {
 
 					if (select && select.selectBindingDependencies) {
 						select.selectBindingDependencies.forEach(prop => {
-							dependencies.forEach((dependency: string) => {
+							attr.dependencies.forEach((dependency: string) => {
 								this.compiler.indirectDependencies.get(prop).add(dependency);
 							});
 						});
@@ -198,10 +198,10 @@ export default class Element extends Node {
 		// so that if `foo.qux` changes, we know that we need to
 		// mark `bar` and `baz` as dirty too
 		if (this.name === 'select') {
-			const binding = this.attributes.find(node => node.type === 'Binding' && node.name === 'value');
+			const binding = this.bindings.find(node => node.name === 'value');
 			if (binding) {
 				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = binding.expression.dependencies;
+				const dependencies = binding.value.dependencies;
 				this.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
 					this.compiler.indirectDependencies.set(prop, new Set());
