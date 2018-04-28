@@ -71,10 +71,7 @@ export default class EachBlock extends Node {
 		this.block = block.child({
 			comment: createDebuggingComment(this, this.compiler),
 			name: this.compiler.getUniqueName('create_each_block'),
-			context: this.context,
 			key: this.key,
-
-			contexts: new Map(block.contexts),
 
 			indexNames: new Map(block.indexNames),
 			listNames: new Map(block.listNames)
@@ -88,16 +85,6 @@ export default class EachBlock extends Node {
 
 		if (this.index) {
 			this.block.getUniqueName(this.index); // this prevents name collisions (#1254)
-		}
-
-		const context = this.block.getUniqueName(this.context);
-		this.block.contexts.set(this.context, context); // TODO this is now redundant?
-
-		if (this.destructuredContexts) {
-			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				const context = this.block.getUniqueName(this.destructuredContexts[i]);
-				this.block.contexts.set(this.destructuredContexts[i], context);
-			}
 		}
 
 		this.contextProps = [

@@ -24,8 +24,6 @@ export default class Fragment extends Node {
 			name: '@create_main_fragment',
 			key: null,
 
-			contexts: new Map(),
-
 			indexNames: new Map(),
 			listNames: new Map(),
 

@@ -233,7 +233,7 @@ export default class Component extends Node {
 
 				let setFromChild;
 
-				if (block.contexts.has(key)) { // TODO remove block.contexts
+				if (binding.isContextual) {
 					const computed = isComputed(binding.value.node);
 					const tail = binding.value.node.type === 'MemberExpression' ? getTailSnippet(binding.value.node) : '';
 

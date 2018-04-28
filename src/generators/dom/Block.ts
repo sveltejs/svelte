@@ -10,7 +10,6 @@ export interface BlockOptions {
 	generator?: DomGenerator;
 	comment?: string;
 	key?: string;
-	contexts?: Map<string, string>;
 	indexNames?: Map<string, string>;
 	listNames?: Map<string, string>;
 	dependencies?: Set<string>;
@@ -24,7 +23,6 @@ export default class Block {
 	key: string;
 	first: string;
 
-	contexts: Map<string, string>;
 	dependencies: Set<string>;
 	indexNames: Map<string, string>;
 	listNames: Map<string, string>;
@@ -63,7 +61,6 @@ export default class Block {
 		this.key = options.key;
 		this.first = null;
 
-		this.contexts = options.contexts;
 		this.dependencies = new Set();
 
 		this.indexNames = options.indexNames;

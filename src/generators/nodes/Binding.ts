@@ -17,6 +17,7 @@ const readOnlyMediaAttributes = new Set([
 export default class Binding extends Node {
 	name: string;
 	value: Expression;
+	isContextual: boolean;
 	usesContext: boolean;
 	obj: string;
 	prop: string;
@@ -30,6 +31,9 @@ export default class Binding extends Node {
 		let obj;
 		let prop;
 
+		const { name } = getObject(this.value.node);
+		this.isContextual = scope.names.has(name);
+
 		if (this.value.node.type === 'MemberExpression') {
 			prop = `[✂${this.value.node.property.start}-${this.value.node.property.end}✂]`;
 			if (!this.value.node.computed) prop = `'${prop}'`;
@@ -37,7 +41,6 @@ export default class Binding extends Node {
 
 			this.usesContext = true;
 		} else {
-			const { name } = getObject(this.value.node);
 			obj = 'ctx';
 			prop = `'${name}'`;
 
@@ -182,11 +185,12 @@ function getEventHandler(
 	snippet: string,
 	dependencies: string[],
 	value: string,
+	isContextual: boolean
 ) {
 	const storeDependencies = [...dependencies].filter(prop => prop[0] === '$').map(prop => prop.slice(1));
 	dependencies = [...dependencies].filter(prop => prop[0] !== '$');
 
-	if (block.contexts.has(name)) {
+	if (binding.isContextual) {
 		const tail = binding.value.node.type === 'MemberExpression'
 			? getTailSnippet(binding.value.node)
 			: '';

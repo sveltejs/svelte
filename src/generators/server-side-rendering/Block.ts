@@ -12,8 +12,6 @@ export default class Block {
 	generator: SsrGenerator;
 	conditions: string[];
 
-	contexts: Map<string, string>;
-
 	constructor(options: BlockOptions) {
 		Object.assign(this, options);
 	}
