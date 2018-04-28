@@ -178,7 +178,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 		}
 
 		else if (selector.type === 'RefSelector') {
-			if (node.attributes.some((attr: Node) => attr.type === 'Ref' && attr.name === selector.name)) {
+			if (node.ref === selector.name) {
 				node._cssRefAttribute = selector.name;
 				toEncapsulate.push({ node, block });
 				return true;
