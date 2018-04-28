@@ -11,20 +11,8 @@ export default function validateElement(
 	refs: Map<string, Node[]>,
 	refCallees: Node[],
 	stack: Node[],
-	elementStack: Node[],
-	isComponent: Boolean
+	elementStack: Node[]
 ) {
-	if (isComponent) {
-		validator.used.components.add(node.name);
-	}
-
-	if (!isComponent && /^[A-Z]/.test(node.name[0])) {
-		validator.error(node, {
-			code: `missing-component`,
-			message: `${node.name} component is not defined`
-		});
-	}
-
 	if (elementStack.length === 0 && validator.namespace !== namespaces.svg && svg.test(node.name)) {
 		validator.warn(node, {
 			code: `missing-namespace`,
@@ -95,7 +83,7 @@ export default function validateElement(
 			refs.get(attribute.name).push(node);
 		}
 
-		if (!isComponent && attribute.type === 'Binding') {
+		if (attribute.type === 'Binding') {
 			const { name } = attribute;
 
 			if (name === 'value') {
@@ -179,13 +167,6 @@ export default function validateElement(
 			validator.used.events.add(attribute.name);
 			validateEventHandler(validator, attribute, refCallees);
 		} else if (attribute.type === 'Transition') {
-			if (isComponent) {
-				validator.error(attribute, {
-					code: `invalid-transition`,
-					message: `Transitions can only be applied to DOM elements, not components`
-				});
-			}
-
 			validator.used.transitions.add(attribute.name);
 
 			const bidi = attribute.intro && attribute.outro;
@@ -238,17 +219,10 @@ export default function validateElement(
 				}
 			}
 
-			if (attribute.name === 'slot' && !isComponent) {
+			if (attribute.name === 'slot') {
 				checkSlotAttribute(validator, node, attribute, stack);
 			}
 		} else if (attribute.type === 'Action') {
-			if (isComponent) {
-				validator.error(attribute, {
-					code: `invalid-action`,
-					message: `Actions can only be applied to DOM elements, not components`
-				});
-			}
-
 			validator.used.actions.add(attribute.name);
 
 			if (!validator.actions.has(attribute.name)) {
