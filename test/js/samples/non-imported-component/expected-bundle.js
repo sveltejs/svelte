@@ -139,7 +139,7 @@ var proto = {
 
 
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 	var text;
 
 	var imported = new Imported({

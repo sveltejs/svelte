@@ -48,6 +48,7 @@ const precedence: Record<string, (expression?: Node) => number> = {
 	SequenceExpression: () => 0
 };
 
+// TODO make this a method of Expression
 export default function getExpressionPrecedence(expression: Node) {
 	return expression.type in precedence ? precedence[expression.type](expression) : 0;
 }

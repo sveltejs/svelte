@@ -146,7 +146,7 @@ function add_css() {
 	appendNode(style, document.head);
 }
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 	var div;
 
 	return {
