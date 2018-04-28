@@ -140,28 +140,20 @@ export default class Attribute extends Node {
 		if (this.isDynamic) {
 			let value;
 
-			const allDependencies = new Set();
 			let shouldCache;
-			let hasChangeableIndex;
 
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.chunks.length === 1) {
 				// single {tag} — may be a non-string
 				const expression = this.chunks[0];
-				const { dependencies, snippet, indexes } = expression;
+				const { snippet, indexes } = expression;
 
 				value = snippet;
-				dependencies.forEach(d => {
-					allDependencies.add(d);
-				});
-
-				hasChangeableIndex = Array.from(indexes).some(index => block.changeableIndexes.get(index));
 
 				shouldCache = (
 					expression.node.type !== 'Identifier' ||
-					block.contexts.has(expression.node.name) ||
-					hasChangeableIndex
+					block.contexts.has(expression.node.name)
 				);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
@@ -173,14 +165,6 @@ export default class Attribute extends Node {
 								return stringify(chunk.data);
 							} else {
 								const { dependencies, snippet, indexes } = chunk;
-
-								if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
-									hasChangeableIndex = true;
-								}
-
-								dependencies.forEach(d => {
-									allDependencies.add(d);
-								});
 
 								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
 							}
@@ -253,8 +237,8 @@ export default class Attribute extends Node {
 				updater = `${method}(${node.var}, "${name}", ${shouldCache ? last : value});`;
 			}
 
-			if (allDependencies.size || hasChangeableIndex || isSelectValueAttribute) {
-				const dependencies = Array.from(allDependencies);
+			if (this.dependencies.size || isSelectValueAttribute) {
+				const dependencies = Array.from(this.dependencies);
 				const changedCheck = (
 					( block.hasOutroMethod ? `#outroing || ` : '' ) +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
@@ -310,9 +294,8 @@ export default class Attribute extends Node {
 			let value;
 
 			if (isDynamic(prop.value)) {
-				const allDependencies = new Set();
+				const propDependencies = new Set();
 				let shouldCache;
-				let hasChangeableIndex;
 
 				value =
 					((prop.value.length === 1 || prop.value[0].type === 'Text') ? '' : `"" + `) +
@@ -321,14 +304,10 @@ export default class Attribute extends Node {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { dependencies, snippet, indexes } = chunk;
-
-								if (Array.from(indexes).some(index => block.changeableIndexes.get(index))) {
-									hasChangeableIndex = true;
-								}
+								const { dependencies, snippet } = chunk;
 
 								dependencies.forEach(d => {
-									allDependencies.add(d);
+									propDependencies.add(d);
 								});
 
 								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
@@ -336,8 +315,8 @@ export default class Attribute extends Node {
 						})
 						.join(' + ');
 
-				if (allDependencies.size || hasChangeableIndex) {
-					const dependencies = Array.from(allDependencies);
+				if (propDependencies.size) {
+					const dependencies = Array.from(propDependencies);
 					const condition = (
 						(block.hasOutroMethod ? `#outroing || ` : '') +
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
