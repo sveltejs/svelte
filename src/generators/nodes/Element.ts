@@ -320,16 +320,15 @@ export default class Element extends Node {
 			//(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
 			this.handlers.some(handler => handler.shouldHoist)
 		);
-		let eventHandlerOrBindingUsesComponent;
-		let eventHandlerOrBindingUsesContext;
+		const eventHandlerOrBindingUsesComponent = (
+			this.bindings.length > 0 ||
+			this.handlers.some(handler => handler.usesComponent)
+		);
 
-		if (this.bindings.length > 0) {
-			eventHandlerOrBindingUsesComponent = true;
-			eventHandlerOrBindingUsesContext = true;
-		} else {
-			eventHandlerOrBindingUsesComponent = this.handlers.some(handler => handler.usesComponent);
-			eventHandlerOrBindingUsesContext = this.handlers.some(handler => handler.usesContext);
-		}
+		const eventHandlerOrBindingUsesContext = (
+			this.bindings.some(binding => binding.usesContext) ||
+			this.handlers.some(handler => handler.usesContext)
+		);
 
 		if (hasHoistedEventHandlerOrBinding) {
 			const initialProps: string[] = [];

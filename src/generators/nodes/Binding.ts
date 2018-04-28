@@ -17,6 +17,7 @@ const readOnlyMediaAttributes = new Set([
 export default class Binding extends Node {
 	name: string;
 	value: Expression;
+	usesContext: boolean;
 	obj: string;
 	prop: string;
 
@@ -33,10 +34,14 @@ export default class Binding extends Node {
 			prop = `[✂${this.value.node.property.start}-${this.value.node.property.end}✂]`;
 			if (!this.value.node.computed) prop = `'${prop}'`;
 			obj = `[✂${this.value.node.object.start}-${this.value.node.object.end}✂]`;
+
+			this.usesContext = true;
 		} else {
 			const { name } = getObject(this.value.node);
 			obj = 'ctx';
 			prop = `'${name}'`;
+
+			this.usesContext = scope.names.has(name);
 		}
 
 		this.obj = obj;

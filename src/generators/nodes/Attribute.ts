@@ -89,7 +89,7 @@ export default class Attribute extends Node {
 					if (chunk.type === 'Text') {
 						return stringify(chunk.data);
 					} else {
-						return getExpressionPrecedence(chunk.node) <= 13 ? `(${chunk.snippet})` : snippet;
+						return getExpressionPrecedence(chunk.node) <= 13 ? `(${chunk.snippet})` : chunk.snippet;
 					}
 				})
 				.join(' + ');
@@ -194,11 +194,13 @@ export default class Attribute extends Node {
 			const isSelectValueAttribute =
 				name === 'value' && node.name === 'select';
 
-			const last = (shouldCache || isSelectValueAttribute) && block.getUniqueName(
+			if (isSelectValueAttribute) shouldCache = true;
+
+			const last = shouldCache && block.getUniqueName(
 				`${node.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
 			);
 
-			if (shouldCache || isSelectValueAttribute) block.addVariable(last);
+			if (shouldCache) block.addVariable(last);
 
 			let updater;
 			const init = shouldCache ? `${last} = ${value}` : value;
