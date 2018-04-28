@@ -57,7 +57,6 @@ export default class AwaitBlock extends Node {
 			});
 
 			if (arg) {
-				child.block.context = arg;
 				child.block.contexts.set(arg, arg); // TODO should be using getUniqueName
 			}
 

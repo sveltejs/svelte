@@ -8,9 +8,6 @@ import shared from './shared';
 export interface BlockOptions {
 	name: string;
 	generator?: DomGenerator;
-	expression?: Node;
-	context?: string;
-	destructuredContexts?: string[];
 	comment?: string;
 	key?: string;
 	contexts?: Map<string, string>;
@@ -24,9 +21,6 @@ export interface BlockOptions {
 export default class Block {
 	generator: DomGenerator;
 	name: string;
-	expression: Node;
-	context: string;
-	destructuredContexts?: string[];
 	comment?: string;
 
 	key: string;
@@ -67,9 +61,6 @@ export default class Block {
 	constructor(options: BlockOptions) {
 		this.generator = options.generator;
 		this.name = options.name;
-		this.expression = options.expression;
-		this.context = options.context;
-		this.destructuredContexts = options.destructuredContexts;
 		this.comment = options.comment;
 
 		// for keyed each blocks
