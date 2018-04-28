@@ -1,7 +1,6 @@
 import deindent from '../../utils/deindent';
 import { stringify } from '../../utils/stringify';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
-import getExpressionPrecedence from '../../utils/getExpressionPrecedence';
 import addToSet from '../../utils/addToSet';
 import { DomGenerator } from '../dom/index';
 import Node from './shared/Node';
@@ -85,11 +84,11 @@ export default class Attribute extends Node {
 
 		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +
 			this.chunks
-				.map((chunk: Node) => {
+				.map(chunk => {
 					if (chunk.type === 'Text') {
 						return stringify(chunk.data);
 					} else {
-						return getExpressionPrecedence(chunk.node) <= 13 ? `(${chunk.snippet})` : chunk.snippet;
+						return chunk.getPrecedence() <= 13 ? `(${chunk.snippet})` : chunk.snippet;
 					}
 				})
 				.join(' + ');
@@ -183,7 +182,7 @@ export default class Attribute extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.node) <= 13 ? `(${snippet})` : snippet;
+								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
@@ -332,7 +331,7 @@ export default class Attribute extends Node {
 									allDependencies.add(d);
 								});
 
-								return getExpressionPrecedence(chunk.node) <= 13 ? `(${snippet})` : snippet;
+								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
 							}
 						})
 						.join(' + ');
