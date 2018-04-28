@@ -11,7 +11,7 @@ export default function validateComponent(
 	stack: Node[],
 	elementStack: Node[]
 ) {
-	if (!validator.components.has(node.name)) {
+	if (node.name !== 'svelte:self' && node.name !== 'svelte:component' && !validator.components.has(node.name)) {
 		validator.error(node, {
 			code: `missing-component`,
 			message: `${node.name} component is not defined`
