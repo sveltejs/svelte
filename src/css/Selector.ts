@@ -246,7 +246,7 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 	if (value.type === 'Text') return pattern.test(value.data);
 
 	const possibleValues = new Set();
-	gatherPossibleValues(value.expression, possibleValues);
+	gatherPossibleValues(value.node, possibleValues);
 	if (possibleValues.has(UNKNOWN)) return true;
 
 	for (const x of Array.from(possibleValues)) { // TypeScript for-of is slightly unlike JS
