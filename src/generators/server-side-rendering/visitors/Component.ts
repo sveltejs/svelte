@@ -22,15 +22,12 @@ export default function visitComponent(
 	}
 
 	const bindingProps = node.bindings.map(binding => {
-		const { name } = getObject(binding.value);
-		const tail = binding.value.type === 'MemberExpression'
-			? getTailSnippet(binding.value)
+		const { name } = getObject(binding.value.node);
+		const tail = binding.value.node.type === 'MemberExpression'
+			? getTailSnippet(binding.value.node)
 			: '';
 
-		const keypath = block.contexts.has(name)
-			? `${name}${tail}`
-			: `ctx.${name}${tail}`;
-		return `${binding.name}: ${keypath}`;
+		return `${binding.name}: ctx.${name}${tail}`;
 	});
 
 	function getAttributeValue(attribute) {
