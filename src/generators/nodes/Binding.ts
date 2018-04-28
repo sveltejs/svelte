@@ -214,7 +214,7 @@ function getEventHandler(
 		// Svelte tries to `set()` a computed property, which throws an
 		// error in dev mode. a) it's possible that we should be
 		// replacing computations with *their* dependencies, and b)
-		// we should probably populate `compiler.readonly` sooner so
+		// we should probably populate `compiler.target.readonly` sooner so
 		// that we don't have to do the `.some()` here
 		dependencies = dependencies.filter(prop => !compiler.computations.some(computation => computation.key === prop));
 

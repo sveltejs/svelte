@@ -180,12 +180,12 @@ export default class Element extends Node {
 
 		if (this.intro) {
 			this.parent.cannotUseInnerHTML();
-			this.compiler.hasIntroTransitions = block.hasIntroMethod = true;
+			this.compiler.target.hasIntroTransitions = block.hasIntroMethod = true;
 		}
 
 		if (this.outro) {
 			this.parent.cannotUseInnerHTML();
-			this.compiler.hasOutroTransitions = block.hasOutroMethod = true;
+			this.compiler.target.hasOutroTransitions = block.hasOutroMethod = true;
 			block.outros += 1;
 		}
 
@@ -266,7 +266,7 @@ export default class Element extends Node {
 			`${name} = ${renderStatement};`
 		);
 
-		if (this.compiler.hydratable) {
+		if (this.compiler.options.hydratable) {
 			if (parentNodes) {
 				block.builders.claim.addBlock(deindent`
 					${name} = ${getClaimStatement(compiler, this.namespace, parentNodes, this)};
@@ -407,7 +407,7 @@ export default class Element extends Node {
 	) {
 		if (this.bindings.length === 0) return;
 
-		if (this.name === 'select' || this.isMediaNode()) this.compiler.hasComplexBindings = true;
+		if (this.name === 'select' || this.isMediaNode()) this.compiler.target.hasComplexBindings = true;
 
 		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
@@ -502,7 +502,7 @@ export default class Element extends Node {
 				.join(' && ');
 
 			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				this.compiler.hasComplexBindings = true;
+				this.compiler.target.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
 					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
@@ -627,7 +627,7 @@ export default class Element extends Node {
 				`;
 
 				if (handler.shouldHoist) {
-					compiler.blocks.push(handlerFunction);
+					compiler.target.blocks.push(handlerFunction);
 				} else {
 					block.builders.init.addBlock(handlerFunction);
 				}
@@ -841,7 +841,7 @@ export default class Element extends Node {
 		if (slot && this.hasAncestor('Component')) {
 			const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 			const slotName = slot.chunks[0].data;
-			const appendTarget = compiler.appendTargets[compiler.appendTargets.length - 1];
+			const appendTarget = compiler.target.appendTargets[compiler.target.appendTargets.length - 1];
 			appendTarget.slotStack.push(slotName);
 			appendTarget.slots[slotName] = '';
 		}
@@ -898,10 +898,10 @@ export default class Element extends Node {
 
 		openingTag += '>';
 
-		compiler.append(openingTag);
+		compiler.target.append(openingTag);
 
 		if (this.name === 'textarea' && textareaContents !== undefined) {
-			compiler.append(textareaContents);
+			compiler.target.append(textareaContents);
 		} else {
 			this.children.forEach((child: Node) => {
 				child.ssr();
@@ -909,7 +909,7 @@ export default class Element extends Node {
 		}
 
 		if (!isVoidElementName(this.name)) {
-			compiler.append(`</${this.name}>`);
+			compiler.target.append(`</${this.name}>`);
 		}
 	}
 }

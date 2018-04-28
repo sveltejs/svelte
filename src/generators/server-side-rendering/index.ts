@@ -2,7 +2,6 @@ import deindent from '../../utils/deindent';
 import Generator from '../Generator';
 import Stats from '../../Stats';
 import Stylesheet from '../../css/Stylesheet';
-import visit from './visit';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
 import getName from '../../utils/getName';
 import globalWhitelist from '../../utils/globalWhitelist';
@@ -10,20 +9,12 @@ import { Ast, Node, CompileOptions } from '../../interfaces';
 import { AppendTarget } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
 
-export class SsrGenerator extends Generator {
+export class SsrTarget {
 	bindings: string[];
 	renderCode: string;
 	appendTargets: AppendTarget[];
 
-	constructor(
-		ast: Ast,
-		source: string,
-		name: string,
-		stylesheet: Stylesheet,
-		options: CompileOptions,
-		stats: Stats
-	) {
-		super(ast, source, name, stylesheet, options, stats, false);
+	constructor() {
 		this.bindings = [];
 		this.renderCode = '';
 		this.appendTargets = [];
@@ -49,7 +40,8 @@ export default function ssr(
 ) {
 	const format = options.format || 'cjs';
 
-	const generator = new SsrGenerator(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats);
+	const target = new SsrTarget();
+	const generator = new Generator(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, false, target);
 
 	const { computations, name, templateProperties } = generator;
 
@@ -132,7 +124,7 @@ export default function ssr(
 					`ctx.${key} = %computed-${key}(ctx);`
 			)}
 
-			${generator.bindings.length &&
+			${target.bindings.length &&
 				deindent`
 				var settled = false;
 				var tmp;
@@ -140,11 +132,11 @@ export default function ssr(
 				while (!settled) {
 					settled = true;
 
-					${generator.bindings.join('\n\n')}
+					${target.bindings.join('\n\n')}
 				}
 			`}
 
-			return \`${generator.renderCode}\`;
+			return \`${target.renderCode}\`;
 		};
 
 		${name}.css = {

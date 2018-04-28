@@ -16,36 +16,18 @@ import Block from './Block';
 import { test } from '../../config';
 import { Ast, CompileOptions, Node } from '../../interfaces';
 
-export class DomGenerator extends Generator {
+export class DomTarget {
 	blocks: (Block|string)[];
 	readonly: Set<string>;
 	metaBindings: string[];
-
-	hydratable: boolean;
-	legacy: boolean;
 
 	hasIntroTransitions: boolean;
 	hasOutroTransitions: boolean;
 	hasComplexBindings: boolean;
 
-	needsEncapsulateHelper: boolean;
-
-	constructor(
-		ast: Ast,
-		source: string,
-		name: string,
-		stylesheet: Stylesheet,
-		options: CompileOptions,
-		stats: Stats
-	) {
-		super(ast, source, name, stylesheet, options, stats, true);
+	constructor() {
 		this.blocks = [];
-
 		this.readonly = new Set();
-
-		this.hydratable = options.hydratable;
-		this.legacy = options.legacy;
-		this.needsEncapsulateHelper = false;
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 		this.metaBindings = [];
@@ -61,7 +43,8 @@ export default function dom(
 ) {
 	const format = options.format || 'es';
 
-	const generator = new DomGenerator(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats);
+	const target = new DomTarget();
+	const generator = new Generator(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, true, target);
 
 	const {
 		computations,
@@ -86,14 +69,14 @@ export default function dom(
 				computationDeps.add(dep);
 			});
 
-			if (generator.readonly.has(key)) {
+			if (target.readonly.has(key)) {
 				// <svelte:window> bindings
 				throw new Error(
 					`Cannot have a computed value '${key}' that clashes with a read-only property`
 				);
 			}
 
-			generator.readonly.add(key);
+			target.readonly.add(key);
 
 			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
 
@@ -123,7 +106,7 @@ export default function dom(
 		`);
 	}
 
-	generator.blocks.forEach(block => {
+	target.blocks.forEach(block => {
 		builder.addBlock(block.toString());
 	});
 
@@ -177,7 +160,7 @@ export default function dom(
 		${generator.usesRefs && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
-		${generator.metaBindings}
+		${target.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
 			Array.from(generator.expectedProperties).map(prop => {
@@ -216,11 +199,11 @@ export default function dom(
 			`if (!document.getElementById("${generator.stylesheet.id}-style")) @add_css();`)
 		}
 
-		${(hasInitHooks || generator.hasComponents || generator.hasComplexBindings || generator.hasIntroTransitions) && deindent`
+		${(hasInitHooks || generator.hasComponents || target.hasComplexBindings || target.hasIntroTransitions) && deindent`
 			if (!options.root) {
 				this._oncreate = [];
-				${(generator.hasComponents || generator.hasComplexBindings) && `this._beforecreate = [];`}
-				${(generator.hasComponents || generator.hasIntroTransitions) && `this._aftercreate = [];`}
+				${(generator.hasComponents || target.hasComplexBindings) && `this._beforecreate = [];`}
+				${(generator.hasComponents || target.hasIntroTransitions) && `this._aftercreate = [];`}
 			}
 		`}
 
@@ -243,7 +226,7 @@ export default function dom(
 			if (options.target) this._mount(options.target, options.anchor);
 		` : deindent`
 			if (options.target) {
-				${generator.hydratable
+				${generator.options.hydratable
 					? deindent`
 						var nodes = @children(options.target);
 						options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
@@ -255,11 +238,11 @@ export default function dom(
 					`}
 				this._mount(options.target, options.anchor);
 
-				${(generator.hasComponents || generator.hasComplexBindings || hasInitHooks || generator.hasIntroTransitions) && deindent`
+				${(generator.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) && deindent`
 					${generator.hasComponents && `this._lock = true;`}
-					${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+					${(generator.hasComponents || target.hasComplexBindings) && `@callAll(this._beforecreate);`}
 					${(generator.hasComponents || hasInitHooks) && `@callAll(this._oncreate);`}
-					${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+					${(generator.hasComponents || target.hasIntroTransitions) && `@callAll(this._aftercreate);`}
 					${generator.hasComponents && `this._lock = false;`}
 				`}
 			}
@@ -301,12 +284,12 @@ export default function dom(
 					this.set({ [attr]: newValue });
 				}
 
-				${(generator.hasComponents || generator.hasComplexBindings || templateProperties.oncreate || generator.hasIntroTransitions) && deindent`
+				${(generator.hasComponents || target.hasComplexBindings || templateProperties.oncreate || target.hasIntroTransitions) && deindent`
 					connectedCallback() {
 						${generator.hasComponents && `this._lock = true;`}
-						${(generator.hasComponents || generator.hasComplexBindings) && `@callAll(this._beforecreate);`}
+						${(generator.hasComponents || target.hasComplexBindings) && `@callAll(this._beforecreate);`}
 						${(generator.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-						${(generator.hasComponents || generator.hasIntroTransitions) && `@callAll(this._aftercreate);`}
+						${(generator.hasComponents || target.hasIntroTransitions) && `@callAll(this._aftercreate);`}
 						${generator.hasComponents && `this._lock = false;`}
 					}
 				`}
@@ -339,7 +322,7 @@ export default function dom(
 	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
-				${Array.from(generator.readonly).map(
+				${Array.from(generator.target.readonly).map(
 					prop =>
 						`if ('${prop}' in newState && !this._updatingReadonlyProperty) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`
 				)}

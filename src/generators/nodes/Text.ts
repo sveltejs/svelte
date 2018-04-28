@@ -78,6 +78,6 @@ export default class Text extends Node {
 			// unless this Text node is inside a <script> or <style> element, escape &,<,>
 			text = escapeHTML(text);
 		}
-		this.compiler.append(escape(escapeTemplate(text)));
+		this.compiler.target.append(escape(escapeTemplate(text)));
 	}
 }

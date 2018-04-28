@@ -30,7 +30,7 @@ export default class Fragment extends Node {
 			dependencies: new Set(),
 		});
 
-		this.compiler.blocks.push(this.block);
+		this.compiler.target.blocks.push(this.block);
 		this.initChildren(this.block, true, null);
 
 		this.block.hasUpdateMethod = true;

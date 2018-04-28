@@ -87,7 +87,7 @@ export default class Node {
 		lastChild = null;
 
 		cleaned.forEach((child: Node, i: number) => {
-			child.canUseInnerHTML = !this.compiler.hydratable;
+			child.canUseInnerHTML = !this.compiler.options.hydratable;
 
 			child.init(block, stripWhitespace, cleaned[i + 1] || nextSibling);
 

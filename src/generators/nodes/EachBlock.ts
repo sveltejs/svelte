@@ -99,7 +99,7 @@ export default class EachBlock extends Node {
 			}
 		}
 
-		this.compiler.blocks.push(this.block);
+		this.compiler.target.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
 		block.addDependencies(this.block.dependencies);
 		this.block.hasUpdateMethod = this.block.dependencies.size > 0;
@@ -110,7 +110,7 @@ export default class EachBlock extends Node {
 				name: this.compiler.getUniqueName(`${this.block.name}_else`),
 			});
 
-			this.compiler.blocks.push(this.else.block);
+			this.compiler.target.blocks.push(this.else.block);
 			this.else.initChildren(
 				this.else.block,
 				stripWhitespace,
@@ -485,23 +485,23 @@ export default class EachBlock extends Node {
 			: `item => Object.assign({}, ctx, { ${props.join(', ')} })`;
 
 		const open = `\${ ${this.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${getContext}, ctx => \``;
-		compiler.append(open);
+		compiler.target.append(open);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
 		const close = `\`)`;
-		compiler.append(close);
+		compiler.target.append(close);
 
 		if (this.else) {
-			compiler.append(` : \``);
+			compiler.target.append(` : \``);
 			this.else.children.forEach((child: Node) => {
 				child.ssr();
 			});
-			compiler.append(`\``);
+			compiler.target.append(`\``);
 		}
 
-		compiler.append('}');
+		compiler.target.append('}');
 	}
 }
