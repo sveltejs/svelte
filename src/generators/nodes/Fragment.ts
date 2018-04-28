@@ -3,7 +3,7 @@ import { DomGenerator } from '../dom/index';
 import Generator from '../Generator';
 import mapChildren from './shared/mapChildren';
 import Block from '../dom/Block';
-import TemplateScope from '../dom/TemplateScope';
+import TemplateScope from './shared/TemplateScope';
 
 export default class Fragment extends Node {
 	block: Block;

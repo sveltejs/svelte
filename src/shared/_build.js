@@ -32,7 +32,7 @@ fs.readdirSync(__dirname).forEach(file => {
 });
 
 fs.writeFileSync(
-	'src/generators/dom/shared.ts',
+	'src/generators/shared.ts',
 	`// this file is auto-generated, do not edit it
 const shared: Record<string, string> = ${JSON.stringify(declarations, null, '\t')};
 

@@ -3,7 +3,6 @@ import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
 import { DomGenerator } from './index';
 import { Node } from '../../interfaces';
-import shared from './shared';
 
 export interface BlockOptions {
 	name: string;
