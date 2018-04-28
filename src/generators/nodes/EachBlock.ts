@@ -36,6 +36,12 @@ export default class EachBlock extends Node {
 		// TODO handle indexes and destructuring
 		this.scope.add(this.context, this.expression.dependencies);
 
+		if (this.index) {
+			// index can only change if this is a keyed each block
+			const dependencies = this.key ? this.expression.dependencies : [];
+			this.scope.add(this.index, dependencies);
+		}
+
 		// TODO more general approach to destructuring
 		this.destructuredContexts = info.destructuredContexts || [];
 		this.destructuredContexts.forEach(name => {
