@@ -5,7 +5,7 @@ import generateSSR from './generators/server-side-rendering/index';
 import Stats from './Stats';
 import { assign } from './shared/index.js';
 import Stylesheet from './css/Stylesheet';
-import { Parsed, CompileOptions, Warning, PreprocessOptions, Preprocessor } from './interfaces';
+import { Ast, CompileOptions, Warning, PreprocessOptions, Preprocessor } from './interfaces';
 import { SourceMap } from 'magic-string';
 
 const version = '__VERSION__';
@@ -108,7 +108,7 @@ export async function preprocess(source: string, options: PreprocessOptions) {
 
 function compile(source: string, _options: CompileOptions) {
 	const options = normalizeOptions(_options);
-	let parsed: Parsed;
+	let ast: Ast;
 
 	const stats = new Stats({
 		onwarn: options.onwarn
@@ -116,7 +116,7 @@ function compile(source: string, _options: CompileOptions) {
 
 	try {
 		stats.start('parse');
-		parsed = parse(source, options);
+		ast = parse(source, options);
 		stats.stop('parse');
 	} catch (err) {
 		options.onerror(err);
@@ -124,20 +124,20 @@ function compile(source: string, _options: CompileOptions) {
 	}
 
 	stats.start('stylesheet');
-	const stylesheet = new Stylesheet(source, parsed, options.filename, options.dev);
+	const stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 	stats.stop('stylesheet');
 
 	stats.start('validate');
-	validate(parsed, source, stylesheet, stats, options);
+	validate(ast, source, stylesheet, stats, options);
 	stats.stop('validate');
 
 	if (options.generate === false) {
-		return { ast: parsed, stats, js: null, css: null };
+		return { ast: ast, stats, js: null, css: null };
 	}
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
-	return compiler(parsed, source, stylesheet, options, stats);
+	return compiler(ast, source, stylesheet, options, stats);
 };
 
 function create(source: string, _options: CompileOptions = {}) {

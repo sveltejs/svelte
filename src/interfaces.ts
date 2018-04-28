@@ -20,7 +20,7 @@ export interface Parser {
 	metaTags: {};
 }
 
-export interface Parsed {
+export interface Ast {
 	html: Node;
 	css: Node;
 	js: Node;

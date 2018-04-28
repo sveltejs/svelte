@@ -14,7 +14,7 @@ import Stylesheet from '../../css/Stylesheet';
 import Stats from '../../Stats';
 import Block from './Block';
 import { test } from '../../config';
-import { Parsed, CompileOptions, Node } from '../../interfaces';
+import { Ast, CompileOptions, Node } from '../../interfaces';
 
 export class DomGenerator extends Generator {
 	blocks: (Block|string)[];
@@ -31,14 +31,14 @@ export class DomGenerator extends Generator {
 	needsEncapsulateHelper: boolean;
 
 	constructor(
-		parsed: Parsed,
+		ast: Ast,
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
 		options: CompileOptions,
 		stats: Stats
 	) {
-		super(parsed, source, name, stylesheet, options, stats, true);
+		super(ast, source, name, stylesheet, options, stats, true);
 		this.blocks = [];
 
 		this.readonly = new Set();
@@ -53,7 +53,7 @@ export class DomGenerator extends Generator {
 }
 
 export default function dom(
-	parsed: Parsed,
+	ast: Ast,
 	source: string,
 	stylesheet: Stylesheet,
 	options: CompileOptions,
@@ -61,7 +61,7 @@ export default function dom(
 ) {
 	const format = options.format || 'es';
 
-	const generator = new DomGenerator(parsed, source, options.name || 'SvelteComponent', stylesheet, options, stats);
+	const generator = new DomGenerator(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats);
 
 	const {
 		computations,

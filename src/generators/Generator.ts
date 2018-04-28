@@ -13,12 +13,11 @@ import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
 import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
-import clone from '../utils/clone';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import nodes from './nodes/index';
 import Fragment from './nodes/Fragment';
-import { Node, GenerateOptions, ShorthandImport, Parsed, CompileOptions, CustomElementOptions } from '../interfaces';
+import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
 	key: string;
@@ -79,8 +78,7 @@ childKeys.Attribute = ['value'];
 export default class Generator {
 	stats: Stats;
 
-	ast: Parsed;
-	parsed: Parsed;
+	ast: Ast;
 	source: string;
 	name: string;
 	options: CompileOptions;
@@ -124,7 +122,7 @@ export default class Generator {
 	usedNames: Set<string>;
 
 	constructor(
-		parsed: Parsed,
+		ast: Ast,
 		source: string,
 		name: string,
 		stylesheet: Stylesheet,
@@ -135,9 +133,7 @@ export default class Generator {
 		stats.start('compile');
 		this.stats = stats;
 
-		this.ast = clone(parsed);
-
-		this.parsed = parsed;
+		this.ast = ast;
 		this.source = source;
 		this.options = options;
 
@@ -193,7 +189,7 @@ export default class Generator {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
 
-		this.fragment = new Fragment(this, parsed.html);
+		this.fragment = new Fragment(this, ast.html);
 		// this.walkTemplate();
 		if (!this.customElement) this.stylesheet.reify();
 	}
@@ -329,7 +325,7 @@ export default class Generator {
 			imports
 		} = this;
 
-		const { js } = this.parsed;
+		const { js } = this.ast;
 
 		const componentDefinition = new CodeBuilder();
 
