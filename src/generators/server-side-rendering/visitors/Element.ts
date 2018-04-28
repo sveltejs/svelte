@@ -65,7 +65,7 @@ export default function visitElement(
 			if (attribute.type !== 'Attribute') return;
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
-				textareaContents = stringifyAttributeValue(block, attribute.value);
+				textareaContents = stringifyAttributeValue(block, attribute.chunks);
 			} else if (attribute.isTrue) {
 				openingTag += ` ${attribute.name}`;
 			} else if (
