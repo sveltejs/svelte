@@ -361,7 +361,7 @@ export default function dom(
 		${immutable && `${name}.prototype._differs = @_differsImmutable;`}
 	`);
 
-	const usedHelpers = new Set();
+	const helpers = new Set();
 
 	let result = builder
 		.toString()
@@ -369,7 +369,7 @@ export default function dom(
 			if (sigil === '@') {
 				if (name in shared) {
 					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
-					usedHelpers.add(name);
+					helpers.add(name);
 				}
 
 				return generator.alias(name);
@@ -381,70 +381,6 @@ export default function dom(
 
 			return sigil.slice(1) + name;
 		});
-
-	let helpers;
-
-	if (sharedPath) {
-		if (format !== 'es' && format !== 'cjs') {
-			throw new Error(`Components with shared helpers must be compiled with \`format: 'es'\` or \`format: 'cjs'\``);
-		}
-		const used = Array.from(usedHelpers).sort();
-		helpers = used.map(name => {
-			const alias = generator.alias(name);
-			return { name, alias };
-		});
-	} else {
-		let inlineHelpers = '';
-
-		usedHelpers.forEach(key => {
-			const str = shared[key];
-			const code = new MagicString(str);
-			const expression = parseExpressionAt(str, 0);
-
-			let { scope } = annotateWithScopes(expression);
-
-			walk(expression, {
-				enter(node: Node, parent: Node) {
-					if (node._scope) scope = node._scope;
-
-					if (
-						node.type === 'Identifier' &&
-						isReference(node, parent) &&
-						!scope.has(node.name)
-					) {
-						if (node.name in shared) {
-							// this helper function depends on another one
-							const dependency = node.name;
-							usedHelpers.add(dependency);
-
-							const alias = generator.alias(dependency);
-							if (alias !== node.name)
-								code.overwrite(node.start, node.end, alias);
-						}
-					}
-				},
-
-				leave(node: Node) {
-					if (node._scope) scope = scope.parent;
-				},
-			});
-
-			if (key === 'transitionManager') {
-				// special case
-				const global = `_svelteTransitionManager`;
-
-				inlineHelpers += `\n\nvar ${generator.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
-			} else {
-				const alias = generator.alias(expression.id.name);
-				if (alias !== expression.id.name)
-					code.overwrite(expression.id.start, expression.id.end, alias);
-
-				inlineHelpers += `\n\n${code}`;
-			}
-		});
-
-		result += inlineHelpers;
-	}
 
 	const filename = options.filename && (
 		typeof process !== 'undefined' ? options.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : options.filename

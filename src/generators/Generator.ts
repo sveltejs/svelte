@@ -1,3 +1,4 @@
+import { parseExpressionAt } from 'acorn';
 import MagicString, { Bundle } from 'magic-string';
 import isReference from 'is-reference';
 import { walk, childKeys } from 'estree-walker';
@@ -16,6 +17,7 @@ import getName from '../utils/getName';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
+import shared from './dom/shared'; // TODO move this file
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -210,10 +212,84 @@ export default class Generator {
 		return this.aliases.get(name);
 	}
 
-	generate(result: string, options: CompileOptions, { banner = '', sharedPath, helpers, name, format }: GenerateOptions ) {
+	generate(result: string, options: CompileOptions, { banner = '', helpers, name, format }: GenerateOptions ) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
-		const module = wrapModule(result, format, name, options, banner, sharedPath, helpers, this.imports, this.shorthandImports, this.source);
+		let importedHelpers;
+
+		if (options.shared) {
+			if (format !== 'es' && format !== 'cjs') {
+				throw new Error(`Components with shared helpers must be compiled with \`format: 'es'\` or \`format: 'cjs'\``);
+			}
+
+			importedHelpers = Array.from(helpers).sort().map(name => {
+				const alias = this.alias(name);
+				return { name, alias };
+			});
+		} else {
+			let inlineHelpers = '';
+
+			const compiler = this;
+
+			importedHelpers = [];
+
+			helpers.forEach(key => {
+				const str = shared[key];
+				const code = new MagicString(str);
+				const expression = parseExpressionAt(str, 0);
+
+				let { scope } = annotateWithScopes(expression);
+
+				walk(expression, {
+					enter(node: Node, parent: Node) {
+						if (node._scope) scope = node._scope;
+
+						if (
+							node.type === 'Identifier' &&
+							isReference(node, parent) &&
+							!scope.has(node.name)
+						) {
+							if (node.name in shared) {
+								// this helper function depends on another one
+								const dependency = node.name;
+								helpers.add(dependency);
+
+								const alias = compiler.alias(dependency);
+								if (alias !== node.name) {
+									code.overwrite(node.start, node.end, alias);
+								}
+							}
+						}
+					},
+
+					leave(node: Node) {
+						if (node._scope) scope = scope.parent;
+					},
+				});
+
+				if (key === 'transitionManager') {
+					// special case
+					const global = `_svelteTransitionManager`;
+
+					inlineHelpers += `\n\nvar ${this.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
+				} else {
+					const alias = this.alias(expression.id.name);
+					if (alias !== expression.id.name) {
+						code.overwrite(expression.id.start, expression.id.end, alias);
+					}
+
+					inlineHelpers += `\n\n${code}`;
+				}
+			});
+
+			result += inlineHelpers;
+		}
+
+		const sharedPath = options.shared === true
+			? 'svelte/shared.js'
+			: options.shared || '';
+
+		const module = wrapModule(result, format, name, options, banner, sharedPath, importedHelpers, this.imports, this.shorthandImports, this.source);
 
 		const parts = module.split('✂]');
 		const finalChunk = parts.pop();
