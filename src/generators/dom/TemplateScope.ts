@@ -1,12 +1,9 @@
 export default class TemplateScope {
 	names: Set<string>;
-	indexes: Set<string>;
 	dependenciesForName: Map<string, string>;
 
 	constructor(parent?: TemplateScope) {
 		this.names = new Set(parent ? parent.names : []);
-		this.indexes = new Set(parent ? parent.names : []);
-
 		this.dependenciesForName = new Map(parent ? parent.dependenciesForName : []);
 	}
 

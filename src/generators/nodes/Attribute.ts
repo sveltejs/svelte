@@ -147,7 +147,7 @@ export default class Attribute extends Node {
 			if (this.chunks.length === 1) {
 				// single {tag} — may be a non-string
 				const expression = this.chunks[0];
-				const { snippet, indexes } = expression;
+				const { snippet } = expression;
 
 				value = snippet;
 
@@ -164,9 +164,9 @@ export default class Attribute extends Node {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { dependencies, snippet, indexes } = chunk;
-
-								return chunk.getPrecedence() <= 13 ? `(${snippet})` : snippet;
+								return chunk.getPrecedence() <= 13
+									? `(${chunk.snippet})`
+									: chunk.snippet;
 							}
 						})
 						.join(' + ');

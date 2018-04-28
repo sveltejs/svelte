@@ -62,7 +62,6 @@ export default class Expression {
 	references: Set<string>;
 	dependencies: Set<string>;
 	contexts: Set<string>;
-	indexes: Set<string>;
 
 	thisReferences: Array<{ start: number, end: number }>;
 
@@ -80,8 +79,6 @@ export default class Expression {
 		this.snippet = `[✂${info.start}-${info.end}✂]`;
 
 		this.usesContext = false;
-		const contextDependencies = new Map(); // TODO
-		const indexes = new Map();
 
 		const dependencies = new Set();
 
@@ -137,7 +134,7 @@ export default class Expression {
 						scope.dependenciesForName.get(name).forEach(dependency => {
 							dependencies.add(dependency);
 						});
-					} else if (!indexes.has(name)) {
+					} else {
 						dependencies.add(name);
 						compiler.expectedProperties.add(name);
 					}
@@ -163,7 +160,6 @@ export default class Expression {
 		this.dependencies = dependencies;
 
 		this.contexts = new Set(); // TODO...
-		this.indexes = new Set(); // TODO...
 	}
 
 	getPrecedence() {
