@@ -93,6 +93,15 @@ export default class Expression {
 						compiler.expectedProperties.add(name);
 					}
 
+					if (node.type === 'MemberExpression') {
+						walk(node, {
+							enter(node) {
+								code.addSourcemapLocation(node.start);
+								code.addSourcemapLocation(node.end);
+							}
+						});
+					}
+
 					this.skip();
 				}
 			},
