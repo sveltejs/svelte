@@ -15,7 +15,7 @@ import mapChildren from './shared/mapChildren';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
-import { AppendTarget } from '../server-side-rendering/interfaces';
+import { AppendTarget } from '../../interfaces';
 
 export default class Component extends Node {
 	type: 'Component';
@@ -483,7 +483,7 @@ export default class Component extends Node {
 		return `${this.var}._mount(${name}._slotted.default, null);`;
 	}
 
-	ssr(compiler, block) {
+	ssr() {
 		function stringifyAttribute(chunk: Node) {
 			if (chunk.type === 'Text') {
 				return escapeTemplate(escape(chunk.data));
@@ -540,13 +540,35 @@ export default class Component extends Node {
 		const isDynamicComponent = this.name === 'svelte:component';
 
 		const expression = (
-			this.name === 'svelte:self' ? compiler.name :
+			this.name === 'svelte:self' ? this.compiler.name :
 			isDynamicComponent ? `((${this.expression.snippet}) || @missingComponent)` :
 			`%components-${this.name}`
 		);
 
 		this.bindings.forEach(binding => {
-			block.addBinding(binding, expression);
+			const conditions = [];
+
+			let node = this;
+			while (node = node.parent) {
+				if (node.type === 'IfBlock') {
+					// TODO handle contextual bindings...
+					conditions.push(`(${node.expression.snippet})`);
+				}
+			}
+
+			conditions.push(`!('${binding.name}' in ctx)`);
+
+			const { name } = getObject(binding.value.node);
+
+			this.compiler.bindings.push(deindent`
+				if (${conditions.reverse().join('&&')}) {
+					tmp = ${expression}.data();
+					if ('${name}' in tmp) {
+						ctx.${binding.name} = tmp.${name};
+						settled = false;
+					}
+				}
+			`);
 		});
 
 		let open = `\${${expression}._render(__result, ${props}`;
@@ -560,10 +582,10 @@ export default class Component extends Node {
 				slotStack: ['default']
 			};
 
-			compiler.appendTargets.push(appendTarget);
+			this.compiler.appendTargets.push(appendTarget);
 
 			this.children.forEach((child: Node) => {
-				child.ssr(compiler, block);
+				child.ssr();
 			});
 
 			const slotted = Object.keys(appendTarget.slots)
@@ -572,15 +594,15 @@ export default class Component extends Node {
 
 			options.push(`slotted: { ${slotted} }`);
 
-			compiler.appendTargets.pop();
+			this.compiler.appendTargets.pop();
 		}
 
 		if (options.length) {
 			open += `, { ${options.join(', ')} }`;
 		}
 
-		compiler.append(open);
-		compiler.append(')}');
+		this.compiler.append(open);
+		this.compiler.append(')}');
 	}
 }
 

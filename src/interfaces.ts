@@ -97,3 +97,8 @@ export interface PreprocessOptions {
 }
 
 export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
+
+export interface AppendTarget {
+	slots: Record<string, string>;
+	slotStack: string[]
+}

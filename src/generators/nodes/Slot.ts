@@ -151,16 +151,16 @@ export default class Slot extends Element {
 		return null;
 	}
 
-	ssr(compiler, block) {
+	ssr() {
 		const name = this.attributes.find(attribute => attribute.name === 'name');
 		const slotName = name && name.chunks[0].data || 'default';
 
-		compiler.append(`\${options && options.slotted && options.slotted.${slotName} ? options.slotted.${slotName}() : \``);
+		this.compiler.append(`\${options && options.slotted && options.slotted.${slotName} ? options.slotted.${slotName}() : \``);
 
 		this.children.forEach((child: Node) => {
-			child.ssr(compiler, block);
+			child.ssr();
 		});
 
-		compiler.append(`\`}`);
+		this.compiler.append(`\`}`);
 	}
 }

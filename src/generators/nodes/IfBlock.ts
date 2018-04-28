@@ -476,24 +476,21 @@ export default class IfBlock extends Node {
 		return branches;
 	}
 
-	ssr(compiler, block) {
+	ssr() {
+		const { compiler } = this;
 		const { snippet } = this.expression;
 
 		compiler.append('${ ' + snippet + ' ? `');
 
-		const childBlock = block.child({
-			conditions: block.conditions.concat(snippet),
-		});
-
 		this.children.forEach((child: Node) => {
-			child.ssr(compiler, childBlock);
+			child.ssr();
 		});
 
 		compiler.append('` : `');
 
 		if (this.else) {
 			this.else.children.forEach((child: Node) => {
-				child.ssr(compiler, block);
+				child.ssr();
 			});
 		}
 

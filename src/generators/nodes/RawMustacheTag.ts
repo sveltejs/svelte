@@ -88,7 +88,7 @@ export default class RawMustacheTag extends Tag {
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
-	ssr(compiler) {
-		compiler.append('${' + this.expression.snippet + '}');
+	ssr() {
+		this.compiler.append('${' + this.expression.snippet + '}');
 	}
 }

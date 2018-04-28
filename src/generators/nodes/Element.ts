@@ -831,7 +831,9 @@ export default class Element extends Node {
 		}
 	}
 
-	ssr(compiler, block) {
+	ssr() {
+		const { compiler } = this;
+
 		let openingTag = `<${this.name}`;
 		let textareaContents; // awkward special case
 
@@ -902,7 +904,7 @@ export default class Element extends Node {
 			compiler.append(textareaContents);
 		} else {
 			this.children.forEach((child: Node) => {
-				child.ssr(compiler, block);
+				child.ssr();
 			});
 		}
 

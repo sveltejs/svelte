@@ -9,10 +9,10 @@ export default class Comment extends Node {
 		this.data = info.data;
 	}
 
-	ssr(compiler) {
+	ssr() {
 		// Allow option to preserve comments, otherwise ignore
-		if (compiler.options.preserveComments) {
-			compiler.append(`<!--${this.data}-->`);
+		if (this.compiler.options.preserveComments) {
+			this.compiler.append(`<!--${this.data}-->`);
 		}
 	}
 }
