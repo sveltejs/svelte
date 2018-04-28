@@ -41,13 +41,9 @@ export default class AwaitBlock extends Node {
 		this.var = block.getUniqueName('await_block');
 		block.addDependencies(this.expression.dependencies);
 
-		let dynamic = false;
+		let isDynamic = false;
 
-		[
-			['pending', null],
-			['then', this.value],
-			['catch', this.error]
-		].forEach(([status, arg]) => {
+		['pending', 'then', 'catch'].forEach(status => {
 			const child = this[status];
 
 			child.block = block.child({
@@ -59,14 +55,14 @@ export default class AwaitBlock extends Node {
 			this.compiler.blocks.push(child.block);
 
 			if (child.block.dependencies.size > 0) {
-				dynamic = true;
+				isDynamic = true;
 				block.addDependencies(child.block.dependencies);
 			}
 		});
 
-		this.pending.block.hasUpdateMethod = dynamic;
-		this.then.block.hasUpdateMethod = dynamic;
-		this.catch.block.hasUpdateMethod = dynamic;
+		this.pending.block.hasUpdateMethod = isDynamic;
+		this.then.block.hasUpdateMethod = isDynamic;
+		this.catch.block.hasUpdateMethod = isDynamic;
 	}
 
 	build(

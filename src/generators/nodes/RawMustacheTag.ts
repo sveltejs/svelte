@@ -4,12 +4,6 @@ import Tag from './shared/Tag';
 import Block from '../dom/Block';
 
 export default class RawMustacheTag extends Tag {
-	init(block: Block) {
-		this.cannotUseInnerHTML();
-		this.var = block.getUniqueName('raw');
-		block.addDependencies(this.expression.dependencies);
-	}
-
 	build(
 		block: Block,
 		parentNode: string,

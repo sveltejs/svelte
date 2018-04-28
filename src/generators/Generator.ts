@@ -15,7 +15,6 @@ import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
-import nodes from './nodes/index';
 import Fragment from './nodes/Fragment';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 

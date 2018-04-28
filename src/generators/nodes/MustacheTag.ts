@@ -3,12 +3,6 @@ import Tag from './shared/Tag';
 import Block from '../dom/Block';
 
 export default class MustacheTag extends Tag {
-	init(block: Block) {
-		this.cannotUseInnerHTML();
-		this.var = block.getUniqueName('text');
-		block.addDependencies(this.expression.dependencies);
-	}
-
 	build(
 		block: Block,
 		parentNode: string,
