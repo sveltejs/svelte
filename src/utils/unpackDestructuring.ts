@@ -3,6 +3,8 @@ export default function unpackDestructuring(
 	node: Node,
 	tail: string
 ) {
+	if (!node) return;
+
 	if (node.type === 'Identifier') {
 		contexts.push({
 			key: node,
