@@ -9,11 +9,7 @@ function create_main_fragment(component, ctx) {
 	var each_blocks = [];
 
 	for (var i = 0; i < each_value.length; i += 1) {
-		each_blocks[i] = create_each_block(component, assign(assign({}, ctx), {
-			each_value: each_value,
-			comment: each_value[i],
-			i: i
-		}));
+		each_blocks[i] = create_each_block(component, get_each_context(ctx, each_value, i));
 	}
 
 	return {
@@ -42,16 +38,12 @@ function create_main_fragment(component, ctx) {
 				each_value = ctx.comments;
 
 				for (var i = 0; i < each_value.length; i += 1) {
-					var each_context = assign(assign({}, ctx), {
-						each_value: each_value,
-						comment: each_value[i],
-						i: i
-					});
+					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, each_context);
+						each_blocks[i].p(changed, child_ctx);
 					} else {
-						each_blocks[i] = create_each_block(component, each_context);
+						each_blocks[i] = create_each_block(component, child_ctx);
 						each_blocks[i].c();
 						each_blocks[i].m(text.parentNode, text);
 					}
@@ -147,6 +139,14 @@ function create_each_block(component, ctx) {
 
 		d: noop
 	};
+}
+
+function get_each_context(ctx, list, i) {
+	return assign(assign({}, ctx), {
+		each_value: list,
+		comment: list[i],
+		i: i
+	});
 }
 
 function SvelteComponent(options) {
