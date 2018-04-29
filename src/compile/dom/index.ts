@@ -113,8 +113,6 @@ export default function dom(
 		? 'svelte/shared.js'
 		: options.shared || '';
 
-	let prototypeBase = `${name}.prototype`;
-
 	const proto = sharedPath
 		? `@proto`
 		: deindent`
@@ -294,8 +292,9 @@ export default function dom(
 				`}
 			}
 
-			customElements.define("${compiler.tag}", ${name});
-			@assign(@assign(${prototypeBase}, ${proto}), {
+			@assign(${name}.prototype, ${proto});
+			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
+			@assign(${name}.prototype, {
 				_mount(target, anchor) {
 					target.insertBefore(this, anchor);
 				},
@@ -304,6 +303,8 @@ export default function dom(
 					this.parentNode.removeChild(this);
 				}
 			});
+
+			customElements.define("${compiler.tag}", ${name});
 		`);
 	} else {
 		builder.addBlock(deindent`
@@ -311,8 +312,8 @@ export default function dom(
 				${constructorBody}
 			}
 
-			@assign(${prototypeBase}, ${proto});
-			${templateProperties.methods && `@assign(${prototypeBase}, %methods);`}
+			@assign(${name}.prototype, ${proto});
+			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
 		`);
 	}
 

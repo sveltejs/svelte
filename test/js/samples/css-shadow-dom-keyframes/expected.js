@@ -51,8 +51,8 @@ class SvelteComponent extends HTMLElement {
 	}
 }
 
-customElements.define("custom-element", SvelteComponent);
-assign(assign(SvelteComponent.prototype, proto), {
+assign(SvelteComponent.prototype, proto);
+assign(SvelteComponent.prototype, {
 	_mount(target, anchor) {
 		target.insertBefore(this, anchor);
 	},
@@ -61,4 +61,6 @@ assign(assign(SvelteComponent.prototype, proto), {
 		this.parentNode.removeChild(this);
 	}
 });
+
+customElements.define("custom-element", SvelteComponent);
 export default SvelteComponent;
