@@ -20,7 +20,7 @@ export interface Parser {
 	metaTags: {};
 }
 
-export interface Parsed {
+export interface Ast {
 	html: Node;
 	css: Node;
 	js: Node;
@@ -71,7 +71,6 @@ export interface GenerateOptions {
 	format: ModuleFormat;
 	banner?: string;
 	sharedPath?: string;
-	helpers?: { name: string, alias: string }[];
 }
 
 export interface ShorthandImport {
@@ -97,3 +96,8 @@ export interface PreprocessOptions {
 }
 
 export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
+
+export interface AppendTarget {
+	slots: Record<string, string>;
+	slotStack: string[]
+}

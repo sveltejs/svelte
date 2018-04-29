@@ -8,7 +8,7 @@
 			{
 				"start": 0,
 				"end": 62,
-				"type": "Element",
+				"type": "Component",
 				"name": "svelte:component",
 				"attributes": [],
 				"children": [],

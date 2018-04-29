@@ -34,7 +34,7 @@ export default [
 
 	/* ssr/register.js */
 	{
-		input: 'src/server-side-rendering/register.js',
+		input: 'src/ssr/register.js',
 		plugins: [
 			resolve(),
 			commonjs(),

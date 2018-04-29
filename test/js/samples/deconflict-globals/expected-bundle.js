@@ -137,7 +137,7 @@ function data_1() {
 function oncreate() {
 	alert(JSON.stringify(data()));
 }
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 
 	return {
 		c: noop,

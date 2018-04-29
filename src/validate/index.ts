@@ -5,8 +5,7 @@ import getCodeFrame from '../utils/getCodeFrame';
 import Stats from '../Stats';
 import error from '../utils/error';
 import Stylesheet from '../css/Stylesheet';
-import Stats from '../Stats';
-import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
+import { Node, Ast, CompileOptions, Warning } from '../interfaces';
 
 export class Validator {
 	readonly source: string;
@@ -34,7 +33,7 @@ export class Validator {
 		actions: Set<string>;
 	};
 
-	constructor(parsed: Parsed, source: string, stats: Stats, options: CompileOptions) {
+	constructor(ast: Ast, source: string, stats: Stats, options: CompileOptions) {
 		this.source = source;
 		this.stats = stats;
 
@@ -93,7 +92,7 @@ export class Validator {
 }
 
 export default function validate(
-	parsed: Parsed,
+	ast: Ast,
 	source: string,
 	stylesheet: Stylesheet,
 	stats: Stats,
@@ -117,27 +116,27 @@ export default function validate(
 			});
 		}
 
-		const validator = new Validator(parsed, source, stats, {
+		const validator = new Validator(ast, source, stats, {
 			name,
 			filename,
 			dev,
 			parser
 		});
 
-		if (parsed.js) {
-			validateJs(validator, parsed.js);
+		if (ast.js) {
+			validateJs(validator, ast.js);
 		}
 
-		if (parsed.css) {
+		if (ast.css) {
 			stylesheet.validate(validator);
 		}
 
-		if (parsed.html) {
-			validateHtml(validator, parsed.html);
+		if (ast.html) {
+			validateHtml(validator, ast.html);
 		}
 
 		// need to do a second pass of the JS, now that we've analysed the markup
-		if (parsed.js && validator.defaultExport) {
+		if (ast.js && validator.defaultExport) {
 			const categories = {
 				components: 'component',
 				// TODO helpers require a bit more work — need to analyse all expressions

@@ -1,5 +1,5 @@
 import { Node, Warning } from './interfaces';
-import Generator from './generators/Generator';
+import Compiler from './compile/Compiler';
 
 const now = (typeof process !== 'undefined' && process.hrtime)
 	? () => {
@@ -73,12 +73,12 @@ export default class Stats {
 		this.currentChildren = this.currentTiming ? this.currentTiming.children : this.timings;
 	}
 
-	render(generator: Generator) {
+	render(compiler: Compiler) {
 		const timings = Object.assign({
 			total: now() - this.startTime
 		}, collapseTimings(this.timings));
 
-		const imports = generator.imports.map(node => {
+		const imports = compiler.imports.map(node => {
 			return {
 				source: node.source.value,
 				specifiers: node.specifiers.map(specifier => {
@@ -95,8 +95,8 @@ export default class Stats {
 		});
 
 		const hooks: Record<string, boolean> = {};
-		if (generator.templateProperties.oncreate) hooks.oncreate = true;
-		if (generator.templateProperties.ondestroy) hooks.ondestroy = true;
+		if (compiler.templateProperties.oncreate) hooks.oncreate = true;
+		if (compiler.templateProperties.ondestroy) hooks.ondestroy = true;
 
 		return {
 			timings,

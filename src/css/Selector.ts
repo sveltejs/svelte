@@ -178,7 +178,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 		}
 
 		else if (selector.type === 'RefSelector') {
-			if (node.attributes.some((attr: Node) => attr.type === 'Ref' && attr.name === selector.name)) {
+			if (node.ref === selector.name) {
 				node._cssRefAttribute = selector.name;
 				toEncapsulate.push({ node, block });
 				return true;
@@ -235,18 +235,18 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
-	if (attr.value === true) return operator === null;
-	if (attr.value.length > 1) return true;
+	if (attr.isTrue) return operator === null;
+	if (attr.chunks.length > 1) return true;
 	if (!expectedValue) return true;
 
 	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
-	const value = attr.value[0];
+	const value = attr.chunks[0];
 
 	if (!value) return false;
 	if (value.type === 'Text') return pattern.test(value.data);
 
 	const possibleValues = new Set();
-	gatherPossibleValues(value.expression, possibleValues);
+	gatherPossibleValues(value.node, possibleValues);
 	if (possibleValues.has(UNKNOWN)) return true;
 
 	for (const x of Array.from(possibleValues)) { // TypeScript for-of is slightly unlike JS

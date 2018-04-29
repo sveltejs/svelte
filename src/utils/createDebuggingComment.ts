@@ -1,8 +1,8 @@
-import { DomGenerator } from '../generators/dom/index';
+import Compiler from '../compile/Compiler';
 import { Node } from '../interfaces';
 
-export default function createDebuggingComment(node: Node, generator: DomGenerator) {
-	const { locate, source } = generator;
+export default function createDebuggingComment(node: Node, compiler: Compiler) {
+	const { locate, source } = compiler;
 
 	let c = node.start;
 	if (node.type === 'ElseBlock') {
@@ -10,7 +10,7 @@ export default function createDebuggingComment(node: Node, generator: DomGenerat
 		while (source[c - 1] === '{') c -= 1;
 	}
 
-	let d = node.expression ? node.expression.end : c;
+	let d = node.expression ? node.expression.node.end : c;
 	while (source[d] !== '}') d += 1;
 	while (source[d] === '}') d += 1;
 

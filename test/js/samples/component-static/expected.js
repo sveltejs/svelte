@@ -3,7 +3,7 @@ import { assign, callAll, init, noop, proto } from "svelte/shared.js";
 
 var Nested = window.Nested;
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 
 	var nested_initial_data = { foo: "bar" };
 	var nested = new Nested({

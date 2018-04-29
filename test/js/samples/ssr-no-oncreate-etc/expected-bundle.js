@@ -28,10 +28,10 @@ SvelteComponent.render = function(state, options = {}) {
 	};
 };
 
-SvelteComponent._render = function(__result, state, options) {
+SvelteComponent._render = function(__result, ctx, options) {
 	__result.addComponent(SvelteComponent);
 
-	state = Object.assign({}, state);
+	ctx = Object.assign({}, ctx);
 
 	return ``;
 };

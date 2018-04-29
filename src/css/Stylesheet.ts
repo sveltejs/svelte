@@ -4,9 +4,9 @@ import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from '../utils/hash';
-import Element from '../generators/nodes/Element';
+import Element from '../compile/nodes/Element';
 import { Validator } from '../validate/index';
-import { Node, Parsed, Warning } from '../interfaces';
+import { Node, Ast, Warning } from '../interfaces';
 
 class Rule {
 	selectors: Selector[];
@@ -236,7 +236,7 @@ const keys = {};
 
 export default class Stylesheet {
 	source: string;
-	parsed: Parsed;
+	ast: Ast;
 	filename: string;
 	dev: boolean;
 
@@ -248,9 +248,9 @@ export default class Stylesheet {
 
 	nodesWithCssClass: Set<Node>;
 
-	constructor(source: string, parsed: Parsed, filename: string, dev: boolean) {
+	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
 		this.source = source;
-		this.parsed = parsed;
+		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
 
@@ -259,15 +259,15 @@ export default class Stylesheet {
 
 		this.nodesWithCssClass = new Set();
 
-		if (parsed.css && parsed.css.children.length) {
-			this.id = `svelte-${hash(parsed.css.content.styles)}`;
+		if (ast.css && ast.css.children.length) {
+			this.id = `svelte-${hash(ast.css.content.styles)}`;
 
 			this.hasStyles = true;
 
 			const stack: (Rule | Atrule)[] = [];
 			let currentAtrule: Atrule = null;
 
-			walk(this.parsed.css, {
+			walk(this.ast.css, {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
 						const last = stack[stack.length - 1];
@@ -346,7 +346,7 @@ export default class Stylesheet {
 
 		const code = new MagicString(this.source);
 
-		walk(this.parsed.css, {
+		walk(this.ast.css, {
 			enter: (node: Node) => {
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
