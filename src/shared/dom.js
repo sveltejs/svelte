@@ -203,13 +203,17 @@ export function addResizeListener(element, fn) {
 	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
 	object.type = 'text/html';
 
-	if (isIE) element.appendChild(object);
-	object.data = 'about:blank';
-	if (!isIE) element.appendChild(object);
-
 	object.onload = () => {
 		object.contentDocument.defaultView.addEventListener('resize', fn);
 	};
+
+	if (/Trident/.test(navigator.userAgent)) {
+		element.appendChild(object);
+		object.data = 'about:blank';
+	} else {
+		object.data = 'about:blank';
+		element.appendChild(object);
+	}
 
 	return {
 		cancel: () => {

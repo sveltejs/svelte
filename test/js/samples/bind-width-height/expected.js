@@ -5,18 +5,19 @@ function create_main_fragment(component, ctx) {
 	var div, div_resize_listener;
 
 	function div_resize_handler() {
-		component.set({ w: div.offsetWidth, h: offsetHeight });
+		component.set({ w: div.offsetWidth, h: div.offsetHeight });
 	}
 
 	return {
 		c: function create() {
 			div = createElement("div");
 			div.textContent = "some content";
+			this.h();
 		},
 
 		h: function hydrate() {
 			div_resize_listener = addResizeListener(div, div_resize_handler);
-			component._beforecreate.push(div_resize_handler);
+			component.root._beforecreate.push(div_resize_handler);
 		},
 
 		m: function mount(target, anchor) {
@@ -26,11 +27,12 @@ function create_main_fragment(component, ctx) {
 		p: noop,
 
 		u: function unmount() {
-			div_resize_listener.cancel();
 			detachNode(div);
 		},
 
-		d: noop
+		d: function destroy() {
+			div_resize_listener.cancel();
+		}
 	};
 }
 

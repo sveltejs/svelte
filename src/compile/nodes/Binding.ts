@@ -6,6 +6,7 @@ import flattenReference from '../../utils/flattenReference';
 import Compiler from '../Compiler';
 import Block from '../dom/Block';
 import Expression from './shared/Expression';
+import { dimensions } from '../../utils/patterns';
 
 const readOnlyMediaAttributes = new Set([
 	'duration',
@@ -62,7 +63,7 @@ export default class Binding extends Node {
 		const needsLock = node.name !== 'input' || !/radio|checkbox|range|color/.test(node.getStaticAttributeValue('type'));
 		const isReadOnly = (
 			(node.isMediaNode() && readOnlyMediaAttributes.has(this.name)) ||
-			this.name === 'width' || this.name === 'height'
+			dimensions.test(this.name)
 		);
 
 		let updateCondition: string;
@@ -122,8 +123,8 @@ export default class Binding extends Node {
 			initialUpdate = null;
 		}
 
-		// bind:width and bind:height
-		if (this.name === 'width' || this.name === 'height') {
+		// bind:offsetWidth and bind:offsetHeight
+		if (dimensions.test(this.name)) {
 			initialUpdate = null;
 			updateDom = null;
 		}
