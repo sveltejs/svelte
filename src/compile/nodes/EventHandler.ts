@@ -80,5 +80,13 @@ export default class EventHandler extends Node {
 		this.args.forEach(arg => {
 			arg.overwriteThis(this.parent.var);
 		});
+
+		if (this.isCustomEvent && this.callee && this.callee.name === 'this') {
+			const node = this.callee.nodes[0];
+			compiler.code.overwrite(node.start, node.end, this.parent.var, {
+				storeName: true,
+				contentOnly: true
+			});
+		}
 	}
 }
