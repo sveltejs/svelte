@@ -16,7 +16,7 @@ export default class EachBlock extends Node {
 	iterations: string;
 	index: string;
 	context: string;
-	key: string;
+	key: Expression;
 	scope: TemplateScope;
 	destructuredContexts: string[];
 
@@ -29,7 +29,10 @@ export default class EachBlock extends Node {
 		this.expression = new Expression(compiler, this, scope, info.expression);
 		this.context = info.context;
 		this.index = info.index;
-		this.key = info.key;
+
+		this.key = info.key
+			? new Expression(compiler, this, scope, info.key)
+			: null;
 
 		this.scope = scope.child();
 
@@ -270,7 +273,7 @@ export default class EachBlock extends Node {
 			mountOrIntro,
 		}
 	) {
-		const key = block.getUniqueName('key');
+		const get_key = block.getUniqueName('get_key');
 		const blocks = block.getUniqueName(`${each}_blocks`);
 		const lookup = block.getUniqueName(`${each}_lookup`);
 
@@ -290,11 +293,14 @@ export default class EachBlock extends Node {
 		}
 
 		block.builders.init.addBlock(deindent`
+			const ${get_key} = ctx => ${this.key.snippet};
+
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				var ${key} = ${each_block_value}[#i].${this.key};
-				${blocks}[#i] = ${lookup}[${key}] = ${create_each_block}(#component, ${key}, @assign(@assign({}, ctx), {
+				let child_ctx = @assign(@assign({}, ctx), {
 					${this.contextProps.join(',\n')}
-				}));
+				});
+				let key = ${get_key}(child_ctx);
+				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(#component, key, child_ctx);
 			}
 		`);
 
@@ -321,7 +327,7 @@ export default class EachBlock extends Node {
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
 
-			${blocks} = @updateKeyedEach(${blocks}, #component, changed, "${this.key}", ${dynamic ? '1' : '0'}, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, function(#i) {
+			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, function(#i) {
 				return @assign(@assign({}, ctx), {
 					${this.contextProps.join(',\n')}
 				});
