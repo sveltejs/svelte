@@ -18,7 +18,7 @@ import { Ast, CompileOptions, Node } from '../../interfaces';
 export class DomTarget {
 	blocks: (Block|string)[];
 	readonly: Set<string>;
-	metaBindings: string[];
+	metaBindings: CodeBuilder;
 
 	hasIntroTransitions: boolean;
 	hasOutroTransitions: boolean;
@@ -29,7 +29,7 @@ export class DomTarget {
 		this.readonly = new Set();
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-		this.metaBindings = [];
+		this.metaBindings = new CodeBuilder();
 	}
 }
 

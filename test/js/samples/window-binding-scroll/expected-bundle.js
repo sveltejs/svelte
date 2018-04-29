@@ -198,6 +198,10 @@ function create_main_fragment(component, ctx) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	if ("y" in this._state) {
+		window.scrollTo(window.pageXOffset, this._state.y);
+	}
+
 	this._state.y = window.pageYOffset;
 
 	this._fragment = create_main_fragment(this, this._state);
