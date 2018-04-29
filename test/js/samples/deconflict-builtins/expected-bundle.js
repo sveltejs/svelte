@@ -250,8 +250,8 @@ function create_each_block(component, ctx) {
 
 function get_each_context(ctx, list, i) {
 	return assign(assign({}, ctx), {
-		each_value: list,
 		node: list[i],
+		each_value: list,
 		node_index: i
 	});
 }
