@@ -56,4 +56,12 @@ describe('stats', () => {
 			}
 		});
 	});
+
+	it('returns a stats object when options.generate is false', () => {
+		const { stats } = svelte.compile('', {
+			generate: false
+		});
+
+		assert.equal(typeof stats.timings.total, 'number');
+	});
 });
