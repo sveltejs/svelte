@@ -1,5 +1,4 @@
 {
-	"hash": "mzeq0s",
 	"html": {
 		"start": 0,
 		"end": 50,
@@ -37,7 +36,12 @@
 						]
 					}
 				],
-				"context": "animal"
+				"context": {
+					"start": 18,
+					"end": 24,
+					"type": "Identifier",
+					"name": "animal"
+				}
 			}
 		]
 	},

@@ -23,8 +23,7 @@ export default class Fragment extends Node {
 			name: '@create_main_fragment',
 			key: null,
 
-			indexNames: new Map(),
-			listNames: new Map(),
+			bindings: new Map(),
 
 			dependencies: new Set(),
 		});

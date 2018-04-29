@@ -1,3 +1,4 @@
+import readContext from '../read/context';
 import readExpression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
 import { trimStart, trimEnd } from '../../utils/trim';
@@ -248,40 +249,7 @@ export default function mustache(parser: Parser) {
 			parser.eat('as', true);
 			parser.requireWhitespace();
 
-			if (parser.eat('[')) {
-				parser.allowWhitespace();
-
-				block.destructuredContexts = [];
-
-				do {
-					parser.allowWhitespace();
-
-					const destructuredContext = parser.readIdentifier();
-					if (!destructuredContext) parser.error({
-						code: `expected-name`,
-						message: `Expected name`
-					});
-
-					block.destructuredContexts.push(destructuredContext);
-					parser.allowWhitespace();
-				} while (parser.eat(','));
-
-				if (!block.destructuredContexts.length) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
-				});
-
-				block.context = block.destructuredContexts.join('_');
-
-				parser.allowWhitespace();
-				parser.eat(']', true);
-			} else {
-				block.context = parser.readIdentifier();
-				if (!block.context) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
-				});
-			}
+			block.context = readContext(parser);
 
 			parser.allowWhitespace();
 

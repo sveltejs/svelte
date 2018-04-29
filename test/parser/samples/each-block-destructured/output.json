@@ -1,5 +1,4 @@
 {
-	"hash": "gtdm5e",
 	"html": {
 		"start": 0,
 		"end": 62,
@@ -54,11 +53,25 @@
 						]
 					}
 				],
-				"destructuredContexts": [
-					"key",
-					"value"
-				],
-				"context": "key_value"
+				"context": {
+					"start": 18,
+					"end": null,
+					"type": "ArrayPattern",
+					"elements": [
+						{
+							"start": 19,
+							"end": 22,
+							"type": "Identifier",
+							"name": "key"
+						},
+						{
+							"start": 24,
+							"end": 29,
+							"type": "Identifier",
+							"name": "value"
+						}
+					]
+				}
 			}
 		]
 	},
