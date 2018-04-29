@@ -10,9 +10,7 @@ function create_main_fragment(component, ctx) {
 
 	for (var i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(component, assign(assign({}, ctx), {
-			each_value: each_value,
-			node: each_value[i],
-			node_index: i
+			node: each_value[i]
 		}));
 	}
 
@@ -39,9 +37,7 @@ function create_main_fragment(component, ctx) {
 
 				for (var i = 0; i < each_value.length; i += 1) {
 					var each_context = assign(assign({}, ctx), {
-						each_value: each_value,
-						node: each_value[i],
-						node_index: i
+						node: each_value[i]
 					});
 
 					if (each_blocks[i]) {
