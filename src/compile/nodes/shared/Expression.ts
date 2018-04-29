@@ -107,7 +107,7 @@ export default class Expression {
 				}
 
 				if (isReference(node, parent)) {
-					const { name } = flattenReference(node);
+					const { name, nodes } = flattenReference(node);
 
 					if (currentScope.has(name) || (name === 'event' && isEventHandler)) return;
 
@@ -139,11 +139,9 @@ export default class Expression {
 					}
 
 					if (node.type === 'MemberExpression') {
-						walk(node, {
-							enter(node) {
-								code.addSourcemapLocation(node.start);
-								code.addSourcemapLocation(node.end);
-							}
+						nodes.forEach(node => {
+							code.addSourcemapLocation(node.start);
+							code.addSourcemapLocation(node.end);
 						});
 					}
 
