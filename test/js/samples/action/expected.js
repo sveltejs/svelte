@@ -2,7 +2,7 @@
 import { assign, createElement, detachNode, init, insertNode, noop, proto } from "svelte/shared.js";
 
 function link(node) {
-
+  
   function onClick(event) {
     event.preventDefault();
     history.pushState(null, null, event.target.href);
