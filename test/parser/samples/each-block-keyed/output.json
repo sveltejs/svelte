@@ -36,7 +36,12 @@
 						]
 					}
 				],
-				"context": "todo",
+				"context": {
+					"start": 16,
+					"end": 20,
+					"type": "Identifier",
+					"name": "todo"
+				},
 				"key": {
 					"type": "MemberExpression",
 					"start": 22,

@@ -6,6 +6,7 @@ import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
 import mapChildren from './shared/mapChildren';
 import TemplateScope from './shared/TemplateScope';
+import unpackDestructuring from '../../utils/unpackDestructuring';
 
 export default class EachBlock extends Node {
 	type: 'EachBlock';
@@ -18,7 +19,7 @@ export default class EachBlock extends Node {
 	context: string;
 	key: Expression;
 	scope: TemplateScope;
-	destructuredContexts: string[];
+	contexts: Array<{ name: string, tail: string }>;
 
 	children: Node[];
 	else?: ElseBlock;
@@ -27,7 +28,7 @@ export default class EachBlock extends Node {
 		super(compiler, parent, scope, info);
 
 		this.expression = new Expression(compiler, this, scope, info.expression);
-		this.context = info.context;
+		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
 		this.index = info.index;
 
 		this.key = info.key
@@ -36,19 +37,18 @@ export default class EachBlock extends Node {
 
 		this.scope = scope.child();
 
-		this.scope.add(this.context, this.expression.dependencies);
+		this.contexts = [];
+		unpackDestructuring(this.contexts, info.context, '');
+
+		this.contexts.forEach(context => {
+			this.scope.add(context.key.name, this.expression.dependencies);
+		});
 
 		if (this.index) {
 			// index can only change if this is a keyed each block
 			const dependencies = this.key ? this.expression.dependencies : [];
 			this.scope.add(this.index, dependencies);
 		}
-
-		// TODO more general approach to destructuring
-		this.destructuredContexts = info.destructuredContexts || [];
-		this.destructuredContexts.forEach(name => {
-			this.scope.add(name, this.expression.dependencies);
-		});
 
 		this.children = mapChildren(compiler, this, this.scope, info.children);
 
@@ -90,17 +90,13 @@ export default class EachBlock extends Node {
 			this.block.getUniqueName(this.index); // this prevents name collisions (#1254)
 		}
 
-		this.contextProps = [
-			`${listName}: list`,
-			`${this.context}: list[i]`,
-			`${indexName}: i`
-		];
+		this.contextProps = this.contexts.map(prop => `${prop.key.name}: list[i]${prop.tail}`);
 
-		if (this.destructuredContexts) {
-			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				this.contextProps.push(`${this.destructuredContexts[i]}: list[i][${i}]`);
-			}
-		}
+		// TODO only add these if necessary
+		this.contextProps.push(
+			`${listName}: list`,
+			`${indexName}: i`
+		);
 
 		this.compiler.target.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
@@ -481,8 +477,7 @@ export default class EachBlock extends Node {
 		const { compiler } = this;
 		const { snippet } = this.expression;
 
-		const props = [`${this.context}: item`]
-			.concat(this.destructuredContexts.map((name, i) => `${name}: item[${i}]`));
+		const props = this.contexts.map(prop => `${prop.key.name}: item${prop.tail}`);
 
 		const getContext = this.index
 			? `(item, i) => Object.assign({}, ctx, { ${props.join(', ')}, ${this.index}: i })`
