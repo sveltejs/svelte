@@ -34,9 +34,9 @@ function create_main_fragment(component, ctx) {
 		},
 
 		p: function update(changed, ctx) {
-			var each_value = ctx.createElement;
-
 			if (changed.createElement) {
+				each_value = ctx.createElement;
+
 				for (var i = 0; i < each_value.length; i += 1) {
 					var each_context = assign(assign({}, ctx), {
 						each_value: each_value,
