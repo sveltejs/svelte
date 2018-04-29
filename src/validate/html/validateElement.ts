@@ -2,6 +2,7 @@ import * as namespaces from '../../utils/namespaces';
 import validateEventHandler from './validateEventHandler';
 import validate, { Validator } from '../index';
 import { Node } from '../../interfaces';
+import { dimensions } from '../../utils/patterns';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -157,7 +158,7 @@ export default function validateElement(
 						message: `'${name}' binding can only be used with <audio> or <video>`
 					});
 				}
-			} else if (name !== 'width' && name !== 'height') {
+			} else if (!dimensions.test(name)) {
 				validator.error(attribute, {
 					code: `invalid-binding`,
 					message: `'${attribute.name}' is not a valid binding`
