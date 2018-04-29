@@ -195,14 +195,13 @@ function getEventHandler(
 			? getTailSnippet(binding.value.node)
 			: '';
 
-		const list = `ctx.${block.listNames.get(name)}`;
-		const index = `ctx.${block.indexNames.get(name)}`;
+		const head = block.bindings.get(name);
 
 		return {
 			usesContext: true,
 			usesState: true,
 			usesStore: storeDependencies.length > 0,
-			mutation: `${list}[${index}]${tail} = ${value};`,
+			mutation: `${head}${tail} = ${value};`,
 			props: dependencies.map(prop => `${prop}: ctx.${prop}`),
 			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};

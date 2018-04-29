@@ -9,8 +9,7 @@ export interface BlockOptions {
 	compiler?: Compiler;
 	comment?: string;
 	key?: string;
-	indexNames?: Map<string, string>;
-	listNames?: Map<string, string>;
+	bindings?: Map<string, string>;
 	dependencies?: Set<string>;
 }
 
@@ -23,8 +22,8 @@ export default class Block {
 	first: string;
 
 	dependencies: Set<string>;
-	indexNames: Map<string, string>;
-	listNames: Map<string, string>;
+
+	bindings: Map<string, string>;
 
 	builders: {
 		init: CodeBuilder;
@@ -62,8 +61,7 @@ export default class Block {
 
 		this.dependencies = new Set();
 
-		this.indexNames = options.indexNames;
-		this.listNames = options.listNames;
+		this.bindings = options.bindings;
 
 		this.builders = {
 			init: new CodeBuilder(),

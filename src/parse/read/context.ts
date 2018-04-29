@@ -77,7 +77,7 @@ export default function readContext(parser: Parser) {
 			parser.allowWhitespace();
 
 			const value = parser.eat(':')
-				? readContext(parser)
+				? (parser.allowWhitespace(), readContext(parser))
 				: key;
 
 			const property: Property = {
