@@ -262,7 +262,7 @@ export default class Element extends Node {
 			parentNode;
 
 		block.addVariable(name);
-		const renderStatement = getRenderStatement(this.compiler, this.namespace, this.name);
+		const renderStatement = getRenderStatement(this.namespace, this.name);
 		block.builders.create.addLine(
 			`${name} = ${renderStatement};`
 		);
@@ -916,7 +916,6 @@ export default class Element extends Node {
 }
 
 function getRenderStatement(
-	compiler: Compiler,
 	namespace: string,
 	name: string
 ) {
@@ -969,6 +968,12 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.name === 'select' ||
 			node.name === 'input' && /radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
+	},
+
+	{
+		eventNames: ['resize'],
+		filter: (node: Element, name: string) =>
+			(name === 'width' || name === 'height')
 	},
 
 	// media events
