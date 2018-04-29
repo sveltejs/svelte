@@ -66,7 +66,7 @@ export default class EachBlock extends Node {
 
 		this.var = block.getUniqueName(`each`);
 		this.iterations = block.getUniqueName(`${this.var}_blocks`);
-		this.get_each_context = block.getUniqueName(`get_${this.var}_context`);
+		this.get_each_context = this.compiler.getUniqueName(`get_${this.var}_context`);
 
 		const { dependencies } = this.expression;
 		block.addDependencies(dependencies);
@@ -296,9 +296,7 @@ export default class EachBlock extends Node {
 			const ${get_key} = ctx => ${this.key.snippet};
 
 			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				let child_ctx = @assign(@assign({}, ctx), {
-					${this.contextProps.join(',\n')}
-				});
+				let child_ctx = ${this.get_each_context}(ctx, ${each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
 				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(#component, key, child_ctx);
 			}
@@ -327,11 +325,7 @@ export default class EachBlock extends Node {
 		block.builders.update.addBlock(deindent`
 			var ${each_block_value} = ${snippet};
 
-			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, function(#i) {
-				return @assign(@assign({}, ctx), {
-					${this.contextProps.join(',\n')}
-				});
-			});
+			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 		`);
 
 		if (!parentNode) {
