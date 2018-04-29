@@ -64,10 +64,6 @@ export default function dom(
 
 	if (computations.length) {
 		computations.forEach(({ key, deps }) => {
-			deps.forEach(dep => {
-				computationDeps.add(dep);
-			});
-
 			if (target.readonly.has(key)) {
 				// <svelte:window> bindings
 				throw new Error(
@@ -77,11 +73,22 @@ export default function dom(
 
 			target.readonly.add(key);
 
-			const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
+			if (deps) {
+				deps.forEach(dep => {
+					computationDeps.add(dep);
+				});
 
-			const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`;
+				const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
+				const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`;
 
-			computationBuilder.addConditional(condition, statement);
+				computationBuilder.addConditional(condition, statement);
+			} else {
+				// computed property depends on entire state object —
+				// these must go at the end
+				computationBuilder.addLine(
+					`if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`
+				);
+			}
 		});
 	}
 
