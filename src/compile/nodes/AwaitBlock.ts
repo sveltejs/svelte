@@ -98,6 +98,8 @@ export default class AwaitBlock extends Node {
 		block.addVariable(promise);
 		block.addVariable(resolved);
 
+		block.maintainContext = true;
+
 		// the `#component.root.set({})` below is just a cheap way to flush
 		// any oncreate handlers. We could have a dedicated `flush()` method
 		// but it's probably not worth it
@@ -119,13 +121,12 @@ export default class AwaitBlock extends Node {
 				}
 			}
 
-			function ${handle_promise}(${promise}, ctx) {
+			function ${handle_promise}(${promise}) {
 				var ${token} = ${await_token} = {};
 
 				if (@isPromise(${promise})) {
 					${promise}.then(function(${value}) {
 						${this.value ? deindent`
-							var ctx = #component.get();
 							${resolved} = { ${this.value}: ${value} };
 							${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, ctx), ${resolved}));
 						` : deindent`
@@ -133,7 +134,6 @@ export default class AwaitBlock extends Node {
 						`}
 					}, function (${error}) {
 						${this.error ? deindent`
-							var ctx = #component.get();
 							${resolved} = { ${this.error}: ${error} };
 							${replace_await_block}(${token}, ${create_catch_block}, @assign(@assign({}, ctx), ${resolved}));
 						` : deindent`
@@ -155,7 +155,7 @@ export default class AwaitBlock extends Node {
 				}
 			}
 
-			${handle_promise}(${promise} = ${snippet}, ctx);
+			${handle_promise}(${promise} = ${snippet});
 		`);
 
 		block.builders.create.addBlock(deindent`
