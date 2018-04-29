@@ -10,7 +10,7 @@ export function outroAndDestroyBlock(block, lookup) {
 	});
 }
 
-export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, next, get_context) {
+export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, has_outro, create_each_block, intro_method, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
@@ -24,15 +24,15 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 
 	var i = n;
 	while (i--) {
-		var ctx = get_context(i);
-		var key = get_key(ctx);
+		var child_ctx = get_context(ctx, list, i);
+		var key = get_key(child_ctx);
 		var block = lookup[key];
 
 		if (!block) {
-			block = create_each_block(component, key, ctx);
+			block = create_each_block(component, key, child_ctx);
 			block.c();
 		} else if (dynamic) {
-			block.p(changed, ctx);
+			block.p(changed, child_ctx);
 		}
 
 		new_blocks[i] = new_lookup[key] = block;
