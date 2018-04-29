@@ -564,16 +564,29 @@ export default class Compiler {
 				if (templateProperties.computed) {
 					const dependencies = new Map();
 
+					const fullStateComputations = [];
+
 					templateProperties.computed.value.properties.forEach((prop: Node) => {
 						const key = getName(prop.key);
 						const value = prop.value;
 
-						const deps = value.params[0].properties.map(prop => prop.key.name);
-
-						deps.forEach(dep => {
-							this.expectedProperties.add(dep);
+						addDeclaration(key, value, false, 'computed', {
+							state: true,
+							changed: true
 						});
-						dependencies.set(key, deps);
+
+						const param = value.params[0];
+
+						if (param.type === 'ObjectPattern') {
+							const deps = param.properties.map(prop => prop.key.name);
+
+							deps.forEach(dep => {
+								this.expectedProperties.add(dep);
+							});
+							dependencies.set(key, deps);
+						} else {
+							fullStateComputations.push({ key, deps: null })
+						}
 					});
 
 					const visited = new Set();
@@ -590,16 +603,15 @@ export default class Compiler {
 						computations.push({ key, deps });
 
 						const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
-
-						addDeclaration(key, prop.value, false, 'computed', {
-							state: true,
-							changed: true
-						});
 					};
 
 					templateProperties.computed.value.properties.forEach((prop: Node) =>
 						visit(getName(prop.key))
 					);
+
+					if (fullStateComputations.length > 0) {
+						computations.push(...fullStateComputations);
+					}
 				}
 
 				if (templateProperties.data) {
