@@ -6,7 +6,7 @@ import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
-import { SsrTarget } from '../server-side-rendering';
+import { SsrTarget } from '../ssr';
 
 export default class AwaitBlock extends Node {
 	expression: Expression;
