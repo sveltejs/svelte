@@ -46,8 +46,13 @@ export default function readContext(parser: Parser) {
 
 		do {
 			parser.allowWhitespace();
-			context.elements.push(readContext(parser));
-			parser.allowWhitespace();
+
+			if (parser.template[parser.index] === ',') {
+				context.elements.push(null);
+			} else {
+				context.elements.push(readContext(parser));
+				parser.allowWhitespace();
+			}
 		} while (parser.eat(','));
 
 		errorOnAssignmentPattern(parser);
