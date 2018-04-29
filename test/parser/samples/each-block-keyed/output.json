@@ -1,5 +1,4 @@
 {
-	"hash": "1x6az5m",
 	"html": {
 		"start": 0,
 		"end": 54,
@@ -38,7 +37,24 @@
 					}
 				],
 				"context": "todo",
-				"key": "id"
+				"key": {
+					"type": "MemberExpression",
+					"start": 22,
+					"end": 29,
+					"object": {
+						"type": "Identifier",
+						"start": 22,
+						"end": 26,
+						"name": "todo"
+					},
+					"property": {
+						"type": "Identifier",
+						"start": 27,
+						"end": 29,
+						"name": "id"
+					},
+					"computed": false
+				}
 			}
 		]
 	},
