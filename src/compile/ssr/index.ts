@@ -120,8 +120,7 @@ export default function ssr(
 			ctx = Object.assign(${initialState.join(', ')});
 
 			${computations.map(
-				({ key, deps }) =>
-					`ctx.${key} = %computed-${key}(ctx);`
+				({ key }) => `ctx.${key} = %computed-${key}(ctx);`
 			)}
 
 			${target.bindings.length &&

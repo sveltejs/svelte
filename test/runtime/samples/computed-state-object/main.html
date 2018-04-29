@@ -1,0 +1,14 @@
+<p>a: {a}</p>
+<p>x: {x}</p>
+<p>y: {y}</p>
+<p>z: {z}</p>
+
+<script>
+	export default {
+		computed: {
+			y: state => state.x * 2,
+			z: state => state.y * 2,
+			x: ({ a }) => a * 2
+		}
+	};
+</script>
