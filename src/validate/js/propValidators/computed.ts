@@ -81,14 +81,5 @@ export default function computed(validator: Validator, prop: Node) {
 				message: `Computed properties must take a single argument`
 			});
 		}
-
-		const param = params[0];
-		if (param.type !== 'ObjectPattern') {
-			// TODO post-v2, allow the entire object to be passed in
-			validator.error(computation.value, {
-				code: `invalid-computed-argument`,
-				message: `Computed property argument must be a destructured object pattern`
-			});
-		}
 	});
 }
