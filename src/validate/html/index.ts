@@ -8,6 +8,7 @@ import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
+import unpackDestructuring from '../../utils/unpackDestructuring';
 
 function isEmptyBlock(node: Node) {
 	if (!/Block$/.test(node.type) || !node.children) return false;
@@ -60,19 +61,17 @@ export default function validateHtml(validator: Validator, html: Node) {
 		}
 
 		else if (node.type === 'EachBlock') {
-			if (validator.helpers.has(node.context)) {
-				let c: number = node.expression.end;
+			const contexts = [];
+			unpackDestructuring(contexts, node.context, '');
 
-				// find start of context
-				while (/\s/.test(validator.source[c])) c += 1;
-				c += 2;
-				while (/\s/.test(validator.source[c])) c += 1;
-
-				validator.warn({ start: c, end: c + node.context.length }, {
-					code: `each-context-clash`,
-					message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
-				});
-			}
+			contexts.forEach(prop => {
+				if (validator.helpers.has(prop.key.name)) {
+					validator.warn(prop.key, {
+						code: `each-context-clash`,
+						message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
+					});
+				}
+			});
 		}
 
 		if (validator.options.dev && isEmptyBlock(node)) {

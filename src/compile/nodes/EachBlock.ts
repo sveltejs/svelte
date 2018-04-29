@@ -6,6 +6,7 @@ import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
 import mapChildren from './shared/mapChildren';
 import TemplateScope from './shared/TemplateScope';
+import unpackDestructuring from '../../utils/unpackDestructuring';
 
 export default class EachBlock extends Node {
 	type: 'EachBlock';
@@ -18,7 +19,7 @@ export default class EachBlock extends Node {
 	context: string;
 	key: Expression;
 	scope: TemplateScope;
-	destructuredContexts: string[];
+	contexts: Array<{ name: string, tail: string }>;
 
 	children: Node[];
 	else?: ElseBlock;
@@ -27,7 +28,7 @@ export default class EachBlock extends Node {
 		super(compiler, parent, scope, info);
 
 		this.expression = new Expression(compiler, this, scope, info.expression);
-		this.context = info.context;
+		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
 		this.index = info.index;
 
 		this.key = info.key
@@ -36,19 +37,18 @@ export default class EachBlock extends Node {
 
 		this.scope = scope.child();
 
-		this.scope.add(this.context, this.expression.dependencies);
+		this.contexts = [];
+		unpackDestructuring(this.contexts, info.context, '');
+
+		this.contexts.forEach(context => {
+			this.scope.add(context.key.name, this.expression.dependencies);
+		});
 
 		if (this.index) {
 			// index can only change if this is a keyed each block
 			const dependencies = this.key ? this.expression.dependencies : [];
 			this.scope.add(this.index, dependencies);
 		}
-
-		// TODO more general approach to destructuring
-		this.destructuredContexts = info.destructuredContexts || [];
-		this.destructuredContexts.forEach(name => {
-			this.scope.add(name, this.expression.dependencies);
-		});
 
 		this.children = mapChildren(compiler, this, this.scope, info.children);
 
@@ -76,31 +76,28 @@ export default class EachBlock extends Node {
 			name: this.compiler.getUniqueName('create_each_block'),
 			key: this.key,
 
-			indexNames: new Map(block.indexNames),
-			listNames: new Map(block.listNames)
+			bindings: new Map(block.bindings)
 		});
 
-		const listName = this.compiler.getUniqueName('each_value');
+		this.each_block_value = this.compiler.getUniqueName('each_value');
+
 		const indexName = this.index || this.compiler.getUniqueName(`${this.context}_index`);
 
-		this.block.indexNames.set(this.context, indexName);
-		this.block.listNames.set(this.context, listName);
+		this.contexts.forEach(prop => {
+			this.block.bindings.set(prop.key.name, `ctx.${this.each_block_value}[ctx.${indexName}]${prop.tail}`);
+		});
 
 		if (this.index) {
 			this.block.getUniqueName(this.index); // this prevents name collisions (#1254)
 		}
 
-		this.contextProps = [
-			`${listName}: list`,
-			`${this.context}: list[i]`,
-			`${indexName}: i`
-		];
+		this.contextProps = this.contexts.map(prop => `${prop.key.name}: list[i]${prop.tail}`);
 
-		if (this.destructuredContexts) {
-			for (let i = 0; i < this.destructuredContexts.length; i += 1) {
-				this.contextProps.push(`${this.destructuredContexts[i]}: list[i][${i}]`);
-			}
-		}
+		// TODO only add these if necessary
+		this.contextProps.push(
+			`${this.each_block_value}: list`,
+			`${indexName}: i`
+		);
 
 		this.compiler.target.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
@@ -135,7 +132,6 @@ export default class EachBlock extends Node {
 		const each = this.var;
 
 		const create_each_block = this.block.name;
-		const each_block_value = this.block.listNames.get(this.context);
 		const iterations = this.iterations;
 
 		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
@@ -154,7 +150,6 @@ export default class EachBlock extends Node {
 		const vars = {
 			each,
 			create_each_block,
-			each_block_value,
 			length,
 			iterations,
 			anchor,
@@ -163,7 +158,7 @@ export default class EachBlock extends Node {
 
 		const { snippet } = this.expression;
 
-		block.builders.init.addLine(`var ${each_block_value} = ${snippet};`);
+		block.builders.init.addLine(`var ${this.each_block_value} = ${snippet};`);
 
 		this.compiler.target.blocks.push(deindent`
 			function ${this.get_each_context}(ctx, list, i) {
@@ -195,7 +190,7 @@ export default class EachBlock extends Node {
 
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.addBlock(deindent`
-				if (!${each_block_value}.${length}) {
+				if (!${this.each_block_value}.${length}) {
 					${each_block_else} = ${this.else.block.name}(#component, ctx);
 					${each_block_else}.c();
 				}
@@ -211,9 +206,9 @@ export default class EachBlock extends Node {
 
 			if (this.else.block.hasUpdateMethod) {
 				block.builders.update.addBlock(deindent`
-					if (!${each_block_value}.${length} && ${each_block_else}) {
+					if (!${this.each_block_value}.${length} && ${each_block_else}) {
 						${each_block_else}.p(changed, ctx);
-					} else if (!${each_block_value}.${length}) {
+					} else if (!${this.each_block_value}.${length}) {
 						${each_block_else} = ${this.else.block.name}(#component, ctx);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
@@ -225,7 +220,7 @@ export default class EachBlock extends Node {
 				`);
 			} else {
 				block.builders.update.addBlock(deindent`
-					if (${each_block_value}.${length}) {
+					if (${this.each_block_value}.${length}) {
 						if (${each_block_else}) {
 							${each_block_else}.u();
 							${each_block_else}.d();
@@ -267,7 +262,6 @@ export default class EachBlock extends Node {
 		{
 			each,
 			create_each_block,
-			each_block_value,
 			length,
 			anchor,
 			mountOrIntro,
@@ -295,8 +289,8 @@ export default class EachBlock extends Node {
 		block.builders.init.addBlock(deindent`
 			const ${get_key} = ctx => ${this.key.snippet};
 
-			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				let child_ctx = ${this.get_each_context}(ctx, ${each_block_value}, #i);
+			for (var #i = 0; #i < ${this.each_block_value}.${length}; #i += 1) {
+				let child_ctx = ${this.get_each_context}(ctx, ${this.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
 				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(#component, key, child_ctx);
 			}
@@ -323,9 +317,9 @@ export default class EachBlock extends Node {
 		const dynamic = this.block.hasUpdateMethod;
 
 		block.builders.update.addBlock(deindent`
-			var ${each_block_value} = ${snippet};
+			var ${this.each_block_value} = ${snippet};
 
-			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
+			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 		`);
 
 		if (!parentNode) {
@@ -346,7 +340,6 @@ export default class EachBlock extends Node {
 		snippet: string,
 		{
 			create_each_block,
-			each_block_value,
 			length,
 			iterations,
 			anchor,
@@ -356,8 +349,8 @@ export default class EachBlock extends Node {
 		block.builders.init.addBlock(deindent`
 			var ${iterations} = [];
 
-			for (var #i = 0; #i < ${each_block_value}.${length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(#component, ${this.get_each_context}(ctx, ${each_block_value}, #i));
+			for (var #i = 0; #i < ${this.each_block_value}.${length}; #i += 1) {
+				${iterations}[#i] = ${create_each_block}(#component, ${this.get_each_context}(ctx, ${this.each_block_value}, #i));
 			}
 		`);
 
@@ -445,15 +438,15 @@ export default class EachBlock extends Node {
 						${iterations}[#i].u();
 						${iterations}[#i].d();
 					}
-					${iterations}.length = ${each_block_value}.${length};
+					${iterations}.length = ${this.each_block_value}.${length};
 				`;
 
 			block.builders.update.addBlock(deindent`
 				if (${condition}) {
-					${each_block_value} = ${snippet};
+					${this.each_block_value} = ${snippet};
 
-					for (var #i = ${start}; #i < ${each_block_value}.${length}; #i += 1) {
-						const child_ctx = ${this.get_each_context}(ctx, ${each_block_value}, #i);
+					for (var #i = ${start}; #i < ${this.each_block_value}.${length}; #i += 1) {
+						const child_ctx = ${this.get_each_context}(ctx, ${this.each_block_value}, #i);
 
 						${forLoopBody}
 					}
@@ -481,8 +474,7 @@ export default class EachBlock extends Node {
 		const { compiler } = this;
 		const { snippet } = this.expression;
 
-		const props = [`${this.context}: item`]
-			.concat(this.destructuredContexts.map((name, i) => `${name}: item[${i}]`));
+		const props = this.contexts.map(prop => `${prop.key.name}: item${prop.tail}`);
 
 		const getContext = this.index
 			? `(item, i) => Object.assign({}, ctx, { ${props.join(', ')}, ${this.index}: i })`

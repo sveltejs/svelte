@@ -1,5 +1,4 @@
 {
-	"hash": "8weqxs",
 	"html": {
 		"start": 0,
 		"end": 41,
@@ -37,7 +36,12 @@
 						]
 					}
 				],
-				"context": "𐊧"
+				"context": {
+					"start": 17,
+					"end": 19,
+					"type": "Identifier",
+					"name": "𐊧"
+				}
 			}
 		]
 	},

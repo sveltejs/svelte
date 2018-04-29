@@ -239,12 +239,11 @@ export default class Component extends Node {
 					const computed = isComputed(binding.value.node);
 					const tail = binding.value.node.type === 'MemberExpression' ? getTailSnippet(binding.value.node) : '';
 
-					const list = block.listNames.get(key);
-					const index = block.indexNames.get(key);
+					const head = block.bindings.get(key);
 
 					const lhs = binding.value.node.type === 'MemberExpression'
 						? binding.value.snippet
-						: `ctx.${list}[ctx.${index}]${tail} = childState.${binding.name}`;
+						: `${head}${tail} = childState.${binding.name}`;
 
 					setFromChild = deindent`
 						${lhs} = childState.${binding.name};
