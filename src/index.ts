@@ -1,7 +1,7 @@
 import parse from './parse/index';
 import validate from './validate/index';
 import generate from './compile/dom/index';
-import generateSSR from './compile/server-side-rendering/index';
+import generateSSR from './compile/ssr/index';
 import Stats from './Stats';
 import { assign } from './shared/index.js';
 import Stylesheet from './css/Stylesheet';

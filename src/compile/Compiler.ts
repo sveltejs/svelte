@@ -19,7 +19,7 @@ import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
 import { DomTarget } from './dom/index';
-import { SsrTarget } from './server-side-rendering/index';
+import { SsrTarget } from './ssr/index';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
