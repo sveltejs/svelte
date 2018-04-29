@@ -443,9 +443,9 @@ export default class EachBlock extends Node {
 				`;
 
 			block.builders.update.addBlock(deindent`
-				var ${each_block_value} = ${snippet};
-
 				if (${condition}) {
+					${each_block_value} = ${snippet};
+
 					for (var #i = ${start}; #i < ${each_block_value}.${length}; #i += 1) {
 						var ${this.each_context} = @assign(@assign({}, ctx), {
 							${this.contextProps.join(',\n')}
