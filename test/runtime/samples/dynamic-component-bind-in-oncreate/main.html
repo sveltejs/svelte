@@ -1,0 +1,18 @@
+<p>text in App.html: {text}</p>
+<svelte:component this={cmp} bind:text=text />
+
+<script>
+	import Nested from './Nested.html';
+
+	export default {
+		data: () => ({
+			text: 'initial'
+		}),
+
+		oncreate() {
+			this.set({
+				cmp: Nested
+			});
+		}
+	};
+</script>
