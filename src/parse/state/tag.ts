@@ -60,6 +60,16 @@ const disallowedContents = new Map([
 	['th', new Set(['td', 'th', 'tr'])],
 ]);
 
+function parentIsHead(stack) {
+	let i = stack.length;
+	while (i--) {
+		const { type } = stack[i];
+		if (type === 'Head') return true;
+		if (type === 'Element' || type === 'Component') return false;
+	}
+	return false;
+}
+
 export default function tag(parser: Parser) {
 	const start = parser.index++;
 
@@ -113,7 +123,9 @@ export default function tag(parser: Parser) {
 
 	const type = metaTags.has(name)
 		? metaTags.get(name)
-		: 'Element'; // TODO in v2, capitalised name means 'Component'
+		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'Component'
+		: name === 'title' && parentIsHead(parser.stack) ? 'Title'
+		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
 	const element: Node = {
 		start,

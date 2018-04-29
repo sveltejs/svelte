@@ -3,6 +3,7 @@ import { noop } from './utils.js';
 export * from './dom.js';
 export * from './keyed-each.js';
 export * from './spread.js';
+export * from './ssr.js';
 export * from './transitions.js';
 export * from './utils.js';
 

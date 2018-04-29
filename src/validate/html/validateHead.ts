@@ -13,7 +13,7 @@ export default function validateHead(validator: Validator, node: Node, refs: Map
 	// TODO ensure only valid elements are included here
 
 	node.children.forEach(node => {
-		if (node.type !== 'Element') return; // TODO handle {{#if}} and friends?
-		validateElement(validator, node, refs, refCallees, [], [], false);
+		if (node.type !== 'Element' && node.type !== 'Title') return; // TODO handle {{#if}} and friends?
+		validateElement(validator, node, refs, refCallees, [], []);
 	});
 }

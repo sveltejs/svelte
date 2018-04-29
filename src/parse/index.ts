@@ -5,12 +5,13 @@ import { whitespace } from '../utils/patterns';
 import { trimStart, trimEnd } from '../utils/trim';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import { Node, Parsed } from '../interfaces';
+import { Node, Ast } from '../interfaces';
 import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
+	customElement?: boolean;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -18,6 +19,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
+	readonly customElement: boolean;
 
 	index: number;
 	stack: Array<Node>;
@@ -36,6 +38,7 @@ export class Parser {
 
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
+		this.customElement = options.customElement;
 
 		this.allowBindings = options.bind !== false;
 
@@ -220,7 +223,7 @@ export class Parser {
 export default function parse(
 	template: string,
 	options: ParserOptions = {}
-): Parsed {
+): Ast {
 	const parser = new Parser(template, options);
 	return {
 		html: parser.html,
