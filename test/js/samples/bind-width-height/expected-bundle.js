@@ -26,6 +26,10 @@ function addResizeListener(element, fn) {
 	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
 	object.type = 'text/html';
 
+	object.onload = () => {
+		object.contentDocument.defaultView.addEventListener('resize', fn);
+	};
+
 	if (/Trident/.test(navigator.userAgent)) {
 		element.appendChild(object);
 		object.data = 'about:blank';
@@ -33,10 +37,6 @@ function addResizeListener(element, fn) {
 		object.data = 'about:blank';
 		element.appendChild(object);
 	}
-
-	object.onload = () => {
-		object.contentDocument.defaultView.addEventListener('resize', fn);
-	};
 
 	return {
 		cancel: () => {
@@ -179,23 +179,22 @@ function create_main_fragment(component, ctx) {
 		},
 
 		h: function hydrate() {
-			div_resize_listener = addResizeListener(div, div_resize_handler);
 			component.root._beforecreate.push(div_resize_handler);
 		},
 
 		m: function mount(target, anchor) {
 			insertNode(div, target, anchor);
+			div_resize_listener = addResizeListener(div, div_resize_handler);
 		},
 
 		p: noop,
 
 		u: function unmount() {
 			detachNode(div);
+			div_resize_listener.cancel();
 		},
 
-		d: function destroy$$1() {
-			div_resize_listener.cancel();
-		}
+		d: noop
 	};
 }
 
@@ -203,11 +202,18 @@ function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
 
+	if (!options.root) {
+		this._oncreate = [];
+		this._beforecreate = [];
+	}
+
 	this._fragment = create_main_fragment(this, this._state);
 
 	if (options.target) {
 		this._fragment.c();
 		this._mount(options.target, options.anchor);
+
+		callAll(this._beforecreate);
 	}
 }
 
