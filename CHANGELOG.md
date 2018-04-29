@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 2.3.0
+
+* Allow computed properties to have entire state object as dependency ([#1303](https://github.com/sveltejs/svelte/issues/1303))
+* Fix `stats` when `options.generate` is `false` ([#1368](https://github.com/sveltejs/svelte/issues/1368))
+* Assign custom methods to custom elements ([#1369](https://github.com/sveltejs/svelte/issues/1369))
+* Fix `this` value in custom event handlers ([#1297](https://github.com/sveltejs/svelte/issues/1297))
+* Re-evaluate `each` values lazily ([#1286](https://github.com/sveltejs/svelte/issues/1286))
+* Preserve outer context in `await` blocks ([#1251](https://github.com/sveltejs/svelte/issues/1251))
+
 ## 2.2.0
 
 * Internal refactoring ([#1367](https://github.com/sveltejs/svelte/pull/1367))
