@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.2.0
+
+* Internal refactoring ([#1367](https://github.com/sveltejs/svelte/pull/1367))
+
 ## 2.1.1
 
 * Report initial `changed` based on state, not expected props ([#1356](https://github.com/sveltejs/svelte/issues/1356))
