@@ -132,7 +132,7 @@ function compile(source: string, _options: CompileOptions) {
 	stats.stop('validate');
 
 	if (options.generate === false) {
-		return { ast: ast, stats, js: null, css: null };
+		return { ast, stats: stats.render(null), js: null, css: null };
 	}
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;

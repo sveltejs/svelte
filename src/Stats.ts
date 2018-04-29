@@ -78,7 +78,9 @@ export default class Stats {
 			total: now() - this.startTime
 		}, collapseTimings(this.timings));
 
-		const imports = compiler.imports.map(node => {
+		// TODO would be good to have this info even
+		// if options.generate is false
+		const imports = compiler && compiler.imports.map(node => {
 			return {
 				source: node.source.value,
 				specifiers: node.specifiers.map(specifier => {
@@ -94,9 +96,12 @@ export default class Stats {
 			}
 		});
 
-		const hooks: Record<string, boolean> = {};
-		if (compiler.templateProperties.oncreate) hooks.oncreate = true;
-		if (compiler.templateProperties.ondestroy) hooks.ondestroy = true;
+		const hooks: Record<string, boolean> = compiler && {
+			oncreate: !!compiler.templateProperties.oncreate,
+			ondestroy: !!compiler.templateProperties.ondestroy,
+			onstate: !!compiler.templateProperties.onstate,
+			onupdate: !!compiler.templateProperties.onupdate
+		};
 
 		return {
 			timings,
