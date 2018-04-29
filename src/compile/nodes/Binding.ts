@@ -14,6 +14,9 @@ const readOnlyMediaAttributes = new Set([
 	'played'
 ]);
 
+// TODO a lot of this element-specific stuff should live in Element —
+// Binding should ideally be agnostic between Element and Component
+
 export default class Binding extends Node {
 	name: string;
 	value: Expression;
@@ -57,7 +60,10 @@ export default class Binding extends Node {
 		const node: Element = this.parent;
 
 		const needsLock = node.name !== 'input' || !/radio|checkbox|range|color/.test(node.getStaticAttributeValue('type'));
-		const isReadOnly = node.isMediaNode() && readOnlyMediaAttributes.has(this.name);
+		const isReadOnly = (
+			(node.isMediaNode() && readOnlyMediaAttributes.has(this.name)) ||
+			this.name === 'width' || this.name === 'height'
+		);
 
 		let updateCondition: string;
 
@@ -103,8 +109,7 @@ export default class Binding extends Node {
 		if (this.name === 'currentTime' || this.name === 'volume') {
 			updateCondition = `!isNaN(${snippet})`;
 
-			if (this.name === 'currentTime')
-				initialUpdate = null;
+			if (this.name === 'currentTime') initialUpdate = null;
 		}
 
 		if (this.name === 'paused') {
@@ -115,6 +120,12 @@ export default class Binding extends Node {
 			updateCondition = `${last} !== (${last} = ${snippet})`;
 			updateDom = `${node.var}[${last} ? "pause" : "play"]();`;
 			initialUpdate = null;
+		}
+
+		// bind:width and bind:height
+		if (this.name === 'width' || this.name === 'height') {
+			initialUpdate = null;
+			updateDom = null;
 		}
 
 		return {

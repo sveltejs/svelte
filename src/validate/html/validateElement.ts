@@ -157,7 +157,7 @@ export default function validateElement(
 						message: `'${name}' binding can only be used with <audio> or <video>`
 					});
 				}
-			} else {
+			} else if (name !== 'width' && name !== 'height') {
 				validator.error(attribute, {
 					code: `invalid-binding`,
 					message: `'${attribute.name}' is not a valid binding`
