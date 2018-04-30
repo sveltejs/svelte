@@ -21,9 +21,10 @@ prog
 	.example('compile src -o dest')
 	.example('compile -f umd MyComponent.html > MyComponent.js')
 
-	.action(async (input, opts) => {
-		const { compile } = await import('./compile.js');
-		compile(input, opts);
+	.action((input, opts) => {
+		import('./compile.js').then(({ compile }) => {
+			compile(input, opts);
+		});
 	})
 
 	.parse(process.argv);
