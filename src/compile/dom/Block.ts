@@ -140,6 +140,8 @@ export default class Block {
 	}
 
 	toString() {
+		const { dev } = this.compiler.options;
+
 		let introing;
 		const hasIntros = !this.builders.intro.isEmpty();
 		if (hasIntros) {
@@ -184,7 +186,7 @@ export default class Block {
 			);
 
 			properties.addBlock(deindent`
-				c() {
+				${dev ? 'c: function create' : 'c'}() {
 					${this.builders.create}
 					${hydrate}
 				},
@@ -196,7 +198,7 @@ export default class Block {
 				properties.addBlock(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					l(nodes) {
+					${dev ? 'l: function claim' : 'l'}(nodes) {
 						${this.builders.claim}
 						${!this.builders.hydrate.isEmpty() && `this.h();`}
 					},
@@ -206,7 +208,7 @@ export default class Block {
 
 		if (this.compiler.options.hydratable && !this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
-				h() {
+				${dev ? 'h: function hydrate' : 'h'}() {
 					${this.builders.hydrate}
 				},
 			`);
@@ -216,7 +218,7 @@ export default class Block {
 			properties.addBlock(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				m(#target, anchor) {
+				${dev ? 'm: function mount' : 'm'}(#target, anchor) {
 					${this.builders.mount}
 				},
 			`);
@@ -227,7 +229,7 @@ export default class Block {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					p(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
+					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
 						${this.maintainContext && `ctx = _ctx;`}
 						${this.builders.update}
 					},
@@ -238,7 +240,7 @@ export default class Block {
 		if (this.hasIntroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
-					i(#target, anchor) {
+					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
 						if (${introing}) return;
 						${introing} = true;
 						${hasOutros && `${outroing} = false;`}
@@ -250,7 +252,7 @@ export default class Block {
 				`);
 			} else {
 				properties.addBlock(deindent`
-					i(#target, anchor) {
+					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
 						this.m(#target, anchor);
 					},
 				`);
@@ -260,7 +262,7 @@ export default class Block {
 		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
-					o(#outrocallback) {
+					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
 						if (${outroing}) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
@@ -281,7 +283,7 @@ export default class Block {
 			properties.addBlock(`u: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				u() {
+				${dev ? 'u: function unmount' : 'u'}() {
 					${this.builders.unmount}
 				},
 			`);
@@ -291,7 +293,7 @@ export default class Block {
 			properties.addBlock(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
-				d() {
+				${dev ? 'd: function destroy' : 'd'}() {
 					${this.builders.destroy}
 				}
 			`);

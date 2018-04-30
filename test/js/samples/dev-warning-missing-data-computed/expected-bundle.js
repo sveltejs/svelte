@@ -169,21 +169,21 @@ function create_main_fragment(component, ctx) {
 	var p, text_value = ctx.Math.max(0, ctx.foo), text, text_1, text_2;
 
 	return {
-		c() {
+		c: function create() {
 			p = createElement("p");
 			text = createText(text_value);
 			text_1 = createText("\n\t");
 			text_2 = createText(ctx.bar);
 		},
 
-		m(target, anchor) {
+		m: function mount(target, anchor) {
 			insertNode(p, target, anchor);
 			appendNode(text, p);
 			appendNode(text_1, p);
 			appendNode(text_2, p);
 		},
 
-		p(changed, ctx) {
+		p: function update(changed, ctx) {
 			if ((changed.Math || changed.foo) && text_value !== (text_value = ctx.Math.max(0, ctx.foo))) {
 				text.data = text_value;
 			}
@@ -193,7 +193,7 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u() {
+		u: function unmount() {
 			detachNode(p);
 		},
 
