@@ -4,11 +4,13 @@
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
   "files": [
+    "cli",
     "compiler",
     "ssr",
     "shared.js",
     "store.js",
     "store.umd.js",
+    "svelte",
     "README.md"
   ],
   "scripts": {
