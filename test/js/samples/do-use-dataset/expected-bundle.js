@@ -143,31 +143,27 @@ function create_main_fragment(component, ctx) {
 	var div, text, div_1;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
 			text = createText("\n");
 			div_1 = createElement("div");
-			this.h();
-		},
-
-		h: function hydrate() {
 			div.dataset.foo = "bar";
 			div_1.dataset.foo = ctx.bar;
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 			insertNode(text, target, anchor);
 			insertNode(div_1, target, anchor);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.bar) {
 				div_1.dataset.foo = ctx.bar;
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 			detachNode(text);
 			detachNode(div_1);

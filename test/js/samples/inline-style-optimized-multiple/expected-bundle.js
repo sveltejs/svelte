@@ -143,21 +143,17 @@ function create_main_fragment(component, ctx) {
 	var div;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
-			this.h();
-		},
-
-		h: function hydrate() {
 			setStyle(div, "color", ctx.color);
 			setStyle(div, "transform", "translate(" + ctx.x + "px," + ctx.y + "px)");
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.color) {
 				setStyle(div, "color", ctx.color);
 			}
@@ -167,7 +163,7 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 		},
 

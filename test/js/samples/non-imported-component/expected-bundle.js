@@ -151,13 +151,13 @@ function create_main_fragment(component, ctx) {
 	});
 
 	return {
-		c: function create() {
+		c() {
 			imported._fragment.c();
 			text = createText("\n");
 			nonimported._fragment.c();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			imported._mount(target, anchor);
 			insertNode(text, target, anchor);
 			nonimported._mount(target, anchor);
@@ -165,13 +165,13 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			imported._unmount();
 			detachNode(text);
 			nonimported._unmount();
 		},
 
-		d: function destroy$$1() {
+		d() {
 			imported.destroy(false);
 			nonimported.destroy(false);
 		}

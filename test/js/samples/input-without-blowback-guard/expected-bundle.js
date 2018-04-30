@@ -155,31 +155,27 @@ function create_main_fragment(component, ctx) {
 	}
 
 	return {
-		c: function create() {
+		c() {
 			input = createElement("input");
-			this.h();
-		},
-
-		h: function hydrate() {
 			addListener(input, "change", input_change_handler);
 			setAttribute(input, "type", "checkbox");
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(input, target, anchor);
 
 			input.checked = ctx.foo;
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			input.checked = ctx.foo;
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(input);
 		},
 
-		d: function destroy$$1() {
+		d() {
 			removeListener(input, "change", input_change_handler);
 		}
 	};

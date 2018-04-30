@@ -165,7 +165,7 @@ function create_main_fragment(component, ctx) {
 	}
 
 	return {
-		c: function create() {
+		c() {
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
@@ -173,7 +173,7 @@ function create_main_fragment(component, ctx) {
 			each_anchor = createComment();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
@@ -181,7 +181,7 @@ function create_main_fragment(component, ctx) {
 			insertNode(each_anchor, target, anchor);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.createElement) {
 				each_value = ctx.createElement;
 
@@ -205,7 +205,7 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].u();
 			}
@@ -213,7 +213,7 @@ function create_main_fragment(component, ctx) {
 			detachNode(each_anchor);
 		},
 
-		d: function destroy$$1() {
+		d() {
 			destroyEach(each_blocks);
 		}
 	};
@@ -224,23 +224,23 @@ function create_each_block(component, ctx) {
 	var span, text_value = ctx.node, text;
 
 	return {
-		c: function create() {
+		c() {
 			span = createElement("span");
 			text = createText(text_value);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(span, target, anchor);
 			appendNode(text, span);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if ((changed.createElement) && text_value !== (text_value = ctx.node)) {
 				text.data = text_value;
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(span);
 		},
 
