@@ -12,21 +12,21 @@ function create_main_fragment(component, ctx) {
 	});
 
 	return {
-		c: function create() {
+		c() {
 			nested._fragment.c();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			nested._mount(target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			nested._unmount();
 		},
 
-		d: function destroy() {
+		d() {
 			nested.destroy(false);
 		}
 	};

@@ -167,29 +167,29 @@ function create_main_fragment(component, ctx) {
 	});
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			text = createText("scrolled to ");
 			text_1 = createText(ctx.y);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 			appendNode(text, p);
 			appendNode(text_1, p);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.y) {
 				text_1.data = ctx.y;
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
-		d: function destroy$$1() {
+		d() {
 			window.removeEventListener("scroll", onwindowscroll);
 		}
 	};

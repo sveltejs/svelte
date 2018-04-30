@@ -5,31 +5,27 @@ function create_main_fragment(component, ctx) {
 	var svg, g, g_1;
 
 	return {
-		c: function create() {
+		c() {
 			svg = createSvgElement("svg");
 			g = createSvgElement("g");
 			g_1 = createSvgElement("g");
-			this.h();
-		},
-
-		h: function hydrate() {
 			setAttribute(g, "data-foo", "bar");
 			setAttribute(g_1, "data-foo", ctx.bar);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(svg, target, anchor);
 			appendNode(g, svg);
 			appendNode(g_1, svg);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.bar) {
 				setAttribute(g_1, "data-foo", ctx.bar);
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(svg);
 		},
 
