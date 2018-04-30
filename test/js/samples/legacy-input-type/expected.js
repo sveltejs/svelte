@@ -5,22 +5,18 @@ function create_main_fragment(component, ctx) {
 	var input;
 
 	return {
-		c: function create() {
+		c() {
 			input = createElement("input");
-			this.h();
-		},
-
-		h: function hydrate() {
 			setInputType(input, "search");
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(input, target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(input);
 		},
 
