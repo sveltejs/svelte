@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('./cli/index.js');
+require('./cli/index.ts.js');

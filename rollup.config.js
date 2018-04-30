@@ -59,7 +59,7 @@ export default [
 
 	/* cli/*.js */
 	{
-		input: ['src/cli/index.js'],
+		input: ['src/cli/index.ts'],
 		output: {
 			dir: 'cli',
 			format: 'cjs'
@@ -71,7 +71,10 @@ export default [
 		plugins: [
 			json(),
 			commonjs(),
-			resolve()
+			resolve(),
+			typescript({
+				typescript: require('typescript')
+			})
 		],
 		experimentalDynamicImport: true,
 		experimentalCodeSplitting: true
