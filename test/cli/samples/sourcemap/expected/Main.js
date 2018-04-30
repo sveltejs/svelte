@@ -4,18 +4,18 @@ function create_main_fragment(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "Hello world!";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
