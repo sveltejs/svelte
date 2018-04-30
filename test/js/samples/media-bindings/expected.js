@@ -37,12 +37,8 @@ function create_main_fragment(component, ctx) {
 	}
 
 	return {
-		c: function create() {
+		c() {
 			audio = createElement("audio");
-			this.h();
-		},
-
-		h: function hydrate() {
 			addListener(audio, "timeupdate", audio_timeupdate_handler);
 			if (!('played' in ctx && 'currentTime' in ctx)) component.root._beforecreate.push(audio_timeupdate_handler);
 			addListener(audio, "durationchange", audio_durationchange_handler);
@@ -56,23 +52,23 @@ function create_main_fragment(component, ctx) {
 			addListener(audio, "volumechange", audio_volumechange_handler);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(audio, target, anchor);
 
 			audio.volume = ctx.volume;
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (!audio_updating && !isNaN(ctx.currentTime )) audio.currentTime = ctx.currentTime ;
 			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused )) audio[audio_is_paused ? "pause" : "play"]();
 			if (!audio_updating && !isNaN(ctx.volume)) audio.volume = ctx.volume;
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(audio);
 		},
 
-		d: function destroy() {
+		d() {
 			removeListener(audio, "timeupdate", audio_timeupdate_handler);
 			removeListener(audio, "durationchange", audio_durationchange_handler);
 			removeListener(audio, "play", audio_play_pause_handler);

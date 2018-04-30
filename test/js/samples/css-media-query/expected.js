@@ -12,22 +12,18 @@ function create_main_fragment(component, ctx) {
 	var div;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
-			this.h();
-		},
-
-		h: function hydrate() {
 			div.className = "svelte-1slhpfn";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 		},
 

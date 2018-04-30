@@ -5,13 +5,13 @@ function create_main_fragment(component, ctx) {
 	var svg, title, text;
 
 	return {
-		c: function create() {
+		c() {
 			svg = createSvgElement("svg");
 			title = createSvgElement("title");
 			text = createText("a title");
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(svg, target, anchor);
 			appendNode(title, svg);
 			appendNode(text, title);
@@ -19,7 +19,7 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(svg);
 		},
 
