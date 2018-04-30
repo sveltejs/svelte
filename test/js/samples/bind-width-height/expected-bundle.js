@@ -172,24 +172,20 @@ function create_main_fragment(component, ctx) {
 	}
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
 			div.textContent = "some content";
-			this.h();
-		},
-
-		h: function hydrate() {
 			component.root._beforecreate.push(div_resize_handler);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 			div_resize_listener = addResizeListener(div, div_resize_handler);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 			div_resize_listener.cancel();
 		},
