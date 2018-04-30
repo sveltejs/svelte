@@ -158,7 +158,19 @@ export default function validateElement(
 						message: `'${name}' binding can only be used with <audio> or <video>`
 					});
 				}
-			} else if (!dimensions.test(name)) {
+			} else if (dimensions.test(name)) {
+				if (node.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
+					validator.error(attribute, {
+						code: 'invalid-binding',
+						message: `'${attribute.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`
+					});
+				} else if (svg.test(node.name)) {
+					validator.error(attribute, {
+						code: 'invalid-binding',
+						message: `'${attribute.name}' is not a valid binding on SVG elements`
+					});
+				}
+			} else {
 				validator.error(attribute, {
 					code: `invalid-binding`,
 					message: `'${attribute.name}' is not a valid binding`
