@@ -60,9 +60,6 @@ describe('svelte-cli', () => {
 						};
 					});
 
-				console.log(actual);
-				console.log(expected);
-
 				actual.forEach((a, i) => {
 					const e = expected[i];
 
