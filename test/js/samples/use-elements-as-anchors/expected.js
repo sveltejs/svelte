@@ -15,7 +15,7 @@ function create_main_fragment(component, ctx) {
 	var if_block_4 = (ctx.e) && create_if_block_4(component, ctx);
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
 			if (if_block) if_block.c();
 			text = createText("\n\n\t");
@@ -35,7 +35,7 @@ function create_main_fragment(component, ctx) {
 			if_block_4_anchor = createComment();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 			if (if_block) if_block.m(div, null);
 			appendNode(text, div);
@@ -53,7 +53,7 @@ function create_main_fragment(component, ctx) {
 			insertNode(if_block_4_anchor, target, anchor);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (ctx.a) {
 				if (!if_block) {
 					if_block = create_if_block(component, ctx);
@@ -115,7 +115,7 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 			if (if_block) if_block.u();
 			if (if_block_1) if_block_1.u();
@@ -126,7 +126,7 @@ function create_main_fragment(component, ctx) {
 			detachNode(if_block_4_anchor);
 		},
 
-		d: function destroy() {
+		d() {
 			if (if_block) if_block.d();
 			if (if_block_1) if_block_1.d();
 			if (if_block_2) if_block_2.d();
@@ -141,16 +141,16 @@ function create_if_block(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "a";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
@@ -163,16 +163,16 @@ function create_if_block_1(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "b";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
@@ -185,16 +185,16 @@ function create_if_block_2(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "c";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
@@ -207,16 +207,16 @@ function create_if_block_3(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "d";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
@@ -229,16 +229,16 @@ function create_if_block_4(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "e";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 

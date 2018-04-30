@@ -148,32 +148,28 @@ function create_main_fragment(component, ctx) {
 	var button, foo_handler;
 
 	return {
-		c: function create() {
+		c() {
 			button = createElement("button");
 			button.textContent = "foo";
-			this.h();
-		},
-
-		h: function hydrate() {
 			foo_handler = foo.call(component, button, function(event) {
 				component.foo( ctx.bar );
 			});
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(button, target, anchor);
 		},
 
-		p: function update(changed, _ctx) {
+		p(changed, _ctx) {
 			ctx = _ctx;
 
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(button);
 		},
 
-		d: function destroy$$1() {
+		d() {
 			foo_handler.destroy();
 		}
 	};

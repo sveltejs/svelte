@@ -21,28 +21,24 @@ function create_main_fragment(component, ctx) {
 	var a, link_action;
 
 	return {
-		c: function create() {
+		c() {
 			a = createElement("a");
 			a.textContent = "Test";
-			this.h();
-		},
-
-		h: function hydrate() {
 			a.href = "#";
 			link_action = link.call(component, a) || {};
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(a, target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(a);
 		},
 
-		d: function destroy() {
+		d() {
 			if (typeof link_action.destroy === 'function') link_action.destroy.call(component);
 		}
 	};

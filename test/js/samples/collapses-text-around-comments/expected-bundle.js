@@ -157,28 +157,24 @@ function create_main_fragment(component, ctx) {
 	var p, text;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			text = createText(ctx.foo);
-			this.h();
-		},
-
-		h: function hydrate() {
 			p.className = "svelte-1a7i8ec";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 			appendNode(text, p);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.foo) {
 				text.data = ctx.foo;
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 
