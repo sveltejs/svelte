@@ -1,6 +1,7 @@
 .DS_Store
 .nyc_output
 node_modules
+/cli/
 /compiler/
 /ssr/
 /shared.js
