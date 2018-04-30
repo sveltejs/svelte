@@ -139,19 +139,19 @@ function create_main_fragment(component, ctx) {
 	var div;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
 			div.textContent = "fades in";
 			this.c = noop;
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 		},
 
