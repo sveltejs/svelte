@@ -6,6 +6,7 @@ import flattenReference from '../../utils/flattenReference';
 import Compiler from '../Compiler';
 import Block from '../dom/Block';
 import Expression from './shared/Expression';
+import { dimensions } from '../../utils/patterns';
 
 const readOnlyMediaAttributes = new Set([
 	'duration',
@@ -13,6 +14,9 @@ const readOnlyMediaAttributes = new Set([
 	'seekable',
 	'played'
 ]);
+
+// TODO a lot of this element-specific stuff should live in Element —
+// Binding should ideally be agnostic between Element and Component
 
 export default class Binding extends Node {
 	name: string;
@@ -57,7 +61,10 @@ export default class Binding extends Node {
 		const node: Element = this.parent;
 
 		const needsLock = node.name !== 'input' || !/radio|checkbox|range|color/.test(node.getStaticAttributeValue('type'));
-		const isReadOnly = node.isMediaNode() && readOnlyMediaAttributes.has(this.name);
+		const isReadOnly = (
+			(node.isMediaNode() && readOnlyMediaAttributes.has(this.name)) ||
+			dimensions.test(this.name)
+		);
 
 		let updateCondition: string;
 
@@ -103,8 +110,7 @@ export default class Binding extends Node {
 		if (this.name === 'currentTime' || this.name === 'volume') {
 			updateCondition = `!isNaN(${snippet})`;
 
-			if (this.name === 'currentTime')
-				initialUpdate = null;
+			if (this.name === 'currentTime') initialUpdate = null;
 		}
 
 		if (this.name === 'paused') {
@@ -115,6 +121,12 @@ export default class Binding extends Node {
 			updateCondition = `${last} !== (${last} = ${snippet})`;
 			updateDom = `${node.var}[${last} ? "pause" : "play"]();`;
 			initialUpdate = null;
+		}
+
+		// bind:offsetWidth and bind:offsetHeight
+		if (dimensions.test(this.name)) {
+			initialUpdate = null;
+			updateDom = null;
 		}
 
 		return {
