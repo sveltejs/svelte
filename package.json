@@ -3,12 +3,17 @@
   "version": "2.3.0",
   "description": "The magical disappearing UI framework",
   "main": "compiler/svelte.js",
+  "bin": {
+    "svelte": "svelte"
+  },
   "files": [
+    "cli",
     "compiler",
     "ssr",
     "shared.js",
     "store.js",
     "store.umd.js",
+    "svelte",
     "README.md"
   ],
   "scripts": {
@@ -48,6 +53,7 @@
     "acorn": "^5.4.1",
     "acorn-dynamic-import": "^3.0.0",
     "chalk": "^2.4.0",
+    "clorox": "^1.0.3",
     "codecov": "^3.0.0",
     "console-group": "^0.3.2",
     "css-tree": "1.0.0-alpha22",
@@ -55,7 +61,6 @@
     "eslint-plugin-html": "^4.0.3",
     "eslint-plugin-import": "^2.11.0",
     "estree-walker": "^0.5.1",
-    "glob": "^7.1.1",
     "is-reference": "^1.1.0",
     "jsdom": "^11.8.0",
     "locate-character": "^2.0.5",
@@ -75,8 +80,11 @@
     "rollup-plugin-typescript": "^0.8.1",
     "rollup-plugin-virtual": "^1.0.1",
     "rollup-watch": "^4.3.1",
+    "sade": "^1.4.0",
+    "sander": "^0.6.0",
     "source-map": "0.6",
     "source-map-support": "^0.5.4",
+    "tiny-glob": "^0.2.0",
     "ts-node": "^6.0.0",
     "tslib": "^1.8.0",
     "typescript": "^2.8.3"
