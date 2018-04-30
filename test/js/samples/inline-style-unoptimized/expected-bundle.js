@@ -143,25 +143,21 @@ function create_main_fragment(component, ctx) {
 	var div, text, div_1, div_1_style_value;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
 			text = createText("\n");
 			div_1 = createElement("div");
-			this.h();
-		},
-
-		h: function hydrate() {
 			div.style.cssText = ctx.style;
 			div_1.style.cssText = div_1_style_value = "" + ctx.key + ": " + ctx.value;
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 			insertNode(text, target, anchor);
 			insertNode(div_1, target, anchor);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.style) {
 				div.style.cssText = ctx.style;
 			}
@@ -171,7 +167,7 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(div);
 			detachNode(text);
 			detachNode(div_1);

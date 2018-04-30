@@ -11,7 +11,7 @@ function create_main_fragment(component, ctx) {
 
 		m: noop,
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if ((changed.custom) && title_value !== (title_value = "a " + ctx.custom + " title")) {
 				document.title = title_value;
 			}

@@ -139,27 +139,23 @@ function create_main_fragment(component, ctx) {
 	var meta, meta_1;
 
 	return {
-		c: function create() {
+		c() {
 			meta = createElement("meta");
 			meta_1 = createElement("meta");
-			this.h();
-		},
-
-		h: function hydrate() {
 			meta.name = "twitter:creator";
 			meta.content = "@sveltejs";
 			meta_1.name = "twitter:title";
 			meta_1.content = "Svelte";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			appendNode(meta, document.head);
 			appendNode(meta_1, document.head);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			detachNode(meta);
 			detachNode(meta_1);
 		},
