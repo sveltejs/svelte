@@ -11,7 +11,7 @@ function mkdirp(dir) {
 	if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 }
 
-export async function compile(input, opts) {
+export function compile(input, opts) {
 	if (opts._.length > 0) {
 		error(`Can only compile a single file or directory`);
 	}
