@@ -8,6 +8,7 @@ node_modules
 /scratch/
 /coverage/
 /coverage.lcov/
+/test/cli/samples/*/actual
 /test/sourcemaps/samples/*/output.js
 /test/sourcemaps/samples/*/output.js.map
 /src/compile/shared.ts
