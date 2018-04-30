@@ -2,6 +2,8 @@ import * as namespaces from '../../utils/namespaces';
 import validateEventHandler from './validateEventHandler';
 import validate, { Validator } from '../index';
 import { Node } from '../../interfaces';
+import { dimensions } from '../../utils/patterns';
+import isVoidElementName from '../../utils/isVoidElementName';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -155,6 +157,23 @@ export default function validateElement(
 					validator.error(attribute, {
 						code: `invalid-binding`,
 						message: `'${name}' binding can only be used with <audio> or <video>`
+					});
+				}
+			} else if (dimensions.test(name)) {
+				if (node.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
+					validator.error(attribute, {
+						code: 'invalid-binding',
+						message: `'${attribute.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`
+					});
+				} else if (svg.test(node.name)) {
+					validator.error(attribute, {
+						code: 'invalid-binding',
+						message: `'${attribute.name}' is not a valid binding on SVG elements`
+					});
+				} else if (isVoidElementName(node.name)) {
+					validator.error(attribute, {
+						code: 'invalid-binding',
+						message: `'${attribute.name}' is not a valid binding on void elements like <${node.name}>. Use a wrapper element instead`
 					});
 				}
 			} else {

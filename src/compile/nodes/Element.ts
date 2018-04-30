@@ -17,6 +17,7 @@ import Action from './Action';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
+import { dimensions } from '../../utils/patterns';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const booleanAttributes = new Set('async autocomplete autofocus autoplay border challenge checked compact contenteditable controls default defer disabled formnovalidate frameborder hidden indeterminate ismap loop multiple muted nohref noresize noshade novalidate nowrap open readonly required reversed scoped scrolling seamless selected sortable spellcheck translate'.split(' '));
@@ -262,7 +263,7 @@ export default class Element extends Node {
 			parentNode;
 
 		block.addVariable(name);
-		const renderStatement = getRenderStatement(this.compiler, this.namespace, this.name);
+		const renderStatement = getRenderStatement(this.namespace, this.name);
 		block.builders.create.addLine(
 			`${name} = ${renderStatement};`
 		);
@@ -489,13 +490,27 @@ export default class Element extends Node {
 			`);
 
 			group.events.forEach(name => {
-				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${name}", ${handler});`
-				);
+				if (name === 'resize') {
+					// special case
+					const resize_listener = block.getUniqueName(`${this.var}_resize_listener`);
+					block.addVariable(resize_listener);
 
-				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${name}", ${handler});`
-				);
+					block.builders.mount.addLine(
+						`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
+					);
+
+					block.builders.unmount.addLine(
+						`${resize_listener}.cancel();`
+					);
+				} else {
+					block.builders.hydrate.addLine(
+						`@addListener(${this.var}, "${name}", ${handler});`
+					);
+
+					block.builders.destroy.addLine(
+						`@removeListener(${this.var}, "${name}", ${handler});`
+					);
+				}
 			});
 
 			const allInitialStateIsDefined = group.bindings
@@ -507,6 +522,14 @@ export default class Element extends Node {
 
 				block.builders.hydrate.addLine(
 					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
+				);
+			}
+
+			if (group.events[0] === 'resize') {
+				this.compiler.target.hasComplexBindings = true;
+
+				block.builders.hydrate.addLine(
+					`#component.root._beforecreate.push(${handler});`
 				);
 			}
 		});
@@ -916,7 +939,6 @@ export default class Element extends Node {
 }
 
 function getRenderStatement(
-	compiler: Compiler,
 	namespace: string,
 	name: string
 ) {
@@ -969,6 +991,12 @@ const events = [
 		filter: (node: Element, name: string) =>
 			node.name === 'select' ||
 			node.name === 'input' && /radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
+	},
+
+	{
+		eventNames: ['resize'],
+		filter: (node: Element, name: string) =>
+			dimensions.test(name)
 	},
 
 	// media events
