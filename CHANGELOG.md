@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 2.4.0
+
+* Integrate CLI ([#1360](https://github.com/sveltejs/svelte/issues/1360))
+* Allow arbitrary destructuring for each block items, with binding ([#1385](https://github.com/sveltejs/svelte/pull/1385))
+* Each block keys can use arbitrary expressions ([#703](https://github.com/sveltejs/svelte/issues/703))
+* `bind:offsetWidth`, `bind:offsetHeight`, `bind:clientWidth` and `bind:clientHeight` ([#984](https://github.com/sveltejs/svelte/issues/984))
+* Leaner generated code for `each` blocks ([#1287](https://github.com/sveltejs/svelte/issues/1287))
+
+
 ## 2.3.0
 
 * Allow computed properties to have entire state object as dependency ([#1303](https://github.com/sveltejs/svelte/issues/1303))
