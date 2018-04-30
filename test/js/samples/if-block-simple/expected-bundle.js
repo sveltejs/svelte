@@ -145,17 +145,17 @@ function create_main_fragment(component, ctx) {
 	var if_block = (ctx.foo) && create_if_block(component, ctx);
 
 	return {
-		c: function create() {
+		c() {
 			if (if_block) if_block.c();
 			if_block_anchor = createComment();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			if (if_block) if_block.m(target, anchor);
 			insertNode(if_block_anchor, target, anchor);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (ctx.foo) {
 				if (!if_block) {
 					if_block = create_if_block(component, ctx);
@@ -169,12 +169,12 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			if (if_block) if_block.u();
 			detachNode(if_block_anchor);
 		},
 
-		d: function destroy$$1() {
+		d() {
 			if (if_block) if_block.d();
 		}
 	};
@@ -185,16 +185,16 @@ function create_if_block(component, ctx) {
 	var p;
 
 	return {
-		c: function create() {
+		c() {
 			p = createElement("p");
 			p.textContent = "foo!";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(p, target, anchor);
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(p);
 		},
 

@@ -13,7 +13,7 @@ function create_main_fragment(component, ctx) {
 	}
 
 	return {
-		c: function create() {
+		c() {
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
@@ -23,7 +23,7 @@ function create_main_fragment(component, ctx) {
 			text_1 = createText(ctx.foo);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
@@ -33,7 +33,7 @@ function create_main_fragment(component, ctx) {
 			appendNode(text_1, p);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.comments || changed.elapsed || changed.time) {
 				each_value = ctx.comments;
 
@@ -61,7 +61,7 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			for (var i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].u();
 			}
@@ -70,7 +70,7 @@ function create_main_fragment(component, ctx) {
 			detachNode(p);
 		},
 
-		d: function destroy() {
+		d() {
 			destroyEach(each_blocks);
 		}
 	};
@@ -81,7 +81,7 @@ function create_each_block(component, ctx) {
 	var div, strong, text, text_1, span, text_2_value = ctx.comment.author, text_2, text_3, text_4_value = ctx.elapsed(ctx.comment.time, ctx.time), text_4, text_5, text_6, raw_value = ctx.comment.html, raw_before;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
 			strong = createElement("strong");
 			text = createText(ctx.i);
@@ -93,15 +93,11 @@ function create_each_block(component, ctx) {
 			text_5 = createText(" ago:");
 			text_6 = createText("\n\n\t\t");
 			raw_before = createElement('noscript');
-			this.h();
-		},
-
-		h: function hydrate() {
 			span.className = "meta";
 			div.className = "comment";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 			appendNode(strong, div);
 			appendNode(text, strong);
@@ -116,7 +112,7 @@ function create_each_block(component, ctx) {
 			raw_before.insertAdjacentHTML("afterend", raw_value);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if ((changed.comments) && text_2_value !== (text_2_value = ctx.comment.author)) {
 				text_2.data = text_2_value;
 			}
@@ -131,7 +127,7 @@ function create_each_block(component, ctx) {
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachAfter(raw_before);
 
 			detachNode(div);
