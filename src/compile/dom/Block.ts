@@ -177,10 +177,16 @@ export default class Block {
 		if (this.builders.create.isEmpty() && this.builders.hydrate.isEmpty()) {
 			properties.addBlock(`c: @noop,`);
 		} else {
+			const hydrate = !this.builders.hydrate.isEmpty() && (
+				this.compiler.options.hydratable
+					? `this.h()`
+					: this.builders.hydrate
+			);
+
 			properties.addBlock(deindent`
-				c: function create() {
+				c() {
 					${this.builders.create}
-					${!this.builders.hydrate.isEmpty() && `this.h();`}
+					${hydrate}
 				},
 			`);
 		}
@@ -190,7 +196,7 @@ export default class Block {
 				properties.addBlock(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					l: function claim(nodes) {
+					l(nodes) {
 						${this.builders.claim}
 						${!this.builders.hydrate.isEmpty() && `this.h();`}
 					},
@@ -198,9 +204,9 @@ export default class Block {
 			}
 		}
 
-		if (!this.builders.hydrate.isEmpty()) {
+		if (this.compiler.options.hydratable && !this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
-				h: function hydrate() {
+				h() {
 					${this.builders.hydrate}
 				},
 			`);
@@ -210,7 +216,7 @@ export default class Block {
 			properties.addBlock(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				m: function mount(#target, anchor) {
+				m(#target, anchor) {
 					${this.builders.mount}
 				},
 			`);
@@ -221,7 +227,7 @@ export default class Block {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					p: function update(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
+					p(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
 						${this.maintainContext && `ctx = _ctx;`}
 						${this.builders.update}
 					},
@@ -232,7 +238,7 @@ export default class Block {
 		if (this.hasIntroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
-					i: function intro(#target, anchor) {
+					i(#target, anchor) {
 						if (${introing}) return;
 						${introing} = true;
 						${hasOutros && `${outroing} = false;`}
@@ -244,7 +250,7 @@ export default class Block {
 				`);
 			} else {
 				properties.addBlock(deindent`
-					i: function intro(#target, anchor) {
+					i(#target, anchor) {
 						this.m(#target, anchor);
 					},
 				`);
@@ -254,7 +260,7 @@ export default class Block {
 		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
-					o: function outro(#outrocallback) {
+					o(#outrocallback) {
 						if (${outroing}) return;
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
@@ -275,7 +281,7 @@ export default class Block {
 			properties.addBlock(`u: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				u: function unmount() {
+				u() {
 					${this.builders.unmount}
 				},
 			`);
@@ -285,7 +291,7 @@ export default class Block {
 			properties.addBlock(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
-				d: function destroy() {
+				d() {
 					${this.builders.destroy}
 				}
 			`);
