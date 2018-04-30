@@ -10,21 +10,21 @@ function create_main_fragment(component, ctx) {
 	});
 
 	return {
-		c: function create() {
+		c() {
 			widget._fragment.c();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			widget._mount(target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
+		u() {
 			widget._unmount();
 		},
 
-		d: function destroy() {
+		d() {
 			widget.destroy(false);
 		}
 	};

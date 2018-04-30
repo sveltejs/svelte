@@ -12,25 +12,25 @@ var Main = (function(answer) { "use strict";
 		var p, text, text_1;
 
 		return {
-			c: function create() {
+			c() {
 				p = createElement("p");
 				text = createText("The answer is ");
 				text_1 = createText(ctx.answer);
 			},
 
-			m: function mount(target, anchor) {
+			m(target, anchor) {
 				insertNode(p, target, anchor);
 				appendNode(text, p);
 				appendNode(text_1, p);
 			},
 
-			p: function update(changed, ctx) {
+			p(changed, ctx) {
 				if (changed.answer) {
 					text_1.data = ctx.answer;
 				}
 			},
 
-			u: function unmount() {
+			u() {
 				detachNode(p);
 			},
 

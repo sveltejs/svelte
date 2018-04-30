@@ -4,25 +4,25 @@ function create_main_fragment(component, ctx) {
 	var h1, text, text_1;
 
 	return {
-		c: function create() {
+		c() {
 			h1 = createElement("h1");
 			text = createText("Hello ");
 			text_1 = createText(ctx.$name);
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(h1, target, anchor);
 			appendNode(text, h1);
 			appendNode(text_1, h1);
 		},
 
-		p: function update(changed, ctx) {
+		p(changed, ctx) {
 			if (changed.$name) {
 				text_1.data = ctx.$name;
 			}
 		},
 
-		u: function unmount() {
+		u() {
 			detachNode(h1);
 		},
 
