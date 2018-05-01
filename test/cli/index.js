@@ -15,7 +15,7 @@ function normalize(str) {
 
 const cwd = process.cwd();
 
-describe('svelte-cli', () => {
+describe('cli', () => {
 	afterEach(() => {
 		process.chdir(cwd);
 	});

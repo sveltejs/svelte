@@ -1,7 +1,7 @@
 import sade from 'sade';
 import * as pkg from '../../package.json';
 
-const prog = sade('svelte-cli').version(pkg.version);
+const prog = sade('svelte').version(pkg.version);
 
 prog
 	.command('compile <input>')
