@@ -203,8 +203,11 @@ export function addResizeListener(element, fn) {
 	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
 	object.type = 'text/html';
 
+	let win;
+
 	object.onload = () => {
-		object.contentDocument.defaultView.addEventListener('resize', fn);
+		win = object.contentDocument.defaultView;
+		win.addEventListener('resize', fn);
 	};
 
 	if (/Trident/.test(navigator.userAgent)) {
@@ -217,7 +220,7 @@ export function addResizeListener(element, fn) {
 
 	return {
 		cancel: () => {
-			object.contentDocument.defaultView.removeEventListener('resize', fn);
+			win.removeEventListener('resize', fn);
 			element.removeChild(object);
 		}
 	};
