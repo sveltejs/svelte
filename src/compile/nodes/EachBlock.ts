@@ -40,15 +40,15 @@ export default class EachBlock extends Node {
 			this.scope.add(context.key.name, this.expression.dependencies);
 		});
 
+		this.key = info.key
+			? new Expression(compiler, this, this.scope, info.key)
+			: null;
+
 		if (this.index) {
 			// index can only change if this is a keyed each block
 			const dependencies = this.key ? this.expression.dependencies : [];
 			this.scope.add(this.index, dependencies);
 		}
-
-		this.key = info.key
-			? new Expression(compiler, this, this.scope, info.key)
-			: null;
 
 		this.children = mapChildren(compiler, this, this.scope, info.children);
 
