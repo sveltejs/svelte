@@ -209,12 +209,6 @@ export default class Component extends Node {
 									.join(' || ')}) ${name_changes}.${attribute.name} = ${attribute.getValue()};
 							`);
 						}
-
-						else {
-							// TODO this is an odd situation to encounter – I *think* it should only happen with
-							// each block indices, in which case it may be possible to optimise this
-							updates.push(`${name_changes}.${attribute.name} = ${attribute.getValue()};`);
-						}
 					});
 				}
 		}
