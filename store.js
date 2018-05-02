@@ -50,7 +50,7 @@ assign(Store.prototype, {
 		var computed = this._computed;
 		var sorted = this._sortedComputedProperties = [];
 		var visited = blankObject();
-		var lookup = blankObject();
+		var cycles = blankObject();
 
 		function visit(key) {
 			if (visited[key]) return;
@@ -59,12 +59,12 @@ assign(Store.prototype, {
 			var c = computed[key];
 
 			if (c) {
-				if (!lookup[key]) lookup[key] = blankObject();
+				if (!cycles[key]) cycles[key] = blankObject();
 				c.deps.forEach(dep => {
-					if (lookup[dep] && lookup[dep][key]) {
+					if (cycles[dep] && cycles[dep][key]) {
 						throw new Error(`Cyclical dependency detected between ${dep} <-> ${key}`);
 					}
-					lookup[key][dep] = true;
+					cycles[key][dep] = true;
 					visit(dep);
 				});
 				sorted.push(c);
