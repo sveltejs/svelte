@@ -144,6 +144,24 @@ describe('store', () => {
 				store.compute('b', ['a'], a => a + 1);
 			}, /Cyclical dependency detected/);
 		});
+
+		it('does not falsely report cycles', () => {
+			const store = new Store();
+
+			store.compute('dep4', ['dep1', 'dep2', 'dep3'], (...args) => ['dep4'].concat(...args));
+			store.compute('dep1', ['source'], (...args) => ['dep1'].concat(...args));
+			store.compute('dep2', ['dep1'], (...args) => ['dep2'].concat(...args));
+			store.compute('dep3', ['dep1', 'dep2'], (...args) => ['dep3'].concat(...args));
+			store.set({source: 'source'});
+
+			assert.deepEqual(store.get().dep4, [
+				'dep4',
+				'dep1', 'source',
+				'dep2', 'dep1', 'source',
+				'dep3', 'dep1', 'source',
+				'dep2', 'dep1', 'source'
+			]);
+		});
 	});
 
 	describe('immutable', () => {
