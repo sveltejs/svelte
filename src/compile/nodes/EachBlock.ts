@@ -31,10 +31,6 @@ export default class EachBlock extends Node {
 		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
 		this.index = info.index;
 
-		this.key = info.key
-			? new Expression(compiler, this, scope, info.key)
-			: null;
-
 		this.scope = scope.child();
 
 		this.contexts = [];
@@ -49,6 +45,10 @@ export default class EachBlock extends Node {
 			const dependencies = this.key ? this.expression.dependencies : [];
 			this.scope.add(this.index, dependencies);
 		}
+
+		this.key = info.key
+			? new Expression(compiler, this, this.scope, info.key)
+			: null;
 
 		this.children = mapChildren(compiler, this, this.scope, info.children);
 
