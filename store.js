@@ -53,12 +53,11 @@ assign(Store.prototype, {
 		var visited = blankObject();
 
 		function visit(key) {
+			if (visited[key]) return;
+
 			if (cycles[key]) {
 				throw new Error('Cyclical dependency detected');
 			}
-
-			if (visited[key]) return;
-			visited[key] = true;
 
 			var c = computed[key];
 
@@ -66,6 +65,7 @@ assign(Store.prototype, {
 				cycles[key] = true;
 				c.deps.forEach(visit);
 				sorted.push(c);
+				visited[key] = true;
 			}
 		}
 
