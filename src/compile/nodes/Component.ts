@@ -16,6 +16,7 @@ import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
 import { AppendTarget } from '../../interfaces';
+import addToSet from '../../utils/addToSet';
 
 export default class Component extends Node {
 	type: 'Component';
@@ -161,10 +162,16 @@ export default class Component extends Node {
 				const initialProps = [];
 				const changes = [];
 
+				const allDependencies = new Set();
+
+				this.attributes.forEach(attr => {
+					addToSet(allDependencies, attr.dependencies);
+				});
+
 				this.attributes.forEach(attr => {
 					const { name, dependencies } = attr;
 
-					const condition = dependencies.size > 0
+					const condition = dependencies.size > 0 && (dependencies.size !== allDependencies.size)
 						? [...dependencies].map(d => `changed.${d}`).join(' || ')
 						: null;
 
@@ -181,20 +188,22 @@ export default class Component extends Node {
 					}
 				});
 
-				block.addVariable(levels);
-
-				statements.push(deindent`
-					${levels} = [
+				block.builders.init.addBlock(deindent`
+					var ${levels} = [
 						${initialProps.join(',\n')}
 					];
+				`);
 
+				statements.push(deindent`
 					for (var #i = 0; #i < ${levels}.length; #i += 1) {
 						${name_initial_data} = @assign(${name_initial_data}, ${levels}[#i]);
 					}
 				`);
 
+				const conditions = [...allDependencies].map(dep => `changed.${dep}`).join(' || ');
+
 				updates.push(deindent`
-					var ${name_changes} = @getSpreadUpdate(${levels}, [
+					var ${name_changes} = ${allDependencies.size === 1 ? `${conditions}` : `(${conditions})`} && @getSpreadUpdate(${levels}, [
 						${changes.join(',\n')}
 					]);
 				`);
@@ -381,6 +390,12 @@ export default class Component extends Node {
 
 			const updateMountNode = this.getUpdateMountNode(anchor);
 
+			if (updates.length) {
+				block.builders.update.addBlock(deindent`
+					${updates}
+				`);
+			}
+
 			block.builders.update.addBlock(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) ${name}.destroy();
@@ -408,8 +423,7 @@ export default class Component extends Node {
 
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
-					else {
-						${updates}
+					else if (${switch_value}) {
 						${name}._set(${name_changes});
 						${this.bindings.length && `${name_updating} = {};`}
 					}
