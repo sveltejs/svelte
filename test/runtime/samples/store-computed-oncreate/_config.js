@@ -1,6 +1,8 @@
 import { Store } from '../../../../store.js';
 
 export default {
+	'skip-ssr': true,
+
 	store: new Store(),
 
 	html: `
