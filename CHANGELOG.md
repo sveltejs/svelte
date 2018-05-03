@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.4.1
+
+* Fix DOM event context ([#1390](https://github.com/sveltejs/svelte/issues/1390))
+
 ## 2.4.0
 
 * Integrate CLI ([#1360](https://github.com/sveltejs/svelte/issues/1360))
