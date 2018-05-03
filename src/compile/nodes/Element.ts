@@ -191,6 +191,10 @@ export default class Element extends Node {
 			block.outros += 1;
 		}
 
+		if (this.ref) {
+			this.parent.cannotUseInnerHTML();
+		}
+
 		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
 		// special case — in a case like this...
