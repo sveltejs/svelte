@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.4.2
+
+* Evaluate `each` key in child scope ([#1397](https://github.com/sveltejs/svelte/issues/1397))
+* Prevent false negatives and positives when detecting cyclical computed store properties ([#1399](https://github.com/sveltejs/svelte/issues/1399))
+* Only update dynamic component props ([#1394](https://github.com/sveltejs/svelte/issues/1394))
+
 ## 2.4.1
 
 * Fix DOM event context ([#1390](https://github.com/sveltejs/svelte/issues/1390))
