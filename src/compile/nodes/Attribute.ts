@@ -66,11 +66,7 @@ export default class Attribute extends Node {
 					return expression;
 				});
 
-			// TODO this would be better, but it breaks some stuff
-			// this.isDynamic = this.dependencies.size > 0;
-			this.isDynamic = this.chunks.length === 1
-				? this.chunks[0].type !== 'Text'
-				: this.chunks.length > 1;
+			this.isDynamic = this.dependencies.size > 0;
 
 			this.shouldCache = this.isDynamic
 				? this.chunks.length === 1
@@ -82,7 +78,7 @@ export default class Attribute extends Node {
 
 	getValue() {
 		if (this.isTrue) return true;
-		if (this.chunks.length === 0) return `''`;
+		if (this.chunks.length === 0) return `""`;
 
 		if (this.chunks.length === 1) {
 			return this.chunks[0].type === 'Text'
@@ -252,9 +248,7 @@ export default class Attribute extends Node {
 				);
 			}
 		} else {
-			const value = this.isTrue
-				? 'true'
-				: this.chunks.length === 0 ? `""` : stringify(this.chunks[0].data);
+			const value = this.getValue();
 
 			const statement = (
 				isLegacyInputType
