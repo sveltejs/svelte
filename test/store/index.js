@@ -141,8 +141,9 @@ describe('store', () => {
 
 			assert.throws(() => {
 				store.compute('a', ['b'], b => b + 1);
-				store.compute('b', ['a'], a => a + 1);
-			}, /Cyclical dependency detected/);
+				store.compute('b', ['c'], c => c + 1);
+				store.compute('c', ['a'], a => a + 1);
+			}, /Cyclical dependency detected between a <-> c/);
 		});
 
 		it('does not falsely report cycles', () => {
