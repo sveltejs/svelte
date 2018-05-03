@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.4.3
+
+* `ref` directives prevent HTMLified content ([#1407](https://github.com/sveltejs/svelte/issues/1407))
+* Store computed properties update components immediately upon declaration ([#1327](https://github.com/sveltejs/svelte/issues/1327))
+
 ## 2.4.2
 
 * Evaluate `each` key in child scope ([#1397](https://github.com/sveltejs/svelte/issues/1397))
