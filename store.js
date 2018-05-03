@@ -49,29 +49,30 @@ assign(Store.prototype, {
 	_sortComputedProperties: function() {
 		var computed = this._computed;
 		var sorted = this._sortedComputedProperties = [];
-		var cycles;
 		var visited = blankObject();
+		var currentKey;
 
 		function visit(key) {
-			if (cycles[key]) {
-				throw new Error('Cyclical dependency detected');
-			}
-
-			if (visited[key]) return;
-			visited[key] = true;
-
 			var c = computed[key];
 
 			if (c) {
-				cycles[key] = true;
-				c.deps.forEach(visit);
-				sorted.push(c);
+				c.deps.forEach(dep => {
+					if (dep === currentKey) {
+						throw new Error(`Cyclical dependency detected between ${dep} <-> ${key}`);
+					}
+
+					visit(dep);
+				});
+
+				if (!visited[key]) {
+					visited[key] = true;
+					sorted.push(c);
+				}
 			}
 		}
 
 		for (var key in this._computed) {
-			cycles = blankObject();
-			visit(key);
+			visit(currentKey = key);
 		}
 	},
 
