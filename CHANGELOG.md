@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.4.4
+
+* Declare missing variable in Store ([#1415](https://github.com/sveltejs/svelte/issues/1415))
+* ALways declare spread levels ([#1413](https://github.com/sveltejs/svelte/issues/1413))
+
 ## 2.4.3
 
 * `ref` directives prevent HTMLified content ([#1407](https://github.com/sveltejs/svelte/issues/1407))
