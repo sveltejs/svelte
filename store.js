@@ -61,11 +61,10 @@ assign(Store.prototype, {
 		});
 
 		const dependents = this._dependents.slice(); // guard against mutations
-		let dirty;
 		for (let i = 0; i < dependents.length; i += 1) {
 			const dependent = dependents[i];
 			const componentState = {};
-			dirty = false;
+			let dirty = false;
 
 			for (let j = 0; j < dependent.props.length; j += 1) {
 				const prop = dependent.props[j];
