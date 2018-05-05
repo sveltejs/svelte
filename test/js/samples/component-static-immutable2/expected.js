@@ -22,12 +22,8 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			nested._unmount();
-		},
-
-		d() {
-			nested.destroy(false);
+		d(detach) {
+			nested.destroy(detach);
 		}
 	};
 }

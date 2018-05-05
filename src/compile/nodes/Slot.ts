@@ -55,13 +55,12 @@ export default class Slot extends Element {
 		if (needsAnchorAfter) block.addVariable(anchorAfter);
 
 		let mountBefore = block.builders.mount.toString();
-		let unmountBefore = block.builders.unmount.toString();
+		let destroyBefore = block.builders.destroy.toString();
 
 		block.builders.create.pushCondition(`!${content_name}`);
 		block.builders.hydrate.pushCondition(`!${content_name}`);
 		block.builders.mount.pushCondition(`!${content_name}`);
 		block.builders.update.pushCondition(`!${content_name}`);
-		block.builders.unmount.pushCondition(`!${content_name}`);
 		block.builders.destroy.pushCondition(`!${content_name}`);
 
 		this.children.forEach((child: Node) => {
@@ -72,7 +71,6 @@ export default class Slot extends Element {
 		block.builders.hydrate.popCondition();
 		block.builders.mount.popCondition();
 		block.builders.update.popCondition();
-		block.builders.unmount.popCondition();
 		block.builders.destroy.popCondition();
 
 		const mountLeadin = block.builders.mount.toString() !== mountBefore
@@ -101,30 +99,30 @@ export default class Slot extends Element {
 		// so that it can be reinserted later
 		// TODO so that this can work with public API, component._slotted should
 		// be all fragments, derived from options.slots. Not === options.slots
-		const unmountLeadin = block.builders.unmount.toString() !== unmountBefore
+		const unmountLeadin = block.builders.destroy.toString() !== destroyBefore
 			? `else`
 			: `if (${content_name})`;
 
 		if (anchorBefore === 'null' && anchorAfter === 'null') {
-			block.builders.unmount.addBlock(deindent`
+			block.builders.destroy.addBlock(deindent`
 				${unmountLeadin} {
 					@reinsertChildren(${parentNode}, ${content_name});
 				}
 			`);
 		} else if (anchorBefore === 'null') {
-			block.builders.unmount.addBlock(deindent`
+			block.builders.destroy.addBlock(deindent`
 				${unmountLeadin} {
 					@reinsertBefore(${anchorAfter}, ${content_name});
 				}
 			`);
 		} else if (anchorAfter === 'null') {
-			block.builders.unmount.addBlock(deindent`
+			block.builders.destroy.addBlock(deindent`
 				${unmountLeadin} {
 					@reinsertAfter(${anchorBefore}, ${content_name});
 				}
 			`);
 		} else {
-			block.builders.unmount.addBlock(deindent`
+			block.builders.destroy.addBlock(deindent`
 				${unmountLeadin} {
 					@reinsertBetween(${anchorBefore}, ${anchorAfter}, ${content_name});
 					@detachNode(${anchorBefore});

@@ -32,11 +32,11 @@ function create_main_fragment(component, ctx) {
 
 		},
 
-		u() {
-			detachNode(button);
-		},
+		d(detach) {
+			if (detach) {
+				detachNode(button);
+			}
 
-		d() {
 			foo_handler.destroy();
 		}
 	};

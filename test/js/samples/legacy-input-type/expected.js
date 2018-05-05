@@ -16,11 +16,11 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			detachNode(input);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(input);
+			}
+		}
 	};
 }
 

@@ -38,8 +38,7 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = noop;
 
-	if (detach !== false) this._fragment.u();
-	this._fragment.d();
+	this._fragment.d(detach !== false);
 	this._fragment = null;
 	this._state = {};
 }
@@ -128,10 +127,6 @@ function _mount(target, anchor) {
 	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
-function _unmount() {
-	if (this._fragment) this._fragment.u();
-}
-
 var proto = {
 	destroy,
 	get,
@@ -141,7 +136,6 @@ var proto = {
 	_recompute: noop,
 	_set,
 	_mount,
-	_unmount,
 	_differs
 };
 
@@ -207,8 +201,7 @@ function create_main_fragment(component, ctx) {
 					if_block.m(div, text);
 				}
 			} else if (if_block) {
-				if_block.u();
-				if_block.d();
+				if_block.d(1);
 				if_block = null;
 			}
 
@@ -219,8 +212,7 @@ function create_main_fragment(component, ctx) {
 					if_block_1.m(div, text_3);
 				}
 			} else if (if_block_1) {
-				if_block_1.u();
-				if_block_1.d();
+				if_block_1.d(1);
 				if_block_1 = null;
 			}
 
@@ -231,8 +223,7 @@ function create_main_fragment(component, ctx) {
 					if_block_2.m(div, text_4);
 				}
 			} else if (if_block_2) {
-				if_block_2.u();
-				if_block_2.d();
+				if_block_2.d(1);
 				if_block_2 = null;
 			}
 
@@ -243,8 +234,7 @@ function create_main_fragment(component, ctx) {
 					if_block_3.m(div, null);
 				}
 			} else if (if_block_3) {
-				if_block_3.u();
-				if_block_3.d();
+				if_block_3.d(1);
 				if_block_3 = null;
 			}
 
@@ -255,29 +245,28 @@ function create_main_fragment(component, ctx) {
 					if_block_4.m(if_block_4_anchor.parentNode, if_block_4_anchor);
 				}
 			} else if (if_block_4) {
-				if_block_4.u();
-				if_block_4.d();
+				if_block_4.d(1);
 				if_block_4 = null;
 			}
 		},
 
-		u() {
-			detachNode(div);
-			if (if_block) if_block.u();
-			if (if_block_1) if_block_1.u();
-			if (if_block_2) if_block_2.u();
-			if (if_block_3) if_block_3.u();
-			detachNode(text_8);
-			if (if_block_4) if_block_4.u();
-			detachNode(if_block_4_anchor);
-		},
+		d(detach) {
+			if (detach) {
+				detachNode(div);
+			}
 
-		d() {
 			if (if_block) if_block.d();
 			if (if_block_1) if_block_1.d();
 			if (if_block_2) if_block_2.d();
 			if (if_block_3) if_block_3.d();
-			if (if_block_4) if_block_4.d();
+			if (detach) {
+				detachNode(text_8);
+			}
+
+			if (if_block_4) if_block_4.d(detach);
+			if (detach) {
+				detachNode(if_block_4_anchor);
+			}
 		}
 	};
 }
@@ -296,11 +285,11 @@ function create_if_block(component, ctx) {
 			insertNode(p, target, anchor);
 		},
 
-		u() {
-			detachNode(p);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(p);
+			}
+		}
 	};
 }
 
@@ -318,11 +307,11 @@ function create_if_block_1(component, ctx) {
 			insertNode(p, target, anchor);
 		},
 
-		u() {
-			detachNode(p);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(p);
+			}
+		}
 	};
 }
 
@@ -340,11 +329,11 @@ function create_if_block_2(component, ctx) {
 			insertNode(p, target, anchor);
 		},
 
-		u() {
-			detachNode(p);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(p);
+			}
+		}
 	};
 }
 
@@ -362,11 +351,11 @@ function create_if_block_3(component, ctx) {
 			insertNode(p, target, anchor);
 		},
 
-		u() {
-			detachNode(p);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(p);
+			}
+		}
 	};
 }
 
@@ -384,11 +373,11 @@ function create_if_block_4(component, ctx) {
 			insertNode(p, target, anchor);
 		},
 
-		u() {
-			detachNode(p);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(p);
+			}
+		}
 	};
 }
 

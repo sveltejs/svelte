@@ -25,11 +25,11 @@ function create_main_fragment(component, ctx) {
 			input.checked = ctx.foo;
 		},
 
-		u() {
-			detachNode(input);
-		},
+		d(detach) {
+			if (detach) {
+				detachNode(input);
+			}
 
-		d() {
 			removeListener(input, "change", input_change_handler);
 		}
 	};

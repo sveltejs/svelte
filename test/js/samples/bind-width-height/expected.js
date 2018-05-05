@@ -22,12 +22,13 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			detachNode(div);
-			div_resize_listener.cancel();
-		},
+		d(detach) {
+			if (detach) {
+				detachNode(div);
+			}
 
-		d: noop
+			div_resize_listener.cancel();
+		}
 	};
 }
 

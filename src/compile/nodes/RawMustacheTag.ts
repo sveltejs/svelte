@@ -56,7 +56,8 @@ export default class RawMustacheTag extends Tag {
 				anchorBefore,
 				`@createElement('noscript')`,
 				parentNodes && `@createElement('noscript')`,
-				parentNode
+				parentNode,
+				true
 			);
 		}
 
@@ -76,7 +77,12 @@ export default class RawMustacheTag extends Tag {
 		}
 
 		block.builders.mount.addLine(insert(init));
-		block.builders.detachRaw.addBlock(detach);
+
+		if (!parentNode) {
+			block.builders.destroy.addConditional('detach', needsAnchorBefore
+				? `${detach}\n@detachNode(${anchorBefore});`
+				: detach);
+		}
 
 		if (needsAnchorAfter && anchorBefore !== 'null') {
 			// ...otherwise it should go afterwards
