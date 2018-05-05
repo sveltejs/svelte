@@ -14,9 +14,10 @@ export function handlePromise(promise, info) {
 		if (info.block) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
-					if (i !== index) block.o(() => {
+					if (i !== index && block) block.o(() => {
 						block.u();
 						block.d();
+						info.blocks[i] = null;
 					});
 				});
 			} else {
