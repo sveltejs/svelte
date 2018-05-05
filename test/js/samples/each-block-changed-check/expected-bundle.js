@@ -272,11 +272,6 @@ function create_each_block(component, ctx) {
 
 		d(detach) {
 			if (detach) {
-				detachAfter(raw_before);
-			}
-
-
-			if (detach) {
 				detachNode(div);
 			}
 		}
