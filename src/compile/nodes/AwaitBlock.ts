@@ -140,7 +140,7 @@ export default class AwaitBlock extends Node {
 		);
 
 		block.builders.update.addLine(
-			`${info}.ctx = ctx`
+			`${info}.ctx = ctx;`
 		);
 
 		if (this.pending.block.hasUpdateMethod) {
@@ -153,10 +153,7 @@ export default class AwaitBlock extends Node {
 			`);
 		} else {
 			block.builders.update.addBlock(deindent`
-				if (${conditions.join(' && ')}) {
-					${info}.block.c();
-					${info}.block.m(${anchor}.parentNode, ${anchor});
-				}
+				${conditions.join(' && ')}
 			`);
 		}
 
@@ -171,7 +168,7 @@ export default class AwaitBlock extends Node {
 
 		[this.pending, this.then, this.catch].forEach(status => {
 			status.children.forEach(child => {
-				child.build(status.block, null,'nodes');
+				child.build(status.block, null, 'nodes');
 			});
 		});
 	}
