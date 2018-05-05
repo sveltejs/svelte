@@ -7,8 +7,6 @@ let promise = new Promise((f, r) => {
 });
 
 export default {
-	solo: 1,
-
 	data: {
 		promise
 	},
