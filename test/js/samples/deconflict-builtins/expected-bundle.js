@@ -238,11 +238,11 @@ function create_each_block(component, ctx) {
 }
 
 function get_each_context(ctx, list, i) {
-	return assign(assign({}, ctx), {
-		node: list[i],
-		each_value: list,
-		node_index: i
-	});
+	const child_ctx = Object.create(ctx);
+	child_ctx.node = list[i];
+	child_ctx.each_value = list;
+	child_ctx.node_index = i;
+	return child_ctx;
 }
 
 function SvelteComponent(options) {
