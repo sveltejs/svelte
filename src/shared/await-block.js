@@ -1,10 +1,12 @@
 import { assign, isPromise } from './utils.js';
 
-export function handlePromise(promise, info, mount, anchor) {
+export function handlePromise(promise, info) {
 	var token = info.token = {};
 
-	function update(type) {
+	function update(type, key, value) {
 		if (info.token !== token) return;
+
+		info.resolved = key && { [key]: value };
 
 		const child_ctx = assign(assign({}, info.ctx), info.resolved);
 		const block = type && (info.current = type)(info.component, child_ctx);
@@ -23,21 +25,9 @@ export function handlePromise(promise, info, mount, anchor) {
 
 	if (isPromise(promise)) {
 		promise.then(value => {
-			if (info.value) {
-				info.resolved = { [info.value]: value };
-				update(info.then);
-			} else {
-				info.resolved = null;
-				update(null);
-			}
+			update(info.then, info.value, value);
 		}, error => {
-			if (info.error) {
-				info.resolved = { [info.error]: error };
-				update(info.catch);
-			} else {
-				info.resolved = null;
-				update(null);
-			}
+			update(info.catch, info.error, error);
 		});
 
 		// if we previously had a then/catch block, destroy it
@@ -46,10 +36,11 @@ export function handlePromise(promise, info, mount, anchor) {
 			return true;
 		}
 	} else {
-		info.resolved = { [info.value]: promise };
 		if (info.current !== info.then) {
-			update(info.then);
+			update(info.then, info.value, promise);
 			return true;
 		}
+
+		info.resolved = { [info.value]: promise };
 	}
 }
