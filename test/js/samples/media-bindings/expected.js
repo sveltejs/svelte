@@ -64,11 +64,11 @@ function create_main_fragment(component, ctx) {
 			if (!audio_updating && !isNaN(ctx.volume)) audio.volume = ctx.volume;
 		},
 
-		u() {
-			detachNode(audio);
-		},
+		d(detach) {
+			if (detach) {
+				detachNode(audio);
+			}
 
-		d() {
 			removeListener(audio, "timeupdate", audio_timeupdate_handler);
 			removeListener(audio, "durationchange", audio_durationchange_handler);
 			removeListener(audio, "play", audio_play_pause_handler);

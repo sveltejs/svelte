@@ -34,11 +34,11 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			detachNode(a);
-		},
+		d(detach) {
+			if (detach) {
+				detachNode(a);
+			}
 
-		d() {
 			if (typeof link_action.destroy === 'function') link_action.destroy.call(component);
 		}
 	};

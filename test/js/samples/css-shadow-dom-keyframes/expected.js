@@ -17,11 +17,11 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			detachNode(div);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(div);
+			}
+		}
 	};
 }
 
@@ -55,10 +55,6 @@ assign(SvelteComponent.prototype, proto);
 assign(SvelteComponent.prototype, {
 	_mount(target, anchor) {
 		target.insertBefore(this, anchor);
-	},
-
-	_unmount() {
-		this.parentNode.removeChild(this);
 	}
 });
 

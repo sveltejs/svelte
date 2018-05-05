@@ -1,6 +1,5 @@
 export function destroyBlock(block, lookup) {
-	block.u();
-	block.d();
+	block.d(1);
 	lookup[block.key] = null;
 }
 

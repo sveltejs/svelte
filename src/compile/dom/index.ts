@@ -124,7 +124,7 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_unmount', '_differs']
+			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_differs']
 				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
@@ -304,10 +304,6 @@ export default function dom(
 			@assign(${name}.prototype, {
 				_mount(target, anchor) {
 					target.insertBefore(this, anchor);
-				},
-
-				_unmount() {
-					this.parentNode.removeChild(this);
 				}
 			});
 

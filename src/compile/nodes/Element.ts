@@ -291,14 +291,14 @@ export default class Element extends Node {
 			);
 
 			if (initialMountNode === 'document.head') {
-				block.builders.unmount.addLine(`@detachNode(${name});`);
+				block.builders.destroy.addLine(`@detachNode(${name});`);
 			}
 		} else {
 			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
-			block.builders.unmount.addLine(`@detachNode(${name});`);
+			block.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
 
 		// TODO move this into a class as well?
@@ -503,7 +503,7 @@ export default class Element extends Node {
 						`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
 					);
 
-					block.builders.unmount.addLine(
+					block.builders.destroy.addLine(
 						`${resize_listener}.cancel();`
 					);
 				} else {
