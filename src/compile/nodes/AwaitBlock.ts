@@ -115,10 +115,6 @@ export default class AwaitBlock extends Node {
 			};
 		`);
 
-		// the `#component.root.set({})` below is just a cheap way to flush
-		// any oncreate handlers. We could have a dedicated `flush()` method
-		// but it's probably not worth it
-
 		block.builders.init.addBlock(deindent`
 			@handlePromise(${promise} = ${snippet}, ${info});
 		`);
