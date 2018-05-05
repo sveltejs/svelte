@@ -3,7 +3,7 @@ import { assign, isPromise } from './utils.js';
 export function handlePromise(promise, info) {
 	var token = info.token = {};
 
-	function update(type, key, value) {
+	function update(type, index, key, value) {
 		if (info.token !== token) return;
 
 		info.resolved = key && { [key]: value };
@@ -12,32 +12,43 @@ export function handlePromise(promise, info) {
 		const block = type && (info.current = type)(info.component, child_ctx);
 
 		if (info.block) {
-			info.block.u();
-			info.block.d();
-			block.c();
-			block.m(info.mount(), info.anchor);
+			if (info.blocks) {
+				info.blocks.forEach((block, i) => {
+					if (i !== index) block.o(() => {
+						block.u();
+						block.d();
+					});
+				});
+			} else {
+				info.block.u();
+				info.block.d();
+			}
 
-			info.component.root.set({});
+			block.c();
+			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
+
+			info.component.root.set({}); // flush any handlers that were created
 		}
 
 		info.block = block;
+		if (info.blocks) info.blocks[index] = block;
 	}
 
 	if (isPromise(promise)) {
 		promise.then(value => {
-			update(info.then, info.value, value);
+			update(info.then, 1, info.value, value);
 		}, error => {
-			update(info.catch, info.error, error);
+			update(info.catch, 2, info.error, error);
 		});
 
 		// if we previously had a then/catch block, destroy it
 		if (info.current !== info.pending) {
-			update(info.pending);
+			update(info.pending, 0);
 			return true;
 		}
 	} else {
 		if (info.current !== info.then) {
-			update(info.then, info.value, promise);
+			update(info.then, 1, info.value, promise);
 			return true;
 		}
 

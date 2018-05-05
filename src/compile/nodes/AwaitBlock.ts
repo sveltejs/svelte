@@ -42,6 +42,8 @@ export default class AwaitBlock extends Node {
 		block.addDependencies(this.expression.dependencies);
 
 		let isDynamic = false;
+		let hasIntros = false;
+		let hasOutros = false;
 
 		['pending', 'then', 'catch'].forEach(status => {
 			const child = this[status];
@@ -58,11 +60,22 @@ export default class AwaitBlock extends Node {
 				isDynamic = true;
 				block.addDependencies(child.block.dependencies);
 			}
+
+			if (child.block.hasIntroMethod) hasIntros = true;
+			if (child.block.hasOutroMethod) hasOutros = true;
 		});
 
 		this.pending.block.hasUpdateMethod = isDynamic;
 		this.then.block.hasUpdateMethod = isDynamic;
 		this.catch.block.hasUpdateMethod = isDynamic;
+
+		this.pending.block.hasIntroMethod = hasIntros;
+		this.then.block.hasIntroMethod = hasIntros;
+		this.catch.block.hasIntroMethod = hasIntros;
+
+		this.pending.block.hasOutroMethod = hasOutros;
+		this.then.block.hasOutroMethod = hasOutros;
+		this.catch.block.hasOutroMethod = hasOutros;
 	}
 
 	build(
@@ -92,7 +105,8 @@ export default class AwaitBlock extends Node {
 			this.then.block.name && `then: ${this.then.block.name}`,
 			this.catch.block.name && `catch: ${this.catch.block.name}`,
 			this.then.block.name && `value: '${this.value}'`,
-			this.catch.block.name && `error: '${this.error}'`
+			this.catch.block.name && `error: '${this.error}'`,
+			this.pending.block.hasOutroMethod && `blocks: Array(3)`
 		].filter(Boolean);
 
 		block.builders.init.addBlock(deindent`
@@ -123,7 +137,7 @@ export default class AwaitBlock extends Node {
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addBlock(deindent`
-			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
+			${info}.block.${this.pending.block.hasIntroMethod ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
 		`);
 
