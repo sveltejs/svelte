@@ -79,25 +79,8 @@ export default class AwaitBlock extends Node {
 
 		const info = block.getUniqueName(`info`);
 		const promise = block.getUniqueName(`promise`);
-		const resolved = block.getUniqueName(`resolved`);
-		const await_block = block.getUniqueName(`await_block`);
-		const await_block_type = block.getUniqueName(`await_block_type`);
-		const token = block.getUniqueName(`token`);
-		const await_token = block.getUniqueName(`await_token`);
-		const handle_promise = block.getUniqueName(`handle_promise`);
-		const replace_await_block = block.getUniqueName(`replace_await_block`);
-		const old_block = block.getUniqueName(`old_block`);
-		const value = block.getUniqueName(`value`);
-		const error = block.getUniqueName(`error`);
-		const create_pending_block = this.pending.block.name;
-		const create_then_block = this.then.block.name;
-		const create_catch_block = this.catch.block.name;
 
-		block.addVariable(await_block);
-		block.addVariable(await_block_type);
-		block.addVariable(await_token);
 		block.addVariable(promise);
-		block.addVariable(resolved);
 
 		block.maintainContext = true;
 
@@ -105,11 +88,11 @@ export default class AwaitBlock extends Node {
 			block.alias('component') === 'component' ? 'component' : `component: #component`,
 			'ctx',
 			'current: null',
-			create_pending_block && `pending: ${create_pending_block}`,
-			create_then_block && `then: ${create_then_block}`,
-			create_catch_block && `catch: ${create_catch_block}`,
-			create_then_block && `value: '${this.value}'`,
-			create_catch_block && `error: '${this.error}'`
+			this.pending.block.name && `pending: ${this.pending.block.name}`,
+			this.then.block.name && `then: ${this.then.block.name}`,
+			this.catch.block.name && `catch: ${this.catch.block.name}`,
+			this.then.block.name && `value: '${this.value}'`,
+			this.catch.block.name && `error: '${this.error}'`
 		].filter(Boolean);
 
 		block.builders.init.addBlock(deindent`
@@ -182,8 +165,8 @@ export default class AwaitBlock extends Node {
 		`);
 
 		block.builders.destroy.addBlock(deindent`
-			${await_token} = null;
 			${info}.block.d();
+			${info} = null;
 		`);
 
 		[this.pending, this.then, this.catch].forEach(status => {
