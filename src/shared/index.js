@@ -1,5 +1,6 @@
 import { assign } from './utils.js';
 import { noop } from './utils.js';
+export * from './await-block.js';
 export * from './dom.js';
 export * from './keyed-each.js';
 export * from './spread.js';
@@ -134,10 +135,6 @@ export function _mount(target, anchor) {
 
 export function _unmount() {
 	if (this._fragment) this._fragment.u();
-}
-
-export function isPromise(value) {
-	return value && typeof value.then === 'function';
 }
 
 export var PENDING = {};
