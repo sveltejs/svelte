@@ -26,8 +26,6 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u: noop,
-
 		d: noop
 	};
 }

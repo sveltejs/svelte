@@ -17,9 +17,9 @@ function detachNode(node) {
 	node.parentNode.removeChild(node);
 }
 
-function destroyEach(iterations) {
+function destroyEach(iterations, detach) {
 	for (var i = 0; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].d();
+		if (iterations[i]) iterations[i].d(detach);
 	}
 }
 
@@ -44,8 +44,7 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = noop;
 
-	if (detach !== false) this._fragment.u();
-	this._fragment.d();
+	this._fragment.d(detach !== false);
 	this._fragment = null;
 	this._state = {};
 }
@@ -134,10 +133,6 @@ function _mount(target, anchor) {
 	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
-function _unmount() {
-	if (this._fragment) this._fragment.u();
-}
-
 var proto = {
 	destroy,
 	get,
@@ -147,7 +142,6 @@ var proto = {
 	_recompute: noop,
 	_set,
 	_mount,
-	_unmount,
 	_differs
 };
 
@@ -198,23 +192,18 @@ function create_main_fragment(component, ctx) {
 				}
 
 				for (; i < each_blocks.length; i += 1) {
-					each_blocks[i].u();
-					each_blocks[i].d();
+					each_blocks[i].d(1);
 				}
 				each_blocks.length = each_value.length;
 			}
 		},
 
-		u() {
-			for (var i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].u();
+		d(detach) {
+			destroyEach(each_blocks, detach);
+
+			if (detach) {
+				detachNode(each_anchor);
 			}
-
-			detachNode(each_anchor);
-		},
-
-		d() {
-			destroyEach(each_blocks);
 		}
 	};
 }
@@ -240,11 +229,11 @@ function create_each_block(component, ctx) {
 			}
 		},
 
-		u() {
-			detachNode(span);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(span);
+			}
+		}
 	};
 }
 

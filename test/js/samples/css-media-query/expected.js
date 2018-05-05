@@ -23,11 +23,11 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			detachNode(div);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(div);
+			}
+		}
 	};
 }
 

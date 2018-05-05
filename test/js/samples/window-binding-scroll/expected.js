@@ -43,12 +43,12 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u() {
-			detachNode(p);
-		},
-
-		d() {
+		d(detach) {
 			window.removeEventListener("scroll", onwindowscroll);
+
+			if (detach) {
+				detachNode(p);
+			}
 		}
 	};
 }

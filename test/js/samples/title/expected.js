@@ -17,8 +17,6 @@ function create_main_fragment(component, ctx) {
 			}
 		},
 
-		u: noop,
-
 		d: noop
 	};
 }

@@ -21,12 +21,10 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
+		d(detach) {
 			detachNode(meta);
 			detachNode(meta_1);
-		},
-
-		d: noop
+		}
 	};
 }
 

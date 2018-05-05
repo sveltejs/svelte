@@ -14,8 +14,7 @@ function destroy(detach) {
 	this.fire('destroy');
 	this.set = noop;
 
-	if (detach !== false) this._fragment.u();
-	this._fragment.d();
+	this._fragment.d(detach !== false);
 	this._fragment = null;
 	this._state = {};
 }
@@ -104,10 +103,6 @@ function _mount(target, anchor) {
 	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
-function _unmount() {
-	if (this._fragment) this._fragment.u();
-}
-
 var proto = {
 	destroy,
 	get,
@@ -117,7 +112,6 @@ var proto = {
 	_recompute: noop,
 	_set,
 	_mount,
-	_unmount,
 	_differs
 };
 
@@ -147,8 +141,6 @@ function create_main_fragment(component, ctx) {
 		m: noop,
 
 		p: noop,
-
-		u: noop,
 
 		d: noop
 	};
