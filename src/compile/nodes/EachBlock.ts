@@ -213,8 +213,7 @@ export default class EachBlock extends Node {
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
 					} else if (${each_block_else}) {
-						${each_block_else}.u();
-						${each_block_else}.d();
+						${each_block_else}.d(1);
 						${each_block_else} = null;
 					}
 				`);
@@ -222,8 +221,7 @@ export default class EachBlock extends Node {
 				block.builders.update.addBlock(deindent`
 					if (${this.each_block_value}.${length}) {
 						if (${each_block_else}) {
-							${each_block_else}.u();
-							${each_block_else}.d();
+							${each_block_else}.d(1);
 							${each_block_else} = null;
 						}
 					} else if (!${each_block_else}) {
@@ -234,12 +232,8 @@ export default class EachBlock extends Node {
 				`);
 			}
 
-			block.builders.unmount.addLine(
-				`if (${each_block_else}) ${each_block_else}.u()`
-			);
-
 			block.builders.destroy.addBlock(deindent`
-				if (${each_block_else}) ${each_block_else}.d();
+				if (${each_block_else}) ${each_block_else}.d(${parentNode ? '' : 'detach'});
 			`);
 		}
 
@@ -322,14 +316,8 @@ export default class EachBlock extends Node {
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 		`);
 
-		if (!parentNode) {
-			block.builders.unmount.addBlock(deindent`
-				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].u();
-			`);
-		}
-
 		block.builders.destroy.addBlock(deindent`
-			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].d();
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].d(${parentNode ? '' : 'detach'});
 		`);
 	}
 
@@ -424,8 +412,7 @@ export default class EachBlock extends Node {
 					function ${outro}(i) {
 						if (${iterations}[i]) {
 							${iterations}[i].o(function() {
-								${iterations}[i].u();
-								${iterations}[i].d();
+								${iterations}[i].d(1);
 								${iterations}[i] = null;
 							});
 						}
@@ -435,8 +422,7 @@ export default class EachBlock extends Node {
 				`
 				: deindent`
 					for (; #i < ${iterations}.length; #i += 1) {
-						${iterations}[#i].u();
-						${iterations}[#i].d();
+						${iterations}[#i].d(1);
 					}
 					${iterations}.length = ${this.each_block_value}.${length};
 				`;
@@ -456,13 +442,7 @@ export default class EachBlock extends Node {
 			`);
 		}
 
-		block.builders.unmount.addBlock(deindent`
-			for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-				${iterations}[#i].u();
-			}
-		`);
-
-		block.builders.destroy.addBlock(`@destroyEach(${iterations});`);
+		block.builders.destroy.addBlock(`@destroyEach(${iterations}, detach);`);
 	}
 
 	remount(name: string) {

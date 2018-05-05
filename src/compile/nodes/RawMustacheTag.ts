@@ -76,7 +76,7 @@ export default class RawMustacheTag extends Tag {
 		}
 
 		block.builders.mount.addLine(insert(init));
-		block.builders.detachRaw.addBlock(detach);
+		block.builders.detachRaw.addConditional('detach', detach);
 
 		if (needsAnchorAfter && anchorBefore !== 'null') {
 			// ...otherwise it should go afterwards
