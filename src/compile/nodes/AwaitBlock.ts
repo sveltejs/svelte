@@ -77,6 +77,7 @@ export default class AwaitBlock extends Node {
 
 		const { snippet } = this.expression;
 
+		const info = block.getUniqueName(`info`);
 		const promise = block.getUniqueName(`promise`);
 		const resolved = block.getUniqueName(`resolved`);
 		const await_block = block.getUniqueName(`await_block`);
@@ -100,71 +101,38 @@ export default class AwaitBlock extends Node {
 
 		block.maintainContext = true;
 
+		const infoProps = [
+			block.alias('component') === 'component' ? 'component' : `component: #component`,
+			'ctx',
+			'current: null',
+			create_pending_block && `pending: ${create_pending_block}`,
+			create_then_block && `then: ${create_then_block}`,
+			create_catch_block && `catch: ${create_catch_block}`,
+			create_then_block && `value: '${this.value}'`,
+			create_catch_block && `error: '${this.error}'`
+		].filter(Boolean);
+
+		block.builders.init.addBlock(deindent`
+			let ${info} = {
+				${infoProps.join(',\n')}
+			};
+		`);
+
 		// the `#component.root.set({})` below is just a cheap way to flush
 		// any oncreate handlers. We could have a dedicated `flush()` method
 		// but it's probably not worth it
 
 		block.builders.init.addBlock(deindent`
-			function ${replace_await_block}(${token}, type, ctx) {
-				if (${token} !== ${await_token}) return;
-
-				var ${old_block} = ${await_block};
-				${await_block} = type && (${await_block_type} = type)(#component, ctx);
-
-				if (${old_block}) {
-					${old_block}.u();
-					${old_block}.d();
-					${await_block}.c();
-					${await_block}.m(${updateMountNode}, ${anchor});
-
-					#component.root.set({});
-				}
-			}
-
-			function ${handle_promise}(${promise}) {
-				var ${token} = ${await_token} = {};
-
-				if (@isPromise(${promise})) {
-					${promise}.then(function(${value}) {
-						${this.value ? deindent`
-							${resolved} = { ${this.value}: ${value} };
-							${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, ctx), ${resolved}));
-						` : deindent`
-							${replace_await_block}(${token}, null, null);
-						`}
-					}, function (${error}) {
-						${this.error ? deindent`
-							${resolved} = { ${this.error}: ${error} };
-							${replace_await_block}(${token}, ${create_catch_block}, @assign(@assign({}, ctx), ${resolved}));
-						` : deindent`
-							${replace_await_block}(${token}, null, null);
-						`}
-					});
-
-					// if we previously had a then/catch block, destroy it
-					if (${await_block_type} !== ${create_pending_block}) {
-						${replace_await_block}(${token}, ${create_pending_block}, ctx);
-						return true;
-					}
-				} else {
-					${resolved} = { ${this.value}: ${promise} };
-					if (${await_block_type} !== ${create_then_block}) {
-						${replace_await_block}(${token}, ${create_then_block}, @assign(@assign({}, ctx), ${resolved}));
-						return true;
-					}
-				}
-			}
-
-			${handle_promise}(${promise} = ${snippet});
+			@handlePromise(${promise} = ${snippet}, ${info});
 		`);
 
 		block.builders.create.addBlock(deindent`
-			${await_block}.c();
+			${info}.block.c();
 		`);
 
 		if (parentNodes) {
 			block.builders.claim.addBlock(deindent`
-				${await_block}.l(${parentNodes});
+				${info}.block.l(${parentNodes});
 			`);
 		}
 
@@ -172,7 +140,8 @@ export default class AwaitBlock extends Node {
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addBlock(deindent`
-			${await_block}.m(${initialMountNode}, ${anchorNode});
+			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
+			${info}.mount = () => ${updateMountNode};
 		`);
 
 		const conditions = [];
@@ -184,7 +153,11 @@ export default class AwaitBlock extends Node {
 
 		conditions.push(
 			`${promise} !== (${promise} = ${snippet})`,
-			`${handle_promise}(${promise}, ctx)`
+			`@handlePromise(${promise}, ${info})`
+		);
+
+		block.builders.update.addLine(
+			`${info}.ctx = ctx`
 		);
 
 		if (this.pending.block.hasUpdateMethod) {
@@ -192,25 +165,25 @@ export default class AwaitBlock extends Node {
 				if (${conditions.join(' && ')}) {
 					// nothing
 				} else {
-					${await_block}.p(changed, @assign(@assign({}, ctx), ${resolved}));
+					${info}.block.p(changed, @assign(@assign({}, ctx), ${info}.resolved));
 				}
 			`);
 		} else {
 			block.builders.update.addBlock(deindent`
 				if (${conditions.join(' && ')}) {
-					${await_block}.c();
-					${await_block}.m(${anchor}.parentNode, ${anchor});
+					${info}.block.c();
+					${info}.block.m(${anchor}.parentNode, ${anchor});
 				}
 			`);
 		}
 
 		block.builders.unmount.addBlock(deindent`
-			${await_block}.u();
+			${info}.block.u();
 		`);
 
 		block.builders.destroy.addBlock(deindent`
 			${await_token} = null;
-			${await_block}.d();
+			${info}.block.d();
 		`);
 
 		[this.pending, this.then, this.catch].forEach(status => {
