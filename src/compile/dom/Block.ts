@@ -39,6 +39,7 @@ export default class Block {
 		destroy: CodeBuilder;
 	};
 
+	maintainContext: boolean;
 	hasIntroMethod: boolean;
 	hasOutroMethod: boolean;
 	outros: number;
