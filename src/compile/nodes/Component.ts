@@ -430,9 +430,7 @@ export default class Component extends Node {
 				`);
 			}
 
-			if (!parentNode) block.builders.unmount.addLine(`if (${name}) ${name}._unmount();`);
-
-			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(false);`);
+			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(${parentNode ? '' : 'detach'});`);
 		} else {
 			const expression = this.name === 'svelte:self'
 				? compiler.name
@@ -477,10 +475,8 @@ export default class Component extends Node {
 				`);
 			}
 
-			if (!parentNode) block.builders.unmount.addLine(`${name}._unmount();`);
-
 			block.builders.destroy.addLine(deindent`
-				${name}.destroy(false);
+				${name}.destroy(${parentNode ? '' : 'detach'});
 				${this.ref && `if (#component.refs.${this.ref} === ${name}) #component.refs.${this.ref} = null;`}
 			`);
 		}

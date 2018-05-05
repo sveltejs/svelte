@@ -192,13 +192,11 @@ export default class IfBlock extends Node {
 		const changeBlock = deindent`
 			${hasElse
 				? deindent`
-					${name}.u();
-					${name}.d();
+					${name}.d(1);
 				`
 				: deindent`
 					if (${name}) {
-						${name}.u();
-						${name}.d();
+						${name}.d(1);
 					}`}
 			${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
 			${if_name}${name}.c();
@@ -221,9 +219,7 @@ export default class IfBlock extends Node {
 			`);
 		}
 
-		block.builders.unmount.addLine(`${if_name}${name}.u();`);
-
-		block.builders.destroy.addLine(`${if_name}${name}.d();`);
+		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
 	}
 
 	// if any of the siblings have outros, we need to keep references to the blocks
@@ -288,8 +284,7 @@ export default class IfBlock extends Node {
 
 		const destroyOldBlock = deindent`
 			${name}.o(function() {
-				${if_blocks}[ ${previous_block_index} ].u();
-				${if_blocks}[ ${previous_block_index} ].d();
+				${if_blocks}[ ${previous_block_index} ].d(1);
 				${if_blocks}[ ${previous_block_index} ] = null;
 			});
 		`;
@@ -343,8 +338,7 @@ export default class IfBlock extends Node {
 
 		block.builders.destroy.addLine(deindent`
 			${if_current_block_type_index}{
-				${if_blocks}[${current_block_type_index}].u();
-				${if_blocks}[${current_block_type_index}].d();
+				${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detach'});
 			}
 		`);
 	}
@@ -413,14 +407,12 @@ export default class IfBlock extends Node {
 		const exit = branch.hasOutroMethod
 			? deindent`
 				${name}.o(function() {
-					${name}.u();
-					${name}.d();
+					${name}.d(1);
 					${name} = null;
 				});
 			`
 			: deindent`
-				${name}.u();
-				${name}.d();
+				${name}.d(1);
 				${name} = null;
 			`;
 
@@ -432,9 +424,7 @@ export default class IfBlock extends Node {
 			}
 		`);
 
-		block.builders.unmount.addLine(`${if_name}${name}.u();`);
-
-		block.builders.destroy.addLine(`${if_name}${name}.d();`);
+		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
 	}
 
 	getBranches(

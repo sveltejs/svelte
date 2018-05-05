@@ -167,12 +167,8 @@ export default class AwaitBlock extends Node {
 			`);
 		}
 
-		block.builders.unmount.addBlock(deindent`
-			${info}.block.u();
-		`);
-
 		block.builders.destroy.addBlock(deindent`
-			${info}.block.d();
+			${info}.block.d(${parentNode ? '' : 'detach'});
 			${info} = null;
 		`);
 

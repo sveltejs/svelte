@@ -111,10 +111,10 @@ export default class Block {
 
 		if (parentNode) {
 			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
-			if (parentNode === 'document.head') this.builders.unmount.addLine(`@detachNode(${name});`);
+			if (parentNode === 'document.head') this.builders.destroy.addLine(`@detachNode(${name});`);
 		} else {
 			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
-			this.builders.unmount.addLine(`@detachNode(${name});`);
+			this.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
 	}
 
@@ -162,7 +162,7 @@ export default class Block {
 		}
 
 		// minor hack – we need to ensure that any {{{triples}}} are detached first
-		this.builders.unmount.addBlockAtStart(this.builders.detachRaw.toString());
+		this.builders.destroy.addBlockAtStart(this.builders.detachRaw.toString());
 
 		const properties = new CodeBuilder();
 
@@ -280,21 +280,11 @@ export default class Block {
 			}
 		}
 
-		if (this.builders.unmount.isEmpty()) {
-			properties.addBlock(`u: @noop,`);
-		} else {
-			properties.addBlock(deindent`
-				${dev ? 'u: function unmount' : 'u'}() {
-					${this.builders.unmount}
-				},
-			`);
-		}
-
 		if (this.builders.destroy.isEmpty()) {
 			properties.addBlock(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
-				${dev ? 'd: function destroy' : 'd'}() {
+				${dev ? 'd: function destroy' : 'd'}(detach) {
 					${this.builders.destroy}
 				}
 			`);

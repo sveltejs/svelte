@@ -15,14 +15,12 @@ export function handlePromise(promise, info) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) block.o(() => {
-						block.u();
-						block.d();
+						block.d(1);
 						info.blocks[i] = null;
 					});
 				});
 			} else {
-				info.block.u();
-				info.block.d();
+				info.block.d(1);
 			}
 
 			block.c();
