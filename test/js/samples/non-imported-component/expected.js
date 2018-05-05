@@ -30,15 +30,13 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			imported._unmount();
-			detachNode(text);
-			nonimported._unmount();
-		},
+		d(detach) {
+			imported.destroy(detach);
+			if (detach) {
+				detachNode(text);
+			}
 
-		d() {
-			imported.destroy(false);
-			nonimported.destroy(false);
+			nonimported.destroy(detach);
 		}
 	};
 }

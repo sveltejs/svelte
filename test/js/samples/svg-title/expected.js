@@ -19,11 +19,11 @@ function create_main_fragment(component, ctx) {
 
 		p: noop,
 
-		u() {
-			detachNode(svg);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(svg);
+			}
+		}
 	};
 }
 

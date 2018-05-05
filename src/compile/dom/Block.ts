@@ -34,7 +34,6 @@ export default class Block {
 		intro: CodeBuilder;
 		update: CodeBuilder;
 		outro: CodeBuilder;
-		unmount: CodeBuilder;
 		detachRaw: CodeBuilder;
 		destroy: CodeBuilder;
 	};
@@ -73,7 +72,6 @@ export default class Block {
 			intro: new CodeBuilder(),
 			update: new CodeBuilder(),
 			outro: new CodeBuilder(),
-			unmount: new CodeBuilder(),
 			detachRaw: new CodeBuilder(),
 			destroy: new CodeBuilder(),
 		};
@@ -161,7 +159,8 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
-		// minor hack – we need to ensure that any {{{triples}}} are detached first
+		// minor hack – we need to ensure that any {@html x} blocks are detached first
+		// (TODO: is this still necessary? or is there a neater approach?)
 		this.builders.destroy.addBlockAtStart(this.builders.detachRaw.toString());
 
 		const properties = new CodeBuilder();
