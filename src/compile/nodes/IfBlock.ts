@@ -366,7 +366,7 @@ export default class IfBlock extends Node {
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const enter = dynamic
-			? branch.hasIntroMethod
+			? (branch.hasIntroMethod || branch.hasOutroMethod)
 				? deindent`
 					if (${name}) {
 						${name}.p(changed, ctx);
@@ -386,7 +386,7 @@ export default class IfBlock extends Node {
 						${name}.m(${updateMountNode}, ${anchor});
 					}
 				`
-			: branch.hasIntroMethod
+			: (branch.hasIntroMethod || branch.hasOutroMethod)
 				? deindent`
 					if (!${name}) {
 						${name} = ${branch.block}(#component, ctx);

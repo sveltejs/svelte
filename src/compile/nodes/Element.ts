@@ -753,6 +753,10 @@ export default class Element extends Node {
 
 				const fn = `%transitions-${outro.name}`;
 
+				block.builders.intro.addBlock(deindent`
+					if (${outroName}) ${outroName}.abort();
+				`);
+
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`

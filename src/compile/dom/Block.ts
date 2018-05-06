@@ -232,7 +232,7 @@ export default class Block {
 			}
 		}
 
-		if (this.hasIntroMethod) {
+		if (this.hasIntroMethod || this.hasOutroMethod) {
 			if (hasIntros) {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
@@ -252,9 +252,7 @@ export default class Block {
 					},
 				`);
 			}
-		}
 
-		if (this.hasOutroMethod) {
 			if (hasOutros) {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
