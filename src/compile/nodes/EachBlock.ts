@@ -91,12 +91,12 @@ export default class EachBlock extends Node {
 			this.block.getUniqueName(this.index); // this prevents name collisions (#1254)
 		}
 
-		this.contextProps = this.contexts.map(prop => `${prop.key.name}: list[i]${prop.tail}`);
+		this.contextProps = this.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
 
 		// TODO only add these if necessary
 		this.contextProps.push(
-			`${this.each_block_value}: list`,
-			`${indexName}: i`
+			`child_ctx.${this.each_block_value} = list;`,
+			`child_ctx.${indexName} = i;`
 		);
 
 		this.compiler.target.blocks.push(this.block);
@@ -162,9 +162,9 @@ export default class EachBlock extends Node {
 
 		this.compiler.target.blocks.push(deindent`
 			function ${this.get_each_context}(ctx, list, i) {
-				return @assign(@assign({}, ctx), {
-					${this.contextProps.join(',\n')}
-				});
+				const child_ctx = Object.create(ctx);
+				${this.contextProps}
+				return child_ctx;
 			}
 		`);
 

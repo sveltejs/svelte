@@ -131,11 +131,11 @@ function create_each_block(component, ctx) {
 }
 
 function get_each_context(ctx, list, i) {
-	return assign(assign({}, ctx), {
-		comment: list[i],
-		each_value: list,
-		i: i
-	});
+	const child_ctx = Object.create(ctx);
+	child_ctx.comment = list[i];
+	child_ctx.each_value = list;
+	child_ctx.i = i;
+	return child_ctx;
 }
 
 function SvelteComponent(options) {
