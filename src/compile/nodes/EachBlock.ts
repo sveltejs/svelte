@@ -146,7 +146,7 @@ export default class EachBlock extends Node {
 		compiler.code.overwrite(c, c + 4, 'length');
 		const length = `[✂${c}-${c+4}✂]`;
 
-		const mountOrIntro = this.block.hasIntroMethod ? 'i' : 'm';
+		const mountOrIntro = (this.block.hasIntroMethod || this.block.hasOutroMethod) ? 'i' : 'm';
 		const vars = {
 			each,
 			create_each_block,
@@ -379,7 +379,7 @@ export default class EachBlock extends Node {
 
 		if (condition !== '') {
 			const forLoopBody = this.block.hasUpdateMethod
-				? this.block.hasIntroMethod
+				? (this.block.hasIntroMethod || this.block.hasOutroMethod)
 					? deindent`
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, child_ctx);

@@ -701,6 +701,8 @@ export default class Element extends Node {
 			const fn = `%transitions-${intro.name}`;
 
 			block.builders.intro.addBlock(deindent`
+				if (${name}) ${name}.invalidate();
+
 				#component.root._aftercreate.push(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
