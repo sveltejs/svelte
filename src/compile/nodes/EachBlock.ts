@@ -418,6 +418,7 @@ export default class EachBlock extends Node {
 						}
 					}
 
+					@transitionManager.groupOutros();
 					for (; #i < ${iterations}.length; #i += 1) ${outro}(#i);
 				`
 				: deindent`
