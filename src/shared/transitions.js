@@ -5,14 +5,7 @@ export function linear(t) {
 	return t;
 }
 
-export function generateRule(
-	a,
-	b,
-	delta,
-	duration,
-	ease,
-	fn
-) {
+export function generateRule({ a, b, delta, duration }, ease, fn) {
 	let keyframes = '{\n';
 
 	for (let p = 0; p <= 1; p += 16.666 / duration) {
@@ -60,14 +53,14 @@ export function wrapTransition(component, node, fn, params, intro) {
 		program: null,
 		pending: null,
 
-		run(intro, callback) {
+		run(b, callback) {
 			const program = {
 				start: window.performance.now() + (obj.delay || 0),
-				intro,
+				b,
 				callback: callback || noop
 			};
 
-			if (!intro) {
+			if (!b) {
 				program.group = transitionManager.outros;
 				transitionManager.outros.remaining += 1;
 			}
@@ -85,10 +78,9 @@ export function wrapTransition(component, node, fn, params, intro) {
 		},
 
 		start(program) {
-			component.fire(`${program.intro ? 'intro' : 'outro'}.start`, { node });
+			component.fire(`${program.b ? 'intro' : 'outro'}.start`, { node });
 
 			program.a = this.t;
-			program.b = program.intro ? 1 : 0;
 			program.delta = program.b - program.a;
 			program.duration = duration * Math.abs(program.b - program.a);
 			program.end = program.start + program.duration;
@@ -96,16 +88,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 			if (obj.css) {
 				if (obj.delay) node.style.cssText = cssText;
 
-				program.rule = generateRule(
-					program.a,
-					program.b,
-					program.delta,
-					program.duration,
-					ease,
-					obj.css
-				);
-
-				transitionManager.addRule(program.rule, program.name = '__svelte_' + hash(program.rule));
+				const rule = generateRule(program, ease, obj.css);
+				transitionManager.addRule(rule, program.name = '__svelte_' + hash(rule));
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
@@ -133,9 +117,9 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 			if (obj.tick) obj.tick(this.t);
 
-			component.fire(`${program.intro ? 'intro' : 'outro'}.end`, { node });
+			component.fire(`${program.b ? 'intro' : 'outro'}.end`, { node });
 
-			if (!program.intro) {
+			if (!program.b) {
 				program.group.callbacks.push(() => {
 					program.callback();
 					if (obj.css) transitionManager.deleteRule(node, program.name);
