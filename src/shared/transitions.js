@@ -128,7 +128,6 @@ export function wrapTransition(component, node, fn, params, intro) {
 				if (obj.css) transitionManager.deleteRule(node, program.name);
 			}
 
-			this.program = null;
 			this.running = !!this.pending;
 		},
 
