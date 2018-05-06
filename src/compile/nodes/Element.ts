@@ -988,13 +988,18 @@ const events = [
 		eventNames: ['input'],
 		filter: (node: Element, name: string) =>
 			node.name === 'textarea' ||
-			node.name === 'input' && !/radio|checkbox/.test(node.getStaticAttributeValue('type'))
+			node.name === 'input' && !/radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
 	},
 	{
 		eventNames: ['change'],
 		filter: (node: Element, name: string) =>
 			node.name === 'select' ||
-			node.name === 'input' && /radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
+			node.name === 'input' && /radio|checkbox/.test(node.getStaticAttributeValue('type'))
+	},
+	{
+		eventNames: ['change', 'input'],
+		filter: (node: Element, name: string) =>
+			node.name === 'input' && node.getStaticAttributeValue('type') === 'range'
 	},
 
 	{
