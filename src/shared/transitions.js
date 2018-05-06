@@ -104,7 +104,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
-					.filter(anim => (program.delta < 0 || !/__svelte/.test(anim)))
+					.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
 					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
 					.join(', ');
 			}
