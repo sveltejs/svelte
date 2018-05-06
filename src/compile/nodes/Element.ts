@@ -701,6 +701,8 @@ export default class Element extends Node {
 			const fn = `%transitions-${intro.name}`;
 
 			block.builders.intro.addBlock(deindent`
+				if (${name}) ${name}.invalidate();
+
 				#component.root._aftercreate.push(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
@@ -747,6 +749,10 @@ export default class Element extends Node {
 					: '{}';
 
 				const fn = `%transitions-${outro.name}`;
+
+				block.builders.intro.addBlock(deindent`
+					if (${outroName}) ${outroName}.abort();
+				`);
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
