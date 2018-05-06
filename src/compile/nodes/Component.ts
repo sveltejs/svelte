@@ -364,7 +364,7 @@ export default class Component extends Node {
 
 				${this.handlers.map(handler => deindent`
 					function ${handler.var}(event) {
-						${handler.snippet}
+						${handler.snippet || `#component.fire("${handler.name}", event);`}
 					}
 
 					if (${name}) ${name}.on("${handler.name}", ${handler.var});
