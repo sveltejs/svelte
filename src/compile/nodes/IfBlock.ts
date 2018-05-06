@@ -283,6 +283,7 @@ export default class IfBlock extends Node {
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const destroyOldBlock = deindent`
+			@transitionManager.groupOutros();
 			${name}.o(function() {
 				${if_blocks}[ ${previous_block_index} ].d(1);
 				${if_blocks}[ ${previous_block_index} ] = null;
@@ -406,6 +407,7 @@ export default class IfBlock extends Node {
 		// as that will typically result in glitching
 		const exit = branch.hasOutroMethod
 			? deindent`
+				@transitionManager.groupOutros();
 				${name}.o(function() {
 					${name}.d(1);
 					${name} = null;

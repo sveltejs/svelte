@@ -67,6 +67,11 @@ export function wrapTransition(component, node, fn, params, intro) {
 				callback: callback || noop
 			};
 
+			if (!intro) {
+				program.group = transitionManager.outros;
+				transitionManager.outros.remaining += 1;
+			}
+
 			if (obj.delay) {
 				this.pending = program;
 			} else {
@@ -127,10 +132,22 @@ export function wrapTransition(component, node, fn, params, intro) {
 			this.t = program.b;
 
 			if (obj.tick) obj.tick(this.t);
-			if (obj.css) transitionManager.deleteRule(node, program.name);
 
 			component.fire(`${program.intro ? 'intro' : 'outro'}.end`, { node });
-			program.callback();
+
+			if (!program.intro) {
+				program.group.callbacks.push(() => {
+					program.callback();
+					if (obj.css) transitionManager.deleteRule(node, program.name);
+				});
+
+				if (--program.group.remaining === 0) {
+					program.group.callbacks.forEach(fn => {
+						fn();
+					});
+				}
+			}
+
 			this.program = null;
 			this.running = !!this.pending;
 		},
@@ -206,5 +223,12 @@ export var transitionManager = {
 			.split(', ')
 			.filter(anim => anim.indexOf(name) === -1)
 			.join(', ');
+	},
+
+	groupOutros() {
+		this.outros = {
+			remaining: 0,
+			callbacks: []
+		};
 	}
 };
