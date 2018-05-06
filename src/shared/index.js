@@ -1,6 +1,10 @@
 import { assign } from './utils.js';
 import { noop } from './utils.js';
+export * from './await-block.js';
 export * from './dom.js';
+export * from './keyed-each.js';
+export * from './spread.js';
+export * from './ssr.js';
 export * from './transitions.js';
 export * from './utils.js';
 
@@ -11,11 +15,11 @@ export function blankObject() {
 export function destroy(detach) {
 	this.destroy = noop;
 	this.fire('destroy');
-	this.set = this.get = noop;
+	this.set = noop;
 
-	if (detach !== false) this._fragment.u();
-	this._fragment.d();
-	this._fragment = this._state = null;
+	this._fragment.d(detach !== false);
+	this._fragment = null;
+	this._state = {};
 }
 
 export function destroyDev(detach) {
@@ -25,29 +29,12 @@ export function destroyDev(detach) {
 	};
 }
 
-export function differs(a, b) {
-	return a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+export function _differs(a, b) {
+	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
 
-export function dispatchObservers(component, group, changed, newState, oldState) {
-	for (var key in group) {
-		if (!changed[key]) continue;
-
-		var newValue = newState[key];
-		var oldValue = oldState[key];
-
-		var callbacks = group[key];
-		if (!callbacks) continue;
-
-		for (var i = 0; i < callbacks.length; i += 1) {
-			var callback = callbacks[i];
-			if (callback.__calling) continue;
-
-			callback.__calling = true;
-			callback.call(component, newValue, oldValue);
-			callback.__calling = false;
-		}
-	}
+export function _differsImmutable(a, b) {
+	return a != a ? b == b : a !== b;
 }
 
 export function fire(eventName, data) {
@@ -56,16 +43,21 @@ export function fire(eventName, data) {
 	if (!handlers) return;
 
 	for (var i = 0; i < handlers.length; i += 1) {
-		handlers[i].call(this, data);
+		var handler = handlers[i];
+
+		if (!handler.__calling) {
+			handler.__calling = true;
+			handler.call(this, data);
+			handler.__calling = false;
+		}
 	}
 }
 
-export function get(key) {
-	return key ? this._state[key] : this._state;
+export function get() {
+	return this._state;
 }
 
 export function init(component, options) {
-	component._observers = { pre: blankObject(), post: blankObject() };
 	component._handlers = blankObject();
 	component._bind = options._bind;
 
@@ -74,44 +66,7 @@ export function init(component, options) {
 	component.store = component.root.store || options.store;
 }
 
-export function observe(key, callback, options) {
-	var group = options && options.defer
-		? this._observers.post
-		: this._observers.pre;
-
-	(group[key] || (group[key] = [])).push(callback);
-
-	if (!options || options.init !== false) {
-		callback.__calling = true;
-		callback.call(this, this._state[key]);
-		callback.__calling = false;
-	}
-
-	return {
-		cancel: function() {
-			var index = group[key].indexOf(callback);
-			if (~index) group[key].splice(index, 1);
-		}
-	};
-}
-
-export function observeDev(key, callback, options) {
-	var c = (key = '' + key).search(/[^\w]/);
-	if (c > -1) {
-		var message =
-			'The first argument to component.observe(...) must be the name of a top-level property';
-		if (c > 0)
-			message += ", i.e. '" + key.slice(0, c) + "' rather than '" + key + "'";
-
-		throw new Error(message);
-	}
-
-	return observe.call(this, key, callback, options);
-}
-
 export function on(eventName, handler) {
-	if (eventName === 'teardown') return this.on('destroy', handler);
-
 	var handlers = this._handlers[eventName] || (this._handlers[eventName] = []);
 	handlers.push(handler);
 
@@ -123,15 +78,8 @@ export function on(eventName, handler) {
 	};
 }
 
-export function onDev(eventName, handler) {
-	if (eventName === 'teardown') {
-		console.warn(
-			"Use component.on('destroy', ...) instead of component.on('teardown', ...) which has been deprecated and will be unsupported in Svelte 2"
-		);
-		return this.on('destroy', handler);
-	}
-
-	return on.call(this, eventName, handler);
+export function run(fn) {
+	fn();
 }
 
 export function set(newState) {
@@ -150,18 +98,18 @@ export function _set(newState) {
 		dirty = false;
 
 	for (var key in newState) {
-		if (differs(newState[key], oldState[key])) changed[key] = dirty = true;
+		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
 	if (!dirty) return;
 
-	this._state = assign({}, oldState, newState);
+	this._state = assign(assign({}, oldState), newState);
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 
 	if (this._fragment) {
-		dispatchObservers(this, this._observers.pre, changed, this._state, oldState);
+		this.fire("state", { changed: changed, current: this._state, previous: oldState });
 		this._fragment.p(changed, this._state);
-		dispatchObservers(this, this._observers.post, changed, this._state, oldState);
+		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
 }
 
@@ -181,15 +129,7 @@ export function callAll(fns) {
 }
 
 export function _mount(target, anchor) {
-	this._fragment.m(target, anchor);
-}
-
-export function _unmount() {
-	if (this._fragment) this._fragment.u();
-}
-
-export function isPromise(value) {
-	return value && typeof value.then === 'function';
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
 export var PENDING = {};
@@ -201,29 +141,25 @@ export function removeFromStore() {
 }
 
 export var proto = {
-	destroy: destroy,
-	get: get,
-	fire: fire,
-	observe: observe,
-	on: on,
-	set: set,
-	teardown: destroy,
+	destroy,
+	get,
+	fire,
+	on,
+	set,
 	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount
+	_set,
+	_mount,
+	_differs
 };
 
 export var protoDev = {
 	destroy: destroyDev,
-	get: get,
-	fire: fire,
-	observe: observeDev,
-	on: onDev,
+	get,
+	fire,
+	on,
 	set: setDev,
-	teardown: destroyDev,
 	_recompute: noop,
-	_set: _set,
-	_mount: _mount,
-	_unmount: _unmount
+	_set,
+	_mount,
+	_differs
 };

@@ -11,16 +11,16 @@ export default {
 
 		component.on('destroy', () => {
 			component.set({ foo: 2 });
-			valueOnDestroy = component.get('foo');
+			valueOnDestroy = component.get().foo;
 		});
 
-		component.observe('foo', foo => {
-			values.push(foo);
+		component.on('state', ({ current }) => {
+			values.push(current.foo);
 		});
 
 		component.destroy();
 
-		assert.deepEqual(values, [1, 2]);
+		assert.deepEqual(values, [2]);
 		assert.equal(valueOnDestroy, 2);
 	}
 };

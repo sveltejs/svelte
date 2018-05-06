@@ -1,8 +1,10 @@
 {
+	"code": "duplicate-attribute",
 	"message": "Attributes need to be unique",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 17
+		"column": 17,
+		"character": 17
 	},
 	"pos": 17
 }

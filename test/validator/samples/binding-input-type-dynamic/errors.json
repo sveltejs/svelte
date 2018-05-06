@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-type",
 	"message": "'type' attribute cannot be dynamic if input uses two-way binding",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 24
+		"column": 24,
+		"character": 24
+	},
+	"end": {
+		"line": 1,
+		"column": 42,
+		"character": 42
 	},
 	"pos": 24
 }]

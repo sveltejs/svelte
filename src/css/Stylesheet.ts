@@ -4,9 +4,9 @@ import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from '../utils/hash';
-import Element from '../generators/nodes/Element';
+import Element from '../compile/nodes/Element';
 import { Validator } from '../validate/index';
-import { Node, Parsed, Warning } from '../interfaces';
+import { Node, Ast, Warning } from '../interfaces';
 
 class Rule {
 	selectors: Selector[];
@@ -14,10 +14,10 @@ class Rule {
 	node: Node;
 	parent: Atrule;
 
-	constructor(node: Node, parent?: Atrule) {
+	constructor(node: Node, stylesheet, parent?: Atrule) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.selector.children.map((node: Node) => new Selector(node));
+		this.selectors = node.selector.children.map((node: Node) => new Selector(node, stylesheet));
 		this.declarations = node.block.children.map((node: Node) => new Declaration(node));
 	}
 
@@ -25,23 +25,24 @@ class Rule {
 		this.selectors.forEach(selector => selector.apply(node, stack)); // TODO move the logic in here?
 	}
 
-	isUsed() {
+	isUsed(dev: boolean) {
 		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
+		if (this.declarations.length === 0) return dev;
 		return this.selectors.some(s => s.used);
 	}
 
-	minify(code: MagicString, cascade: boolean) {
+	minify(code: MagicString, dev: boolean) {
 		let c = this.node.start;
 		let started = false;
 
 		this.selectors.forEach((selector, i) => {
-			if (cascade || selector.used) {
+			if (selector.used) {
 				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
 					code.overwrite(c, selector.node.start, separator);
 				}
 
-				if (!cascade) selector.minify(code);
+				selector.minify(code);
 				c = selector.node.end;
 
 				started = true;
@@ -65,39 +66,12 @@ class Rule {
 		code.remove(c, this.node.block.end - 1);
 	}
 
-	transform(code: MagicString, id: string, keyframes: Map<string, string>, cascade: boolean) {
+	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
 		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
 
-		const attr = `[${id}]`;
+		const attr = `.${id}`;
 
-		if (cascade) {
-			this.selectors.forEach(selector => {
-				// TODO disable cascading (without :global(...)) in v2
-				const { start, end, children } = selector.node;
-
-				const css = code.original;
-				const selectorString = css.slice(start, end);
-
-				const firstToken = children[0];
-
-				let transformed;
-
-				if (firstToken.type === 'TypeSelector') {
-					const insert = firstToken.end;
-					const head = firstToken.name === '*' ? '' : css.slice(start, insert);
-					const tail = css.slice(insert, end);
-
-					transformed = `${head}${attr}${tail},${attr} ${selectorString}`;
-				} else {
-					transformed = `${attr}${selectorString},${attr} ${selectorString}`;
-				}
-
-				code.overwrite(start, end, transformed);
-			});
-		} else {
-			this.selectors.forEach(selector => selector.transform(code, attr));
-		}
-
+		this.selectors.forEach(selector => selector.transform(code, attr));
 		this.declarations.forEach(declaration => declaration.transform(code, keyframes));
 	}
 
@@ -162,7 +136,7 @@ class Atrule {
 	}
 
 	apply(node: Element, stack: Element[]) {
-		if (this.node.name === 'media') {
+		if (this.node.name === 'media' || this.node.name === 'supports') {
 			this.children.forEach(child => {
 				child.apply(node, stack);
 			});
@@ -177,11 +151,11 @@ class Atrule {
 		}
 	}
 
-	isUsed() {
+	isUsed(dev: boolean) {
 		return true; // TODO
 	}
 
-	minify(code: MagicString, cascade: boolean) {
+	minify(code: MagicString, dev: boolean) {
 		if (this.node.name === 'media') {
 			const expressionChar = code.original[this.node.expression.start];
 			let c = this.node.start + (expressionChar === '(' ? 6 : 7);
@@ -198,6 +172,14 @@ class Atrule {
 			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
 			c = this.node.expression.end;
 			if (this.node.block.start - c > 0) code.remove(c, this.node.block.start);
+		} else if (this.node.name === 'supports') {
+			let c = this.node.start + 9;
+			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
+			this.node.expression.children.forEach((query: Node) => {
+				// TODO minify queries
+				c = query.end;
+			});
+			code.remove(c, this.node.block.start);
 		}
 
 		// TODO other atrules
@@ -206,9 +188,9 @@ class Atrule {
 			let c = this.node.block.start + 1;
 
 			this.children.forEach(child => {
-				if (cascade || child.isUsed()) {
+				if (child.isUsed(dev)) {
 					code.remove(c, child.node.start);
-					child.minify(code, cascade);
+					child.minify(code, dev);
 					c = child.node.end;
 				}
 			});
@@ -217,7 +199,7 @@ class Atrule {
 		}
 	}
 
-	transform(code: MagicString, id: string, keyframes: Map<string, string>, cascade: boolean) {
+	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
 		if (this.node.name === 'keyframes') {
 			this.node.expression.children.forEach(({ type, name, start, end }: Node) => {
 				if (type === 'Identifier') {
@@ -231,7 +213,7 @@ class Atrule {
 		}
 
 		this.children.forEach(child => {
-			child.transform(code, id, keyframes, cascade);
+			child.transform(code, id, keyframes);
 		})
 	}
 
@@ -254,9 +236,9 @@ const keys = {};
 
 export default class Stylesheet {
 	source: string;
-	parsed: Parsed;
-	cascade: boolean;
+	ast: Ast;
 	filename: string;
+	dev: boolean;
 
 	hasStyles: boolean;
 	id: string;
@@ -264,24 +246,28 @@ export default class Stylesheet {
 	children: (Rule|Atrule)[];
 	keyframes: Map<string, string>;
 
-	constructor(source: string, parsed: Parsed, filename: string, cascade: boolean) {
+	nodesWithCssClass: Set<Node>;
+
+	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
 		this.source = source;
-		this.parsed = parsed;
-		this.cascade = cascade;
+		this.ast = ast;
 		this.filename = filename;
+		this.dev = dev;
 
 		this.children = [];
 		this.keyframes = new Map();
 
-		if (parsed.css && parsed.css.children.length) {
-			this.id = `svelte-${hash(parsed.css.content.styles)}`;
+		this.nodesWithCssClass = new Set();
+
+		if (ast.css && ast.css.children.length) {
+			this.id = `svelte-${hash(ast.css.content.styles)}`;
 
 			this.hasStyles = true;
 
 			const stack: (Rule | Atrule)[] = [];
 			let currentAtrule: Atrule = null;
 
-			walk(this.parsed.css, {
+			walk(this.ast.css, {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
 						const last = stack[stack.length - 1];
@@ -311,7 +297,7 @@ export default class Stylesheet {
 					}
 
 					if (node.type === 'Rule') {
-						const rule = new Rule(node, currentAtrule);
+						const rule = new Rule(node, this, currentAtrule);
 						stack.push(rule);
 
 						if (currentAtrule) {
@@ -341,25 +327,26 @@ export default class Stylesheet {
 			if (parent.type === 'Element') stack.unshift(<Element>parent);
 		}
 
-		if (this.cascade) {
-			if (stack.length === 0) node._needsCssAttribute = true;
-			return;
-		}
-
 		for (let i = 0; i < this.children.length; i += 1) {
 			const child = this.children[i];
 			child.apply(node, stack);
 		}
 	}
 
+	reify() {
+		this.nodesWithCssClass.forEach((node: Node) => {
+			node.addCssClass();
+		});
+	}
+
 	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {
 		if (!this.hasStyles) {
-			return { css: null, cssMap: null };
+			return { code: null, map: null };
 		}
 
 		const code = new MagicString(this.source);
 
-		walk(this.parsed.css, {
+		walk(this.ast.css, {
 			enter: (node: Node) => {
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
@@ -368,15 +355,15 @@ export default class Stylesheet {
 
 		if (shouldTransformSelectors) {
 			this.children.forEach((child: (Atrule|Rule)) => {
-				child.transform(code, this.id, this.keyframes, this.cascade);
+				child.transform(code, this.id, this.keyframes);
 			});
 		}
 
 		let c = 0;
 		this.children.forEach(child => {
-			if (this.cascade || child.isUsed()) {
+			if (child.isUsed(this.dev)) {
 				code.remove(c, child.node.start);
-				child.minify(code, this.cascade);
+				child.minify(code, this.dev);
 				c = child.node.end;
 			}
 		});
@@ -384,8 +371,8 @@ export default class Stylesheet {
 		code.remove(c, this.source.length);
 
 		return {
-			css: code.toString(),
-			cssMap: code.generateMap({
+			code: code.toString(),
+			map: code.generateMap({
 				includeContent: true,
 				source: this.filename,
 				file: cssOutputFilename
@@ -400,26 +387,27 @@ export default class Stylesheet {
 	}
 
 	warnOnUnusedSelectors(onwarn: (warning: Warning) => void) {
-		if (this.cascade) return;
-
 		let locator;
 
 		const handler = (selector: Selector) => {
 			const pos = selector.node.start;
 
-			if (!locator) locator = getLocator(this.source);
-			const { line, column } = locator(pos);
+			if (!locator) locator = getLocator(this.source, { offsetLine: 1 });
+			const start = locator(pos);
+			const end = locator(selector.node.end);
 
-			const frame = getCodeFrame(this.source, line, column);
+			const frame = getCodeFrame(this.source, start.line - 1, start.column);
 			const message = `Unused CSS selector`;
 
 			onwarn({
+				code: `css-unused-selector`,
 				message,
 				frame,
-				loc: { line: line + 1, column },
+				start,
+				end,
 				pos,
 				filename: this.filename,
-				toString: () => `${message} (${line + 1}:${column})\n${frame}`,
+				toString: () => `${message} (${start.line}:${start.column})\n${frame}`,
 			});
 		};
 

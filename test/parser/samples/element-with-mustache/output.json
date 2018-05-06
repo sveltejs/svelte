@@ -2,12 +2,12 @@
 	"hash": 1265376132,
 	"html": {
 		"start": 0,
-		"end": 24,
+		"end": 22,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 24,
+				"end": 22,
 				"type": "Element",
 				"name": "h1",
 				"attributes": [],
@@ -20,18 +20,18 @@
 					},
 					{
 						"start": 10,
-						"end": 18,
+						"end": 16,
 						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 12,
-							"end": 16,
+							"start": 11,
+							"end": 15,
 							"name": "name"
 						}
 					},
 					{
-						"start": 18,
-						"end": 19,
+						"start": 16,
+						"end": 17,
 						"type": "Text",
 						"data": "!"
 					}

@@ -1,10 +1,10 @@
 <select bind:value="selected.letter">
-	{{#each uppercase as letter}}
-		<option value="{{letter}}">{{letter}}</option>
-	{{/each}}
+	{#each uppercase as letter}
+		<option value="{letter}">{letter}</option>
+	{/each}
 </select>
 
-{{selected.letter}}
+{selected.letter}
 
 <script>
 	export default {
@@ -21,7 +21,7 @@
 			}
 		},
 		computed:{
-			uppercase: letters => letters.map(x => x.toUpperCase())
+			uppercase: ({ letters }) => letters.map(x => x.toUpperCase())
 		}
 	};
 </script>

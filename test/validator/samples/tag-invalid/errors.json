@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-tag-property",
 	"message": "tag name must be two or more words joined by the '-' character",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 7
+		"column": 7,
+		"character": 34
+	},
+	"end": {
+		"line": 3,
+		"column": 16,
+		"character": 43
 	},
 	"pos": 34
 }]

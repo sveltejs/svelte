@@ -1,9 +1,7 @@
 function preload(input) {
 	return output;
 }
-
 var SvelteComponent = {};
-
 SvelteComponent.data = function() {
 	return {};
 };
@@ -30,10 +28,10 @@ SvelteComponent.render = function(state, options = {}) {
 	};
 };
 
-SvelteComponent._render = function(__result, state, options) {
+SvelteComponent._render = function(__result, ctx, options) {
 	__result.addComponent(SvelteComponent);
 
-	state = Object.assign({}, state);
+	ctx = Object.assign({}, ctx);
 
 	return ``;
 };
@@ -41,22 +39,6 @@ SvelteComponent._render = function(__result, state, options) {
 SvelteComponent.css = {
 	code: '',
 	map: null
-};
-
-var warned = false;
-SvelteComponent.renderCss = function() {
-	if (!warned) {
-		console.error('Component.renderCss(...) is deprecated and will be removed in v2 — use Component.render(...).css instead');
-		warned = true;
-	}
-
-	var components = [];
-
-	return {
-		css: components.map(x => x.css).join('\n'),
-		map: null,
-		components
-	};
 };
 
 SvelteComponent.preload = preload;

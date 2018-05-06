@@ -17,3 +17,7 @@ const escaped = {
 export function escapeHTML(html) {
 	return String(html).replace(/[&<>]/g, match => escaped[match]);
 }
+
+export function escapeTemplate(str) {
+	return str.replace(/(\${|`|\\)/g, '\\$1');
+}

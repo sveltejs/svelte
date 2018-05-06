@@ -78,10 +78,10 @@ describe('css', () => {
 			);
 
 			// check the code is valid
-			checkCodeIsValid(dom.code);
-			checkCodeIsValid(ssr.code);
+			checkCodeIsValid(dom.js.code);
+			checkCodeIsValid(ssr.js.code);
 
-			assert.equal(dom.css, ssr.css);
+			assert.equal(dom.css.code, ssr.css.code);
 
 			assert.deepEqual(
 				domWarnings.map(normalizeWarning),
@@ -89,13 +89,13 @@ describe('css', () => {
 			);
 			assert.deepEqual(domWarnings.map(normalizeWarning), expectedWarnings);
 
-			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css);
+			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css.code);
 			const expected = {
 				html: read(`test/css/samples/${dir}/expected.html`),
 				css: read(`test/css/samples/${dir}/expected.css`)
 			};
 
-			assert.equal(dom.css.replace(/svelte-\d+/g, 'svelte-xyz'), expected.css);
+			assert.equal(dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
@@ -104,7 +104,7 @@ describe('css', () => {
 				// dom
 				try {
 					const Component = eval(
-						`(function () { ${dom.code}; return SvelteComponent; }())`
+						`(function () { ${dom.js.code}; return SvelteComponent; }())`
 					);
 					const target = window.document.querySelector('main');
 
@@ -114,31 +114,31 @@ describe('css', () => {
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
 
 					assert.equal(
-						normalizeHtml(window, html.replace(/svelte-\d+/g, 'svelte-xyz')),
+						normalizeHtml(window, html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')),
 						normalizeHtml(window, expected.html)
 					);
 
 					window.document.head.innerHTML = ''; // remove added styles
 				} catch (err) {
-					console.log(dom.code);
+					console.log(dom.js.code);
 					throw err;
 				}
 
 				// ssr
 				try {
 					const component = eval(
-						`(function () { ${ssr.code}; return SvelteComponent; }())`
+						`(function () { ${ssr.js.code}; return SvelteComponent; }())`
 					);
 
 					assert.equal(
 						normalizeHtml(
 							window,
-							component.render(config.data).html.replace(/svelte-\d+/g, 'svelte-xyz')
+							component.render(config.data).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);
 				} catch (err) {
-					console.log(ssr.code);
+					console.log(ssr.js.code);
 					throw err;
 				}
 			}

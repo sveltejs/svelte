@@ -1,19 +1,19 @@
 {
-	"hash": 804348386,
+	"hash": "ehtsx6",
 	"html": {
 		"start": 0,
-		"end": 46,
+		"end": 42,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 46,
+				"end": 42,
 				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 5,
-						"end": 30,
+						"end": 28,
 						"type": "Attribute",
 						"name": "style",
 						"value": [
@@ -25,18 +25,18 @@
 							},
 							{
 								"start": 19,
-								"end": 28,
+								"end": 26,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 21,
-									"end": 26,
+									"start": 20,
+									"end": 25,
 									"name": "color"
 								}
 							},
 							{
-								"start": 28,
-								"end": 29,
+								"start": 26,
+								"end": 27,
 								"type": "Text",
 								"data": ";"
 							}
@@ -45,13 +45,13 @@
 				],
 				"children": [
 					{
-						"start": 31,
-						"end": 40,
+						"start": 29,
+						"end": 36,
 						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 33,
-							"end": 38,
+							"start": 30,
+							"end": 35,
 							"name": "color"
 						}
 					}

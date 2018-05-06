@@ -12,7 +12,10 @@ export default function readScript(parser: Parser, start: number, attributes: No
 	const scriptStart = parser.index;
 	const scriptEnd = parser.template.indexOf(scriptClosingTag, scriptStart);
 
-	if (scriptEnd === -1) parser.error(`<script> must have a closing tag`);
+	if (scriptEnd === -1) parser.error({
+		code: `unclosed-script`,
+		message: `<script> must have a closing tag`
+	});
 
 	const source =
 		repeat(' ', scriptStart) + parser.template.slice(scriptStart, scriptEnd);
@@ -22,7 +25,7 @@ export default function readScript(parser: Parser, start: number, attributes: No
 
 	try {
 		ast = acorn.parse(source, {
-			ecmaVersion: 8,
+			ecmaVersion: 9,
 			sourceType: 'module',
 			plugins: {
 				dynamicImport: true

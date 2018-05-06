@@ -1,0 +1,1 @@
+@keyframes why{0%{color:red}100%{color:blue}}.animated.svelte-xyz{animation:why 2s}.also-animated.svelte-xyz{animation:not-defined-here 2s}

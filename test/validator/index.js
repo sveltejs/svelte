@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import assert from "assert";
-import { svelte, tryToLoadJson } from "../helpers.js";
+import { svelte, loadConfig, tryToLoadJson } from "../helpers.js";
 
 describe("validate", () => {
 	fs.readdirSync("test/validator/samples").forEach(dir => {
@@ -15,24 +15,36 @@ describe("validate", () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const filename = `test/validator/samples/${dir}/input.html`;
-			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
+			const config = loadConfig(`./validator/samples/${dir}/_config.js`);
 
+			const input = fs.readFileSync(`test/validator/samples/${dir}/input.html`, "utf-8").replace(/\s+$/, "");
 			const expectedWarnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
 			const expectedErrors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
+
 			let error;
 
 			try {
 				const warnings = [];
 
-				svelte.compile(input, {
+				const { stats } = svelte.compile(input, {
 					onwarn(warning) {
-						warnings.push({
-							message: warning.message,
-							pos: warning.pos,
-							loc: warning.loc
-						});
-					}
+						const { code, message, pos, start, end } = warning;
+						warnings.push({ code, message, pos, start, end });
+					},
+					dev: config.dev,
+					generate: false
+				});
+
+				assert.equal(stats.warnings.length, warnings.length);
+				stats.warnings.forEach((full, i) => {
+					const lite = warnings[i];
+					assert.deepEqual({
+						code: full.code,
+						message: full.message,
+						pos: full.pos,
+						start: full.start,
+						end: full.end
+					}, lite);
 				});
 
 				assert.deepEqual(warnings, expectedWarnings);
@@ -51,8 +63,10 @@ describe("validate", () => {
 					throw new Error(`Expected an error: ${expected.message}`);
 				}
 
+				assert.equal(error.code, expected.code);
 				assert.equal(error.message, expected.message);
-				assert.deepEqual(error.loc, expected.loc);
+				assert.deepEqual(error.start, expected.start);
+				assert.deepEqual(error.end, expected.end);
 				assert.equal(error.pos, expected.pos);
 			}
 		});
@@ -61,7 +75,8 @@ describe("validate", () => {
 	it("errors if options.name is illegal", () => {
 		assert.throws(() => {
 			svelte.compile("<div></div>", {
-				name: "not.valid"
+				name: "not.valid",
+				generate: false
 			});
 		}, /options\.name must be a valid identifier/);
 	});
@@ -72,18 +87,38 @@ describe("validate", () => {
 			name: "lowercase",
 			onwarn(warning) {
 				warnings.push({
+					code: warning.code,
 					message: warning.message,
 					pos: warning.pos,
-					loc: warning.loc
+					start: warning.start
 				});
-			}
+			},
+			generate: false
 		});
 		assert.deepEqual(warnings, [
 			{
+				code: `options-lowercase-name`,
 				message: "options.name should be capitalised",
 				pos: undefined,
-				loc: undefined
+				start: undefined
 			}
 		]);
+	});
+
+	it("does not warn if options.name begins with non-alphabetic character", () => {
+		const warnings = [];
+		svelte.compile("<div></div>", {
+			name: "_",
+			onwarn(warning) {
+				warnings.push({
+					code: warning.code,
+					message: warning.message,
+					pos: warning.pos,
+					start: warning.start
+				});
+			},
+			generate: false
+		});
+		assert.deepEqual(warnings, []);
 	});
 });

@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-callee",
+	"message": "'store.set' is an invalid callee (did you mean '$set(...)'?)",
+	"pos": 18,
+	"start": {
+		"line": 1,
+		"column": 18,
+		"character": 18
+	},
+	"end": {
+		"line": 1,
+		"column": 43,
+		"character": 43
+	}
+}]

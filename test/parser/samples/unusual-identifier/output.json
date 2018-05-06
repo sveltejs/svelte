@@ -1,43 +1,47 @@
 {
-	"hash": 795130236,
 	"html": {
 		"start": 0,
-		"end": 47,
+		"end": 41,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 47,
+				"end": 41,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 8,
-					"end": 14,
+					"start": 7,
+					"end": 13,
 					"name": "things"
 				},
 				"children": [
 					{
-						"start": 24,
-						"end": 37,
+						"start": 22,
+						"end": 33,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 27,
-								"end": 33,
+								"start": 25,
+								"end": 29,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 29,
-									"end": 31,
+									"start": 26,
+									"end": 28,
 									"name": "𐊧"
 								}
 							}
 						]
 					}
 				],
-				"context": "𐊧"
+				"context": {
+					"start": 17,
+					"end": 19,
+					"type": "Identifier",
+					"name": "𐊧"
+				}
 			}
 		]
 	},

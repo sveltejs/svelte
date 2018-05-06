@@ -10,7 +10,7 @@ export default {
 
 		button.dispatchEvent( click );
 
-		assert.equal( component.get( 'x' ), 11 );
+		assert.equal( component.get().x, 11 );
 		assert.htmlEqual( target.innerHTML, `
 			<button>+1</button>
 			<p>count: 11</p>
@@ -18,7 +18,7 @@ export default {
 
 		button.dispatchEvent( click );
 
-		assert.equal( component.get( 'x' ), 12 );
+		assert.equal( component.get().x, 12 );
 		assert.htmlEqual( target.innerHTML, `
 			<button>+1</button>
 			<p>count: 12</p>

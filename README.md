@@ -18,9 +18,9 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
-* [svelte-hot-loader](https://github.com/ekhaled/svelte-hot-loader) – Webpack loader addon to support HMR
 * [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
 * [sveltejs-brunch](https://github.com/StarpTech/sveltejs-brunch) – Brunch build plugin
+* [svelte-dev-store](https://github.com/GarethOates/svelte-dev-store) - Use Redux tools to visualise Svelte store
 * More to come!
 
 
@@ -29,7 +29,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 ```js
 import * as svelte from 'svelte';
 
-const { code, map } = svelte.compile( source, {
+const { code, map } = svelte.compile(source, {
 	// the target module format – defaults to 'es' (ES2015 modules), can
 	// also be 'amd', 'cjs', 'umd', 'iife' or 'eval'
 	format: 'umd',
@@ -64,9 +64,9 @@ const { code, map } = svelte.compile( source, {
 
 The Svelte compiler exposes the following API:
 
-* `compile( source [, options ] ) => { code, map, ast, css }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
-* `create( source [, options ] ) => function` - Compile the component and return the component itself.
-* `preprocess( source, options ) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
+* `compile(source [, options]) => { js, css, ast }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
+* `create(source [, options]) => function` - Compile the component and return the component itself.
+* `preprocess(source, options) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
 ### Compiler options
@@ -75,13 +75,11 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 
 | | **Values** | **Description** | **Default** |
 |---|---|---|---|
-| `generate` | `'dom'`, `'ssr'` | Whether to generate JavaScript code intended for use on the client (`'dom'`), or for use in server-side rendering (`'ssr'`). | `'dom'` |
+| `generate` | `'dom'`, `'ssr'`, `false` | Whether to generate JavaScript code intended for use on the client (`'dom'`), or for use in server-side rendering (`'ssr'`). If `false`, component will be parsed and validated but no code will be emitted | `'dom'` |
 | `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
 | `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |
-| `store` | `true`, `false` | Whether to support store integration on the compiled component. | `false` |
 | `hydratable` | `true`, `false` | Whether to support hydration on the compiled component. | `false` |
 | `customElement` | `true`, `false`, `{ tag, props }` | Whether to compile this component to a custom element. If `tag`/`props` are passed, compiles to a custom element and overrides the values exported by the component. | `false` |
-| `cascade` | `true`, `false` | Whether to cascade all of the component's styles to child components. If `false`, only selectors wrapped in `:global(...)` and keyframe IDs beginning with `-global-` are cascaded. | `true` |
 | `bind` | `boolean` | If `false`, disallows `bind:` directives | `true` |
 | | | |
 | `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
@@ -92,6 +90,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `filename` | `string` | The filename to use in sourcemaps and compiler error and warning messages. | `'SvelteComponent.html'` |
 | `amd`.`id` | `string` | The AMD module ID to use for the `'amd'` and `'umd'` output formats. | `undefined` |
 | `globals` | `object`, `function` | When outputting to the `'umd'`, `'iife'` or `'eval'` formats, an object or function mapping the names of imported dependencies to the names of global variables. | `{}` |
+| `preserveComments` | `boolean` | Include comments in rendering. Currently, only applies to SSR rendering | `false` |
 | | | |
 | `onerror` | `function` | Specify a callback for when Svelte encounters an error while compiling the component. Passed two arguments: the error object, and another function that is Svelte's default onerror handling. | (exception is thrown) |
 | `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. Passed two arguments: the warning object, and another function that is Svelte's default onwarn handling. | (warning is logged to console) |
@@ -130,6 +129,7 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 * [charpeni/svelte-example](https://github.com/charpeni/svelte-example) - Some Svelte examples with configured Rollup, Babel, ESLint, directives, Two-Way binding, and nested components
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
 * [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
+* [khtdr/svelte-redux-shopping-cart](https://github.com/khtdr/svelte-redux-shopping-cart) – Redux Shopping Cart example (with devtools and hot-reloading)
 
 ## BrowserStack
 <img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">

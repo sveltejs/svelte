@@ -2,28 +2,17 @@ import validateJs from './js/index';
 import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
-import CompileError from '../utils/CompileError';
+import Stats from '../Stats';
+import error from '../utils/error';
 import Stylesheet from '../css/Stylesheet';
-import { Node, Parsed, CompileOptions, Warning } from '../interfaces';
-
-class ValidationError extends CompileError {
-	constructor(
-		message: string,
-		template: string,
-		index: number,
-		filename: string
-	) {
-		super(message, template, index, filename);
-		this.name = 'ValidationError';
-	}
-}
+import { Node, Ast, CompileOptions, Warning } from '../interfaces';
 
 export class Validator {
 	readonly source: string;
 	readonly filename: string;
+	readonly stats: Stats;
 
 	options: CompileOptions;
-	onwarn: ({}) => void;
 	locator?: (pos: number) => Location;
 
 	namespace: string;
@@ -33,6 +22,7 @@ export class Validator {
 	methods: Map<string, Node>;
 	helpers: Map<string, Node>;
 	transitions: Map<string, Node>;
+	actions: Map<string, Node>;
 	slots: Set<string>;
 
 	used: {
@@ -40,12 +30,14 @@ export class Validator {
 		helpers: Set<string>;
 		events: Set<string>;
 		transitions: Set<string>;
+		actions: Set<string>;
 	};
 
-	constructor(parsed: Parsed, source: string, options: CompileOptions) {
+	constructor(ast: Ast, source: string, stats: Stats, options: CompileOptions) {
 		this.source = source;
+		this.stats = stats;
+
 		this.filename = options.filename;
-		this.onwarn = options.onwarn;
 		this.options = options;
 
 		this.namespace = null;
@@ -56,44 +48,57 @@ export class Validator {
 		this.methods = new Map();
 		this.helpers = new Map();
 		this.transitions = new Map();
+		this.actions = new Map();
 		this.slots = new Set();
 
 		this.used = {
 			components: new Set(),
 			helpers: new Set(),
 			events: new Set(),
-			transitions: new Set()
+			transitions: new Set(),
+			actions: new Set(),
 		};
 	}
 
-	error(message: string, pos: number) {
-		throw new ValidationError(message, this.source, pos, this.filename);
+	error(pos: { start: number, end: number }, { code, message } : { code: string, message: string }) {
+		error(message, {
+			name: 'ValidationError',
+			code,
+			source: this.source,
+			start: pos.start,
+			end: pos.end,
+			filename: this.filename
+		});
 	}
 
-	warn(message: string, pos: number) {
-		if (!this.locator) this.locator = getLocator(this.source);
-		const { line, column } = this.locator(pos);
+	warn(pos: { start: number, end: number }, { code, message }: { code: string, message: string }) {
+		if (!this.locator) this.locator = getLocator(this.source, { offsetLine: 1 });
+		const start = this.locator(pos.start);
+		const end = this.locator(pos.end);
 
-		const frame = getCodeFrame(this.source, line, column);
+		const frame = getCodeFrame(this.source, start.line - 1, start.column);
 
-		this.onwarn({
+		this.stats.warn({
+			code,
 			message,
 			frame,
-			loc: { line: line + 1, column },
-			pos,
+			start,
+			end,
+			pos: pos.start,
 			filename: this.filename,
-			toString: () => `${message} (${line + 1}:${column})\n${frame}`,
+			toString: () => `${message} (${start.line + 1}:${start.column})\n${frame}`,
 		});
 	}
 }
 
 export default function validate(
-	parsed: Parsed,
+	ast: Ast,
 	source: string,
 	stylesheet: Stylesheet,
+	stats: Stats,
 	options: CompileOptions
 ) {
-	const { onwarn, onerror, name, filename, store } = options;
+	const { onerror, name, filename, dev, parser } = options;
 
 	try {
 		if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
@@ -101,42 +106,44 @@ export default function validate(
 			throw error;
 		}
 
-		if (name && !/^[A-Z]/.test(name)) {
+		if (name && /^[a-z]/.test(name)) {
 			const message = `options.name should be capitalised`;
-			onwarn({
+			stats.warn({
+				code: `options-lowercase-name`,
 				message,
 				filename,
 				toString: () => message,
 			});
 		}
 
-		const validator = new Validator(parsed, source, {
-			onwarn,
+		const validator = new Validator(ast, source, stats, {
 			name,
 			filename,
-			store
+			dev,
+			parser
 		});
 
-		if (parsed.js) {
-			validateJs(validator, parsed.js);
+		if (ast.js) {
+			validateJs(validator, ast.js);
 		}
 
-		if (parsed.css) {
+		if (ast.css) {
 			stylesheet.validate(validator);
 		}
 
-		if (parsed.html) {
-			validateHtml(validator, parsed.html);
+		if (ast.html) {
+			validateHtml(validator, ast.html);
 		}
 
 		// need to do a second pass of the JS, now that we've analysed the markup
-		if (parsed.js && validator.defaultExport) {
+		if (ast.js && validator.defaultExport) {
 			const categories = {
 				components: 'component',
 				// TODO helpers require a bit more work — need to analyse all expressions
 				// helpers: 'helper',
 				events: 'event definition',
-				transitions: 'transition'
+				transitions: 'transition',
+				actions: 'actions',
 			};
 
 			Object.keys(categories).forEach(category => {
@@ -145,10 +152,10 @@ export default function validate(
 					definitions.value.properties.forEach(prop => {
 						const { name } = prop.key;
 						if (!validator.used[category].has(name)) {
-							validator.warn(
-								`The '${name}' ${categories[category]} is unused`,
-								prop.start
-							);
+							validator.warn(prop, {
+								code: `unused-${category.slice(0, -1)}`,
+								message: `The '${name}' ${categories[category]} is unused`
+							});
 						}
 					});
 				}

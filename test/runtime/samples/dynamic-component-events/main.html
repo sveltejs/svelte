@@ -1,4 +1,4 @@
-<:Component { x ? Foo : Bar } on:select='set({ selected: event.id })'/>
+<svelte:component this="{ x ? Foo : Bar }" on:select='set({ selected: event.id })'/>
 
 <script>
 	import Foo from './Foo.html';

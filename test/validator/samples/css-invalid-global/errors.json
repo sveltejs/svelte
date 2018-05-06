@@ -1,8 +1,15 @@
 [{
+	"code": "css-invalid-global",
 	"message": ":global(...) must be the first element in a compound selector",
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 5
+		"column": 5,
+		"character": 13
+	},
+	"end": {
+		"line": 2,
+		"column": 18,
+		"character": 26
 	},
 	"pos": 13
 }]

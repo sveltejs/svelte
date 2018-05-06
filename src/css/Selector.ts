@@ -1,16 +1,19 @@
 import MagicString from 'magic-string';
+import Stylesheet from './Stylesheet';
 import { gatherPossibleValues, UNKNOWN } from './gatherPossibleValues';
 import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
 
 export default class Selector {
 	node: Node;
+	stylesheet: Stylesheet;
 	blocks: Block[];
 	localBlocks: Block[];
 	used: boolean;
 
-	constructor(node: Node) {
+	constructor(node: Node, stylesheet: Stylesheet) {
 		this.node = node;
+		this.stylesheet = stylesheet;
 
 		this.blocks = groupSelectors(node);
 
@@ -31,7 +34,7 @@ export default class Selector {
 
 		if (toEncapsulate.length > 0) {
 			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
-				node._needsCssAttribute = true;
+				this.stylesheet.nodesWithCssClass.add(node);
 				block.shouldEncapsulate = true;
 			});
 
@@ -99,7 +102,10 @@ export default class Selector {
 			while (i-- > 1) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					validator.error(`:global(...) must be the first element in a compound selector`, selector.start);
+					validator.error(selector, {
+						code: `css-invalid-global`,
+						message: `:global(...) must be the first element in a compound selector`
+					});
 				}
 			}
 		});
@@ -117,7 +123,10 @@ export default class Selector {
 
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
-				validator.error(`:global(...) can be at the start or end of a selector sequence, but not in the middle`, this.blocks[i].selectors[0].start);
+				validator.error(this.blocks[i].selectors[0], {
+					code: `css-invalid-global`,
+					message: `:global(...) can be at the start or end of a selector sequence, but not in the middle`
+				});
 			}
 		}
 	}
@@ -164,11 +173,12 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 		}
 
 		else if (selector.type === 'TypeSelector') {
-			if (node.name !== selector.name && selector.name !== '*') return false;
+			// remove toLowerCase() in v2, when uppercase elements will be forbidden
+			if (node.name.toLowerCase() !== selector.name.toLowerCase() && selector.name !== '*') return false;
 		}
 
 		else if (selector.type === 'RefSelector') {
-			if (node.attributes.some((attr: Node) => attr.type === 'Ref' && attr.name === selector.name)) {
+			if (node.ref === selector.name) {
 				node._cssRefAttribute = selector.name;
 				toEncapsulate.push({ node, block });
 				return true;
@@ -220,20 +230,23 @@ const operators = {
 };
 
 function attributeMatches(node: Node, name: string, expectedValue: string, operator: string, caseInsensitive: boolean) {
+	const spread = node.attributes.find(attr => attr.type === 'Spread');
+	if (spread) return true;
+
 	const attr = node.attributes.find((attr: Node) => attr.name === name);
 	if (!attr) return false;
-	if (attr.value === true) return operator === null;
-	if (attr.value.length > 1) return true;
+	if (attr.isTrue) return operator === null;
+	if (attr.chunks.length > 1) return true;
 	if (!expectedValue) return true;
 
 	const pattern = operators[operator](expectedValue, caseInsensitive ? 'i' : '');
-	const value = attr.value[0];
+	const value = attr.chunks[0];
 
 	if (!value) return false;
 	if (value.type === 'Text') return pattern.test(value.data);
 
 	const possibleValues = new Set();
-	gatherPossibleValues(value.expression, possibleValues);
+	gatherPossibleValues(value.node, possibleValues);
 	if (possibleValues.has(UNKNOWN)) return true;
 
 	for (const x of Array.from(possibleValues)) { // TypeScript for-of is slightly unlike JS

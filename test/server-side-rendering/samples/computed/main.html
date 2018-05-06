@@ -1,11 +1,11 @@
-<p>{{a}} + {{b}} = {{c}}</p>
-<p>{{c}} * {{c}} = {{cSquared}}</p>
+<p>{a} + {b} = {c}</p>
+<p>{c} * {c} = {cSquared}</p>
 
 <script>
 	export default {
 		computed: {
-			c: ( a, b ) => a + b,
-			cSquared: c => c * c
+			c: ({ a, b }) => a + b,
+			cSquared: ({ c }) => c * c
 		}
 	};
 </script>

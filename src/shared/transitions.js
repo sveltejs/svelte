@@ -1,4 +1,3 @@
-import { assign, noop } from './utils.js';
 import { createElement } from './dom.js';
 
 export function linear(t) {
@@ -106,7 +105,7 @@ export function wrapTransition(component, node, fn, params, intro, outgroup) {
 						// when introing, discard old animations if there are any
 						return anim && (program.delta < 0 || !/__svelte/.test(anim));
 					})
-					.concat(program.name + ' ' + duration + 'ms linear 1 forwards')
+					.concat(program.name + ' ' + program.duration + 'ms linear 1 forwards')
 					.join(', ');
 			}
 
@@ -200,7 +199,7 @@ export var transitionManager = {
 		node.style.animation = node.style.animation
 			.split(', ')
 			.filter(function(anim) {
-				return anim.slice(0, name.length) !== name;
+				return anim.indexOf(name) === -1;
 			})
 			.join(', ');
 	}
