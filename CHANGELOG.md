@@ -1,5 +1,16 @@
 # Svelte changelog
 
+## 2.5.0
+
+* Support transitions in `await` blocks ([#956](https://github.com/sveltejs/svelte/issues/956))
+* Abort outros if block is recreated ([#1425](https://github.com/sveltejs/svelte/issues/1425))
+* Wait until transitions have completed before removing styles ([#648](https://github.com/sveltejs/svelte/issues/648))
+* Support event shorthand on dynamic components ([#1427](https://github.com/sveltejs/svelte/pull/1427))
+* Various codegen improvements ([#1419](https://github.com/sveltejs/svelte/pull/1419), [#1421](https://github.com/sveltejs/svelte/pull/1421), [#1422](https://github.com/sveltejs/svelte/pull/1422), [#1424](https://github.com/sveltejs/svelte/pull/1424))
+* Correctly handle `await` blocks with no dynamic content ([#1417](https://github.com/sveltejs/svelte/issues/1417))
+* Allow spread props on elements with static attribute tests ([#1429](https://github.com/sveltejs/svelte/pull/1429))
+
+
 ## 2.4.4
 
 * Declare missing variable in Store ([#1415](https://github.com/sveltejs/svelte/issues/1415))
