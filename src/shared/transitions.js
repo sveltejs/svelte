@@ -1,4 +1,5 @@
 import { createElement } from './dom.js';
+import { noop } from './utils.js';
 
 export function linear(t) {
 	return t;
@@ -12,34 +13,34 @@ export function generateRule(
 	ease,
 	fn
 ) {
-	var keyframes = '{\n';
+	let keyframes = '{\n';
 
-	for (var p = 0; p <= 1; p += 16.666 / duration) {
-		var t = a + delta * ease(p);
-		keyframes += p * 100 + '%{' + fn(t) + '}\n';
+	for (let p = 0; p <= 1; p += 16.666 / duration) {
+		const t = a + delta * ease(p);
+		keyframes += p * 100 + `%{${fn(t)}}\n`;
 	}
 
-	return keyframes + '100% {' + fn(b) + '}\n}';
+	return keyframes + `100% {${fn(b)}}\n}`;
 }
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 export function hash(str) {
-	var hash = 5381;
-	var i = str.length;
+	let hash = 5381;
+	let i = str.length;
 
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
 }
 
-export function wrapTransition(component, node, fn, params, intro, outgroup) {
-	var obj = fn(node, params);
-	var duration = obj.duration || 300;
-	var ease = obj.easing || linear;
-	var cssText;
+export function wrapTransition(component, node, fn, params, intro) {
+	const obj = fn(node, params);
+	const duration = obj.duration || 300;
+	const ease = obj.easing || linear;
+	let cssText;
 
 	// TODO share <style> tag between all transitions?
 	if (obj.css && !transitionManager.stylesheet) {
-		var style = createElement('style');
+		const style = createElement('style');
 		document.head.appendChild(style);
 		transitionManager.stylesheet = style.sheet;
 	}
@@ -58,11 +59,12 @@ export function wrapTransition(component, node, fn, params, intro, outgroup) {
 		running: false,
 		program: null,
 		pending: null,
-		run: function(intro, callback) {
-			var program = {
+
+		run(intro, callback) {
+			const program = {
 				start: window.performance.now() + (obj.delay || 0),
-				intro: intro,
-				callback: callback
+				intro,
+				callback: callback || noop
 			};
 
 			if (obj.delay) {
@@ -76,8 +78,9 @@ export function wrapTransition(component, node, fn, params, intro, outgroup) {
 				transitionManager.add(this);
 			}
 		},
-		start: function(program) {
-			component.fire(program.intro ? 'intro.start' : 'outro.start', { node: node });
+
+		start(program) {
+			component.fire(`${program.intro ? 'intro' : 'outro'}.start`, { node });
 
 			program.a = this.t;
 			program.b = program.intro ? 1 : 0;
@@ -101,35 +104,38 @@ export function wrapTransition(component, node, fn, params, intro, outgroup) {
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
-					.filter(function(anim) {
-						// when introing, discard old animations if there are any
-						return anim && (program.delta < 0 || !/__svelte/.test(anim));
-					})
-					.concat(program.name + ' ' + program.duration + 'ms linear 1 forwards')
+					.filter(anim => (program.delta < 0 || !/__svelte/.test(anim)))
+					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
 					.join(', ');
 			}
 
 			this.program = program;
 			this.pending = null;
 		},
-		update: function(now) {
-			var program = this.program;
+
+		update(now) {
+			const program = this.program;
 			if (!program) return;
 
-			var p = now - program.start;
+			const p = now - program.start;
 			this.t = program.a + program.delta * ease(p / program.duration);
 			if (obj.tick) obj.tick(this.t);
 		},
-		done: function() {
-			var program = this.program;
+
+		done() {
+			const program = this.program;
 			this.t = program.b;
+
 			if (obj.tick) obj.tick(this.t);
 			if (obj.css) transitionManager.deleteRule(node, program.name);
+
+			component.fire(`${program.intro ? 'intro' : 'outro'}.end`, { node });
 			program.callback();
-			program = null;
+			this.program = null;
 			this.running = !!this.pending;
 		},
-		abort: function() {
+
+		abort() {
 			if (obj.tick) obj.tick(1);
 			if (obj.css) transitionManager.deleteRule(node, this.program.name);
 			this.program = this.pending = null;
@@ -145,7 +151,7 @@ export var transitionManager = {
 	stylesheet: null,
 	activeRules: {},
 
-	add: function(transition) {
+	add(transition) {
 		this.transitions.push(transition);
 
 		if (!this.running) {
@@ -154,21 +160,21 @@ export var transitionManager = {
 		}
 	},
 
-	addRule: function(rule, name) {
+	addRule(rule, name) {
 		if (!this.activeRules[name]) {
 			this.activeRules[name] = true;
-			this.stylesheet.insertRule('@keyframes ' + name + ' ' + rule, this.stylesheet.cssRules.length);
+			this.stylesheet.insertRule(`@keyframes ${name} ${rule}`, this.stylesheet.cssRules.length);
 		}
 	},
 
-	next: function() {
+	next() {
 		this.running = false;
 
-		var now = window.performance.now();
-		var i = this.transitions.length;
+		const now = window.performance.now();
+		let i = this.transitions.length;
 
 		while (i--) {
-			var transition = this.transitions[i];
+			const transition = this.transitions[i];
 
 			if (transition.program && now >= transition.program.end) {
 				transition.done();
@@ -189,18 +195,16 @@ export var transitionManager = {
 		if (this.running) {
 			requestAnimationFrame(this.bound);
 		} else if (this.stylesheet) {
-			var i = this.stylesheet.cssRules.length;
+			let i = this.stylesheet.cssRules.length;
 			while (i--) this.stylesheet.deleteRule(i);
 			this.activeRules = {};
 		}
 	},
 
-	deleteRule: function(node, name) {
+	deleteRule(node, name) {
 		node.style.animation = node.style.animation
 			.split(', ')
-			.filter(function(anim) {
-				return anim.indexOf(name) === -1;
-			})
+			.filter(anim => anim.indexOf(name) === -1)
 			.join(', ');
 	}
 };
