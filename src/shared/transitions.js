@@ -31,13 +31,6 @@ export function wrapTransition(component, node, fn, params, intro) {
 	const ease = obj.easing || linear;
 	let cssText;
 
-	// TODO share <style> tag between all transitions?
-	if (obj.css && !transitionManager.stylesheet) {
-		const style = createElement('style');
-		document.head.appendChild(style);
-		transitionManager.stylesheet = style.sheet;
-	}
-
 	if (intro) {
 		if (obj.css && obj.delay) {
 			cssText = node.style.cssText;
@@ -162,6 +155,12 @@ export var transitionManager = {
 	},
 
 	addRule(rule, name) {
+		if (!this.stylesheet) {
+			const style = createElement('style');
+			document.head.appendChild(style);
+			transitionManager.stylesheet = style.sheet;
+		}
+
 		if (!this.activeRules[name]) {
 			this.activeRules[name] = true;
 			this.stylesheet.insertRule(`@keyframes ${name} ${rule}`, this.stylesheet.cssRules.length);
