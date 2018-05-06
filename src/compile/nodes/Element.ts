@@ -702,16 +702,13 @@ export default class Element extends Node {
 
 			block.builders.intro.addBlock(deindent`
 				#component.root._aftercreate.push(() => {
-					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
-					${name}.run(true, () => {
-						#component.fire("intro.end", { node: ${this.var} });
-					});
+					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
+					${name}.run(1);
 				});
 			`);
 
 			block.builders.outro.addBlock(deindent`
-				${name}.run(false, () => {
-					#component.fire("outro.end", { node: ${this.var} });
+				${name}.run(0, () => {
 					${block.outros > 1 ? `if (--#outros === 0) #outrocallback();` : `#outrocallback();`}
 					${name} = null;
 				});
@@ -737,10 +734,8 @@ export default class Element extends Node {
 
 				block.builders.intro.addBlock(deindent`
 					#component.root._aftercreate.push(() => {
-						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
-						${introName}.run(true, () => {
-							#component.fire("intro.end", { node: ${this.var} });
-						});
+						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
+						${introName}.run(1);
 					});
 				`);
 			}
@@ -756,9 +751,8 @@ export default class Element extends Node {
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false, null);
-					${outroName}.run(false, () => {
-						#component.fire("outro.end", { node: ${this.var} });
+					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
+					${outroName}.run(0, () => {
 						${block.outros > 1 ? `if (--#outros === 0) #outrocallback();` : `#outrocallback();`}
 					});
 				`);

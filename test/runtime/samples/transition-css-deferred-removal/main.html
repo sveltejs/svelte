@@ -1,0 +1,31 @@
+{#if visible}
+	<span class='outer' out:foo>
+		<span class='inner' out:bar>
+			double transition
+		</span>
+	</span>
+{/if}
+
+<script>
+	export default {
+		transitions: {
+			foo(node) {
+				return {
+					duration: 200,
+					css: t => {
+						return `opacity: ${t}`;
+					}
+				};
+			},
+
+			bar(node) {
+				return {
+					duration: 100,
+					css: t => {
+						return `left: ${t * 100}px`;
+					}
+				};
+			}
+		}
+	};
+</script>
