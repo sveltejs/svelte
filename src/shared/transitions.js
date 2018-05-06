@@ -6,9 +6,10 @@ export function linear(t) {
 }
 
 export function generateRule({ a, b, delta, duration }, ease, fn) {
+	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
-	for (let p = 0; p <= 1; p += 16.666 / duration) {
+	for (let p = 0; p <= 1; p += step) {
 		const t = a + delta * ease(p);
 		keyframes += p * 100 + `%{${fn(t)}}\n`;
 	}
@@ -112,7 +113,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 			component.fire(`${program.b ? 'intro' : 'outro'}.end`, { node });
 
-			if (!program.b) {
+			if (!program.b && !program.invalidated) {
 				program.group.callbacks.push(() => {
 					program.callback();
 					if (obj.css) transitionManager.deleteRule(node, program.name);
@@ -123,17 +124,26 @@ export function wrapTransition(component, node, fn, params, intro) {
 						fn();
 					});
 				}
+			} else {
+				if (obj.css) transitionManager.deleteRule(node, program.name);
 			}
 
-			this.program = null;
 			this.running = !!this.pending;
 		},
 
 		abort() {
-			if (obj.tick) obj.tick(1);
-			if (obj.css) transitionManager.deleteRule(node, this.program.name);
-			this.program = this.pending = null;
-			this.running = false;
+			if (this.program) {
+				if (obj.tick) obj.tick(1);
+				if (obj.css) transitionManager.deleteRule(node, this.program.name);
+				this.program = this.pending = null;
+				this.running = false;
+			}
+		},
+
+		invalidate() {
+			if (this.program) {
+				this.program.invalidated = true;
+			}
 		}
 	};
 }
@@ -204,7 +214,7 @@ export var transitionManager = {
 	deleteRule(node, name) {
 		node.style.animation = node.style.animation
 			.split(', ')
-			.filter(anim => anim.indexOf(name) === -1)
+			.filter(anim => anim && anim.indexOf(name) === -1)
 			.join(', ');
 	},
 

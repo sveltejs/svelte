@@ -132,8 +132,10 @@ export default class AwaitBlock extends Node {
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
+		const hasTransitions = this.pending.block.hasIntroMethod || this.pending.block.hasOutroMethod;
+
 		block.builders.mount.addBlock(deindent`
-			${info}.block.${this.pending.block.hasIntroMethod ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
+			${info}.block.${hasTransitions ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
 		`);
 
