@@ -13,10 +13,6 @@ The magical disappearing UI framework.
 
 This is the Svelte compiler, which is primarily intended for authors of tooling that integrates Svelte with different build systems. If you just want to write Svelte components and use them in your app, you probably want one of those tools:
 
-### Standalone tools
-
-* [svelte-cli](https://github.com/sveltejs/svelte-cli) – Command line interface for compiling components
-
 ### Build Systems
 
 * [gulp-svelte](https://github.com/shinnn/gulp-svelte) - gulp plugin
