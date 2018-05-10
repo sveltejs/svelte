@@ -9,20 +9,26 @@ The magical disappearing UI framework.
 
 ---
 
+## Tooling
+
 This is the Svelte compiler, which is primarily intended for authors of tooling that integrates Svelte with different build systems. If you just want to write Svelte components and use them in your app, you probably want one of those tools:
 
-* [svelte-cli](https://github.com/sveltejs/svelte-cli) – Command line interface for compiling components
-* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) – Rollup plugin
-* [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
+### Build Systems
+
 * [gulp-svelte](https://github.com/shinnn/gulp-svelte) - gulp plugin
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
 * [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
 * [sveltejs-brunch](https://github.com/StarpTech/sveltejs-brunch) – Brunch build plugin
+* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) – Rollup plugin
+* [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte) - Parcel build plugin
+* [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
+
+### Additional tools
+
 * [svelte-dev-store](https://github.com/GarethOates/svelte-dev-store) - Use Redux tools to visualise Svelte store
 * More to come!
-
 
 ## Example usage
 
