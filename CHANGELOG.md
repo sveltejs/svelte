@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.5.1
+
+* Add new ARIA attributes ([#1436](https://github.com/sveltejs/svelte/pull/1436))
+* Add `Promise` to whitelisted globals ([#1441](https://github.com/sveltejs/svelte/issues/1441))
+* Allow spaces around reserved keyword attributes ([#1445](https://github.com/sveltejs/svelte/issues/1445))
+
 ## 2.5.0
 
 * Support transitions in `await` blocks ([#956](https://github.com/sveltejs/svelte/issues/956))
