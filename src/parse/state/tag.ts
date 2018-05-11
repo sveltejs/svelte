@@ -439,6 +439,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 				chunks.push(currentChunk);
 			}
 
+			parser.allowWhitespace();
 			const expression = readExpression(parser);
 			parser.allowWhitespace();
 			parser.eat('}', true);
