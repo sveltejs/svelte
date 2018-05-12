@@ -128,8 +128,8 @@ export function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
 
-export function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
+export function _mount(target, anchor, intro) {
+	this._fragment[intro && this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
 export var PENDING = {};
