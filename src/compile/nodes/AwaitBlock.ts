@@ -77,7 +77,7 @@ export default class AwaitBlock extends Node {
 		this.then.block.hasOutroMethod = hasOutros;
 		this.catch.block.hasOutroMethod = hasOutros;
 
-		if (hasOutros) block.addOutro();
+		if (hasOutros && this.compiler.options.nestedTransitions) block.addOutro();
 	}
 
 	build(
@@ -171,7 +171,7 @@ export default class AwaitBlock extends Node {
 			`);
 		}
 
-		if (this.pending.block.hasOutroMethod) {
+		if (this.pending.block.hasOutroMethod && this.compiler.options.nestedTransitions) {
 			block.builders.outro.addBlock(deindent`
 				#outrocallback = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {

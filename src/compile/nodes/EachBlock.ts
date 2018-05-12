@@ -321,10 +321,12 @@ export default class EachBlock extends Node {
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 		`);
 
-		block.builders.outro.addBlock(deindent`
-			#outrocallback = @callAfter(#outrocallback, ${blocks}.length);
-			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(#outrocallback);
-		`)
+		if (this.compiler.options.nestedTransitions) {
+			block.builders.outro.addBlock(deindent`
+				#outrocallback = @callAfter(#outrocallback, ${blocks}.length);
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(#outrocallback);
+			`);
+		}
 
 		block.builders.destroy.addBlock(deindent`
 			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].d(${parentNode ? '' : 'detach'});
@@ -462,7 +464,7 @@ export default class EachBlock extends Node {
 			`);
 		}
 
-		if (outro) {
+		if (outro && this.compiler.options.nestedTransitions) {
 			block.builders.outro.addBlock(deindent`
 				#outrocallback = @callAfter(#outrocallback, #i);
 				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outro}(#i, 0, #outrocallback);`

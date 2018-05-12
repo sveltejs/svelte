@@ -108,6 +108,10 @@ export default class Component extends Node {
 				child.init(block, stripWhitespace, nextSibling);
 			});
 		}
+
+		if (this.compiler.options.nestedTransitions) {
+			block.addOutro();
+		}
 	}
 
 	build(
@@ -383,7 +387,7 @@ export default class Component extends Node {
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}, ${compiler.options.skipIntroByDefault ? 'false' : 'true'});
+					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}, ${compiler.options.skipIntroByDefault ? '#component._intro' : 'true'});
 					${this.ref && `#component.refs.${this.ref} = ${name};`}
 				}
 			`);
@@ -405,7 +409,7 @@ export default class Component extends Node {
 						${name}._fragment.c();
 
 						${this.children.map(child => child.remount(name))}
-						${name}._mount(${updateMountNode}, ${anchor}, ${compiler.options.skipIntroByDefault ? 'false' : 'true'});
+						${name}._mount(${updateMountNode}, ${anchor}, true);
 
 						${this.handlers.map(handler => deindent`
 							${name}.on("${handler.name}", ${handler.var});
@@ -464,7 +468,7 @@ export default class Component extends Node {
 			}
 
 			block.builders.mount.addLine(
-				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}, ${compiler.options.skipIntroByDefault ? 'false' : 'true'});`
+				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}, ${compiler.options.skipIntroByDefault ? '#component._intro' : 'true'});`
 			);
 
 			if (updates.length) {
@@ -480,10 +484,16 @@ export default class Component extends Node {
 				${this.ref && `if (#component.refs.${this.ref} === ${name}) #component.refs.${this.ref} = null;`}
 			`);
 		}
+
+		if (this.compiler.options.nestedTransitions) {
+			block.builders.outro.addLine(
+				`${name}._fragment.o(#outrocallback);`
+			);
+		}
 	}
 
 	remount(name: string) {
-		return `${this.var}._mount(${name}._slotted.default, null, ${this.compiler.options.skipIntroByDefault ? 'false' : 'true'});`;
+		return `${this.var}._mount(${name}._slotted.default, null, false);`;
 	}
 
 	ssr() {
