@@ -119,11 +119,11 @@ export default class Block {
 	}
 
 	addIntro() {
-		this.hasIntroMethod = true;
+		this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
 	}
 
 	addOutro() {
-		this.hasOutroMethod = true;
+		this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
 		this.outros += 1;
 	}
 

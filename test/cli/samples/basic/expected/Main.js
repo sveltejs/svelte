@@ -26,6 +26,7 @@ function create_main_fragment(component, ctx) {
 function Main(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	this._fragment = create_main_fragment(this, this._state);
 

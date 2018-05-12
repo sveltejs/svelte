@@ -35,6 +35,7 @@ function create_main_fragment(component, ctx) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	if (!options.root) {
 		this._oncreate = [];

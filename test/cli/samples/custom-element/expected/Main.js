@@ -29,6 +29,7 @@ class Main extends HTMLElement {
 		super();
 		init(this, options);
 		this._state = assign({}, options.data);
+		this._intro = true;
 
 		this.attachShadow({ mode: 'open' });
 
