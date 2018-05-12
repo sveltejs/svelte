@@ -272,7 +272,7 @@ export default class Block {
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
 
-						${this.outros > 1 && `var #outros = ${this.outros};`}
+						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
 
 						${this.builders.outro}
 					},

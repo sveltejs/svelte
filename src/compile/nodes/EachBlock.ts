@@ -118,6 +118,10 @@ export default class EachBlock extends Node {
 			);
 			this.else.block.hasUpdateMethod = this.else.block.dependencies.size > 0;
 		}
+
+		if (this.block.hasOutroMethod || (this.else && this.else.block.hasOutroMethod)) {
+			block.addOutro();
+		}
 	}
 
 	build(
@@ -313,8 +317,23 @@ export default class EachBlock extends Node {
 		block.builders.update.addBlock(deindent`
 			var ${this.each_block_value} = ${snippet};
 
+			${this.block.hasOutroMethod && `@transitionManager.groupOutros();`}
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 		`);
+
+		block.builders.outro.addBlock(deindent`
+			const keys = Object.keys(${lookup}).filter(key => ${lookup}[key]);
+			#outrocallback = @callAfter(#outrocallback, keys.length);
+
+			function outro(key) {
+				${lookup}[key].o(() => {
+					${lookup}[key] = null;
+					#outrocallback();
+				});
+			}
+
+			for (let #i = 0; #i < keys.length; #i += 1) outro(keys[#i]);
+		`)
 
 		block.builders.destroy.addBlock(deindent`
 			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].d(${parentNode ? '' : 'detach'});
@@ -372,6 +391,21 @@ export default class EachBlock extends Node {
 			allDependencies.add(dependency);
 		});
 
+		const outro = this.block.hasOutroMethod && block.getUniqueName('outro')
+		if (outro) {
+			block.builders.init.addBlock(deindent`
+				function ${outro}(i, detach, fn) {
+					if (${iterations}[i]) {
+						${iterations}[i].o(() => {
+							${iterations}[i].d(detach);
+							if (detach) ${iterations}[i] = null;
+							if (fn) fn();
+						});
+					}
+				}
+			`);
+		}
+
 		// TODO do this for keyed blocks as well
 		const condition = Array.from(allDependencies)
 			.map(dependency => `changed.${dependency}`)
@@ -406,27 +440,21 @@ export default class EachBlock extends Node {
 
 			const start = this.block.hasUpdateMethod ? '0' : `${iterations}.length`;
 
-			const outro = block.getUniqueName('outro');
-			const destroy = this.block.hasOutroMethod
-				? deindent`
-					function ${outro}(i) {
-						if (${iterations}[i]) {
-							${iterations}[i].o(function() {
-								${iterations}[i].d(1);
-								${iterations}[i] = null;
-							});
-						}
-					}
+			let destroy;
 
+			if (this.block.hasOutroMethod) {
+				destroy = deindent`
 					@transitionManager.groupOutros();
-					for (; #i < ${iterations}.length; #i += 1) ${outro}(#i);
-				`
-				: deindent`
+					for (; #i < ${iterations}.length; #i += 1) ${outro}(#i, 1);
+				`;
+			} else {
+				destroy = deindent`
 					for (; #i < ${iterations}.length; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${iterations}.length = ${this.each_block_value}.${length};
 				`;
+			}
 
 			block.builders.update.addBlock(deindent`
 				if (${condition}) {
@@ -441,6 +469,13 @@ export default class EachBlock extends Node {
 					${destroy}
 				}
 			`);
+		}
+
+		if (outro) {
+			block.builders.outro.addBlock(deindent`
+				#outrocallback = @callAfter(#outrocallback, #i);
+				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outro}(#i, 0, #outrocallback);`
+			);
 		}
 
 		block.builders.destroy.addBlock(`@destroyEach(${iterations}, detach);`);
