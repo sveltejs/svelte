@@ -13,3 +13,9 @@ export function assignTrue(tar, src) {
 export function isPromise(value) {
 	return value && typeof value.then === 'function';
 }
+
+export function callAfter(fn, i) {
+	return () => {
+		if (!--i) fn();
+	};
+}
