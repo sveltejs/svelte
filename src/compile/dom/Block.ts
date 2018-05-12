@@ -5,6 +5,7 @@ import Compiler from '../Compiler';
 import { Node } from '../../interfaces';
 
 export interface BlockOptions {
+	parent?: Block;
 	name: string;
 	compiler?: Compiler;
 	comment?: string;
@@ -14,6 +15,7 @@ export interface BlockOptions {
 }
 
 export default class Block {
+	parent?: Block;
 	compiler: Compiler;
 	name: string;
 	comment?: string;
@@ -50,6 +52,7 @@ export default class Block {
 	autofocus: string;
 
 	constructor(options: BlockOptions) {
+		this.parent = options.parent;
 		this.compiler = options.compiler;
 		this.name = options.name;
 		this.comment = options.comment;
@@ -113,6 +116,15 @@ export default class Block {
 			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 			if (!noDetach) this.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
+	}
+
+	addIntro() {
+		this.hasIntroMethod = true;
+	}
+
+	addOutro() {
+		this.hasOutroMethod = true;
+		this.outros += 1;
 	}
 
 	addVariable(name: string, init?: string) {

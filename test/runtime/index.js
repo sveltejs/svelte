@@ -73,6 +73,7 @@ describe("runtime", () => {
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
 			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
+			compileOptions.nestedTransitions = config.nestedTransitions;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))

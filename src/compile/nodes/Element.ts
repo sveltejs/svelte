@@ -182,13 +182,14 @@ export default class Element extends Node {
 
 		if (this.intro) {
 			this.parent.cannotUseInnerHTML();
-			this.compiler.target.hasIntroTransitions = block.hasIntroMethod = true;
+			this.compiler.target.hasIntroTransitions = true;
+			block.addIntro();
 		}
 
 		if (this.outro) {
 			this.parent.cannotUseInnerHTML();
-			this.compiler.target.hasOutroTransitions = block.hasOutroMethod = true;
-			block.outros += 1;
+			this.compiler.target.hasOutroTransitions = true;
+			block.addOutro();
 		}
 
 		if (this.ref) {
