@@ -39,7 +39,7 @@ class SvelteComponent extends HTMLElement {
 		this._fragment.c();
 		this._fragment.m(this.shadowRoot, null);
 
-		if (options.target) this._mount(options.target, options.anchor);
+		if (options.target) this._mount(options.target, options.anchor, true);
 	}
 
 	static get observedAttributes() {

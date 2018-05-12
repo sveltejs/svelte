@@ -103,8 +103,8 @@ function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
 
-function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
+function _mount(target, anchor, intro) {
+	this._fragment[intro && this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
 var proto = {
@@ -137,7 +137,7 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			nested._mount(target, anchor);
+			nested._mount(target, anchor, true);
 		},
 
 		p: noop,
@@ -162,7 +162,7 @@ function SvelteComponent(options) {
 
 	if (options.target) {
 		this._fragment.c();
-		this._mount(options.target, options.anchor);
+		this._mount(options.target, options.anchor, true);
 
 		this._lock = true;
 		callAll(this._beforecreate);
