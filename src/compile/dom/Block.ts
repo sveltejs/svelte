@@ -258,11 +258,15 @@ export default class Block {
 					},
 				`);
 			} else {
-				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						this.m(#target, anchor);
-					},
-				`);
+				if (this.builders.mount.isEmpty()) {
+					properties.addBlock(`i: @noop,`);
+				} else {
+					properties.addBlock(deindent`
+						${dev ? 'i: function intro' : 'i'}(#target, anchor) {
+							this.m(#target, anchor);
+						},
+					`);
+				}
 			}
 
 			if (hasOutros) {

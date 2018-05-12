@@ -76,6 +76,8 @@ export default class AwaitBlock extends Node {
 		this.pending.block.hasOutroMethod = hasOutros;
 		this.then.block.hasOutroMethod = hasOutros;
 		this.catch.block.hasOutroMethod = hasOutros;
+
+		if (hasOutros) block.addOutro();
 	}
 
 	build(
@@ -166,6 +168,17 @@ export default class AwaitBlock extends Node {
 		} else {
 			block.builders.update.addBlock(deindent`
 				${conditions.join(' && ')}
+			`);
+		}
+
+		if (this.pending.block.hasOutroMethod) {
+			block.builders.outro.addBlock(deindent`
+				#outrocallback = @callAfter(#outrocallback, 3);
+				for (let #i = 0; #i < 3; #i += 1) {
+					const block = ${info}.blocks[#i];
+					if (block) block.o(#outrocallback);
+					else #outrocallback();
+				}
 			`);
 		}
 

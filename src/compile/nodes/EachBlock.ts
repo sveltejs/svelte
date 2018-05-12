@@ -322,17 +322,8 @@ export default class EachBlock extends Node {
 		`);
 
 		block.builders.outro.addBlock(deindent`
-			const keys = Object.keys(${lookup}).filter(key => ${lookup}[key]);
-			#outrocallback = @callAfter(#outrocallback, keys.length);
-
-			function outro(key) {
-				${lookup}[key].o(() => {
-					${lookup}[key] = null;
-					#outrocallback();
-				});
-			}
-
-			for (let #i = 0; #i < keys.length; #i += 1) outro(keys[#i]);
+			#outrocallback = @callAfter(#outrocallback, ${blocks}.length);
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(#outrocallback);
 		`)
 
 		block.builders.destroy.addBlock(deindent`
