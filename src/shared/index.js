@@ -1,5 +1,5 @@
-import { assign } from './utils.js';
-import { noop } from './utils.js';
+import { assign, noop } from './utils.js';
+import { transitionManager } from './transitions.js';
 export * from './await-block.js';
 export * from './dom.js';
 export * from './keyed-each.js';
@@ -78,6 +78,21 @@ export function on(eventName, handler) {
 	};
 }
 
+export function outro() {
+	this.destroy();
+	return Promise.resolve();
+}
+
+export function outroWithTransitions() {
+	return new Promise(fulfil => {
+		transitionManager.groupOutros();
+		this._fragment.o(() => {
+			this.destroy();
+			fulfil();
+		});
+	});
+}
+
 export function run(fn) {
 	fn();
 }
@@ -145,6 +160,7 @@ export var proto = {
 	get,
 	fire,
 	on,
+	outro,
 	set,
 	_recompute: noop,
 	_set,
@@ -157,6 +173,7 @@ export var protoDev = {
 	get,
 	fire,
 	on,
+	outro,
 	set: setDev,
 	_recompute: noop,
 	_set,

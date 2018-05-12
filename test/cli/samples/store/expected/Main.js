@@ -50,6 +50,7 @@ assign(Main.prototype, {
  	get: get,
  	fire: fire,
  	on: on,
+ 	outro: outro,
  	set: set,
  	_set: _set,
  	_mount: _mount,
@@ -136,6 +137,11 @@ function on(eventName, handler) {
 			if (~index) handlers.splice(index, 1);
 		}
 	};
+}
+
+function outro() {
+	this.destroy();
+	return Promise.resolve();
 }
 
 function set(newState) {
