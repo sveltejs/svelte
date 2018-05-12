@@ -27,19 +27,12 @@ export function hash(str) {
 }
 
 export function wrapTransition(component, node, fn, params, intro) {
-	const obj = fn(node, params);
-	const duration = obj.duration || 300;
-	const ease = obj.easing || linear;
+	let obj = fn(node, params);
+	let duration;
+	let ease;
 	let cssText;
 
-	if (intro) {
-		if (obj.css && obj.delay) {
-			cssText = node.style.cssText;
-			node.style.cssText += obj.css(0, 1);
-		}
-
-		if (obj.tick) obj.tick(0, 1);
-	}
+	let initialised = false;
 
 	return {
 		t: intro ? 0 : 1,
@@ -48,11 +41,35 @@ export function wrapTransition(component, node, fn, params, intro) {
 		pending: null,
 
 		run(b, callback) {
+			if (typeof obj === 'function') {
+				transitionManager.wait().then(() => {
+					obj = obj();
+					this._run(b, callback);
+				});
+			} else {
+				this._run(b, callback);
+			}
+		},
+
+		_run(b, callback) {
+			duration = obj.duration || 300;
+			ease = obj.easing || linear;
+
 			const program = {
 				start: window.performance.now() + (obj.delay || 0),
 				b,
 				callback: callback || noop
 			};
+
+			if (intro && !initialised) {
+				if (obj.css && obj.delay) {
+					cssText = node.style.cssText;
+					node.style.cssText += obj.css(0, 1);
+				}
+
+				if (obj.tick) obj.tick(0, 1);
+				initialised = true;
+			}
 
 			if (!b) {
 				program.group = transitionManager.outros;
@@ -154,6 +171,7 @@ export var transitionManager = {
 	bound: null,
 	stylesheet: null,
 	activeRules: {},
+	promise: null,
 
 	add(transition) {
 		this.transitions.push(transition);
@@ -223,5 +241,16 @@ export var transitionManager = {
 			remaining: 0,
 			callbacks: []
 		};
+	},
+
+	wait() {
+		if (!transitionManager.promise) {
+			transitionManager.promise = Promise.resolve();
+			transitionManager.promise.then(() => {
+				transitionManager.promise = null;
+			});
+		}
+
+		return transitionManager.promise;
 	}
 };
