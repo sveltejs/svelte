@@ -387,7 +387,7 @@ export default class Component extends Node {
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}, ${compiler.options.skipIntroByDefault ? '#component._intro' : 'true'});
+					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
 					${this.ref && `#component.refs.${this.ref} = ${name};`}
 				}
 			`);
@@ -409,7 +409,7 @@ export default class Component extends Node {
 						${name}._fragment.c();
 
 						${this.children.map(child => child.remount(name))}
-						${name}._mount(${updateMountNode}, ${anchor}, true);
+						${name}._mount(${updateMountNode}, ${anchor});
 
 						${this.handlers.map(handler => deindent`
 							${name}.on("${handler.name}", ${handler.var});
@@ -468,7 +468,7 @@ export default class Component extends Node {
 			}
 
 			block.builders.mount.addLine(
-				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}, ${compiler.options.skipIntroByDefault ? '#component._intro' : 'true'});`
+				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
 			if (updates.length) {
@@ -493,7 +493,7 @@ export default class Component extends Node {
 	}
 
 	remount(name: string) {
-		return `${this.var}._mount(${name}._slotted.default, null, false);`;
+		return `${this.var}._mount(${name}._slotted.default, null);`;
 	}
 
 	ssr() {

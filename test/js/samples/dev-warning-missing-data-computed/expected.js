@@ -55,7 +55,7 @@ function SvelteComponent(options) {
 	if (options.target) {
 		if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		this._fragment.c();
-		this._mount(options.target, options.anchor, true);
+		this._mount(options.target, options.anchor);
 	}
 }
 
