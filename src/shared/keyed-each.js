@@ -1,4 +1,4 @@
-import { transitionManager, linear } from './transitions';
+import { transitionManager, linear, generateRule, hash } from './transitions';
 
 export function destroyBlock(block, lookup) {
 	block.d(1);
@@ -113,8 +113,10 @@ export function animate(blocks, rects, fn, params) {
 		const from = rects[block.key];
 
 		if (!from) continue;
-
 		const to = block.node.getBoundingClientRect();
+
+		if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) continue;
+
 		const info = fn(block.node, { from, to }, params);
 
 		const duration = 'duration' in info ? info.duration : 300;
@@ -138,6 +140,21 @@ export function animate(blocks, rects, fn, params) {
 			program: delay ? null : program,
 			running: !delay,
 
+			start() {
+				if (info.css) {
+					const rule = generateRule(program, ease, info.css);
+					program.name = `__svelte_${hash(rule)}`;
+
+					transitionManager.addRule(rule, program.name);
+
+					block.node.style.animation = (block.node.style.animation || '')
+						.split(', ')
+						.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
+						.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
+						.join(', ');
+				}
+			},
+
 			update: now => {
 				const p = now - program.start;
 				const t = program.a + program.delta * ease(p / program.duration);
@@ -145,7 +162,10 @@ export function animate(blocks, rects, fn, params) {
 			},
 
 			done() {
-				// TODO remove styles
+				if (info.css) {
+					transitionManager.deleteRule(block.node, program.name);
+				}
+
 				animation.running = false;
 			}
 		};
@@ -153,5 +173,7 @@ export function animate(blocks, rects, fn, params) {
 		transitionManager.add(animation);
 
 		if (info.tick) info.tick(0, 1);
+
+		if (!delay) animation.start();
 	}
 }
