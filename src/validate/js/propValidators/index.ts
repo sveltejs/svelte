@@ -1,5 +1,6 @@
 import data from './data';
 import actions from './actions';
+import animations from './animations';
 import computed from './computed';
 import oncreate from './oncreate';
 import ondestroy from './ondestroy';
@@ -23,6 +24,7 @@ import immutable from './immutable';
 export default {
 	data,
 	actions,
+	animations,
 	computed,
 	oncreate,
 	ondestroy,

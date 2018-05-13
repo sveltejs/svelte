@@ -13,6 +13,7 @@ import Attribute from './Attribute';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Transition from './Transition';
+import Animation from './Animation';
 import Action from './Action';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
@@ -30,8 +31,9 @@ export default class Element extends Node {
 	actions: Action[];
 	bindings: Binding[];
 	handlers: EventHandler[];
-	intro: Transition;
-	outro: Transition;
+	intro?: Transition;
+	outro?: Transition;
+	animation?: Animation;
 	children: Node[];
 
 	ref: string;
@@ -54,6 +56,7 @@ export default class Element extends Node {
 
 		this.intro = null;
 		this.outro = null;
+		this.animation = null;
 
 		if (this.name === 'textarea') {
 			// this is an egregious hack, but it's the easiest way to get <textarea>
@@ -113,6 +116,10 @@ export default class Element extends Node {
 					if (node.outro) this.outro = transition;
 					break;
 
+				case 'Animation':
+					this.animation = new Animation(compiler, this, scope, node);
+					break;
+
 				case 'Ref':
 					// TODO catch this in validation
 					if (this.ref) throw new Error(`Duplicate refs`);
@@ -125,8 +132,6 @@ export default class Element extends Node {
 					throw new Error(`Not implemented: ${node.type}`);
 			}
 		});
-
-		// TODO break out attributes and directives here
 
 		this.children = mapChildren(compiler, this, scope, info.children);
 
@@ -141,6 +146,10 @@ export default class Element extends Node {
 		if (this.name === 'slot' || this.name === 'option') {
 			this.cannotUseInnerHTML();
 		}
+
+		this.var = block.getUniqueName(
+			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+		);
 
 		this.attributes.forEach(attr => {
 			if (attr.dependencies.size) {
@@ -180,19 +189,13 @@ export default class Element extends Node {
 			block.addDependencies(handler.dependencies);
 		});
 
-		if (this.intro) {
+		if (this.intro || this.outro || this.animation || this.ref) {
 			this.parent.cannotUseInnerHTML();
-			block.addIntro();
 		}
 
-		if (this.outro) {
-			this.parent.cannotUseInnerHTML();
-			block.addOutro();
-		}
-
-		if (this.ref) {
-			this.parent.cannotUseInnerHTML();
-		}
+		if (this.intro) block.addIntro();
+		if (this.outro) block.addOutro();
+		if (this.animation) block.addAnimation(this.var);
 
 		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
@@ -228,10 +231,6 @@ export default class Element extends Node {
 			const component = this.findNearest(/^Component/);
 			component._slots.add(slot);
 		}
-
-		this.var = block.getUniqueName(
-			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
-		);
 
 		if (this.children.length) {
 			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
