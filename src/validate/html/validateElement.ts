@@ -247,7 +247,7 @@ export default function validateElement(
 			}
 
 			const parent = stack[stack.length - 1];
-			if (parent.type !== 'EachBlock' || !parent.key) {
+			if (!parent || parent.type !== 'EachBlock' || !parent.key) {
 				// TODO can we relax the 'immediate child' rule?
 				validator.error(attribute, {
 					code: `invalid-animation`,

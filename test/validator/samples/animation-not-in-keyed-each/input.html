@@ -1,0 +1,14 @@
+{#each things as thing}
+	<div animate:foo></div>
+	<div animate:foo></div>
+{/each}
+
+<script>
+	export default {
+		animations: {
+			foo(node, animation, params) {
+				// ...
+			}
+		}
+	};
+</script>
