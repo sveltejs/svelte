@@ -95,6 +95,11 @@ export default class IfBlock extends Node {
 
 		attachBlocks(this);
 
+		if (compiler.options.nestedTransitions) {
+			if (hasIntros) block.addIntro();
+			if (hasOutros) block.addOutro();
+		}
+
 		blocks.forEach(block => {
 			block.hasUpdateMethod = dynamic;
 			block.hasIntroMethod = hasIntros;
@@ -129,11 +134,23 @@ export default class IfBlock extends Node {
 		if (this.else) {
 			if (hasOutros) {
 				this.buildCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
+
+				if (this.compiler.options.nestedTransitions) {
+					block.builders.outro.addLine(
+						`${name}.o(#outrocallback);`
+					);
+				}
 			} else {
 				this.buildCompound(block, parentNode, parentNodes, branches, dynamic, vars);
 			}
 		} else {
 			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
+
+			if (hasOutros && this.compiler.options.nestedTransitions) {
+				block.builders.outro.addLine(
+					`if (${name}) ${name}.o(#outrocallback);`
+				);
+			}
 		}
 
 		block.builders.create.addLine(`${if_name}${name}.c();`);

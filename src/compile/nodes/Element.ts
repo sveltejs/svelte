@@ -182,13 +182,12 @@ export default class Element extends Node {
 
 		if (this.intro) {
 			this.parent.cannotUseInnerHTML();
-			this.compiler.target.hasIntroTransitions = block.hasIntroMethod = true;
+			block.addIntro();
 		}
 
 		if (this.outro) {
 			this.parent.cannotUseInnerHTML();
-			this.compiler.target.hasOutroTransitions = block.hasOutroMethod = true;
-			block.outros += 1;
+			block.addOutro();
 		}
 
 		if (this.ref) {
@@ -711,7 +710,7 @@ export default class Element extends Node {
 
 			block.builders.outro.addBlock(deindent`
 				${name}.run(0, () => {
-					${block.outros > 1 ? `if (--#outros === 0) #outrocallback();` : `#outrocallback();`}
+					#outrocallback();
 					${name} = null;
 				});
 			`);
@@ -758,9 +757,7 @@ export default class Element extends Node {
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
 					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
-					${outroName}.run(0, () => {
-						${block.outros > 1 ? `if (--#outros === 0) #outrocallback();` : `#outrocallback();`}
-					});
+					${outroName}.run(0, #outrocallback);
 				`);
 			}
 		}

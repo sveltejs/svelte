@@ -67,6 +67,7 @@ export interface CompileOptions {
 
 	// to remove in v3
 	skipIntroByDefault?: boolean;
+	nestedTransitions: boolean;
 }
 
 export interface GenerateOptions {

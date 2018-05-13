@@ -5,6 +5,7 @@ import Compiler from '../Compiler';
 import { Node } from '../../interfaces';
 
 export interface BlockOptions {
+	parent?: Block;
 	name: string;
 	compiler?: Compiler;
 	comment?: string;
@@ -14,6 +15,7 @@ export interface BlockOptions {
 }
 
 export default class Block {
+	parent?: Block;
 	compiler: Compiler;
 	name: string;
 	comment?: string;
@@ -50,6 +52,7 @@ export default class Block {
 	autofocus: string;
 
 	constructor(options: BlockOptions) {
+		this.parent = options.parent;
 		this.compiler = options.compiler;
 		this.name = options.name;
 		this.comment = options.comment;
@@ -113,6 +116,15 @@ export default class Block {
 			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
 			if (!noDetach) this.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
+	}
+
+	addIntro() {
+		this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
+	}
+
+	addOutro() {
+		this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
+		this.outros += 1;
 	}
 
 	addVariable(name: string, init?: string) {
@@ -246,11 +258,15 @@ export default class Block {
 					},
 				`);
 			} else {
-				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						this.m(#target, anchor);
-					},
-				`);
+				if (this.builders.mount.isEmpty()) {
+					properties.addBlock(`i: @noop,`);
+				} else {
+					properties.addBlock(deindent`
+						${dev ? 'i: function intro' : 'i'}(#target, anchor) {
+							this.m(#target, anchor);
+						},
+					`);
+				}
 			}
 
 			if (hasOutros) {
@@ -260,7 +276,7 @@ export default class Block {
 						${outroing} = true;
 						${hasIntros && `${introing} = false;`}
 
-						${this.outros > 1 && `var #outros = ${this.outros};`}
+						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
 
 						${this.builders.outro}
 					},

@@ -34,6 +34,7 @@ function Main(options) {
 	init(this, options);
 	this._state = assign(this.store._init(["name"]), options.data);
 	this.store._add(this, ["name"]);
+	this._intro = true;
 
 	this._handlers.destroy = [removeFromStore];
 

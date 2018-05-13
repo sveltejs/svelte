@@ -1,5 +1,3 @@
-import { transitionManager } from './transitions.js';
-
 export function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
@@ -45,7 +43,6 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 	var did_move = {};
 
 	var destroy = has_outro ? outroAndDestroyBlock : destroyBlock;
-	if (has_outro) transitionManager.groupOutros();
 
 	function insert(block) {
 		block[intro_method](node, next);

@@ -34,6 +34,7 @@ function create_main_fragment(component, ctx) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	if (!document.getElementById("svelte-1slhpfn-style")) add_css();
 
