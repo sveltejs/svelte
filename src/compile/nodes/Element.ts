@@ -698,22 +698,19 @@ export default class Element extends Node {
 
 			const fn = `%transitions-${intro.name}`;
 
+			block.builders.hydrate.addLine(
+				`${name} = new @BidirectionalTransition(#component, ${this.var}, ${fn});`
+			);
+
 			block.builders.intro.addConditional(`#component._intro`, deindent`
-				if (${name}) ${name}.invalidate();
-
 				#component.root._aftercreate.push(() => {
-					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1);
+					${name}.intro(${snippet});
 				});
 			`);
 
-			block.builders.outro.addBlock(deindent`
-				if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
-				${name}.run(0, () => {
-					#outrocallback();
-					${name} = null;
-				});
-			`);
+			block.builders.outro.addLine(
+				`${name}.outro(${snippet}, #outrocallback);`
+			);
 		} else {
 			const introName = intro && block.getUniqueName(`${this.var}_intro`);
 			const outroName = outro && block.getUniqueName(`${this.var}_outro`);

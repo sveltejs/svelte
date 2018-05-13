@@ -27,17 +27,12 @@ export function hash(str) {
 }
 
 export class Transition {
-	constructor(component, node, fn) {
+	constructor(component, node, fn, counterpart) {
 		this.component = component;
 		this.node = node;
 		this.fn = fn;
 
 		this.cssText = node.style.cssText;
-
-		this.a = 0;
-		this.t = 0;
-		this.b = 1;
-		this.delta = 1;
 
 		this.duration = 300;
 		this.delay = 0;
@@ -46,6 +41,7 @@ export class Transition {
 		this.rule = '';
 		this.name = '';
 
+		this.counterpart = counterpart;
 		this.running = true;
 		this.started = false;
 	}
@@ -74,36 +70,50 @@ export class Transition {
 		this.end = this.start + this.duration;
 
 		if (info.css) {
-			if (this.type === 'intro' && this.delay) node.style.cssText += info.css(this.a, 1 - this.a);
-			this.rule = generateRule(this, this.ease, info.css);
-			this.name = `__svelte_${hash(this.rule)}`;
+			if (this.type === 'intro' && this.delay) this.node.style.cssText += info.css(this.a, 1 - this.a);
 		}
 
 		if (this.type === 'intro' && info.tick) {
 			info.tick(this.a, 1 - this.a);
 		}
 
+		if (!this.delay) this.begin();
+
 		transitionManager.add(this);
+	}
+
+	begin() {
+		if (this.counterpart) {
+			this.a = this.counterpart.t;
+			this.delta = this.b - this.a;
+			this.duration *= Math.abs(this.delta);
+		}
+
+		if (this.css) {
+			this.rule = generateRule(this, this.ease, this.css);
+			this.name = `__svelte_${hash(this.rule)}`;
+		}
+
+		this.component.fire(`${this.type}.start`, { node: this.node });
+
+		if (this.rule) {
+			if (this.type === 'intro' && this.delay) this.node.style.cssText = this.cssText;
+
+			transitionManager.addRule(this.rule, this.name);
+
+			this.node.style.animation = (this.node.style.animation || '')
+				.split(', ')
+				.filter(anim => anim && (this.delta < 0 || !/__svelte/.test(anim)))
+				.concat(`${this.name} ${this.duration}ms linear 1 forwards`)
+				.join(', ');
+		}
+
+		this.started = true;
 	}
 
 	update(now) {
 		if (now < this.start) return;
-
-		if (!this.started) {
-			this.component.fire(`${this.type}.start`, { node: this.node });
-
-			if (this.rule) {
-				transitionManager.addRule(this.rule, this.name);
-
-				this.node.style.animation = (this.node.style.animation || '')
-					.split(', ')
-					.filter(anim => anim && (this.delta < 0 || !/__svelte/.test(anim)))
-					.concat(`${this.name} ${this.duration}ms linear 1 forwards`)
-					.join(', ');
-			}
-
-			this.started = true;
-		}
+		if (!this.started) this.begin();
 
 		if (now >= this.end) return this.done();
 
@@ -129,8 +139,8 @@ export class Transition {
 }
 
 export class Intro extends Transition {
-	constructor(component, node, fn) {
-		super(component, node, fn);
+	constructor(component, node, fn, counterpart) {
+		super(component, node, fn, counterpart);
 
 		this.type = 'intro';
 
@@ -149,8 +159,8 @@ export class Intro extends Transition {
 }
 
 export class Outro extends Transition{
-	constructor(component, node, fn) {
-		super(component, node, fn);
+	constructor(component, node, fn, counterpart) {
+		super(component, node, fn, counterpart);
 
 		this.type = 'outro';
 
@@ -192,143 +202,28 @@ export class Outro extends Transition{
 	}
 }
 
-export function wrapTransition(component, node, fn, params, intro) {
-	let obj = fn(node, params);
-	let duration;
-	let ease;
-	let cssText;
+export class BidirectionalTransition {
+	constructor(component, node, fn) {
+		this.component = component;
+		this.node = node;
+		this.fn = fn;
 
-	let initialised = false;
+		this.in = null;
+		this.out = null;
+	}
 
-	return {
-		t: intro ? 0 : 1,
-		running: false,
-		program: null,
-		pending: null,
+	intro(params) {
+		if (this.out) this.out.invalidate();
+		this.in = new Intro(this.component, this.node, this.fn, this.out);
 
-		run(b, callback) {
-			if (typeof obj === 'function') {
-				transitionManager.wait().then(() => {
-					obj = obj();
-					this._run(b, callback);
-				});
-			} else {
-				this._run(b, callback);
-			}
-		},
+		this.in.play(params);
+	}
 
-		_run(b, callback) {
-			duration = obj.duration || 300;
-			ease = obj.easing || linear;
+	outro(params, callback) {
+		this.out = new Outro(this.component, this.node, this.fn, this.in);
 
-			const program = {
-				start: window.performance.now() + (obj.delay || 0),
-				b,
-				callback: callback || noop
-			};
-
-			if (intro && !initialised) {
-				if (obj.css && obj.delay) {
-					cssText = node.style.cssText;
-					node.style.cssText += obj.css(0, 1);
-				}
-
-				if (obj.tick) obj.tick(0, 1);
-				initialised = true;
-			}
-
-			if (!b) {
-				program.group = transitionManager.outros;
-				transitionManager.outros.remaining += 1;
-			}
-
-			if (obj.delay) {
-				this.pending = program;
-			} else {
-				this.start(program);
-			}
-
-			if (!this.running) {
-				this.running = true;
-				transitionManager.add(this);
-			}
-		},
-
-		start(program) {
-			component.fire(`${program.b ? 'intro' : 'outro'}.start`, { node });
-
-			program.a = this.t;
-			program.delta = program.b - program.a;
-			program.duration = duration * Math.abs(program.b - program.a);
-			program.end = program.start + program.duration;
-
-			if (obj.css) {
-				if (obj.delay) node.style.cssText = cssText;
-
-				const rule = generateRule(program, ease, obj.css);
-				transitionManager.addRule(rule, program.name = '__svelte_' + hash(rule));
-
-				node.style.animation = (node.style.animation || '')
-					.split(', ')
-					.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
-					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
-					.join(', ');
-			}
-
-			this.program = program;
-			this.pending = null;
-		},
-
-		update(now) {
-			const program = this.program;
-			if (!program) return;
-
-			const p = now - program.start;
-			this.t = program.a + program.delta * ease(p / program.duration);
-			if (obj.tick) obj.tick(this.t, 1 - this.t);
-		},
-
-		done() {
-			const program = this.program;
-			this.t = program.b;
-
-			if (obj.tick) obj.tick(this.t, 1 - this.t);
-
-			component.fire(`${program.b ? 'intro' : 'outro'}.end`, { node });
-
-			if (!program.b && !program.invalidated) {
-				program.group.callbacks.push(() => {
-					program.callback();
-					if (obj.css) transitionManager.deleteRule(node, program.name);
-				});
-
-				if (--program.group.remaining === 0) {
-					program.group.callbacks.forEach(fn => {
-						fn();
-					});
-				}
-			} else {
-				if (obj.css) transitionManager.deleteRule(node, program.name);
-			}
-
-			this.running = !!this.pending;
-		},
-
-		abort() {
-			if (this.program) {
-				if (obj.tick) obj.tick(1, 0);
-				if (obj.css) transitionManager.deleteRule(node, this.program.name);
-				this.program = this.pending = null;
-				this.running = false;
-			}
-		},
-
-		invalidate() {
-			if (this.program) {
-				this.program.invalidated = true;
-			}
-		}
-	};
+		this.out.play(params, callback);
+	}
 }
 
 export var transitionManager = {
