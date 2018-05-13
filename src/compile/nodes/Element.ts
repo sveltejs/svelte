@@ -718,6 +718,17 @@ export default class Element extends Node {
 			const introName = intro && block.getUniqueName(`${this.var}_intro`);
 			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
 
+			if (intro && outro) {
+				block.builders.intro.addBlock(deindent`
+					if (${introName}) ${introName}.abort();
+					if (${outroName}) ${outroName}.abort();
+				`);
+			} else if (outro) {
+				block.builders.intro.addBlock(deindent`
+					if (${outroName}) ${outroName}.abort();
+				`);
+			}
+
 			if (intro) {
 				block.addVariable(introName);
 				const snippet = intro.expression
@@ -725,12 +736,6 @@ export default class Element extends Node {
 					: '{}';
 
 				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
-
-				if (outro) {
-					block.builders.intro.addBlock(deindent`
-						if (${outroName}) ${outroName}.abort();
-					`);
-				}
 
 				block.builders.intro.addConditional(`#component._intro`, deindent`
 					#component.root._aftercreate.push(() => {
@@ -747,10 +752,6 @@ export default class Element extends Node {
 					: '{}';
 
 				const fn = `%transitions-${outro.name}`;
-
-				block.builders.intro.addBlock(deindent`
-					if (${outroName}) ${outroName}.abort();
-				`);
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
