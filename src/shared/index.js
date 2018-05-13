@@ -1,5 +1,4 @@
-import { assign } from './utils.js';
-import { noop } from './utils.js';
+import { assign, noop, run } from './utils.js';
 export * from './await-block.js';
 export * from './dom.js';
 export * from './keyed-each.js';
@@ -76,10 +75,6 @@ export function on(eventName, handler) {
 			if (~index) handlers.splice(index, 1);
 		}
 	};
-}
-
-export function run(fn) {
-	fn();
 }
 
 export function set(newState) {

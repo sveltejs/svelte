@@ -103,3 +103,20 @@ export function measure(blocks) {
 	while (i--) measurements[blocks[i].key] = blocks[i].node.getBoundingClientRect();
 	return measurements;
 }
+
+export function animate(blocks, rects, fn, params) {
+	let i = blocks.length;
+	while (i--) {
+		const block = blocks[i];
+		const from = rects[block.key];
+
+		if (!from) continue;
+
+		const to = block.node.getBoundingClientRect();
+		const animation = fn(block.node, { from, to }, params);
+
+		console.log(animation);
+
+		// TODO handle the animation
+	}
+}

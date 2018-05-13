@@ -728,15 +728,14 @@ export default class Element extends Node {
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
-						if (${introName}) ${introName}.abort();
 						if (${outroName}) ${outroName}.abort();
 					`);
 				}
 
 				block.builders.intro.addConditional(`#component._intro`, deindent`
 					#component.root._aftercreate.push(() => {
-						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
-						${introName}.run(1);
+						${introName} = new @Intro(#component, ${this.var}, ${fn});
+						${introName}.play(${snippet});
 					});
 				`);
 			}
@@ -756,8 +755,8 @@ export default class Element extends Node {
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
-					${outroName}.run(0, #outrocallback);
+					${outroName} = new @Outro(#component, ${this.var}, ${fn});
+					${outroName}.play(${snippet}, #outrocallback);
 				`);
 			}
 		}

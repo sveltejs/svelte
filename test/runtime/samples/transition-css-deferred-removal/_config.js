@@ -9,6 +9,8 @@ export default {
 		const outer = target.querySelector('.outer');
 		const inner = target.querySelector('.inner');
 
+		raf.tick(0);
+
 		const animations = [
 			outer.style.animation,
 			inner.style.animation

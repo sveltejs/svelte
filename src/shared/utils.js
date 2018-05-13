@@ -19,3 +19,7 @@ export function callAfter(fn, i) {
 		if (!--i) fn();
 	};
 }
+
+export function run(fn) {
+	fn();
+}
