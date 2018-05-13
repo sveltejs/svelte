@@ -21,6 +21,7 @@ export class Validator {
 	components: Map<string, Node>;
 	methods: Map<string, Node>;
 	helpers: Map<string, Node>;
+	animations: Map<string, Node>;
 	transitions: Map<string, Node>;
 	actions: Map<string, Node>;
 	slots: Set<string>;
@@ -29,6 +30,7 @@ export class Validator {
 		components: Set<string>;
 		helpers: Set<string>;
 		events: Set<string>;
+		animations: Set<string>;
 		transitions: Set<string>;
 		actions: Set<string>;
 	};
@@ -47,6 +49,7 @@ export class Validator {
 		this.components = new Map();
 		this.methods = new Map();
 		this.helpers = new Map();
+		this.animations = new Map();
 		this.transitions = new Map();
 		this.actions = new Map();
 		this.slots = new Set();
@@ -55,6 +58,7 @@ export class Validator {
 			components: new Set(),
 			helpers: new Set(),
 			events: new Set(),
+			animations: new Set(),
 			transitions: new Set(),
 			actions: new Set(),
 		};
