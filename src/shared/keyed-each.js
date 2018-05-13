@@ -1,3 +1,5 @@
+import { transitionManager, linear } from './transitions';
+
 export function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
@@ -102,4 +104,53 @@ export function measure(blocks) {
 	let i = blocks.length;
 	while (i--) measurements[blocks[i].key] = blocks[i].node.getBoundingClientRect();
 	return measurements;
+}
+
+export function animate(blocks, rects, fn, params) {
+	let i = blocks.length;
+	while (i--) {
+		const block = blocks[i];
+		const from = rects[block.key];
+
+		if (!from) continue;
+
+		const to = block.node.getBoundingClientRect();
+		const info = fn(block.node, { from, to }, params);
+
+		const duration = 'duration' in info ? info.duration : 300;
+		const delay = 'delay' in info ? info.delay : 0;
+		const ease = info.easing || linear;
+		const start = window.performance.now() + delay;
+		const end = start + duration;
+
+		const program = {
+			a: 0,
+			t: 0,
+			b: 1,
+			delta: 1,
+			duration,
+			start,
+			end
+		};
+
+		const animation = {
+			pending: delay ? program : null,
+			program: delay ? null : program,
+			running: !delay,
+
+			update: now => {
+				const p = now - program.start;
+				const t = program.a + program.delta * ease(p / program.duration);
+				if (info.tick) info.tick(t, 1 - t);
+			},
+
+			done() {
+				// TODO remove styles
+			}
+		};
+
+		transitionManager.add(animation);
+
+		if (info.tick) info.tick(0, 1);
+	}
 }

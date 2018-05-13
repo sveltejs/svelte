@@ -318,11 +318,9 @@ export default class EachBlock extends Node {
 			const ${this.each_block_value} = ${snippet};
 
 			${this.block.hasOutroMethod && `@transitionManager.groupOutros();`}
-			${this.block.animation && `const before = @measure(${blocks});`}
+			${this.block.animation && `const rects = @measure(${blocks});`}
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
-			${this.block.animation && `const after = @measure(${blocks});`}
-
-			console.log({ before, after });
+			${this.block.animation && `@animate(${blocks}, rects, %animations-${this.children[0].animation.name}, {});`}
 		`);
 
 		if (this.compiler.options.nestedTransitions) {

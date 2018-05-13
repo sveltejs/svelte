@@ -6,8 +6,8 @@
 	export default {
 		animations: {
 			flip(node, animation, params) {
-				const dx = animation.to.left - animation.from.left;
-				const dy = animation.to.top - animation.from.top;
+				const dx = animation.from.left - animation.to.left;
+				const dy = animation.from.top - animation.to.top;
 
 				return {
 					duration: 100,
