@@ -72,6 +72,7 @@ describe("runtime", () => {
 			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
+			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -134,7 +135,8 @@ describe("runtime", () => {
 						target,
 						hydrate,
 						data: config.data,
-						store: (config.store !== true && config.store)
+						store: (config.store !== true && config.store),
+						intro: config.intro
 					}, config.options || {});
 
 					const component = new SvelteComponent(options);
