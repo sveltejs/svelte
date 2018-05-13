@@ -124,7 +124,7 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_differs']
+			${['destroy', 'get', 'fire', 'on', 'outro', 'set', '_set', '_mount', '_differs']
 				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
@@ -337,6 +337,8 @@ export default function dom(
 				${computationBuilder}
 			}
 		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
+
+		${!block.builders.outro.isEmpty() && `${name}.prototype.outro = @outroWithTransitions;`}
 
 		${templateProperties.setup && `%setup(${name});`}
 

@@ -55,6 +55,7 @@ var Main = (function(answer) { "use strict";
 	 	get: get,
 	 	fire: fire,
 	 	on: on,
+	 	outro: outro,
 	 	set: set,
 	 	_set: _set,
 	 	_mount: _mount,
@@ -137,6 +138,11 @@ var Main = (function(answer) { "use strict";
 				if (~index) handlers.splice(index, 1);
 			}
 		};
+	}
+
+	function outro() {
+		this.destroy();
+		return Promise.resolve();
 	}
 
 	function set(newState) {

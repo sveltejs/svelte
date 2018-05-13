@@ -68,6 +68,11 @@ function on(eventName, handler) {
 	};
 }
 
+function outro() {
+	this.destroy();
+	return Promise.resolve();
+}
+
 function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
@@ -112,6 +117,7 @@ var proto = {
 	get,
 	fire,
 	on,
+	outro,
 	set,
 	_recompute: noop,
 	_set,
