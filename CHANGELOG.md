@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 2.6.0
+
+* Add `animate` directive ([#1454](https://github.com/sveltejs/svelte/pull/1454))
+* Add `skipIntroByDefault` compiler option and `intro: true` init option ([#1448](https://github.com/sveltejs/svelte/pull/1448))
+* Add `nestedTransitions` compiler option ([#1451](https://github.com/sveltejs/svelte/pull/1451))
+* Component outros, if `nestedTransitions` is true ([#1211](https://github.com/sveltejs/svelte/issues/1211))
+* Allow transition functions to return a function, for inter-transition coordination ([#1453](https://github.com/sveltejs/svelte/pull/1453))
+* Pass `1 - t` as second argument to transition functions ([#1452](https://github.com/sveltejs/svelte/pull/1452))
+
 ## 2.5.1
 
 * Add new ARIA attributes ([#1436](https://github.com/sveltejs/svelte/pull/1436))
