@@ -1,0 +1,15 @@
+[{
+	"code": "duplicate-animation",
+	"message": "An element can only have one 'animate' directive",
+	"start": {
+		"line": 2,
+		"column": 18,
+		"character": 50
+	},
+	"end": {
+		"line": 2,
+		"column": 29,
+		"character": 61
+	},
+	"pos": 50
+}]
