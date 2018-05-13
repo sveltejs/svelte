@@ -26,7 +26,7 @@ export function hash(str) {
 	return hash >>> 0;
 }
 
-export class Intro {
+export class Transition {
 	constructor(component, node, fn) {
 		this.component = component;
 		this.node = node;
@@ -74,13 +74,13 @@ export class Intro {
 		this.end = this.start + this.duration;
 
 		if (info.css) {
-			if (this.delay) node.style.cssText += info.css(0, 1);
+			if (this.type === 'intro' && this.delay) node.style.cssText += info.css(this.a, 1 - this.a);
 			this.rule = generateRule(this, this.ease, info.css);
 			this.name = `__svelte_${hash(this.rule)}`;
 		}
 
-		if (info.tick) {
-			info.tick(0, 1);
+		if (this.type === 'intro' && info.tick) {
+			info.tick(this.a, 1 - this.a);
 		}
 
 		transitionManager.add(this);
@@ -88,10 +88,9 @@ export class Intro {
 
 	update(now) {
 		if (now < this.start) return;
-		if (now >= this.end) return this.done();
 
 		if (!this.started) {
-			this.component.fire(`intro.start`, { node: this.node });
+			this.component.fire(`${this.type}.start`, { node: this.node });
 
 			if (this.rule) {
 				transitionManager.addRule(this.rule, this.name);
@@ -106,120 +105,71 @@ export class Intro {
 			this.started = true;
 		}
 
+		if (now >= this.end) return this.done();
+
 		const p = now - this.start;
 		this.t = this.a + this.delta * this.ease(p / this.duration);
 		if (this.tick) this.tick(this.t, 1 - this.t);
 	}
 
-	reset() {
-		if (this.tick) this.tick(1, 0);
-		if (this.css) transitionManager.deleteRule(this.node, this.name);
+	abort() {
+		if (this.tick) this.tick(this.a, 1 - this.a);
+		if (this.rule) transitionManager.deleteRule(this.node, this.name);
 		this.running = false;
 	}
 
 	done() {
-		this.reset();
-		this.component.fire(`intro.end`, { node: this.node });
-	}
+		if (this.tick) this.tick(this.b, 1 - this.b);
+		this.running = false;
 
-	abort() {
-		if (this.running) this.reset();
+		this.component.fire(`${this.type}.end`, { node: this.node });
 	}
 
 	tick() {}
 }
 
-export class Outro {
+export class Intro extends Transition {
 	constructor(component, node, fn) {
-		this.component = component;
-		this.node = node;
-		this.fn = fn;
+		super(component, node, fn);
+
+		this.type = 'intro';
 
 		this.cssText = node.style.cssText;
+
+		this.a = 0;
+		this.t = 0;
+		this.b = 1;
+		this.delta = 1;
+	}
+
+	done() {
+		if (this.css) transitionManager.deleteRule(this.node, this.name);
+		super.done();
+	}
+}
+
+export class Outro extends Transition{
+	constructor(component, node, fn) {
+		super(component, node, fn);
+
+		this.type = 'outro';
 
 		this.a = 1;
 		this.t = 1;
 		this.b = 0;
 		this.delta = -1;
 
-		this.duration = 300;
-		this.delay = 0;
-		this.ease = linear;
-
-		this.rule = '';
-		this.name = '';
-
-		this.running = true;
-		this.started = false;
 		this.invalidated = false;
 		this.group = null;
 		this.callback = null;
 	}
 
 	play(params, callback) {
-		const info = this.fn(this.node, params);
-
 		this.callback = callback;
 		this.group = transitionManager.outros;
 		transitionManager.outros.remaining += 1;
 
-		if (typeof info === 'function') {
-			transitionManager.wait().then(() => {
-				this.schedule(info());
-			});
-		} else {
-			this.schedule(info);
-		}
-	}
-
-	schedule(info) {
-		if ('duration' in info) this.duration = info.duration;
-		if ('delay' in info) this.delay = info.delay;
-		if ('easing' in info) this.ease = info.easing;
-
-		this.tick = info.tick;
-		this.css = info.css;
-
-		this.start = window.performance.now() + this.delay;
-		this.end = this.start + this.duration;
-
-		if (info.css) {
-			// if (this.delay) node.style.cssText += info.css(0, 1);
-			this.rule = generateRule(this, this.ease, info.css);
-			this.name = `__svelte_${hash(this.rule)}`;
-		}
-
-		// if (info.tick) {
-		// 	info.tick(0, 1);
-		// }
-
-		transitionManager.add(this);
-	}
-
-	update(now) {
-		if (now < this.start) return;
-
-		if (!this.started) {
-			this.component.fire(`outro.start`, { node: this.node });
-
-			if (this.rule) {
-				transitionManager.addRule(this.rule, this.name);
-
-				this.node.style.animation = (this.node.style.animation || '')
-					.split(', ')
-					.filter(anim => anim && (this.delta < 0 || !/__svelte/.test(anim)))
-					.concat(`${this.name} ${this.duration}ms linear 1 forwards`)
-					.join(', ');
-			}
-
-			this.started = true;
-		}
-
-		if (now >= this.end) return this.done();
-
-		const p = now - this.start;
-		this.t = this.a + this.delta * this.ease(p / this.duration);
-		if (this.tick) this.tick(this.t, 1 - this.t);
+		super.play(params);
 	}
 
 	done() {
@@ -234,23 +184,12 @@ export class Outro {
 			}
 		}
 
-		if (this.tick) this.tick(this.b, 1 - this.b);
-		this.running = false;
-
-		this.component.fire(`outro.end`, { node: this.node });
-	}
-
-	abort() {
-		if (this.tick) this.tick(this.a, 1 - this.a);
-		if (this.rule) transitionManager.deleteRule(this.node, this.name);
-		this.running = false;
+		super.done();
 	}
 
 	invalidate() {
 		this.invalidated = true;
 	}
-
-	tick() {}
 }
 
 export function wrapTransition(component, node, fn, params, intro) {

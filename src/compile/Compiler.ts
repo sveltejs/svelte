@@ -231,6 +231,12 @@ export default class Compiler {
 			if (sigil === '@') {
 				if (name in shared) {
 					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+
+					// special case — classes need to follow their superclasses...
+					if (name === 'Intro' || name === 'Outro' || name === 'BidirectionalTransition') {
+						helpers.add('Transition');
+					}
+
 					helpers.add(name);
 				}
 
