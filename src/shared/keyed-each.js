@@ -146,6 +146,7 @@ export function animate(blocks, rects, fn, params) {
 
 			done() {
 				// TODO remove styles
+				animation.running = false;
 			}
 		};
 
