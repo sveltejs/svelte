@@ -11,10 +11,10 @@ export function generateRule({ a, b, delta, duration }, ease, fn) {
 
 	for (let p = 0; p <= 1; p += step) {
 		const t = a + delta * ease(p);
-		keyframes += p * 100 + `%{${fn(t)}}\n`;
+		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
 	}
 
-	return keyframes + `100% {${fn(b)}}\n}`;
+	return keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 }
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
@@ -35,10 +35,10 @@ export function wrapTransition(component, node, fn, params, intro) {
 	if (intro) {
 		if (obj.css && obj.delay) {
 			cssText = node.style.cssText;
-			node.style.cssText += obj.css(0);
+			node.style.cssText += obj.css(0, 1);
 		}
 
-		if (obj.tick) obj.tick(0);
+		if (obj.tick) obj.tick(0, 1);
 	}
 
 	return {
@@ -102,14 +102,14 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 			const p = now - program.start;
 			this.t = program.a + program.delta * ease(p / program.duration);
-			if (obj.tick) obj.tick(this.t);
+			if (obj.tick) obj.tick(this.t, 1 - this.t);
 		},
 
 		done() {
 			const program = this.program;
 			this.t = program.b;
 
-			if (obj.tick) obj.tick(this.t);
+			if (obj.tick) obj.tick(this.t, 1 - this.t);
 
 			component.fire(`${program.b ? 'intro' : 'outro'}.end`, { node });
 
@@ -133,7 +133,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 		abort() {
 			if (this.program) {
-				if (obj.tick) obj.tick(1);
+				if (obj.tick) obj.tick(1, 0);
 				if (obj.css) transitionManager.deleteRule(node, this.program.name);
 				this.program = this.pending = null;
 				this.running = false;
