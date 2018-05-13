@@ -64,6 +64,9 @@ export interface CompileOptions {
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
+
+	// to remove in v3
+	skipIntroByDefault?: boolean;
 }
 
 export interface GenerateOptions {

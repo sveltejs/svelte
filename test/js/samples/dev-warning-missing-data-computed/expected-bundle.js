@@ -137,8 +137,8 @@ function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
 
-function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
+function _mount(target, anchor, intro) {
+	this._fragment[intro && this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
 
 var protoDev = {
@@ -208,7 +208,7 @@ function SvelteComponent(options) {
 	if (options.target) {
 		if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 		this._fragment.c();
-		this._mount(options.target, options.anchor);
+		this._mount(options.target, options.anchor, true);
 	}
 }
 
