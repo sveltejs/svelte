@@ -166,6 +166,10 @@ export function animate(blocks, rects, fn, params) {
 					transitionManager.deleteRule(block.node, program.name);
 				}
 
+				if (info.tick) {
+					info.tick(1, 0);
+				}
+
 				animation.running = false;
 			}
 		};
