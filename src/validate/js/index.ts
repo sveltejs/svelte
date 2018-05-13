@@ -89,7 +89,7 @@ export default function validateJs(validator: Validator, js: Node) {
 		}
 	});
 
-	['components', 'methods', 'helpers', 'transitions', 'actions'].forEach(key => {
+	['components', 'methods', 'helpers', 'transitions', 'animations', 'actions'].forEach(key => {
 		if (validator.properties.has(key)) {
 			validator.properties.get(key).value.properties.forEach((prop: Node) => {
 				validator[key].set(getName(prop.key), prop.value);

@@ -1,3 +1,5 @@
+import { transitionManager, linear, generateRule, hash } from './transitions';
+
 export function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
@@ -95,4 +97,87 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 	while (n) insert(new_blocks[n - 1]);
 
 	return new_blocks;
+}
+
+export function measure(blocks) {
+	const measurements = {};
+	let i = blocks.length;
+	while (i--) measurements[blocks[i].key] = blocks[i].node.getBoundingClientRect();
+	return measurements;
+}
+
+export function animate(blocks, rects, fn, params) {
+	let i = blocks.length;
+	while (i--) {
+		const block = blocks[i];
+		const from = rects[block.key];
+
+		if (!from) continue;
+		const to = block.node.getBoundingClientRect();
+
+		if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) continue;
+
+		const info = fn(block.node, { from, to }, params);
+
+		const duration = 'duration' in info ? info.duration : 300;
+		const delay = 'delay' in info ? info.delay : 0;
+		const ease = info.easing || linear;
+		const start = window.performance.now() + delay;
+		const end = start + duration;
+
+		const program = {
+			a: 0,
+			t: 0,
+			b: 1,
+			delta: 1,
+			duration,
+			start,
+			end
+		};
+
+		const animation = {
+			pending: delay ? program : null,
+			program: delay ? null : program,
+			running: !delay,
+
+			start() {
+				if (info.css) {
+					const rule = generateRule(program, ease, info.css);
+					program.name = `__svelte_${hash(rule)}`;
+
+					transitionManager.addRule(rule, program.name);
+
+					block.node.style.animation = (block.node.style.animation || '')
+						.split(', ')
+						.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
+						.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
+						.join(', ');
+				}
+			},
+
+			update: now => {
+				const p = now - program.start;
+				const t = program.a + program.delta * ease(p / program.duration);
+				if (info.tick) info.tick(t, 1 - t);
+			},
+
+			done() {
+				if (info.css) {
+					transitionManager.deleteRule(block.node, program.name);
+				}
+
+				if (info.tick) {
+					info.tick(1, 0);
+				}
+
+				animation.running = false;
+			}
+		};
+
+		transitionManager.add(animation);
+
+		if (info.tick) info.tick(0, 1);
+
+		if (!delay) animation.start();
+	}
 }

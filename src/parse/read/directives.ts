@@ -63,8 +63,17 @@ const DIRECTIVES: Record<string, {
 		error: 'Transition argument must be an object literal, e.g. `{ duration: 400 }`'
 	},
 
+	Animation: {
+		names: ['animate'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['ObjectExpression'],
+		error: 'Animation argument must be an object literal, e.g. `{ duration: 400 }`'
+	},
+
 	Action: {
-		names: [ 'use' ],
+		names: ['use'],
 		attribute(start, end, type, name, expression) {
 			return { start, end, type, name, expression };
 		},

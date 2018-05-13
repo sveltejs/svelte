@@ -40,6 +40,7 @@ export default class Block {
 	};
 
 	maintainContext: boolean;
+	animation?: string;
 	hasIntroMethod: boolean;
 	hasOutroMethod: boolean;
 	outros: number;
@@ -77,6 +78,7 @@ export default class Block {
 			destroy: new CodeBuilder(),
 		};
 
+		this.animation = null;
 		this.hasIntroMethod = false; // a block could have an intro method but not intro transitions, e.g. if a sibling block has intros
 		this.hasOutroMethod = false;
 		this.outros = 0;
@@ -125,6 +127,10 @@ export default class Block {
 	addOutro() {
 		this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
 		this.outros += 1;
+	}
+
+	addAnimation(name) {
+		this.animation = name;
 	}
 
 	addVariable(name: string, init?: string) {
@@ -181,6 +187,11 @@ export default class Block {
 		if (this.first) {
 			properties.addBlock(`first: null,`);
 			this.builders.hydrate.addLine(`this.first = ${this.first};`);
+		}
+
+		if (this.animation) {
+			properties.addBlock(`node: null,`);
+			this.builders.hydrate.addLine(`this.node = ${this.animation};`);
 		}
 
 		if (this.builders.create.isEmpty() && this.builders.hydrate.isEmpty()) {
