@@ -99,6 +99,7 @@ export default class Compiler {
 	components: Set<string>;
 	events: Set<string>;
 	methods: Set<string>;
+	animations: Set<string>;
 	transitions: Set<string>;
 	actions: Set<string>;
 	importedComponents: Map<string, string>;
@@ -149,6 +150,7 @@ export default class Compiler {
 		this.components = new Set();
 		this.events = new Set();
 		this.methods = new Set();
+		this.animations = new Set();
 		this.transitions = new Set();
 		this.actions = new Set();
 		this.importedComponents = new Map();
@@ -475,7 +477,7 @@ export default class Compiler {
 					templateProperties[getName(prop.key)] = prop;
 				});
 
-				['helpers', 'events', 'components', 'transitions', 'actions'].forEach(key => {
+				['helpers', 'events', 'components', 'transitions', 'actions', 'animations'].forEach(key => {
 					if (templateProperties[key]) {
 						templateProperties[key].value.properties.forEach((prop: Node) => {
 							this[key].add(getName(prop.key));
@@ -682,6 +684,12 @@ export default class Compiler {
 				if (templateProperties.transitions) {
 					templateProperties.transitions.value.properties.forEach((property: Node) => {
 						addDeclaration(getName(property.key), property.value, false, 'transitions');
+					});
+				}
+
+				if (templateProperties.animations) {
+					templateProperties.animations.value.properties.forEach((property: Node) => {
+						addDeclaration(getName(property.key), property.value, false, 'animations');
 					});
 				}
 

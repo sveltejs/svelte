@@ -78,6 +78,7 @@ export default function validateElement(
 	let hasIntro: boolean;
 	let hasOutro: boolean;
 	let hasTransition: boolean;
+	let hasAnimation: boolean;
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
@@ -228,6 +229,40 @@ export default function validateElement(
 					message: `Missing transition '${attribute.name}'`
 				});
 			}
+		} else if (attribute.type === 'Animation') {
+			validator.used.animations.add(attribute.name);
+
+			if (hasAnimation) {
+				validator.error(attribute, {
+					code: `duplicate-animation`,
+					message: `An element can only have one 'animate' directive`
+				});
+			}
+
+			if (!validator.animations.has(attribute.name)) {
+				validator.error(attribute, {
+					code: `missing-animation`,
+					message: `Missing animation '${attribute.name}'`
+				});
+			}
+
+			const parent = stack[stack.length - 1];
+			if (parent.type !== 'EachBlock' || !parent.key) {
+				// TODO can we relax the 'immediate child' rule?
+				validator.error(attribute, {
+					code: `invalid-animation`,
+					message: `An element that use the animate directive must be the immediate child of a keyed each block`
+				});
+			}
+
+			if (parent.children.length > 1) {
+				validator.error(attribute, {
+					code: `invalid-animation`,
+					message: `An element that use the animate directive must be the sole child of a keyed each block`
+				});
+			}
+
+			hasAnimation = true;
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name === 'value' && node.name === 'textarea') {
 				if (node.children.length) {

@@ -96,3 +96,10 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 
 	return new_blocks;
 }
+
+export function measure(blocks) {
+	const measurements = {};
+	let i = blocks.length;
+	while (i--) measurements[blocks[i].key] = blocks[i].node.getBoundingClientRect();
+	return measurements;
+}

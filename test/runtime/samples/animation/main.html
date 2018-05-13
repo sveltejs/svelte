@@ -1,0 +1,22 @@
+{#each things as thing (thing.id)}
+	<div animate:flip>{thing.name}</div>
+{/each}
+
+<script>
+	export default {
+		animations: {
+			flip(node, animation, params) {
+				const dx = animation.to.left - animation.from.left;
+				const dy = animation.to.top - animation.from.top;
+
+				return {
+					duration: 100,
+					tick: (t, u) => {
+						node.dx = u * dx;
+						node.dy = u * dy;
+					}
+				};
+			}
+		}
+	};
+</script>
