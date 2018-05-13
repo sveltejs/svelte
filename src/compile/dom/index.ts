@@ -228,7 +228,7 @@ export default function dom(
 			this._fragment.c();
 			this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
 
-			if (options.target) this._mount(options.target, options.anchor, ${options.skipIntroByDefault ? `options.intro` : 'true'});
+			if (options.target) this._mount(options.target, options.anchor);
 		` : deindent`
 			if (options.target) {
 				${compiler.options.hydratable
@@ -241,7 +241,7 @@ export default function dom(
 						${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
 						this._fragment.c();
 					`}
-				this._mount(options.target, options.anchor, ${options.skipIntroByDefault ? `options.intro` : 'true'});
+				this._mount(options.target, options.anchor);
 
 				${(compiler.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) && deindent`
 					${compiler.hasComponents && `this._lock = true;`}

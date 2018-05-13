@@ -36,7 +36,7 @@ function SvelteComponent(options) {
 
 	if (options.target) {
 		this._fragment.c();
-		this._mount(options.target, options.anchor, true);
+		this._mount(options.target, options.anchor);
 	}
 }
 

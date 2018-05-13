@@ -699,7 +699,7 @@ export default class Element extends Node {
 
 			const fn = `%transitions-${intro.name}`;
 
-			block.builders.intro.addBlock(deindent`
+			block.builders.intro.addConditional(`#component._intro`, deindent`
 				if (${name}) ${name}.invalidate();
 
 				#component.root._aftercreate.push(() => {
@@ -709,6 +709,7 @@ export default class Element extends Node {
 			`);
 
 			block.builders.outro.addBlock(deindent`
+				if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0, () => {
 					#outrocallback();
 					${name} = null;
@@ -733,7 +734,7 @@ export default class Element extends Node {
 					`);
 				}
 
-				block.builders.intro.addBlock(deindent`
+				block.builders.intro.addConditional(`#component._intro`, deindent`
 					#component.root._aftercreate.push(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
