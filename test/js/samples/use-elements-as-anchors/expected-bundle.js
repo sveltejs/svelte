@@ -384,6 +384,7 @@ function create_if_block_4(component, ctx) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	this._fragment = create_main_fragment(this, this._state);
 

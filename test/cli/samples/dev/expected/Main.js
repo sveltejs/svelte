@@ -28,6 +28,7 @@ function Main(options) {
 	if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	this._fragment = create_main_fragment(this, this._state);
 

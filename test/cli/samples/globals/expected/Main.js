@@ -41,6 +41,7 @@ var Main = (function(answer) { "use strict";
 	function Main(options) {
 		init(this, options);
 		this._state = assign(data(), options.data);
+		this._intro = true;
 
 		this._fragment = create_main_fragment(this, this._state);
 
