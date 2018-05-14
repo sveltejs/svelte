@@ -33,9 +33,6 @@ export default {
 			};
 		})
 
-		const bcr1 = divs[0].getBoundingClientRect();
-		const bcr2 = divs[4].getBoundingClientRect();
-
 		component.set({
 			things: [
 				{ id: 5, name: 'e' },
