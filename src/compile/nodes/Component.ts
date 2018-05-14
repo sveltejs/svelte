@@ -5,7 +5,7 @@ import stringifyProps from '../../utils/stringifyProps';
 import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
-import quoteIfNecessary from '../../utils/quoteIfNecessary';
+import { quoteNameIfNecessary } from '../../utils/quoteIfNecessary';
 import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
@@ -126,7 +126,7 @@ export default class Component extends Node {
 		const componentInitProperties = [`root: #component.root`];
 
 		if (this.children.length > 0) {
-			const slots = Array.from(this._slots).map(name => `${quoteIfNecessary(name)}: @createFragment()`);
+			const slots = Array.from(this._slots).map(name => `${quoteNameIfNecessary(name)}: @createFragment()`);
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.children.forEach((child: Node) => {
@@ -185,7 +185,7 @@ export default class Component extends Node {
 
 						changes.push(condition ? `${condition} && ${value}` : value);
 					} else {
-						const obj = `{ ${quoteIfNecessary(name)}: ${attr.getValue()} }`;
+						const obj = `{ ${quoteNameIfNecessary(name)}: ${attr.getValue()} }`;
 						initialProps.push(obj);
 
 						changes.push(condition ? `${condition} && ${obj}` : obj);
@@ -602,7 +602,7 @@ export default class Component extends Node {
 			});
 
 			const slotted = Object.keys(appendTarget.slots)
-				.map(name => `${name}: () => \`${appendTarget.slots[name]}\``)
+				.map(name => `${quoteNameIfNecessary(name)}: () => \`${appendTarget.slots[name]}\``)
 				.join(', ');
 
 			options.push(`slotted: { ${slotted} }`);
