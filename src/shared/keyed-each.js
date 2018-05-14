@@ -11,7 +11,30 @@ export function outroAndDestroyBlock(block, lookup) {
 	});
 }
 
-export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, has_outro, create_each_block, intro_method, next, get_context) {
+export function fixAndOutroAndDestroyBlock(block, lookup) {
+	const { node } = block;
+	const style = getComputedStyle(node);
+
+	if (style.position !== 'absolute' && style.position !== 'fixed') {
+		const { width, height } = style;
+		const a = node.getBoundingClientRect();
+		node.style.position = 'absolute';
+		node.style.width = width;
+		node.style.height = height;
+		const b = node.getBoundingClientRect();
+
+		if (a.left !== b.left || a.top !== b.top) {
+			const style = getComputedStyle(node);
+			const transform = style.transform === 'none' ? '' : style.transform;
+
+			node.style.transform = `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`;
+		}
+	}
+
+	outroAndDestroyBlock(block, lookup);
+}
+
+export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, has_outro, has_animation, create_each_block, intro_method, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
@@ -44,7 +67,7 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 	var will_move = {};
 	var did_move = {};
 
-	var destroy = has_outro ? outroAndDestroyBlock : destroyBlock;
+	var destroy = has_outro ? has_animation ? fixAndOutroAndDestroyBlock : outroAndDestroyBlock : destroyBlock;
 
 	function insert(block) {
 		block[intro_method](node, next);
