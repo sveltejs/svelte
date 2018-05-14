@@ -1,7 +1,12 @@
 import isValidIdentifier from './isValidIdentifier';
 import reservedNames from './reservedNames';
 
-export default function quoteIfNecessary(name) {
+export function quoteNameIfNecessary(name) {
 	if (!isValidIdentifier(name)) return `"${name}"`;
 	return name;
+}
+
+export function quotePropIfNecessary(name) {
+	if (!isValidIdentifier(name)) return `["${name}"]`;
+	return `.${name}`;
 }

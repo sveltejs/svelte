@@ -5,7 +5,7 @@ import isVoidElementName from '../../utils/isVoidElementName';
 import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
-import quoteIfNecessary from '../../utils/quoteIfNecessary';
+import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import Compiler from '../Compiler';
 import Node from './shared/Node';
 import Block from '../dom/Block';
@@ -260,8 +260,9 @@ export default class Element extends Node {
 		const name = this.var;
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
+		const prop = slot && quotePropIfNecessary(slot.chunks[0].data);
 		const initialMountNode = this.slotted ?
-			`${this.findNearest(/^Component/).var}._slotted.${slot.chunks[0].data}` : // TODO this looks bonkers
+			`${this.findNearest(/^Component/).var}._slotted${prop}` : // TODO this looks bonkers
 			parentNode;
 
 		block.addVariable(name);
@@ -571,7 +572,7 @@ export default class Element extends Node {
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
 				} else {
-					const snippet = `{ ${quoteIfNecessary(attr.name)}: ${attr.getValue()} }`;
+					const snippet = `{ ${quoteNameIfNecessary(attr.name)}: ${attr.getValue()} }`;
 					initialProps.push(snippet);
 
 					updates.push(condition ? `${condition} && ${snippet}` : snippet);
@@ -824,7 +825,8 @@ export default class Element extends Node {
 	remount(name: string) {
 		const slot = this.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
-			return `@appendNode(${this.var}, ${name}._slotted.${this.getStaticAttributeValue('slot')});`;
+			const prop = quotePropIfNecessary(slot.chunks[0].data);
+			return `@appendNode(${this.var}, ${name}._slotted${prop});`;
 		}
 
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
@@ -881,16 +883,16 @@ export default class Element extends Node {
 					if (attribute.name === 'value' && this.name === 'textarea') {
 						textareaContents = attribute.stringifyForSsr();
 					} else if (attribute.isTrue) {
-						args.push(`{ ${quoteIfNecessary(attribute.name)}: true }`);
+						args.push(`{ ${quoteNameIfNecessary(attribute.name)}: true }`);
 					} else if (
 						booleanAttributes.has(attribute.name) &&
 						attribute.chunks.length === 1 &&
 						attribute.chunks[0].type !== 'Text'
 					) {
 						// a boolean attribute with one non-Text chunk
-						args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
+						args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
 					} else {
-						args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${attribute.stringifyForSsr()}\` }`);
+						args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${attribute.stringifyForSsr()}\` }`);
 					}
 				}
 			});
@@ -962,7 +964,7 @@ function getClaimStatement(
 ) {
 	const attributes = node.attributes
 		.filter((attr: Node) => attr.type === 'Attribute')
-		.map((attr: Node) => `${quoteIfNecessary(attr.name)}: true`)
+		.map((attr: Node) => `${quoteNameIfNecessary(attr.name)}: true`)
 		.join(', ');
 
 	const name = namespace ? node.name : node.name.toUpperCase();
