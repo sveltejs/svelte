@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.6.1
+
+* Absolutely position outroing animated nodes ([#1457](https://github.com/sveltejs/svelte/pull/1457))
+
 ## 2.6.0
 
 * Add `animate` directive ([#1454](https://github.com/sveltejs/svelte/pull/1454))
