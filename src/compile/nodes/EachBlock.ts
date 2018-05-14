@@ -321,7 +321,7 @@ export default class EachBlock extends Node {
 
 			${this.block.hasOutroMethod && `@transitionManager.groupOutros();`}
 			${this.block.animation && `const ${rects} = @measure(${blocks});`}
-			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
+			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${String(this.block.hasOutroMethod)}, ${String(!!this.block.animation)}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 			${this.block.animation && `@animate(${blocks}, ${rects}, %animations-${this.children[0].animation.name}, {});`}
 		`);
 
