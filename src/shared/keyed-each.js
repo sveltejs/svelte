@@ -34,7 +34,7 @@ export function fixAndOutroAndDestroyBlock(block, lookup) {
 	outroAndDestroyBlock(block, lookup);
 }
 
-export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, has_outro, has_animation, create_each_block, intro_method, next, get_context) {
+export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, intro_method, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
@@ -66,8 +66,6 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 
 	var will_move = {};
 	var did_move = {};
-
-	var destroy = has_outro ? has_animation ? fixAndOutroAndDestroyBlock : outroAndDestroyBlock : destroyBlock;
 
 	function insert(block) {
 		block[intro_method](node, next);
