@@ -1,3 +1,4 @@
+import Block from '../dom/Block';
 import Node from './shared/Node';
 import Expression from './shared/Expression';
 
@@ -14,5 +15,13 @@ export default class Animation extends Node {
 		this.expression = info.expression
 			? new Expression(compiler, this, scope, info.expression)
 			: null;
+	}
+
+	build(
+		block: Block,
+		parentNode: string,
+		parentNodes: string
+	) {
+
 	}
 }
