@@ -33,6 +33,9 @@ export default class Block {
 		claim: CodeBuilder;
 		hydrate: CodeBuilder;
 		mount: CodeBuilder;
+		measure: CodeBuilder;
+		fix: CodeBuilder;
+		animate: CodeBuilder;
 		intro: CodeBuilder;
 		update: CodeBuilder;
 		outro: CodeBuilder;
@@ -40,7 +43,7 @@ export default class Block {
 	};
 
 	maintainContext: boolean;
-	animation?: string;
+	hasAnimation: boolean;
 	hasIntroMethod: boolean;
 	hasOutroMethod: boolean;
 	outros: number;
@@ -72,13 +75,16 @@ export default class Block {
 			claim: new CodeBuilder(),
 			hydrate: new CodeBuilder(),
 			mount: new CodeBuilder(),
+			measure: new CodeBuilder(),
+			fix: new CodeBuilder(),
+			animate: new CodeBuilder(),
 			intro: new CodeBuilder(),
 			update: new CodeBuilder(),
 			outro: new CodeBuilder(),
 			destroy: new CodeBuilder(),
 		};
 
-		this.animation = null;
+		this.hasAnimation = false;
 		this.hasIntroMethod = false; // a block could have an intro method but not intro transitions, e.g. if a sibling block has intros
 		this.hasOutroMethod = false;
 		this.outros = 0;
@@ -129,8 +135,8 @@ export default class Block {
 		this.outros += 1;
 	}
 
-	addAnimation(name) {
-		this.animation = name;
+	addAnimation() {
+		this.hasAnimation = true;
 	}
 
 	addVariable(name: string, init?: string) {
@@ -187,11 +193,6 @@ export default class Block {
 		if (this.first) {
 			properties.addBlock(`first: null,`);
 			this.builders.hydrate.addLine(`this.first = ${this.first};`);
-		}
-
-		if (this.animation) {
-			properties.addBlock(`node: null,`);
-			this.builders.hydrate.addLine(`this.node = ${this.animation};`);
 		}
 
 		if (this.builders.create.isEmpty() && this.builders.hydrate.isEmpty()) {
@@ -253,6 +254,22 @@ export default class Block {
 					},
 				`);
 			}
+		}
+
+		if (this.hasAnimation) {
+			properties.addBlock(deindent`
+				${dev ? `r: function measure` : `r`}() {
+					${this.builders.measure}
+				},
+
+				${dev ? `f: function fix` : `f`}() {
+					${this.builders.fix}
+				},
+
+				${dev ? `a: function animate` : `a`}() {
+					${this.builders.animate}
+				},
+			`);
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
