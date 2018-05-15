@@ -5,6 +5,11 @@ import Node from './shared/Node';
 import Element from './Element';
 import Attribute from './Attribute';
 import Block from '../dom/Block';
+import { quotePropIfNecessary } from '../../utils/quoteIfNecessary';
+
+function sanitize(name) {
+	return name.replace(/[^a-zA-Z]+/g, '_').replace(/^_/, '').replace(/_$/, '');
+}
 
 export default class Slot extends Element {
 	type: 'Element';
@@ -36,8 +41,8 @@ export default class Slot extends Element {
 		const slotName = this.getStaticAttributeValue('name') || 'default';
 		compiler.slots.add(slotName);
 
-		const content_name = block.getUniqueName(`slot_content_${slotName}`);
-		const prop = !isValidIdentifier(slotName) ? `["${slotName}"]` : `.${slotName}`;
+		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
+		const prop = quotePropIfNecessary(slotName);
 		block.addVariable(content_name, `#component._slotted${prop}`);
 
 		const needsAnchorBefore = this.prev ? this.prev.type !== 'Element' : !parentNode;
@@ -151,9 +156,11 @@ export default class Slot extends Element {
 
 	ssr() {
 		const name = this.attributes.find(attribute => attribute.name === 'name');
-		const slotName = name && name.chunks[0].data || 'default';
 
-		this.compiler.target.append(`\${options && options.slotted && options.slotted.${slotName} ? options.slotted.${slotName}() : \``);
+		const slotName = name && name.chunks[0].data || 'default';
+		const prop = quotePropIfNecessary(slotName);
+
+		this.compiler.target.append(`\${options && options.slotted && options.slotted${prop} ? options.slotted${prop}() : \``);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
