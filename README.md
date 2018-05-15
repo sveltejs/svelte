@@ -35,7 +35,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 ```js
 import * as svelte from 'svelte';
 
-const { code, map } = svelte.compile(source, {
+const { js, css, ast } = svelte.compile(source, {
 	// the target module format – defaults to 'es' (ES2015 modules), can
 	// also be 'amd', 'cjs', 'umd', 'iife' or 'eval'
 	format: 'umd',
