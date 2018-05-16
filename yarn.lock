@@ -1465,9 +1465,9 @@ globby@^5.0.0:
     pify "^2.0.0"
     pinkie-promise "^2.0.0"
 
-globrex@0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/globrex/-/globrex-0.0.2.tgz#9fbdfeee1e3edd878d61ebda19fa57a999850ca4"
+globrex@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/globrex/-/globrex-0.1.1.tgz#cfe565cfa910707d0ef98eb0b9d78c3c055ca2ef"
 
 graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.3, graceful-fs@^4.1.6, graceful-fs@^4.1.9:
   version "4.1.11"
@@ -3669,12 +3669,12 @@ through@^2.3.6:
   version "2.3.8"
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
 
-tiny-glob@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/tiny-glob/-/tiny-glob-0.2.0.tgz#44d2feb1293308ed97520b9931d17c36432c7555"
+tiny-glob@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/tiny-glob/-/tiny-glob-0.2.1.tgz#64347c97094f10669641d415952ce090cf8af34d"
   dependencies:
     globalyzer "^0.1.0"
-    globrex "0.0.2"
+    globrex "^0.1.1"
 
 tippex@^2.1.1:
   version "2.3.1"
