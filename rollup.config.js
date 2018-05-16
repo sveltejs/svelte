@@ -62,12 +62,12 @@ export default [
 		input: ['src/cli/index.ts'],
 		output: {
 			dir: 'cli',
-			format: 'cjs'
+			format: 'cjs',
+			paths: {
+				svelte: '../compiler/svelte.js'
+			}
 		},
 		external: ['fs', 'path', 'os', 'svelte'],
-		paths: {
-			svelte: '../compiler/svelte.js'
-		},
 		plugins: [
 			json(),
 			commonjs(),
