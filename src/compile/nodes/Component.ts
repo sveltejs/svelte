@@ -207,9 +207,9 @@ export default class Component extends Node {
 				const conditions = [...allDependencies].map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(deindent`
-					var ${name_changes} = ${allDependencies.size === 1 ? `${conditions}` : `(${conditions})`} && @getSpreadUpdate(${levels}, [
+					var ${name_changes} = ${allDependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @getSpreadUpdate(${levels}, [
 						${changes.join(',\n')}
-					]);
+					]) : ${name_changes};
 				`);
 			} else {
 				this.attributes
