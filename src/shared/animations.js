@@ -6,8 +6,6 @@ export function wrapAnimation(node, from, fn, params) {
 	const to = node.getBoundingClientRect();
 	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return;
 
-	// console.log({ x: from.x, y: from.y }, { x: to.x, y: to.y }, node.textContent.trim())
-
 	const info = fn(node, { from, to }, params);
 
 	const duration = 'duration' in info ? info.duration : 300;
@@ -26,13 +24,17 @@ export function wrapAnimation(node, from, fn, params) {
 		end
 	};
 
+	const cssText = node.style.cssText;
+
 	const animation = {
 		pending: delay ? program : null,
 		program: delay ? null : program,
-		running: !delay,
+		running: true,
 
 		start() {
 			if (info.css) {
+				if (delay) node.style.cssText = cssText;
+
 				const rule = generateRule(program, ease, info.css);
 				program.name = `__svelte_${hash(rule)}`;
 
@@ -44,6 +46,9 @@ export function wrapAnimation(node, from, fn, params) {
 					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
 					.join(', ');
 			}
+
+			animation.program = program;
+			animation.pending = null;
 		},
 
 		update: now => {
@@ -54,7 +59,7 @@ export function wrapAnimation(node, from, fn, params) {
 
 		done() {
 			if (info.tick) info.tick(1, 0);
-			this.stop();
+			animation.stop();
 		},
 
 		stop() {
@@ -66,7 +71,12 @@ export function wrapAnimation(node, from, fn, params) {
 	transitionManager.add(animation);
 
 	if (info.tick) info.tick(0, 1);
-	if (!delay) animation.start();
+
+	if (delay) {
+		if (info.css) node.style.cssText += info.css(0, 1);
+	} else {
+		animation.start();
+	}
 
 	return animation;
 }
