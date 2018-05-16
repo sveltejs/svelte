@@ -1,5 +1,6 @@
 import { assign } from './utils.js';
 import { noop } from './utils.js';
+export * from './animations.js';
 export * from './await-block.js';
 export * from './dom.js';
 export * from './keyed-each.js';

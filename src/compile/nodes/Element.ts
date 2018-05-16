@@ -195,7 +195,7 @@ export default class Element extends Node {
 
 		if (this.intro) block.addIntro();
 		if (this.outro) block.addOutro();
-		if (this.animation) block.addAnimation(this.var);
+		if (this.animation) block.addAnimation();
 
 		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
 
@@ -368,6 +368,7 @@ export default class Element extends Node {
 		if (this.ref) this.addRef(block);
 		this.addAttributes(block);
 		this.addTransitions(block);
+		this.addAnimation(block);
 		this.addActions(block);
 
 		if (this.initialUpdate) {
@@ -762,6 +763,31 @@ export default class Element extends Node {
 				`);
 			}
 		}
+	}
+
+	addAnimation(block: Block) {
+		if (!this.animation) return;
+
+		const rect = block.getUniqueName('rect');
+		const animation = block.getUniqueName('animation');
+
+		block.addVariable(rect);
+		block.addVariable(animation);
+
+		block.builders.measure.addBlock(deindent`
+			${rect} = ${this.var}.getBoundingClientRect();
+		`);
+
+		block.builders.fix.addBlock(deindent`
+			@fixPosition(${this.var});
+			if (${animation}) ${animation}.stop();
+		`);
+
+		const params = this.animation.expression ? this.animation.expression.snippet : '{}';
+		block.builders.animate.addBlock(deindent`
+			if (${animation}) ${animation}.stop();
+			${animation} = @wrapAnimation(${this.var}, ${rect}, %animations-${this.animation.name}, ${params});
+		`);
 	}
 
 	addActions(block: Block) {
