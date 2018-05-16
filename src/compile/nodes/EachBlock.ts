@@ -315,7 +315,7 @@ export default class EachBlock extends Node {
 		const dynamic = this.block.hasUpdateMethod;
 
 		const rects = block.getUniqueName('rects');
-		const destroy = this.block.animation
+		const destroy = this.block.hasAnimation
 			? `@fixAndOutroAndDestroyBlock`
 			: this.block.hasOutroMethod
 				? `@outroAndDestroyBlock`
@@ -325,9 +325,9 @@ export default class EachBlock extends Node {
 			const ${this.each_block_value} = ${snippet};
 
 			${this.block.hasOutroMethod && `@transitionManager.groupOutros();`}
-			${this.block.animation && `const ${rects} = @measure(${blocks});`}
+			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].r();`}
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
-			${this.block.animation && `@animate(${blocks}, ${rects}, %animations-${this.children[0].animation.name}, {});`}
+			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
 		if (this.compiler.options.nestedTransitions) {
