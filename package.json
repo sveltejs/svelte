@@ -84,7 +84,7 @@
     "sander": "^0.6.0",
     "source-map": "0.6",
     "source-map-support": "^0.5.4",
-    "tiny-glob": "^0.2.0",
+    "tiny-glob": "^0.2.1",
     "ts-node": "^6.0.0",
     "tslib": "^1.8.0",
     "typescript": "^2.8.3"
