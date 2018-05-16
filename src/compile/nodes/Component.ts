@@ -155,7 +155,7 @@ export default class Component extends Node {
 			componentInitProperties.push(`data: ${name_initial_data}`);
 		}
 
-		if ((!usesSpread && this.attributes.filter(a => a.isDynamic).length) || this.bindings.length) {
+		if (!usesSpread && (this.attributes.filter(a => a.isDynamic).length || this.bindings.length)) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
@@ -209,7 +209,7 @@ export default class Component extends Node {
 				updates.push(deindent`
 					var ${name_changes} = ${allDependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @getSpreadUpdate(${levels}, [
 						${changes.join(',\n')}
-					]) : ${name_changes};
+					]) : {};
 				`);
 			} else {
 				this.attributes

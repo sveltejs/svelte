@@ -1,0 +1,15 @@
+<svelte:component this={Widget} {...props} bind:value="x" />
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data() {
+			return {
+				Widget,
+				x: 'foo',
+				props: {}
+			}
+		}
+	};
+</script>
