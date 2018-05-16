@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.6.2
+
+* Fix spread+bindings on dynamic components ([#1433](https://github.com/sveltejs/svelte/issues/1433))
+* Abort in-progress animations, if a new one starts ([#1458](https://github.com/sveltejs/svelte/issues/1458))
+* Allow animations to be parameterised ([#1462](https://github.com/sveltejs/svelte/issues/1462))
+
 ## 2.6.1
 
 * Absolutely position outroing animated nodes ([#1457](https://github.com/sveltejs/svelte/pull/1457))
