@@ -182,7 +182,7 @@ export default function dom(
 			})}
 		${compiler.bindingGroups.length &&
 			`this._bindingGroups = [${Array(compiler.bindingGroups.length).fill('[]').join(', ')}];`}
-		this._intro = ${compiler.options.skipIntroByDefault ? 'options.intro' : 'true'};
+		this._intro = ${compiler.options.skipIntroByDefault ? '!!options.intro' : 'true'};
 
 		${templateProperties.onstate && `this._handlers.state = [%onstate];`}
 		${templateProperties.onupdate && `this._handlers.update = [%onupdate];`}
