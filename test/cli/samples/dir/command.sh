@@ -1,1 +1,1 @@
-compile src -o actual
+svelte compile src -o actual

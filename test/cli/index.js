@@ -36,7 +36,9 @@ describe('cli', () => {
 
 			shell.mkdir("-p", "actual");
 			shell.rm("-rf", "actual/*");
-			const { commandErr } = shell.exec(`node ${cli} ${command}`);
+			const { commandErr } = shell.exec(
+				command.replace(/^svelte /, `node ${cli} `)
+			);
 
 			if (commandErr) {
 				done(commandErr);
@@ -74,7 +76,6 @@ describe('cli', () => {
 			});
 
 			done();
-			// });
 		});
 	});
 });
