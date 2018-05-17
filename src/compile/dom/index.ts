@@ -55,6 +55,10 @@ export default function dom(
 	compiler.fragment.build();
 	const { block } = compiler.fragment;
 
+	if (compiler.options.nestedTransitions) {
+		block.hasOutroMethod = true;
+	}
+
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.addLine(`this.c = @noop;`);
 
