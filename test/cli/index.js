@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const child_process = require('child_process');
 const assert = require('assert');
 const glob = require('tiny-glob/sync.js');
+const shell = require("shelljs");
 
-const bin = path.resolve(`svelte`);
+const cli = path.resolve(__dirname, "../../cli/index.ts.js");
 
 function normalize(str) {
 	return str
@@ -31,49 +31,47 @@ describe('cli', () => {
 
 			const command = fs.readFileSync('command.sh', 'utf-8');
 
-			child_process.exec(`
-				alias svelte=${bin}
-				mkdir -p actual
-				rm -rf actual/*
-				${command}
-			`, (err, stdout, stderr) => {
-				if (err) {
-					done(err);
-					return;
-				}
+			shell.mkdir("-p", "actual");
+			shell.rm("-rf", "actual/*");
+			const { commandErr } = shell.exec(`node ${cli} ${command}`);
 
-				const actual = glob('**', { cwd: 'actual', filesOnly: true })
-					.map(file => {
-						return {
-							file,
-							contents: normalize(fs.readFileSync(`actual/${file}`, 'utf-8'))
-						};
-					});
+			if (commandErr) {
+				done(commandErr);
+				return;
+			}
 
-				const expected = glob('**', { cwd: 'expected', filesOnly: true })
-					.map(file => {
-						return {
-							file,
-							contents: normalize(
-								fs.readFileSync(`expected/${file}`, 'utf-8')
-							)
-						};
-					});
-
-				actual.forEach((a, i) => {
-					const e = expected[i];
-
-					assert.equal(a.file, e.file, 'File list mismatch');
-
-					if (/\.map$/.test(a.file)) {
-						assert.deepEqual(JSON.parse(a.contents), JSON.parse(e.contents));
-					} else {
-						assert.equal(a.contents, e.contents);
-					}
+			const actual = glob('**', { cwd: 'actual', filesOnly: true })
+				.map(file => {
+					return {
+						file,
+						contents: normalize(fs.readFileSync(`actual/${file}`, 'utf-8'))
+					};
 				});
 
-				done();
+			const expected = glob('**', { cwd: 'expected', filesOnly: true })
+				.map(file => {
+					return {
+						file,
+						contents: normalize(
+							fs.readFileSync(`expected/${file}`, 'utf-8')
+						)
+					};
+				});
+
+			actual.forEach((a, i) => {
+				const e = expected[i];
+
+				assert.equal(a.file, e.file, 'File list mismatch');
+
+				if (/\.map$/.test(a.file)) {
+					assert.deepEqual(JSON.parse(a.contents), JSON.parse(e.contents));
+				} else {
+					assert.equal(a.contents, e.contents);
+				}
 			});
+
+			done();
+			// });
 		});
 	});
 });

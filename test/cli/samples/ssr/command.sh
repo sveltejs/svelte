@@ -1,1 +1,1 @@
-svelte compile --generate ssr src/Main.html > actual/Main.js
+compile --generate ssr src/Main.html > actual/Main.js
