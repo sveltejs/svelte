@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.6.3
+
+* Nested transitions respect `skipIntroByDefault` ([#1460](https://github.com/sveltejs/svelte/issues/1460))
+* Always create outro for top-level block ([#1470](https://github.com/sveltejs/svelte/issues/1470))
+
 ## 2.6.2
 
 * Fix spread+bindings on dynamic components ([#1433](https://github.com/sveltejs/svelte/issues/1433))
