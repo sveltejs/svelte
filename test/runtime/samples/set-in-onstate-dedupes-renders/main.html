@@ -1,0 +1,24 @@
+<Widget foo='{foo}' bar='{bar}'/>
+
+<script>
+	import Widget from './Widget.html';
+
+	export default {
+		data () {
+			return {
+				foo: { x: 1 },
+				bar: { x: 1 }
+			}
+		},
+
+		onstate({ changed, current }) {
+			if (changed.foo) {
+				this.set({ bar: current.foo });
+			}
+		},
+
+		components: {
+			Widget
+		}
+	};
+</script>

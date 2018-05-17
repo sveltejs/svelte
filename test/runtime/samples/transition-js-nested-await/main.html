@@ -1,0 +1,20 @@
+{#if x}
+	{#await promise then value}
+		<div transition:foo></div>
+	{/await}
+{/if}
+
+<script>
+	export default {
+		transitions: {
+			foo(node, params) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

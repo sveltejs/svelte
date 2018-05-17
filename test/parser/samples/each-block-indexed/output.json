@@ -1,60 +1,64 @@
 {
-	"hash": 2841674990,
 	"html": {
 		"start": 0,
-		"end": 66,
+		"end": 58,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 66,
+				"end": 58,
 				"type": "EachBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 8,
-					"end": 15,
+					"start": 7,
+					"end": 14,
 					"name": "animals"
 				},
 				"children": [
 					{
-						"start": 32,
-						"end": 56,
+						"start": 30,
+						"end": 50,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 35,
-								"end": 40,
+								"start": 33,
+								"end": 36,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 37,
-									"end": 38,
+									"start": 34,
+									"end": 35,
 									"name": "i"
 								}
 							},
 							{
-								"start": 40,
-								"end": 42,
+								"start": 36,
+								"end": 38,
 								"type": "Text",
 								"data": ": "
 							},
 							{
-								"start": 42,
-								"end": 52,
+								"start": 38,
+								"end": 46,
 								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
-									"start": 44,
-									"end": 50,
+									"start": 39,
+									"end": 45,
 									"name": "animal"
 								}
 							}
 						]
 					}
 				],
-				"context": "animal",
+				"context": {
+					"start": 18,
+					"end": 24,
+					"type": "Identifier",
+					"name": "animal"
+				},
 				"index": "i"
 			}
 		]

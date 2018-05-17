@@ -4,7 +4,7 @@ import Imported from 'Imported.html';
 
 
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 	var text;
 
 	var imported = new Imported({
@@ -16,13 +16,13 @@ function create_main_fragment(component, state) {
 	});
 
 	return {
-		c: function create() {
+		c() {
 			imported._fragment.c();
 			text = createText("\n");
 			nonimported._fragment.c();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			imported._mount(target, anchor);
 			insertNode(text, target, anchor);
 			nonimported._mount(target, anchor);
@@ -30,15 +30,13 @@ function create_main_fragment(component, state) {
 
 		p: noop,
 
-		u: function unmount() {
-			imported._unmount();
-			detachNode(text);
-			nonimported._unmount();
-		},
+		d(detach) {
+			imported.destroy(detach);
+			if (detach) {
+				detachNode(text);
+			}
 
-		d: function destroy() {
-			imported.destroy(false);
-			nonimported.destroy(false);
+			nonimported.destroy(detach);
 		}
 	};
 }
@@ -46,6 +44,7 @@ function create_main_fragment(component, state) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	if (!options.root) {
 		this._oncreate = [];

@@ -1,8 +1,8 @@
-{{#if show}}
+{#if show}
 	<Nested bind:show/>
-{{else}}
+{:else}
 	<button on:click="set({show:true})">Show</button>
-{{/if}}
+{/if}
 
 <script>
 	import Nested from './Nested.html';

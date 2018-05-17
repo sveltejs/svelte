@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-computed-property",
 	"message": "The 'computed' property must be an object literal",
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 2
+		"column": 2,
+		"character": 42
+	},
+	"end": {
+		"line": 5,
+		"column": 23,
+		"character": 63
 	},
 	"pos": 42
 }]

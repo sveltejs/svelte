@@ -34,7 +34,7 @@ export default [
 
 	/* ssr/register.js */
 	{
-		input: 'src/server-side-rendering/register.js',
+		input: 'src/ssr/register.js',
 		plugins: [
 			resolve(),
 			commonjs(),
@@ -55,6 +55,29 @@ export default [
 			},
 			sourcemap: true
 		}
+	},
+
+	/* cli/*.js */
+	{
+		input: ['src/cli/index.ts'],
+		output: {
+			dir: 'cli',
+			format: 'cjs',
+			paths: {
+				svelte: '../compiler/svelte.js'
+			}
+		},
+		external: ['fs', 'path', 'os', 'svelte'],
+		plugins: [
+			json(),
+			commonjs(),
+			resolve(),
+			typescript({
+				typescript: require('typescript')
+			})
+		],
+		experimentalDynamicImport: true,
+		experimentalCodeSplitting: true
 	},
 
 	/* shared.js */

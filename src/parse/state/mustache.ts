@@ -1,3 +1,4 @@
+import readContext from '../read/context';
 import readExpression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
 import { trimStart, trimEnd } from '../../utils/trim';
@@ -32,7 +33,7 @@ function trimWhitespace(block: Node, trimBefore: boolean, trimAfter: boolean) {
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
-	parser.index += 2;
+	parser.index += 1;
 
 	parser.allowWhitespace();
 
@@ -56,12 +57,15 @@ export default function mustache(parser: Parser) {
 		} else if (block.type === 'AwaitBlock') {
 			expected = 'await';
 		} else {
-			parser.error(`Unexpected block closing tag`);
+			parser.error({
+				code: `unexpected-block-close`,
+				message: `Unexpected block closing tag`
+			});
 		}
 
 		parser.eat(expected, true);
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat('}', true);
 
 		while (block.elseif) {
 			block.end = parser.index;
@@ -83,19 +87,20 @@ export default function mustache(parser: Parser) {
 
 		block.end = parser.index;
 		parser.stack.pop();
-	} else if (parser.eat('elseif')) {
+	} else if (parser.eat(':elseif')) {
 		const block = parser.current();
 		if (block.type !== 'IfBlock')
-			parser.error(
-				'Cannot have an {{elseif ...}} block outside an {{#if ...}} block'
-			);
+			parser.error({
+				code: `invalid-elseif-placement`,
+				message: 'Cannot have an {{elseif ...}} block outside an {{#if ...}} block'
+			});
 
 		parser.requireWhitespace();
 
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat('}', true);
 
 		block.else = {
 			start: parser.index,
@@ -114,16 +119,17 @@ export default function mustache(parser: Parser) {
 		};
 
 		parser.stack.push(block.else.children[0]);
-	} else if (parser.eat('else')) {
+	} else if (parser.eat(':else')) {
 		const block = parser.current();
 		if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
-			parser.error(
-				'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block'
-			);
+			parser.error({
+				code: `invalid-else-placement`,
+				message: 'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block'
+			});
 		}
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat('}', true);
 
 		block.else = {
 			start: parser.index,
@@ -133,7 +139,7 @@ export default function mustache(parser: Parser) {
 		};
 
 		parser.stack.push(block.else);
-	} else if (parser.eat('then')) {
+	} else if (parser.eat(':then')) {
 		// TODO DRY out this and the next section
 		const pendingBlock = parser.current();
 		if (pendingBlock.type === 'PendingBlock') {
@@ -145,7 +151,7 @@ export default function mustache(parser: Parser) {
 			awaitBlock.value = parser.readIdentifier();
 
 			parser.allowWhitespace();
-			parser.eat('}}', true);
+			parser.eat('}', true);
 
 			const thenBlock: Node = {
 				start,
@@ -157,7 +163,7 @@ export default function mustache(parser: Parser) {
 			awaitBlock.then = thenBlock;
 			parser.stack.push(thenBlock);
 		}
-	} else if (parser.eat('catch')) {
+	} else if (parser.eat(':catch')) {
 		const thenBlock = parser.current();
 		if (thenBlock.type === 'ThenBlock') {
 			thenBlock.end = start;
@@ -168,7 +174,7 @@ export default function mustache(parser: Parser) {
 			awaitBlock.error = parser.readIdentifier();
 
 			parser.allowWhitespace();
-			parser.eat('}}', true);
+			parser.eat('}', true);
 
 			const catchBlock: Node = {
 				start,
@@ -191,7 +197,10 @@ export default function mustache(parser: Parser) {
 		} else if (parser.eat('await')) {
 			type = 'AwaitBlock';
 		} else {
-			parser.error(`Expected if, each or await`);
+			parser.error({
+				code: `expected-block-type`,
+				message: `Expected if, each or await`
+			});
 		}
 
 		parser.requireWhitespace();
@@ -240,43 +249,34 @@ export default function mustache(parser: Parser) {
 			parser.eat('as', true);
 			parser.requireWhitespace();
 
-			if (parser.eat('[')) {
-				parser.allowWhitespace();
-
-				block.destructuredContexts = [];
-
-				do {
-					parser.allowWhitespace();
-
-					const destructuredContext = parser.readIdentifier();
-					if (!destructuredContext) parser.error(`Expected name`);
-
-					block.destructuredContexts.push(destructuredContext);
-					parser.allowWhitespace();
-				} while (parser.eat(','));
-
-				if (!block.destructuredContexts.length) parser.error(`Expected name`);
-				block.context = block.destructuredContexts.join('_');
-
-				parser.allowWhitespace();
-				parser.eat(']', true);
-			} else {
-				block.context = parser.readIdentifier();
-				if (!block.context) parser.error(`Expected name`);
-			}
+			block.context = readContext(parser);
 
 			parser.allowWhitespace();
 
 			if (parser.eat(',')) {
 				parser.allowWhitespace();
 				block.index = parser.readIdentifier();
-				if (!block.index) parser.error(`Expected name`);
+				if (!block.index) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
+
 				parser.allowWhitespace();
 			}
 
-			if (parser.eat('@')) {
+			if (parser.eat('(')) {
+				parser.allowWhitespace();
+
+				block.key = readExpression(parser);
+				parser.allowWhitespace();
+				parser.eat(')', true);
+				parser.allowWhitespace();
+			} else if (parser.eat('@')) {
 				block.key = parser.readIdentifier();
-				if (!block.key) parser.error(`Expected name`);
+				if (!block.key) parser.error({
+					code: `expected-name`,
+					message: `Expected name`
+				});
 				parser.allowWhitespace();
 			}
 		}
@@ -288,7 +288,7 @@ export default function mustache(parser: Parser) {
 			parser.allowWhitespace();
 		}
 
-		parser.eat('}}', true);
+		parser.eat('}', true);
 
 		parser.current().children.push(block);
 		parser.stack.push(block);
@@ -298,26 +298,12 @@ export default function mustache(parser: Parser) {
 			childBlock.start = parser.index;
 			parser.stack.push(childBlock);
 		}
-	} else if (parser.eat('yield')) {
-		// {{yield}}
-		// TODO deprecate
-		parser.allowWhitespace();
-		parser.eat('}}', true);
-
-		parser.current().children.push({
-			start,
-			end: parser.index,
-			type: 'Element',
-			name: 'slot',
-			attributes: [],
-			children: []
-		});
-	} else if (parser.eat('{')) {
+	} else if (parser.eat('@html')) {
 		// {{{raw}}} mustache
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}}', true);
+		parser.eat('}', true);
 
 		parser.current().children.push({
 			start,
@@ -329,7 +315,7 @@ export default function mustache(parser: Parser) {
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
-		parser.eat('}}', true);
+		parser.eat('}', true);
 
 		parser.current().children.push({
 			start,

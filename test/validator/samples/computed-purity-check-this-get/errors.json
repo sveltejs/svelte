@@ -1,8 +1,15 @@
 [{
+	"code": "impure-computed",
 	"message": "Cannot use this.get(...) — values must be passed into the function as arguments",
-	"pos": 73,
-	"loc": {
+	"pos": 71,
+	"start": {
 		"line": 7,
-		"column": 11
+		"column": 11,
+		"character": 71
+	},
+	"end": {
+		"line": 7,
+		"column": 28,
+		"character": 88
 	}
 }]

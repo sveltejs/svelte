@@ -1,0 +1,10 @@
+<p>{foo}</p>
+<p>{bar}</p>
+
+<script>
+	export default {
+		onstate({ current }) {
+			this.set({ bar: current.foo.toUpperCase() });
+		}
+	};
+</script>

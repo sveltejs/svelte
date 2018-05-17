@@ -1,8 +1,15 @@
 [{
+	"code": "parse-error",
 	"message": "Duplicate export 'default'",
 	"pos": 37,
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 8
+		"column": 8,
+		"character": 37
+	},
+	"end": {
+		"line": 3,
+		"column": 8,
+		"character": 37
 	}
 }]

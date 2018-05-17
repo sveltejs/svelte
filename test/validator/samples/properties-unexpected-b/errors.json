@@ -1,8 +1,15 @@
 [{
+	"code": "unexpected-property",
 	"message": "Unexpected property 'doSomething' (did you mean to include it in 'methods'?)",
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 2
+		"column": 2,
+		"character": 42
+	},
+	"end": {
+		"line": 7,
+		"column": 3,
+		"character": 81
 	},
 	"pos": 42
 }]

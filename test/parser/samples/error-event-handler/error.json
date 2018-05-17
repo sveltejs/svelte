@@ -1,8 +1,10 @@
 {
-	"message": "Expected call expression",
-	"loc": {
+	"code": "invalid-directive-value",
+	"message": "Expected a method call",
+	"start": {
 		"line": 1,
-		"column": 15
+		"column": 15,
+		"character": 15
 	},
 	"pos": 15
 }

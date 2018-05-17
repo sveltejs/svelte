@@ -70,10 +70,7 @@ describe('custom-elements', function() {
 									dev: config.dev
 								});
 
-								return {
-									code: compiled.code,
-									map: compiled.map
-								};
+								return compiled.js;
 							}
 						}
 					},

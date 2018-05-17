@@ -1,10 +1,11 @@
 import parse from './parse/index';
 import validate from './validate/index';
-import generate from './generators/dom/index';
-import generateSSR from './generators/server-side-rendering/index';
+import generate from './compile/dom/index';
+import generateSSR from './compile/ssr/index';
+import Stats from './Stats';
 import { assign } from './shared/index.js';
 import Stylesheet from './css/Stylesheet';
-import { Parsed, CompileOptions, Warning, PreprocessOptions, Preprocessor } from './interfaces';
+import { Ast, CompileOptions, Warning, PreprocessOptions, Preprocessor } from './interfaces';
 import { SourceMap } from 'magic-string';
 
 const version = '__VERSION__';
@@ -22,9 +23,9 @@ function normalizeOptions(options: CompileOptions): CompileOptions {
 }
 
 function defaultOnwarn(warning: Warning) {
-	if (warning.loc) {
+	if (warning.start) {
 		console.warn(
-			`(${warning.loc.line}:${warning.loc.column}) – ${warning.message}`
+			`(${warning.start.line}:${warning.start.column}) – ${warning.message}`
 		); // eslint-disable-line no-console
 	} else {
 		console.warn(warning.message); // eslint-disable-line no-console
@@ -105,37 +106,51 @@ export async function preprocess(source: string, options: PreprocessOptions) {
 	};
 }
 
-export function compile(source: string, _options: CompileOptions) {
+function compile(source: string, _options: CompileOptions) {
 	const options = normalizeOptions(_options);
-	let parsed: Parsed;
+	let ast: Ast;
+
+	const stats = new Stats({
+		onwarn: options.onwarn
+	});
 
 	try {
-		parsed = parse(source, options);
+		stats.start('parse');
+		ast = parse(source, options);
+		stats.stop('parse');
 	} catch (err) {
 		options.onerror(err);
 		return;
 	}
 
-	const stylesheet = new Stylesheet(source, parsed, options.filename, options.cascade !== false, options.dev);
+	stats.start('stylesheet');
+	const stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
+	stats.stop('stylesheet');
 
-	validate(parsed, source, stylesheet, options);
+	stats.start('validate');
+	validate(ast, source, stylesheet, stats, options);
+	stats.stop('validate');
+
+	if (options.generate === false) {
+		return { ast, stats: stats.render(null), js: null, css: null };
+	}
 
 	const compiler = options.generate === 'ssr' ? generateSSR : generate;
 
-	return compiler(parsed, source, stylesheet, options);
+	return compiler(ast, source, stylesheet, options, stats);
 };
 
-export function create(source: string, _options: CompileOptions = {}) {
+function create(source: string, _options: CompileOptions = {}) {
 	_options.format = 'eval';
 
 	const compiled = compile(source, _options);
 
-	if (!compiled || !compiled.code) {
+	if (!compiled || !compiled.js.code) {
 		return;
 	}
 
 	try {
-		return (0, eval)(compiled.code);
+		return (new Function(`return ${compiled.js.code}`))();
 	} catch (err) {
 		if (_options.onerror) {
 			_options.onerror(err);
@@ -146,4 +161,4 @@ export function create(source: string, _options: CompileOptions = {}) {
 	}
 }
 
-export { parse, validate, version as VERSION };
+export { parse, create, compile, version as VERSION };

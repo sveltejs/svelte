@@ -9,7 +9,7 @@ export default {
 	html: `<div><input><p>one</p></div><div><input><p>two</p></div><div><input><p>three</p></div><!---->`,
 	test ( assert, component, target, window ) {
 		const inputs = [ ...target.querySelectorAll( 'input' ) ];
-		const items = component.get( 'items' );
+		const items = component.get().items;
 		const event = new window.Event( 'input' );
 
 		assert.equal( inputs[0].value, 'one' );

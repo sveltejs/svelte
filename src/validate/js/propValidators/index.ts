@@ -1,8 +1,12 @@
 import data from './data';
+import actions from './actions';
+import animations from './animations';
 import computed from './computed';
 import oncreate from './oncreate';
 import onunmount from './onunmount';
 import ondestroy from './ondestroy';
+import onstate from './onstate';
+import onupdate from './onupdate';
 import onrender from './onrender';
 import onteardown from './onteardown';
 import helpers from './helpers';
@@ -20,10 +24,14 @@ import immutable from './immutable';
 
 export default {
 	data,
+	actions,
+	animations,
 	computed,
 	oncreate,
 	onunmount,
 	ondestroy,
+	onstate,
+	onupdate,
 	onrender,
 	onteardown,
 	helpers,

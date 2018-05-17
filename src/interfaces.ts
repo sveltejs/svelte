@@ -20,16 +20,17 @@ export interface Parser {
 	metaTags: {};
 }
 
-export interface Parsed {
-	hash: number;
+export interface Ast {
 	html: Node;
 	css: Node;
 	js: Node;
 }
 
 export interface Warning {
-	loc?: { line: number; column: number; pos?: number };
+	start?: { line: number; column: number; pos?: number };
+	end?: { line: number; column: number; };
 	pos?: number;
+	code: string;
 	message: string;
 	filename?: string;
 	frame?: string;
@@ -42,7 +43,7 @@ export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: string;
+	generate?: string | false;
 	globals?: ((id: string) => string) | object;
 	amd?: {
 		id?: string;
@@ -54,15 +55,19 @@ export interface CompileOptions {
 	dev?: boolean;
 	immutable?: boolean;
 	shared?: boolean | string;
-	cascade?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
-	store?: boolean;
+
+	preserveComments?: boolean | false;
 
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
+
+	// to remove in v3
+	skipIntroByDefault?: boolean;
+	nestedTransitions: boolean;
 }
 
 export interface GenerateOptions {
@@ -70,8 +75,12 @@ export interface GenerateOptions {
 	format: ModuleFormat;
 	banner?: string;
 	sharedPath?: string;
-	helpers?: { name: string, alias: string }[];
 }
+
+export interface ShorthandImport {
+	name: string;
+	source: string;
+};
 
 export interface Visitor {
 	enter: (node: Node) => void;
@@ -91,3 +100,8 @@ export interface PreprocessOptions {
 }
 
 export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
+
+export interface AppendTarget {
+	slots: Record<string, string>;
+	slotStack: string[]
+}

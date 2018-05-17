@@ -3,30 +3,27 @@ import { assign, callAll, init, noop, proto } from "svelte/shared.js";
 
 var Nested = window.Nested;
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 
+	var nested_initial_data = { foo: "bar" };
 	var nested = new Nested({
 		root: component.root,
-		data: { foo: "bar" }
+		data: nested_initial_data
 	});
 
 	return {
-		c: function create() {
+		c() {
 			nested._fragment.c();
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			nested._mount(target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
-			nested._unmount();
-		},
-
-		d: function destroy() {
-			nested.destroy(false);
+		d(detach) {
+			nested.destroy(detach);
 		}
 	};
 }
@@ -34,6 +31,7 @@ function create_main_fragment(component, state) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	if (!options.root) {
 		this._oncreate = [];

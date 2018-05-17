@@ -1,0 +1,22 @@
+<button use:foo>{x}</button>
+
+<script>
+	export default {
+		actions: {
+			foo(node) {
+				let x = 0;
+
+				const handler = () => this.set({ x: x++ });
+
+				node.addEventListener('click', handler);
+				handler();
+
+				return {
+					destroy() {
+						node.removeEventListener('click', handler);
+					}
+				};
+			}
+		},
+	};
+</script>

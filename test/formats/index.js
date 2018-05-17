@@ -85,7 +85,7 @@ describe("formats", () => {
 	describe("amd", () => {
 		it("generates an AMD module", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -98,19 +98,19 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "amd",
 				amd: { id: "foo" }
 			});
 
-			return testAmd(code, "foo", { answer: 42 }, `<div>42</div>`);
+			return testAmd(js.code, "foo", { answer: 42 }, `<div>42</div>`);
 		});
 	});
 
 	describe("cjs", () => {
 		it("generates a CommonJS module", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -123,18 +123,18 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "cjs"
 			});
 
-			return testCjs(code, { answer: 42 }, `<div>42</div>`);
+			return testCjs(js.code, { answer: 42 }, `<div>42</div>`);
 		});
 	});
 
 	describe("iife", () => {
 		it("generates a self-executing script", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -147,7 +147,7 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "iife",
 				name: "Foo",
 				globals: {
@@ -155,7 +155,7 @@ describe("formats", () => {
 				}
 			});
 
-			return testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
+			return testIife(js.code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 
 		it('requires options.name', () => {
@@ -184,6 +184,7 @@ describe("formats", () => {
 			);
 
 			assert.deepEqual(warnings, [{
+				code: `options-missing-globals`,
 				message: `No name was supplied for imported module 'lodash'. Guessing '_', but you should use options.globals`
 			}]);
 		});
@@ -207,7 +208,7 @@ describe("formats", () => {
 	describe("umd", () => {
 		it("generates a UMD build", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -220,7 +221,7 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "umd",
 				name: "Foo",
 				globals: {
@@ -231,9 +232,9 @@ describe("formats", () => {
 				}
 			});
 
-			testAmd(code, "foo", { answer: 42 }, `<div>42</div>`);
-			testCjs(code, { answer: 42 }, `<div>42</div>`);
-			testIife(code, "Foo", { answer: 42 }, `<div>42</div>`);
+			testAmd(js.code, "foo", { answer: 42 }, `<div>42</div>`);
+			testCjs(js.code, { answer: 42 }, `<div>42</div>`);
+			testIife(js.code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 
 		it('requires options.name', () => {
@@ -248,7 +249,7 @@ describe("formats", () => {
 	describe("eval", () => {
 		it("generates a self-executing script that returns the component on eval", () => {
 			const source = deindent`
-				<div>{{answer}}</div>
+				<div>{answer}</div>
 
 				<script>
 					import answer from 'answer';
@@ -261,14 +262,14 @@ describe("formats", () => {
 				</script>
 			`;
 
-			const { code } = svelte.compile(source, {
+			const { js } = svelte.compile(source, {
 				format: "eval",
 				globals: {
 					answer: "answer"
 				}
 			});
 
-			return testEval(code, "Foo", { answer: 42 }, `<div>42</div>`);
+			return testEval(js.code, "Foo", { answer: 42 }, `<div>42</div>`);
 		});
 	});
 

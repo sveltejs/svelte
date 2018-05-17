@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-namespace-property",
 	"message": "Invalid namespace 'lol'",
 	"pos": 29,
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 2
+		"column": 2,
+		"character": 29
+	},
+	"end": {
+		"line": 3,
+		"column": 18,
+		"character": 45
 	}
 }]

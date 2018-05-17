@@ -1,0 +1,15 @@
+[{
+	"code": "component-lowercase",
+	"message": "Component names must be capitalised",
+	"start": {
+		"line": 6,
+		"column": 3,
+		"character": 59
+	},
+	"end": {
+		"line": 6,
+		"column": 6,
+		"character": 62
+	},
+	"pos": 59
+}]

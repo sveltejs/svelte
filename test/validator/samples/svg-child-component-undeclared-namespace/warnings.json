@@ -1,40 +1,15 @@
 [{
+	"code": "missing-namespace",
 	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 0
+		"column": 0,
+		"character": 0
+	},
+	"end": {
+		"line": 1,
+		"column": 57,
+		"character": 57
 	},
 	"pos": 0
-},
-{
-	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
-	"loc": {
-		"column": 1,
-		"line": 5
-	},
-	"pos": 90
-},
-{
-	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
-	"loc": {
-		"column": 2,
-		"line": 10
-	},
-	"pos": 191
-},
-{
-	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
-	"loc": {
-		"column": 2,
-		"line": 20
-	},
-	"pos": 333
-},
-{
-	"message": "<rect> is an SVG element – did you forget to add { namespace: 'svg' } ?",
-	"loc": {
-		"column": 2,
-		"line": 26
-	},
-	"pos": 445
 }]

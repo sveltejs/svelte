@@ -1,11 +1,14 @@
+import validateComponent from './validateComponent';
 import validateElement from './validateElement';
 import validateWindow from './validateWindow';
 import validateHead from './validateHead';
+import validateSlot from './validateSlot';
 import a11y from './a11y';
 import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
 import { Validator } from '../index';
 import { Node } from '../../interfaces';
+import unpackDestructuring from '../../utils/unpackDestructuring';
 
 function isEmptyBlock(node: Node) {
 	if (!/Block$/.test(node.type) || !node.children) return false;
@@ -29,45 +32,53 @@ export default function validateHtml(validator: Validator, html: Node) {
 			validateHead(validator, node, refs, refCallees);
 		}
 
-		else if (node.type === 'Element') {
-			const isComponent =
-				node.name === ':Self' ||
-				node.name === ':Component' ||
-				validator.components.has(node.name);
+		else if (node.type === 'Slot') {
+			validateSlot(validator, node);
+		}
 
+		else if (node.type === 'Component' || node.name === 'svelte:self' || node.name === 'svelte:component') {
+			validateComponent(
+				validator,
+				node,
+				refs,
+				refCallees,
+				stack,
+				elementStack
+			);
+		}
+
+		else if (node.type === 'Element') {
 			validateElement(
 				validator,
 				node,
 				refs,
 				refCallees,
 				stack,
-				elementStack,
-				isComponent
+				elementStack
 			);
 
-			if (!isComponent) {
-				a11y(validator, node, elementStack);
-			}
+			a11y(validator, node, elementStack);
 		}
 
 		else if (node.type === 'EachBlock') {
-			if (validator.helpers.has(node.context)) {
-				let c = node.expression.end;
+			const contexts = [];
+			unpackDestructuring(contexts, node.context, '');
 
-				// find start of context
-				while (/\s/.test(validator.source[c])) c += 1;
-				c += 2;
-				while (/\s/.test(validator.source[c])) c += 1;
-
-				validator.warn(
-					`Context clashes with a helper. Rename one or the other to eliminate any ambiguity`,
-					c
-				);
-			}
+			contexts.forEach(prop => {
+				if (validator.helpers.has(prop.key.name)) {
+					validator.warn(prop.key, {
+						code: `each-context-clash`,
+						message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
+					});
+				}
+			});
 		}
 
 		if (validator.options.dev && isEmptyBlock(node)) {
-			validator.warn('Empty block', node.start);
+			validator.warn(node, {
+				code: `empty-block`,
+				message: 'Empty block'
+			});
 		}
 
 		if (node.children) {
@@ -103,7 +114,10 @@ export default function validateHtml(validator: Validator, html: Node) {
 			let message = `'refs.${ref}' does not exist`;
 			if (match) message += ` (did you mean 'refs.${match}'?)`;
 
-			validator.error(message, callee.start);
+			validator.error(callee, {
+				code: `missing-ref`,
+				message
+			});
 		}
 	});
 }

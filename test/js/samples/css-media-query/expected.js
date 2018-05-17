@@ -4,40 +4,37 @@ import { appendNode, assign, createElement, detachNode, init, insertNode, noop, 
 function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-1slhpfn-style';
-	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn,.svelte-1slhpfn div{color:red}}";
+	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}";
 	appendNode(style, document.head);
 }
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 	var div;
 
 	return {
-		c: function create() {
+		c() {
 			div = createElement("div");
-			this.h();
-		},
-
-		h: function hydrate() {
 			div.className = "svelte-1slhpfn";
 		},
 
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			insertNode(div, target, anchor);
 		},
 
 		p: noop,
 
-		u: function unmount() {
-			detachNode(div);
-		},
-
-		d: noop
+		d(detach) {
+			if (detach) {
+				detachNode(div);
+			}
+		}
 	};
 }
 
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	if (!document.getElementById("svelte-1slhpfn-style")) add_css();
 

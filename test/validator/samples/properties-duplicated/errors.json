@@ -1,8 +1,15 @@
 [{
+	"code": "duplicate-property",
 	"message": "Duplicate property 'methods'",
-	"loc": {
+	"start": {
 		"line": 9,
-		"column": 2
+		"column": 2,
+		"character": 74
+	},
+	"end": {
+		"line": 11,
+		"column": 3,
+		"character": 101
 	},
 	"pos": 74
 }]

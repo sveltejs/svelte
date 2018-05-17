@@ -1,13 +1,13 @@
-{{#each comments as comment, i}}
+{#each comments as comment, i}
 	<div class='comment'>
-		<strong>{{i}}</strong>
+		<strong>{i}</strong>
 
 		<span class='meta'>
-			{{comment.author}} wrote {{elapsed(comment.time, time)}} ago:
+			{comment.author} wrote {elapsed(comment.time, time)} ago:
 		</span>
 
-		{{{comment.html}}}
+		{@html comment.html}
 	</div>
-{{/each}}
+{/each}
 
-<p>{{foo}}</p>
+<p>{foo}</p>
