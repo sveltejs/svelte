@@ -6,7 +6,7 @@ const now = (typeof process !== 'undefined' && process.hrtime)
 		const t = process.hrtime();
 		return t[0] * 1e3 + t[1] / 1e6;
 	}
-	: () => window.performance.now();
+	: () => self.performance.now();
 
 type Timing = {
 	label: string;
