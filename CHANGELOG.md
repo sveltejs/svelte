@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.6.4
+
+* Web worker support ([#1487](https://github.com/sveltejs/svelte/issues/1487))
+* Update dynamic component bindings when component changes ([#1489](https://github.com/sveltejs/svelte/issues/1489))
+
 ## 2.6.3
 
 * Nested transitions respect `skipIntroByDefault` ([#1460](https://github.com/sveltejs/svelte/issues/1460))
