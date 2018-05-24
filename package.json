@@ -82,6 +82,7 @@
     "rollup-watch": "^4.3.1",
     "sade": "^1.4.0",
     "sander": "^0.6.0",
+    "shelljs": "^0.8.2",
     "source-map": "0.6",
     "source-map-support": "^0.5.4",
     "tiny-glob": "^0.2.1",
