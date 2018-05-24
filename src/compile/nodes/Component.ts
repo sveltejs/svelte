@@ -290,7 +290,7 @@ export default class Component extends Node {
 				}
 
 				statements.push(deindent`
-					if (${binding.prop} in ${binding.obj}) {
+					if (${binding.value.snippet} !== void 0) {
 						${name_initial_data}.${binding.name} = ${binding.value.snippet};
 						${name_updating}.${binding.name} = true;
 					}`
@@ -304,7 +304,7 @@ export default class Component extends Node {
 				updates.push(deindent`
 					if (!${name_updating}.${binding.name} && ${[...binding.value.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
 						${name_changes}.${binding.name} = ${binding.value.snippet};
-						${name_updating}.${binding.name} = true;
+						${name_updating}.${binding.name} = ${binding.value.snippet} !== void 0;
 					}
 				`);
 			});
@@ -318,7 +318,7 @@ export default class Component extends Node {
 
 			// TODO use component.on('state', ...) instead of _bind
 			componentInitProperties.push(deindent`
-				_bind: function(changed, childState) {
+				_bind(changed, childState) {
 					var ${initialisers};
 					${builder}
 					${hasStoreBindings && `#component.store.set(newStoreState);`}
@@ -328,7 +328,7 @@ export default class Component extends Node {
 			`);
 
 			beforecreate = deindent`
-				#component.root._beforecreate.push(function() {
+				#component.root._beforecreate.push(() => {
 					${name}._bind({ ${this.bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
 				});
 			`;
@@ -406,6 +406,14 @@ export default class Component extends Node {
 
 					if (${switch_value}) {
 						${name} = new ${switch_value}(${switch_props}(ctx));
+
+						${this.bindings.length > 0 && deindent`
+						#component.root._beforecreate.push(() => {
+							const changed = {};
+							${this.bindings.map(binding => deindent`
+							if (${binding.value.snippet} === void 0) changed.${binding.name} = 1;`)}
+							${name}._bind(changed, ${name}.get());
+						});`}
 						${name}._fragment.c();
 
 						${this.children.map(child => child.remount(name))}
@@ -554,8 +562,8 @@ export default class Component extends Node {
 
 		const expression = (
 			this.name === 'svelte:self' ? this.compiler.name :
-			isDynamicComponent ? `((${this.expression.snippet}) || @missingComponent)` :
-			`%components-${this.name}`
+			(isDynamicComponent ? `((${this.expression.snippet}) || @missingComponent)` :
+			`%components-${this.name}`)
 		);
 
 		this.bindings.forEach(binding => {
