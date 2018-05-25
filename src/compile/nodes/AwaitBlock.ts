@@ -61,8 +61,8 @@ export default class AwaitBlock extends Node {
 				block.addDependencies(child.block.dependencies);
 			}
 
-			if (child.block.hasIntroMethod) hasIntros = true;
-			if (child.block.hasOutroMethod) hasOutros = true;
+			if (child.block.hasIntros) hasIntros = true;
+			if (child.block.hasOutros) hasOutros = true;
 		});
 
 		this.pending.block.hasUpdateMethod = isDynamic;
