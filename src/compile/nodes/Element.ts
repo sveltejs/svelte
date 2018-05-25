@@ -300,13 +300,6 @@ export default class Element extends Node {
 			block.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
 
-		// TODO move this into a class as well?
-		if (this._cssRefAttribute) {
-			block.builders.hydrate.addLine(
-				`@setAttribute(${name}, "svelte-ref-${this._cssRefAttribute}", "");`
-			)
-		}
-
 		// insert static children with textContent or innerHTML
 		if (!this.namespace && this.canUseInnerHTML && this.children.length > 0) {
 			if (this.children.length === 1 && this.children[0].type === 'Text') {
@@ -393,10 +386,6 @@ export default class Element extends Node {
 			if (node.name === 'noscript') return '';
 
 			let open = `<${node.name}`;
-
-			if (node._cssRefAttribute) {
-				open += ` svelte-ref-${node._cssRefAttribute}`;
-			}
 
 			node.attributes.forEach((attr: Node) => {
 				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.chunks)}`
@@ -858,19 +847,17 @@ export default class Element extends Node {
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
-	addCssClass() {
+	addCssClass(className = this.compiler.stylesheet.id) {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
 			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
-				(<Text>classAttribute.chunks[0]).data += ` ${this.compiler.stylesheet.id}`;
+				(<Text>classAttribute.chunks[0]).data += ` ${className}`;
 			} else {
 				(<Node[]>classAttribute.chunks).push(
 					new Text(this.compiler, this, this.scope, {
 						type: 'Text',
-						data: ` ${this.compiler.stylesheet.id}`
+						data: ` ${className}`
 					})
-
-					// new Text({ type: 'Text', data: ` ${this.compiler.stylesheet.id}` })
 				);
 			}
 		} else {
@@ -878,7 +865,7 @@ export default class Element extends Node {
 				new Attribute(this.compiler, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: `${this.compiler.stylesheet.id}` }]
+					value: [{ type: 'Text', data: className }]
 				})
 			);
 		}
@@ -943,10 +930,6 @@ export default class Element extends Node {
 					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
 				}
 			});
-		}
-
-		if (this._cssRefAttribute) {
-			openingTag += ` svelte-ref-${this._cssRefAttribute}`;
 		}
 
 		openingTag += '>';

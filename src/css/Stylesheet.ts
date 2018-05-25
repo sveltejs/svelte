@@ -247,6 +247,7 @@ export default class Stylesheet {
 	keyframes: Map<string, string>;
 
 	nodesWithCssClass: Set<Node>;
+	nodesWithRefCssClass: Map<String, Node>;
 
 	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
 		this.source = source;
@@ -258,6 +259,7 @@ export default class Stylesheet {
 		this.keyframes = new Map();
 
 		this.nodesWithCssClass = new Set();
+		this.nodesWithRefCssClass = new Map();
 
 		if (ast.css && ast.css.children.length) {
 			this.id = `svelte-${hash(ast.css.content.styles)}`;
@@ -337,6 +339,9 @@ export default class Stylesheet {
 		this.nodesWithCssClass.forEach((node: Node) => {
 			node.addCssClass();
 		});
+		this.nodesWithRefCssClass.forEach((node: Node, name: String) => {
+			node.addCssClass(`svelte-ref-${name}`);
+		})
 	}
 
 	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {
