@@ -147,9 +147,10 @@ export default class IfBlock extends Node {
 			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
 
 			if (hasOutros && this.compiler.options.nestedTransitions) {
-				block.builders.outro.addLine(
-					`if (${name}) ${name}.o(#outrocallback);`
-				);
+				block.builders.outro.addBlock(deindent`
+					if (${name}) ${name}.o(#outrocallback);
+					else #outrocallback();
+				`);
 			}
 		}
 
