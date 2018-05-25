@@ -232,7 +232,7 @@ export default class Attribute extends Node {
 			if (this.dependencies.size || isSelectValueAttribute) {
 				const dependencies = Array.from(this.dependencies);
 				const changedCheck = (
-					( block.hasOutroMethod ? `#outroing || ` : '' ) +
+					( block.hasOutros ? `#outroing || ` : '' ) +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 				);
 
@@ -308,7 +308,7 @@ export default class Attribute extends Node {
 				if (propDependencies.size) {
 					const dependencies = Array.from(propDependencies);
 					const condition = (
-						(block.hasOutroMethod ? `#outroing || ` : '') +
+						(block.hasOutros ? `#outroing || ` : '') +
 						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 					);
 
