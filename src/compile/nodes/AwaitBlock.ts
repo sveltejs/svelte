@@ -172,12 +172,13 @@ export default class AwaitBlock extends Node {
 		}
 
 		if (this.pending.block.hasOutroMethod && this.compiler.options.nestedTransitions) {
+			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				#outrocallback = @callAfter(#outrocallback, 3);
+				const ${countdown} = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o(#outrocallback);
-					else #outrocallback();
+					if (block) block.o(${countdown});
+					else ${countdown}();
 				}
 			`);
 		}

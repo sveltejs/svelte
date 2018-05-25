@@ -1,0 +1,22 @@
+{#if visible}
+	{#each rows as row}
+		<div out:foo class="row">
+			{#each cols as col}
+				<div out:foo class="cell">{row}, {col}</div>
+			{/each}
+		</div>
+	{/each}
+{/if}
+
+<script>
+	export default {
+		transitions: {
+			foo(node) {
+				return {
+					duration: 100,
+					tick: t => node.foo = t
+				};
+			}
+		}
+	};
+</script>

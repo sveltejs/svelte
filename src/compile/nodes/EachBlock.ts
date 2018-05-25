@@ -331,9 +331,10 @@ export default class EachBlock extends Node {
 		`);
 
 		if (this.compiler.options.nestedTransitions) {
+			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				#outrocallback = @callAfter(#outrocallback, ${blocks}.length);
-				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(#outrocallback);
+				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown});
 			`);
 		}
 
@@ -476,9 +477,10 @@ export default class EachBlock extends Node {
 		}
 
 		if (outroBlock && this.compiler.options.nestedTransitions) {
+			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				#outrocallback = @callAfter(#outrocallback, #i);
-				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, #outrocallback);`
+				const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
+				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
 			);
 		}
 
