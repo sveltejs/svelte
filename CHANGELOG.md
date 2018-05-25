@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.6.5
+
+* Handle cases where only some `if` block branches have outros ([#1492](https://github.com/sveltejs/svelte/issues/1492))
+
 ## 2.6.4
 
 * Web worker support ([#1487](https://github.com/sveltejs/svelte/issues/1487))
