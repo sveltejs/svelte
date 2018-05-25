@@ -30,7 +30,7 @@ export default class Selector {
 
 	apply(node: Node, stack: Node[]) {
 		const toEncapsulate: Node[] = [];
-		applySelector(this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
+		applySelector(this.stylesheet, this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
 
 		if (toEncapsulate.length > 0) {
 			toEncapsulate.filter((_, i) => i === 0 || i === toEncapsulate.length - 1).forEach(({ node, block }) => {
@@ -76,7 +76,7 @@ export default class Selector {
 				const selector = block.selectors[i];
 
 				if (selector.type === 'RefSelector') {
-					code.overwrite(selector.start, selector.end, `[svelte-ref-${selector.name}]`, {
+					code.overwrite(selector.start, selector.end, `.svelte-ref-${selector.name}`, {
 						contentOnly: true,
 						storeName: false
 					});
@@ -136,7 +136,7 @@ function isDescendantSelector(selector: Node) {
 	return selector.type === 'WhiteSpace' || selector.type === 'Combinator';
 }
 
-function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
+function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
@@ -179,7 +179,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 
 		else if (selector.type === 'RefSelector') {
 			if (node.ref === selector.name) {
-				node._cssRefAttribute = selector.name;
+				stylesheet.nodesWithRefCssClass.set(selector.name, node);
 				toEncapsulate.push({ node, block });
 				return true;
 			}
@@ -196,7 +196,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 	if (block.combinator) {
 		if (block.combinator.type === 'WhiteSpace') {
 			while (stack.length) {
-				if (applySelector(blocks.slice(), stack.pop(), stack, toEncapsulate)) {
+				if (applySelector(stylesheet, blocks.slice(), stack.pop(), stack, toEncapsulate)) {
 					toEncapsulate.push({ node, block });
 					return true;
 				}
@@ -204,7 +204,7 @@ function applySelector(blocks: Block[], node: Node, stack: Node[], toEncapsulate
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			if (applySelector(blocks, stack.pop(), stack, toEncapsulate)) {
+			if (applySelector(stylesheet, blocks, stack.pop(), stack, toEncapsulate)) {
 				toEncapsulate.push({ node, block });
 				return true;
 			}
