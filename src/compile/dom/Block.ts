@@ -44,7 +44,9 @@ export default class Block {
 
 	maintainContext: boolean;
 	hasAnimation: boolean;
-	hasIntroMethod: boolean;
+	hasIntros: boolean;
+	hasOutros: boolean;
+	hasIntroMethod: boolean; // could have the method without the transition, due to siblings
 	hasOutroMethod: boolean;
 	outros: number;
 
@@ -127,11 +129,11 @@ export default class Block {
 	}
 
 	addIntro() {
-		this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
+		this.hasIntros = this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
 	}
 
 	addOutro() {
-		this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
+		this.hasOutros = this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
 		this.outros += 1;
 	}
 
