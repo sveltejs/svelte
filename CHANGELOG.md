@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.6.6
+
+* Fix nested transition bug ([#1497](https://github.com/sveltejs/svelte/issues/1497))
+
 ## 2.6.5
 
 * Handle cases where only some `if` block branches have outros ([#1492](https://github.com/sveltejs/svelte/issues/1492))
