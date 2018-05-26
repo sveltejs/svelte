@@ -143,7 +143,7 @@ export default class Element extends Node {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
-		if (this.name === 'slot' || this.name === 'option') {
+		if (this.name === 'slot' || this.name === 'option' || this.compiler.options.dev) {
 			this.cannotUseInnerHTML();
 		}
 
@@ -394,6 +394,13 @@ export default class Element extends Node {
 			if (isVoidElementName(node.name)) return open + '>';
 
 			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
+		}
+
+		if (this.compiler.options.dev) {
+			const loc = this.compiler.locate(this.start);
+			block.builders.hydrate.addLine(
+				`@addLoc(${this.var}, __file, ${loc.line}, ${loc.column}, ${this.start});`
+			);
 		}
 	}
 
