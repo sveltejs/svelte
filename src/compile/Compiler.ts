@@ -117,6 +117,7 @@ export default class Compiler {
 	expectedProperties: Set<string>;
 	usesRefs: boolean;
 
+	file: string;
 	locate: (c: number) => { line: number, column: number };
 
 	stylesheet: Stylesheet;
@@ -159,6 +160,9 @@ export default class Compiler {
 		this.bindingGroups = [];
 		this.indirectDependencies = new Map();
 
+		this.file = options.filename && (
+			typeof process !== 'undefined' ? options.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : options.filename
+		);
 		this.locate = getLocator(this.source);
 
 		// track which properties are needed, so we can provide useful info
