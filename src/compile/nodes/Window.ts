@@ -33,6 +33,11 @@ const readonly = new Set([
 	'online',
 ]);
 
+const specialEventTargets = new Map([
+	['mouseenter', 'document'],
+	['mouseleave', 'document'],
+]);
+
 export default class Window extends Node {
 	type: 'Window';
 	handlers: EventHandler[];
@@ -93,15 +98,17 @@ export default class Window extends Node {
 					${handlerName}.destroy();
 				`);
 			} else {
+				const target = specialEventTargets.get(handler.name) || 'window';
+
 				block.builders.init.addBlock(deindent`
 					function ${handlerName}(event) {
 						${handlerBody}
 					}
-					window.addEventListener("${handler.name}", ${handlerName});
+					${target}.addEventListener("${handler.name}", ${handlerName});
 				`);
 
 				block.builders.destroy.addBlock(deindent`
-					window.removeEventListener("${handler.name}", ${handlerName});
+					${target}.removeEventListener("${handler.name}", ${handlerName});
 				`);
 			}
 		});
