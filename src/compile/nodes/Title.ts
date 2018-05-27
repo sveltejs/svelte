@@ -35,7 +35,7 @@ export default class Title extends Node {
 			// TODO some of this code is repeated in Tag.ts — would be good to
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.children.length === 1) {
-				// single {{tag}} — may be a non-string
+				// single {tag} — may be a non-string
 				const { expression } = this.children[0];
 				const { dependencies, snippet } = this.children[0].expression;
 

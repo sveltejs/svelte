@@ -69,7 +69,7 @@ export default function validateElement(
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
 				validator.error(child, {
 					code: 'illegal-structure',
-					message: `<title> can only contain text and {{tags}}`
+					message: `<title> can only contain text and {tags}`
 				});
 			}
 		});
