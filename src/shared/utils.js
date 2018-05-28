@@ -21,5 +21,7 @@ export function callAfter(fn, i) {
 }
 
 export function addLoc(element, file, line, column, char) {
-	element.__svelte_meta = { file, line, column, char };
+	element.__svelte_meta = {
+		loc: { file, line, column, char }
+	};
 }
