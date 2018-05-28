@@ -5,7 +5,7 @@ function bar({ foo }) {
 	return foo * 2;
 }
 
-const __file = undefined;
+const file = undefined;
 
 function create_main_fragment(component, ctx) {
 	var p, text_value = ctx.Math.max(0, ctx.foo), text, text_1, text_2;
@@ -16,7 +16,7 @@ function create_main_fragment(component, ctx) {
 			text = createText(text_value);
 			text_1 = createText("\n\t");
 			text_2 = createText(ctx.bar);
-			addLoc(p, __file, 0, 0, 0);
+			addLoc(p, file, 0, 0, 0);
 		},
 
 		m: function mount(target, anchor) {

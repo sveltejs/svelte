@@ -101,7 +101,7 @@ export default function dom(
 	}
 
 	if (compiler.options.dev) {
-		builder.addLine(`const __file = ${JSON.stringify(compiler.file)};`);
+		builder.addLine(`const ${compiler.fileVar} = ${JSON.stringify(compiler.file)};`);
 	}
 
 	const css = compiler.stylesheet.render(options.filename, !compiler.customElement);

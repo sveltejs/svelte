@@ -399,7 +399,7 @@ export default class Element extends Node {
 		if (this.compiler.options.dev) {
 			const loc = this.compiler.locate(this.start);
 			block.builders.hydrate.addLine(
-				`@addLoc(${this.var}, __file, ${loc.line}, ${loc.column}, ${this.start});`
+				`@addLoc(${this.var}, ${this.compiler.fileVar}, ${loc.line}, ${loc.column}, ${this.start});`
 			);
 		}
 	}
