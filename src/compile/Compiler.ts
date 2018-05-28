@@ -118,6 +118,7 @@ export default class Compiler {
 	usesRefs: boolean;
 
 	file: string;
+	fileVar: string;
 	locate: (c: number) => { line: number, column: number };
 
 	stylesheet: Stylesheet;
@@ -181,6 +182,8 @@ export default class Compiler {
 		this.templateVars = new Map();
 		this.aliases = new Map();
 		this.usedNames = new Set();
+
+		this.fileVar = options.dev && this.getUniqueName('file');
 
 		this.computations = [];
 		this.templateProperties = {};
