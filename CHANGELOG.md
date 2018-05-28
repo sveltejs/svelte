@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 2.7.0
+
+* Add `__svelte_meta` object to elements in dev mode, containing source info ([#1499](https://github.com/sveltejs/svelte/issues/1499))
+* Fix `bind:online` in dev mode ([#1502](https://github.com/sveltejs/svelte/issues/1502))
+* Update v1 warnings/errors ([#1508](https://github.com/sveltejs/svelte/pull/1508))
+* Transform prefixed keyframes ([#1504](https://github.com/sveltejs/svelte/issues/1504))
+
 ## 2.6.6
 
 * Fix nested transition bug ([#1497](https://github.com/sveltejs/svelte/issues/1497))
