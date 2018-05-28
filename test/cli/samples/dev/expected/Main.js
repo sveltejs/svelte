@@ -68,7 +68,9 @@ function createText(data) {
 }
 
 function addLoc(element, file, line, column, char) {
-	element.__svelte_meta = { file, line, column, char };
+	element.__svelte_meta = {
+		loc: { file, line, column, char }
+	};
 }
 
 function insertNode(node, target, anchor) {
