@@ -3,7 +3,7 @@ import replace from 'rollup-plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
-import typescript from 'rollup-plugin-typescript';
+import sucrase from 'rollup-plugin-sucrase';
 import buble from 'rollup-plugin-buble';
 import pkg from './package.json';
 
@@ -15,13 +15,14 @@ export default [
 			replace({
 				__VERSION__: pkg.version
 			}),
-			resolve(),
+			resolve({
+				extensions: ['.ts', '.js']
+			}),
 			commonjs(),
 			json(),
-			typescript({
-				include: 'src/**',
-				exclude: 'src/shared/**',
-				typescript: require('typescript')
+			sucrase({
+				transforms: ['typescript'],
+				exclude: ['node_modules/**']
 			})
 		],
 		output: {
@@ -72,8 +73,9 @@ export default [
 			json(),
 			commonjs(),
 			resolve(),
-			typescript({
-				typescript: require('typescript')
+			sucrase({
+				transforms: ['typescript'],
+				exclude: ['node_modules/**']
 			})
 		],
 		experimentalDynamicImport: true,
