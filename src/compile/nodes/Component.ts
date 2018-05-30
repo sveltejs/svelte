@@ -176,7 +176,7 @@ export default class Component extends Node {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== allDependencies.size)
-						? [...dependencies].map(d => `changed.${d}`).join(' || ')
+						? `(${[...dependencies].map(d => `changed.${d}`).join(' || ')})`
 						: null;
 
 					if (attr.isSpread) {
