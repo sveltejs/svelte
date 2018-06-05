@@ -559,7 +559,7 @@ export default class Element extends Node {
 			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
 			.forEach(attr => {
 				const condition = attr.dependencies.size > 0
-					? [...attr.dependencies].map(d => `changed.${d}`).join(' || ')
+					? `(${[...attr.dependencies].map(d => `changed.${d}`).join(' || ')})`
 					: null;
 
 				if (attr.isSpread) {
