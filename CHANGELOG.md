@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.7.1
+
+* Fix spread props with multiple dependencies ([#1515](https://github.com/sveltejs/svelte/issues/1515))
+
 ## 2.7.0
 
 * Add `__svelte_meta` object to elements in dev mode, containing source info ([#1499](https://github.com/sveltejs/svelte/issues/1499))
