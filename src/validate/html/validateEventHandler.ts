@@ -43,7 +43,7 @@ export default function validateEventHandlerCallee(
 		return;
 	}
 
-	const validCallees = ['this.*', 'event.*', 'options.*', 'console.*'].concat(
+	const validCallees = ['this.*', 'refs.*', 'event.*', 'options.*', 'console.*'].concat(
 		Array.from(validBuiltins),
 		Array.from(validator.methods.keys())
 	);
