@@ -81,7 +81,7 @@ export default class Title extends Node {
 			if (allDependencies.size) {
 				const dependencies = Array.from(allDependencies);
 				const changedCheck = (
-					( block.hasOutros ? `#outroing || ` : '' ) +
+					( block.hasOutros ? `!#current || ` : '' ) +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
 				);
 

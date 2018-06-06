@@ -142,6 +142,10 @@ export default class Block {
 	}
 
 	addVariable(name: string, init?: string) {
+		if (name[0] === '#') {
+			name = this.alias(name.slice(1));
+		}
+
 		if (this.variables.has(name) && this.variables.get(name) !== init) {
 			throw new Error(
 				`Variable '${name}' already initialised with a different value`
@@ -166,11 +170,16 @@ export default class Block {
 	toString() {
 		const { dev } = this.compiler.options;
 
-		let current;
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			current = this.getUniqueName('current');
-			this.addVariable(current);
-			this.builders.mount.addLine(`${current} = true;`);
+			this.addVariable('#current');
+
+			if (!this.builders.mount.isEmpty()) {
+				this.builders.mount.addLine(`#current = true;`);
+			}
+
+			if (!this.builders.outro.isEmpty()) {
+				this.builders.outro.addLine(`#current = false;`);
+			}
 		}
 
 		if (this.autofocus) {
@@ -268,24 +277,24 @@ export default class Block {
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			if (this.builders.mount.isEmpty() && this.builders.outro.isEmpty()) {
+			if (this.builders.mount.isEmpty()) {
 				properties.addBlock(`i: @noop,`);
-				properties.addBlock(`o: @run,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						console.trace("intro", #component.constructor.name, ${current});
-						if (${current}) return;
+						if (#current) return;
 						${this.builders.intro}
 						this.m(#target, anchor);
 					},
 				`);
+			}
 
+			if (this.builders.outro.isEmpty()) {
+				properties.addBlock(`o: @run,`);
+			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						console.trace("outro", #component.constructor.name, ${current});
-						if (!${current}) return;
-						${current} = false;
+						if (!#current) return;
 
 						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
 
