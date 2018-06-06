@@ -166,18 +166,11 @@ export default class Block {
 	toString() {
 		const { dev } = this.compiler.options;
 
-		let introing;
-		const hasIntros = !this.builders.intro.isEmpty();
-		if (hasIntros) {
-			introing = this.getUniqueName('introing');
-			this.addVariable(introing);
-		}
-
-		let outroing;
-		const hasOutros = !this.builders.outro.isEmpty();
-		if (hasOutros) {
-			outroing = this.alias('outroing');
-			this.addVariable(outroing);
+		let current;
+		if (this.hasIntroMethod || this.hasOutroMethod) {
+			current = this.getUniqueName('current');
+			this.addVariable(current);
+			this.builders.mount.addLine(`${current} = true;`);
 		}
 
 		if (this.autofocus) {
@@ -275,45 +268,29 @@ export default class Block {
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			if (hasIntros) {
+			if (this.builders.mount.isEmpty() && this.builders.outro.isEmpty()) {
+				properties.addBlock(`i: @noop,`);
+				properties.addBlock(`o: @run,`);
+			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						if (${introing}) return;
-						${introing} = true;
-						${hasOutros && `${outroing} = false;`}
-
+						console.trace("intro", #component.constructor.name, ${current});
+						if (${current}) return;
 						${this.builders.intro}
-
 						this.m(#target, anchor);
 					},
 				`);
-			} else {
-				if (this.builders.mount.isEmpty()) {
-					properties.addBlock(`i: @noop,`);
-				} else {
-					properties.addBlock(deindent`
-						${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-							this.m(#target, anchor);
-						},
-					`);
-				}
-			}
 
-			if (hasOutros) {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						if (${outroing}) return;
-						${outroing} = true;
-						${hasIntros && `${introing} = false;`}
+						console.trace("outro", #component.constructor.name, ${current});
+						if (!${current}) return;
+						${current} = false;
 
 						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
 
 						${this.builders.outro}
 					},
-				`);
-			} else {
-				properties.addBlock(deindent`
-					o: @run,
 				`);
 			}
 		}
