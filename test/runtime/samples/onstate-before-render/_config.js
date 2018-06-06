@@ -10,5 +10,7 @@ export default {
 			'oncreate',
 			'onupdate'
 		]);
+
+		order.length = 0;
 	}
 };
