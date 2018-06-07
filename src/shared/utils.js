@@ -15,6 +15,7 @@ export function isPromise(value) {
 }
 
 export function callAfter(fn, i) {
+	if (i === 0) fn();
 	return () => {
 		if (!--i) fn();
 	};
