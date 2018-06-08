@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.7.2
+
+* Prevent unnecessary remounts ([#1527](https://github.com/sveltejs/svelte/issues/1527))
+* Allow `refs.*` as callee ([#1526](https://github.com/sveltejs/svelte/pull/1526))
+* Handle empty lists when outroing ([#1532](https://github.com/sveltejs/svelte/issues/1532))
+
 ## 2.7.1
 
 * Fix spread props with multiple dependencies ([#1515](https://github.com/sveltejs/svelte/issues/1515))
