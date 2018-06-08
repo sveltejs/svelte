@@ -35,7 +35,7 @@ export default class Tag extends Node {
 
 		if (dependencies.size) {
 			const changedCheck = (
-				(block.hasOutros ? `#outroing || ` : '') +
+				(block.hasOutros ? `!#current || ` : '') +
 				[...dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')
 			);
 
