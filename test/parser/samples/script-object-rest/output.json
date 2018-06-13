@@ -1,0 +1,242 @@
+{
+	"html": {
+		"start": 0,
+		"end": 22,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 22,
+				"type": "Element",
+				"name": "h1",
+				"attributes": [],
+				"children": [
+					{
+						"start": 4,
+						"end": 10,
+						"type": "Text",
+						"data": "Hello "
+					},
+					{
+						"start": 10,
+						"end": 16,
+						"type": "MustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 11,
+							"end": 15,
+							"name": "name"
+						}
+					},
+					{
+						"start": 16,
+						"end": 17,
+						"type": "Text",
+						"data": "!"
+					}
+				]
+			},
+			{
+				"start": 22,
+				"end": 24,
+				"type": "Text",
+				"data": "\n\n"
+			}
+		]
+	},
+	"css": null,
+	"js": {
+		"start": 24,
+		"end": 174,
+		"attributes": [],
+		"content": {
+			"type": "Program",
+			"start": 32,
+			"end": 165,
+			"body": [
+				{
+					"type": "ExportDefaultDeclaration",
+					"start": 34,
+					"end": 164,
+					"declaration": {
+						"type": "ObjectExpression",
+						"start": 49,
+						"end": 163,
+						"properties": [
+							{
+								"type": "Property",
+								"start": 53,
+								"end": 104,
+								"method": false,
+								"shorthand": false,
+								"computed": false,
+								"key": {
+									"type": "Identifier",
+									"start": 53,
+									"end": 57,
+									"name": "data"
+								},
+								"value": {
+									"type": "ArrowFunctionExpression",
+									"start": 59,
+									"end": 104,
+									"id": null,
+									"generator": false,
+									"expression": true,
+									"async": false,
+									"params": [],
+									"body": {
+										"type": "ObjectExpression",
+										"start": 66,
+										"end": 103,
+										"properties": [
+											{
+												"type": "Property",
+												"start": 71,
+												"end": 84,
+												"method": false,
+												"shorthand": false,
+												"computed": false,
+												"key": {
+													"type": "Identifier",
+													"start": 71,
+													"end": 75,
+													"name": "name"
+												},
+												"value": {
+													"type": "Literal",
+													"start": 77,
+													"end": 84,
+													"value": "world",
+													"raw": "'world'"
+												},
+												"kind": "init"
+											},
+											{
+												"type": "Property",
+												"start": 89,
+												"end": 99,
+												"method": false,
+												"shorthand": false,
+												"computed": false,
+												"key": {
+													"type": "Identifier",
+													"start": 89,
+													"end": 92,
+													"name": "foo"
+												},
+												"value": {
+													"type": "Literal",
+													"start": 94,
+													"end": 99,
+													"value": "bar",
+													"raw": "'bar'"
+												},
+												"kind": "init"
+											}
+										]
+									}
+								},
+								"kind": "init"
+							},
+							{
+								"type": "Property",
+								"start": 108,
+								"end": 160,
+								"method": false,
+								"shorthand": false,
+								"computed": false,
+								"key": {
+									"type": "Identifier",
+									"start": 108,
+									"end": 116,
+									"name": "computed"
+								},
+								"value": {
+									"type": "ObjectExpression",
+									"start": 118,
+									"end": 160,
+									"properties": [
+										{
+											"type": "Property",
+											"start": 123,
+											"end": 156,
+											"method": false,
+											"shorthand": false,
+											"computed": false,
+											"key": {
+												"type": "Identifier",
+												"start": 123,
+												"end": 127,
+												"name": "comp"
+											},
+											"value": {
+												"type": "ArrowFunctionExpression",
+												"start": 129,
+												"end": 156,
+												"id": null,
+												"generator": false,
+												"expression": true,
+												"async": false,
+												"params": [
+													{
+														"type": "ObjectPattern",
+														"start": 130,
+														"end": 147,
+														"properties": [
+															{
+																"type": "Property",
+																"start": 132,
+																"end": 136,
+																"method": false,
+																"shorthand": true,
+																"computed": false,
+																"key": {
+																	"type": "Identifier",
+																	"start": 132,
+																	"end": 136,
+																	"name": "name"
+																},
+																"kind": "init",
+																"value": {
+																	"type": "Identifier",
+																	"start": 132,
+																	"end": 136,
+																	"name": "name"
+																}
+															},
+															{
+																"type": "RestElement",
+																"start": 138,
+																"end": 145,
+																"argument": {
+																	"type": "Identifier",
+																	"start": 141,
+																	"end": 145,
+																	"name": "rest"
+																}
+															}
+														]
+													}
+												],
+												"body": {
+													"type": "Identifier",
+													"start": 152,
+													"end": 156,
+													"name": "rest"
+												}
+											},
+											"kind": "init"
+										}
+									]
+								},
+								"kind": "init"
+							}
+						]
+					}
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}
