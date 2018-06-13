@@ -137,7 +137,11 @@ const extractors = {
 
 	ObjectPattern(names: string[], param: Node) {
 		param.properties.forEach((prop: Node) => {
-			extractors[prop.value.type](names, prop.value);
+			if (prop.type === 'RestElement') {
+				names.push(prop.argument.name);
+			} else {
+				extractors[prop.value.type](names, prop.value);
+			}
 		});
 	},
 
