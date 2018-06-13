@@ -1,4 +1,6 @@
 export default {
+	skip: +/v(\d+)/.exec(process.version)[1] < 8,
+
 	html: `
 		<pre>{"wanted":2}</pre>
 	`,
@@ -9,9 +11,9 @@ export default {
 			wanted: 4
 		});
 
-		// assert.htmlEqual(target.innerHTML, `
-		// 	<pre>{"wanted":4}</pre>
-		// `);
+		assert.htmlEqual(target.innerHTML, `
+			<pre>{"wanted":4}</pre>
+		`);
 
 		component.set({
 			unwanted: 5,
