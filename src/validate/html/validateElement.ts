@@ -80,6 +80,15 @@ export default function validateElement(
 	let hasTransition: boolean;
 	let hasAnimation: boolean;
 
+	function checkElement(attribute, bindingName, nodeName) {
+		if (node.name !== nodeName) {
+			validator.error(attribute, {
+				code: `invalid-binding`,
+				message: `'${bindingName}' is not a valid binding on <${nodeName}> elements`
+			});
+		}
+	}
+
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
 			if (!refs.has(attribute.name)) refs.set(attribute.name, []);
@@ -115,18 +124,24 @@ export default function validateElement(
 				} else {
 					checkTypeAttribute(validator, node);
 				}
-			} else if (name === 'checked' || name === 'indeterminate') {
-				if (node.name !== 'input') {
+			} else if (name === 'checked') {
+				checkElement(attribute, name, 'input');
+				const type = checkTypeAttribute(validator, node);
+
+				if (type !== 'checkbox' && type !== 'radio') {
 					validator.error(attribute, {
 						code: `invalid-binding`,
-						message: `'${name}' is not a valid binding on <${node.name}> elements`
+						message: `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`
 					});
 				}
+			} else if (name === 'indeterminate') {
+				checkElement(attribute, name, 'input');
+				const type = checkTypeAttribute(validator, node);
 
-				if (checkTypeAttribute(validator, node) !== 'checkbox') {
+				if (type !== 'checkbox') {
 					validator.error(attribute, {
 						code: `invalid-binding`,
-						message: `'${name}' binding can only be used with <input type="checkbox">`
+						message: `'indeterminate' binding can only be used with <input type="checkbox">`
 					});
 				}
 			} else if (name === 'group') {
