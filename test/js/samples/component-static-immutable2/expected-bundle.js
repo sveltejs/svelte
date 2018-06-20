@@ -53,7 +53,7 @@ function init(component, options) {
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.store || options.store;
+	component.store = options.store || component.root.store;
 }
 
 function on(eventName, handler) {
@@ -128,6 +128,7 @@ function create_main_fragment(component, ctx) {
 	var nested_initial_data = { foo: "bar" };
 	var nested = new Nested({
 		root: component.root,
+		store: component.store,
 		data: nested_initial_data
 	});
 
