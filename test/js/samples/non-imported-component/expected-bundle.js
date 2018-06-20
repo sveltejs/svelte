@@ -63,7 +63,7 @@ function init(component, options) {
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.store || options.store;
+	component.store = options.store || component.root.store;
 }
 
 function on(eventName, handler) {
@@ -137,11 +137,13 @@ function create_main_fragment(component, ctx) {
 	var text;
 
 	var imported = new Imported({
-		root: component.root
+		root: component.root,
+		store: component.store
 	});
 
 	var nonimported = new NonImported({
-		root: component.root
+		root: component.root,
+		store: component.store
 	});
 
 	return {

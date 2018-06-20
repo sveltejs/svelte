@@ -391,7 +391,7 @@ function init(component, options) {
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.store || options.store;
+	component.store = options.store || component.root.store;
 }
 
 function on(eventName, handler) {
