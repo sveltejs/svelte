@@ -6,7 +6,8 @@ import Widget from './widget/Widget.html';
 function create_main_fragment(component, ctx) {
 
 	var widget = new Widget({
-		root: component.root
+		root: component.root,
+		store: component.store
 	});
 
 	return {
@@ -72,7 +73,7 @@ function init(component, options) {
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.store || options.store;
+	component.store = options.store || component.root.store;
 }
 
 function assign(tar, src) {
