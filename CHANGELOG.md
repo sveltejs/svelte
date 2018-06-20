@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.8.0
+
+* Correctly set store on nested components (to parent store, not root store) ([#1538](https://github.com/sveltejs/svelte/issues/1538))
+
 ## 2.7.2
 
 * Prevent unnecessary remounts ([#1527](https://github.com/sveltejs/svelte/issues/1527))
