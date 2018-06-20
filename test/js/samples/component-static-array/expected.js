@@ -8,6 +8,7 @@ function create_main_fragment(component, ctx) {
 	var nested_initial_data = { foo: [1, 2, 3] };
 	var nested = new Nested({
 		root: component.root,
+		store: component.store,
 		data: nested_initial_data
 	});
 

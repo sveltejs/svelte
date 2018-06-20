@@ -123,7 +123,7 @@ export default class Component extends Node {
 
 		const name = this.var;
 
-		const componentInitProperties = [`root: #component.root`];
+		const componentInitProperties = [`root: #component.root`, `store: #component.store`];
 
 		if (this.children.length > 0) {
 			const slots = Array.from(this._slots).map(name => `${quoteNameIfNecessary(name)}: @createFragment()`);
