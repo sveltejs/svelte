@@ -4,10 +4,12 @@ import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from '../utils/hash';
-import isKeyframesNode from '../utils/isKeyframesNode';
+import removeCSSPrefix from '../utils/removeCSSPrefix';
 import Element from '../compile/nodes/Element';
 import { Validator } from '../validate/index';
 import { Node, Ast, Warning } from '../interfaces';
+
+const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
 
 class Rule {
 	selectors: Selector[];
@@ -97,7 +99,7 @@ class Declaration {
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && this.node.property.toLowerCase();
+		const property = this.node.property && removeCSSPrefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			this.node.value.children.forEach((block: Node) => {
 				if (block.type === 'Identifier') {
