@@ -148,7 +148,7 @@ export default class Component extends Node {
 		const attributeObject = usesSpread
 			? '{}'
 			: stringifyProps(
-				this.attributes.map(attr => `${attr.name}: ${attr.getValue()}`)
+				this.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue()}`)
 			);
 
 		if (this.attributes.length || this.bindings.length) {
