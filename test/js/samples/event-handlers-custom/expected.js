@@ -19,7 +19,7 @@ function create_main_fragment(component, ctx) {
 			button = createElement("button");
 			button.textContent = "foo";
 			foo_handler = foo.call(component, button, function(event) {
-				return component.foo( ctx.bar );
+				component.foo( ctx.bar );
 			});
 		},
 
