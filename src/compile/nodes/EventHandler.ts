@@ -67,12 +67,12 @@ export default class EventHandler extends Node {
 				compiler.code.overwrite(
 					this.insertionPoint,
 					this.insertionPoint + 1,
-					`return ${component}.store.`
+					`${component}.store.`
 				);
 			} else {
 				compiler.code.prependRight(
 					this.insertionPoint,
-					`return ${component}.`
+					`${component}.`
 				);
 			}
 		}
