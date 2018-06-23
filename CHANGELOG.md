@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.8.1
+
+* Fix prefixed animation name replacement ([#1556](https://github.com/sveltejs/svelte/pull/1556))
+
 ## 2.8.0
 
 * Correctly set store on nested components (to parent store, not root store) ([#1538](https://github.com/sveltejs/svelte/issues/1538))
