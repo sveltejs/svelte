@@ -5,7 +5,7 @@ import stringifyProps from '../../utils/stringifyProps';
 import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
 import getObject from '../../utils/getObject';
-import { quoteNameIfNecessary } from '../../utils/quoteIfNecessary';
+import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
@@ -219,7 +219,7 @@ export default class Component extends Node {
 							updates.push(deindent`
 								if (${[...attribute.dependencies]
 									.map(dependency => `changed.${dependency}`)
-									.join(' || ')}) ${name_changes}.${attribute.name} = ${attribute.getValue()};
+									.join(' || ')}) ${name_changes}${quotePropIfNecessary(attribute.name)} = ${attribute.getValue()};
 							`);
 						}
 					});
@@ -250,10 +250,10 @@ export default class Component extends Node {
 
 					const lhs = binding.value.node.type === 'MemberExpression'
 						? binding.value.snippet
-						: `${head}${tail} = childState.${binding.name}`;
+						: `${head}${tail} = childState${quotePropIfNecessary(binding.name)}`;
 
 					setFromChild = deindent`
-						${lhs} = childState.${binding.name};
+						${lhs} = childState${quotePropIfNecessary(binding.name)};
 
 						${[...binding.value.dependencies]
 							.map((name: string) => {
@@ -264,7 +264,7 @@ export default class Component extends Node {
 								if (isStoreProp) hasStoreBindings = true;
 								else hasLocalBindings = true;
 
-								return `${newState}.${prop} = ctx.${name};`;
+								return `${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(name)};`;
 							})}
 					`;
 				}
@@ -279,32 +279,32 @@ export default class Component extends Node {
 
 					if (binding.value.node.type === 'MemberExpression') {
 						setFromChild = deindent`
-							${binding.value.snippet} = childState.${binding.name};
-							${newState}.${prop} = ctx.${key};
+							${binding.value.snippet} = childState${quotePropIfNecessary(binding.name)};
+							${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(key)};
 						`;
 					}
 
 					else {
-						setFromChild = `${newState}.${prop} = childState.${binding.name};`;
+						setFromChild = `${newState}${quotePropIfNecessary(prop)} = childState${quotePropIfNecessary(binding.name)};`;
 					}
 				}
 
 				statements.push(deindent`
 					if (${binding.value.snippet} !== void 0) {
-						${name_initial_data}.${binding.name} = ${binding.value.snippet};
-						${name_updating}.${binding.name} = true;
+						${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet};
+						${name_updating}${quotePropIfNecessary(binding.name)} = true;
 					}`
 				);
 
 				builder.addConditional(
-					`!${name_updating}.${binding.name} && changed.${binding.name}`,
+					`!${name_updating}${quotePropIfNecessary(binding.name)} && changed${quotePropIfNecessary(binding.name)}`,
 					setFromChild
 				);
 
 				updates.push(deindent`
-					if (!${name_updating}.${binding.name} && ${[...binding.value.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-						${name_changes}.${binding.name} = ${binding.value.snippet};
-						${name_updating}.${binding.name} = ${binding.value.snippet} !== void 0;
+					if (!${name_updating}${quotePropIfNecessary(binding.name)} && ${[...binding.value.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+						${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet};
+						${name_updating}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet} !== void 0;
 					}
 				`);
 			});
@@ -329,7 +329,7 @@ export default class Component extends Node {
 
 			beforecreate = deindent`
 				#component.root._beforecreate.push(() => {
-					${name}._bind({ ${this.bindings.map(b => `${b.name}: 1`).join(', ')} }, ${name}.get());
+					${name}._bind({ ${this.bindings.map(b => `${quoteNameIfNecessary(b.name)}: 1`).join(', ')} }, ${name}.get());
 				});
 			`;
 		}
@@ -519,7 +519,7 @@ export default class Component extends Node {
 				? getTailSnippet(binding.value.node)
 				: '';
 
-			return `${binding.name}: ctx.${name}${tail}`;
+			return `${quoteNameIfNecessary(binding.name)}: ctx${quotePropIfNecessary(name)}${tail}`;
 		});
 
 		function getAttributeValue(attribute) {
@@ -547,14 +547,14 @@ export default class Component extends Node {
 						if (attribute.isSpread) {
 							return attribute.expression.snippet;
 						} else {
-							return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
+							return `{ ${quoteNameIfNecessary(attribute.name)}: ${getAttributeValue(attribute)} }`;
 						}
 					})
 					.concat(bindingProps.map(p => `{ ${p} }`))
 					.join(', ')
 			})`
 			: `{ ${this.attributes
-				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
+				.map(attribute => `${quoteNameIfNecessary(attribute.name)}: ${getAttributeValue(attribute)}`)
 				.concat(bindingProps)
 				.join(', ')} }`;
 
@@ -585,7 +585,7 @@ export default class Component extends Node {
 				if (${conditions.reverse().join('&&')}) {
 					tmp = ${expression}.data();
 					if ('${name}' in tmp) {
-						ctx.${binding.name} = tmp.${name};
+						ctx${quotePropIfNecessary(binding.name)} = tmp.${name};
 						settled = false;
 					}
 				}
