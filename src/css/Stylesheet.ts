@@ -4,9 +4,12 @@ import { getLocator } from 'locate-character';
 import Selector from './Selector';
 import getCodeFrame from '../utils/getCodeFrame';
 import hash from '../utils/hash';
+import removeCSSPrefix from '../utils/removeCSSPrefix';
 import Element from '../compile/nodes/Element';
 import { Validator } from '../validate/index';
 import { Node, Ast, Warning } from '../interfaces';
+
+const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
 
 class Rule {
 	selectors: Selector[];
@@ -26,7 +29,7 @@ class Rule {
 	}
 
 	isUsed(dev: boolean) {
-		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
+		if (this.parent && this.parent.node.type === 'Atrule' && isKeyframesNode(this.parent.node)) return true;
 		if (this.declarations.length === 0) return dev;
 		return this.selectors.some(s => s.used);
 	}
@@ -67,7 +70,7 @@ class Rule {
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
-		if (this.parent && this.parent.node.type === 'Atrule' && this.parent.node.name === 'keyframes') return true;
+		if (this.parent && this.parent.node.type === 'Atrule' && isKeyframesNode(this.parent.node)) return true;
 
 		const attr = `.${id}`;
 
@@ -96,7 +99,7 @@ class Declaration {
 	}
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
-		const property = this.node.property && this.node.property.toLowerCase();
+		const property = this.node.property && removeCSSPrefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			this.node.value.children.forEach((block: Node) => {
 				if (block.type === 'Identifier') {
@@ -142,7 +145,7 @@ class Atrule {
 			});
 		}
 
-		else if (this.node.name === 'keyframes') {
+		else if (isKeyframesNode(this.node)) {
 			this.children.forEach((rule: Rule) => {
 				rule.selectors.forEach(selector => {
 					selector.used = true;
@@ -167,8 +170,8 @@ class Atrule {
 			});
 
 			code.remove(c, this.node.block.start);
-		} else if (this.node.name === 'keyframes') {
-			let c = this.node.start + 10;
+		} else if (isKeyframesNode(this.node)) {
+			let c = this.node.start + this.node.name.length + 1;
 			if (this.node.expression.start - c > 1) code.overwrite(c, this.node.expression.start, ' ');
 			c = this.node.expression.end;
 			if (this.node.block.start - c > 0) code.remove(c, this.node.block.start);
@@ -200,7 +203,7 @@ class Atrule {
 	}
 
 	transform(code: MagicString, id: string, keyframes: Map<string, string>) {
-		if (this.node.name === 'keyframes') {
+		if (isKeyframesNode(this.node)) {
 			this.node.expression.children.forEach(({ type, name, start, end }: Node) => {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
@@ -247,6 +250,7 @@ export default class Stylesheet {
 	keyframes: Map<string, string>;
 
 	nodesWithCssClass: Set<Node>;
+	nodesWithRefCssClass: Map<String, Node>;
 
 	constructor(source: string, ast: Ast, filename: string, dev: boolean) {
 		this.source = source;
@@ -258,6 +262,7 @@ export default class Stylesheet {
 		this.keyframes = new Map();
 
 		this.nodesWithCssClass = new Set();
+		this.nodesWithRefCssClass = new Map();
 
 		if (ast.css && ast.css.children.length) {
 			this.id = `svelte-${hash(ast.css.content.styles)}`;
@@ -285,7 +290,7 @@ export default class Stylesheet {
 							this.children.push(atrule);
 						}
 
-						if (node.name === 'keyframes') {
+						if (isKeyframesNode(node)) {
 							node.expression.children.forEach((expression: Node) => {
 								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
 									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
@@ -337,6 +342,9 @@ export default class Stylesheet {
 		this.nodesWithCssClass.forEach((node: Node) => {
 			node.addCssClass();
 		});
+		this.nodesWithRefCssClass.forEach((node: Node, name: String) => {
+			node.addCssClass(`svelte-ref-${name}`);
+		})
 	}
 
 	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {

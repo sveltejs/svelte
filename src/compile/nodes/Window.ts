@@ -200,7 +200,9 @@ export default class Window extends Node {
 			const handlerName = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
 				function ${handlerName}(event) {
+					${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
+					${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
 				}
 				window.addEventListener("online", ${handlerName});
 				window.addEventListener("offline", ${handlerName});

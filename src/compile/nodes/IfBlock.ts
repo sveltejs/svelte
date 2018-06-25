@@ -68,8 +68,8 @@ export default class IfBlock extends Node {
 				block.addDependencies(node.block.dependencies);
 			}
 
-			if (node.block.hasIntroMethod) hasIntros = true;
-			if (node.block.hasOutroMethod) hasOutros = true;
+			if (node.block.hasIntros) hasIntros = true;
+			if (node.block.hasOutros) hasOutros = true;
 
 			if (isElseIf(node.else)) {
 				attachBlocks(node.else.children[0]);
@@ -147,9 +147,10 @@ export default class IfBlock extends Node {
 			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
 
 			if (hasOutros && this.compiler.options.nestedTransitions) {
-				block.builders.outro.addLine(
-					`if (${name}) ${name}.o(#outrocallback);`
-				);
+				block.builders.outro.addBlock(deindent`
+					if (${name}) ${name}.o(#outrocallback);
+					else #outrocallback();
+				`);
 			}
 		}
 
@@ -302,8 +303,8 @@ export default class IfBlock extends Node {
 		const destroyOldBlock = deindent`
 			@transitionManager.groupOutros();
 			${name}.o(function() {
-				${if_blocks}[ ${previous_block_index} ].d(1);
-				${if_blocks}[ ${previous_block_index} ] = null;
+				${if_blocks}[${previous_block_index}].d(1);
+				${if_blocks}[${previous_block_index}] = null;
 			});
 		`;
 
@@ -355,9 +356,7 @@ export default class IfBlock extends Node {
 		}
 
 		block.builders.destroy.addLine(deindent`
-			${if_current_block_type_index}{
-				${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detach'});
-			}
+			${if_current_block_type_index}${if_blocks}[${current_block_type_index}].d(${parentNode ? '' : 'detach'});
 		`);
 	}
 

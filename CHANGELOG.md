@@ -1,5 +1,43 @@
 # Svelte changelog
 
+## 2.8.1
+
+* Fix prefixed animation name replacement ([#1556](https://github.com/sveltejs/svelte/pull/1556))
+
+## 2.8.0
+
+* Correctly set store on nested components (to parent store, not root store) ([#1538](https://github.com/sveltejs/svelte/issues/1538))
+
+## 2.7.2
+
+* Prevent unnecessary remounts ([#1527](https://github.com/sveltejs/svelte/issues/1527))
+* Allow `refs.*` as callee ([#1526](https://github.com/sveltejs/svelte/pull/1526))
+* Handle empty lists when outroing ([#1532](https://github.com/sveltejs/svelte/issues/1532))
+
+## 2.7.1
+
+* Fix spread props with multiple dependencies ([#1515](https://github.com/sveltejs/svelte/issues/1515))
+
+## 2.7.0
+
+* Add `__svelte_meta` object to elements in dev mode, containing source info ([#1499](https://github.com/sveltejs/svelte/issues/1499))
+* Fix `bind:online` in dev mode ([#1502](https://github.com/sveltejs/svelte/issues/1502))
+* Update v1 warnings/errors ([#1508](https://github.com/sveltejs/svelte/pull/1508))
+* Transform prefixed keyframes ([#1504](https://github.com/sveltejs/svelte/issues/1504))
+
+## 2.6.6
+
+* Fix nested transition bug ([#1497](https://github.com/sveltejs/svelte/issues/1497))
+
+## 2.6.5
+
+* Handle cases where only some `if` block branches have outros ([#1492](https://github.com/sveltejs/svelte/issues/1492))
+
+## 2.6.4
+
+* Web worker support ([#1487](https://github.com/sveltejs/svelte/issues/1487))
+* Update dynamic component bindings when component changes ([#1489](https://github.com/sveltejs/svelte/issues/1489))
+
 ## 2.6.3
 
 * Nested transitions respect `skipIntroByDefault` ([#1460](https://github.com/sveltejs/svelte/issues/1460))

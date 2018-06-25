@@ -8,11 +8,13 @@ function create_main_fragment(component, ctx) {
 	var text;
 
 	var imported = new Imported({
-		root: component.root
+		root: component.root,
+		store: component.store
 	});
 
 	var nonimported = new NonImported({
-		root: component.root
+		root: component.root,
+		store: component.store
 	});
 
 	return {

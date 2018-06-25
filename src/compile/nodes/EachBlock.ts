@@ -119,7 +119,7 @@ export default class EachBlock extends Node {
 			this.else.block.hasUpdateMethod = this.else.block.dependencies.size > 0;
 		}
 
-		if (this.block.hasOutroMethod || (this.else && this.else.block.hasOutroMethod)) {
+		if (this.block.hasOutros || (this.else && this.else.block.hasOutros)) {
 			block.addOutro();
 		}
 	}
@@ -317,23 +317,24 @@ export default class EachBlock extends Node {
 		const rects = block.getUniqueName('rects');
 		const destroy = this.block.hasAnimation
 			? `@fixAndOutroAndDestroyBlock`
-			: this.block.hasOutroMethod
+			: this.block.hasOutros
 				? `@outroAndDestroyBlock`
 				: `@destroyBlock`;
 
 		block.builders.update.addBlock(deindent`
 			const ${this.each_block_value} = ${snippet};
 
-			${this.block.hasOutroMethod && `@transitionManager.groupOutros();`}
+			${this.block.hasOutros && `@transitionManager.groupOutros();`}
 			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].r();`}
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
 		if (this.compiler.options.nestedTransitions) {
+			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				#outrocallback = @callAfter(#outrocallback, ${blocks}.length);
-				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(#outrocallback);
+				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown});
 			`);
 		}
 
@@ -393,14 +394,16 @@ export default class EachBlock extends Node {
 			allDependencies.add(dependency);
 		});
 
-		const outro = this.block.hasOutroMethod && block.getUniqueName('outro')
-		if (outro) {
+		const outroBlock = this.block.hasOutros && block.getUniqueName('outroBlock')
+		if (outroBlock) {
 			block.builders.init.addBlock(deindent`
-				function ${outro}(i, detach, fn) {
+				function ${outroBlock}(i, detach, fn) {
 					if (${iterations}[i]) {
 						${iterations}[i].o(() => {
-							${iterations}[i].d(detach);
-							if (detach) ${iterations}[i] = null;
+							if (detach) {
+								${iterations}[i].d(detach);
+								${iterations}[i] = null;
+							}
 							if (fn) fn();
 						});
 					}
@@ -415,7 +418,7 @@ export default class EachBlock extends Node {
 
 		if (condition !== '') {
 			const forLoopBody = this.block.hasUpdateMethod
-				? (this.block.hasIntroMethod || this.block.hasOutroMethod)
+				? (this.block.hasIntros || this.block.hasOutros)
 					? deindent`
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, child_ctx);
@@ -444,10 +447,10 @@ export default class EachBlock extends Node {
 
 			let destroy;
 
-			if (this.block.hasOutroMethod) {
+			if (this.block.hasOutros) {
 				destroy = deindent`
 					@transitionManager.groupOutros();
-					for (; #i < ${iterations}.length; #i += 1) ${outro}(#i, 1);
+					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1);
 				`;
 			} else {
 				destroy = deindent`
@@ -473,10 +476,11 @@ export default class EachBlock extends Node {
 			`);
 		}
 
-		if (outro && this.compiler.options.nestedTransitions) {
+		if (outroBlock && this.compiler.options.nestedTransitions) {
+			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				#outrocallback = @callAfter(#outrocallback, #i);
-				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outro}(#i, 0, #outrocallback);`
+				const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
+				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
 			);
 		}
 

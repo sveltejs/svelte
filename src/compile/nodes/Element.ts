@@ -143,7 +143,7 @@ export default class Element extends Node {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
-		if (this.name === 'slot' || this.name === 'option') {
+		if (this.name === 'slot' || this.name === 'option' || this.compiler.options.dev) {
 			this.cannotUseInnerHTML();
 		}
 
@@ -300,13 +300,6 @@ export default class Element extends Node {
 			block.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
 
-		// TODO move this into a class as well?
-		if (this._cssRefAttribute) {
-			block.builders.hydrate.addLine(
-				`@setAttribute(${name}, "svelte-ref-${this._cssRefAttribute}", "");`
-			)
-		}
-
 		// insert static children with textContent or innerHTML
 		if (!this.namespace && this.canUseInnerHTML && this.children.length > 0) {
 			if (this.children.length === 1 && this.children[0].type === 'Text') {
@@ -394,10 +387,6 @@ export default class Element extends Node {
 
 			let open = `<${node.name}`;
 
-			if (node._cssRefAttribute) {
-				open += ` svelte-ref-${node._cssRefAttribute}`;
-			}
-
 			node.attributes.forEach((attr: Node) => {
 				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.chunks)}`
 			});
@@ -405,6 +394,13 @@ export default class Element extends Node {
 			if (isVoidElementName(node.name)) return open + '>';
 
 			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
+		}
+
+		if (this.compiler.options.dev) {
+			const loc = this.compiler.locate(this.start);
+			block.builders.hydrate.addLine(
+				`@addLoc(${this.var}, ${this.compiler.fileVar}, ${loc.line}, ${loc.column}, ${this.start});`
+			);
 		}
 	}
 
@@ -563,7 +559,7 @@ export default class Element extends Node {
 			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
 			.forEach(attr => {
 				const condition = attr.dependencies.size > 0
-					? [...attr.dependencies].map(d => `changed.${d}`).join(' || ')
+					? `(${[...attr.dependencies].map(d => `changed.${d}`).join(' || ')})`
 					: null;
 
 				if (attr.isSpread) {
@@ -858,19 +854,17 @@ export default class Element extends Node {
 		return `@appendNode(${this.var}, ${name}._slotted.default);`;
 	}
 
-	addCssClass() {
+	addCssClass(className = this.compiler.stylesheet.id) {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
 			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
-				(<Text>classAttribute.chunks[0]).data += ` ${this.compiler.stylesheet.id}`;
+				(<Text>classAttribute.chunks[0]).data += ` ${className}`;
 			} else {
 				(<Node[]>classAttribute.chunks).push(
 					new Text(this.compiler, this, this.scope, {
 						type: 'Text',
-						data: ` ${this.compiler.stylesheet.id}`
+						data: ` ${className}`
 					})
-
-					// new Text({ type: 'Text', data: ` ${this.compiler.stylesheet.id}` })
 				);
 			}
 		} else {
@@ -878,7 +872,7 @@ export default class Element extends Node {
 				new Attribute(this.compiler, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: `${this.compiler.stylesheet.id}` }]
+					value: [{ type: 'Text', data: className }]
 				})
 			);
 		}
@@ -943,10 +937,6 @@ export default class Element extends Node {
 					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
 				}
 			});
-		}
-
-		if (this._cssRefAttribute) {
-			openingTag += ` svelte-ref-${this._cssRefAttribute}`;
 		}
 
 		openingTag += '>';

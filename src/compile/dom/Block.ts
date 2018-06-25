@@ -44,7 +44,9 @@ export default class Block {
 
 	maintainContext: boolean;
 	hasAnimation: boolean;
-	hasIntroMethod: boolean;
+	hasIntros: boolean;
+	hasOutros: boolean;
+	hasIntroMethod: boolean; // could have the method without the transition, due to siblings
 	hasOutroMethod: boolean;
 	outros: number;
 
@@ -132,11 +134,11 @@ export default class Block {
 	}
 
 	addIntro() {
-		this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
+		this.hasIntros = this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
 	}
 
 	addOutro() {
-		this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
+		this.hasOutros = this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
 		this.outros += 1;
 	}
 
@@ -145,6 +147,10 @@ export default class Block {
 	}
 
 	addVariable(name: string, init?: string) {
+		if (name[0] === '#') {
+			name = this.alias(name.slice(1));
+		}
+
 		if (this.variables.has(name) && this.variables.get(name) !== init) {
 			throw new Error(
 				`Variable '${name}' already initialised with a different value`
@@ -169,18 +175,16 @@ export default class Block {
 	toString() {
 		const { dev } = this.compiler.options;
 
-		let introing;
-		const hasIntros = !this.builders.intro.isEmpty();
-		if (hasIntros) {
-			introing = this.getUniqueName('introing');
-			this.addVariable(introing);
-		}
+		if (this.hasIntroMethod || this.hasOutroMethod) {
+			this.addVariable('#current');
 
-		let outroing;
-		const hasOutros = !this.builders.outro.isEmpty();
-		if (hasOutros) {
-			outroing = this.alias('outroing');
-			this.addVariable(outroing);
+			if (!this.builders.mount.isEmpty()) {
+				this.builders.mount.addLine(`#current = true;`);
+			}
+
+			if (!this.builders.outro.isEmpty()) {
+				this.builders.outro.addLine(`#current = false;`);
+			}
 		}
 
 		if (this.autofocus) {
@@ -278,45 +282,29 @@ export default class Block {
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			if (hasIntros) {
+			if (this.builders.mount.isEmpty()) {
+				properties.addBlock(`i: @noop,`);
+			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						if (${introing}) return;
-						${introing} = true;
-						${hasOutros && `${outroing} = false;`}
-
+						if (#current) return;
 						${this.builders.intro}
-
 						this.m(#target, anchor);
 					},
 				`);
-			} else {
-				if (this.builders.mount.isEmpty()) {
-					properties.addBlock(`i: @noop,`);
-				} else {
-					properties.addBlock(deindent`
-						${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-							this.m(#target, anchor);
-						},
-					`);
-				}
 			}
 
-			if (hasOutros) {
+			if (this.builders.outro.isEmpty()) {
+				properties.addBlock(`o: @run,`);
+			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						if (${outroing}) return;
-						${outroing} = true;
-						${hasIntros && `${introing} = false;`}
+						if (!#current) return;
 
 						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
 
 						${this.builders.outro}
 					},
-				`);
-			} else {
-				properties.addBlock(deindent`
-					o: @run,
 				`);
 			}
 		}

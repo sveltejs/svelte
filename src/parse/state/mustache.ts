@@ -37,7 +37,7 @@ export default function mustache(parser: Parser) {
 
 	parser.allowWhitespace();
 
-	// {{/if}} or {{/each}}
+	// {/if} or {/each}
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
@@ -92,7 +92,7 @@ export default function mustache(parser: Parser) {
 		if (block.type !== 'IfBlock')
 			parser.error({
 				code: `invalid-elseif-placement`,
-				message: 'Cannot have an {{elseif ...}} block outside an {{#if ...}} block'
+				message: 'Cannot have an {:elseif ...} block outside an {#if ...} block'
 			});
 
 		parser.requireWhitespace();
@@ -124,7 +124,7 @@ export default function mustache(parser: Parser) {
 		if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 			parser.error({
 				code: `invalid-else-placement`,
-				message: 'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block'
+				message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
 			});
 		}
 
@@ -187,7 +187,7 @@ export default function mustache(parser: Parser) {
 			parser.stack.push(catchBlock);
 		}
 	} else if (parser.eat('#')) {
-		// {{#if foo}} or {{#each foo}}
+		// {#if foo}, {#each foo} or {#await foo}
 		let type;
 
 		if (parser.eat('if')) {
@@ -244,7 +244,7 @@ export default function mustache(parser: Parser) {
 
 		parser.allowWhitespace();
 
-		// {{#each}} blocks must declare a context – {{#each list as item}}
+		// {#each} blocks must declare a context – {#each list as item}
 		if (type === 'EachBlock') {
 			parser.eat('as', true);
 			parser.requireWhitespace();
@@ -299,7 +299,7 @@ export default function mustache(parser: Parser) {
 			parser.stack.push(childBlock);
 		}
 	} else if (parser.eat('@html')) {
-		// {{{raw}}} mustache
+		// {@html content} tag
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();

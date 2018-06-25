@@ -61,8 +61,8 @@ export default class AwaitBlock extends Node {
 				block.addDependencies(child.block.dependencies);
 			}
 
-			if (child.block.hasIntroMethod) hasIntros = true;
-			if (child.block.hasOutroMethod) hasOutros = true;
+			if (child.block.hasIntros) hasIntros = true;
+			if (child.block.hasOutros) hasOutros = true;
 		});
 
 		this.pending.block.hasUpdateMethod = isDynamic;
@@ -172,12 +172,13 @@ export default class AwaitBlock extends Node {
 		}
 
 		if (this.pending.block.hasOutroMethod && this.compiler.options.nestedTransitions) {
+			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				#outrocallback = @callAfter(#outrocallback, 3);
+				const ${countdown} = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o(#outrocallback);
-					else #outrocallback();
+					if (block) block.o(${countdown});
+					else ${countdown}();
 				}
 			`);
 		}
