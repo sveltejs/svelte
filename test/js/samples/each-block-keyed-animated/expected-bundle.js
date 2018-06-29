@@ -125,13 +125,6 @@ var transitionManager = {
 			.join(', ');
 	},
 
-	groupOutros() {
-		this.outros = {
-			remaining: 0,
-			callbacks: []
-		};
-	},
-
 	wait() {
 		if (!transitionManager.promise) {
 			transitionManager.promise = Promise.resolve();

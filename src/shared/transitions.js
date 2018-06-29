@@ -72,8 +72,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 			}
 
 			if (!b) {
-				program.group = transitionManager.outros;
-				transitionManager.outros.remaining += 1;
+				program.group = outros;
+				outros.remaining += 1;
 			}
 
 			if (obj.delay) {
@@ -165,6 +165,16 @@ export function wrapTransition(component, node, fn, params, intro) {
 	};
 }
 
+export let outros = {
+	remaining: 0,
+	callbacks: []
+};
+
+export function groupOutros() {
+	outros.remaining = 0;
+	outros.callbacks = [];
+}
+
 export var transitionManager = {
 	running: false,
 	transitions: [],
@@ -234,13 +244,6 @@ export var transitionManager = {
 			.split(', ')
 			.filter(anim => anim && anim.indexOf(name) === -1)
 			.join(', ');
-	},
-
-	groupOutros() {
-		this.outros = {
-			remaining: 0,
-			callbacks: []
-		};
 	},
 
 	wait() {
