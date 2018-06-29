@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 2.9.0
+
+* Play outro transitions on `<svelte:component>` if `nestedTransitions` is true ([#1568](https://github.com/sveltejs/svelte/issues/1568))
+* Allow illegal identifiers to be component prop names, for e.g. spreading `data-foo` props ([#887](https://github.com/sveltejs/svelte/issues/887))
+* Abort transition when node is detached ([#1561](https://github.com/sveltejs/svelte/issues/1561))
+* Only include `transitionManager` when necessary ([#1514](https://github.com/sveltejs/svelte/issues/1514))
+
 ## 2.8.1
 
 * Fix prefixed animation name replacement ([#1556](https://github.com/sveltejs/svelte/pull/1556))
