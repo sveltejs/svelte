@@ -1,5 +1,5 @@
 import { assign, isPromise } from './utils.js';
-import { transitionManager } from './transitions.js';
+import { groupOutros } from './transitions.js';
 
 export function handlePromise(promise, info) {
 	var token = info.token = {};
@@ -16,7 +16,7 @@ export function handlePromise(promise, info) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
-						transitionManager.groupOutros();
+						groupOutros();
 						block.o(() => {
 							block.d(1);
 							info.blocks[i] = null;

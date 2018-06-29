@@ -303,11 +303,13 @@ export default class Compiler {
 					},
 				});
 
-				if (name === 'transitionManager') {
+				if (name === 'transitionManager' || name === 'outros') {
 					// special case
-					const global = `_svelteTransitionManager`;
+					const global = name === 'outros'
+						? `_svelteOutros`
+						: `_svelteTransitionManager`;
 
-					inlineHelpers += `\n\nvar ${this.alias('transitionManager')} = window.${global} || (window.${global} = ${code});\n\n`;
+					inlineHelpers += `\n\nvar ${this.alias(name)} = window.${global} || (window.${global} = ${code});\n\n`;
 				} else if (name === 'escaped' || name === 'missingComponent') {
 					// vars are an awkward special case... would be nice to avoid this
 					const alias = this.alias(name);

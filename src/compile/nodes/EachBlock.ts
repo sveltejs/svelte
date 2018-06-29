@@ -324,7 +324,7 @@ export default class EachBlock extends Node {
 		block.builders.update.addBlock(deindent`
 			const ${this.each_block_value} = ${snippet};
 
-			${this.block.hasOutros && `@transitionManager.groupOutros();`}
+			${this.block.hasOutros && `@groupOutros();`}
 			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].r();`}
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.get_each_context});
 			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
@@ -449,7 +449,7 @@ export default class EachBlock extends Node {
 
 			if (this.block.hasOutros) {
 				destroy = deindent`
-					@transitionManager.groupOutros();
+					@groupOutros();
 					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1);
 				`;
 			} else {
