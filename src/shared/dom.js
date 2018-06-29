@@ -7,6 +7,7 @@ export function insertNode(node, target, anchor) {
 }
 
 export function detachNode(node) {
+	if (!node.parentElement) return;
 	node.parentNode.removeChild(node);
 }
 
