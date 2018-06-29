@@ -1,6 +1,4 @@
 import deindent from '../../utils/deindent';
-import flattenReference from '../../utils/flattenReference';
-import validCalleeObjects from '../../utils/validCalleeObjects';
 import stringifyProps from '../../utils/stringifyProps';
 import CodeBuilder from '../../utils/CodeBuilder';
 import getTailSnippet from '../../utils/getTailSnippet';
@@ -10,7 +8,6 @@ import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
-import usesThisOrArguments from '../../validate/js/utils/usesThisOrArguments';
 import mapChildren from './shared/mapChildren';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
@@ -344,9 +341,7 @@ export default class Component extends Node {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
-			const { dependencies, snippet } = this.expression;
-
-			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
+			const { snippet } = this.expression;
 
 			block.builders.init.addBlock(deindent`
 				var ${switch_value} = ${snippet};
@@ -392,6 +387,7 @@ export default class Component extends Node {
 				}
 			`);
 
+			const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 			const updateMountNode = this.getUpdateMountNode(anchor);
 
 			if (updates.length) {
@@ -402,7 +398,16 @@ export default class Component extends Node {
 
 			block.builders.update.addBlock(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
-					if (${name}) ${name}.destroy();
+					if (${name}) {
+						${this.compiler.options.nestedTransitions
+						? deindent`
+						@transitionManager.groupOutros();
+						const old_component = ${name};
+						old_component._fragment.o(() => {
+							old_component.destroy();
+						});`
+						: `${name}.destroy();`}
+					}
 
 					if (${switch_value}) {
 						${name} = new ${switch_value}(${switch_props}(ctx));
