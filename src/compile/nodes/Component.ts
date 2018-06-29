@@ -401,7 +401,7 @@ export default class Component extends Node {
 					if (${name}) {
 						${this.compiler.options.nestedTransitions
 						? deindent`
-						@transitionManager.groupOutros();
+						@groupOutros();
 						const old_component = ${name};
 						old_component._fragment.o(() => {
 							old_component.destroy();
