@@ -148,9 +148,9 @@ export function wrapTransition(component, node, fn, params, intro) {
 			this.running = !!this.pending;
 		},
 
-		abort() {
+		abort(reset) {
 			if (this.program) {
-				if (obj.tick) obj.tick(1, 0);
+				if (reset && obj.tick) obj.tick(1, 0);
 				if (obj.css) transitionManager.deleteRule(node, this.program.name);
 				this.program = this.pending = null;
 				this.running = false;
