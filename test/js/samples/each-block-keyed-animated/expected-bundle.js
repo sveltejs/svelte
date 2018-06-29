@@ -14,6 +14,7 @@ function insertNode(node, target, anchor) {
 }
 
 function detachNode(node) {
+	if (!node.parentNode) return;
 	node.parentNode.removeChild(node);
 }
 

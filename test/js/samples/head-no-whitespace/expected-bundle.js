@@ -10,6 +10,7 @@ function appendNode(node, target) {
 }
 
 function detachNode(node) {
+	if (!node.parentNode) return;
 	node.parentNode.removeChild(node);
 }
 

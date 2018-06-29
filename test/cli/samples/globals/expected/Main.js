@@ -81,6 +81,7 @@ var Main = (function(answer) { "use strict";
 	}
 
 	function detachNode(node) {
+		if (!node.parentNode) return;
 		node.parentNode.removeChild(node);
 	}
 
