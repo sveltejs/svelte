@@ -27,7 +27,7 @@ fs.readdirSync(__dirname).forEach(file => {
 			? declaration.declarations[0].init
 			: declaration;
 
-		declarations[name] = source.slice(value.start, value.end);
+		declarations[name] = value ? source.slice(value.start, value.end) : 'null';
 	});
 });
 
