@@ -712,6 +712,8 @@ export default class Element extends Node {
 					${name} = null;
 				});
 			`);
+
+			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.abort();`);
 		} else {
 			const introName = intro && block.getUniqueName(`${this.var}_intro`);
 			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
@@ -726,8 +728,8 @@ export default class Element extends Node {
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
-						if (${introName}) ${introName}.abort();
-						if (${outroName}) ${outroName}.abort();
+						if (${introName}) ${introName}.abort(1);
+						if (${outroName}) ${outroName}.abort(1);
 					`);
 				}
 
@@ -748,7 +750,7 @@ export default class Element extends Node {
 				const fn = `%transitions-${outro.name}`;
 
 				block.builders.intro.addBlock(deindent`
-					if (${outroName}) ${outroName}.abort();
+					if (${outroName}) ${outroName}.abort(1);
 				`);
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
@@ -757,6 +759,8 @@ export default class Element extends Node {
 					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
 					${outroName}.run(0, #outrocallback);
 				`);
+
+				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.abort();`);
 			}
 		}
 	}
