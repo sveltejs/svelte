@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.9.1
+
+* Use `template.content` instead of `template` where appropriate ([#1571](https://github.com/sveltejs/svelte/issues/1571))
+
 ## 2.9.0
 
 * Play outro transitions on `<svelte:component>` if `nestedTransitions` is true ([#1568](https://github.com/sveltejs/svelte/issues/1568))
