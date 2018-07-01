@@ -252,12 +252,8 @@ export default class Element extends Node {
 
 		if (this.name === 'noscript') return;
 
-		const childState = {
-			parentNode: this.var,
-			parentNodes: parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
-		};
-
-		const name = this.var;
+		const node = this.var;
+		const nodes = parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
 
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const prop = slot && quotePropIfNecessary(slot.chunks[0].data);
@@ -265,55 +261,55 @@ export default class Element extends Node {
 			`${this.findNearest(/^Component/).var}._slotted${prop}` : // TODO this looks bonkers
 			parentNode;
 
-		block.addVariable(name);
+		block.addVariable(node);
 		const renderStatement = getRenderStatement(this.namespace, this.name);
 		block.builders.create.addLine(
-			`${name} = ${renderStatement};`
+			`${node} = ${renderStatement};`
 		);
 
 		if (this.compiler.options.hydratable) {
 			if (parentNodes) {
 				block.builders.claim.addBlock(deindent`
-					${name} = ${getClaimStatement(compiler, this.namespace, parentNodes, this)};
-					var ${childState.parentNodes} = @children(${name});
+					${node} = ${getClaimStatement(compiler, this.namespace, parentNodes, this)};
+					var ${nodes} = @children(${this.name === 'template' ? `${node}.content` : node});
 				`);
 			} else {
 				block.builders.claim.addLine(
-					`${name} = ${renderStatement};`
+					`${node} = ${renderStatement};`
 				);
 			}
 		}
 
 		if (initialMountNode) {
 			block.builders.mount.addLine(
-				`@appendNode(${name}, ${initialMountNode});`
+				`@appendNode(${node}, ${initialMountNode});`
 			);
 
 			if (initialMountNode === 'document.head') {
-				block.builders.destroy.addLine(`@detachNode(${name});`);
+				block.builders.destroy.addLine(`@detachNode(${node});`);
 			}
 		} else {
-			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
+			block.builders.mount.addLine(`@insertNode(${node}, #target, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
-			block.builders.destroy.addConditional('detach', `@detachNode(${name});`);
+			block.builders.destroy.addConditional('detach', `@detachNode(${node});`);
 		}
 
 		// insert static children with textContent or innerHTML
 		if (!this.namespace && this.canUseInnerHTML && this.children.length > 0) {
 			if (this.children.length === 1 && this.children[0].type === 'Text') {
 				block.builders.create.addLine(
-					`${name}.textContent = ${stringify(this.children[0].data)};`
+					`${node}.textContent = ${stringify(this.children[0].data)};`
 				);
 			} else {
 				block.builders.create.addLine(
-					`${name}.innerHTML = ${stringify(this.children.map(toHTML).join(''))};`
+					`${node}.innerHTML = ${stringify(this.children.map(toHTML).join(''))};`
 				);
 			}
 		} else {
 			this.children.forEach((child: Node) => {
-				child.build(block, childState.parentNode, childState.parentNodes);
+				child.build(block, this.name === 'template' ? `${node}.content` : node, nodes);
 			});
 		}
 
@@ -342,12 +338,12 @@ export default class Element extends Node {
 
 			if (eventHandlerOrBindingUsesContext) {
 				initialProps.push(`ctx`);
-				block.builders.update.addLine(`${name}._svelte.ctx = ctx;`);
+				block.builders.update.addLine(`${node}._svelte.ctx = ctx;`);
 			}
 
 			if (initialProps.length) {
 				block.builders.hydrate.addBlock(deindent`
-					${name}._svelte = { ${initialProps.join(', ')} };
+					${node}._svelte = { ${initialProps.join(', ')} };
 				`);
 			}
 		} else {
@@ -368,9 +364,9 @@ export default class Element extends Node {
 			block.builders.mount.addBlock(this.initialUpdate);
 		}
 
-		if (childState.parentNodes) {
+		if (nodes) {
 			block.builders.claim.addLine(
-				`${childState.parentNodes}.forEach(@detachNode);`
+				`${nodes}.forEach(@detachNode);`
 			);
 		}
 
