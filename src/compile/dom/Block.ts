@@ -169,9 +169,11 @@ export default class Block {
 
 	toString() {
 		const { dev } = this.compiler.options;
+		const properties = new CodeBuilder();
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			this.addVariable('#current');
+			properties.addBlock(`cr(){ return #current; },`);
 
 			if (!this.builders.mount.isEmpty()) {
 				this.builders.mount.addLine(`#current = true;`);
@@ -185,8 +187,6 @@ export default class Block {
 		if (this.autofocus) {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
-
-		const properties = new CodeBuilder();
 
 		let localKey;
 		if (this.key) {
