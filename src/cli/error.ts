@@ -8,9 +8,9 @@ export default function error(err) {
 	stderr(`${clorox.red(err.message || err)}`);
 
 	if (err.frame) {
-		stderr(err.frame); // eslint-disable-line no-console
+		stderr(err.frame);
 	} else if (err.stack) {
-		stderr(`${clorox.grey(err.stack)}`);
+		stderr(`${clorox.gray(err.stack)}`);
 	}
 
 	process.exit(1);
