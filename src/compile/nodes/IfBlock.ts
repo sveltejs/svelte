@@ -250,7 +250,7 @@ export default class IfBlock extends Node {
 		dynamic,
 		{ name, anchor, hasElse }
 	) {
-		const select_block_type = block.getUniqueName(`select_block_type`);
+		const select_block_type = this.compiler.getUniqueName(`select_block_type`);
 		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
 		const previous_block_index = block.getUniqueName(`previous_block_index`);
 		const if_block_creators = block.getUniqueName(`if_block_creators`);
