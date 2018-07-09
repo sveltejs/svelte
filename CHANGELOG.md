@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.9.2
+
+* Fix conflict when using multiple if-else blocks, some of which use outros and some of which do not ([#1580](https://github.com/sveltejs/svelte/issues/1580))
+* Fix some cases where `.innerHTML` was being used to create child elements when it shouldn't ([#1581](https://github.com/sveltejs/svelte/issues/1581))
+
 ## 2.9.1
 
 * Use `template.content` instead of `template` where appropriate ([#1571](https://github.com/sveltejs/svelte/issues/1571))
