@@ -5,6 +5,7 @@ import mapChildren from './shared/mapChildren';
 export default class ElseBlock extends Node {
 	type: 'ElseBlock';
 	children: Node[];
+	block: Block;
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
