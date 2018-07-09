@@ -152,8 +152,14 @@ export default class Element extends Node {
 		);
 
 		this.attributes.forEach(attr => {
-			if (attr.dependencies.size) {
+			if (
+				attr.chunks &&
+				attr.chunks.length &&
+				(attr.chunks.length > 1 || attr.chunks[0].type !== 'Text')
+			) {
 				this.parent.cannotUseInnerHTML();
+			}
+			if (attr.dependencies.size) {
 				block.addDependencies(attr.dependencies);
 
 				// special case — <option value={foo}> — see below
