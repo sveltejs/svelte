@@ -189,6 +189,7 @@ export default class EachBlock extends Node {
 
 		if (this.else) {
 			const each_block_else = compiler.getUniqueName(`${each}_else`);
+			const mountOrIntro = (this.else.block.hasIntroMethod || this.else.block.hasOutroMethod) ? 'i' : 'm';
 
 			block.builders.init.addLine(`var ${each_block_else} = null;`);
 
