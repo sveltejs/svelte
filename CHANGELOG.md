@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## v2.9.3
+
+* Fix bug when an each block contains transitions but its else branch does not ([#1559](https://github.com/sveltejs/svelte/issues/1559))
+* If an event handler throws an exception, don't block all future calls to that handler ([#1573](https://github.com/sveltejs/svelte/issues/1573))
+
 ## 2.9.2
 
 * Fix conflict when using multiple if-else blocks, some of which use outros and some of which do not ([#1580](https://github.com/sveltejs/svelte/issues/1580))
