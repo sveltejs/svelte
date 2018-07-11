@@ -208,14 +208,7 @@ export default class IfBlock extends Node {
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const changeBlock = deindent`
-			${hasElse
-				? deindent`
-					${name}.d(1);
-				`
-				: deindent`
-					if (${name}) {
-						${name}.d(1);
-					}`}
+			${if_name}${name}.d(1);
 			${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
 			${if_name}${name}.c();
 			${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
