@@ -1,6 +1,11 @@
 # Svelte changelog
 
-## v2.9.3
+## 2.9.4
+
+* Make identifier optional for `then` and `catch` blocks ([#1507](https://github.com/sveltejs/svelte/issues/1507))
+* Group outros correctly ([#1575](https://github.com/sveltejs/svelte/issues/1575))
+
+## 2.9.3
 
 * Fix bug when an each block contains transitions but its else branch does not ([#1559](https://github.com/sveltejs/svelte/issues/1559))
 * If an event handler throws an exception, don't block all future calls to that handler ([#1573](https://github.com/sveltejs/svelte/issues/1573))
