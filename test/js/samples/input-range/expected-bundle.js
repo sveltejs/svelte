@@ -60,9 +60,12 @@ function fire(eventName, data) {
 		var handler = handlers[i];
 
 		if (!handler.__calling) {
-			handler.__calling = true;
-			handler.call(this, data);
-			handler.__calling = false;
+			try {
+				handler.__calling = true;
+				handler.call(this, data);
+			} finally {
+				handler.__calling = false;
+			}
 		}
 	}
 }

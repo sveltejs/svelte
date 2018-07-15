@@ -147,11 +147,12 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			const awaitBlock = parser.current();
 
-			parser.requireWhitespace();
-			awaitBlock.value = parser.readIdentifier();
-
-			parser.allowWhitespace();
-			parser.eat('}', true);
+			if (!parser.eat('}')) {
+				parser.requireWhitespace();
+				awaitBlock.value = parser.readIdentifier();
+				parser.allowWhitespace();
+				parser.eat('}', true);
+			}
 
 			const thenBlock: Node = {
 				start,
@@ -170,11 +171,12 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			const awaitBlock = parser.current();
 
-			parser.requireWhitespace();
-			awaitBlock.error = parser.readIdentifier();
-
-			parser.allowWhitespace();
-			parser.eat('}', true);
+			if (!parser.eat('}')) {
+				parser.requireWhitespace();
+				awaitBlock.error = parser.readIdentifier();
+				parser.allowWhitespace();
+				parser.eat('}', true);
+			}
 
 			const catchBlock: Node = {
 				start,
