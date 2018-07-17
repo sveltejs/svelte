@@ -429,6 +429,8 @@ export default class Component extends Node {
 						`)}
 
 						${this.ref && `#component.refs.${this.ref} = ${name};`}
+					} else {
+						${name} = null;
 					}
 
 					${this.ref && deindent`
