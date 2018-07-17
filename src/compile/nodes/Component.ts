@@ -431,12 +431,11 @@ export default class Component extends Node {
 						${this.ref && `#component.refs.${this.ref} = ${name};`}
 					} else {
 						${name} = null;
-					}
-
-					${this.ref && deindent`
-						else if (#component.refs.${this.ref} === ${name}) {
+						${this.ref && deindent`
+						if (#component.refs.${this.ref} === ${name}) {
 							#component.refs.${this.ref} = null;
 						}`}
+					}
 				}
 			`);
 
