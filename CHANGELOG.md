@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.9.5
+
+* Null out refs to dynamic components ([#1596](https://github.com/sveltejs/svelte/issues/1596))
+
 ## 2.9.4
 
 * Make identifier optional for `then` and `catch` blocks ([#1507](https://github.com/sveltejs/svelte/issues/1507))
