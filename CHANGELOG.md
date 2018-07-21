@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.9.6
+
+* Provide more useful error if SSR component attempts to render non-SSR component ([#1605](https://github.com/sveltejs/svelte/issues/1605))
+
 ## 2.9.5
 
 * Null out refs to dynamic components ([#1596](https://github.com/sveltejs/svelte/issues/1596))
