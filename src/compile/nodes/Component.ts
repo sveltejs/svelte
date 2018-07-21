@@ -564,12 +564,12 @@ export default class Component extends Node {
 				.concat(bindingProps)
 				.join(', ')} }`;
 
-		const isDynamicComponent = this.name === 'svelte:component';
-
 		const expression = (
-			this.name === 'svelte:self' ? this.compiler.name :
-			(isDynamicComponent ? `((${this.expression.snippet}) || @missingComponent)` :
-			`%components-${this.name}`)
+			this.name === 'svelte:self'
+				? this.compiler.name
+				: this.name === 'svelte:component'
+					? `((${this.expression.snippet}) || @missingComponent)`
+					: `%components-${this.name}`
 		);
 
 		this.bindings.forEach(binding => {
@@ -583,7 +583,10 @@ export default class Component extends Node {
 				}
 			}
 
-			conditions.push(`!('${binding.name}' in ctx)`);
+			conditions.push(
+				`!('${binding.name}' in ctx)`,
+				`${expression}.data`
+			);
 
 			const { name } = getObject(binding.value.node);
 
@@ -598,7 +601,7 @@ export default class Component extends Node {
 			`);
 		});
 
-		let open = `\${${expression}._render(__result, ${props}`;
+		let open = `\${@validateSsrComponent(${expression}, '${this.name}')._render(__result, ${props}`;
 
 		const options = [];
 		options.push(`store: options.store`);
