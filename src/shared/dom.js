@@ -220,7 +220,7 @@ export function addResizeListener(element, fn) {
 
 	return {
 		cancel: () => {
-			win.removeEventListener('resize', fn);
+			win && win.removeEventListener('resize', fn);
 			element.removeChild(object);
 		}
 	};
