@@ -90,6 +90,9 @@ export default class IfBlock extends Node {
 					dynamic = true;
 					block.addDependencies(node.else.block.dependencies);
 				}
+
+				if (node.else.block.hasIntros) hasIntros = true;
+				if (node.else.block.hasOutros) hasOutros = true;
 			}
 		}
 
