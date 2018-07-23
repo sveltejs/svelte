@@ -145,6 +145,22 @@ export default function validateElement(
 						message: `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`
 					});
 				}
+			} else if (name == 'files') {
+				if (node.name !== 'input') {
+					validator.error(attribute, {
+						code: `invalid-binding`,
+						message: `'files' binding acn only be used with <input type="file">`
+					});
+				}
+
+				const type = checkTypeAttribute(validator, node);
+
+				if (type !== 'file') {
+					validator.error(attribute, {
+						code: `invalid-binding`,
+						message: `'files' binding can only be used with <input type="file">`
+					});
+				}
 			} else if (
 				name === 'currentTime' ||
 				name === 'duration' ||
