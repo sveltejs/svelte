@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.9.7
+
+* Allow `<input type=file bind:files>` ([#1608](https://github.com/sveltejs/svelte/issues/1608))
+* Ensure child window exists before removing listener in `addResizeHandler` ([#1600](https://github.com/sveltejs/svelte/issues/1600))
+* Handle transitions in `else` block ([#1589](https://github.com/sveltejs/svelte/issues/1589))
+
 ## 2.9.6
 
 * Provide more useful error if SSR component attempts to render non-SSR component ([#1605](https://github.com/sveltejs/svelte/issues/1605))
