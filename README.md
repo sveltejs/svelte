@@ -143,7 +143,7 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 
 ## Development
 
-PRs are encouraged and always welcome. Pick an issue and help us out!
+Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
 
 To install and work on Svelte locally:
 
@@ -156,20 +156,23 @@ npm run dev
 
 ### Linking to a Live Project
 
+You can then continue to make changes locally to the Svelte project and test it against a local project. For a quick project that takes almost no setup, use the default [sapper-template](https://github.com/sveltejs/sapper-template) project, which employs both Svelte and [Sapper](https://sapper.svelte.technology/). Instructions on setting up the default Sapper template are found in the [repo page](https://github.com/sveltejs/sapper-template).
+
 From the root of your local svelte git checkout:
 
 ```bash
+cd svelte
 npm link
 ```
 
-Then, to link from any given project:
+Then, to link from `sapper-template` or any other given project:
 
 ```bash
-cd my-project
+cd sapper-template
 npm link svelte
 ```
 
-You can then continue to make changes locally to the Svelte project and test it against a local project. For a quick project that takes almost no setup, use the default [sapper-template](https://github.com/sveltejs/sapper-template) project, which employs both Svelte and [Sapper](https://sapper.svelte.technology/). Instructions on setting up the default Sapper template are found in the [repo page](https://github.com/sveltejs/sapper-template).
+You should be good to test changes locally.
 
 ### Running Tests
 
