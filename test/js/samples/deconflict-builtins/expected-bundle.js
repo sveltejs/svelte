@@ -28,7 +28,7 @@ function createElement(name) {
 }
 
 function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === null ? '' : data);
 }
 
 function createComment() {

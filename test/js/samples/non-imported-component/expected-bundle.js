@@ -16,7 +16,7 @@ function detachNode(node) {
 }
 
 function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === null ? '' : data);
 }
 
 function blankObject() {
