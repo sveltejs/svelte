@@ -141,6 +141,42 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 <img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">
 <p>To keep Svelte's performance in check, we use BrowserStack to quickly run benchmarks for each PR that immediately give feedback to the contributor. You can see how we use BrowserStack in the <a href="https://github.com/sveltejs/svelte-bench">svelte-bench</a> project and check out BrowserStack's services on their <a href="https://www.browserstack.com/">website</a>.</p>
 
+## Development
+
+PRs are encouraged and always welcome. Pick an issue and help us out!
+
+To install and work on Svelte locally:
+
+```bash
+git clone git@github.com:sveltejs/svelte.git
+cd svelte
+npm install
+npm run dev
+```
+
+### Linking to a Live Project
+
+From the root of your local svelte git checkout:
+
+```bash
+npm link
+```
+
+Then, to link from any given project:
+
+```bash
+cd my-project
+npm link svelte
+```
+
+You can then continue to make changes locally to the Svelte project and test it against a local project. For a quick project that takes almost no setup, use the default [sapper-template](https://github.com/sveltejs/sapper-template) project, which employs both Svelte and [Sapper](https://sapper.svelte.technology/). Instructions on setting up the default Sapper template are found in the [repo page](https://github.com/sveltejs/sapper-template).
+
+### Running Tests
+
+```bash
+npm run test
+```
+
 ## License
 
 [MIT](LICENSE)
