@@ -156,23 +156,22 @@ npm run dev
 
 ### Linking to a Live Project
 
-You can then continue to make changes locally to the Svelte project and test it against a local project. For a quick project that takes almost no setup, use the default [sapper-template](https://github.com/sveltejs/sapper-template) project, which employs both Svelte and [Sapper](https://sapper.svelte.technology/). Instructions on setting up the default Sapper template are found in the [repo page](https://github.com/sveltejs/sapper-template).
+You can make changes locally to Svelte and test it against any Svelte project. You can also use a [default template](https://github.com/sveltejs/template) for development. Instruction on setup are found in that project repository.
 
 From the root of your local svelte git checkout:
 
 ```bash
-cd svelte
 npm link
 ```
 
-Then, to link from `sapper-template` or any other given project:
+Then, to link from your Svelte project:
 
-```bash
-cd sapper-template
+```
+cd your-svelte-project
 npm link svelte
 ```
 
-You should be good to test changes locally.
+And you should be good to test changes locally.
 
 ### Running Tests
 
