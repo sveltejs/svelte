@@ -158,26 +158,34 @@ npm run dev
 
 You can make changes locally to Svelte and test it against any Svelte project. You can also use a [default template](https://github.com/sveltejs/template) for development. Instruction on setup are found in that project repository.
 
-From the root of your local svelte git checkout:
+From your project:
 
 ```bash
-npm link
-```
-
-Then, to link from your Svelte project:
-
-```
-cd your-svelte-project
-npm link svelte
+cd ~/path/to/your-svelte-project
+npm install ~/path/to/svelte
 ```
 
 And you should be good to test changes locally.
+
+To undo this and link to the official latest Svelte release, just run:
+
+```bash
+npm install svelte@latest
+```
 
 ### Running Tests
 
 ```bash
 npm run test
 ```
+
+For running single tests, you can use pattern matching:
+
+```bash
+npm run test -- -g "includes AST in svelte.compile output"
+```
+
+Alternately, you can add `solo: true` to any given `test/../_config.js` file, but **remember never to commit that setting.**
 
 ## License
 
