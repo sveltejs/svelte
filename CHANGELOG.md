@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.9.8
+
+* Sanitize spread attributes in SSR — fixes vulnerability CVE-2018-6341 ([#1623](https://github.com/sveltejs/svelte/pull/1623))
+
 ## 2.9.7
 
 * Allow `<input type=file bind:files>` ([#1608](https://github.com/sveltejs/svelte/issues/1608))
