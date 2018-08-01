@@ -12,7 +12,6 @@ node_modules
 /test/sourcemaps/samples/*/output.js
 /test/sourcemaps/samples/*/output.js.map
 /src/compile/shared.ts
-/package-lock.json
 /store.umd.js
 /yarn-error.log
 _actual*.*
