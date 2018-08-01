@@ -315,7 +315,6 @@ export default class Compiler {
 					const alias = this.alias(name);
 					inlineHelpers += `\n\nconst ${alias} = ${code};`
 				} else {
-					if (!expression.id) console.log(name, expression);
 					const alias = this.alias(expression.id.name);
 					if (alias !== expression.id.name) {
 						code.overwrite(expression.id.start, expression.id.end, alias);
