@@ -1,0 +1,12 @@
+<div foo={foo}></div>
+
+<script>
+
+	export default {
+		data() {
+			return {
+				foo: '"></div><script>alert(42)</' + 'script>'
+			};
+		}
+	};
+</script>
