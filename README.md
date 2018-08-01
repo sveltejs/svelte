@@ -141,6 +141,52 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 <img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">
 <p>To keep Svelte's performance in check, we use BrowserStack to quickly run benchmarks for each PR that immediately give feedback to the contributor. You can see how we use BrowserStack in the <a href="https://github.com/sveltejs/svelte-bench">svelte-bench</a> project and check out BrowserStack's services on their <a href="https://www.browserstack.com/">website</a>.</p>
 
+## Development
+
+Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
+
+To install and work on Svelte locally:
+
+```bash
+git clone git@github.com:sveltejs/svelte.git
+cd svelte
+npm install
+npm run dev
+```
+
+### Linking to a Live Project
+
+You can make changes locally to Svelte and test it against any Svelte project. You can also use a [default template](https://github.com/sveltejs/template) for development. Instruction on setup are found in that project repository.
+
+From your project:
+
+```bash
+cd ~/path/to/your-svelte-project
+npm install ~/path/to/svelte
+```
+
+And you should be good to test changes locally.
+
+To undo this and link to the official latest Svelte release, just run:
+
+```bash
+npm install svelte@latest
+```
+
+### Running Tests
+
+```bash
+npm run test
+```
+
+For running single tests, you can use pattern matching:
+
+```bash
+npm run test -- -g "includes AST in svelte.compile output"
+```
+
+Alternately, you can add `solo: true` to any given `test/../_config.js` file, but **remember never to commit that setting.**
+
 ## License
 
 [MIT](LICENSE)
