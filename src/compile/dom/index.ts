@@ -67,7 +67,7 @@ export default function dom(
 	const computationDeps = new Set();
 
 	if (computations.length) {
-		computations.forEach(({ key, deps }) => {
+		computations.forEach(({ key, deps, hasRestParam }) => {
 			if (target.readonly.has(key)) {
 				// <svelte:window> bindings
 				throw new Error(
@@ -89,8 +89,10 @@ export default function dom(
 			} else {
 				// computed property depends on entire state object —
 				// these must go at the end
+				const arg = hasRestParam ? `@exclude(state, "${key}")` : `state`;
+
 				computationBuilder.addLine(
-					`if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`
+					`if (this._differs(state.${key}, (state.${key} = %computed-${key}(${arg})))) changed.${key} = true;`
 				);
 			}
 		});
