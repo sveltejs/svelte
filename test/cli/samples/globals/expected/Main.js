@@ -26,7 +26,7 @@ var Main = (function(answer) { "use strict";
 
 			p(changed, ctx) {
 				if (changed.answer) {
-					text_1.data = ctx.answer;
+					setData(text_1, ctx.answer);
 				}
 			},
 
@@ -78,6 +78,10 @@ var Main = (function(answer) { "use strict";
 
 	function appendNode(node, target) {
 		target.appendChild(node);
+	}
+
+	function setData(text, data) {
+		text.data = '' + data;
 	}
 
 	function detachNode(node) {
