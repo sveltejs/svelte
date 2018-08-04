@@ -79,12 +79,14 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 
 		else if (did_move[old_key]) {
 			o--;
+		}
 
-		} else if (deltas[new_key] > deltas[old_key]) {
+		else if (deltas[new_key] > deltas[old_key]) {
 			did_move[new_key] = true;
 			insert(new_block);
+		}
 
-		} else {
+		else {
 			will_move[old_key] = true;
 			o--;
 		}

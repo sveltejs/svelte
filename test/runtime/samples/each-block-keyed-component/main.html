@@ -1,0 +1,11 @@
+{#each todos as todo, i (todo.id)}
+	<Todo>{i+1}: {todo.description}</Todo>
+{/each}
+
+<script>
+	export default {
+		components: {
+			Todo: './Todo.html'
+		}
+	};
+</script>
