@@ -22,7 +22,7 @@ prog
 	.example('compile -f umd MyComponent.html > MyComponent.js')
 
 	.action((input, opts) => {
-		import('./compile.js').then(({ compile }) => {
+		import('./compile').then(({ compile }) => {
 			compile(input, opts);
 		});
 	})
