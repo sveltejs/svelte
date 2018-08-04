@@ -4,7 +4,7 @@ const assert = require('assert');
 const glob = require('tiny-glob/sync.js');
 const shell = require("shelljs");
 
-const cli = path.resolve(__dirname, "../../cli/index.ts.js");
+const cli = path.resolve(__dirname, "../../cli/index.js");
 
 function normalize(str) {
 	return str
