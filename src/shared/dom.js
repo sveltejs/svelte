@@ -66,7 +66,7 @@ export function createSvgElement(name) {
 }
 
 export function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === null ? '' : data);
 }
 
 export function createComment() {
