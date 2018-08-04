@@ -10,7 +10,7 @@ export default class MustacheTag extends Tag {
 	) {
 		const { init } = this.renameThisMethod(
 			block,
-			value => `${this.var}.data = ${value};`
+			value => `@setData(${this.var}, ${value});`
 		);
 
 		block.addElement(

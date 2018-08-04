@@ -31,6 +31,10 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
+function setData(text, data) {
+	text.data = '' + data;
+}
+
 function blankObject() {
 	return Object.create(null);
 }
@@ -191,11 +195,11 @@ function create_main_fragment(component, ctx) {
 
 		p: function update(changed, ctx) {
 			if ((changed.Math || changed.foo) && text_value !== (text_value = ctx.Math.max(0, ctx.foo))) {
-				text.data = text_value;
+				setData(text, text_value);
 			}
 
 			if (changed.bar) {
-				text_2.data = ctx.bar;
+				setData(text_2, ctx.bar);
 			}
 		},
 

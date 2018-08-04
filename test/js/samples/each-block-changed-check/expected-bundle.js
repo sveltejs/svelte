@@ -37,6 +37,10 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
+function setData(text, data) {
+	text.data = '' + data;
+}
+
 function blankObject() {
 	return Object.create(null);
 }
@@ -207,7 +211,7 @@ function create_main_fragment(component, ctx) {
 			}
 
 			if (changed.foo) {
-				text_1.data = ctx.foo;
+				setData(text_1, ctx.foo);
 			}
 		},
 
@@ -260,11 +264,11 @@ function create_each_block(component, ctx) {
 
 		p(changed, ctx) {
 			if ((changed.comments) && text_2_value !== (text_2_value = ctx.comment.author)) {
-				text_2.data = text_2_value;
+				setData(text_2, text_2_value);
 			}
 
 			if ((changed.elapsed || changed.comments || changed.time) && text_4_value !== (text_4_value = ctx.elapsed(ctx.comment.time, ctx.time))) {
-				text_4.data = text_4_value;
+				setData(text_4, text_4_value);
 			}
 
 			if ((changed.comments) && raw_value !== (raw_value = ctx.comment.html)) {

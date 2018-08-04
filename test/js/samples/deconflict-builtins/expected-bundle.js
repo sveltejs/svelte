@@ -35,6 +35,10 @@ function createComment() {
 	return document.createComment('');
 }
 
+function setData(text, data) {
+	text.data = '' + data;
+}
+
 function blankObject() {
 	return Object.create(null);
 }
@@ -228,7 +232,7 @@ function create_each_block(component, ctx) {
 
 		p(changed, ctx) {
 			if ((changed.createElement) && text_value !== (text_value = ctx.node)) {
-				text.data = text_value;
+				setData(text, text_value);
 			}
 		},
 

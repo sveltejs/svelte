@@ -155,6 +155,10 @@ export function claimText (nodes, data) {
 	return createText(data);
 }
 
+export function setData(text, data) {
+	text.data = '' + data;
+}
+
 export function setInputType(input, type) {
 	try {
 		input.type = type;

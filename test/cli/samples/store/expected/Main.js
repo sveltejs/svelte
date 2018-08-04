@@ -18,7 +18,7 @@ function create_main_fragment(component, ctx) {
 
 		p(changed, ctx) {
 			if (changed.$name) {
-				text_1.data = ctx.$name;
+				setData(text_1, ctx.$name);
 			}
 		},
 
@@ -73,6 +73,10 @@ function insertNode(node, target, anchor) {
 
 function appendNode(node, target) {
 	target.appendChild(node);
+}
+
+function setData(text, data) {
+	text.data = '' + data;
 }
 
 function detachNode(node) {
