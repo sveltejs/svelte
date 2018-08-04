@@ -10,11 +10,11 @@ init:
 environment:
   matrix:
     # node.js
-    - nodejs_version: 10
+    - nodejs_version: 6
 
 install:
   - ps: Install-Product node $env:nodejs_version
-  - npm ci
+  - npm install
 
 build: off
 
