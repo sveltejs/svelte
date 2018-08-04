@@ -30,6 +30,7 @@ export default class Selector {
 
 	apply(node: Node, stack: Node[]) {
 		const toEncapsulate: Node[] = [];
+
 		applySelector(this.stylesheet, this.localBlocks.slice(), node, stack.slice(), toEncapsulate);
 
 		if (toEncapsulate.length > 0) {
@@ -132,10 +133,6 @@ export default class Selector {
 	}
 }
 
-function isDescendantSelector(selector: Node) {
-	return selector.type === 'WhiteSpace' || selector.type === 'Combinator';
-}
-
 function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stack: Node[], toEncapsulate: any[]): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
@@ -145,7 +142,6 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 	}
 
 	let i = block.selectors.length;
-	let j = stack.length;
 
 	while (i--) {
 		const selector = block.selectors[i];
@@ -202,12 +198,18 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 				}
 			}
 
+			if (blocks.every(block => block.global)) {
+				toEncapsulate.push({ node, block });
+				return true;
+			}
+
 			return false;
 		} else if (block.combinator.name === '>') {
 			if (applySelector(stylesheet, blocks, stack.pop(), stack, toEncapsulate)) {
 				toEncapsulate.push({ node, block });
 				return true;
 			}
+
 			return false;
 		}
 
