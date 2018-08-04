@@ -1,22 +1,13 @@
-const data = { foo: null };
-
 export default {
-	data,
+	data: { foo: null },
 
-	html: '',
+	html: 'foo is null',
 
 	test(assert, component, target) {
-		assert.htmlEqual(target.innerHTML, 'hi there');
+		component.set({ foo: 42 });
+		assert.htmlEqual(target.innerHTML, 'foo is 42');
 
-		data.foo = 'friend';
-		component.set(data);
-
-		assert.htmlEqual(target.innerHTML, 'hi there friend');
-
-		data.foo = null;
-		component.set(data);
-
-		assert.htmlEqual(target.innerHTML, 'hi there');
-
+		component.set({ foo: null });
+		assert.htmlEqual(target.innerHTML, 'foo is null');
 	}
 };

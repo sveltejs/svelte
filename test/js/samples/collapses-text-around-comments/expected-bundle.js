@@ -25,6 +25,10 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
+function setData(text, data) {
+	text.data = '' + data;
+}
+
 function blankObject() {
 	return Object.create(null);
 }
@@ -167,7 +171,7 @@ function create_main_fragment(component, ctx) {
 
 		p(changed, ctx) {
 			if (changed.foo) {
-				text.data = ctx.foo;
+				setData(text, ctx.foo);
 			}
 		},
 
