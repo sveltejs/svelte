@@ -132,14 +132,12 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 
 ## Example/starter repos
 
+* [sveltejs/template](https://github.com/sveltejs/template) — the 'official' starter template
+* [sveltejs/template-webpack](https://github.com/sveltejs/template-webpack) — using webpack for bundling
 * [charpeni/svelte-example](https://github.com/charpeni/svelte-example) - Some Svelte examples with configured Rollup, Babel, ESLint, directives, Two-Way binding, and nested components
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
 * [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
 * [khtdr/svelte-redux-shopping-cart](https://github.com/khtdr/svelte-redux-shopping-cart) – Redux Shopping Cart example (with devtools and hot-reloading)
-
-## BrowserStack
-<img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">
-<p>To keep Svelte's performance in check, we use BrowserStack to quickly run benchmarks for each PR that immediately give feedback to the contributor. You can see how we use BrowserStack in the <a href="https://github.com/sveltejs/svelte-bench">svelte-bench</a> project and check out BrowserStack's services on their <a href="https://www.browserstack.com/">website</a>.</p>
 
 ## Development
 
@@ -153,6 +151,8 @@ cd svelte
 npm install
 npm run dev
 ```
+
+The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [VSCode](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
 
 ### Linking to a Live Project
 
