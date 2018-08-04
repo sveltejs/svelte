@@ -24,7 +24,8 @@ import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElem
 
 interface Computation {
 	key: string;
-	deps: string[]
+	deps: string[];
+	hasRestParam: boolean;
 }
 
 function detectIndentation(str: string) {
@@ -436,7 +437,6 @@ export default class Compiler {
 			code,
 			source,
 			computations,
-			methods,
 			templateProperties,
 			imports
 		} = this;
@@ -588,15 +588,20 @@ export default class Compiler {
 
 						const param = value.params[0];
 
-						if (param.type === 'ObjectPattern') {
+						const hasRestParam = (
+							param.properties &&
+							param.properties.some(prop => prop.type === 'RestElement')
+						);
+
+						if (param.type !== 'ObjectPattern' || hasRestParam) {
+							fullStateComputations.push({ key, deps: null, hasRestParam });
+						} else {
 							const deps = param.properties.map(prop => prop.key.name);
 
 							deps.forEach(dep => {
 								this.expectedProperties.add(dep);
 							});
 							dependencies.set(key, deps);
-						} else {
-							fullStateComputations.push({ key, deps: null })
 						}
 					});
 
@@ -611,7 +616,7 @@ export default class Compiler {
 						const deps = dependencies.get(key);
 						deps.forEach(visit);
 
-						computations.push({ key, deps });
+						computations.push({ key, deps, hasRestParam: false });
 
 						const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
 					};
