@@ -78,6 +78,10 @@ export default class Component extends Node {
 	) {
 		this.cannotUseInnerHTML();
 
+		if (this.expression) {
+			block.addDependencies(this.expression.dependencies);
+		}
+
 		this.attributes.forEach(attr => {
 			block.addDependencies(attr.dependencies);
 		});

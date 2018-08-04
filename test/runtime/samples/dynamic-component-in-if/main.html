@@ -1,0 +1,18 @@
+{#if x}
+	<svelte:component this={x}/>
+{/if}
+
+<script>
+	import Foo from './Foo.html';
+	import Bar from './Bar.html';
+
+	export default {
+		data() {
+			return {
+				x: Foo,
+				Foo,
+				Bar
+			};
+		}
+	};
+</script>
