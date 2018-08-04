@@ -26,3 +26,9 @@ export function addLoc(element, file, line, column, char) {
 		loc: { file, line, column, char }
 	};
 }
+
+export function exclude(src, prop) {
+	const tar = {};
+	for (const k in src) k === prop || (tar[k] = src[k]);
+	return tar;
+}
