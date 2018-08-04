@@ -29,6 +29,10 @@ function createComment() {
 	return document.createComment('');
 }
 
+function setData(text, data) {
+	text.data = '' + data;
+}
+
 function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
@@ -298,7 +302,7 @@ function create_each_block(component, key_1, ctx) {
 
 		p(changed, ctx) {
 			if ((changed.things) && text_value !== (text_value = ctx.thing.name)) {
-				text.data = text_value;
+				setData(text, text_value);
 			}
 		},
 
