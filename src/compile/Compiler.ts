@@ -589,7 +589,9 @@ export default class Compiler {
 						const param = value.params[0];
 
 						if (param.type === 'ObjectPattern') {
-							const deps = param.properties.map(prop => prop.key.name);
+							const deps = param.properties.map(prop => {
+								return (prop.type === 'RestElement' ? prop.argument : prop.key).name;
+							});
 
 							deps.forEach(dep => {
 								this.expectedProperties.add(dep);
