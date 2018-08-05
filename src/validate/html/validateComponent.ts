@@ -22,6 +22,8 @@ export default function validateComponent(
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
+			if (attribute.name.includes('-'))
+				console.dir(attribute);
 			if (!refs.has(attribute.name)) refs.set(attribute.name, []);
 			refs.get(attribute.name).push(node);
 		}
