@@ -2,6 +2,7 @@ import * as namespaces from '../../utils/namespaces';
 import validateEventHandler from './validateEventHandler';
 import validate, { Validator } from '../index';
 import { Node } from '../../interfaces';
+import isValidIdentifier from '../../utils/isValidIdentifier';
 
 export default function validateComponent(
 	validator: Validator,
@@ -22,10 +23,22 @@ export default function validateComponent(
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
-			if (attribute.name.includes('-'))
-				console.dir(attribute);
-			if (!refs.has(attribute.name)) refs.set(attribute.name, []);
-			refs.get(attribute.name).push(node);
+			if (!isValidIdentifier(attribute.name)) {
+				const suggestion = attribute.name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
+				
+				const key = {
+					start: attribute.start,
+					end: attribute.end
+				};
+				
+				validator.error(key, {
+					code: `invalid-reference-name`,
+					message: `Reference name '${attribute.name}' is invalid — must be a valid identifier such as ${suggestion}`
+				});	
+			} else {
+				if (!refs.has(attribute.name)) refs.set(attribute.name, []);
+				refs.get(attribute.name).push(node);
+			}
 		}
 
 		if (attribute.type === 'EventHandler') {
