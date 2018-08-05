@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 2.9.10
+
+* Handle `null` consistently in tags ([#1598](https://github.com/sveltejs/svelte/issues/1598))
+* Support object rest in computed properties ([#1540](https://github.com/sveltejs/svelte/issues/1540))
+* Always update dynamic components when expression changes ([#1621](https://github.com/sveltejs/svelte/issues/1621))
+* Encapsulate local styles inside global styles ([#1618](https://github.com/sveltejs/svelte/issues/1618))
+
 ## 2.9.9
 
 * Fix attribute name regex ([#1623](https://github.com/sveltejs/svelte/pull/1623))
