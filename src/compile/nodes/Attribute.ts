@@ -130,9 +130,11 @@ export default class Attribute extends Node {
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
-		const method = name.slice(0, 6) === 'xlink:'
-			? '@setXlinkAttribute'
-			: '@setAttribute';
+		const method = /-/.test(node.name)
+			? '@setCustomElementData'
+			: name.slice(0, 6) === 'xlink:'
+				? '@setXlinkAttribute'
+				: '@setAttribute';
 
 		const isLegacyInputType = this.compiler.options.legacy && name === 'type' && this.parent.name === 'input';
 

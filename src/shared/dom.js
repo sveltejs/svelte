@@ -96,6 +96,16 @@ export function setAttributes(node, attributes) {
 	}
 }
 
+export function setCustomElementData(node, prop, value) {
+	if (prop in node) {
+		node[prop] = value;
+	} else if (value) {
+		setAttribute(node, prop, value);
+	} else {
+		removeAttribute(node, prop);
+	}
+}
+
 export function removeAttribute(node, attribute) {
 	node.removeAttribute(attribute);
 }
