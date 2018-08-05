@@ -5,11 +5,11 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -151,9 +151,9 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(svg, target, anchor);
-			appendNode(title, svg);
-			appendNode(text, title);
+			insert(target, svg, anchor);
+			append(svg, title);
+			append(title, text);
 		},
 
 		p: noop,

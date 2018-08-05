@@ -22,7 +22,7 @@ export default class MustacheTag extends Tag {
 	}
 
 	remount(name: string) {
-		return `@appendNode(${this.var}, ${name}._slotted.default);`;
+		return `@append(${name}._slotted.default, ${this.var});`;
 	}
 
 	ssr() {

@@ -120,10 +120,10 @@ export default class Block {
 		this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
 
 		if (parentNode) {
-			this.builders.mount.addLine(`@appendNode(${name}, ${parentNode});`);
+			this.builders.mount.addLine(`@append(${parentNode}, ${name});`);
 			if (parentNode === 'document.head') this.builders.destroy.addLine(`@detachNode(${name});`);
 		} else {
-			this.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
+			this.builders.mount.addLine(`@insert(#target, ${name}, anchor);`);
 			if (!noDetach) this.builders.destroy.addConditional('detach', `@detachNode(${name});`);
 		}
 	}

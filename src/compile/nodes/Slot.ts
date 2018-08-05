@@ -85,17 +85,17 @@ export default class Slot extends Element {
 		if (parentNode) {
 			block.builders.mount.addBlock(deindent`
 				${mountLeadin} {
-					${needsAnchorBefore && `@appendNode(${anchorBefore} || (${anchorBefore} = @createComment()), ${parentNode});`}
-					@appendNode(${content_name}, ${parentNode});
-					${needsAnchorAfter && `@appendNode(${anchorAfter} || (${anchorAfter} = @createComment()), ${parentNode});`}
+					${needsAnchorBefore && `@append(${parentNode}, ${anchorBefore} || (${anchorBefore} = @createComment()));`}
+					@append(${parentNode}, ${content_name});
+					${needsAnchorAfter && `@append(${parentNode}, ${anchorAfter} || (${anchorAfter} = @createComment()));`}
 				}
 			`);
 		} else {
 			block.builders.mount.addBlock(deindent`
 				${mountLeadin} {
-					${needsAnchorBefore && `@insertNode(${anchorBefore} || (${anchorBefore} = @createComment()), #target, anchor);`}
-					@insertNode(${content_name}, #target, anchor);
-					${needsAnchorAfter && `@insertNode(${anchorAfter} || (${anchorAfter} = @createComment()), #target, anchor);`}
+					${needsAnchorBefore && `@insert(#target, ${anchorBefore} || (${anchorBefore} = @createComment()), anchor);`}
+					@insert(#target, ${content_name}, anchor);
+					${needsAnchorAfter && `@insert(#target, ${anchorAfter} || (${anchorAfter} = @createComment()), anchor);`}
 				}
 			`);
 		}
