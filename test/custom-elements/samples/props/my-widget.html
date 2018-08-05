@@ -1,9 +1,14 @@
-<p>{(items || []).length} items</p>
-<p>{(items || []).join(', ')}</p>
-<p>{JSON.stringify(items)}</p>
+<p>{items.length} items</p>
+<p>{items.join(', ')}</p>
 
 <script>
 	export default {
-		tag: 'my-widget'
+		tag: 'my-widget',
+
+		data() {
+			return {
+				items: []
+			};
+		}
 	};
 </script>
