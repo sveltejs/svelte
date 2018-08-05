@@ -11,7 +11,7 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, p, anchor);
 		},
 
 		p: noop,
@@ -76,7 +76,7 @@ function createElement(name) {
 
 function noop() {}
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 

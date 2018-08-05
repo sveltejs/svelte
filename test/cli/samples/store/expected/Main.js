@@ -11,9 +11,9 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(h1, target, anchor);
-			appendNode(text, h1);
-			appendNode(text_1, h1);
+			insert(target, h1, anchor);
+			append(h1, text);
+			append(h1, text_1);
 		},
 
 		p(changed, ctx) {
@@ -67,11 +67,11 @@ function createText(data) {
 	return document.createTextNode(data);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 

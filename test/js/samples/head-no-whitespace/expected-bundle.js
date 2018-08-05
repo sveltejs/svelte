@@ -5,7 +5,7 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
@@ -146,8 +146,8 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			appendNode(meta, document.head);
-			appendNode(meta_1, document.head);
+			append(document.head, meta);
+			append(document.head, meta_1);
 		},
 
 		p: noop,

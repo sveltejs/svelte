@@ -5,11 +5,11 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -140,7 +140,7 @@ function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-1slhpfn-style';
 	style.textContent = "@media(min-width: 1px){div.svelte-1slhpfn{color:red}}";
-	appendNode(style, document.head);
+	append(document.head, style);
 }
 
 function create_main_fragment(component, ctx) {
@@ -153,7 +153,7 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(div, target, anchor);
+			insert(target, div, anchor);
 		},
 
 		p: noop,

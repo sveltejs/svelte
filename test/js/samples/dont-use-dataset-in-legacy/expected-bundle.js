@@ -5,7 +5,7 @@ function assign(tar, src) {
 	return tar;
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -153,9 +153,9 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(div, target, anchor);
-			insertNode(text, target, anchor);
-			insertNode(div_1, target, anchor);
+			insert(target, div, anchor);
+			insert(target, text, anchor);
+			insert(target, div_1, anchor);
 		},
 
 		p(changed, ctx) {
