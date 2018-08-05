@@ -83,7 +83,6 @@ export default function validateElement(
 
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Ref') {
-			// console.dir(isValidIdentifier(attribute.name));
 			if (!isValidIdentifier(attribute.name)) {
 				const suggestion = attribute.name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
 				
