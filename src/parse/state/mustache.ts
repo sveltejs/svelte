@@ -314,7 +314,13 @@ export default function mustache(parser: Parser) {
 			expression,
 		});
 	} else if (parser.eat('@debug')) {
-		const expression = readExpression(parser);
+		let expression;
+
+		// Implies {@debug} which indicates "debug all"
+		if (/\s*}/.test(parser.template[parser.index]))
+			expression = null;
+		else
+			expression = readExpression(parser);
 	
 		parser.allowWhitespace();
 		parser.eat('}', true);
