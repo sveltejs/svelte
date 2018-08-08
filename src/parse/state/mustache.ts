@@ -313,6 +313,20 @@ export default function mustache(parser: Parser) {
 			type: 'RawMustacheTag',
 			expression,
 		});
+	} else if (parser.eat('@debug')) {
+		const expression = readExpression(parser);
+		
+		parser.allowWhitespace();
+		parser.eat('}', true);
+
+		// console.error(expression);
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'DebugTag',
+			expression
+		});
 	} else {
 		const expression = readExpression(parser);
 
