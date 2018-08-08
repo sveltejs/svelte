@@ -1,21 +1,34 @@
 import Node from './shared/Node';
 import Tag from './shared/Tag';
 import Block from '../dom/Block';
+import Expression from './shared/Expression';
 import deindent from '../../utils/deindent';
 
-export default class DebugTag extends Tag {
+export default class DebugTag extends Node {
+	expression: Expression;
+	
+	constructor(compiler, parent, scope, info) {
+		super(compiler, parent, scope, info);
+		if (info.expression !== null)
+			// Debug when expression nodes change		
+			this.expression = new Expression(compiler, parent, scope, info.expression);
+		else
+			// "Debug all"
+			this.expression = info.expression
+	}
+
 	build(
 		block: Block,
 		parentNode: string,
 		parentNodes: string,
 	) {
-		const { dependencies } = this.expression;
-
 		// Debug all
-		if (dependencies.has('_')) {
+		if (this.expression === null) {
 			block.builders.create.addLine('debugger;');
 			block.builders.update.addLine('debugger;');
 		} else {
+			const { dependencies } = this.expression;
+
 			const condition = [...dependencies].map(d => `changed.${d}`).join(' || ');
 
 			const identifiers = [...dependencies].join(', ');

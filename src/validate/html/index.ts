@@ -74,19 +74,6 @@ export default function validateHtml(validator: Validator, html: Node) {
 			});
 		}
 
-		else if (node.type === 'DebugTag') {
-			// Only allow the `_` expression if it's by itself
-			// i.e. {@debug _, name } is redundantredundant-debug-all
-			const names = node.expression.expressions.map(e => e.name);
-
-			if (names.length > 0 && names.includes('_')) {
-				validator.error(node, {
-					code: 'redundant-debug-all',
-					message: `Combining other expressions with '_' is redundant`
-				});
-			}
-		}
-
 		if (validator.options.dev && isEmptyBlock(node)) {
 			validator.warn(node, {
 				code: `empty-block`,
