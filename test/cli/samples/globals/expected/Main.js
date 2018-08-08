@@ -19,9 +19,9 @@ var Main = (function(answer) { "use strict";
 			},
 
 			m(target, anchor) {
-				insertNode(p, target, anchor);
-				appendNode(text, p);
-				appendNode(text_1, p);
+				insert(target, p, anchor);
+				append(p, text);
+				append(p, text_1);
 			},
 
 			p(changed, ctx) {
@@ -72,11 +72,11 @@ var Main = (function(answer) { "use strict";
 		return document.createTextNode(data);
 	}
 
-	function insertNode(node, target, anchor) {
+	function insert(target, node, anchor) {
 		target.insertBefore(node, anchor);
 	}
 
-	function appendNode(node, target) {
+	function append(target, node) {
 		target.appendChild(node);
 	}
 

@@ -9,10 +9,8 @@ const elementsWithoutText = new Set([
 	'audio',
 	'datalist',
 	'dl',
-	'ol',
 	'optgroup',
 	'select',
-	'ul',
 	'video',
 ]);
 
@@ -39,8 +37,6 @@ export default class Text extends Node {
 	}
 
 	init(block: Block) {
-		const parentElement = this.findNearest(/(?:Element|Component)/);
-
 		if (shouldSkip(this)) {
 			this.shouldSkip = true;
 			return;
@@ -65,7 +61,7 @@ export default class Text extends Node {
 	}
 
 	remount(name: string) {
-		return `@appendNode(${this.var}, ${name}._slotted.default);`;
+		return `@append(${name}._slotted.default, ${this.var});`;
 	}
 
 	ssr() {

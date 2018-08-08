@@ -5,11 +5,11 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -151,7 +151,7 @@ function add_css() {
 	var style = createElement("style");
 	style.id = 'svelte-1a7i8ec-style';
 	style.textContent = "p.svelte-1a7i8ec{color:red}";
-	appendNode(style, document.head);
+	append(document.head, style);
 }
 
 function create_main_fragment(component, ctx) {
@@ -165,8 +165,8 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
-			appendNode(text, p);
+			insert(target, p, anchor);
+			append(p, text);
 		},
 
 		p(changed, ctx) {

@@ -5,11 +5,11 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -179,7 +179,7 @@ function create_main_fragment(component, ctx) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insertNode(each_anchor, target, anchor);
+			insert(target, each_anchor, anchor);
 		},
 
 		p(changed, ctx) {
@@ -226,8 +226,8 @@ function create_each_block(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(span, target, anchor);
-			appendNode(text, span);
+			insert(target, span, anchor);
+			append(span, text);
 		},
 
 		p(changed, ctx) {

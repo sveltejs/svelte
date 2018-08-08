@@ -5,11 +5,11 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -179,21 +179,21 @@ function create_main_fragment(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(div, target, anchor);
+			insert(target, div, anchor);
 			if (if_block) if_block.m(div, null);
-			appendNode(text, div);
-			appendNode(p, div);
-			appendNode(text_2, div);
+			append(div, text);
+			append(div, p);
+			append(div, text_2);
 			if (if_block_1) if_block_1.m(div, null);
-			appendNode(text_3, div);
+			append(div, text_3);
 			if (if_block_2) if_block_2.m(div, null);
-			appendNode(text_4, div);
-			appendNode(p_1, div);
-			appendNode(text_6, div);
+			append(div, text_4);
+			append(div, p_1);
+			append(div, text_6);
 			if (if_block_3) if_block_3.m(div, null);
-			insertNode(text_8, target, anchor);
+			insert(target, text_8, anchor);
 			if (if_block_4) if_block_4.m(target, anchor);
-			insertNode(if_block_4_anchor, target, anchor);
+			insert(target, if_block_4_anchor, anchor);
 		},
 
 		p(changed, ctx) {
@@ -285,7 +285,7 @@ function create_if_block(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, p, anchor);
 		},
 
 		d(detach) {
@@ -307,7 +307,7 @@ function create_if_block_1(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, p, anchor);
 		},
 
 		d(detach) {
@@ -329,7 +329,7 @@ function create_if_block_2(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, p, anchor);
 		},
 
 		d(detach) {
@@ -351,7 +351,7 @@ function create_if_block_3(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, p, anchor);
 		},
 
 		d(detach) {
@@ -373,7 +373,7 @@ function create_if_block_4(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(p, target, anchor);
+			insert(target, p, anchor);
 		},
 
 		d(detach) {
