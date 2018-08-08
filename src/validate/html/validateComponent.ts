@@ -26,12 +26,7 @@ export default function validateComponent(
 			if (!isValidIdentifier(attribute.name)) {
 				const suggestion = attribute.name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
 				
-				const key = {
-					start: attribute.start,
-					end: attribute.end
-				};
-				
-				validator.error(key, {
+				validator.error(attribute, {
 					code: `invalid-reference-name`,
 					message: `Reference name '${attribute.name}' is invalid — must be a valid identifier such as ${suggestion}`
 				});	
