@@ -11,15 +11,21 @@ export default class DebugTag extends Tag {
 	) {
 		const { dependencies } = this.expression;
 
-		const condition = [...dependencies].map(d => `changed.${d}`).join(' || ');
+		// Debug all
+		if (dependencies.has('_')) {
+			block.builders.create.addLine('debugger;');
+			block.builders.update.addLine('debugger;');
+		} else {
+			const condition = [...dependencies].map(d => `changed.${d}`).join(' || ');
 
-		const identifiers = [...dependencies].join(', ');
+			const identifiers = [...dependencies].join(', ');
 
-		block.builders.update.addBlock(deindent`
-			if (${condition}) {
-				const { ${identifiers} } = ctx;
-				debugger;
-			}
-		`);
+			block.builders.update.addBlock(deindent`
+				if (${condition}) {
+					const { ${identifiers} } = ctx;
+					debugger;
+				}
+			`);
+		}
 	}
 }
