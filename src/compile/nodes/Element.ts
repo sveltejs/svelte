@@ -21,7 +21,8 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const booleanAttributes = new Set(['async',
+const booleanAttributes = new Set([
+	'async',
 	'autocomplete',
 	'autofocus',
 	'autoplay',
