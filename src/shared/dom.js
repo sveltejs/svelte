@@ -1,8 +1,8 @@
-export function appendNode(node, target) {
+export function append(target, node) {
 	target.appendChild(node);
 }
 
-export function insertNode(node, target, anchor) {
+export function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 

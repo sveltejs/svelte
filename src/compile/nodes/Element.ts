@@ -288,14 +288,14 @@ export default class Element extends Node {
 
 		if (initialMountNode) {
 			block.builders.mount.addLine(
-				`@appendNode(${node}, ${initialMountNode});`
+				`@append(${initialMountNode}, ${node});`
 			);
 
 			if (initialMountNode === 'document.head') {
 				block.builders.destroy.addLine(`@detachNode(${node});`);
 			}
 		} else {
-			block.builders.mount.addLine(`@insertNode(${node}, #target, anchor);`);
+			block.builders.mount.addLine(`@insert(#target, ${node}, anchor);`);
 
 			// TODO we eventually need to consider what happens to elements
 			// that belong to the same outgroup as an outroing element...
@@ -854,10 +854,10 @@ export default class Element extends Node {
 		const slot = this.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
 			const prop = quotePropIfNecessary(slot.chunks[0].data);
-			return `@appendNode(${this.var}, ${name}._slotted${prop});`;
+			return `@append(${name}._slotted${prop}, ${this.var});`;
 		}
 
-		return `@appendNode(${this.var}, ${name}._slotted.default);`;
+		return `@append(${name}._slotted.default, ${this.var});`;
 	}
 
 	addCssClass(className = this.compiler.stylesheet.id) {

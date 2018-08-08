@@ -5,11 +5,11 @@ function assign(tar, src) {
 	return tar;
 }
 
-function appendNode(node, target) {
+function append(target, node) {
 	target.appendChild(node);
 }
 
-function insertNode(node, target, anchor) {
+function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -183,9 +183,9 @@ function create_main_fragment(component, ctx) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insertNode(text, target, anchor);
-			insertNode(p, target, anchor);
-			appendNode(text_1, p);
+			insert(target, text, anchor);
+			insert(target, p, anchor);
+			append(p, text_1);
 		},
 
 		p(changed, ctx) {
@@ -248,17 +248,17 @@ function create_each_block(component, ctx) {
 		},
 
 		m(target, anchor) {
-			insertNode(div, target, anchor);
-			appendNode(strong, div);
-			appendNode(text, strong);
-			appendNode(text_1, div);
-			appendNode(span, div);
-			appendNode(text_2, span);
-			appendNode(text_3, span);
-			appendNode(text_4, span);
-			appendNode(text_5, span);
-			appendNode(text_6, div);
-			appendNode(raw_before, div);
+			insert(target, div, anchor);
+			append(div, strong);
+			append(strong, text);
+			append(div, text_1);
+			append(div, span);
+			append(span, text_2);
+			append(span, text_3);
+			append(span, text_4);
+			append(span, text_5);
+			append(div, text_6);
+			append(div, raw_before);
 			raw_before.insertAdjacentHTML("afterend", raw_value);
 		},
 
