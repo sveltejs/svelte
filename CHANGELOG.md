@@ -1,5 +1,11 @@
 # Svelte changelog
 
+## 2.9.11
+
+* Pass props to custom elements rather than setting attributes, where appropriate ([#875](https://github.com/sveltejs/svelte/issues/875))
+* Handle whitespace in lists consistently between SSR and DOM renderers ([#1637](https://github.com/sveltejs/svelte/pull/1637))
+* Improve error for invalid `ref` names ([#1613](https://github.com/sveltejs/svelte/issues/1613))
+
 ## 2.9.10
 
 * Handle `null` consistently in tags ([#1598](https://github.com/sveltejs/svelte/issues/1598))
