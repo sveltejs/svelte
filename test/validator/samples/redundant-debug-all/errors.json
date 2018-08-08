@@ -1,0 +1,15 @@
+[{
+	"message": "Combining other expressions with '_' is redundant",
+	"start": {
+		"line": 1,
+		"column": 0,
+		"character": 0
+	},
+	"end":{
+		"line": 1,
+		"column": 16,
+		"character": 16
+	},
+	"pos": 0,
+	"code": "redundant-debug-all"
+}]
