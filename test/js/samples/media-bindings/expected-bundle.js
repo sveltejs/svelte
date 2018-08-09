@@ -17,12 +17,12 @@ function createElement(name) {
 	return document.createElement(name);
 }
 
-function addListener(node, event, handler) {
-	node.addEventListener(event, handler, false);
+function addListener(node, event, handler, options) {
+	node.addEventListener(event, handler, options);
 }
 
-function removeListener(node, event, handler) {
-	node.removeEventListener(event, handler, false);
+function removeListener(node, event, handler, options) {
+	node.removeEventListener(event, handler, options);
 }
 
 function timeRangesToArray(ranges) {
