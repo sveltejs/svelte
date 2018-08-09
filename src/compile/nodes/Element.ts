@@ -6,6 +6,7 @@ import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
+import getEventModifiers from '../../utils/getEventModifiers';
 import Compiler from '../Compiler';
 import Node from './shared/Node';
 import Block from '../dom/Block';
@@ -21,7 +22,45 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const booleanAttributes = new Set('async autocomplete autofocus autoplay border challenge checked compact contenteditable controls default defer disabled formnovalidate frameborder hidden indeterminate ismap loop multiple muted nohref noresize noshade novalidate nowrap open readonly required reversed scoped scrolling seamless selected sortable spellcheck translate'.split(' '));
+const booleanAttributes = new Set([
+	'async',
+	'autocomplete',
+	'autofocus',
+	'autoplay',
+	'border',
+	'challenge',
+	'checked',
+	'compact',
+	'contenteditable',
+	'controls',
+	'default',
+	'defer',
+	'disabled',
+	'formnovalidate',
+	'frameborder',
+	'hidden',
+	'indeterminate',
+	'ismap',
+	'loop',
+	'multiple',
+	'muted',
+	'nohref',
+	'noresize',
+	'noshade',
+	'novalidate',
+	'nowrap',
+	'open',
+	'readonly',
+	'required',
+	'reversed',
+	'scoped',
+	'scrolling',
+	'seamless',
+	'selected',
+	'sortable',
+	'spellcheck',
+	'translate'
+]);
 
 export default class Element extends Node {
 	type: 'Element';
@@ -612,14 +651,19 @@ export default class Element extends Node {
 
 			const target = handler.shouldHoist ? 'this' : this.var;
 
+			// split by | to remove stop, prevent, pass, etc.
+			const eventName = handler.name.split('|')[0];
+			
 			// get a name for the event handler that is globally unique
-			// if hoisted, locally unique otherwise
+			// if hoisted, locally unique otherwise.
 			const handlerName = (handler.shouldHoist ? compiler : block).getUniqueName(
-				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+				`${eventName.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
 			const component = block.alias('component'); // can't use #component, might be hoisted
 
+			const { bodyModifiers, optionModifiers } = getEventModifiers(handler.name);
+			
 			// create the handler body
 			const handlerBody = deindent`
 				${handler.shouldHoist && (
@@ -627,7 +671,7 @@ export default class Element extends Node {
 						? `const { ${[handler.usesComponent && 'component', handler.usesContext && 'ctx'].filter(Boolean).join(', ')} } = ${target}._svelte;`
 						: null
 				)}
-
+				${bodyModifiers}
 				${handler.snippet ?
 					handler.snippet :
 					`${component}.fire("${handler.name}", event);`}
@@ -659,11 +703,11 @@ export default class Element extends Node {
 				}
 
 				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${handler.name}", ${handlerName});`
+					`@addListener(${this.var}, "${eventName}", ${handlerName}, ${JSON.stringify(optionModifiers)});`
 				);
 
 				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
+					`@removeListener(${this.var}, "${eventName}", ${handlerName}, ${JSON.stringify(optionModifiers)});`
 				);
 			}
 		});
