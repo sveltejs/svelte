@@ -73,12 +73,12 @@ export function createComment() {
 	return document.createComment('');
 }
 
-export function addListener(node, event, handler) {
-	node.addEventListener(event, handler, false);
+export function addListener(node, event, handler, options) {
+	node.addEventListener(event, handler, options);
 }
 
-export function removeListener(node, event, handler) {
-	node.removeEventListener(event, handler, false);
+export function removeListener(node, event, handler, options) {
+	node.removeEventListener(event, handler, options);
 }
 
 export function setAttribute(node, attribute, value) {
