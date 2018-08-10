@@ -6,6 +6,8 @@ import { Node } from '../../interfaces';
 
 const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
+const validModifiers = new Set(['stop', 'prevent', 'capture', 'once', 'passive']);
+
 export default function validateEventHandlerCallee(
 	validator: Validator,
 	attribute: Node,
@@ -19,6 +21,17 @@ export default function validateEventHandlerCallee(
 		validator.error(attribute.expression, {
 			code: `invalid-event-handler`,
 			message: `Expected a call expression`
+		});
+	}
+
+	const modifiers = attribute.name.split('|').slice(1);
+	if (
+		modifiers.length > 0 &&
+		modifiers.filter(m => !validModifiers.has(m)).length > 0
+	) {
+		validator.error(attribute, {
+			code: 'invalid-event-modifiers',
+			message: `Valid event modifiers are ${[...validModifiers].join(', ')}.`
 		});
 	}
 
