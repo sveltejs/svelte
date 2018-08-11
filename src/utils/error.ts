@@ -22,7 +22,6 @@ export default function error(message: string, props: {
 	start: number,
 	end?: number
 }) {
-	console.error(props);
 	const error = new CompileError(message);
 	error.name = props.name;
 
