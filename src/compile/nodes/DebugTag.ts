@@ -7,9 +7,12 @@ import addToSet from '../../utils/addToSet';
 
 export default class DebugTag extends Node {
 	expressions: Expression[];
+	shouldSkip: boolean;
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
+
+		this.shouldSkip = !compiler.options.dev;
 
 		this.expressions = info.identifiers.map(node => {
 			return new Expression(compiler, parent, scope, node);
@@ -21,6 +24,8 @@ export default class DebugTag extends Node {
 		parentNode: string,
 		parentNodes: string,
 	) {
+		if (this.shouldSkip) return;
+
 		// Debug all
 		if (this.expressions.length === 0) {
 			block.builders.create.addLine('debugger;');
