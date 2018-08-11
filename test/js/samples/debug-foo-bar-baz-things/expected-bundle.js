@@ -232,8 +232,8 @@ function create_each_block(component, ctx) {
 			text = createText(text_value);
 			text_1 = createText("\n\t");
 
-			const { foo, bar, baz } = ctx;
-			console.log({ foo, bar, baz });
+			const { foo, bar, baz, thing } = ctx;
+			console.log({ foo, bar, baz, thing });
 			debugger;
 		},
 
@@ -248,9 +248,9 @@ function create_each_block(component, ctx) {
 				setData(text, text_value);
 			}
 
-			if (changed.foo || changed.bar || changed.baz) {
-				const { foo, bar, baz } = ctx;
-				console.log({ foo, bar, baz });
+			if (changed.foo || changed.bar || changed.baz || changed.things) {
+				const { foo, bar, baz, thing } = ctx;
+				console.log({ foo, bar, baz, thing });
 				debugger;
 			}
 		},
