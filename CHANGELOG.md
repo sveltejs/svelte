@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.10.0
+
+* Add a `{@debug}` tag, for inspecting values in templates in dev mode ([#1635](https://github.com/sveltejs/svelte/issues/1635))
+* Fix dimension bindings in iOS ([#1642](https://github.com/sveltejs/svelte/pull/1642))
+
 ## 2.9.11
 
 * Pass props to custom elements rather than setting attributes, where appropriate ([#875](https://github.com/sveltejs/svelte/issues/875))
