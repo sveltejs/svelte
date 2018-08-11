@@ -21,7 +21,45 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const booleanAttributes = new Set('async autocomplete autofocus autoplay border challenge checked compact contenteditable controls default defer disabled formnovalidate frameborder hidden indeterminate ismap loop multiple muted nohref noresize noshade novalidate nowrap open readonly required reversed scoped scrolling seamless selected sortable spellcheck translate'.split(' '));
+const booleanAttributes = new Set([
+	'async',
+	'autocomplete',
+	'autofocus',
+	'autoplay',
+	'border',
+	'challenge',
+	'checked',
+	'compact',
+	'contenteditable',
+	'controls',
+	'default',
+	'defer',
+	'disabled',
+	'formnovalidate',
+	'frameborder',
+	'hidden',
+	'indeterminate',
+	'ismap',
+	'loop',
+	'multiple',
+	'muted',
+	'nohref',
+	'noresize',
+	'noshade',
+	'novalidate',
+	'nowrap',
+	'open',
+	'readonly',
+	'required',
+	'reversed',
+	'scoped',
+	'scrolling',
+	'seamless',
+	'selected',
+	'sortable',
+	'spellcheck',
+	'translate'
+]);
 
 export default class Element extends Node {
 	type: 'Element';

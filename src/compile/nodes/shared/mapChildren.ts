@@ -7,6 +7,7 @@ import Head from '../Head';
 import IfBlock from '../IfBlock';
 import MustacheTag from '../MustacheTag';
 import RawMustacheTag from '../RawMustacheTag';
+import DebugTag from '../DebugTag';
 import Slot from '../Slot';
 import Text from '../Text';
 import Title from '../Title';
@@ -24,6 +25,7 @@ function getConstructor(type): typeof Node {
 		case 'IfBlock': return IfBlock;
 		case 'MustacheTag': return MustacheTag;
 		case 'RawMustacheTag': return RawMustacheTag;
+		case 'DebugTag': return DebugTag;
 		case 'Slot': return Slot;
 		case 'Text': return Text;
 		case 'Title': return Title;
