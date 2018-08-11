@@ -1,6 +1,6 @@
 [{
 	"code": "invalid-debug-args",
-	"message": "{@debug ...} arguments must be identifers, not arbitrary expressions",
+	"message": "{@debug ...} arguments must be identifiers, not arbitrary expressions",
 	"start": {
 		"line": 2,
 		"column": 9,
