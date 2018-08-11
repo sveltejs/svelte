@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-debug-args",
+	"message": "{@debug ...} arguments must be identifers, not arbitrary expressions",
+	"start": {
+		"line": 2,
+		"column": 9,
+		"character": 13
+	},
+	"end": {
+		"line": 2,
+		"column": 9,
+		"character": 13
+	},
+	"pos": 13
+}]

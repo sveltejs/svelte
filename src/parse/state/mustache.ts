@@ -320,8 +320,14 @@ export default function mustache(parser: Parser) {
 		if (/\s*}/.test(parser.template[parser.index]))
 			expression = null;
 		else
-			expression = readExpression(parser);
-	
+			expression = readExpression(parser);				
+
+		if (expression !== null && expression.type !== 'SequenceExpression')
+			parser.error({
+				code: 'invalid-debug-args',
+				message: '{@debug ...} arguments must be identifers, not arbitrary expressions'
+			}, expression.start);
+
 		parser.allowWhitespace();
 		parser.eat('}', true);
 

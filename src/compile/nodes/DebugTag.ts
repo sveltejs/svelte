@@ -31,13 +31,20 @@ export default class DebugTag extends Node {
 
 			const condition = [...dependencies].map(d => `changed.${d}`).join(' || ');
 
-			const identifiers = [...dependencies].join(', ');
+			const identifiers = this.expression.node.expressions.map(e => e.name).join(', ');
 
 			block.builders.update.addBlock(deindent`
 				if (${condition}) {
 					const { ${identifiers} } = ctx;
+					console.log({ ${identifiers} });
 					debugger;
 				}
+			`);
+
+			block.builders.create.addBlock(deindent`
+				const { ${identifiers} } = ctx;
+				console.log({ ${identifiers} });
+				debugger;
 			`);
 		}
 	}
