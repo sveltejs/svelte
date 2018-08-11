@@ -7,12 +7,9 @@ import addToSet from '../../utils/addToSet';
 
 export default class DebugTag extends Node {
 	expressions: Expression[];
-	shouldSkip: boolean;
 
 	constructor(compiler, parent, scope, info) {
 		super(compiler, parent, scope, info);
-
-		this.shouldSkip = !compiler.options.dev;
 
 		this.expressions = info.identifiers.map(node => {
 			return new Expression(compiler, parent, scope, node);
@@ -24,13 +21,26 @@ export default class DebugTag extends Node {
 		parentNode: string,
 		parentNodes: string,
 	) {
-		if (this.shouldSkip) return;
+		if (!this.compiler.options.dev) return;
+
+		const { code } = this.compiler;
 
 		// Debug all
 		if (this.expressions.length === 0) {
-			block.builders.create.addLine('debugger;');
-			block.builders.update.addLine('debugger;');
+			code.overwrite(this.start + 1, this.start + 7, 'debugger', {
+				storeName: true
+			});
+			const statement = `[✂${this.start + 1}-${this.start + 7}✂];`;
+
+			block.builders.create.addLine(statement);
+			block.builders.update.addLine(statement);
 		} else {
+			const { code } = this.compiler;
+			code.overwrite(this.start + 1, this.start + 7, 'log', {
+				storeName: true
+			});
+			const log = `[✂${this.start + 1}-${this.start + 7}✂]`;
+
 			const dependencies = new Set();
 			this.expressions.forEach(expression => {
 				addToSet(dependencies, expression.dependencies);
@@ -43,15 +53,17 @@ export default class DebugTag extends Node {
 			block.builders.update.addBlock(deindent`
 				if (${condition}) {
 					const { ${identifiers} } = ctx;
-					console.log({ ${identifiers} });
+					console.${log}({ ${identifiers} });
 					debugger;
 				}
 			`);
 
 			block.builders.create.addBlock(deindent`
-				const { ${identifiers} } = ctx;
-				console.log({ ${identifiers} });
-				debugger;
+				{
+					const { ${identifiers} } = ctx;
+					console.${log}({ ${identifiers} });
+					debugger;
+				}
 			`);
 		}
 	}
