@@ -314,28 +314,36 @@ export default function mustache(parser: Parser) {
 			expression,
 		});
 	} else if (parser.eat('@debug')) {
-		let expression;
+		let identifiers;
 
 		// Implies {@debug} which indicates "debug all"
-		if (/\s*}/.test(parser.template[parser.index]))
-			expression = null;
-		else
-			expression = readExpression(parser);				
+		if (parser.read(/\s*}/)) {
+			identifiers = [];
+		} else {
+			const expression = readExpression(parser);
 
-		if (expression !== null && expression.type !== 'SequenceExpression')
-			parser.error({
-				code: 'invalid-debug-args',
-				message: '{@debug ...} arguments must be identifers, not arbitrary expressions'
-			}, expression.start);
+			identifiers = expression.type === 'SequenceExpression'
+				? expression.expressions
+				: [expression];
 
-		parser.allowWhitespace();
-		parser.eat('}', true);
+			identifiers.forEach(node => {
+				if (node.type !== 'Identifier') {
+					parser.error({
+						code: 'invalid-debug-args',
+						message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
+					}, node.start);
+				}
+			});
+
+			parser.allowWhitespace();
+			parser.eat('}', true);
+		}
 
 		parser.current().children.push({
 			start,
 			end: parser.index,
 			type: 'DebugTag',
-			expression,
+			identifiers
 		});
 	} else {
 		const expression = readExpression(parser);
