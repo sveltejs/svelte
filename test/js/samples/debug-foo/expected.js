@@ -86,9 +86,11 @@ function create_each_block(component, ctx) {
 			text = createText(text_value);
 			text_1 = createText("\n\t");
 
-			const { foo } = ctx;
-			console.log({ foo });
-			debugger;
+			{
+				const { foo } = ctx;
+				console.log({ foo });
+				debugger;
+			}
 			addLoc(span, file, 1, 1, 25);
 		},
 

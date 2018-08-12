@@ -259,9 +259,11 @@ function create_each_block(component, ctx) {
 			text = createText(text_value);
 			text_1 = createText("\n\t");
 
-			const { foo, bar, baz, thing } = ctx;
-			console.log({ foo, bar, baz, thing });
-			debugger;
+			{
+				const { foo, bar, baz, thing } = ctx;
+				console.log({ foo, bar, baz, thing });
+				debugger;
+			}
 			addLoc(span, file, 1, 1, 25);
 		},
 
