@@ -6,7 +6,7 @@ import { Node } from '../../interfaces';
 
 const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
-const validModifiers = new Set(['stop', 'prevent', 'capture', 'once', 'passive']);
+const validModifiers = new Set(['stopPropagation', 'preventDefault', 'capture', 'once', 'passive']);
 
 export default function validateEventHandlerCallee(
 	validator: Validator,

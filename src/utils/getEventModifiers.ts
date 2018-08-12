@@ -6,9 +6,9 @@ export default function getEventModifiers(handlerName: String) {
 	let modifiers = handlerName.split('|').slice(1);
 
 	let eventModifiers = modifiers.reduce((acc, m) => {
-		if (m === 'stop')
+		if (m === 'stopPropagation')
 			acc.bodyModifiers += 'event.stopPropagation();\n';
-		else if (m === 'prevent')
+		else if (m === 'preventDefault')
 			acc.bodyModifiers += 'event.preventDefault();\n';
 		else if (m === 'capture')
 			acc.optionModifiers[m] = true;
