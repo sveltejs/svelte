@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.10.1
+
+* Add sourcemaps to `{@debug}` tags ([#1647](https://github.com/sveltejs/svelte/pull/1647))
+
 ## 2.10.0
 
 * Add a `{@debug}` tag, for inspecting values in templates in dev mode ([#1635](https://github.com/sveltejs/svelte/issues/1635))
