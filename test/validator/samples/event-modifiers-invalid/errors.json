@@ -1,5 +1,5 @@
 [{
-  "message": "Valid event modifiers are stop, prevent, capture, once, passive.",
+  "message": "Valid event modifiers are stopPropagation, preventDefault, capture, once, passive.",
   "code": "invalid-event-modifiers",
   "start": {
     "line": 1,
