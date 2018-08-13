@@ -89,10 +89,8 @@ export default function dom(
 			} else {
 				// computed property depends on entire state object —
 				// these must go at the end
-				const arg = hasRestParam ? `@exclude(state, "${key}")` : `state`;
-
 				computationBuilder.addLine(
-					`if (this._differs(state.${key}, (state.${key} = %computed-${key}(${arg})))) changed.${key} = true;`
+					`if (this._differs(state.${key}, (state.${key} = %computed-${key}(@exclude(state, "${key}"))))) changed.${key} = true;`
 				);
 			}
 		});
