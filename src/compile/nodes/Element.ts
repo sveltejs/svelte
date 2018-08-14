@@ -846,7 +846,7 @@ export default class Element extends Node {
 			block.addVariable(name);
 			const fn = `%actions-${action.name}`;
 
-			block.builders.hydrate.addLine(
+			block.builders.mount.addLine(
 				`${name} = ${fn}.call(#component, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
 			);
 
