@@ -224,11 +224,12 @@ export default function dom(
 
 		${compiler.slots.size && `this.slots = {};`}
 
+		${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
+
 		this._fragment = @create_main_fragment(this, this._state);
 
 		${hasInitHooks && deindent`
 			this.root._oncreate.push(() => {
-				${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
 				${templateProperties.oncreate && `%oncreate.call(this);`}
 				this.fire("update", { changed: @assignTrue({}, this._state), current: this._state });
 			});
