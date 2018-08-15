@@ -107,7 +107,7 @@ export function set(newState) {
 	flush(this.root);
 }
 
-export function _set(newState) {
+export function _set(newState, options) {
 	var oldState = this._state,
 		changed = {},
 		dirty = false;
@@ -115,9 +115,22 @@ export function _set(newState) {
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
-	if (!dirty) return;
+	if (!dirty && !this._changed) return false;
 
 	this._state = assign(assign({}, oldState), newState);
+
+	if (options && options.skipRender) {
+		if (!this._oldState) this._oldState = oldState;
+		this._changed = assign(changed, this._changed);
+		return true;
+	}
+
+	if (this._changed) {
+		oldState = this._oldState;
+		changed = assign(changed, this._changed),
+		this._changed = this._oldState = null;
+	}
+
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
 
@@ -126,6 +139,7 @@ export function _set(newState) {
 		this._fragment.p(changed, this._state);
 		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
+	return true;
 }
 
 export function setDev(newState) {
