@@ -61,8 +61,9 @@ assign(Store.prototype, {
 		});
 
 		const dependents = this._dependents.slice(); // guard against mutations
-		for (let i = 0; i < dependents.length; i += 1) {
-			const dependent = dependents[i];
+		const options = { skipRender: true };
+		const empty = {};
+		const dirtyDependents = dependents.filter(dependent => {
 			const componentState = {};
 			let dirty = false;
 
@@ -74,8 +75,12 @@ assign(Store.prototype, {
 				}
 			}
 
-			if (dirty) dependent.component.set(componentState);
-		}
+			if (dirty) {
+				return dependent.component._set(componentState, options);
+			}
+		});
+
+		dirtyDependents.forEach(dependent => dependent.component.set(empty));
 
 		this.fire('update', {
 			changed,
