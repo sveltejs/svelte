@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 2.11.0
+
+* Add `--shared` CLI option ([#1649](https://github.com/sveltejs/svelte/pull/1649))
+* Run first `onstate` *before* fragment is rendered ([#1522](https://github.com/sveltejs/svelte/issues/1522))
+* Exclude current computed prop from state object ([#1544](https://github.com/sveltejs/svelte/issues/1544))
+
+
 ## 2.10.1
 
 * Add sourcemaps to `{@debug}` tags ([#1647](https://github.com/sveltejs/svelte/pull/1647))
