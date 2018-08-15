@@ -25,6 +25,13 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte) - Parcel build plugin
 * [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
 
+### CSS Preprocessors
+
+* [Less](https://github.com/ls-age/svelte-preprocess-less)
+* [modular-css](https://github.com/tivac/modular-css/tree/master/packages/svelte)
+* [PostCSS](https://github.com/TehShrike/svelte-preprocess-postcss)
+* [Sass](https://github.com/ls-age/svelte-preprocess-sass)
+
 ### Additional tools
 
 * [svelte-dev-store](https://github.com/GarethOates/svelte-dev-store) - Use Redux tools to visualise Svelte store
