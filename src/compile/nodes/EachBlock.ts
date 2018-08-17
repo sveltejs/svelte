@@ -407,6 +407,8 @@ export default class EachBlock extends Node {
 							}
 							if (fn) fn();
 						});
+					} else {
+						if (fn) fn();
 					}
 				}
 			`);
