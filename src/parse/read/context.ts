@@ -87,7 +87,7 @@ export default function readContext(parser: Parser) {
 				end: value.end,
 				type: 'Property',
 				kind: 'init',
-				shorthand: key === value,
+				shorthand: value.type === 'Identifier' && value.name === name,
 				key,
 				value
 			};
