@@ -82,7 +82,8 @@ export function removeListener(node, event, handler) {
 }
 
 export function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
+	if (value === undefined) removeAttribute(node, attribute);
+	else node.setAttribute(attribute, value);
 }
 
 export function setAttributes(node, attributes) {
@@ -90,8 +91,7 @@ export function setAttributes(node, attributes) {
 		if (key in node) {
 			node[key] = attributes[key];
 		} else {
-			if (attributes[key] === undefined) removeAttribute(node, key);
-			else setAttribute(node, key, attributes[key]);
+			setAttribute(node, key, attributes[key]);
 		}
 	}
 }
