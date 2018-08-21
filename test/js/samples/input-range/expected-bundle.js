@@ -26,7 +26,12 @@ function removeListener(node, event, handler) {
 }
 
 function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
+	if (value == null) removeAttribute(node, attribute);
+	else node.setAttribute(attribute, value);
+}
+
+function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
 }
 
 function toNumber(value) {
