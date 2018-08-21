@@ -82,7 +82,7 @@ export function removeListener(node, event, handler) {
 }
 
 export function setAttribute(node, attribute, value) {
-	if (value === undefined) removeAttribute(node, attribute);
+	if (value == null) removeAttribute(node, attribute);
 	else node.setAttribute(attribute, value);
 }
 
