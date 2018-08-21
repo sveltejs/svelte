@@ -212,16 +212,6 @@ export default function dom(
 			`if (!document.getElementById("${compiler.stylesheet.id}-style")) @add_css();`)
 		}
 
-		${(hasInitHooks || compiler.hasComponents || target.hasComplexBindings || target.hasIntroTransitions) && deindent`
-			if (!options.root) {
-				this._oncreate = [];
-				${(compiler.hasComponents || target.hasComplexBindings) && `this._beforecreate = [];`}
-				${(compiler.hasComponents || target.hasIntroTransitions) && `this._aftercreate = [];`}
-			}
-		`}
-
-		${compiler.slots.size && `this.slots = {};`}
-
 		${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
 
 		this._fragment = @create_main_fragment(this, this._state);
@@ -241,24 +231,18 @@ export default function dom(
 		` : deindent`
 			if (options.target) {
 				${compiler.options.hydratable
-					? deindent`
-						var nodes = @children(options.target);
-						options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
-						nodes.forEach(@detachNode);
-					` :
-					deindent`
-						${options.dev && `if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
-						this._fragment.c();
-					`}
+				? deindent`
+				var nodes = @children(options.target);
+				options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
+				nodes.forEach(@detachNode);` :
+				deindent`
+				${options.dev &&
+				`if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
+				this._fragment.c();`}
 				this._mount(options.target, options.anchor);
 
-				${(compiler.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) && deindent`
-					${compiler.hasComponents && `this._lock = true;`}
-					${(compiler.hasComponents || target.hasComplexBindings) && `@callAll(this._beforecreate);`}
-					${(compiler.hasComponents || hasInitHooks) && `@callAll(this._oncreate);`}
-					${(compiler.hasComponents || target.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-					${compiler.hasComponents && `this._lock = false;`}
-				`}
+				${(compiler.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) &&
+				`@flush(this);`}
 			}
 		`}
 
@@ -302,11 +286,7 @@ export default function dom(
 
 				${(compiler.hasComponents || target.hasComplexBindings || templateProperties.oncreate || target.hasIntroTransitions) && deindent`
 					connectedCallback() {
-						${compiler.hasComponents && `this._lock = true;`}
-						${(compiler.hasComponents || target.hasComplexBindings) && `@callAll(this._beforecreate);`}
-						${(compiler.hasComponents || templateProperties.oncreate) && `@callAll(this._oncreate);`}
-						${(compiler.hasComponents || target.hasIntroTransitions) && `@callAll(this._aftercreate);`}
-						${compiler.hasComponents && `this._lock = false;`}
+						@flush(this);
 					}
 				`}
 			}
