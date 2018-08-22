@@ -55,7 +55,7 @@
 				],
 				"context": {
 					"start": 18,
-					"end": null,
+					"end": 30,
 					"type": "ArrayPattern",
 					"elements": [
 						{
