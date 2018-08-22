@@ -57,6 +57,7 @@ export default function readContext(parser: Parser) {
 
 		errorOnAssignmentPattern(parser);
 		parser.eat(']', true);
+		context.end = parser.index;
 	}
 
 	else if (parser.eat('{')) {
@@ -95,6 +96,7 @@ export default function readContext(parser: Parser) {
 
 		errorOnAssignmentPattern(parser);
 		parser.eat('}', true);
+		context.end = parser.index;
 	}
 
 	else {
