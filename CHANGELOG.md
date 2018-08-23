@@ -1,5 +1,14 @@
 # Svelte changelog
 
+## 2.12.0
+
+* Initialise actions on mount rather than hydrate ([#1653](https://github.com/sveltejs/svelte/pull/1653))
+* Allow non-existent components to be destroyed ([#1677](https://github.com/sveltejs/svelte/pull/1677))
+* Pass AMD ID from CLI correctly ([#1672](https://github.com/sveltejs/svelte/pull/1672))
+* Minor AST tweaks ([#1673](https://github.com/sveltejs/svelte/pull/1673), [#1674](https://github.com/sveltejs/svelte/pull/1674))
+* Reduce code duplication in component initialisation ([#1670](https://github.com/sveltejs/svelte/pull/1670))
+
+
 ## 2.11.0
 
 * Add `--shared` CLI option ([#1649](https://github.com/sveltejs/svelte/pull/1649))
