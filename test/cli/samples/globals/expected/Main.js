@@ -90,11 +90,18 @@ var Main = (function(answer) { "use strict";
 
 	function init(component, options) {
 		component._handlers = blankObject();
+		component._slots = blankObject();
 		component._bind = options._bind;
 
 		component.options = options;
 		component.root = options.root || component;
 		component.store = options.store || component.root.store;
+
+		if (!options.root) {
+			component._beforecreate = [];
+			component._oncreate = [];
+			component._aftercreate = [];
+		}
 	}
 
 	function assign(tar, src) {
@@ -150,11 +157,7 @@ var Main = (function(answer) { "use strict";
 	function set(newState) {
 		this._set(assign({}, newState));
 		if (this.root._lock) return;
-		this.root._lock = true;
-		callAll(this.root._beforecreate);
-		callAll(this.root._oncreate);
-		callAll(this.root._aftercreate);
-		this.root._lock = false;
+		flush(this.root);
 	}
 
 	function _set(newState) {
@@ -190,6 +193,14 @@ var Main = (function(answer) { "use strict";
 
 	function blankObject() {
 		return Object.create(null);
+	}
+
+	function flush(component) {
+		component._lock = true;
+		callAll(component._beforecreate);
+		callAll(component._oncreate);
+		callAll(component._aftercreate);
+		component._lock = false;
 	}
 
 	function callAll(fns) {
