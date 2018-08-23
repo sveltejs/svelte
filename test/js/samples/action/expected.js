@@ -2,7 +2,7 @@
 import { assign, createElement, detachNode, init, insert, noop, proto } from "svelte/shared.js";
 
 function link(node) {
-  
+
   function onClick(event) {
     event.preventDefault();
     history.pushState(null, null, event.target.href);
@@ -25,11 +25,11 @@ function create_main_fragment(component, ctx) {
 			a = createElement("a");
 			a.textContent = "Test";
 			a.href = "#";
-			link_action = link.call(component, a) || {};
 		},
 
 		m(target, anchor) {
 			insert(target, a, anchor);
+			link_action = link.call(component, a) || {};
 		},
 
 		p: noop,
