@@ -11,6 +11,8 @@ type Property = {
 	start: number;
 	end: number;
 	type: 'Property';
+	kind: string;
+	shorthand: boolean;
 	key: Identifier;
 	value: Context;
 };
@@ -85,6 +87,8 @@ export default function readContext(parser: Parser) {
 				start,
 				end: value.end,
 				type: 'Property',
+				kind: 'init',
+				shorthand: value.type === 'Identifier' && value.name === name,
 				key,
 				value
 			};
