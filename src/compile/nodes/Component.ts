@@ -505,7 +505,7 @@ export default class Component extends Node {
 
 		if (this.compiler.options.nestedTransitions) {
 			block.builders.outro.addLine(
-				`${name}._fragment.o(#outrocallback);`
+				`if (${name}) ${name}._fragment.o(#outrocallback);`
 			);
 		}
 	}
