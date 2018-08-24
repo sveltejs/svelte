@@ -77,7 +77,7 @@ const DIRECTIVES: Record<string, {
 		attribute(start, end, type, name, expression) {
 			return { start, end, type, name, expression };
 		},
-		allowedExpressionTypes: ['Identifier', 'MemberExpression', 'ObjectExpression', 'Literal', 'CallExpression'],
+		allowedExpressionTypes: ['*'],
 		error: 'Data passed to actions must be an identifier (e.g. `foo`), a member expression ' +
 			'(e.g. `foo.bar` or `foo[baz]`), a method call (e.g. `foo()`), or a literal (e.g. `true` or `\'a string\'`'
 	},
@@ -163,7 +163,8 @@ export function readDirective(
 
 		try {
 			expression = readExpression(parser, expressionStart, quoteMark);
-			if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
+			const allowed = directive.allowedExpressionTypes;
+			if (allowed[0] !== '*' && allowed.indexOf(expression.type) === -1) {
 				parser.error({
 					code: `invalid-directive-value`,
 					message: directive.error
