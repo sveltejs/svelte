@@ -18,7 +18,19 @@ function createElement(name) {
 }
 
 function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === undefined ? '' : data);
+}
+
+function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
+}
+
+function setProperty(node, prop, attribute, value) {
+	if (value === undefined) {
+		removeAttribute(node, attribute);
+	} else {
+		node[prop] = value;
+	}
 }
 
 function blankObject() {
@@ -155,8 +167,8 @@ function create_main_fragment(component, ctx) {
 			div = createElement("div");
 			text = createText("\n");
 			div_1 = createElement("div");
-			div.style.cssText = ctx.style;
-			div_1.style.cssText = div_1_style_value = "" + ctx.key + ": " + ctx.value;
+			setProperty(div, "style.cssText", "style", ctx.style);
+			setProperty(div_1, "style.cssText", "style", div_1_style_value = "" + ctx.key + ": " + ctx.value);
 		},
 
 		m(target, anchor) {
@@ -167,11 +179,11 @@ function create_main_fragment(component, ctx) {
 
 		p(changed, ctx) {
 			if (changed.style) {
-				div.style.cssText = ctx.style;
+				setProperty(div, "style.cssText", "style", ctx.style);
 			}
 
 			if ((changed.key || changed.value) && div_1_style_value !== (div_1_style_value = "" + ctx.key + ": " + ctx.value)) {
-				div_1.style.cssText = div_1_style_value;
+				setProperty(div_1, "style.cssText", "style", div_1_style_value);
 			}
 		},
 

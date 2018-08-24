@@ -69,7 +69,7 @@ var Main = (function(answer) { "use strict";
 	}
 
 	function createText(data) {
-		return document.createTextNode(data);
+		return document.createTextNode(data === undefined ? '' : data);
 	}
 
 	function insert(target, node, anchor) {
@@ -81,7 +81,7 @@ var Main = (function(answer) { "use strict";
 	}
 
 	function setData(text, data) {
-		text.data = '' + data;
+		text.data = data === undefined ? '' : '' + data;
 	}
 
 	function detachNode(node) {

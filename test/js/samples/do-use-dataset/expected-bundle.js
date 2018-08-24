@@ -18,7 +18,19 @@ function createElement(name) {
 }
 
 function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === undefined ? '' : data);
+}
+
+function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
+}
+
+function setDataSet(node, prop, attribute, value) {
+	if (value === undefined) {
+		removeAttribute(node, attribute);
+	} else {
+		node.dataset[prop] = value;
+	}
 }
 
 function blankObject() {
@@ -156,7 +168,7 @@ function create_main_fragment(component, ctx) {
 			text = createText("\n");
 			div_1 = createElement("div");
 			div.dataset.foo = "bar";
-			div_1.dataset.foo = ctx.bar;
+			setDataSet(div_1, "foo", "data-foo", ctx.bar);
 		},
 
 		m(target, anchor) {
@@ -167,7 +179,7 @@ function create_main_fragment(component, ctx) {
 
 		p(changed, ctx) {
 			if (changed.bar) {
-				div_1.dataset.foo = ctx.bar;
+				setDataSet(div_1, "foo", "data-foo", ctx.bar);
 			}
 		},
 

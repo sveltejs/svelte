@@ -181,12 +181,13 @@ export default class Attribute extends Node {
 
 			let updater;
 			const init = shouldCache ? `${last} = ${value}` : value;
+			const updaterValue = shouldCache ? last : value;
 
 			if (isLegacyInputType) {
 				block.builders.hydrate.addLine(
 					`@setInputType(${node.var}, ${init});`
 				);
-				updater = `@setInputType(${node.var}, ${shouldCache ? last : value});`;
+				updater = `@setInputType(${node.var}, ${updaterValue});`;
 			} else if (isSelectValueAttribute) {
 				// annoying special case
 				const isMultipleSelect = node.getStaticAttributeValue('multiple');
@@ -216,19 +217,19 @@ export default class Attribute extends Node {
 				`);
 			} else if (propertyName) {
 				block.builders.hydrate.addLine(
-					`${node.var}.${propertyName} = ${init};`
+					`@setProperty(${node.var}, "${propertyName}", "${name}", ${init});`
 				);
-				updater = `${node.var}.${propertyName} = ${shouldCache ? last : value};`;
+				updater = `@setProperty(${node.var}, "${propertyName}", "${name}", ${updaterValue});`;
 			} else if (isDataSet) {
 				block.builders.hydrate.addLine(
-					`${node.var}.dataset.${camelCaseName} = ${init};`
+					`@setDataSet(${node.var}, "${camelCaseName}", "${name}", ${init});`
 				);
-				updater = `${node.var}.dataset.${camelCaseName} = ${shouldCache ? last : value};`;
+				updater = `@setDataSet(${node.var}, "${camelCaseName}", "${name}", ${updaterValue});`;
 			} else {
 				block.builders.hydrate.addLine(
 					`${method}(${node.var}, "${name}", ${init});`
 				);
-				updater = `${method}(${node.var}, "${name}", ${shouldCache ? last : value});`;
+				updater = `${method}(${node.var}, "${name}", ${updaterValue});`;
 			}
 
 			if (this.dependencies.size || isSelectValueAttribute) {

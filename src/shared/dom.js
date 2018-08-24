@@ -66,7 +66,7 @@ export function createSvgElement(name) {
 }
 
 export function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === undefined ? '' : data);
 }
 
 export function createComment() {
@@ -82,7 +82,11 @@ export function removeListener(node, event, handler) {
 }
 
 export function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
+	if (value === undefined) {
+		removeAttribute(node, attribute);
+	} else {
+		node.setAttribute(attribute, value);
+	}
 }
 
 export function setAttributes(node, attributes) {
@@ -108,6 +112,22 @@ export function setCustomElementData(node, prop, value) {
 
 export function removeAttribute(node, attribute) {
 	node.removeAttribute(attribute);
+}
+
+export function setProperty(node, prop, attribute, value) {
+	if (value === undefined) {
+		removeAttribute(node, attribute);
+	} else {
+		node[prop] = value;
+	}
+}
+
+export function setDataSet(node, prop, attribute, value) {
+	if (value === undefined) {
+		removeAttribute(node, attribute);
+	} else {
+		node.dataset[prop] = value;
+	}
 }
 
 export function setXlinkAttribute(node, attribute, value) {
@@ -166,7 +186,7 @@ export function claimText (nodes, data) {
 }
 
 export function setData(text, data) {
-	text.data = '' + data;
+	text.data = data === undefined ? '' : '' + data;
 }
 
 export function setInputType(input, type) {

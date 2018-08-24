@@ -32,7 +32,7 @@ export const escaped = {
 };
 
 export function escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+	return html === undefined ? '' : String(html).replace(/["'&<>]/g, match => escaped[match]);
 }
 
 export function each(items, assign, fn) {

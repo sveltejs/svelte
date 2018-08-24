@@ -22,7 +22,15 @@ function createSvgElement(name) {
 }
 
 function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
+	if (value === undefined) {
+		removeAttribute(node, attribute);
+	} else {
+		node.setAttribute(attribute, value);
+	}
+}
+
+function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
 }
 
 function blankObject() {

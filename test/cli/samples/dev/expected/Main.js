@@ -64,7 +64,7 @@ function createElement(name) {
 }
 
 function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === undefined ? '' : data);
 }
 
 function addLoc(element, file, line, column, char) {

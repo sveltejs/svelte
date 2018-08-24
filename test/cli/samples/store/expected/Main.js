@@ -64,7 +64,7 @@ function createElement(name) {
 }
 
 function createText(data) {
-	return document.createTextNode(data);
+	return document.createTextNode(data === undefined ? '' : data);
 }
 
 function insert(target, node, anchor) {
@@ -76,7 +76,7 @@ function append(target, node) {
 }
 
 function setData(text, data) {
-	text.data = '' + data;
+	text.data = data === undefined ? '' : '' + data;
 }
 
 function detachNode(node) {

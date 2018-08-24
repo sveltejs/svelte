@@ -7,7 +7,7 @@ export default {
 
 	html: `
 		<p>woo!</p>
-		<p>undefined</p>
+		<p></p>
 	`,
 
 	test(assert, component, target) {

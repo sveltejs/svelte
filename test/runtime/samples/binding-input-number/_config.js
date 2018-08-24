@@ -37,7 +37,7 @@ export default {
 		assert.equal( component.get().count, undefined );
 		assert.htmlEqual( target.innerHTML, `
 			<input type='number'>
-			<p>undefined undefined</p>
+			<p>undefined </p>
 		` );
 	}
 };

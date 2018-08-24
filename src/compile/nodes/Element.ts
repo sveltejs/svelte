@@ -970,13 +970,15 @@ export default class Element extends Node {
 					textareaContents = attribute.stringifyForSsr();
 				} else if (attribute.isTrue) {
 					openingTag += ` ${attribute.name}`;
-				} else if (
-					booleanAttributes.has(attribute.name) &&
-					attribute.chunks.length === 1 &&
-					attribute.chunks[0].type !== 'Text'
-				) {
-					// a boolean attribute with one non-Text chunk
-					openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
+				} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
+					if (booleanAttributes.has(attribute.name)) {
+						// a boolean attribute with one non-Text chunk
+						openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
+					} else {
+						openingTag += '${ (' + attribute.chunks[0].snippet + ') !== undefined ? ` ' +
+							` ${attribute.name}="${attribute.stringifyForSsr()}"` +
+							'` : "" }';
+					}
 				} else {
 					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
 				}
