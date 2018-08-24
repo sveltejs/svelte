@@ -32,3 +32,7 @@ export function exclude(src, prop) {
 	for (const k in src) k === prop || (tar[k] = src[k]);
 	return tar;
 }
+
+export function run(fn) {
+	fn();
+}
