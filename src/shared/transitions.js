@@ -1,5 +1,5 @@
 import { createElement } from './dom.js';
-import { noop } from './utils.js';
+import { noop, run } from './utils.js';
 
 export function linear(t) {
 	return t;
@@ -27,7 +27,7 @@ export function hash(str) {
 }
 
 export function wrapTransition(component, node, fn, params, intro) {
-	let obj = fn(node, params);
+	let obj = fn.call(component, node, params);
 	let duration;
 	let ease;
 	let cssText;
@@ -137,9 +137,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 				});
 
 				if (--program.group.remaining === 0) {
-					program.group.callbacks.forEach(fn => {
-						fn();
-					});
+					program.group.callbacks.forEach(run);
 				}
 			} else {
 				if (obj.css) transitionManager.deleteRule(node, program.name);

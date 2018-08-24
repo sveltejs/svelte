@@ -97,10 +97,6 @@ export function on(eventName, handler) {
 	};
 }
 
-export function run(fn) {
-	fn();
-}
-
 export function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
