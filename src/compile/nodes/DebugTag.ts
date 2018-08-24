@@ -4,6 +4,7 @@ import Block from '../dom/Block';
 import Expression from './shared/Expression';
 import deindent from '../../utils/deindent';
 import addToSet from '../../utils/addToSet';
+import { stringify } from '../../utils/stringify';
 
 export default class DebugTag extends Node {
 	expressions: Expression[];
@@ -25,8 +26,8 @@ export default class DebugTag extends Node {
 
 		const { code } = this.compiler;
 
-		// Debug all
 		if (this.expressions.length === 0) {
+			// Debug all
 			code.overwrite(this.start + 1, this.start + 7, 'debugger', {
 				storeName: true
 			});
@@ -66,5 +67,23 @@ export default class DebugTag extends Node {
 				}
 			`);
 		}
+	}
+
+	ssr() {
+		if (!this.compiler.options.dev) return;
+
+		const filename = this.compiler.file || null;
+		const { line, column } = this.compiler.locate(this.start + 1);
+
+		const obj = this.expressions.length === 0
+			? `ctx`
+			: `{ ${this.expressions
+				.map(e => e.node.name)
+				.map(name => `${name}: ctx.${name}`)
+				.join(', ')} }`;
+
+		const str = '${@debug(' + `${filename && stringify(filename)}, ${line}, ${column}, ${obj})}`;
+
+		this.compiler.target.append(str);
 	}
 }
