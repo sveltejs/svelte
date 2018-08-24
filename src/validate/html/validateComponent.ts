@@ -25,11 +25,11 @@ export default function validateComponent(
 		if (attribute.type === 'Ref') {
 			if (!isValidIdentifier(attribute.name)) {
 				const suggestion = attribute.name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
-				
+
 				validator.error(attribute, {
 					code: `invalid-reference-name`,
 					message: `Reference name '${attribute.name}' is invalid — must be a valid identifier such as ${suggestion}`
-				});	
+				});
 			} else {
 				if (!refs.has(attribute.name)) refs.set(attribute.name, []);
 				refs.get(attribute.name).push(node);
@@ -48,6 +48,11 @@ export default function validateComponent(
 			validator.error(attribute, {
 				code: `invalid-action`,
 				message: `Actions can only be applied to DOM elements, not components`
+			});
+		} else if (attribute.type === 'Class') {
+			validator.error(attribute, {
+				code: `invalid-class`,
+				message: `Classes can only be applied to DOM elements, not components`
 			});
 		}
 	});
