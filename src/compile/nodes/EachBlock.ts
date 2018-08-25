@@ -201,9 +201,13 @@ export default class EachBlock extends Node {
 				}
 			`);
 
+			const mountCall = compiler.options.containedTransitions
+				? `m(${parentNode || '#target'}, null, true)`
+				: `${mountOrIntro}(${parentNode || '#target'}, null)`
+
 			block.builders.mount.addBlock(deindent`
 				if (${each_block_else}) {
-					${each_block_else}.${mountOrIntro}(${parentNode || '#target'}, null);
+					${each_block_else}.${mountCall};
 				}
 			`);
 
@@ -309,8 +313,12 @@ export default class EachBlock extends Node {
 			`);
 		}
 
+		const mountCall = this.compiler.options.containedTransitions
+			? `m(${initialMountNode}, ${anchorNode}, true)`
+			: `${mountOrIntro}(${initialMountNode}, ${anchorNode})`;
+
 		block.builders.mount.addBlock(deindent`
-			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode});
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].${mountCall};
 		`);
 
 		const dynamic = this.block.hasUpdateMethod;
@@ -332,11 +340,15 @@ export default class EachBlock extends Node {
 		`);
 
 		if (this.compiler.options.nestedTransitions) {
-			const countdown = block.getUniqueName('countdown');
-			block.builders.outro.addBlock(deindent`
-				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
-				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown});
-			`);
+			if (this.compiler.options.containedTransitions) {
+				block.builders.outro.addLine('#outrocallback();');
+			} else {
+				const countdown = block.getUniqueName('countdown');
+				block.builders.outro.addBlock(deindent`
+					const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
+					for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown});
+				`);
+			}
 		}
 
 		block.builders.destroy.addBlock(deindent`
@@ -383,9 +395,13 @@ export default class EachBlock extends Node {
 			`);
 		}
 
+		const mountCall = this.compiler.options.containedTransitions
+			? `m(${initialMountNode}, ${anchorNode}, true)`
+			: `${mountOrIntro}(${initialMountNode}, ${anchorNode})`;
+
 		block.builders.mount.addBlock(deindent`
 			for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-				${iterations}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode});
+				${iterations}[#i].${mountCall};
 			}
 		`);
 
@@ -478,11 +494,15 @@ export default class EachBlock extends Node {
 		}
 
 		if (outroBlock && this.compiler.options.nestedTransitions) {
-			const countdown = block.getUniqueName('countdown');
-			block.builders.outro.addBlock(deindent`
-				const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
-				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
-			);
+			if (this.compiler.options.containedTransitions) {
+				block.builders.outro.addLine('#outrocallback();');
+			} else {
+				const countdown = block.getUniqueName('countdown');
+				block.builders.outro.addBlock(deindent`
+					const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
+					for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
+				);
+			}
 		}
 
 		block.builders.destroy.addBlock(`@destroyEach(${iterations}, detach);`);

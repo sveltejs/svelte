@@ -386,7 +386,7 @@ export default class Component extends Node {
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}${compiler.options.containedTransitions ? ', skipIntro' : ''});
 					${this.ref && `#component.refs.${this.ref} = ${name};`}
 				}
 			`);
@@ -486,7 +486,7 @@ export default class Component extends Node {
 			}
 
 			block.builders.mount.addLine(
-				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}${compiler.options.containedTransitions ? ', skipIntro' : ''});`
 			);
 
 			if (updates.length) {

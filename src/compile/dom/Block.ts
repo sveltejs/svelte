@@ -241,7 +241,7 @@ export default class Block {
 			properties.addBlock(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				${dev ? 'm: function mount' : 'm'}(#target, anchor) {
+				${dev ? 'm: function mount' : 'm'}(#target, anchor${this.compiler.options.containedTransitions ? ', skipIntro' : ''}) {
 					${this.builders.mount}
 				},
 			`);
