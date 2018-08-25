@@ -1,0 +1,20 @@
+{#if visible}
+	{#each things as thing}
+		<div transition:foo>{thing}</div>
+	{/each}
+{/if}
+
+<script>
+	export default {
+		transitions: {
+			foo(node, params) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>
