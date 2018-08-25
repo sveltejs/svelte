@@ -151,7 +151,6 @@ define("test", function() { "use strict";
 		if (!dirty) return;
 
 		this._state = assign(assign({}, oldState), newState);
-
 		this._recompute(changed, this._state);
 		if (this._bind) this._bind(changed, this._state);
 
