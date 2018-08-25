@@ -15,6 +15,7 @@ import EventHandler from './EventHandler';
 import Transition from './Transition';
 import Animation from './Animation';
 import Action from './Action';
+import Class from './Class';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
@@ -68,6 +69,8 @@ export default class Element extends Node {
 	attributes: Attribute[];
 	actions: Action[];
 	bindings: Binding[];
+	classes: Class[];
+	classDependencies: string[];
 	handlers: EventHandler[];
 	intro?: Transition;
 	outro?: Transition;
@@ -90,6 +93,8 @@ export default class Element extends Node {
 		this.attributes = [];
 		this.actions = [];
 		this.bindings = [];
+		this.classes = [];
+		this.classDependencies = [];
 		this.handlers = [];
 
 		this.intro = null;
@@ -142,6 +147,10 @@ export default class Element extends Node {
 
 				case 'Binding':
 					this.bindings.push(new Binding(compiler, this, scope, node));
+					break;
+
+				case 'Class':
+					this.classes.push(new Class(compiler, this, scope, node));
 					break;
 
 				case 'EventHandler':
@@ -226,6 +235,13 @@ export default class Element extends Node {
 		this.bindings.forEach(binding => {
 			this.parent.cannotUseInnerHTML();
 			block.addDependencies(binding.value.dependencies);
+		});
+
+		this.classes.forEach(classDir => {
+			this.parent.cannotUseInnerHTML();
+			if (classDir.expression) {
+				block.addDependencies(classDir.expression.dependencies);
+			}
 		});
 
 		this.handlers.forEach(handler => {
@@ -403,6 +419,7 @@ export default class Element extends Node {
 		this.addTransitions(block);
 		this.addAnimation(block);
 		this.addActions(block);
+		this.addClasses(block);
 
 		if (this.initialUpdate) {
 			block.builders.mount.addBlock(this.initialUpdate);
@@ -584,6 +601,9 @@ export default class Element extends Node {
 		}
 
 		this.attributes.forEach((attribute: Attribute) => {
+			if (attribute.name === 'class' && attribute.isDynamic) {
+				this.classDependencies.push(...attribute.dependencies);
+			}
 			attribute.render(block);
 		});
 	}
@@ -867,6 +887,26 @@ export default class Element extends Node {
 		});
 	}
 
+	addClasses(block: Block) {
+		this.classes.forEach(classDir => {
+			const { expression: { snippet, dependencies}, name } = classDir;
+			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
+
+			block.builders.hydrate.addLine(updater);
+
+			if ((dependencies && dependencies.size > 0) || this.classDependencies.length) {
+				const allDeps = this.classDependencies.concat(...dependencies);
+				const deps = allDeps.map(dependency => `changed.${dependency}`).join(' || ');
+				const condition = allDeps.length > 1 ? `(${deps})` : deps;
+
+				block.builders.update.addConditional(
+					condition,
+					updater
+				);
+			}
+		});
+	}
+
 	getStaticAttributeValue(name: string) {
 		const attribute = this.attributes.find(
 			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
@@ -937,6 +977,13 @@ export default class Element extends Node {
 			appendTarget.slots[slotName] = '';
 		}
 
+		const classExpr = this.classes.map((classDir: Class) => {
+			const { expression: { snippet }, name } = classDir;
+			return `${snippet} ? "${name}" : ""`;
+		}).join(', ');
+
+		let addClassAttribute = classExpr ? true : false;
+
 		if (this.attributes.find(attr => attr.isSpread)) {
 			// TODO dry this out
 			const args = [];
@@ -977,10 +1024,17 @@ export default class Element extends Node {
 				) {
 					// a boolean attribute with one non-Text chunk
 					openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
+				} else if (attribute.name === 'class' && classExpr) {
+					addClassAttribute = false;
+					openingTag += ` class="\${ [\`${attribute.stringifyForSsr()}\`, ${classExpr} ].join(' ') }"`;
 				} else {
 					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
 				}
 			});
+		}
+
+		if (addClassAttribute) {
+			openingTag += ` class="\${ [${classExpr}].join(' ') }"`;
 		}
 
 		openingTag += '>';

@@ -87,7 +87,9 @@ export function setAttribute(node, attribute, value) {
 
 export function setAttributes(node, attributes) {
 	for (var key in attributes) {
-		if (key in node) {
+		if (key === 'style') {
+			node.style.cssText = attributes[key];
+		} else if (key in node) {
 			node[key] = attributes[key];
 		} else {
 			if (attributes[key] === undefined) removeAttribute(node, key);
@@ -238,4 +240,8 @@ export function addResizeListener(element, fn) {
 			element.removeChild(object);
 		}
 	};
+}
+
+export function toggleClass(element, name, toggle) {
+	element.classList.toggle(name, !!toggle);
 }

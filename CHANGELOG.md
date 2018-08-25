@@ -1,5 +1,25 @@
 # Svelte changelog
 
+## 2.13.1
+
+* Coerce second argument to `toggleClass` ([#1685](https://github.com/sveltejs/svelte/issues/1685))
+
+## 2.13.0
+
+* Add `class` directive ([#890](https://github.com/sveltejs/svelte/issues/890))
+* Remove sourcemaps from npm package ([#1690](https://github.com/sveltejs/svelte/pull/1690))
+
+## 2.12.1
+
+* Allow actions to take any expression ([#1676](https://github.com/sveltejs/svelte/issues/1676))
+* Run transitions in component context ([#1675](https://github.com/sveltejs/svelte/issues/1675))
+* Correctly set select value on mount ([#1666](https://github.com/sveltejs/svelte/issues/1666))
+* Support `{@debug}` in SSR ([#1659](https://github.com/sveltejs/svelte/issues/1659))
+* Don't treat `&nbsp;` as empty whitespace ([#1658](https://github.com/sveltejs/svelte/issues/1658))
+* Fix outros for if blocks with no else ([#1688](https://github.com/sveltejs/svelte/pull/1688))
+* Set `style.cssText` in spread attributes ([#1684](https://github.com/sveltejs/svelte/pull/1684))
+
+
 ## 2.12.0
 
 * Initialise actions on mount rather than hydrate ([#1653](https://github.com/sveltejs/svelte/pull/1653))
