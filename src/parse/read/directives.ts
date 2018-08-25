@@ -81,6 +81,15 @@ const DIRECTIVES: Record<string, {
 		error: 'Data passed to actions must be an identifier (e.g. `foo`), a member expression ' +
 			'(e.g. `foo.bar` or `foo[baz]`), a method call (e.g. `foo()`), or a literal (e.g. `true` or `\'a string\'`'
 	},
+
+	Class: {
+		names: ['class'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['*'],
+		error: 'Data passed to class directives must be an expression'
+	},
 };
 
 
