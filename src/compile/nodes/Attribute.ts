@@ -210,7 +210,7 @@ export default class Attribute extends Node {
 					}
 				`;
 
-				block.builders.hydrate.addBlock(deindent`
+				block.builders.mount.addBlock(deindent`
 					${last} = ${value};
 					${updater}
 				`);

@@ -1,0 +1,16 @@
+{#if foo}
+	{#if false}
+		<Component/>
+	{:elseif false}
+		<Component/>
+	{/if}
+{/if}
+
+<script>
+	export default {
+		components: {
+			Component: './Component.html',
+		},
+		data: () => ({ foo: true }),
+	}
+</script>
