@@ -53,6 +53,7 @@ assign(Main.prototype, {
  	on: on,
  	set: set,
  	_set: _set,
+ 	_stage: _stage,
  	_mount: _mount,
  	_differs: _differs
  });
@@ -87,6 +88,7 @@ function init(component, options) {
 	component._handlers = blankObject();
 	component._slots = blankObject();
 	component._bind = options._bind;
+	component._staged = {};
 
 	component.options = options;
 	component.root = options.root || component;
@@ -159,29 +161,20 @@ function set(newState) {
 	flush(this.root);
 }
 
-function _set(newState, options) {
+function _set(newState) {
 	var oldState = this._state,
 		changed = {},
 		dirty = false;
 
+	newState = assign(this._staged, newState);
+	this._staged = {};
+
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
-	if (!dirty && !this._changed) return false;
+	if (!dirty) return;
 
 	this._state = assign(assign({}, oldState), newState);
-
-	if (options && options.skipRender) {
-		if (!this._oldState) this._oldState = oldState;
-		this._changed = assign(changed, this._changed);
-		return true;
-	}
-
-	if (this._changed) {
-		oldState = this._oldState;
-		changed = assign(changed, this._changed),
-		this._changed = this._oldState = null;
-	}
 
 	this._recompute(changed, this._state);
 	if (this._bind) this._bind(changed, this._state);
@@ -191,7 +184,10 @@ function _set(newState, options) {
 		this._fragment.p(changed, this._state);
 		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
-	return true;
+}
+
+function _stage(newState) {
+	assign(this._staged, newState);
 }
 
 function _mount(target, anchor) {
