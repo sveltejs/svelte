@@ -1,0 +1,22 @@
+{#if x}
+	{#if y}
+		<div transition:foo></div>
+	{/if}
+{/if}
+
+<script>
+	export default {
+		transitions: {
+			foo(node, params) {
+				return {
+					intro: false,
+					outro: false,
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

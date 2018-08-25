@@ -137,7 +137,8 @@ describe("runtime", () => {
 						hydrate,
 						data: config.data,
 						store: (config.store !== true && config.store),
-						intro: config.intro
+						intro: config.intro,
+						transitions: config.transitions
 					}, config.options || {});
 
 					const component = new SvelteComponent(options);

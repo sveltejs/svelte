@@ -761,7 +761,7 @@ export default class Element extends Node {
 
 				#component.root._aftercreate.push(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1);
+					${name}.run(1${this.compiler.options.nestedTransitions && ', null, introing'});
 				});
 			`);
 
@@ -770,7 +770,7 @@ export default class Element extends Node {
 				${name}.run(0, () => {
 					#outrocallback();
 					${name} = null;
-				});
+				}${this.compiler.options.nestedTransitions && ', outroing'});
 			`);
 
 			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.abort();`);
@@ -796,7 +796,7 @@ export default class Element extends Node {
 				block.builders.intro.addConditional(`#component.root._intro`, deindent`
 					#component.root._aftercreate.push(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
-						${introName}.run(1);
+						${introName}.run(1${this.compiler.options.nestedTransitions && ', null, introing'});
 					});
 				`);
 			}
@@ -817,7 +817,7 @@ export default class Element extends Node {
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
 					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
-					${outroName}.run(0, #outrocallback);
+					${outroName}.run(0, #outrocallback${this.compiler.options.nestedTransitions && ', outroing'});
 				`);
 
 				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.abort();`);

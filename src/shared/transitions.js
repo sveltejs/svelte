@@ -1,5 +1,5 @@
 import { createElement } from './dom.js';
-import { noop, run } from './utils.js';
+import { noop, run, assign } from './utils.js';
 
 export function linear(t) {
 	return t;
@@ -28,6 +28,7 @@ export function hash(str) {
 
 export function wrapTransition(component, node, fn, params, intro) {
 	let obj = fn.call(component, node, params);
+	if (typeof obj !== 'function') obj = assign(assign({}, component.root.options.transitions), obj);
 	let duration;
 	let ease;
 	let cssText;
@@ -40,20 +41,27 @@ export function wrapTransition(component, node, fn, params, intro) {
 		program: null,
 		pending: null,
 
-		run(b, callback) {
+		run(b, callback, introOutro) {
 			if (typeof obj === 'function') {
 				transitionManager.wait().then(() => {
 					obj = obj();
-					this._run(b, callback);
+					obj = assign(assign({}, component.root.options.transitions), obj);
+					this._run(b, callback, introOutro);
 				});
 			} else {
-				this._run(b, callback);
+				this._run(b, callback, introOutro);
 			}
 		},
 
-		_run(b, callback) {
+		_run(b, callback, introOutro) {
 			duration = obj.duration || 300;
 			ease = obj.easing || linear;
+
+			if (introOutro && ((b && obj.intro === false) || (!b && obj.outro === false))) {
+				this.t = b;
+				if (callback) callback();
+				return;
+			}
 
 			const program = {
 				start: window.performance.now() + (obj.delay || 0),
@@ -61,7 +69,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 				callback: callback || noop
 			};
 
-			if (intro && !initialised) {
+			if (b && !initialised) {
 				if (obj.css && obj.delay) {
 					cssText = node.style.cssText;
 					node.style.cssText += obj.css(0, 1);

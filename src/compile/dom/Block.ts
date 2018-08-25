@@ -241,7 +241,7 @@ export default class Block {
 			properties.addBlock(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
-				${dev ? 'm: function mount' : 'm'}(#target, anchor) {
+				${dev ? 'm: function mount' : 'm'}(#target, anchor${this.compiler.options.nestedTransitions && ', introing'}) {
 					${this.builders.mount}
 				},
 			`);
@@ -281,10 +281,10 @@ export default class Block {
 				properties.addBlock(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
+					${dev ? 'i: function intro' : 'i'}(#target, anchor${this.compiler.options.nestedTransitions && ', introing'}) {
 						if (#current) return;
 						${this.builders.intro}
-						this.m(#target, anchor);
+						this.m(#target, anchor${this.compiler.options.nestedTransitions && ', introing'});
 					},
 				`);
 			}
@@ -293,7 +293,7 @@ export default class Block {
 				properties.addBlock(`o: @run,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
+					${dev ? 'o: function outro' : 'o'}(#outrocallback${this.compiler.options.nestedTransitions && ', outroing'}) {
 						if (!#current) return;
 
 						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
