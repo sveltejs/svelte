@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.13.0
+
+* Add `class` directive ([#890](https://github.com/sveltejs/svelte/issues/890))
+* Remove sourcemaps from npm package ([#1690](https://github.com/sveltejs/svelte/pull/1690))
+
 ## 2.12.1
 
 * Allow actions to take any expression ([#1676](https://github.com/sveltejs/svelte/issues/1676))
