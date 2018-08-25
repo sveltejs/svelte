@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.13.1
+
+* Coerce second argument to `toggleClass` ([#1685](https://github.com/sveltejs/svelte/issues/1685))
+
 ## 2.13.0
 
 * Add `class` directive ([#890](https://github.com/sveltejs/svelte/issues/890))
