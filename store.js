@@ -79,7 +79,7 @@ assign(Store.prototype, {
 				}
 			})
 			.forEach(dependent => {
-				dependent.component.set();
+				dependent.component.set({});
 			});
 
 		this.fire('update', {
