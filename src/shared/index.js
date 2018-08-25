@@ -15,6 +15,7 @@ export function blankObject() {
 
 export function destroy(detach) {
 	this.destroy = noop;
+	this.fire('unmount');
 	this.fire('destroy');
 	this.set = noop;
 

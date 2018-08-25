@@ -77,6 +77,7 @@ export default class Block {
 			claim: new CodeBuilder(),
 			hydrate: new CodeBuilder(),
 			mount: new CodeBuilder(),
+			unmount: new CodeBuilder(),
 			measure: new CodeBuilder(),
 			fix: new CodeBuilder(),
 			animate: new CodeBuilder(),
@@ -100,6 +101,10 @@ export default class Block {
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
+
+		if (this.compiler.templateProperties.onunmount) {
+			this.builders.unmount.addLine(`%onunmount.call(#component${this.key ? `, ${this.getUniqueName('key')}` : ''})`);
+		}
 	}
 
 	addDependencies(dependencies: Set<string>) {

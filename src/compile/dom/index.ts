@@ -201,6 +201,12 @@ export default function dom(
 			}];`
 		)}
 
+		${(templateProperties.onunmount || storeProps.length) && (
+			`this._handlers.unmount = [${
+				[templateProperties.onunmount && `%onunmount`, storeProps.length && `@removeFromStore`].filter(Boolean).join(', ')
+			}];`
+		)}
+
 		${compiler.slots.size && `this._slotted = options.slots || {};`}
 
 		${compiler.customElement ?

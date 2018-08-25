@@ -663,6 +663,10 @@ export default class Compiler {
 					addDeclaration('oncreate', templateProperties.oncreate.value);
 				}
 
+				if (templateProperties.onunmount && dom) {
+					addDeclaration('onunmount', templateProperties.onunmount.value);
+				}
+
 				if (templateProperties.ondestroy && dom) {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);
 				}

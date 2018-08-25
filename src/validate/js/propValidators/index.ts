@@ -3,6 +3,7 @@ import actions from './actions';
 import animations from './animations';
 import computed from './computed';
 import oncreate from './oncreate';
+import onunmount from './onunmount';
 import ondestroy from './ondestroy';
 import onstate from './onstate';
 import onupdate from './onupdate';
@@ -27,6 +28,7 @@ export default {
 	animations,
 	computed,
 	oncreate,
+	onunmount,
 	ondestroy,
 	onstate,
 	onupdate,
