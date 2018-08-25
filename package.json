@@ -8,8 +8,8 @@
   },
   "files": [
     "cli",
-    "compiler",
-    "ssr",
+    "compiler/*.js",
+    "ssr/*.js",
     "shared.js",
     "store.js",
     "store.umd.js",
