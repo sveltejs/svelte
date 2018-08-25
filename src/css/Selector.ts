@@ -157,7 +157,7 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 		}
 
 		if (selector.type === 'ClassSelector') {
-			if (!attributeMatches(node, 'class', selector.name, '~=', false)) return false;
+			if (!attributeMatches(node, 'class', selector.name, '~=', false) && !classMatches(node, selector.name)) return false;
 		}
 
 		else if (selector.type === 'IdSelector') {
@@ -256,6 +256,12 @@ function attributeMatches(node: Node, name: string, expectedValue: string, opera
 	}
 
 	return false;
+}
+
+function classMatches(node, name: string) {
+	return node.classes.some(function(classDir) {
+		return classDir.name === name;
+	});
 }
 
 function isDynamic(value: Node) {
