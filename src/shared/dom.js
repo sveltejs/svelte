@@ -243,5 +243,5 @@ export function addResizeListener(element, fn) {
 }
 
 export function toggleClass(element, name, toggle) {
-	element.classList.toggle(name, Boolean(toggle));
+	element.classList.toggle(name, toggle);
 }
