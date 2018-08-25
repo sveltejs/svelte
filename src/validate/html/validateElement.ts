@@ -85,11 +85,11 @@ export default function validateElement(
 		if (attribute.type === 'Ref') {
 			if (!isValidIdentifier(attribute.name)) {
 				const suggestion = attribute.name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
-				
+
 				validator.error(attribute, {
 					code: `invalid-reference-name`,
 					message: `Reference name '${attribute.name}' is invalid — must be a valid identifier such as ${suggestion}`
-				});	
+				});
 			} else {
 				if (!refs.has(attribute.name)) refs.set(attribute.name, []);
 				refs.get(attribute.name).push(node);
@@ -213,7 +213,7 @@ export default function validateElement(
 			validator.used.events.add(attribute.name);
 			validateEventHandler(validator, attribute, refCallees);
 		} else if (attribute.type === 'Transition') {
-			validator.used.transitions.add(attribute.name);
+			validator.used.transitions.add(attribute.name.split('|')[0]);
 
 			const bidi = attribute.intro && attribute.outro;
 
@@ -249,7 +249,7 @@ export default function validateElement(
 			if (attribute.outro) hasOutro = true;
 			if (bidi) hasTransition = true;
 
-			if (!validator.transitions.has(attribute.name)) {
+			if (!validator.transitions.has(attribute.name.split('|')[0])) {
 				validator.error(attribute, {
 					code: `missing-transition`,
 					message: `Missing transition '${attribute.name}'`

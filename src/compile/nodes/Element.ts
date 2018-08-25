@@ -745,8 +745,11 @@ export default class Element extends Node {
 		const { intro, outro } = this;
 
 		if (!intro && !outro) return;
+		const nested = this.compiler.options.nestedTransitions;
 
 		if (intro === outro) {
+			const [transitionName, ...pipes] = intro.name.split('|');
+			const local = ~pipes.indexOf('local') && 1;
 			const name = block.getUniqueName(`${this.var}_transition`);
 			const snippet = intro.expression
 				? intro.expression.snippet
@@ -754,23 +757,23 @@ export default class Element extends Node {
 
 			block.addVariable(name);
 
-			const fn = `%transitions-${intro.name}`;
+			const fn = `%transitions-${transitionName}`;
 
 			block.builders.intro.addConditional(`#component.root._intro`, deindent`
 				if (${name}) ${name}.invalidate();
 
 				#component.root._aftercreate.push(() => {
-					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1);
+					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, 1${nested && `, ${local}`});
+					${name}.run(1${nested && ', null, introing'});
 				});
 			`);
 
 			block.builders.outro.addBlock(deindent`
-				if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
+				if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, 0${nested && `, ${local}`});
 				${name}.run(0, () => {
 					#outrocallback();
 					${name} = null;
-				});
+				}${nested && ', outroing'});
 			`);
 
 			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.abort();`);
@@ -780,11 +783,13 @@ export default class Element extends Node {
 
 			if (intro) {
 				block.addVariable(introName);
+				const [transitionName, ...pipes] = intro.name.split('|');
+				const local = ~pipes.indexOf('local') && 1;
 				const snippet = intro.expression
 					? intro.expression.snippet
 					: '{}';
 
-				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
+				const fn = `%transitions-${transitionName}`; // TODO add built-in transitions?
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
@@ -795,19 +800,21 @@ export default class Element extends Node {
 
 				block.builders.intro.addConditional(`#component.root._intro`, deindent`
 					#component.root._aftercreate.push(() => {
-						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
-						${introName}.run(1);
+						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, 1${nested && `, ${local}`});
+						${introName}.run(1${nested && ', null, introing'});
 					});
 				`);
 			}
 
 			if (outro) {
 				block.addVariable(outroName);
+				const [transitionName, ...pipes] = outro.name.split('|');
+				const local = ~pipes.indexOf('local') && 1;
 				const snippet = outro.expression
 					? outro.expression.snippet
 					: '{}';
 
-				const fn = `%transitions-${outro.name}`;
+				const fn = `%transitions-${transitionName}`;
 
 				block.builders.intro.addBlock(deindent`
 					if (${outroName}) ${outroName}.abort(1);
@@ -816,8 +823,8 @@ export default class Element extends Node {
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
-					${outroName}.run(0, #outrocallback);
+					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, 0${nested && `, ${local}`});
+					${outroName}.run(0, #outrocallback${nested && ', outroing'});
 				`);
 
 				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.abort();`);

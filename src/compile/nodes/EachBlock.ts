@@ -203,7 +203,7 @@ export default class EachBlock extends Node {
 
 			block.builders.mount.addBlock(deindent`
 				if (${each_block_else}) {
-					${each_block_else}.${mountOrIntro}(${parentNode || '#target'}, null);
+					${each_block_else}.${mountOrIntro}(${parentNode || '#target'}, null${this.compiler.options.nestedTransitions && ', 1'});
 				}
 			`);
 
@@ -310,12 +310,11 @@ export default class EachBlock extends Node {
 		}
 
 		block.builders.mount.addBlock(deindent`
-			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode});
+			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode}${this.compiler.options.nestedTransitions ? ', 1' : ''});
 		`);
 
 		const dynamic = this.block.hasUpdateMethod;
 
-		const rects = block.getUniqueName('rects');
 		const destroy = this.block.hasAnimation
 			? `@fixAndOutroAndDestroyBlock`
 			: this.block.hasOutros
@@ -335,7 +334,7 @@ export default class EachBlock extends Node {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
-				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown});
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown}, 1);
 			`);
 		}
 
@@ -385,7 +384,7 @@ export default class EachBlock extends Node {
 
 		block.builders.mount.addBlock(deindent`
 			for (var #i = 0; #i < ${iterations}.length; #i += 1) {
-				${iterations}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode});
+				${iterations}[#i].${mountOrIntro}(${initialMountNode}, ${anchorNode}${this.compiler.options.nestedTransitions && ', 1'});
 			}
 		`);
 
@@ -397,8 +396,9 @@ export default class EachBlock extends Node {
 
 		const outroBlock = this.block.hasOutros && block.getUniqueName('outroBlock')
 		if (outroBlock) {
+			const outroArg = this.compiler.options.nestedTransitions ? ', outroing' : '';
 			block.builders.init.addBlock(deindent`
-				function ${outroBlock}(i, detach, fn) {
+				function ${outroBlock}(i, detach, fn${outroArg}) {
 					if (${iterations}[i]) {
 						${iterations}[i].o(() => {
 							if (detach) {
@@ -406,7 +406,7 @@ export default class EachBlock extends Node {
 								${iterations}[i] = null;
 							}
 							if (fn) fn();
-						});
+						}${outroArg});
 					}
 				}
 			`);
@@ -451,7 +451,7 @@ export default class EachBlock extends Node {
 			if (this.block.hasOutros) {
 				destroy = deindent`
 					@groupOutros();
-					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1);
+					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1${this.compiler.options.nestedTransitions && ', null, 1'});
 				`;
 			} else {
 				destroy = deindent`
@@ -482,7 +482,7 @@ export default class EachBlock extends Node {
 			block.builders.outro.addBlock(deindent`
 				${iterations} = ${iterations}.filter(Boolean);
 				const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
-				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
+				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown}${this.compiler.options.nestedTransitions && ', 1'});`
 			);
 		}
 

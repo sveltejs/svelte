@@ -139,8 +139,8 @@ function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
 
-function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
+function _mount(target, anchor, introing) {
+	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null, introing);
 }
 
 var proto = {
