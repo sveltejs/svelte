@@ -139,9 +139,10 @@ export default class IfBlock extends Node {
 				this.buildCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
 
 				if (this.compiler.options.nestedTransitions) {
-					block.builders.outro.addLine(
-						`${name}.o(#outrocallback);`
-					);
+					block.builders.outro.addBlock(deindent`
+						if (${name}) ${name}.o(#outrocallback);
+						else #outrocallback();
+					`);
 				}
 			} else {
 				this.buildCompound(block, parentNode, parentNodes, branches, dynamic, vars);

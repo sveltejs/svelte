@@ -55,3 +55,9 @@ export function validateSsrComponent(component, name) {
 
 	return component;
 }
+
+export function debug(file, line, column, values) {
+	console.log(`{@debug} ${file ? file + ' ' : ''}(${line}:${column})`);
+	console.log(values);
+	return '';
+}
