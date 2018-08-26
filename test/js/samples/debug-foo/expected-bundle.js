@@ -101,6 +101,7 @@ function init(component, options) {
 	component._handlers = blankObject();
 	component._slots = blankObject();
 	component._bind = options._bind;
+	component._staged = {};
 
 	component.options = options;
 	component.root = options.root || component;
@@ -136,6 +137,9 @@ function _set(newState) {
 		changed = {},
 		dirty = false;
 
+	newState = assign(this._staged, newState);
+	this._staged = {};
+
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
@@ -150,6 +154,10 @@ function _set(newState) {
 		this._fragment.p(changed, this._state);
 		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
+}
+
+function _stage(newState) {
+	assign(this._staged, newState);
 }
 
 function setDev(newState) {
@@ -179,6 +187,7 @@ var protoDev = {
 	set: setDev,
 	_recompute: noop,
 	_set,
+	_stage,
 	_mount,
 	_differs
 };
