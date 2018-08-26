@@ -58,6 +58,7 @@ var Main = (function(answer) { "use strict";
 	 	on: on,
 	 	set: set,
 	 	_set: _set,
+	 	_stage: _stage,
 	 	_mount: _mount,
 	 	_differs: _differs
 	 });
@@ -92,6 +93,7 @@ var Main = (function(answer) { "use strict";
 		component._handlers = blankObject();
 		component._slots = blankObject();
 		component._bind = options._bind;
+		component._staged = {};
 
 		component.options = options;
 		component.root = options.root || component;
@@ -165,6 +167,9 @@ var Main = (function(answer) { "use strict";
 			changed = {},
 			dirty = false;
 
+		newState = assign(this._staged, newState);
+		this._staged = {};
+
 		for (var key in newState) {
 			if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 		}
@@ -179,6 +184,10 @@ var Main = (function(answer) { "use strict";
 			this._fragment.p(changed, this._state);
 			this.fire("update", { changed: changed, current: this._state, previous: oldState });
 		}
+	}
+
+	function _stage(newState) {
+		assign(this._staged, newState);
 	}
 
 	function _mount(target, anchor) {

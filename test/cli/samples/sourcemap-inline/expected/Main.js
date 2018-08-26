@@ -43,6 +43,7 @@ assign(Main.prototype, {
  	on: on,
  	set: set,
  	_set: _set,
+ 	_stage: _stage,
  	_mount: _mount,
  	_differs: _differs
  });
@@ -67,6 +68,7 @@ function init(component, options) {
 	component._handlers = blankObject();
 	component._slots = blankObject();
 	component._bind = options._bind;
+	component._staged = {};
 
 	component.options = options;
 	component.root = options.root || component;
@@ -140,6 +142,9 @@ function _set(newState) {
 		changed = {},
 		dirty = false;
 
+	newState = assign(this._staged, newState);
+	this._staged = {};
+
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 	}
@@ -154,6 +159,10 @@ function _set(newState) {
 		this._fragment.p(changed, this._state);
 		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
+}
+
+function _stage(newState) {
+	assign(this._staged, newState);
 }
 
 function _mount(target, anchor) {
@@ -180,4 +189,4 @@ function callAll(fns) {
 	while (fns && fns.length) fns.shift()();
 }
 export default Main;
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiTWFpbi5qcyIsInNvdXJjZXMiOlsiLi4vc3JjL01haW4uaHRtbCJdLCJzb3VyY2VzQ29udGVudCI6WyI8cD5IZWxsbyB3b3JsZCE8L3A+XG5cbjxzY3JpcHQ+XG5cdGV4cG9ydCBkZWZhdWx0IHtcblx0XHRvbnJlbmRlciAoKSB7XG5cdFx0XHRjb25zb2xlLmxvZyggJ2hlcmUnICk7XG5cdFx0fVxuXHR9O1xuPC9zY3JpcHQ+Il0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7In0=
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiTWFpbi5qcyIsInNvdXJjZXMiOlsiLi4vc3JjL01haW4uaHRtbCJdLCJzb3VyY2VzQ29udGVudCI6WyI8cD5IZWxsbyB3b3JsZCE8L3A+XG5cbjxzY3JpcHQ+XG5cdGV4cG9ydCBkZWZhdWx0IHtcblx0XHRvbnJlbmRlciAoKSB7XG5cdFx0XHRjb25zb2xlLmxvZyggJ2hlcmUnICk7XG5cdFx0fVxuXHR9O1xuPC9zY3JpcHQ+Il0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7In0=
