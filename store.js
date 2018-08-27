@@ -60,22 +60,27 @@ assign(Store.prototype, {
 			current: this._state
 		});
 
-		const dependents = this._dependents.slice(); // guard against mutations
-		for (let i = 0; i < dependents.length; i += 1) {
-			const dependent = dependents[i];
-			const componentState = {};
-			let dirty = false;
+		this._dependents
+			.filter(dependent => {
+				const componentState = {};
+				let dirty = false;
 
-			for (let j = 0; j < dependent.props.length; j += 1) {
-				const prop = dependent.props[j];
-				if (prop in changed) {
-					componentState['$' + prop] = this._state[prop];
-					dirty = true;
+				for (let j = 0; j < dependent.props.length; j += 1) {
+					const prop = dependent.props[j];
+					if (prop in changed) {
+						componentState['$' + prop] = this._state[prop];
+						dirty = true;
+					}
 				}
-			}
 
-			if (dirty) dependent.component.set(componentState);
-		}
+				if (dirty) {
+					dependent.component._stage(componentState);
+					return true;
+				}
+			})
+			.forEach(dependent => {
+				dependent.component.set({});
+			});
 
 		this.fire('update', {
 			changed,

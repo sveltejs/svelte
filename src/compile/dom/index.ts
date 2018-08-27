@@ -132,7 +132,7 @@ export default function dom(
 		? `@proto`
 		: deindent`
 		{
-			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_mount', '_differs']
+			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_stage', '_mount', '_differs']
 				.map(n => `${n}: @${n}`)
 				.join(',\n')}
 		}`;
