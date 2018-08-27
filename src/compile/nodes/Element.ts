@@ -895,9 +895,8 @@ export default class Element extends Node {
 				snippet = expression.snippet;
 				dependencies = expression.dependencies;
 			} else {
-				const varName = camelCase(name);
-				snippet = `ctx.${varName}`;
-				dependencies = [varName];
+				snippet = `ctx${propertize(name)}`;
+				dependencies = [name];
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
 
@@ -905,7 +904,7 @@ export default class Element extends Node {
 
 			if ((dependencies && dependencies.size > 0) || this.classDependencies.length) {
 				const allDeps = this.classDependencies.concat(...dependencies);
-				const deps = allDeps.map(dependency => `changed.${dependency}`).join(' || ');
+				const deps = allDeps.map(dependency => `changed${propertize(dependency)}`).join(' || ');
 				const condition = allDeps.length > 1 ? `(${deps})` : deps;
 
 				block.builders.update.addConditional(
@@ -988,7 +987,7 @@ export default class Element extends Node {
 
 		const classExpr = this.classes.map((classDir: Class) => {
 			const { expression, name } = classDir;
-			const snippet = expression ? expression.snippet : `ctx.${camelCase(name)}`;
+			const snippet = expression ? expression.snippet : `ctx${propertize(name)}`;
 			return `${snippet} ? "${name}" : ""`;
 		}).join(', ');
 
@@ -1170,8 +1169,6 @@ const events = [
 	}
 ];
 
-function camelCase(str) {
-	return str.replace(/(-\w)/g, function (m) {
-		return m[1].toUpperCase();
-	});
+function propertize(prop) {
+	return /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(prop) ? `.${prop}` : `["${prop}"]`;
 }
