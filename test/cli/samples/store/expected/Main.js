@@ -189,8 +189,8 @@ function _stage(newState) {
 	assign(this._staged, newState);
 }
 
-function _mount(target, anchor) {
-	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
+function _mount(target, anchor, skipIntro) {
+	this._fragment[!skipIntro && this._fragment.i ? 'i' : 'm'](target, anchor || null, skipIntro);
 }
 
 function _differs(a, b) {

@@ -65,6 +65,8 @@ export interface CompileOptions {
 	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
 
+	containedTransitions?: boolean;
+
 	// to remove in v3
 	skipIntroByDefault?: boolean;
 	nestedTransitions: boolean;

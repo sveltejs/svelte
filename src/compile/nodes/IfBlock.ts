@@ -139,10 +139,14 @@ export default class IfBlock extends Node {
 				this.buildCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
 
 				if (this.compiler.options.nestedTransitions) {
-					block.builders.outro.addBlock(deindent`
-						if (${name}) ${name}.o(#outrocallback);
-						else #outrocallback();
-					`);
+					if (this.compiler.options.containedTransitions) {
+						block.builders.outro.addLine('#outrocallback();');
+					} else {
+						block.builders.outro.addBlock(deindent`
+							if (${name}) ${name}.o(#outrocallback);
+							else #outrocallback();
+						`);
+					}
 				}
 			} else {
 				this.buildCompound(block, parentNode, parentNodes, branches, dynamic, vars);
@@ -151,10 +155,14 @@ export default class IfBlock extends Node {
 			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
 
 			if (hasOutros && this.compiler.options.nestedTransitions) {
-				block.builders.outro.addBlock(deindent`
-					if (${name}) ${name}.o(#outrocallback);
-					else #outrocallback();
-				`);
+				if (this.compiler.options.containedTransitions) {
+					block.builders.outro.addLine('#outrocallback();');
+				} else {
+					block.builders.outro.addBlock(deindent`
+						if (${name}) ${name}.o(#outrocallback);
+						else #outrocallback();
+					`);
+				}
 			}
 		}
 
@@ -205,8 +213,11 @@ export default class IfBlock extends Node {
 
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
+		const mountCall = this.compiler.options.containedTransitions
+			? `m(${initialMountNode}, ${anchorNode}, true)`
+			: `${mountOrIntro}(${initialMountNode}, ${anchorNode})`;
 		block.builders.mount.addLine(
-			`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`${if_name}${name}.${mountCall};`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
@@ -290,9 +301,12 @@ export default class IfBlock extends Node {
 		const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
+		const mountCall = this.compiler.options.containedTransitions
+			? `m(${initialMountNode}, ${anchorNode}, true)`
+			: `${mountOrIntro}(${initialMountNode}, ${anchorNode})`;
 
 		block.builders.mount.addLine(
-			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountCall};`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
@@ -372,9 +386,12 @@ export default class IfBlock extends Node {
 		const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
+		const mountCall = this.compiler.options.containedTransitions
+			? `m(${initialMountNode}, ${anchorNode}, true)`
+			: `${mountOrIntro}(${initialMountNode}, ${anchorNode})`;
 
 		block.builders.mount.addLine(
-			`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`if (${name}) ${name}.${mountCall};`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
