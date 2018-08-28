@@ -855,8 +855,8 @@ export default class Element extends Node {
 			const { expression } = action;
 			let snippet, dependencies;
 			if (expression) {
-				snippet = action.expression.snippet;
-				dependencies = action.expression.dependencies;
+				snippet = expression.snippet;
+				dependencies = expression.dependencies;
 			}
 
 			const name = block.getUniqueName(
@@ -889,14 +889,22 @@ export default class Element extends Node {
 
 	addClasses(block: Block) {
 		this.classes.forEach(classDir => {
-			const { expression: { snippet, dependencies}, name } = classDir;
+			const { expression, name } = classDir;
+			let snippet, dependencies;
+			if (expression) {
+				snippet = expression.snippet;
+				dependencies = expression.dependencies;
+			} else {
+				snippet = `ctx${quotePropIfNecessary(name)}`;
+				dependencies = [name];
+			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
 
 			block.builders.hydrate.addLine(updater);
 
 			if ((dependencies && dependencies.size > 0) || this.classDependencies.length) {
 				const allDeps = this.classDependencies.concat(...dependencies);
-				const deps = allDeps.map(dependency => `changed.${dependency}`).join(' || ');
+				const deps = allDeps.map(dependency => `changed${quotePropIfNecessary(dependency)}`).join(' || ');
 				const condition = allDeps.length > 1 ? `(${deps})` : deps;
 
 				block.builders.update.addConditional(
@@ -978,7 +986,8 @@ export default class Element extends Node {
 		}
 
 		const classExpr = this.classes.map((classDir: Class) => {
-			const { expression: { snippet }, name } = classDir;
+			const { expression, name } = classDir;
+			const snippet = expression ? expression.snippet : `ctx${quotePropIfNecessary(name)}`;
 			return `${snippet} ? "${name}" : ""`;
 		}).join(', ');
 
@@ -1026,7 +1035,7 @@ export default class Element extends Node {
 					openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
 				} else if (attribute.name === 'class' && classExpr) {
 					addClassAttribute = false;
-					openingTag += ` class="\${ [\`${attribute.stringifyForSsr()}\`, ${classExpr} ].join(' ') }"`;
+					openingTag += ` class="\${ [\`${attribute.stringifyForSsr()}\`, ${classExpr} ].join(' ').trim() }"`;
 				} else {
 					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
 				}
@@ -1034,7 +1043,7 @@ export default class Element extends Node {
 		}
 
 		if (addClassAttribute) {
-			openingTag += ` class="\${ [${classExpr}].join(' ') }"`;
+			openingTag += ` class="\${ [${classExpr}].join(' ').trim() }"`;
 		}
 
 		openingTag += '>';
