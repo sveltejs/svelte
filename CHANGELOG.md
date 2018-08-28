@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 2.13.2
+
+* Coalesce simultaneous store/component updates ([#1520](https://github.com/sveltejs/svelte/issues/1520))
+* Fix nested transitions preventing each block item removal ([#1617](https://github.com/sveltejs/svelte/issues/1617))
+* Add `class` directive shorthand and encapsulate styles ([#1695](https://github.com/sveltejs/svelte/pull/1695))
+* Prevent erroneous updates of bound inputs ([#1699](https://github.com/sveltejs/svelte/issues/1699))
+
 ## 2.13.1
 
 * Coerce second argument to `toggleClass` ([#1685](https://github.com/sveltejs/svelte/issues/1685))
