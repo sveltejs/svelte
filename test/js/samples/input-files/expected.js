@@ -25,7 +25,7 @@ function create_main_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			if (!input_updating) input.files = ctx.files;
+			if (!input_updating && changed.files) input.files = ctx.files;
 		},
 
 		d(detach) {

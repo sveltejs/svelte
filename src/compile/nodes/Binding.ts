@@ -66,7 +66,7 @@ export default class Binding extends Node {
 			dimensions.test(this.name)
 		);
 
-		let updateCondition: string;
+		let updateConditions: string[] = [];
 
 		const { name } = getObject(this.value.node);
 		const { snippet } = this.value;
@@ -108,7 +108,7 @@ export default class Binding extends Node {
 		}
 
 		if (this.name === 'currentTime' || this.name === 'volume') {
-			updateCondition = `!isNaN(${snippet})`;
+			updateConditions.push(`!isNaN(${snippet})`);
 
 			if (this.name === 'currentTime') initialUpdate = null;
 		}
@@ -118,7 +118,7 @@ export default class Binding extends Node {
 			const last = block.getUniqueName(`${node.var}_is_paused`);
 			block.addVariable(last, 'true');
 
-			updateCondition = `${last} !== (${last} = ${snippet})`;
+			updateConditions.push(`${last} !== (${last} = ${snippet})`);
 			updateDom = `${node.var}[${last} ? "pause" : "play"]();`;
 			initialUpdate = null;
 		}
@@ -129,6 +129,16 @@ export default class Binding extends Node {
 			updateDom = null;
 		}
 
+		const dependencyArray = [...this.value.dependencies]
+
+		if (dependencyArray.length === 1) {
+			updateConditions.push(`changed.${dependencyArray[0]}`)
+		} else if (dependencyArray.length > 1) {
+			updateConditions.push(
+				`(${dependencyArray.map(prop => `changed.${prop}`).join(' || ')})`
+			)
+		}
+
 		return {
 			name: this.name,
 			object: name,
@@ -136,7 +146,7 @@ export default class Binding extends Node {
 			updateDom,
 			initialUpdate,
 			needsLock: !isReadOnly && needsLock,
-			updateCondition,
+			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
 			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute()
 		};
 	}

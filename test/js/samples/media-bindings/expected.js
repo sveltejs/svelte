@@ -59,9 +59,9 @@ function create_main_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			if (!audio_updating && !isNaN(ctx.currentTime )) audio.currentTime = ctx.currentTime ;
-			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused )) audio[audio_is_paused ? "pause" : "play"]();
-			if (!audio_updating && !isNaN(ctx.volume)) audio.volume = ctx.volume;
+			if (!audio_updating && !isNaN(ctx.currentTime ) && changed.currentTime) audio.currentTime = ctx.currentTime ;
+			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused ) && changed.paused) audio[audio_is_paused ? "pause" : "play"]();
+			if (!audio_updating && !isNaN(ctx.volume) && changed.volume) audio.volume = ctx.volume;
 		},
 
 		d(detach) {
