@@ -480,6 +480,7 @@ export default class EachBlock extends Node {
 		if (outroBlock && this.compiler.options.nestedTransitions) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
+				${iterations} = ${iterations}.filter(Boolean);
 				const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
 				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
 			);
