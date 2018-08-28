@@ -23,7 +23,7 @@ function create_main_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			input.value = ctx.value;
+			if (changed.value) input.value = ctx.value;
 		},
 
 		d(detach) {

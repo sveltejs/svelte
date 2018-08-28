@@ -185,7 +185,7 @@ function create_main_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			input.checked = ctx.foo;
+			if (changed.foo) input.checked = ctx.foo;
 		},
 
 		d(detach) {
