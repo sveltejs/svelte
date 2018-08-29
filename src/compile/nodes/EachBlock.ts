@@ -331,7 +331,7 @@ export default class EachBlock extends Node {
 			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
-		if (this.compiler.options.nestedTransitions) {
+		if (this.block.hasOutros && this.compiler.options.nestedTransitions) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
