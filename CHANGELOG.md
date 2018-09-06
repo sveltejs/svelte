@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.13.4
+
+* Support dynamic `import()` in template expressions
+
 ## 2.13.3
 
 * Fix bug with keyed each blocks and nested components ([#1706](https://github.com/sveltejs/svelte/issues/1706))
