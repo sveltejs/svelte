@@ -18,7 +18,9 @@ function normalize(str) {
 
 const cwd = process.cwd();
 
-describe('cli', () => {
+describe('cli', function() {
+	this.timeout(10000);
+
 	afterEach(() => {
 		process.chdir(cwd);
 	});
