@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.13.3
+
+* Fix bug with keyed each blocks and nested components ([#1706](https://github.com/sveltejs/svelte/issues/1706))
+
 ## 2.13.2
 
 * Coalesce simultaneous store/component updates ([#1520](https://github.com/sveltejs/svelte/issues/1520))
