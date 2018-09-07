@@ -386,7 +386,7 @@ export default class Component extends Node {
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}${compiler.options.nestedTransitions && ', introing'});
 					${this.ref && `#component.refs.${this.ref} = ${name};`}
 				}
 			`);
@@ -486,7 +486,7 @@ export default class Component extends Node {
 			}
 
 			block.builders.mount.addLine(
-				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'}${compiler.options.nestedTransitions ? ', introing' : ''});`
 			);
 
 			if (updates.length) {
@@ -505,7 +505,7 @@ export default class Component extends Node {
 
 		if (this.compiler.options.nestedTransitions) {
 			block.builders.outro.addLine(
-				`if (${name}) ${name}._fragment.o(#outrocallback);`
+				`if (${name}) ${name}._fragment.o(#outrocallback, outroing);`
 			);
 		}
 	}

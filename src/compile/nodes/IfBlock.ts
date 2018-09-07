@@ -140,7 +140,7 @@ export default class IfBlock extends Node {
 
 				if (this.compiler.options.nestedTransitions) {
 					block.builders.outro.addBlock(deindent`
-						if (${name}) ${name}.o(#outrocallback);
+						if (${name}) ${name}.o(#outrocallback, 1);
 						else #outrocallback();
 					`);
 				}
@@ -152,7 +152,7 @@ export default class IfBlock extends Node {
 
 			if (hasOutros && this.compiler.options.nestedTransitions) {
 				block.builders.outro.addBlock(deindent`
-					if (${name}) ${name}.o(#outrocallback);
+					if (${name}) ${name}.o(#outrocallback, 1);
 					else #outrocallback();
 				`);
 			}
@@ -206,7 +206,7 @@ export default class IfBlock extends Node {
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 		block.builders.mount.addLine(
-			`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode}${this.compiler.options.nestedTransitions ? ', 1' : ''});`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
@@ -292,7 +292,7 @@ export default class IfBlock extends Node {
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addLine(
-			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode}${this.compiler.options.nestedTransitions ? ', 1' : ''});`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
@@ -374,7 +374,7 @@ export default class IfBlock extends Node {
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addLine(
-			`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode}${this.compiler.options.nestedTransitions ? ', 1' : ''});`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);

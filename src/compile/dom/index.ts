@@ -227,7 +227,7 @@ export default function dom(
 			this._fragment.c();
 			this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
 
-			if (options.target) this._mount(options.target, options.anchor);
+			if (options.target) this._mount(options.target, options.anchor${compiler.options.nestedTransitions && ', 1'});
 		` : deindent`
 			if (options.target) {
 				${compiler.options.hydratable
@@ -239,7 +239,7 @@ export default function dom(
 				${options.dev &&
 				`if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
 				this._fragment.c();`}
-				this._mount(options.target, options.anchor);
+				this._mount(options.target, options.anchor${compiler.options.nestedTransitions && ', 1'});
 
 				${(compiler.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) &&
 				`@flush(this);`}

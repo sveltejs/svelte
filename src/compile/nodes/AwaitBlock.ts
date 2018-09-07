@@ -177,7 +177,7 @@ export default class AwaitBlock extends Node {
 				const ${countdown} = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o(${countdown});
+					if (block) block.o(${countdown}, 1);
 					else ${countdown}();
 				}
 			`);
