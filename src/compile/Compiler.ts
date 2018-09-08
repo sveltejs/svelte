@@ -19,7 +19,6 @@ import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
 import { DomTarget } from './dom/index';
-import { SsrTarget } from './ssr/index';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -137,7 +136,7 @@ export default class Compiler {
 		options: CompileOptions,
 		stats: Stats,
 		dom: boolean,
-		target: DomTarget | SsrTarget
+		target?: DomTarget
 	) {
 		stats.start('compile');
 		this.stats = stats;
