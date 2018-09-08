@@ -493,35 +493,4 @@ export default class EachBlock extends Node {
 		// TODO consider keyed blocks
 		return `for (var #i = 0; #i < ${this.iterations}.length; #i += 1) ${this.iterations}[#i].m(${name}._slotted.default, null);`;
 	}
-
-	ssr() {
-		const { compiler } = this;
-		const { snippet } = this.expression;
-
-		const props = this.contexts.map(prop => `${prop.key.name}: item${prop.tail}`);
-
-		const getContext = this.index
-			? `(item, i) => Object.assign({}, ctx, { ${props.join(', ')}, ${this.index}: i })`
-			: `item => Object.assign({}, ctx, { ${props.join(', ')} })`;
-
-		const open = `\${ ${this.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${getContext}, ctx => \``;
-		compiler.target.append(open);
-
-		this.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		const close = `\`)`;
-		compiler.target.append(close);
-
-		if (this.else) {
-			compiler.target.append(` : \``);
-			this.else.children.forEach((child: Node) => {
-				child.ssr();
-			});
-			compiler.target.append(`\``);
-		}
-
-		compiler.target.append('}');
-	}
 }
