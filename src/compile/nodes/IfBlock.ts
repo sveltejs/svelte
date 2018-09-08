@@ -1,7 +1,6 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
-import Compiler from '../Compiler';
 import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
@@ -479,27 +478,6 @@ export default class IfBlock extends Node {
 		}
 
 		return branches;
-	}
-
-	ssr() {
-		const { compiler } = this;
-		const { snippet } = this.expression;
-
-		compiler.target.append('${ ' + snippet + ' ? `');
-
-		this.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		compiler.target.append('` : `');
-
-		if (this.else) {
-			this.else.children.forEach((child: Node) => {
-				child.ssr();
-			});
-		}
-
-		compiler.target.append('` }');
 	}
 
 	visitChildren(block: Block, node: Node) {

@@ -6,7 +6,6 @@ import ThenBlock from './ThenBlock';
 import CatchBlock from './CatchBlock';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
-import { SsrTarget } from '../ssr';
 
 export default class AwaitBlock extends Node {
 	expression: Expression;
@@ -193,24 +192,5 @@ export default class AwaitBlock extends Node {
 				child.build(status.block, null, 'nodes');
 			});
 		});
-	}
-
-	ssr() {
-		const target: SsrTarget = <SsrTarget>this.compiler.target;
-		const { snippet } = this.expression;
-
-		target.append('${(function(__value) { if(@isPromise(__value)) return `');
-
-		this.pending.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		target.append('`; return function(ctx) { return `');
-
-		this.then.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		target.append(`\`;}(Object.assign({}, ctx, { ${this.value}: __value }));}(${snippet})) }`);
 	}
 }

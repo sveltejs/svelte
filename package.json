@@ -96,5 +96,8 @@
     ],
     "sourceMap": true,
     "instrument": true
+  },
+  "dependencies": {
+    "@sveltejs/generate-ssr": "github:sveltejs/generate-ssr"
   }
 }

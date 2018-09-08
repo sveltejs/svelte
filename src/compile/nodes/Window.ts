@@ -1,10 +1,4 @@
-import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
-import flattenReference from '../../utils/flattenReference';
-import isVoidElementName from '../../utils/isVoidElementName';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Binding from './Binding';
@@ -218,9 +212,5 @@ export default class Window extends Node {
 				window.removeEventListener("offline", ${handlerName});
 			`);
 		}
-	}
-
-	ssr() {
-		// noop
 	}
 }
