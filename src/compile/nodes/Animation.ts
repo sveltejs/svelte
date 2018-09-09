@@ -27,8 +27,8 @@ export default class Animation extends Node {
 			});
 		}
 
-		const block = parent.block;
-		if (!block || block.type !== 'EachBlock' || !bloc.key) {
+		const block = parent.parent;
+		if (!block || block.type !== 'EachBlock' || !block.key) {
 			// TODO can we relax the 'immediate child' rule?
 			component.error(this, {
 				code: `invalid-animation`,
@@ -36,12 +36,14 @@ export default class Animation extends Node {
 			});
 		}
 
-		if (block.children.length > 1) {
-			component.error(this, {
-				code: `invalid-animation`,
-				message: `An element that use the animate directive must be the sole child of a keyed each block`
-			});
-		}
+		// TODO reinstate this... it's tricky because we're
+		// in the process of *creating* block.children
+		// if (block.children.length > 1) {
+		// 	component.error(this, {
+		// 		code: `invalid-animation`,
+		// 		message: `An element that use the animate directive must be the sole child of a keyed each block`
+		// 	});
+		// }
 
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)

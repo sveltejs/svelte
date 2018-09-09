@@ -10,5 +10,7 @@ export default class ElseBlock extends Node {
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 		this.children = mapChildren(component, this, scope, info.children);
+
+		this.warnIfEmptyBlock();
 	}
 }

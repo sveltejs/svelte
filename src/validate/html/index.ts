@@ -1,4 +1,3 @@
-import validateElement from './validateElement';
 import a11y from './a11y';
 import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
@@ -21,15 +20,6 @@ export default function validateHtml(validator: Validator, html: Node) {
 
 	function visit(node: Node) {
 		if (node.type === 'Element') {
-			validateElement(
-				validator,
-				node,
-				refs,
-				refCallees,
-				stack,
-				elementStack
-			);
-
 			a11y(validator, node, elementStack);
 		}
 
@@ -74,23 +64,4 @@ export default function validateHtml(validator: Validator, html: Node) {
 	}
 
 	html.children.forEach(visit);
-
-	refCallees.forEach(callee => {
-		const { parts } = flattenReference(callee);
-		const ref = parts[1];
-
-		if (refs.has(ref)) {
-			// TODO check method is valid, e.g. `audio.stop()` should be `audio.pause()`
-		} else {
-			const match = fuzzymatch(ref, Array.from(refs.keys()));
-
-			let message = `'refs.${ref}' does not exist`;
-			if (match) message += ` (did you mean 'refs.${match}'?)`;
-
-			validator.error(callee, {
-				code: `missing-ref`,
-				message
-			});
-		}
-	});
 }

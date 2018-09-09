@@ -34,6 +34,8 @@ export default class IfBlock extends Node {
 		this.else = info.else
 			? new ElseBlock(component, this, scope, info.else)
 			: null;
+
+		this.warnIfEmptyBlock();
 	}
 
 	init(

@@ -52,6 +52,8 @@ export default class EachBlock extends Node {
 
 		this.children = mapChildren(component, this, this.scope, info.children);
 
+		this.warnIfEmptyBlock(); // TODO would be better if EachBlock, IfBlock etc extended an abstract Block class
+
 		this.else = info.else
 			? new ElseBlock(component, this, this.scope, info.else)
 			: null;

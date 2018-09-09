@@ -26,6 +26,7 @@ import checkForComputedKeys from '../validate/js/utils/checkForComputedKeys';
 import checkForDupes from '../validate/js/utils/checkForDupes';
 import propValidators from '../validate/js/propValidators';
 import fuzzymatch from '../validate/utils/fuzzymatch';
+import flattenReference from '../utils/flattenReference';
 
 interface Computation {
 	key: string;
@@ -207,6 +208,7 @@ export default class Component {
 
 		// styles
 		this.stylesheet = new Stylesheet(source, ast, this.file, options.dev);
+		this.stylesheet.validate(this);
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
@@ -268,6 +270,25 @@ export default class Component {
 				}
 			});
 		}
+
+		this.refCallees.forEach(callee => {
+			const { parts } = flattenReference(callee);
+			const ref = parts[1];
+
+			if (this.refs.has(ref)) {
+				// TODO check method is valid, e.g. `audio.stop()` should be `audio.pause()`
+			} else {
+				const match = fuzzymatch(ref, Array.from(this.refs.keys()));
+
+				let message = `'refs.${ref}' does not exist`;
+				if (match) message += ` (did you mean 'refs.${match}'?)`;
+
+				this.error(callee, {
+					code: `missing-ref`,
+					message
+				});
+			}
+		});
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -486,22 +507,6 @@ export default class Component {
 			localUsedNames.add(alias);
 			return alias;
 		};
-	}
-
-	validate() {
-		const { filename } = this.options;
-
-		try {
-			if (this.stylesheet) {
-				this.stylesheet.validate(this);
-			}
-		} catch (err) {
-			if (onerror) {
-				onerror(err);
-			} else {
-				throw err;
-			}
-		}
 	}
 
 	error(

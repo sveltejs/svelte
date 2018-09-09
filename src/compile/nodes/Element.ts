@@ -152,9 +152,17 @@ export default class Element extends Node {
 		this.animation = null;
 
 		if (this.name === 'textarea') {
-			// this is an egregious hack, but it's the easiest way to get <textarea>
-			// children treated the same way as a value attribute
 			if (info.children.length > 0) {
+				const valueAttribute = info.attributes.find(node => node.name === 'value');
+				if (valueAttribute) {
+					component.error(valueAttribute, {
+						code: `textarea-duplicate-value`,
+						message: `A <textarea> can have either a value attribute or (equivalently) child content, but not both`
+					});
+				}
+
+				// this is an egregious hack, but it's the easiest way to get <textarea>
+				// children treated the same way as a value attribute
 				info.attributes.push({
 					type: 'Attribute',
 					name: 'value',

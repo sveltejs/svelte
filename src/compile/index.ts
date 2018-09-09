@@ -67,29 +67,29 @@ export default function compile(source: string, options: CompileOptions) {
 		stats.start('parse');
 		ast = parse(source, options);
 		stats.stop('parse');
+
+		stats.start('create component');
+		const component = new Component(
+			ast,
+			source,
+			options.name || 'SvelteComponent',
+			options,
+			stats,
+
+			// TODO make component generator-agnostic, to allow e.g. WebGL generator
+			options.generate === 'ssr' ? new SsrTarget() : new DomTarget()
+		);
+		stats.stop('create component');
+
+		if (options.generate === false) {
+			return { ast, stats: stats.render(null), js: null, css: null };
+		}
+
+		const compiler = options.generate === 'ssr' ? generateSSR : generate;
+
+		return compiler(component, options);
 	} catch (err) {
 		options.onerror(err);
 		return;
 	}
-
-	stats.start('create component');
-	const component = new Component(
-		ast,
-		source,
-		options.name || 'SvelteComponent',
-		options,
-		stats,
-
-		// TODO make component generator-agnostic, to allow e.g. WebGL generator
-		options.generate === 'ssr' ? new SsrTarget() : new DomTarget()
-	);
-	stats.stop('create component');
-
-	if (options.generate === false) {
-		return { ast, stats: stats.render(null), js: null, css: null };
-	}
-
-	const compiler = options.generate === 'ssr' ? generateSSR : generate;
-
-	return compiler(component, options);
 }
