@@ -27,22 +27,15 @@ export class DomTarget {
 }
 
 export default function dom(
-	ast: Ast,
-	source: string,
-	stylesheet: Stylesheet,
-	options: CompileOptions,
-	stats: Stats
+	component: Component,
+	options: CompileOptions
 ) {
 	const format = options.format || 'es';
-
-	const target = new DomTarget();
-	const component = new Component(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, target);
 
 	const {
 		computations,
 		name,
-		templateProperties,
-		namespace,
+		templateProperties
 	} = component;
 
 	component.fragment.build();
@@ -61,14 +54,14 @@ export default function dom(
 
 	if (computations.length) {
 		computations.forEach(({ key, deps, hasRestParam }) => {
-			if (target.readonly.has(key)) {
+			if (component.target.readonly.has(key)) {
 				// <svelte:window> bindings
 				throw new Error(
 					`Cannot have a computed value '${key}' that clashes with a read-only property`
 				);
 			}
 
-			target.readonly.add(key);
+			component.target.readonly.add(key);
 
 			if (deps) {
 				deps.forEach(dep => {
@@ -113,7 +106,7 @@ export default function dom(
 		`);
 	}
 
-	target.blocks.forEach(block => {
+	component.target.blocks.forEach(block => {
 		builder.addBlock(block.toString());
 	});
 
@@ -165,7 +158,7 @@ export default function dom(
 		${component.usesRefs && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
-		${target.metaBindings}
+		${component.target.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
 			Array.from(component.expectedProperties).map(prop => {
@@ -234,7 +227,7 @@ export default function dom(
 				this._fragment.c();`}
 				this._mount(options.target, options.anchor);
 
-				${(component.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) &&
+				${(component.hasComponents || component.target.hasComplexBindings || hasInitHooks || component.target.hasIntroTransitions) &&
 				`@flush(this);`}
 			}
 		`}
@@ -277,7 +270,7 @@ export default function dom(
 					this.set({ [attr]: newValue });
 				}
 
-				${(component.hasComponents || target.hasComplexBindings || templateProperties.oncreate || target.hasIntroTransitions) && deindent`
+				${(component.hasComponents || component.target.hasComplexBindings || templateProperties.oncreate || component.target.hasIntroTransitions) && deindent`
 					connectedCallback() {
 						@flush(this);
 					}
@@ -310,7 +303,7 @@ export default function dom(
 	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
-				${Array.from(target.readonly).map(
+				${Array.from(component.target.readonly).map(
 					prop =>
 						`if ('${prop}' in newState && !this._updatingReadonlyProperty) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`
 				)}

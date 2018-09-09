@@ -64,7 +64,7 @@ export default class Stats {
 
 	stop(label) {
 		if (label !== this.currentTiming.label) {
-			throw new Error(`Mismatched timing labels`);
+			throw new Error(`Mismatched timing labels (expected ${this.currentTiming.label}, got ${label})`);
 		}
 
 		this.currentTiming.end = now();

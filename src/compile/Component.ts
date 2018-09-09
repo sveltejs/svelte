@@ -20,6 +20,12 @@ import shared from './shared';
 import { DomTarget } from './dom';
 import { SsrTarget } from './ssr';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
+import error from '../utils/error';
+import getCodeFrame from '../utils/getCodeFrame';
+import checkForComputedKeys from '../validate/js/utils/checkForComputedKeys';
+import checkForDupes from '../validate/js/utils/checkForDupes';
+import propValidators from '../validate/js/propValidators';
+import fuzzymatch from '../validate/utils/fuzzymatch';
 
 interface Computation {
 	key: string;
@@ -92,6 +98,8 @@ export default class Component {
 	tag: string;
 	props: string[];
 
+	properties: Map<string, Node>;
+
 	defaultExport: Node[];
 	imports: Node[];
 	shorthandImports: ShorthandImport[];
@@ -109,6 +117,17 @@ export default class Component {
 	templateProperties: Record<string, Node>;
 	slots: Set<string>;
 	javascript: string;
+
+	used: {
+		components: Set<string>;
+		helpers: Set<string>;
+		events: Set<string>;
+		animations: Set<string>;
+		transitions: Set<string>;
+		actions: Set<string>;
+	};
+
+	refCallees: Node[];
 
 	code: MagicString;
 
@@ -128,16 +147,19 @@ export default class Component {
 	aliases: Map<string, string>;
 	usedNames: Set<string>;
 
+	locator: (search: number, startIndex?: number) => {
+		line: number,
+		column: number
+	};
+
 	constructor(
 		ast: Ast,
 		source: string,
 		name: string,
-		stylesheet: Stylesheet,
 		options: CompileOptions,
 		stats: Stats,
 		target: DomTarget | SsrTarget
 	) {
-		stats.start('compile');
 		this.stats = stats;
 
 		this.ast = ast;
@@ -157,6 +179,17 @@ export default class Component {
 		this.importedComponents = new Map();
 		this.slots = new Set();
 
+		this.used = {
+			components: new Set(),
+			helpers: new Set(),
+			events: new Set(),
+			animations: new Set(),
+			transitions: new Set(),
+			actions: new Set(),
+		};
+
+		this.refCallees = [];
+
 		this.bindingGroups = [];
 		this.indirectDependencies = new Map();
 
@@ -173,7 +206,7 @@ export default class Component {
 		this.usesRefs = false;
 
 		// styles
-		this.stylesheet = stylesheet;
+		this.stylesheet = new Stylesheet(source, ast, this.file, options.dev);
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
 		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
@@ -186,6 +219,7 @@ export default class Component {
 
 		this.computations = [];
 		this.templateProperties = {};
+		this.properties = new Map();
 
 		this.walkJs();
 		this.name = this.alias(name);
@@ -207,7 +241,7 @@ export default class Component {
 		// this.walkTemplate();
 		if (!this.customElement) this.stylesheet.reify();
 
-		stylesheet.warnOnUnusedSelectors(options.onwarn);
+		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -382,8 +416,6 @@ export default class Component {
 			})
 		};
 
-		this.stats.stop('compile');
-
 		return {
 			ast: this.ast,
 			js,
@@ -430,12 +462,371 @@ export default class Component {
 		};
 	}
 
+	validate() {
+		const { filename } = this.options;
+
+		try {
+			if (this.stylesheet) {
+				this.stylesheet.validate(this);
+			}
+		} catch (err) {
+			if (onerror) {
+				onerror(err);
+			} else {
+				throw err;
+			}
+		}
+	}
+
+	error(
+		pos: {
+			start: number,
+			end: number
+		},
+		e : {
+			code: string,
+			message: string
+		}
+	) {
+		error(e.message, {
+			name: 'ValidationError',
+			code: e.code,
+			source: this.source,
+			start: pos.start,
+			end: pos.end,
+			filename: this.options.filename
+		});
+	}
+
+	warn(
+		pos: {
+			start: number,
+			end: number
+		},
+		warning: {
+			code: string,
+			message: string
+		}
+	) {
+		if (!this.locator) {
+			this.locator = getLocator(this.source, { offsetLine: 1 });
+		}
+
+		const start = this.locator(pos.start);
+		const end = this.locator(pos.end);
+
+		const frame = getCodeFrame(this.source, start.line - 1, start.column);
+
+		this.stats.warn({
+			code: warning.code,
+			message: warning.message,
+			frame,
+			start,
+			end,
+			pos: pos.start,
+			filename: this.options.filename,
+			toString: () => `${warning.message} (${start.line + 1}:${start.column})\n${frame}`,
+		});
+	}
+
+	processDefaultExport(node, componentDefinition, indentExclusionRanges) {
+		const { templateProperties, source, code } = this;
+
+		if (node.declaration.type !== 'ObjectExpression') {
+			this.error(node.declaration, {
+				code: `invalid-default-export`,
+				message: `Default export must be an object literal`
+			});
+		}
+
+		checkForComputedKeys(this, node.declaration.properties);
+		checkForDupes(this, node.declaration.properties);
+
+		const props = this.properties;
+
+		node.declaration.properties.forEach((prop: Node) => {
+			props.set(getName(prop.key), prop);
+		});
+
+		const validPropList = Object.keys(propValidators);
+
+		// ensure all exported props are valid
+		node.declaration.properties.forEach((prop: Node) => {
+			const name = getName(prop.key);
+			const propValidator = propValidators[name];
+
+			if (propValidator) {
+				propValidator(this, prop);
+			} else {
+				const match = fuzzymatch(name, validPropList);
+				if (match) {
+					this.error(prop, {
+						code: `unexpected-property`,
+						message: `Unexpected property '${name}' (did you mean '${match}'?)`
+					});
+				} else if (/FunctionExpression/.test(prop.value.type)) {
+					this.error(prop, {
+						code: `unexpected-property`,
+						message: `Unexpected property '${name}' (did you mean to include it in 'methods'?)`
+					});
+				} else {
+					this.error(prop, {
+						code: `unexpected-property`,
+						message: `Unexpected property '${name}'`
+					});
+				}
+			}
+		});
+
+		if (props.has('namespace')) {
+			const ns = nodeToString(props.get('namespace').value);
+			this.namespace = namespaces[ns] || ns;
+		}
+
+		node.declaration.properties.forEach((prop: Node) => {
+			templateProperties[getName(prop.key)] = prop;
+		});
+
+		['helpers', 'events', 'components', 'transitions', 'actions', 'animations'].forEach(key => {
+			if (templateProperties[key]) {
+				templateProperties[key].value.properties.forEach((prop: Node) => {
+					this[key].add(getName(prop.key));
+				});
+			}
+		});
+
+		const addArrowFunctionExpression = (name: string, node: Node) => {
+			const { body, params, async } = node;
+			const fnKeyword = async ? 'async function' : 'function';
+
+			const paramString = params.length ?
+				`[✂${params[0].start}-${params[params.length - 1].end}✂]` :
+				``;
+
+			if (body.type === 'BlockStatement') {
+				componentDefinition.addBlock(deindent`
+					${fnKeyword} ${name}(${paramString}) [✂${body.start}-${body.end}✂]
+				`);
+			} else {
+				componentDefinition.addBlock(deindent`
+					${fnKeyword} ${name}(${paramString}) {
+						return [✂${body.start}-${body.end}✂];
+					}
+				`);
+			}
+		};
+
+		const addFunctionExpression = (name: string, node: Node) => {
+			const { async } = node;
+			const fnKeyword = async ? 'async function' : 'function';
+
+			let c = node.start;
+			while (this.source[c] !== '(') c += 1;
+			componentDefinition.addBlock(deindent`
+				${fnKeyword} ${name}[✂${c}-${node.end}✂];
+			`);
+		};
+
+		const addValue = (name: string, node: Node) => {
+			componentDefinition.addBlock(deindent`
+				var ${name} = [✂${node.start}-${node.end}✂];
+			`);
+		};
+
+		const addDeclaration = (
+			key: string,
+			node: Node,
+			allowShorthandImport?: boolean,
+			disambiguator?: string,
+			conflicts?: Record<string, boolean>
+		) => {
+			const qualified = disambiguator ? `${disambiguator}-${key}` : key;
+
+			if (node.type === 'Identifier' && node.name === key) {
+				this.templateVars.set(qualified, key);
+				return;
+			}
+
+			let deconflicted = key;
+			if (conflicts) while (deconflicted in conflicts) deconflicted += '_'
+
+			let name = this.getUniqueName(deconflicted);
+			this.templateVars.set(qualified, name);
+
+			if (allowShorthandImport && node.type === 'Literal' && typeof node.value === 'string') {
+				this.shorthandImports.push({ name, source: node.value });
+				return;
+			}
+
+			// deindent
+			const indentationLevel = getIndentationLevel(source, node.start);
+			if (indentationLevel) {
+				removeIndentation(code, node.start, node.end, indentationLevel, indentExclusionRanges);
+			}
+
+			if (node.type === 'ArrowFunctionExpression') {
+				addArrowFunctionExpression(name, node);
+			} else if (node.type === 'FunctionExpression') {
+				addFunctionExpression(name, node);
+			} else {
+				addValue(name, node);
+			}
+		};
+
+		if (templateProperties.components) {
+			templateProperties.components.value.properties.forEach((property: Node) => {
+				addDeclaration(getName(property.key), property.value, true, 'components');
+			});
+		}
+
+		if (templateProperties.computed) {
+			const dependencies = new Map();
+
+			const fullStateComputations = [];
+
+			templateProperties.computed.value.properties.forEach((prop: Node) => {
+				const key = getName(prop.key);
+				const value = prop.value;
+
+				addDeclaration(key, value, false, 'computed', {
+					state: true,
+					changed: true
+				});
+
+				const param = value.params[0];
+
+				const hasRestParam = (
+					param.properties &&
+					param.properties.some(prop => prop.type === 'RestElement')
+				);
+
+				if (param.type !== 'ObjectPattern' || hasRestParam) {
+					fullStateComputations.push({ key, deps: null, hasRestParam });
+				} else {
+					const deps = param.properties.map(prop => prop.key.name);
+
+					deps.forEach(dep => {
+						this.expectedProperties.add(dep);
+					});
+					dependencies.set(key, deps);
+				}
+			});
+
+			const visited = new Set();
+
+			const visit = (key: string) => {
+				if (!dependencies.has(key)) return; // not a computation
+
+				if (visited.has(key)) return;
+				visited.add(key);
+
+				const deps = dependencies.get(key);
+				deps.forEach(visit);
+
+				computations.push({ key, deps, hasRestParam: false });
+
+				const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
+			};
+
+			templateProperties.computed.value.properties.forEach((prop: Node) =>
+				visit(getName(prop.key))
+			);
+
+			if (fullStateComputations.length > 0) {
+				computations.push(...fullStateComputations);
+			}
+		}
+
+		if (templateProperties.data) {
+			addDeclaration('data', templateProperties.data.value);
+		}
+
+		if (templateProperties.events) {
+			templateProperties.events.value.properties.forEach((property: Node) => {
+				addDeclaration(getName(property.key), property.value, false, 'events');
+			});
+		}
+
+		if (templateProperties.helpers) {
+			templateProperties.helpers.value.properties.forEach((property: Node) => {
+				addDeclaration(getName(property.key), property.value, false, 'helpers');
+			});
+		}
+
+		if (templateProperties.methods) {
+			addDeclaration('methods', templateProperties.methods.value);
+
+			templateProperties.methods.value.properties.forEach(prop => {
+				this.methods.add(prop.key.name);
+			});
+		}
+
+		if (templateProperties.namespace) {
+			const ns = nodeToString(templateProperties.namespace.value);
+			this.namespace = namespaces[ns] || ns;
+		}
+
+		if (templateProperties.oncreate) {
+			addDeclaration('oncreate', templateProperties.oncreate.value);
+		}
+
+		if (templateProperties.ondestroy) {
+			addDeclaration('ondestroy', templateProperties.ondestroy.value);
+		}
+
+		if (templateProperties.onstate) {
+			addDeclaration('onstate', templateProperties.onstate.value);
+		}
+
+		if (templateProperties.onupdate) {
+			addDeclaration('onupdate', templateProperties.onupdate.value);
+		}
+
+		if (templateProperties.preload) {
+			addDeclaration('preload', templateProperties.preload.value);
+		}
+
+		if (templateProperties.props) {
+			this.props = templateProperties.props.value.elements.map((element: Node) => nodeToString(element));
+		}
+
+		if (templateProperties.setup) {
+			addDeclaration('setup', templateProperties.setup.value);
+		}
+
+		if (templateProperties.store) {
+			addDeclaration('store', templateProperties.store.value);
+		}
+
+		if (templateProperties.tag) {
+			this.tag = nodeToString(templateProperties.tag.value);
+		}
+
+		if (templateProperties.transitions) {
+			templateProperties.transitions.value.properties.forEach((property: Node) => {
+				addDeclaration(getName(property.key), property.value, false, 'transitions');
+			});
+		}
+
+		if (templateProperties.animations) {
+			templateProperties.animations.value.properties.forEach((property: Node) => {
+				addDeclaration(getName(property.key), property.value, false, 'animations');
+			});
+		}
+
+		if (templateProperties.actions) {
+			templateProperties.actions.value.properties.forEach((property: Node) => {
+				addDeclaration(getName(property.key), property.value, false, 'actions');
+			});
+		}
+
+		this.defaultExport = node;
+	}
+
 	walkJs() {
 		const {
 			code,
 			source,
-			computations,
-			templateProperties,
 			imports
 		} = this;
 
@@ -462,10 +853,21 @@ export default class Component {
 
 			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
-			// imports need to be hoisted out of the IIFE
-			for (let i = 0; i < body.length; i += 1) {
-				const node = body[i];
-				if (node.type === 'ImportDeclaration') {
+			body.forEach(node => {
+				// check there are no named exports
+				if (node.type === 'ExportNamedDeclaration') {
+					this.error(node, {
+						code: `named-export`,
+						message: `A component can only have a default export`
+					});
+				}
+
+				if (node.type === 'ExportDefaultDeclaration') {
+					this.processDefaultExport(node, componentDefinition, indentExclusionRanges);
+				}
+
+				// imports need to be hoisted out of the IIFE
+				else if (node.type === 'ImportDeclaration') {
 					removeNode(code, js.content, node);
 					imports.push(node);
 
@@ -473,255 +875,12 @@ export default class Component {
 						this.userVars.add(specifier.local.name);
 					});
 				}
-			}
-
-			const defaultExport = this.defaultExport = body.find(
-				(node: Node) => node.type === 'ExportDefaultDeclaration'
-			);
-
-			if (defaultExport) {
-				defaultExport.declaration.properties.forEach((prop: Node) => {
-					templateProperties[getName(prop.key)] = prop;
-				});
-
-				['helpers', 'events', 'components', 'transitions', 'actions', 'animations'].forEach(key => {
-					if (templateProperties[key]) {
-						templateProperties[key].value.properties.forEach((prop: Node) => {
-							this[key].add(getName(prop.key));
-						});
-					}
-				});
-
-				const addArrowFunctionExpression = (name: string, node: Node) => {
-					const { body, params, async } = node;
-					const fnKeyword = async ? 'async function' : 'function';
-
-					const paramString = params.length ?
-						`[✂${params[0].start}-${params[params.length - 1].end}✂]` :
-						``;
-
-					if (body.type === 'BlockStatement') {
-						componentDefinition.addBlock(deindent`
-							${fnKeyword} ${name}(${paramString}) [✂${body.start}-${body.end}✂]
-						`);
-					} else {
-						componentDefinition.addBlock(deindent`
-							${fnKeyword} ${name}(${paramString}) {
-								return [✂${body.start}-${body.end}✂];
-							}
-						`);
-					}
-				};
-
-				const addFunctionExpression = (name: string, node: Node) => {
-					const { async } = node;
-					const fnKeyword = async ? 'async function' : 'function';
-
-					let c = node.start;
-					while (this.source[c] !== '(') c += 1;
-					componentDefinition.addBlock(deindent`
-						${fnKeyword} ${name}[✂${c}-${node.end}✂];
-					`);
-				};
-
-				const addValue = (name: string, node: Node) => {
-					componentDefinition.addBlock(deindent`
-						var ${name} = [✂${node.start}-${node.end}✂];
-					`);
-				};
-
-				const addDeclaration = (
-					key: string,
-					node: Node,
-					allowShorthandImport?: boolean,
-					disambiguator?: string,
-					conflicts?: Record<string, boolean>
-				) => {
-					const qualified = disambiguator ? `${disambiguator}-${key}` : key;
-
-					if (node.type === 'Identifier' && node.name === key) {
-						this.templateVars.set(qualified, key);
-						return;
-					}
-
-					let deconflicted = key;
-					if (conflicts) while (deconflicted in conflicts) deconflicted += '_'
-
-					let name = this.getUniqueName(deconflicted);
-					this.templateVars.set(qualified, name);
-
-					if (allowShorthandImport && node.type === 'Literal' && typeof node.value === 'string') {
-						this.shorthandImports.push({ name, source: node.value });
-						return;
-					}
-
-					// deindent
-					const indentationLevel = getIndentationLevel(source, node.start);
-					if (indentationLevel) {
-						removeIndentation(code, node.start, node.end, indentationLevel, indentExclusionRanges);
-					}
-
-					if (node.type === 'ArrowFunctionExpression') {
-						addArrowFunctionExpression(name, node);
-					} else if (node.type === 'FunctionExpression') {
-						addFunctionExpression(name, node);
-					} else {
-						addValue(name, node);
-					}
-				};
-
-				if (templateProperties.components) {
-					templateProperties.components.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, true, 'components');
-					});
-				}
-
-				if (templateProperties.computed) {
-					const dependencies = new Map();
-
-					const fullStateComputations = [];
-
-					templateProperties.computed.value.properties.forEach((prop: Node) => {
-						const key = getName(prop.key);
-						const value = prop.value;
-
-						addDeclaration(key, value, false, 'computed', {
-							state: true,
-							changed: true
-						});
-
-						const param = value.params[0];
-
-						const hasRestParam = (
-							param.properties &&
-							param.properties.some(prop => prop.type === 'RestElement')
-						);
-
-						if (param.type !== 'ObjectPattern' || hasRestParam) {
-							fullStateComputations.push({ key, deps: null, hasRestParam });
-						} else {
-							const deps = param.properties.map(prop => prop.key.name);
-
-							deps.forEach(dep => {
-								this.expectedProperties.add(dep);
-							});
-							dependencies.set(key, deps);
-						}
-					});
-
-					const visited = new Set();
-
-					const visit = (key: string) => {
-						if (!dependencies.has(key)) return; // not a computation
-
-						if (visited.has(key)) return;
-						visited.add(key);
-
-						const deps = dependencies.get(key);
-						deps.forEach(visit);
-
-						computations.push({ key, deps, hasRestParam: false });
-
-						const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
-					};
-
-					templateProperties.computed.value.properties.forEach((prop: Node) =>
-						visit(getName(prop.key))
-					);
-
-					if (fullStateComputations.length > 0) {
-						computations.push(...fullStateComputations);
-					}
-				}
-
-				if (templateProperties.data) {
-					addDeclaration('data', templateProperties.data.value);
-				}
-
-				if (templateProperties.events) {
-					templateProperties.events.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, false, 'events');
-					});
-				}
-
-				if (templateProperties.helpers) {
-					templateProperties.helpers.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, false, 'helpers');
-					});
-				}
-
-				if (templateProperties.methods) {
-					addDeclaration('methods', templateProperties.methods.value);
-
-					templateProperties.methods.value.properties.forEach(prop => {
-						this.methods.add(prop.key.name);
-					});
-				}
-
-				if (templateProperties.namespace) {
-					const ns = nodeToString(templateProperties.namespace.value);
-					this.namespace = namespaces[ns] || ns;
-				}
-
-				if (templateProperties.oncreate) {
-					addDeclaration('oncreate', templateProperties.oncreate.value);
-				}
-
-				if (templateProperties.ondestroy) {
-					addDeclaration('ondestroy', templateProperties.ondestroy.value);
-				}
-
-				if (templateProperties.onstate) {
-					addDeclaration('onstate', templateProperties.onstate.value);
-				}
-
-				if (templateProperties.onupdate) {
-					addDeclaration('onupdate', templateProperties.onupdate.value);
-				}
-
-				if (templateProperties.preload) {
-					addDeclaration('preload', templateProperties.preload.value);
-				}
-
-				if (templateProperties.props) {
-					this.props = templateProperties.props.value.elements.map((element: Node) => nodeToString(element));
-				}
-
-				if (templateProperties.setup) {
-					addDeclaration('setup', templateProperties.setup.value);
-				}
-
-				if (templateProperties.store) {
-					addDeclaration('store', templateProperties.store.value);
-				}
-
-				if (templateProperties.tag) {
-					this.tag = nodeToString(templateProperties.tag.value);
-				}
-
-				if (templateProperties.transitions) {
-					templateProperties.transitions.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, false, 'transitions');
-					});
-				}
-
-				if (templateProperties.animations) {
-					templateProperties.animations.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, false, 'animations');
-					});
-				}
-
-				if (templateProperties.actions) {
-					templateProperties.actions.value.properties.forEach((property: Node) => {
-						addDeclaration(getName(property.key), property.value, false, 'actions');
-					});
-				}
-			}
+			});
 
 			if (indentationLevel) {
-				if (defaultExport) {
-					removeIndentation(code, js.content.start, defaultExport.start, indentationLevel, indentExclusionRanges);
-					removeIndentation(code, defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
+				if (this.defaultExport) {
+					removeIndentation(code, js.content.start, this.defaultExport.start, indentationLevel, indentExclusionRanges);
+					removeIndentation(code, this.defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
 				} else {
 					removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
 				}
@@ -733,11 +892,11 @@ export default class Component {
 			let b = js.content.end;
 			while (/\s/.test(source[b - 1])) b -= 1;
 
-			if (defaultExport) {
+			if (this.defaultExport) {
 				this.javascript = '';
-				if (a !== defaultExport.start) this.javascript += `[✂${a}-${defaultExport.start}✂]`;
+				if (a !== this.defaultExport.start) this.javascript += `[✂${a}-${this.defaultExport.start}✂]`;
 				if (!componentDefinition.isEmpty()) this.javascript += componentDefinition;
-				if (defaultExport.end !== b) this.javascript += `[✂${defaultExport.end}-${b}✂]`;
+				if (this.defaultExport.end !== b) this.javascript += `[✂${this.defaultExport.end}-${b}✂]`;
 			} else {
 				this.javascript = a === b ? null : `[✂${a}-${b}✂]`;
 			}

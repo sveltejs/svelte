@@ -32,16 +32,10 @@ export class SsrTarget {
 }
 
 export default function ssr(
-	ast: Ast,
-	source: string,
-	stylesheet: Stylesheet,
-	options: CompileOptions,
-	stats: Stats
+	component: Component,
+	options: CompileOptions
 ) {
 	const format = options.format || 'cjs';
-
-	const target = new SsrTarget();
-	const component = new Component(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, target);
 
 	const { computations, name, templateProperties } = component;
 
@@ -123,7 +117,7 @@ export default function ssr(
 				({ key }) => `ctx.${key} = %computed-${key}(ctx);`
 			)}
 
-			${target.bindings.length &&
+			${component.target.bindings.length &&
 				deindent`
 				var settled = false;
 				var tmp;
@@ -131,11 +125,11 @@ export default function ssr(
 				while (!settled) {
 					settled = true;
 
-					${target.bindings.join('\n\n')}
+					${component.target.bindings.join('\n\n')}
 				}
 			`}
 
-			return \`${target.renderCode}\`;
+			return \`${component.target.renderCode}\`;
 		};
 
 		${name}.css = {

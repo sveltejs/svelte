@@ -15,7 +15,12 @@ const validBindings = [
 	'online'
 ];
 
-export default function validateWindow(validator: Validator, node: Node, refs: Map<string, Node[]>, refCallees: Node[]) {
+export default function validateWindow(
+	validator: Validator,
+	node: Node,
+	refs: Map<string, Node[]>,
+	refCallees: Node[]
+) {
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Binding') {
 			if (attribute.value.type !== 'Identifier') {

@@ -1,14 +1,12 @@
-import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
-import flattenReference from '../../utils/flattenReference';
-import isVoidElementName from '../../utils/isVoidElementName';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
+import flattenReference from '../../utils/flattenReference';
+import fuzzymatch from '../../validate/utils/fuzzymatch';
+import list from '../../utils/list';
+import validateEventHandlerCallee from '../../validate/html/validateEventHandler';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -33,6 +31,16 @@ const readonly = new Set([
 	'online',
 ]);
 
+const validBindings = [
+	'innerWidth',
+	'innerHeight',
+	'outerWidth',
+	'outerHeight',
+	'scrollX',
+	'scrollY',
+	'online'
+];
+
 export default class Window extends Node {
 	type: 'Window';
 	handlers: EventHandler[];
@@ -46,9 +54,49 @@ export default class Window extends Node {
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
+				component.used.events.add(node.name);
+				validateEventHandlerCallee(component, node); // TODO make this a method of component?
+
 				this.handlers.push(new EventHandler(component, this, scope, node));
-			} else if (node.type === 'Binding') {
+			}
+
+			else if (node.type === 'Binding') {
+				if (node.value.type !== 'Identifier') {
+					const { parts } = flattenReference(node.value);
+
+					component.error(node.value, {
+						code: `invalid-binding`,
+						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
+					});
+				}
+
+				if (!~validBindings.indexOf(node.name)) {
+					const match = node.name === 'width'
+						? 'innerWidth'
+						: node.name === 'height'
+							? 'innerHeight'
+							: fuzzymatch(node.name, validBindings);
+
+					const message = `'${node.name}' is not a valid binding on <svelte:window>`;
+
+					if (match) {
+						component.error(node, {
+							code: `invalid-binding`,
+							message: `${message} (did you mean '${match}'?)`
+						});
+					} else {
+						component.error(node, {
+							code: `invalid-binding`,
+							message: `${message} — valid bindings are ${list(validBindings)}`
+						});
+					}
+				}
+
 				this.bindings.push(new Binding(component, this, scope, node));
+			}
+
+			else {
+				// TODO there shouldn't be anything else here...
 			}
 		});
 	}
