@@ -32,7 +32,7 @@
 					{
 						"start": 17,
 						"end": 51,
-						"type": "Component",
+						"type": "InlineComponent",
 						"name": "svelte:self",
 						"attributes": [
 							{

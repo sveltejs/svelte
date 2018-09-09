@@ -85,11 +85,11 @@ export default function validateElement(
 		if (attribute.type === 'Ref') {
 			if (!isValidIdentifier(attribute.name)) {
 				const suggestion = attribute.name.replace(/[^_$a-z0-9]/ig, '_').replace(/^\d/, '_$&');
-				
+
 				validator.error(attribute, {
 					code: `invalid-reference-name`,
 					message: `Reference name '${attribute.name}' is invalid — must be a valid identifier such as ${suggestion}`
-				});	
+				});
 			} else {
 				if (!refs.has(attribute.name)) refs.set(attribute.name, []);
 				refs.get(attribute.name).push(node);
@@ -350,7 +350,7 @@ function checkSlotAttribute(validator: Validator, node: Node, attribute: Node, s
 	while (i--) {
 		const parent = stack[i];
 
-		if (parent.type === 'Component') {
+		if (parent.type === 'InlineComponent') {
 			// if we're inside a component or a custom element, gravy
 			if (parent.name === 'svelte:self' || parent.name === 'svelte:component' || validator.components.has(parent.name)) return;
 		} else if (parent.type === 'Element') {

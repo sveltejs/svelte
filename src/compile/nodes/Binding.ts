@@ -16,7 +16,7 @@ const readOnlyMediaAttributes = new Set([
 ]);
 
 // TODO a lot of this element-specific stuff should live in Element —
-// Binding should ideally be agnostic between Element and Component
+// Binding should ideally be agnostic between Element and InlineComponent
 
 export default class Binding extends Node {
 	name: string;

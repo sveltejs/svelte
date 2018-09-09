@@ -1,10 +1,10 @@
 import AwaitBlock from '../AwaitBlock';
 import Comment from '../Comment';
-import Component from '../Component';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
 import Head from '../Head';
 import IfBlock from '../IfBlock';
+import InlineComponent from '../InlineComponent';
 import MustacheTag from '../MustacheTag';
 import RawMustacheTag from '../RawMustacheTag';
 import DebugTag from '../DebugTag';
@@ -18,11 +18,11 @@ function getConstructor(type): typeof Node {
 	switch (type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Comment': return Comment;
-		case 'Component': return Component;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;
 		case 'IfBlock': return IfBlock;
+		case 'InlineComponent': return InlineComponent;
 		case 'MustacheTag': return MustacheTag;
 		case 'RawMustacheTag': return RawMustacheTag;
 		case 'DebugTag': return DebugTag;

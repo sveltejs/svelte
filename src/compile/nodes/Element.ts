@@ -284,11 +284,11 @@ export default class Element extends Node {
 		}
 
 		const slot = this.getStaticAttributeValue('slot');
-		if (slot && this.hasAncestor('Component')) {
+		if (slot && this.hasAncestor('InlineComponent')) {
 			this.cannotUseInnerHTML();
 			this.slotted = true;
 			// TODO validate slots — no nesting, no dynamic names...
-			const component = this.findNearest(/^Component/);
+			const component = this.findNearest(/^InlineComponent/);
 			component._slots.add(slot);
 		}
 
@@ -318,7 +318,7 @@ export default class Element extends Node {
 		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const prop = slot && quotePropIfNecessary(slot.chunks[0].data);
 		const initialMountNode = this.slotted ?
-			`${this.findNearest(/^Component/).var}._slotted${prop}` : // TODO this looks bonkers
+			`${this.findNearest(/^InlineComponent/).var}._slotted${prop}` : // TODO this looks bonkers
 			parentNode;
 
 		block.addVariable(node);
@@ -977,7 +977,7 @@ export default class Element extends Node {
 		let textareaContents; // awkward special case
 
 		const slot = this.getStaticAttributeValue('slot');
-		if (slot && this.hasAncestor('Component')) {
+		if (slot && this.hasAncestor('InlineComponent')) {
 			const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 			const slotName = slot.chunks[0].data;
 			const appendTarget = compiler.target.appendTargets[compiler.target.appendTargets.length - 1];

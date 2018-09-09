@@ -36,7 +36,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 			validateSlot(validator, node);
 		}
 
-		else if (node.type === 'Component' || node.name === 'svelte:self' || node.name === 'svelte:component') {
+		else if (node.type === 'InlineComponent' || node.name === 'svelte:self' || node.name === 'svelte:component') {
 			validateComponent(
 				validator,
 				node,

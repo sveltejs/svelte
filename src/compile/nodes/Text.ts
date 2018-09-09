@@ -17,11 +17,11 @@ const elementsWithoutText = new Set([
 function shouldSkip(node: Text) {
 	if (/\S/.test(node.data)) return false;
 
-	const parentElement = node.findNearest(/(?:Element|Component|Head)/);
+	const parentElement = node.findNearest(/(?:Element|InlineComponent|Head)/);
 	if (!parentElement) return false;
 
 	if (parentElement.type === 'Head') return true;
-	if (parentElement.type === 'Component') return parentElement.children.length === 1 && node === parentElement.children[0];
+	if (parentElement.type === 'InlineComponent') return parentElement.children.length === 1 && node === parentElement.children[0];
 
 	return parentElement.namespace || elementsWithoutText.has(parentElement.name);
 }

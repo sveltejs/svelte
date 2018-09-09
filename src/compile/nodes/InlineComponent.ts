@@ -15,8 +15,8 @@ import Expression from './shared/Expression';
 import { AppendTarget } from '../../interfaces';
 import addToSet from '../../utils/addToSet';
 
-export default class Component extends Node {
-	type: 'Component';
+export default class InlineComponent extends Node {
+	type: 'InlineComponent';
 	name: string;
 	expression: Expression;
 	attributes: Attribute[];
