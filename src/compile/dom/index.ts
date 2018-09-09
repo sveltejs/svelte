@@ -1,19 +1,12 @@
-import MagicString from 'magic-string';
-import isReference from 'is-reference';
-import { parseExpressionAt } from 'acorn';
-import annotateWithScopes from '../../utils/annotateWithScopes';
-import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
-import reservedNames from '../../utils/reservedNames';
 import Compiler from '../Compiler';
 import Stylesheet from '../../css/Stylesheet';
 import Stats from '../../Stats';
 import Block from './Block';
-import { test } from '../../config';
-import { Ast, CompileOptions, Node } from '../../interfaces';
+import { Ast, CompileOptions } from '../../interfaces';
 
 export class DomTarget {
 	blocks: (Block|string)[];

@@ -2,7 +2,6 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
 import Compiler from '../Compiler';
-import { Node } from '../../interfaces';
 
 export interface BlockOptions {
 	parent?: Block;
