@@ -1,5 +1,5 @@
 import { Node, Warning } from './interfaces';
-import Compiler from './compile/Compiler';
+import Component from './compile/Component';
 
 const now = (typeof process !== 'undefined' && process.hrtime)
 	? () => {
@@ -73,14 +73,14 @@ export default class Stats {
 		this.currentChildren = this.currentTiming ? this.currentTiming.children : this.timings;
 	}
 
-	render(compiler: Compiler) {
+	render(component: Component) {
 		const timings = Object.assign({
 			total: now() - this.startTime
 		}, collapseTimings(this.timings));
 
 		// TODO would be good to have this info even
 		// if options.generate is false
-		const imports = compiler && compiler.imports.map(node => {
+		const imports = component && component.imports.map(node => {
 			return {
 				source: node.source.value,
 				specifiers: node.specifiers.map(specifier => {
@@ -96,11 +96,11 @@ export default class Stats {
 			}
 		});
 
-		const hooks: Record<string, boolean> = compiler && {
-			oncreate: !!compiler.templateProperties.oncreate,
-			ondestroy: !!compiler.templateProperties.ondestroy,
-			onstate: !!compiler.templateProperties.onstate,
-			onupdate: !!compiler.templateProperties.onupdate
+		const hooks: Record<string, boolean> = component && {
+			oncreate: !!component.templateProperties.oncreate,
+			ondestroy: !!component.templateProperties.ondestroy,
+			onstate: !!component.templateProperties.onstate,
+			onupdate: !!component.templateProperties.onupdate
 		};
 
 		return {

@@ -34,11 +34,11 @@ function getConstructor(type): typeof Node {
 	}
 }
 
-export default function mapChildren(compiler, parent, scope, children: any[]) {
+export default function mapChildren(component, parent, scope, children: any[]) {
 	let last = null;
 	return children.map(child => {
 		const constructor = getConstructor(child.type);
-		const node = new constructor(compiler, parent, scope, child);
+		const node = new constructor(component, parent, scope, child);
 
 		if (last) last.next = node;
 		node.prev = last;

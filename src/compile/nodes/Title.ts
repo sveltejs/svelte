@@ -8,9 +8,9 @@ export default class Title extends Node {
 	children: any[]; // TODO
 	shouldCache: boolean;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
-		this.children = mapChildren(compiler, parent, scope, info.children);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.children = mapChildren(component, parent, scope, info.children);
 
 		this.shouldCache = info.children.length === 1
 			? (
@@ -103,12 +103,12 @@ export default class Title extends Node {
 	}
 
 	ssr() {
-		this.compiler.target.append(`<title>`);
+		this.component.target.append(`<title>`);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		this.compiler.target.append(`</title>`);
+		this.component.target.append(`</title>`);
 	}
 }

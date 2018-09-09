@@ -36,10 +36,10 @@ export default class Slot extends Element {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		const slotName = this.getStaticAttributeValue('name') || 'default';
-		compiler.slots.add(slotName);
+		component.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
 		const prop = quotePropIfNecessary(slotName);
@@ -160,12 +160,12 @@ export default class Slot extends Element {
 		const slotName = name && name.chunks[0].data || 'default';
 		const prop = quotePropIfNecessary(slotName);
 
-		this.compiler.target.append(`\${options && options.slotted && options.slotted${prop} ? options.slotted${prop}() : \``);
+		this.component.target.append(`\${options && options.slotted && options.slotted${prop} ? options.slotted${prop}() : \``);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		this.compiler.target.append(`\`}`);
+		this.component.target.append(`\`}`);
 	}
 }

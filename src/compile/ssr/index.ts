@@ -1,5 +1,5 @@
 import deindent from '../../utils/deindent';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import Stats from '../../Stats';
 import Stylesheet from '../../css/Stylesheet';
 import { removeNode, removeObjectKey } from '../../utils/removeNode';
@@ -41,21 +41,21 @@ export default function ssr(
 	const format = options.format || 'cjs';
 
 	const target = new SsrTarget();
-	const compiler = new Compiler(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, false, target);
+	const component = new Component(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, target);
 
-	const { computations, name, templateProperties } = compiler;
+	const { computations, name, templateProperties } = component;
 
 	// create main render() function
-	trim(compiler.fragment.children).forEach((node: Node) => {
+	trim(component.fragment.children).forEach((node: Node) => {
 		node.ssr();
 	});
 
-	const css = compiler.customElement ?
+	const css = component.customElement ?
 		{ code: null, map: null } :
-		compiler.stylesheet.render(options.filename, true);
+		component.stylesheet.render(options.filename, true);
 
 	// generate initial state object
-	const expectedProperties = Array.from(compiler.expectedProperties);
+	const expectedProperties = Array.from(component.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
 	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
 
@@ -81,7 +81,7 @@ export default function ssr(
 
 	// TODO concatenate CSS maps
 	const result = deindent`
-		${compiler.javascript}
+		${component.javascript}
 
 		var ${name} = {};
 
@@ -148,7 +148,7 @@ export default function ssr(
 		${templateProperties.preload && `${name}.preload = %preload;`}
 	`;
 
-	return compiler.generate(result, options, { name, format });
+	return component.generate(result, options, { name, format });
 }
 
 function trim(nodes) {

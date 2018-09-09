@@ -6,7 +6,7 @@ import validCalleeObjects from '../../utils/validCalleeObjects';
 import reservedNames from '../../utils/reservedNames';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Attribute from './Attribute';
@@ -80,15 +80,15 @@ export default class Element extends Node {
 	ref: string;
 	namespace: string;
 
-	constructor(compiler, parent, scope, info: any) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info: any) {
+		super(component, parent, scope, info);
 		this.name = info.name;
 		this.scope = scope;
 
 		const parentElement = parent.findNearest(/^Element/);
 		this.namespace = this.name === 'svg' ?
 			namespaces.svg :
-			parentElement ? parentElement.namespace : this.compiler.namespace;
+			parentElement ? parentElement.namespace : this.component.namespace;
 
 		this.attributes = [];
 		this.actions = [];
@@ -134,7 +134,7 @@ export default class Element extends Node {
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
-					this.actions.push(new Action(compiler, this, scope, node));
+					this.actions.push(new Action(component, this, scope, node));
 					break;
 
 				case 'Attribute':
@@ -142,36 +142,36 @@ export default class Element extends Node {
 					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
-					this.attributes.push(new Attribute(compiler, this, scope, node));
+					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
 
 				case 'Binding':
-					this.bindings.push(new Binding(compiler, this, scope, node));
+					this.bindings.push(new Binding(component, this, scope, node));
 					break;
 
 				case 'Class':
-					this.classes.push(new Class(compiler, this, scope, node));
+					this.classes.push(new Class(component, this, scope, node));
 					break;
 
 				case 'EventHandler':
-					this.handlers.push(new EventHandler(compiler, this, scope, node));
+					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
 				case 'Transition':
-					const transition = new Transition(compiler, this, scope, node);
+					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
 					break;
 
 				case 'Animation':
-					this.animation = new Animation(compiler, this, scope, node);
+					this.animation = new Animation(component, this, scope, node);
 					break;
 
 				case 'Ref':
 					// TODO catch this in validation
 					if (this.ref) throw new Error(`Duplicate refs`);
 
-					compiler.usesRefs = true
+					component.usesRefs = true
 					this.ref = node.name;
 					break;
 
@@ -180,9 +180,9 @@ export default class Element extends Node {
 			}
 		});
 
-		this.children = mapChildren(compiler, this, scope, info.children);
+		this.children = mapChildren(component, this, scope, info.children);
 
-		compiler.stylesheet.apply(this);
+		component.stylesheet.apply(this);
 	}
 
 	init(
@@ -190,7 +190,7 @@ export default class Element extends Node {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
-		if (this.name === 'slot' || this.name === 'option' || this.compiler.options.dev) {
+		if (this.name === 'slot' || this.name === 'option' || this.component.options.dev) {
 			this.cannotUseInnerHTML();
 		}
 
@@ -217,7 +217,7 @@ export default class Element extends Node {
 					if (select && select.selectBindingDependencies) {
 						select.selectBindingDependencies.forEach(prop => {
 							attr.dependencies.forEach((dependency: string) => {
-								this.compiler.indirectDependencies.get(prop).add(dependency);
+								this.component.indirectDependencies.get(prop).add(dependency);
 							});
 						});
 					}
@@ -276,7 +276,7 @@ export default class Element extends Node {
 				const dependencies = binding.value.dependencies;
 				this.selectBindingDependencies = dependencies;
 				dependencies.forEach((prop: string) => {
-					this.compiler.indirectDependencies.set(prop, new Set());
+					this.component.indirectDependencies.set(prop, new Set());
 				});
 			} else {
 				this.selectBindingDependencies = null;
@@ -303,11 +303,11 @@ export default class Element extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		if (this.name === 'slot') {
 			const slotName = this.getStaticAttributeValue('name') || 'default';
-			this.compiler.slots.add(slotName);
+			this.component.slots.add(slotName);
 		}
 
 		if (this.name === 'noscript') return;
@@ -327,10 +327,10 @@ export default class Element extends Node {
 			`${node} = ${renderStatement};`
 		);
 
-		if (this.compiler.options.hydratable) {
+		if (this.component.options.hydratable) {
 			if (parentNodes) {
 				block.builders.claim.addBlock(deindent`
-					${node} = ${getClaimStatement(compiler, this.namespace, parentNodes, this)};
+					${node} = ${getClaimStatement(component, this.namespace, parentNodes, this)};
 					var ${nodes} = @children(${this.name === 'template' ? `${node}.content` : node});
 				`);
 			} else {
@@ -453,10 +453,10 @@ export default class Element extends Node {
 			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
 		}
 
-		if (this.compiler.options.dev) {
-			const loc = this.compiler.locate(this.start);
+		if (this.component.options.dev) {
+			const loc = this.component.locate(this.start);
 			block.builders.hydrate.addLine(
-				`@addLoc(${this.var}, ${this.compiler.fileVar}, ${loc.line}, ${loc.column}, ${this.start});`
+				`@addLoc(${this.var}, ${this.component.fileVar}, ${loc.line}, ${loc.column}, ${this.start});`
 			);
 		}
 	}
@@ -466,7 +466,7 @@ export default class Element extends Node {
 	) {
 		if (this.bindings.length === 0) return;
 
-		if (this.name === 'select' || this.isMediaNode()) this.compiler.target.hasComplexBindings = true;
+		if (this.name === 'select' || this.isMediaNode()) this.component.target.hasComplexBindings = true;
 
 		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
@@ -575,7 +575,7 @@ export default class Element extends Node {
 				.join(' && ');
 
 			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				this.compiler.target.hasComplexBindings = true;
+				this.component.target.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
 					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
@@ -583,7 +583,7 @@ export default class Element extends Node {
 			}
 
 			if (group.events[0] === 'resize') {
-				this.compiler.target.hasComplexBindings = true;
+				this.component.target.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
 					`#component.root._beforecreate.push(${handler});`
@@ -659,24 +659,24 @@ export default class Element extends Node {
 	}
 
 	addEventHandlers(block: Block) {
-		const { compiler } = this;
+		const { component } = this;
 
 		this.handlers.forEach(handler => {
-			const isCustomEvent = compiler.events.has(handler.name);
+			const isCustomEvent = component.events.has(handler.name);
 
 			if (handler.callee) {
-				handler.render(this.compiler, block, handler.shouldHoist);
+				handler.render(this.component, block, handler.shouldHoist);
 			}
 
 			const target = handler.shouldHoist ? 'this' : this.var;
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
-			const handlerName = (handler.shouldHoist ? compiler : block).getUniqueName(
+			const handlerName = (handler.shouldHoist ? component : block).getUniqueName(
 				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
-			const component = block.alias('component'); // can't use #component, might be hoisted
+			const component_name = block.alias('component'); // can't use #component, might be hoisted
 
 			// create the handler body
 			const handlerBody = deindent`
@@ -688,14 +688,14 @@ export default class Element extends Node {
 
 				${handler.snippet ?
 					handler.snippet :
-					`${component}.fire("${handler.name}", event);`}
+					`${component_name}.fire("${handler.name}", event);`}
 			`;
 
 			if (isCustomEvent) {
 				block.addVariable(handlerName);
 
 				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(${component}, ${this.var}, function(event) {
+					${handlerName} = %events-${handler.name}.call(${component_name}, ${this.var}, function(event) {
 						${handlerBody}
 					});
 				`);
@@ -711,7 +711,7 @@ export default class Element extends Node {
 				`;
 
 				if (handler.shouldHoist) {
-					compiler.target.blocks.push(handlerFunction);
+					component.target.blocks.push(handlerFunction);
 				} else {
 					block.builders.init.addBlock(handlerFunction);
 				}
@@ -946,14 +946,14 @@ export default class Element extends Node {
 		return `@append(${name}._slotted.default, ${this.var});`;
 	}
 
-	addCssClass(className = this.compiler.stylesheet.id) {
+	addCssClass(className = this.component.stylesheet.id) {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
 			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
 				(<Text>classAttribute.chunks[0]).data += ` ${className}`;
 			} else {
 				(<Node[]>classAttribute.chunks).push(
-					new Text(this.compiler, this, this.scope, {
+					new Text(this.component, this, this.scope, {
 						type: 'Text',
 						data: ` ${className}`
 					})
@@ -961,7 +961,7 @@ export default class Element extends Node {
 			}
 		} else {
 			this.attributes.push(
-				new Attribute(this.compiler, this, this.scope, {
+				new Attribute(this.component, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
 					value: [{ type: 'Text', data: className }]
@@ -971,7 +971,7 @@ export default class Element extends Node {
 	}
 
 	ssr() {
-		const { compiler } = this;
+		const { component } = this;
 
 		let openingTag = `<${this.name}`;
 		let textareaContents; // awkward special case
@@ -980,7 +980,7 @@ export default class Element extends Node {
 		if (slot && this.hasAncestor('InlineComponent')) {
 			const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
 			const slotName = slot.chunks[0].data;
-			const appendTarget = compiler.target.appendTargets[compiler.target.appendTargets.length - 1];
+			const appendTarget = component.target.appendTargets[component.target.appendTargets.length - 1];
 			appendTarget.slotStack.push(slotName);
 			appendTarget.slots[slotName] = '';
 		}
@@ -1048,10 +1048,10 @@ export default class Element extends Node {
 
 		openingTag += '>';
 
-		compiler.target.append(openingTag);
+		component.target.append(openingTag);
 
 		if (this.name === 'textarea' && textareaContents !== undefined) {
-			compiler.target.append(textareaContents);
+			component.target.append(textareaContents);
 		} else {
 			this.children.forEach((child: Node) => {
 				child.ssr();
@@ -1059,7 +1059,7 @@ export default class Element extends Node {
 		}
 
 		if (!isVoidElementName(this.name)) {
-			compiler.target.append(`</${this.name}>`);
+			component.target.append(`</${this.name}>`);
 		}
 	}
 }
@@ -1080,7 +1080,7 @@ function getRenderStatement(
 }
 
 function getClaimStatement(
-	compiler: Compiler,
+	component: Component,
 	namespace: string,
 	nodes: string,
 	node: Node

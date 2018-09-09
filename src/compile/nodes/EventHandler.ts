@@ -19,8 +19,8 @@ export default class EventHandler extends Node {
 	args: Expression[];
 	snippet: string;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.name = info.name;
 		this.dependencies = new Set();
@@ -33,7 +33,7 @@ export default class EventHandler extends Node {
 			this.usesContext = false;
 
 			this.args = info.expression.arguments.map(param => {
-				const expression = new Expression(compiler, this, scope, param);
+				const expression = new Expression(component, this, scope, param);
 				addToSet(this.dependencies, expression.dependencies);
 				if (expression.usesContext) this.usesContext = true;
 				return expression;
@@ -51,28 +51,28 @@ export default class EventHandler extends Node {
 			this.snippet = null; // TODO handle shorthand events here?
 		}
 
-		this.isCustomEvent = compiler.events.has(this.name);
+		this.isCustomEvent = component.events.has(this.name);
 		this.shouldHoist = !this.isCustomEvent && parent.hasAncestor('EachBlock');
 	}
 
-	render(compiler, block, hoisted) { // TODO hoist more event handlers
+	render(component, block, hoisted) { // TODO hoist more event handlers
 		if (this.insertionPoint === null) return; // TODO handle shorthand events here?
 
 		if (!validCalleeObjects.has(this.callee.name)) {
-			const component = hoisted ? `component` : block.alias(`component`);
+			const component_name = hoisted ? `component` : block.alias(`component`);
 
 			// allow event.stopPropagation(), this.select() etc
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			if (this.callee.name[0] === '$' && !compiler.methods.has(this.callee.name)) {
-				compiler.code.overwrite(
+			if (this.callee.name[0] === '$' && !component.methods.has(this.callee.name)) {
+				component.code.overwrite(
 					this.insertionPoint,
 					this.insertionPoint + 1,
-					`${component}.store.`
+					`${component_name}.store.`
 				);
 			} else {
-				compiler.code.prependRight(
+				component.code.prependRight(
 					this.insertionPoint,
-					`${component}.`
+					`${component_name}.`
 				);
 			}
 		}
@@ -84,7 +84,7 @@ export default class EventHandler extends Node {
 
 			if (this.callee && this.callee.name === 'this') {
 				const node = this.callee.nodes[0];
-				compiler.code.overwrite(node.start, node.end, this.parent.var, {
+				component.code.overwrite(node.start, node.end, this.parent.var, {
 					storeName: true,
 					contentOnly: true
 				});

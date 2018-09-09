@@ -6,20 +6,19 @@ import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import deindent from '../utils/deindent';
 import CodeBuilder from '../utils/CodeBuilder';
-import flattenReference from '../utils/flattenReference';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
-import { removeNode, removeObjectKey } from '../utils/removeNode';
+import { removeNode } from '../utils/removeNode';
 import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
-import annotateWithScopes, { Scope } from '../utils/annotateWithScopes';
+import annotateWithScopes from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import Stylesheet from '../css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
-import { DomTarget } from './dom/index';
-import { SsrTarget } from './ssr/index';
+import { DomTarget } from './dom';
+import { SsrTarget } from './ssr';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 
 interface Computation {
@@ -79,7 +78,7 @@ function removeIndentation(
 childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 
-export default class Compiler {
+export default class Component {
 	stats: Stats;
 
 	ast: Ast;
@@ -136,7 +135,6 @@ export default class Compiler {
 		stylesheet: Stylesheet,
 		options: CompileOptions,
 		stats: Stats,
-		dom: boolean,
 		target: DomTarget | SsrTarget
 	) {
 		stats.start('compile');
@@ -189,7 +187,7 @@ export default class Compiler {
 		this.computations = [];
 		this.templateProperties = {};
 
-		this.walkJs(dom);
+		this.walkJs();
 		this.name = this.alias(name);
 
 		if (options.customElement === true) {
@@ -266,7 +264,7 @@ export default class Compiler {
 		} else {
 			let inlineHelpers = '';
 
-			const compiler = this;
+			const component = this;
 
 			importedHelpers = [];
 
@@ -291,7 +289,7 @@ export default class Compiler {
 								const dependency = node.name;
 								helpers.add(dependency);
 
-								const alias = compiler.alias(dependency);
+								const alias = component.alias(dependency);
 								if (alias !== node.name) {
 									code.overwrite(node.start, node.end, alias);
 								}
@@ -432,7 +430,7 @@ export default class Compiler {
 		};
 	}
 
-	walkJs(dom: boolean) {
+	walkJs() {
 		const {
 			code,
 			source,
@@ -532,7 +530,13 @@ export default class Compiler {
 					`);
 				};
 
-				const addDeclaration = (key: string, node: Node, allowShorthandImport?: boolean, disambiguator?: string, conflicts?: Record<string, boolean>) => {
+				const addDeclaration = (
+					key: string,
+					node: Node,
+					allowShorthandImport?: boolean,
+					disambiguator?: string,
+					conflicts?: Record<string, boolean>
+				) => {
 					const qualified = disambiguator ? `${disambiguator}-${key}` : key;
 
 					if (node.type === 'Identifier' && node.name === key) {
@@ -634,7 +638,7 @@ export default class Compiler {
 					addDeclaration('data', templateProperties.data.value);
 				}
 
-				if (templateProperties.events && dom) {
+				if (templateProperties.events) {
 					templateProperties.events.value.properties.forEach((property: Node) => {
 						addDeclaration(getName(property.key), property.value, false, 'events');
 					});
@@ -646,7 +650,7 @@ export default class Compiler {
 					});
 				}
 
-				if (templateProperties.methods && dom) {
+				if (templateProperties.methods) {
 					addDeclaration('methods', templateProperties.methods.value);
 
 					templateProperties.methods.value.properties.forEach(prop => {
@@ -659,19 +663,19 @@ export default class Compiler {
 					this.namespace = namespaces[ns] || ns;
 				}
 
-				if (templateProperties.oncreate && dom) {
+				if (templateProperties.oncreate) {
 					addDeclaration('oncreate', templateProperties.oncreate.value);
 				}
 
-				if (templateProperties.ondestroy && dom) {
+				if (templateProperties.ondestroy) {
 					addDeclaration('ondestroy', templateProperties.ondestroy.value);
 				}
 
-				if (templateProperties.onstate && dom) {
+				if (templateProperties.onstate) {
 					addDeclaration('onstate', templateProperties.onstate.value);
 				}
 
-				if (templateProperties.onupdate && dom) {
+				if (templateProperties.onupdate) {
 					addDeclaration('onupdate', templateProperties.onupdate.value);
 				}
 

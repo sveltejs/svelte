@@ -9,9 +9,9 @@ export default class Head extends Node {
 	type: 'Head';
 	children: any[]; // TODO
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
-		this.children = mapChildren(compiler, parent, scope, info.children.filter(child => {
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.children = mapChildren(component, parent, scope, info.children.filter(child => {
 			return (child.type !== 'Text' || /\S/.test(child.data));
 		}));
 	}
@@ -37,12 +37,12 @@ export default class Head extends Node {
 	}
 
 	ssr() {
-		this.compiler.target.append('${(__result.head += `');
+		this.component.target.append('${(__result.head += `');
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		this.compiler.target.append('`, "")}');
+		this.component.target.append('`, "")}');
 	}
 }

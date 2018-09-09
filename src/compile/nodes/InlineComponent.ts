@@ -25,15 +25,15 @@ export default class InlineComponent extends Node {
 	children: Node[];
 	ref: string;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
-		compiler.hasComponents = true;
+		component.hasComponents = true;
 
 		this.name = info.name;
 
 		this.expression = this.name === 'svelte:component'
-			? new Expression(compiler, this, scope, info.expression)
+			? new Expression(component, this, scope, info.expression)
 			: null;
 
 		this.attributes = [];
@@ -44,22 +44,22 @@ export default class InlineComponent extends Node {
 			switch (node.type) {
 				case 'Attribute':
 				case 'Spread':
-					this.attributes.push(new Attribute(compiler, this, scope, node));
+					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
 
 				case 'Binding':
-					this.bindings.push(new Binding(compiler, this, scope, node));
+					this.bindings.push(new Binding(component, this, scope, node));
 					break;
 
 				case 'EventHandler':
-					this.handlers.push(new EventHandler(compiler, this, scope, node));
+					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
 				case 'Ref':
 					// TODO catch this in validation
 					if (this.ref) throw new Error(`Duplicate refs`);
 
-					compiler.usesRefs = true
+					component.usesRefs = true
 					this.ref = node.name;
 					break;
 
@@ -68,7 +68,7 @@ export default class InlineComponent extends Node {
 			}
 		});
 
-		this.children = mapChildren(compiler, this, scope, info.children);
+		this.children = mapChildren(component, this, scope, info.children);
 	}
 
 	init(
@@ -96,7 +96,7 @@ export default class InlineComponent extends Node {
 
 		this.var = block.getUniqueName(
 			(
-				this.name === 'svelte:self' ? this.compiler.name :
+				this.name === 'svelte:self' ? this.component.name :
 				this.name === 'svelte:component' ? 'switch_instance' :
 				this.name
 			).toLowerCase()
@@ -110,7 +110,7 @@ export default class InlineComponent extends Node {
 			});
 		}
 
-		if (this.compiler.options.nestedTransitions) {
+		if (this.component.options.nestedTransitions) {
 			block.addOutro();
 		}
 	}
@@ -120,7 +120,7 @@ export default class InlineComponent extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		const name = this.var;
 
@@ -228,7 +228,7 @@ export default class InlineComponent extends Node {
 		}
 
 		if (this.bindings.length) {
-			compiler.target.hasComplexBindings = true;
+			component.target.hasComplexBindings = true;
 
 			name_updating = block.alias(`${name}_updating`);
 			block.addVariable(name_updating, '{}');
@@ -337,7 +337,7 @@ export default class InlineComponent extends Node {
 
 		this.handlers.forEach(handler => {
 			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
-			handler.render(compiler, block, false); // TODO hoist when possible
+			handler.render(component, block, false); // TODO hoist when possible
 			if (handler.usesContext) block.maintainContext = true; // TODO is there a better place to put this?
 		});
 
@@ -403,7 +403,7 @@ export default class InlineComponent extends Node {
 			block.builders.update.addBlock(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
-						${this.compiler.options.nestedTransitions
+						${this.component.options.nestedTransitions
 						? deindent`
 						@groupOutros();
 						const old_component = ${name};
@@ -455,7 +455,7 @@ export default class InlineComponent extends Node {
 			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(${parentNode ? '' : 'detach'});`);
 		} else {
 			const expression = this.name === 'svelte:self'
-				? compiler.name
+				? component.name
 				: `%components-${this.name}`;
 
 			block.builders.init.addBlock(deindent`
@@ -503,7 +503,7 @@ export default class InlineComponent extends Node {
 			`);
 		}
 
-		if (this.compiler.options.nestedTransitions) {
+		if (this.component.options.nestedTransitions) {
 			block.builders.outro.addLine(
 				`if (${name}) ${name}._fragment.o(#outrocallback);`
 			);
@@ -570,7 +570,7 @@ export default class InlineComponent extends Node {
 
 		const expression = (
 			this.name === 'svelte:self'
-				? this.compiler.name
+				? this.component.name
 				: this.name === 'svelte:component'
 					? `((${this.expression.snippet}) || @missingComponent)`
 					: `%components-${this.name}`
@@ -594,7 +594,7 @@ export default class InlineComponent extends Node {
 
 			const { name } = getObject(binding.value.node);
 
-			this.compiler.target.bindings.push(deindent`
+			this.component.target.bindings.push(deindent`
 				if (${conditions.reverse().join('&&')}) {
 					tmp = ${expression}.data();
 					if ('${name}' in tmp) {
@@ -616,7 +616,7 @@ export default class InlineComponent extends Node {
 				slotStack: ['default']
 			};
 
-			this.compiler.target.appendTargets.push(appendTarget);
+			this.component.target.appendTargets.push(appendTarget);
 
 			this.children.forEach((child: Node) => {
 				child.ssr();
@@ -628,15 +628,15 @@ export default class InlineComponent extends Node {
 
 			options.push(`slotted: { ${slotted} }`);
 
-			this.compiler.target.appendTargets.pop();
+			this.component.target.appendTargets.pop();
 		}
 
 		if (options.length) {
 			open += `, { ${options.join(', ')} }`;
 		}
 
-		this.compiler.target.append(open);
-		this.compiler.target.append(')}');
+		this.component.target.append(open);
+		this.component.target.append(')}');
 	}
 }
 

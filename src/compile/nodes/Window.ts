@@ -38,17 +38,17 @@ export default class Window extends Node {
 	handlers: EventHandler[];
 	bindings: Binding[];
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.handlers = [];
 		this.bindings = [];
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
-				this.handlers.push(new EventHandler(compiler, this, scope, node));
+				this.handlers.push(new EventHandler(component, this, scope, node));
 			} else if (node.type === 'Binding') {
-				this.bindings.push(new Binding(compiler, this, scope, node));
+				this.bindings.push(new Binding(component, this, scope, node));
 			}
 		});
 	}
@@ -58,20 +58,20 @@ export default class Window extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		const events = {};
 		const bindings: Record<string, string> = {};
 
 		this.handlers.forEach(handler => {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			compiler.addSourcemapLocations(handler.expression);
+			component.addSourcemapLocations(handler.expression);
 
-			const isCustomEvent = compiler.events.has(handler.name);
+			const isCustomEvent = component.events.has(handler.name);
 
 			let usesState = handler.dependencies.size > 0;
 
-			handler.render(compiler, block, false); // TODO hoist?
+			handler.render(component, block, false); // TODO hoist?
 
 			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
 			const handlerBody = deindent`
@@ -109,7 +109,7 @@ export default class Window extends Node {
 		this.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				compiler.target.readonly.add(binding.value.node.name);
+				component.target.readonly.add(binding.value.node.name);
 			}
 
 			bindings[binding.name] = binding.value.node.name;
@@ -126,7 +126,7 @@ export default class Window extends Node {
 			);
 
 			// add initial value
-			compiler.target.metaBindings.push(
+			component.target.metaBindings.push(
 				`this._state.${binding.value.node.name} = window.${property};`
 			);
 		});
@@ -151,13 +151,13 @@ export default class Window extends Node {
 					if (${lock}) return;
 					${lock} = true;
 				`}
-				${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
+				${component.options.dev && `component._updatingReadonlyProperty = true;`}
 
 				#component.set({
 					${props}
 				});
 
-				${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
+				${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				${event === 'scroll' && `${lock} = false;`}
 			`;
 
@@ -200,16 +200,16 @@ export default class Window extends Node {
 			const handlerName = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
 				function ${handlerName}(event) {
-					${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
+					${component.options.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
-					${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
+					${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				}
 				window.addEventListener("online", ${handlerName});
 				window.addEventListener("offline", ${handlerName});
 			`);
 
 			// add initial value
-			compiler.target.metaBindings.push(
+			component.target.metaBindings.push(
 				`this._state.${bindings.online} = navigator.onLine;`
 			);
 

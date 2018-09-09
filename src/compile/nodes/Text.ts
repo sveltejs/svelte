@@ -31,8 +31,8 @@ export default class Text extends Node {
 	data: string;
 	shouldSkip: boolean;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 		this.data = info.data;
 	}
 
@@ -74,6 +74,6 @@ export default class Text extends Node {
 			// unless this Text node is inside a <script> or <style> element, escape &,<,>
 			text = escapeHTML(text);
 		}
-		this.compiler.target.append(escape(escapeTemplate(text)));
+		this.component.target.append(escape(escapeTemplate(text)));
 	}
 }
