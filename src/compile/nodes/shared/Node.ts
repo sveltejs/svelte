@@ -169,8 +169,4 @@ export default class Node {
 	remount(name: string) {
 		return `${this.var}.m(${name}._slotted.default, null);`;
 	}
-
-	validate() {
-		throw new Error(`${this.type} does not implement validate method`);
-	}
 }

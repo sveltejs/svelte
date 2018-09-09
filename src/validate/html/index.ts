@@ -1,8 +1,4 @@
-import validateComponent from './validateComponent';
 import validateElement from './validateElement';
-import validateWindow from './validateWindow';
-import validateHead from './validateHead';
-import validateSlot from './validateSlot';
 import a11y from './a11y';
 import fuzzymatch from '../utils/fuzzymatch'
 import flattenReference from '../../utils/flattenReference';
@@ -24,30 +20,7 @@ export default function validateHtml(validator: Validator, html: Node) {
 	const elementStack: Node[] = [];
 
 	function visit(node: Node) {
-		if (node.type === 'Window') {
-			validateWindow(validator, node, refs, refCallees);
-		}
-
-		else if (node.type === 'Head') {
-			validateHead(validator, node, refs, refCallees);
-		}
-
-		else if (node.type === 'Slot') {
-			validateSlot(validator, node);
-		}
-
-		else if (node.type === 'InlineComponent' || node.name === 'svelte:self' || node.name === 'svelte:component') {
-			validateComponent(
-				validator,
-				node,
-				refs,
-				refCallees,
-				stack,
-				elementStack
-			);
-		}
-
-		else if (node.type === 'Element') {
+		if (node.type === 'Element') {
 			validateElement(
 				validator,
 				node,

@@ -6,7 +6,6 @@ import EventHandler from './EventHandler';
 import flattenReference from '../../utils/flattenReference';
 import fuzzymatch from '../../validate/utils/fuzzymatch';
 import list from '../../utils/list';
-import validateEventHandlerCallee from '../../validate/html/validateEventHandler';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -54,9 +53,6 @@ export default class Window extends Node {
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
-				component.used.events.add(node.name);
-				validateEventHandlerCallee(component, node); // TODO make this a method of component?
-
 				this.handlers.push(new EventHandler(component, this, scope, node));
 			}
 

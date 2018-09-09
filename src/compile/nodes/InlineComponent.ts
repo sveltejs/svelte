@@ -14,6 +14,9 @@ import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
 import { AppendTarget } from '../../interfaces';
 import addToSet from '../../utils/addToSet';
+import Component from '../Component';
+import isValidIdentifier from '../../utils/isValidIdentifier';
+import Ref from './Ref';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -23,14 +26,25 @@ export default class InlineComponent extends Node {
 	bindings: Binding[];
 	handlers: EventHandler[];
 	children: Node[];
-	ref: string;
+	ref: Ref;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
 		component.hasComponents = true;
 
 		this.name = info.name;
+
+		if (this.name !== 'svelte:self' && this.name !== 'svelte:component') {
+			if (!component.components.has(this.name)) {
+				component.error(this, {
+					code: `missing-component`,
+					message: `${this.name} component is not defined`
+				});
+			}
+
+			component.used.components.add(this.name);
+		}
 
 		this.expression = this.name === 'svelte:component'
 			? new Expression(component, this, scope, info.expression)
@@ -42,6 +56,12 @@ export default class InlineComponent extends Node {
 
 		info.attributes.forEach(node => {
 			switch (node.type) {
+				case 'Action':
+					component.error(node, {
+						code: `invalid-action`,
+						message: `Actions can only be applied to DOM elements, not components`
+					});
+
 				case 'Attribute':
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
@@ -51,17 +71,25 @@ export default class InlineComponent extends Node {
 					this.bindings.push(new Binding(component, this, scope, node));
 					break;
 
+				case 'Class':
+					component.error(node, {
+						code: `invalid-class`,
+						message: `Classes can only be applied to DOM elements, not components`
+					});
+
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
 				case 'Ref':
-					// TODO catch this in validation
-					if (this.ref) throw new Error(`Duplicate refs`);
-
-					component.usesRefs = true
-					this.ref = node.name;
+					this.ref = new Ref(component, this, scope, node);
 					break;
+
+				case 'Transition':
+					component.error(node, {
+						code: `invalid-transition`,
+						message: `Transitions can only be applied to DOM elements, not components`
+					});
 
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
@@ -387,7 +415,7 @@ export default class InlineComponent extends Node {
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
 					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${this.ref && `#component.refs.${this.ref} = ${name};`}
+					${this.ref && `#component.refs.${this.ref.name} = ${name};`}
 				}
 			`);
 
@@ -432,12 +460,12 @@ export default class InlineComponent extends Node {
 							${name}.on("${handler.name}", ${handler.var});
 						`)}
 
-						${this.ref && `#component.refs.${this.ref} = ${name};`}
+						${this.ref && `#component.refs.${this.ref.name} = ${name};`}
 					} else {
 						${name} = null;
 						${this.ref && deindent`
-						if (#component.refs.${this.ref} === ${name}) {
-							#component.refs.${this.ref} = null;
+						if (#component.refs.${this.ref.name} === ${name}) {
+							#component.refs.${this.ref.name} = null;
 						}`}
 					}
 				}
@@ -474,7 +502,7 @@ export default class InlineComponent extends Node {
 					});
 				`)}
 
-				${this.ref && `#component.refs.${this.ref} = ${name};`}
+				${this.ref && `#component.refs.${this.ref.name} = ${name};`}
 			`);
 
 			block.builders.create.addLine(`${name}._fragment.c();`);
@@ -499,7 +527,7 @@ export default class InlineComponent extends Node {
 
 			block.builders.destroy.addLine(deindent`
 				${name}.destroy(${parentNode ? '' : 'detach'});
-				${this.ref && `if (#component.refs.${this.ref} === ${name}) #component.refs.${this.ref} = null;`}
+				${this.ref && `if (#component.refs.${this.ref.name} === ${name}) #component.refs.${this.ref.name} = null;`}
 			`);
 		}
 

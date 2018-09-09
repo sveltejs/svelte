@@ -100,7 +100,7 @@ export default class Component {
 
 	properties: Map<string, Node>;
 
-	defaultExport: Node[];
+	defaultExport: Node;
 	imports: Node[];
 	shorthandImports: ShorthandImport[];
 	helpers: Set<string>;
@@ -134,7 +134,7 @@ export default class Component {
 	bindingGroups: string[];
 	indirectDependencies: Map<string, Set<string>>;
 	expectedProperties: Set<string>;
-	usesRefs: boolean;
+	refs: Set<string>;
 
 	file: string;
 	fileVar: string;
@@ -188,6 +188,7 @@ export default class Component {
 			actions: new Set(),
 		};
 
+		this.refs = new Set();
 		this.refCallees = [];
 
 		this.bindingGroups = [];
@@ -203,7 +204,6 @@ export default class Component {
 		this.expectedProperties = new Set();
 
 		this.code = new MagicString(source);
-		this.usesRefs = false;
 
 		// styles
 		this.stylesheet = new Stylesheet(source, ast, this.file, options.dev);
@@ -242,6 +242,32 @@ export default class Component {
 		if (!this.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
+
+		if (this.defaultExport) {
+			const categories = {
+				components: 'component',
+				// TODO helpers require a bit more work — need to analyse all expressions
+				// helpers: 'helper',
+				events: 'event definition',
+				transitions: 'transition',
+				actions: 'actions',
+			};
+
+			Object.keys(categories).forEach(category => {
+				const definitions = this.defaultExport.declaration.properties.find(prop => prop.key.name === category);
+				if (definitions) {
+					definitions.value.properties.forEach(prop => {
+						const { name } = prop.key;
+						if (!this.used[category].has(name)) {
+							this.warn(prop, {
+								code: `unused-${category.slice(0, -1)}`,
+								message: `The '${name}' ${categories[category]} is unused`
+							});
+						}
+					});
+				}
+			});
+		}
 	}
 
 	addSourcemapLocations(node: Node) {

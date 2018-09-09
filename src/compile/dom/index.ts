@@ -155,7 +155,7 @@ export default function dom(
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
 		${templateProperties.store && `this.store = %store();`}
-		${component.usesRefs && `this.refs = {};`}
+		${component.refs.size > 0 && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
 		${component.target.metaBindings}

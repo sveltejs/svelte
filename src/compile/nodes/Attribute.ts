@@ -98,6 +98,16 @@ export default class Attribute extends Node {
 				.join(' + ');
 	}
 
+	getStaticValue() {
+		if (this.isSpread || this.isDynamic) return null;
+
+		return this.isTrue
+			? true
+			: this.chunks[0]
+				? this.chunks[0].data
+				: '';
+	}
+
 	render(block: Block) {
 		const node = this.parent;
 		const name = fixAttributeCasing(this.name);

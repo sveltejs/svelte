@@ -1,8 +1,5 @@
-import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../dom/Block';
-import Attribute from './Attribute';
 import mapChildren from './shared/mapChildren';
 
 export default class Head extends Node {
@@ -11,6 +8,14 @@ export default class Head extends Node {
 
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
+
+		if (info.attributes.length) {
+			component.error(info.attributes[0], {
+				code: `invalid-attribute`,
+				message: `<svelte:head> should not have any attributes or directives`
+			});
+		}
+
 		this.children = mapChildren(component, parent, scope, info.children.filter(child => {
 			return (child.type !== 'Text' || /\S/.test(child.data));
 		}));

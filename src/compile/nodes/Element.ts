@@ -20,6 +20,8 @@ import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
+import fuzzymatch from '../../validate/utils/fuzzymatch';
+import Ref from './Ref';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const booleanAttributes = new Set([
@@ -62,6 +64,45 @@ const booleanAttributes = new Set([
 	'translate'
 ]);
 
+const ariaAttributes = 'activedescendant atomic autocomplete busy checked controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const ariaAttributeSet = new Set(ariaAttributes);
+
+const ariaRoles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
+const ariaRoleSet = new Set(ariaRoles);
+
+const a11yRequiredAttributes = {
+	a: ['href'],
+	area: ['alt', 'aria-label', 'aria-labelledby'],
+
+	// html-has-lang
+	html: ['lang'],
+
+	// iframe-has-title
+	iframe: ['title'],
+	img: ['alt'],
+	object: ['title', 'aria-label', 'aria-labelledby']
+};
+
+const a11yDistractingElements = new Set([
+	'blink',
+	'marquee'
+]);
+
+const a11yRequiredContent = new Set([
+	// anchor-has-content
+	'a',
+
+	// heading-has-content
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6'
+])
+
+const invisibleElements = new Set(['meta', 'html', 'script', 'style']);
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -77,7 +118,7 @@ export default class Element extends Node {
 	animation?: Animation;
 	children: Node[];
 
-	ref: string;
+	ref: Ref;
 	namespace: string;
 
 	constructor(component, parent, scope, info: any) {
@@ -168,11 +209,7 @@ export default class Element extends Node {
 					break;
 
 				case 'Ref':
-					// TODO catch this in validation
-					if (this.ref) throw new Error(`Duplicate refs`);
-
-					component.usesRefs = true
-					this.ref = node.name;
+					this.ref = new Ref(component, this, scope, node);
 					break;
 
 				default:
@@ -182,7 +219,158 @@ export default class Element extends Node {
 
 		this.children = mapChildren(component, this, scope, info.children);
 
+		this.validate();
+
 		component.stylesheet.apply(this);
+	}
+
+	validate() {
+		if (a11yDistractingElements.has(this.name)) {
+			// no-distracting-elements
+			this.component.warn(this, {
+				code: `a11y-distracting-elements`,
+				message: `A11y: Avoid <${this.name}> elements`
+			});
+		}
+
+		this.validateAttributes();
+		this.validateContent();
+	}
+
+	validateAttributes() {
+		const { component } = this;
+
+		const attributeMap = new Map();
+
+		this.attributes.forEach(attribute => {
+			const name = attribute.name.toLowerCase();
+
+			// aria-props
+			if (name.startsWith('aria-')) {
+				if (invisibleElements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, {
+						code: `a11y-aria-attributes`,
+						message: `A11y: <${this.name}> should not have aria-* attributes`
+					});
+				}
+
+				const type = name.slice(5);
+				if (!ariaAttributeSet.has(type)) {
+					const match = fuzzymatch(type, ariaAttributes);
+					let message = `A11y: Unknown aria attribute 'aria-${type}'`;
+					if (match) message += ` (did you mean '${match}'?)`;
+
+					component.warn(attribute, {
+						code: `a11y-unknown-aria-attribute`,
+						message
+					});
+				}
+			}
+
+			// aria-role
+			if (name === 'role') {
+				if (invisibleElements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, {
+						code: `a11y-misplaced-role`,
+						message: `A11y: <${this.name}> should not have role attribute`
+					});
+				}
+
+				const value = attribute.getStaticValue();
+				if (value && !ariaRoleSet.has(value)) {
+					const match = fuzzymatch(value, ariaRoles);
+					let message = `A11y: Unknown role '${value}'`;
+					if (match) message += ` (did you mean '${match}'?)`;
+
+					component.warn(attribute, {
+						code: `a11y-unknown-role`,
+						message
+					});
+				}
+			}
+
+			// no-access-key
+			if (name === 'accesskey') {
+				component.warn(attribute, {
+					code: `a11y-accesskey`,
+					message: `A11y: Avoid using accesskey`
+				});
+			}
+
+			// no-autofocus
+			if (name === 'autofocus') {
+				component.warn(attribute, {
+					code: `a11y-autofocus`,
+					message: `A11y: Avoid using autofocus`
+				});
+			}
+
+			// scope
+			if (name === 'scope' && this.name !== 'th') {
+				component.warn(attribute, {
+					code: `a11y-misplaced-scope`,
+					message: `A11y: The scope attribute should only be used with <th> elements`
+				});
+			}
+
+			// tabindex-no-positive
+			if (name === 'tabindex') {
+				const value = attribute.getStaticValue();
+				if (!isNaN(value) && +value > 0) {
+					component.warn(attribute, {
+						code: `a11y-positive-tabindex`,
+						message: `A11y: avoid tabindex values above zero`
+					});
+				}
+			}
+
+			attributeMap.set(attribute.name, attribute);
+		});
+
+		// handle special cases
+		if (this.name === 'a') {
+			const attribute = attributeMap.get('href') || attributeMap.get('xlink:href');
+
+			if (attribute) {
+				const value = attribute.getStaticValue();
+
+				if (value === '' || value === '#') {
+					component.warn(attribute, {
+						code: `a11y-invalid-attribute`,
+						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
+					});
+				}
+			} else {
+				component.warn(this, {
+					code: `a11y-missing-attribute`,
+					message: `A11y: <a> element should have an href attribute`
+				});
+			}
+		}
+
+		else {
+			const requiredAttributes = a11yRequiredAttributes[this.name];
+			if (requiredAttributes) {
+				const hasAttribute = requiredAttributes.some(name => attributeMap.has(name));
+
+				if (!hasAttribute) {
+					shouldHaveAttribute(this, requiredAttributes);
+				}
+			}
+		}
+	}
+
+	validateContent() {
+		if (!a11yRequiredContent.has(this.name)) return;
+
+		if (this.children.length === 0) {
+			this.component.warn(this, {
+				code: `a11y-missing-content`,
+				message: `A11y: <${this.name}> element should have child content`
+			});
+		}
 	}
 
 	init(
@@ -728,7 +916,7 @@ export default class Element extends Node {
 	}
 
 	addRef(block: Block) {
-		const ref = `#component.refs.${this.ref}`;
+		const ref = `#component.refs.${this.ref.name}`;
 
 		block.builders.mount.addLine(
 			`${ref} = ${this.var};`
@@ -1168,3 +1356,19 @@ const events = [
 			name === 'volume'
 	}
 ];
+
+function shouldHaveAttribute(
+	node,
+	attributes: string[],
+	name = node.name
+) {
+	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const sequence = attributes.length > 1 ?
+		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
+		attributes[0];
+
+	node.component.warn(node, {
+		code: `a11y-missing-attribute`,
+		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
+	});
+}
