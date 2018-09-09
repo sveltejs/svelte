@@ -64,6 +64,8 @@ const booleanAttributes = new Set([
 	'translate'
 ]);
 
+const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
+
 const ariaAttributes = 'activedescendant atomic autocomplete busy checked controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const ariaAttributeSet = new Set(ariaAttributes);
 
@@ -130,6 +132,13 @@ export default class Element extends Node {
 		this.namespace = this.name === 'svg' ?
 			namespaces.svg :
 			parentElement ? parentElement.namespace : this.component.namespace;
+
+		if (!this.namespace && svg.test(this.name)) {
+			this.component.warn(this, {
+				code: `missing-namespace`,
+				message: `<${this.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
+			});
+		}
 
 		this.attributes = [];
 		this.actions = [];
@@ -234,6 +243,7 @@ export default class Element extends Node {
 		}
 
 		this.validateAttributes();
+		this.validateBindings();
 		this.validateContent();
 	}
 
@@ -326,6 +336,38 @@ export default class Element extends Node {
 				}
 			}
 
+			if (name === 'slot') {
+				if (attribute.isDynamic) {
+					component.error(attribute, {
+						code: `invalid-slot-attribute`,
+						message: `slot attribute cannot have a dynamic value`
+					});
+				}
+
+				let ancestor = parent;
+				do {
+					if (ancestor.type === 'InlineComponent') break;
+					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
+
+					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
+						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';
+						const message = `Cannot place slotted elements inside an ${type}-block`;
+
+						component.error(attribute, {
+							code: `invalid-slotted-content`,
+							message
+						});
+					}
+				} while (ancestor);
+
+				if (!ancestor) {
+					component.error(attribute, {
+						code: `invalid-slotted-content`,
+						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
+					});
+				}
+			}
+
 			attributeMap.set(attribute.name, attribute);
 		});
 
@@ -360,6 +402,151 @@ export default class Element extends Node {
 				}
 			}
 		}
+	}
+
+	validateBindings() {
+		const { component } = this;
+
+		const checkTypeAttribute = () => {
+			const attribute = this.attributes.find(
+				(attribute: Attribute) => attribute.name === 'type'
+			);
+
+			if (!attribute) return null;
+
+			if (attribute.isDynamic) {
+				component.error(attribute, {
+					code: `invalid-type`,
+					message: `'type' attribute cannot be dynamic if input uses two-way binding`
+				});
+			}
+
+			const value = attribute.getStaticValue();
+
+			if (value === true) {
+				component.error(attribute, {
+					code: `missing-type`,
+					message: `'type' attribute must be specified`
+				});
+			}
+
+			return value;
+		};
+
+		this.bindings.forEach(binding => {
+			const { name } = binding;
+
+			if (name === 'value') {
+				if (
+					this.name !== 'input' &&
+					this.name !== 'textarea' &&
+					this.name !== 'select'
+				) {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'value' is not a valid binding on <${this.name}> elements`
+					});
+				}
+
+				if (this.name === 'select') {
+					const attribute = this.attributes.find(
+						(attribute: Attribute) => attribute.name === 'multiple'
+					);
+
+					if (attribute && attribute.isDynamic) {
+						component.error(attribute, {
+							code: `dynamic-multiple-attribute`,
+							message: `'multiple' attribute cannot be dynamic if select uses two-way binding`
+						});
+					}
+				} else {
+					checkTypeAttribute();
+				}
+			} else if (name === 'checked' || name === 'indeterminate') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' is not a valid binding on <${this.name}> elements`
+					});
+				}
+
+				if (checkTypeAttribute() !== 'checkbox') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <input type="checkbox">`
+					});
+				}
+			} else if (name === 'group') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'group' is not a valid binding on <${this.name}> elements`
+					});
+				}
+
+				const type = checkTypeAttribute();
+
+				if (type !== 'checkbox' && type !== 'radio') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`
+					});
+				}
+			} else if (name == 'files') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'files' binding acn only be used with <input type="file">`
+					});
+				}
+
+				const type = checkTypeAttribute();
+
+				if (type !== 'file') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'files' binding can only be used with <input type="file">`
+					});
+				}
+			} else if (
+				name === 'currentTime' ||
+				name === 'duration' ||
+				name === 'paused' ||
+				name === 'buffered' ||
+				name === 'seekable' ||
+				name === 'played' ||
+				name === 'volume'
+			) {
+				if (this.name !== 'audio' && this.name !== 'video') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <audio> or <video>`
+					});
+				}
+			} else if (dimensions.test(name)) {
+				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
+					component.error(binding, {
+						code: 'invalid-binding',
+						message: `'${binding.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`
+					});
+				} else if (svg.test(this.name)) {
+					component.error(binding, {
+						code: 'invalid-binding',
+						message: `'${binding.name}' is not a valid binding on SVG elements`
+					});
+				} else if (isVoidElementName(this.name)) {
+					component.error(binding, {
+						code: 'invalid-binding',
+						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
+					});
+				}
+			} else {
+				component.error(binding, {
+					code: `invalid-binding`,
+					message: `'${binding.name}' is not a valid binding`
+				});
+			}
+		});
 	}
 
 	validateContent() {

@@ -16,15 +16,6 @@ export default function validateElement(
 	stack: Node[],
 	elementStack: Node[]
 ) {
-	if (elementStack.length === 0 && component.namespace !== namespaces.svg && svg.test(node.name)) {
-		component.warn(node, {
-			code: `missing-namespace`,
-			message: `<${node.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
-		});
-	}
-
-	let hasAnimation: boolean;
-
 	node.attributes.forEach((attribute: Node) => {
 		if (attribute.type === 'Binding') {
 			const { name } = attribute;
@@ -148,19 +139,6 @@ export default function validateElement(
 					});
 				}
 			}
-
-			if (attribute.name === 'slot') {
-				checkSlotAttribute(component, node, attribute, stack);
-			}
-		} else if (attribute.type === 'Action') {
-			component.used.actions.add(attribute.name);
-
-			if (!component.actions.has(attribute.name)) {
-				component.error(attribute, {
-					code: `missing-action`,
-					message: `Missing action '${attribute.name}'`
-				});
-			}
 		}
 	});
 }
@@ -186,40 +164,6 @@ function checkTypeAttribute(component: Component, node: Node) {
 	}
 
 	return attribute.value[0].data;
-}
-
-function checkSlotAttribute(component: Component, node: Node, attribute: Node, stack: Node[]) {
-	if (isDynamic(attribute)) {
-		component.error(attribute, {
-			code: `invalid-slot-attribute`,
-			message: `slot attribute cannot have a dynamic value`
-		});
-	}
-
-	let i = stack.length;
-	while (i--) {
-		const parent = stack[i];
-
-		if (parent.type === 'InlineComponent') {
-			// if we're inside a component or a custom element, gravy
-			if (parent.name === 'svelte:self' || parent.name === 'svelte:component' || component.components.has(parent.name)) return;
-		} else if (parent.type === 'Element') {
-			if (/-/.test(parent.name)) return;
-		}
-
-		if (parent.type === 'IfBlock' || parent.type === 'EachBlock') {
-			const message = `Cannot place slotted elements inside an ${parent.type === 'IfBlock' ? 'if' : 'each'}-block`;
-			component.error(attribute, {
-				code: `invalid-slotted-content`,
-				message
-			});
-		}
-	}
-
-	component.error(attribute, {
-		code: `invalid-slotted-content`,
-		message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
-	});
 }
 
 function isDynamic(attribute: Node) {
