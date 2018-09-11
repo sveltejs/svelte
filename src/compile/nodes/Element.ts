@@ -250,6 +250,32 @@ export default class Element extends Node {
 			});
 		}
 
+		if (this.name === 'figcaption') {
+			if (this.parent.name !== 'figure') {
+				this.component.warn(this, {
+					code: `a11y-structure`,
+					message: `A11y: <figcaption> must be an immediate child of <figure>`
+				});
+			}
+		}
+
+		if (this.name === 'figure') {
+			const children = this.children.filter(node => {
+				if (node.type === 'Comment') return false;
+				if (node.type === 'Text') return /\S/.test(node.data);
+				return true;
+			});
+
+			const index = children.findIndex(child => child.name === 'figcaption');
+
+			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
+				this.component.warn(children[index], {
+					code: `a11y-structure`,
+					message: `A11y: <figcaption> must be first or last child of <figure>`
+				});
+			}
+		}
+
 		this.validateAttributes();
 		this.validateBindings();
 		this.validateContent();
@@ -352,7 +378,7 @@ export default class Element extends Node {
 					});
 				}
 
-				let ancestor = parent;
+				let ancestor = this.parent;
 				do {
 					if (ancestor.type === 'InlineComponent') break;
 					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
@@ -366,7 +392,7 @@ export default class Element extends Node {
 							message
 						});
 					}
-				} while (ancestor);
+				} while (ancestor = ancestor.parent);
 
 				if (!ancestor) {
 					component.error(attribute, {
@@ -407,6 +433,17 @@ export default class Element extends Node {
 
 				if (!hasAttribute) {
 					shouldHaveAttribute(this, requiredAttributes);
+				}
+			}
+
+			if (this.name === 'input') {
+				const type = attributeMap.get('type');
+				if (type && type.getStaticValue() === 'image') {
+					shouldHaveAttribute(
+						this,
+						['alt', 'aria-label', 'aria-labelledby'],
+						'input type="image"'
+					);
 				}
 			}
 		}

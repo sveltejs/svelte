@@ -37,10 +37,6 @@ export default function a11y(
 		}
 	}
 
-	if (node.name === 'input' && getStaticAttributeValue(node, 'type') === 'image') {
-		shouldHaveAttribute(['alt', 'aria-label', 'aria-labelledby'], 'input type="image"');
-	}
-
 	if (/^h[1-6]$/.test(node.name)) {
 		if (attributeMap.has('aria-hidden')) {
 			validator.warn(attributeMap.get('aria-hidden'), {
