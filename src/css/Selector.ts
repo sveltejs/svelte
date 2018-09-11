@@ -174,7 +174,7 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 		}
 
 		else if (selector.type === 'RefSelector') {
-			if (node.ref === selector.name) {
+			if (node.ref && node.ref.name === selector.name) {
 				stylesheet.nodesWithRefCssClass.set(selector.name, node);
 				toEncapsulate.push({ node, block });
 				return true;
