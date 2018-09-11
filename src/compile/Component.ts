@@ -754,7 +754,7 @@ export default class Component {
 				const deps = dependencies.get(key);
 				deps.forEach(visit);
 
-				computations.push({ key, deps, hasRestParam: false });
+				this.computations.push({ key, deps, hasRestParam: false });
 
 				const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
 			};
@@ -764,7 +764,7 @@ export default class Component {
 			);
 
 			if (fullStateComputations.length > 0) {
-				computations.push(...fullStateComputations);
+				this.computations.push(...fullStateComputations);
 			}
 		}
 
@@ -787,8 +787,8 @@ export default class Component {
 		if (templateProperties.methods) {
 			addDeclaration('methods', templateProperties.methods.value);
 
-			templateProperties.methods.value.properties.forEach(prop => {
-				this.methods.add(prop.key.name);
+			templateProperties.methods.value.properties.forEach(property => {
+				this.methods.add(getName(property.key));
 			});
 		}
 

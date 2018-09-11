@@ -171,8 +171,10 @@ export default class Node {
 	}
 
 	warnIfEmptyBlock() {
+		if (!this.component.options.dev) return;
 		if (!/Block$/.test(this.type) || !this.children) return;
 		if (this.children.length > 1) return;
+
 		const child = this.children[0];
 
 		if (!child || (child.type === 'Text' && !/[^ \r\n\f\v\t]/.test(child.data))) {

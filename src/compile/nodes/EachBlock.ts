@@ -20,6 +20,7 @@ export default class EachBlock extends Node {
 	key: Expression;
 	scope: TemplateScope;
 	contexts: Array<{ name: string, tail: string }>;
+	hasAnimation: boolean;
 
 	children: Node[];
 	else?: ElseBlock;
@@ -37,6 +38,13 @@ export default class EachBlock extends Node {
 		unpackDestructuring(this.contexts, info.context, '');
 
 		this.contexts.forEach(context => {
+			if (component.helpers.has(context.key.name)) {
+				component.warn(context.key, {
+					code: `each-context-clash`,
+					message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
+				});
+			}
+
 			this.scope.add(context.key.name, this.expression.dependencies);
 		});
 
@@ -50,7 +58,19 @@ export default class EachBlock extends Node {
 			this.scope.add(this.index, dependencies);
 		}
 
+		this.hasAnimation = false;
+
 		this.children = mapChildren(component, this, this.scope, info.children);
+
+		if (this.hasAnimation) {
+			if (this.children.length !== 1) {
+				const child = this.children.find(child => !!child.animation);
+				component.error(child.animation, {
+					code: `invalid-animation`,
+					message: `An element that use the animate directive must be the sole child of a keyed each block`
+				});
+			}
+		}
 
 		this.warnIfEmptyBlock(); // TODO would be better if EachBlock, IfBlock etc extended an abstract Block class
 

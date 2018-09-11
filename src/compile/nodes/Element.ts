@@ -287,6 +287,8 @@ export default class Element extends Node {
 		const attributeMap = new Map();
 
 		this.attributes.forEach(attribute => {
+			if (attribute.isSpread) return;
+
 			const name = attribute.name.toLowerCase();
 
 			// aria-props
@@ -308,6 +310,13 @@ export default class Element extends Node {
 					component.warn(attribute, {
 						code: `a11y-unknown-aria-attribute`,
 						message
+					});
+				}
+
+				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
+					component.warn(attribute, {
+						code: `a11y-hidden`,
+						message: `A11y: <${this.name}> element should not be hidden`
 					});
 				}
 			}

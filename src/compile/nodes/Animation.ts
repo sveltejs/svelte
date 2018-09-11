@@ -36,14 +36,7 @@ export default class Animation extends Node {
 			});
 		}
 
-		// TODO reinstate this... it's tricky because we're
-		// in the process of *creating* block.children
-		// if (block.children.length > 1) {
-		// 	component.error(this, {
-		// 		code: `invalid-animation`,
-		// 		message: `An element that use the animate directive must be the sole child of a keyed each block`
-		// 	});
-		// }
+		block.hasAnimation = true;
 
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
