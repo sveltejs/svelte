@@ -140,6 +140,14 @@ export function setDev(newState) {
 	}
 
 	this._checkReadOnly(newState);
+	
+	Object.keys(newState).forEach(prop => {
+		if (prop in this._state && typeof this._state[prop] !== 'undefined' 
+			&& typeof this._state[prop] !== typeof newState[prop]) {
+			console.warn('Type of data property "' + prop + '" not match with previous one.');
+		}
+	});
+	
 	set.call(this, newState);
 }
 
