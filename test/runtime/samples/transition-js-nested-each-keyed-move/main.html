@@ -1,0 +1,9 @@
+{#each things as thing (thing)}
+	<Widget :thing/>
+{/each}
+
+<script>
+	export default {
+		components: { Widget: './Widget.html' }
+	};
+</script>

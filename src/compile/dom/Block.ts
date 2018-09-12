@@ -177,6 +177,10 @@ export default class Block {
 				this.builders.mount.addLine(`#current = true;`);
 			}
 
+			if (!this.builders.mount.isEmpty() && this.builders.outro.isEmpty()) {
+				this.builders.outro.addLine(`#outrocallback();`);
+			}
+
 			if (!this.builders.outro.isEmpty()) {
 				this.builders.outro.addLine(`#current = false;`);
 			}

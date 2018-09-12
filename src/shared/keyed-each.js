@@ -1,3 +1,5 @@
+import { noop } from './utils.js';
+
 export function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
@@ -47,7 +49,8 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 	var will_move = {};
 	var did_move = {};
 
-	function insert(block) {
+	function insert(block, removeFirst) {
+		if (removeFirst && block.o) block.o(noop);
 		block[intro_method](node, next);
 		lookup[block.key] = block;
 		next = block.first;
@@ -74,7 +77,7 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 		}
 
 		else if (!lookup[new_key] || will_move[new_key]) {
-			insert(new_block);
+			insert(new_block, !!lookup[new_key]);
 		}
 
 		else if (did_move[old_key]) {
@@ -82,7 +85,7 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 
 		} else if (deltas[new_key] > deltas[old_key]) {
 			did_move[new_key] = true;
-			insert(new_block);
+			insert(new_block, true);
 
 		} else {
 			will_move[old_key] = true;
