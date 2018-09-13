@@ -399,6 +399,7 @@ export default class Element extends Node {
 			if (eventHandlerOrBindingUsesContext) {
 				initialProps.push(`ctx`);
 				block.builders.update.addLine(`${node}._svelte.ctx = ctx;`);
+				block.maintainContext = true;
 			}
 
 			if (initialProps.length) {
