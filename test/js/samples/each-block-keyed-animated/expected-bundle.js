@@ -291,8 +291,8 @@ function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, 
 	var will_move = {};
 	var did_move = {};
 
-	function insert(block, removeFirst) {
-		if (removeFirst && block.o) block.o(noop);
+	function insert(block) {
+		if (lookup[block.key] && block.o) block.o(noop);
 		block[intro_method](node, next);
 		lookup[block.key] = block;
 		next = block.first;
@@ -319,7 +319,7 @@ function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, 
 		}
 
 		else if (!lookup[new_key] || will_move[new_key]) {
-			insert(new_block, !!lookup[new_key]);
+			insert(new_block);
 		}
 
 		else if (did_move[old_key]) {
@@ -327,7 +327,7 @@ function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, 
 
 		} else if (deltas[new_key] > deltas[old_key]) {
 			did_move[new_key] = true;
-			insert(new_block, true);
+			insert(new_block);
 
 		} else {
 			will_move[old_key] = true;
