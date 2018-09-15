@@ -1,5 +1,4 @@
 import validateJs from './js/index';
-import validateHtml from './html/index';
 import { getLocator, Location } from 'locate-character';
 import getCodeFrame from '../utils/getCodeFrame';
 import Stats from '../Stats';
@@ -133,10 +132,6 @@ export default function validate(
 
 		if (ast.css) {
 			stylesheet.validate(validator);
-		}
-
-		if (ast.html) {
-			validateHtml(validator, ast.html);
 		}
 
 		// need to do a second pass of the JS, now that we've analysed the markup

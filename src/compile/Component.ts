@@ -53,6 +53,7 @@ function getIndentationLevel(str: string, b: number) {
 }
 
 function getIndentExclusionRanges(node: Node) {
+	// TODO can we fold this into a different pass?
 	const ranges: Node[] = [];
 	walk(node, {
 		enter(node: Node) {
@@ -868,7 +869,6 @@ export default class Component {
 		if (js) {
 			this.addSourcemapLocations(js.content);
 
-			const indentation = detectIndentation(source.slice(js.start, js.end));
 			const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
 			const indentExclusionRanges = getIndentExclusionRanges(js.content);
 
