@@ -1,9 +1,9 @@
-import { Validator } from '../../index';
-import { Node } from '../../../interfaces';
-import getName from '../../../utils/getName';
+import { Node } from '../../../../interfaces';
+import getName from '../../../../utils/getName';
+import Component from '../../../Component';
 
 export default function checkForDupes(
-	validator: Validator,
+	component: Component,
 	properties: Node[]
 ) {
 	const seen = new Set();
@@ -12,7 +12,7 @@ export default function checkForDupes(
 		const name = getName(prop.key);
 
 		if (seen.has(name)) {
-			validator.error(prop, {
+			component.error(prop, {
 				code: `duplicate-property`,
 				message: `Duplicate property '${name}'`
 			});

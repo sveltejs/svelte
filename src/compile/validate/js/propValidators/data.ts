@@ -1,13 +1,13 @@
-import { Validator } from '../../index';
-import { Node } from '../../../interfaces';
+import { Node } from '../../../../interfaces';
+import Component from '../../../Component';
 
 const disallowed = new Set(['Literal', 'ObjectExpression', 'ArrayExpression']);
 
-export default function data(validator: Validator, prop: Node) {
+export default function data(component: Component, prop: Node) {
 	while (prop.type === 'ParenthesizedExpression') prop = prop.expression;
 
 	if (disallowed.has(prop.value.type)) {
-		validator.error(prop.value, {
+		component.error(prop.value, {
 			code: `invalid-data-property`,
 			message: `'data' must be a function`
 		});

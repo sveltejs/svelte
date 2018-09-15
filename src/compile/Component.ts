@@ -22,10 +22,10 @@ import { SsrTarget } from './ssr';
 import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
-import checkForComputedKeys from '../validate/js/utils/checkForComputedKeys';
-import checkForDupes from '../validate/js/utils/checkForDupes';
-import propValidators from '../validate/js/propValidators';
-import fuzzymatch from '../validate/utils/fuzzymatch';
+import checkForComputedKeys from './validate/js/utils/checkForComputedKeys';
+import checkForDupes from './validate/js/utils/checkForDupes';
+import propValidators from './validate/js/propValidators';
+import fuzzymatch from './validate/utils/fuzzymatch';
 import flattenReference from '../utils/flattenReference';
 
 interface Computation {

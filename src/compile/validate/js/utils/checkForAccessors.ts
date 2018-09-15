@@ -1,14 +1,14 @@
-import { Validator } from '../../index';
-import { Node } from '../../../interfaces';
+import { Node } from '../../../../interfaces';
+import Component from '../../../Component';
 
 export default function checkForAccessors(
-	validator: Validator,
+	component: Component,
 	properties: Node[],
 	label: string
 ) {
 	properties.forEach(prop => {
 		if (prop.kind !== 'init') {
-			validator.error(prop, {
+			component.error(prop, {
 				code: `illegal-accessor`,
 				message: `${label} cannot use getters and setters`
 			});

@@ -1,11 +1,11 @@
 import usesThisOrArguments from '../utils/usesThisOrArguments';
-import { Validator } from '../../index';
-import { Node } from '../../../interfaces';
+import { Node } from '../../../../interfaces';
+import Component from '../../../Component';
 
-export default function ondestroy(validator: Validator, prop: Node) {
+export default function ondestroy(component: Component, prop: Node) {
 	if (prop.value.type === 'ArrowFunctionExpression') {
 		if (usesThisOrArguments(prop.value.body)) {
-			validator.error(prop, {
+			component.error(prop, {
 				code: `invalid-ondestroy-property`,
 				message: `'ondestroy' should be a function expression, not an arrow function expression`
 			});

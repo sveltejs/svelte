@@ -20,7 +20,7 @@ import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
-import fuzzymatch from '../../validate/utils/fuzzymatch';
+import fuzzymatch from '../validate/utils/fuzzymatch';
 import Ref from './Ref';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7

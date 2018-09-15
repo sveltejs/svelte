@@ -4,7 +4,7 @@ import Block from '../dom/Block';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import flattenReference from '../../utils/flattenReference';
-import fuzzymatch from '../../validate/utils/fuzzymatch';
+import fuzzymatch from '../validate/utils/fuzzymatch';
 import list from '../../utils/list';
 
 const associatedEvents = {

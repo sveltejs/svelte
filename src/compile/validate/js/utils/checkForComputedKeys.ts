@@ -1,13 +1,13 @@
-import { Validator } from '../../index';
-import { Node } from '../../../interfaces';
+import { Node } from '../../../../interfaces';
+import Component from '../../../Component';
 
 export default function checkForComputedKeys(
-	validator: Validator,
+	component: Component,
 	properties: Node[]
 ) {
 	properties.forEach(prop => {
 		if (prop.key.computed) {
-			validator.error(prop, {
+			component.error(prop, {
 				code: `computed-key`,
 				message: `Cannot use computed keys`
 			});
