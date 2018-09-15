@@ -83,7 +83,18 @@ export default function dom(
 	}
 
 	if (component.javascript) {
-		builder.addBlock(component.javascript);
+		const componentDefinition = new CodeBuilder();
+		component.declarations.forEach(declaration => {
+			componentDefinition.addBlock(declaration.block);
+		});
+
+		const js = (
+			component.javascript[0] +
+			componentDefinition +
+			component.javascript[1]
+		);
+
+		builder.addBlock(js);
 	}
 
 	if (component.options.dev) {

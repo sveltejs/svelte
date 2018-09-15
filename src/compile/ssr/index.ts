@@ -1,13 +1,10 @@
 import deindent from '../../utils/deindent';
 import Component from '../Component';
-import Stats from '../../Stats';
-import Stylesheet from '../../css/Stylesheet';
-import { removeNode, removeObjectKey } from '../../utils/removeNode';
-import getName from '../../utils/getName';
 import globalWhitelist from '../../utils/globalWhitelist';
-import { Ast, Node, CompileOptions } from '../../interfaces';
+import { Node, CompileOptions } from '../../interfaces';
 import { AppendTarget } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
+import CodeBuilder from '../../utils/CodeBuilder';
 
 export class SsrTarget {
 	bindings: string[];
@@ -71,11 +68,36 @@ export default function ssr(
 
 	initialState.push('ctx');
 
-	const helpers = new Set();
+	let js = null;
+	if (component.javascript) {
+		const componentDefinition = new CodeBuilder();
+
+		// not all properties are relevant to SSR (e.g. lifecycle hooks)
+		const relevant = new Set([
+			'data',
+			'components',
+			'computed',
+			'helpers',
+			'preload',
+			'store'
+		]);
+
+		component.declarations.forEach(declaration => {
+			if (relevant.has(declaration.type)) {
+				componentDefinition.addBlock(declaration.block);
+			}
+		});
+
+		js = (
+			component.javascript[0] +
+			componentDefinition +
+			component.javascript[1]
+		);
+	}
 
 	// TODO concatenate CSS maps
-	const result = deindent`
-		${component.javascript}
+	const result = (deindent`
+		${js}
 
 		var ${name} = {};
 
@@ -140,7 +162,7 @@ export default function ssr(
 		var warned = false;
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
-	`;
+	`).trim();
 
 	return component.generate(result, options, { name, format });
 }

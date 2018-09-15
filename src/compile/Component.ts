@@ -34,6 +34,13 @@ interface Computation {
 	hasRestParam: boolean;
 }
 
+interface Declaration {
+	type: string;
+	name: string;
+	node: Node;
+	block: string;
+}
+
 function detectIndentation(str: string) {
 	const pattern = /^[\t\s]{1,4}/gm;
 	let match;
@@ -118,7 +125,7 @@ export default class Component {
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
 	slots: Set<string>;
-	javascript: string;
+	javascript: [string, string];
 
 	used: {
 		components: Set<string>;
@@ -128,6 +135,8 @@ export default class Component {
 		transitions: Set<string>;
 		actions: Set<string>;
 	};
+
+	declarations: Declaration[];
 
 	refCallees: Node[];
 
@@ -189,6 +198,8 @@ export default class Component {
 			transitions: new Set(),
 			actions: new Set(),
 		};
+
+		this.declarations = [];
 
 		this.refs = new Set();
 		this.refCallees = [];
@@ -561,7 +572,7 @@ export default class Component {
 		});
 	}
 
-	processDefaultExport(node, componentDefinition, indentExclusionRanges) {
+	processDefaultExport(node, indentExclusionRanges) {
 		const { templateProperties, source, code } = this;
 
 		if (node.declaration.type !== 'ObjectExpression') {
@@ -627,7 +638,7 @@ export default class Component {
 			}
 		});
 
-		const addArrowFunctionExpression = (name: string, node: Node) => {
+		const addArrowFunctionExpression = (type: string, name: string, node: Node) => {
 			const { body, params, async } = node;
 			const fnKeyword = async ? 'async function' : 'function';
 
@@ -635,37 +646,43 @@ export default class Component {
 				`[✂${params[0].start}-${params[params.length - 1].end}✂]` :
 				``;
 
-			if (body.type === 'BlockStatement') {
-				componentDefinition.addBlock(deindent`
+			const block = body.type === 'BlockStatement'
+				? deindent`
 					${fnKeyword} ${name}(${paramString}) [✂${body.start}-${body.end}✂]
-				`);
-			} else {
-				componentDefinition.addBlock(deindent`
+				`
+				: deindent`
 					${fnKeyword} ${name}(${paramString}) {
 						return [✂${body.start}-${body.end}✂];
 					}
-				`);
-			}
+				`;
+
+			this.declarations.push({ type, name, block, node });
 		};
 
-		const addFunctionExpression = (name: string, node: Node) => {
+		const addFunctionExpression = (type: string, name: string, node: Node) => {
 			const { async } = node;
 			const fnKeyword = async ? 'async function' : 'function';
 
 			let c = node.start;
 			while (this.source[c] !== '(') c += 1;
-			componentDefinition.addBlock(deindent`
+
+			const block = deindent`
 				${fnKeyword} ${name}[✂${c}-${node.end}✂];
-			`);
+			`;
+
+			this.declarations.push({ type, name, block, node });
 		};
 
-		const addValue = (name: string, node: Node) => {
-			componentDefinition.addBlock(deindent`
+		const addValue = (type: string, name: string, node: Node) => {
+			const block = deindent`
 				var ${name} = [✂${node.start}-${node.end}✂];
-			`);
+			`;
+
+			this.declarations.push({ type, name, block, node });
 		};
 
 		const addDeclaration = (
+			type: string,
 			key: string,
 			node: Node,
 			allowShorthandImport?: boolean,
@@ -697,17 +714,17 @@ export default class Component {
 			}
 
 			if (node.type === 'ArrowFunctionExpression') {
-				addArrowFunctionExpression(name, node);
+				addArrowFunctionExpression(type, name, node);
 			} else if (node.type === 'FunctionExpression') {
-				addFunctionExpression(name, node);
+				addFunctionExpression(type, name, node);
 			} else {
-				addValue(name, node);
+				addValue(type, name, node);
 			}
 		};
 
 		if (templateProperties.components) {
 			templateProperties.components.value.properties.forEach((property: Node) => {
-				addDeclaration(getName(property.key), property.value, true, 'components');
+				addDeclaration('components', getName(property.key), property.value, true, 'components');
 			});
 		}
 
@@ -720,7 +737,7 @@ export default class Component {
 				const key = getName(prop.key);
 				const value = prop.value;
 
-				addDeclaration(key, value, false, 'computed', {
+				addDeclaration('computed', key, value, false, 'computed', {
 					state: true,
 					changed: true
 				});
@@ -770,23 +787,23 @@ export default class Component {
 		}
 
 		if (templateProperties.data) {
-			addDeclaration('data', templateProperties.data.value);
+			addDeclaration('data', 'data', templateProperties.data.value);
 		}
 
 		if (templateProperties.events) {
 			templateProperties.events.value.properties.forEach((property: Node) => {
-				addDeclaration(getName(property.key), property.value, false, 'events');
+				addDeclaration('events', getName(property.key), property.value, false, 'events');
 			});
 		}
 
 		if (templateProperties.helpers) {
 			templateProperties.helpers.value.properties.forEach((property: Node) => {
-				addDeclaration(getName(property.key), property.value, false, 'helpers');
+				addDeclaration('helpers', getName(property.key), property.value, false, 'helpers');
 			});
 		}
 
 		if (templateProperties.methods) {
-			addDeclaration('methods', templateProperties.methods.value);
+			addDeclaration('methods', 'methods', templateProperties.methods.value);
 
 			templateProperties.methods.value.properties.forEach(property => {
 				this.methods.add(getName(property.key));
@@ -799,23 +816,23 @@ export default class Component {
 		}
 
 		if (templateProperties.oncreate) {
-			addDeclaration('oncreate', templateProperties.oncreate.value);
+			addDeclaration('oncreate', 'oncreate', templateProperties.oncreate.value);
 		}
 
 		if (templateProperties.ondestroy) {
-			addDeclaration('ondestroy', templateProperties.ondestroy.value);
+			addDeclaration('ondestroy', 'ondestroy', templateProperties.ondestroy.value);
 		}
 
 		if (templateProperties.onstate) {
-			addDeclaration('onstate', templateProperties.onstate.value);
+			addDeclaration('onstate', 'onstate', templateProperties.onstate.value);
 		}
 
 		if (templateProperties.onupdate) {
-			addDeclaration('onupdate', templateProperties.onupdate.value);
+			addDeclaration('onupdate', 'onupdate', templateProperties.onupdate.value);
 		}
 
 		if (templateProperties.preload) {
-			addDeclaration('preload', templateProperties.preload.value);
+			addDeclaration('preload', 'preload', templateProperties.preload.value);
 		}
 
 		if (templateProperties.props) {
@@ -823,11 +840,11 @@ export default class Component {
 		}
 
 		if (templateProperties.setup) {
-			addDeclaration('setup', templateProperties.setup.value);
+			addDeclaration('setup', 'setup', templateProperties.setup.value);
 		}
 
 		if (templateProperties.store) {
-			addDeclaration('store', templateProperties.store.value);
+			addDeclaration('store', 'store', templateProperties.store.value);
 		}
 
 		if (templateProperties.tag) {
@@ -836,19 +853,19 @@ export default class Component {
 
 		if (templateProperties.transitions) {
 			templateProperties.transitions.value.properties.forEach((property: Node) => {
-				addDeclaration(getName(property.key), property.value, false, 'transitions');
+				addDeclaration('transitions', getName(property.key), property.value, false, 'transitions');
 			});
 		}
 
 		if (templateProperties.animations) {
 			templateProperties.animations.value.properties.forEach((property: Node) => {
-				addDeclaration(getName(property.key), property.value, false, 'animations');
+				addDeclaration('animations', getName(property.key), property.value, false, 'animations');
 			});
 		}
 
 		if (templateProperties.actions) {
 			templateProperties.actions.value.properties.forEach((property: Node) => {
-				addDeclaration(getName(property.key), property.value, false, 'actions');
+				addDeclaration('actions', getName(property.key), property.value, false, 'actions');
 			});
 		}
 
@@ -856,81 +873,75 @@ export default class Component {
 	}
 
 	walkJs() {
-		const {
-			code,
-			source,
-			imports
-		} = this;
-
 		const { js } = this.ast;
+		if (!js) return;
 
-		const componentDefinition = new CodeBuilder();
+		this.addSourcemapLocations(js.content);
 
-		if (js) {
-			this.addSourcemapLocations(js.content);
+		const { code, source, imports } = this;
 
-			const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
-			const indentExclusionRanges = getIndentExclusionRanges(js.content);
+		const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
+		const indentExclusionRanges = getIndentExclusionRanges(js.content);
 
-			const { scope, globals } = annotateWithScopes(js.content);
+		const { scope, globals } = annotateWithScopes(js.content);
 
-			scope.declarations.forEach(name => {
-				this.userVars.add(name);
-			});
+		scope.declarations.forEach(name => {
+			this.userVars.add(name);
+		});
 
-			globals.forEach(name => {
-				this.userVars.add(name);
-			});
+		globals.forEach(name => {
+			this.userVars.add(name);
+		});
 
-			const body = js.content.body.slice(); // slice, because we're going to be mutating the original
+		const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
-			body.forEach(node => {
-				// check there are no named exports
-				if (node.type === 'ExportNamedDeclaration') {
-					this.error(node, {
-						code: `named-export`,
-						message: `A component can only have a default export`
-					});
-				}
-
-				if (node.type === 'ExportDefaultDeclaration') {
-					this.processDefaultExport(node, componentDefinition, indentExclusionRanges);
-				}
-
-				// imports need to be hoisted out of the IIFE
-				else if (node.type === 'ImportDeclaration') {
-					removeNode(code, js.content, node);
-					imports.push(node);
-
-					node.specifiers.forEach((specifier: Node) => {
-						this.userVars.add(specifier.local.name);
-					});
-				}
-			});
-
-			if (indentationLevel) {
-				if (this.defaultExport) {
-					removeIndentation(code, js.content.start, this.defaultExport.start, indentationLevel, indentExclusionRanges);
-					removeIndentation(code, this.defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
-				} else {
-					removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
-				}
+		body.forEach(node => {
+			// check there are no named exports
+			if (node.type === 'ExportNamedDeclaration') {
+				this.error(node, {
+					code: `named-export`,
+					message: `A component can only have a default export`
+				});
 			}
 
-			let a = js.content.start;
-			while (/\s/.test(source[a])) a += 1;
+			if (node.type === 'ExportDefaultDeclaration') {
+				this.processDefaultExport(node, indentExclusionRanges);
+			}
 
-			let b = js.content.end;
-			while (/\s/.test(source[b - 1])) b -= 1;
+			// imports need to be hoisted out of the IIFE
+			else if (node.type === 'ImportDeclaration') {
+				removeNode(code, js.content, node);
+				imports.push(node);
 
+				node.specifiers.forEach((specifier: Node) => {
+					this.userVars.add(specifier.local.name);
+				});
+			}
+		});
+
+		if (indentationLevel) {
 			if (this.defaultExport) {
-				this.javascript = '';
-				if (a !== this.defaultExport.start) this.javascript += `[✂${a}-${this.defaultExport.start}✂]`;
-				if (!componentDefinition.isEmpty()) this.javascript += componentDefinition;
-				if (this.defaultExport.end !== b) this.javascript += `[✂${this.defaultExport.end}-${b}✂]`;
+				removeIndentation(code, js.content.start, this.defaultExport.start, indentationLevel, indentExclusionRanges);
+				removeIndentation(code, this.defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
 			} else {
-				this.javascript = a === b ? null : `[✂${a}-${b}✂]`;
+				removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
 			}
 		}
+
+		let a = js.content.start;
+		while (/\s/.test(source[a])) a += 1;
+
+		let b = js.content.end;
+		while (/\s/.test(source[b - 1])) b -= 1;
+
+		this.javascript = this.defaultExport
+			? [
+				a !== this.defaultExport.start ? `[✂${a}-${this.defaultExport.start}✂]` : '',
+				b !== this.defaultExport.end ?`[✂${this.defaultExport.end}-${b}✂]` : ''
+			]
+			: [
+				a !== b ? `[✂${a}-${b}✂]` : '',
+				''
+			];
 	}
 }
