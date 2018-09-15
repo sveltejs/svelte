@@ -205,12 +205,11 @@ function getEventHandler(
 	block: Block,
 	name: string,
 	snippet: string,
-	dependencies: string[],
-	value: string,
-	isContextual: boolean
+	dependencies: Set<string>,
+	value: string
 ) {
 	const storeDependencies = [...dependencies].filter(prop => prop[0] === '$').map(prop => prop.slice(1));
-	dependencies = [...dependencies].filter(prop => prop[0] !== '$');
+	let dependenciesArray = [...dependencies].filter(prop => prop[0] !== '$');
 
 	if (binding.isContextual) {
 		const tail = binding.value.node.type === 'MemberExpression'
@@ -224,7 +223,7 @@ function getEventHandler(
 			usesState: true,
 			usesStore: storeDependencies.length > 0,
 			mutation: `${head}${tail} = ${value};`,
-			props: dependencies.map(prop => `${prop}: ctx.${prop}`),
+			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`),
 			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};
 	}
@@ -237,14 +236,14 @@ function getEventHandler(
 		// replacing computations with *their* dependencies, and b)
 		// we should probably populate `compiler.target.readonly` sooner so
 		// that we don't have to do the `.some()` here
-		dependencies = dependencies.filter(prop => !compiler.computations.some(computation => computation.key === prop));
+		dependenciesArray = dependenciesArray.filter(prop => !compiler.computations.some(computation => computation.key === prop));
 
 		return {
 			usesContext: false,
 			usesState: true,
 			usesStore: storeDependencies.length > 0,
 			mutation: `${snippet} = ${value}`,
-			props: dependencies.map((prop: string) => `${prop}: ctx.${prop}`),
+			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`),
 			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};
 	}
