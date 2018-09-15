@@ -3,10 +3,8 @@ import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
 import Component from '../Component';
-import Stylesheet from '../../css/Stylesheet';
-import Stats from '../../Stats';
 import Block from './Block';
-import { Ast, CompileOptions } from '../../interfaces';
+import { CompileOptions } from '../../interfaces';
 
 export class DomTarget {
 	blocks: (Block|string)[];

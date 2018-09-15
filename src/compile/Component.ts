@@ -13,7 +13,7 @@ import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
 import annotateWithScopes from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
-import Stylesheet from '../css/Stylesheet';
+import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
