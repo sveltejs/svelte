@@ -115,6 +115,8 @@ export default class Expression {
 						let object = node;
 						while (object.type === 'MemberExpression') object = object.object;
 
+						component.used.helpers.add(name);
+
 						const alias = component.templateVars.get(`helpers-${name}`);
 						if (alias !== name) code.overwrite(object.start, object.end, alias);
 						return;
