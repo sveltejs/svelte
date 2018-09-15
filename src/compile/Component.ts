@@ -260,8 +260,7 @@ export default class Component {
 		if (this.defaultExport) {
 			const categories = {
 				components: 'component',
-				// TODO helpers require a bit more work — need to analyse all expressions
-				// helpers: 'helper',
+				helpers: 'helper',
 				events: 'event definition',
 				transitions: 'transition',
 				actions: 'actions',
