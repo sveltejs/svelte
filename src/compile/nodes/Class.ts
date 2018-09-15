@@ -6,13 +6,13 @@ export default class Class extends Node {
 	name: string;
 	expression: Expression;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.name = info.name;
 
 		this.expression = info.expression
-			? new Expression(compiler, this, scope, info.expression)
+			? new Expression(component, this, scope, info.expression)
 			: null;
 	}
 }

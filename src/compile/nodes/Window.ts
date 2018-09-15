@@ -1,14 +1,11 @@
-import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
-import flattenReference from '../../utils/flattenReference';
-import isVoidElementName from '../../utils/isVoidElementName';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Block from '../dom/Block';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
+import flattenReference from '../../utils/flattenReference';
+import fuzzymatch from '../validate/utils/fuzzymatch';
+import list from '../../utils/list';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -33,22 +30,69 @@ const readonly = new Set([
 	'online',
 ]);
 
+const validBindings = [
+	'innerWidth',
+	'innerHeight',
+	'outerWidth',
+	'outerHeight',
+	'scrollX',
+	'scrollY',
+	'online'
+];
+
 export default class Window extends Node {
 	type: 'Window';
 	handlers: EventHandler[];
 	bindings: Binding[];
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.handlers = [];
 		this.bindings = [];
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
-				this.handlers.push(new EventHandler(compiler, this, scope, node));
-			} else if (node.type === 'Binding') {
-				this.bindings.push(new Binding(compiler, this, scope, node));
+				this.handlers.push(new EventHandler(component, this, scope, node));
+			}
+
+			else if (node.type === 'Binding') {
+				if (node.value.type !== 'Identifier') {
+					const { parts } = flattenReference(node.value);
+
+					component.error(node.value, {
+						code: `invalid-binding`,
+						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
+					});
+				}
+
+				if (!~validBindings.indexOf(node.name)) {
+					const match = node.name === 'width'
+						? 'innerWidth'
+						: node.name === 'height'
+							? 'innerHeight'
+							: fuzzymatch(node.name, validBindings);
+
+					const message = `'${node.name}' is not a valid binding on <svelte:window>`;
+
+					if (match) {
+						component.error(node, {
+							code: `invalid-binding`,
+							message: `${message} (did you mean '${match}'?)`
+						});
+					} else {
+						component.error(node, {
+							code: `invalid-binding`,
+							message: `${message} — valid bindings are ${list(validBindings)}`
+						});
+					}
+				}
+
+				this.bindings.push(new Binding(component, this, scope, node));
+			}
+
+			else {
+				// TODO there shouldn't be anything else here...
 			}
 		});
 	}
@@ -58,20 +102,20 @@ export default class Window extends Node {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		const events = {};
 		const bindings: Record<string, string> = {};
 
 		this.handlers.forEach(handler => {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			compiler.addSourcemapLocations(handler.expression);
+			component.addSourcemapLocations(handler.expression);
 
-			const isCustomEvent = compiler.events.has(handler.name);
+			const isCustomEvent = component.events.has(handler.name);
 
 			let usesState = handler.dependencies.size > 0;
 
-			handler.render(compiler, block, false); // TODO hoist?
+			handler.render(component, block, false); // TODO hoist?
 
 			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
 			const handlerBody = deindent`
@@ -109,7 +153,7 @@ export default class Window extends Node {
 		this.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				compiler.target.readonly.add(binding.value.node.name);
+				component.target.readonly.add(binding.value.node.name);
 			}
 
 			bindings[binding.name] = binding.value.node.name;
@@ -126,7 +170,7 @@ export default class Window extends Node {
 			);
 
 			// add initial value
-			compiler.target.metaBindings.push(
+			component.target.metaBindings.push(
 				`this._state.${binding.value.node.name} = window.${property};`
 			);
 		});
@@ -151,13 +195,13 @@ export default class Window extends Node {
 					if (${lock}) return;
 					${lock} = true;
 				`}
-				${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
+				${component.options.dev && `component._updatingReadonlyProperty = true;`}
 
 				#component.set({
 					${props}
 				});
 
-				${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
+				${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				${event === 'scroll' && `${lock} = false;`}
 			`;
 
@@ -200,16 +244,16 @@ export default class Window extends Node {
 			const handlerName = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
 				function ${handlerName}(event) {
-					${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
+					${component.options.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
-					${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
+					${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				}
 				window.addEventListener("online", ${handlerName});
 				window.addEventListener("offline", ${handlerName});
 			`);
 
 			// add initial value
-			compiler.target.metaBindings.push(
+			component.target.metaBindings.push(
 				`this._state.${bindings.online} = navigator.onLine;`
 			);
 

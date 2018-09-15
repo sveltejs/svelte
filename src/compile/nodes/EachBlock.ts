@@ -20,14 +20,15 @@ export default class EachBlock extends Node {
 	key: Expression;
 	scope: TemplateScope;
 	contexts: Array<{ name: string, tail: string }>;
+	hasAnimation: boolean;
 
 	children: Node[];
 	else?: ElseBlock;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
-		this.expression = new Expression(compiler, this, scope, info.expression);
+		this.expression = new Expression(component, this, scope, info.expression);
 		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
 		this.index = info.index;
 
@@ -37,11 +38,18 @@ export default class EachBlock extends Node {
 		unpackDestructuring(this.contexts, info.context, '');
 
 		this.contexts.forEach(context => {
+			if (component.helpers.has(context.key.name)) {
+				component.warn(context.key, {
+					code: `each-context-clash`,
+					message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
+				});
+			}
+
 			this.scope.add(context.key.name, this.expression.dependencies);
 		});
 
 		this.key = info.key
-			? new Expression(compiler, this, this.scope, info.key)
+			? new Expression(component, this, this.scope, info.key)
 			: null;
 
 		if (this.index) {
@@ -50,10 +58,24 @@ export default class EachBlock extends Node {
 			this.scope.add(this.index, dependencies);
 		}
 
-		this.children = mapChildren(compiler, this, this.scope, info.children);
+		this.hasAnimation = false;
+
+		this.children = mapChildren(component, this, this.scope, info.children);
+
+		if (this.hasAnimation) {
+			if (this.children.length !== 1) {
+				const child = this.children.find(child => !!child.animation);
+				component.error(child.animation, {
+					code: `invalid-animation`,
+					message: `An element that use the animate directive must be the sole child of a keyed each block`
+				});
+			}
+		}
+
+		this.warnIfEmptyBlock(); // TODO would be better if EachBlock, IfBlock etc extended an abstract Block class
 
 		this.else = info.else
-			? new ElseBlock(compiler, this, this.scope, info.else)
+			? new ElseBlock(component, this, this.scope, info.else)
 			: null;
 	}
 
@@ -66,22 +88,22 @@ export default class EachBlock extends Node {
 
 		this.var = block.getUniqueName(`each`);
 		this.iterations = block.getUniqueName(`${this.var}_blocks`);
-		this.get_each_context = this.compiler.getUniqueName(`get_${this.var}_context`);
+		this.get_each_context = this.component.getUniqueName(`get_${this.var}_context`);
 
 		const { dependencies } = this.expression;
 		block.addDependencies(dependencies);
 
 		this.block = block.child({
-			comment: createDebuggingComment(this, this.compiler),
-			name: this.compiler.getUniqueName('create_each_block'),
+			comment: createDebuggingComment(this, this.component),
+			name: this.component.getUniqueName('create_each_block'),
 			key: this.key,
 
 			bindings: new Map(block.bindings)
 		});
 
-		this.each_block_value = this.compiler.getUniqueName('each_value');
+		this.each_block_value = this.component.getUniqueName('each_value');
 
-		const indexName = this.index || this.compiler.getUniqueName(`${this.context}_index`);
+		const indexName = this.index || this.component.getUniqueName(`${this.context}_index`);
 
 		this.contexts.forEach(prop => {
 			this.block.bindings.set(prop.key.name, `ctx.${this.each_block_value}[ctx.${indexName}]${prop.tail}`);
@@ -99,18 +121,18 @@ export default class EachBlock extends Node {
 			`child_ctx.${indexName} = i;`
 		);
 
-		this.compiler.target.blocks.push(this.block);
+		this.component.target.blocks.push(this.block);
 		this.initChildren(this.block, stripWhitespace, nextSibling);
 		block.addDependencies(this.block.dependencies);
 		this.block.hasUpdateMethod = this.block.dependencies.size > 0;
 
 		if (this.else) {
 			this.else.block = block.child({
-				comment: createDebuggingComment(this.else, this.compiler),
-				name: this.compiler.getUniqueName(`${this.block.name}_else`),
+				comment: createDebuggingComment(this.else, this.component),
+				name: this.component.getUniqueName(`${this.block.name}_else`),
 			});
 
-			this.compiler.target.blocks.push(this.else.block);
+			this.component.target.blocks.push(this.else.block);
 			this.else.initChildren(
 				this.else.block,
 				stripWhitespace,
@@ -131,7 +153,7 @@ export default class EachBlock extends Node {
 	) {
 		if (this.children.length === 0) return;
 
-		const { compiler } = this;
+		const { component } = this;
 
 		const each = this.var;
 
@@ -146,8 +168,8 @@ export default class EachBlock extends Node {
 		// hack the sourcemap, so that if data is missing the bug
 		// is easy to find
 		let c = this.start + 2;
-		while (compiler.source[c] !== 'e') c += 1;
-		compiler.code.overwrite(c, c + 4, 'length');
+		while (component.source[c] !== 'e') c += 1;
+		component.code.overwrite(c, c + 4, 'length');
 		const length = `[✂${c}-${c+4}✂]`;
 
 		const mountOrIntro = (this.block.hasIntroMethod || this.block.hasOutroMethod) ? 'i' : 'm';
@@ -164,7 +186,7 @@ export default class EachBlock extends Node {
 
 		block.builders.init.addLine(`var ${this.each_block_value} = ${snippet};`);
 
-		this.compiler.target.blocks.push(deindent`
+		this.component.target.blocks.push(deindent`
 			function ${this.get_each_context}(ctx, list, i) {
 				const child_ctx = Object.create(ctx);
 				${this.contextProps}
@@ -188,7 +210,7 @@ export default class EachBlock extends Node {
 		}
 
 		if (this.else) {
-			const each_block_else = compiler.getUniqueName(`${each}_else`);
+			const each_block_else = component.getUniqueName(`${each}_else`);
 			const mountOrIntro = (this.else.block.hasIntroMethod || this.else.block.hasOutroMethod) ? 'i' : 'm';
 
 			block.builders.init.addLine(`var ${each_block_else} = null;`);
@@ -331,7 +353,7 @@ export default class EachBlock extends Node {
 			${this.block.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
-		if (this.block.hasOutros && this.compiler.options.nestedTransitions) {
+		if (this.block.hasOutros && this.component.options.nestedTransitions) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
@@ -477,7 +499,7 @@ export default class EachBlock extends Node {
 			`);
 		}
 
-		if (outroBlock && this.compiler.options.nestedTransitions) {
+		if (outroBlock && this.component.options.nestedTransitions) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				${iterations} = ${iterations}.filter(Boolean);
@@ -495,7 +517,7 @@ export default class EachBlock extends Node {
 	}
 
 	ssr() {
-		const { compiler } = this;
+		const { component } = this;
 		const { snippet } = this.expression;
 
 		const props = this.contexts.map(prop => `${prop.key.name}: item${prop.tail}`);
@@ -505,23 +527,23 @@ export default class EachBlock extends Node {
 			: `item => Object.assign({}, ctx, { ${props.join(', ')} })`;
 
 		const open = `\${ ${this.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${getContext}, ctx => \``;
-		compiler.target.append(open);
+		component.target.append(open);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
 		const close = `\`)`;
-		compiler.target.append(close);
+		component.target.append(close);
 
 		if (this.else) {
-			compiler.target.append(` : \``);
+			component.target.append(` : \``);
 			this.else.children.forEach((child: Node) => {
 				child.ssr();
 			});
-			compiler.target.append(`\``);
+			component.target.append(`\``);
 		}
 
-		compiler.target.append('}');
+		component.target.append('}');
 	}
 }

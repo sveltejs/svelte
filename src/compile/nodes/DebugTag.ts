@@ -9,11 +9,11 @@ import { stringify } from '../../utils/stringify';
 export default class DebugTag extends Node {
 	expressions: Expression[];
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.expressions = info.identifiers.map(node => {
-			return new Expression(compiler, parent, scope, node);
+			return new Expression(component, parent, scope, node);
 		});
 	}
 
@@ -22,9 +22,9 @@ export default class DebugTag extends Node {
 		parentNode: string,
 		parentNodes: string,
 	) {
-		if (!this.compiler.options.dev) return;
+		if (!this.component.options.dev) return;
 
-		const { code } = this.compiler;
+		const { code } = this.component;
 
 		if (this.expressions.length === 0) {
 			// Debug all
@@ -36,7 +36,7 @@ export default class DebugTag extends Node {
 			block.builders.create.addLine(statement);
 			block.builders.update.addLine(statement);
 		} else {
-			const { code } = this.compiler;
+			const { code } = this.component;
 			code.overwrite(this.start + 1, this.start + 7, 'log', {
 				storeName: true
 			});
@@ -70,10 +70,10 @@ export default class DebugTag extends Node {
 	}
 
 	ssr() {
-		if (!this.compiler.options.dev) return;
+		if (!this.component.options.dev) return;
 
-		const filename = this.compiler.file || null;
-		const { line, column } = this.compiler.locate(this.start + 1);
+		const filename = this.component.file || null;
+		const { line, column } = this.component.locate(this.start + 1);
 
 		const obj = this.expressions.length === 0
 			? `ctx`
@@ -84,6 +84,6 @@ export default class DebugTag extends Node {
 
 		const str = '${@debug(' + `${filename && stringify(filename)}, ${line}, ${column}, ${obj})}`;
 
-		this.compiler.target.append(str);
+		this.component.target.append(str);
 	}
 }

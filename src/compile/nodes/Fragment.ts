@@ -1,5 +1,5 @@
 import Node from './shared/Node';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import mapChildren from './shared/mapChildren';
 import Block from '../dom/Block';
 import TemplateScope from './shared/TemplateScope';
@@ -9,17 +9,17 @@ export default class Fragment extends Node {
 	children: Node[];
 	scope: TemplateScope;
 
-	constructor(compiler: Compiler, info: any) {
+	constructor(component: Component, info: any) {
 		const scope = new TemplateScope();
-		super(compiler, null, scope, info);
+		super(component, null, scope, info);
 
 		this.scope = scope;
-		this.children = mapChildren(compiler, this, scope, info.children);
+		this.children = mapChildren(component, this, scope, info.children);
 	}
 
 	init() {
 		this.block = new Block({
-			compiler: this.compiler,
+			component: this.component,
 			name: '@create_main_fragment',
 			key: null,
 
@@ -28,7 +28,7 @@ export default class Fragment extends Node {
 			dependencies: new Set(),
 		});
 
-		this.compiler.target.blocks.push(this.block);
+		this.component.target.blocks.push(this.block);
 		this.initChildren(this.block, true, null);
 
 		this.block.hasUpdateMethod = true;

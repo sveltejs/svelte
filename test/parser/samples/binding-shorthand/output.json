@@ -8,7 +8,7 @@
 			{
 				"start": 0,
 				"end": 18,
-				"type": "Component",
+				"type": "InlineComponent",
 				"name": "Widget",
 				"attributes": [
 					{

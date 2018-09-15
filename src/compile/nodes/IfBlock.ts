@@ -1,7 +1,7 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
 import ElseBlock from './ElseBlock';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import Block from '../dom/Block';
 import createDebuggingComment from '../../utils/createDebuggingComment';
 import Expression from './shared/Expression';
@@ -25,15 +25,17 @@ export default class IfBlock extends Node {
 
 	block: Block;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
-		this.expression = new Expression(compiler, this, scope, info.expression);
-		this.children = mapChildren(compiler, this, scope, info.children);
+		this.expression = new Expression(component, this, scope, info.expression);
+		this.children = mapChildren(component, this, scope, info.children);
 
 		this.else = info.else
-			? new ElseBlock(compiler, this, scope, info.else)
+			? new ElseBlock(component, this, scope, info.else)
 			: null;
+
+		this.warnIfEmptyBlock();
 	}
 
 	init(
@@ -41,7 +43,7 @@ export default class IfBlock extends Node {
 		stripWhitespace: boolean,
 		nextSibling: Node
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		this.cannotUseInnerHTML();
 
@@ -56,8 +58,8 @@ export default class IfBlock extends Node {
 			block.addDependencies(node.expression.dependencies);
 
 			node.block = block.child({
-				comment: createDebuggingComment(node, compiler),
-				name: compiler.getUniqueName(`create_if_block`),
+				comment: createDebuggingComment(node, component),
+				name: component.getUniqueName(`create_if_block`),
 			});
 
 			blocks.push(node.block);
@@ -75,8 +77,8 @@ export default class IfBlock extends Node {
 				attachBlocks(node.else.children[0]);
 			} else if (node.else) {
 				node.else.block = block.child({
-					comment: createDebuggingComment(node.else, compiler),
-					name: compiler.getUniqueName(`create_if_block`),
+					comment: createDebuggingComment(node.else, component),
+					name: component.getUniqueName(`create_if_block`),
 				});
 
 				blocks.push(node.else.block);
@@ -98,7 +100,7 @@ export default class IfBlock extends Node {
 
 		attachBlocks(this);
 
-		if (compiler.options.nestedTransitions) {
+		if (component.options.nestedTransitions) {
 			if (hasIntros) block.addIntro();
 			if (hasOutros) block.addOutro();
 		}
@@ -109,7 +111,7 @@ export default class IfBlock extends Node {
 			block.hasOutroMethod = hasOutros;
 		});
 
-		compiler.target.blocks.push(...blocks);
+		component.target.blocks.push(...blocks);
 	}
 
 	build(
@@ -138,7 +140,7 @@ export default class IfBlock extends Node {
 			if (hasOutros) {
 				this.buildCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
 
-				if (this.compiler.options.nestedTransitions) {
+				if (this.component.options.nestedTransitions) {
 					block.builders.outro.addBlock(deindent`
 						if (${name}) ${name}.o(#outrocallback);
 						else #outrocallback();
@@ -150,7 +152,7 @@ export default class IfBlock extends Node {
 		} else {
 			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
 
-			if (hasOutros && this.compiler.options.nestedTransitions) {
+			if (hasOutros && this.component.options.nestedTransitions) {
 				block.builders.outro.addBlock(deindent`
 					if (${name}) ${name}.o(#outrocallback);
 					else #outrocallback();
@@ -184,7 +186,7 @@ export default class IfBlock extends Node {
 		dynamic,
 		{ name, anchor, hasElse, if_name }
 	) {
-		const select_block_type = this.compiler.getUniqueName(`select_block_type`);
+		const select_block_type = this.component.getUniqueName(`select_block_type`);
 		const current_block_type = block.getUniqueName(`current_block_type`);
 		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
@@ -247,7 +249,7 @@ export default class IfBlock extends Node {
 		dynamic,
 		{ name, anchor, hasElse }
 	) {
-		const select_block_type = this.compiler.getUniqueName(`select_block_type`);
+		const select_block_type = this.component.getUniqueName(`select_block_type`);
 		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
 		const previous_block_index = block.getUniqueName(`previous_block_index`);
 		const if_block_creators = block.getUniqueName(`if_block_creators`);
@@ -482,16 +484,16 @@ export default class IfBlock extends Node {
 	}
 
 	ssr() {
-		const { compiler } = this;
+		const { component } = this;
 		const { snippet } = this.expression;
 
-		compiler.target.append('${ ' + snippet + ' ? `');
+		component.target.append('${ ' + snippet + ' ? `');
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		compiler.target.append('` : `');
+		component.target.append('` : `');
 
 		if (this.else) {
 			this.else.children.forEach((child: Node) => {
@@ -499,7 +501,7 @@ export default class IfBlock extends Node {
 			});
 		}
 
-		compiler.target.append('` }');
+		component.target.append('` }');
 	}
 
 	visitChildren(block: Block, node: Node) {

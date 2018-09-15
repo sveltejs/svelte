@@ -7,8 +7,10 @@ export default class ElseBlock extends Node {
 	children: Node[];
 	block: Block;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
-		this.children = mapChildren(compiler, this, scope, info.children);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.children = mapChildren(component, this, scope, info.children);
+
+		this.warnIfEmptyBlock();
 	}
 }

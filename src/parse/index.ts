@@ -1,17 +1,15 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import { locate, Location } from 'locate-character';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
-import { trimStart, trimEnd } from '../utils/trim';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import { Node, Ast } from '../interfaces';
+import { Node, Ast, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
-	customElement?: boolean;
+	customElement?: CustomElementOptions | true;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -19,7 +17,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
-	readonly customElement: boolean;
+	readonly customElement: CustomElementOptions | true;
 
 	index: number;
 	stack: Array<Node>;

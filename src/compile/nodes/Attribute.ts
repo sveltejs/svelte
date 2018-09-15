@@ -2,7 +2,7 @@ import deindent from '../../utils/deindent';
 import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import addToSet from '../../utils/addToSet';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import Node from './shared/Node';
 import Element from './Element';
 import Text from './Text';
@@ -19,7 +19,7 @@ export default class Attribute extends Node {
 	start: number;
 	end: number;
 
-	compiler: Compiler;
+	component: Component;
 	parent: Element;
 	name: string;
 	isSpread: boolean;
@@ -31,8 +31,8 @@ export default class Attribute extends Node {
 	chunks: (Text | Expression)[];
 	dependencies: Set<string>;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		if (info.type === 'Spread') {
 			this.name = null;
@@ -40,7 +40,7 @@ export default class Attribute extends Node {
 			this.isTrue = false;
 			this.isSynthetic = false;
 
-			this.expression = new Expression(compiler, this, scope, info.expression);
+			this.expression = new Expression(component, this, scope, info.expression);
 			this.dependencies = this.expression.dependencies;
 			this.chunks = null;
 
@@ -60,7 +60,7 @@ export default class Attribute extends Node {
 				: info.value.map(node => {
 					if (node.type === 'Text') return node;
 
-					const expression = new Expression(compiler, this, scope, node.expression);
+					const expression = new Expression(component, this, scope, node.expression);
 
 					addToSet(this.dependencies, expression.dependencies);
 					return expression;
@@ -96,6 +96,16 @@ export default class Attribute extends Node {
 					}
 				})
 				.join(' + ');
+	}
+
+	getStaticValue() {
+		if (this.isSpread || this.isDynamic) return null;
+
+		return this.isTrue
+			? true
+			: this.chunks[0]
+				? this.chunks[0].data
+				: '';
 	}
 
 	render(block: Block) {
@@ -136,9 +146,9 @@ export default class Attribute extends Node {
 				? '@setXlinkAttribute'
 				: '@setAttribute';
 
-		const isLegacyInputType = this.compiler.options.legacy && name === 'type' && this.parent.name === 'input';
+		const isLegacyInputType = this.component.options.legacy && name === 'type' && this.parent.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !this.compiler.options.legacy && !node.namespace;
+		const isDataSet = /^data-/.test(name) && !this.component.options.legacy && !node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;

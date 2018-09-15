@@ -1,19 +1,12 @@
-import MagicString from 'magic-string';
-import isReference from 'is-reference';
-import { parseExpressionAt } from 'acorn';
-import annotateWithScopes from '../../utils/annotateWithScopes';
-import { walk } from 'estree-walker';
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
-import reservedNames from '../../utils/reservedNames';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import Stylesheet from '../../css/Stylesheet';
 import Stats from '../../Stats';
 import Block from './Block';
-import { test } from '../../config';
-import { Ast, CompileOptions, Node } from '../../interfaces';
+import { Ast, CompileOptions } from '../../interfaces';
 
 export class DomTarget {
 	blocks: (Block|string)[];
@@ -34,28 +27,21 @@ export class DomTarget {
 }
 
 export default function dom(
-	ast: Ast,
-	source: string,
-	stylesheet: Stylesheet,
-	options: CompileOptions,
-	stats: Stats
+	component: Component,
+	options: CompileOptions
 ) {
 	const format = options.format || 'es';
-
-	const target = new DomTarget();
-	const compiler = new Compiler(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, true, target);
 
 	const {
 		computations,
 		name,
-		templateProperties,
-		namespace,
-	} = compiler;
+		templateProperties
+	} = component;
 
-	compiler.fragment.build();
-	const { block } = compiler.fragment;
+	component.fragment.build();
+	const { block } = component.fragment;
 
-	if (compiler.options.nestedTransitions) {
+	if (component.options.nestedTransitions) {
 		block.hasOutroMethod = true;
 	}
 
@@ -68,14 +54,14 @@ export default function dom(
 
 	if (computations.length) {
 		computations.forEach(({ key, deps, hasRestParam }) => {
-			if (target.readonly.has(key)) {
+			if (component.target.readonly.has(key)) {
 				// <svelte:window> bindings
 				throw new Error(
 					`Cannot have a computed value '${key}' that clashes with a read-only property`
 				);
 			}
 
-			target.readonly.add(key);
+			component.target.readonly.add(key);
 
 			if (deps) {
 				deps.forEach(dep => {
@@ -96,31 +82,42 @@ export default function dom(
 		});
 	}
 
-	if (compiler.javascript) {
-		builder.addBlock(compiler.javascript);
+	if (component.javascript) {
+		const componentDefinition = new CodeBuilder();
+		component.declarations.forEach(declaration => {
+			componentDefinition.addBlock(declaration.block);
+		});
+
+		const js = (
+			component.javascript[0] +
+			componentDefinition +
+			component.javascript[1]
+		);
+
+		builder.addBlock(js);
 	}
 
-	if (compiler.options.dev) {
-		builder.addLine(`const ${compiler.fileVar} = ${JSON.stringify(compiler.file)};`);
+	if (component.options.dev) {
+		builder.addLine(`const ${component.fileVar} = ${JSON.stringify(component.file)};`);
 	}
 
-	const css = compiler.stylesheet.render(options.filename, !compiler.customElement);
-	const styles = compiler.stylesheet.hasStyles && stringify(options.dev ?
+	const css = component.stylesheet.render(options.filename, !component.customElement);
+	const styles = component.stylesheet.hasStyles && stringify(options.dev ?
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { onlyEscapeAtSymbol: true });
 
-	if (styles && compiler.options.css !== false && !compiler.customElement) {
+	if (styles && component.options.css !== false && !component.customElement) {
 		builder.addBlock(deindent`
 			function @add_css() {
 				var style = @createElement("style");
-				style.id = '${compiler.stylesheet.id}-style';
+				style.id = '${component.stylesheet.id}-style';
 				style.textContent = ${styles};
 				@append(document.head, style);
 			}
 		`);
 	}
 
-	target.blocks.forEach(block => {
+	component.target.blocks.forEach(block => {
 		builder.addBlock(block.toString());
 	});
 
@@ -137,10 +134,10 @@ export default function dom(
 				.join(',\n')}
 		}`;
 
-	const debugName = `<${compiler.customElement ? compiler.tag : name}>`;
+	const debugName = `<${component.customElement ? component.tag : name}>`;
 
 	// generate initial state object
-	const expectedProperties = Array.from(compiler.expectedProperties);
+	const expectedProperties = Array.from(component.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
 	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
 	const initialState = [];
@@ -165,32 +162,32 @@ export default function dom(
 
 	const constructorBody = deindent`
 		${options.dev && `this._debugName = '${debugName}';`}
-		${options.dev && !compiler.customElement &&
+		${options.dev && !component.customElement &&
 			`if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");`}
 		@init(this, options);
 		${templateProperties.store && `this.store = %store();`}
-		${compiler.usesRefs && `this.refs = {};`}
+		${component.refs.size > 0 && `this.refs = {};`}
 		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
 		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
-		${target.metaBindings}
+		${component.target.metaBindings}
 		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
 		${options.dev &&
-			Array.from(compiler.expectedProperties).map(prop => {
+			Array.from(component.expectedProperties).map(prop => {
 				if (globalWhitelist.has(prop)) return;
 				if (computations.find(c => c.key === prop)) return;
 
-				const message = compiler.components.has(prop) ?
+				const message = component.components.has(prop) ?
 					`${debugName} expected to find '${prop}' in \`data\`, but found it in \`components\` instead` :
 					`${debugName} was created without expected data property '${prop}'`;
 
 				const conditions = [`!('${prop}' in this._state)`];
-				if (compiler.customElement) conditions.push(`!('${prop}' in this.attributes)`);
+				if (component.customElement) conditions.push(`!('${prop}' in this.attributes)`);
 
 				return `if (${conditions.join(' && ')}) console.warn("${message}");`
 			})}
-		${compiler.bindingGroups.length &&
-			`this._bindingGroups = [${Array(compiler.bindingGroups.length).fill('[]').join(', ')}];`}
-		this._intro = ${compiler.options.skipIntroByDefault ? '!!options.intro' : 'true'};
+		${component.bindingGroups.length &&
+			`this._bindingGroups = [${Array(component.bindingGroups.length).fill('[]').join(', ')}];`}
+		this._intro = ${component.options.skipIntroByDefault ? '!!options.intro' : 'true'};
 
 		${templateProperties.onstate && `this._handlers.state = [%onstate];`}
 		${templateProperties.onupdate && `this._handlers.update = [%onupdate];`}
@@ -201,15 +198,15 @@ export default function dom(
 			}];`
 		)}
 
-		${compiler.slots.size && `this._slotted = options.slots || {};`}
+		${component.slots.size && `this._slotted = options.slots || {};`}
 
-		${compiler.customElement ?
+		${component.customElement ?
 			deindent`
 				this.attachShadow({ mode: 'open' });
 				${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 			` :
-			(compiler.stylesheet.hasStyles && options.css !== false &&
-			`if (!document.getElementById("${compiler.stylesheet.id}-style")) @add_css();`)
+			(component.stylesheet.hasStyles && options.css !== false &&
+			`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`)
 		}
 
 		${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
@@ -223,14 +220,14 @@ export default function dom(
 			});
 		`}
 
-		${compiler.customElement ? deindent`
+		${component.customElement ? deindent`
 			this._fragment.c();
 			this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
 
 			if (options.target) this._mount(options.target, options.anchor);
 		` : deindent`
 			if (options.target) {
-				${compiler.options.hydratable
+				${component.options.hydratable
 				? deindent`
 				var nodes = @children(options.target);
 				options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
@@ -241,16 +238,16 @@ export default function dom(
 				this._fragment.c();`}
 				this._mount(options.target, options.anchor);
 
-				${(compiler.hasComponents || target.hasComplexBindings || hasInitHooks || target.hasIntroTransitions) &&
+				${(component.hasComponents || component.target.hasComplexBindings || hasInitHooks || component.target.hasIntroTransitions) &&
 				`@flush(this);`}
 			}
 		`}
 
-		${compiler.options.skipIntroByDefault && `this._intro = true;`}
+		${component.options.skipIntroByDefault && `this._intro = true;`}
 	`;
 
-	if (compiler.customElement) {
-		const props = compiler.props || Array.from(compiler.expectedProperties);
+	if (component.customElement) {
+		const props = component.props || Array.from(component.expectedProperties);
 
 		builder.addBlock(deindent`
 			class ${name} extends HTMLElement {
@@ -273,7 +270,7 @@ export default function dom(
 					}
 				`).join('\n\n')}
 
-				${compiler.slots.size && deindent`
+				${component.slots.size && deindent`
 					connectedCallback() {
 						Object.keys(this._slotted).forEach(key => {
 							this.appendChild(this._slotted[key]);
@@ -284,7 +281,7 @@ export default function dom(
 					this.set({ [attr]: newValue });
 				}
 
-				${(compiler.hasComponents || target.hasComplexBindings || templateProperties.oncreate || target.hasIntroTransitions) && deindent`
+				${(component.hasComponents || component.target.hasComplexBindings || templateProperties.oncreate || component.target.hasIntroTransitions) && deindent`
 					connectedCallback() {
 						@flush(this);
 					}
@@ -299,7 +296,7 @@ export default function dom(
 				}
 			});
 
-			customElements.define("${compiler.tag}", ${name});
+			customElements.define("${component.tag}", ${name});
 		`);
 	} else {
 		builder.addBlock(deindent`
@@ -317,7 +314,7 @@ export default function dom(
 	builder.addBlock(deindent`
 		${options.dev && deindent`
 			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
-				${Array.from(target.readonly).map(
+				${Array.from(component.target.readonly).map(
 					prop =>
 						`if ('${prop}' in newState && !this._updatingReadonlyProperty) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`
 				)}
@@ -339,8 +336,8 @@ export default function dom(
 
 	let result = builder.toString();
 
-	return compiler.generate(result, options, {
-		banner: `/* ${compiler.file ? `${compiler.file} ` : ``}generated by Svelte v${"__VERSION__"} */`,
+	return component.generate(result, options, {
+		banner: `/* ${component.file ? `${component.file} ` : ``}generated by Svelte v${"__VERSION__"} */`,
 		sharedPath,
 		name,
 		format,

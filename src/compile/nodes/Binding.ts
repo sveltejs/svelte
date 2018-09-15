@@ -3,7 +3,7 @@ import Element from './Element';
 import getObject from '../../utils/getObject';
 import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
-import Compiler from '../Compiler';
+import Component from '../Component';
 import Block from '../dom/Block';
 import Expression from './shared/Expression';
 import { dimensions } from '../../utils/patterns';
@@ -16,7 +16,7 @@ const readOnlyMediaAttributes = new Set([
 ]);
 
 // TODO a lot of this element-specific stuff should live in Element —
-// Binding should ideally be agnostic between Element and Component
+// Binding should ideally be agnostic between Element and InlineComponent
 
 export default class Binding extends Node {
 	name: string;
@@ -26,11 +26,11 @@ export default class Binding extends Node {
 	obj: string;
 	prop: string;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.name = info.name;
-		this.value = new Expression(compiler, this, scope, info.value);
+		this.value = new Expression(component, this, scope, info.value);
 
 		let obj;
 		let prop;
@@ -78,7 +78,7 @@ export default class Binding extends Node {
 		// TODO should this happen in preprocess?
 		const dependencies = new Set(this.value.dependencies);
 		this.value.dependencies.forEach((prop: string) => {
-			const indirectDependencies = this.compiler.indirectDependencies.get(prop);
+			const indirectDependencies = this.component.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
 					dependencies.add(indirectDependency);
@@ -87,8 +87,8 @@ export default class Binding extends Node {
 		});
 
 		// view to model
-		const valueFromDom = getValueFromDom(this.compiler, node, this);
-		const handler = getEventHandler(this, this.compiler, block, name, snippet, dependencies, valueFromDom);
+		const valueFromDom = getValueFromDom(this.component, node, this);
+		const handler = getEventHandler(this, this.component, block, name, snippet, dependencies, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(node, this, snippet);
@@ -96,7 +96,7 @@ export default class Binding extends Node {
 
 		// special cases
 		if (this.name === 'group') {
-			const bindingGroup = getBindingGroup(this.compiler, this.value.node);
+			const bindingGroup = getBindingGroup(this.component, this.value.node);
 
 			block.builders.hydrate.addLine(
 				`#component._bindingGroups[${bindingGroup}].push(${node.var});`
@@ -184,16 +184,16 @@ function getDomUpdater(
 	return `${node.var}.${binding.name} = ${snippet};`;
 }
 
-function getBindingGroup(compiler: Compiler, value: Node) {
+function getBindingGroup(component: Component, value: Node) {
 	const { parts } = flattenReference(value); // TODO handle cases involving computed member expressions
 	const keypath = parts.join('.');
 
 	// TODO handle contextual bindings — `keypath` should include unique ID of
 	// each block that provides context
-	let index = compiler.bindingGroups.indexOf(keypath);
+	let index = component.bindingGroups.indexOf(keypath);
 	if (index === -1) {
-		index = compiler.bindingGroups.length;
-		compiler.bindingGroups.push(keypath);
+		index = component.bindingGroups.length;
+		component.bindingGroups.push(keypath);
 	}
 
 	return index;
@@ -201,7 +201,7 @@ function getBindingGroup(compiler: Compiler, value: Node) {
 
 function getEventHandler(
 	binding: Binding,
-	compiler: Compiler,
+	component: Component,
 	block: Block,
 	name: string,
 	snippet: string,
@@ -234,9 +234,9 @@ function getEventHandler(
 		// Svelte tries to `set()` a computed property, which throws an
 		// error in dev mode. a) it's possible that we should be
 		// replacing computations with *their* dependencies, and b)
-		// we should probably populate `compiler.target.readonly` sooner so
+		// we should probably populate `component.target.readonly` sooner so
 		// that we don't have to do the `.some()` here
-		dependenciesArray = dependenciesArray.filter(prop => !compiler.computations.some(computation => computation.key === prop));
+		dependenciesArray = dependenciesArray.filter(prop => !component.computations.some(computation => computation.key === prop));
 
 		return {
 			usesContext: false,
@@ -270,7 +270,7 @@ function getEventHandler(
 }
 
 function getValueFromDom(
-	compiler: Compiler,
+	component: Component,
 	node: Element,
 	binding: Node
 ) {
@@ -285,7 +285,7 @@ function getValueFromDom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (binding.name === 'group') {
-		const bindingGroup = getBindingGroup(compiler, binding.value.node);
+		const bindingGroup = getBindingGroup(component, binding.value.node);
 		if (type === 'checkbox') {
 			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
 		}

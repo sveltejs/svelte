@@ -1,13 +1,10 @@
 import deindent from '../../utils/deindent';
-import Compiler from '../Compiler';
-import Stats from '../../Stats';
-import Stylesheet from '../../css/Stylesheet';
-import { removeNode, removeObjectKey } from '../../utils/removeNode';
-import getName from '../../utils/getName';
+import Component from '../Component';
 import globalWhitelist from '../../utils/globalWhitelist';
-import { Ast, Node, CompileOptions } from '../../interfaces';
+import { Node, CompileOptions } from '../../interfaces';
 import { AppendTarget } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
+import CodeBuilder from '../../utils/CodeBuilder';
 
 export class SsrTarget {
 	bindings: string[];
@@ -32,30 +29,24 @@ export class SsrTarget {
 }
 
 export default function ssr(
-	ast: Ast,
-	source: string,
-	stylesheet: Stylesheet,
-	options: CompileOptions,
-	stats: Stats
+	component: Component,
+	options: CompileOptions
 ) {
 	const format = options.format || 'cjs';
 
-	const target = new SsrTarget();
-	const compiler = new Compiler(ast, source, options.name || 'SvelteComponent', stylesheet, options, stats, false, target);
-
-	const { computations, name, templateProperties } = compiler;
+	const { computations, name, templateProperties } = component;
 
 	// create main render() function
-	trim(compiler.fragment.children).forEach((node: Node) => {
+	trim(component.fragment.children).forEach((node: Node) => {
 		node.ssr();
 	});
 
-	const css = compiler.customElement ?
+	const css = component.customElement ?
 		{ code: null, map: null } :
-		compiler.stylesheet.render(options.filename, true);
+		component.stylesheet.render(options.filename, true);
 
 	// generate initial state object
-	const expectedProperties = Array.from(compiler.expectedProperties);
+	const expectedProperties = Array.from(component.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
 	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
 
@@ -77,11 +68,36 @@ export default function ssr(
 
 	initialState.push('ctx');
 
-	const helpers = new Set();
+	let js = null;
+	if (component.javascript) {
+		const componentDefinition = new CodeBuilder();
+
+		// not all properties are relevant to SSR (e.g. lifecycle hooks)
+		const relevant = new Set([
+			'data',
+			'components',
+			'computed',
+			'helpers',
+			'preload',
+			'store'
+		]);
+
+		component.declarations.forEach(declaration => {
+			if (relevant.has(declaration.type)) {
+				componentDefinition.addBlock(declaration.block);
+			}
+		});
+
+		js = (
+			component.javascript[0] +
+			componentDefinition +
+			component.javascript[1]
+		);
+	}
 
 	// TODO concatenate CSS maps
-	const result = deindent`
-		${compiler.javascript}
+	const result = (deindent`
+		${js}
 
 		var ${name} = {};
 
@@ -123,7 +139,7 @@ export default function ssr(
 				({ key }) => `ctx.${key} = %computed-${key}(ctx);`
 			)}
 
-			${target.bindings.length &&
+			${component.target.bindings.length &&
 				deindent`
 				var settled = false;
 				var tmp;
@@ -131,11 +147,11 @@ export default function ssr(
 				while (!settled) {
 					settled = true;
 
-					${target.bindings.join('\n\n')}
+					${component.target.bindings.join('\n\n')}
 				}
 			`}
 
-			return \`${target.renderCode}\`;
+			return \`${component.target.renderCode}\`;
 		};
 
 		${name}.css = {
@@ -146,9 +162,9 @@ export default function ssr(
 		var warned = false;
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
-	`;
+	`).trim();
 
-	return compiler.generate(result, options, { name, format });
+	return component.generate(result, options, { name, format });
 }
 
 function trim(nodes) {

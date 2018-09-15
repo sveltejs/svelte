@@ -6,8 +6,8 @@ import getCodeFrame from '../utils/getCodeFrame';
 import hash from '../utils/hash';
 import removeCSSPrefix from '../utils/removeCSSPrefix';
 import Element from '../compile/nodes/Element';
-import { Validator } from '../validate/index';
 import { Node, Ast, Warning } from '../interfaces';
+import Component from '../compile/Component';
 
 const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
 
@@ -78,9 +78,9 @@ class Rule {
 		this.declarations.forEach(declaration => declaration.transform(code, keyframes));
 	}
 
-	validate(validator: Validator) {
+	validate(component: Component) {
 		this.selectors.forEach(selector => {
-			selector.validate(validator);
+			selector.validate(component);
 		});
 	}
 
@@ -220,9 +220,9 @@ class Atrule {
 		})
 	}
 
-	validate(validator: Validator) {
+	validate(component: Component) {
 		this.children.forEach(child => {
-			child.validate(validator);
+			child.validate(component);
 		});
 	}
 
@@ -388,9 +388,9 @@ export default class Stylesheet {
 		};
 	}
 
-	validate(validator: Validator) {
+	validate(component: Component) {
 		this.children.forEach(child => {
-			child.validate(validator);
+			child.validate(component);
 		});
 	}
 
