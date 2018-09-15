@@ -17,6 +17,57 @@ export default class Slot extends Element {
 	attributes: Attribute[];
 	children: Node[];
 
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+
+		info.attributes.forEach(attr => {
+			if (attr.type !== 'Attribute') {
+				component.error(attr, {
+					code: `invalid-slot-directive`,
+					message: `<slot> cannot have directives`
+				});
+			}
+
+			if (attr.name !== 'name') {
+				component.error(attr, {
+					code: `invalid-slot-attribute`,
+					message: `"name" is the only attribute permitted on <slot> elements`
+				});
+			}
+
+			if (attr.value.length !== 1 || attr.value[0].type !== 'Text') {
+				component.error(attr, {
+					code: `dynamic-slot-name`,
+					message: `<slot> name cannot be dynamic`
+				});
+			}
+
+			const slotName = attr.value[0].data;
+			if (slotName === 'default') {
+				component.error(attr, {
+					code: `invalid-slot-name`,
+					message: `default is a reserved word — it cannot be used as a slot name`
+				});
+			}
+
+			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a
+			// bug than anything. Perhaps it should be a warning
+
+			// if (validator.slots.has(slotName)) {
+			// 	validator.error(`duplicate '${slotName}' <slot> element`, nameAttribute.start);
+			// }
+
+			// validator.slots.add(slotName);
+		});
+
+		// if (node.attributes.length === 0) && validator.slots.has('default')) {
+		// 	validator.error(node, {
+		// 		code: `duplicate-slot`,
+		// 		message: `duplicate default <slot> element`
+		// 	});
+		// }
+	}
+
 	init(
 		block: Block,
 		stripWhitespace: boolean,
@@ -36,10 +87,10 @@ export default class Slot extends Element {
 		parentNode: string,
 		parentNodes: string
 	) {
-		const { compiler } = this;
+		const { component } = this;
 
 		const slotName = this.getStaticAttributeValue('name') || 'default';
-		compiler.slots.add(slotName);
+		component.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
 		const prop = quotePropIfNecessary(slotName);
@@ -160,12 +211,12 @@ export default class Slot extends Element {
 		const slotName = name && name.chunks[0].data || 'default';
 		const prop = quotePropIfNecessary(slotName);
 
-		this.compiler.target.append(`\${options && options.slotted && options.slotted${prop} ? options.slotted${prop}() : \``);
+		this.component.target.append(`\${options && options.slotted && options.slotted${prop} ? options.slotted${prop}() : \``);
 
 		this.children.forEach((child: Node) => {
 			child.ssr();
 		});
 
-		this.compiler.target.append(`\`}`);
+		this.component.target.append(`\`}`);
 	}
 }

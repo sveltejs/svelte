@@ -17,11 +17,11 @@ const elementsWithoutText = new Set([
 function shouldSkip(node: Text) {
 	if (/\S/.test(node.data)) return false;
 
-	const parentElement = node.findNearest(/(?:Element|Component|Head)/);
+	const parentElement = node.findNearest(/(?:Element|InlineComponent|Head)/);
 	if (!parentElement) return false;
 
 	if (parentElement.type === 'Head') return true;
-	if (parentElement.type === 'Component') return parentElement.children.length === 1 && node === parentElement.children[0];
+	if (parentElement.type === 'InlineComponent') return parentElement.children.length === 1 && node === parentElement.children[0];
 
 	return parentElement.namespace || elementsWithoutText.has(parentElement.name);
 }
@@ -31,8 +31,8 @@ export default class Text extends Node {
 	data: string;
 	shouldSkip: boolean;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 		this.data = info.data;
 	}
 
@@ -74,6 +74,6 @@ export default class Text extends Node {
 			// unless this Text node is inside a <script> or <style> element, escape &,<,>
 			text = escapeHTML(text);
 		}
-		this.compiler.target.append(escape(escapeTemplate(text)));
+		this.component.target.append(escape(escapeTemplate(text)));
 	}
 }

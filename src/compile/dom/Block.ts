@@ -1,13 +1,12 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
-import Compiler from '../Compiler';
-import { Node } from '../../interfaces';
+import Component from '../Component';
 
 export interface BlockOptions {
 	parent?: Block;
 	name: string;
-	compiler?: Compiler;
+	component?: Component;
 	comment?: string;
 	key?: string;
 	bindings?: Map<string, string>;
@@ -16,7 +15,7 @@ export interface BlockOptions {
 
 export default class Block {
 	parent?: Block;
-	compiler: Compiler;
+	component: Component;
 	name: string;
 	comment?: string;
 
@@ -59,7 +58,7 @@ export default class Block {
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
-		this.compiler = options.compiler;
+		this.component = options.component;
 		this.name = options.name;
 		this.comment = options.comment;
 
@@ -91,7 +90,7 @@ export default class Block {
 		this.hasOutroMethod = false;
 		this.outros = 0;
 
-		this.getUniqueName = this.compiler.getUniqueNameMaker();
+		this.getUniqueName = this.component.getUniqueNameMaker();
 		this.variables = new Map();
 
 		this.aliases = new Map()
@@ -129,11 +128,11 @@ export default class Block {
 	}
 
 	addIntro() {
-		this.hasIntros = this.hasIntroMethod = this.compiler.target.hasIntroTransitions = true;
+		this.hasIntros = this.hasIntroMethod = this.component.target.hasIntroTransitions = true;
 	}
 
 	addOutro() {
-		this.hasOutros = this.hasOutroMethod = this.compiler.target.hasOutroTransitions = true;
+		this.hasOutros = this.hasOutroMethod = this.component.target.hasOutroTransitions = true;
 		this.outros += 1;
 	}
 
@@ -168,7 +167,7 @@ export default class Block {
 	}
 
 	toString() {
-		const { dev } = this.compiler.options;
+		const { dev } = this.component.options;
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			this.addVariable('#current');
@@ -203,7 +202,7 @@ export default class Block {
 			properties.addBlock(`c: @noop,`);
 		} else {
 			const hydrate = !this.builders.hydrate.isEmpty() && (
-				this.compiler.options.hydratable
+				this.component.options.hydratable
 					? `this.h()`
 					: this.builders.hydrate
 			);
@@ -216,7 +215,7 @@ export default class Block {
 			`);
 		}
 
-		if (this.compiler.options.hydratable) {
+		if (this.component.options.hydratable) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
 				properties.addBlock(`l: @noop,`);
 			} else {
@@ -229,7 +228,7 @@ export default class Block {
 			}
 		}
 
-		if (this.compiler.options.hydratable && !this.builders.hydrate.isEmpty()) {
+		if (this.component.options.hydratable && !this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
 				${dev ? 'h: function hydrate' : 'h'}() {
 					${this.builders.hydrate}

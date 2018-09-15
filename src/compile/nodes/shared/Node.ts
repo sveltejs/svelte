@@ -1,11 +1,11 @@
-import Compiler from './../../Compiler';
+import Component from './../../Component';
 import Block from '../../dom/Block';
 import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {
 	readonly start: number;
 	readonly end: number;
-	readonly compiler: Compiler;
+	readonly component: Component;
 	readonly parent: Node;
 	readonly type: string;
 
@@ -15,7 +15,7 @@ export default class Node {
 	canUseInnerHTML: boolean;
 	var: string;
 
-	constructor(compiler: Compiler, parent, scope, info: any) {
+	constructor(component: Component, parent, scope, info: any) {
 		this.start = info.start;
 		this.end = info.end;
 		this.type = info.type;
@@ -23,8 +23,8 @@ export default class Node {
 		// this makes properties non-enumerable, which makes logging
 		// bearable. might have a performance cost. TODO remove in prod?
 		Object.defineProperties(this, {
-			compiler: {
-				value: compiler
+			component: {
+				value: component
 			},
 			parent: {
 				value: parent
@@ -86,7 +86,7 @@ export default class Node {
 		lastChild = null;
 
 		cleaned.forEach((child: Node, i: number) => {
-			child.canUseInnerHTML = !this.compiler.options.hydratable;
+			child.canUseInnerHTML = !this.component.options.hydratable;
 
 			child.init(block, stripWhitespace, cleaned[i + 1] || nextSibling);
 
@@ -168,5 +168,20 @@ export default class Node {
 
 	remount(name: string) {
 		return `${this.var}.m(${name}._slotted.default, null);`;
+	}
+
+	warnIfEmptyBlock() {
+		if (!this.component.options.dev) return;
+		if (!/Block$/.test(this.type) || !this.children) return;
+		if (this.children.length > 1) return;
+
+		const child = this.children[0];
+
+		if (!child || (child.type === 'Text' && !/[^ \r\n\f\v\t]/.test(child.data))) {
+			this.component.warn(this, {
+				code: 'empty-block',
+				message: 'Empty block'
+			});
+		}
 	}
 }

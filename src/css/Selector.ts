@@ -1,8 +1,8 @@
 import MagicString from 'magic-string';
 import Stylesheet from './Stylesheet';
 import { gatherPossibleValues, UNKNOWN } from './gatherPossibleValues';
-import { Validator } from '../validate/index';
 import { Node } from '../interfaces';
+import Component from '../compile/Component';
 
 export default class Selector {
 	node: Node;
@@ -97,13 +97,13 @@ export default class Selector {
 		});
 	}
 
-	validate(validator: Validator) {
+	validate(component: Component) {
 		this.blocks.forEach((block) => {
 			let i = block.selectors.length;
 			while (i-- > 1) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					validator.error(selector, {
+					component.error(selector, {
 						code: `css-invalid-global`,
 						message: `:global(...) must be the first element in a compound selector`
 					});
@@ -124,7 +124,7 @@ export default class Selector {
 
 		for (let i = start; i < end; i += 1) {
 			if (this.blocks[i].global) {
-				validator.error(this.blocks[i].selectors[0], {
+				component.error(this.blocks[i].selectors[0], {
 					code: `css-invalid-global`,
 					message: `:global(...) can be at the start or end of a selector sequence, but not in the middle`
 				});
@@ -174,7 +174,7 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 		}
 
 		else if (selector.type === 'RefSelector') {
-			if (node.ref === selector.name) {
+			if (node.ref && node.ref.name === selector.name) {
 				stylesheet.nodesWithRefCssClass.set(selector.name, node);
 				toEncapsulate.push({ node, block });
 				return true;

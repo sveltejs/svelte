@@ -1,5 +1,3 @@
-import {SourceMap} from 'magic-string';
-
 export interface Node {
 	start: number;
 	end: number;
@@ -67,7 +65,7 @@ export interface CompileOptions {
 
 	// to remove in v3
 	skipIntroByDefault?: boolean;
-	nestedTransitions: boolean;
+	nestedTransitions?: boolean;
 }
 
 export interface GenerateOptions {
@@ -91,15 +89,6 @@ export interface CustomElementOptions {
 	tag?: string;
 	props?: string[];
 }
-
-export interface PreprocessOptions {
-	markup?: (options: {content: string, filename: string}) => { code: string, map?: SourceMap | string };
-	style?: Preprocessor;
-	script?: Preprocessor;
-	filename?: string
-}
-
-export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
 
 export interface AppendTarget {
 	slots: Record<string, string>;

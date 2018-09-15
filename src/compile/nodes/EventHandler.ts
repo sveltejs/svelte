@@ -3,6 +3,9 @@ import Expression from './shared/Expression';
 import addToSet from '../../utils/addToSet';
 import flattenReference from '../../utils/flattenReference';
 import validCalleeObjects from '../../utils/validCalleeObjects';
+import list from '../../utils/list';
+
+const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
 export default class EventHandler extends Node {
 	name: string;
@@ -19,21 +22,26 @@ export default class EventHandler extends Node {
 	args: Expression[];
 	snippet: string;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.name = info.name;
+		component.used.events.add(this.name);
+
 		this.dependencies = new Set();
 
 		if (info.expression) {
+			this.validateExpression(info.expression);
+
 			this.callee = flattenReference(info.expression.callee);
+
 			this.insertionPoint = info.expression.start;
 
 			this.usesComponent = !validCalleeObjects.has(this.callee.name);
 			this.usesContext = false;
 
 			this.args = info.expression.arguments.map(param => {
-				const expression = new Expression(compiler, this, scope, param);
+				const expression = new Expression(component, this, scope, param);
 				addToSet(this.dependencies, expression.dependencies);
 				if (expression.usesContext) this.usesContext = true;
 				return expression;
@@ -51,28 +59,28 @@ export default class EventHandler extends Node {
 			this.snippet = null; // TODO handle shorthand events here?
 		}
 
-		this.isCustomEvent = compiler.events.has(this.name);
+		this.isCustomEvent = component.events.has(this.name);
 		this.shouldHoist = !this.isCustomEvent && parent.hasAncestor('EachBlock');
 	}
 
-	render(compiler, block, hoisted) { // TODO hoist more event handlers
+	render(component, block, hoisted) { // TODO hoist more event handlers
 		if (this.insertionPoint === null) return; // TODO handle shorthand events here?
 
 		if (!validCalleeObjects.has(this.callee.name)) {
-			const component = hoisted ? `component` : block.alias(`component`);
+			const component_name = hoisted ? `component` : block.alias(`component`);
 
 			// allow event.stopPropagation(), this.select() etc
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			if (this.callee.name[0] === '$' && !compiler.methods.has(this.callee.name)) {
-				compiler.code.overwrite(
+			if (this.callee.name[0] === '$' && !component.methods.has(this.callee.name)) {
+				component.code.overwrite(
 					this.insertionPoint,
 					this.insertionPoint + 1,
-					`${component}.store.`
+					`${component_name}.store.`
 				);
 			} else {
-				compiler.code.prependRight(
+				component.code.prependRight(
 					this.insertionPoint,
-					`${component}.`
+					`${component_name}.`
 				);
 			}
 		}
@@ -84,11 +92,66 @@ export default class EventHandler extends Node {
 
 			if (this.callee && this.callee.name === 'this') {
 				const node = this.callee.nodes[0];
-				compiler.code.overwrite(node.start, node.end, this.parent.var, {
+				component.code.overwrite(node.start, node.end, this.parent.var, {
 					storeName: true,
 					contentOnly: true
 				});
 			}
 		}
+	}
+
+	validateExpression(expression) {
+		const { callee, type } = expression;
+
+		if (type !== 'CallExpression') {
+			this.component.error(expression, {
+				code: `invalid-event-handler`,
+				message: `Expected a call expression`
+			});
+		}
+
+		const { component } = this;
+		const { name } = flattenReference(callee);
+
+		if (validCalleeObjects.has(name) || name === 'options') return;
+
+		if (name === 'refs') {
+			this.component.refCallees.push(callee);
+			return;
+		}
+
+		if (
+			(callee.type === 'Identifier' && validBuiltins.has(name)) ||
+			this.component.methods.has(name)
+		) {
+			return;
+		}
+
+		if (name[0] === '$') {
+			// assume it's a store method
+			return;
+		}
+
+		const validCallees = ['this.*', 'refs.*', 'event.*', 'options.*', 'console.*'].concat(
+			Array.from(validBuiltins),
+			Array.from(this.component.methods.keys())
+		);
+
+		let message = `'${component.source.slice(callee.start, callee.end)}' is an invalid callee ` ;
+
+		if (name === 'store') {
+			message += `(did you mean '$${component.source.slice(callee.start + 6, callee.end)}(...)'?)`;
+		} else {
+			message += `(should be one of ${list(validCallees)})`;
+
+			if (callee.type === 'Identifier' && component.helpers.has(callee.name)) {
+				message += `. '${callee.name}' exists on 'helpers', did you put it in the wrong place?`;
+			}
+		}
+
+		component.warn(expression, {
+			code: `invalid-callee`,
+			message
+		});
 	}
 }

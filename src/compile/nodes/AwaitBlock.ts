@@ -17,18 +17,18 @@ export default class AwaitBlock extends Node {
 	then: ThenBlock;
 	catch: CatchBlock;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
-		this.expression = new Expression(compiler, this, scope, info.expression);
+		this.expression = new Expression(component, this, scope, info.expression);
 		const deps = this.expression.dependencies;
 
 		this.value = info.value;
 		this.error = info.error;
 
-		this.pending = new PendingBlock(compiler, this, scope, info.pending);
-		this.then = new ThenBlock(compiler, this, scope.add(this.value, deps), info.then);
-		this.catch = new CatchBlock(compiler, this, scope.add(this.error, deps), info.catch);
+		this.pending = new PendingBlock(component, this, scope, info.pending);
+		this.then = new ThenBlock(component, this, scope.add(this.value, deps), info.then);
+		this.catch = new CatchBlock(component, this, scope.add(this.error, deps), info.catch);
 	}
 
 	init(
@@ -49,12 +49,12 @@ export default class AwaitBlock extends Node {
 			const child = this[status];
 
 			child.block = block.child({
-				comment: createDebuggingComment(child, this.compiler),
-				name: this.compiler.getUniqueName(`create_${status}_block`)
+				comment: createDebuggingComment(child, this.component),
+				name: this.component.getUniqueName(`create_${status}_block`)
 			});
 
 			child.initChildren(child.block, stripWhitespace, nextSibling);
-			this.compiler.target.blocks.push(child.block);
+			this.component.target.blocks.push(child.block);
 
 			if (child.block.dependencies.size > 0) {
 				isDynamic = true;
@@ -77,7 +77,7 @@ export default class AwaitBlock extends Node {
 		this.then.block.hasOutroMethod = hasOutros;
 		this.catch.block.hasOutroMethod = hasOutros;
 
-		if (hasOutros && this.compiler.options.nestedTransitions) block.addOutro();
+		if (hasOutros && this.component.options.nestedTransitions) block.addOutro();
 	}
 
 	build(
@@ -171,7 +171,7 @@ export default class AwaitBlock extends Node {
 			`);
 		}
 
-		if (this.pending.block.hasOutroMethod && this.compiler.options.nestedTransitions) {
+		if (this.pending.block.hasOutroMethod && this.component.options.nestedTransitions) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, 3);
@@ -196,7 +196,7 @@ export default class AwaitBlock extends Node {
 	}
 
 	ssr() {
-		const target: SsrTarget = <SsrTarget>this.compiler.target;
+		const target: SsrTarget = <SsrTarget>this.component.target;
 		const { snippet } = this.expression;
 
 		target.append('${(function(__value) { if(@isPromise(__value)) return `');

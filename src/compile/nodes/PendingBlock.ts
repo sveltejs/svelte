@@ -6,8 +6,10 @@ export default class PendingBlock extends Node {
 	block: Block;
 	children: Node[];
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
-		this.children = mapChildren(compiler, parent, scope, info.children);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.children = mapChildren(component, parent, scope, info.children);
+
+		this.warnIfEmptyBlock();
 	}
 }

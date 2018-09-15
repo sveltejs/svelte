@@ -6,9 +6,9 @@ export default class Tag extends Node {
 	expression: Expression;
 	shouldCache: boolean;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
-		this.expression = new Expression(compiler, this, scope, info.expression);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.expression = new Expression(component, this, scope, info.expression);
 
 		this.shouldCache = (
 			info.expression.type !== 'Identifier' ||
