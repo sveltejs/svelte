@@ -219,7 +219,7 @@ export default class Component {
 		this.code = new MagicString(source);
 
 		// styles
-		this.stylesheet = new Stylesheet(source, ast, this.file, options.dev);
+		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
 
 		// allow compiler to deconflict user's `import { get } from 'whatever'` and
