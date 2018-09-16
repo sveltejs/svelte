@@ -11,8 +11,9 @@ import Slot from './handlers/Slot';
 import Tag from './handlers/Tag';
 import Text from './handlers/Text';
 import Title from './handlers/Title';
+import { CompileOptions } from '../../interfaces';
 
-type Handler = (node: any, target: any, options: any) => void;
+type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
 
 function noop(){}
 

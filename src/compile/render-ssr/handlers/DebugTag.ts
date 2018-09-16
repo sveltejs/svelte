@@ -1,6 +1,6 @@
 import { stringify } from '../../../utils/stringify';
 
-export default function(node, target, options) {
+export default function(node, renderer, options) {
 	if (!options.dev) return;
 
 	const filename = options.file || null;
@@ -15,5 +15,5 @@ export default function(node, target, options) {
 
 	const str = '${@debug(' + `${filename && stringify(filename)}, ${line}, ${column}, ${obj})}`;
 
-	target.append(str);
+	renderer.append(str);
 }

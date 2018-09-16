@@ -1,6 +1,6 @@
 import { escapeHTML, escapeTemplate, escape } from '../../../utils/stringify';
 
-export default function(node, target, options) {
+export default function(node, renderer, options) {
 	let text = node.data;
 	if (
 		!node.parent ||
@@ -10,5 +10,5 @@ export default function(node, target, options) {
 		// unless this Text node is inside a <script> or <style> element, escape &,<,>
 		text = escapeHTML(text);
 	}
-	target.append(escape(escapeTemplate(text)));
+	renderer.append(escape(escapeTemplate(text)));
 }
