@@ -1,6 +1,6 @@
 import Node from './Node';
 import Expression from './Expression';
-import Block from '../../dom/Block';
+import Block from '../../render-dom/Block';
 
 export default class Tag extends Node {
 	expression: Expression;

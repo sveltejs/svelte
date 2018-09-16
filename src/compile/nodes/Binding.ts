@@ -4,7 +4,7 @@ import getObject from '../../utils/getObject';
 import getTailSnippet from '../../utils/getTailSnippet';
 import flattenReference from '../../utils/flattenReference';
 import Component from '../Component';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
 import { dimensions } from '../../utils/patterns';
 

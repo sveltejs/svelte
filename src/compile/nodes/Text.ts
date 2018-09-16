@@ -1,6 +1,6 @@
 import { escape, escapeHTML, escapeTemplate, stringify } from '../../utils/stringify';
 import Node from './shared/Node';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This

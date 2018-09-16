@@ -1,6 +1,6 @@
 import deindent from '../../utils/deindent';
 import Node from './shared/Node';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import flattenReference from '../../utils/flattenReference';

@@ -68,13 +68,6 @@ export interface CompileOptions {
 	nestedTransitions?: boolean;
 }
 
-export interface GenerateOptions {
-	name: string;
-	format: ModuleFormat;
-	banner?: string;
-	sharedPath?: string;
-}
-
 export interface ShorthandImport {
 	name: string;
 	source: string;

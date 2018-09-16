@@ -19,7 +19,7 @@ import Fragment from './nodes/Fragment';
 import shared from './shared';
 import { DomTarget } from './dom';
 import { SsrTarget } from './ssr';
-import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
+import { Node, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import checkForComputedKeys from './validate/js/utils/checkForComputedKeys';
@@ -319,7 +319,11 @@ export default class Component {
 		return this.aliases.get(name);
 	}
 
-	generate(result: string, options: CompileOptions, { banner = '', name, format }: GenerateOptions ) {
+	generate(result: string, options: CompileOptions, {
+		banner = '',
+		name,
+		format
+	}) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
 		const helpers = new Set();

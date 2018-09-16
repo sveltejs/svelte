@@ -1,45 +1,25 @@
 import deindent from '../../utils/deindent';
 import Component from '../Component';
 import globalWhitelist from '../../utils/globalWhitelist';
-import { Node, CompileOptions } from '../../interfaces';
-import { AppendTarget } from '../../interfaces';
+import { CompileOptions } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
-
-export class SsrTarget {
-	bindings: string[];
-	renderCode: string;
-	appendTargets: AppendTarget[];
-
-	constructor() {
-		this.bindings = [];
-		this.renderCode = '';
-		this.appendTargets = [];
-	}
-
-	append(code: string) {
-		if (this.appendTargets.length) {
-			const appendTarget = this.appendTargets[this.appendTargets.length - 1];
-			const slotName = appendTarget.slotStack[appendTarget.slotStack.length - 1];
-			appendTarget.slots[slotName] += code;
-		} else {
-			this.renderCode += code;
-		}
-	}
-}
+import Renderer from './Renderer';
 
 export default function ssr(
 	component: Component,
 	options: CompileOptions
 ) {
+	const renderer = new Renderer();
+
 	const format = options.format || 'cjs';
 
 	const { computations, name, templateProperties } = component;
 
 	// create main render() function
-	trim(component.fragment.children).forEach((node: Node) => {
-		node.ssr();
-	});
+	renderer.render(trim(component.fragment.children), Object.assign({
+		locate: component.locate
+	}, options));
 
 	const css = component.customElement ?
 		{ code: null, map: null } :
@@ -139,7 +119,7 @@ export default function ssr(
 				({ key }) => `ctx.${key} = %computed-${key}(ctx);`
 			)}
 
-			${component.target.bindings.length &&
+			${renderer.bindings.length &&
 				deindent`
 				var settled = false;
 				var tmp;
@@ -147,11 +127,11 @@ export default function ssr(
 				while (!settled) {
 					settled = true;
 
-					${component.target.bindings.join('\n\n')}
+					${renderer.bindings.join('\n\n')}
 				}
 			`}
 
-			return \`${component.target.renderCode}\`;
+			return \`${renderer.code}\`;
 		};
 
 		${name}.css = {

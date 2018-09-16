@@ -1,6 +1,6 @@
 import Node from './shared/Node';
 import Tag from './shared/Tag';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
 import deindent from '../../utils/deindent';
 import addToSet from '../../utils/addToSet';

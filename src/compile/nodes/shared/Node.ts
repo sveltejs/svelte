@@ -1,5 +1,5 @@
 import Component from './../../Component';
-import Block from '../../dom/Block';
+import Block from '../../render-dom/Block';
 import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {

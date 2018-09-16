@@ -4,7 +4,7 @@ import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Element from './Element';
 import Attribute from './Attribute';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import { quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 
 function sanitize(name) {

@@ -6,7 +6,7 @@ import getObject from '../../utils/getObject';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import { escape, escapeTemplate, stringify } from '../../utils/stringify';
 import Node from './shared/Node';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import Attribute from './Attribute';
 import mapChildren from './shared/mapChildren';
 import Binding from './Binding';

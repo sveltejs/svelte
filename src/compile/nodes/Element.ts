@@ -8,7 +8,7 @@ import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import Component from '../Component';
 import Node from './shared/Node';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import Attribute from './Attribute';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
