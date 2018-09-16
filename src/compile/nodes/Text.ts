@@ -63,17 +63,4 @@ export default class Text extends Node {
 	remount(name: string) {
 		return `@append(${name}._slotted.default, ${this.var});`;
 	}
-
-	ssr() {
-		let text = this.data;
-		if (
-			!this.parent ||
-			this.parent.type !== 'Element' ||
-			(this.parent.name !== 'script' && this.parent.name !== 'style')
-		) {
-			// unless this Text node is inside a <script> or <style> element, escape &,<,>
-			text = escapeHTML(text);
-		}
-		this.component.target.append(escape(escapeTemplate(text)));
-	}
 }

@@ -263,8 +263,4 @@ export default class Window extends Node {
 			`);
 		}
 	}
-
-	ssr() {
-		// noop
-	}
 }

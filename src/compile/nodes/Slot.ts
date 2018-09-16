@@ -204,19 +204,4 @@ export default class Slot extends Element {
 
 		return null;
 	}
-
-	ssr() {
-		const name = this.attributes.find(attribute => attribute.name === 'name');
-
-		const slotName = name && name.chunks[0].data || 'default';
-		const prop = quotePropIfNecessary(slotName);
-
-		this.component.target.append(`\${options && options.slotted && options.slotted${prop} ? options.slotted${prop}() : \``);
-
-		this.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		this.component.target.append(`\`}`);
-	}
 }

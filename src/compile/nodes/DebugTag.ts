@@ -68,22 +68,4 @@ export default class DebugTag extends Node {
 			`);
 		}
 	}
-
-	ssr() {
-		if (!this.component.options.dev) return;
-
-		const filename = this.component.file || null;
-		const { line, column } = this.component.locate(this.start + 1);
-
-		const obj = this.expressions.length === 0
-			? `ctx`
-			: `{ ${this.expressions
-				.map(e => e.node.name)
-				.map(name => `${name}: ctx.${name}`)
-				.join(', ')} }`;
-
-		const str = '${@debug(' + `${filename && stringify(filename)}, ${line}, ${column}, ${obj})}`;
-
-		this.component.target.append(str);
-	}
 }

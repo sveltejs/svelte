@@ -117,14 +117,4 @@ export default class Title extends Node {
 			block.builders.hydrate.addLine(`document.title = ${value};`);
 		}
 	}
-
-	ssr() {
-		this.component.target.append(`<title>`);
-
-		this.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		this.component.target.append(`</title>`);
-	}
 }
