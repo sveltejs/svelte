@@ -1,7 +1,7 @@
 import { assign } from '../shared';
 import Stats from '../Stats';
 import parse from '../parse/index';
-import renderDOM, { DomTarget } from './render-dom/index';
+import renderDOM from './render-dom/index';
 import renderSSR from './render-ssr/index';
 import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
@@ -74,10 +74,7 @@ export default function compile(source: string, options: CompileOptions) {
 			source,
 			options.name || 'SvelteComponent',
 			options,
-			stats,
-
-			// TODO make component generator-agnostic, to allow e.g. WebGL generator
-			options.generate === 'ssr' ? null : new DomTarget()
+			stats
 		);
 		stats.stop('create component');
 

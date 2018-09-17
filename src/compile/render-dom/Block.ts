@@ -19,6 +19,8 @@ export default class Block {
 	name: string;
 	comment?: string;
 
+	wrappers: Wrapper[];
+
 	key: string;
 	first: string;
 
@@ -62,6 +64,8 @@ export default class Block {
 		this.name = options.name;
 		this.comment = options.comment;
 
+		this.wrappers = [];
+
 		// for keyed each blocks
 		this.key = options.key;
 		this.first = null;
@@ -99,6 +103,31 @@ export default class Block {
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
+	}
+
+	assignVariableNames() {
+		const seen = new Set();
+		const dupes = new Set();
+
+		this.wrappers.forEach(wrapper => {
+			if (seen.has(wrapper.var)) {
+				dupes.add(wrapper.var);
+			}
+
+			seen.add(wrapper.var);
+		});
+
+		const counts = new Map();
+
+		this.wrappers.forEach(wrapper => {
+			if (dupes.has(wrapper.var)) {
+				const i = counts.get(wrapper.var);
+				wrapper.var = this.getUniqueName(wrapper.var + i);
+				counts.set(wrapper.var, i + 1);
+			} else {
+				wrapper.var = this.getUniqueName(wrapper.var);
+			}
+		});
 	}
 
 	addDependencies(dependencies: Set<string>) {

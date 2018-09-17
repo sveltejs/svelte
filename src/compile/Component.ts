@@ -5,7 +5,6 @@ import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import deindent from '../utils/deindent';
-import CodeBuilder from '../utils/CodeBuilder';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
@@ -17,8 +16,6 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
-import { DomTarget } from './dom';
-import { SsrTarget } from './ssr';
 import { Node, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -101,7 +98,6 @@ export default class Component {
 	name: string;
 	options: CompileOptions;
 	fragment: Fragment;
-	target: DomTarget | SsrTarget;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -148,7 +144,6 @@ export default class Component {
 	refs: Set<string>;
 
 	file: string;
-	fileVar: string;
 	locate: (c: number) => { line: number, column: number };
 
 	stylesheet: Stylesheet;
@@ -168,15 +163,13 @@ export default class Component {
 		source: string,
 		name: string,
 		options: CompileOptions,
-		stats: Stats,
-		target: DomTarget | SsrTarget
+		stats: Stats
 	) {
 		this.stats = stats;
 
 		this.ast = ast;
 		this.source = source;
 		this.options = options;
-		this.target = target;
 
 		this.imports = [];
 		this.shorthandImports = [];
@@ -228,8 +221,6 @@ export default class Component {
 		this.templateVars = new Map();
 		this.aliases = new Map();
 		this.usedNames = new Set();
-
-		this.fileVar = options.dev && this.getUniqueName('file');
 
 		this.computations = [];
 		this.templateProperties = {};

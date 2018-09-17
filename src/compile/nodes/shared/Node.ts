@@ -127,10 +127,6 @@ export default class Node {
 		// implemented by subclasses
 	}
 
-	isDomNode() {
-		return this.type === 'Element' || this.type === 'Text' || this.type === 'MustacheTag';
-	}
-
 	hasAncestor(type: string) {
 		return this.parent ?
 			this.parent.type === type || this.parent.hasAncestor(type) :
@@ -160,10 +156,6 @@ export default class Node {
 		}
 
 		return anchor;
-	}
-
-	getUpdateMountNode(anchor: string) {
-		return this.parent.isDomNode() ? this.parent.var : `${anchor}.parentNode`;
 	}
 
 	remount(name: string) {
