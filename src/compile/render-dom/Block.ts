@@ -110,6 +110,8 @@ export default class Block {
 		const dupes = new Set();
 
 		this.wrappers.forEach(wrapper => {
+			if (wrapper.parent && wrapper.parent.canUseInnerHTML) return;
+
 			if (seen.has(wrapper.var)) {
 				dupes.add(wrapper.var);
 			}
@@ -121,7 +123,7 @@ export default class Block {
 
 		this.wrappers.forEach(wrapper => {
 			if (dupes.has(wrapper.var)) {
-				const i = counts.get(wrapper.var);
+				const i = counts.get(wrapper.var) || 0;
 				wrapper.var = this.getUniqueName(wrapper.var + i);
 				counts.set(wrapper.var, i + 1);
 			} else {

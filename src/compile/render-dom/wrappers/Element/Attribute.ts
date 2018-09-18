@@ -10,21 +10,25 @@ export default class AttributeWrapper {
 	constructor(node: Attribute, parent: ElementWrapper) {
 		this.node = node;
 		this.parent = parent;
+
+		if (node.dependencies.size > 0) {
+			parent.cannotUseInnerHTML();
+		}
 	}
 
 	render(block: Block) {
 		const element = this.parent;
 		const name = fixAttributeCasing(this.node.name);
 
-		let metadata = element.namespace ? null : attributeLookup[name];
+		let metadata = element.node.namespace ? null : attributeLookup[name];
 		if (metadata && metadata.appliesTo && !~metadata.appliesTo.indexOf(element.node.name))
 			metadata = null;
 
 		const isIndirectlyBoundValue =
 			name === 'value' &&
-			(element.name === 'option' || // TODO check it's actually bound
-				(element.name === 'input' &&
-					element.bindings.find(
+			(element.node.name === 'option' || // TODO check it's actually bound
+				(element.node.name === 'input' &&
+					element.node.bindings.find(
 						(binding: Binding) =>
 							/checked|group/.test(binding.name)
 						)));
@@ -36,7 +40,7 @@ export default class AttributeWrapper {
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
-		const method = /-/.test(element.name)
+		const method = /-/.test(element.node.name)
 			? '@setCustomElementData'
 			: name.slice(0, 6) === 'xlink:'
 				? '@setXlinkAttribute'
@@ -44,7 +48,7 @@ export default class AttributeWrapper {
 
 		const isLegacyInputType = element.renderer.component.options.legacy && name === 'type' && this.parent.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !element.renderer.component.options.legacy && !element.namespace;
+		const isDataSet = /^data-/.test(name) && !element.renderer.component.options.legacy && !element.node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;
@@ -75,7 +79,7 @@ export default class AttributeWrapper {
 			}
 
 			const isSelectValueAttribute =
-				name === 'value' && element.name === 'select';
+				name === 'value' && element.node.name === 'select';
 
 			const shouldCache = this.shouldCache || isSelectValueAttribute;
 
@@ -182,6 +186,19 @@ export default class AttributeWrapper {
 			block.builders.hydrate.addLine(updateValue);
 			if (this.node.isDynamic) block.builders.update.addLine(updateValue);
 		}
+	}
+
+	stringify() {
+		const value = this.node.chunks;
+
+		if (value === true) return '';
+		if (value.length === 0) return `=""`;
+
+		return `="${value.map(chunk => {
+			return chunk.type === 'Text'
+				? chunk.data.replace(/"/g, '\\"')
+				: `\${${chunk.snippet}}`
+		})}"`;
 	}
 }
 

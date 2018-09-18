@@ -7,7 +7,7 @@ import { CompileOptions } from '../../../../interfaces';
 import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../../utils/quoteIfNecessary';
 import isVoidElementName from '../../../../utils/isVoidElementName';
 import FragmentWrapper from '../Fragment';
-import { stringify, escapeHTML } from '../../../../utils/stringify';
+import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
 import TextWrapper from '../Text';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
 import deindent from '../../../../utils/deindent';
@@ -108,7 +108,7 @@ export default class ElementWrapper extends Wrapper {
 				);
 			} else {
 				block.builders.create.addLine(
-					`${node}.innerHTML = ${stringify(this.fragment.nodes.map(toHTML).join(''))};`
+					`${node}.innerHTML = \`${escape(this.fragment.nodes.map(toHTML).join(''))}\`;`
 				);
 			}
 		} else {
@@ -193,8 +193,8 @@ export default class ElementWrapper extends Wrapper {
 
 			let open = `<${wrapper.node.name}`;
 
-			(<ElementWrapper>wrapper).node.attributes.forEach((attr: Node) => {
-				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.chunks)}`
+			(<ElementWrapper>wrapper).attributes.forEach((attr: AttributeWrapper) => {
+				open += ` ${fixAttributeCasing(attr.node.name)}${attr.stringify()}`
 			});
 
 			if (isVoidElementName(wrapper.node.name)) return open + '>';
@@ -748,12 +748,4 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 	}
-}
-
-function stringifyAttributeValue(value: Node[] | true) {
-	if (value === true) return '';
-	if (value.length === 0) return `=""`;
-
-	const data = value[0].data;
-	return `=${JSON.stringify(data)}`;
 }

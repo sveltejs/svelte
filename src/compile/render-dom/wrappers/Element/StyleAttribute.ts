@@ -14,10 +14,6 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	node: Attribute;
 	parent: ElementWrapper;
 
-	constructor(node: Attribute, parent: ElementWrapper) {
-		super(node, parent);
-	}
-
 	render(block: Block) {
 		const styleProps = optimizeStyle(this.node.chunks);
 		if (!styleProps) return super.render(block);

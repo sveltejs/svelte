@@ -32,6 +32,7 @@ function shouldSkip(node: Text) {
 
 export default class TextWrapper extends Wrapper {
 	node: Text;
+	skip: boolean;
 	var: string;
 
 	constructor(
@@ -41,10 +42,14 @@ export default class TextWrapper extends Wrapper {
 		node: Text
 	) {
 		super(renderer, block, parent, node);
-		this.var = 'text';
+
+		this.skip = shouldSkip(this.node);
+		this.var = this.skip ? null : 'text';
 	}
 
 	render(block: Block, parentNode: string, parentNodes: string) {
+		if (this.skip) return;
+
 		block.addElement(
 			this.var,
 			`@createText(${stringify(this.node.data)})`,
