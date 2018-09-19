@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.13.5
+
+* Fix missing dependencies in shorthand class directives ([#1739](https://github.com/sveltejs/svelte/issues/1739))
+
 ## 2.13.4
 
 * Support dynamic `import()` in template expressions
