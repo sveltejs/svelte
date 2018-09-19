@@ -1326,7 +1326,7 @@ export default class Element extends Node {
 				dependencies = expression.dependencies;
 			} else {
 				snippet = `ctx${quotePropIfNecessary(name)}`;
-				dependencies = [name];
+				dependencies = new Set([name]);
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
 
