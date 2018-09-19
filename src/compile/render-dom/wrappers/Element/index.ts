@@ -14,12 +14,80 @@ import deindent from '../../../../utils/deindent';
 import namespaces from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
+import { dimensions } from '../../../../utils/patterns';
+import BindingWrapper from './Binding';
+
+const events = [
+	{
+		eventNames: ['input'],
+		filter: (node: Element, name: string) =>
+			node.name === 'textarea' ||
+			node.name === 'input' && !/radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
+	},
+	{
+		eventNames: ['change'],
+		filter: (node: Element, name: string) =>
+			node.name === 'select' ||
+			node.name === 'input' && /radio|checkbox/.test(node.getStaticAttributeValue('type'))
+	},
+	{
+		eventNames: ['change', 'input'],
+		filter: (node: Element, name: string) =>
+			node.name === 'input' && node.getStaticAttributeValue('type') === 'range'
+	},
+
+	{
+		eventNames: ['resize'],
+		filter: (node: Element, name: string) =>
+			dimensions.test(name)
+	},
+
+	// media events
+	{
+		eventNames: ['timeupdate'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			(name === 'currentTime' || name === 'played')
+	},
+	{
+		eventNames: ['durationchange'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'duration'
+	},
+	{
+		eventNames: ['play', 'pause'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'paused'
+	},
+	{
+		eventNames: ['progress'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'buffered'
+	},
+	{
+		eventNames: ['loadedmetadata'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			(name === 'buffered' || name === 'seekable')
+	},
+	{
+		eventNames: ['volumechange'],
+		filter: (node: Element, name: string) =>
+			node.isMediaNode() &&
+			name === 'volume'
+	}
+];
 
 export default class ElementWrapper extends Wrapper {
 	node: Element;
 	fragment: FragmentWrapper;
 	attributes: AttributeWrapper[];
+	bindings: BindingWrapper[];
 	classDependencies: string[];
+	initialUpdate: string;
 
 	var: string;
 
@@ -43,6 +111,10 @@ export default class ElementWrapper extends Wrapper {
 			return new AttributeWrapper(attribute, this);
 		});
 
+		this.bindings = this.node.bindings.map(binding => {
+			return new BindingWrapper(binding, this);
+		});
+
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 	}
 
@@ -62,7 +134,7 @@ export default class ElementWrapper extends Wrapper {
 		const slot = this.node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const prop = slot && quotePropIfNecessary(slot.chunks[0].data);
 		const initialMountNode = this.slotted ?
-			`${this.findNearest(/^InlineComponent/).var}._slotted${prop}` : // TODO this looks bonkers
+			`${this.node.findNearest(/^InlineComponent/).var}._slotted${prop}` : // TODO this looks bonkers
 			parentNode;
 
 		block.addVariable(node);
@@ -75,7 +147,7 @@ export default class ElementWrapper extends Wrapper {
 			if (parentNodes) {
 				block.builders.claim.addBlock(deindent`
 					${node} = ${this.getClaimStatement(parentNodes)};
-					var ${nodes} = @children(${this.name === 'template' ? `${node}.content` : node});
+					var ${nodes} = @children(${this.node.name === 'template' ? `${node}.content` : node});
 				`);
 			} else {
 				block.builders.claim.addLine(
@@ -122,16 +194,16 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		let hasHoistedEventHandlerOrBinding = (
-			//(this.hasAncestor('EachBlock') && this.node.bindings.length > 0) ||
+			//(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
 			this.node.handlers.some(handler => handler.shouldHoist)
 		);
 		const eventHandlerOrBindingUsesComponent = (
-			this.node.bindings.length > 0 ||
+			this.bindings.length > 0 ||
 			this.node.handlers.some(handler => handler.usesComponent)
 		);
 
 		const eventHandlerOrBindingUsesContext = (
-			this.node.bindings.some(binding => binding.usesContext) ||
+			this.bindings.some(binding => binding.node.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext)
 		);
 
@@ -163,7 +235,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.addBindings(block);
 		this.addEventHandlers(block);
-		if (this.ref) this.addRef(block);
+		if (this.node.ref) this.addRef(block);
 		this.addAttributes(block);
 		this.addTransitions(block);
 		this.addAnimation(block);
@@ -199,7 +271,7 @@ export default class ElementWrapper extends Wrapper {
 
 			if (isVoidElementName(wrapper.node.name)) return open + '>';
 
-			return `${open}>${wrapper.fragment.nodes.map(toHTML).join('')}</${wrapper.name}>`;
+			return `${open}>${wrapper.fragment.nodes.map(toHTML).join('')}</${wrapper.node.name}>`;
 		}
 
 		if (renderer.options.dev) {
@@ -239,19 +311,16 @@ export default class ElementWrapper extends Wrapper {
 			: `{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
 	}
 
-	addBindings(
-		block: Block
-	) {
-		if (this.node.bindings.length === 0) return;
+	addBindings(block: Block) {
+		if (this.bindings.length === 0) return;
 
-		if (this.name === 'select' || this.isMediaNode()) this.component.target.hasComplexBindings = true;
+		if (this.node.name === 'select' || this.isMediaNode()) {
+			this.renderer.hasComplexBindings = true;
+		}
 
-		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
+		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
-		// TODO munge in constructor
-		const mungedBindings = this.bindings.map(binding => binding.munge(block));
-
-		const lock = mungedBindings.some(binding => binding.needsLock) ?
+		const lock = this.bindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
 			null;
 
@@ -261,7 +330,7 @@ export default class ElementWrapper extends Wrapper {
 			.map(event => {
 				return {
 					events: event.eventNames,
-					bindings: mungedBindings.filter(binding => event.filter(this, binding.name))
+					bindings: this.bindings.filter(binding => event.filter(this, binding.name))
 				};
 			})
 			.filter(group => group.bindings.length);
@@ -282,8 +351,6 @@ export default class ElementWrapper extends Wrapper {
 				);
 			});
 
-			const usesContext = group.bindings.some(binding => binding.handler.usesContext);
-			const usesState = group.bindings.some(binding => binding.handler.usesState);
 			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
 			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
 
@@ -369,7 +436,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
+		this.initialUpdate = this.bindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 	}
 
 	addAttributes(block: Block) {

@@ -11,6 +11,7 @@ export default class Wrapper {
 	prev: Wrapper | null;
 	next: Wrapper | null;
 
+	var: string;
 	canUseInnerHTML: boolean;
 
 	constructor(
@@ -31,6 +32,26 @@ export default class Wrapper {
 	cannotUseInnerHTML() {
 		this.canUseInnerHTML = false;
 		if (this.parent) this.parent.cannotUseInnerHTML();
+	}
+
+	getOrCreateAnchor(block: Block, parentNode: string, parentNodes: string) {
+		// TODO use this in EachBlock and IfBlock — tricky because
+		// children need to be created first
+		const needsAnchor = this.next ? !this.next.isDomNode() : !parentNode || !this.parent.isDomNode();
+		const anchor = needsAnchor
+			? block.getUniqueName(`${this.var}_anchor`)
+			: (this.next && this.next.var) || 'null';
+
+		if (needsAnchor) {
+			block.addElement(
+				anchor,
+				`@createComment()`,
+				parentNodes && `@createComment()`,
+				parentNode
+			);
+		}
+
+		return anchor;
 	}
 
 	getUpdateMountNode(anchor: string) {

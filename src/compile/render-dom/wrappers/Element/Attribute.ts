@@ -6,6 +6,7 @@ import { stringify } from '../../../../utils/stringify';
 
 export default class AttributeWrapper {
 	node: Attribute;
+	parent: ElementWrapper;
 
 	constructor(node: Attribute, parent: ElementWrapper) {
 		this.node = node;
