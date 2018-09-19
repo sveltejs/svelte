@@ -742,7 +742,7 @@ export default class ElementWrapper extends Wrapper {
 				dependencies = expression.dependencies;
 			} else {
 				snippet = `ctx${quotePropIfNecessary(name)}`;
-				dependencies = [name];
+				dependencies = new Set([name]);
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
 
