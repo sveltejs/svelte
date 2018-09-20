@@ -15,6 +15,8 @@ import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import InputCheckboxBinding from './Binding/InputCheckboxBinding';
+import InputNumberBinding from './Binding/InputNumberBinding';
+import InputRangeBinding from './Binding/InputRangeBinding';
 import InputTextBinding from './Binding/InputTextBinding';
 import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
 import SelectBinding from './Binding/SelectBinding';
@@ -23,6 +25,8 @@ const bindings = [
 	InputTextBinding,
 	InputRadioGroupBinding,
 	InputCheckboxBinding,
+	InputNumberBinding,
+	InputRangeBinding,
 	SelectBinding
 ];
 
@@ -119,6 +123,12 @@ export default class ElementWrapper extends Wrapper {
 		this.classDependencies = [];
 
 		this.attributes = this.node.attributes.map(attribute => {
+			if (attribute.name === 'slot') {
+				// TODO make separate subclass for this?
+				// TODO what about custom elements?
+				const owner = this.findNearest(/^InlineComponent/);
+				owner._slots.add(attribute.getStaticValue());
+			}
 			if (attribute.name === 'style') {
 				return new StyleAttributeWrapper(attribute, this);
 			}
@@ -166,9 +176,16 @@ export default class ElementWrapper extends Wrapper {
 
 		const slot = this.node.attributes.find((attribute: Node) => attribute.name === 'slot');
 		const prop = slot && quotePropIfNecessary(slot.chunks[0].data);
-		const initialMountNode = this.slotted ?
-			`${this.node.findNearest(/^InlineComponent/).var}._slotted${prop}` : // TODO this looks bonkers
-			parentNode;
+
+		let initialMountNode;
+
+		if (slot) {
+			// TODO what about custom elements?
+			const owner = this.findNearest(/^InlineComponent/);
+			initialMountNode = `${owner.var}._slotted${prop}`;
+		} else {
+			initialMountNode = parentNode;
+		}
 
 		block.addVariable(node);
 		const renderStatement = this.getRenderStatement();

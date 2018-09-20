@@ -120,7 +120,6 @@ export default class Component {
 	hasComponents: boolean;
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
-	slots: Set<string>;
 	javascript: [string, string];
 
 	used: {
@@ -180,7 +179,6 @@ export default class Component {
 		this.transitions = new Set();
 		this.actions = new Set();
 		this.importedComponents = new Map();
-		this.slots = new Set();
 
 		this.used = {
 			components: new Set(),

@@ -43,10 +43,9 @@ export default class SlotWrapper extends Wrapper {
 		parentNodes: string
 	) {
 		const { renderer } = this;
-		const { component } = renderer;
 
 		const slotName = this.node.getStaticAttributeValue('name') || 'default';
-		component.slots.add(slotName);
+		renderer.slots.add(slotName);
 
 		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
 		const prop = quotePropIfNecessary(slotName);

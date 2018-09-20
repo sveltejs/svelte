@@ -179,7 +179,7 @@ export default function dom(
 			}];`
 		)}
 
-		${component.slots.size && `this._slotted = options.slots || {};`}
+		${renderer.slots.size && `this._slotted = options.slots || {};`}
 
 		${component.customElement ?
 			deindent`
@@ -251,7 +251,7 @@ export default function dom(
 					}
 				`).join('\n\n')}
 
-				${component.slots.size && deindent`
+				${renderer.slots.size && deindent`
 					connectedCallback() {
 						Object.keys(this._slotted).forEach(key => {
 							this.appendChild(this._slotted[key]);

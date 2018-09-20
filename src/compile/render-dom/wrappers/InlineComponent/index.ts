@@ -16,7 +16,7 @@ import getTailSnippet from '../../../../utils/getTailSnippet';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
-	_slots: Set<string>; // TODO lost the underscore
+	_slots: Set<string>; // TODO lose the underscore
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 

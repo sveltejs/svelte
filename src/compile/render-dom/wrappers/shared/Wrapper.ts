@@ -42,6 +42,12 @@ export default class Wrapper {
 		if (this.parent) this.parent.cannotUseInnerHTML();
 	}
 
+	// TODO do we still need equivalent method on Node?
+	findNearest(pattern) {
+		if (pattern.test(this.node.type)) return this;
+		return this.parent && this.parent.findNearest(pattern);
+	}
+
 	getOrCreateAnchor(block: Block, parentNode: string, parentNodes: string) {
 		// TODO use this in EachBlock and IfBlock — tricky because
 		// children need to be created first
@@ -78,5 +84,9 @@ export default class Wrapper {
 
 	render(block: Block, parentNode: string, parentNodes: string) {
 		throw new Error(`render method not implemented by subclass ${this.node.type}`);
+	}
+
+	remount(name: string) {
+		return `${this.var}.m(${name}._slotted.default, null);`;
 	}
 }

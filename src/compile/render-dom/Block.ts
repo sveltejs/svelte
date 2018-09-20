@@ -130,7 +130,7 @@ export default class Block {
 		while (i--) {
 			const wrapper = this.wrappers[i];
 
-			if (!wrapper.var) return;
+			if (!wrapper.var) continue;
 
 			if (dupes.has(wrapper.var)) {
 				const i = counts.get(wrapper.var) || 0;
