@@ -1,7 +1,7 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Node from '../../nodes/shared/Node';
-import Wrapper from './shared/wrapper';
+import Wrapper from './shared/Wrapper';
 import deindent from '../../../utils/deindent';
 
 const associatedEvents = {

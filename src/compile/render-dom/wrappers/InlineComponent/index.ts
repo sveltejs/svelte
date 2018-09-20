@@ -1,4 +1,4 @@
-import Wrapper from '../shared/wrapper';
+import Wrapper from '../shared/Wrapper';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';

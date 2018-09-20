@@ -1,4 +1,5 @@
-import Wrapper from './shared/wrapper';
+import Wrapper from './shared/Wrapper';
+import AwaitBlock from './AwaitBlock';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import IfBlock from './IfBlock';
@@ -13,6 +14,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 
 const wrappers = {
+	AwaitBlock,
 	Comment: null,
 	EachBlock,
 	Element,

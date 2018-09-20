@@ -1,4 +1,4 @@
-import Wrapper from './shared/wrapper';
+import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import EachBlock from '../../nodes/EachBlock';
@@ -45,7 +45,7 @@ class IfBlockBranch extends Wrapper {
 			)
 		});
 
-		this.fragment = new FragmentWrapper(renderer, block, node.children, parent.parent, stripWhitespace, nextSibling);
+		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent.parent, stripWhitespace, nextSibling);
 
 		this.isDynamic = this.block.dependencies.size > 0;
 	}
@@ -74,7 +74,7 @@ export default class IfBlockWrapper extends Wrapper {
 		this.branches = [];
 
 		const blocks: Block[] = [];
-		let dynamic = false;
+		let isDynamic = false;
 		let hasIntros = false;
 		let hasOutros = false;
 
@@ -93,8 +93,8 @@ export default class IfBlockWrapper extends Wrapper {
 			blocks.push(branch.block);
 			block.addDependencies(node.expression.dependencies);
 
-			if (branch.isDynamic) {
-				dynamic = true;
+			if (branch.block.dependencies.size > 0) {
+				isDynamic = true;
 				block.addDependencies(branch.block.dependencies);
 			}
 
@@ -118,7 +118,7 @@ export default class IfBlockWrapper extends Wrapper {
 				blocks.push(branch.block);
 
 				if (branch.block.dependencies.size > 0) {
-					dynamic = true;
+					isDynamic = true;
 					block.addDependencies(branch.block.dependencies);
 				}
 
@@ -135,7 +135,7 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 
 		blocks.forEach(block => {
-			block.hasUpdateMethod = dynamic;
+			block.hasUpdateMethod = isDynamic;
 			block.hasIntroMethod = hasIntros;
 			block.hasOutroMethod = hasOutros;
 		});

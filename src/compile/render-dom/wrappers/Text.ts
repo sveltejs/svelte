@@ -1,7 +1,7 @@
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Text from '../../nodes/Text';
-import Wrapper from './shared/wrapper';
+import Wrapper from './shared/Wrapper';
 import { CompileOptions } from '../../../interfaces';
 import { stringify } from '../../../utils/stringify';
 

@@ -1,6 +1,6 @@
 import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
-import Wrapper from '../shared/wrapper';
+import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
 import { CompileOptions } from '../../../../interfaces';
@@ -550,7 +550,8 @@ export default class ElementWrapper extends Wrapper {
 			const isCustomEvent = component.events.has(handler.name);
 
 			if (handler.callee) {
-				handler.render(this.component, block, handler.shouldHoist);
+				// TODO move handler render method into a wrapper
+				handler.render(this.renderer.component, block, handler.shouldHoist);
 			}
 
 			const target = handler.shouldHoist ? 'this' : this.var;
