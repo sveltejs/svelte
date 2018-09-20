@@ -3,7 +3,6 @@ import Block from '../../Block';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
 import ElementWrapper from './index';
 import { stringify } from '../../../../utils/stringify';
-import Wrapper from '../shared/wrapper';
 import deindent from '../../../../utils/deindent';
 
 export default class AttributeWrapper {

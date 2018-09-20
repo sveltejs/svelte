@@ -14,10 +14,6 @@ function isElseIf(node: ElseBlock) {
 	);
 }
 
-function isElseBranch(branch) {
-	return branch.block && !branch.condition;
-}
-
 class IfBlockBranch extends Wrapper {
 	block: Block;
 	fragment: FragmentWrapper;

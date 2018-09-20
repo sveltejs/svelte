@@ -9,7 +9,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, string>;
+	bindings?: Map<string, () => string>;
 	dependencies?: Set<string>;
 }
 
@@ -26,7 +26,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, string>;
+	bindings: Map<string, () => string>;
 
 	builders: {
 		init: CodeBuilder;
@@ -109,30 +109,37 @@ export default class Block {
 		const seen = new Set();
 		const dupes = new Set();
 
-		this.wrappers.forEach(wrapper => {
-			if (!wrapper.var) return;
-			if (wrapper.parent && wrapper.parent.canUseInnerHTML) return;
+		let i = this.wrappers.length;
+
+		while (i--) {
+			const wrapper = this.wrappers[i];
+
+			if (!wrapper.var) continue;
+			if (wrapper.parent && wrapper.parent.canUseInnerHTML) continue;
 
 			if (seen.has(wrapper.var)) {
 				dupes.add(wrapper.var);
 			}
 
 			seen.add(wrapper.var);
-		});
+		}
 
 		const counts = new Map();
+		i = this.wrappers.length;
 
-		this.wrappers.forEach(wrapper => {
+		while (i--) {
+			const wrapper = this.wrappers[i];
+
 			if (!wrapper.var) return;
 
 			if (dupes.has(wrapper.var)) {
 				const i = counts.get(wrapper.var) || 0;
-				wrapper.var = this.getUniqueName(wrapper.var + i);
 				counts.set(wrapper.var, i + 1);
+				wrapper.var = this.getUniqueName(wrapper.var + i);
 			} else {
 				wrapper.var = this.getUniqueName(wrapper.var);
 			}
-		});
+		}
 	}
 
 	addDependencies(dependencies: Set<string>) {

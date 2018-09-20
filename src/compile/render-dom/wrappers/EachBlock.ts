@@ -49,9 +49,12 @@ export default class EachBlockWrapper extends Wrapper {
 		// TODO this seems messy
 		this.block.hasAnimation = this.node.hasAnimation;
 
-		// node.contexts.forEach(prop => {
-		// 	this.block.bindings.set(prop.key.name, `ctx.${this.vars.each_block_value}[ctx.${indexName}]${prop.tail}`);
-		// });
+		this.indexName = this.node.index || renderer.component.getUniqueName(`${this.node.context}_index`);
+
+		node.contexts.forEach(prop => {
+			// TODO this doesn't feel great
+			this.block.bindings.set(prop.key.name, () => `ctx.${this.vars.each_block_value}[ctx.${this.indexName}]${prop.tail}`);
+		});
 
 		if (this.node.index) {
 			this.block.getUniqueName(this.node.index); // this prevents name collisions (#1254)
@@ -59,7 +62,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		renderer.blocks.push(this.block);
 
-		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
+		this.fragment = new FragmentWrapper(renderer, this.block, node.children, this, stripWhitespace, nextSibling);
 		block.addDependencies(this.block.dependencies);
 		this.block.hasUpdateMethod = this.block.dependencies.size > 0; // TODO should this logic be in Block?
 
@@ -116,12 +119,10 @@ export default class EachBlockWrapper extends Wrapper {
 
 		this.contextProps = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
 
-		const indexName = this.node.index || renderer.component.getUniqueName(`${this.node.context}_index`);
-
 		// TODO only add these if necessary
 		this.contextProps.push(
 			`child_ctx.${this.vars.each_block_value} = list;`,
-			`child_ctx.${indexName} = i;`
+			`child_ctx.${this.indexName} = i;`
 		);
 
 		const { snippet } = this.node.expression;

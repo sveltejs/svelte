@@ -1,10 +1,6 @@
 import Binding from '../../../../nodes/Binding';
 import Element from '../../../../nodes/Element';
 import ElementWrapper from '..';
-import Block from '../../../Block';
-import Renderer from '../../../Renderer';
-import flattenReference from '../../../../../utils/flattenReference';
-import { Node } from '../../../../../interfaces';
 import BindingWrapper from './Binding';
 
 export default class SelectBinding extends BindingWrapper {
@@ -46,11 +42,5 @@ export default class SelectBinding extends BindingWrapper {
 		return this.element.getStaticAttributeValue('multiple') === true ?
 			`@selectOptions(${this.element.var}, ${this.binding.value.snippet});` :
 			`@selectOption(${this.element.var}, ${this.binding.value.snippet});`;
-	}
-
-	render(block: Block) {
-
-
-		super.render(block);
 	}
 }

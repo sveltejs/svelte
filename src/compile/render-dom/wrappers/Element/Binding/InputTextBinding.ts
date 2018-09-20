@@ -1,10 +1,11 @@
 import Binding from '../../../../nodes/Binding';
 import Element from '../../../../nodes/Element';
 import ElementWrapper from '..';
-import Block from '../../../Block';
 import BindingWrapper from './Binding';
 
 export default class InputTextBinding extends BindingWrapper {
+	events = ['input'];
+
 	static filter(
 		node: Element,
 		binding_lookup: Record<string, Binding>,
@@ -23,10 +24,15 @@ export default class InputTextBinding extends BindingWrapper {
 		element: ElementWrapper,
 		binding_lookup: Record<string, Binding>
 	) {
-		super(element);
+		super(element, binding_lookup.value);
+		this.needsLock = true;
 	}
 
-	render(block: Block) {
+	fromDom() {
+		return `${this.element.var}.value`;
+	}
 
+	toDom() {
+		return `${this.element.var}.value = ${this.binding.value.snippet};`;
 	}
 }

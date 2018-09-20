@@ -6,6 +6,8 @@ import Wrapper from './shared/wrapper';
 import deindent from '../../../utils/deindent';
 
 export default class RawMustacheTagWrapper extends Tag {
+	var = 'raw';
+
 	constructor(
 		renderer: Renderer,
 		block: Block,

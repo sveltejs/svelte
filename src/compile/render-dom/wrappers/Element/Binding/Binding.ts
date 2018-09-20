@@ -214,13 +214,15 @@ export default class BindingWrapper {
 			updateConditions.length ? `if (${updateConditions.join(' && ')}) ${this.updateDom}` : this.updateDom
 		);
 
-		block.builders.hydrate.addLine(
-			`@addListener(${this.element.var}, "${name}", ${handler_name});`
-		);
+		this.events.forEach(name => {
+			block.builders.hydrate.addLine(
+				`@addListener(${this.element.var}, "${name}", ${handler_name});`
+			);
 
-		block.builders.destroy.addLine(
-			`@removeListener(${this.element.var}, "${name}", ${handler_name});`
-		);
+			block.builders.destroy.addLine(
+				`@removeListener(${this.element.var}, "${name}", ${handler_name});`
+			);
+		});
 	}
 }
 
@@ -247,7 +249,7 @@ function getEventHandler(
 			usesContext: true,
 			usesState: true,
 			usesStore: storeDependencies.length > 0,
-			mutation: `${head}${tail} = ${value};`,
+			mutation: `${head()}${tail} = ${value};`,
 			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`),
 			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
 		};

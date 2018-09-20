@@ -2,13 +2,16 @@ import Wrapper from './Wrapper';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
+import MustacheTag from '../../../nodes/MustacheTag';
+import RawMustacheTag from '../../../nodes/RawMustacheTag';
 
 export default class Tag extends Wrapper {
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Node) {
+	node: MustacheTag | RawMustacheTag;
+
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: MustacheTag | RawMustacheTag) {
 		super(renderer, block, parent, node);
 		this.cannotUseInnerHTML();
 
-		this.var = this.type === 'MustacheTag' ? 'text' : 'raw';
 		block.addDependencies(node.expression.dependencies);
 	}
 

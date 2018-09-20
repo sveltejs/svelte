@@ -204,7 +204,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					const lhs = binding.value.node.type === 'MemberExpression'
 						? binding.value.snippet
-						: `${head}${tail} = childState${quotePropIfNecessary(binding.name)}`;
+						: `${head()}${tail} = childState${quotePropIfNecessary(binding.name)}`;
 
 					setFromChild = deindent`
 						${lhs} = childState${quotePropIfNecessary(binding.name)};

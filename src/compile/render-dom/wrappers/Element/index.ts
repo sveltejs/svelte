@@ -3,7 +3,6 @@ import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
-import { CompileOptions } from '../../../../interfaces';
 import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../../utils/quoteIfNecessary';
 import isVoidElementName from '../../../../utils/isVoidElementName';
 import FragmentWrapper from '../Fragment';
@@ -15,6 +14,7 @@ import namespaces from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
+import InputCheckboxBinding from './Binding/InputCheckboxBinding';
 import InputTextBinding from './Binding/InputTextBinding';
 import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
 import SelectBinding from './Binding/SelectBinding';
@@ -22,6 +22,7 @@ import SelectBinding from './Binding/SelectBinding';
 const bindings = [
 	InputTextBinding,
 	InputRadioGroupBinding,
+	InputCheckboxBinding,
 	SelectBinding
 ];
 
@@ -124,9 +125,11 @@ export default class ElementWrapper extends Wrapper {
 			return new AttributeWrapper(attribute, this);
 		});
 
+		let has_bindings;
 		const binding_lookup = {};
 		this.node.bindings.forEach(binding => {
 			binding_lookup[binding.name] = binding;
+			has_bindings = true;
 		});
 
 		const type = this.node.getStaticAttributeValue('type');
@@ -139,6 +142,11 @@ export default class ElementWrapper extends Wrapper {
 				return Binding.filter(this.node, binding_lookup, type);
 			})
 			.map(Binding => new Binding(this, binding_lookup));
+
+		// TODO remove this, it's just useful during refactoring
+		if (has_bindings && !this.bindings.length) {
+			throw new Error(`no binding was created`);
+		}
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 	}
