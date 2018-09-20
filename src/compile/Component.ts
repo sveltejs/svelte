@@ -138,7 +138,6 @@ export default class Component {
 
 	code: MagicString;
 
-	bindingGroups: string[];
 	indirectDependencies: Map<string, Set<string>>;
 	expectedProperties: Set<string>;
 	refs: Set<string>;
@@ -197,7 +196,6 @@ export default class Component {
 		this.refs = new Set();
 		this.refCallees = [];
 
-		this.bindingGroups = [];
 		this.indirectDependencies = new Map();
 
 		this.file = options.filename && (

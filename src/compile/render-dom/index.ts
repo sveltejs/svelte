@@ -166,8 +166,8 @@ export default function dom(
 
 				return `if (${conditions.join(' && ')}) console.warn("${message}");`
 			})}
-		${component.bindingGroups.length &&
-			`this._bindingGroups = [${Array(component.bindingGroups.length).fill('[]').join(', ')}];`}
+		${renderer.bindingGroups.length &&
+			`this._bindingGroups = [${Array(renderer.bindingGroups.length).fill('[]').join(', ')}];`}
 		this._intro = ${component.options.skipIntroByDefault ? '!!options.intro' : 'true'};
 
 		${templateProperties.onstate && `this._handlers.state = [%onstate];`}

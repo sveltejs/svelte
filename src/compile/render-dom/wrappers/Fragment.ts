@@ -1,6 +1,7 @@
 import Wrapper from './shared/wrapper';
 import EachBlock from './EachBlock';
 import Element from './Element';
+import IfBlock from './IfBlock';
 import InlineComponent from './InlineComponent';
 import MustacheTag from './MustacheTag';
 import Text from './Text';
@@ -15,6 +16,7 @@ const wrappers = {
 	Comment: null,
 	EachBlock,
 	Element,
+	IfBlock,
 	InlineComponent,
 	MustacheTag,
 	Text,

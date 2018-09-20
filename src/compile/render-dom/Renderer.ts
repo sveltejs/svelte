@@ -11,6 +11,7 @@ export default class Renderer {
 	readonly: Set<string>;
 	slots: Set<string>;
 	metaBindings: string[];
+	bindingGroups: string[];
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -34,6 +35,8 @@ export default class Renderer {
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
 		this.metaBindings = [];
+
+		this.bindingGroups = [];
 
 		// main block
 		this.block = new Block({

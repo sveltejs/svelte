@@ -1,34 +1,149 @@
-import deindent from '../../utils/deindent';
-import Node from './shared/Node';
-import ElseBlock from './ElseBlock';
-import Component from '../Component';
-import Block from '../render-dom/Block';
-import createDebuggingComment from '../../utils/createDebuggingComment';
-import Expression from './shared/Expression';
-import mapChildren from './shared/mapChildren';
+import Wrapper from './shared/wrapper';
+import Renderer from '../Renderer';
+import Block from '../Block';
+import EachBlock from '../../nodes/EachBlock';
+import IfBlock from '../../nodes/IfBlock';
+import createDebuggingComment from '../../../utils/createDebuggingComment';
+import ElseBlock from '../../nodes/ElseBlock';
+import FragmentWrapper from './Fragment';
+import deindent from '../../../utils/deindent';
 
-export default class IfBlock extends Node {
-	type: 'IfBlock';
-	expression: Expression;
-	children: any[];
-	else: ElseBlock;
+function isElseIf(node: ElseBlock) {
+	return (
+		node && node.children.length === 1 && node.children[0].type === 'IfBlock'
+	);
+}
 
+function isElseBranch(branch) {
+	return branch.block && !branch.condition;
+}
+
+class IfBlockBranch extends Wrapper {
 	block: Block;
+	fragment: FragmentWrapper;
+	condition: string;
+	isDynamic: boolean;
 
-	constructor(component, parent, scope, info) {
-		super(component, parent, scope, info);
+	var = null;
 
-		this.expression = new Expression(component, this, scope, info.expression);
-		this.children = mapChildren(component, this, scope, info.children);
+	constructor(
+		renderer: Renderer,
+		block: Block,
+		parent: IfBlockWrapper,
+		node: IfBlock | ElseBlock,
+		stripWhitespace: boolean,
+		nextSibling: Wrapper
+	) {
+		super(renderer, block, parent, node);
 
-		this.else = info.else
-			? new ElseBlock(component, this, scope, info.else)
-			: null;
+		this.condition = (<IfBlock>node).expression && (<IfBlock>node).expression.snippet;
 
-		this.warnIfEmptyBlock();
+		this.block = block.child({
+			comment: createDebuggingComment(node, parent.renderer.component),
+			name: parent.renderer.component.getUniqueName(
+				(<IfBlock>node).expression ? `create_if_block` : `create_else_block`
+			)
+		});
+
+		this.fragment = new FragmentWrapper(renderer, block, node.children, parent.parent, stripWhitespace, nextSibling);
+
+		this.isDynamic = this.block.dependencies.size > 0;
+	}
+}
+
+export default class IfBlockWrapper extends Wrapper {
+	node: IfBlock;
+	branches: IfBlockBranch[];
+
+	var = 'if_block';
+
+	constructor(
+		renderer: Renderer,
+		block: Block,
+		parent: Wrapper,
+		node: EachBlock,
+		stripWhitespace: boolean,
+		nextSibling: Wrapper
+	) {
+		super(renderer, block, parent, node);
+
+		const { component } = renderer;
+
+		this.cannotUseInnerHTML();
+
+		this.branches = [];
+
+		const blocks: Block[] = [];
+		let dynamic = false;
+		let hasIntros = false;
+		let hasOutros = false;
+
+		const createBranches = (node: IfBlock) => {
+			const branch = new IfBlockBranch(
+				renderer,
+				block,
+				this,
+				node,
+				stripWhitespace,
+				nextSibling
+			);
+
+			this.branches.push(branch);
+
+			blocks.push(branch.block);
+			block.addDependencies(node.expression.dependencies);
+
+			if (branch.isDynamic) {
+				dynamic = true;
+				block.addDependencies(branch.block.dependencies);
+			}
+
+			if (branch.block.hasIntros) hasIntros = true;
+			if (branch.block.hasOutros) hasOutros = true;
+
+			if (isElseIf(node.else)) {
+				createBranches(node.else.children[0]);
+			} else if (node.else) {
+				const branch = new IfBlockBranch(
+					renderer,
+					block,
+					this,
+					node.else,
+					stripWhitespace,
+					nextSibling
+				);
+
+				this.branches.push(branch);
+
+				blocks.push(branch.block);
+
+				if (branch.block.dependencies.size > 0) {
+					dynamic = true;
+					block.addDependencies(branch.block.dependencies);
+				}
+
+				if (branch.block.hasIntros) hasIntros = true;
+				if (branch.block.hasOutros) hasOutros = true;
+			}
+		};
+
+		createBranches(this.node);
+
+		if (component.options.nestedTransitions) {
+			if (hasIntros) block.addIntro();
+			if (hasOutros) block.addOutro();
+		}
+
+		blocks.forEach(block => {
+			block.hasUpdateMethod = dynamic;
+			block.hasIntroMethod = hasIntros;
+			block.hasOutroMethod = hasOutros;
+		});
+
+		renderer.blocks.push(...blocks);
 	}
 
-	build(
+	render(
 		block: Block,
 		parentNode: string,
 		parentNodes: string
@@ -40,33 +155,31 @@ export default class IfBlock extends Node {
 			? block.getUniqueName(`${name}_anchor`)
 			: (this.next && this.next.var) || 'null';
 
-		const branches = this.getBranches(block, parentNode, parentNodes, this);
-
-		const hasElse = isElseBranch(branches[branches.length - 1]);
+		const hasElse = !(this.branches[this.branches.length - 1].condition);
 		const if_name = hasElse ? '' : `if (${name}) `;
 
-		const dynamic = branches[0].hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
-		const hasOutros = branches[0].hasOutroMethod;
+		const dynamic = this.branches[0].block.hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
+		const hasOutros = this.branches[0].block.hasOutroMethod;
 
 		const vars = { name, anchor, if_name, hasElse };
 
-		if (this.else) {
+		if (this.node.else) {
 			if (hasOutros) {
-				this.buildCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
+				this.renderCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
 
-				if (this.component.options.nestedTransitions) {
+				if (this.renderer.options.nestedTransitions) {
 					block.builders.outro.addBlock(deindent`
 						if (${name}) ${name}.o(#outrocallback);
 						else #outrocallback();
 					`);
 				}
 			} else {
-				this.buildCompound(block, parentNode, parentNodes, branches, dynamic, vars);
+				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
 			}
 		} else {
-			this.buildSimple(block, parentNode, parentNodes, branches[0], dynamic, vars);
+			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
 
-			if (hasOutros && this.component.options.nestedTransitions) {
+			if (hasOutros && this.renderer.options.nestedTransitions) {
 				block.builders.outro.addBlock(deindent`
 					if (${name}) ${name}.o(#outrocallback);
 					else #outrocallback();
@@ -90,13 +203,16 @@ export default class IfBlock extends Node {
 				parentNode
 			);
 		}
+
+		this.branches.forEach(branch => {
+			branch.fragment.render(branch.block, parentNode, parentNodes);
+		});
 	}
 
-	buildCompound(
+	renderCompound(
 		block: Block,
 		parentNode: string,
 		parentNodes: string,
-		branches,
 		dynamic,
 		{ name, anchor, hasElse, if_name }
 	) {
@@ -106,8 +222,8 @@ export default class IfBlock extends Node {
 
 		block.builders.init.addBlock(deindent`
 			function ${select_block_type}(ctx) {
-				${branches
-					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block};`)
+				${this.branches
+					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block.name};`)
 					.join('\n')}
 			}
 		`);
@@ -117,7 +233,7 @@ export default class IfBlock extends Node {
 			var ${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
 		`);
 
-		const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
+		const mountOrIntro = this.branches[0].block.hasIntroMethod ? 'i' : 'm';
 
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
@@ -155,15 +271,14 @@ export default class IfBlock extends Node {
 
 	// if any of the siblings have outros, we need to keep references to the blocks
 	// (TODO does this only apply to bidi transitions?)
-	buildCompoundWithOutros(
+	renderCompoundWithOutros(
 		block: Block,
 		parentNode: string,
 		parentNodes: string,
-		branches,
 		dynamic,
 		{ name, anchor, hasElse }
 	) {
-		const select_block_type = this.component.getUniqueName(`select_block_type`);
+		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
 		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
 		const previous_block_index = block.getUniqueName(`previous_block_index`);
 		const if_block_creators = block.getUniqueName(`if_block_creators`);
@@ -178,13 +293,13 @@ export default class IfBlock extends Node {
 
 		block.builders.init.addBlock(deindent`
 			var ${if_block_creators} = [
-				${branches.map(branch => branch.block).join(',\n')}
+				${this.branches.map(branch => branch.block.name).join(',\n')}
 			];
 
 			var ${if_blocks} = [];
 
 			function ${select_block_type}(ctx) {
-				${branches
+				${this.branches
 					.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
 					.join('\n')}
 			}
@@ -203,7 +318,7 @@ export default class IfBlock extends Node {
 			`);
 		}
 
-		const mountOrIntro = branches[0].hasIntroMethod ? 'i' : 'm';
+		const mountOrIntro = this.branches[0].block.hasIntroMethod ? 'i' : 'm';
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
@@ -273,19 +388,20 @@ export default class IfBlock extends Node {
 		`);
 	}
 
-	buildSimple(
+	renderSimple(
 		block: Block,
 		parentNode: string,
 		parentNodes: string,
-		branch,
 		dynamic,
 		{ name, anchor, if_name }
 	) {
+		const branch = this.branches[0];
+
 		block.builders.init.addBlock(deindent`
-			var ${name} = (${branch.condition}) && ${branch.block}(#component, ctx);
+			var ${name} = (${branch.condition}) && ${branch.block.name}(#component, ctx);
 		`);
 
-		const mountOrIntro = branch.hasIntroMethod ? 'i' : 'm';
+		const mountOrIntro = branch.block.hasIntroMethod ? 'i' : 'm';
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
@@ -296,12 +412,12 @@ export default class IfBlock extends Node {
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const enter = dynamic
-			? (branch.hasIntroMethod || branch.hasOutroMethod)
+			? (branch.block.hasIntroMethod || branch.block.hasOutroMethod)
 				? deindent`
 					if (${name}) {
 						${name}.p(changed, ctx);
 					} else {
-						${name} = ${branch.block}(#component, ctx);
+						${name} = ${branch.block.name}(#component, ctx);
 						if (${name}) ${name}.c();
 					}
 
@@ -311,22 +427,22 @@ export default class IfBlock extends Node {
 					if (${name}) {
 						${name}.p(changed, ctx);
 					} else {
-						${name} = ${branch.block}(#component, ctx);
+						${name} = ${branch.block.name}(#component, ctx);
 						${name}.c();
 						${name}.m(${updateMountNode}, ${anchor});
 					}
 				`
-			: (branch.hasIntroMethod || branch.hasOutroMethod)
+			: (branch.block.hasIntroMethod || branch.block.hasOutroMethod)
 				? deindent`
 					if (!${name}) {
-						${name} = ${branch.block}(#component, ctx);
+						${name} = ${branch.block.name}(#component, ctx);
 						${name}.c();
 					}
 					${name}.i(${updateMountNode}, ${anchor});
 				`
 				: deindent`
 					if (!${name}) {
-						${name} = ${branch.block}(#component, ctx);
+						${name} = ${branch.block.name}(#component, ctx);
 						${name}.c();
 						${name}.m(${updateMountNode}, ${anchor});
 					}
@@ -334,7 +450,7 @@ export default class IfBlock extends Node {
 
 		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
-		const exit = branch.hasOutroMethod
+		const exit = branch.block.hasOutroMethod
 			? deindent`
 				@groupOutros();
 				${name}.o(function() {
@@ -356,50 +472,5 @@ export default class IfBlock extends Node {
 		`);
 
 		block.builders.destroy.addLine(`${if_name}${name}.d(${parentNode ? '' : 'detach'});`);
-	}
-
-	getBranches(
-		block: Block,
-		parentNode: string,
-		parentNodes: string,
-		node: IfBlock
-	) {
-		const branches = [
-			{
-				condition: node.expression.snippet,
-				block: node.block.name,
-				hasUpdateMethod: node.block.hasUpdateMethod,
-				hasIntroMethod: node.block.hasIntroMethod,
-				hasOutroMethod: node.block.hasOutroMethod,
-			},
-		];
-
-		this.visitChildren(block, node);
-
-		if (isElseIf(node.else)) {
-			branches.push(
-				...this.getBranches(block, parentNode, parentNodes, node.else.children[0])
-			);
-		} else {
-			branches.push({
-				condition: null,
-				block: node.else ? node.else.block.name : null,
-				hasUpdateMethod: node.else ? node.else.block.hasUpdateMethod : false,
-				hasIntroMethod: node.else ? node.else.block.hasIntroMethod : false,
-				hasOutroMethod: node.else ? node.else.block.hasOutroMethod : false,
-			});
-
-			if (node.else) {
-				this.visitChildren(block, node.else);
-			}
-		}
-
-		return branches;
-	}
-
-	visitChildren(block: Block, node: Node) {
-		node.children.forEach((child: Node) => {
-			child.build(node.block, null, 'nodes');
-		});
 	}
 }

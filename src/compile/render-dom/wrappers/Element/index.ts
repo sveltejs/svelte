@@ -15,7 +15,13 @@ import namespaces from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
-import BindingWrapper from './Binding';
+import InputTextBinding from './Binding/InputTextBinding';
+import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
+
+const bindings = [
+	InputTextBinding,
+	InputRadioGroupBinding
+];
 
 const events = [
 	{
@@ -85,7 +91,10 @@ export default class ElementWrapper extends Wrapper {
 	node: Element;
 	fragment: FragmentWrapper;
 	attributes: AttributeWrapper[];
-	bindings: BindingWrapper[];
+	bindings: Array<
+		InputTextBinding |
+		InputRadioGroupBinding
+	>;
 	classDependencies: string[];
 	initialUpdate: string;
 
@@ -111,9 +120,21 @@ export default class ElementWrapper extends Wrapper {
 			return new AttributeWrapper(attribute, this);
 		});
 
-		this.bindings = this.node.bindings.map(binding => {
-			return new BindingWrapper(binding, this);
+		const binding_lookup = {};
+		this.node.bindings.forEach(binding => {
+			binding_lookup[binding.name] = binding;
 		});
+
+		const type = this.node.getStaticAttributeValue('type');
+
+		// ordinarily, there'll only be one... but we need to handle
+		// the rare case where an element can have multiple bindings,
+		// e.g. <audio bind:paused bind:currentTime>
+		this.bindings = bindings
+			.filter(Binding => {
+				return Binding.filter(this.node, binding_lookup, type);
+			})
+			.map(Binding => new Binding(this, binding_lookup));
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 	}
@@ -203,7 +224,7 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		const eventHandlerOrBindingUsesContext = (
-			this.bindings.some(binding => binding.node.usesContext) ||
+			this.bindings.some(binding => binding.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext)
 		);
 
@@ -318,126 +339,144 @@ export default class ElementWrapper extends Wrapper {
 			this.renderer.hasComplexBindings = true;
 		}
 
-		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
-
-		const lock = this.bindings.some(binding => binding.needsLock) ?
-			block.getUniqueName(`${this.var}_updating`) :
-			null;
-
-		if (lock) block.addVariable(lock, 'false');
-
-		const groups = events
-			.map(event => {
-				return {
-					events: event.eventNames,
-					bindings: this.bindings.filter(binding => event.filter(this, binding.name))
-				};
-			})
-			.filter(group => group.bindings.length);
-
-		groups.forEach(group => {
-			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
-
-			const needsLock = group.bindings.some(binding => binding.needsLock);
-
-			group.bindings.forEach(binding => {
-				if (!binding.updateDom) return;
-
-				const updateConditions = needsLock ? [`!${lock}`] : [];
-				if (binding.updateCondition) updateConditions.push(binding.updateCondition);
-
-				block.builders.update.addLine(
-					updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
-				);
-			});
-
-			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
-			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
-
-			const props = new Set();
-			const storeProps = new Set();
-			group.bindings.forEach(binding => {
-				binding.handler.props.forEach(prop => {
-					props.add(prop);
-				});
-
-				binding.handler.storeProps.forEach(prop => {
-					storeProps.add(prop);
-				});
-			}); // TODO use stringifyProps here, once indenting is fixed
-
-			// media bindings — awkward special case. The native timeupdate events
-			// fire too infrequently, so we need to take matters into our
-			// own hands
-			let animation_frame;
-			if (group.events[0] === 'timeupdate') {
-				animation_frame = block.getUniqueName(`${this.var}_animationframe`);
-				block.addVariable(animation_frame);
-			}
-
-			block.builders.init.addBlock(deindent`
-				function ${handler}() {
-					${
-						animation_frame && deindent`
-							cancelAnimationFrame(${animation_frame});
-							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-					}
-					${usesStore && `var $ = #component.store.get();`}
-					${needsLock && `${lock} = true;`}
-					${mutations.length > 0 && mutations}
-					${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
-					${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
-					${needsLock && `${lock} = false;`}
-				}
-			`);
-
-			group.events.forEach(name => {
-				if (name === 'resize') {
-					// special case
-					const resize_listener = block.getUniqueName(`${this.var}_resize_listener`);
-					block.addVariable(resize_listener);
-
-					block.builders.mount.addLine(
-						`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
-					);
-
-					block.builders.destroy.addLine(
-						`${resize_listener}.cancel();`
-					);
-				} else {
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${name}", ${handler});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${name}", ${handler});`
-					);
-				}
-			});
-
-			const allInitialStateIsDefined = group.bindings
-				.map(binding => `'${binding.object}' in ctx`)
-				.join(' && ');
-
-			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				this.component.target.hasComplexBindings = true;
-
-				block.builders.hydrate.addLine(
-					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
-				);
-			}
-
-			if (group.events[0] === 'resize') {
-				this.component.target.hasComplexBindings = true;
-
-				block.builders.hydrate.addLine(
-					`#component.root._beforecreate.push(${handler});`
-				);
-			}
+		this.bindings.forEach(binding => {
+			binding.render(block);
 		});
 
 		this.initialUpdate = this.bindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 	}
+
+	// addBindings(block: Block) {
+	// 	if (this.bindings.length === 0) return;
+
+	// 	if (this.node.name === 'select' || this.isMediaNode()) {
+	// 		this.renderer.hasComplexBindings = true;
+	// 	}
+
+	// 	const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
+
+	// 	const lock = this.bindings.some(binding => binding.needsLock) ?
+	// 		block.getUniqueName(`${this.var}_updating`) :
+	// 		null;
+
+	// 	if (lock) block.addVariable(lock, 'false');
+
+	// 	const groups = events
+	// 		.map(event => {
+	// 			return {
+	// 				events: event.eventNames,
+	// 				bindings: this.bindings.filter(binding => event.filter(this, binding.name))
+	// 			};
+	// 		})
+	// 		.filter(group => group.bindings.length);
+
+	// 	if (groups.length > 1) {
+	// 		throw new Error('huh');
+	// 	}
+
+	// 	groups.forEach(group => {
+	// 		const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
+
+	// 		const needsLock = group.bindings.some(binding => binding.needsLock);
+
+	// 		group.bindings.forEach(binding => {
+	// 			if (!binding.updateDom) return;
+
+	// 			const updateConditions = needsLock ? [`!${lock}`] : [];
+	// 			if (binding.updateCondition) updateConditions.push(binding.updateCondition);
+
+	// 			block.builders.update.addLine(
+	// 				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
+	// 			);
+	// 		});
+
+	// 		const usesStore = group.bindings.some(binding => binding.handler.usesStore);
+	// 		const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
+
+	// 		const props = new Set();
+	// 		const storeProps = new Set();
+	// 		group.bindings.forEach(binding => {
+	// 			binding.handler.props.forEach(prop => {
+	// 				props.add(prop);
+	// 			});
+
+	// 			binding.handler.storeProps.forEach(prop => {
+	// 				storeProps.add(prop);
+	// 			});
+	// 		}); // TODO use stringifyProps here, once indenting is fixed
+
+	// 		// media bindings — awkward special case. The native timeupdate events
+	// 		// fire too infrequently, so we need to take matters into our
+	// 		// own hands
+	// 		let animation_frame;
+	// 		if (group.events[0] === 'timeupdate') {
+	// 			animation_frame = block.getUniqueName(`${this.var}_animationframe`);
+	// 			block.addVariable(animation_frame);
+	// 		}
+
+	// 		block.builders.init.addBlock(deindent`
+	// 			function ${handler}() {
+	// 				${
+	// 					animation_frame && deindent`
+	// 						cancelAnimationFrame(${animation_frame});
+	// 						if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+	// 				}
+	// 				${usesStore && `var $ = #component.store.get();`}
+	// 				${needsLock && `${lock} = true;`}
+	// 				${mutations.length > 0 && mutations}
+	// 				${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
+	// 				${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
+	// 				${needsLock && `${lock} = false;`}
+	// 			}
+	// 		`);
+
+	// 		group.events.forEach(name => {
+	// 			if (name === 'resize') {
+	// 				// special case
+	// 				const resize_listener = block.getUniqueName(`${this.var}_resize_listener`);
+	// 				block.addVariable(resize_listener);
+
+	// 				block.builders.mount.addLine(
+	// 					`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
+	// 				);
+
+	// 				block.builders.destroy.addLine(
+	// 					`${resize_listener}.cancel();`
+	// 				);
+	// 			} else {
+	// 				block.builders.hydrate.addLine(
+	// 					`@addListener(${this.var}, "${name}", ${handler});`
+	// 				);
+
+	// 				block.builders.destroy.addLine(
+	// 					`@removeListener(${this.var}, "${name}", ${handler});`
+	// 				);
+	// 			}
+	// 		});
+
+	// 		const allInitialStateIsDefined = group.bindings
+	// 			.map(binding => `'${binding.object}' in ctx`)
+	// 			.join(' && ');
+
+	// 		if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
+	// 			this.component.target.hasComplexBindings = true;
+
+	// 			block.builders.hydrate.addLine(
+	// 				`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
+	// 			);
+	// 		}
+
+	// 		if (group.events[0] === 'resize') {
+	// 			this.component.target.hasComplexBindings = true;
+
+	// 			block.builders.hydrate.addLine(
+	// 				`#component.root._beforecreate.push(${handler});`
+	// 			);
+	// 		}
+	// 	});
+
+	// 	this.initialUpdate = this.bindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
+	// }
 
 	addAttributes(block: Block) {
 		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
@@ -574,7 +613,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addRef(block: Block) {
-		const ref = `#component.refs.${this.ref.name}`;
+		const ref = `#component.refs.${this.node.ref.name}`;
 
 		block.builders.mount.addLine(
 			`${ref} = ${this.var};`
