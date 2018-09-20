@@ -5,6 +5,7 @@ import Element from './Element';
 import IfBlock from './IfBlock';
 import InlineComponent from './InlineComponent';
 import MustacheTag from './MustacheTag';
+import Slot from './Slot';
 import Text from './Text';
 import Window from './Window';
 import Node from '../../nodes/shared/Node';
@@ -21,6 +22,7 @@ const wrappers = {
 	IfBlock,
 	InlineComponent,
 	MustacheTag,
+	Slot,
 	Text,
 	Window
 };

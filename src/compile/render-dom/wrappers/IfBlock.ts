@@ -216,7 +216,7 @@ export default class IfBlockWrapper extends Wrapper {
 		dynamic,
 		{ name, anchor, hasElse, if_name }
 	) {
-		const select_block_type = this.component.getUniqueName(`select_block_type`);
+		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
 		const current_block_type = block.getUniqueName(`current_block_type`);
 		const current_block_type_and = hasElse ? '' : `${current_block_type} && `;
 
