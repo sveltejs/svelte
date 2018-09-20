@@ -1,6 +1,5 @@
 import Renderer from '../../Renderer';
 import Node from '../../../nodes/shared/Node';
-import { CompileOptions } from '../../../../interfaces';
 import Block from '../../Block';
 
 export default class Wrapper {
@@ -20,9 +19,18 @@ export default class Wrapper {
 		parent: Wrapper,
 		node: Node
 	) {
-		this.renderer = renderer;
-		this.parent = parent;
 		this.node = node;
+
+		// make these non-enumerable so that they can be logged sensibly
+		// (TODO in dev only?)
+		Object.defineProperties(this, {
+			renderer: {
+				value: renderer
+			},
+			parent: {
+				value: parent
+			}
+		});
 
 		this.canUseInnerHTML = !renderer.options.hydratable;
 

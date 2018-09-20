@@ -17,10 +17,12 @@ import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import InputTextBinding from './Binding/InputTextBinding';
 import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
+import SelectBinding from './Binding/SelectBinding';
 
 const bindings = [
 	InputTextBinding,
-	InputRadioGroupBinding
+	InputRadioGroupBinding,
+	SelectBinding
 ];
 
 const events = [
@@ -97,6 +99,8 @@ export default class ElementWrapper extends Wrapper {
 	>;
 	classDependencies: string[];
 	initialUpdate: string;
+
+	selectBindingDependencies?: Set<string>;
 
 	var: string;
 
@@ -296,9 +300,9 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (renderer.options.dev) {
-			const loc = renderer.locate(this.start);
+			const loc = renderer.locate(this.node.start);
 			block.builders.hydrate.addLine(
-				`@addLoc(${this.var}, ${renderer.fileVar}, ${loc.line}, ${loc.column}, ${this.start});`
+				`@addLoc(${this.var}, ${renderer.fileVar}, ${loc.line}, ${loc.column}, ${this.node.start});`
 			);
 		}
 	}
@@ -597,7 +601,7 @@ export default class ElementWrapper extends Wrapper {
 				`;
 
 				if (handler.shouldHoist) {
-					component.target.blocks.push(handlerFunction);
+					renderer.blocks.push(handlerFunction);
 				} else {
 					block.builders.init.addBlock(handlerFunction);
 				}

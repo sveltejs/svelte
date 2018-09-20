@@ -26,6 +26,7 @@ export default class Renderer {
 	constructor(component: Component, options: CompileOptions) {
 		this.component = component;
 		this.options = options;
+		this.locate = component.locate; // TODO messy
 
 		this.readonly = new Set();
 		this.slots = new Set();
@@ -40,7 +41,7 @@ export default class Renderer {
 
 		// main block
 		this.block = new Block({
-			component,
+			renderer: this,
 			name: '@create_main_fragment',
 			key: null,
 

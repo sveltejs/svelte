@@ -378,7 +378,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						});`}
 						${name}._fragment.c();
 
-						${this.fragment.nodes.map(child => child.remount(name))}
+						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
 						${name}._mount(${updateMountNode}, ${anchor});
 
 						${this.node.handlers.map(handler => deindent`

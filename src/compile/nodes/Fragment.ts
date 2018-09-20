@@ -16,29 +16,4 @@ export default class Fragment extends Node {
 		this.scope = scope;
 		this.children = mapChildren(component, this, scope, info.children);
 	}
-
-	init() {
-		this.block = new Block({
-			component: this.component,
-			name: '@create_main_fragment',
-			key: null,
-
-			bindings: new Map(),
-
-			dependencies: new Set(),
-		});
-
-		this.component.target.blocks.push(this.block);
-		this.initChildren(this.block, true, null);
-
-		this.block.hasUpdateMethod = true;
-	}
-
-	build() {
-		this.init();
-
-		this.children.forEach(child => {
-			child.build(this.block, null, 'nodes');
-		});
-	}
 }

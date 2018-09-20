@@ -1,15 +1,6 @@
-import deindent from '../../utils/deindent';
-import isValidIdentifier from '../../utils/isValidIdentifier';
-import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
 import Element from './Element';
 import Attribute from './Attribute';
-import Block from '../render-dom/Block';
-import { quotePropIfNecessary } from '../../utils/quoteIfNecessary';
-
-function sanitize(name) {
-	return name.replace(/[^a-zA-Z]+/g, '_').replace(/^_/, '').replace(/_$/, '');
-}
 
 export default class Slot extends Element {
 	type: 'Element';

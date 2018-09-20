@@ -1,8 +1,10 @@
 import Attribute from '../../../nodes/Attribute';
 import Block from '../../Block';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
-import ElementWrapper from '.';
+import ElementWrapper from './index';
 import { stringify } from '../../../../utils/stringify';
+import Wrapper from '../shared/wrapper';
+import deindent from '../../../../utils/deindent';
 
 export default class AttributeWrapper {
 	node: Attribute;
@@ -14,6 +16,20 @@ export default class AttributeWrapper {
 
 		if (node.dependencies.size > 0) {
 			parent.cannotUseInnerHTML();
+
+			// special case — <option value={foo}> — see below
+			if (this.parent.node.name === 'option' && node.name === 'value') {
+				let select: ElementWrapper = this.parent;
+				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) select = select.parent;
+
+				if (select && select.selectBindingDependencies) {
+					select.selectBindingDependencies.forEach(prop => {
+						this.node.dependencies.forEach((dependency: string) => {
+							this.parent.renderer.component.indirectDependencies.get(prop).add(dependency);
+						});
+					});
+				}
+			}
 		}
 	}
 

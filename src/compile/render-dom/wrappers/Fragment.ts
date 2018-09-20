@@ -5,6 +5,7 @@ import Element from './Element';
 import IfBlock from './IfBlock';
 import InlineComponent from './InlineComponent';
 import MustacheTag from './MustacheTag';
+import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import Text from './Text';
 import Window from './Window';
@@ -22,6 +23,7 @@ const wrappers = {
 	IfBlock,
 	InlineComponent,
 	MustacheTag,
+	RawMustacheTag,
 	Slot,
 	Text,
 	Window
@@ -86,6 +88,8 @@ export default class FragmentWrapper {
 				}
 
 				const wrapper = new TextWrapper(renderer, block, parent, child);
+				if (wrapper.skip) continue;
+
 				this.nodes.unshift(wrapper);
 
 				link(lastChild, lastChild = wrapper);

@@ -22,8 +22,4 @@ export default class MustacheTagWrapper extends Tag {
 			parentNode
 		);
 	}
-
-	remount(name: string) {
-		return `@append(${name}._slotted.default, ${this.var});`;
-	}
 }
