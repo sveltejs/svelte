@@ -10,6 +10,9 @@ import BindingWrapper from './Binding';
 export default class InputRadioGroupBinding extends BindingWrapper {
 	element: ElementWrapper;
 	node: Binding;
+	bindingGroup: number;
+
+	events = ['change'];
 
 	static filter(
 		node: Element,
@@ -26,59 +29,41 @@ export default class InputRadioGroupBinding extends BindingWrapper {
 		binding_lookup: Record<string, Binding>
 	) {
 		super(element, binding_lookup.group);
-		this.events = ['change'];
+
+		// TODO handle cases involving computed member expressions
+		const { parts } = flattenReference(this.binding.value.node);
+		const keypath = parts.join('.');
+
+		// TODO handle contextual bindings — `keypath` should include unique ID of
+		// each block that provides context
+		let index = element.renderer.bindingGroups.indexOf(keypath);
+		if (index === -1) {
+			index = element.renderer.bindingGroups.length;
+			element.renderer.bindingGroups.push(keypath);
+		}
+
+		this.bindingGroup = index;
 	}
 
 	fromDom() {
-		const bindingGroup = getBindingGroup(this.element.renderer, this.binding.value.node);
-		if (this.element.node.getStaticAttributeValue('type') === 'checkbox') {
-			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
-		}
-
 		return `${this.element.var}.__value`;
 	}
 
 	toDom() {
-		const type = this.element.node.getStaticAttributeValue('type');
-
-		const condition = type === 'checkbox'
-			? `~${this.binding.value.snippet}.indexOf(${this.element.var}.__value)`
-			: `${this.element.var}.__value === ${this.binding.value.snippet}`;
+		const condition = `${this.element.var}.__value === ${this.binding.value.snippet}`;
 
 		return `${this.element.var}.checked = ${condition};`
 	}
 
 	render(block: Block) {
-		const bindingGroup = getBindingGroup(
-			this.element.renderer,
-			this.binding.value.node
-		);
-
 		block.builders.hydrate.addLine(
-			`#component._bindingGroups[${bindingGroup}].push(${this.element.var});`
+			`#component._bindingGroups[${this.bindingGroup}].push(${this.element.var});`
 		);
 
 		block.builders.destroy.addLine(
-			`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${this.element.var}), 1);`
+			`#component._bindingGroups[${this.bindingGroup}].splice(#component._bindingGroups[${this.bindingGroup}].indexOf(${this.element.var}), 1);`
 		);
 
 		super.render(block);
-
-		// this.renderHandler(block, 'TODO');
 	}
-}
-
-function getBindingGroup(renderer: Renderer, value: Node) {
-	const { parts } = flattenReference(value); // TODO handle cases involving computed member expressions
-	const keypath = parts.join('.');
-
-	// TODO handle contextual bindings — `keypath` should include unique ID of
-	// each block that provides context
-	let index = renderer.bindingGroups.indexOf(keypath);
-	if (index === -1) {
-		index = renderer.bindingGroups.length;
-		renderer.bindingGroups.push(keypath);
-	}
-
-	return index;
 }

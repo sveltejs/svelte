@@ -117,7 +117,10 @@ export default class FragmentWrapper {
 				first.data = trimStart(first.data);
 				if (!first.data) {
 					this.nodes.shift();
-					link(null, this.nodes[0]);
+
+					if (this.nodes.length) {
+						link(null, this.nodes[0]);
+					}
 				}
 			}
 		}

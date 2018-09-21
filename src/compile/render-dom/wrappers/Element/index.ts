@@ -15,6 +15,7 @@ import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import InputCheckboxBinding from './Binding/InputCheckboxBinding';
+import InputCheckboxGroupBinding from './Binding/InputCheckboxGroupBinding';
 import InputNumberBinding from './Binding/InputNumberBinding';
 import InputRangeBinding from './Binding/InputRangeBinding';
 import InputTextBinding from './Binding/InputTextBinding';
@@ -25,6 +26,7 @@ const bindings = [
 	InputTextBinding,
 	InputRadioGroupBinding,
 	InputCheckboxBinding,
+	InputCheckboxGroupBinding,
 	InputNumberBinding,
 	InputRangeBinding,
 	SelectBinding
@@ -118,7 +120,7 @@ export default class ElementWrapper extends Wrapper {
 		nextSibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.var = node.name;
+		this.var = node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
 
 		this.classDependencies = [];
 

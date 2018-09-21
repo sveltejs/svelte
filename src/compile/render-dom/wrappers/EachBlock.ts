@@ -6,11 +6,53 @@ import createDebuggingComment from '../../../utils/createDebuggingComment';
 import EachBlock from '../../nodes/EachBlock';
 import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
+import ElseBlock from '../../nodes/ElseBlock';
+
+class ElseBlockWrapper extends Wrapper {
+	node: ElseBlock;
+	block: Block;
+	fragment: FragmentWrapper;
+	isDynamic: boolean;
+
+	var = null;
+
+	constructor(
+		renderer: Renderer,
+		block: Block,
+		parent: Wrapper,
+		node: ElseBlock,
+		stripWhitespace: boolean,
+		nextSibling: Wrapper
+	) {
+		super(renderer, block, parent, node);
+
+		this.block = block.child({
+			comment: createDebuggingComment(node, this.renderer.component),
+			name: this.renderer.component.getUniqueName(`create_else_block`)
+		});
+
+		this.fragment = new FragmentWrapper(
+			renderer,
+			this.block,
+			this.node.children,
+			parent,
+			stripWhitespace,
+			nextSibling
+		);
+
+		this.isDynamic = this.block.dependencies.size > 0;
+		if (this.isDynamic) {
+			// TODO this can't be right
+			this.block.hasUpdateMethod = true;
+		}
+	}
+}
 
 export default class EachBlockWrapper extends Wrapper {
 	block: Block;
 	node: EachBlock;
 	fragment: FragmentWrapper;
+	else?: ElseBlockWrapper;
 	var: string;
 	vars: {
 		anchor: string;
@@ -63,23 +105,26 @@ export default class EachBlockWrapper extends Wrapper {
 		renderer.blocks.push(this.block);
 
 		this.fragment = new FragmentWrapper(renderer, this.block, node.children, this, stripWhitespace, nextSibling);
-		block.addDependencies(this.block.dependencies);
-		this.block.hasUpdateMethod = this.block.dependencies.size > 0; // TODO should this logic be in Block?
 
-		if (this.else) {
-			this.else.block = block.child({
-				comment: createDebuggingComment(this.else, this.renderer.component),
-				name: renderer.component.getUniqueName(`${this.block.name}_else`),
-			});
-
-			renderer.blocks.push(this.else.block);
-			this.else.initChildren(
-				this.else.block,
+		if (this.node.else) {
+			this.else = new ElseBlockWrapper(
+				renderer,
+				block,
+				this,
+				this.node.else,
 				stripWhitespace,
 				nextSibling
 			);
-			this.else.block.hasUpdateMethod = this.else.block.dependencies.size > 0;
+
+			renderer.blocks.push(this.else.block);
+
+			if (this.else.isDynamic) {
+				this.block.addDependencies(this.else.block.dependencies);
+			}
 		}
+
+		block.addDependencies(this.block.dependencies);
+		this.block.hasUpdateMethod = this.block.dependencies.size > 0; // TODO should this logic be in Block?
 
 		if (this.block.hasOutros || (this.else && this.else.block.hasOutros)) {
 			block.addOutro();
@@ -172,7 +217,7 @@ export default class EachBlockWrapper extends Wrapper {
 				}
 			`);
 
-			const initialMountNode = parentNode || `${anchor}.parentNode`;
+			const initialMountNode = parentNode || `${this.vars.anchor}.parentNode`;
 
 			if (this.else.block.hasUpdateMethod) {
 				block.builders.update.addBlock(deindent`
@@ -197,7 +242,7 @@ export default class EachBlockWrapper extends Wrapper {
 					} else if (!${each_block_else}) {
 						${each_block_else} = ${this.else.block.name}(#component, ctx);
 						${each_block_else}.c();
-						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${anchor});
+						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${this.vars.anchor});
 					}
 				`);
 			}
@@ -207,14 +252,10 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		this.fragment.nodes.forEach((child: Wrapper) => {
-			child.render(this.block, null, 'nodes');
-		});
+		this.fragment.render(this.block, null, 'nodes');
 
 		if (this.else) {
-			this.else.children.forEach((child: Node) => {
-				child.build(this.else.block, null, 'nodes');
-			});
+			this.else.fragment.render(this.else.block, null, 'nodes');
 		}
 	}
 
