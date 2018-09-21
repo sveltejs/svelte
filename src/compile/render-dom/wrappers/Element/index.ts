@@ -175,6 +175,10 @@ export default class ElementWrapper extends Wrapper {
 			this.cannotUseInnerHTML();
 		}
 
+		if (renderer.options.dev) {
+			this.cannotUseInnerHTML(); // need to use addLoc
+		}
+
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 	}
 

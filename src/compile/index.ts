@@ -7,7 +7,7 @@ import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
 
 function normalize_options(options: CompileOptions): CompileOptions {
-	let normalized = assign({ generate: 'dom' }, options);
+	let normalized = assign({ generate: 'dom', dev: false }, options);
 	const { onwarn, onerror } = normalized;
 
 	normalized.onwarn = onwarn
