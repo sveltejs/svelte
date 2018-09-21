@@ -221,6 +221,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${this.branches
 					.map(({ condition, block }) => `${condition ? `if (${condition}) ` : ''}return ${block.name};`)
 					.join('\n')}
+				${!hasElse && `return -1;`}
 			}
 		`);
 
@@ -298,6 +299,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${this.branches
 					.map(({ condition, block }, i) => `${condition ? `if (${condition}) ` : ''}return ${block ? i : -1};`)
 					.join('\n')}
+				${!hasElse && `return -1;`}
 			}
 		`);
 

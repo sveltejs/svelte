@@ -130,9 +130,9 @@ export default class ElementWrapper extends Wrapper {
 				owner._slots.add(attribute.getStaticValue());
 			}
 			if (attribute.name === 'style') {
-				return new StyleAttributeWrapper(attribute, this);
+				return new StyleAttributeWrapper(this, block, attribute);
 			}
-			return new AttributeWrapper(attribute, this);
+			return new AttributeWrapper(this, block, attribute);
 		});
 
 		let has_bindings;
@@ -166,6 +166,11 @@ export default class ElementWrapper extends Wrapper {
 
 		if (node.animation) {
 			block.addAnimation();
+			this.cannotUseInnerHTML();
+		}
+
+		if (node.ref) {
+			this.cannotUseInnerHTML();
 		}
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);

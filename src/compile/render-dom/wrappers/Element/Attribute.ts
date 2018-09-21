@@ -9,12 +9,14 @@ export default class AttributeWrapper {
 	node: Attribute;
 	parent: ElementWrapper;
 
-	constructor(node: Attribute, parent: ElementWrapper) {
+	constructor(parent: ElementWrapper, block: Block, node: Attribute) {
 		this.node = node;
 		this.parent = parent;
 
 		if (node.dependencies.size > 0) {
 			parent.cannotUseInnerHTML();
+
+			block.addDependencies(node.dependencies);
 
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
