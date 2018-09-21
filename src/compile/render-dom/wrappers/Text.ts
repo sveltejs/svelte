@@ -32,6 +32,7 @@ function shouldSkip(node: Text) {
 
 export default class TextWrapper extends Wrapper {
 	node: Text;
+	data: string;
 	skip: boolean;
 	var: string;
 
@@ -44,6 +45,7 @@ export default class TextWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.skip = shouldSkip(this.node);
+		this.data = node.data;
 		this.var = this.skip ? null : 'text';
 	}
 
@@ -52,8 +54,8 @@ export default class TextWrapper extends Wrapper {
 
 		block.addElement(
 			this.var,
-			`@createText(${stringify(this.node.data)})`,
-			parentNodes && `@claimText(${parentNodes}, ${stringify(this.node.data)})`,
+			`@createText(${stringify(this.data)})`,
+			parentNodes && `@claimText(${parentNodes}, ${stringify(this.data)})`,
 			parentNode
 		);
 	}

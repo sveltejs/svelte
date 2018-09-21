@@ -106,6 +106,18 @@ export default class FragmentWrapper {
 			}
 		}
 
+		if (stripWhitespace) {
+			const first = <TextWrapper>this.nodes[0];
+
+			if (first && first.node.type === 'Text') {
+				first.data = trimStart(first.data);
+				if (!first.data) {
+					this.nodes.shift();
+					link(null, this.nodes[0]);
+				}
+			}
+		}
+
 		if (windowWrapper) {
 			this.nodes.unshift(windowWrapper);
 			link(lastChild, windowWrapper);

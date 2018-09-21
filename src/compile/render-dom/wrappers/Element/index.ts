@@ -158,6 +158,16 @@ export default class ElementWrapper extends Wrapper {
 			throw new Error(`no binding was created`);
 		}
 
+		if (node.intro || node.outro) {
+			if (node.intro) block.addIntro();
+			if (node.outro) block.addOutro();
+			this.cannotUseInnerHTML();
+		}
+
+		if (node.animation) {
+			block.addAnimation();
+		}
+
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 	}
 
@@ -657,7 +667,7 @@ export default class ElementWrapper extends Wrapper {
 	addTransitions(
 		block: Block
 	) {
-		const { intro, outro } = this;
+		const { intro, outro } = this.node;
 
 		if (!intro && !outro) return;
 

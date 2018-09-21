@@ -161,7 +161,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		if (this.node.else) {
 			if (hasOutros) {
-				this.renderCompoundWithOutros(block, parentNode, parentNodes, branches, dynamic, vars);
+				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
 
 				if (this.renderer.options.nestedTransitions) {
 					block.builders.outro.addBlock(deindent`
