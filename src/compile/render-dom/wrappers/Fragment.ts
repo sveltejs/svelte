@@ -2,12 +2,14 @@ import Wrapper from './shared/Wrapper';
 import AwaitBlock from './AwaitBlock';
 import EachBlock from './EachBlock';
 import Element from './Element';
+import Head from './Head';
 import IfBlock from './IfBlock';
 import InlineComponent from './InlineComponent';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import Text from './Text';
+import Title from './Title';
 import Window from './Window';
 import Node from '../../nodes/shared/Node';
 import { trimStart, trimEnd } from '../../../utils/trim';
@@ -20,12 +22,14 @@ const wrappers = {
 	Comment: null,
 	EachBlock,
 	Element,
+	Head,
 	IfBlock,
 	InlineComponent,
 	MustacheTag,
 	RawMustacheTag,
 	Slot,
 	Text,
+	Title,
 	Window
 };
 
