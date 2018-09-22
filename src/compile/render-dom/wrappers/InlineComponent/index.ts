@@ -290,7 +290,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		this.node.handlers.forEach(handler => {
 			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
-			handler.render(component, block, false); // TODO hoist when possible
+			handler.render(component, block, this.var, false); // TODO hoist when possible
 			if (handler.usesContext) block.maintainContext = true; // TODO is there a better place to put this?
 		});
 

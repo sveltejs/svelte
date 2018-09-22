@@ -601,7 +601,7 @@ export default class ElementWrapper extends Wrapper {
 
 			if (handler.callee) {
 				// TODO move handler render method into a wrapper
-				handler.render(this.renderer.component, block, handler.shouldHoist);
+				handler.render(this.renderer.component, block, this.var, handler.shouldHoist);
 			}
 
 			const target = handler.shouldHoist ? 'this' : this.var;

@@ -47,7 +47,7 @@ export default class WindowWrapper extends Wrapper {
 
 			let usesState = handler.dependencies.size > 0;
 
-			handler.render(component, block, false); // TODO hoist?
+			handler.render(component, block, 'window', false); // TODO hoist?
 
 			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
 			const handlerBody = deindent`

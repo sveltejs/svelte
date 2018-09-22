@@ -63,7 +63,7 @@ export default class EventHandler extends Node {
 		this.shouldHoist = !this.isCustomEvent && parent.hasAncestor('EachBlock');
 	}
 
-	render(component, block, hoisted) { // TODO hoist more event handlers
+	render(component, block, context, hoisted) { // TODO hoist more event handlers
 		if (this.insertionPoint === null) return; // TODO handle shorthand events here?
 
 		if (!validCalleeObjects.has(this.callee.name)) {
@@ -87,12 +87,12 @@ export default class EventHandler extends Node {
 
 		if (this.isCustomEvent) {
 			this.args.forEach(arg => {
-				arg.overwriteThis(this.parent.var);
+				arg.overwriteThis(context);
 			});
 
 			if (this.callee && this.callee.name === 'this') {
 				const node = this.callee.nodes[0];
-				component.code.overwrite(node.start, node.end, this.parent.var, {
+				component.code.overwrite(node.start, node.end, context, {
 					storeName: true,
 					contentOnly: true
 				});
