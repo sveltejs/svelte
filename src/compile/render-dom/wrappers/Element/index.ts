@@ -21,6 +21,7 @@ import InputRangeBinding from './Binding/InputRangeBinding';
 import InputTextBinding from './Binding/InputTextBinding';
 import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
 import SelectBinding from './Binding/SelectBinding';
+import InlineComponentWrapper from '../InlineComponent';
 
 const bindings = [
 	InputTextBinding,
@@ -107,9 +108,11 @@ export default class ElementWrapper extends Wrapper {
 	classDependencies: string[];
 	initialUpdate: string;
 
+	slotOwner?: InlineComponentWrapper;
 	selectBindingDependencies?: Set<string>;
 
 	var: string;
+
 
 	constructor(
 		renderer: Renderer,
@@ -127,9 +130,23 @@ export default class ElementWrapper extends Wrapper {
 		this.attributes = this.node.attributes.map(attribute => {
 			if (attribute.name === 'slot') {
 				// TODO make separate subclass for this?
-				// TODO what about custom elements?
-				const owner = this.findNearest(/^InlineComponent/);
-				owner._slots.add(attribute.getStaticValue());
+				let owner = this.parent;
+				while (owner) {
+					if (owner.node.type === 'InlineComponent') {
+						break;
+					}
+
+					if (owner.node.type === 'Element' && /-/.test(owner.node.name)) {
+						break;
+					}
+
+					owner = owner.parent;
+				}
+
+				if (owner && owner.node.type === 'InlineComponent') {
+					this.slotOwner = <InlineComponentWrapper>owner;
+					owner._slots.add(attribute.getStaticValue());
+				}
 			}
 			if (attribute.name === 'style') {
 				return new StyleAttributeWrapper(this, block, attribute);
@@ -200,10 +217,8 @@ export default class ElementWrapper extends Wrapper {
 
 		let initialMountNode;
 
-		if (slot) {
-			// TODO what about custom elements?
-			const owner = this.findNearest(/^InlineComponent/);
-			initialMountNode = `${owner.var}._slotted${prop}`;
+		if (this.slotOwner) {
+			initialMountNode = `${this.slotOwner.var}._slotted${prop}`;
 		} else {
 			initialMountNode = parentNode;
 		}
@@ -250,8 +265,17 @@ export default class ElementWrapper extends Wrapper {
 					`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
 				);
 			} else {
+				const innerHTML = escape(
+					this.fragment.nodes
+						.map(toHTML)
+						.join('')
+						.replace(/\\/g, '\\\\')
+						.replace(/`/g, '\\`')
+						.replace(/\$/g, '\\$')
+				);
+
 				block.builders.create.addLine(
-					`${node}.innerHTML = \`${escape(this.fragment.nodes.map(toHTML).join(''))}\`;`
+					`${node}.innerHTML = \`${innerHTML}\`;`
 				);
 			}
 		} else {
@@ -274,7 +298,7 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		const eventHandlerOrBindingUsesContext = (
-			this.bindings.some(binding => binding.usesContext) ||
+			this.bindings.some(binding => binding.binding.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext)
 		);
 

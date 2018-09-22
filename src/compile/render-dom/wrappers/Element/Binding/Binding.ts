@@ -29,6 +29,7 @@ export default class BindingWrapper {
 	mutations: string[];
 	props: Set<string>;
 	storeProps: Set<string>;
+	handlerName: string;
 
 	object: string;
 	// handler: Handler;
@@ -192,10 +193,10 @@ export default class BindingWrapper {
 
 		let animation_frame = null; // TODO media binding only
 
-		const handler_name = block.getUniqueName(`${this.element.var}_${this.events.join('_')}_handler`);
+		this.handlerName = block.getUniqueName(`${this.element.var}_${this.events.join('_')}_handler`);
 
 		block.builders.init.addBlock(deindent`
-			function ${handler_name}() {
+			function ${this.handlerName}() {
 				${
 					animation_frame && deindent`
 						cancelAnimationFrame(${animation_frame});
@@ -216,11 +217,11 @@ export default class BindingWrapper {
 
 		this.events.forEach(name => {
 			block.builders.hydrate.addLine(
-				`@addListener(${this.element.var}, "${name}", ${handler_name});`
+				`@addListener(${this.element.var}, "${name}", ${this.handlerName});`
 			);
 
 			block.builders.destroy.addLine(
-				`@removeListener(${this.element.var}, "${name}", ${handler_name});`
+				`@removeListener(${this.element.var}, "${name}", ${this.handlerName});`
 			);
 		});
 	}

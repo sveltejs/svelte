@@ -153,7 +153,7 @@ export default class EachBlockWrapper extends Wrapper {
 				? block.getUniqueName(`${this.var}_anchor`)
 				: (this.next && this.next.var) || 'null',
 			create_each_block: this.block.name,
-			each_block_value: renderer.component.getUniqueName('each_value'),
+			each_block_value: renderer.component.getUniqueName(`${this.var}_value`),
 			get_each_context: renderer.component.getUniqueName(`get_${this.var}_context`),
 			iterations: block.getUniqueName(`${this.var}_blocks`),
 			length: `[✂${c}-${c+4}✂]`,

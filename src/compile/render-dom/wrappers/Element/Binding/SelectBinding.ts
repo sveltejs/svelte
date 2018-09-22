@@ -2,6 +2,7 @@ import Binding from '../../../../nodes/Binding';
 import Element from '../../../../nodes/Element';
 import ElementWrapper from '..';
 import BindingWrapper from './Binding';
+import Block from '../../../Block';
 
 export default class SelectBinding extends BindingWrapper {
 	element: ElementWrapper;
@@ -21,6 +22,7 @@ export default class SelectBinding extends BindingWrapper {
 	) {
 		super(element, binding_lookup.value);
 		this.events = ['change'];
+		this.needsLock = true;
 
 		element.renderer.hasComplexBindings = true;
 
@@ -42,5 +44,15 @@ export default class SelectBinding extends BindingWrapper {
 		return this.element.getStaticAttributeValue('multiple') === true ?
 			`@selectOptions(${this.element.var}, ${this.binding.value.snippet});` :
 			`@selectOption(${this.element.var}, ${this.binding.value.snippet});`;
+	}
+
+	render(block: Block) {
+		const allInitialStateIsDefined = `${this.binding.prop} in ctx`;
+
+		super.render(block);
+
+		block.builders.hydrate.addLine(
+			`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${this.handlerName});`
+		);
 	}
 }
