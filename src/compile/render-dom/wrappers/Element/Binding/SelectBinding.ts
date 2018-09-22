@@ -47,9 +47,9 @@ export default class SelectBinding extends BindingWrapper {
 	}
 
 	render(block: Block) {
-		const allInitialStateIsDefined = `${this.binding.prop} in ctx`;
-
 		super.render(block);
+
+		const allInitialStateIsDefined = `'${this.object}' in ctx`;
 
 		block.builders.hydrate.addLine(
 			`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${this.handlerName});`
