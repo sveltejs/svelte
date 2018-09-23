@@ -14,26 +14,8 @@ import namespaces from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
-import Binding from './UNUSED-Binding';
-// import InputCheckboxBinding from './Binding/InputCheckboxBinding';
-// import InputCheckboxGroupBinding from './Binding/InputCheckboxGroupBinding';
-// import InputNumberBinding from './Binding/InputNumberBinding';
-// import InputRangeBinding from './Binding/InputRangeBinding';
-// import InputTextBinding from './Binding/InputTextBinding';
-// import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
-// import SelectBinding from './Binding/SelectBinding';
+import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
-import addToSet from '../../../../utils/addToSet';
-
-// const bindings = [
-// 	InputTextBinding,
-// 	InputRadioGroupBinding,
-// 	InputCheckboxBinding,
-// 	InputCheckboxGroupBinding,
-// 	InputNumberBinding,
-// 	InputRangeBinding,
-// 	SelectBinding
-// ];
 
 const events = [
 	{
