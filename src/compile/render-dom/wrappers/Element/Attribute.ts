@@ -99,7 +99,7 @@ export default class AttributeWrapper {
 			const isSelectValueAttribute =
 				name === 'value' && element.node.name === 'select';
 
-			const shouldCache = this.shouldCache || isSelectValueAttribute;
+			const shouldCache = this.node.shouldCache || isSelectValueAttribute;
 
 			const last = shouldCache && block.getUniqueName(
 				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`

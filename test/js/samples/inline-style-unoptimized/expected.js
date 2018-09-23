@@ -2,38 +2,38 @@
 import { assign, createElement, createText, detachNode, init, insert, proto } from "svelte/shared.js";
 
 function create_main_fragment(component, ctx) {
-	var div, text, div_1, div_1_style_value;
+	var div0, text, div1, div1_style_value;
 
 	return {
 		c() {
-			div = createElement("div");
+			div0 = createElement("div");
 			text = createText("\n");
-			div_1 = createElement("div");
-			div.style.cssText = ctx.style;
-			div_1.style.cssText = div_1_style_value = "" + ctx.key + ": " + ctx.value;
+			div1 = createElement("div");
+			div0.style.cssText = ctx.style;
+			div1.style.cssText = div1_style_value = "" + ctx.key + ": " + ctx.value;
 		},
 
 		m(target, anchor) {
-			insert(target, div, anchor);
+			insert(target, div0, anchor);
 			insert(target, text, anchor);
-			insert(target, div_1, anchor);
+			insert(target, div1, anchor);
 		},
 
 		p(changed, ctx) {
 			if (changed.style) {
-				div.style.cssText = ctx.style;
+				div0.style.cssText = ctx.style;
 			}
 
-			if ((changed.key || changed.value) && div_1_style_value !== (div_1_style_value = "" + ctx.key + ": " + ctx.value)) {
-				div_1.style.cssText = div_1_style_value;
+			if ((changed.key || changed.value) && div1_style_value !== (div1_style_value = "" + ctx.key + ": " + ctx.value)) {
+				div1.style.cssText = div1_style_value;
 			}
 		},
 
 		d(detach) {
 			if (detach) {
-				detachNode(div);
+				detachNode(div0);
 				detachNode(text);
-				detachNode(div_1);
+				detachNode(div1);
 			}
 		}
 	};
