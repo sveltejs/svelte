@@ -2,7 +2,7 @@
 import { append, assign, createElement, createText, detachNode, init, insert, proto, setData } from "svelte/shared.js";
 
 function create_main_fragment(component, ctx) {
-	var window_updating = false, clear_window_updating = function() { window_updating = false; }, window_updating_timeout, p, text1, text2;
+	var window_updating = false, clear_window_updating = function() { window_updating = false; }, window_updating_timeout, p, text0, text1;
 
 	function onwindowscroll(event) {
 		if (window_updating) return;
@@ -27,19 +27,19 @@ function create_main_fragment(component, ctx) {
 	return {
 		c() {
 			p = createElement("p");
-			text1 = createText("scrolled to ");
-			text2 = createText(ctx.y);
+			text0 = createText("scrolled to ");
+			text1 = createText(ctx.y);
 		},
 
 		m(target, anchor) {
 			insert(target, p, anchor);
+			append(p, text0);
 			append(p, text1);
-			append(p, text2);
 		},
 
 		p(changed, ctx) {
 			if (changed.y) {
-				setData(text2, ctx.y);
+				setData(text1, ctx.y);
 			}
 		},
 

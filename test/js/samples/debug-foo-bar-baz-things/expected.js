@@ -3,8 +3,16 @@ import { addLoc, append, assign, createElement, createText, destroyEach, detachN
 
 const file = undefined;
 
+function get_each_context(ctx, list, i) {
+	const child_ctx = Object.create(ctx);
+	child_ctx.thing = list[i];
+	child_ctx.each_value = list;
+	child_ctx.thing_index = i;
+	return child_ctx;
+}
+
 function create_main_fragment(component, ctx) {
-	var text, p, text_1, text_2;
+	var text0, p, text1, text2;
 
 	var each_value = ctx.things;
 
@@ -20,10 +28,10 @@ function create_main_fragment(component, ctx) {
 				each_blocks[i].c();
 			}
 
-			text = createText("\n\n");
+			text0 = createText("\n\n");
 			p = createElement("p");
-			text_1 = createText("foo: ");
-			text_2 = createText(ctx.foo);
+			text1 = createText("foo: ");
+			text2 = createText(ctx.foo);
 			addLoc(p, file, 5, 0, 91);
 		},
 
@@ -32,10 +40,10 @@ function create_main_fragment(component, ctx) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert(target, text, anchor);
+			insert(target, text0, anchor);
 			insert(target, p, anchor);
-			append(p, text_1);
-			append(p, text_2);
+			append(p, text1);
+			append(p, text2);
 		},
 
 		p: function update(changed, ctx) {
@@ -50,7 +58,7 @@ function create_main_fragment(component, ctx) {
 					} else {
 						each_blocks[i] = create_each_block(component, child_ctx);
 						each_blocks[i].c();
-						each_blocks[i].m(text.parentNode, text);
+						each_blocks[i].m(text0.parentNode, text0);
 					}
 				}
 
@@ -61,7 +69,7 @@ function create_main_fragment(component, ctx) {
 			}
 
 			if (changed.foo) {
-				setData(text_2, ctx.foo);
+				setData(text2, ctx.foo);
 			}
 		},
 
@@ -69,7 +77,7 @@ function create_main_fragment(component, ctx) {
 			destroyEach(each_blocks, detach);
 
 			if (detach) {
-				detachNode(text);
+				detachNode(text0);
 				detachNode(p);
 			}
 		}
@@ -78,13 +86,13 @@ function create_main_fragment(component, ctx) {
 
 // (1:0) {#each things as thing}
 function create_each_block(component, ctx) {
-	var span, text_value = ctx.thing.name, text, text_1;
+	var span, text0_value = ctx.thing.name, text0, text1;
 
 	return {
 		c: function create() {
 			span = createElement("span");
-			text = createText(text_value);
-			text_1 = createText("\n\t");
+			text0 = createText(text0_value);
+			text1 = createText("\n\t");
 
 			{
 				const { foo, bar, baz, thing } = ctx;
@@ -96,13 +104,13 @@ function create_each_block(component, ctx) {
 
 		m: function mount(target, anchor) {
 			insert(target, span, anchor);
-			append(span, text);
-			insert(target, text_1, anchor);
+			append(span, text0);
+			insert(target, text1, anchor);
 		},
 
 		p: function update(changed, ctx) {
-			if ((changed.things) && text_value !== (text_value = ctx.thing.name)) {
-				setData(text, text_value);
+			if ((changed.things) && text0_value !== (text0_value = ctx.thing.name)) {
+				setData(text0, text0_value);
 			}
 
 			if (changed.foo || changed.bar || changed.baz || changed.things) {
@@ -115,18 +123,10 @@ function create_each_block(component, ctx) {
 		d: function destroy(detach) {
 			if (detach) {
 				detachNode(span);
-				detachNode(text_1);
+				detachNode(text1);
 			}
 		}
 	};
-}
-
-function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.thing = list[i];
-	child_ctx.each_value = list;
-	child_ctx.thing_index = i;
-	return child_ctx;
 }
 
 function SvelteComponent(options) {

@@ -41,14 +41,14 @@ function create_main_fragment(component, ctx) {
 	};
 }
 
-// (1:0) {#if foo}
-function create_if_block(component, ctx) {
+// (3:0) {:else}
+function create_else_block(component, ctx) {
 	var p;
 
 	return {
 		c() {
 			p = createElement("p");
-			p.textContent = "foo!";
+			p.textContent = "not foo!";
 		},
 
 		m(target, anchor) {
@@ -63,14 +63,14 @@ function create_if_block(component, ctx) {
 	};
 }
 
-// (3:0) {:else}
-function create_else_block(component, ctx) {
+// (1:0) {#if foo}
+function create_if_block(component, ctx) {
 	var p;
 
 	return {
 		c() {
 			p = createElement("p");
-			p.textContent = "not foo!";
+			p.textContent = "foo!";
 		},
 
 		m(target, anchor) {

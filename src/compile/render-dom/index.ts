@@ -98,7 +98,11 @@ export default function dom(
 		`);
 	}
 
-	renderer.blocks.forEach(block => {
+	// fix order
+	// TODO the deconflicted names of blocks are reversed... should set them here
+	const blocks = renderer.blocks.slice().reverse();
+
+	blocks.forEach(block => {
 		builder.addBlock(block.toString());
 	});
 

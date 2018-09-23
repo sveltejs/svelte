@@ -492,6 +492,14 @@ function foo(node, animation, params) {
 		}
 	};
 }
+function get_each_context(ctx, list, i) {
+	const child_ctx = Object.create(ctx);
+	child_ctx.thing = list[i];
+	child_ctx.each_value = list;
+	child_ctx.thing_index = i;
+	return child_ctx;
+}
+
 function create_main_fragment(component, ctx) {
 	var each_blocks_1 = [], each_lookup = blankObject(), each_anchor;
 
@@ -581,14 +589,6 @@ function create_each_block(component, key_1, ctx) {
 			}
 		}
 	};
-}
-
-function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.thing = list[i];
-	child_ctx.each_value = list;
-	child_ctx.thing_index = i;
-	return child_ctx;
 }
 
 function SvelteComponent(options) {

@@ -51,7 +51,7 @@ export default class Renderer {
 		});
 
 		this.block.hasUpdateMethod = true;
-		this.blocks = [this.block];
+		this.blocks = [];
 
 		this.fragment = new FragmentWrapper(
 			this,
@@ -61,6 +61,8 @@ export default class Renderer {
 			true,
 			null
 		);
+
+		this.blocks.push(this.block);
 
 		this.blocks.forEach(block => {
 			if (typeof block !== 'string') {

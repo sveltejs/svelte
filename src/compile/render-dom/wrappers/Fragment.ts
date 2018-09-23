@@ -1,5 +1,6 @@
 import Wrapper from './shared/Wrapper';
 import AwaitBlock from './AwaitBlock';
+import DebugTag from './DebugTag';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import Head from './Head';
@@ -20,6 +21,7 @@ import Block from '../Block';
 const wrappers = {
 	AwaitBlock,
 	Comment: null,
+	DebugTag,
 	EachBlock,
 	Element,
 	Head,
@@ -86,7 +88,7 @@ export default class FragmentWrapper {
 				}
 
 				// glue text nodes (which could e.g. be separated by comments) together
-				if (lastChild && lastChild.type === 'Text') {
+				if (lastChild && lastChild.node.type === 'Text') {
 					lastChild.data = data + lastChild.data;
 					continue;
 				}
@@ -101,7 +103,7 @@ export default class FragmentWrapper {
 
 			else {
 				const Wrapper = wrappers[child.type];
-				if (!Wrapper) return;
+				if (!Wrapper) continue;
 
 				const wrapper = new Wrapper(renderer, block, parent, child, stripWhitespace, lastChild || nextSibling);
 				this.nodes.unshift(wrapper);
@@ -116,6 +118,7 @@ export default class FragmentWrapper {
 			if (first && first.node.type === 'Text') {
 				first.data = trimStart(first.data);
 				if (!first.data) {
+					first.var = null;
 					this.nodes.shift();
 
 					if (this.nodes.length) {
