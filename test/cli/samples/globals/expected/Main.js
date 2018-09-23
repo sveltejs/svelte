@@ -9,24 +9,24 @@ var Main = (function(answer) { "use strict";
 };
 
 	function create_main_fragment(component, ctx) {
-		var p, text, text_1;
+		var p, text0, text1;
 
 		return {
 			c() {
 				p = createElement("p");
-				text = createText("The answer is ");
-				text_1 = createText(ctx.answer);
+				text0 = createText("The answer is ");
+				text1 = createText(ctx.answer);
 			},
 
 			m(target, anchor) {
 				insert(target, p, anchor);
-				append(p, text);
-				append(p, text_1);
+				append(p, text0);
+				append(p, text1);
 			},
 
 			p(changed, ctx) {
 				if (changed.answer) {
-					setData(text_1, ctx.answer);
+					setData(text1, ctx.answer);
 				}
 			},
 
