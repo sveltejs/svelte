@@ -3,15 +3,10 @@ import ElementWrapper from '.';
 import { dimensions } from '../../../../utils/patterns';
 import getObject from '../../../../utils/getObject';
 import Block from '../../Block';
-import Element from '../../../nodes/Element';
 import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flattenReference from '../../../../utils/flattenReference';
 import getTailSnippet from '../../../../utils/getTailSnippet';
-
-type Handler = {
-
-}
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -26,7 +21,7 @@ export default class BindingWrapper {
 	parent: ElementWrapper;
 
 	object: string;
-	handler: Handler;
+	handler: any; // TODO
 	updateDom: string;
 	initialUpdate: string;
 	needsLock: boolean;
@@ -35,21 +30,6 @@ export default class BindingWrapper {
 	constructor(block: Block, node: Binding, parent: ElementWrapper) {
 		this.node = node;
 		this.parent = parent;
-
-		const needsLock = (
-			parent.node.name !== 'input' ||
-			!/radio|checkbox|range|color/.test(parent.getStaticAttributeValue('type'))
-		);
-
-		const isReadOnly = (
-			(parent.isMediaNode() && readOnlyMediaAttributes.has(this.node.name)) ||
-			dimensions.test(this.node.name)
-		);
-
-		let updateConditions: string[] = [];
-
-		const { name } = getObject(this.node.value.node);
-		const { snippet } = this.node.value;
 
 		const { dependencies } = this.node.value;
 
