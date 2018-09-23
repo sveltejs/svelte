@@ -2,26 +2,26 @@
 import { append, assign, createSvgElement, detachNode, init, insert, proto, setAttribute } from "svelte/shared.js";
 
 function create_main_fragment(component, ctx) {
-	var svg, g, g_1;
+	var svg, g0, g1;
 
 	return {
 		c() {
 			svg = createSvgElement("svg");
-			g = createSvgElement("g");
-			g_1 = createSvgElement("g");
-			setAttribute(g, "data-foo", "bar");
-			setAttribute(g_1, "data-foo", ctx.bar);
+			g0 = createSvgElement("g");
+			g1 = createSvgElement("g");
+			setAttribute(g0, "data-foo", "bar");
+			setAttribute(g1, "data-foo", ctx.bar);
 		},
 
 		m(target, anchor) {
 			insert(target, svg, anchor);
-			append(svg, g);
-			append(svg, g_1);
+			append(svg, g0);
+			append(svg, g1);
 		},
 
 		p(changed, ctx) {
 			if (changed.bar) {
-				setAttribute(g_1, "data-foo", ctx.bar);
+				setAttribute(g1, "data-foo", ctx.bar);
 			}
 		},
 

@@ -161,7 +161,7 @@ function create_main_fragment(component, ctx) {
 
 	function select_block_type(ctx) {
 		if (ctx.foo) return create_if_block;
-		return create_if_block_1;
+		return create_else_block;
 	}
 
 	var current_block_type = select_block_type(ctx);
@@ -219,7 +219,7 @@ function create_if_block(component, ctx) {
 }
 
 // (3:0) {:else}
-function create_if_block_1(component, ctx) {
+function create_else_block(component, ctx) {
 	var p;
 
 	return {
