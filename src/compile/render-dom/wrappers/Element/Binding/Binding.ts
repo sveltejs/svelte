@@ -36,7 +36,6 @@ export default class BindingWrapper {
 	initialUpdate: string;
 	updateCondition: string;
 	isReadOnly: boolean;
-	isReadOnlyMediaAttribute: boolean;
 
 	constructor(block: Block, element: ElementWrapper, binding: Binding) {
 		this.element = element;
@@ -119,7 +118,7 @@ export default class BindingWrapper {
 	}
 
 	isReadOnlyMediaAttribute() {
-		return false;
+		return readOnlyMediaAttributes.has(this.binding.name);
 	}
 
 	render(block: Block) {
@@ -193,7 +192,6 @@ export default class BindingWrapper {
 		this.initialUpdate = initialUpdate;
 		this.needsLock = !this.isReadOnly && this.needsLock; // TODO ????
 		this.updateCondition = updateConditions.length ? updateConditions.join(' && ') : undefined;
-		this.isReadOnlyMediaAttribute = readOnlyMediaAttributes.has(this.binding.name);
 
 		let animation_frame = null; // TODO media binding only
 

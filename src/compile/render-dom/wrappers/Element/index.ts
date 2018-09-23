@@ -14,24 +14,26 @@ import namespaces from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
-import InputCheckboxBinding from './Binding/InputCheckboxBinding';
-import InputCheckboxGroupBinding from './Binding/InputCheckboxGroupBinding';
-import InputNumberBinding from './Binding/InputNumberBinding';
-import InputRangeBinding from './Binding/InputRangeBinding';
-import InputTextBinding from './Binding/InputTextBinding';
-import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
-import SelectBinding from './Binding/SelectBinding';
+import Binding from './UNUSED-Binding';
+// import InputCheckboxBinding from './Binding/InputCheckboxBinding';
+// import InputCheckboxGroupBinding from './Binding/InputCheckboxGroupBinding';
+// import InputNumberBinding from './Binding/InputNumberBinding';
+// import InputRangeBinding from './Binding/InputRangeBinding';
+// import InputTextBinding from './Binding/InputTextBinding';
+// import InputRadioGroupBinding from './Binding/InputRadioGroupBinding';
+// import SelectBinding from './Binding/SelectBinding';
 import InlineComponentWrapper from '../InlineComponent';
+import addToSet from '../../../../utils/addToSet';
 
-const bindings = [
-	InputTextBinding,
-	InputRadioGroupBinding,
-	InputCheckboxBinding,
-	InputCheckboxGroupBinding,
-	InputNumberBinding,
-	InputRangeBinding,
-	SelectBinding
-];
+// const bindings = [
+// 	InputTextBinding,
+// 	InputRadioGroupBinding,
+// 	InputCheckboxBinding,
+// 	InputCheckboxGroupBinding,
+// 	InputNumberBinding,
+// 	InputRangeBinding,
+// 	SelectBinding
+// ];
 
 const events = [
 	{
@@ -101,10 +103,7 @@ export default class ElementWrapper extends Wrapper {
 	node: Element;
 	fragment: FragmentWrapper;
 	attributes: AttributeWrapper[];
-	bindings: Array<
-		InputTextBinding |
-		InputRadioGroupBinding
-	>;
+	bindings: Binding[];
 	classDependencies: string[];
 	initialUpdate: string;
 
@@ -166,11 +165,7 @@ export default class ElementWrapper extends Wrapper {
 		// ordinarily, there'll only be one... but we need to handle
 		// the rare case where an element can have multiple bindings,
 		// e.g. <audio bind:paused bind:currentTime>
-		this.bindings = bindings
-			.filter(Binding => {
-				return Binding.filter(this.node, binding_lookup, type);
-			})
-			.map(Binding => new Binding(block, this, binding_lookup));
+		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
 
 		// TODO remove this, it's just useful during refactoring
 		if (has_bindings && !this.bindings.length) {
@@ -299,7 +294,7 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		const eventHandlerOrBindingUsesContext = (
-			this.bindings.some(binding => binding.binding.usesContext) ||
+			this.bindings.some(binding => binding.node.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext)
 		);
 
@@ -415,20 +410,6 @@ export default class ElementWrapper extends Wrapper {
 			: `{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
 	}
 
-	addBindings(block: Block) {
-		if (this.bindings.length === 0) return;
-
-		if (this.node.name === 'select' || this.isMediaNode()) {
-			this.renderer.hasComplexBindings = true;
-		}
-
-		this.bindings.forEach(binding => {
-			binding.render(block);
-		});
-
-		this.initialUpdate = this.bindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
-	}
-
 	// addBindings(block: Block) {
 	// 	if (this.bindings.length === 0) return;
 
@@ -436,130 +417,145 @@ export default class ElementWrapper extends Wrapper {
 	// 		this.renderer.hasComplexBindings = true;
 	// 	}
 
-	// 	const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
-
-	// 	const lock = this.bindings.some(binding => binding.needsLock) ?
-	// 		block.getUniqueName(`${this.var}_updating`) :
-	// 		null;
-
-	// 	if (lock) block.addVariable(lock, 'false');
-
-	// 	const groups = events
-	// 		.map(event => {
-	// 			return {
-	// 				events: event.eventNames,
-	// 				bindings: this.bindings.filter(binding => event.filter(this, binding.name))
-	// 			};
-	// 		})
-	// 		.filter(group => group.bindings.length);
-
-	// 	if (groups.length > 1) {
-	// 		throw new Error('huh');
-	// 	}
-
-	// 	groups.forEach(group => {
-	// 		const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
-
-	// 		const needsLock = group.bindings.some(binding => binding.needsLock);
-
-	// 		group.bindings.forEach(binding => {
-	// 			if (!binding.updateDom) return;
-
-	// 			const updateConditions = needsLock ? [`!${lock}`] : [];
-	// 			if (binding.updateCondition) updateConditions.push(binding.updateCondition);
-
-	// 			block.builders.update.addLine(
-	// 				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
-	// 			);
-	// 		});
-
-	// 		const usesStore = group.bindings.some(binding => binding.handler.usesStore);
-	// 		const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
-
-	// 		const props = new Set();
-	// 		const storeProps = new Set();
-	// 		group.bindings.forEach(binding => {
-	// 			binding.handler.props.forEach(prop => {
-	// 				props.add(prop);
-	// 			});
-
-	// 			binding.handler.storeProps.forEach(prop => {
-	// 				storeProps.add(prop);
-	// 			});
-	// 		}); // TODO use stringifyProps here, once indenting is fixed
-
-	// 		// media bindings — awkward special case. The native timeupdate events
-	// 		// fire too infrequently, so we need to take matters into our
-	// 		// own hands
-	// 		let animation_frame;
-	// 		if (group.events[0] === 'timeupdate') {
-	// 			animation_frame = block.getUniqueName(`${this.var}_animationframe`);
-	// 			block.addVariable(animation_frame);
-	// 		}
-
-	// 		block.builders.init.addBlock(deindent`
-	// 			function ${handler}() {
-	// 				${
-	// 					animation_frame && deindent`
-	// 						cancelAnimationFrame(${animation_frame});
-	// 						if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-	// 				}
-	// 				${usesStore && `var $ = #component.store.get();`}
-	// 				${needsLock && `${lock} = true;`}
-	// 				${mutations.length > 0 && mutations}
-	// 				${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
-	// 				${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
-	// 				${needsLock && `${lock} = false;`}
-	// 			}
-	// 		`);
-
-	// 		group.events.forEach(name => {
-	// 			if (name === 'resize') {
-	// 				// special case
-	// 				const resize_listener = block.getUniqueName(`${this.var}_resize_listener`);
-	// 				block.addVariable(resize_listener);
-
-	// 				block.builders.mount.addLine(
-	// 					`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
-	// 				);
-
-	// 				block.builders.destroy.addLine(
-	// 					`${resize_listener}.cancel();`
-	// 				);
-	// 			} else {
-	// 				block.builders.hydrate.addLine(
-	// 					`@addListener(${this.var}, "${name}", ${handler});`
-	// 				);
-
-	// 				block.builders.destroy.addLine(
-	// 					`@removeListener(${this.var}, "${name}", ${handler});`
-	// 				);
-	// 			}
-	// 		});
-
-	// 		const allInitialStateIsDefined = group.bindings
-	// 			.map(binding => `'${binding.object}' in ctx`)
-	// 			.join(' && ');
-
-	// 		if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-	// 			this.component.target.hasComplexBindings = true;
-
-	// 			block.builders.hydrate.addLine(
-	// 				`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
-	// 			);
-	// 		}
-
-	// 		if (group.events[0] === 'resize') {
-	// 			this.component.target.hasComplexBindings = true;
-
-	// 			block.builders.hydrate.addLine(
-	// 				`#component.root._beforecreate.push(${handler});`
-	// 			);
-	// 		}
+	// 	this.bindings.forEach(binding => {
+	// 		binding.render(block);
 	// 	});
 
 	// 	this.initialUpdate = this.bindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 	// }
+
+	addBindings(block: Block) {
+		const { renderer } = this;
+
+		if (this.bindings.length === 0) return;
+
+		if (this.node.name === 'select' || this.isMediaNode()) {
+			this.renderer.hasComplexBindings = true;
+		}
+
+		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
+
+		// TODO munge in constructor
+		const mungedBindings = this.bindings.map(binding => binding.munge(block));
+
+		const lock = mungedBindings.some(binding => binding.needsLock) ?
+			block.getUniqueName(`${this.var}_updating`) :
+			null;
+
+		if (lock) block.addVariable(lock, 'false');
+
+		const groups = events
+			.map(event => {
+				return {
+					events: event.eventNames,
+					bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
+				};
+			})
+			.filter(group => group.bindings.length);
+
+		groups.forEach(group => {
+			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
+
+			const needsLock = group.bindings.some(binding => binding.needsLock);
+
+			group.bindings.forEach(binding => {
+				if (!binding.updateDom) return;
+
+				const updateConditions = needsLock ? [`!${lock}`] : [];
+				if (binding.updateCondition) updateConditions.push(binding.updateCondition);
+
+				block.builders.update.addLine(
+					updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
+				);
+			});
+
+			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
+			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
+
+			const props = new Set();
+			const storeProps = new Set();
+			group.bindings.forEach(binding => {
+				binding.handler.props.forEach(prop => {
+					props.add(prop);
+				});
+
+				binding.handler.storeProps.forEach(prop => {
+					storeProps.add(prop);
+				});
+			}); // TODO use stringifyProps here, once indenting is fixed
+
+			// media bindings — awkward special case. The native timeupdate events
+			// fire too infrequently, so we need to take matters into our
+			// own hands
+			let animation_frame;
+			if (group.events[0] === 'timeupdate') {
+				animation_frame = block.getUniqueName(`${this.var}_animationframe`);
+				block.addVariable(animation_frame);
+			}
+
+			block.builders.init.addBlock(deindent`
+				function ${handler}() {
+					${
+						animation_frame && deindent`
+							cancelAnimationFrame(${animation_frame});
+							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+					}
+					${usesStore && `var $ = #component.store.get();`}
+					${needsLock && `${lock} = true;`}
+					${mutations.length > 0 && mutations}
+					${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
+					${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
+					${needsLock && `${lock} = false;`}
+				}
+			`);
+
+			group.events.forEach(name => {
+				if (name === 'resize') {
+					// special case
+					const resize_listener = block.getUniqueName(`${this.var}_resize_listener`);
+					block.addVariable(resize_listener);
+
+					block.builders.mount.addLine(
+						`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
+					);
+
+					block.builders.destroy.addLine(
+						`${resize_listener}.cancel();`
+					);
+				} else {
+					block.builders.hydrate.addLine(
+						`@addListener(${this.var}, "${name}", ${handler});`
+					);
+
+					block.builders.destroy.addLine(
+						`@removeListener(${this.var}, "${name}", ${handler});`
+					);
+				}
+			});
+
+			const allInitialStateIsDefined = group.bindings
+				.map(binding => `'${binding.object}' in ctx`)
+				.join(' && ');
+
+			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
+				renderer.hasComplexBindings = true;
+
+				block.builders.hydrate.addLine(
+					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
+				);
+			}
+
+			if (group.events[0] === 'resize') {
+				renderer.hasComplexBindings = true;
+
+				block.builders.hydrate.addLine(
+					`#component.root._beforecreate.push(${handler});`
+				);
+			}
+		});
+
+		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
+	}
 
 	addAttributes(block: Block) {
 		if (this.node.attributes.find(attr => attr.type === 'Spread')) {
