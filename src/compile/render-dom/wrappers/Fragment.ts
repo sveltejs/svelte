@@ -78,7 +78,7 @@ export default class FragmentWrapper {
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
 					const shouldTrim = (
-						nextSibling ? (nextSibling.type === 'Text' && /^\s/.test(nextSibling.data)) : !child.hasAncestor('EachBlock')
+						nextSibling ? (nextSibling.node.type === 'Text' && /^\s/.test(nextSibling.data)) : !child.hasAncestor('EachBlock')
 					);
 
 					if (shouldTrim) {
@@ -93,7 +93,7 @@ export default class FragmentWrapper {
 					continue;
 				}
 
-				const wrapper = new TextWrapper(renderer, block, parent, child);
+				const wrapper = new TextWrapper(renderer, block, parent, child, data);
 				if (wrapper.skip) continue;
 
 				this.nodes.unshift(wrapper);

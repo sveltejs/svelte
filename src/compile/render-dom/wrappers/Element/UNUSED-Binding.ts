@@ -36,8 +36,6 @@ export default class BindingWrapper {
 		this.node = node;
 		this.parent = parent;
 
-		parent.cannotUseInnerHTML();
-
 		const needsLock = (
 			parent.node.name !== 'input' ||
 			!/radio|checkbox|range|color/.test(parent.getStaticAttributeValue('type'))

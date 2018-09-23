@@ -190,6 +190,8 @@ export default class ElementWrapper extends Wrapper {
 			if (node.handlers.length > 0) this.parent.cannotUseInnerHTML();
 			if (node.ref) this.parent.cannotUseInnerHTML();
 
+			if (this.node.name === 'option') this.parent.cannotUseInnerHTML();
+
 			if (renderer.options.dev) {
 				this.parent.cannotUseInnerHTML(); // need to use addLoc
 			}
@@ -537,7 +539,7 @@ export default class ElementWrapper extends Wrapper {
 				.map(binding => `'${binding.object}' in ctx`)
 				.join(' && ');
 
-			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
+			if (this.node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(

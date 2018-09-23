@@ -40,12 +40,13 @@ export default class TextWrapper extends Wrapper {
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: Text
+		node: Text,
+		data: string
 	) {
 		super(renderer, block, parent, node);
 
 		this.skip = shouldSkip(this.node);
-		this.data = node.data;
+		this.data = data;
 		this.var = this.skip ? null : 'text';
 	}
 
