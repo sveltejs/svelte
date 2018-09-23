@@ -262,7 +262,7 @@ export default class ElementWrapper extends Wrapper {
 
 		// insert static children with textContent or innerHTML
 		if (!this.node.namespace && this.canUseInnerHTML && this.fragment.nodes.length > 0) {
-			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].type === 'Text') {
+			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.builders.create.addLine(
 					`${node}.textContent = ${stringify(this.fragment.nodes[0].data)};`
 				);
