@@ -2,9 +2,6 @@ import Node from './shared/Node';
 import getObject from '../../utils/getObject';
 import Expression from './shared/Expression';
 
-// TODO a lot of this element-specific stuff should live in Element —
-// Binding should ideally be agnostic between Element and InlineComponent
-
 export default class Binding extends Node {
 	name: string;
 	value: Expression;

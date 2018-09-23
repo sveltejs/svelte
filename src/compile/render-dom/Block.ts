@@ -2,6 +2,7 @@ import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
 import Renderer from './Renderer';
+import Wrapper from './wrappers/shared/Wrapper';
 
 export interface BlockOptions {
 	parent?: Block;
