@@ -1,12 +1,9 @@
-import deindent from '../../utils/deindent';
 import { escape, escapeTemplate, stringify } from '../../utils/stringify';
-import fixAttributeCasing from '../../utils/fixAttributeCasing';
 import addToSet from '../../utils/addToSet';
 import Component from '../Component';
 import Node from './shared/Node';
 import Element from './Element';
 import Text from './Text';
-import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
 
 export default class Attribute extends Node {

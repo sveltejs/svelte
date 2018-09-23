@@ -1,14 +1,6 @@
-import deindent from '../../utils/deindent';
-import { stringify, escapeHTML } from '../../utils/stringify';
-import flattenReference from '../../utils/flattenReference';
 import isVoidElementName from '../../utils/isVoidElementName';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import reservedNames from '../../utils/reservedNames';
-import fixAttributeCasing from '../../utils/fixAttributeCasing';
-import { quoteNameIfNecessary, quotePropIfNecessary } from '../../utils/quoteIfNecessary';
-import Component from '../Component';
+import { quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import Node from './shared/Node';
-import Block from '../render-dom/Block';
 import Attribute from './Attribute';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
@@ -22,47 +14,6 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../validate/utils/fuzzymatch';
 import Ref from './Ref';
-
-// source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const booleanAttributes = new Set([
-	'async',
-	'autocomplete',
-	'autofocus',
-	'autoplay',
-	'border',
-	'challenge',
-	'checked',
-	'compact',
-	'contenteditable',
-	'controls',
-	'default',
-	'defer',
-	'disabled',
-	'formnovalidate',
-	'frameborder',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nohref',
-	'noresize',
-	'noshade',
-	'novalidate',
-	'nowrap',
-	'open',
-	'readonly',
-	'required',
-	'reversed',
-	'scoped',
-	'scrolling',
-	'seamless',
-	'selected',
-	'sortable',
-	'spellcheck',
-	'translate'
-]);
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -666,21 +617,6 @@ export default class Element extends Node {
 			);
 		}
 	}
-}
-
-function getRenderStatement(
-	namespace: string,
-	name: string
-) {
-	if (namespace === 'http://www.w3.org/2000/svg') {
-		return `@createSvgElement("${name}")`;
-	}
-
-	if (namespace) {
-		return `document.createElementNS("${namespace}", "${name}")`;
-	}
-
-	return `@createElement("${name}")`;
 }
 
 function shouldHaveAttribute(

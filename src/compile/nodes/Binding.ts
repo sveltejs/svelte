@@ -1,12 +1,6 @@
 import Node from './shared/Node';
-import Element from './Element';
 import getObject from '../../utils/getObject';
-import getTailSnippet from '../../utils/getTailSnippet';
-import flattenReference from '../../utils/flattenReference';
-import Component from '../Component';
-import Block from '../render-dom/Block';
 import Expression from './shared/Expression';
-import { dimensions } from '../../utils/patterns';
 
 // TODO a lot of this element-specific stuff should live in Element —
 // Binding should ideally be agnostic between Element and InlineComponent

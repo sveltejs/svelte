@@ -1,4 +1,4 @@
-import { escape, escapeHTML, escapeTemplate, stringify } from '../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 import Node from './shared/Node';
 import Block from '../render-dom/Block';
 

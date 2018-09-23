@@ -5,9 +5,7 @@ import Binding from '../../../../nodes/Binding';
 import getObject from '../../../../../utils/getObject';
 import Renderer from '../../../Renderer';
 import getTailSnippet from '../../../../../utils/getTailSnippet';
-import { Node } from '../../../../../interfaces';
 import Element from '../../../../nodes/Element';
-import flattenReference from '../../../../../utils/flattenReference';
 import { dimensions } from '../../../../../utils/patterns';
 
 // TODO this should live in a specific binding
