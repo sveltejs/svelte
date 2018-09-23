@@ -188,9 +188,11 @@ export default class ElementWrapper extends Wrapper {
 			this.cannotUseInnerHTML();
 		}
 
-		if (node.ref) {
-			this.cannotUseInnerHTML();
-		}
+		if (node.actions.length > 0) this.cannotUseInnerHTML();
+		if (node.bindings.length > 0) this.cannotUseInnerHTML();
+		if (node.classes.length > 0) this.cannotUseInnerHTML();
+		if (node.handlers.length > 0) this.cannotUseInnerHTML();
+		if (node.ref) this.cannotUseInnerHTML();
 
 		if (renderer.options.dev) {
 			this.cannotUseInnerHTML(); // need to use addLoc
@@ -269,9 +271,6 @@ export default class ElementWrapper extends Wrapper {
 					this.fragment.nodes
 						.map(toHTML)
 						.join('')
-						.replace(/\\/g, '\\\\')
-						.replace(/`/g, '\\`')
-						.replace(/\$/g, '\\$')
 				);
 
 				block.builders.create.addLine(
@@ -349,11 +348,19 @@ export default class ElementWrapper extends Wrapper {
 
 		function toHTML(wrapper: ElementWrapper | TextWrapper) {
 			if (wrapper.node.type === 'Text') {
-				return wrapper.node.parent &&
-					wrapper.node.parent.type === 'Element' &&
-					(wrapper.node.parent.name === 'script' || wrapper.node.parent.name === 'style')
+				const { parent } = wrapper.node;
+
+				const raw = parent && (
+					parent.name === 'script' ||
+					parent.name === 'style'
+				);
+
+				return raw
 					? wrapper.node.data
-					: escapeHTML(wrapper.node.data);
+					: escapeHTML(wrapper.node.data)
+						.replace(/\\/g, '\\\\')
+						.replace(/`/g, '\\`')
+						.replace(/\$/g, '\\$');
 			}
 
 			if (wrapper.node.name === 'noscript') return '';
