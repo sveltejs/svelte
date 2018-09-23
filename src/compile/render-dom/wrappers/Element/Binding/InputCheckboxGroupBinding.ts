@@ -24,6 +24,6 @@ export default class InputCheckboxGroupBinding extends InputRadioGroupBinding {
 	toDom() {
 		const condition = `~${this.binding.value.snippet}.indexOf(${this.element.var}.__value)`;
 
-		return `${this.element.var}.checked = ${condition};`
+		return `${this.element.var}.checked = ${condition};`;
 	}
 }

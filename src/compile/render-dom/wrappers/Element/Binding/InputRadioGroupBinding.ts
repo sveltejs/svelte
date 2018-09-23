@@ -25,10 +25,11 @@ export default class InputRadioGroupBinding extends BindingWrapper {
 	}
 
 	constructor(
+		block: Block,
 		element: ElementWrapper,
 		binding_lookup: Record<string, Binding>
 	) {
-		super(element, binding_lookup.group);
+		super(block, element, binding_lookup.group);
 
 		// TODO handle cases involving computed member expressions
 		const { parts } = flattenReference(this.binding.value.node);

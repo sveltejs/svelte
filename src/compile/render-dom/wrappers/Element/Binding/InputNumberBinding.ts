@@ -2,6 +2,7 @@ import Binding from '../../../../nodes/Binding';
 import Element from '../../../../nodes/Element';
 import ElementWrapper from '..';
 import BindingWrapper from './Binding';
+import Block from '../../../Block';
 
 export default class InputNumberBinding extends BindingWrapper {
 	events = ['input'];
@@ -19,10 +20,11 @@ export default class InputNumberBinding extends BindingWrapper {
 	}
 
 	constructor(
+		block: Block,
 		element: ElementWrapper,
 		binding_lookup: Record<string, Binding>
 	) {
-		super(element, binding_lookup.value);
+		super(block, element, binding_lookup.value);
 		this.needsLock = true;
 	}
 

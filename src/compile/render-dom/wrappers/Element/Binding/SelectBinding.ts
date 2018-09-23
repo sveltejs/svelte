@@ -17,10 +17,11 @@ export default class SelectBinding extends BindingWrapper {
 	}
 
 	constructor(
+		block: Block,
 		element: ElementWrapper,
 		binding_lookup: Record<string, Binding>
 	) {
-		super(element, binding_lookup.value);
+		super(block, element, binding_lookup.value);
 		this.events = ['change'];
 		this.needsLock = true;
 

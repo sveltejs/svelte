@@ -22,6 +22,7 @@ export default class BindingWrapper {
 	element: ElementWrapper;
 	binding: Binding;
 	events: string[];
+	dependencies: Set<string>;
 
 	usesStore: boolean;
 	needsLock: boolean;
@@ -39,7 +40,7 @@ export default class BindingWrapper {
 	isReadOnly: boolean;
 	isReadOnlyMediaAttribute: boolean;
 
-	constructor(element: ElementWrapper, binding: Binding) {
+	constructor(block: Block, element: ElementWrapper, binding: Binding) {
 		this.element = element;
 		this.binding = binding;
 
@@ -48,6 +49,24 @@ export default class BindingWrapper {
 		this.isReadOnly = false;
 		this.needsLock = false;
 		this.events = [];
+
+		this.dependencies = new Set(this.binding.value.dependencies);
+
+		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
+		// and `selected` is an object chosen with a <select>, then when `checked` changes,
+		// we need to tell the component to update all the values `selected` might be
+		// pointing to
+		// TODO should this happen in preprocess?
+		this.binding.value.dependencies.forEach((prop: string) => {
+			const indirectDependencies = this.element.renderer.component.indirectDependencies.get(prop);
+			if (indirectDependencies) {
+				indirectDependencies.forEach(indirectDependency => {
+					this.dependencies.add(indirectDependency);
+				});
+			}
+		});
+
+		block.addDependencies(this.dependencies);
 	}
 
 	fromDom() {
@@ -128,24 +147,11 @@ export default class BindingWrapper {
 		const { name } = getObject(this.binding.value.node);
 		const { snippet } = this.binding.value;
 
-		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
-		// and `selected` is an object chosen with a <select>, then when `checked` changes,
-		// we need to tell the component to update all the values `selected` might be
-		// pointing to
-		// TODO should this happen in preprocess?
-		const dependencies = new Set(this.binding.value.dependencies);
-		this.binding.value.dependencies.forEach((prop: string) => {
-			const indirectDependencies = this.element.renderer.component.indirectDependencies.get(prop);
-			if (indirectDependencies) {
-				indirectDependencies.forEach(indirectDependency => {
-					dependencies.add(indirectDependency);
-				});
-			}
-		});
+
 
 		// view to model
 		const valueFromDom = this.fromDom();
-		const handler = getEventHandler(this.binding, this.element.renderer, block, name, snippet, dependencies, valueFromDom);
+		const handler = getEventHandler(this.binding, this.element.renderer, block, name, snippet, this.dependencies, valueFromDom);
 
 		// model to view
 		let updateDom = this.toDom();

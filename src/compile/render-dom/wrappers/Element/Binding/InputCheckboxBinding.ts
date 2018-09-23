@@ -2,6 +2,7 @@ import Binding from '../../../../nodes/Binding';
 import Element from '../../../../nodes/Element';
 import ElementWrapper from '..';
 import BindingWrapper from './Binding';
+import Block from '../../../Block';
 
 export default class InputCheckboxBinding extends BindingWrapper {
 	events = ['change'];
@@ -19,10 +20,11 @@ export default class InputCheckboxBinding extends BindingWrapper {
 	}
 
 	constructor(
+		block: Block,
 		element: ElementWrapper,
 		binding_lookup: Record<string, Binding>
 	) {
-		super(element, binding_lookup.checked);
+		super(block, element, binding_lookup.checked);
 	}
 
 	fromDom() {

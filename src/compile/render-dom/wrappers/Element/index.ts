@@ -170,7 +170,7 @@ export default class ElementWrapper extends Wrapper {
 			.filter(Binding => {
 				return Binding.filter(this.node, binding_lookup, type);
 			})
-			.map(Binding => new Binding(this, binding_lookup));
+			.map(Binding => new Binding(block, this, binding_lookup));
 
 		// TODO remove this, it's just useful during refactoring
 		if (has_bindings && !this.bindings.length) {
