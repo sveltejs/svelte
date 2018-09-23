@@ -1,9 +1,11 @@
 import InputNumberBinding from './InputNumberBinding';
 import Binding from '../../../../nodes/Binding';
 import Element from '../../../../nodes/Element';
+import Block from '../../../Block';
+import ElementWrapper from '..';
 
 export default class InputRangeBinding extends InputNumberBinding {
-	events = ['input', 'change'];
+	events = ['change', 'input'];
 
 	static filter(
 		node: Element,
@@ -15,5 +17,14 @@ export default class InputRangeBinding extends InputNumberBinding {
 			type === 'range' &&
 			binding_lookup.value
 		);
+	}
+
+	constructor(
+		block: Block,
+		element: ElementWrapper,
+		binding_lookup: Record<string, Binding>
+	) {
+		super(block, element, binding_lookup);
+		this.needsLock = false;
 	}
 }

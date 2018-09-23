@@ -25,7 +25,7 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-describe.only("runtime", () => {
+describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);

@@ -180,22 +180,24 @@ export default class ElementWrapper extends Wrapper {
 		if (node.intro || node.outro) {
 			if (node.intro) block.addIntro();
 			if (node.outro) block.addOutro();
-			this.cannotUseInnerHTML();
 		}
 
 		if (node.animation) {
 			block.addAnimation();
-			this.cannotUseInnerHTML();
 		}
 
-		if (node.actions.length > 0) this.cannotUseInnerHTML();
-		if (node.bindings.length > 0) this.cannotUseInnerHTML();
-		if (node.classes.length > 0) this.cannotUseInnerHTML();
-		if (node.handlers.length > 0) this.cannotUseInnerHTML();
-		if (node.ref) this.cannotUseInnerHTML();
+		if (this.parent) {
+			if (node.actions.length > 0) this.parent.cannotUseInnerHTML();
+			if (node.animation) this.parent.cannotUseInnerHTML();
+			if (node.bindings.length > 0) this.parent.cannotUseInnerHTML();
+			if (node.classes.length > 0) this.parent.cannotUseInnerHTML();
+			if (node.intro || node.outro) this.parent.cannotUseInnerHTML();
+			if (node.handlers.length > 0) this.parent.cannotUseInnerHTML();
+			if (node.ref) this.parent.cannotUseInnerHTML();
 
-		if (renderer.options.dev) {
-			this.cannotUseInnerHTML(); // need to use addLoc
+			if (renderer.options.dev) {
+				this.parent.cannotUseInnerHTML(); // need to use addLoc
+			}
 		}
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
