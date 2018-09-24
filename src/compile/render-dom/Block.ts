@@ -1,30 +1,33 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
-import Component from '../Component';
+import Renderer from './Renderer';
+import Wrapper from './wrappers/shared/Wrapper';
 
 export interface BlockOptions {
 	parent?: Block;
 	name: string;
-	component?: Component;
+	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, string>;
+	bindings?: Map<string, () => string>;
 	dependencies?: Set<string>;
 }
 
 export default class Block {
 	parent?: Block;
-	component: Component;
+	renderer: Renderer;
 	name: string;
 	comment?: string;
+
+	wrappers: Wrapper[];
 
 	key: string;
 	first: string;
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, string>;
+	bindings: Map<string, () => string>;
 
 	builders: {
 		init: CodeBuilder;
@@ -58,9 +61,11 @@ export default class Block {
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
-		this.component = options.component;
+		this.renderer = options.renderer;
 		this.name = options.name;
 		this.comment = options.comment;
+
+		this.wrappers = [];
 
 		// for keyed each blocks
 		this.key = options.key;
@@ -90,7 +95,7 @@ export default class Block {
 		this.hasOutroMethod = false;
 		this.outros = 0;
 
-		this.getUniqueName = this.component.getUniqueNameMaker();
+		this.getUniqueName = this.renderer.component.getUniqueNameMaker();
 		this.variables = new Map();
 
 		this.aliases = new Map()
@@ -99,6 +104,43 @@ export default class Block {
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
+	}
+
+	assignVariableNames() {
+		const seen = new Set();
+		const dupes = new Set();
+
+		let i = this.wrappers.length;
+
+		while (i--) {
+			const wrapper = this.wrappers[i];
+
+			if (!wrapper.var) continue;
+			if (wrapper.parent && wrapper.parent.canUseInnerHTML) continue;
+
+			if (seen.has(wrapper.var)) {
+				dupes.add(wrapper.var);
+			}
+
+			seen.add(wrapper.var);
+		}
+
+		const counts = new Map();
+		i = this.wrappers.length;
+
+		while (i--) {
+			const wrapper = this.wrappers[i];
+
+			if (!wrapper.var) continue;
+
+			if (dupes.has(wrapper.var)) {
+				const i = counts.get(wrapper.var) || 0;
+				counts.set(wrapper.var, i + 1);
+				wrapper.var = this.getUniqueName(wrapper.var + i);
+			} else {
+				wrapper.var = this.getUniqueName(wrapper.var);
+			}
+		}
 	}
 
 	addDependencies(dependencies: Set<string>) {
@@ -128,11 +170,11 @@ export default class Block {
 	}
 
 	addIntro() {
-		this.hasIntros = this.hasIntroMethod = this.component.target.hasIntroTransitions = true;
+		this.hasIntros = this.hasIntroMethod = this.renderer.hasIntroTransitions = true;
 	}
 
 	addOutro() {
-		this.hasOutros = this.hasOutroMethod = this.component.target.hasOutroTransitions = true;
+		this.hasOutros = this.hasOutroMethod = this.renderer.hasOutroTransitions = true;
 		this.outros += 1;
 	}
 
@@ -167,7 +209,7 @@ export default class Block {
 	}
 
 	toString() {
-		const { dev } = this.component.options;
+		const { dev } = this.renderer.options;
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			this.addVariable('#current');
@@ -202,7 +244,7 @@ export default class Block {
 			properties.addBlock(`c: @noop,`);
 		} else {
 			const hydrate = !this.builders.hydrate.isEmpty() && (
-				this.component.options.hydratable
+				this.renderer.options.hydratable
 					? `this.h()`
 					: this.builders.hydrate
 			);
@@ -215,7 +257,7 @@ export default class Block {
 			`);
 		}
 
-		if (this.component.options.hydratable) {
+		if (this.renderer.options.hydratable) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
 				properties.addBlock(`l: @noop,`);
 			} else {
@@ -228,7 +270,7 @@ export default class Block {
 			}
 		}
 
-		if (this.component.options.hydratable && !this.builders.hydrate.isEmpty()) {
+		if (this.renderer.options.hydratable && !this.builders.hydrate.isEmpty()) {
 			properties.addBlock(deindent`
 				${dev ? 'h: function hydrate' : 'h'}() {
 					${this.builders.hydrate}

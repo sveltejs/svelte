@@ -49,7 +49,7 @@ export const missingComponent = {
 
 export function validateSsrComponent(component, name) {
 	if (!component || !component._render) {
-		if (name === 'svelte:component') name += 'this={...}';
+		if (name === 'svelte:component') name += ' this={...}';
 		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
 	}
 

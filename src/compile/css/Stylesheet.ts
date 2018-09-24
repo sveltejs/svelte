@@ -2,12 +2,12 @@ import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Selector from './Selector';
-import getCodeFrame from '../utils/getCodeFrame';
-import hash from '../utils/hash';
-import removeCSSPrefix from '../utils/removeCSSPrefix';
-import Element from '../compile/nodes/Element';
-import { Node, Ast, Warning } from '../interfaces';
-import Component from '../compile/Component';
+import getCodeFrame from '../../utils/getCodeFrame';
+import hash from '../../utils/hash';
+import removeCSSPrefix from '../../utils/removeCSSPrefix';
+import Element from '../nodes/Element';
+import { Node, Ast, Warning } from '../../interfaces';
+import Component from '../Component';
 
 const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
 
