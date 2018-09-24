@@ -1,13 +1,13 @@
 import { assign } from '../shared';
 import Stats from '../Stats';
 import parse from '../parse/index';
-import generate, { DomTarget } from './dom/index';
-import generateSSR, { SsrTarget } from './ssr/index';
+import renderDOM from './render-dom/index';
+import renderSSR from './render-ssr/index';
 import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
 
 function normalize_options(options: CompileOptions): CompileOptions {
-	let normalized = assign({ generate: 'dom' }, options);
+	let normalized = assign({ generate: 'dom', dev: false }, options);
 	const { onwarn, onerror } = normalized;
 
 	normalized.onwarn = onwarn
@@ -74,10 +74,7 @@ export default function compile(source: string, options: CompileOptions) {
 			source,
 			options.name || 'SvelteComponent',
 			options,
-			stats,
-
-			// TODO make component generator-agnostic, to allow e.g. WebGL generator
-			options.generate === 'ssr' ? new SsrTarget() : new DomTarget()
+			stats
 		);
 		stats.stop('create component');
 
@@ -85,9 +82,11 @@ export default function compile(source: string, options: CompileOptions) {
 			return { ast, stats: stats.render(null), js: null, css: null };
 		}
 
-		const compiler = options.generate === 'ssr' ? generateSSR : generate;
+		if (options.generate === 'ssr') {
+			return renderSSR(component, options);
+		}
 
-		return compiler(component, options);
+		return renderDOM(component, options);
 	} catch (err) {
 		options.onerror(err);
 		return;

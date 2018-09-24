@@ -1,5 +1,5 @@
 import Node from './shared/Node';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import mapChildren from './shared/mapChildren';
 
 export default class Head extends Node {
@@ -19,35 +19,5 @@ export default class Head extends Node {
 		this.children = mapChildren(component, parent, scope, info.children.filter(child => {
 			return (child.type !== 'Text' || /\S/.test(child.data));
 		}));
-	}
-
-	init(
-		block: Block,
-		stripWhitespace: boolean,
-		nextSibling: Node
-	) {
-		this.initChildren(block, true, null);
-	}
-
-	build(
-		block: Block,
-		parentNode: string,
-		parentNodes: string
-	) {
-		this.var = 'document.head';
-
-		this.children.forEach((child: Node) => {
-			child.build(block, 'document.head', null);
-		});
-	}
-
-	ssr() {
-		this.component.target.append('${(__result.head += `');
-
-		this.children.forEach((child: Node) => {
-			child.ssr();
-		});
-
-		this.component.target.append('`, "")}');
 	}
 }

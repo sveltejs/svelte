@@ -174,7 +174,15 @@ describe("runtime", () => {
 						config.error(assert, err);
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
+						showOutput(cwd, {
+							shared,
+							format: 'cjs',
+							hydratable: hydrate,
+							store: !!compileOptions.store,
+							skipIntroByDefault: compileOptions.skipIntroByDefault,
+							nestedTransitions: compileOptions.nestedTransitions,
+							dev: compileOptions.dev
+						}, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})

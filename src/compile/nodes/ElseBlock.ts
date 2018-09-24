@@ -1,5 +1,5 @@
 import Node from './shared/Node';
-import Block from '../dom/Block';
+import Block from '../render-dom/Block';
 import mapChildren from './shared/mapChildren';
 
 export default class ElseBlock extends Node {

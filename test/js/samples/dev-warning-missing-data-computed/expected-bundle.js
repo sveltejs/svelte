@@ -195,31 +195,31 @@ function bar({ foo }) {
 const file = undefined;
 
 function create_main_fragment(component, ctx) {
-	var p, text_value = ctx.Math.max(0, ctx.foo), text, text_1, text_2;
+	var p, text0_value = ctx.Math.max(0, ctx.foo), text0, text1, text2;
 
 	return {
 		c: function create() {
 			p = createElement("p");
-			text = createText(text_value);
-			text_1 = createText("\n\t");
-			text_2 = createText(ctx.bar);
+			text0 = createText(text0_value);
+			text1 = createText("\n\t");
+			text2 = createText(ctx.bar);
 			addLoc(p, file, 0, 0, 0);
 		},
 
 		m: function mount(target, anchor) {
 			insert(target, p, anchor);
-			append(p, text);
-			append(p, text_1);
-			append(p, text_2);
+			append(p, text0);
+			append(p, text1);
+			append(p, text2);
 		},
 
 		p: function update(changed, ctx) {
-			if ((changed.Math || changed.foo) && text_value !== (text_value = ctx.Math.max(0, ctx.foo))) {
-				setData(text, text_value);
+			if ((changed.Math || changed.foo) && text0_value !== (text0_value = ctx.Math.max(0, ctx.foo))) {
+				setData(text0, text0_value);
 			}
 
 			if (changed.bar) {
-				setData(text_2, ctx.bar);
+				setData(text2, ctx.bar);
 			}
 		},
 

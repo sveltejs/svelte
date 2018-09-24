@@ -4,30 +4,30 @@ import { addLoc, append, assign, createElement, createText, detachNode, init, in
 const file = undefined;
 
 function create_main_fragment(component, ctx) {
-	var h1, text, text_1, text_2, text_3;
+	var h1, text0, text1, text2, text3;
 
 	return {
 		c: function create() {
 			h1 = createElement("h1");
-			text = createText("Hello ");
-			text_1 = createText(ctx.name);
-			text_2 = createText("!");
-			text_3 = createText("\n");
+			text0 = createText("Hello ");
+			text1 = createText(ctx.name);
+			text2 = createText("!");
+			text3 = createText("\n");
 			debugger;
 			addLoc(h1, file, 0, 0, 0);
 		},
 
 		m: function mount(target, anchor) {
 			insert(target, h1, anchor);
-			append(h1, text);
-			append(h1, text_1);
-			append(h1, text_2);
-			insert(target, text_3, anchor);
+			append(h1, text0);
+			append(h1, text1);
+			append(h1, text2);
+			insert(target, text3, anchor);
 		},
 
 		p: function update(changed, ctx) {
 			if (changed.name) {
-				setData(text_1, ctx.name);
+				setData(text1, ctx.name);
 			}
 
 			debugger;
@@ -36,7 +36,7 @@ function create_main_fragment(component, ctx) {
 		d: function destroy(detach) {
 			if (detach) {
 				detachNode(h1);
-				detachNode(text_3);
+				detachNode(text3);
 			}
 		}
 	};

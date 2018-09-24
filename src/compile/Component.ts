@@ -5,7 +5,6 @@ import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import deindent from '../utils/deindent';
-import CodeBuilder from '../utils/CodeBuilder';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
@@ -13,13 +12,11 @@ import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
 import annotateWithScopes from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
-import Stylesheet from '../css/Stylesheet';
+import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import shared from './shared';
-import { DomTarget } from './dom';
-import { SsrTarget } from './ssr';
-import { Node, GenerateOptions, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
+import { Node, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import checkForComputedKeys from './validate/js/utils/checkForComputedKeys';
@@ -101,7 +98,6 @@ export default class Component {
 	name: string;
 	options: CompileOptions;
 	fragment: Fragment;
-	target: DomTarget | SsrTarget;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -124,7 +120,6 @@ export default class Component {
 	hasComponents: boolean;
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
-	slots: Set<string>;
 	javascript: [string, string];
 
 	used: {
@@ -142,13 +137,11 @@ export default class Component {
 
 	code: MagicString;
 
-	bindingGroups: string[];
 	indirectDependencies: Map<string, Set<string>>;
 	expectedProperties: Set<string>;
 	refs: Set<string>;
 
 	file: string;
-	fileVar: string;
 	locate: (c: number) => { line: number, column: number };
 
 	stylesheet: Stylesheet;
@@ -168,15 +161,13 @@ export default class Component {
 		source: string,
 		name: string,
 		options: CompileOptions,
-		stats: Stats,
-		target: DomTarget | SsrTarget
+		stats: Stats
 	) {
 		this.stats = stats;
 
 		this.ast = ast;
 		this.source = source;
 		this.options = options;
-		this.target = target;
 
 		this.imports = [];
 		this.shorthandImports = [];
@@ -188,7 +179,6 @@ export default class Component {
 		this.transitions = new Set();
 		this.actions = new Set();
 		this.importedComponents = new Map();
-		this.slots = new Set();
 
 		this.used = {
 			components: new Set(),
@@ -204,7 +194,6 @@ export default class Component {
 		this.refs = new Set();
 		this.refCallees = [];
 
-		this.bindingGroups = [];
 		this.indirectDependencies = new Map();
 
 		this.file = options.filename && (
@@ -228,8 +217,6 @@ export default class Component {
 		this.templateVars = new Map();
 		this.aliases = new Map();
 		this.usedNames = new Set();
-
-		this.fileVar = options.dev && this.getUniqueName('file');
 
 		this.computations = [];
 		this.templateProperties = {};
@@ -319,7 +306,11 @@ export default class Component {
 		return this.aliases.get(name);
 	}
 
-	generate(result: string, options: CompileOptions, { banner = '', name, format }: GenerateOptions ) {
+	generate(result: string, options: CompileOptions, {
+		banner = '',
+		name,
+		format
+	}) {
 		const pattern = /\[✂(\d+)-(\d+)$/;
 
 		const helpers = new Set();
