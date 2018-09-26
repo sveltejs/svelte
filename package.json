@@ -17,7 +17,7 @@
     "README.md"
   ],
   "scripts": {
-    "test": "mocha --opts mocha.opts",
+    "test": "mocha --opts mocha.opts && agadoo shared.js",
     "quicktest": "mocha --opts mocha.opts",
     "precoverage": "export COVERAGE=true && nyc mocha --opts mocha.coverage.opts",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov",
@@ -28,7 +28,7 @@
     "prepare": "npm run build",
     "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
-    "prepublishOnly": "npm run lint && npm test && agadoo shared.js",
+    "prepublishOnly": "npm run lint && npm test",
     "prettier": "prettier --write \"src/**/*.ts\""
   },
   "repository": {
