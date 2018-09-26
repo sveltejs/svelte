@@ -276,7 +276,7 @@ function getCompatibilityStatements(dependencies: Dependency[]) {
 }
 
 function getGlobals(dependencies: Dependency[], options: CompileOptions) {
-	const { globals, onerror, onwarn } = options;
+	const { globals, onwarn } = options;
 	const globalFn = getGlobalFn(globals);
 
 	return dependencies.map(d => {
@@ -284,10 +284,9 @@ function getGlobals(dependencies: Dependency[], options: CompileOptions) {
 
 		if (!name) {
 			if (d.name.startsWith('__import')) {
-				const error = new Error(
+				throw new Error(
 					`Could not determine name for imported module '${d.source}' – use options.globals`
 				);
-				onerror(error);
 			} else {
 				const warning = {
 					code: `options-missing-globals`,

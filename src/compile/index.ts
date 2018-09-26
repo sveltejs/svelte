@@ -5,18 +5,15 @@ import renderDOM from './render-dom/index';
 import renderSSR from './render-ssr/index';
 import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
+import deprecate from '../utils/deprecate';
 
 function normalize_options(options: CompileOptions): CompileOptions {
 	let normalized = assign({ generate: 'dom', dev: false }, options);
-	const { onwarn, onerror } = normalized;
+	const { onwarn } = normalized;
 
 	normalized.onwarn = onwarn
 		? (warning: Warning) => onwarn(warning, default_onwarn)
 		: default_onwarn;
-
-	normalized.onerror = onerror
-		? (error: Error) => onerror(error, default_onerror)
-		: default_onerror;
 
 	return normalized;
 }
@@ -27,10 +24,6 @@ function default_onwarn({ start, message }: Warning) {
 	} else {
 		console.warn(message);
 	}
-}
-
-function default_onerror(error: Error) {
-	throw error;
 }
 
 function validate_options(options: CompileOptions, stats: Stats) {
@@ -52,7 +45,17 @@ function validate_options(options: CompileOptions, stats: Stats) {
 	}
 }
 
-export default function compile(source: string, options: CompileOptions) {
+export default function compile(source: string, options: CompileOptions = {}) {
+	const onerror = options.onerror || (err => {
+		throw err;
+	});
+
+	if (options.onerror) {
+		// TODO remove in v3
+		deprecate(`Instead of using options.onerror, wrap svelte.compile in a try-catch block`);
+		delete options.onerror;
+	}
+
 	options = normalize_options(options);
 
 	const stats = new Stats({
@@ -88,7 +91,6 @@ export default function compile(source: string, options: CompileOptions) {
 
 		return renderDOM(component, options);
 	} catch (err) {
-		options.onerror(err);
-		return;
+		onerror(err);
 	}
 }
