@@ -28,7 +28,7 @@
     "prepare": "npm run build",
     "dev": "node src/shared/_build.js && rollup -c -w",
     "pretest": "npm run build",
-    "prepublishOnly": "npm run lint && npm test",
+    "prepublishOnly": "npm run lint && npm test && agadoo shared.js",
     "prettier": "prettier --write \"src/**/*.ts\""
   },
   "repository": {
@@ -52,6 +52,7 @@
     "@types/node": "^10.5.5",
     "acorn": "^5.4.1",
     "acorn-dynamic-import": "^3.0.0",
+    "agadoo": "^1.0.0",
     "chalk": "^2.4.0",
     "codecov": "^3.0.0",
     "console-group": "^0.3.2",
