@@ -162,7 +162,7 @@ assign(Store.prototype, {
 		let dirty = false;
 
 		for (const key in newState) {
-			if (this._computed[key]) throw new Error(`'${key}' is a read-only property`);
+			if (this._computed[key]) throw new Error(`'${key}' is a read-only computed property`);
 			if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
 		}
 		if (!dirty) return;
