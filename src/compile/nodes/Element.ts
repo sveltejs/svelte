@@ -365,22 +365,32 @@ export default class Element extends Node {
 
 		// handle special cases
 		if (this.name === 'a') {
-			const attribute = attributeMap.get('href') || attributeMap.get('xlink:href');
+			const hrefAttribute = attributeMap.get('href') || attributeMap.get('xlink:href');
 
-			if (attribute) {
-				const value = attribute.getStaticValue();
+			const roleAttribute = attributeMap.get('role');
+			let hasButtonRole = false
 
-				if (value === '' || value === '#') {
-					component.warn(attribute, {
-						code: `a11y-invalid-attribute`,
-						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
+			if (roleAttribute) {
+				const roleValue = roleAttribute.getStaticValue();
+				hasButtonRole = (roleValue === 'button')
+			}
+
+			if (!hasButtonRole) {
+				if (hrefAttribute) {
+					const value = hrefAttribute.getStaticValue();
+
+					if (value === '' || value === '#') {
+						component.warn(hrefAttribute, {
+							code: `a11y-invalid-attribute`,
+							message: `A11y: '${value}' is not a valid ${hrefAttribute.name} attribute`
+						});
+					}
+				} else {
+					component.warn(this, {
+						code: `a11y-missing-attribute`,
+						message: `A11y: <a> element should have an href attribute`
 					});
 				}
-			} else {
-				component.warn(this, {
-					code: `a11y-missing-attribute`,
-					message: `A11y: <a> element should have an href attribute`
-				});
 			}
 		}
 
