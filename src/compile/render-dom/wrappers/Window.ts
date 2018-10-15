@@ -157,7 +157,7 @@ export default class WindowWrapper extends Wrapper {
 						[bindings.scrollX, bindings.scrollY].map(
 							binding => binding && `changed["${binding}"]`
 						).filter(Boolean).join(' || ')
-					}) {
+					} && !${lock}) {
 						${lock} = true;
 						clearTimeout(${timeout});
 						window.scrollTo(${
