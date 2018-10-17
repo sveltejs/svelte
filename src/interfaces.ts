@@ -60,10 +60,10 @@ export interface CompileOptions {
 
 	preserveComments?: boolean | false;
 
-	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
 
 	// to remove in v3
+	onerror?: (error: Error) => void;
 	skipIntroByDefault?: boolean;
 	nestedTransitions?: boolean;
 }
