@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 2.14.0
+
+* Refactor internals ([#1678](https://github.com/sveltejs/svelte/issues/1678))
+* Deprecate `onerror` option ([#1745](https://github.com/sveltejs/svelte/issues/1745))
+* Handle edge cases where `destroy` is called before `mount` ([#1653](https://github.com/sveltejs/svelte/pull/1653))
+* Make `scroll` binding more efficient ([#1579](https://github.com/sveltejs/svelte/pull/1770))
+* Make 'readonly property' store error more informative ([#1761](https://github.com/sveltejs/svelte/pull/1761))
+
 ## 2.13.5
 
 * Fix missing dependencies in shorthand class directives ([#1739](https://github.com/sveltejs/svelte/issues/1739))
