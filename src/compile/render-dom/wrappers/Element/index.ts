@@ -831,7 +831,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.addLine(
-				`if (typeof ${name}.destroy === 'function') ${name}.destroy.call(#component);`
+				`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy.call(#component);`
 			);
 		});
 	}
