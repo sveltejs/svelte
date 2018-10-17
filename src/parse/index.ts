@@ -136,6 +136,13 @@ export class Parser {
 		return this.template.slice(this.index, this.index + str.length) === str;
 	}
 
+	matchRegex(pattern: RegExp) {
+		const match = pattern.exec(this.template.slice(this.index));
+		if (!match || match.index !== 0) return null;
+
+		return match[0];
+	}
+
 	allowWhitespace() {
 		while (
 			this.index < this.template.length &&
@@ -146,12 +153,9 @@ export class Parser {
 	}
 
 	read(pattern: RegExp) {
-		const match = pattern.exec(this.template.slice(this.index));
-		if (!match || match.index !== 0) return null;
-
-		this.index += match[0].length;
-
-		return match[0];
+		const result = this.matchRegex(pattern);
+		if (result) this.index += result.length;
+		return result;
 	}
 
 	readIdentifier() {
