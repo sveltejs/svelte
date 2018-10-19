@@ -99,9 +99,7 @@ export default class FragmentWrapper {
 				this.nodes.unshift(wrapper);
 
 				link(lastChild, lastChild = wrapper);
-			}
-
-			else {
+			} else {
 				const Wrapper = wrappers[child.type];
 				if (!Wrapper) continue;
 
