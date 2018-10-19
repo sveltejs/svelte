@@ -1,5 +1,4 @@
 import { parseExpressionAt } from 'acorn';
-import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 
 const DIRECTIVES: Record<string, {
@@ -101,35 +100,26 @@ Object.keys(DIRECTIVES).forEach(name => {
 });
 
 function readExpression(parser: Parser, start: number, quoteMark: string|null) {
-	let str = '';
+	let i = start;
 	let escaped = false;
 
-	for (let i = start; i < parser.template.length; i += 1) {
+	for (; i < parser.template.length; i += 1) {
 		const char = parser.template[i];
 
 		if (quoteMark) {
 			if (char === quoteMark) {
-				if (escaped) {
-					str += quoteMark;
-				} else {
-					break;
-				}
+				if (!escaped) break;
 			} else if (escaped) {
-				str += '\\' + char;
 				escaped = false;
 			} else if (char === '\\') {
 				escaped = true;
-			} else {
-				str += char;
 			}
 		} else if (/[\s\/>]/.test(char)) {
 			break;
-		} else {
-			str += char;
 		}
 	}
 
-	const expression = parseExpressionAt(repeat(' ', start) + str, start, {
+	const expression = parseExpressionAt(parser.template.slice(0, i), start, {
 		ecmaVersion: 9,
 	});
 	parser.index = expression.end;
