@@ -120,10 +120,6 @@ export default class FragmentWrapper {
 				if (!first.data) {
 					first.var = null;
 					this.nodes.shift();
-
-					if (this.nodes.length) {
-						link(null, this.nodes[0]);
-					}
 				}
 			}
 		}
