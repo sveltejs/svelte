@@ -1,5 +1,13 @@
 # Svelte changelog
 
+## 2.14.1
+
+* Fix block insertion order regression ([#1778](https://github.com/sveltejs/svelte/issues/1778))
+* Fix blocks inside `<svelte:head>` ([#1774](https://github.com/sveltejs/svelte/issues/1774))
+* Better attribute parsing ([#1772](https://github.com/sveltejs/svelte/issues/1772))
+* Fix parse errors inside directives ([#1788](https://github.com/sveltejs/svelte/issues/1788))
+
+
 ## 2.14.0
 
 * Refactor internals ([#1678](https://github.com/sveltejs/svelte/issues/1678))
