@@ -397,13 +397,13 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 function readAttributeValue(parser: Parser) {
 	const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
 
-	const regex = quoteMark === `'`
-		? /'/
-		: quoteMark === `"` ? /"/ : /[\s"'=<>\/`]/;
-
-	const value = readSequence(parser, () =>
-		regex.test(parser.template[parser.index])
+	const regex = (
+		quoteMark === `'` ? /'/ :
+		quoteMark === `"` ? /"/ :
+		/(\/>|[\s"'=<>`])/
 	);
+
+	const value = readSequence(parser, () => !!parser.matchRegex(regex));
 
 	if (quoteMark) parser.index += 1;
 	return value;
