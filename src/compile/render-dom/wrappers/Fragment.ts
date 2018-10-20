@@ -118,6 +118,10 @@ export default class FragmentWrapper {
 				if (!first.data) {
 					first.var = null;
 					this.nodes.shift();
+
+					if (this.nodes[0]) {
+						this.nodes[0].prev = null;
+					}
 				}
 			}
 		}
