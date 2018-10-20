@@ -99,9 +99,7 @@ export default class FragmentWrapper {
 				this.nodes.unshift(wrapper);
 
 				link(lastChild, lastChild = wrapper);
-			}
-
-			else {
+			} else {
 				const Wrapper = wrappers[child.type];
 				if (!Wrapper) continue;
 
@@ -120,10 +118,6 @@ export default class FragmentWrapper {
 				if (!first.data) {
 					first.var = null;
 					this.nodes.shift();
-
-					if (this.nodes.length) {
-						link(null, this.nodes[0]);
-					}
 				}
 			}
 		}
