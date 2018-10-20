@@ -21,7 +21,7 @@ export default class HeadWrapper extends Wrapper {
 			renderer,
 			block,
 			node.children,
-			parent,
+			this,
 			stripWhitespace,
 			nextSibling
 		);
