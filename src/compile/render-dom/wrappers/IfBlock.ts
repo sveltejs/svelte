@@ -41,7 +41,7 @@ class IfBlockBranch extends Wrapper {
 			)
 		});
 
-		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent.parent, stripWhitespace, nextSibling);
+		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent, stripWhitespace, nextSibling);
 
 		this.isDynamic = this.block.dependencies.size > 0;
 	}
