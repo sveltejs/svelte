@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.14.2
+
+* Fix issue with nested `{#if}` blocks ([#1780](https://github.com/sveltejs/svelte/issues/1780))
+
 ## 2.14.1
 
 * Fix block insertion order regression ([#1778](https://github.com/sveltejs/svelte/issues/1778))
