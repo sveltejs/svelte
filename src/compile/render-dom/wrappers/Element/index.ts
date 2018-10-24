@@ -163,13 +163,16 @@ export default class ElementWrapper extends Wrapper {
 			block.addAnimation();
 		}
 
-		if (node.classes) {
-			node.classes.forEach(({ expression }) => {
-				if (expression) {
-					block.addDependencies(expression.dependencies);
-				}
-			});
-		}
+		// add directive and handler dependencies
+		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
+			if (directive && directive.expression) {
+				block.addDependencies(directive.expression.dependencies);
+			}
+		});
+
+		node.handlers.forEach(handler => {
+			block.addDependencies(handler.dependencies);
+		});
 
 		if (this.parent) {
 			if (node.actions.length > 0) this.parent.cannotUseInnerHTML();
