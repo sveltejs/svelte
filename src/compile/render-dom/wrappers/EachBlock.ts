@@ -462,7 +462,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			} else {
 				destroy = deindent`
-					for (; #i < ${iterations}.length; #i += 1) {
+					for (${this.block.hasUpdateMethod ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${iterations}.length; #i += 1) {
 						${iterations}[#i].d(1);
 					}
 					${iterations}.length = ${this.vars.each_block_value}.${length};
