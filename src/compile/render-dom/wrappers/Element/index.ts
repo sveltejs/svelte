@@ -163,6 +163,17 @@ export default class ElementWrapper extends Wrapper {
 			block.addAnimation();
 		}
 
+		// add directive and handler dependencies
+		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
+			if (directive && directive.expression) {
+				block.addDependencies(directive.expression.dependencies);
+			}
+		});
+
+		node.handlers.forEach(handler => {
+			block.addDependencies(handler.dependencies);
+		});
+
 		if (this.parent) {
 			if (node.actions.length > 0) this.parent.cannotUseInnerHTML();
 			if (node.animation) this.parent.cannotUseInnerHTML();
@@ -393,20 +404,6 @@ export default class ElementWrapper extends Wrapper {
 			? `{ ${attributes} }`
 			: `{}`}, ${this.node.namespace === namespaces.svg ? true : false})`;
 	}
-
-	// addBindings(block: Block) {
-	// 	if (this.bindings.length === 0) return;
-
-	// 	if (this.node.name === 'select' || this.isMediaNode()) {
-	// 		this.renderer.hasComplexBindings = true;
-	// 	}
-
-	// 	this.bindings.forEach(binding => {
-	// 		binding.render(block);
-	// 	});
-
-	// 	this.initialUpdate = this.bindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
-	// }
 
 	addBindings(block: Block) {
 		const { renderer } = this;

@@ -105,7 +105,7 @@ export default function(node, renderer, options) {
 				openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
 			} else if (attribute.name === 'class' && classExpr) {
 				addClassAttribute = false;
-				openingTag += ` class="\${ [\`${attribute.stringifyForSsr()}\`, ${classExpr} ].join(' ').trim() }"`;
+				openingTag += ` class="\${[\`${attribute.stringifyForSsr()}\`, ${classExpr}].join(' ').trim() }"`;
 			} else {
 				openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
 			}
@@ -113,7 +113,7 @@ export default function(node, renderer, options) {
 	}
 
 	if (addClassAttribute) {
-		openingTag += ` class="\${ [${classExpr}].join(' ').trim() }"`;
+		openingTag += `\${((v) => v ? ' class="' + v + '"' : '')([${classExpr}].join(' ').trim())}`;
 	}
 
 	openingTag += '>';
