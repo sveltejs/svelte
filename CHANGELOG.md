@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## 2.14.3
+
+* Account for directive dependencies ([#1793](https://github.com/sveltejs/svelte/issues/1793))
+* Detach each block iterations in each blocks with no update method ([#1795](https://github.com/sveltejs/svelte/issues/1795))
+
 ## 2.14.2
 
 * Fix issue with nested `{#if}` blocks ([#1780](https://github.com/sveltejs/svelte/issues/1780))
