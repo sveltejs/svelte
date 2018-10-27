@@ -21,6 +21,7 @@ const handlers: Record<string, Handler> = {
 	AwaitBlock,
 	Comment,
 	DebugTag,
+	Document: noop,
 	EachBlock,
 	Element,
 	Head,
