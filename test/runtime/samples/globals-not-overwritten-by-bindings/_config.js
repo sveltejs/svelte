@@ -16,6 +16,23 @@ export default {
 		</div>
 	`,
 
+	ssrHtml: `
+		<div class="todo done">
+			<input type="checkbox" checked>
+			<input type="text" value="Buy some milk">
+		</div>
+
+		<div class="todo done">
+			<input type="checkbox" checked>
+			<input type="text" value="Do the laundry">
+		</div>
+
+		<div class="todo ">
+			<input type="checkbox">
+			<input type="text" value="Find life's true purpose">
+		</div>
+	`,
+
 	data: {
 		todos: {
 			first: {

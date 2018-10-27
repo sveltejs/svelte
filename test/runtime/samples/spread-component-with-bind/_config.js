@@ -4,6 +4,11 @@ export default {
 		<input>
 	`,
 
+	ssrHtml: `
+		<p>foo</p>
+		<input value=foo>
+	`,
+
 	test (assert, component, target, window) {
 		const input = target.querySelector('input');
 

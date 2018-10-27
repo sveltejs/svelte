@@ -14,6 +14,11 @@ export default {
 		<input>
 	`,
 
+	ssrHtml: `
+		<h1>Hello world!</h1>
+		<input value=world>
+	`,
+
 	test(assert, component, target, window) {
 		const input = target.querySelector('input');
 		const event = new window.Event('input');
