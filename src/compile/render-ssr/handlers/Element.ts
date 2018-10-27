@@ -2,7 +2,7 @@ import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../utils/quote
 import isVoidElementName from '../../../utils/isVoidElementName';
 import Attribute from '../../nodes/Attribute';
 import Node from '../../nodes/shared/Node';
-import { escapeTemplate } from '../../../utils/stringify';
+import { escape, escapeTemplate } from '../../../utils/stringify';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
