@@ -13,6 +13,7 @@
     "shared.js",
     "store.js",
     "store.umd.js",
+    "store.d.ts",
     "svelte",
     "README.md"
   ],
