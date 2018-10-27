@@ -16,7 +16,6 @@ export default class Attribute extends Node {
 	name: string;
 	isSpread: boolean;
 	isTrue: boolean;
-	isConcatenated: boolean;
 	isDynamic: boolean;
 	isSynthetic: boolean;
 	shouldCache: boolean;
@@ -39,7 +38,6 @@ export default class Attribute extends Node {
 
 			this.isDynamic = true; // TODO not necessarily
 			this.shouldCache = false; // TODO does this mean anything here?
-			this.isConcatenated = false;
 		}
 
 		else {
@@ -67,8 +65,6 @@ export default class Attribute extends Node {
 					? this.chunks[0].node.type !== 'Identifier' || scope.names.has(this.chunks[0].node.name)
 					: true
 				: false;
-
-			this.isConcatenated = this.chunks.length > 1;
 		}
 	}
 
