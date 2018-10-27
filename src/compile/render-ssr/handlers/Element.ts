@@ -1,5 +1,8 @@
 import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
 import isVoidElementName from '../../../utils/isVoidElementName';
+import Attribute from '../../nodes/Attribute';
+import Node from '../../nodes/shared/Node';
+import { escapeTemplate } from '../../../utils/stringify';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
@@ -71,7 +74,7 @@ export default function(node, renderer, options) {
 				args.push(attribute.expression.snippet);
 			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
-					textareaContents = attribute.stringifyForSsr();
+					textareaContents = stringifyAttribute(attribute);
 				} else if (attribute.isTrue) {
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: true }`);
 				} else if (
@@ -82,18 +85,18 @@ export default function(node, renderer, options) {
 					// a boolean attribute with one non-Text chunk
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
 				} else {
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${attribute.stringifyForSsr()}\` }`);
+					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringifyAttribute(attribute)}\` }`);
 				}
 			}
 		});
 
 		openingTag += "${@spread([" + args.join(', ') + "])}";
 	} else {
-		node.attributes.forEach((attribute: Node) => {
+		node.attributes.forEach((attribute: Attribute) => {
 			if (attribute.type !== 'Attribute') return;
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
-				textareaContents = attribute.stringifyForSsr();
+				textareaContents = stringifyAttribute(attribute);
 			} else if (attribute.isTrue) {
 				openingTag += ` ${attribute.name}`;
 			} else if (
@@ -105,9 +108,14 @@ export default function(node, renderer, options) {
 				openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
 			} else if (attribute.name === 'class' && classExpr) {
 				addClassAttribute = false;
-				openingTag += ` class="\${[\`${attribute.stringifyForSsr()}\`, ${classExpr}].join(' ').trim() }"`;
+				openingTag += ` class="\${[\`${stringifyAttribute(attribute)}\`, ${classExpr}].join(' ').trim() }"`;
+			} else if (attribute.isConcatenated || !attribute.isDynamic) {
+				openingTag += ` ${attribute.name}="${stringifyAttribute(attribute)}"`;
 			} else {
-				openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
+				const { name } = attribute;
+				const { snippet } = attribute.chunks[0];
+
+				openingTag += '${(v => v == null ? "" : ` ' + name + '=${' + snippet + '}`)(' + snippet + ')}';
 			}
 		});
 	}
@@ -129,4 +137,16 @@ export default function(node, renderer, options) {
 	if (!isVoidElementName(node.name)) {
 		renderer.append(`</${node.name}>`);
 	}
+}
+
+function stringifyAttribute(attribute: Attribute) {
+	return attribute.chunks
+		.map((chunk: Node) => {
+			if (chunk.type === 'Text') {
+				return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
+			}
+
+			return '${@escape(' + chunk.snippet + ')}';
+		})
+		.join('');
 }
