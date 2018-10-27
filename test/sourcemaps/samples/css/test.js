@@ -1,11 +1,11 @@
 export function test ({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
 	const expected = locateInSource( '.foo' );
 
-	const loc = locateInGeneratedCss( '.foo' );
+	const start = locateInGeneratedCss( '.foo' );
 
 	const actual = smcCss.originalPositionFor({
-		line: loc.line + 1,
-		column: loc.column
+		line: start.line + 1,
+		column: start.column
 	});
 
 	assert.deepEqual( actual, {

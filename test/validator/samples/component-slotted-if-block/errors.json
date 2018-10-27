@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-slotted-content",
 	"message": "Cannot place slotted elements inside an if-block",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 7
+		"column": 7,
+		"character": 29
 	},
-	"pos": 31
+	"end": {
+		"line": 3,
+		"column": 17,
+		"character": 39
+	},
+	"pos": 29
 }]

@@ -1,8 +1,15 @@
 [{
-	"message": "'innerwidth' is not a valid binding on <:Window> (did you mean 'innerWidth'?)",
-	"loc": {
+	"code": "invalid-binding",
+	"message": "'innerwidth' is not a valid binding on <svelte:window> (did you mean 'innerWidth'?)",
+	"start": {
 		"line": 1,
-		"column": 9
+		"column": 15,
+		"character": 15
 	},
-	"pos": 9
+	"end": {
+		"line": 1,
+		"column": 34,
+		"character": 34
+	},
+	"pos": 15
 }]

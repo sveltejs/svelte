@@ -1,8 +1,10 @@
 {
+	"code": "unexpected-eof",
 	"message": "comment was left open, expected -->",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 24
+		"column": 24,
+		"character": 24
 	},
 	"pos": 24
 }

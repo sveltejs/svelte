@@ -17,7 +17,7 @@ function setup(Component) {
 	Component.prototype.foo( 'baz' );
 }
 
-function create_main_fragment(component, state) {
+function create_main_fragment(component, ctx) {
 
 	return {
 		c: noop,
@@ -26,8 +26,6 @@ function create_main_fragment(component, state) {
 
 		p: noop,
 
-		u: noop,
-
 		d: noop
 	};
 }
@@ -35,16 +33,18 @@ function create_main_fragment(component, state) {
 function SvelteComponent(options) {
 	init(this, options);
 	this._state = assign({}, options.data);
+	this._intro = true;
 
 	this._fragment = create_main_fragment(this, this._state);
 
 	if (options.target) {
 		this._fragment.c();
-		this._fragment.m(options.target, options.anchor || null);
+		this._mount(options.target, options.anchor);
 	}
 }
 
-assign(SvelteComponent.prototype, methods, proto);
+assign(SvelteComponent.prototype, proto);
+assign(SvelteComponent.prototype, methods);
 
 setup(SvelteComponent);
 export default SvelteComponent;

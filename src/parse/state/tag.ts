@@ -1,11 +1,7 @@
 import readExpression from '../read/expression';
 import readScript from '../read/script';
 import readStyle from '../read/style';
-import {
-	readEventHandlerDirective,
-	readBindingDirective,
-	readTransitionDirective,
-} from '../read/directives';
+import { readDirective } from '../read/directives';
 import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
@@ -14,12 +10,9 @@ import { Node } from '../../interfaces';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
-const SELF = ':Self';
-const COMPONENT = ':Component';
-
-const metaTags = new Set([
-	':Window',
-	':Head'
+const metaTags = new Map([
+	['svelte:window', 'Window'],
+	['svelte:head', 'Head']
 ]);
 
 const specials = new Map([
@@ -38,6 +31,9 @@ const specials = new Map([
 		},
 	],
 ]);
+
+const SELF = 'svelte:self';
+const COMPONENT = 'svelte:component';
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 const disallowedContents = new Map([
@@ -64,6 +60,16 @@ const disallowedContents = new Map([
 	['th', new Set(['td', 'th', 'tr'])],
 ]);
 
+function parentIsHead(stack) {
+	let i = stack.length;
+	while (i--) {
+		const { type } = stack[i];
+		if (type === 'Head') return true;
+		if (type === 'Element' || type === 'InlineComponent') return false;
+	}
+	return false;
+}
+
 export default function tag(parser: Parser) {
 	const start = parser.index++;
 
@@ -88,31 +94,43 @@ export default function tag(parser: Parser) {
 	const name = readTagName(parser);
 
 	if (metaTags.has(name)) {
+		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
-			if (name === ':Window' && parser.current().children.length) {
-				parser.error(
-					`<:Window> cannot have children`,
-					parser.current().children[0].start
-				);
+			if (name === 'svelte:window' && parser.current().children.length) {
+				parser.error({
+					code: `invalid-window-content`,
+					message: `<${name}> cannot have children`
+				}, parser.current().children[0].start);
 			}
 		} else {
 			if (name in parser.metaTags) {
-				parser.error(`A component can only have one <${name}> tag`, start);
+				parser.error({
+					code: `duplicate-${slug}`,
+					message: `A component can only have one <${name}> tag`
+				}, start);
 			}
 
 			if (parser.stack.length > 1) {
-				console.log(parser.stack);
-				parser.error(`<${name}> tags cannot be inside elements or blocks`, start);
+				parser.error({
+					code: `invalid-${slug}-placement`,
+					message: `<${name}> tags cannot be inside elements or blocks`
+				}, start);
 			}
 
 			parser.metaTags[name] = true;
 		}
 	}
 
+	const type = metaTags.has(name)
+		? metaTags.get(name)
+		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
+		: name === 'title' && parentIsHead(parser.stack) ? 'Title'
+		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+
 	const element: Node = {
 		start,
 		end: null, // filled in later
-		type: 'Element',
+		type,
 		name,
 		attributes: [],
 		children: [],
@@ -122,21 +140,21 @@ export default function tag(parser: Parser) {
 
 	if (isClosingTag) {
 		if (isVoidElementName(name)) {
-			parser.error(
-				`<${name}> is a void element and cannot have children, or a closing tag`,
-				start
-			);
+			parser.error({
+				code: `invalid-void-content`,
+				message: `<${name}> is a void element and cannot have children, or a closing tag`
+			}, start);
 		}
 
-		if (!parser.eat('>')) parser.error(`Expected '>'`);
+		parser.eat('>', true);
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
 			if (parent.type !== 'Element')
-				parser.error(
-					`</${name}> attempted to close an element that was not open`,
-					start
-				);
+				parser.error({
+					code: `invalid-closing-tag`,
+					message: `</${name}> attempted to close an element that was not open`
+				}, start);
 
 			parent.end = start;
 			parser.stack.pop();
@@ -162,20 +180,12 @@ export default function tag(parser: Parser) {
 		while (i--) {
 			const item = parser.stack[i];
 			if (item.type === 'EachBlock') {
-				parser.error(
-					`<slot> cannot be a child of an each-block`,
-					start
-				);
+				parser.error({
+					code: `invalid-slot-placement`,
+					message: `<slot> cannot be a child of an each-block`
+				}, start);
 			}
 		}
-	}
-
-	if (name === COMPONENT) {
-		parser.eat('{', true);
-		element.expression = readExpression(parser);
-		parser.allowWhitespace();
-		parser.eat('}', true);
-		parser.allowWhitespace();
 	}
 
 	const uniqueNames = new Set();
@@ -183,11 +193,35 @@ export default function tag(parser: Parser) {
 	let attribute;
 	while ((attribute = readAttribute(parser, uniqueNames))) {
 		if (attribute.type === 'Binding' && !parser.allowBindings) {
-			parser.error(`Two-way binding is disabled`, attribute.start);
+			parser.error({
+				code: `binding-disabled`,
+				message: `Two-way binding is disabled`
+			}, attribute.start);
 		}
 
 		element.attributes.push(attribute);
 		parser.allowWhitespace();
+	}
+
+	if (name === 'svelte:component') {
+		// TODO post v2, treat this just as any other attribute
+		const index = element.attributes.findIndex(attr => attr.name === 'this');
+		if (!~index) {
+			parser.error({
+				code: `missing-component-definition`,
+				message: `<svelte:component> must have a 'this' attribute`
+			}, start);
+		}
+
+		const definition = element.attributes.splice(index, 1)[0];
+		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
+			parser.error({
+				code: `invalid-component-definition`,
+				message: `invalid component definition`
+			}, definition.start);
+		}
+
+		element.expression = definition.value[0].expression;
 	}
 
 	// special cases – top-level <script> and <style>
@@ -196,9 +230,10 @@ export default function tag(parser: Parser) {
 
 		if (parser[special.property]) {
 			parser.index = start;
-			parser.error(
-				`You can only have one top-level <${name}> tag per component`
-			);
+			parser.error({
+				code: `duplicate-${name}`,
+				message: `You can only have one top-level <${name}> tag per component`
+			});
 		}
 
 		parser.eat('>', true);
@@ -234,13 +269,11 @@ export default function tag(parser: Parser) {
 		element.end = parser.index;
 	} else if (name === 'style') {
 		// special case
-		element.children = readSequence(
-			parser,
-			() =>
-				parser.template.slice(parser.index, parser.index + 8) === '</style>'
-		);
-		parser.read(/<\/style>/);
-		element.end = parser.index;
+		const start = parser.index;
+		const data = parser.readUntil(/<\/style>/);
+		const end = parser.index;
+		element.children.push({ start, end, type: 'Text', data });
+		parser.eat('</style>', true);
 	} else {
 		parser.stack.push(element);
 	}
@@ -264,10 +297,10 @@ function readTagName(parser: Parser) {
 		}
 
 		if (!legal) {
-			parser.error(
-				`<${SELF}> components can only exist inside if-blocks or each-blocks`,
-				start
-			);
+			parser.error({
+				code: `invalid-self-placement`,
+				message: `<${SELF}> components can only exist inside if-blocks or each-blocks`
+			}, start);
 		}
 
 		return SELF;
@@ -280,7 +313,10 @@ function readTagName(parser: Parser) {
 	if (metaTags.has(name)) return name;
 
 	if (!validTagName.test(name)) {
-		parser.error(`Expected valid tag name`, start);
+		parser.error({
+			code: `invalid-tag-name`,
+			message: `Expected valid tag name`
+		}, start);
 	}
 
 	return name;
@@ -289,52 +325,65 @@ function readTagName(parser: Parser) {
 function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const start = parser.index;
 
+	if (parser.eat('{')) {
+		parser.allowWhitespace();
+
+		if (parser.eat('...')) {
+			const expression = readExpression(parser);
+
+			parser.allowWhitespace();
+			parser.eat('}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Spread',
+				expression
+			};
+		} else {
+			const valueStart = parser.index;
+
+			const name = parser.readIdentifier();
+			parser.allowWhitespace();
+			parser.eat('}', true);
+
+			return {
+				start,
+				end: parser.index,
+				type: 'Attribute',
+				name,
+				value: [{
+					start: valueStart,
+					end: valueStart + name.length,
+					type: 'AttributeShorthand',
+					expression: {
+						start: valueStart,
+						end: valueStart + name.length,
+						type: 'Identifier',
+						name
+					}
+				}]
+			};
+		}
+	}
+
 	let name = parser.readUntil(/(\s|=|\/|>)/);
 	if (!name) return null;
 	if (uniqueNames.has(name)) {
-		parser.error('Attributes need to be unique', start);
+		parser.error({
+			code: `duplicate-attribute`,
+			message: 'Attributes need to be unique'
+		}, start);
 	}
 
 	uniqueNames.add(name);
 
 	parser.allowWhitespace();
 
-	if (/^on:/.test(name)) {
-		return readEventHandlerDirective(parser, start, name.slice(3), parser.eat('='));
-	}
+	const directive = readDirective(parser, start, name);
+	if (directive) return directive;
 
-	if (/^bind:/.test(name)) {
-		return readBindingDirective(parser, start, name.slice(5));
-	}
-
-	if (/^ref:/.test(name)) {
-		return {
-			start,
-			end: parser.index,
-			type: 'Ref',
-			name: name.slice(4),
-		};
-	}
-
-	const match = /^(in|out|transition):/.exec(name);
-	if (match) {
-		return readTransitionDirective(
-			parser,
-			start,
-			name.slice(match[0].length),
-			match[1]
-		);
-	}
-
-	let value;
-
-	// :foo is shorthand for foo='{{foo}}'
-	if (/^:\w+$/.test(name)) {
-		name = name.slice(1);
-		value = getShorthandValue(start + 1, name);
-	} else {
-		value = parser.eat('=') ? readAttributeValue(parser) : true;
-	}
+	let value = parser.eat('=') ? readAttributeValue(parser) : true;
 
 	return {
 		start,
@@ -348,34 +397,16 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 function readAttributeValue(parser: Parser) {
 	const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
 
-	const regex = quoteMark === `'`
-		? /'/
-		: quoteMark === `"` ? /"/ : /[\s"'=<>\/`]/;
-
-	const value = readSequence(parser, () =>
-		regex.test(parser.template[parser.index])
+	const regex = (
+		quoteMark === `'` ? /'/ :
+		quoteMark === `"` ? /"/ :
+		/(\/>|[\s"'=<>`])/
 	);
+
+	const value = readSequence(parser, () => !!parser.matchRegex(regex));
 
 	if (quoteMark) parser.index += 1;
 	return value;
-}
-
-function getShorthandValue(start: number, name: string) {
-	const end = start + name.length;
-
-	return [
-		{
-			type: 'AttributeShorthand',
-			start,
-			end,
-			expression: {
-				type: 'Identifier',
-				start,
-				end,
-				name,
-			},
-		},
-	];
 }
 
 function readSequence(parser: Parser, done: () => boolean) {
@@ -402,17 +433,16 @@ function readSequence(parser: Parser, done: () => boolean) {
 			});
 
 			return chunks;
-		} else if (parser.eat('{{')) {
+		} else if (parser.eat('{')) {
 			if (currentChunk.data) {
 				currentChunk.end = index;
 				chunks.push(currentChunk);
 			}
 
+			parser.allowWhitespace();
 			const expression = readExpression(parser);
 			parser.allowWhitespace();
-			if (!parser.eat('}}')) {
-				parser.error(`Expected }}`);
-			}
+			parser.eat('}', true);
 
 			chunks.push({
 				start: index,
@@ -432,5 +462,8 @@ function readSequence(parser: Parser, done: () => boolean) {
 		}
 	}
 
-	parser.error(`Unexpected end of input`);
+	parser.error({
+		code: `unexpected-eof`,
+		message: `Unexpected end of input`
+	});
 }

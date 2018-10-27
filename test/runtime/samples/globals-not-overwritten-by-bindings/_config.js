@@ -40,7 +40,7 @@ export default {
 		input.checked = true;
 		input.dispatchEvent(change);
 
-		assert.ok(component.get('todos').third.done);
+		assert.ok(component.get().todos.third.done);
 		assert.htmlEqual(target.innerHTML, `
 			<div class="todo done">
 				<input type="checkbox">

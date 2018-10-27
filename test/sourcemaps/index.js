@@ -27,14 +27,13 @@ describe("sourcemaps", () => {
 			);
 
 			const input = fs.readFileSync(filename, "utf-8").replace(/\s+$/, "");
-			const { code, map, css, cssMap } = svelte.compile(input, {
+			const { js, css } = svelte.compile(input, {
 				filename,
 				outputFilename: `${outputFilename}.js`,
-				cssOutputFilename: `${outputFilename}.css`,
-				cascade: config.cascade
+				cssOutputFilename: `${outputFilename}.css`
 			});
 
-			const _code = code.replace(/Svelte v\d+\.\d+\.\d+/, match => match.replace(/\d/g, 'x'));
+			const _code = js.code.replace(/Svelte v\d+\.\d+\.\d+/, match => match.replace(/\d/g, 'x'));
 
 			fs.writeFileSync(
 				`${outputFilename}.js`,
@@ -42,34 +41,34 @@ describe("sourcemaps", () => {
 			);
 			fs.writeFileSync(
 				`${outputFilename}.js.map`,
-				JSON.stringify(map, null, "  ")
+				JSON.stringify(js.map, null, "  ")
 			);
 
-			if (css) {
+			if (css.code) {
 				fs.writeFileSync(
 					`${outputFilename}.css`,
-					`${css}\n/*# sourceMappingURL=output.css.map */`
+					`${css.code}\n/*# sourceMappingURL=output.css.map */`
 				);
 				fs.writeFileSync(
 					`${outputFilename}.css.map`,
-					JSON.stringify(cssMap, null, "  ")
+					JSON.stringify(css.map, null, "  ")
 				);
 			}
 
-			assert.deepEqual(map.sources, ["input.html"]);
-			if (cssMap) assert.deepEqual(cssMap.sources, ["input.html"]);
+			assert.deepEqual(js.map.sources, ["input.html"]);
+			if (css.map) assert.deepEqual(css.map.sources, ["input.html"]);
 
 			const { test } = require(`./samples/${dir}/test.js`);
 
 			const locateInSource = getLocator(input);
 
-			const smc = new SourceMapConsumer(map);
+			const smc = new SourceMapConsumer(js.map);
 			const locateInGenerated = getLocator(_code);
 
-			const smcCss = cssMap && new SourceMapConsumer(cssMap);
-			const locateInGeneratedCss = getLocator(css || '');
+			const smcCss = css.map && new SourceMapConsumer(css.map);
+			const locateInGeneratedCss = getLocator(css.code || '');
 
-			test({ assert, code: _code, map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });
+			test({ assert, code: _code, map: js.map, smc, smcCss, locateInSource, locateInGenerated, locateInGeneratedCss });
 		});
 	});
 });

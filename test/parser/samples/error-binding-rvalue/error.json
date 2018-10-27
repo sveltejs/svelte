@@ -1,8 +1,10 @@
 {
-	"message": "Cannot bind to rvalue",
+	"code": "invalid-directive-value",
+	"message": "Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)",
 	"pos": 19,
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 19
+		"column": 19,
+		"character": 19
 	}
 }

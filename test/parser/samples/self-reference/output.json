@@ -1,5 +1,4 @@
 {
-	"hash": 216762188,
 	"html": {
 		"start": 0,
 		"end": 57,
@@ -11,55 +10,55 @@
 				"type": "IfBlock",
 				"expression": {
 					"type": "BinaryExpression",
-					"start": 6,
-					"end": 15,
+					"start": 5,
+					"end": 14,
 					"left": {
 						"type": "Identifier",
-						"start": 6,
-						"end": 11,
+						"start": 5,
+						"end": 10,
 						"name": "depth"
 					},
 					"operator": ">",
 					"right": {
 						"type": "Literal",
-						"start": 14,
-						"end": 15,
+						"start": 13,
+						"end": 14,
 						"value": 1,
 						"raw": "1"
 					}
 				},
 				"children": [
 					{
-						"start": 19,
-						"end": 49,
-						"type": "Element",
-						"name": ":Self",
+						"start": 17,
+						"end": 51,
+						"type": "InlineComponent",
+						"name": "svelte:self",
 						"attributes": [
 							{
-								"start": 26,
-								"end": 47,
+								"start": 30,
+								"end": 49,
 								"type": "Attribute",
 								"name": "depth",
 								"value": [
 									{
-										"start": 33,
-										"end": 46,
+										"start": 37,
+										"end": 48,
 										"type": "MustacheTag",
 										"expression": {
 											"type": "BinaryExpression",
-											"start": 35,
-											"end": 44,
+											"start": 38,
+											"end": 47,
 											"left": {
 												"type": "Identifier",
-												"start": 35,
-												"end": 40,
+												"start": 38,
+												"end": 43,
 												"name": "depth"
 											},
 											"operator": "-",
 											"right": {
 												"type": "Literal",
-												"start": 43,
-												"end": 44,
+												"start": 46,
+												"end": 47,
 												"value": 1,
 												"raw": "1"
 											}

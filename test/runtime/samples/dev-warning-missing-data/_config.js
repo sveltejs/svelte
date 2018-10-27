@@ -1,5 +1,7 @@
 export default {
-	dev: true,
+	compileOptions: {
+		dev: true
+	},
 
 	warnings: [
 		`<Main$> was created without expected data property 'foo'`,

@@ -1,4 +1,4 @@
-<button on:tap='set({ z: event.answer })'>{{z}}</button>
+<button on:tap='set({ z: event.answer })'>{z}</button>
 
 <script>
 	export default {
@@ -11,14 +11,14 @@
 			tap ( node, callback ) {
 				const clickHandler = event => {
 					callback({
-						answer: this.get( 'answer' )
+						answer: this.get().answer
 					});
 				};
 
 				node.addEventListener( 'click', clickHandler, false );
 
 				return {
-					teardown () {
+					destroy () {
 						node.addEventListener( 'click', clickHandler, false );
 					}
 				};

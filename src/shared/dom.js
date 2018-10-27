@@ -1,8 +1,8 @@
-export function appendNode(node, target) {
+export function append(target, node) {
 	target.appendChild(node);
 }
 
-export function insertNode(node, target, anchor) {
+export function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -47,9 +47,9 @@ export function reinsertBefore(after, target) {
 	while (parent.firstChild !== after) target.appendChild(parent.firstChild);
 }
 
-export function destroyEach(iterations) {
+export function destroyEach(iterations, detach) {
 	for (var i = 0; i < iterations.length; i += 1) {
-		if (iterations[i]) iterations[i].d();
+		if (iterations[i]) iterations[i].d(detach);
 	}
 }
 
@@ -83,6 +83,33 @@ export function removeListener(node, event, handler) {
 
 export function setAttribute(node, attribute, value) {
 	node.setAttribute(attribute, value);
+}
+
+export function setAttributes(node, attributes) {
+	for (var key in attributes) {
+		if (key === 'style') {
+			node.style.cssText = attributes[key];
+		} else if (key in node) {
+			node[key] = attributes[key];
+		} else {
+			if (attributes[key] === undefined) removeAttribute(node, key);
+			else setAttribute(node, key, attributes[key]);
+		}
+	}
+}
+
+export function setCustomElementData(node, prop, value) {
+	if (prop in node) {
+		node[prop] = value;
+	} else if (value) {
+		setAttribute(node, prop, value);
+	} else {
+		removeAttribute(node, prop);
+	}
+}
+
+export function removeAttribute(node, attribute) {
+	node.removeAttribute(attribute);
 }
 
 export function setXlinkAttribute(node, attribute, value) {
@@ -140,6 +167,10 @@ export function claimText (nodes, data) {
 	return createText(data);
 }
 
+export function setData(text, data) {
+	text.data = '' + data;
+}
+
 export function setInputType(input, type) {
 	try {
 		input.type = type;
@@ -177,4 +208,40 @@ export function selectMultipleValue(select) {
 	return [].map.call(select.querySelectorAll(':checked'), function(option) {
 		return option.__value;
 	});
+}
+
+export function addResizeListener(element, fn) {
+	if (getComputedStyle(element).position === 'static') {
+		element.style.position = 'relative';
+	}
+
+	const object = document.createElement('object');
+	object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+	object.type = 'text/html';
+
+	let win;
+
+	object.onload = () => {
+		win = object.contentDocument.defaultView;
+		win.addEventListener('resize', fn);
+	};
+
+	if (/Trident/.test(navigator.userAgent)) {
+		element.appendChild(object);
+		object.data = 'about:blank';
+	} else {
+		object.data = 'about:blank';
+		element.appendChild(object);
+	}
+
+	return {
+		cancel: () => {
+			win && win.removeEventListener && win.removeEventListener('resize', fn);
+			element.removeChild(object);
+		}
+	};
+}
+
+export function toggleClass(element, name, toggle) {
+	element.classList.toggle(name, !!toggle);
 }

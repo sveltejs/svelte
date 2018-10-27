@@ -1,8 +1,10 @@
 {
+	"code": "unclosed-block",
 	"message": "Block was left open",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 0
+		"column": 0,
+		"character": 0
 	},
 	"pos": 0
 }

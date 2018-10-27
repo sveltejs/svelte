@@ -1,6 +1,6 @@
-import { JSDOM } from 'jsdom';
+import jsdom from 'jsdom';
 import assert from 'assert';
-import glob from 'glob';
+import glob from 'tiny-glob/sync.js';
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
@@ -45,7 +45,8 @@ export function tryToReadFile(file) {
 	}
 }
 
-const { window } = new JSDOM('<main></main>');
+export const virtualConsole = new jsdom.VirtualConsole();
+const { window } = new jsdom.JSDOM('<main></main>', {virtualConsole});
 global.document = window.document;
 
 export function env() {
@@ -172,8 +173,8 @@ function capitalise(str) {
 	return str[0].toUpperCase() + str.slice(1);
 }
 
-export function showOutput(cwd, options = {}, s = svelte) {
-	glob.sync('**/*.html', { cwd }).forEach(file => {
+export function showOutput(cwd, options = {}, compile = svelte.compile) {
+	glob('**/*.html', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
 		const name = path.basename(file)
@@ -181,7 +182,7 @@ export function showOutput(cwd, options = {}, s = svelte) {
 			.replace(/^\d/, '_$&')
 			.replace(/[^a-zA-Z0-9_$]/g, '');
 
-		const { code } = s.compile(
+		const { js } = compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
 				filename: file,
@@ -190,7 +191,7 @@ export function showOutput(cwd, options = {}, s = svelte) {
 		);
 
 		console.log( // eslint-disable-line no-console
-			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(code)}\n<< ${chalk.cyan.bold(file)}`
+			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(js.code)}\n<< ${chalk.cyan.bold(file)}`
 		);
 	});
 }

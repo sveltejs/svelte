@@ -1,8 +1,15 @@
 [{
+	"code": "impure-helper",
 	"message": "Cannot use this.get(...) — values must be passed into the helper function as arguments",
-	"pos": 74,
-	"loc": {
+	"pos": 72,
+	"start": {
 		"line": 7,
-		"column": 11
+		"column": 11,
+		"character": 72
+	},
+	"end": {
+		"line": 7,
+		"column": 28,
+		"character": 89
 	}
 }]

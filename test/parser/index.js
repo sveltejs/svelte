@@ -16,33 +16,30 @@ describe('parse', () => {
 		}
 
 		(solo ? it.only : it)(dir, () => {
-			const input = fs
-				.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8')
-				.replace(/\s+$/, '');
-
 			const options = tryToLoadJson(`test/parser/samples/${dir}/options.json`) || {};
+
+			const input = fs.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8').replace(/\s+$/, '');
+			const expectedOutput = tryToLoadJson(`test/parser/samples/${dir}/output.json`);
+			const expectedError = tryToLoadJson(`test/parser/samples/${dir}/error.json`);
 
 			try {
 				const actual = svelte.parse(input, options);
-				fs.writeFileSync(
-					`test/parser/samples/${dir}/_actual.json`,
-					JSON.stringify(actual, null, '\t')
-				);
-				const expected = require(`./samples/${dir}/output.json`);
 
-				assert.deepEqual(actual.html, expected.html);
-				assert.deepEqual(actual.css, expected.css);
-				assert.deepEqual(actual.js, expected.js);
+				fs.writeFileSync(`test/parser/samples/${dir}/_actual.json`, JSON.stringify(actual, null, '\t'));
+
+				assert.deepEqual(actual.html, expectedOutput.html);
+				assert.deepEqual(actual.css, expectedOutput.css);
+				assert.deepEqual(actual.js, expectedOutput.js);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
+				if (!expectedError) throw err;
 
 				try {
-					const expected = require(`./samples/${dir}/error.json`);
-
-					assert.equal(err.message, expected.message);
-					assert.deepEqual(err.loc, expected.loc);
-					assert.equal(err.pos, expected.pos);
-					assert.equal(err.toString().split('\n')[0], `${expected.message} (${expected.loc.line}:${expected.loc.column})`);
+					assert.equal(err.code, expectedError.code);
+					assert.equal(err.message, expectedError.message);
+					assert.deepEqual(err.start, expectedError.start);
+					assert.equal(err.pos, expectedError.pos);
+					assert.equal(err.toString().split('\n')[0], `${expectedError.message} (${expectedError.start.line}:${expectedError.start.column})`);
 				} catch (err2) {
 					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
 					throw e;
@@ -51,6 +48,7 @@ describe('parse', () => {
 		});
 	});
 
+	// TODO remove in v3
 	it('handles errors with options.onerror', () => {
 		let errored = false;
 
@@ -64,6 +62,7 @@ describe('parse', () => {
 		assert.ok(errored);
 	});
 
+	// TODO remove in v3
 	it('throws without options.onerror', () => {
 		assert.throws(() => {
 			svelte.compile(`<h1>unclosed`);
@@ -71,8 +70,7 @@ describe('parse', () => {
 	});
 
 	it('includes AST in svelte.compile output', () => {
-		const dir = fs.readdirSync('test/parser/samples')[0];
-		const source = fs.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8');
+		const source = fs.readFileSync(`test/parser/samples/attribute-dynamic/input.html`, 'utf-8');
 
 		const { ast } = svelte.compile(source);
 		const parsed = svelte.parse(source);

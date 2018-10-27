@@ -1,9 +1,9 @@
 <ul>
-	{{#each items as item}}
-		{{#if filter(item, currentFilter)}}
-			<li>{{item.description}}</li>
-		{{/if}}
-	{{/each}}
+	{#each items as item}
+		{#if filter(item, currentFilter)}
+			<li>{item.description}</li>
+		{/if}
+	{/each}
 </ul>
 
 <script>

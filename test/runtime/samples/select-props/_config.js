@@ -10,6 +10,6 @@ export default {
 		selects[1].value = 'b';
 		selects[1].dispatchEvent(event2);
 
-		assert.deepEqual( component.get( 'log' ), [ 1, 2 ] );
+		assert.deepEqual( component.get().log, [ 1, 2 ] );
 	}
 };

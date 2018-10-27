@@ -1,143 +1,142 @@
 {
-	"hash": 1040536517,
 	"html": {
 		"start": 0,
-		"end": 158,
+		"end": 148,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 158,
+				"end": 148,
 				"type": "AwaitBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 9,
-					"end": 19,
+					"start": 8,
+					"end": 18,
 					"name": "thePromise"
 				},
 				"value": "theValue",
 				"error": "theError",
 				"pending": {
-					"start": 21,
-					"end": 41,
+					"start": 19,
+					"end": 39,
 					"type": "PendingBlock",
 					"children": [
 						{
-							"start": 21,
-							"end": 23,
+							"start": 19,
+							"end": 21,
 							"type": "Text",
 							"data": "\n\t"
 						},
 						{
-							"start": 23,
-							"end": 40,
+							"start": 21,
+							"end": 38,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 26,
-									"end": 36,
+									"start": 24,
+									"end": 34,
 									"type": "Text",
 									"data": "loading..."
 								}
 							]
 						},
 						{
-							"start": 40,
-							"end": 41,
+							"start": 38,
+							"end": 39,
 							"type": "Text",
 							"data": "\n"
 						}
 					]
 				},
 				"then": {
-					"start": 41,
-					"end": 93,
+					"start": 39,
+					"end": 88,
 					"type": "ThenBlock",
 					"children": [
 						{
-							"start": 58,
-							"end": 60,
+							"start": 55,
+							"end": 57,
 							"type": "Text",
 							"data": "\n\t"
 						},
 						{
-							"start": 60,
-							"end": 92,
+							"start": 57,
+							"end": 87,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 63,
-									"end": 76,
+									"start": 60,
+									"end": 73,
 									"type": "Text",
 									"data": "the value is "
 								},
 								{
-									"start": 76,
-									"end": 88,
+									"start": 73,
+									"end": 83,
 									"type": "MustacheTag",
 									"expression": {
 										"type": "Identifier",
-										"start": 78,
-										"end": 86,
+										"start": 74,
+										"end": 82,
 										"name": "theValue"
 									}
 								}
 							]
 						},
 						{
-							"start": 92,
-							"end": 93,
+							"start": 87,
+							"end": 88,
 							"type": "Text",
 							"data": "\n"
 						}
 					]
 				},
 				"catch": {
-					"start": 93,
-					"end": 148,
+					"start": 88,
+					"end": 140,
 					"type": "CatchBlock",
 					"children": [
 						{
-							"start": 111,
-							"end": 113,
+							"start": 105,
+							"end": 107,
 							"type": "Text",
 							"data": "\n\t"
 						},
 						{
-							"start": 113,
-							"end": 147,
+							"start": 107,
+							"end": 139,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 116,
-									"end": 123,
+									"start": 110,
+									"end": 117,
 									"type": "Text",
 									"data": "oh no! "
 								},
 								{
-									"start": 123,
-									"end": 143,
+									"start": 117,
+									"end": 135,
 									"type": "MustacheTag",
 									"expression": {
 										"type": "MemberExpression",
-										"start": 125,
-										"end": 141,
+										"start": 118,
+										"end": 134,
 										"object": {
 											"type": "Identifier",
-											"start": 125,
-											"end": 133,
+											"start": 118,
+											"end": 126,
 											"name": "theError"
 										},
 										"property": {
 											"type": "Identifier",
-											"start": 134,
-											"end": 141,
+											"start": 127,
+											"end": 134,
 											"name": "message"
 										},
 										"computed": false
@@ -146,8 +145,8 @@
 							]
 						},
 						{
-							"start": 147,
-							"end": 148,
+							"start": 139,
+							"end": 140,
 							"type": "Text",
 							"data": "\n"
 						}

@@ -1,17 +1,31 @@
 [
 	{
+		"code": "unused-component",
 		"message": "The 'Foo' component is unused",
-		"loc": {
+		"start": {
 			"line": 7,
-			"column": 3
+			"column": 3,
+			"character": 109
+		},
+		"end": {
+			"line": 7,
+			"column": 6,
+			"character": 112
 		},
 		"pos": 109
 	},
 	{
+		"code": "unused-component",
 		"message": "The 'Bar' component is unused",
-		"loc": {
+		"start": {
 			"line": 8,
-			"column": 3
+			"column": 3,
+			"character": 117
+		},
+		"end": {
+			"line": 8,
+			"column": 6,
+			"character": 120
 		},
 		"pos": 117
 	}

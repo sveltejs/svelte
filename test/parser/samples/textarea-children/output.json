@@ -1,13 +1,12 @@
 {
-	"hash": 2992234421,
 	"html": {
 		"start": 0,
-		"end": 63,
+		"end": 61,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 63,
+				"end": 61,
 				"type": "Element",
 				"name": "textarea",
 				"attributes": [],
@@ -20,18 +19,18 @@
 					},
 					{
 						"start": 40,
-						"end": 47,
+						"end": 45,
 						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 42,
-							"end": 45,
+							"start": 41,
+							"end": 44,
 							"name": "foo"
 						}
 					},
 					{
-						"start": 47,
-						"end": 52,
+						"start": 45,
+						"end": 50,
 						"type": "Text",
 						"data": "</p>\n"
 					}

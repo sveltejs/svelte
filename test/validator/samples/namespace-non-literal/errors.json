@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-namespace-property",
 	"message": "The 'namespace' property must be a string literal representing a valid namespace",
 	"pos": 79,
-	"loc": {
+	"start": {
 		"line": 5,
-		"column": 2
+		"column": 2,
+		"character": 79
+	},
+	"end": {
+		"line": 5,
+		"column": 11,
+		"character": 88
 	}
 }]

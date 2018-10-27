@@ -1,8 +1,15 @@
 [{
-	"message": "'foo' is an invalid callee (should be one of this.*, event.*, options.*, console.*, set, fire, destroy or bar)",
+	"code": "invalid-callee",
+	"message": "'foo' is an invalid callee (should be one of this.*, refs.*, event.*, options.*, console.*, set, fire, destroy or bar)",
 	"pos": 18,
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 18
+		"column": 18,
+		"character": 18
+	},
+	"end": {
+		"line": 1,
+		"column": 23,
+		"character": 23
 	}
 }]

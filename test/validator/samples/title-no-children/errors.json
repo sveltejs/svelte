@@ -1,8 +1,15 @@
 [{
-	"message": "<title> can only contain text and {{tags}}",
-	"loc": {
+	"code": "illegal-structure",
+	"message": "<title> can only contain text and {tags}",
+	"start": {
 		"line": 2,
-		"column": 11
+		"column": 11,
+		"character": 25
 	},
-	"pos": 19
+	"end": {
+		"line": 2,
+		"column": 35,
+		"character": 49
+	},
+	"pos": 25
 }]

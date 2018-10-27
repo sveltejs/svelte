@@ -1,5 +1,4 @@
 {
-	"hash": 3088875001,
 	"html": {
 		"start": 0,
 		"end": 18,
@@ -8,7 +7,7 @@
 			{
 				"start": 0,
 				"end": 18,
-				"type": "Element",
+				"type": "InlineComponent",
 				"name": "Widget",
 				"attributes": [
 					{

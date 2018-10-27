@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-transitions-property",
 	"message": "The 'transitions' property must be an object literal",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 2
+		"column": 2,
+		"character": 29
+	},
+	"end": {
+		"line": 3,
+		"column": 38,
+		"character": 65
 	},
 	"pos": 29
 }]
