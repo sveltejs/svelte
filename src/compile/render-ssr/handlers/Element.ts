@@ -109,13 +109,13 @@ export default function(node, renderer, options) {
 			} else if (attribute.name === 'class' && classExpr) {
 				addClassAttribute = false;
 				openingTag += ` class="\${[\`${stringifyAttribute(attribute)}\`, ${classExpr}].join(' ').trim() }"`;
-			} else if (attribute.isConcatenated || !attribute.isDynamic) {
-				openingTag += ` ${attribute.name}="${stringifyAttribute(attribute)}"`;
-			} else {
+			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const { snippet } = attribute.chunks[0];
 
-				openingTag += '${(v => v == null ? "" : ` ' + name + '=${' + snippet + '}`)(' + snippet + ')}';
+				openingTag += '${(v => v == null ? "" : ` ' + name + '="${@escape(' + snippet + ')}"`)(' + snippet + ')}';
+			} else {
+				openingTag += ` ${attribute.name}="${stringifyAttribute(attribute)}"`;
 			}
 		});
 	}
