@@ -124,8 +124,16 @@ describe("ssr", () => {
 					assert.htmlEqual(html, config.html);
 				}
 			} catch (err) {
-				showOutput(cwd, { generate: "ssr" });
-				throw err;
+				if (config.error) {
+					if (typeof config.error === 'function') {
+						config.error(assert, err);
+					} else {
+						assert.equal(config.error, err.message);
+					}
+				} else {
+					showOutput(cwd, { generate: "ssr" });
+					throw err;
+				}
 			}
 		});
 	});

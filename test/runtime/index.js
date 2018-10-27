@@ -69,7 +69,6 @@ describe("runtime", () => {
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
 			compileOptions.hydratable = hydrate;
-			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
 			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
@@ -171,7 +170,11 @@ describe("runtime", () => {
 				})
 				.catch(err => {
 					if (config.error && !unintendedError) {
-						config.error(assert, err);
+						if (typeof config.error === 'function') {
+							config.error(assert, err);
+						} else {
+							assert.equal(config.error, err.message);
+						}
 					} else {
 						failed.add(dir);
 						showOutput(cwd, {

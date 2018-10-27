@@ -1,7 +1,9 @@
 import path from 'path';
 
 export default {
-	dev: true,
+	compileOptions: {
+		dev: true
+	},
 
 	test(assert, component, target) {
 		const h1 = target.querySelector('h1');

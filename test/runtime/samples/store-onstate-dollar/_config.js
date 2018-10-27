@@ -9,7 +9,9 @@ export default {
 
 	html: `<h1>Hello world!</h1>`,
 
-	dev: true,
+	compileOptions: {
+		dev: true
+	},
 
 	test(assert, component) {
 		const names = [];

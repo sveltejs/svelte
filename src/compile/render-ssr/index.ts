@@ -75,6 +75,8 @@ export default function ssr(
 		);
 	}
 
+	const debugName = `<${component.customElement ? component.tag : name}>`;
+
 	// TODO concatenate CSS maps
 	const result = (deindent`
 		${js}
@@ -112,6 +114,12 @@ export default function ssr(
 		${name}._render = function(__result, ctx, options) {
 			${templateProperties.store && `options.store = %store();`}
 			__result.addComponent(${name});
+
+			${options.dev && storeProps.length > 0 && deindent`
+				if (!options.store) {
+					throw new Error("${debugName} references store properties, but no store was provided");
+				}
+			`}
 
 			ctx = Object.assign(${initialState.join(', ')});
 
