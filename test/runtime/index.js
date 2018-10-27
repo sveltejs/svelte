@@ -165,7 +165,7 @@ describe("runtime", () => {
 						});
 					} else {
 						component.destroy();
-						assert.equal(target.innerHTML, "");
+						assert.htmlEqual(target.innerHTML, "");
 					}
 				})
 				.catch(err => {
