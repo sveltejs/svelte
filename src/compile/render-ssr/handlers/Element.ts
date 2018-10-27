@@ -120,6 +120,16 @@ export default function(node, renderer, options) {
 		});
 	}
 
+	node.bindings.forEach(binding => {
+		const { name, value: { snippet } } = binding;
+
+		if (name === 'group') {
+			// TODO server-render group bindings
+		} else {
+			openingTag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
+		}
+	});
+
 	if (addClassAttribute) {
 		openingTag += `\${((v) => v ? ' class="' + v + '"' : '')([${classExpr}].join(' ').trim())}`;
 	}

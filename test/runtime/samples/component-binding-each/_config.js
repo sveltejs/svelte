@@ -4,6 +4,13 @@ export default {
 		<p>foo, bar, baz</p>
 	`,
 
+	ssrHtml: `
+		<input value=foo>
+		<input value=bar>
+		<input value=baz>
+		<p>foo, bar, baz</p>
+	`,
+
 	test ( assert, component, target, window ) {
 		const event = new window.MouseEvent( 'input' );
 		const inputs = target.querySelectorAll( 'input' );
