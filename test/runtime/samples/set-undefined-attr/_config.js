@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true,
+	html: '<div></div>',
 
-	html: '<div></div>'
+	ssrHtml: '<div foo=1></div>'
 };

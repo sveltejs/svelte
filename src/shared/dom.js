@@ -82,7 +82,7 @@ export function removeListener(node, event, handler) {
 }
 
 export function setAttribute(node, attribute, value) {
-	if (value == null) removeAttribute(node, attribute);
+	if (value == null) node.removeAttribute(attribute);
 	else node.setAttribute(attribute, value);
 }
 
@@ -104,12 +104,8 @@ export function setCustomElementData(node, prop, value) {
 	} else if (value) {
 		setAttribute(node, prop, value);
 	} else {
-		removeAttribute(node, prop);
+		node.removeAttribute(prop);
 	}
-}
-
-export function removeAttribute(node, attribute) {
-	node.removeAttribute(attribute);
 }
 
 export function setXlinkAttribute(node, attribute, value) {
