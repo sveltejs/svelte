@@ -9,6 +9,12 @@ export default {
 		<p>Doctor Who</p>
 	`,
 
+	ssrHtml: `
+		<input value=Doctor>
+		<input value=Who>
+		<p>Doctor Who</p>
+	`,
+
 	test(assert, component, target, window) {
 		const inputs = target.querySelectorAll('input');
 

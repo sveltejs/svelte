@@ -120,7 +120,9 @@ describe("ssr", () => {
 					store: (config.store !== true) && config.store
 				});
 
-				if (config.html) {
+				if (config.ssrHtml) {
+					assert.htmlEqual(html, config.ssrHtml);
+				} else if (config.html) {
 					assert.htmlEqual(html, config.html);
 				}
 			} catch (err) {
