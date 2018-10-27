@@ -7,9 +7,9 @@ export default {
 
 	test(assert, component, target, window) {
 		let triggered = false;
-		component.refs.nested.observe('field2', () => {
-			triggered = true;
-		}, { init: false });
+		component.refs.nested.on('state', ({ changed }) => {
+			if (changed.field2) triggered = true;
+		});
 
 		const input = target.querySelector('input');
 		const event = new window.Event('input');

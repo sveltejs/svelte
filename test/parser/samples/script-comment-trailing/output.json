@@ -1,13 +1,12 @@
 {
-	"hash": 619854804,
 	"html": {
 		"start": 0,
-		"end": 24,
+		"end": 22,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 24,
+				"end": 22,
 				"type": "Element",
 				"name": "h1",
 				"attributes": [],
@@ -20,26 +19,26 @@
 					},
 					{
 						"start": 10,
-						"end": 18,
+						"end": 16,
 						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
-							"start": 12,
-							"end": 16,
+							"start": 11,
+							"end": 15,
 							"name": "name"
 						}
 					},
 					{
-						"start": 18,
-						"end": 19,
+						"start": 16,
+						"end": 17,
 						"type": "Text",
 						"data": "!"
 					}
 				]
 			},
 			{
-				"start": 24,
-				"end": 26,
+				"start": 22,
+				"end": 24,
 				"type": "Text",
 				"data": "\n\n"
 			}
@@ -47,40 +46,40 @@
 	},
 	"css": null,
 	"js": {
-		"start": 26,
-		"end": 132,
+		"start": 24,
+		"end": 130,
 		"attributes": [],
 		"content": {
 			"type": "Program",
-			"start": 34,
-			"end": 123,
+			"start": 32,
+			"end": 121,
 			"body": [
 				{
 					"type": "ExportDefaultDeclaration",
-					"start": 36,
-					"end": 95,
+					"start": 34,
+					"end": 93,
 					"declaration": {
 						"type": "ObjectExpression",
-						"start": 51,
-						"end": 94,
+						"start": 49,
+						"end": 92,
 						"properties": [
 							{
 								"type": "Property",
-								"start": 55,
-								"end": 91,
+								"start": 53,
+								"end": 89,
 								"method": false,
 								"shorthand": false,
 								"computed": false,
 								"key": {
 									"type": "Identifier",
-									"start": 55,
-									"end": 59,
+									"start": 53,
+									"end": 57,
 									"name": "data"
 								},
 								"value": {
 									"type": "ArrowFunctionExpression",
-									"start": 61,
-									"end": 91,
+									"start": 59,
+									"end": 89,
 									"id": null,
 									"generator": false,
 									"expression": true,
@@ -88,26 +87,26 @@
 									"params": [],
 									"body": {
 										"type": "ObjectExpression",
-										"start": 68,
-										"end": 90,
+										"start": 66,
+										"end": 88,
 										"properties": [
 											{
 												"type": "Property",
-												"start": 73,
-												"end": 86,
+												"start": 71,
+												"end": 84,
 												"method": false,
 												"shorthand": false,
 												"computed": false,
 												"key": {
 													"type": "Identifier",
-													"start": 73,
-													"end": 77,
+													"start": 71,
+													"end": 75,
 													"name": "name"
 												},
 												"value": {
 													"type": "Literal",
-													"start": 79,
-													"end": 86,
+													"start": 77,
+													"end": 84,
 													"value": "world",
 													"raw": "'world'"
 												},

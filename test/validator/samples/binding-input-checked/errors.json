@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-binding",
 	"message": "'checked' binding can only be used with <input type=\"checkbox\">",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 7
+		"column": 7,
+		"character": 7
+	},
+	"end": {
+		"line": 1,
+		"column": 25,
+		"character": 25
 	},
 	"pos": 7
 }]

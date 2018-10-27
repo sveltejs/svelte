@@ -1,13 +1,14 @@
 {
     "compilerOptions": {
+        "target": "ES6",
         "diagnostics": true,
         "noImplicitThis": true,
         "noEmitOnError": true,
         "allowJs": true,
         "lib": ["es5", "es6", "dom"],
-        "importHelpers": true
+        "importHelpers": true,
+        "moduleResolution": "node"
     },
-    "target": "ES5",
     "include": [
         "src"
     ],

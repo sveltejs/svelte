@@ -1,30 +1,15 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import { locate, Location } from 'locate-character';
 import fragment from './state/fragment';
 import { whitespace } from '../utils/patterns';
-import { trimStart, trimEnd } from '../utils/trim';
-import getCodeFrame from '../utils/getCodeFrame';
 import reservedNames from '../utils/reservedNames';
 import fullCharCodeAt from '../utils/fullCharCodeAt';
-import hash from '../utils/hash';
-import { Node, Parsed } from '../interfaces';
-import CompileError from '../utils/CompileError';
-
-class ParseError extends CompileError {
-	constructor(
-		message: string,
-		template: string,
-		index: number,
-		filename: string
-	) {
-		super(message, template, index, filename);
-		this.name = 'ParseError';
-	}
-}
+import { Node, Ast, CustomElementOptions } from '../interfaces';
+import error from '../utils/error';
 
 interface ParserOptions {
 	filename?: string;
 	bind?: boolean;
+	customElement?: CustomElementOptions | true;
 }
 
 type ParserState = (parser: Parser) => (ParserState | void);
@@ -32,6 +17,7 @@ type ParserState = (parser: Parser) => (ParserState | void);
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
+	readonly customElement: CustomElementOptions | true;
 
 	index: number;
 	stack: Array<Node>;
@@ -50,6 +36,7 @@ export class Parser {
 
 		this.template = template.replace(/\s+$/, '');
 		this.filename = options.filename;
+		this.customElement = options.customElement;
 
 		this.allowBindings = options.bind !== false;
 
@@ -79,11 +66,19 @@ export class Parser {
 			const current = this.current();
 
 			const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
-			this.error(`${type} was left open`, current.start);
+			const slug = current.type === 'Element' ? 'element' : 'block';
+
+			this.error({
+				code: `unclosed-${slug}`,
+				message: `${type} was left open`
+			}, current.start);
 		}
 
 		if (state !== fragment) {
-			this.error('Unexpected end of input');
+			this.error({
+				code: `unexpected-eof`,
+				message: 'Unexpected end of input'
+			});
 		}
 
 		if (this.html.children.length) {
@@ -105,11 +100,20 @@ export class Parser {
 	}
 
 	acornError(err: any) {
-		this.error(err.message.replace(/ \(\d+:\d+\)$/, ''), err.pos);
+		this.error({
+			code: `parse-error`,
+			message: err.message.replace(/ \(\d+:\d+\)$/, '')
+		}, err.pos);
 	}
 
-	error(message: string, index = this.index) {
-		throw new ParseError(message, this.template, index, this.filename);
+	error({ code, message }: { code: string, message: string }, index = this.index) {
+		error(message, {
+			name: 'ParseError',
+			code,
+			source: this.template,
+			start: index,
+			filename: this.filename
+		});
 	}
 
 	eat(str: string, required?: boolean, message?: string) {
@@ -119,7 +123,10 @@ export class Parser {
 		}
 
 		if (required) {
-			this.error(message || `Expected ${str}`);
+			this.error({
+				code: `unexpected-${this.index === this.template.length ? 'eof' : 'token'}`,
+				message: message || `Expected ${str}`
+			});
 		}
 
 		return false;
@@ -127,6 +134,13 @@ export class Parser {
 
 	match(str: string) {
 		return this.template.slice(this.index, this.index + str.length) === str;
+	}
+
+	matchRegex(pattern: RegExp) {
+		const match = pattern.exec(this.template.slice(this.index));
+		if (!match || match.index !== 0) return null;
+
+		return match[0];
 	}
 
 	allowWhitespace() {
@@ -139,12 +153,9 @@ export class Parser {
 	}
 
 	read(pattern: RegExp) {
-		const match = pattern.exec(this.template.slice(this.index));
-		if (!match || match.index !== 0) return null;
-
-		this.index += match[0].length;
-
-		return match[0];
+		const result = this.matchRegex(pattern);
+		if (result) this.index += result.length;
+		return result;
 	}
 
 	readIdentifier() {
@@ -167,7 +178,10 @@ export class Parser {
 		const identifier = this.template.slice(this.index, this.index = i);
 
 		if (reservedNames.has(identifier)) {
-			this.error(`'${identifier}' is a reserved word in JavaScript and cannot be used here`, start);
+			this.error({
+				code: `unexpected-reserved-word`,
+				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
+			}, start);
 		}
 
 		return identifier;
@@ -175,7 +189,10 @@ export class Parser {
 
 	readUntil(pattern: RegExp) {
 		if (this.index >= this.template.length)
-			this.error('Unexpected end of input');
+			this.error({
+				code: `unexpected-eof`,
+				message: 'Unexpected end of input'
+			});
 
 		const start = this.index;
 		const match = pattern.exec(this.template.slice(start));
@@ -195,7 +212,10 @@ export class Parser {
 
 	requireWhitespace() {
 		if (!whitespace.test(this.template[this.index])) {
-			this.error(`Expected whitespace`);
+			this.error({
+				code: `missing-whitespace`,
+				message: `Expected whitespace`
+			});
 		}
 
 		this.allowWhitespace();
@@ -205,10 +225,9 @@ export class Parser {
 export default function parse(
 	template: string,
 	options: ParserOptions = {}
-): Parsed {
+): Ast {
 	const parser = new Parser(template, options);
 	return {
-		hash: hash(parser.template),
 		html: parser.html,
 		css: parser.css,
 		js: parser.js,

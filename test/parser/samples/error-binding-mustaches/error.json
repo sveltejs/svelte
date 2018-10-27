@@ -1,8 +1,10 @@
 {
-	"message": "bound values should not be wrapped — use 'foo', not '{{foo}}'",
-	"loc": {
+	"code": "invalid-directive-value",
+	"message": "directive values should not be wrapped — use 'foo', not '{foo}'",
+	"start": {
 		"line": 1,
-		"column": 19
+		"column": 19,
+		"character": 19
 	},
 	"pos": 19
 }

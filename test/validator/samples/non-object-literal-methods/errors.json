@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-methods-property",
 	"message": "The 'methods' property must be an object literal",
-	"loc": {
+	"start": {
 		"line": 3,
-		"column": 2
+		"column": 2,
+		"character": 29
+	},
+	"end": {
+		"line": 3,
+		"column": 34,
+		"character": 61
 	},
 	"pos": 29
 }]

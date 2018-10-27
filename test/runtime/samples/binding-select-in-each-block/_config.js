@@ -25,7 +25,7 @@ export default {
 		selects[1].options[0].selected = true;
 		selects[1].dispatchEvent(change);
 
-		assert.deepEqual(component.get('items'), [
+		assert.deepEqual(component.get().items, [
 			{ value: 'hullo' }, { value: 'hullo' }
 		]);
 	}

@@ -29,7 +29,7 @@
         "plugin:import/warnings"
     ],
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": 9,
         "sourceType": "module"
     },
     "settings": {

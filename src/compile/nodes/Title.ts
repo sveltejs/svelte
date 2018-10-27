@@ -1,0 +1,36 @@
+import Node from './shared/Node';
+import mapChildren from './shared/mapChildren';
+
+export default class Title extends Node {
+	type: 'Title';
+	children: any[]; // TODO
+	shouldCache: boolean;
+
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.children = mapChildren(component, parent, scope, info.children);
+
+		if (info.attributes.length > 0) {
+			component.error(info.attributes[0], {
+				code: `illegal-attribute`,
+				message: `<title> cannot have attributes`
+			});
+		}
+
+		info.children.forEach(child => {
+			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
+				component.error(child, {
+					code: 'illegal-structure',
+					message: `<title> can only contain text and {tags}`
+				});
+			}
+		});
+
+		this.shouldCache = info.children.length === 1
+			? (
+				info.children[0].type !== 'Identifier' ||
+				scope.names.has(info.children[0].name)
+			)
+			: true;
+	}
+}

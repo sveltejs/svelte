@@ -1,31 +1,30 @@
 {
-	"hash": 3134964533,
 	"html": {
 		"start": 0,
-		"end": 56,
+		"end": 51,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 56,
+				"end": 51,
 				"type": "IfBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 6,
-					"end": 9,
+					"start": 5,
+					"end": 8,
 					"name": "foo"
 				},
 				"children": [
 					{
-						"start": 13,
-						"end": 23,
+						"start": 11,
+						"end": 21,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 16,
-								"end": 19,
+								"start": 14,
+								"end": 17,
 								"type": "Text",
 								"data": "foo"
 							}
@@ -33,20 +32,20 @@
 					}
 				],
 				"else": {
-					"start": 32,
-					"end": 49,
+					"start": 29,
+					"end": 46,
 					"type": "ElseBlock",
 					"children": [
 						{
-							"start": 34,
-							"end": 48,
+							"start": 31,
+							"end": 45,
 							"type": "Element",
 							"name": "p",
 							"attributes": [],
 							"children": [
 								{
-									"start": 37,
-									"end": 44,
+									"start": 34,
+									"end": 41,
 									"type": "Text",
 									"data": "not foo"
 								}

@@ -1,8 +1,0 @@
-[{
-	"message": "Computed properties cannot use destructuring in function parameters",
-	"loc": {
-		"line": 6,
-		"column": 8
-	},
-	"pos": 62
-}]

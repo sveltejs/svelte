@@ -1,8 +1,7 @@
 {
-	"hash": 4260626221,
 	"html": {
 		"start": 0,
-		"end": 101,
+		"end": 97,
 		"type": "Fragment",
 		"children": [
 			{
@@ -83,25 +82,25 @@
 			},
 			{
 				"start": 63,
-				"end": 101,
+				"end": 97,
 				"type": "IfBlock",
 				"expression": {
 					"type": "Identifier",
-					"start": 69,
-					"end": 76,
+					"start": 68,
+					"end": 75,
 					"name": "visible"
 				},
 				"children": [
 					{
-						"start": 80,
-						"end": 93,
+						"start": 78,
+						"end": 91,
 						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
-								"start": 83,
-								"end": 89,
+								"start": 81,
+								"end": 87,
 								"type": "Text",
 								"data": "hello!"
 							}

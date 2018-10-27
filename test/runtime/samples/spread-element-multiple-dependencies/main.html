@@ -1,0 +1,12 @@
+<div class={foo ? a : b} {...bar}></div>
+
+<script>
+	export default {
+		data: () => ({
+			foo: false,
+			a: 'a',
+			b: 'b',
+			bar: { title: 'baz' },
+		}),
+	};
+</script>

@@ -1,37 +1,125 @@
 import { parseExpressionAt } from 'acorn';
-import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 
+const DIRECTIVES: Record<string, {
+	names: string[];
+	attribute: (
+		start: number,
+		end: number,
+		type: string,
+		name: string,
+		expression?: any,
+		directiveName?: string
+	) => { start: number, end: number, type: string, name: string, value?: any, expression?: any };
+	allowedExpressionTypes: string[];
+	error: string;
+}> = {
+	Ref: {
+		names: ['ref'],
+		attribute(start, end, type, name) {
+			return { start, end, type, name };
+		},
+		allowedExpressionTypes: [],
+		error: 'ref directives cannot have a value'
+	},
+
+	EventHandler: {
+		names: ['on'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['CallExpression'],
+		error: 'Expected a method call'
+	},
+
+	Binding: {
+		names: ['bind'],
+		attribute(start, end, type, name, expression) {
+			return {
+				start, end, type, name,
+				value: expression || {
+					type: 'Identifier',
+					start: start + 5,
+					end,
+					name,
+				}
+			};
+		},
+		allowedExpressionTypes: ['Identifier', 'MemberExpression'],
+		error: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
+	},
+
+	Transition: {
+		names: ['in', 'out', 'transition'],
+		attribute(start, end, type, name, expression, directiveName) {
+			return {
+				start, end, type, name, expression,
+				intro: directiveName === 'in' || directiveName === 'transition',
+				outro: directiveName === 'out' || directiveName === 'transition',
+			};
+		},
+		allowedExpressionTypes: ['ObjectExpression'],
+		error: 'Transition argument must be an object literal, e.g. `{ duration: 400 }`'
+	},
+
+	Animation: {
+		names: ['animate'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['ObjectExpression'],
+		error: 'Animation argument must be an object literal, e.g. `{ duration: 400 }`'
+	},
+
+	Action: {
+		names: ['use'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['*'],
+		error: 'Data passed to actions must be an identifier (e.g. `foo`), a member expression ' +
+			'(e.g. `foo.bar` or `foo[baz]`), a method call (e.g. `foo()`), or a literal (e.g. `true` or `\'a string\'`'
+	},
+
+	Class: {
+		names: ['class'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['*'],
+		error: 'Data passed to class directives must be an expression'
+	},
+};
+
+
+const lookupByName = {};
+
+Object.keys(DIRECTIVES).forEach(name => {
+	const directive = DIRECTIVES[name];
+	directive.names.forEach(type => lookupByName[type] = name);
+});
+
 function readExpression(parser: Parser, start: number, quoteMark: string|null) {
-	let str = '';
+	let i = start;
 	let escaped = false;
 
-	for (let i = start; i < parser.template.length; i += 1) {
+	for (; i < parser.template.length; i += 1) {
 		const char = parser.template[i];
 
 		if (quoteMark) {
 			if (char === quoteMark) {
-				if (escaped) {
-					str += quoteMark;
-				} else {
-					break;
-				}
+				if (!escaped) break;
 			} else if (escaped) {
-				str += '\\' + char;
 				escaped = false;
 			} else if (char === '\\') {
 				escaped = true;
-			} else {
-				str += char;
 			}
-		} else if (/\s/.test(char)) {
+		} else if (/[\s\/>]/.test(char)) {
 			break;
-		} else {
-			str += char;
 		}
 	}
 
-	const expression = parseExpressionAt(repeat(' ', start) + str, start, {
+	const expression = parseExpressionAt(parser.template.slice(0, i), start, {
 		ecmaVersion: 9,
 	});
 	parser.index = expression.end;
@@ -42,104 +130,29 @@ function readExpression(parser: Parser, start: number, quoteMark: string|null) {
 	return expression;
 }
 
-export function readEventHandlerDirective(
+export function readDirective(
 	parser: Parser,
 	start: number,
-	name: string,
-	hasValue: boolean
+	attrName: string
 ) {
-	let expression;
+	const [directiveName, name] = attrName.split(':');
+	if (name === undefined) return; // No colon in the name
 
-	if (hasValue) {
-		const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
-
-		const expressionStart = parser.index;
-
-		expression = readExpression(parser, expressionStart, quoteMark);
-
-		if (expression.type !== 'CallExpression') {
-			parser.error(`Expected call expression`, expressionStart);
-		}
-	}
-
-	return {
-		start,
-		end: parser.index,
-		type: 'EventHandler',
-		name,
-		expression,
-	};
-}
-
-export function readBindingDirective(
-	parser: Parser,
-	start: number,
-	name: string
-) {
-	let value;
-
-	if (parser.eat('=')) {
-		const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
-
-		const a = parser.index;
-
-		if (parser.eat('{{')) {
-			let message = 'bound values should not be wrapped';
-			const b = parser.template.indexOf('}}', a);
-			if (b !== -1) {
-				const value = parser.template.slice(parser.index, b);
-				message += ` — use '${value}', not '{{${value}}}'`;
-			}
-
-			parser.error(message, a);
-		}
-
-		// this is a bit of a hack so that we can give Acorn something parseable
-		let b;
-		if (quoteMark) {
-			b = parser.index = parser.template.indexOf(quoteMark, parser.index);
-		} else {
-			parser.readUntil(/[\s\r\n\/>]/);
-			b = parser.index;
-		}
-
-		const source = repeat(' ', a) + parser.template.slice(a, b);
-		value = parseExpressionAt(source, a, { ecmaVersion: 9 });
-
-		if (value.type !== 'Identifier' && value.type !== 'MemberExpression') {
-			parser.error(`Cannot bind to rvalue`, value.start);
-		}
-
-		parser.allowWhitespace();
-
-		if (quoteMark) {
-			parser.eat(quoteMark, true);
-		}
-	} else {
-		// shorthand – bind:foo equivalent to bind:foo='foo'
-		value = {
-			type: 'Identifier',
-			start: start + 5,
-			end: parser.index,
+	if (directiveName === '') {
+		// not a directive — :foo is short for foo={{foo}}
+		return {
+			start: start,
+			end: start + name.length + 1,
+			type: 'Attribute',
 			name,
+			value: getShorthandValue(start + 1, name)
 		};
 	}
 
-	return {
-		start,
-		end: parser.index,
-		type: 'Binding',
-		name,
-		value,
-	};
-}
+	const type = lookupByName[directiveName];
+	if (!type) return; // not a registered directive
 
-export function readTransitionDirective(
-	parser: Parser,
-	start: number,
-	name: string,
-	type: string
-) {
+	const directive = DIRECTIVES[type];
 	let expression = null;
 
 	if (parser.eat('=')) {
@@ -147,20 +160,53 @@ export function readTransitionDirective(
 
 		const expressionStart = parser.index;
 
-		expression = readExpression(parser, expressionStart, quoteMark);
+		try {
+			expression = readExpression(parser, expressionStart, quoteMark);
+			const allowed = directive.allowedExpressionTypes;
+			if (allowed[0] !== '*' && allowed.indexOf(expression.type) === -1) {
+				parser.error({
+					code: `invalid-directive-value`,
+					message: directive.error
+				}, expressionStart);
+			}
+		} catch (err) {
+			if (parser.template[expressionStart] === '{') {
+				// assume the mistake was wrapping the directive arguments.
+				// this could yield false positives! but hopefully not too many
+				let message = 'directive values should not be wrapped';
+				const expressionEnd = parser.template.indexOf('}', expressionStart);
+				if (expressionEnd !== -1) {
+					const value = parser.template.slice(expressionStart + 1, expressionEnd);
+					message += ` — use '${value}', not '{${value}}'`;
+				}
+				parser.error({
+					code: `invalid-directive-value`,
+					message
+				}, expressionStart);
+			}
 
-		if (expression.type !== 'ObjectExpression') {
-			parser.error(`Expected object expression`, expressionStart);
+			throw err;
 		}
 	}
 
-	return {
-		start,
-		end: parser.index,
-		type: 'Transition',
-		name,
-		intro: type === 'in' || type === 'transition',
-		outro: type === 'out' || type === 'transition',
-		expression,
-	};
+	return directive.attribute(start, parser.index, type, name, expression, directiveName);
+}
+
+
+function getShorthandValue(start: number, name: string) {
+	const end = start + name.length;
+
+	return [
+		{
+			type: 'AttributeShorthand',
+			start,
+			end,
+			expression: {
+				type: 'Identifier',
+				start,
+				end,
+				name,
+			},
+		},
+	];
 }

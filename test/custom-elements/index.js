@@ -17,12 +17,6 @@ const assert = fs.readFileSync('test/custom-elements/assert.js', 'utf-8');
 describe('custom-elements', function() {
 	this.timeout(10000);
 
-	const nightmare = new Nightmare({ show: false });
-
-	nightmare.on('console', (type, ...args) => {
-		console[type](...args);
-	});
-
 	let svelte;
 	let server;
 	let bundle;
@@ -70,10 +64,7 @@ describe('custom-elements', function() {
 									dev: config.dev
 								});
 
-								return {
-									code: compiled.code,
-									map: compiled.map
-								};
+								return compiled.js;
 							}
 						}
 					},
@@ -87,6 +78,12 @@ describe('custom-elements', function() {
 				.then(generated => {
 					bundle = generated.code;
 
+					const nightmare = new Nightmare({ show: false });
+
+					nightmare.on('console', (type, ...args) => {
+						console[type](...args);
+					});
+
 					return nightmare
 						.goto('http://localhost:6789')
 						.evaluate(() => {
@@ -98,7 +95,8 @@ describe('custom-elements', function() {
 						.catch(message => {
 							console.log(addLineNumbers(bundle));
 							throw new Error(message);
-						});
+						})
+						.then(() => nightmare.end());
 				});
 
 

@@ -1,0 +1,31 @@
+{
+	"html": {
+		"start": 0,
+		"end": 22,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 22,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 15,
+						"type": "Spread",
+						"expression": {
+							"type": "Identifier",
+							"start": 9,
+							"end": 14,
+							"name": "props"
+						}
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

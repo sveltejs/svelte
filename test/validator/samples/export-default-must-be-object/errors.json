@@ -1,8 +1,15 @@
 [{
+	"code": "invalid-default-export",
 	"message": "Default export must be an object literal",
 	"pos": 25,
-	"loc": {
+	"start": {
 		"line": 2,
-		"column": 16
+		"column": 16,
+		"character": 25
+	},
+	"end": {
+		"line": 2,
+		"column": 22,
+		"character": 31
 	}
 }]

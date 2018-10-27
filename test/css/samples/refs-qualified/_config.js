@@ -1,17 +1,22 @@
 export default {
-	cascade: false,
-
 	data: {
 		active: true
 	},
 
 	warnings: [{
+		code: `css-unused-selector`,
 		message: 'Unused CSS selector',
-		loc: {
+		start: {
 			column: 1,
-			line: 12
+			line: 12,
+			character: 169
 		},
-		pos: 174,
+		end: {
+			column: 20,
+			line: 12,
+			character: 188
+		},
+		pos: 169,
 		frame: `
 			10:   }
 			11:

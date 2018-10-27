@@ -1,4 +1,4 @@
-<button on:tap='set({ x: event.x, y: event.y })'>{{x}}, {{y}}</button>
+<button on:tap='set({ x: event.x, y: event.y })'>{x}, {y}</button>
 
 <script>
 	export default {
@@ -19,7 +19,7 @@
 				node.addEventListener( 'click', clickHandler, false );
 
 				return {
-					teardown () {
+					destroy () {
 						node.addEventListener( 'click', clickHandler, false );
 					}
 				};

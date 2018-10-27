@@ -1,15 +1,15 @@
 export function test ({ assert, smc, locateInSource, locateInGenerated }) {
 	const expected = locateInSource( 'potato' );
 
-	let loc;
+	let start;
 
-	loc = locateInGenerated( 'potato' );
-	loc = locateInGenerated( 'potato', loc.character + 1 );
-	loc = locateInGenerated( 'potato', loc.character + 1 ); // we need the third instance of 'potato'
+	start = locateInGenerated( 'potato' );
+	start = locateInGenerated( 'potato', start.character + 1 );
+	start = locateInGenerated( 'potato', start.character + 1 ); // we need the third instance of 'potato'
 
 	const actual = smc.originalPositionFor({
-		line: loc.line + 1,
-		column: loc.column
+		line: start.line + 1,
+		column: start.column
 	});
 
 	assert.deepEqual( actual, {

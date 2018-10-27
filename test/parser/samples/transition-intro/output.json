@@ -1,5 +1,4 @@
 {
-	"hash": 3731674194,
 	"html": {
 		"start": 0,
 		"end": 43,
@@ -16,8 +15,6 @@
 						"end": 28,
 						"type": "Transition",
 						"name": "style",
-						"intro": true,
-						"outro": false,
 						"expression": {
 							"type": "ObjectExpression",
 							"start": 15,
@@ -46,7 +43,9 @@
 									"kind": "init"
 								}
 							]
-						}
+						},
+						"intro": true,
+						"outro": false
 					}
 				],
 				"children": [

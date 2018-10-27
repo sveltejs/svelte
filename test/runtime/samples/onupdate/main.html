@@ -1,0 +1,12 @@
+<p ref:a>{value}</p>
+<p ref:b></p>
+
+<script>
+	export default {
+		onupdate({ changed, current, previous }) {
+			if (changed.value) {
+				this.refs.b.textContent = this.refs.a.textContent;
+			}
+		}
+	};
+</script>

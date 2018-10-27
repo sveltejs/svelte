@@ -8,6 +8,9 @@ indent_size = 2
 charset = utf-8
 trim_trailing_whitespace = true
 
+[test/**/expected.css]
+insert_final_newline = false
+
 [{package.json,.travis.yml,.eslintrc.json}]
 indent_style = space
 indent_size = 2

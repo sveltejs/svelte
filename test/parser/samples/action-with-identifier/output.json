@@ -1,0 +1,32 @@
+{
+	"html": {
+		"start": 0,
+		"end": 29,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 29,
+				"type": "Element",
+				"name": "input",
+				"attributes": [
+					{
+						"start": 7,
+						"end": 28,
+						"type": "Action",
+						"name": "tooltip",
+						"expression": {
+							"type": "Identifier",
+							"start": 20,
+							"end": 27,
+							"name": "message"
+						}
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"css": null,
+	"js": null
+}

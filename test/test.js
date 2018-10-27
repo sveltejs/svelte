@@ -1,11 +1,7 @@
-const glob = require("glob");
+const glob = require("tiny-glob/sync.js");
 
 require("./setup");
 
-glob.sync("**/__test__.js", { cwd: "src" }).forEach(function(file) {
-	require("../src/" + file);
-});
-
-glob.sync("*/index.js", { cwd: "test" }).forEach(function(file) {
+glob("*/index.js", { cwd: "test" }).forEach(function(file) {
 	require("./" + file);
 });

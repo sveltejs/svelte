@@ -1,8 +1,15 @@
 [{
+	"code": "duplicate-transition",
 	"message": "An element cannot have both an 'in' directive and a 'transition' directive",
-	"loc": {
+	"start": {
 		"line": 1,
-		"column": 12
+		"column": 12,
+		"character": 12
+	},
+	"end": {
+		"line": 1,
+		"column": 26,
+		"character": 26
 	},
 	"pos": 12
 }]

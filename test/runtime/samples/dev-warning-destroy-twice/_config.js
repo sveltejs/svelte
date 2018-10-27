@@ -1,5 +1,7 @@
 export default {
-	dev: true,
+	compileOptions: {
+		dev: true
+	},
 
 	test(assert, component) {
 		const warn = console.warn; // eslint-disable-line no-console

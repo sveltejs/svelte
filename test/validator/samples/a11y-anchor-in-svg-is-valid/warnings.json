@@ -1,26 +1,47 @@
 [
-  {
-    "message": "A11y: <a> element should have an href attribute",
-    "loc": {
-      "line": 1,
-      "column": 11
-    },
-    "pos": 11
-  },
-  {
-    "message": "A11y: '' is not a valid xlink:href attribute",
-    "loc": {
-      "line": 2,
-      "column": 14
-    },
-    "pos": 65
-  },
-  {
-    "message": "A11y: '#' is not a valid xlink:href attribute",
-    "loc": {
-      "line": 3,
-      "column": 14
-    },
-    "pos": 130
-  }
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <a> element should have an href attribute",
+		"start": {
+			"line": 1,
+			"column": 11,
+			"character": 11
+		},
+		"end": {
+			"line": 1,
+			"column": 37,
+			"character": 37
+		},
+		"pos": 11
+	},
+	{
+		"code": "a11y-invalid-attribute",
+		"message": "A11y: '' is not a valid xlink:href attribute",
+		"start": {
+			"line": 2,
+			"column": 14,
+			"character": 65
+		},
+		"end": {
+			"line": 2,
+			"column": 27,
+			"character": 78
+		},
+		"pos": 65
+	},
+	{
+		"code": "a11y-invalid-attribute",
+		"message": "A11y: '#' is not a valid xlink:href attribute",
+		"start": {
+			"line": 3,
+			"column": 14,
+			"character": 130
+		},
+		"end": {
+			"line": 3,
+			"column": 28,
+			"character": 144
+		},
+		"pos": 130
+	}
 ]

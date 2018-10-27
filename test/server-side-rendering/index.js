@@ -1,7 +1,7 @@
 import assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import glob from 'glob';
+import glob from 'tiny-glob/sync.js';
 
 import {
 	showOutput,
@@ -105,14 +105,14 @@ describe("ssr", () => {
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
-			glob.sync('**/*.html', { cwd: `test/runtime/samples/${dir}` }).forEach(file => {
+			glob('**/*.html', { cwd: `test/runtime/samples/${dir}` }).forEach(file => {
 				const resolved = require.resolve(`../runtime/samples/${dir}/${file}`);
 				delete require.cache[resolved];
 			});
 
-			require("../../ssr/register")({
-				store: !!config.store
-			});
+			const compileOptions = config.compileOptions || {};
+
+			require("../../ssr/register")(compileOptions);
 
 			try {
 				const component = require(`../runtime/samples/${dir}/main.html`);
@@ -124,8 +124,16 @@ describe("ssr", () => {
 					assert.htmlEqual(html, config.html);
 				}
 			} catch (err) {
-				showOutput(cwd, { generate: "ssr" });
-				throw err;
+				if (config.error) {
+					if (typeof config.error === 'function') {
+						config.error(assert, err);
+					} else {
+						assert.equal(config.error, err.message);
+					}
+				} else {
+					showOutput(cwd, { generate: "ssr" });
+					throw err;
+				}
 			}
 		});
 	});

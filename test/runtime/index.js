@@ -14,9 +14,11 @@ import {
 	spaces
 } from "../helpers.js";
 
+let svelte$;
 let svelte;
 
 let compileOptions = null;
+let compile = null;
 
 function getName(filename) {
 	const base = path.basename(filename).replace(".html", "");
@@ -25,7 +27,8 @@ function getName(filename) {
 
 describe("runtime", () => {
 	before(() => {
-		svelte = loadSvelte(true);
+		svelte = loadSvelte(false);
+		svelte$ = loadSvelte(true);
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
@@ -33,9 +36,9 @@ describe("runtime", () => {
 				compileOptions
 			);
 
-			const { code } = svelte.compile(fs.readFileSync(filename, "utf-8"), options);
+			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
 
-			return module._compile(code, filename);
+			return module._compile(js.code, filename);
 		};
 
 		return setupHtmlEqual();
@@ -52,11 +55,13 @@ describe("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ' , hydration' : ''})`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''})`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
 			}
+
+			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
 			const cwd = path.resolve(`test/runtime/samples/${dir}`);
 			global.document.title = '';
@@ -64,41 +69,10 @@ describe("runtime", () => {
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
 			compileOptions.hydratable = hydrate;
-			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
-
-			// check that no ES2015+ syntax slipped in
-			if (!config.allowES2015) {
-				try {
-					const source = fs.readFileSync(
-						`test/runtime/samples/${dir}/main.html`,
-						"utf-8"
-					);
-					const { code } = svelte.compile(source, compileOptions);
-					const startIndex = code.indexOf("function create_main_fragment"); // may change!
-					if (startIndex === -1) throw new Error("missing create_main_fragment");
-					const endIndex = code.lastIndexOf("export default");
-					const es5 =
-						code.slice(0, startIndex).split('\n').map(x => spaces(x.length)).join('\n') +
-						code.slice(startIndex, endIndex);
-
-					acorn.parse(es5, { ecmaVersion: 5 });
-
-					if (/Object\.assign/.test(es5)) {
-						throw new Error(
-							"cannot use Object.assign in generated code, as it is not supported everywhere"
-						);
-					}
-				} catch (err) {
-					failed.add(dir);
-					if (err.frame) {
-						console.error(chalk.red(err.frame)); // eslint-disable-line no-console
-					}
-					showOutput(cwd, { shared, format: 'cjs', store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
-					throw err;
-				}
-			}
+			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
+			compileOptions.nestedTransitions = config.nestedTransitions;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -140,7 +114,7 @@ describe("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -161,7 +135,8 @@ describe("runtime", () => {
 						target,
 						hydrate,
 						data: config.data,
-						store: (config.store !== true && config.store)
+						store: (config.store !== true && config.store),
+						intro: config.intro
 					}, config.options || {});
 
 					const component = new SvelteComponent(options);
@@ -195,15 +170,27 @@ describe("runtime", () => {
 				})
 				.catch(err => {
 					if (config.error && !unintendedError) {
-						config.error(assert, err);
+						if (typeof config.error === 'function') {
+							config.error(assert, err);
+						} else {
+							assert.equal(config.error, err.message);
+						}
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte); // eslint-disable-line no-console
+						showOutput(cwd, {
+							shared,
+							format: 'cjs',
+							hydratable: hydrate,
+							store: !!compileOptions.store,
+							skipIntroByDefault: compileOptions.skipIntroByDefault,
+							nestedTransitions: compileOptions.nestedTransitions,
+							dev: compileOptions.dev
+						}, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store }, svelte);
+					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile);
 				});
 		});
 	}
@@ -216,14 +203,14 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.target is missing in dev mode", () => {
-		const { code } = svelte.compile(`<div></div>`, {
+		const { js } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
 		});
 
 		const SvelteComponent = eval(
-			`(function () { ${code}; return SvelteComponent; }())`
+			`(function () { ${js.code}; return SvelteComponent; }())`
 		);
 
 		assert.throws(() => {
@@ -232,14 +219,14 @@ describe("runtime", () => {
 	});
 
 	it("fails if options.hydrate is true but the component is non-hydratable", () => {
-		const { code } = svelte.compile(`<div></div>`, {
+		const { js } = svelte$.compile(`<div></div>`, {
 			format: "iife",
 			name: "SvelteComponent",
 			dev: true
 		});
 
 		const SvelteComponent = eval(
-			`(function () { ${code}; return SvelteComponent; }())`
+			`(function () { ${js.code}; return SvelteComponent; }())`
 		);
 
 		assert.throws(() => {

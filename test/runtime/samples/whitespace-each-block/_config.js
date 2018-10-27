@@ -1,12 +1,12 @@
 export default {
 	data: {
-		name: 'world'
+		characters: ['a', 'b', 'c']
 	},
 
 	test ( assert, component, target ) {
 		assert.equal(
 			target.textContent,
-			`Hello world! How are you?`
+			`a b c `
 		);
 	}
 };

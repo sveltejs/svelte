@@ -1,5 +1,3 @@
-import {SourceMap} from 'magic-string';
-
 export interface Node {
 	start: number;
 	end: number;
@@ -20,16 +18,17 @@ export interface Parser {
 	metaTags: {};
 }
 
-export interface Parsed {
-	hash: number;
+export interface Ast {
 	html: Node;
 	css: Node;
 	js: Node;
 }
 
 export interface Warning {
-	loc?: { line: number; column: number; pos?: number };
+	start?: { line: number; column: number; pos?: number };
+	end?: { line: number; column: number; };
 	pos?: number;
+	code: string;
 	message: string;
 	filename?: string;
 	frame?: string;
@@ -42,7 +41,7 @@ export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
-	generate?: string;
+	generate?: string | false;
 	globals?: ((id: string) => string) | object;
 	amd?: {
 		id?: string;
@@ -54,24 +53,25 @@ export interface CompileOptions {
 	dev?: boolean;
 	immutable?: boolean;
 	shared?: boolean | string;
-	cascade?: boolean;
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
-	store?: boolean;
 
-	onerror?: (error: Error) => void;
+	preserveComments?: boolean | false;
+
 	onwarn?: (warning: Warning) => void;
+
+	// to remove in v3
+	onerror?: (error: Error) => void;
+	skipIntroByDefault?: boolean;
+	nestedTransitions?: boolean;
 }
 
-export interface GenerateOptions {
+export interface ShorthandImport {
 	name: string;
-	format: ModuleFormat;
-	banner?: string;
-	sharedPath?: string;
-	helpers?: { name: string, alias: string }[];
-}
+	source: string;
+};
 
 export interface Visitor {
 	enter: (node: Node) => void;
@@ -83,11 +83,7 @@ export interface CustomElementOptions {
 	props?: string[];
 }
 
-export interface PreprocessOptions {
-	markup?: (options: {content: string, filename: string}) => { code: string, map?: SourceMap | string };
-	style?: Preprocessor;
-	script?: Preprocessor;
-	filename?: string
+export interface AppendTarget {
+	slots: Record<string, string>;
+	slotStack: string[]
 }
-
-export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
