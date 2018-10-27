@@ -28,7 +28,10 @@ function create_main_fragment(component, ctx) {
 
 function Main(options) {
 	this._debugName = '<Main>';
-	if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
+	if (!options || (!options.target && !options.root)) {
+		throw new Error("'target' is a required option");
+	}
+
 	init(this, options);
 	this._state = assign({}, options.data);
 	this._intro = true;

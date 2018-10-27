@@ -8,10 +8,10 @@ export default {
 	html: ``,
 
 	compileOptions: {
-		dev: true
+		dev: true,
+		nestedTransitions: true,
+		skipIntroByDefault: true,
 	},
-	nestedTransitions: true,
-	skipIntroByDefault: true,
 
 	test(assert, component, target, window, raf) {
 		component.set({ visible: true });
