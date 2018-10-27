@@ -1,5 +1,4 @@
 import { parseExpressionAt } from 'acorn';
-import repeat from '../../utils/repeat';
 import { Parser } from '../index';
 
 const DIRECTIVES: Record<string, {
@@ -63,14 +62,32 @@ const DIRECTIVES: Record<string, {
 		error: 'Transition argument must be an object literal, e.g. `{ duration: 400 }`'
 	},
 
-	Action: {
-		names: [ 'use' ],
+	Animation: {
+		names: ['animate'],
 		attribute(start, end, type, name, expression) {
 			return { start, end, type, name, expression };
 		},
-		allowedExpressionTypes: [ 'Identifier', 'MemberExpression', 'ObjectExpression', 'Literal', 'CallExpression' ],
+		allowedExpressionTypes: ['ObjectExpression'],
+		error: 'Animation argument must be an object literal, e.g. `{ duration: 400 }`'
+	},
+
+	Action: {
+		names: ['use'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['*'],
 		error: 'Data passed to actions must be an identifier (e.g. `foo`), a member expression ' +
 			'(e.g. `foo.bar` or `foo[baz]`), a method call (e.g. `foo()`), or a literal (e.g. `true` or `\'a string\'`'
+	},
+
+	Class: {
+		names: ['class'],
+		attribute(start, end, type, name, expression) {
+			return { start, end, type, name, expression };
+		},
+		allowedExpressionTypes: ['*'],
+		error: 'Data passed to class directives must be an expression'
 	},
 };
 
@@ -83,35 +100,26 @@ Object.keys(DIRECTIVES).forEach(name => {
 });
 
 function readExpression(parser: Parser, start: number, quoteMark: string|null) {
-	let str = '';
+	let i = start;
 	let escaped = false;
 
-	for (let i = start; i < parser.template.length; i += 1) {
+	for (; i < parser.template.length; i += 1) {
 		const char = parser.template[i];
 
 		if (quoteMark) {
 			if (char === quoteMark) {
-				if (escaped) {
-					str += quoteMark;
-				} else {
-					break;
-				}
+				if (!escaped) break;
 			} else if (escaped) {
-				str += '\\' + char;
 				escaped = false;
 			} else if (char === '\\') {
 				escaped = true;
-			} else {
-				str += char;
 			}
 		} else if (/[\s\/>]/.test(char)) {
 			break;
-		} else {
-			str += char;
 		}
 	}
 
-	const expression = parseExpressionAt(repeat(' ', start) + str, start, {
+	const expression = parseExpressionAt(parser.template.slice(0, i), start, {
 		ecmaVersion: 9,
 	});
 	parser.index = expression.end;
@@ -154,7 +162,8 @@ export function readDirective(
 
 		try {
 			expression = readExpression(parser, expressionStart, quoteMark);
-			if (directive.allowedExpressionTypes.indexOf(expression.type) === -1) {
+			const allowed = directive.allowedExpressionTypes;
+			if (allowed[0] !== '*' && allowed.indexOf(expression.type) === -1) {
 				parser.error({
 					code: `invalid-directive-value`,
 					message: directive.error

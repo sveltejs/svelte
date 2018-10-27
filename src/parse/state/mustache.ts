@@ -1,3 +1,4 @@
+import readContext from '../read/context';
 import readExpression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
 import { trimStart, trimEnd } from '../../utils/trim';
@@ -36,7 +37,7 @@ export default function mustache(parser: Parser) {
 
 	parser.allowWhitespace();
 
-	// {{/if}} or {{/each}}
+	// {/if} or {/each}
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
@@ -91,7 +92,7 @@ export default function mustache(parser: Parser) {
 		if (block.type !== 'IfBlock')
 			parser.error({
 				code: `invalid-elseif-placement`,
-				message: 'Cannot have an {{elseif ...}} block outside an {{#if ...}} block'
+				message: 'Cannot have an {:elseif ...} block outside an {#if ...} block'
 			});
 
 		parser.requireWhitespace();
@@ -123,7 +124,7 @@ export default function mustache(parser: Parser) {
 		if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 			parser.error({
 				code: `invalid-else-placement`,
-				message: 'Cannot have an {{else}} block outside an {{#if ...}} or {{#each ...}} block'
+				message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
 			});
 		}
 
@@ -146,11 +147,12 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			const awaitBlock = parser.current();
 
-			parser.requireWhitespace();
-			awaitBlock.value = parser.readIdentifier();
-
-			parser.allowWhitespace();
-			parser.eat('}', true);
+			if (!parser.eat('}')) {
+				parser.requireWhitespace();
+				awaitBlock.value = parser.readIdentifier();
+				parser.allowWhitespace();
+				parser.eat('}', true);
+			}
 
 			const thenBlock: Node = {
 				start,
@@ -169,11 +171,12 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			const awaitBlock = parser.current();
 
-			parser.requireWhitespace();
-			awaitBlock.error = parser.readIdentifier();
-
-			parser.allowWhitespace();
-			parser.eat('}', true);
+			if (!parser.eat('}')) {
+				parser.requireWhitespace();
+				awaitBlock.error = parser.readIdentifier();
+				parser.allowWhitespace();
+				parser.eat('}', true);
+			}
 
 			const catchBlock: Node = {
 				start,
@@ -186,7 +189,7 @@ export default function mustache(parser: Parser) {
 			parser.stack.push(catchBlock);
 		}
 	} else if (parser.eat('#')) {
-		// {{#if foo}} or {{#each foo}}
+		// {#if foo}, {#each foo} or {#await foo}
 		let type;
 
 		if (parser.eat('if')) {
@@ -243,45 +246,12 @@ export default function mustache(parser: Parser) {
 
 		parser.allowWhitespace();
 
-		// {{#each}} blocks must declare a context – {{#each list as item}}
+		// {#each} blocks must declare a context – {#each list as item}
 		if (type === 'EachBlock') {
 			parser.eat('as', true);
 			parser.requireWhitespace();
 
-			if (parser.eat('[')) {
-				parser.allowWhitespace();
-
-				block.destructuredContexts = [];
-
-				do {
-					parser.allowWhitespace();
-
-					const destructuredContext = parser.readIdentifier();
-					if (!destructuredContext) parser.error({
-						code: `expected-name`,
-						message: `Expected name`
-					});
-
-					block.destructuredContexts.push(destructuredContext);
-					parser.allowWhitespace();
-				} while (parser.eat(','));
-
-				if (!block.destructuredContexts.length) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
-				});
-
-				block.context = block.destructuredContexts.join('_');
-
-				parser.allowWhitespace();
-				parser.eat(']', true);
-			} else {
-				block.context = parser.readIdentifier();
-				if (!block.context) parser.error({
-					code: `expected-name`,
-					message: `Expected name`
-				});
-			}
+			block.context = readContext(parser);
 
 			parser.allowWhitespace();
 
@@ -299,23 +269,7 @@ export default function mustache(parser: Parser) {
 			if (parser.eat('(')) {
 				parser.allowWhitespace();
 
-				const expression = readExpression(parser);
-
-				// TODO eventually, we should accept any expression, and turn
-				// it into a function. For now, assume that every expression
-				// follows the `foo.id` pattern, and equates to `@id`
-				if (
-					expression.type !== 'MemberExpression' ||
-					expression.property.computed ||
-					expression.property.type !== 'Identifier'
-				) {
-					parser.error({
-						code: `invalid-key`,
-						message: 'invalid key'
-					}, expression.start);
-				}
-
-				block.key = expression.property.name;
+				block.key = readExpression(parser);
 				parser.allowWhitespace();
 				parser.eat(')', true);
 				parser.allowWhitespace();
@@ -347,7 +301,7 @@ export default function mustache(parser: Parser) {
 			parser.stack.push(childBlock);
 		}
 	} else if (parser.eat('@html')) {
-		// {{{raw}}} mustache
+		// {@html content} tag
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
@@ -358,6 +312,38 @@ export default function mustache(parser: Parser) {
 			end: parser.index,
 			type: 'RawMustacheTag',
 			expression,
+		});
+	} else if (parser.eat('@debug')) {
+		let identifiers;
+
+		// Implies {@debug} which indicates "debug all"
+		if (parser.read(/\s*}/)) {
+			identifiers = [];
+		} else {
+			const expression = readExpression(parser);
+
+			identifiers = expression.type === 'SequenceExpression'
+				? expression.expressions
+				: [expression];
+
+			identifiers.forEach(node => {
+				if (node.type !== 'Identifier') {
+					parser.error({
+						code: 'invalid-debug-args',
+						message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
+					}, node.start);
+				}
+			});
+
+			parser.allowWhitespace();
+			parser.eat('}', true);
+		}
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'DebugTag',
+			identifiers
 		});
 	} else {
 		const expression = readExpression(parser);

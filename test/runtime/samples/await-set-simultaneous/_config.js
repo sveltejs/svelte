@@ -1,6 +1,8 @@
 export default {
 	test(assert, component, target) {
-		const promise = Promise.resolve().then(() => component.set({ answer: 42 }));
+		const promise = Promise.resolve().then(() => {
+			component.set({ answer: 42 });
+		});
 
 		component.set({ promise });
 

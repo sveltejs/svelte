@@ -5,31 +5,44 @@ The magical disappearing UI framework.
 * [Read the introductory blog post](https://svelte.technology/blog/frameworks-without-the-framework)
 * [Read the guide](https://svelte.technology/guide)
 * [Try it out](https://svelte.technology/repl)
-* [Chat on Gitter](https://gitter.im/sveltejs/svelte)
+* [Chat on Discord](https://discord.gg/yy75DKs)
 
 ---
 
+## Tooling
+
 This is the Svelte compiler, which is primarily intended for authors of tooling that integrates Svelte with different build systems. If you just want to write Svelte components and use them in your app, you probably want one of those tools:
 
-* [svelte-cli](https://github.com/sveltejs/svelte-cli) – Command line interface for compiling components
-* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) – Rollup plugin
-* [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
+### Build Systems
+
 * [gulp-svelte](https://github.com/shinnn/gulp-svelte) - gulp plugin
 * [metalsmith-svelte](https://github.com/shinnn/metalsmith-svelte) - Metalsmith plugin
 * [system-svelte](https://github.com/CanopyTax/system-svelte) – System.js loader
 * [svelte-loader](https://github.com/sveltejs/svelte-loader) – Webpack loader
 * [meteor-svelte](https://github.com/klaussner/meteor-svelte) – Meteor build plugin
 * [sveltejs-brunch](https://github.com/StarpTech/sveltejs-brunch) – Brunch build plugin
+* [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) – Rollup plugin
+* [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte) - Parcel build plugin
+* [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
+
+### CSS Preprocessors
+
+* [Less](https://github.com/ls-age/svelte-preprocess-less)
+* [modular-css](https://github.com/tivac/modular-css/tree/master/packages/svelte)
+* [PostCSS](https://github.com/TehShrike/svelte-preprocess-postcss)
+* [Sass](https://github.com/ls-age/svelte-preprocess-sass)
+
+### Additional tools
+
 * [svelte-dev-store](https://github.com/GarethOates/svelte-dev-store) - Use Redux tools to visualise Svelte store
 * More to come!
-
 
 ## Example usage
 
 ```js
 import * as svelte from 'svelte';
 
-const { code, map } = svelte.compile(source, {
+const { js, css, ast } = svelte.compile(source, {
 	// the target module format – defaults to 'es' (ES2015 modules), can
 	// also be 'amd', 'cjs', 'umd', 'iife' or 'eval'
 	format: 'umd',
@@ -126,14 +139,60 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 
 ## Example/starter repos
 
+* [sveltejs/template](https://github.com/sveltejs/template) — the 'official' starter template
+* [sveltejs/template-webpack](https://github.com/sveltejs/template-webpack) — using webpack for bundling
 * [charpeni/svelte-example](https://github.com/charpeni/svelte-example) - Some Svelte examples with configured Rollup, Babel, ESLint, directives, Two-Way binding, and nested components
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
 * [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
 * [khtdr/svelte-redux-shopping-cart](https://github.com/khtdr/svelte-redux-shopping-cart) – Redux Shopping Cart example (with devtools and hot-reloading)
 
-## BrowserStack
-<img src="https://cdn.worldvectorlogo.com/logos/browserstack.svg" height="80" width="80" align="left">
-<p>To keep Svelte's performance in check, we use BrowserStack to quickly run benchmarks for each PR that immediately give feedback to the contributor. You can see how we use BrowserStack in the <a href="https://github.com/sveltejs/svelte-bench">svelte-bench</a> project and check out BrowserStack's services on their <a href="https://www.browserstack.com/">website</a>.</p>
+## Development
+
+Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
+
+To install and work on Svelte locally:
+
+```bash
+git clone git@github.com:sveltejs/svelte.git
+cd svelte
+npm install
+npm run dev
+```
+
+The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [VSCode](https://code.visualstudio.com/) you may need to install a plugin in order to get syntax highlighting and code hints etc.
+
+### Linking to a Live Project
+
+You can make changes locally to Svelte and test it against any Svelte project. You can also use a [default template](https://github.com/sveltejs/template) for development. Instruction on setup are found in that project repository.
+
+From your project:
+
+```bash
+cd ~/path/to/your-svelte-project
+npm install ~/path/to/svelte
+```
+
+And you should be good to test changes locally.
+
+To undo this and link to the official latest Svelte release, just run:
+
+```bash
+npm install svelte@latest
+```
+
+### Running Tests
+
+```bash
+npm run test
+```
+
+For running single tests, you can use pattern matching:
+
+```bash
+npm run test -- -g "includes AST in svelte.compile output"
+```
+
+Alternately, you can add `solo: true` to any given `test/../_config.js` file, but **remember never to commit that setting.**
 
 ## License
 

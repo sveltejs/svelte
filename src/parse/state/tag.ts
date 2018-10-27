@@ -65,7 +65,7 @@ function parentIsHead(stack) {
 	while (i--) {
 		const { type } = stack[i];
 		if (type === 'Head') return true;
-		if (type === 'Element' || type === 'Component') return false;
+		if (type === 'Element' || type === 'InlineComponent') return false;
 	}
 	return false;
 }
@@ -123,7 +123,7 @@ export default function tag(parser: Parser) {
 
 	const type = metaTags.has(name)
 		? metaTags.get(name)
-		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'Component'
+		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 		: name === 'title' && parentIsHead(parser.stack) ? 'Title'
 		: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
 
@@ -397,13 +397,13 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 function readAttributeValue(parser: Parser) {
 	const quoteMark = parser.eat(`'`) ? `'` : parser.eat(`"`) ? `"` : null;
 
-	const regex = quoteMark === `'`
-		? /'/
-		: quoteMark === `"` ? /"/ : /[\s"'=<>\/`]/;
-
-	const value = readSequence(parser, () =>
-		regex.test(parser.template[parser.index])
+	const regex = (
+		quoteMark === `'` ? /'/ :
+		quoteMark === `"` ? /"/ :
+		/(\/>|[\s"'=<>`])/
 	);
+
+	const value = readSequence(parser, () => !!parser.matchRegex(regex));
 
 	if (quoteMark) parser.index += 1;
 	return value;
@@ -439,6 +439,7 @@ function readSequence(parser: Parser, done: () => boolean) {
 				chunks.push(currentChunk);
 			}
 
+			parser.allowWhitespace();
 			const expression = readExpression(parser);
 			parser.allowWhitespace();
 			parser.eat('}', true);
