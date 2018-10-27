@@ -1,8 +1,8 @@
 export default {
 	data: {
 		component: {
-			name: 'world'
-		}
+			name: 'world',
+		},
 	},
 
 	html: `
@@ -10,26 +10,31 @@ export default {
 		<input>
 	`,
 
-	test ( assert, component, target, window ) {
-		const input = target.querySelector( 'input' );
-		assert.equal( input.value, 'world' );
+	ssrHtml: `
+		<h1>Hello world!</h1>
+		<input value=world>
+	`,
 
-		const event = new window.Event( 'input' );
+	test(assert, component, target, window) {
+		const input = target.querySelector('input');
+		assert.equal(input.value, 'world');
+
+		const event = new window.Event('input');
 
 		input.value = 'everybody';
-		input.dispatchEvent( event );
+		input.dispatchEvent(event);
 
-		assert.equal( input.value, 'everybody' );
-		assert.htmlEqual( target.innerHTML, `
+		assert.equal(input.value, 'everybody');
+		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello everybody!</h1>
 			<input>
-		` );
+		`);
 
 		component.set({ component: { name: 'goodbye' } });
-		assert.equal( input.value, 'goodbye' );
-		assert.htmlEqual( target.innerHTML, `
+		assert.equal(input.value, 'goodbye');
+		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello goodbye!</h1>
 			<input>
-		` );
-	}
+		`);
+	},
 };

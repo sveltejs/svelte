@@ -11,6 +11,12 @@ export default {
 		<input>
 	`,
 
+	ssrHtml: `
+		<input value=x>
+		<input value=y>
+		<input value=z>
+	`,
+
 	test(assert, component, target, window) {
 		const inputs = target.querySelectorAll('input');
 
