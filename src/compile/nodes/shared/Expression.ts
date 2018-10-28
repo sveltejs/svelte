@@ -57,10 +57,11 @@ export default class Expression {
 	component: Component;
 	node: any;
 	snippet: string;
-
-	usesContext: boolean;
 	references: Set<string>;
 	dependencies: Set<string>;
+
+	usesContext = false;
+	usesEvent = false;
 
 	thisReferences: Array<{ start: number, end: number }>;
 
@@ -76,8 +77,6 @@ export default class Expression {
 		this.thisReferences = [];
 
 		this.snippet = `[✂${info.start}-${info.end}✂]`;
-
-		this.usesContext = false;
 
 		const dependencies = new Set();
 
@@ -109,7 +108,12 @@ export default class Expression {
 				if (isReference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
-					if (currentScope.has(name) || (name === 'event' && isEventHandler)) return;
+					if (name === 'event' && isEventHandler) {
+						expression.usesEvent = true;
+						return;
+					}
+
+					if (currentScope.has(name)) return;
 
 					if (component.helpers.has(name)) {
 						let object = node;

@@ -1,0 +1,32 @@
+[
+	{
+		"message": "The passive modifier only works with wheel and touch events",
+		"code": "redundant-event-modifier",
+		"start": {
+			"line": 1,
+			"column": 8,
+			"character": 8
+		},
+		"end": {
+			"line": 1,
+			"column": 40,
+			"character": 40
+		},
+		"pos": 8
+	},
+	{
+		"message": "Touch event handlers that don't use the 'event' object are passive by default",
+		"code": "redundant-event-modifier",
+		"start": {
+			"line": 2,
+			"column": 5,
+			"character": 56
+		},
+		"end": {
+			"line": 2,
+			"column": 47,
+			"character": 98
+		},
+		"pos": 56
+	}
+]
