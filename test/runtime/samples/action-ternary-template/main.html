@@ -1,0 +1,21 @@
+<h1 use:insert="display ? `Hello ${target}` : ''"></h1>
+
+<script>
+	export default {
+		actions: {
+			insert(node, text) {
+
+				function onClick() {
+					node.textContent = text;
+				}
+				node.addEventListener('click', onClick);
+
+				return {
+					destroy() {
+						node.removeEventListener('click', onClick);
+					}
+				}
+			}
+		}
+	}
+</script>

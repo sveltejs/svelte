@@ -1,7 +1,6 @@
 import jsdom from 'jsdom';
-import { JSDOM } from 'jsdom';
 import assert from 'assert';
-import glob from 'glob';
+import glob from 'tiny-glob/sync.js';
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
@@ -47,7 +46,7 @@ export function tryToReadFile(file) {
 }
 
 export const virtualConsole = new jsdom.VirtualConsole();
-const { window } = new JSDOM('<main></main>', {virtualConsole});
+const { window } = new jsdom.JSDOM('<main></main>', {virtualConsole});
 global.document = window.document;
 
 export function env() {
@@ -175,7 +174,7 @@ function capitalise(str) {
 }
 
 export function showOutput(cwd, options = {}, compile = svelte.compile) {
-	glob.sync('**/*.html', { cwd }).forEach(file => {
+	glob('**/*.html', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
 		const name = path.basename(file)

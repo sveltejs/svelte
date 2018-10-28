@@ -1,7 +1,6 @@
 import assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { rollup } from "rollup";
 import { loadConfig, svelte } from "../helpers.js";
 
 describe("js", () => {
@@ -35,45 +34,14 @@ describe("js", () => {
 			}
 
 			const output = `${dir}/_actual.js`;
-
 			fs.writeFileSync(output, actual);
 
-			return rollup({
-				input: output,
-				plugins: [
-					{
-						resolveId(importee, importer) {
-							if (!importer) return importee;
-							if (importee === "svelte/shared.js")
-								return path.resolve("shared.js");
-							return null;
-						}
-					}
-				]
-			}).then(bundle => {
-				return bundle.generate({ format: "es" });
-			}).then(({ code }) => {
-				fs.writeFileSync(`${dir}/_actual-bundle.js`, code);
+			const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
 
-				const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
-				const expectedBundle = fs.readFileSync(
-					`${dir}/expected-bundle.js`,
-					"utf-8"
-				);
-
-				assert.equal(
-					actual.trim().replace(/^[ \t]+$/gm, ""),
-					expected.trim().replace(/^[ \t]+$/gm, "")
-				);
-
-				assert.equal(
-					code.trim().replace(/^[ \t]+$/gm, ""),
-					expectedBundle.trim().replace(/^[ \t]+$/gm, "")
-				);
-			}).catch(err => {
-				if (err.start) console.error(err.start);
-				throw err;
-			});
+			assert.equal(
+				actual.trim().replace(/^[ \t]+$/gm, ""),
+				expected.trim().replace(/^[ \t]+$/gm, "")
+			);
 		});
 	});
 });

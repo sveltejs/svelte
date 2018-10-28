@@ -1,0 +1,15 @@
+[{
+	"code": "missing-animation",
+	"message": "Missing animation 'foo'",
+	"start": {
+		"line": 2,
+		"column": 6,
+		"character": 38
+	},
+	"end": {
+		"line": 2,
+		"column": 17,
+		"character": 49
+	},
+	"pos": 38
+}]

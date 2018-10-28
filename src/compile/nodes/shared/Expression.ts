@@ -1,4 +1,4 @@
-import Compiler from '../../Compiler';
+import Component from '../../Component';
 import { walk } from 'estree-walker';
 import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
@@ -54,7 +54,7 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 export default class Expression {
-	compiler: Compiler;
+	component: Component;
 	node: any;
 	snippet: string;
 
@@ -64,11 +64,11 @@ export default class Expression {
 
 	thisReferences: Array<{ start: number, end: number }>;
 
-	constructor(compiler, parent, scope, info) {
+	constructor(component, parent, scope, info) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
-			compiler: {
-				value: compiler
+			component: {
+				value: component
 			}
 		});
 
@@ -81,7 +81,7 @@ export default class Expression {
 
 		const dependencies = new Set();
 
-		const { code, helpers } = compiler;
+		const { code, helpers } = component;
 
 		let { map, scope: currentScope } = createScopes(info);
 
@@ -111,11 +111,13 @@ export default class Expression {
 
 					if (currentScope.has(name) || (name === 'event' && isEventHandler)) return;
 
-					if (compiler.helpers.has(name)) {
+					if (component.helpers.has(name)) {
 						let object = node;
 						while (object.type === 'MemberExpression') object = object.object;
 
-						const alias = compiler.templateVars.get(`helpers-${name}`);
+						component.used.helpers.add(name);
+
+						const alias = component.templateVars.get(`helpers-${name}`);
 						if (alias !== name) code.overwrite(object.start, object.end, alias);
 						return;
 					}
@@ -135,7 +137,7 @@ export default class Expression {
 						});
 					} else {
 						dependencies.add(name);
-						compiler.expectedProperties.add(name);
+						component.expectedProperties.add(name);
 					}
 
 					if (node.type === 'MemberExpression') {
@@ -163,7 +165,7 @@ export default class Expression {
 
 	overwriteThis(name) {
 		this.thisReferences.forEach(ref => {
-			this.compiler.code.overwrite(ref.start, ref.end, name, {
+			this.component.code.overwrite(ref.start, ref.end, name, {
 				storeName: true
 			});
 		});

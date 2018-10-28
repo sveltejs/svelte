@@ -1,6 +1,5 @@
 export function destroyBlock(block, lookup) {
-	block.u();
-	block.d();
+	block.d(1);
 	lookup[block.key] = null;
 }
 
@@ -10,7 +9,12 @@ export function outroAndDestroyBlock(block, lookup) {
 	});
 }
 
-export function updateKeyedEach(old_blocks, component, changed, key_prop, dynamic, list, lookup, node, has_outro, create_each_block, intro_method, next, get_context) {
+export function fixAndOutroAndDestroyBlock(block, lookup) {
+	block.f();
+	outroAndDestroyBlock(block, lookup);
+}
+
+export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, intro_method, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
@@ -24,14 +28,15 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 
 	var i = n;
 	while (i--) {
-		var key = list[i][key_prop];
+		var child_ctx = get_context(ctx, list, i);
+		var key = get_key(child_ctx);
 		var block = lookup[key];
 
 		if (!block) {
-			block = create_each_block(component, key, get_context(i));
+			block = create_each_block(component, key, child_ctx);
 			block.c();
 		} else if (dynamic) {
-			block.p(changed, get_context(i));
+			block.p(changed, child_ctx);
 		}
 
 		new_blocks[i] = new_lookup[key] = block;
@@ -41,8 +46,6 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 
 	var will_move = {};
 	var did_move = {};
-
-	var destroy = has_outro ? outroAndDestroyBlock : destroyBlock;
 
 	function insert(block) {
 		block[intro_method](node, next);
@@ -95,4 +98,26 @@ export function updateKeyedEach(old_blocks, component, changed, key_prop, dynami
 	while (n) insert(new_blocks[n - 1]);
 
 	return new_blocks;
+}
+
+export function measure(blocks) {
+	const rects = {};
+	let i = blocks.length;
+	while (i--) rects[blocks[i].key] = blocks[i].node.getBoundingClientRect();
+	return rects;
+}
+
+export function animate(blocks, rects, fn, params) {
+	let i = blocks.length;
+	while (i--) {
+		const block = blocks[i];
+		const from = rects[block.key];
+
+		if (!from) continue;
+		const to = block.node.getBoundingClientRect();
+
+		if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) continue;
+
+
+	}
 }
