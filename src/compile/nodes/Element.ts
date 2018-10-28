@@ -57,6 +57,22 @@ const a11yRequiredContent = new Set([
 
 const invisibleElements = new Set(['meta', 'html', 'script', 'style']);
 
+const validModifiers = new Set([
+	'preventDefault',
+	'stopPropagation',
+	'capture',
+	'once',
+	'passive'
+]);
+
+const passiveEvents = new Set([
+	'wheel',
+	'touchstart',
+	'touchmove',
+	'touchend',
+	'touchcancel'
+]);
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -567,22 +583,6 @@ export default class Element extends Node {
 
 	validateEventHandlers() {
 		const { component } = this;
-
-		const validModifiers = new Set([
-			'preventDefault',
-			'stopPropagation',
-			'capture',
-			'once',
-			'passive'
-		]);
-
-		const passiveEvents = new Set([
-			'wheel',
-			'touchstart',
-			'touchmove',
-			'touchend',
-			'touchcancel'
-		]);
 
 		this.handlers.forEach(handler => {
 			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
