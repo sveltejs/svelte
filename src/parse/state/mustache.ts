@@ -147,11 +147,12 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			const awaitBlock = parser.current();
 
-			parser.requireWhitespace();
-			awaitBlock.value = parser.readIdentifier();
-
-			parser.allowWhitespace();
-			parser.eat('}', true);
+			if (!parser.eat('}')) {
+				parser.requireWhitespace();
+				awaitBlock.value = parser.readIdentifier();
+				parser.allowWhitespace();
+				parser.eat('}', true);
+			}
 
 			const thenBlock: Node = {
 				start,
@@ -170,11 +171,12 @@ export default function mustache(parser: Parser) {
 			parser.stack.pop();
 			const awaitBlock = parser.current();
 
-			parser.requireWhitespace();
-			awaitBlock.error = parser.readIdentifier();
-
-			parser.allowWhitespace();
-			parser.eat('}', true);
+			if (!parser.eat('}')) {
+				parser.requireWhitespace();
+				awaitBlock.error = parser.readIdentifier();
+				parser.allowWhitespace();
+				parser.eat('}', true);
+			}
 
 			const catchBlock: Node = {
 				start,
@@ -310,6 +312,38 @@ export default function mustache(parser: Parser) {
 			end: parser.index,
 			type: 'RawMustacheTag',
 			expression,
+		});
+	} else if (parser.eat('@debug')) {
+		let identifiers;
+
+		// Implies {@debug} which indicates "debug all"
+		if (parser.read(/\s*}/)) {
+			identifiers = [];
+		} else {
+			const expression = readExpression(parser);
+
+			identifiers = expression.type === 'SequenceExpression'
+				? expression.expressions
+				: [expression];
+
+			identifiers.forEach(node => {
+				if (node.type !== 'Identifier') {
+					parser.error({
+						code: 'invalid-debug-args',
+						message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
+					}, node.start);
+				}
+			});
+
+			parser.allowWhitespace();
+			parser.eat('}', true);
+		}
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'DebugTag',
+			identifiers
 		});
 	} else {
 		const expression = readExpression(parser);

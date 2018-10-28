@@ -3,7 +3,15 @@ export default {
 		foo: true
 	},
 
-	html: `<input type="checkbox">\n<p>true</p>`,
+	html: `
+		<input type="checkbox">
+		<p>true</p>
+	`,
+
+	ssrHtml: `
+		<input type="checkbox" checked>
+		<p>true</p>
+	`,
 
 	test ( assert, component, target, window ) {
 		const input = target.querySelector( 'input' );

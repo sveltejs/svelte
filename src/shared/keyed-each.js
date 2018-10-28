@@ -1,5 +1,3 @@
-import { transitionManager, linear, generateRule, hash } from './transitions';
-
 export function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;

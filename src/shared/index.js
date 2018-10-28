@@ -47,11 +47,22 @@ export function fire(eventName, data) {
 		var handler = handlers[i];
 
 		if (!handler.__calling) {
-			handler.__calling = true;
-			handler.call(this, data);
-			handler.__calling = false;
+			try {
+				handler.__calling = true;
+				handler.call(this, data);
+			} finally {
+				handler.__calling = false;
+			}
 		}
 	}
+}
+
+export function flush(component) {
+	component._lock = true;
+	callAll(component._beforecreate);
+	callAll(component._oncreate);
+	callAll(component._aftercreate);
+	component._lock = false;
 }
 
 export function get() {
@@ -60,11 +71,19 @@ export function get() {
 
 export function init(component, options) {
 	component._handlers = blankObject();
+	component._slots = blankObject();
 	component._bind = options._bind;
+	component._staged = {};
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.store || options.store;
+	component.store = options.store || component.root.store;
+
+	if (!options.root) {
+		component._beforecreate = [];
+		component._oncreate = [];
+		component._aftercreate = [];
+	}
 }
 
 export function on(eventName, handler) {
@@ -79,24 +98,19 @@ export function on(eventName, handler) {
 	};
 }
 
-export function run(fn) {
-	fn();
-}
-
 export function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
-	this.root._lock = true;
-	callAll(this.root._beforecreate);
-	callAll(this.root._oncreate);
-	callAll(this.root._aftercreate);
-	this.root._lock = false;
+	flush(this.root);
 }
 
 export function _set(newState) {
 	var oldState = this._state,
 		changed = {},
 		dirty = false;
+
+	newState = assign(this._staged, newState);
+	this._staged = {};
 
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
@@ -112,6 +126,10 @@ export function _set(newState) {
 		this._fragment.p(changed, this._state);
 		this.fire("update", { changed: changed, current: this._state, previous: oldState });
 	}
+}
+
+export function _stage(newState) {
+	assign(this._staged, newState);
 }
 
 export function setDev(newState) {
@@ -149,6 +167,7 @@ export var proto = {
 	set,
 	_recompute: noop,
 	_set,
+	_stage,
 	_mount,
 	_differs
 };
@@ -161,6 +180,7 @@ export var protoDev = {
 	set: setDev,
 	_recompute: noop,
 	_set,
+	_stage,
 	_mount,
 	_differs
 };

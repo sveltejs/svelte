@@ -16,13 +16,14 @@ prog
 	.option('--generate', 'Change generate format between `dom` and `ssr`')
 	.option('--no-css', `Don't include CSS (useful with SSR)`)
 	.option('--immutable', 'Support immutable data structures')
+	.option('--shared', 'Don\'t include shared helpers')
 
 	.example('compile App.html > App.js')
 	.example('compile src -o dest')
 	.example('compile -f umd MyComponent.html > MyComponent.js')
 
 	.action((input, opts) => {
-		import('./compile.js').then(({ compile }) => {
+		import('./compile').then(({ compile }) => {
 			compile(input, opts);
 		});
 	})

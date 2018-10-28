@@ -69,7 +69,6 @@ describe("runtime", () => {
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = shared;
 			compileOptions.hydratable = hydrate;
-			compileOptions.dev = config.dev;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
 			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
@@ -166,15 +165,27 @@ describe("runtime", () => {
 						});
 					} else {
 						component.destroy();
-						assert.equal(target.innerHTML, "");
+						assert.htmlEqual(target.innerHTML, "");
 					}
 				})
 				.catch(err => {
 					if (config.error && !unintendedError) {
-						config.error(assert, err);
+						if (typeof config.error === 'function') {
+							config.error(assert, err);
+						} else {
+							assert.equal(config.error, err.message);
+						}
 					} else {
 						failed.add(dir);
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
+						showOutput(cwd, {
+							shared,
+							format: 'cjs',
+							hydratable: hydrate,
+							store: !!compileOptions.store,
+							skipIntroByDefault: compileOptions.skipIntroByDefault,
+							nestedTransitions: compileOptions.nestedTransitions,
+							dev: compileOptions.dev
+						}, compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})

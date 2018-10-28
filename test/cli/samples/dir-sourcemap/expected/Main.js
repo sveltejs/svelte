@@ -6,7 +6,8 @@ import Widget from './Widget.html';
 function create_main_fragment(component, ctx) {
 
 	var widget = new Widget({
-		root: component.root
+		root: component.root,
+		store: component.store
 	});
 
 	return {
@@ -31,23 +32,13 @@ function Main(options) {
 	this._state = assign({}, options.data);
 	this._intro = true;
 
-	if (!options.root) {
-		this._oncreate = [];
-		this._beforecreate = [];
-		this._aftercreate = [];
-	}
-
 	this._fragment = create_main_fragment(this, this._state);
 
 	if (options.target) {
 		this._fragment.c();
 		this._mount(options.target, options.anchor);
 
-		this._lock = true;
-		callAll(this._beforecreate);
-		callAll(this._oncreate);
-		callAll(this._aftercreate);
-		this._lock = false;
+		flush(this);
 	}
 }
 
@@ -58,6 +49,7 @@ assign(Main.prototype, {
  	on: on,
  	set: set,
  	_set: _set,
+ 	_stage: _stage,
  	_mount: _mount,
  	_differs: _differs
  });
@@ -68,11 +60,19 @@ function noop() {}
 
 function init(component, options) {
 	component._handlers = blankObject();
+	component._slots = blankObject();
 	component._bind = options._bind;
+	component._staged = {};
 
 	component.options = options;
 	component.root = options.root || component;
-	component.store = component.root.store || options.store;
+	component.store = options.store || component.root.store;
+
+	if (!options.root) {
+		component._beforecreate = [];
+		component._oncreate = [];
+		component._aftercreate = [];
+	}
 }
 
 function assign(tar, src) {
@@ -80,8 +80,12 @@ function assign(tar, src) {
 	return tar;
 }
 
-function callAll(fns) {
-	while (fns && fns.length) fns.shift()();
+function flush(component) {
+	component._lock = true;
+	callAll(component._beforecreate);
+	callAll(component._oncreate);
+	callAll(component._aftercreate);
+	component._lock = false;
 }
 
 function destroy(detach) {
@@ -107,9 +111,12 @@ function fire(eventName, data) {
 		var handler = handlers[i];
 
 		if (!handler.__calling) {
-			handler.__calling = true;
-			handler.call(this, data);
-			handler.__calling = false;
+			try {
+				handler.__calling = true;
+				handler.call(this, data);
+			} finally {
+				handler.__calling = false;
+			}
 		}
 	}
 }
@@ -129,17 +136,16 @@ function on(eventName, handler) {
 function set(newState) {
 	this._set(assign({}, newState));
 	if (this.root._lock) return;
-	this.root._lock = true;
-	callAll(this.root._beforecreate);
-	callAll(this.root._oncreate);
-	callAll(this.root._aftercreate);
-	this.root._lock = false;
+	flush(this.root);
 }
 
 function _set(newState) {
 	var oldState = this._state,
 		changed = {},
 		dirty = false;
+
+	newState = assign(this._staged, newState);
+	this._staged = {};
 
 	for (var key in newState) {
 		if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
@@ -157,6 +163,10 @@ function _set(newState) {
 	}
 }
 
+function _stage(newState) {
+	assign(this._staged, newState);
+}
+
 function _mount(target, anchor) {
 	this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 }
@@ -167,6 +177,10 @@ function _differs(a, b) {
 
 function blankObject() {
 	return Object.create(null);
+}
+
+function callAll(fns) {
+	while (fns && fns.length) fns.shift()();
 }
 export default Main;
 //# sourceMappingURL=Main.js.map

@@ -1,8 +1,11 @@
-import Compiler from '../compile/Compiler';
+import Component from '../compile/Component';
 import { Node } from '../interfaces';
 
-export default function createDebuggingComment(node: Node, compiler: Compiler) {
-	const { locate, source } = compiler;
+export default function createDebuggingComment(
+	node: Node,
+	component: Component
+) {
+	const { locate, source } = component;
 
 	let c = node.start;
 	if (node.type === 'ElseBlock') {

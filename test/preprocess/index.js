@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {svelte} from '../helpers.js';
+import { svelte } from '../helpers.js';
 
 describe('preprocess', () => {
 	it('preprocesses entire component', () => {

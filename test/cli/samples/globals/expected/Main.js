@@ -9,24 +9,24 @@ var Main = (function(answer) { "use strict";
 };
 
 	function create_main_fragment(component, ctx) {
-		var p, text, text_1;
+		var p, text0, text1;
 
 		return {
 			c() {
 				p = createElement("p");
-				text = createText("The answer is ");
-				text_1 = createText(ctx.answer);
+				text0 = createText("The answer is ");
+				text1 = createText(ctx.answer);
 			},
 
 			m(target, anchor) {
-				insertNode(p, target, anchor);
-				appendNode(text, p);
-				appendNode(text_1, p);
+				insert(target, p, anchor);
+				append(p, text0);
+				append(p, text1);
 			},
 
 			p(changed, ctx) {
 				if (changed.answer) {
-					text_1.data = ctx.answer;
+					setData(text1, ctx.answer);
 				}
 			},
 
@@ -58,6 +58,7 @@ var Main = (function(answer) { "use strict";
 	 	on: on,
 	 	set: set,
 	 	_set: _set,
+	 	_stage: _stage,
 	 	_mount: _mount,
 	 	_differs: _differs
 	 });
@@ -72,12 +73,16 @@ var Main = (function(answer) { "use strict";
 		return document.createTextNode(data);
 	}
 
-	function insertNode(node, target, anchor) {
+	function insert(target, node, anchor) {
 		target.insertBefore(node, anchor);
 	}
 
-	function appendNode(node, target) {
+	function append(target, node) {
 		target.appendChild(node);
+	}
+
+	function setData(text, data) {
+		text.data = '' + data;
 	}
 
 	function detachNode(node) {
@@ -86,11 +91,19 @@ var Main = (function(answer) { "use strict";
 
 	function init(component, options) {
 		component._handlers = blankObject();
+		component._slots = blankObject();
 		component._bind = options._bind;
+		component._staged = {};
 
 		component.options = options;
 		component.root = options.root || component;
-		component.store = component.root.store || options.store;
+		component.store = options.store || component.root.store;
+
+		if (!options.root) {
+			component._beforecreate = [];
+			component._oncreate = [];
+			component._aftercreate = [];
+		}
 	}
 
 	function assign(tar, src) {
@@ -121,9 +134,12 @@ var Main = (function(answer) { "use strict";
 			var handler = handlers[i];
 
 			if (!handler.__calling) {
-				handler.__calling = true;
-				handler.call(this, data);
-				handler.__calling = false;
+				try {
+					handler.__calling = true;
+					handler.call(this, data);
+				} finally {
+					handler.__calling = false;
+				}
 			}
 		}
 	}
@@ -143,17 +159,16 @@ var Main = (function(answer) { "use strict";
 	function set(newState) {
 		this._set(assign({}, newState));
 		if (this.root._lock) return;
-		this.root._lock = true;
-		callAll(this.root._beforecreate);
-		callAll(this.root._oncreate);
-		callAll(this.root._aftercreate);
-		this.root._lock = false;
+		flush(this.root);
 	}
 
 	function _set(newState) {
 		var oldState = this._state,
 			changed = {},
 			dirty = false;
+
+		newState = assign(this._staged, newState);
+		this._staged = {};
 
 		for (var key in newState) {
 			if (this._differs(newState[key], oldState[key])) changed[key] = dirty = true;
@@ -171,6 +186,10 @@ var Main = (function(answer) { "use strict";
 		}
 	}
 
+	function _stage(newState) {
+		assign(this._staged, newState);
+	}
+
 	function _mount(target, anchor) {
 		this._fragment[this._fragment.i ? 'i' : 'm'](target, anchor || null);
 	}
@@ -183,6 +202,14 @@ var Main = (function(answer) { "use strict";
 
 	function blankObject() {
 		return Object.create(null);
+	}
+
+	function flush(component) {
+		component._lock = true;
+		callAll(component._beforecreate);
+		callAll(component._oncreate);
+		callAll(component._aftercreate);
+		component._lock = false;
 	}
 
 	function callAll(fns) {

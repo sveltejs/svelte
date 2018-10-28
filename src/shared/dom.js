@@ -1,8 +1,8 @@
-export function appendNode(node, target) {
+export function append(target, node) {
 	target.appendChild(node);
 }
 
-export function insertNode(node, target, anchor) {
+export function insert(target, node, anchor) {
 	target.insertBefore(node, anchor);
 }
 
@@ -82,22 +82,30 @@ export function removeListener(node, event, handler) {
 }
 
 export function setAttribute(node, attribute, value) {
-	node.setAttribute(attribute, value);
+	if (value == null) node.removeAttribute(attribute);
+	else node.setAttribute(attribute, value);
 }
 
 export function setAttributes(node, attributes) {
 	for (var key in attributes) {
-		if (key in node) {
+		if (key === 'style') {
+			node.style.cssText = attributes[key];
+		} else if (key in node) {
 			node[key] = attributes[key];
 		} else {
-			if (attributes[key] === undefined) removeAttribute(node, key);
-			else setAttribute(node, key, attributes[key]);
+			setAttribute(node, key, attributes[key]);
 		}
 	}
 }
 
-export function removeAttribute(node, attribute) {
-	node.removeAttribute(attribute);
+export function setCustomElementData(node, prop, value) {
+	if (prop in node) {
+		node[prop] = value;
+	} else if (value) {
+		setAttribute(node, prop, value);
+	} else {
+		node.removeAttribute(prop);
+	}
 }
 
 export function setXlinkAttribute(node, attribute, value) {
@@ -153,6 +161,10 @@ export function claimText (nodes, data) {
 	}
 
 	return createText(data);
+}
+
+export function setData(text, data) {
+	text.data = '' + data;
 }
 
 export function setInputType(input, type) {
@@ -220,8 +232,12 @@ export function addResizeListener(element, fn) {
 
 	return {
 		cancel: () => {
-			win.removeEventListener('resize', fn);
+			win && win.removeEventListener && win.removeEventListener('resize', fn);
 			element.removeChild(object);
 		}
 	};
+}
+
+export function toggleClass(element, name, toggle) {
+	element.classList.toggle(name, !!toggle);
 }

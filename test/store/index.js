@@ -118,7 +118,7 @@ describe('store', () => {
 
 			assert.throws(() => {
 				store.set({ bar: 'whatever' });
-			}, /'bar' is a read-only property/);
+			}, /'bar' is a read-only computed property/);
 		});
 
 		it('allows multiple dependents to depend on the same computed property', () => {

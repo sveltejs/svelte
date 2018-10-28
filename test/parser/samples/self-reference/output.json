@@ -1,5 +1,4 @@
 {
-	"hash": "1wh7lqr",
 	"html": {
 		"start": 0,
 		"end": 57,
@@ -32,7 +31,7 @@
 					{
 						"start": 17,
 						"end": 51,
-						"type": "Component",
+						"type": "InlineComponent",
 						"name": "svelte:self",
 						"attributes": [
 							{

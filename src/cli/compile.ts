@@ -44,12 +44,18 @@ export function compile(input, opts) {
 		format: opts.format,
 		sourceMap: opts.sourcemap,
 		globals,
+		amd: opts.amdId
+			? {
+				id: opts.amdId,
+			}
+			: undefined,
 		css: opts.css !== false,
 		dev: opts.dev,
 		immutable: opts.immutable,
 		generate: opts.generate || 'dom',
 		customElement: opts.customElement,
-		store: opts.store
+		store: opts.store,
+		shared: opts.shared
 	};
 
 	if (isDir) {

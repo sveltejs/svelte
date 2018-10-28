@@ -1,5 +1,5 @@
 import { createElement } from './dom.js';
-import { noop } from './utils.js';
+import { noop, run } from './utils.js';
 
 export function linear(t) {
 	return t;
@@ -27,7 +27,7 @@ export function hash(str) {
 }
 
 export function wrapTransition(component, node, fn, params, intro) {
-	let obj = fn(node, params);
+	let obj = fn.call(component, node, params);
 	let duration;
 	let ease;
 	let cssText;
@@ -72,8 +72,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 			}
 
 			if (!b) {
-				program.group = transitionManager.outros;
-				transitionManager.outros.remaining += 1;
+				program.group = outros.current;
+				outros.current.remaining += 1;
 			}
 
 			if (obj.delay) {
@@ -137,9 +137,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 				});
 
 				if (--program.group.remaining === 0) {
-					program.group.callbacks.forEach(fn => {
-						fn();
-					});
+					program.group.callbacks.forEach(run);
 				}
 			} else {
 				if (obj.css) transitionManager.deleteRule(node, program.name);
@@ -148,9 +146,9 @@ export function wrapTransition(component, node, fn, params, intro) {
 			this.running = !!this.pending;
 		},
 
-		abort() {
+		abort(reset) {
 			if (this.program) {
-				if (obj.tick) obj.tick(1, 0);
+				if (reset && obj.tick) obj.tick(1, 0);
 				if (obj.css) transitionManager.deleteRule(node, this.program.name);
 				this.program = this.pending = null;
 				this.running = false;
@@ -162,6 +160,15 @@ export function wrapTransition(component, node, fn, params, intro) {
 				this.program.invalidated = true;
 			}
 		}
+	};
+}
+
+export let outros = {};
+
+export function groupOutros() {
+	outros.current = {
+		remaining: 0,
+		callbacks: []
 	};
 }
 
@@ -234,13 +241,6 @@ export var transitionManager = {
 			.split(', ')
 			.filter(anim => anim && anim.indexOf(name) === -1)
 			.join(', ');
-	},
-
-	groupOutros() {
-		this.outros = {
-			remaining: 0,
-			callbacks: []
-		};
 	},
 
 	wait() {
