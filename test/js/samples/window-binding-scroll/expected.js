@@ -59,7 +59,6 @@ function SvelteComponent(options) {
 	if ("y" in this._state) {
 		window.scrollTo(window.pageXOffset, this._state.y);
 	}
-
 	this._state.y = window.pageYOffset;
 	this._intro = true;
 
