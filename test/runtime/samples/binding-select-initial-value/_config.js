@@ -11,17 +11,29 @@ export default {
 		<p>selected: b</p>
 	`,
 
+	ssrHtml: `
+		<p>selected: b</p>
+
+		<select value=b>
+			<option value='a'>a</option>
+			<option value='b'>b</option>
+			<option value='c'>c</option>
+		</select>
+
+		<p>selected: b</p>
+	`,
+
 	data: {
-		selected: 'b'
+		selected: 'b',
 	},
 
-	test ( assert, component, target ) {
-		const select = target.querySelector( 'select' );
-		const options = [ ...target.querySelectorAll( 'option' ) ];
+	test(assert, component, target) {
+		const select = target.querySelector('select');
+		const options = [...target.querySelectorAll('option')];
 
-		assert.equal( select.value, 'b' );
-		assert.ok( options[1].selected );
+		assert.equal(select.value, 'b');
+		assert.ok(options[1].selected);
 
 		component.destroy();
-	}
+	},
 };

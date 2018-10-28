@@ -3,27 +3,47 @@ export default {
 		items: [
 			{ description: 'one' },
 			{ description: 'two' },
-			{ description: 'three' }
-		]
+			{ description: 'three' },
+		],
 	},
-	html: `<div><input><p>one</p></div><div><input><p>two</p></div><div><input><p>three</p></div><!---->`,
-	test ( assert, component, target, window ) {
-		const inputs = [ ...target.querySelectorAll( 'input' ) ];
 
-		assert.equal( inputs[0].value, 'one' );
+	html: `
+		<div><input><p>one</p></div>
+		<div><input><p>two</p></div>
+		<div><input><p>three</p></div>
+	`,
 
-		const event = new window.Event( 'input' );
+	ssrHtml: `
+		<div><input value=one><p>one</p></div>
+		<div><input value=two><p>two</p></div>
+		<div><input value=three><p>three</p></div>
+	`,
+
+	test(assert, component, target, window) {
+		const inputs = [...target.querySelectorAll('input')];
+
+		assert.equal(inputs[0].value, 'one');
+
+		const event = new window.Event('input');
 
 		inputs[1].value = 'four';
-		inputs[1].dispatchEvent( event );
+		inputs[1].dispatchEvent(event);
 
-		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>three</p></div><!---->` );
+		assert.htmlEqual(target.innerHTML, `
+			<div><input><p>one</p></div>
+			<div><input><p>four</p></div>
+			<div><input><p>three</p></div>
+		`);
 
 		const items = component.get().items;
 		items[2].description = 'five';
 
 		component.set({ items });
-		assert.equal( inputs[2].value, 'five' );
-		assert.equal( target.innerHTML, `<div><input><p>one</p></div><div><input><p>four</p></div><div><input><p>five</p></div><!---->` );
-	}
+		assert.equal(inputs[2].value, 'five');
+		assert.htmlEqual(target.innerHTML, `
+			<div><input><p>one</p></div>
+			<div><input><p>four</p></div>
+			<div><input><p>five</p></div>
+		`);
+	},
 };

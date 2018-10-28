@@ -1,5 +1,4 @@
 {
-	"hash": "1143n2g",
 	"html": {
 		"start": 0,
 		"end": 58,
@@ -54,7 +53,12 @@
 						]
 					}
 				],
-				"context": "animal",
+				"context": {
+					"start": 18,
+					"end": 24,
+					"type": "Identifier",
+					"name": "animal"
+				},
 				"index": "i"
 			}
 		]

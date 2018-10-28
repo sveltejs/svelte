@@ -1,25 +1,60 @@
-import deindent from '../../utils/deindent';
-import { stringify, escapeHTML } from '../../utils/stringify';
-import flattenReference from '../../utils/flattenReference';
 import isVoidElementName from '../../utils/isVoidElementName';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import reservedNames from '../../utils/reservedNames';
-import fixAttributeCasing from '../../utils/fixAttributeCasing';
-import quoteIfNecessary from '../../utils/quoteIfNecessary';
-import Compiler from '../Compiler';
+import { quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import Node from './shared/Node';
-import Block from '../dom/Block';
 import Attribute from './Attribute';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Transition from './Transition';
+import Animation from './Animation';
 import Action from './Action';
+import Class from './Class';
 import Text from './Text';
 import * as namespaces from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
+import { dimensions } from '../../utils/patterns';
+import fuzzymatch from '../validate/utils/fuzzymatch';
+import Ref from './Ref';
 
-// source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
-const booleanAttributes = new Set('async autocomplete autofocus autoplay border challenge checked compact contenteditable controls default defer disabled formnovalidate frameborder hidden indeterminate ismap loop multiple muted nohref noresize noshade novalidate nowrap open readonly required reversed scoped scrolling seamless selected sortable spellcheck translate'.split(' '));
+const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
+
+const ariaAttributes = 'activedescendant atomic autocomplete busy checked controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const ariaAttributeSet = new Set(ariaAttributes);
+
+const ariaRoles = 'alert alertdialog application article banner button cell checkbox columnheader combobox command complementary composite contentinfo definition dialog directory document feed figure form grid gridcell group heading img input landmark link list listbox listitem log main marquee math menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option presentation progressbar radio radiogroup range region roletype row rowgroup rowheader scrollbar search searchbox section sectionhead select separator slider spinbutton status structure switch tab table tablist tabpanel term textbox timer toolbar tooltip tree treegrid treeitem widget window'.split(' ');
+const ariaRoleSet = new Set(ariaRoles);
+
+const a11yRequiredAttributes = {
+	a: ['href'],
+	area: ['alt', 'aria-label', 'aria-labelledby'],
+
+	// html-has-lang
+	html: ['lang'],
+
+	// iframe-has-title
+	iframe: ['title'],
+	img: ['alt'],
+	object: ['title', 'aria-label', 'aria-labelledby']
+};
+
+const a11yDistractingElements = new Set([
+	'blink',
+	'marquee'
+]);
+
+const a11yRequiredContent = new Set([
+	// anchor-has-content
+	'a',
+
+	// heading-has-content
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6'
+])
+
+const invisibleElements = new Set(['meta', 'html', 'script', 'style']);
 
 export default class Element extends Node {
 	type: 'Element';
@@ -28,36 +63,55 @@ export default class Element extends Node {
 	attributes: Attribute[];
 	actions: Action[];
 	bindings: Binding[];
+	classes: Class[];
 	handlers: EventHandler[];
-	intro: Transition;
-	outro: Transition;
+	intro?: Transition;
+	outro?: Transition;
+	animation?: Animation;
 	children: Node[];
 
-	ref: string;
+	ref: Ref;
 	namespace: string;
 
-	constructor(compiler, parent, scope, info: any) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info: any) {
+		super(component, parent, scope, info);
 		this.name = info.name;
 		this.scope = scope;
 
 		const parentElement = parent.findNearest(/^Element/);
 		this.namespace = this.name === 'svg' ?
 			namespaces.svg :
-			parentElement ? parentElement.namespace : this.compiler.namespace;
+			parentElement ? parentElement.namespace : this.component.namespace;
+
+		if (!this.namespace && svg.test(this.name)) {
+			this.component.warn(this, {
+				code: `missing-namespace`,
+				message: `<${this.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
+			});
+		}
 
 		this.attributes = [];
 		this.actions = [];
 		this.bindings = [];
+		this.classes = [];
 		this.handlers = [];
 
 		this.intro = null;
 		this.outro = null;
+		this.animation = null;
 
 		if (this.name === 'textarea') {
-			// this is an egregious hack, but it's the easiest way to get <textarea>
-			// children treated the same way as a value attribute
 			if (info.children.length > 0) {
+				const valueAttribute = info.attributes.find(node => node.name === 'value');
+				if (valueAttribute) {
+					component.error(valueAttribute, {
+						code: `textarea-duplicate-value`,
+						message: `A <textarea> can have either a value attribute or (equivalently) child content, but not both`
+					});
+				}
+
+				// this is an egregious hack, but it's the easiest way to get <textarea>
+				// children treated the same way as a value attribute
 				info.attributes.push({
 					type: 'Attribute',
 					name: 'value',
@@ -87,7 +141,7 @@ export default class Element extends Node {
 		info.attributes.forEach(node => {
 			switch (node.type) {
 				case 'Action':
-					this.actions.push(new Action(compiler, this, scope, node));
+					this.actions.push(new Action(component, this, scope, node));
 					break;
 
 				case 'Attribute':
@@ -95,29 +149,33 @@ export default class Element extends Node {
 					// special case
 					if (node.name === 'xmlns') this.namespace = node.value[0].data;
 
-					this.attributes.push(new Attribute(compiler, this, scope, node));
+					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
 
 				case 'Binding':
-					this.bindings.push(new Binding(compiler, this, scope, node));
+					this.bindings.push(new Binding(component, this, scope, node));
+					break;
+
+				case 'Class':
+					this.classes.push(new Class(component, this, scope, node));
 					break;
 
 				case 'EventHandler':
-					this.handlers.push(new EventHandler(compiler, this, scope, node));
+					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
 				case 'Transition':
-					const transition = new Transition(compiler, this, scope, node);
+					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
 					break;
 
-				case 'Ref':
-					// TODO catch this in validation
-					if (this.ref) throw new Error(`Duplicate refs`);
+				case 'Animation':
+					this.animation = new Animation(component, this, scope, node);
+					break;
 
-					compiler.usesRefs = true
-					this.ref = node.name;
+				case 'Ref':
+					this.ref = new Ref(component, this, scope, node);
 					break;
 
 				default:
@@ -125,655 +183,384 @@ export default class Element extends Node {
 			}
 		});
 
-		// TODO break out attributes and directives here
+		this.children = mapChildren(component, this, scope, info.children);
 
-		this.children = mapChildren(compiler, this, scope, info.children);
+		this.validate();
 
-		compiler.stylesheet.apply(this);
+		component.stylesheet.apply(this);
 	}
 
-	init(
-		block: Block,
-		stripWhitespace: boolean,
-		nextSibling: Node
-	) {
-		if (this.name === 'slot' || this.name === 'option') {
-			this.cannotUseInnerHTML();
+	validate() {
+		if (a11yDistractingElements.has(this.name)) {
+			// no-distracting-elements
+			this.component.warn(this, {
+				code: `a11y-distracting-elements`,
+				message: `A11y: Avoid <${this.name}> elements`
+			});
 		}
 
-		this.attributes.forEach(attr => {
-			if (attr.dependencies.size) {
-				this.parent.cannotUseInnerHTML();
-				block.addDependencies(attr.dependencies);
+		if (this.name === 'figcaption') {
+			if (this.parent.name !== 'figure') {
+				this.component.warn(this, {
+					code: `a11y-structure`,
+					message: `A11y: <figcaption> must be an immediate child of <figure>`
+				});
+			}
+		}
 
-				// special case — <option value={foo}> — see below
-				if (this.name === 'option' && attr.name === 'value') {
-					let select = this.parent;
-					while (select && (select.type !== 'Element' || select.name !== 'select')) select = select.parent;
+		if (this.name === 'figure') {
+			const children = this.children.filter(node => {
+				if (node.type === 'Comment') return false;
+				if (node.type === 'Text') return /\S/.test(node.data);
+				return true;
+			});
 
-					if (select && select.selectBindingDependencies) {
-						select.selectBindingDependencies.forEach(prop => {
-							attr.dependencies.forEach((dependency: string) => {
-								this.compiler.indirectDependencies.get(prop).add(dependency);
-							});
-						});
-					}
+			const index = children.findIndex(child => child.name === 'figcaption');
+
+			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
+				this.component.warn(children[index], {
+					code: `a11y-structure`,
+					message: `A11y: <figcaption> must be first or last child of <figure>`
+				});
+			}
+		}
+
+		this.validateAttributes();
+		this.validateBindings();
+		this.validateContent();
+	}
+
+	validateAttributes() {
+		const { component } = this;
+
+		const attributeMap = new Map();
+
+		this.attributes.forEach(attribute => {
+			if (attribute.isSpread) return;
+
+			const name = attribute.name.toLowerCase();
+
+			// aria-props
+			if (name.startsWith('aria-')) {
+				if (invisibleElements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, {
+						code: `a11y-aria-attributes`,
+						message: `A11y: <${this.name}> should not have aria-* attributes`
+					});
+				}
+
+				const type = name.slice(5);
+				if (!ariaAttributeSet.has(type)) {
+					const match = fuzzymatch(type, ariaAttributes);
+					let message = `A11y: Unknown aria attribute 'aria-${type}'`;
+					if (match) message += ` (did you mean '${match}'?)`;
+
+					component.warn(attribute, {
+						code: `a11y-unknown-aria-attribute`,
+						message
+					});
+				}
+
+				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
+					component.warn(attribute, {
+						code: `a11y-hidden`,
+						message: `A11y: <${this.name}> element should not be hidden`
+					});
 				}
 			}
-		});
 
-		this.actions.forEach(action => {
-			this.parent.cannotUseInnerHTML();
-			if (action.expression) {
-				block.addDependencies(action.expression.dependencies);
+			// aria-role
+			if (name === 'role') {
+				if (invisibleElements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, {
+						code: `a11y-misplaced-role`,
+						message: `A11y: <${this.name}> should not have role attribute`
+					});
+				}
+
+				const value = attribute.getStaticValue();
+				if (value && !ariaRoleSet.has(value)) {
+					const match = fuzzymatch(value, ariaRoles);
+					let message = `A11y: Unknown role '${value}'`;
+					if (match) message += ` (did you mean '${match}'?)`;
+
+					component.warn(attribute, {
+						code: `a11y-unknown-role`,
+						message
+					});
+				}
 			}
-		});
 
-		this.bindings.forEach(binding => {
-			this.parent.cannotUseInnerHTML();
-			block.addDependencies(binding.value.dependencies);
-		});
-
-		this.handlers.forEach(handler => {
-			this.parent.cannotUseInnerHTML();
-			block.addDependencies(handler.dependencies);
-		});
-
-		if (this.intro) {
-			this.parent.cannotUseInnerHTML();
-			this.compiler.target.hasIntroTransitions = block.hasIntroMethod = true;
-		}
-
-		if (this.outro) {
-			this.parent.cannotUseInnerHTML();
-			this.compiler.target.hasOutroTransitions = block.hasOutroMethod = true;
-			block.outros += 1;
-		}
-
-		const valueAttribute = this.attributes.find((attribute: Attribute) => attribute.name === 'value');
-
-		// special case — in a case like this...
-		//
-		//   <select bind:value='foo'>
-		//     <option value='{bar}'>bar</option>
-		//     <option value='{baz}'>baz</option>
-		//   </option>
-		//
-		// ...we need to know that `foo` depends on `bar` and `baz`,
-		// so that if `foo.qux` changes, we know that we need to
-		// mark `bar` and `baz` as dirty too
-		if (this.name === 'select') {
-			const binding = this.bindings.find(node => node.name === 'value');
-			if (binding) {
-				// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
-				const dependencies = binding.value.dependencies;
-				this.selectBindingDependencies = dependencies;
-				dependencies.forEach((prop: string) => {
-					this.compiler.indirectDependencies.set(prop, new Set());
+			// no-access-key
+			if (name === 'accesskey') {
+				component.warn(attribute, {
+					code: `a11y-accesskey`,
+					message: `A11y: Avoid using accesskey`
 				});
+			}
+
+			// no-autofocus
+			if (name === 'autofocus') {
+				component.warn(attribute, {
+					code: `a11y-autofocus`,
+					message: `A11y: Avoid using autofocus`
+				});
+			}
+
+			// scope
+			if (name === 'scope' && this.name !== 'th') {
+				component.warn(attribute, {
+					code: `a11y-misplaced-scope`,
+					message: `A11y: The scope attribute should only be used with <th> elements`
+				});
+			}
+
+			// tabindex-no-positive
+			if (name === 'tabindex') {
+				const value = attribute.getStaticValue();
+				if (!isNaN(value) && +value > 0) {
+					component.warn(attribute, {
+						code: `a11y-positive-tabindex`,
+						message: `A11y: avoid tabindex values above zero`
+					});
+				}
+			}
+
+			if (name === 'slot') {
+				if (attribute.isDynamic) {
+					component.error(attribute, {
+						code: `invalid-slot-attribute`,
+						message: `slot attribute cannot have a dynamic value`
+					});
+				}
+
+				let ancestor = this.parent;
+				do {
+					if (ancestor.type === 'InlineComponent') break;
+					if (ancestor.type === 'Element' && /-/.test(ancestor.name)) break;
+
+					if (ancestor.type === 'IfBlock' || ancestor.type === 'EachBlock') {
+						const type = ancestor.type === 'IfBlock' ? 'if' : 'each';
+						const message = `Cannot place slotted elements inside an ${type}-block`;
+
+						component.error(attribute, {
+							code: `invalid-slotted-content`,
+							message
+						});
+					}
+				} while (ancestor = ancestor.parent);
+
+				if (!ancestor) {
+					component.error(attribute, {
+						code: `invalid-slotted-content`,
+						message: `Element with a slot='...' attribute must be a descendant of a component or custom element`
+					});
+				}
+			}
+
+			attributeMap.set(attribute.name, attribute);
+		});
+
+		// handle special cases
+		if (this.name === 'a') {
+			const attribute = attributeMap.get('href') || attributeMap.get('xlink:href');
+
+			if (attribute) {
+				const value = attribute.getStaticValue();
+
+				if (value === '' || value === '#') {
+					component.warn(attribute, {
+						code: `a11y-invalid-attribute`,
+						message: `A11y: '${value}' is not a valid ${attribute.name} attribute`
+					});
+				}
 			} else {
-				this.selectBindingDependencies = null;
+				component.warn(this, {
+					code: `a11y-missing-attribute`,
+					message: `A11y: <a> element should have an href attribute`
+				});
 			}
 		}
 
-		const slot = this.getStaticAttributeValue('slot');
-		if (slot && this.hasAncestor('Component')) {
-			this.cannotUseInnerHTML();
-			this.slotted = true;
-			// TODO validate slots — no nesting, no dynamic names...
-			const component = this.findNearest(/^Component/);
-			component._slots.add(slot);
-		}
+		else {
+			const requiredAttributes = a11yRequiredAttributes[this.name];
+			if (requiredAttributes) {
+				const hasAttribute = requiredAttributes.some(name => attributeMap.has(name));
 
-		this.var = block.getUniqueName(
-			this.name.replace(/[^a-zA-Z0-9_$]/g, '_')
-		);
+				if (!hasAttribute) {
+					shouldHaveAttribute(this, requiredAttributes);
+				}
+			}
 
-		if (this.children.length) {
-			if (this.name === 'pre' || this.name === 'textarea') stripWhitespace = false;
-			this.initChildren(block, stripWhitespace, nextSibling);
+			if (this.name === 'input') {
+				const type = attributeMap.get('type');
+				if (type && type.getStaticValue() === 'image') {
+					shouldHaveAttribute(
+						this,
+						['alt', 'aria-label', 'aria-labelledby'],
+						'input type="image"'
+					);
+				}
+			}
 		}
 	}
 
-	build(
-		block: Block,
-		parentNode: string,
-		parentNodes: string
-	) {
-		const { compiler } = this;
+	validateBindings() {
+		const { component } = this;
 
-		if (this.name === 'slot') {
-			const slotName = this.getStaticAttributeValue('name') || 'default';
-			this.compiler.slots.add(slotName);
-		}
+		const checkTypeAttribute = () => {
+			const attribute = this.attributes.find(
+				(attribute: Attribute) => attribute.name === 'type'
+			);
 
-		if (this.name === 'noscript') return;
+			if (!attribute) return null;
 
-		const childState = {
-			parentNode: this.var,
-			parentNodes: parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
+			if (attribute.isDynamic) {
+				component.error(attribute, {
+					code: `invalid-type`,
+					message: `'type' attribute cannot be dynamic if input uses two-way binding`
+				});
+			}
+
+			const value = attribute.getStaticValue();
+
+			if (value === true) {
+				component.error(attribute, {
+					code: `missing-type`,
+					message: `'type' attribute must be specified`
+				});
+			}
+
+			return value;
 		};
 
-		const name = this.var;
-
-		const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
-		const initialMountNode = this.slotted ?
-			`${this.findNearest(/^Component/).var}._slotted.${slot.chunks[0].data}` : // TODO this looks bonkers
-			parentNode;
-
-		block.addVariable(name);
-		const renderStatement = getRenderStatement(this.compiler, this.namespace, this.name);
-		block.builders.create.addLine(
-			`${name} = ${renderStatement};`
-		);
-
-		if (this.compiler.options.hydratable) {
-			if (parentNodes) {
-				block.builders.claim.addBlock(deindent`
-					${name} = ${getClaimStatement(compiler, this.namespace, parentNodes, this)};
-					var ${childState.parentNodes} = @children(${name});
-				`);
-			} else {
-				block.builders.claim.addLine(
-					`${name} = ${renderStatement};`
-				);
-			}
-		}
-
-		if (initialMountNode) {
-			block.builders.mount.addLine(
-				`@appendNode(${name}, ${initialMountNode});`
-			);
-
-			if (initialMountNode === 'document.head') {
-				block.builders.unmount.addLine(`@detachNode(${name});`);
-			}
-		} else {
-			block.builders.mount.addLine(`@insertNode(${name}, #target, anchor);`);
-
-			// TODO we eventually need to consider what happens to elements
-			// that belong to the same outgroup as an outroing element...
-			block.builders.unmount.addLine(`@detachNode(${name});`);
-		}
-
-		// TODO move this into a class as well?
-		if (this._cssRefAttribute) {
-			block.builders.hydrate.addLine(
-				`@setAttribute(${name}, "svelte-ref-${this._cssRefAttribute}", "");`
-			)
-		}
-
-		// insert static children with textContent or innerHTML
-		if (!this.namespace && this.canUseInnerHTML && this.children.length > 0) {
-			if (this.children.length === 1 && this.children[0].type === 'Text') {
-				block.builders.create.addLine(
-					`${name}.textContent = ${stringify(this.children[0].data)};`
-				);
-			} else {
-				block.builders.create.addLine(
-					`${name}.innerHTML = ${stringify(this.children.map(toHTML).join(''))};`
-				);
-			}
-		} else {
-			this.children.forEach((child: Node) => {
-				child.build(block, childState.parentNode, childState.parentNodes);
-			});
-		}
-
-		let hasHoistedEventHandlerOrBinding = (
-			//(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
-			this.handlers.some(handler => handler.shouldHoist)
-		);
-		const eventHandlerOrBindingUsesComponent = (
-			this.bindings.length > 0 ||
-			this.handlers.some(handler => handler.usesComponent)
-		);
-
-		const eventHandlerOrBindingUsesContext = (
-			this.bindings.some(binding => binding.usesContext) ||
-			this.handlers.some(handler => handler.usesContext)
-		);
-
-		if (hasHoistedEventHandlerOrBinding) {
-			const initialProps: string[] = [];
-			const updates: string[] = [];
-
-			if (eventHandlerOrBindingUsesComponent) {
-				const component = block.alias('component');
-				initialProps.push(component === 'component' ? 'component' : `component: ${component}`);
-			}
-
-			if (eventHandlerOrBindingUsesContext) {
-				initialProps.push(`ctx`);
-				block.builders.update.addLine(`${name}._svelte.ctx = ctx;`);
-			}
-
-			if (initialProps.length) {
-				block.builders.hydrate.addBlock(deindent`
-					${name}._svelte = { ${initialProps.join(', ')} };
-				`);
-			}
-		} else {
-			if (eventHandlerOrBindingUsesContext) {
-				block.maintainContext = true;
-			}
-		}
-
-		this.addBindings(block);
-		this.addEventHandlers(block);
-		if (this.ref) this.addRef(block);
-		this.addAttributes(block);
-		this.addTransitions(block);
-		this.addActions(block);
-
-		if (this.initialUpdate) {
-			block.builders.mount.addBlock(this.initialUpdate);
-		}
-
-		if (childState.parentNodes) {
-			block.builders.claim.addLine(
-				`${childState.parentNodes}.forEach(@detachNode);`
-			);
-		}
-
-		function toHTML(node: Element | Text) {
-			if (node.type === 'Text') {
-				return node.parent &&
-					node.parent.type === 'Element' &&
-					(node.parent.name === 'script' || node.parent.name === 'style')
-					? node.data
-					: escapeHTML(node.data);
-			}
-
-			if (node.name === 'noscript') return '';
-
-			let open = `<${node.name}`;
-
-			if (node._cssRefAttribute) {
-				open += ` svelte-ref-${node._cssRefAttribute}`;
-			}
-
-			node.attributes.forEach((attr: Node) => {
-				open += ` ${fixAttributeCasing(attr.name)}${stringifyAttributeValue(attr.chunks)}`
-			});
-
-			if (isVoidElementName(node.name)) return open + '>';
-
-			return `${open}>${node.children.map(toHTML).join('')}</${node.name}>`;
-		}
-	}
-
-	addBindings(
-		block: Block
-	) {
-		if (this.bindings.length === 0) return;
-
-		if (this.name === 'select' || this.isMediaNode()) this.compiler.target.hasComplexBindings = true;
-
-		const needsLock = this.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
-
-		// TODO munge in constructor
-		const mungedBindings = this.bindings.map(binding => binding.munge(block));
-
-		const lock = mungedBindings.some(binding => binding.needsLock) ?
-			block.getUniqueName(`${this.var}_updating`) :
-			null;
-
-		if (lock) block.addVariable(lock, 'false');
-
-		const groups = events
-			.map(event => {
-				return {
-					events: event.eventNames,
-					bindings: mungedBindings.filter(binding => event.filter(this, binding.name))
-				};
-			})
-			.filter(group => group.bindings.length);
-
-		groups.forEach(group => {
-			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
-
-			const needsLock = group.bindings.some(binding => binding.needsLock);
-
-			group.bindings.forEach(binding => {
-				if (!binding.updateDom) return;
-
-				const updateConditions = needsLock ? [`!${lock}`] : [];
-				if (binding.updateCondition) updateConditions.push(binding.updateCondition);
-
-				block.builders.update.addLine(
-					updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
-				);
-			});
-
-			const usesContext = group.bindings.some(binding => binding.handler.usesContext);
-			const usesState = group.bindings.some(binding => binding.handler.usesState);
-			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
-			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
-
-			const props = new Set();
-			const storeProps = new Set();
-			group.bindings.forEach(binding => {
-				binding.handler.props.forEach(prop => {
-					props.add(prop);
-				});
-
-				binding.handler.storeProps.forEach(prop => {
-					storeProps.add(prop);
-				});
-			}); // TODO use stringifyProps here, once indenting is fixed
-
-			// media bindings — awkward special case. The native timeupdate events
-			// fire too infrequently, so we need to take matters into our
-			// own hands
-			let animation_frame;
-			if (group.events[0] === 'timeupdate') {
-				animation_frame = block.getUniqueName(`${this.var}_animationframe`);
-				block.addVariable(animation_frame);
-			}
-
-			block.builders.init.addBlock(deindent`
-				function ${handler}() {
-					${
-						animation_frame && deindent`
-							cancelAnimationFrame(${animation_frame});
-							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-					}
-					${usesStore && `var $ = #component.store.get();`}
-					${needsLock && `${lock} = true;`}
-					${mutations.length > 0 && mutations}
-					${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
-					${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
-					${needsLock && `${lock} = false;`}
-				}
-			`);
-
-			group.events.forEach(name => {
-				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${name}", ${handler});`
-				);
-
-				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${name}", ${handler});`
-				);
-			});
-
-			const allInitialStateIsDefined = group.bindings
-				.map(binding => `'${binding.object}' in ctx`)
-				.join(' && ');
-
-			if (this.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				this.compiler.target.hasComplexBindings = true;
-
-				block.builders.hydrate.addLine(
-					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
-				);
-			}
-		});
-
-		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
-	}
-
-	addAttributes(block: Block) {
-		if (this.attributes.find(attr => attr.type === 'Spread')) {
-			this.addSpreadAttributes(block);
-			return;
-		}
-
-		this.attributes.forEach((attribute: Attribute) => {
-			attribute.render(block);
-		});
-	}
-
-	addSpreadAttributes(block: Block) {
-		const levels = block.getUniqueName(`${this.var}_levels`);
-		const data = block.getUniqueName(`${this.var}_data`);
-
-		const initialProps = [];
-		const updates = [];
-
-		this.attributes
-			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
-			.forEach(attr => {
-				const condition = attr.dependencies.size > 0
-					? [...attr.dependencies].map(d => `changed.${d}`).join(' || ')
-					: null;
-
-				if (attr.isSpread) {
-					const { snippet, dependencies } = attr.expression;
-
-					initialProps.push(snippet);
-
-					updates.push(condition ? `${condition} && ${snippet}` : snippet);
-				} else {
-					const snippet = `{ ${quoteIfNecessary(attr.name)}: ${attr.getValue()} }`;
-					initialProps.push(snippet);
-
-					updates.push(condition ? `${condition} && ${snippet}` : snippet);
-				}
-			});
-
-		block.builders.init.addBlock(deindent`
-			var ${levels} = [
-				${initialProps.join(',\n')}
-			];
-
-			var ${data} = {};
-			for (var #i = 0; #i < ${levels}.length; #i += 1) {
-				${data} = @assign(${data}, ${levels}[#i]);
-			}
-		`);
-
-		block.builders.hydrate.addLine(
-			`@setAttributes(${this.var}, ${data});`
-		);
-
-		block.builders.update.addBlock(deindent`
-			@setAttributes(${this.var}, @getSpreadUpdate(${levels}, [
-				${updates.join(',\n')}
-			]));
-		`);
-	}
-
-	addEventHandlers(block: Block) {
-		const { compiler } = this;
-
-		this.handlers.forEach(handler => {
-			const isCustomEvent = compiler.events.has(handler.name);
-
-			if (handler.callee) {
-				handler.render(this.compiler, block, handler.shouldHoist);
-			}
-
-			const target = handler.shouldHoist ? 'this' : this.var;
-
-			// get a name for the event handler that is globally unique
-			// if hoisted, locally unique otherwise
-			const handlerName = (handler.shouldHoist ? compiler : block).getUniqueName(
-				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
-			);
-
-			const component = block.alias('component'); // can't use #component, might be hoisted
-
-			// create the handler body
-			const handlerBody = deindent`
-				${handler.shouldHoist && (
-					handler.usesComponent || handler.usesContext
-						? `const { ${[handler.usesComponent && 'component', handler.usesContext && 'ctx'].filter(Boolean).join(', ')} } = ${target}._svelte;`
-						: null
-				)}
-
-				${handler.snippet ?
-					handler.snippet :
-					`${component}.fire("${handler.name}", event);`}
-			`;
-
-			if (isCustomEvent) {
-				block.addVariable(handlerName);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(${component}, ${this.var}, function(event) {
-						${handlerBody}
+		this.bindings.forEach(binding => {
+			const { name } = binding;
+
+			if (name === 'value') {
+				if (
+					this.name !== 'input' &&
+					this.name !== 'textarea' &&
+					this.name !== 'select'
+				) {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'value' is not a valid binding on <${this.name}> elements`
 					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handlerName}.destroy();
-				`);
-			} else {
-				const handlerFunction = deindent`
-					function ${handlerName}(event) {
-						${handlerBody}
-					}
-				`;
-
-				if (handler.shouldHoist) {
-					compiler.target.blocks.push(handlerFunction);
-				} else {
-					block.builders.init.addBlock(handlerFunction);
 				}
 
-				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${handler.name}", ${handlerName});`
-				);
+				if (this.name === 'select') {
+					const attribute = this.attributes.find(
+						(attribute: Attribute) => attribute.name === 'multiple'
+					);
 
-				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
-				);
-			}
-		});
-	}
-
-	addRef(block: Block) {
-		const ref = `#component.refs.${this.ref}`;
-
-		block.builders.mount.addLine(
-			`${ref} = ${this.var};`
-		);
-
-		block.builders.destroy.addLine(
-			`if (${ref} === ${this.var}) ${ref} = null;`
-		);
-	}
-
-	addTransitions(
-		block: Block
-	) {
-		const { intro, outro } = this;
-
-		if (!intro && !outro) return;
-
-		if (intro === outro) {
-			const name = block.getUniqueName(`${this.var}_transition`);
-			const snippet = intro.expression
-				? intro.expression.snippet
-				: '{}';
-
-			block.addVariable(name);
-
-			const fn = `%transitions-${intro.name}`;
-
-			block.builders.intro.addBlock(deindent`
-				#component.root._aftercreate.push(function() {
-					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
-					${name}.run(true, function() {
-						#component.fire("intro.end", { node: ${this.var} });
-					});
-				});
-			`);
-
-			block.builders.outro.addBlock(deindent`
-				${name}.run(false, function() {
-					#component.fire("outro.end", { node: ${this.var} });
-					if (--#outros === 0) #outrocallback();
-					${name} = null;
-				});
-			`);
-		} else {
-			const introName = intro && block.getUniqueName(`${this.var}_intro`);
-			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
-
-			if (intro) {
-				block.addVariable(introName);
-				const snippet = intro.expression
-					? intro.expression.snippet
-					: '{}';
-
-				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
-
-				if (outro) {
-					block.builders.intro.addBlock(deindent`
-						if (${introName}) ${introName}.abort();
-						if (${outroName}) ${outroName}.abort();
-					`);
-				}
-
-				block.builders.intro.addBlock(deindent`
-					#component.root._aftercreate.push(function() {
-						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true, null);
-						${introName}.run(true, function() {
-							#component.fire("intro.end", { node: ${this.var} });
+					if (attribute && attribute.isDynamic) {
+						component.error(attribute, {
+							code: `dynamic-multiple-attribute`,
+							message: `'multiple' attribute cannot be dynamic if select uses two-way binding`
 						});
+					}
+				} else {
+					checkTypeAttribute();
+				}
+			} else if (name === 'checked' || name === 'indeterminate') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' is not a valid binding on <${this.name}> elements`
 					});
-				`);
-			}
+				}
 
-			if (outro) {
-				block.addVariable(outroName);
-				const snippet = outro.expression
-					? outro.expression.snippet
-					: '{}';
-
-				const fn = `%transitions-${outro.name}`;
-
-				// TODO hide elements that have outro'd (unless they belong to a still-outroing
-				// group) prior to their removal from the DOM
-				block.builders.outro.addBlock(deindent`
-					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false, null);
-					${outroName}.run(false, function() {
-						#component.fire("outro.end", { node: ${this.var} });
-						if (--#outros === 0) #outrocallback();
+				if (checkTypeAttribute() !== 'checkbox') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <input type="checkbox">`
 					});
-				`);
+				}
+			} else if (name === 'group') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'group' is not a valid binding on <${this.name}> elements`
+					});
+				}
+
+				const type = checkTypeAttribute();
+
+				if (type !== 'checkbox' && type !== 'radio') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'checked' binding can only be used with <input type="checkbox"> or <input type="radio">`
+					});
+				}
+			} else if (name == 'files') {
+				if (this.name !== 'input') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'files' binding acn only be used with <input type="file">`
+					});
+				}
+
+				const type = checkTypeAttribute();
+
+				if (type !== 'file') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'files' binding can only be used with <input type="file">`
+					});
+				}
+			} else if (
+				name === 'currentTime' ||
+				name === 'duration' ||
+				name === 'paused' ||
+				name === 'buffered' ||
+				name === 'seekable' ||
+				name === 'played' ||
+				name === 'volume'
+			) {
+				if (this.name !== 'audio' && this.name !== 'video') {
+					component.error(binding, {
+						code: `invalid-binding`,
+						message: `'${name}' binding can only be used with <audio> or <video>`
+					});
+				}
+			} else if (dimensions.test(name)) {
+				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
+					component.error(binding, {
+						code: 'invalid-binding',
+						message: `'${binding.name}' is not a valid binding on <svg>. Use '${name.replace('offset', 'client')}' instead`
+					});
+				} else if (svg.test(this.name)) {
+					component.error(binding, {
+						code: 'invalid-binding',
+						message: `'${binding.name}' is not a valid binding on SVG elements`
+					});
+				} else if (isVoidElementName(this.name)) {
+					component.error(binding, {
+						code: 'invalid-binding',
+						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
+					});
+				}
+			} else {
+				component.error(binding, {
+					code: `invalid-binding`,
+					message: `'${binding.name}' is not a valid binding`
+				});
 			}
-		}
+		});
 	}
 
-	addActions(block: Block) {
-		this.actions.forEach(action => {
-			const { expression } = action;
-			let snippet, dependencies;
-			if (expression) {
-				snippet = action.expression.snippet;
-				dependencies = action.expression.dependencies;
-			}
+	validateContent() {
+		if (!a11yRequiredContent.has(this.name)) return;
 
-			const name = block.getUniqueName(
-				`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
-			);
-
-			block.addVariable(name);
-			const fn = `%actions-${action.name}`;
-
-			block.builders.hydrate.addLine(
-				`${name} = ${fn}.call(#component, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
-			);
-
-			if (dependencies && dependencies.size > 0) {
-				let conditional = `typeof ${name}.update === 'function' && `;
-				const deps = [...dependencies].map(dependency => `changed.${dependency}`).join(' || ');
-				conditional += dependencies.size > 1 ? `(${deps})` : deps;
-
-				block.builders.update.addConditional(
-					conditional,
-					`${name}.update.call(#component, ${snippet});`
-				);
-			}
-
-			block.builders.destroy.addLine(
-				`if (typeof ${name}.destroy === 'function') ${name}.destroy.call(#component);`
-			);
-		});
+		if (this.children.length === 0) {
+			this.component.warn(this, {
+				code: `a11y-missing-content`,
+				message: `A11y: <${this.name}> element should have child content`
+			});
+		}
 	}
 
 	getStaticAttributeValue(name: string) {
@@ -800,212 +587,50 @@ export default class Element extends Node {
 	remount(name: string) {
 		const slot = this.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
-			return `@appendNode(${this.var}, ${name}._slotted.${this.getStaticAttributeValue('slot')});`;
+			const prop = quotePropIfNecessary(slot.chunks[0].data);
+			return `@append(${name}._slotted${prop}, ${this.var});`;
 		}
 
-		return `@appendNode(${this.var}, ${name}._slotted.default);`;
+		return `@append(${name}._slotted.default, ${this.var});`;
 	}
 
-	addCssClass() {
+	addCssClass(className = this.component.stylesheet.id) {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
 			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
-				(<Text>classAttribute.chunks[0]).data += ` ${this.compiler.stylesheet.id}`;
+				(<Text>classAttribute.chunks[0]).data += ` ${className}`;
 			} else {
 				(<Node[]>classAttribute.chunks).push(
-					new Text(this.compiler, this, this.scope, {
+					new Text(this.component, this, this.scope, {
 						type: 'Text',
-						data: ` ${this.compiler.stylesheet.id}`
+						data: ` ${className}`
 					})
-
-					// new Text({ type: 'Text', data: ` ${this.compiler.stylesheet.id}` })
 				);
 			}
 		} else {
 			this.attributes.push(
-				new Attribute(this.compiler, this, this.scope, {
+				new Attribute(this.component, this, this.scope, {
 					type: 'Attribute',
 					name: 'class',
-					value: [{ type: 'Text', data: `${this.compiler.stylesheet.id}` }]
+					value: [{ type: 'Text', data: className }]
 				})
 			);
 		}
 	}
-
-	ssr() {
-		const { compiler } = this;
-
-		let openingTag = `<${this.name}`;
-		let textareaContents; // awkward special case
-
-		const slot = this.getStaticAttributeValue('slot');
-		if (slot && this.hasAncestor('Component')) {
-			const slot = this.attributes.find((attribute: Node) => attribute.name === 'slot');
-			const slotName = slot.chunks[0].data;
-			const appendTarget = compiler.target.appendTargets[compiler.target.appendTargets.length - 1];
-			appendTarget.slotStack.push(slotName);
-			appendTarget.slots[slotName] = '';
-		}
-
-		if (this.attributes.find(attr => attr.isSpread)) {
-			// TODO dry this out
-			const args = [];
-			this.attributes.forEach(attribute => {
-				if (attribute.isSpread) {
-					args.push(attribute.expression.snippet);
-				} else {
-					if (attribute.name === 'value' && this.name === 'textarea') {
-						textareaContents = attribute.stringifyForSsr();
-					} else if (attribute.isTrue) {
-						args.push(`{ ${quoteIfNecessary(attribute.name)}: true }`);
-					} else if (
-						booleanAttributes.has(attribute.name) &&
-						attribute.chunks.length === 1 &&
-						attribute.chunks[0].type !== 'Text'
-					) {
-						// a boolean attribute with one non-Text chunk
-						args.push(`{ ${quoteIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
-					} else {
-						args.push(`{ ${quoteIfNecessary(attribute.name)}: \`${attribute.stringifyForSsr()}\` }`);
-					}
-				}
-			});
-
-			openingTag += "${@spread([" + args.join(', ') + "])}";
-		} else {
-			this.attributes.forEach((attribute: Node) => {
-				if (attribute.type !== 'Attribute') return;
-
-				if (attribute.name === 'value' && this.name === 'textarea') {
-					textareaContents = attribute.stringifyForSsr();
-				} else if (attribute.isTrue) {
-					openingTag += ` ${attribute.name}`;
-				} else if (
-					booleanAttributes.has(attribute.name) &&
-					attribute.chunks.length === 1 &&
-					attribute.chunks[0].type !== 'Text'
-				) {
-					// a boolean attribute with one non-Text chunk
-					openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
-				} else {
-					openingTag += ` ${attribute.name}="${attribute.stringifyForSsr()}"`;
-				}
-			});
-		}
-
-		if (this._cssRefAttribute) {
-			openingTag += ` svelte-ref-${this._cssRefAttribute}`;
-		}
-
-		openingTag += '>';
-
-		compiler.target.append(openingTag);
-
-		if (this.name === 'textarea' && textareaContents !== undefined) {
-			compiler.target.append(textareaContents);
-		} else {
-			this.children.forEach((child: Node) => {
-				child.ssr();
-			});
-		}
-
-		if (!isVoidElementName(this.name)) {
-			compiler.target.append(`</${this.name}>`);
-		}
-	}
 }
 
-function getRenderStatement(
-	compiler: Compiler,
-	namespace: string,
-	name: string
+function shouldHaveAttribute(
+	node,
+	attributes: string[],
+	name = node.name
 ) {
-	if (namespace === 'http://www.w3.org/2000/svg') {
-		return `@createSvgElement("${name}")`;
-	}
+	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const sequence = attributes.length > 1 ?
+		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
+		attributes[0];
 
-	if (namespace) {
-		return `document.createElementNS("${namespace}", "${name}")`;
-	}
-
-	return `@createElement("${name}")`;
+	node.component.warn(node, {
+		code: `a11y-missing-attribute`,
+		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
+	});
 }
-
-function getClaimStatement(
-	compiler: Compiler,
-	namespace: string,
-	nodes: string,
-	node: Node
-) {
-	const attributes = node.attributes
-		.filter((attr: Node) => attr.type === 'Attribute')
-		.map((attr: Node) => `${quoteIfNecessary(attr.name)}: true`)
-		.join(', ');
-
-	const name = namespace ? node.name : node.name.toUpperCase();
-
-	return `@claimElement(${nodes}, "${name}", ${attributes
-		? `{ ${attributes} }`
-		: `{}`}, ${namespace === namespaces.svg ? true : false})`;
-}
-
-function stringifyAttributeValue(value: Node[] | true) {
-	if (value === true) return '';
-	if (value.length === 0) return `=""`;
-
-	const data = value[0].data;
-	return `=${JSON.stringify(data)}`;
-}
-
-const events = [
-	{
-		eventNames: ['input'],
-		filter: (node: Element, name: string) =>
-			node.name === 'textarea' ||
-			node.name === 'input' && !/radio|checkbox/.test(node.getStaticAttributeValue('type'))
-	},
-	{
-		eventNames: ['change'],
-		filter: (node: Element, name: string) =>
-			node.name === 'select' ||
-			node.name === 'input' && /radio|checkbox|range/.test(node.getStaticAttributeValue('type'))
-	},
-
-	// media events
-	{
-		eventNames: ['timeupdate'],
-		filter: (node: Element, name: string) =>
-			node.isMediaNode() &&
-			(name === 'currentTime' || name === 'played')
-	},
-	{
-		eventNames: ['durationchange'],
-		filter: (node: Element, name: string) =>
-			node.isMediaNode() &&
-			name === 'duration'
-	},
-	{
-		eventNames: ['play', 'pause'],
-		filter: (node: Element, name: string) =>
-			node.isMediaNode() &&
-			name === 'paused'
-	},
-	{
-		eventNames: ['progress'],
-		filter: (node: Element, name: string) =>
-			node.isMediaNode() &&
-			name === 'buffered'
-	},
-	{
-		eventNames: ['loadedmetadata'],
-		filter: (node: Element, name: string) =>
-			node.isMediaNode() &&
-			(name === 'buffered' || name === 'seekable')
-	},
-	{
-		eventNames: ['volumechange'],
-		filter: (node: Element, name: string) =>
-			node.isMediaNode() &&
-			name === 'volume'
-	}
-];

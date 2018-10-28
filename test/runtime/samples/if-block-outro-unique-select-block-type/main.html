@@ -1,0 +1,20 @@
+{#if foo}
+	<Component/>
+{:else}
+	<Component/>
+{/if}
+
+{#if foo}
+	<div></div>
+{:else}
+	<div></div>
+{/if}
+
+<script>
+	export default {
+		components: {
+			Component: './Component.html',
+		},
+		data: () => ({ foo: true }),
+	}
+</script>

@@ -8,7 +8,16 @@ export default {
 	store,
 
 	html: `
-		<input><input><input>
+		<input>
+		<input>
+		<input>
+		<p>foo, bar, baz</p>
+	`,
+
+	ssrHtml: `
+		<input value=foo>
+		<input value=bar>
+		<input value=baz>
 		<p>foo, bar, baz</p>
 	`,
 
@@ -21,7 +30,9 @@ export default {
 
 		assert.deepEqual(store.get().a, ['blah', 'bar', 'baz']);
 		assert.htmlEqual(target.innerHTML, `
-			<input><input><input>
+			<input>
+			<input>
+			<input>
 			<p>blah, bar, baz</p>
 		`);
 
