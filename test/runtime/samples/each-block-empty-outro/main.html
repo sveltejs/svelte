@@ -1,0 +1,17 @@
+{#if visible}
+	<div>
+		{#each empty as thing}
+			<Thing {thing}/>
+		{/each}
+
+		<p>text</p>
+	</div>
+{/if}
+
+<script>
+	export default {
+		components: {
+			Thing: './Thing.html'
+		}
+	};
+</script>

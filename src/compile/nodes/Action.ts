@@ -6,13 +6,22 @@ export default class Action extends Node {
 	name: string;
 	expression: Expression;
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.name = info.name;
 
+		component.used.actions.add(this.name);
+
+		if (!component.actions.has(this.name)) {
+			component.error(this, {
+				code: `missing-action`,
+				message: `Missing action '${this.name}'`
+			});
+		}
+
 		this.expression = info.expression
-			? new Expression(compiler, this, scope, info.expression)
+			? new Expression(component, this, scope, info.expression)
 			: null;
 	}
 }

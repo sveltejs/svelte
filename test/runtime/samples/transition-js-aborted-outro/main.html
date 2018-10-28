@@ -1,0 +1,18 @@
+{#if visible}
+	<span out:foo>hello</span>
+{/if}
+
+<script>
+	export default {
+		transitions: {
+			foo(node, params) {
+				return {
+					duration: 100,
+					tick: t => {
+						node.foo = t;
+					}
+				};
+			}
+		}
+	};
+</script>

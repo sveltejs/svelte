@@ -1,0 +1,20 @@
+{#if y}
+	<Foo/>
+{:else}
+	<span>{x}</span>
+{/if}
+
+<script>
+	export default {
+		components: {
+			Foo: './Foo.html'
+		},
+
+		data() {
+			return {
+				x: 'x',
+				y: false
+			};
+		}
+	};
+</script>

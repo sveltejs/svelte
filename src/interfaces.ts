@@ -1,5 +1,3 @@
-import {SourceMap} from 'magic-string';
-
 export interface Node {
 	start: number;
 	end: number;
@@ -62,15 +60,12 @@ export interface CompileOptions {
 
 	preserveComments?: boolean | false;
 
-	onerror?: (error: Error) => void;
 	onwarn?: (warning: Warning) => void;
-}
 
-export interface GenerateOptions {
-	name: string;
-	format: ModuleFormat;
-	banner?: string;
-	sharedPath?: string;
+	// to remove in v3
+	onerror?: (error: Error) => void;
+	skipIntroByDefault?: boolean;
+	nestedTransitions?: boolean;
 }
 
 export interface ShorthandImport {
@@ -87,15 +82,6 @@ export interface CustomElementOptions {
 	tag?: string;
 	props?: string[];
 }
-
-export interface PreprocessOptions {
-	markup?: (options: {content: string, filename: string}) => { code: string, map?: SourceMap | string };
-	style?: Preprocessor;
-	script?: Preprocessor;
-	filename?: string
-}
-
-export type Preprocessor = (options: {content: string, attributes: Record<string, string | boolean>, filename?: string}) => { code: string, map?: SourceMap | string };
 
 export interface AppendTarget {
 	slots: Record<string, string>;

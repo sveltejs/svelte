@@ -1,0 +1,15 @@
+<my-widget class="foo" {items}/>
+
+<script>
+	import './my-widget.html';
+
+	export default {
+		tag: 'custom-element',
+
+		data() {
+			return {
+				items: ['a', 'b', 'c']
+			};
+		}
+	};
+</script>

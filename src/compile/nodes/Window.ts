@@ -1,244 +1,74 @@
-import CodeBuilder from '../../utils/CodeBuilder';
-import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
-import flattenReference from '../../utils/flattenReference';
-import isVoidElementName from '../../utils/isVoidElementName';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import reservedNames from '../../utils/reservedNames';
 import Node from './shared/Node';
-import Block from '../dom/Block';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
+import flattenReference from '../../utils/flattenReference';
+import fuzzymatch from '../validate/utils/fuzzymatch';
+import list from '../../utils/list';
 
-const associatedEvents = {
-	innerWidth: 'resize',
-	innerHeight: 'resize',
-	outerWidth: 'resize',
-	outerHeight: 'resize',
-
-	scrollX: 'scroll',
-	scrollY: 'scroll',
-};
-
-const properties = {
-	scrollX: 'pageXOffset',
-	scrollY: 'pageYOffset'
-};
-
-const readonly = new Set([
+const validBindings = [
 	'innerWidth',
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
-	'online',
-]);
+	'scrollX',
+	'scrollY',
+	'online'
+];
 
 export default class Window extends Node {
 	type: 'Window';
 	handlers: EventHandler[];
 	bindings: Binding[];
 
-	constructor(compiler, parent, scope, info) {
-		super(compiler, parent, scope, info);
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
 
 		this.handlers = [];
 		this.bindings = [];
 
 		info.attributes.forEach(node => {
 			if (node.type === 'EventHandler') {
-				this.handlers.push(new EventHandler(compiler, this, scope, node));
-			} else if (node.type === 'Binding') {
-				this.bindings.push(new Binding(compiler, this, scope, node));
+				this.handlers.push(new EventHandler(component, this, scope, node));
 			}
-		});
-	}
 
-	build(
-		block: Block,
-		parentNode: string,
-		parentNodes: string
-	) {
-		const { compiler } = this;
+			else if (node.type === 'Binding') {
+				if (node.value.type !== 'Identifier') {
+					const { parts } = flattenReference(node.value);
 
-		const events = {};
-		const bindings: Record<string, string> = {};
-
-		this.handlers.forEach(handler => {
-			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			compiler.addSourcemapLocations(handler.expression);
-
-			const isCustomEvent = compiler.events.has(handler.name);
-
-			let usesState = handler.dependencies.size > 0;
-
-			handler.render(compiler, block, false); // TODO hoist?
-
-			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
-			const handlerBody = deindent`
-				${usesState && `var ctx = #component.get();`}
-				${handler.snippet};
-			`;
-
-			if (isCustomEvent) {
-				// TODO dry this out
-				block.addVariable(handlerName);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(#component, window, function(event) {
-						${handlerBody}
+					component.error(node.value, {
+						code: `invalid-binding`,
+						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
 					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handlerName}.destroy();
-				`);
-			} else {
-				block.builders.init.addBlock(deindent`
-					function ${handlerName}(event) {
-						${handlerBody}
-					}
-					window.addEventListener("${handler.name}", ${handlerName});
-				`);
-
-				block.builders.destroy.addBlock(deindent`
-					window.removeEventListener("${handler.name}", ${handlerName});
-				`);
-			}
-		});
-
-		this.bindings.forEach(binding => {
-			// in dev mode, throw if read-only values are written to
-			if (readonly.has(binding.name)) {
-				compiler.target.readonly.add(binding.value.node.name);
-			}
-
-			bindings[binding.name] = binding.value.node.name;
-
-			// bind:online is a special case, we need to listen for two separate events
-			if (binding.name === 'online') return;
-
-			const associatedEvent = associatedEvents[binding.name];
-			const property = properties[binding.name] || binding.name;
-
-			if (!events[associatedEvent]) events[associatedEvent] = [];
-			events[associatedEvent].push({
-				name: binding.value.node.name,
-				value: property
-			});
-		});
-
-		const lock = block.getUniqueName(`window_updating`);
-		const clear = block.getUniqueName(`clear_window_updating`);
-		const timeout = block.getUniqueName(`window_updating_timeout`);
-
-		Object.keys(events).forEach(event => {
-			const handlerName = block.getUniqueName(`onwindow${event}`);
-			const props = events[event];
-
-			if (event === 'scroll') {
-				// TODO other bidirectional bindings...
-				block.addVariable(lock, 'false');
-				block.addVariable(clear, `function() { ${lock} = false; }`);
-				block.addVariable(timeout);
-
-				const condition = [
-					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
-					bindings.scrollY && `"${bindings.scrollY}" in this._state`
-				].filter(Boolean).join(' || ');
-
-				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
-				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
-
-				compiler.target.metaBindings.addBlock(deindent`
-					if (${condition}) {
-						window.scrollTo(${x || 'window.pageXOffset'}, ${y || 'window.pageYOffset'});
-					}
-
-					${x && `${x} = window.pageXOffset;`}
-
-					${y && `${y} = window.pageYOffset;`}
-				`);
-			} else {
-				props.forEach(prop => {
-					compiler.target.metaBindings.addLine(
-						`this._state.${prop.name} = window.${prop.value};`
-					);
-				});
-			}
-
-			const handlerBody = deindent`
-				${event === 'scroll' && deindent`
-					if (${lock}) return;
-					${lock} = true;
-				`}
-				${compiler.options.dev && `component._updatingReadonlyProperty = true;`}
-
-				#component.set({
-					${props.map(prop => `${prop.name}: this.${prop.value}`)}
-				});
-
-				${compiler.options.dev && `component._updatingReadonlyProperty = false;`}
-				${event === 'scroll' && `${lock} = false;`}
-			`;
-
-			block.builders.init.addBlock(deindent`
-				function ${handlerName}(event) {
-					${handlerBody}
 				}
-				window.addEventListener("${event}", ${handlerName});
-			`);
 
-			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("${event}", ${handlerName});
-			`);
-		});
+				if (!~validBindings.indexOf(node.name)) {
+					const match = node.name === 'width'
+						? 'innerWidth'
+						: node.name === 'height'
+							? 'innerHeight'
+							: fuzzymatch(node.name, validBindings);
 
-		// special case... might need to abstract this out if we add more special cases
-		if (bindings.scrollX || bindings.scrollY) {
-			block.builders.init.addBlock(deindent`
-				#component.on("state", ({ changed, current }) => {
-					if (${
-						[bindings.scrollX, bindings.scrollY].map(
-							binding => binding && `changed["${binding}"]`
-						).filter(Boolean).join(' || ')
-					}) {
-						${lock} = true;
-						clearTimeout(${timeout});
-						window.scrollTo(${
-							bindings.scrollX ? `current["${bindings.scrollX}"]` : `window.pageXOffset`
-						}, ${
-							bindings.scrollY ? `current["${bindings.scrollY}"]` : `window.pageYOffset`
+					const message = `'${node.name}' is not a valid binding on <svelte:window>`;
+
+					if (match) {
+						component.error(node, {
+							code: `invalid-binding`,
+							message: `${message} (did you mean '${match}'?)`
 						});
-						${timeout} = setTimeout(${clear}, 100);
+					} else {
+						component.error(node, {
+							code: `invalid-binding`,
+							message: `${message} — valid bindings are ${list(validBindings)}`
+						});
 					}
-				});
-			`);
-		}
-
-		// another special case. (I'm starting to think these are all special cases.)
-		if (bindings.online) {
-			const handlerName = block.getUniqueName(`onlinestatuschanged`);
-			block.builders.init.addBlock(deindent`
-				function ${handlerName}(event) {
-					#component.set({ ${bindings.online}: navigator.onLine });
 				}
-				window.addEventListener("online", ${handlerName});
-				window.addEventListener("offline", ${handlerName});
-			`);
 
-			// add initial value
-			compiler.target.metaBindings.push(
-				`this._state.${bindings.online} = navigator.onLine;`
-			);
+				this.bindings.push(new Binding(component, this, scope, node));
+			}
 
-			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("online", ${handlerName});
-				window.removeEventListener("offline", ${handlerName});
-			`);
-		}
-	}
-
-	ssr() {
-		// noop
+			else {
+				// TODO there shouldn't be anything else here...
+			}
+		});
 	}
 }

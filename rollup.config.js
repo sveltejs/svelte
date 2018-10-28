@@ -57,6 +57,28 @@ export default [
 		}
 	},
 
+	/* cli/*.js */
+	{
+		input: ['src/cli/index.ts'],
+		output: {
+			dir: 'cli',
+			format: 'cjs',
+			paths: {
+				svelte: '../compiler/svelte.js'
+			}
+		},
+		external: ['fs', 'path', 'os', 'svelte'],
+		plugins: [
+			json(),
+			commonjs(),
+			resolve(),
+			typescript({
+				typescript: require('typescript')
+			})
+		],
+		experimentalCodeSplitting: true
+	},
+
 	/* shared.js */
 	{
 		input: 'src/shared/index.js',
