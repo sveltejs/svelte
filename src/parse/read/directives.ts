@@ -25,8 +25,9 @@ const DIRECTIVES: Record<string, {
 
 	EventHandler: {
 		names: ['on'],
-		attribute(start, end, type, name, expression) {
-			return { start, end, type, name, expression };
+		attribute(start, end, type, lhs, expression) {
+			const [name, ...modifiers] = lhs.split('|');
+			return { start, end, type, name, modifiers, expression };
 		},
 		allowedExpressionTypes: ['CallExpression'],
 		error: 'Expected a method call'

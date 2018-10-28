@@ -14,6 +14,7 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../validate/utils/fuzzymatch';
 import Ref from './Ref';
+import list from '../../utils/list';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -228,6 +229,7 @@ export default class Element extends Node {
 		this.validateAttributes();
 		this.validateBindings();
 		this.validateContent();
+		this.validateEventHandlers();
 	}
 
 	validateAttributes() {
@@ -561,6 +563,58 @@ export default class Element extends Node {
 				message: `A11y: <${this.name}> element should have child content`
 			});
 		}
+	}
+
+	validateEventHandlers() {
+		const { component } = this;
+
+		const validModifiers = new Set([
+			'preventDefault',
+			'stopPropagation',
+			'capture',
+			'once',
+			'passive'
+		]);
+
+		const passiveEvents = new Set([
+			'wheel',
+			'touchstart',
+			'touchmove',
+			'touchend',
+			'touchcancel'
+		]);
+
+		this.handlers.forEach(handler => {
+			handler.modifiers.forEach(modifier => {
+				if (!validModifiers.has(modifier)) {
+					component.error(handler, {
+						code: 'invalid-event-modifier',
+						message: `Valid event modifiers are ${list([...validModifiers])}`
+					});
+				}
+
+				if (modifier === 'passive') {
+					if (passiveEvents.has(handler.name)) {
+						const usesEvent = (
+							handler.callee.name === 'event' ||
+							handler.args.some(x => x.usesEvent)
+						);
+
+						if (!usesEvent) {
+							component.warn(handler, {
+								code: 'redundant-event-modifier',
+								message: `Touch event handlers that don't use the 'event' object are passive by default`
+							});
+						}
+					} else {
+						component.warn(handler, {
+							code: 'redundant-event-modifier',
+							message: `The passive modifier only works with wheel and touch events`
+						});
+					}
+				}
+			});
+		});
 	}
 
 	getStaticAttributeValue(name: string) {
