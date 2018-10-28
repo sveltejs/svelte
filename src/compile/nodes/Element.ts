@@ -585,6 +585,13 @@ export default class Element extends Node {
 		]);
 
 		this.handlers.forEach(handler => {
+			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
+				component.error(handler, {
+					code: 'invalid-event-modifier',
+					message: `The 'passive' and 'preventDefault' modifiers cannot be used together`
+				});
+			}
+
 			handler.modifiers.forEach(modifier => {
 				if (!validModifiers.has(modifier)) {
 					component.error(handler, {
@@ -619,7 +626,7 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passiveEvents.has(handler.name) && !handler.usesEventObject) {
+			if (passiveEvents.has(handler.name) && !handler.usesEventObject && !handler.modifiers.has('preventDefault')) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}
