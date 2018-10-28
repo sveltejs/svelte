@@ -16,7 +16,7 @@ function create_main_fragment(component, ctx) {
 	window.addEventListener("scroll", onwindowscroll);
 
 	component.on("state", ({ changed, current }) => {
-		if (changed["y"]) {
+		if (changed["y"] && !window_updating) {
 			window_updating = true;
 			clearTimeout(window_updating_timeout);
 			window.scrollTo(window.pageXOffset, current["y"]);
