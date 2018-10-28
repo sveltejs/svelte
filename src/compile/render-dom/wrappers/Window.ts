@@ -97,14 +97,10 @@ export default class WindowWrapper extends Wrapper {
 			const property = properties[binding.name] || binding.name;
 
 			if (!events[associatedEvent]) events[associatedEvent] = [];
-			events[associatedEvent].push(
-				`${binding.value.node.name}: this.${property}`
-			);
-
-			// add initial value
-			renderer.metaBindings.push(
-				`this._state.${binding.value.node.name} = window.${property};`
-			);
+			events[associatedEvent].push({
+				name: binding.value.node.name,
+				value: property
+			});
 		});
 
 		const lock = block.getUniqueName(`window_updating`);
@@ -113,13 +109,35 @@ export default class WindowWrapper extends Wrapper {
 
 		Object.keys(events).forEach(event => {
 			const handlerName = block.getUniqueName(`onwindow${event}`);
-			const props = events[event].join(',\n');
+			const props = events[event];
 
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
 				block.addVariable(lock, 'false');
 				block.addVariable(clear, `function() { ${lock} = false; }`);
 				block.addVariable(timeout);
+
+				const condition = [
+					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
+					bindings.scrollY && `"${bindings.scrollY}" in this._state`
+				].filter(Boolean).join(' || ');
+
+ 				const x = bindings.scrollX && `this._state.${bindings.scrollX}`;
+				const y = bindings.scrollY && `this._state.${bindings.scrollY}`;
+
+				renderer.metaBindings.addBlock(deindent`
+					if (${condition}) {
+						window.scrollTo(${x || 'window.pageXOffset'}, ${y || 'window.pageYOffset'});
+					}
+					${x && `${x} = window.pageXOffset;`}
+					${y && `${y} = window.pageYOffset;`}
+				`);
+			} else {
+				props.forEach(prop => {
+					renderer.metaBindings.addLine(
+						`this._state.${prop.name} = window.${prop.value};`
+					);
+				});
 			}
 
 			const handlerBody = deindent`
@@ -130,7 +148,7 @@ export default class WindowWrapper extends Wrapper {
 				${component.options.dev && `component._updatingReadonlyProperty = true;`}
 
 				#component.set({
-					${props}
+					${props.map(prop => `${prop.name}: this.${prop.value}`)}
 				});
 
 				${component.options.dev && `component._updatingReadonlyProperty = false;`}
@@ -185,7 +203,7 @@ export default class WindowWrapper extends Wrapper {
 			`);
 
 			// add initial value
-			renderer.metaBindings.push(
+			renderer.metaBindings.addLine(
 				`this._state.${bindings.online} = navigator.onLine;`
 			);
 
