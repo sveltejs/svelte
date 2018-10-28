@@ -3,6 +3,7 @@ import deindent from '../../utils/deindent';
 import { escape } from '../../utils/stringify';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
+import EachBlockWrapper from './wrappers/EachBlock';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -11,6 +12,7 @@ export interface BlockOptions {
 	comment?: string;
 	key?: string;
 	bindings?: Map<string, () => string>;
+	contextOwners?: Map<string, EachBlockWrapper>;
 	dependencies?: Set<string>;
 }
 
@@ -28,6 +30,7 @@ export default class Block {
 	dependencies: Set<string>;
 
 	bindings: Map<string, () => string>;
+	contextOwners: Map<string, EachBlockWrapper>;
 
 	builders: {
 		init: CodeBuilder;
@@ -74,6 +77,7 @@ export default class Block {
 		this.dependencies = new Set();
 
 		this.bindings = options.bindings;
+		this.contextOwners = options.contextOwners;
 
 		this.builders = {
 			init: new CodeBuilder(),
