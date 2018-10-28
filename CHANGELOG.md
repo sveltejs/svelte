@@ -1,5 +1,17 @@
 # Svelte changelog
 
+## 2.15.0
+
+* Event modifiers ([#1088](https://github.com/sveltejs/svelte/issues/1088))
+* Wheel and touch events are passive by default ([#1088](https://github.com/sveltejs/svelte/issues/1088))
+* Add `<svelte:document>` tag ([#1484](https://github.com/sveltejs/svelte/issues/1484))
+* Include binding values in server-rendered HTML ([#1205](https://github.com/sveltejs/svelte/issues/1205))
+* Remove attributes when value is undefined/null ([#1434](https://github.com/sveltejs/svelte/issues/1434))
+* Initialise window scroll from component data ([#938](https://github.com/sveltejs/svelte/issues/938))
+* Remove references to unused properties in generated code ([#1187](https://github.com/sveltejs/svelte/issues/1187))
+* Add TypeScript definitions for store ([#1207](https://github.com/sveltejs/svelte/issues/1207))
+* Better error for missing store ([#1807](https://github.com/sveltejs/svelte/issues/1807))
+
 ## 2.14.3
 
 * Account for directive dependencies ([#1793](https://github.com/sveltejs/svelte/issues/1793))
