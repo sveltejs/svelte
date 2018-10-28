@@ -52,6 +52,7 @@ function SvelteComponent(options) {
 
 	init(this, options);
 	this._state = assign({ Math : Math }, options.data);
+
 	this._recompute({ foo: 1 }, this._state);
 	if (!('foo' in this._state)) console.warn("<SvelteComponent> was created without expected data property 'foo'");
 	this._intro = true;

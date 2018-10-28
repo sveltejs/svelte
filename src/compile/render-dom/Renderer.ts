@@ -2,6 +2,7 @@ import Block from './Block';
 import { CompileOptions } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
+import CodeBuilder from '../../utils/CodeBuilder';
 
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
@@ -10,7 +11,7 @@ export default class Renderer {
 	blocks: (Block | string)[];
 	readonly: Set<string>;
 	slots: Set<string>;
-	metaBindings: string[];
+	metaBindings: CodeBuilder;
 	bindingGroups: string[];
 
 	block: Block;
@@ -35,7 +36,7 @@ export default class Renderer {
 		this.fileVar = options.dev && this.component.getUniqueName('file');
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-		this.metaBindings = [];
+		this.metaBindings = new CodeBuilder();
 
 		this.bindingGroups = [];
 
