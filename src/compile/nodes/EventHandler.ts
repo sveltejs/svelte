@@ -9,12 +9,14 @@ const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
 export default class EventHandler extends Node {
 	name: string;
+	modifiers: Set<string>;
 	dependencies: Set<string>;
 	expression: Node;
 	callee: any; // TODO
 
 	usesComponent: boolean;
 	usesContext: boolean;
+	usesEventObject: boolean;
 	isCustomEvent: boolean;
 	shouldHoist: boolean;
 
@@ -26,6 +28,8 @@ export default class EventHandler extends Node {
 		super(component, parent, scope, info);
 
 		this.name = info.name;
+		this.modifiers = new Set(info.modifiers);
+
 		component.used.events.add(this.name);
 
 		this.dependencies = new Set();
@@ -39,11 +43,13 @@ export default class EventHandler extends Node {
 
 			this.usesComponent = !validCalleeObjects.has(this.callee.name);
 			this.usesContext = false;
+			this.usesEventObject = this.callee.name === 'event';
 
 			this.args = info.expression.arguments.map(param => {
 				const expression = new Expression(component, this, scope, param);
 				addToSet(this.dependencies, expression.dependencies);
 				if (expression.usesContext) this.usesContext = true;
+				if (expression.usesEvent) this.usesEventObject = true;
 				return expression;
 			});
 
@@ -55,6 +61,7 @@ export default class EventHandler extends Node {
 			this.args = null;
 			this.usesComponent = true;
 			this.usesContext = false;
+			this.usesEventObject = true;
 
 			this.snippet = null; // TODO handle shorthand events here?
 		}

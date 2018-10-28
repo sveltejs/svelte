@@ -14,6 +14,7 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../validate/utils/fuzzymatch';
 import Ref from './Ref';
+import list from '../../utils/list';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -55,6 +56,22 @@ const a11yRequiredContent = new Set([
 ])
 
 const invisibleElements = new Set(['meta', 'html', 'script', 'style']);
+
+const validModifiers = new Set([
+	'preventDefault',
+	'stopPropagation',
+	'capture',
+	'once',
+	'passive'
+]);
+
+const passiveEvents = new Set([
+	'wheel',
+	'touchstart',
+	'touchmove',
+	'touchend',
+	'touchcancel'
+]);
 
 export default class Element extends Node {
 	type: 'Element';
@@ -228,6 +245,7 @@ export default class Element extends Node {
 		this.validateAttributes();
 		this.validateBindings();
 		this.validateContent();
+		this.validateEventHandlers();
 	}
 
 	validateAttributes() {
@@ -561,6 +579,58 @@ export default class Element extends Node {
 				message: `A11y: <${this.name}> element should have child content`
 			});
 		}
+	}
+
+	validateEventHandlers() {
+		const { component } = this;
+
+		this.handlers.forEach(handler => {
+			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
+				component.error(handler, {
+					code: 'invalid-event-modifier',
+					message: `The 'passive' and 'preventDefault' modifiers cannot be used together`
+				});
+			}
+
+			handler.modifiers.forEach(modifier => {
+				if (!validModifiers.has(modifier)) {
+					component.error(handler, {
+						code: 'invalid-event-modifier',
+						message: `Valid event modifiers are ${list([...validModifiers])}`
+					});
+				}
+
+				if (modifier === 'passive') {
+					if (passiveEvents.has(handler.name)) {
+						if (!handler.usesEventObject) {
+							component.warn(handler, {
+								code: 'redundant-event-modifier',
+								message: `Touch event handlers that don't use the 'event' object are passive by default`
+							});
+						}
+					} else {
+						component.warn(handler, {
+							code: 'redundant-event-modifier',
+							message: `The passive modifier only works with wheel and touch events`
+						});
+					}
+				}
+
+				if (component.options.legacy && (modifier === 'once' || modifier === 'passive')) {
+					// TODO this could be supported, but it would need a few changes to
+					// how event listeners work
+					component.error(handler, {
+						code: 'invalid-event-modifier',
+						message: `The '${modifier}' modifier cannot be used in legacy mode`
+					});
+				}
+			});
+
+			if (passiveEvents.has(handler.name) && !handler.usesEventObject && !handler.modifiers.has('preventDefault')) {
+				// touch/wheel events should be passive by default
+				handler.modifiers.add('passive');
+			}
+		});
 	}
 
 	getStaticAttributeValue(name: string) {

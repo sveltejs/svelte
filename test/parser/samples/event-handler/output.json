@@ -15,6 +15,7 @@
 						"end": 45,
 						"type": "EventHandler",
 						"name": "click",
+						"modifiers": [],
 						"expression": {
 							"type": "CallExpression",
 							"start": 18,
