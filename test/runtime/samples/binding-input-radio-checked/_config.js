@@ -20,7 +20,26 @@ export default {
 
 		<p>foo false</p>
 		<p>bar true</p>
-		<p>baz false</p>`,
+		<p>baz false</p>
+	`,
+
+	ssrHtml: `
+		<label>
+			<input type="radio" name="x"> foo
+		</label>
+
+		<label>
+			<input type="radio" name="x" checked> bar
+		</label>
+
+		<label>
+			<input type="radio" name="x"> baz
+		</label>
+
+		<p>foo false</p>
+		<p>bar true</p>
+		<p>baz false</p>
+	`,
 
 	test(assert, component, target, window) {
 		const inputs = target.querySelectorAll('input');
@@ -31,6 +50,7 @@ export default {
 		const event = new window.Event('change');
 
 		inputs[0].checked = true;
+		assert.equal(inputs[1].checked, false);
 		inputs[0].dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `

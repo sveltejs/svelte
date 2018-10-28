@@ -473,7 +473,9 @@ export default class Element extends Node {
 					});
 				}
 
-				if (checkTypeAttribute() !== 'checkbox') {
+				const type = checkTypeAttribute();
+
+				if (type !== 'checkbox' && type !== 'radio') {
 					component.error(binding, {
 						code: `invalid-binding`,
 						message: `'${name}' binding can only be used with <input type="checkbox">`
