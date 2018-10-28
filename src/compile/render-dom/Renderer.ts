@@ -47,6 +47,7 @@ export default class Renderer {
 			key: null,
 
 			bindings: new Map(),
+			contextOwners: new Map(),
 
 			dependencies: new Set(),
 		});

@@ -42,6 +42,15 @@ export default class BindingWrapper {
 				parent.renderer.component.indirectDependencies.set(prop, new Set());
 			});
 		}
+
+		if (node.isContextual) {
+			// we need to ensure that the each block creates a context including
+			// the list and the index, if they're not otherwise referenced
+			const { name } = getObject(this.node.value.node);
+			const eachBlock = block.contextOwners.get(name);
+
+			eachBlock.hasBinding = true;
+		}
 	}
 
 	isReadOnlyMediaAttribute() {
