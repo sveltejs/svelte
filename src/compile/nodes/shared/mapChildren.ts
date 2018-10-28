@@ -1,5 +1,6 @@
 import AwaitBlock from '../AwaitBlock';
 import Comment from '../Comment';
+import Document from '../Document';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
 import Head from '../Head';
@@ -18,6 +19,7 @@ function getConstructor(type): typeof Node {
 	switch (type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Comment': return Comment;
+		case 'Document': return Document;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;
