@@ -94,7 +94,6 @@ export default class ElementWrapper extends Wrapper {
 
 	var: string;
 
-
 	constructor(
 		renderer: Renderer,
 		block: Block,

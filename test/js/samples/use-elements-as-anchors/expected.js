@@ -58,7 +58,7 @@ function create_main_fragment(component, ctx) {
 				if (!if_block0) {
 					if_block0 = create_if_block_4(component, ctx);
 					if_block0.c();
-					if_block0.m(div, null);
+					if_block0.m(div, text0);
 				}
 			} else if (if_block0) {
 				if_block0.d(1);
