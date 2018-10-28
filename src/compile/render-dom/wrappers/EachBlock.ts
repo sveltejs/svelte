@@ -53,7 +53,6 @@ export default class EachBlockWrapper extends Wrapper {
 	node: EachBlock;
 	fragment: FragmentWrapper;
 	else?: ElseBlockWrapper;
-	var: string;
 	vars: {
 		anchor: string;
 		create_each_block: string;
@@ -63,6 +62,12 @@ export default class EachBlockWrapper extends Wrapper {
 		length: string;
 		mountOrIntro: string;
 	}
+
+	contextProps: string[];
+	indexName: string;
+
+	var = 'each';
+	hasBinding = false;
 
 	constructor(
 		renderer: Renderer,
@@ -75,8 +80,6 @@ export default class EachBlockWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 		this.cannotUseInnerHTML();
 
-		this.var = 'each';
-
 		const { dependencies } = node.expression;
 		block.addDependencies(dependencies);
 
@@ -85,7 +88,8 @@ export default class EachBlockWrapper extends Wrapper {
 			name: renderer.component.getUniqueName('create_each_block'),
 			key: <string>node.key, // TODO...
 
-			bindings: new Map(block.bindings)
+			bindings: new Map(block.bindings),
+			contextOwners: new Map(block.contextOwners)
 		});
 
 		// TODO this seems messy
@@ -94,6 +98,8 @@ export default class EachBlockWrapper extends Wrapper {
 		this.indexName = this.node.index || renderer.component.getUniqueName(`${this.node.context}_index`);
 
 		node.contexts.forEach(prop => {
+			this.block.contextOwners.set(prop.key.name, this);
+
 			// TODO this doesn't feel great
 			this.block.bindings.set(prop.key.name, () => `ctx.${this.vars.each_block_value}[ctx.${this.indexName}]${prop.tail}`);
 		});
@@ -164,11 +170,8 @@ export default class EachBlockWrapper extends Wrapper {
 
 		this.contextProps = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
 
-		// TODO only add these if necessary
-		this.contextProps.push(
-			`child_ctx.${this.vars.each_block_value} = list;`,
-			`child_ctx.${this.indexName} = i;`
-		);
+		if (this.hasBinding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
+		if (this.hasBinding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
 
 		const { snippet } = this.node.expression;
 

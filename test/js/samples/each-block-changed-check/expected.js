@@ -4,7 +4,6 @@ import { append, assign, createElement, createText, destroyEach, detachAfter, de
 function get_each_context(ctx, list, i) {
 	const child_ctx = Object.create(ctx);
 	child_ctx.comment = list[i];
-	child_ctx.each_value = list;
 	child_ctx.i = i;
 	return child_ctx;
 }
