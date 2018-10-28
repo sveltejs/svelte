@@ -265,15 +265,6 @@ function getEventHandler(
 	};
 }
 
-function isComputed(node: Node) {
-	while (node.type === 'MemberExpression') {
-		if (node.computed) return true;
-		node = node.object;
-	}
-
-	return false;
-}
-
 function getValueFromDom(
 	renderer: Renderer,
 	element: ElementWrapper,
@@ -312,13 +303,4 @@ function getValueFromDom(
 
 	// everything else
 	return `${element.var}.${name}`;
-}
-
-function isComputed(node: Node) {
-	while (node.type === 'MemberExpression') {
-		if (node.computed) return true;
-		node = node.object;
-	}
-
-	return false;
 }
