@@ -1,0 +1,14 @@
+<div {foo} {bar}></div>
+
+<script>
+	export default {
+		data: () => ({
+			foo: 1,
+			bar: undefined
+		}),
+
+		oncreate () {
+			this.set({ foo: undefined });
+		}
+	};
+</script>
