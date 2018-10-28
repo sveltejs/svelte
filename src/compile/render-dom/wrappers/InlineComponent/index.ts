@@ -41,6 +41,15 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		this.node.bindings.forEach(binding => {
+			if (binding.isContextual) {
+				// we need to ensure that the each block creates a context including
+				// the list and the index, if they're not otherwise referenced
+				const { name } = getObject(binding.value.node);
+				const eachBlock = block.contextOwners.get(name);
+
+				eachBlock.hasBinding = true;
+			}
+
 			block.addDependencies(binding.value.dependencies);
 		});
 
