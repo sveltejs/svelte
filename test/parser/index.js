@@ -48,6 +48,7 @@ describe('parse', () => {
 		});
 	});
 
+	// TODO remove in v3
 	it('handles errors with options.onerror', () => {
 		let errored = false;
 
@@ -61,6 +62,7 @@ describe('parse', () => {
 		assert.ok(errored);
 	});
 
+	// TODO remove in v3
 	it('throws without options.onerror', () => {
 		assert.throws(() => {
 			svelte.compile(`<h1>unclosed`);

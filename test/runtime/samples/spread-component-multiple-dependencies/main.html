@@ -1,0 +1,13 @@
+<Widget foo={foo ? a : b} {...bar}/>
+
+<script>
+	export default {
+		components: { Widget: './Widget.html' },
+		data: () => ({
+			foo: false,
+			a: 'a',
+			b: 'b',
+			bar: { baz: 'baz' },
+		}),
+	};
+</script>

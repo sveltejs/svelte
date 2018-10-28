@@ -2,29 +2,43 @@ export default {
 	data: {
 		prop: 'name',
 		user: {
-			name: 'alice'
-		}
+			name: 'alice',
+		},
 	},
 
-	html: `<input>\n<p>hello alice</p>`,
+	html: `
+		<input>
+		<p>hello alice</p>
+	`,
 
-	test ( assert, component, target, window ) {
-		const input = target.querySelector( 'input' );
+	ssrHtml: `
+		<input value=alice>
+		<p>hello alice</p>
+	`,
 
-		assert.equal( input.value, 'alice' );
+	test(assert, component, target, window) {
+		const input = target.querySelector('input');
 
-		const event = new window.Event( 'input' );
+		assert.equal(input.value, 'alice');
+
+		const event = new window.Event('input');
 
 		input.value = 'bob';
-		input.dispatchEvent( event );
+		input.dispatchEvent(event);
 
-		assert.equal( target.innerHTML, `<input>\n<p>hello bob</p>` );
+		assert.htmlEqual(target.innerHTML, `
+			<input>
+			<p>hello bob</p>
+		`);
 
 		const user = component.get().user;
 		user.name = 'carol';
 
 		component.set({ user });
-		assert.equal( input.value, 'carol' );
-		assert.equal( target.innerHTML, `<input>\n<p>hello carol</p>` );
-	}
+		assert.equal(input.value, 'carol');
+		assert.htmlEqual(target.innerHTML, `
+			<input>
+			<p>hello carol</p>
+		`);
+	},
 };

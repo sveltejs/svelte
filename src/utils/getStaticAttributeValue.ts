@@ -2,7 +2,7 @@ import { Node } from '../interfaces';
 
 export default function getStaticAttributeValue(node: Node, name: string) {
 	const attribute = node.attributes.find(
-		(attr: Node) => attr.name.toLowerCase() === name
+		(attr: Node) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
 	);
 
 	if (!attribute) return null;

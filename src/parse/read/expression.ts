@@ -34,6 +34,9 @@ export default function readExpression(parser: Parser) {
 		const node = parseExpressionAt(parser.template, parser.index, {
 			ecmaVersion: 9,
 			preserveParens: true,
+			plugins: {
+				dynamicImport: true
+			}
 		});
 		parser.index = node.end;
 

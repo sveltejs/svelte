@@ -1,6 +1,12 @@
 export default {
 	html: `
-		<input type='number'>
+		<input type=number>
+		<p>field1: 1</p>
+		<p>field2: 2</p>
+	`,
+
+	ssrHtml: `
+		<input type=number value=1>
 		<p>field1: 1</p>
 		<p>field2: 2</p>
 	`,

@@ -1,5 +1,4 @@
 {
-	"hash": 1705925892,
 	"html": {
 		"start": 0,
 		"end": 11,
@@ -18,13 +17,13 @@
 						"name": "id",
 						"value": [
 							{
-								"type": "AttributeShorthand",
 								"start": 6,
 								"end": 8,
+								"type": "AttributeShorthand",
 								"expression": {
-									"type": "Identifier",
 									"start": 6,
 									"end": 8,
+									"type": "Identifier",
 									"name": "id"
 								}
 							}
