@@ -649,8 +649,13 @@ export default class ElementWrapper extends Wrapper {
 					${handlerName}.destroy();
 				`);
 			} else {
+				const modifiers = [];
+				if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
+				if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
+
 				const handlerFunction = deindent`
 					function ${handlerName}(event) {
+						${modifiers}
 						${handlerBody}
 					}
 				`;
@@ -661,13 +666,28 @@ export default class ElementWrapper extends Wrapper {
 					block.builders.init.addBlock(handlerFunction);
 				}
 
-				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${handler.name}", ${handlerName});`
-				);
+				const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
+				if (opts.length) {
+					const optString = (opts.length === 1 && opts[0] === 'capture')
+						? 'true'
+						: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
-				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
-				);
+					block.builders.hydrate.addLine(
+						`@addListener(${this.var}, "${handler.name}", ${handlerName}, ${optString});`
+					);
+
+					block.builders.destroy.addLine(
+						`@removeListener(${this.var}, "${handler.name}", ${handlerName}, ${optString});`
+					);
+				} else {
+					block.builders.hydrate.addLine(
+						`@addListener(${this.var}, "${handler.name}", ${handlerName});`
+					);
+
+					block.builders.destroy.addLine(
+						`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
+					);
+				}
 			}
 		});
 	}
