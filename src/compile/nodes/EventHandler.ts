@@ -9,6 +9,7 @@ const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
 export default class EventHandler extends Node {
 	name: string;
+	modifiers: Set<string>;
 	dependencies: Set<string>;
 	expression: Node;
 	callee: any; // TODO
@@ -26,6 +27,8 @@ export default class EventHandler extends Node {
 		super(component, parent, scope, info);
 
 		this.name = info.name;
+		this.modifiers = new Set(info.modifiers);
+
 		component.used.events.add(this.name);
 
 		this.dependencies = new Set();
