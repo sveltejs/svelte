@@ -1,7 +1,6 @@
 import assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { rollup } from "rollup";
 import { loadConfig, svelte } from "../helpers.js";
 
 describe("js", () => {
@@ -35,8 +34,14 @@ describe("js", () => {
 			}
 
 			const output = `${dir}/_actual.js`;
-
 			fs.writeFileSync(output, actual);
+
+			const expected = fs.readFileSync(`${dir}/expected.js`, "utf-8");
+
+			assert.equal(
+				actual.trim().replace(/^[ \t]+$/gm, ""),
+				expected.trim().replace(/^[ \t]+$/gm, "")
+			);
 		});
 	});
 });

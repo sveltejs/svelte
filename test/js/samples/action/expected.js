@@ -2,7 +2,7 @@
 import { assign, createElement, detachNode, init, insert, noop, proto } from "svelte/shared.js";
 
 function link(node) {
-  
+
   function onClick(event) {
     event.preventDefault();
     history.pushState(null, null, event.target.href);
@@ -39,7 +39,7 @@ function create_main_fragment(component, ctx) {
 				detachNode(a);
 			}
 
-			if (typeof link_action.destroy === 'function') link_action.destroy.call(component);
+			if (link_action && typeof link_action.destroy === 'function') link_action.destroy.call(component);
 		}
 	};
 }
