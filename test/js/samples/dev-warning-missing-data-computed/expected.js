@@ -46,7 +46,10 @@ function create_main_fragment(component, ctx) {
 
 function SvelteComponent(options) {
 	this._debugName = '<SvelteComponent>';
-	if (!options || (!options.target && !options.root)) throw new Error("'target' is a required option");
+	if (!options || (!options.target && !options.root)) {
+		throw new Error("'target' is a required option");
+	}
+
 	init(this, options);
 	this._state = assign({ Math : Math }, options.data);
 	this._recompute({ foo: 1 }, this._state);
