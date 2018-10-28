@@ -1,0 +1,12 @@
+<svelte:document on:mouseenter='log("enter")' on:mouseleave='log("leave")'/>
+
+<script>
+	export default {
+		data: () => ({ events: [] }),
+		methods: {
+			log(event) {
+				this.set({ events: this.get().events.concat(event) });
+			},
+		},
+	};
+</script>

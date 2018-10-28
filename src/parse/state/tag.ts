@@ -11,6 +11,7 @@ import { Node } from '../../interfaces';
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const metaTags = new Map([
+	['svelte:document', 'Document'],
 	['svelte:window', 'Window'],
 	['svelte:head', 'Head']
 ]);
@@ -96,9 +97,12 @@ export default function tag(parser: Parser) {
 	if (metaTags.has(name)) {
 		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
-			if (name === 'svelte:window' && parser.current().children.length) {
+			if (
+				(name === 'svelte:window' || name === 'svelte:document') &&
+				parser.current().children.length
+			) {
 				parser.error({
-					code: `invalid-window-content`,
+					code: `invalid-${name.slice(7)}-content`,
 					message: `<${name}> cannot have children`
 				}, parser.current().children[0].start);
 			}
