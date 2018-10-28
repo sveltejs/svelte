@@ -1,5 +1,5 @@
 [{
-	"message": "Valid event modifiers are preventDefault, stopPropagation, capture, once or passive",
+	"message": "The 'once' modifier cannot be used in legacy mode",
 	"code": "invalid-event-modifier",
 	"start": {
 		"line": 1,
@@ -8,8 +8,8 @@
 	},
 	"end": {
 		"line": 1,
-		"column": 36,
-		"character": 36
+		"column": 37,
+		"character": 37
 	},
 	"pos": 8
 }]

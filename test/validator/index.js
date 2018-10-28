@@ -32,6 +32,7 @@ describe("validate", () => {
 						warnings.push({ code, message, pos, start, end });
 					},
 					dev: config.dev,
+					legacy: config.legacy,
 					generate: false
 				});
 
