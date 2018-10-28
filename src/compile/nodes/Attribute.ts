@@ -1,4 +1,4 @@
-import { escape, escapeTemplate, stringify } from '../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 import addToSet from '../../utils/addToSet';
 import Component from '../Component';
 import Node from './shared/Node';
@@ -98,17 +98,5 @@ export default class Attribute extends Node {
 			: this.chunks[0]
 				? this.chunks[0].data
 				: '';
-	}
-
-	stringifyForSsr() {
-		return this.chunks
-			.map((chunk: Node) => {
-				if (chunk.type === 'Text') {
-					return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
-				}
-
-				return '${@escape(' + chunk.snippet + ')}';
-			})
-			.join('');
 	}
 }
