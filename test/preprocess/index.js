@@ -110,6 +110,42 @@ describe('preprocess', () => {
 		});
 	});
 
+	it('preprocesses multiple matching tags', () => {
+		const source = `
+			<script>
+				REPLACEME
+			</script>
+			<style>
+				SHOULD NOT BE REPLACED
+			</style>
+			<script>
+				REPLACEMETOO
+			</script>
+		`;
+
+		const expected = `
+			<script>
+				replaceme
+			</script>
+			<style>
+				SHOULD NOT BE REPLACED
+			</style>
+			<script>
+				replacemetoo
+			</script>
+		`;
+
+		return svelte.preprocess(source, {
+			script: ({ content }) => {
+				return {
+					code: content.toLowerCase()
+				};
+			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
+		});
+	});
+
 	it('parses attributes', () => {
 		const source = `
 			<style type='text/scss' data-foo="bar" bool></style>
