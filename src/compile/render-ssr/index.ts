@@ -115,7 +115,7 @@ export default function ssr(
 			${templateProperties.store && `options.store = %store();`}
 			__result.addComponent(${name});
 
-			${options.dev && storeProps.length > 0 && deindent`
+			${options.dev && storeProps.length > 0 && !templateProperties.store && deindent`
 				if (!options.store) {
 					throw new Error("${debugName} references store properties, but no store was provided");
 				}
