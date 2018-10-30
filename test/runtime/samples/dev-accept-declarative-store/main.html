@@ -1,0 +1,11 @@
+<p>{$foo}</p>
+
+<script>
+import { Store } from '../../../../store.js';
+
+const store = new Store({ foo : "foo" });
+
+export default {
+	store : () => store,
+};
+</script>
