@@ -153,7 +153,7 @@ export default function dom(
 				throw new Error("'target' is a required option");
 			}`}
 			${storeProps.length > 0 && deindent`
-			if (!options.store) {
+			if (!options.store && !${templateProperties.store}) {
 				throw new Error("${debugName} references store properties, but no store was provided");
 			}`}
 		`}
