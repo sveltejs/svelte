@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.15.2
+
+* Expose `stats.props` ([#1837](https://github.com/sveltejs/svelte/issues/1837))
+
 ## 2.15.1
 
 * Don't throw missing store error when store is declared in component ([#1828](https://github.com/sveltejs/svelte/issues/1828))
