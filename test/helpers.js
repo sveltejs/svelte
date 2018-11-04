@@ -48,6 +48,8 @@ export function tryToReadFile(file) {
 export const virtualConsole = new jsdom.VirtualConsole();
 const { window } = new jsdom.JSDOM('<main></main>', {virtualConsole});
 global.document = window.document;
+global.getComputedStyle = window.getComputedStyle;
+global.navigator = {userAgent: 'fake'};
 
 export function env() {
 	window._svelteTransitionManager = null;
