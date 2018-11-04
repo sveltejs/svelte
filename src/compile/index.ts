@@ -82,7 +82,7 @@ export default function compile(source: string, options: CompileOptions = {}) {
 		stats.stop('create component');
 
 		if (options.generate === false) {
-			return { ast, stats: stats.render(null), js: null, css: null };
+			return { ast, stats: stats.render(component), js: null, css: null };
 		}
 
 		if (options.generate === 'ssr') {

@@ -103,7 +103,10 @@ export default class Stats {
 			onupdate: !!component.templateProperties.onupdate
 		};
 
+		const computed = new Set(component.computations.map(c => c.key));
+
 		return {
+			props: Array.from(component.expectedProperties).filter(key => !computed.has(key)),
 			timings,
 			warnings: this.warnings,
 			imports,
