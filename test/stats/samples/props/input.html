@@ -1,0 +1,23 @@
+<h1>Hello {name}!</h1>
+
+<ul>
+	{#each cats as cat}
+		<li><a target="_blank" href={cat.video}>{cat.name}</a></li>
+	{/each}
+</ul>
+
+<p>bar: {bar}</p>
+
+<script>
+	export default {
+		data() {
+			return {
+				name: 'world'
+			};
+		},
+
+		computed: {
+			bar: ({ foo }) => foo * 2
+		}
+	};
+</script>
