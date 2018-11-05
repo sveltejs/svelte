@@ -1,12 +1,10 @@
-<Counter bind:count/>
-<p>clicked {count} times</p>
+<svelte:meta tag="my-app"/>
 
 <script>
 	import Counter from './Counter.html';
 
-	export default {
-		tag: 'my-app',
-
-		components: { Counter }
-	};
+	export let count;
 </script>
+
+<Counter bind:count/>
+<p>clicked {count} times</p>

@@ -1,14 +1,8 @@
-<p>{items.length} items</p>
-<p>{items.join(', ')}</p>
+<svelte:meta tag="my-widget"/>
 
 <script>
-	export default {
-		tag: 'my-widget',
-
-		data() {
-			return {
-				items: []
-			};
-		}
-	};
+	export let items = [];
 </script>
+
+<p>{items.length} items</p>
+<p>{items.join(', ')}</p>

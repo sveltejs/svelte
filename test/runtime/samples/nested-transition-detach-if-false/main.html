@@ -1,9 +1,7 @@
-<Folder ref:folder dir="a"/>
-
 <script>
-	export default {
-		components: {
-			Folder: './Folder.html'
-		}
-	};
+	export let folder;
+
+	import Folder from './Folder.html';
 </script>
+
+<Folder ref:folder dir="a"/>

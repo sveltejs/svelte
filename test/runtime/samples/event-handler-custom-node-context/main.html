@@ -1,25 +1,19 @@
-<button on:tap='set({ z: z + 1 })'>{z}</button>
-
 <script>
-	export default {
-		data: () => ({
-			z: 10
-		}),
+	export let z = 10;
 
-		events: {
-			tap ( node, callback ) {
-				const clickHandler = event => {
-					callback(event);
-				};
+	function tap(node, callback) {
+		const clickHandler = event => {
+			callback(event);
+		};
 
+		node.addEventListener( 'click', clickHandler, false );
+
+		return {
+			destroy () {
 				node.addEventListener( 'click', clickHandler, false );
-
-				return {
-					destroy () {
-						node.addEventListener( 'click', clickHandler, false );
-					}
-				};
 			}
-		}
-	};
+		};
+	}
 </script>
+
+<button on:tap='{() => z += 1}'>{z}</button>

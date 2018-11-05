@@ -1,3 +1,25 @@
+<script>
+	export let dir;
+	export let open = true;
+	export let items = [];
+
+	function items() {
+		return dir === 'a'
+			? [
+				{
+					filename: 'a/b',
+					isDir: true
+				}
+			]
+			: [
+				{
+					filename: 'a/b/c',
+					isDir: false
+				}
+			];
+	}
+</script>
+
 <li>
 	<span>{dir}</span>
 
@@ -13,32 +35,3 @@
 		</ul>
 	{/if}
 </li>
-
-<script>
-	export default {
-		data() {
-			return {
-				items: [],
-				open: true
-			};
-		},
-
-		computed: {
-			items: ({ dir }) => {
-				return dir === 'a'
-					? [
-						{
-							filename: 'a/b',
-							isDir: true
-						}
-					]
-					: [
-						{
-							filename: 'a/b/c',
-							isDir: false
-						}
-					];
-			}
-		}
-	};
-</script>

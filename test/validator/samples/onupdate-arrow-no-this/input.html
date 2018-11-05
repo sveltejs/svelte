@@ -1,5 +1,5 @@
 <script>
-	export default {
-		onupdate: () => console.log('updating')
-	};
+	import { onupdate } from 'svelte';
+
+	onupdate(() => console.log('updating'));
 </script>

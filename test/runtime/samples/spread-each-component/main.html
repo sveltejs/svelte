@@ -1,11 +1,9 @@
-{#each things as thing}
-	<Nested {...thing}/>
-{/each}
-
 <script>
 	import Nested from './Nested.html';
 
-	export default {
-		components: { Nested }
-	};
+	export let things;
 </script>
+
+{#each things as thing}
+	<Nested {...thing}/>
+{/each}

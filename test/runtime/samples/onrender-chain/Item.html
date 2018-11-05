@@ -1,14 +1,12 @@
-<span>{foo}</span>
-
 <script>
-	export default {
-		data() {
-			return {
-				foo: 'XX'
-			};
-		},
-		onstate({ changed, current }) {
-			this.set({ foo: current.item });
-		}
-	};
+	import { onprops } from 'svelte';
+
+	export let item;
+	export let foo = 'XX';
+
+	onprops(() => {
+		foo = item;
+	});
 </script>
+
+<span>{foo}</span>

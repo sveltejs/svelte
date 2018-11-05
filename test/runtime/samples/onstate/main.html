@@ -1,10 +1,13 @@
+<script>
+	import { onprops } from 'svelte';
+
+	export let foo;
+	export let bar;
+
+	onprops(() => {
+		bar = foo.toUpperCase();
+	});
+</script>
+
 <p>{foo}</p>
 <p>{bar}</p>
-
-<script>
-	export default {
-		onstate({ current }) {
-			this.set({ bar: current.foo.toUpperCase() });
-		}
-	};
-</script>

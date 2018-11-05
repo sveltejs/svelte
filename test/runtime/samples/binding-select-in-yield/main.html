@@ -1,3 +1,10 @@
+<script>
+	import Modal from './Modal.html';
+
+	export let letter;
+	export let letters = ['a', 'b', 'c'];
+</script>
+
 <Modal ref:modal>
 	<span>{letter}</span>
 	<select bind:value='letter'>
@@ -6,18 +13,3 @@
 		{/each}
 	</select>
 </Modal>
-
-<script>
-	import Modal from './Modal.html';
-
-	export default {
-		data () {
-			return {
-				letters: ['a', 'b', 'c']
-			};
-		},
-		components: {
-			Modal
-		}
-	};
-</script>

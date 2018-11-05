@@ -5,7 +5,7 @@ export default {
 
 	test(assert, component, target) {
 		assert.deepEqual(order, [
-			'onstate',
+			'onprops',
 			'render',
 			'oncreate',
 			'onupdate'

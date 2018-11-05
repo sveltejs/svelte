@@ -1,29 +1,23 @@
-<button on:tap='set({ x: event.x, y: event.y })'>{x}, {y}</button>
-
 <script>
-	export default {
-		data: () => ({
-			x: 0,
-			y: 0
-		}),
+	export let x = 0;
+	export let y = 0;
 
-		events: {
-			tap ( node, callback ) {
-				function clickHandler ( event ) {
-					callback({
-						x: event.clientX,
-						y: event.clientY
-					});
-				}
-
-				node.addEventListener( 'click', clickHandler, false );
-
-				return {
-					destroy () {
-						node.addEventListener( 'click', clickHandler, false );
-					}
-				};
-			}
+	function tap(node, callback) {
+		function clickHandler ( event ) {
+			callback({
+				x: event.clientX,
+				y: event.clientY
+			});
 		}
-	};
+
+		node.addEventListener( 'click', clickHandler, false );
+
+		return {
+			destroy () {
+				node.addEventListener( 'click', clickHandler, false );
+			}
+		};
+	}
 </script>
+
+<button on:tap='{event => x = event.x, y = event.y}'>{x}, {y}</button>

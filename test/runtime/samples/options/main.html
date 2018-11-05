@@ -1,11 +1,11 @@
-<p>{text}</p>
-
 <script>
-	export default {
-		oncreate() {
-			this.set({
-				text: this.options.text
-			});
-		}
-	};
+	import { onmount } from 'svelte';
+
+	export let text;
+
+	onmount(() => {
+		text = this.options.text;
+	});
 </script>
+
+<p>{text}</p>

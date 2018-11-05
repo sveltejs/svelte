@@ -1,15 +1,7 @@
 <script>
-	export default {
-		data() {
-			return {
-				bar: 1
-			};
-		},
+	export let bar = 1;
 
-		computed: {
-			foo({ bar }) {
-				return bar * 2;
-			}
-		}
-	};
+	function foo() {
+		return bar * 2;
+	}
 </script>

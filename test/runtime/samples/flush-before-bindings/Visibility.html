@@ -1,11 +1,13 @@
+<script>
+	import { onmount } from 'svelte';
+
+	export let isVisible;
+
+	onmount(() => {
+		isVisible = true;
+	});
+</script>
+
 <div>
 	<slot></slot>
 </div>
-
-<script>
-	export default {
-		oncreate() {
-			this.set({ isVisible: true });
-		}
-	};
-</script>

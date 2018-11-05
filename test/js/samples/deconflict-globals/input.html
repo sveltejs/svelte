@@ -1,11 +1,9 @@
 <script>
-	export default {
-		data: () => ({
-			foo: 'bar'
-		}),
+	import { onmount } from 'svelte';
 
-		oncreate() {
-			alert(JSON.stringify(data()));
-		}
-	};
+	export let foo = 'bar';
+
+	onmount(() => {
+		alert(JSON.stringify(data()));
+	});
 </script>

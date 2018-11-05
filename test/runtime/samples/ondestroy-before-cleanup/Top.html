@@ -1,9 +1,12 @@
-<div ref:element></div>
-
 <script>
-	export default {
-		ondestroy() {
-			this.refOnDestroy = this.refs.element;
-		}
-	};
+	import { ondestroy } from 'svelte';
+
+	export let element;
+	export let refOnDestroy;
+
+	ondestroy(() => {
+		refOnDestroy = element;
+	});
 </script>
+
+<div ref:element></div>

@@ -1,15 +1,7 @@
-<p>{numbers.map(square)}</p>
-
 <script>
-	export default {
-		data () {
-			return {
-				numbers: [ 1, 2, 3 ]
-			};
-		},
+	export let numbers = [ 1, 2, 3 ];
 
-		helpers: {
-			square: num => num * num
-		}
-	};
+	const square = num => num * num;
 </script>
+
+<p>{numbers.map(square)}</p>

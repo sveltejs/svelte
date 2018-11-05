@@ -1,26 +1,24 @@
-{identity(42)}
-
 <script>
+	import { onmount, onprops, onupdate } from 'svelte';
+
 	import order from './order.js';
 
-	export default {
-		helpers: {
-			identity(x) {
-				order.push('render');
-				return x;
-			}
-		},
+	function identity(x) {
+		order.push('render');
+		return x;
+	}
 
-		onstate() {
-			order.push('onstate');
-		},
+	onprops(() => {
+		order.push('onprops');
+	});
 
-		onupdate() {
-			order.push('onupdate');
-		},
+	onupdate(() => {
+		order.push('onupdate');
+	});
 
-		oncreate() {
-			order.push('oncreate');
-		}
-	};
+	onmount(() => {
+		order.push('oncreate');
+	});
 </script>
+
+{identity(42)}

@@ -1,5 +1,5 @@
 <script>
-	export default {
-		oncreate: () => console.log( 'rendering' )
-	};
+	import { onmount } from 'svelte';
+
+	onmount(() => console.log( 'rendering' ));
 </script>

@@ -1,9 +1,13 @@
-<p ref:x>{inDocument}</p>
-
 <script>
-	export default {
-		oncreate () {
-			this.set({ inDocument: document.contains( this.refs.x ) })
-		}
-	};
+	import { onmount } from 'svelte';
+
+	export let x;
+
+	export let inDocument;
+
+	onmount(() => {
+		inDocument = document.contains(x);
+	});
 </script>
+
+<p ref:x>{inDocument}</p>

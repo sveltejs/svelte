@@ -1,5 +1,5 @@
 <script>
-	export default {
-		oncreate: async () => await 123
-	};
+	import { onmount } from 'svelte';
+
+	onmount(async () => await 123);
 </script>

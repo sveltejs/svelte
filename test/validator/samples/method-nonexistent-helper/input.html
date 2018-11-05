@@ -1,17 +1,11 @@
-<button on:click='foo()'></button>
-
 <script>
-	export default {
-		methods: {
-			bar () {
-				// ...
-			}
-		},
+	function bar() {
+		// ...
+	}
 
-		helpers: {
-			foo ( x ) {
-				return x;
-			}
-		}
-	};
+	function foo(x) {
+		return x;
+	}
 </script>
+
+<button on:click='{foo}'></button>

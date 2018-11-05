@@ -1,5 +1,3 @@
-<p>{value}</p>
-
 <script>
 	function throwError() {
 		throw new Error('nope');
@@ -8,13 +6,7 @@
 	const createElement = throwError;
 	const createElement$ = throwError;
 
-	export default {
-		data() {
-			return {
-				value: template() + template$()
-			};
-		}
-	};
+	export let value = template() + template$();
 
 	function template() {
 		return 'a';
@@ -24,3 +16,5 @@
 		return 'b';
 	}
 </script>
+
+<p>{value}</p>

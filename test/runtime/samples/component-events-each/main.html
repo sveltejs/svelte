@@ -1,19 +1,15 @@
-<div>
-	{#each items as item}
-		<Widget on:foo='foo(item)'/>
-	{/each}
-</div>
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		components: { Widget },
+	export let items;
 
-		methods: {
-			foo ( item ) {
-				this.fire( 'foo', item );
-			}
-		}
-	};
+	function foo(item) {
+		dispatch( 'foo', item );
+	}
 </script>
+
+<div>
+	{#each items as item}
+		<Widget on:foo='{() => foo(item)}'/>
+	{/each}
+</div>

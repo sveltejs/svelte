@@ -1,14 +1,11 @@
-<button on:click='set({ "x-count": state["x-count"] + 1 })'>+1</button>
-
 <script>
-	export default {
-		data: () => ({
-			"x-count": 0
-		}),
-		computed: {
-			state(arg)  {
-				return arg;
-			}
-		}
-	};
+	export let undefined = 0;
+
+	function state() {
+		// [svelte-upgrade warning]
+		// this function needs to be manually rewritten
+		return arg;
+	}
 </script>
+
+<button on:click='{() => undefined += 1}'>+1</button>

@@ -1,14 +1,10 @@
-<Foo ref:foo x='{x}'/>
-
 <script>
+	export let foo;
+
 	import Foo from './Foo.html';
 
-	export default {
-		data: () => ({
-			x: {},
-			y: {}
-		}),
-
-		components: { Foo }
-	};
+	export let x = {};
+	export let y = {};
 </script>
+
+<Foo ref:foo x='{x}'/>

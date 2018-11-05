@@ -1,5 +1,3 @@
-<p>{x}</p>
-
 <script>
 	let _x;
 
@@ -7,22 +5,16 @@
 		return _x;
 	}
 
-	export default {
-		data () {
-			return {
-				y: 1
-			};
-		},
+	export let y = 1;
 
-		computed: {
-			xGetter ({ y }) {
-				_x = y * 2;
-				return getX;
-			},
+	function xGetter() {
+		_x = y * 2;
+		return getX;
+	}
 
-			x ({ xGetter }) {
-				return xGetter();
-			}
-		}
-	};
+	function x() {
+		return xGetter()();
+	}
 </script>
+
+<p>{x()}</p>

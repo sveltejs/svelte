@@ -1,12 +1,10 @@
-<svelte:component this="{ x ? Foo : Bar }" bind:y bind:z/>
-
 <script>
 	import Foo from './Foo.html';
 	import Bar from './Bar.html';
 
-	export default {
-		data() {
-			return { Foo, Bar };
-		}
-	};
+	export let x;
+	export let y;
+	export let z;
 </script>
+
+<svelte:component this="{ x ? Foo : Bar }" bind:y bind:z/>

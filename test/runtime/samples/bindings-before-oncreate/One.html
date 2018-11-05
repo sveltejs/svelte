@@ -1,15 +1,13 @@
-<Two bind:foo/>
-
 <script>
+	import { onmount } from 'svelte';
 	import Two from './Two.html';
 
-	export default {
-		components: {
-			Two
-		},
+	export let snapshot;
+	export let foo;
 
-		oncreate() {
-			this.snapshot = this.get().foo;
-		}
-	};
+	onmount(() => {
+		snapshot = foo;
+	});
 </script>
+
+<Two bind:foo/>

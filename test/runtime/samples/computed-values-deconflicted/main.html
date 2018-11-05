@@ -1,14 +1,9 @@
-<span>{state}</span>
-
 <script>
-	export default {
-		data() {
-			return {
-				x: 'waiting'
-			};
-		},
-		computed: {
-			state: ({ x }) => x
-		}
-	};
+	export let x = 'waiting';
+
+	function state() {
+		return x;
+	}
 </script>
+
+<span>{state()}</span>

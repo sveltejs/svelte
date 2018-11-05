@@ -1,13 +1,7 @@
-<svelte:component this={Foo} {...props} />
-
 <script>
 	import Foo from './Foo.html';
 
-	export default {
-		data() {
-			return {
-				Foo
-			};
-		}
-	};
+	export let props;
 </script>
+
+<svelte:component this={Foo} {...props} />

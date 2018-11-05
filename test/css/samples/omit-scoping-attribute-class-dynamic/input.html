@@ -1,3 +1,7 @@
+<script>
+	export let unknown = 'whatever';
+</script>
+
 <p class='{unknown}'>this is styled</p>
 <p class='bar'>this is unstyled</p>
 
@@ -6,13 +10,3 @@
 		color: red;
 	}
 </style>
-
-<script>
-	export default {
-		data () {
-			return {
-				unknown: 'whatever'
-			};
-		}
-	};
-</script>

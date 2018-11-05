@@ -1,16 +1,21 @@
 <script>
-	export default {
-		onstate() {
-			this.onstateRan = true;
-		},
+	import { onmount, onprops, onupdate } from 'svelte';
 
-		onupdate() {
-			this.onupdateRan = true;
-		},
+	export let onstateRanBeforeOncreate;
+	export let onupdateRanBeforeOncreate;
+	let onpropsRan;
+	let onupdateRan;
 
-		oncreate() {
-			this.onstateRanBeforeOncreate = this.onstateRan;
-			this.onupdateRanBeforeOncreate = this.onupdateRan;
-		}
-	};
+	onprops(() => {
+		onstateRan = true;
+	});
+
+	onupdate(() => {
+		onupdateRan = true;
+	});
+
+	onmount(() => {
+		onpropsRanBeforeOncreate = onpropsRan;
+		onupdateRanBeforeOncreate = onupdateRan;
+	});
 </script>

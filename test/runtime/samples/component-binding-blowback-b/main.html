@@ -1,3 +1,16 @@
+<script>
+	import Nested from './Nested.html';
+	
+	export let count;
+	export let idToValue = Object.create(null);
+
+	function ids() {
+		return new Array(count)
+			.fill(null)
+			.map((_, i) => 'id-' + i);
+	}
+</script>
+
 <input type='number' bind:value='count'>
 
 <ol>
@@ -7,27 +20,3 @@
 		</Nested>
 	{/each}
 </ol>
-
-<script>
-	import Nested from './Nested.html';
-	
-	export default {
-		data() {
-			return {
-				idToValue: Object.create(null)
-			};
-		},
-
-		computed: {
-			ids({ count }) {
-				return new Array(count)
-					.fill(null)
-					.map((_, i) => 'id-' + i);
-			}
-		},
-
-		components: {
-			Nested
-		}
-	};
-</script>

@@ -1,12 +1,10 @@
-<button class='bar' on:click='set({ x: "q" })'>bar</button>
-<p>bar x: {x}</p>
-
-<Baz bind:x/>
-
 <script>
 	import Baz from './Baz.html';
 
-	export default {
-		components: { Baz }
-	};
+	export let x;
 </script>
+
+<button class='bar' on:click='{() => x = "q"}'>bar</button>
+<p>bar x: {x}</p>
+
+<Baz bind:x/>

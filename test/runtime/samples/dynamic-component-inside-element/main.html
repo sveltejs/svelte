@@ -1,14 +1,10 @@
-<div>
-	<svelte:component this="{ x ? Foo : Bar }" x='{x}'/>
-</div>
-
 <script>
 	import Foo from './Foo.html';
 	import Bar from './Bar.html';
 
-	export default {
-		data() {
-			return { Foo, Bar };
-		}
-	};
+	export let x;
 </script>
+
+<div>
+	<svelte:component this="{ x ? Foo : Bar }" x='{x}'/>
+</div>

@@ -1,13 +1,9 @@
-<div><Widget ref:widget foo='{foo}'/></div>
-
 <script>
+	export let widget;
+
 	import Widget from './Widget.html';
 
-	export default {
-		components: { Widget },
-
-		data () {
-			return { foo: 42 }
-		}
-	};
+	export let foo = 42;
 </script>
+
+<div><Widget ref:widget foo='{foo}'/></div>

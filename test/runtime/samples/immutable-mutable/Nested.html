@@ -1,13 +1,6 @@
-<h3>Called {count} times.</h3>
-
 <script>
-	export default {
-		immutable: false,
-		data() {
-			return {
-				count: 0,
-				foo: { bar: 'baz' }
-			};
-		}
-	}
+	export let count = 0;
+	export let foo = { bar: 'baz' };
 </script>
+
+<h3>Called {count} times.</h3>

@@ -1,24 +1,14 @@
-<Widget foo='{foo}' bar='{bar}'/>
-
 <script>
+	import { onprops } from 'svelte';
+
 	import Widget from './Widget.html';
 
-	export default {
-		data () {
-			return {
-				foo: { x: 1 },
-				bar: { x: 1 }
-			}
-		},
+	export let foo = { x: 1 };
+	export let bar = { x: 1 };
 
-		onstate({ changed, current }) {
-			if (changed.foo) {
-				this.set({ bar: current.foo });
-			}
-		},
-
-		components: {
-			Widget
-		}
-	};
+	onprops(() => {
+		bar = foo;
+	});
 </script>
+
+<Widget foo='{foo}' bar='{bar}'/>

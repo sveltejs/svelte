@@ -1,5 +1,5 @@
 <script>
-	export default {
-		onstate: () => console.log('updating')
-	};
+	import { onprops } from 'svelte';
+
+	onprops(() => console.log('updating'));
 </script>

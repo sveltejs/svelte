@@ -1,8 +1,9 @@
-<p>foo: {foo}</p>
-<p>bar: {bar}</p>
+<svelte:meta tag="my-app"/>
 
 <script>
-	export default {
-		tag: 'my-app'
-	};
+	export let foo;
+	export let bar;
 </script>
+
+<p>foo: {foo}</p>
+<p>bar: {bar}</p>

@@ -1,13 +1,11 @@
-{Math.min(x, 5)}
-
 <script>
-	export default {
-		helpers: {
-			Math: {
-				min ( a, b ) {
-					return 'potato';
-				}
-			}
+	export let x;
+
+	const Math = {
+		min ( a, b ) {
+			return 'potato';
 		}
 	};
 </script>
+
+{Math.min(x, 5)}

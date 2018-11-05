@@ -1,14 +1,9 @@
-<div>empty</div>
 <script>
-	export default {
-		data () {
-			return {};
-		},
+	import { onmount } from 'svelte';
 
-		computed: {},
-
-		oncreate () {
-			this.set({ created: true });
-		}
-	};
+	onmount(() => {
+		created = true;
+	});
 </script>
+
+<div>empty</div>

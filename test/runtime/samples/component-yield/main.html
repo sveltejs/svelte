@@ -1,16 +1,10 @@
+<script>
+	export let test = true;
+</script>
+
 <p>
 	Hello
 	{#if test}
 		<slot></slot>
 	{/if}
 </p>
-
-<script>
-	export default {
-		data () {
-			return {
-				test: true
-			};
-		}
-	};
-</script>

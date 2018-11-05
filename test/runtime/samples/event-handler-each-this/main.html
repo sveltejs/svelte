@@ -1,3 +1,9 @@
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+</script>
+
 {#each items as item}
-	<button on:click='fire("clicked", { node: this })'>{item}</button>
+	<button on:click='{() => dispatch("clicked", { node: this })}'>{item}</button>
 {/each}

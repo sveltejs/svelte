@@ -1,45 +1,53 @@
+<!-- TODO need to rethink transition events!
+     Perhaps add on:introend etc on the elements? -->
+
+<script>
+	import { onmount } from 'svelte';
+
+	// [svelte-upgrade suggestion]
+	// manually refactor all references to __this
+	const __this = {};
+
+	export let things;
+	export let visible;
+
+	function foo(node, params) {
+		return {
+			duration: 100,
+			tick: t => {
+				node.foo = t;
+			}
+		};
+	}
+
+	onmount(() => {
+		__this.intros = [];
+		__this.outros = [];
+		__this.introCount = 0;
+		__this.outroCount = 0;
+
+		__this.on('intro.start', ({ node }) => {
+			__this.intros.push(node.textContent);
+			__this.introCount += 1;
+		});
+
+		__this.on('intro.end', () => {
+			__this.introCount -= 1;
+		});
+
+		__this.on('outro.start', ({ node }) => {
+			__this.outros.push(node.textContent);
+			__this.outroCount += 1;
+		});
+
+		__this.on('outro.end', () => {
+			__this.outroCount -= 1;
+		});
+	});
+</script>
+
 {#each things as thing}
 	{#if visible}
 		<p transition:foo>{thing}</p>
 	{/if}
 {/each}
-
-<script>
-	export default {
-		transitions: {
-			foo: function ( node, params ) {
-				return {
-					duration: 100,
-					tick: t => {
-						node.foo = t;
-					}
-				};
-			}
-		},
-
-		oncreate() {
-			this.intros = [];
-			this.outros = [];
-			this.introCount = 0;
-			this.outroCount = 0;
-
-			this.on('intro.start', ({ node }) => {
-				this.intros.push(node.textContent);
-				this.introCount += 1;
-			});
-
-			this.on('intro.end', () => {
-				this.introCount -= 1;
-			});
-
-			this.on('outro.start', ({ node }) => {
-				this.outros.push(node.textContent);
-				this.outroCount += 1;
-			});
-
-			this.on('outro.end', () => {
-				this.outroCount -= 1;
-			});
-		}
-	};
-</script>

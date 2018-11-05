@@ -1,14 +1,11 @@
+<script>
+	import Widget from './Widget.html';
+
+	export let visible;
+</script>
+
 before
 {#if visible}
 	<Widget />
 {/if}
 after
-<script>
-	import Widget from './Widget.html';
-
-	export default {
-		components: {
-			Widget
-		}
-	};
-</script>

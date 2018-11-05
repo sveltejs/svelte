@@ -1,12 +1,12 @@
+<script>
+	export let foo;
+
+	function bar() {
+		return foo * 2;
+	}
+</script>
+
 <p>
 	{Math.max(0, foo)}
-	{bar}
+	{bar()}
 </p>
-
-<script>
-	export default {
-		computed: {
-			bar: ({ foo }) => foo * 2
-		}
-	};
-</script>

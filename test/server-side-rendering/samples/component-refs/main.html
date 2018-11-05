@@ -1,9 +1,7 @@
-<div><Widget ref:widget/></div>
-
 <script>
-	import Widget from './Widget.html';
+	export let widget;
 
-	export default {
-		components: { Widget }
-	};
+	import Widget from './Widget.html';
 </script>
+
+<div><Widget ref:widget/></div>
