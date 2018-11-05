@@ -42,7 +42,6 @@ export function removeNode(code: MagicString, parent: Node, node: Node) {
 	}
 
 	code.remove(a, b);
-	list.splice(i, 1);
 	return;
 }
 
