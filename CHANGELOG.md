@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.15.3
+
+* Don't mutate AST
+
 ## 2.15.2
 
 * Expose `stats.props` ([#1837](https://github.com/sveltejs/svelte/issues/1837))
