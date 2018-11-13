@@ -227,8 +227,17 @@ export default class Component {
 
 		if (options.customElement === true) {
 			this.customElement = {
-				tag: this.tag,
-				props: this.props
+				tag: null,
+				props: [] // TODO!!!
+			};
+
+			// find <svelte:meta> tag
+			const meta = this.ast.html.children.find(node => node.name === 'svelte:meta');
+			if (meta) {
+				const tag_attribute = meta.attributes.find(a => a.name === 'tag');
+				if (tag_attribute) {
+					this.customElement.tag = tag_attribute.value[0].data;
+				}
 			}
 		} else {
 			this.customElement = options.customElement;

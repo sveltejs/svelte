@@ -6,6 +6,7 @@ import Element from '../Element';
 import Head from '../Head';
 import IfBlock from '../IfBlock';
 import InlineComponent from '../InlineComponent';
+import Meta from '../Meta';
 import MustacheTag from '../MustacheTag';
 import RawMustacheTag from '../RawMustacheTag';
 import DebugTag from '../DebugTag';
@@ -25,6 +26,7 @@ function getConstructor(type): typeof Node {
 		case 'Head': return Head;
 		case 'IfBlock': return IfBlock;
 		case 'InlineComponent': return InlineComponent;
+		case 'Meta': return Meta;
 		case 'MustacheTag': return MustacheTag;
 		case 'RawMustacheTag': return RawMustacheTag;
 		case 'DebugTag': return DebugTag;
