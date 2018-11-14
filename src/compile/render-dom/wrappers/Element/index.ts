@@ -806,7 +806,7 @@ export default class ElementWrapper extends Wrapper {
 		const params = this.node.animation.expression ? this.node.animation.expression.snippet : '{}';
 		block.builders.animate.addBlock(deindent`
 			if (${animation}) ${animation}.stop();
-			${animation} = @wrapAnimation(${this.var}, ${rect}, %animations-${this.node.animation.name}, ${params});
+			${animation} = @wrapAnimation(${this.var}, ${rect}, ctx.${this.node.animation.name}, ${params});
 		`);
 	}
 

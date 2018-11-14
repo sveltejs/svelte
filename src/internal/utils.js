@@ -36,3 +36,7 @@ export function exclude(src, prop) {
 export function run(fn) {
 	fn();
 }
+
+export function blankObject() {
+	return Object.create(null);
+}

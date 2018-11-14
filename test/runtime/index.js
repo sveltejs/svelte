@@ -71,7 +71,6 @@ describe.only("runtime", () => {
 			compileOptions = config.compileOptions || {};
 			compileOptions.shared = internal;
 			compileOptions.hydratable = hydrate;
-			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
 			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
 			compileOptions.nestedTransitions = config.nestedTransitions;
@@ -116,7 +115,7 @@ describe.only("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 

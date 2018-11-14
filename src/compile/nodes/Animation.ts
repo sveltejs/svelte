@@ -20,13 +20,6 @@ export default class Animation extends Node {
 			});
 		}
 
-		if (!component.animations.has(this.name)) {
-			component.error(this, {
-				code: `missing-animation`,
-				message: `Missing animation '${this.name}'`
-			});
-		}
-
 		const block = parent.parent;
 		if (!block || block.type !== 'EachBlock' || !block.key) {
 			// TODO can we relax the 'immediate child' rule?

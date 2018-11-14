@@ -125,6 +125,17 @@ export default function dom(
 				__create_fragment(ctx) {
 					${block.getContents()}
 				}
+
+				${component.exports.map(x => deindent`
+				get ${x.as}() {
+					return this.__get_state().${x.name};
+				}
+
+				set ${x.as}(value) {
+					this.__set('${x.name}', value);
+					@flush();
+				}
+				`)}
 			}
 		`);
 	}

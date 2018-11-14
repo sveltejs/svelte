@@ -209,7 +209,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.addBlock(deindent`
 				if (!${this.vars.each_block_value}.${length}) {
-					${each_block_else} = ${this.else.block.name}(#component, ctx);
+					${each_block_else} = ${this.else.block.name}(ctx);
 					${each_block_else}.c();
 				}
 			`);
@@ -227,7 +227,7 @@ export default class EachBlockWrapper extends Wrapper {
 					if (!${this.vars.each_block_value}.${length} && ${each_block_else}) {
 						${each_block_else}.p(changed, ctx);
 					} else if (!${this.vars.each_block_value}.${length}) {
-						${each_block_else} = ${this.else.block.name}(#component, ctx);
+						${each_block_else} = ${this.else.block.name}(ctx);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${this.vars.anchor});
 					} else if (${each_block_else}) {
@@ -243,7 +243,7 @@ export default class EachBlockWrapper extends Wrapper {
 							${each_block_else} = null;
 						}
 					} else if (!${each_block_else}) {
-						${each_block_else} = ${this.else.block.name}(#component, ctx);
+						${each_block_else} = ${this.else.block.name}(ctx);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${this.vars.anchor});
 					}
@@ -300,7 +300,7 @@ export default class EachBlockWrapper extends Wrapper {
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
-				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(#component, key, child_ctx);
+				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(key, child_ctx);
 			}
 		`);
 
@@ -336,7 +336,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			${this.block.hasOutros && `@groupOutros();`}
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].r();`}
-			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.vars.get_each_context});
+			${blocks} = @updateKeyedEach(${blocks}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.vars.get_each_context});
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
@@ -371,7 +371,7 @@ export default class EachBlockWrapper extends Wrapper {
 			var ${iterations} = [];
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(#component, ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
+				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
 			}
 		`);
 
@@ -434,7 +434,7 @@ export default class EachBlockWrapper extends Wrapper {
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, child_ctx);
 						} else {
-							${iterations}[#i] = ${create_each_block}(#component, child_ctx);
+							${iterations}[#i] = ${create_each_block}(child_ctx);
 							${iterations}[#i].c();
 						}
 						${iterations}[#i].i(${updateMountNode}, ${anchor});
@@ -443,13 +443,13 @@ export default class EachBlockWrapper extends Wrapper {
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, child_ctx);
 						} else {
-							${iterations}[#i] = ${create_each_block}(#component, child_ctx);
+							${iterations}[#i] = ${create_each_block}(child_ctx);
 							${iterations}[#i].c();
 							${iterations}[#i].m(${updateMountNode}, ${anchor});
 						}
 					`
 				: deindent`
-					${iterations}[#i] = ${create_each_block}(#component, child_ctx);
+					${iterations}[#i] = ${create_each_block}(child_ctx);
 					${iterations}[#i].c();
 					${iterations}[#i].${mountOrIntro}(${updateMountNode}, ${anchor});
 				`;

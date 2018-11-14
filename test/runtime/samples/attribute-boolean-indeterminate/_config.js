@@ -3,7 +3,7 @@ export default {
 	// so it can't be server-rendered
 	'skip-ssr': true,
 
-	data: {
+	props: {
 		indeterminate: true
 	},
 
@@ -15,7 +15,7 @@ export default {
 		const input = target.querySelector('input');
 
 		assert.ok(input.indeterminate);
-		component.set({ indeterminate: false });
+		component.indeterminate = false;
 		assert.ok(!input.indeterminate);
 	}
 };

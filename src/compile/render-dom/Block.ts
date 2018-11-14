@@ -381,7 +381,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, ctx) {
+			function ${this.name}(${this.key ? `${localKey}, ` : ''}ctx) {
 				${this.getContents(localKey)}
 			}
 		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {

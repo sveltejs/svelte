@@ -414,6 +414,7 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 function get_directive_type(name) {
 	if (name === 'use') return 'Action';
 	if (name === 'on') return 'EventHandler';
+	if (name === 'animate') return 'Animation';
 	throw new Error(`TODO directive ${name}`);
 }
 

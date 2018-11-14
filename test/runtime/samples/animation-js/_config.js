@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		things: [
 			{ id: 1, name: 'a' },
 			{ id: 2, name: 'b' },
@@ -33,15 +33,13 @@ export default {
 			};
 		})
 
-		component.set({
-			things: [
-				{ id: 5, name: 'e' },
-				{ id: 2, name: 'b' },
-				{ id: 3, name: 'c' },
-				{ id: 4, name: 'd' },
-				{ id: 1, name: 'a' }
-			]
-		});
+		component.things = [
+			{ id: 5, name: 'e' },
+			{ id: 2, name: 'b' },
+			{ id: 3, name: 'c' },
+			{ id: 4, name: 'd' },
+			{ id: 1, name: 'a' }
+		];
 
 		divs = document.querySelectorAll('div');
 		assert.equal(divs[0].dy, 120);
