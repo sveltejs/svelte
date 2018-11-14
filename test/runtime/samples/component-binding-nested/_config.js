@@ -1,7 +1,7 @@
 export default {
 	'skip-ssr': true, // TODO delete this line, once binding works
 
-	data: {
+	props: {
 		x: 'initial'
 	},
 

@@ -18,7 +18,7 @@ function permute() {
 }
 
 export default {
-	data: {
+	props: {
 		values: toObjects('abc'),
 	},
 

@@ -5,7 +5,7 @@ const thePromise = new Promise(f => {
 });
 
 export default {
-	data: {
+	props: {
 		show: true,
 		thePromise
 	},

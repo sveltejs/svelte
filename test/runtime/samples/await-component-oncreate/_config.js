@@ -1,7 +1,7 @@
 const promise = Promise.resolve(42);
 
 export default {
-	data: {
+	props: {
 		promise
 	},
 

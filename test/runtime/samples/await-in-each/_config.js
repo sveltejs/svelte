@@ -10,7 +10,7 @@ const items = [{
 }];
 
 export default {
-	data: {
+	props: {
 		items
 	},
 

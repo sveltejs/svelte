@@ -1,7 +1,7 @@
 export default {
 	skip: true, // JSDOM
 
-	data: {
+	props: {
 		selected: [ 'two', 'three' ]
 	},
 

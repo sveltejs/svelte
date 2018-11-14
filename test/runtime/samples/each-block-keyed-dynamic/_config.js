@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		todos: [
 			{ id: 123, description: 'buy milk' },
 			{ id: 234, description: 'drink milk' }

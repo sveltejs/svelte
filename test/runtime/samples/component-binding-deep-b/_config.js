@@ -14,7 +14,7 @@ const selectedComponent = components[0];
 export default {
 	skip: true, // doesn't reflect real-world bug, maybe a JSDOM quirk
 
-	data: {
+	props: {
 		components,
 		selectedComponent
 	},

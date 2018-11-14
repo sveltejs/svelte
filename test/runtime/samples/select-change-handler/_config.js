@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		options: [ { id: 'a' }, { id: 'b' }, { id: 'c' } ],
 		selected: 'b'
 	},

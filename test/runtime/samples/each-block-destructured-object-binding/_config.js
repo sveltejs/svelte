@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		people: [{ name: { first: 'Doctor', last: 'Who' } }],
 	},
 

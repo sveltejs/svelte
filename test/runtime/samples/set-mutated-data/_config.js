@@ -1,7 +1,7 @@
 const data = { foo: 0 };
 
 export default {
-	data,
+	props,
 
 	html: '0',
 

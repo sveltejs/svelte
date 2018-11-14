@@ -3,7 +3,7 @@ const ns = '<noscript></noscript>';
 export default {
 	'skip-ssr': true,
 
-	data: {
+	props: {
 		raw: '<span><em>raw html!!!\\o/</span></em>'
 	},
 

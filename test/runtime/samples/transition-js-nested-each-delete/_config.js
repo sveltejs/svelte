@@ -2,7 +2,7 @@ export default {
 	nestedTransitions: true,
 	skipIntroByDefault: true,
 
-	data: {
+	props: {
 		visible: true,
 		things: [ 'a', 'b', 'c' ]
 	},

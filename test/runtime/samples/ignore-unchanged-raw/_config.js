@@ -1,7 +1,7 @@
 import counter from './counter.js';
 
 export default {
-	data: {
+	props: {
 		x: 1,
 		y: 2
 	},

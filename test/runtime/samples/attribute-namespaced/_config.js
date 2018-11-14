@@ -1,5 +1,5 @@
 export default {
-	data: { foo: 'bar' },
+	props: { foo: 'bar' },
 
 	html: `
 		<svg>

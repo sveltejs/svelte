@@ -1,7 +1,7 @@
 export default {
 	'skip-ssr': true,
 
-	data: {
+	props: {
 		raw: '<p>does not change</p>'
 	},
 

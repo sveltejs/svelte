@@ -1,7 +1,7 @@
 export default {
 	html: ``,
 
-	data: {
+	props: {
 		letter: 'b'
 	},
 

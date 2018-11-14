@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		prop: 'name',
 		user: {
 			name: 'alice',

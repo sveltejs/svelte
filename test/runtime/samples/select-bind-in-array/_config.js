@@ -3,7 +3,7 @@ const items = [ { id: 'a' }, { id: 'b' } ];
 export default {
 	'skip-ssr': true,
 
-	data: {
+	props: {
 		items
 	},
 

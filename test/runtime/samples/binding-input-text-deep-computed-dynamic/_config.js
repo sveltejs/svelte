@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		prop: 'bar',
 		obj: {
 			foo: 'a',

@@ -1,7 +1,7 @@
 export default {
 	'skip-ssr': true,
 
-	data: {
+	props: {
 		x: 0,
 		y: 0,
 		width: 100,

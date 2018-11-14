@@ -5,7 +5,7 @@ const values = [
 ];
 
 export default {
-	data: {
+	props: {
 		values,
 		selected: [ values[1] ]
 	},

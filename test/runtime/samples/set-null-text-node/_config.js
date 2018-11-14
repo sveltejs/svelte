@@ -1,5 +1,5 @@
 export default {
-	data: { foo: null },
+	props: { foo: null },
 
 	html: 'foo is null',
 

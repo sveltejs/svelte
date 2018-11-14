@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 
-	data: {
+	props: {
 		bar: 1
 	},
 

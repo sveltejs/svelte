@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		"is-active": true,
 		isSelected: true,
 		myClass: 'one two'

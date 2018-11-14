@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		columns: [ 'a', 'b', 'c' ],
 		rows: [ 1, 2, 3 ]
 	},

@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		dummy: false,
 		fruits: ['Apple', 'Banana', 'Tomato'],
 	},

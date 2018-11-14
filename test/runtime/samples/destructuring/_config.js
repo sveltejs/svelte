@@ -1,7 +1,7 @@
 export default {
 	html: `<button>click me</button>`,
 
-	data: {
+	props: {
 		foo: 42
 	},
 

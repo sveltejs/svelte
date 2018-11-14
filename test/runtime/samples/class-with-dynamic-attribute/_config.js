@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		myClass: 'one two'
 	},
 	html: `<div class="one two three"></div>`,

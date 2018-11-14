@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		// so it doesn't use innerHTML
 		one: 'one',
 		two: 'two',

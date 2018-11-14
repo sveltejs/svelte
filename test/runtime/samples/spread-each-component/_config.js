@@ -4,7 +4,7 @@ export default {
 		<div data-a="3" data-b="4"></div>
 	`,
 
-	data: {
+	props: {
 		things: [
 			{ a: 1, b: 2 },
 			{ a: 3, b: 4 }

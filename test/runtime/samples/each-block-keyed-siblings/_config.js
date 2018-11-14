@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		ones: [{ text: '1' }],
 		twos: [{ text: '2' }],
 	},

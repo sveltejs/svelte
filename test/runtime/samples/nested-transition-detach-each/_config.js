@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		visible: false,
 		rows: [1, 2, 3],
 		cols: ['a', 'b', 'c']

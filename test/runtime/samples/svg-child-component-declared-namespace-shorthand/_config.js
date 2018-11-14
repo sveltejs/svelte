@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: 0,
 		y: 0,
 		width: 100,

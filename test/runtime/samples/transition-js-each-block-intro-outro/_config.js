@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		visible: false,
 		things: [ 'a', 'b', 'c' ]
 	},

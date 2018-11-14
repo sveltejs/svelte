@@ -33,7 +33,7 @@ export default {
 		</div>
 	`,
 
-	data: {
+	props: {
 		todos: {
 			first: {
 				description: 'Buy some milk',

@@ -8,7 +8,7 @@ export default {
 	skipIntroByDefault: true,
 	nestedTransitions: true,
 
-	data: {
+	props: {
 		x: false,
 		promise
 	},

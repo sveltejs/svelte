@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		user: { active: true }
 	},
 	html: `<div class="active"></div>`,

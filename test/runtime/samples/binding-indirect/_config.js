@@ -8,7 +8,7 @@ const tasks = [
 export default {
 	'skip-ssr': true,
 
-	data: {
+	props: {
 		tasks,
 		selected: tasks[0]
 	},

@@ -23,7 +23,7 @@ export default {
 		<p>selected: one</p>
 	`,
 
-	data: {
+	props: {
 		selected: 'one',
 	},
 

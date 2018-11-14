@@ -1,7 +1,7 @@
 export default {
 	skipIntroByDefault: true,
 
-	data: {
+	props: {
 		visible: true
 	},
 

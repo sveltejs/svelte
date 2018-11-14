@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		a: [{ id: 'foo' }, { id: 'bar' }, { id: 'baz' }]
 	},
 

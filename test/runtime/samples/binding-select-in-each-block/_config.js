@@ -13,7 +13,7 @@ export default {
 		</select>
 	`,
 
-	data: {
+	props: {
 		items: [{ value: 'hullo' }, { value: 'world' }]
 	},
 

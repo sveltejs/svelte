@@ -1,7 +1,7 @@
 export default {
 	'skip-ssr': true, // SSR behaviour is awkwardly different
 
-	data: {
+	props: {
 		foo: 42
 	},
 

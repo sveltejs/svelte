@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		bar: 'lol',
 		x: 2,
 		compound: 'piece of',

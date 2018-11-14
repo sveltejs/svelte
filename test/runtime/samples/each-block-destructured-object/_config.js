@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		animalPawsEntries: [
 			{ animal: 'raccoon', pawType: 'hands' },
 			{ animal: 'eagle', pawType: 'wings' }

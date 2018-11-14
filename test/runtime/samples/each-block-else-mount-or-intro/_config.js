@@ -1,5 +1,5 @@
 export default {
 	nestedTransitions: true,
-	data: { items: [] },
+	props: { items: [] },
 	html: `No items.`,
 };

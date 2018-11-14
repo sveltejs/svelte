@@ -4,7 +4,7 @@ let thePromise = new Promise(f => {
 });
 
 export default {
-	data: {
+	props: {
 		thePromise
 	},
 

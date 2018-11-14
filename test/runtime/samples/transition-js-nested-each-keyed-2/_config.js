@@ -1,7 +1,7 @@
 export default {
 	nestedTransitions: true,
 
-	data: {
+	props: {
 		x: true,
 		things: ['a', 'b']
 	},
