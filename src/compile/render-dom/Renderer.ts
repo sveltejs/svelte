@@ -70,6 +70,8 @@ export default class Renderer {
 			}
 		});
 
+		this.block.assignVariableNames();
+
 		this.fragment.render(this.block, null, 'nodes');
 	}
 }
