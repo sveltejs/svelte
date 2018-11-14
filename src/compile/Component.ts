@@ -259,49 +259,14 @@ export default class Component {
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
-		if (this.defaultExport) {
-			const categories = {
-				components: 'component',
-				helpers: 'helper',
-				events: 'event definition',
-				transitions: 'transition',
-				actions: 'actions',
-			};
+		if (!this.ast.js) {
+			this.declarations = Array.from(this.expectedProperties);
 
-			Object.keys(categories).forEach(category => {
-				const definitions = this.defaultExport.declaration.properties.find(prop => prop.key.name === category);
-				if (definitions) {
-					definitions.value.properties.forEach(prop => {
-						const { name } = prop.key;
-						if (!this.used[category].has(name)) {
-							this.warn(prop, {
-								code: `unused-${category.slice(0, -1)}`,
-								message: `The '${name}' ${categories[category]} is unused`
-							});
-						}
-					});
-				}
-			});
+			this.exports = this.declarations.map(name => ({
+				name,
+				as: name
+			}));
 		}
-
-		this.refCallees.forEach(callee => {
-			const { parts } = flattenReference(callee);
-			const ref = parts[1];
-
-			if (this.refs.has(ref)) {
-				// TODO check method is valid, e.g. `audio.stop()` should be `audio.pause()`
-			} else {
-				const match = fuzzymatch(ref, Array.from(this.refs.keys()));
-
-				let message = `'refs.${ref}' does not exist`;
-				if (match) message += ` (did you mean 'refs.${match}'?)`;
-
-				this.error(callee, {
-					code: `missing-ref`,
-					message
-				});
-			}
-		});
 	}
 
 	addSourcemapLocations(node: Node) {

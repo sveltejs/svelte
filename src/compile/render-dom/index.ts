@@ -110,7 +110,7 @@ export default function dom(
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteComponent {
 				__init(__set_inject_props, __set_inject_refs, __make_dirty) {
-					${component.javascript}
+					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
 					__set_inject_props(props => {
 						// TODO only do this for export let|var
