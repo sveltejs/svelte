@@ -13,6 +13,8 @@ export function createScopes(expression: Node) {
 			if (/Function/.test(node.type)) {
 				if (node.type === 'FunctionDeclaration') {
 					scope.declarations.add(node.id.name);
+					scope = new Scope(scope, false);
+					map.set(node, scope);
 				} else {
 					scope = new Scope(scope, false);
 					map.set(node, scope);
@@ -30,9 +32,9 @@ export function createScopes(expression: Node) {
 			} else if (node.type === 'BlockStatement') {
 				scope = new Scope(scope, true);
 				map.set(node, scope);
-			} else if (/(Function|Class|Variable)Declaration/.test(node.type)) {
+			} else if (/(Class|Variable)Declaration/.test(node.type)) {
 				scope.addDeclaration(node);
-			} else if (isReference(node, parent)) {
+			} else if (node.type === 'Identifier' && isReference(node, parent)) {
 				if (!scope.has(node.name)) {
 					globals.add(node.name);
 				}
@@ -47,49 +49,6 @@ export function createScopes(expression: Node) {
 	});
 
 	return { map, scope, globals };
-}
-
-// TODO remove this in favour of weakmap version
-export default function annotateWithScopes(expression: Node) {
-	const globals = new Set();
-	let scope = new Scope(null, false);
-
-	walk(expression, {
-		enter(node: Node, parent: Node) {
-			if (/Function/.test(node.type)) {
-				if (node.type === 'FunctionDeclaration') {
-					scope.declarations.add(node.id.name);
-				} else {
-					node._scope = scope = new Scope(scope, false);
-					if (node.id) scope.declarations.add(node.id.name);
-				}
-
-				node.params.forEach((param: Node) => {
-					extractNames(param).forEach(name => {
-						scope.declarations.add(name);
-					});
-				});
-			} else if (/For(?:In|Of)Statement/.test(node.type)) {
-				node._scope = scope = new Scope(scope, true);
-			} else if (node.type === 'BlockStatement') {
-				node._scope = scope = new Scope(scope, true);
-			} else if (/(Function|Class|Variable)Declaration/.test(node.type)) {
-				scope.addDeclaration(node);
-			} else if (isReference(node, parent)) {
-				if (!scope.has(node.name)) {
-					globals.add(node.name);
-				}
-			}
-		},
-
-		leave(node: Node) {
-			if (node._scope) {
-				scope = scope.parent;
-			}
-		},
-	});
-
-	return { scope, globals };
 }
 
 export class Scope {

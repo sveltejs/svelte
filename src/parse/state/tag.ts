@@ -384,18 +384,36 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	parser.allowWhitespace();
 
-	const directive = readDirective(parser, start, name);
-	if (directive) return directive;
-
 	let value = parser.eat('=') ? readAttributeValue(parser) : true;
+	const end = parser.index;
+
+	const colon_index = name.indexOf(':');
+
+	if (colon_index !== -1) {
+		const type = get_directive_type(name.slice(0, colon_index));
+		name = name.slice(colon_index + 1);
+
+		return {
+			start,
+			end,
+			type,
+			name,
+			expression: value[0].expression
+		};
+	}
 
 	return {
 		start,
-		end: parser.index,
+		end,
 		type: 'Attribute',
 		name,
 		value,
 	};
+}
+
+function get_directive_type(name) {
+	if (name === 'use') return 'Action';
+	throw new Error(`TODO directive ${name}`);
 }
 
 function readAttributeValue(parser: Parser) {

@@ -43,7 +43,7 @@ export default class Renderer {
 		// main block
 		this.block = new Block({
 			renderer: this,
-			name: '@create_main_fragment',
+			name: null,
 			key: null,
 
 			bindings: new Map(),
@@ -63,8 +63,6 @@ export default class Renderer {
 			true,
 			null
 		);
-
-		this.blocks.push(this.block);
 
 		this.blocks.forEach(block => {
 			if (typeof block !== 'string') {

@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import * as path from "path";
 import * as fs from "fs";
 import * as acorn from "acorn";
-import { transitionManager } from "../../shared.js";
+import { transitionManager } from "../../internal.js";
 
 import {
 	showOutput,
@@ -25,7 +25,7 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-describe("runtime", () => {
+describe.only("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
@@ -161,10 +161,10 @@ describe("runtime", () => {
 
 					if (config.test) {
 						return Promise.resolve(config.test(assert, component, target, window, raf)).then(() => {
-							component.destroy();
+							component.$destroy();
 						});
 					} else {
-						component.destroy();
+						component.$destroy();
 						assert.htmlEqual(target.innerHTML, "");
 					}
 				})
@@ -195,11 +195,10 @@ describe("runtime", () => {
 		});
 	}
 
-	const shared = path.resolve("shared.js");
+	const internal = path.resolve("internal.js");
 	fs.readdirSync("test/runtime/samples").forEach(dir => {
-		runTest(dir, shared, false);
-		runTest(dir, shared, true);
-		runTest(dir, null, false);
+		runTest(dir, internal, false);
+		runTest(dir, internal, true);
 	});
 
 	it("fails if options.target is missing in dev mode", () => {

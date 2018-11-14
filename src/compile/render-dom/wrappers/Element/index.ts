@@ -829,10 +829,10 @@ export default class ElementWrapper extends Wrapper {
 			);
 
 			block.addVariable(name);
-			const fn = `%actions-${action.name}`;
+			const fn = `ctx.${action.name}`;
 
 			block.builders.mount.addLine(
-				`${name} = ${fn}.call(#component, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
+				`${name} = ${fn}.call(null, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
 			);
 
 			if (dependencies && dependencies.size > 0) {
@@ -842,12 +842,12 @@ export default class ElementWrapper extends Wrapper {
 
 				block.builders.update.addConditional(
 					conditional,
-					`${name}.update.call(#component, ${snippet});`
+					`${name}.update.call(null, ${snippet});`
 				);
 			}
 
 			block.builders.destroy.addLine(
-				`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy.call(#component);`
+				`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
 			);
 		});
 	}
@@ -860,7 +860,7 @@ export default class ElementWrapper extends Wrapper {
 				snippet = expression.snippet;
 				dependencies = expression.dependencies;
 			} else {
-				snippet = `ctx${quotePropIfNecessary(name)}`;
+				snippet = `${quotePropIfNecessary(name)}`;
 				dependencies = new Set([name]);
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;

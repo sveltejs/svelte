@@ -10,7 +10,7 @@ import namespaces from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
 import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
-import annotateWithScopes from '../utils/annotateWithScopes';
+import { createScopes } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
@@ -67,7 +67,7 @@ function getIndentExclusionRanges(node: Node) {
 	return ranges;
 }
 
-function removeIndentation(
+function increaseIndentation(
 	code: MagicString,
 	start: number,
 	end: number,
@@ -75,13 +75,16 @@ function removeIndentation(
 	ranges: Node[]
 ) {
 	const str = code.original.slice(start, end);
-	const pattern = new RegExp(`^${indentationLevel}`, 'gm');
-	let match;
+	const lines = str.split('\n');
 
-	while (match = pattern.exec(str)) {
-		// TODO bail if we're inside an exclusion range
-		code.remove(start + match.index, start + match.index + indentationLevel.length);
-	}
+	let c = start;
+	lines.forEach(line => {
+		if (line) {
+			code.prependRight(c, '\t\t\t'); // TODO detect indentation
+		}
+
+		c += line.length + 1;
+	});
 }
 
 // We need to tell estree-walker that it should always
@@ -131,7 +134,7 @@ export default class Component {
 		actions: Set<string>;
 	};
 
-	declarations: Declaration[];
+	declarations: string[];
 
 	refCallees: Node[];
 
@@ -342,85 +345,12 @@ export default class Component {
 			return sigil.slice(1) + name;
 		});
 
-		let importedHelpers;
+		const importedHelpers = Array.from(helpers).concat('SvelteComponent').sort().map(name => {
+			const alias = this.alias(name);
+			return { name, alias };
+		});
 
-		if (options.shared) {
-			if (format !== 'es' && format !== 'cjs') {
-				throw new Error(`Components with shared helpers must be compiled with \`format: 'es'\` or \`format: 'cjs'\``);
-			}
-
-			importedHelpers = Array.from(helpers).sort().map(name => {
-				const alias = this.alias(name);
-				return { name, alias };
-			});
-		} else {
-			let inlineHelpers = '';
-
-			const component = this;
-
-			importedHelpers = [];
-
-			helpers.forEach(name => {
-				const str = shared[name];
-				const code = new MagicString(str);
-				const expression = parseExpressionAt(str, 0);
-
-				let { scope } = annotateWithScopes(expression);
-
-				walk(expression, {
-					enter(node: Node, parent: Node) {
-						if (node._scope) scope = node._scope;
-
-						if (
-							node.type === 'Identifier' &&
-							isReference(node, parent) &&
-							!scope.has(node.name)
-						) {
-							if (node.name in shared) {
-								// this helper function depends on another one
-								const dependency = node.name;
-								helpers.add(dependency);
-
-								const alias = component.alias(dependency);
-								if (alias !== node.name) {
-									code.overwrite(node.start, node.end, alias);
-								}
-							}
-						}
-					},
-
-					leave(node: Node) {
-						if (node._scope) scope = scope.parent;
-					},
-				});
-
-				if (name === 'transitionManager' || name === 'outros') {
-					// special case
-					const global = name === 'outros'
-						? `_svelteOutros`
-						: `_svelteTransitionManager`;
-
-					inlineHelpers += `\n\nvar ${this.alias(name)} = window.${global} || (window.${global} = ${code});\n\n`;
-				} else if (name === 'escaped' || name === 'missingComponent' || name === 'invalidAttributeNameCharacter') {
-					// vars are an awkward special case... would be nice to avoid this
-					const alias = this.alias(name);
-					inlineHelpers += `\n\nconst ${alias} = ${code};`
-				} else {
-					const alias = this.alias(expression.id.name);
-					if (alias !== expression.id.name) {
-						code.overwrite(expression.id.start, expression.id.end, alias);
-					}
-
-					inlineHelpers += `\n\n${code}`;
-				}
-			});
-
-			result += inlineHelpers;
-		}
-
-		const sharedPath = options.shared === true
-			? 'svelte/shared.js'
-			: options.shared || '';
+		const sharedPath = options.shared || 'svelte/internal.js';
 
 		const module = wrapModule(result, format, name, options, banner, sharedPath, importedHelpers, this.imports, this.shorthandImports, this.source);
 
@@ -571,306 +501,6 @@ export default class Component {
 		});
 	}
 
-	processDefaultExport(node, indentExclusionRanges) {
-		const { templateProperties, source, code } = this;
-
-		if (node.declaration.type !== 'ObjectExpression') {
-			this.error(node.declaration, {
-				code: `invalid-default-export`,
-				message: `Default export must be an object literal`
-			});
-		}
-
-		checkForComputedKeys(this, node.declaration.properties);
-		checkForDupes(this, node.declaration.properties);
-
-		const props = this.properties;
-
-		node.declaration.properties.forEach((prop: Node) => {
-			props.set(getName(prop.key), prop);
-		});
-
-		const validPropList = Object.keys(propValidators);
-
-		// ensure all exported props are valid
-		node.declaration.properties.forEach((prop: Node) => {
-			const name = getName(prop.key);
-			const propValidator = propValidators[name];
-
-			if (propValidator) {
-				propValidator(this, prop);
-			} else {
-				const match = fuzzymatch(name, validPropList);
-				if (match) {
-					this.error(prop, {
-						code: `unexpected-property`,
-						message: `Unexpected property '${name}' (did you mean '${match}'?)`
-					});
-				} else if (/FunctionExpression/.test(prop.value.type)) {
-					this.error(prop, {
-						code: `unexpected-property`,
-						message: `Unexpected property '${name}' (did you mean to include it in 'methods'?)`
-					});
-				} else {
-					this.error(prop, {
-						code: `unexpected-property`,
-						message: `Unexpected property '${name}'`
-					});
-				}
-			}
-		});
-
-		if (props.has('namespace')) {
-			const ns = nodeToString(props.get('namespace').value);
-			this.namespace = namespaces[ns] || ns;
-		}
-
-		node.declaration.properties.forEach((prop: Node) => {
-			templateProperties[getName(prop.key)] = prop;
-		});
-
-		['helpers', 'events', 'components', 'transitions', 'actions', 'animations'].forEach(key => {
-			if (templateProperties[key]) {
-				templateProperties[key].value.properties.forEach((prop: Node) => {
-					this[key].add(getName(prop.key));
-				});
-			}
-		});
-
-		const addArrowFunctionExpression = (type: string, name: string, node: Node) => {
-			const { body, params, async } = node;
-			const fnKeyword = async ? 'async function' : 'function';
-
-			const paramString = params.length ?
-				`[✂${params[0].start}-${params[params.length - 1].end}✂]` :
-				``;
-
-			const block = body.type === 'BlockStatement'
-				? deindent`
-					${fnKeyword} ${name}(${paramString}) [✂${body.start}-${body.end}✂]
-				`
-				: deindent`
-					${fnKeyword} ${name}(${paramString}) {
-						return [✂${body.start}-${body.end}✂];
-					}
-				`;
-
-			this.declarations.push({ type, name, block, node });
-		};
-
-		const addFunctionExpression = (type: string, name: string, node: Node) => {
-			const { async } = node;
-			const fnKeyword = async ? 'async function' : 'function';
-
-			let c = node.start;
-			while (this.source[c] !== '(') c += 1;
-
-			const block = deindent`
-				${fnKeyword} ${name}[✂${c}-${node.end}✂];
-			`;
-
-			this.declarations.push({ type, name, block, node });
-		};
-
-		const addValue = (type: string, name: string, node: Node) => {
-			const block = deindent`
-				var ${name} = [✂${node.start}-${node.end}✂];
-			`;
-
-			this.declarations.push({ type, name, block, node });
-		};
-
-		const addDeclaration = (
-			type: string,
-			key: string,
-			node: Node,
-			allowShorthandImport?: boolean,
-			disambiguator?: string,
-			conflicts?: Record<string, boolean>
-		) => {
-			const qualified = disambiguator ? `${disambiguator}-${key}` : key;
-
-			if (node.type === 'Identifier' && node.name === key) {
-				this.templateVars.set(qualified, key);
-				return;
-			}
-
-			let deconflicted = key;
-			if (conflicts) while (deconflicted in conflicts) deconflicted += '_'
-
-			let name = this.getUniqueName(deconflicted);
-			this.templateVars.set(qualified, name);
-
-			if (allowShorthandImport && node.type === 'Literal' && typeof node.value === 'string') {
-				this.shorthandImports.push({ name, source: node.value });
-				return;
-			}
-
-			// deindent
-			const indentationLevel = getIndentationLevel(source, node.start);
-			if (indentationLevel) {
-				removeIndentation(code, node.start, node.end, indentationLevel, indentExclusionRanges);
-			}
-
-			if (node.type === 'ArrowFunctionExpression') {
-				addArrowFunctionExpression(type, name, node);
-			} else if (node.type === 'FunctionExpression') {
-				addFunctionExpression(type, name, node);
-			} else {
-				addValue(type, name, node);
-			}
-		};
-
-		if (templateProperties.components) {
-			templateProperties.components.value.properties.forEach((property: Node) => {
-				addDeclaration('components', getName(property.key), property.value, true, 'components');
-			});
-		}
-
-		if (templateProperties.computed) {
-			const dependencies = new Map();
-
-			const fullStateComputations = [];
-
-			templateProperties.computed.value.properties.forEach((prop: Node) => {
-				const key = getName(prop.key);
-				const value = prop.value;
-
-				addDeclaration('computed', key, value, false, 'computed', {
-					state: true,
-					changed: true
-				});
-
-				const param = value.params[0];
-
-				const hasRestParam = (
-					param.properties &&
-					param.properties.some(prop => prop.type === 'RestElement')
-				);
-
-				if (param.type !== 'ObjectPattern' || hasRestParam) {
-					fullStateComputations.push({ key, deps: null, hasRestParam });
-				} else {
-					const deps = param.properties.map(prop => prop.key.name);
-
-					deps.forEach(dep => {
-						this.expectedProperties.add(dep);
-					});
-					dependencies.set(key, deps);
-				}
-			});
-
-			const visited = new Set();
-
-			const visit = (key: string) => {
-				if (!dependencies.has(key)) return; // not a computation
-
-				if (visited.has(key)) return;
-				visited.add(key);
-
-				const deps = dependencies.get(key);
-				deps.forEach(visit);
-
-				this.computations.push({ key, deps, hasRestParam: false });
-
-				const prop = templateProperties.computed.value.properties.find((prop: Node) => getName(prop.key) === key);
-			};
-
-			templateProperties.computed.value.properties.forEach((prop: Node) =>
-				visit(getName(prop.key))
-			);
-
-			if (fullStateComputations.length > 0) {
-				this.computations.push(...fullStateComputations);
-			}
-		}
-
-		if (templateProperties.data) {
-			addDeclaration('data', 'data', templateProperties.data.value);
-		}
-
-		if (templateProperties.events) {
-			templateProperties.events.value.properties.forEach((property: Node) => {
-				addDeclaration('events', getName(property.key), property.value, false, 'events');
-			});
-		}
-
-		if (templateProperties.helpers) {
-			templateProperties.helpers.value.properties.forEach((property: Node) => {
-				addDeclaration('helpers', getName(property.key), property.value, false, 'helpers');
-			});
-		}
-
-		if (templateProperties.methods) {
-			addDeclaration('methods', 'methods', templateProperties.methods.value);
-
-			templateProperties.methods.value.properties.forEach(property => {
-				this.methods.add(getName(property.key));
-			});
-		}
-
-		if (templateProperties.namespace) {
-			const ns = nodeToString(templateProperties.namespace.value);
-			this.namespace = namespaces[ns] || ns;
-		}
-
-		if (templateProperties.oncreate) {
-			addDeclaration('oncreate', 'oncreate', templateProperties.oncreate.value);
-		}
-
-		if (templateProperties.ondestroy) {
-			addDeclaration('ondestroy', 'ondestroy', templateProperties.ondestroy.value);
-		}
-
-		if (templateProperties.onstate) {
-			addDeclaration('onstate', 'onstate', templateProperties.onstate.value);
-		}
-
-		if (templateProperties.onupdate) {
-			addDeclaration('onupdate', 'onupdate', templateProperties.onupdate.value);
-		}
-
-		if (templateProperties.preload) {
-			addDeclaration('preload', 'preload', templateProperties.preload.value);
-		}
-
-		if (templateProperties.props) {
-			this.props = templateProperties.props.value.elements.map((element: Node) => nodeToString(element));
-		}
-
-		if (templateProperties.setup) {
-			addDeclaration('setup', 'setup', templateProperties.setup.value);
-		}
-
-		if (templateProperties.store) {
-			addDeclaration('store', 'store', templateProperties.store.value);
-		}
-
-		if (templateProperties.tag) {
-			this.tag = nodeToString(templateProperties.tag.value);
-		}
-
-		if (templateProperties.transitions) {
-			templateProperties.transitions.value.properties.forEach((property: Node) => {
-				addDeclaration('transitions', getName(property.key), property.value, false, 'transitions');
-			});
-		}
-
-		if (templateProperties.animations) {
-			templateProperties.animations.value.properties.forEach((property: Node) => {
-				addDeclaration('animations', getName(property.key), property.value, false, 'animations');
-			});
-		}
-
-		if (templateProperties.actions) {
-			templateProperties.actions.value.properties.forEach((property: Node) => {
-				addDeclaration('actions', getName(property.key), property.value, false, 'actions');
-			});
-		}
-
-		this.defaultExport = node;
-	}
-
 	walkJs() {
 		const { js } = this.ast;
 		if (!js) return;
@@ -882,10 +512,11 @@ export default class Component {
 		const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
 		const indentExclusionRanges = getIndentExclusionRanges(js.content);
 
-		const { scope, globals } = annotateWithScopes(js.content);
+		const { scope, globals } = createScopes(js.content);
 
 		scope.declarations.forEach(name => {
 			this.userVars.add(name);
+			this.declarations.push(name);
 		});
 
 		globals.forEach(name => {
@@ -895,19 +526,15 @@ export default class Component {
 		const body = js.content.body.slice(); // slice, because we're going to be mutating the original
 
 		body.forEach(node => {
-			// check there are no named exports
-			if (node.type === 'ExportNamedDeclaration') {
-				this.error(node, {
-					code: `named-export`,
-					message: `A component can only have a default export`
-				});
-			}
-
 			if (node.type === 'ExportDefaultDeclaration') {
-				this.processDefaultExport(node, indentExclusionRanges);
+				this.error(node, {
+					code: `default-export`,
+					message: `A component cannot have a default export`
+				})
 			}
 
 			// imports need to be hoisted out of the IIFE
+			// TODO hoist other stuff where possible
 			else if (node.type === 'ImportDeclaration') {
 				removeNode(code, js.content, node);
 				imports.push(node);
@@ -917,15 +544,6 @@ export default class Component {
 				});
 			}
 		});
-
-		if (indentationLevel) {
-			if (this.defaultExport) {
-				removeIndentation(code, js.content.start, this.defaultExport.start, indentationLevel, indentExclusionRanges);
-				removeIndentation(code, this.defaultExport.end, js.content.end, indentationLevel, indentExclusionRanges);
-			} else {
-				removeIndentation(code, js.content.start, js.content.end, indentationLevel, indentExclusionRanges);
-			}
-		}
 
 		let a = js.content.start;
 		while (/\s/.test(source[a])) a += 1;

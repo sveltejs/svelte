@@ -20,7 +20,7 @@ export default [
 			json(),
 			typescript({
 				include: 'src/**',
-				exclude: 'src/shared/**',
+				exclude: 'src/internal/**',
 				typescript: require('typescript')
 			})
 		],
@@ -40,7 +40,7 @@ export default [
 			commonjs(),
 			buble({
 				include: 'src/**',
-				exclude: 'src/shared/**',
+				exclude: 'src/internal/**',
 				target: {
 					node: 4
 				}
@@ -79,11 +79,11 @@ export default [
 		experimentalCodeSplitting: true
 	},
 
-	/* shared.js */
+	/* internal.js */
 	{
-		input: 'src/shared/index.js',
+		input: 'src/internal/index.js',
 		output: {
-			file: 'shared.js',
+			file: 'internal.js',
 			format: 'es'
 		}
 	}

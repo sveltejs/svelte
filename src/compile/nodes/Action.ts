@@ -13,13 +13,6 @@ export default class Action extends Node {
 
 		component.used.actions.add(this.name);
 
-		if (!component.actions.has(this.name)) {
-			component.error(this, {
-				code: `missing-action`,
-				message: `Missing action '${this.name}'`
-			});
-		}
-
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
 			: null;

@@ -50,29 +50,7 @@ export default function ssr(
 
 	let js = null;
 	if (component.javascript) {
-		const componentDefinition = new CodeBuilder();
-
-		// not all properties are relevant to SSR (e.g. lifecycle hooks)
-		const relevant = new Set([
-			'data',
-			'components',
-			'computed',
-			'helpers',
-			'preload',
-			'store'
-		]);
-
-		component.declarations.forEach(declaration => {
-			if (relevant.has(declaration.type)) {
-				componentDefinition.addBlock(declaration.block);
-			}
-		});
-
-		js = (
-			component.javascript[0] +
-			componentDefinition +
-			component.javascript[1]
-		);
+		// TODO
 	}
 
 	const debugName = `<${component.customElement ? component.tag : name}>`;

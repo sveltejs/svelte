@@ -212,7 +212,7 @@ export default class Block {
 		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
-	toString() {
+	getContents(localKey?: string) {
 		const { dev } = this.renderer.options;
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
@@ -233,9 +233,7 @@ export default class Block {
 
 		const properties = new CodeBuilder();
 
-		let localKey;
-		if (this.key) {
-			localKey = this.getUniqueName('key');
+		if (localKey) {
 			properties.addBlock(`key: ${localKey},`);
 		}
 
@@ -360,21 +358,31 @@ export default class Block {
 		}
 
 		return deindent`
+			${this.variables.size > 0 &&
+				`var ${Array.from(this.variables.keys())
+					.map(key => {
+						const init = this.variables.get(key);
+						return init !== undefined ? `${key} = ${init}` : key;
+					})
+					.join(', ')};`}
+
+			${!this.builders.init.isEmpty() && this.builders.init}
+
+			return {
+				${properties}
+			};
+		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
+			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
+		});
+	}
+
+	toString() {
+		const localKey = this.key && this.getUniqueName('key');
+
+		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
 			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, ctx) {
-				${this.variables.size > 0 &&
-					`var ${Array.from(this.variables.keys())
-						.map(key => {
-							const init = this.variables.get(key);
-							return init !== undefined ? `${key} = ${init}` : key;
-						})
-						.join(', ')};`}
-
-				${!this.builders.init.isEmpty() && this.builders.init}
-
-				return {
-					${properties}
-				};
+				${this.getContents(localKey)}
 			}
 		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
 			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
