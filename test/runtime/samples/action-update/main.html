@@ -2,10 +2,11 @@
 	export let text = 'Perform an Action';
 
 	function checkForCtrl(event) {
+		console.log(`!!! ${event.ctrlKey}`);
 		if (event.ctrlKey) {
-			tooltip = 'Perform an augmented Action';
+			text = 'Perform an augmented Action';
 		} else {
-			tooltip = 'Perform an Action';
+			text = 'Perform an Action';
 		}
 	}
 

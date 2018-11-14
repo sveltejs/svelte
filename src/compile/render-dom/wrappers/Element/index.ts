@@ -608,11 +608,6 @@ export default class ElementWrapper extends Wrapper {
 		this.node.handlers.forEach(handler => {
 			const isCustomEvent = component.events.has(handler.name);
 
-			if (handler.callee) {
-				// TODO move handler render method into a wrapper
-				handler.render(this.renderer.component, block, this.var, handler.shouldHoist);
-			}
-
 			const target = handler.shouldHoist ? 'this' : this.var;
 
 			// get a name for the event handler that is globally unique
@@ -656,7 +651,7 @@ export default class ElementWrapper extends Wrapper {
 				const handlerFunction = deindent`
 					function ${handlerName}(event) {
 						${modifiers}
-						${handlerBody}
+						(${handlerBody})(event);
 					}
 				`;
 

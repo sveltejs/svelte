@@ -84,7 +84,6 @@ export default class Expression {
 
 		let { map, scope: currentScope } = createScopes(info);
 
-		const isEventHandler = parent.type === 'EventHandler';
 		const expression = this;
 		const isSynthetic = parent.isSynthetic;
 
@@ -107,11 +106,6 @@ export default class Expression {
 
 				if (isReference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
-
-					if (name === 'event' && isEventHandler) {
-						expression.usesEvent = true;
-						return;
-					}
 
 					if (currentScope.has(name)) return;
 

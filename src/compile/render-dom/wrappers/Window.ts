@@ -47,12 +47,10 @@ export default class WindowWrapper extends Wrapper {
 
 			let usesState = handler.dependencies.size > 0;
 
-			handler.render(component, block, 'window', false); // TODO hoist?
-
 			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
 			const handlerBody = deindent`
 				${usesState && `var ctx = #component.get();`}
-				${handler.snippet};
+				${handler.snippet}
 			`;
 
 			if (isCustomEvent) {
@@ -61,7 +59,7 @@ export default class WindowWrapper extends Wrapper {
 
 				block.builders.hydrate.addBlock(deindent`
 					${handlerName} = %events-${handler.name}.call(#component, window, function(event) {
-						${handlerBody}
+						(${handlerBody})(event);
 					});
 				`);
 
@@ -71,7 +69,7 @@ export default class WindowWrapper extends Wrapper {
 			} else {
 				block.builders.init.addBlock(deindent`
 					function ${handlerName}(event) {
-						${handlerBody}
+						(${handlerBody})(event);
 					}
 					window.addEventListener("${handler.name}", ${handlerName});
 				`);
