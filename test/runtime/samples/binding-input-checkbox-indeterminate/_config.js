@@ -30,7 +30,7 @@ export default {
 			<p>indeterminate? false</p>
 		`);
 
-		component.set({ indeterminate: true });
+		component.indeterminate = true;
 		assert.equal(input.indeterminate, true);
 		assert.equal(input.checked, true);
 		assert.htmlEqual(target.innerHTML, `

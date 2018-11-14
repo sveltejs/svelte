@@ -10,21 +10,21 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ animals: [] });
+		component.animals = [];
 		assert.htmlEqual( target.innerHTML, `
 			<p>no animals</p>
 		` );
 
 		// trigger an 'update' of the else block, to ensure that
 		// non-existent update method is not called
-		component.set({ animals: [] });
+		component.animals = [];
 
-		component.set({ animals: ['wombat'] });
+		component.animals = ['wombat'];
 		assert.htmlEqual( target.innerHTML, `
 			<p>wombat</p>
 		` );
 
-		component.set({ animals: ['dinosaur'] });
+		component.animals = ['dinosaur'];
 		assert.htmlEqual( target.innerHTML, `
 			<p>dinosaur</p>
 		` );

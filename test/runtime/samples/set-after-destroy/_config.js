@@ -5,6 +5,6 @@ export default {
 
 	test(assert, component) {
 		component.destroy();
-		component.set({ x: 2 });
+		component.x = 2;
 	}
 };

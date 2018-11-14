@@ -23,18 +23,16 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({
-			states: [
-				'Maine',
-				'Maryland',
-				'Massachusetts',
-				'Michigan',
-				'Minnesota',
-				'Mississippi',
-				'Missouri',
-				'Montana'
-			]
-		});
+		component.states = [
+			'Maine',
+			'Maryland',
+			'Massachusetts',
+			'Michigan',
+			'Minnesota',
+			'Mississippi',
+			'Missouri',
+			'Montana'
+		];
 
 		assert.htmlEqual( target.innerHTML, `
 			<p>Current state: deconflicted</p>

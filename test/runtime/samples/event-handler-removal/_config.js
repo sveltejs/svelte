@@ -6,10 +6,10 @@ export default {
 		component.refs.input.focus();
 
 		// this should NOT trigger blur event
-		component.set({ visible: false });
+		component.visible = false;
 		assert.ok( !component.get().blurred );
 
-		component.set({ visible: true });
+		component.visible = true;
 		component.refs.input.focus();
 
 		// this SHOULD trigger blur event

@@ -4,7 +4,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ arriving: false });
+		component.arriving = false;
 		assert.htmlEqual( target.innerHTML, `<div><p class='widget'>Goodbye</p></div>` );
 
 		component.destroy();

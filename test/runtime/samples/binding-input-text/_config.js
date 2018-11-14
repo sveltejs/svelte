@@ -27,7 +27,7 @@ export default {
 			<p>hello everybody</p>
 		`);
 
-		component.set({ name: 'goodbye' });
+		component.name = 'goodbye';
 		assert.equal(input.value, 'goodbye');
 		assert.htmlEqual(target.innerHTML, `
 			<input>

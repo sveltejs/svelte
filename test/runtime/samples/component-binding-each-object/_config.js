@@ -8,12 +8,10 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({
-			a: [
-				{ id: 'yep' },
-				{ id: 'nope' }
-			]
-		});
+		component.a = [
+			{ id: 'yep' },
+			{ id: 'nope' }
+		];
 
 		assert.htmlEqual( target.innerHTML, `
 			<span>yep</span><span>nope</span>

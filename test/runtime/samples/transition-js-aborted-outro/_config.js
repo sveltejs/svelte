@@ -4,13 +4,13 @@ export default {
 	},
 
 	test(assert, component, target, window, raf) {
-		component.set({ visible: false });
+		component.visible = false;
 		const span = target.querySelector('span');
 
 		raf.tick(50);
 		assert.equal(span.foo, 0.5);
 
-		component.set({ visible: true });
+		component.visible = true;
 		assert.equal(span.foo, 1);
 
 		raf.tick(75);

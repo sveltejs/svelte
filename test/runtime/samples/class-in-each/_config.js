@@ -11,7 +11,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({ selected: 'three' });
+		component.selected = 'three';
 		assert.htmlEqual(target.innerHTML, `
 			<div></div>
 			<div class=""></div>

@@ -1,6 +1,6 @@
 export default {
 	test ( assert, component, target, window, raf ) {
-		component.set({ visible: true });
+		component.visible = true;
 		let div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
@@ -13,7 +13,7 @@ export default {
 		raf.tick( 500 );
 		assert.equal( div.foo, 1 );
 
-		component.set({ visible: false });
+		component.visible = false;
 		raf.tick( 600 );
 		assert.equal( div.foo, 1 );
 		assert.equal( div.bar, 0.75 );
@@ -24,13 +24,13 @@ export default {
 
 		// test outro before intro complete
 		raf.tick( 1000 );
-		component.set({ visible: true });
+		component.visible = true;
 		div = target.querySelector( 'div' );
 
 		raf.tick( 1200 );
 		assert.equal( div.foo, 0.5 );
 
-		component.set({ visible: false });
+		component.visible = false;
 		raf.tick( 1300 );
 		assert.equal( div.foo, 0.75 );
 		assert.equal( div.bar, 0.75 );

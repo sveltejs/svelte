@@ -14,7 +14,7 @@ export default {
 		assert.equal( options[0].selected, false );
 		assert.equal( options[1].selected, true );
 
-		component.set( { foo: items[0].id } );
+		component.foo = items[0].id;
 
 		assert.equal( options[0].selected, true );
 		assert.equal( options[1].selected, false );

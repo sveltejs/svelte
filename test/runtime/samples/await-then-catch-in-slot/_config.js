@@ -28,9 +28,7 @@ export default {
 					reject = r;
 				});
 
-				component.set({
-					thePromise
-				});
+				component.thePromise = thePromise;
 
 				assert.htmlEqual(target.innerHTML, `
 					<p>loading...</p>

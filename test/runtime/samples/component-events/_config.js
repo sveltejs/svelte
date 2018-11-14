@@ -13,11 +13,11 @@ export default {
 			count += 1;
 		});
 
-		component.set({ visible: false });
+		component.visible = false;
 		assert.equal( count, 1 );
 
-		component.set({ visible: true });
-		component.set({ visible: false });
+		component.visible = true;
+		component.visible = false;
 		assert.equal( count, 2 );
 	}
 };

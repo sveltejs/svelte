@@ -15,9 +15,7 @@ export default {
 
 		assert.equal(component.get().y, 'abc');
 
-		component.set({
-			x: false
-		});
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>bar</p>

@@ -14,14 +14,14 @@ export default {
 			<div>c</div>
 		`);
 
-		component.set({ things: [ 'a' ] });
+		component.things = [ 'a' ];
 
 		raf.tick( 100 );
 		assert.htmlEqual(target.innerHTML, `
 			<div>a</div>
 		`);
 
-		component.set({ visible: false });
+		component.visible = false;
 
 		raf.tick( 200 );
 		assert.htmlEqual(target.innerHTML, '');

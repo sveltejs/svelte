@@ -13,20 +13,16 @@ export default {
 		// component.set({ foo: undefined });
 		// delete component._state.foo;
 
-		component.set({
-			x: false,
-			foo: undefined
-		});
+		component.x = false;
+		component.foo = undefined;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>parent red</p>
 			<p>red red</p>
 		`);
 
-		component.set({
-			x: true,
-			foo: undefined
-		});
+		component.x = true;
+		component.foo = undefined;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>parent green</p>

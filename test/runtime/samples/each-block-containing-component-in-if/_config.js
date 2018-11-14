@@ -7,10 +7,8 @@ export default {
 	html: `<div></div>`,
 
 	test ( assert, component, target ) {
-		component.set({
-			show: true,
-			fields: [1, 2, 3]
-		});
+		component.show = true;
+		component.fields = [1, 2, 3];
 
 		assert.htmlEqual( target.innerHTML, `
 			<div>
@@ -20,9 +18,7 @@ export default {
 			</div>
 		` );
 
-		component.set({
-			fields: [1, 2, 3, 4]
-		});
+		component.fields = [1, 2, 3, 4];
 
 		assert.htmlEqual( target.innerHTML, `
 			<div>

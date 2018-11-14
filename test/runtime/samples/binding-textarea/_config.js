@@ -27,7 +27,7 @@ export default {
 			<p>hello</p>
 		`);
 
-		component.set({ value: 'goodbye' });
+		component.value = 'goodbye';
 		assert.equal(textarea.value, 'goodbye');
 		assert.htmlEqual(target.innerHTML, `
 			<textarea></textarea>

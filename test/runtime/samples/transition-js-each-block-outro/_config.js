@@ -6,7 +6,7 @@ export default {
 	test ( assert, component, target, window, raf ) {
 		const divs = target.querySelectorAll( 'div' );
 
-		component.set({ things: [ 'a' ] });
+		component.things = [ 'a' ];
 
 		raf.tick( 50 );
 		assert.equal( divs[0].foo, undefined );

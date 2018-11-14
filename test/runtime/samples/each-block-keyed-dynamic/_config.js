@@ -14,12 +14,10 @@ export default {
 	test ( assert, component, target ) {
 		const [ p1, p2 ] = target.querySelectorAll( 'p' );
 
-		component.set({
-			todos: [
-				{ id: 123, description: 'buy beer' },
-				{ id: 234, description: 'drink beer' }
-			]
-		});
+		component.todos = [
+			{ id: 123, description: 'buy beer' },
+			{ id: 234, description: 'drink beer' }
+		];
 		assert.htmlEqual( target.innerHTML, `
 			<p>buy beer</p>
 			<p>drink beer</p>

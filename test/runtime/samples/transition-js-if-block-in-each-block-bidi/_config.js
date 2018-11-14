@@ -19,7 +19,7 @@ export default {
 		raf.tick(100);
 		assert.equal(divs[0].foo, 1);
 
-		component.set({ threshold: 4 });
+		component.threshold = 4;
 		assert.equal( divs[4].foo, 1 );
 
 		raf.tick( 200 );
@@ -30,7 +30,7 @@ export default {
 			<div>4</div>
 		`);
 
-		component.set({ threshold: 3 });
+		component.threshold = 3;
 		assert.equal( divs[3].foo, 1 );
 
 		raf.tick( 300 );

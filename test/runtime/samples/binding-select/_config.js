@@ -52,6 +52,6 @@ export default {
 			<p>selected: two</p>
 		`);
 
-		component.set({ selected: 'three' });
+		component.selected = 'three';
 	},
 };

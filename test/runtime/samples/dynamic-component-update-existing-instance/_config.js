@@ -8,9 +8,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			x: 2
-		});
+		component.x = 2;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>Foo 2</p>

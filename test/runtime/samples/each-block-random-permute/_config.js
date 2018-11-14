@@ -26,7 +26,7 @@ export default {
 	test ( assert, component, target ) {
 		for (let i = 0; i < 100; i++) {
 			step = permute();
-			component.set({ values: step.data });
+			component.values = step.data;
 			assert.htmlEqual( target.innerHTML, step.expected );
 		}
 	}

@@ -10,7 +10,7 @@ export default {
 			if (changed.thing) {
 				const { thing } = current;
 				thing.b = thing.a * 2;
-				component.set({ thing }); // triggers infinite loop, unless event handler breaks it
+				component.thing = thing; // triggers infinite loop, unless event handler breaks it
 			}
 		});
 
@@ -19,7 +19,7 @@ export default {
 		});
 
 		thing.a = 3;
-		component.set({ thing });
+		component.thing = thing;
 
 		assert.deepEqual(thing, {
 			a: 3,

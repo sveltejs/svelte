@@ -6,7 +6,7 @@ export default {
 	},
 
 	test(assert, component, target, window, raf) {
-		component.set({ visible: false });
+		component.visible = false;
 		const div = target.querySelector('div');
 
 		raf.tick(50);

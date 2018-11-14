@@ -6,7 +6,7 @@ export default {
 	html: ``,
 
 	test (assert, component, target) {
-		component.set({ items: ['x'] });
+		component.items = ['x'];
 		assert.htmlEqual(target.innerHTML, `foo`);
 	}
 };

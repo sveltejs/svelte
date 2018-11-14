@@ -6,7 +6,7 @@ export default {
 
 		assert.equal( div.style.color, 'red' );
 
-		component.set({ color: 'blue' });
+		component.color = 'blue';
 		assert.equal( target.innerHTML, `<div style="color: blue;">blue</div>` );
 		assert.equal( div.style.color, 'blue' );
 	}

@@ -34,7 +34,7 @@ export default {
 		`);
 
 		people[0].name.first = 'Frank';
-		component.set({ people });
+		component.people = people;
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>

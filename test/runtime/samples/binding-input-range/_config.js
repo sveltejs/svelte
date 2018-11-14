@@ -28,7 +28,7 @@ export default {
 			<p>number 43</p>
 		`);
 
-		component.set({ count: 44 });
+		component.count = 44;
 		assert.equal(input.value, '44');
 		assert.htmlEqual(target.innerHTML, `
 			<input type='range'>

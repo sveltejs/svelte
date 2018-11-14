@@ -60,7 +60,7 @@ export default {
 		// console.log( `select.value`, select.value )
 		// console.log( `select.__value`, select.__value )
 		// select.dispatchEvent( new window.Event( 'change' ) );
-		component.set({ selectedComponent: components[1] });
+		component.selectedComponent = components[1];
 
 		assert.equal( textarea.value, 'two source' );
 

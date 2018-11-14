@@ -26,9 +26,7 @@ export default {
 					fulfil = f;
 				});
 
-				component.set({
-					promise
-				});
+				component.promise = promise;
 
 				assert.htmlEqual(target.innerHTML, `
 					<p>loading...</p>

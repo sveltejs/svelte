@@ -3,7 +3,7 @@ export default {
 		const top = component.refs.top;
 		const div = target.querySelector('div');
 
-		component.set({ visible: false });
+		component.visible = false;
 		assert.equal(top.refOnDestroy, div);
 	}
 };

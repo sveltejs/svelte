@@ -6,8 +6,6 @@ export default {
 	nestedTransitions: true,
 
 	test(assert, component) {
-		component.set({
-			x: false
-		});
+		component.x = false;
 	}
 };

@@ -12,7 +12,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ animalPawsEntries: [['foo', 'bar']] });
+		component.animalPawsEntries = [['foo', 'bar']];
 		assert.htmlEqual( target.innerHTML, `
 			<p>bar</p>
 		`);

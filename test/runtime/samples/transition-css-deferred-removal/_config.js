@@ -4,7 +4,7 @@ export default {
 	},
 
 	test(assert, component, target, window, raf) {
-		component.set({ visible: false });
+		component.visible = false;
 
 		const outer = target.querySelector('.outer');
 		const inner = target.querySelector('.inner');

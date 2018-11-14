@@ -23,17 +23,13 @@ export default {
 					<p>the value is 42</p>
 				`);
 
-				component.set({
-					show: false
-				});
+				component.show = false;
 
 				assert.htmlEqual(target.innerHTML, `
 					<p>Else</p>
 				`);
 
-				component.set({
-					show: true
-				});
+				component.show = true;
 
 				return thePromise.then(() => {
 					assert.htmlEqual(target.innerHTML, `

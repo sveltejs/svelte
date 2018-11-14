@@ -17,7 +17,7 @@ export default {
 
 		raf.tick(100);
 
-		component.set({ threshold: 4 });
+		component.threshold = 4;
 
 		raf.tick( 200 );
 		assert.htmlEqual(target.innerHTML, `

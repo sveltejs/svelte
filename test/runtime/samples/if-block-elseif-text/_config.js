@@ -8,12 +8,12 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ x: 4 });
+		component.x = 4;
 		assert.htmlEqual( target.innerHTML, `
 			before-elseif-after
 		` );
 
-		component.set({ x: 6 });
+		component.x = 6;
 		assert.htmlEqual( target.innerHTML, `
 			before-else-after
 		` );

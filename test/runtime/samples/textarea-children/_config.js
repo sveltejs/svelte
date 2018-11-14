@@ -11,7 +11,7 @@ export default {
 		const textarea = target.querySelector( 'textarea' );
 		assert.strictEqual( textarea.value, `\n\t<p>not actually an element. 42</p>\n` );
 
-		component.set({ foo: 43 });
+		component.foo = 43;
 		assert.strictEqual( textarea.value, `\n\t<p>not actually an element. 43</p>\n` );
 	}
 };

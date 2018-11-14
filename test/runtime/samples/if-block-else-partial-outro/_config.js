@@ -11,7 +11,7 @@ export default {
 	nestedTransitions: true,
 
 	test(assert, component, target) {
-		component.set({ x: 2 });
+		component.x = 2;
 		assert.htmlEqual(target.innerHTML, `
 			<span>2</span>
 		`);

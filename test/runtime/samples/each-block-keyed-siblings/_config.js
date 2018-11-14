@@ -10,9 +10,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			ones: [{ text: '11' }]
-		});
+		component.ones = [{ text: '11' }];
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>11</div>

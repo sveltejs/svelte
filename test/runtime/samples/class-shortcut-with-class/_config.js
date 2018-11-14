@@ -7,7 +7,7 @@ export default {
 	html: `<div class="one two is-active isSelected"></div>`,
 
 	test ( assert, component, target, window ) {
-		component.set({ "is-active": false });
+		component.undefined = false;
 
 		assert.htmlEqual( target.innerHTML, `
 			<div class="one two isSelected"></div>

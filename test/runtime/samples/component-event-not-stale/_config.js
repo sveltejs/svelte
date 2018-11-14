@@ -15,7 +15,7 @@ export default {
 		buttons[0].dispatchEvent(click);
 		buttons[1].dispatchEvent(click);
 
-		component.set({ value: 2 });
+		component.value = 2;
 
 		buttons[0].dispatchEvent(click);
 		buttons[1].dispatchEvent(click);

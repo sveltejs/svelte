@@ -14,7 +14,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({ x: 'y' });
+		component.x = 'y';
 		assert.htmlEqual(target.innerHTML, `
 			<div>A wild component appears</div>
 			<p>y</p>

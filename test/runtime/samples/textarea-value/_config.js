@@ -11,7 +11,7 @@ export default {
 		const textarea = target.querySelector( 'textarea' );
 		assert.strictEqual( textarea.value, '42' );
 
-		component.set({ foo: 43 });
+		component.foo = 43;
 		assert.strictEqual( textarea.value, '43' );
 	}
 };

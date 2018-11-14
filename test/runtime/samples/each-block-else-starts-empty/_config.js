@@ -11,7 +11,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ animals: ['wombat'] });
+		component.animals = ['wombat'];
 		assert.htmlEqual( target.innerHTML, `
 			before
 			<p>wombat</p>

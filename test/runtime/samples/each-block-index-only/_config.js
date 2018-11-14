@@ -12,9 +12,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			things: [0, 0, 0]
-		});
+		component.things = [0, 0, 0];
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>0</p>

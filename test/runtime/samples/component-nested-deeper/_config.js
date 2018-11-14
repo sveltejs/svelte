@@ -4,6 +4,6 @@ export default {
 	},
 
 	test(assert, component) {
-		component.set({ values: [2, 3] });
+		component.values = [2, 3];
 	}
 };

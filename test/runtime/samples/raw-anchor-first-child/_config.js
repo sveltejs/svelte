@@ -7,8 +7,6 @@ export default {
 		const span = target.querySelector('span');
 		assert.ok(!span.previousSibling);
 
-		component.set({
-			raw: `<span>bar</span>`
-		});
+		component.raw = `<span>bar</span>`;
 	}
 };

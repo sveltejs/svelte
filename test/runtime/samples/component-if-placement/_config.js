@@ -10,7 +10,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set( { flag: false } );
+		component.flag = false;
 		assert.htmlEqual( target.innerHTML, `
 			<span>Before</span>
 			<span>Component</span>

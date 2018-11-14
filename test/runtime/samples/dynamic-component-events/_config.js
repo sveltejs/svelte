@@ -13,9 +13,7 @@ export default {
 		target.querySelector('button').dispatchEvent(click);
 		assert.equal(component.get().selected, 'foo');
 
-		component.set({
-			x: false
-		});
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<button>select bar</button>

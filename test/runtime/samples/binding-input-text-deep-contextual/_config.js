@@ -38,7 +38,7 @@ export default {
 		const items = component.get().items;
 		items[2].description = 'five';
 
-		component.set({ items });
+		component.items = items;
 		assert.equal(inputs[2].value, 'five');
 		assert.htmlEqual(target.innerHTML, `
 			<div><input><p>one</p></div>

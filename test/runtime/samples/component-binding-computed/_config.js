@@ -22,12 +22,10 @@ export default {
 			lastname: 'Lovelace'
 		});
 
-		component.set({
-			values: {
-				firstname: 'Grace',
-				lastname: 'Hopper'
-			}
-		});
+		component.values = {
+			firstname: 'Grace',
+			lastname: 'Hopper'
+		};
 		assert.equal(inputs[0].value, 'Grace');
 		assert.equal(inputs[1].value, 'Hopper');
 	}

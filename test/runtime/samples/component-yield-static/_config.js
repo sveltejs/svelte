@@ -4,7 +4,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set( { name: 'World' } );
+		component.name = 'World';
 		assert.htmlEqual( target.innerHTML, `
 			<b>Hello</b> World
 		` );

@@ -1,6 +1,6 @@
 export default {
 	test ( assert, component, target, window, raf ) {
-		component.set({ visible: true });
+		component.visible = true;
 		const div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
@@ -10,7 +10,7 @@ export default {
 		raf.tick( 100 );
 		assert.equal( div.foo, 0.5 );
 
-		component.set({ visible: false });
+		component.visible = false;
 
 		raf.tick( 125 );
 		assert.equal( div.foo, 0.75 );

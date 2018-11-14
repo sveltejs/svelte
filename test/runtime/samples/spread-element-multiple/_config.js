@@ -15,15 +15,13 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			a: {
-				'data-one': 10
-			},
-			c: {
-				'data-c': 'new'
-			},
-			d: 'DEEEEEE'
-		});
+		component.a = {
+			'data-one': 10
+		};
+		component.c = {
+			'data-c': 'new'
+		};
+		component.d = 'DEEEEEE';
 
 		assert.htmlEqual(
 			target.innerHTML,

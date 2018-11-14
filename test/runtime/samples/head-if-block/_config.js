@@ -6,7 +6,7 @@ export default {
 	test(assert, component, target, window) {
 		assert.equal(window.document.title, '');
 
-		component.set({ condition: true });
+		component.condition = true;
 		assert.equal(window.document.title, 'woo!!!');
 	}
 };

@@ -12,9 +12,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({
-			animalPawsEntries: [{ animal: 'cow', pawType: 'hooves' }]
-		});
+		component.animalPawsEntries = [{ animal: 'cow', pawType: 'hooves' }];
 		assert.htmlEqual( target.innerHTML, `
 			<p>cow: hooves</p>
 		`);

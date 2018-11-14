@@ -11,7 +11,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({ foo: 'yeah!' });
+		component.foo = 'yeah!';
 		assert.htmlEqual(target.innerHTML, `
 			<p>yeah!</p>
 			<p>YEAH!</p>

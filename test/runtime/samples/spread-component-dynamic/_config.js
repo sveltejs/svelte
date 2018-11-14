@@ -10,11 +10,9 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			props: {
-				a: 2,
-			},
-		});
+		component.props = {
+			a: 2,
+		};
 
 		assert.htmlEqual(target.innerHTML, `<p>a: 2</p>`);
 	},

@@ -7,7 +7,7 @@ export default {
 	html: '<div><div>Apple</div><div>Banana</div><div>Tomato</div></div>',
 
 	test ( assert, component, target ) {
-		component.set({ dummy: true });
+		component.dummy = true;
 		assert.htmlEqual(target.innerHTML, '<div><div>Apple</div><div>Banana</div><div>Tomato</div></div>' );
 	}
 };

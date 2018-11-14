@@ -10,7 +10,7 @@ export default {
 		let valueOnDestroy;
 
 		component.on('destroy', () => {
-			component.set({ foo: 2 });
+			component.foo = 2;
 			valueOnDestroy = component.get().foo;
 		});
 

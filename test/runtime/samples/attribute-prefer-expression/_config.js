@@ -11,7 +11,7 @@ export default {
 		assert.ok( inputs[0].checked );
 		assert.ok( !inputs[1].checked );
 
-		component.set( { foo: true } );
+		component.foo = true;
 
 		assert.ok( !inputs[0].checked );
 		assert.ok( inputs[1].checked );

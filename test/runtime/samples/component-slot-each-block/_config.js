@@ -11,7 +11,7 @@ export default {
 		</div>`,
 
 	test(assert, component, target) {
-		component.set({ things: [1, 2, 3, 4] });
+		component.things = [1, 2, 3, 4];
 		assert.htmlEqual(target.innerHTML, `
 			<div>
 				<span>1</span>

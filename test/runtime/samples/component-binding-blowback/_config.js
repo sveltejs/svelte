@@ -6,7 +6,7 @@ export default {
 			if (changed.bar) count += 1;
 		});
 
-		component.set({ x: true });
+		component.x = true;
 		assert.equal(count, 0);
 	}
 };

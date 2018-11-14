@@ -2,7 +2,7 @@ export default {
 	test ( assert, component, target, window, raf ) {
 		assert.equal( target.querySelector( 'div' ), component.refs.no );
 
-		component.set({ x: true });
+		component.x = true;
 
 		raf.tick( 25 );
 		assert.equal( component.refs.yes.foo, undefined );

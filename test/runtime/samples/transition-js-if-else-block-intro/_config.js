@@ -7,7 +7,7 @@ export default {
 		assert.equal( component.refs.no.foo, 0.5 );
 
 		raf.tick( 500 );
-		component.set({ x: true });
+		component.x = true;
 		assert.equal( component.refs.no, undefined );
 		assert.equal( component.refs.yes.foo, 0 );
 

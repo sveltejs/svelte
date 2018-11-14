@@ -49,7 +49,7 @@ export default {
 			<p>selected: one, three</p>
 		` );
 
-		component.set({ selected: [ 'one', 'two' ] });
+		component.selected = [ 'one', 'two' ];
 
 		assert.ok( options[0].selected );
 		assert.ok( options[1].selected );

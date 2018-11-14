@@ -8,11 +8,9 @@ export default {
 	html: ``,
 
 	test(assert, component, target) {
-		component.set({
-			props: {
-				a: 2,
-			},
-		});
+		component.props = {
+			a: 2,
+		};
 
 		assert.htmlEqual(target.innerHTML, ``);
 	},

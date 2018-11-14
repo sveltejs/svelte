@@ -7,7 +7,8 @@ export default {
 	test ( assert, component, target, window, raf ) {
 		assert.equal( target.querySelector( 'div' ), component.refs.no );
 
-		component.set({ x: true, y: false });
+		component.x = true;
+		component.y = false;
 
 		raf.tick( 25 );
 		assert.equal( component.refs.yes.foo, undefined );

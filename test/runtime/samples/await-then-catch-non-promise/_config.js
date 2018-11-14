@@ -8,9 +8,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			thePromise: 'still not a promise'
-		});
+		component.thePromise = 'still not a promise';
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>the value is still not a promise</p>

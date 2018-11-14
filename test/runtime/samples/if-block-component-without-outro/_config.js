@@ -9,7 +9,7 @@ export default {
 	html: '<div>A wild component appears</div>',
 
 	test(assert, component, target) {
-		component.set({ foo: false });
+		component.foo = false;
 		assert.htmlEqual(target.innerHTML, '');
 	},
 };

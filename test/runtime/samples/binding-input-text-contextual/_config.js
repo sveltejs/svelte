@@ -52,7 +52,7 @@ export default {
 
 		items[2] = 'five';
 
-		component.set({ items });
+		component.items = items;
 		assert.equal(inputs[2].value, 'five');
 		assert.htmlEqual(target.innerHTML, `
 			<div>

@@ -10,7 +10,7 @@ export default {
 	test(assert, component, target) {
 		const { tagList } = component.get();
 		tagList.push('two');
-		component.set({ tagList });
+		component.tagList = tagList;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>

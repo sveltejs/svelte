@@ -14,7 +14,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ x: false });
+		component.x = false;
 
 		assert.htmlEqual( target.innerHTML, `
 			<p>y: foo</p>

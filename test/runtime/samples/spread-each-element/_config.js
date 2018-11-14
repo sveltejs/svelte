@@ -14,9 +14,7 @@ export default {
 	test(assert, component, target) {
 		const { things } = component.get();
 
-		component.set({
-			things: things.reverse()
-		});
+		component.things = things.reverse();
 
 		assert.htmlEqual(target.innerHTML, `
 			<div data-c="3" data-d="4"></div>

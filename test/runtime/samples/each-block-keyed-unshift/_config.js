@@ -9,9 +9,7 @@ export default {
 	`,
 
 	test (assert, component, target) {
-		component.set({
-			titles: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
-		});
+		component.titles = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>a</p>

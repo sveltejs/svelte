@@ -21,6 +21,6 @@ export default {
 			throw new Error('DOM was mutated');
 		};
 
-		component.set({ value: 'two' });
+		component.value = 'two';
 	},
 };

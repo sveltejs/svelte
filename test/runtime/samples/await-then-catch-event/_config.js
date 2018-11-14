@@ -29,7 +29,7 @@ export default {
 				assert.equal(component.get().clicked, 42);
 
 				thePromise = Promise.resolve(43);
-				component.set({ thePromise });
+				component.thePromise = thePromise;
 
 				return thePromise;
 			})

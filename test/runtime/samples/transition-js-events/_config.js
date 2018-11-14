@@ -12,7 +12,7 @@ export default {
 		raf.tick(100);
 		assert.equal(component.introCount, 0);
 
-		component.set({ visible: false });
+		component.visible = false;
 
 		raf.tick(150);
 		assert.deepEqual(component.outros.sort(), ['a', 'b', 'c', 'd']);
@@ -21,7 +21,7 @@ export default {
 		raf.tick(200);
 		assert.equal(component.outroCount, 0);
 
-		component.set({ visible: true });
+		component.visible = true;
 		component.on('intro.start', () => {
 			throw new Error(`intro.start should fire during set(), not after`);
 		});

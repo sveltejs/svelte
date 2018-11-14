@@ -12,7 +12,7 @@ export default {
 	},
 
 	test(assert, component, target, window, raf) {
-		component.set({ visible: true });
+		component.visible = true;
 		let p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');

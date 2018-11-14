@@ -10,10 +10,8 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({
-			items: [ 'one', 'two', 'three' ],
-			selected: 'two'
-		});
+		component.items = [ 'one', 'two', 'three' ];
+		component.selected = 'two';
 
 		const options = target.querySelectorAll( 'option' );
 		assert.ok( !options[0].selected );

@@ -18,14 +18,12 @@ export default {
 		assert.equal( divs[1].foo, 0.5 );
 		assert.equal( divs[2].foo, 0.5 );
 
-		component.set({
-			things: [
-				{ name: 'a' },
-				{ name: 'woo!' },
-				{ name: 'b' },
-				{ name: 'c' }
-			]
-		});
+		component.things = [
+			{ name: 'a' },
+			{ name: 'woo!' },
+			{ name: 'b' },
+			{ name: 'c' }
+		];
 		assert.htmlEqual( target.innerHTML, `
 			<div>a</div>
 			<div>woo!</div>

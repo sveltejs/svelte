@@ -9,13 +9,13 @@ export default {
 		widget.set({show: true});
 		assert.htmlEqual( target.innerHTML, '<div><p>Hello</p></div>' );
 
-		component.set({data: 'World'});
+		component.data = 'World';
 		assert.htmlEqual( target.innerHTML, '<div><p>World</p></div>' );
 
 		widget.set({show: false});
 		assert.htmlEqual( target.innerHTML, '<div><p></p></div>' );
 
-		component.set({data: 'Goodbye'});
+		component.data = 'Goodbye';
 		assert.htmlEqual( target.innerHTML, '<div><p></p></div>' );
 
 		widget.set({show: true});

@@ -6,23 +6,24 @@ export default {
 	test ( assert, component, target, window, raf ) {
 		global.count = 0;
 
-		component.set({ visible: true });
+		component.visible = true;
 		assert.equal( global.count, 1 );
 		const div = target.querySelector( 'div' );
 		assert.equal( div.foo, 0 );
 
 		raf.tick( 75 );
-		component.set({ name: 'everybody' });
+		component.name = 'everybody';
 		assert.equal( div.foo, 0.75 );
 		assert.htmlEqual( div.innerHTML, 'hello everybody!' );
 
-		component.set({ visible: false, name: 'again' });
+		component.visible = false;
+		component.name = 'again';
 		assert.htmlEqual( div.innerHTML, 'hello everybody!' );
 
 		raf.tick( 125 );
 		assert.equal( div.foo, 0.25 );
 
-		component.set({ visible: true });
+		component.visible = true;
 		raf.tick( 175 );
 		assert.equal( div.foo, 0.75 );
 		assert.htmlEqual( div.innerHTML, 'hello again!' );

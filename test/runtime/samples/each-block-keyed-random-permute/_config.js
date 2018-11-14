@@ -28,7 +28,7 @@ export default {
 		function test(sequence) {
 			const previous = target.textContent;
 			const expected = sequence.split('').map(x => `(${x})`).join('');
-			component.set({ values: toObjects(sequence) });
+			component.values = toObjects(sequence);
 			assert.htmlEqual(
 				target.innerHTML,
 				expected,

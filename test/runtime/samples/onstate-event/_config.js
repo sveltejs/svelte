@@ -15,16 +15,16 @@ export default {
 
 		component.on('state', ({ changed, current, previous }) => {
 			history.push({ changed, current, previous });
-			component.set({ bar: current.foo.toUpperCase() });
+			component.bar = current.foo.toUpperCase();
 		});
 
-		component.set({ foo: 'yeah!' });
+		component.foo = 'yeah!';
 		assert.htmlEqual(target.innerHTML, `
 			<p>yeah!</p>
 			<p>YEAH!</p>
 		`);
 
-		component.set({ unused: 'x' });
+		component.unused = 'x';
 
 		assert.deepEqual(history, [
 			{

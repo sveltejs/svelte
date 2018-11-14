@@ -6,9 +6,9 @@ export default {
 	html: '(alpaca)(baboon)(capybara)',
 
 	test ( assert, component, target ) {
-		component.set({ animals: [ 'caribou', 'dogfish' ] });
+		component.animals = [ 'caribou', 'dogfish' ];
 		assert.htmlEqual( target.innerHTML, '(caribou)(dogfish)' );
-		component.set({ animals: [] });
+		component.animals = [];
 		assert.htmlEqual( target.innerHTML, '' );
 	}
 };

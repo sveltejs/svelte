@@ -14,7 +14,7 @@ export default {
 		button.dispatchEvent(event);
 		assert.equal(component.get().foo, 'right');
 
-		component.set({ bar: 'left' });
+		component.bar = 'left';
 		button.dispatchEvent(event);
 		assert.equal(component.get().foo, 'left');
 	}

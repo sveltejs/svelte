@@ -5,7 +5,7 @@ export default {
 	},
 
 	test ( assert, component, target, window, raf ) {
-		component.set({ visible: true });
+		component.visible = true;
 		const divs = target.querySelectorAll( 'div' );
 		assert.equal( divs[0].foo, 0 );
 		assert.equal( divs[1].foo, 0 );
@@ -16,7 +16,7 @@ export default {
 		assert.equal( divs[1].foo, 0.5 );
 		assert.equal( divs[2].foo, 0.5 );
 
-		component.set({ visible: false });
+		component.visible = false;
 
 		raf.tick( 70 );
 		assert.equal( divs[0].foo, 0.7 );
@@ -27,7 +27,7 @@ export default {
 		assert.equal( divs[1].bar, 0.8 );
 		assert.equal( divs[2].bar, 0.8 );
 
-		component.set({ visible: true });
+		component.visible = true;
 
 		raf.tick( 100 );
 		assert.equal( divs[0].foo, 0.3 );

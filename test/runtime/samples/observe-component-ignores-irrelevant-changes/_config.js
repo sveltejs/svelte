@@ -9,7 +9,7 @@ export default {
 
 		assert.equal(count, 0);
 
-		component.set({ y: {} });
+		component.y = {};
 		assert.equal(count, 0);
 	}
 };

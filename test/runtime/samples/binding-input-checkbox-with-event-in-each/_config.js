@@ -24,7 +24,7 @@ export default {
 			name: "cat " + cats.length,
 			checked: false,
 		});
-		component.set({ cats: newCats });
+		component.cats = newCats;
 
 		let inputs = target.querySelectorAll('input');
 		assert.equal(inputs.length, 3);

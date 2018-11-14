@@ -36,7 +36,7 @@ export default {
 		`);
 
 		// edit baz
-		component.set({ prop: 'baz' });
+		component.prop = 'baz';
 		assert.equal(input.value, 'c');
 
 		input.value = 'f';
@@ -48,7 +48,7 @@ export default {
 		`);
 
 		// edit foo
-		component.set({ prop: 'foo' });
+		component.prop = 'foo';
 		assert.equal(input.value, 'a');
 
 		input.value = 'd';

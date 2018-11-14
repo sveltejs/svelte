@@ -14,9 +14,7 @@ export default {
 
 		assert.ok(button.disabled);
 
-		component.set({
-			props: { disabled: false }
-		});
+		component.props = { disabled: false };
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -8,8 +8,6 @@ export default {
 		assert.equal(span.previousSibling.nodeName, 'BR');
 		assert.equal(span.nextSibling.nodeName, 'BR');
 
-		component.set({
-			raw: `<span>bar</span>`
-		});
+		component.raw = `<span>bar</span>`;
 	}
 };

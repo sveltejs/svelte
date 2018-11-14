@@ -5,7 +5,7 @@ export default {
 		</div>`,
 
 	test(assert, component, target) {
-		component.set({ foo: true });
+		component.foo = true;
 		assert.htmlEqual(target.innerHTML, `
 			<div>
 				<p>conditional</p>

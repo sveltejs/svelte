@@ -10,7 +10,7 @@ export default {
 	test(assert, component, target, window, raf) {
 		const { things } = component.get();
 
-		component.set({ things: [] });
+		component.things = [];
 		const spans = target.querySelectorAll('span');
 
 		raf.tick(25);
@@ -23,7 +23,7 @@ export default {
 		assert.equal(spans[1].foo, 0.25);
 		assert.equal(spans[2].foo, 0.75);
 
-		component.set({ things });
+		component.things = things;
 		raf.tick(225);
 
 		assert.htmlEqual(target.innerHTML, `

@@ -12,7 +12,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({ foo: ['a', 'b'] });
+		component.foo = ['a', 'b'];
 
 		assert.htmlEqual(target.innerHTML, `
 			<svg>

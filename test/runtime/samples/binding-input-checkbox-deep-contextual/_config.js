@@ -54,7 +54,7 @@ export default {
 		const items = component.get().items;
 		items[2].completed = true;
 
-		component.set({ items });
+		component.items = items;
 		assert.ok( inputs[2].checked );
 		assert.htmlEqual( target.innerHTML, `
 			<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>

@@ -10,19 +10,19 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ foo: false });
+		component.foo = false;
 		assert.htmlEqual( target.innerHTML, `
 			<p>not foo</p>
 			<p>not bar</p>
 		` );
 
-		component.set({ bar: true });
+		component.bar = true;
 		assert.htmlEqual( target.innerHTML, `
 			<p>not foo</p>
 			<p>bar</p>
 		` );
 
-		component.set({ foo: true });
+		component.foo = true;
 		assert.htmlEqual( target.innerHTML, `
 			<p>foo</p>
 			<p>bar</p>

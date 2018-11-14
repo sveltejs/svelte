@@ -15,7 +15,8 @@ export default {
 		assert.equal( svg.namespaceURI, 'http://www.w3.org/2000/svg' );
 		assert.equal( rect.namespaceURI, 'http://www.w3.org/2000/svg' );
 
-		component.set({ width: 150, height: 50 });
+		component.width = 150;
+		component.height = 50;
 		assert.equal( target.innerHTML, `<svg><rect x="0" y="0" width="150" height="50"></rect></svg>` );
 	},
 };

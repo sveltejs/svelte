@@ -5,9 +5,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			list: [3, 4]
-		});
+		component.list = [3, 4];
 
 		assert.htmlEqual(target.innerHTML, `
 			<span>3</span>

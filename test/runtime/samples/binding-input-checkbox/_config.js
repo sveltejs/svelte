@@ -24,7 +24,7 @@ export default {
 
 		assert.equal( target.innerHTML, `<input type="checkbox">\n<p>false</p>` );
 
-		component.set({ foo: true });
+		component.foo = true;
 		assert.equal( input.checked, true );
 		assert.equal( target.innerHTML, `<input type="checkbox">\n<p>true</p>` );
 	}

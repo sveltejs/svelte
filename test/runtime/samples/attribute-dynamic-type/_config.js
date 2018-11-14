@@ -13,7 +13,7 @@ export default {
 		assert.equal(input.type, 'text');
 		assert.equal(input.value, '42');
 
-		component.set({ inputType: 'number' });
+		component.inputType = 'number';
 		assert.equal(input.type, 'number');
 	}
 };

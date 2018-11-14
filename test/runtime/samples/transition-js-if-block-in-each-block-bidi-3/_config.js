@@ -17,12 +17,12 @@ export default {
 
 		raf.tick(100);
 
-		component.set({ threshold: 4 });
+		component.threshold = 4;
 		raf.tick(150);
-		component.set({ threshold: 5 });
+		component.threshold = 5;
 		raf.tick(200);
 
-		component.set({ threshold: 5.5 });
+		component.threshold = 5.5;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>1</div>

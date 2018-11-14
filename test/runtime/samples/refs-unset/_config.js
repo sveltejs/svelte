@@ -10,12 +10,12 @@ export default {
 		assert.equal( canvas, component.refs.foo );
 		assert.equal( canvas.getAttribute( 'data-x' ), 'true' );
 
-		component.set({ x: false });
+		component.x = false;
 		canvas = target.querySelector( 'canvas' );
 		assert.equal( canvas, component.refs.foo );
 		assert.equal( canvas.getAttribute( 'data-x' ), 'false' );
 
-		component.set({ x: true });
+		component.x = true;
 		canvas = target.querySelector( 'canvas' );
 		assert.equal( canvas, component.refs.foo );
 		assert.equal( canvas.getAttribute( 'data-x' ), 'true' );

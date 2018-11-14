@@ -9,18 +9,14 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		component.set({
-			x: false
-		});
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>red one</p>
 		`);
 
-		component.set({
-			x: true,
-			foo: 'two'
-		});
+		component.x = true;
+		component.foo = 'two';
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>green two</p>

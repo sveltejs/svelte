@@ -12,9 +12,7 @@ export default {
 	test(assert, component, target) {
 		const [p1, p2, p3] = target.querySelectorAll('p');
 
-		component.set({
-			words: ['foo', 'baz'],
-		});
+		component.words = ['foo', 'baz'];
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>foo</p>

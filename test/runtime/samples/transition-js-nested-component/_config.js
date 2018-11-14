@@ -7,7 +7,7 @@ export default {
 	},
 
 	test(assert, component, target, window, raf) {
-		component.set({ x: true });
+		component.x = true;
 
 		const div = target.querySelector('div');
 		assert.equal(div.foo, 0);
@@ -15,7 +15,7 @@ export default {
 		raf.tick(100);
 		assert.equal(div.foo, 1);
 
-		component.set({ x: false });
+		component.x = false;
 		assert.htmlEqual(target.innerHTML, '<div></div>');
 
 		raf.tick(150);

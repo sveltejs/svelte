@@ -13,7 +13,7 @@ export default {
 	nestedTransitions: true,
 
 	test(assert, component, target) {
-		component.set({ visible: false });
+		component.visible = false;
 
 		assert.htmlEqual(target.innerHTML, ``);
 	}

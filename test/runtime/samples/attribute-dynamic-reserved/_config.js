@@ -9,7 +9,7 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		component.set({ class: 'bar' });
+		component.class = 'bar';
 		assert.htmlEqual( target.innerHTML, `
 			<div class="bar"></div>123
 			<div class="bar"></div>123

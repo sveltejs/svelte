@@ -34,7 +34,7 @@ export default {
 		const user = component.get().user;
 		user.name = 'carol';
 
-		component.set({ user });
+		component.user = user;
 		assert.equal(input.value, 'carol');
 		assert.htmlEqual(target.innerHTML, `
 			<input>
