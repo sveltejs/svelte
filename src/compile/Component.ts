@@ -10,7 +10,7 @@ import namespaces from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
 import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
-import { createScopes } from '../utils/annotateWithScopes';
+import { createScopes, extractNames } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
@@ -92,6 +92,7 @@ function increaseIndentation(
 // the wrong idea about the shape of each/if blocks
 childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
+childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
 export default class Component {
 	stats: Stats;
@@ -104,7 +105,6 @@ export default class Component {
 
 	customElement: CustomElementOptions;
 	tag: string;
-	props: string[];
 
 	properties: Map<string, Node>;
 
@@ -123,7 +123,7 @@ export default class Component {
 	hasComponents: boolean;
 	computations: Computation[];
 	templateProperties: Record<string, Node>;
-	javascript: [string, string];
+	javascript: string;
 
 	used: {
 		components: Set<string>;
@@ -135,6 +135,8 @@ export default class Component {
 	};
 
 	declarations: string[];
+	exports: Array<{ name: string, as: string }>;
+	props: string[];
 
 	refCallees: Node[];
 
@@ -193,6 +195,7 @@ export default class Component {
 		};
 
 		this.declarations = [];
+		this.exports = [];
 
 		this.refs = new Set();
 		this.refCallees = [];
@@ -509,10 +512,15 @@ export default class Component {
 
 		const { code, source, imports } = this;
 
-		const indentationLevel = getIndentationLevel(source, js.content.body[0].start);
-		const indentExclusionRanges = getIndentExclusionRanges(js.content);
+		const indent = code.getIndentString();
+		code.indent(indent, {
+			exclude: [
+				[0, js.content.start],
+				[js.content.end, source.length]
+			]
+		});
 
-		const { scope, globals } = createScopes(js.content);
+		let { scope, map, globals } = createScopes(js.content);
 
 		scope.declarations.forEach(name => {
 			this.userVars.add(name);
@@ -533,6 +541,30 @@ export default class Component {
 				})
 			}
 
+			if (node.type === 'ExportNamedDeclaration') {
+				if (node.declaration) {
+					if (node.declaration.type === 'VariableDeclaration') {
+						node.declaration.declarations.forEach(declarator => {
+							extractNames(declarator.id).forEach(name => {
+								this.exports.push({ name, as: name });
+							});
+						});
+					} else {
+						const { name } = node.declaration.id;
+						this.exports.push({ name, as: name });
+					}
+
+					code.remove(node.start, node.declaration.start);
+				} else {
+					node.specifiers.forEach(specifier => {
+						this.exports.push({
+							name: specifier.local.name,
+							as: specifier.exported.name
+						});
+					});
+				}
+			}
+
 			// imports need to be hoisted out of the IIFE
 			// TODO hoist other stuff where possible
 			else if (node.type === 'ImportDeclaration') {
@@ -545,20 +577,32 @@ export default class Component {
 			}
 		});
 
+		walk(js.content, {
+			enter(node) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (node.type === 'AssignmentExpression') {
+					const { name } = flattenReference(node.left);
+					code.appendLeft(node.end, `; __make_dirty('${name}')`);
+				}
+
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+			}
+		});
+
 		let a = js.content.start;
 		while (/\s/.test(source[a])) a += 1;
 
 		let b = js.content.end;
 		while (/\s/.test(source[b - 1])) b -= 1;
 
-		this.javascript = this.defaultExport
-			? [
-				a !== this.defaultExport.start ? `[✂${a}-${this.defaultExport.start}✂]` : '',
-				b !== this.defaultExport.end ?`[✂${this.defaultExport.end}-${b}✂]` : ''
-			]
-			: [
-				a !== b ? `[✂${a}-${b}✂]` : '',
-				''
-			];
+		this.javascript = a !== b ? `[✂${a}-${b}✂]` : '';
 	}
 }

@@ -1,9 +1,11 @@
-import { schedule_update } from './scheduler';
+import { schedule_update, flush } from './scheduler';
 
 export class SvelteComponent {
 	constructor(options) {
 		this.__get_state = this.__init(
-			fn => this.__inject_props = fn
+			fn => this.__inject_props = fn,
+			fn => this.__inject_refs = fn,
+			key => this.__make_dirty(key)
 		);
 
 		this.__dirty = null;
@@ -14,6 +16,7 @@ export class SvelteComponent {
 
 		if (options.target) {
 			this.__mount(options.target);
+			flush();
 		}
 	}
 
@@ -25,10 +28,12 @@ export class SvelteComponent {
 		this.__destroy(true);
 	}
 
-	__make_dirty() {
-		if (this.__dirty) return;
-		this.__dirty = {};
-		schedule_update(this);
+	__make_dirty(key) {
+		if (!this.__dirty) {
+			schedule_update(this);
+			this.__dirty = {};
+		}
+		this.__dirty[key] = true;
 	}
 
 	__mount(target, anchor) {
@@ -39,8 +44,7 @@ export class SvelteComponent {
 
 	__set(key, value) {
 		this.__inject_props({ [key]: value });
-		this.__make_dirty();
-		this.__dirty[key] = true;
+		this.__make_dirty(key);
 	}
 
 	__update() {

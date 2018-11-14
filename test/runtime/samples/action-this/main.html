@@ -1,10 +1,10 @@
 <script>
-	export let x;
+	export let x = 0;
 
 	function foo(node) {
-		let x = 0;
-
-		const handler = () => x = x++;
+		const handler = () => {
+			x += 1;
+		}
 
 		node.addEventListener('click', handler);
 		handler();

@@ -1,5 +1,5 @@
 <script>
-	export let tooltip = 'Perform an Action';
+	export let text = 'Perform an Action';
 
 	function checkForCtrl(event) {
 		if (event.ctrlKey) {
@@ -40,5 +40,5 @@
 	}
 </script>
 
-<button use:tooltip="{tooltip}">action</button>
+<button use:tooltip="{text}">action</button>
 <svelte:window on:keydown="{checkForCtrl}" on:keyup="{checkForCtrl}"/>

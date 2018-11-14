@@ -13,7 +13,6 @@ export default function dom(
 	const format = options.format || 'es';
 
 	const {
-		computations,
 		name,
 		templateProperties
 	} = component;
@@ -110,8 +109,15 @@ export default function dom(
 	} else {
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteComponent {
-				__init() {
+				__init(__set_inject_props, __set_inject_refs, __make_dirty) {
 					${component.javascript}
+
+					__set_inject_props(props => {
+						// TODO only do this for export let|var
+						${(component.exports.map(name =>
+						`if ('${name.as}' in props) ${name.as} = props.${name.as};`
+						))}
+					});
 
 					return () => ({ ${(component.declarations).join(', ')} });
 				}

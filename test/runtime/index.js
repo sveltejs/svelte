@@ -46,8 +46,10 @@ describe.only("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, shared, hydrate) {
+	function runTest(dir, internal, hydrate) {
 		if (dir[0] === ".") return;
+
+		const { flush } = require(internal);
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
 
@@ -55,7 +57,7 @@ describe.only("runtime", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''})`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -67,7 +69,7 @@ describe.only("runtime", () => {
 			global.document.title = '';
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = shared;
+			compileOptions.shared = internal;
 			compileOptions.hydratable = hydrate;
 			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
@@ -114,7 +116,7 @@ describe.only("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -134,8 +136,7 @@ describe.only("runtime", () => {
 					const options = Object.assign({}, {
 						target,
 						hydrate,
-						data: config.data,
-						store: (config.store !== true && config.store),
+						props: config.props,
 						intro: config.intro
 					}, config.options || {});
 
@@ -178,7 +179,7 @@ describe.only("runtime", () => {
 					} else {
 						failed.add(dir);
 						showOutput(cwd, {
-							shared,
+							internal,
 							format: 'cjs',
 							hydratable: hydrate,
 							store: !!compileOptions.store,
@@ -190,7 +191,9 @@ describe.only("runtime", () => {
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile);
+					if (config.show) showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile);
+
+					flush();
 				});
 		});
 	}

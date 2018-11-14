@@ -398,7 +398,7 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 			end,
 			type,
 			name,
-			expression: value[0].expression
+			expression: value[0] && value[0].expression
 		};
 	}
 
