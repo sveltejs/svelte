@@ -388,9 +388,9 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const end = parser.index;
 
 	const colon_index = name.indexOf(':');
+	const type = colon_index !== 1 && get_directive_type(name.slice(0, colon_index));
 
-	if (colon_index !== -1) {
-		const type = get_directive_type(name.slice(0, colon_index));
+	if (type) {
 		name = name.slice(colon_index + 1);
 
 		return {
@@ -413,9 +413,12 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 function get_directive_type(name) {
 	if (name === 'use') return 'Action';
-	if (name === 'on') return 'EventHandler';
 	if (name === 'animate') return 'Animation';
-	throw new Error(`TODO directive ${name}`);
+	if (name === 'bind') return 'Binding';
+	if (name === 'class') return 'Class';
+	if (name === 'on') return 'EventHandler';
+	if (name === 'ref') return 'Ref';
+	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }
 
 function readAttributeValue(parser: Parser) {

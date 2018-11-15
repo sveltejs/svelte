@@ -181,7 +181,6 @@ describe.only("runtime", () => {
 							internal,
 							format: 'cjs',
 							hydratable: hydrate,
-							store: !!compileOptions.store,
 							skipIntroByDefault: compileOptions.skipIntroByDefault,
 							nestedTransitions: compileOptions.nestedTransitions,
 							dev: compileOptions.dev
@@ -190,7 +189,15 @@ describe.only("runtime", () => {
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile);
+					if (config.show) {
+						showOutput(cwd, {
+							internal,
+							format: 'cjs',
+							hydratable: hydrate,
+							skipIntroByDefault: compileOptions.skipIntroByDefault,
+							nestedTransitions: compileOptions.nestedTransitions
+						}, compile);
+					}
 
 					flush();
 				});

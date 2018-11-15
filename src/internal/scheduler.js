@@ -12,7 +12,7 @@ export function schedule_update(component) {
 
 export function flush() {
 	while (dirty_components.length) {
-		dirty_components.pop().__update();
+		dirty_components.pop().$$update();
 	}
 
 	update_scheduled = false;

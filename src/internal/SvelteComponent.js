@@ -2,20 +2,22 @@ import { schedule_update, flush } from './scheduler';
 
 export class SvelteComponent {
 	constructor(options) {
-		this.__get_state = this.__init(
-			fn => this.__inject_props = fn,
-			fn => this.__inject_refs = fn,
-			key => this.__make_dirty(key)
+		this.$$get_state = this.$$init(
+			fn => this.$$inject_props = fn,
+			fn => this.$$inject_refs = fn,
+			key => this.$$make_dirty(key)
 		);
 
-		this.__dirty = null;
+		this.$$dirty = null;
 
 		if (options.props) {
-			this.__inject_props(options.props);
+			this.$$inject_props(options.props);
 		}
 
+		this.$$fragment = this.$$create_fragment(this, this.$$get_state());
+
 		if (options.target) {
-			this.__mount(options.target);
+			this.$$mount(options.target);
 			flush();
 		}
 	}
@@ -25,34 +27,33 @@ export class SvelteComponent {
 	}
 
 	$destroy() {
-		this.__destroy(true);
+		this.$$destroy(true);
 	}
 
-	__make_dirty(key) {
-		if (!this.__dirty) {
+	$$make_dirty(key) {
+		if (!this.$$dirty) {
 			schedule_update(this);
-			this.__dirty = {};
+			this.$$dirty = {};
 		}
-		this.__dirty[key] = true;
+		this.$$dirty[key] = true;
 	}
 
-	__mount(target, anchor) {
-		this.__fragment = this.__create_fragment(this.__get_state());
-		this.__fragment.c();
-		this.__fragment.m(target, anchor);
+	$$mount(target, anchor) {
+		this.$$fragment.c();
+		this.$$fragment.m(target, anchor);
 	}
 
-	__set(key, value) {
-		this.__inject_props({ [key]: value });
-		this.__make_dirty(key);
+	$$set(key, value) {
+		this.$$inject_props({ [key]: value });
+		this.$$make_dirty(key);
 	}
 
-	__update() {
-		this.__fragment.p(this.__dirty, this.__get_state());
-		this.__dirty = null;
+	$$update() {
+		this.$$fragment.p(this.$$dirty, this.$$get_state());
+		this.$$dirty = null;
 	}
 
-	__destroy(detach) {
-		this.__fragment.d(detach);
+	$$destroy(detach) {
+		this.$$fragment.d(detach);
 	}
 }

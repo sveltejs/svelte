@@ -300,7 +300,7 @@ export default class EachBlockWrapper extends Wrapper {
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
-				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(key, child_ctx);
+				${blocks}[#i] = ${lookup}[key] = ${create_each_block}(#component, key, child_ctx);
 			}
 		`);
 
@@ -371,7 +371,7 @@ export default class EachBlockWrapper extends Wrapper {
 			var ${iterations} = [];
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
+				${iterations}[#i] = ${create_each_block}(#component, ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
 			}
 		`);
 
@@ -434,7 +434,7 @@ export default class EachBlockWrapper extends Wrapper {
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, child_ctx);
 						} else {
-							${iterations}[#i] = ${create_each_block}(child_ctx);
+							${iterations}[#i] = ${create_each_block}(#component, child_ctx);
 							${iterations}[#i].c();
 						}
 						${iterations}[#i].i(${updateMountNode}, ${anchor});
@@ -443,13 +443,13 @@ export default class EachBlockWrapper extends Wrapper {
 						if (${iterations}[#i]) {
 							${iterations}[#i].p(changed, child_ctx);
 						} else {
-							${iterations}[#i] = ${create_each_block}(child_ctx);
+							${iterations}[#i] = ${create_each_block}(#component, child_ctx);
 							${iterations}[#i].c();
 							${iterations}[#i].m(${updateMountNode}, ${anchor});
 						}
 					`
 				: deindent`
-					${iterations}[#i] = ${create_each_block}(child_ctx);
+					${iterations}[#i] = ${create_each_block}(#component, child_ctx);
 					${iterations}[#i].c();
 					${iterations}[#i].${mountOrIntro}(${updateMountNode}, ${anchor});
 				`;

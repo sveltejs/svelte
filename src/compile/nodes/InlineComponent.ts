@@ -24,17 +24,6 @@ export default class InlineComponent extends Node {
 
 		this.name = info.name;
 
-		if (this.name !== 'svelte:self' && this.name !== 'svelte:component') {
-			if (!component.components.has(this.name)) {
-				component.error(this, {
-					code: `missing-component`,
-					message: `${this.name} component is not defined`
-				});
-			}
-
-			component.used.components.add(this.name);
-		}
-
 		this.expression = this.name === 'svelte:component'
 			? new Expression(component, this, scope, info.expression)
 			: null;

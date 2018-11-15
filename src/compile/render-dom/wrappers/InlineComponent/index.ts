@@ -84,8 +84,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const name = this.var;
 
 		const componentInitProperties = [
-			`root: #component.root`,
-			`store: #component.store`
+			`root: #component.root`
 		];
 
 		if (this.fragment) {
@@ -115,7 +114,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length) {
-			componentInitProperties.push(`data: ${name_initial_data}`);
+			componentInitProperties.push(`props: ${name_initial_data}`);
 		}
 
 		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length)) {
@@ -284,7 +283,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				_bind(changed, childState) {
 					var ${initialisers};
 					${builder}
-					${hasStoreBindings && `#component.store.set(newStoreState);`}
 					${hasLocalBindings && `#component._set(newState);`}
 					${name_updating} = {};
 				}
@@ -299,7 +297,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		this.node.handlers.forEach(handler => {
 			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
-			handler.render(component, block, this.var, false); // TODO hoist when possible
+			// handler.render(component, block, this.var, false); // TODO hoist when possible
 			if (handler.usesContext) block.maintainContext = true; // TODO is there a better place to put this?
 		});
 
@@ -337,18 +335,18 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.create.addLine(
-				`if (${name}) ${name}._fragment.c();`
+				`if (${name}) ${name}.$$fragment.c();`
 			);
 
 			if (parentNodes) {
 				block.builders.claim.addLine(
-					`if (${name}) ${name}._fragment.l(${parentNodes});`
+					`if (${name}) ${name}.$$fragment.l(${parentNodes});`
 				);
 			}
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					${name}.$$mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
 					${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
 				}
 			`);
@@ -369,10 +367,10 @@ export default class InlineComponentWrapper extends Wrapper {
 						? deindent`
 						@groupOutros();
 						const old_component = ${name};
-						old_component._fragment.o(() => {
-							old_component.destroy();
+						old_component.$$fragment.o(() => {
+							old_component.$destroy();
 						});`
-						: `${name}.destroy();`}
+						: `${name}.$destroy();`}
 					}
 
 					if (${switch_value}) {
@@ -385,10 +383,10 @@ export default class InlineComponentWrapper extends Wrapper {
 							if (${binding.value.snippet} === void 0) changed.${binding.name} = 1;`)}
 							${name}._bind(changed, ${name}.get());
 						});`}
-						${name}._fragment.c();
+						${name}.$$fragment.c();
 
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
-						${name}._mount(${updateMountNode}, ${anchor});
+						${name}.$$mount(${updateMountNode}, ${anchor});
 
 						${this.node.handlers.map(handler => deindent`
 							${name}.on("${handler.name}", ${handler.var});
@@ -414,11 +412,11 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
-			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(${parentNode ? '' : 'detach'});`);
+			block.builders.destroy.addLine(`if (${name}) ${name}.$destroy(${parentNode ? '' : 'detach'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: `%components-${this.node.name}`;
+				: `ctx.${this.node.name}`;
 
 			block.builders.init.addBlock(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
@@ -439,16 +437,16 @@ export default class InlineComponentWrapper extends Wrapper {
 				${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
 			`);
 
-			block.builders.create.addLine(`${name}._fragment.c();`);
+			block.builders.create.addLine(`${name}.$$fragment.c();`);
 
 			if (parentNodes) {
 				block.builders.claim.addLine(
-					`${name}._fragment.l(${parentNodes});`
+					`${name}.$$fragment.l(${parentNodes});`
 				);
 			}
 
 			block.builders.mount.addLine(
-				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+				`${name}.$$mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
 			if (updates.length) {
@@ -460,20 +458,20 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			block.builders.destroy.addLine(deindent`
-				${name}.destroy(${parentNode ? '' : 'detach'});
+				${name}.$destroy(${parentNode ? '' : 'detach'});
 				${this.node.ref && `if (#component.refs.${this.node.ref.name} === ${name}) #component.refs.${this.node.ref.name} = null;`}
 			`);
 		}
 
 		if (component.options.nestedTransitions) {
 			block.builders.outro.addLine(
-				`if (${name}) ${name}._fragment.o(#outrocallback);`
+				`if (${name}) ${name}.$$fragment.o(#outrocallback);`
 			);
 		}
 	}
 
 	remount(name: string) {
-		return `${this.var}._mount(${name}._slotted.default, null);`;
+		return `${this.var}.$$mount(${name}._slotted.default, null);`;
 	}
 }
 

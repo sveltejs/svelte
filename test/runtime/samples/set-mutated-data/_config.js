@@ -1,4 +1,4 @@
-const data = { foo: 0 };
+const props = { foo: 0 };
 
 export default {
 	props,
@@ -6,8 +6,8 @@ export default {
 	html: '0',
 
 	test(assert, component, target) {
-		data.foo = 42;
-		component.set(data);
+		props.foo = 42;
+		component.set(props);
 
 		assert.htmlEqual(target.innerHTML, '42');
 	}

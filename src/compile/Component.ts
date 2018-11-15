@@ -538,6 +538,7 @@ export default class Component {
 
 				node.specifiers.forEach((specifier: Node) => {
 					this.userVars.add(specifier.local.name);
+					this.declarations.push(specifier.local.name); // TODO we don't really want this, but it's convenient for now
 				});
 			}
 		});
@@ -550,7 +551,7 @@ export default class Component {
 
 				if (node.type === 'AssignmentExpression') {
 					const { name } = flattenReference(node.left);
-					code.appendLeft(node.end, `; __make_dirty('${name}')`);
+					code.appendLeft(node.end, `; $$make_dirty('${name}')`);
 				}
 
 			},

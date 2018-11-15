@@ -109,10 +109,10 @@ export default function dom(
 	} else {
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteComponent {
-				__init(__set_inject_props, __set_inject_refs, __make_dirty) {
+				$$init($$set_inject_props, $$set_inject_refs, $$make_dirty) {
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
-					__set_inject_props(props => {
+					$$set_inject_props(props => {
 						// TODO only do this for export let|var
 						${(component.exports.map(name =>
 						`if ('${name.as}' in props) ${name.as} = props.${name.as};`
@@ -122,17 +122,17 @@ export default function dom(
 					return () => ({ ${(component.declarations).join(', ')} });
 				}
 
-				__create_fragment(ctx) {
+				$$create_fragment(${component.alias('component')}, ctx) {
 					${block.getContents()}
 				}
 
 				${component.exports.map(x => deindent`
 				get ${x.as}() {
-					return this.__get_state().${x.name};
+					return this.$$get_state().${x.name};
 				}
 
 				set ${x.as}(value) {
-					this.__set('${x.name}', value);
+					this.$$set('${x.name}', value);
 					@flush();
 				}
 				`)}
