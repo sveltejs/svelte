@@ -9,6 +9,7 @@ export class SvelteComponent {
 		);
 
 		this.$$dirty = null;
+		this.$$bindingGroups = []; // TODO find a way to not have this here?
 
 		if (options.props) {
 			this.$$inject_props(options.props);

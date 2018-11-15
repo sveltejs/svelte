@@ -105,11 +105,11 @@ export default class BindingWrapper {
 			const bindingGroup = getBindingGroup(renderer, this.node.value.node);
 
 			block.builders.hydrate.addLine(
-				`#component._bindingGroups[${bindingGroup}].push(${parent.var});`
+				`(#component.$$bindingGroups[${bindingGroup}] || (#component.$$bindingGroups[${bindingGroup}] = [])).push(${parent.var});`
 			);
 
 			block.builders.destroy.addLine(
-				`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${parent.var}), 1);`
+				`#component.$$bindingGroups[${bindingGroup}].splice(#component.$$bindingGroups[${bindingGroup}].indexOf(${parent.var}), 1);`
 			);
 		}
 
@@ -295,7 +295,7 @@ function getValueFromDom(
 	if (name === 'group') {
 		const bindingGroup = getBindingGroup(renderer, binding.node.value.node);
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
+			return `@getBindingGroupValue(#component.$$bindingGroups[${bindingGroup}])`;
 		}
 
 		return `${element.var}.__value`;
