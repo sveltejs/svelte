@@ -36,3 +36,8 @@ export function exclude(src, prop) {
 export function run(fn) {
 	fn();
 }
+
+export function run_all(fns) {
+	let i = fns.length;
+	while (i--) fns[i]();
+}

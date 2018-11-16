@@ -688,7 +688,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addRef(block: Block) {
-		const ref = `#component.refs.${this.node.ref.name}`;
+		const ref = `#component.$$refs.${this.node.ref.name}`;
 
 		block.builders.mount.addLine(
 			`${ref} = ${this.var};`

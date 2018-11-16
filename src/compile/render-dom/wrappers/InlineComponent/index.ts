@@ -347,7 +347,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
 					${name}.$$mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
+					${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
 				}
 			`);
 
@@ -392,12 +392,12 @@ export default class InlineComponentWrapper extends Wrapper {
 							${name}.on("${handler.name}", ${handler.var});
 						`)}
 
-						${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
+						${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
 					} else {
 						${name} = null;
 						${this.node.ref && deindent`
-						if (#component.refs.${this.node.ref.name} === ${name}) {
-							#component.refs.${this.node.ref.name} = null;
+						if (#component.$$refs.${this.node.ref.name} === ${name}) {
+							#component.$$refs.${this.node.ref.name} = null;
 						}`}
 					}
 				}
@@ -434,7 +434,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					});
 				`)}
 
-				${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
+				${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
 			`);
 
 			block.builders.create.addLine(`${name}.$$fragment.c();`);
@@ -459,7 +459,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.destroy.addLine(deindent`
 				${name}.$destroy(${parentNode ? '' : 'detach'});
-				${this.node.ref && `if (#component.refs.${this.node.ref.name} === ${name}) #component.refs.${this.node.ref.name} = null;`}
+				${this.node.ref && `if (#component.$$refs.${this.node.ref.name} === ${name}) #component.$$refs.${this.node.ref.name} = null;`}
 			`);
 		}
 

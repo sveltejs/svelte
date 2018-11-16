@@ -107,19 +107,26 @@ export default function dom(
 			customElements.define("${component.tag}", ${name});
 		`);
 	} else {
+		const refs = Array.from(component.refs);
+
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteComponent {
-				$$init($$set_inject_props, $$set_inject_refs, $$make_dirty) {
+				$$init($$make_dirty) {
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
-					$$set_inject_props(props => {
-						// TODO only do this for export let|var
-						${(component.exports.map(name =>
-						`if ('${name.as}' in props) ${name.as} = props.${name.as};`
-						))}
-					});
-
-					return () => ({ ${(component.declarations).join(', ')} });
+					return [
+						() => ({ ${(component.declarations).join(', ')} }),
+						props => {
+							// TODO only do this for export let|var
+							${(component.exports.map(name =>
+							`if ('${name.as}' in props) ${name.as} = props.${name.as};`
+							))}
+						},
+						refs => {
+							// TODO only if we have some refs
+							${refs.map(name => `${name} = refs.${name};`)}
+						}
+					];
 				}
 
 				$$create_fragment(${component.alias('component')}, ctx) {
@@ -128,7 +135,7 @@ export default function dom(
 
 				${component.exports.map(x => deindent`
 				get ${x.as}() {
-					return this.$$get_state().${x.name};
+					return this.$$.get_state().${x.name};
 				}
 
 				set ${x.as}(value) {

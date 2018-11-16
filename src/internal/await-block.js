@@ -1,5 +1,6 @@
 import { assign, isPromise } from './utils.js';
 import { groupOutros } from './transitions.js';
+import { flush } from '../internal/scheduler.js';
 
 export function handlePromise(promise, info) {
 	var token = info.token = {};
@@ -30,7 +31,10 @@ export function handlePromise(promise, info) {
 			block.c();
 			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
 
-			info.component.root.set({}); // flush any handlers that were created
+			// TODO is some of this redundant?
+			info.component.$$.inject_refs(info.component.$$refs);
+			run_all(info.component.$$onupdate);
+			flush();
 		}
 
 		info.block = block;

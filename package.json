@@ -2,7 +2,7 @@
   "name": "svelte",
   "version": "2.15.1",
   "description": "The magical disappearing UI framework",
-  "main": "compiler/svelte.js",
+  "main": "index.js",
   "bin": {
     "svelte": "svelte"
   },
@@ -10,10 +10,8 @@
     "cli",
     "compiler/*.js",
     "ssr/*.js",
-    "shared.js",
-    "store.js",
-    "store.umd.js",
-    "store.d.ts",
+    "index.js",
+    "internal.js",
     "svelte",
     "README.md"
   ],
