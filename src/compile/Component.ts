@@ -543,6 +543,8 @@ export default class Component {
 			}
 		});
 
+		const top_scope = scope;
+
 		walk(js.content, {
 			enter(node) {
 				if (map.has(node)) {
@@ -551,7 +553,15 @@ export default class Component {
 
 				if (node.type === 'AssignmentExpression') {
 					const { name } = flattenReference(node.left);
-					code.appendLeft(node.end, `; $$make_dirty('${name}')`);
+
+					if (scope.findOwner(name) === top_scope) {
+						// TODO verify that it needs to be reactive, i.e. is
+						// used in the template (and not just in an event
+						// handler or transition etc)
+
+						// TODO handle arrow function expressions etc
+						code.appendLeft(node.end, `; $$make_dirty('${name}')`);
+					}
 				}
 
 			},
