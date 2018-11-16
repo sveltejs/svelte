@@ -174,6 +174,9 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		if (this.parent) {
+			// console.log(`has intro ${!!node.intro}`);
+			// console.log(`has outro ${!!node.outro}`);
+
 			if (node.actions.length > 0) this.parent.cannotUseInnerHTML();
 			if (node.animation) this.parent.cannotUseInnerHTML();
 			if (node.bindings.length > 0) this.parent.cannotUseInnerHTML();
@@ -211,7 +214,7 @@ export default class ElementWrapper extends Wrapper {
 		let initialMountNode;
 
 		if (this.slotOwner) {
-			initialMountNode = `${this.slotOwner.var}._slotted${prop}`;
+			initialMountNode = `${this.slotOwner.var}.$$slotted${prop}`;
 		} else {
 			initialMountNode = parentNode;
 		}
@@ -714,7 +717,7 @@ export default class ElementWrapper extends Wrapper {
 
 			block.addVariable(name);
 
-			const fn = `%transitions-${intro.name}`;
+			const fn = `ctx.${intro.name}`;
 
 			block.builders.intro.addConditional(`#component.root._intro`, deindent`
 				if (${name}) ${name}.invalidate();
@@ -744,7 +747,7 @@ export default class ElementWrapper extends Wrapper {
 					? intro.expression.snippet
 					: '{}';
 
-				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
+				const fn = `ctx.${intro.name}`; // TODO add built-in transitions?
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
@@ -767,7 +770,7 @@ export default class ElementWrapper extends Wrapper {
 					? outro.expression.snippet
 					: '{}';
 
-				const fn = `%transitions-${outro.name}`;
+				const fn = `ctx.${outro.name}`;
 
 				block.builders.intro.addBlock(deindent`
 					if (${outroName}) ${outroName}.abort(1);
@@ -900,10 +903,10 @@ export default class ElementWrapper extends Wrapper {
 		const slot = this.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
 			const prop = quotePropIfNecessary(slot.chunks[0].data);
-			return `@append(${name}._slotted${prop}, ${this.var});`;
+			return `@append(${name}.$$slotted${prop}, ${this.var});`;
 		}
 
-		return `@append(${name}._slotted.default, ${this.var});`;
+		return `@append(${name}.$$slotted.default, ${this.var});`;
 	}
 
 	addCssClass(className = this.component.stylesheet.id) {

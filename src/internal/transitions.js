@@ -89,7 +89,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 		},
 
 		start(program) {
-			component.fire(`${program.b ? 'intro' : 'outro'}.start`, { node });
+			// TODO find an alternative to this
+			// component.fire(`${program.b ? 'intro' : 'outro'}.start`, { node });
 
 			program.a = this.t;
 			program.delta = program.b - program.a;
@@ -128,7 +129,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 			if (obj.tick) obj.tick(this.t, 1 - this.t);
 
-			component.fire(`${program.b ? 'intro' : 'outro'}.end`, { node });
+			// TODO find an alternative to this
+			// component.fire(`${program.b ? 'intro' : 'outro'}.end`, { node });
 
 			if (!program.b && !program.invalidated) {
 				program.group.callbacks.push(() => {

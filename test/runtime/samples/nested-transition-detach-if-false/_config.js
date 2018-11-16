@@ -16,7 +16,7 @@ export default {
 	nestedTransitions: true,
 
 	test(assert, component, target, window, raf) {
-		component.refs.folder.set({ open: false });
+		component.folder.open = false;
 		assert.htmlEqual(target.innerHTML, `
 			<li>
 				<span>a</span>

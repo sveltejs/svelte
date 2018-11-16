@@ -76,6 +76,11 @@ export class Scope {
 		}
 	}
 
+	findOwner(name: string): Scope {
+		if (this.declarations.has(name)) return this;
+		return this.parent && this.parent.findOwner(name);
+	}
+
 	has(name: string): boolean {
 		return (
 			this.declarations.has(name) || (this.parent && this.parent.has(name))

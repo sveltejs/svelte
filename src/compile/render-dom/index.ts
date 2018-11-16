@@ -88,8 +88,8 @@ export default function dom(
 
 				${renderer.slots.size && deindent`
 					connectedCallback() {
-						Object.keys(this._slotted).forEach(key => {
-							this.appendChild(this._slotted[key]);
+						Object.keys(this.$$slotted).forEach(key => {
+							this.appendChild(this.$$slotted[key]);
 						});
 					}`}
 

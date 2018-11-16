@@ -92,7 +92,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.fragment.nodes.forEach((child: Wrapper) => {
-				child.render(block, `${this.var}._slotted.default`, 'nodes');
+				child.render(block, `${this.var}.$$slotted.default`, 'nodes');
 			});
 		}
 
@@ -471,7 +471,7 @@ export default class InlineComponentWrapper extends Wrapper {
 	}
 
 	remount(name: string) {
-		return `${this.var}.$$mount(${name}._slotted.default, null);`;
+		return `${this.var}.$$mount(${name}.$$slotted.default, null);`;
 	}
 }
 

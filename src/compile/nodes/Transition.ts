@@ -10,13 +10,6 @@ export default class Transition extends Node {
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		if (!component.transitions.has(info.name)) {
-			component.error(info, {
-				code: `missing-transition`,
-				message: `Missing transition '${info.name}'`
-			});
-		}
-
 		this.name = info.name;
 		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out';
 

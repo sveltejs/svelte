@@ -408,15 +408,28 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const end = parser.index;
 
 	if (type) {
-		name = name.slice(colon_index + 1);
+		const directive_name = name.slice(colon_index + 1);
 
-		return {
+		const directive = {
 			start,
 			end,
 			type,
-			name,
-			[type === 'Binding' ? 'value' : 'expression']: value[0] && value[0].expression
+			name: directive_name
 		};
+
+		if (type === 'Binding') {
+			directive.value = value[0] && value[0].expression;
+		} else {
+			directive.expression = value[0] && value[0].expression;
+		}
+
+		if (type === 'Transition') {
+			const direction = name.slice(0, colon_index);
+			directive.intro = direction === 'in' || direction === 'transition';
+			directive.outro = direction === 'out' || direction === 'transition';
+		}
+
+		return directive;
 	}
 
 	return {

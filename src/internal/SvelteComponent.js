@@ -9,6 +9,8 @@ export class SvelteComponent {
 		this.$$onupdate = [];
 		this.$$ondestroy = [];
 
+		this.$$slotted = options.slots;
+
 		set_current_component(this);
 		const [get_state, inject_props, inject_refs] = this.$$init(
 			key => this.$$make_dirty(key)

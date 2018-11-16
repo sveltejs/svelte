@@ -501,6 +501,6 @@ export default class EachBlockWrapper extends Wrapper {
 
 	remount(name: string) {
 		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${this.vars.iterations}.length; #i += 1) ${this.vars.iterations}[#i].m(${name}._slotted.default, null);`;
+		return `for (var #i = 0; #i < ${this.vars.iterations}.length; #i += 1) ${this.vars.iterations}[#i].m(${name}.$$slotted.default, null);`;
 	}
 }
