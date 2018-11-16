@@ -1,14 +1,13 @@
+<script>
+	import { onmount } from 'svelte';
+
+	export let value;
+	let called = false;
+
+	onmount(() => {
+		called = true;
+	});
+</script>
+
 <p>{value}</p>
 <p>{called}</p>
-
-<script>
-	export default {
-		data() {
-			return { called: false };
-		},
-
-		oncreate() {
-			this.set({ called: true });
-		}
-	};
-</script>

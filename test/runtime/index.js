@@ -14,6 +14,7 @@ import {
 	spaces
 } from "../helpers.js";
 
+const main = path.resolve('index.js');
 let svelte$;
 let svelte;
 
@@ -38,7 +39,9 @@ describe.only("runtime", () => {
 
 			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
 
-			return module._compile(js.code, filename);
+			const code = js.code.replace(/require\("svelte"\)/g, `require("${main}")`);
+
+			return module._compile(code, filename);
 		};
 
 		return setupHtmlEqual();
