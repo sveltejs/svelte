@@ -7,13 +7,13 @@ export default {
 
 		// this should NOT trigger blur event
 		component.visible = false;
-		assert.ok( !component.get().blurred );
+		assert.ok( !component.blurred );
 
 		component.visible = true;
 		component.refs.input.focus();
 
 		// this SHOULD trigger blur event
 		component.refs.input.blur();
-		assert.ok( component.get().blurred );
+		assert.ok( component.blurred );
 	}
 };

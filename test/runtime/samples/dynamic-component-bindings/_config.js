@@ -13,7 +13,7 @@ export default {
 		input.value = 'abc';
 		input.dispatchEvent(new window.Event('input'));
 
-		assert.equal(component.get().y, 'abc');
+		assert.equal(component.y, 'abc');
 
 		component.x = false;
 
@@ -26,6 +26,6 @@ export default {
 		input.checked = true;
 		input.dispatchEvent(new window.Event('change'));
 
-		assert.equal(component.get().z, true);
+		assert.equal(component.z, true);
 	}
 };

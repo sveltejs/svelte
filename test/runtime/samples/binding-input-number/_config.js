@@ -22,7 +22,7 @@ export default {
 		input.value = '43';
 		input.dispatchEvent(event);
 
-		assert.equal(component.get().count, 43);
+		assert.equal(component.count, 43);
 		assert.htmlEqual(target.innerHTML, `
 			<input type='number'>
 			<p>number 43</p>
@@ -39,7 +39,7 @@ export default {
 		input.value = '';
 		input.dispatchEvent(event);
 
-		assert.equal(component.get().count, undefined);
+		assert.equal(component.count, undefined);
 		assert.htmlEqual(target.innerHTML, `
 			<input type='number'>
 			<p>undefined undefined</p>

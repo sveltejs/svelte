@@ -16,7 +16,7 @@ export default {
 		input.value = 'blah';
 		input.dispatchEvent(event);
 
-		assert.deepEqual(component.get().deep, { name: 'blah' });
+		assert.deepEqual(component.deep, { name: 'blah' });
 		assert.htmlEqual(target.innerHTML, `
 			<input>
 			<p>blah</p>

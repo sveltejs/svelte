@@ -11,7 +11,7 @@ export default {
 	`,
 
 	test(assert, component) {
-		const visibleThings = component.get().visibleThings;
+		const visibleThings = component.visibleThings;
 		assert.deepEqual(visibleThings, ['first thing', 'second thing']);
 
 		const snapshots = component.snapshots;

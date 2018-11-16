@@ -32,14 +32,14 @@ export default {
 		const options = [...target.querySelectorAll('option')];
 
 		assert.deepEqual(options, select.options);
-		assert.equal(component.get().selected, 'one');
+		assert.equal(component.selected, 'one');
 
 		const change = new window.Event('change');
 
 		options[1].selected = true;
 		select.dispatchEvent(change);
 
-		assert.equal(component.get().selected, 'two');
+		assert.equal(component.selected, 'two');
 		assert.htmlEqual(target.innerHTML, `
 			<p>selected: two</p>
 

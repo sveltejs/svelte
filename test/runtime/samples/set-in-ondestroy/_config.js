@@ -11,7 +11,7 @@ export default {
 
 		component.on('destroy', () => {
 			component.foo = 2;
-			valueOnDestroy = component.get().foo;
+			valueOnDestroy = component.foo;
 		});
 
 		component.on('state', ({ current }) => {

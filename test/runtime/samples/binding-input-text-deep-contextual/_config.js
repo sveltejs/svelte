@@ -35,7 +35,7 @@ export default {
 			<div><input><p>three</p></div>
 		`);
 
-		const items = component.get().items;
+		const items = component.items;
 		items[2].description = 'five';
 
 		component.items = items;

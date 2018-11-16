@@ -14,8 +14,8 @@ export default {
 		select.dispatchEvent( event );
 
 		assert.equal( select.value, 'c' );
-		assert.equal( component.get().lastChangedTo, 'c' );
-		assert.equal( component.get().selected, 'c' );
+		assert.equal( component.lastChangedTo, 'c' );
+		assert.equal( component.selected, 'c' );
 
 		component.destroy();
 	}

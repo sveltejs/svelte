@@ -20,7 +20,7 @@ export default {
 		options[1].selected = true;
 		select.dispatchEvent(change);
 
-		assert.equal(component.get().selected.letter, 'B');
+		assert.equal(component.selected.letter, 'B');
 		assert.htmlEqual(target.innerHTML, `
 			<select>
 				<option value='A'>A</option>

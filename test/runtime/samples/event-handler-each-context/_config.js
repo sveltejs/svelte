@@ -12,10 +12,10 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		button.dispatchEvent(event);
-		assert.equal(component.get().foo, 'right');
+		assert.equal(component.foo, 'right');
 
 		component.bar = 'left';
 		button.dispatchEvent(event);
-		assert.equal(component.get().foo, 'left');
+		assert.equal(component.foo, 'left');
 	}
 };

@@ -4,7 +4,7 @@ export default {
 	},
 
 	test(assert, component) {
-		const thing = component.get().thing;
+		const thing = component.thing;
 
 		component.on('state', ({ changed, current }) => {
 			if (changed.thing) {

@@ -24,8 +24,8 @@ export default {
 			<p>second: bar</p>
 		` );
 
-		assert.equal( component.get().first, '1' );
-		assert.equal( component.get().second, 'bar' );
+		assert.equal( component.first, '1' );
+		assert.equal( component.second, 'bar' );
 
 		component.destroy();
 	}

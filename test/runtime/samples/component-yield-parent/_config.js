@@ -4,10 +4,10 @@ export default {
 	`,
 
 	test ( assert, component, target ) {
-		assert.equal( component.get().data, 'Hello' );
+		assert.equal( component.data, 'Hello' );
 
 		component.data = 'World';
-		assert.equal( component.get().data, 'World' );
+		assert.equal( component.data, 'World' );
 		assert.htmlEqual( target.innerHTML, `
 			<div><p>World</p></div>
 		` );

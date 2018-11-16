@@ -31,7 +31,7 @@ export default {
 			<p>hello bob</p>
 		`);
 
-		const user = component.get().user;
+		const user = component.user;
 		user.name = 'carol';
 
 		component.user = user;
