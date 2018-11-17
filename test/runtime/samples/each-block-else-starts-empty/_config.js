@@ -10,12 +10,12 @@ export default {
 		after
 	`,
 
-	test ( assert, component, target ) {
+	test(assert, component, target) {
 		component.animals = ['wombat'];
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			before
 			<p>wombat</p>
 			after
-		` );
+		`);
 	}
 };
