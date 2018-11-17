@@ -283,7 +283,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				_bind(changed, childState) {
 					var ${initialisers};
 					${builder}
-					${hasLocalBindings && `#component._set(newState);`}
+					${hasLocalBindings && `#component.$set(newState);`}
 					${name_updating} = {};
 				}
 			`);
@@ -406,7 +406,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					else if (${switch_value}) {
-						${name}._set(${name_changes});
+						${name}.$set(${name_changes});
 						${this.node.bindings.length && `${name_updating} = {};`}
 					}
 				`);
@@ -452,7 +452,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					${updates}
-					${name}._set(${name_changes});
+					${name}.$set(${name_changes});
 					${this.node.bindings.length && `${name_updating} = {};`}
 				`);
 			}

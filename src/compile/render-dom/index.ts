@@ -139,7 +139,7 @@ export default function dom(
 				}
 
 				set ${x.as}(value) {
-					this.$$set('${x.name}', value);
+					this.$set({ ${x.name}: value });
 					@flush();
 				}
 				`)}

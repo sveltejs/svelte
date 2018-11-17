@@ -67,13 +67,14 @@ export class SvelteComponent {
 
 		const ondestroy = this.$$onmount.map(fn => fn()).filter(Boolean);
 		this.$$ondestroy.push(...ondestroy);
-		this.$$onmount = null;
+		this.$$onmount = [];
 	}
 
-	$$set(key, value) {
-		this.$$.inject_props({ [key]: value });
+	$set(values) {
+		this.$$.inject_props(values);
 		run_all(this.$$onprops);
-		this.$$make_dirty(key);
+
+		for (const key in values) this.$$make_dirty(key);
 	}
 
 	$$update() {
