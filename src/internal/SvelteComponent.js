@@ -1,6 +1,7 @@
 import { schedule_update, flush } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
 import { run_all } from '../shared/utils.js';
+import { blankObject } from './utils.js';
 
 export class SvelteComponent {
 	constructor(options) {
@@ -8,6 +9,8 @@ export class SvelteComponent {
 		this.$$onmount = [];
 		this.$$onupdate = [];
 		this.$$ondestroy = [];
+
+		this.$$callbacks = blankObject();
 
 		this.$$slotted = options.slots;
 
@@ -35,8 +38,14 @@ export class SvelteComponent {
 		}
 	}
 
-	$on(eventName, callback) {
+	$on(type, callback) {
+		const callbacks = (this.$$callbacks[type] || (this.$$callbacks[type] = []));
+		callbacks.push(callback);
 
+		return () => {
+			const index = callbacks.indexOf(callback);
+			if (index !== -1) callbacks.splice(index, 1);
+		};
 	}
 
 	$destroy() {

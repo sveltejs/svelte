@@ -174,9 +174,6 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		if (this.parent) {
-			// console.log(`has intro ${!!node.intro}`);
-			// console.log(`has outro ${!!node.outro}`);
-
 			if (node.actions.length > 0) this.parent.cannotUseInnerHTML();
 			if (node.animation) this.parent.cannotUseInnerHTML();
 			if (node.bindings.length > 0) this.parent.cannotUseInnerHTML();

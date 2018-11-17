@@ -168,7 +168,7 @@ export default class WindowWrapper extends Wrapper {
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
 			block.builders.init.addBlock(deindent`
-				#component.on("state", ({ changed, current }) => {
+				#component.$on("state", ({ changed, current }) => {
 					if (${
 						[bindings.scrollX, bindings.scrollY].map(
 							binding => binding && `changed["${binding}"]`

@@ -1,3 +1,3 @@
-import { onprops, onmount, onupdate, ondestroy } from './internal.js';
+import { onprops, onmount, onupdate, ondestroy, createEventDispatcher } from './internal.js';
 
-export { onprops, onmount, onupdate, ondestroy };
+export { onprops, onmount, onupdate, ondestroy, createEventDispatcher };

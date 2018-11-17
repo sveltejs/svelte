@@ -278,7 +278,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				hasStoreBindings && 'newStoreState = {}',
 			].filter(Boolean).join(', ');
 
-			// TODO use component.on('state', ...) instead of _bind
+			// TODO use component.$on('state', ...) instead of _bind
 			componentInitProperties.push(deindent`
 				_bind(changed, childState) {
 					var ${initialisers};
@@ -327,10 +327,10 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				${this.node.handlers.map(handler => deindent`
 					function ${handler.var}(event) {
-						${handler.snippet || `#component.fire("${handler.name}", event);`}
+						(${handler.snippet || `() => { throw new Error('TODO shorthand events'); }`})(event);
 					}
 
-					if (${name}) ${name}.on("${handler.name}", ${handler.var});
+					if (${name}) ${name}.$on("${handler.name}", ${handler.var});
 				`)}
 			`);
 
@@ -389,7 +389,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name}.$$mount(${updateMountNode}, ${anchor});
 
 						${this.node.handlers.map(handler => deindent`
-							${name}.on("${handler.name}", ${handler.var});
+							${name}.$on("${handler.name}", ${handler.var});
 						`)}
 
 						${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
@@ -429,8 +429,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				${beforecreate}
 
 				${this.node.handlers.map(handler => deindent`
-					${name}.on("${handler.name}", function(event) {
-						${handler.snippet || `#component.fire("${handler.name}", event);`}
+					${name}.$on("${handler.name}", function(event) {
+						(${handler.snippet || `() => { throw new Error('TODO shorthand events'); }`})(event);
 					});
 				`)}
 
