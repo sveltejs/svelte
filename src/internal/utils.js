@@ -40,3 +40,7 @@ export function run(fn) {
 export function blankObject() {
 	return Object.create(null);
 }
+
+export function run_all(fns) {
+	fns.forEach(run);
+}

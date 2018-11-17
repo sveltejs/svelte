@@ -1,6 +1,6 @@
 import { schedule_update, flush } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
-import { run_all } from '../shared/utils.js';
+import { run_all } from './utils.js';
 import { blankObject } from './utils.js';
 
 export class SvelteComponent {

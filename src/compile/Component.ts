@@ -15,7 +15,7 @@ import getName from '../utils/getName';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
-import shared from './shared';
+import * as internal from '../internal/index';
 import { Node, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -223,8 +223,8 @@ export default class Component {
 		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
 
-		// allow compiler to deconflict user's `import { get } from 'whatever'` and
-		// Svelte's builtin `import { get, ... } from 'svelte/shared.ts'`;
+		// allow compiler to deconflict user's `import { flush } from 'whatever'` and
+		// Svelte's builtin `import { flush, ... } from 'svelte/internal.ts'`;
 		this.userVars = new Set();
 		this.templateVars = new Map();
 		this.aliases = new Map();
@@ -298,8 +298,8 @@ export default class Component {
 		// TODO use same regex for both
 		result = result.replace(options.generate === 'ssr' ? /(@+|#+|%+)(\w*(?:-\w*)?)/g : /(%+|@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 			if (sigil === '@') {
-				if (name in shared) {
-					if (options.dev && `${name}Dev` in shared) name = `${name}Dev`;
+				if (name in internal) {
+					if (options.dev && `${name}Dev` in internal) name = `${name}Dev`;
 					helpers.add(name);
 				}
 
