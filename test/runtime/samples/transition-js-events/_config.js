@@ -22,7 +22,7 @@ export default {
 		assert.equal(component.outroCount, 0);
 
 		component.visible = true;
-		component.on('intro.start', () => {
+		component.$on('intro.start', () => {
 			throw new Error(`intro.start should fire during set(), not after`);
 		});
 

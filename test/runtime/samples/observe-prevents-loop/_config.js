@@ -6,7 +6,7 @@ export default {
 	test(assert, component) {
 		const thing = component.thing;
 
-		component.on('state', ({ changed, current }) => {
+		component.$on('state', ({ changed, current }) => {
 			if (changed.thing) {
 				const { thing } = current;
 				thing.b = thing.a * 2;

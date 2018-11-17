@@ -4,7 +4,7 @@ export default {
 
 		const expected = { x: 1 };
 
-		component.on( 'foo', data => {
+		component.$on( 'foo', data => {
 			assert.equal( data, expected );
 			count += 1;
 		});

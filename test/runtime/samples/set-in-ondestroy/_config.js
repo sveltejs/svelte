@@ -9,12 +9,12 @@ export default {
 		const values = [];
 		let valueOnDestroy;
 
-		component.on('destroy', () => {
+		component.$on('destroy', () => {
 			component.foo = 2;
 			valueOnDestroy = component.foo;
 		});
 
-		component.on('state', ({ current }) => {
+		component.$on('state', ({ current }) => {
 			values.push(current.foo);
 		});
 

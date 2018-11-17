@@ -13,7 +13,7 @@ export default {
 	test(assert, component, target) {
 		const history = [];
 
-		component.on('state', ({ changed, current, previous }) => {
+		component.$on('state', ({ changed, current, previous }) => {
 			history.push({ changed, current, previous });
 			component.bar = current.foo.toUpperCase();
 		});

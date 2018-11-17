@@ -5,23 +5,21 @@ export default {
 		foo: 42
 	},
 
-	test ( assert, component, target, window ) {
-		const event = new window.MouseEvent( 'click' );
-		const button = target.querySelector( 'button' );
+	test(assert, component, target, window) {
+		const event = new window.MouseEvent('click');
+		const button = target.querySelector('button');
 
 		let count = 0;
 		let number = null;
 
-		component.on( 'foo', obj => {
+		component.$on('foo', event => {
 			count++;
-			number = obj.foo;
+			number = event.detail.foo;
 		});
 
-		button.dispatchEvent( event );
+		button.dispatchEvent(event);
 
-		assert.equal( count, 1 );
-		assert.equal( number, 42 );
-
-		component.destroy();
+		assert.equal(count, 1);
+		assert.equal(number, 42);
 	}
 };

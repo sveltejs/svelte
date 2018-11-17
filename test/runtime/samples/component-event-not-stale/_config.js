@@ -8,8 +8,8 @@ export default {
 		const click = new window.MouseEvent('click');
 
 		const events = [];
-		component.on('value', event => {
-			events.push(event);
+		component.$on('value', event => {
+			events.push(event.detail);
 		});
 
 		buttons[0].dispatchEvent(click);
