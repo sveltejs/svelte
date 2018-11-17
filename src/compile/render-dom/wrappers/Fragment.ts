@@ -29,6 +29,7 @@ const wrappers = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	Meta: null,
 	MustacheTag,
 	RawMustacheTag,
 	Slot,

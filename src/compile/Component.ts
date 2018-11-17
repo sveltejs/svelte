@@ -103,6 +103,12 @@ export default class Component {
 	options: CompileOptions;
 	fragment: Fragment;
 
+	meta: {
+		namespace?: string;
+		tag?: string;
+		immutable?: boolean;
+	};
+
 	customElement: CustomElementOptions;
 	tag: string;
 
@@ -231,20 +237,14 @@ export default class Component {
 		this.walkJs();
 		this.name = this.alias(name);
 
+		const meta = process_meta(this, this.ast.html.children);
+		this.namespace = meta.namespace;
+
 		if (options.customElement === true) {
 			this.customElement = {
-				tag: null,
+				tag: meta.tag,
 				props: [] // TODO!!!
 			};
-
-			// find <svelte:meta> tag
-			const meta = this.ast.html.children.find(node => node.name === 'svelte:meta');
-			if (meta) {
-				const tag_attribute = meta.attributes.find(a => a.name === 'tag');
-				if (tag_attribute) {
-					this.customElement.tag = tag_attribute.value[0].data;
-				}
-			}
 		} else {
 			this.customElement = options.customElement;
 		}
@@ -581,4 +581,70 @@ export default class Component {
 
 		this.javascript = a !== b ? `[✂${a}-${b}✂]` : '';
 	}
+}
+
+type Meta = {
+	namespace?: string;
+	tag?: string;
+	immutable?: boolean;
+};
+
+function process_meta(component, nodes) {
+	const meta: Meta = {};
+	const node = nodes.find(node => node.name === 'svelte:meta');
+
+	if (node) {
+		node.attributes.forEach(attribute => {
+			if (attribute.type !== 'Attribute') {
+				// TODO implement bindings on <svelte:meta>
+				component.error(attribute, {
+					code: `invalid-meta-attribute`,
+					message: `<svelte:meta> can only have 'tag' and 'namespace' attributes`
+				});
+			}
+
+			const { name, value } = attribute;
+
+			if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
+				component.error(attribute, {
+					code: `invalid-meta-attribute`,
+					message: `<svelte:meta> cannot have dynamic attributes`
+				});
+			}
+
+			const { data } = value[0];
+
+			switch (name) {
+				case 'tag':
+				case 'namespace':
+					if (!data) {
+						component.error(attribute, {
+							code: `invalid-meta-attribute`,
+							message: `<svelte:meta> ${name} attribute must have a string value`
+						});
+					}
+
+					meta[name] = data;
+					break;
+
+				case 'immutable':
+					if (data && (data !== 'true' && data !== 'false')) {
+						component.error(attribute, {
+							code: `invalid-meta-attribute`,
+							message: `<svelte:meta> immutable attribute must be true or false`
+						});
+					}
+
+					meta.immutable = data !== 'false';
+
+				default:
+					component.error(attribute, {
+						code: `invalid-meta-attribute`,
+						message: `<svelte:meta> unknown attribute`
+					});
+			}
+		});
+	}
+
+	return meta;
 }

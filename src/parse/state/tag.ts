@@ -13,6 +13,7 @@ const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const metaTags = new Map([
 	['svelte:document', 'Document'],
 	['svelte:window', 'Window'],
+	['svelte:meta', 'Meta'],
 	['svelte:head', 'Head']
 ]);
 
