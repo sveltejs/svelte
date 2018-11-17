@@ -238,7 +238,7 @@ export default class Component {
 		this.name = this.alias(name);
 
 		const meta = process_meta(this, this.ast.html.children);
-		this.namespace = meta.namespace;
+		this.namespace = namespaces[meta.namespace] || meta.namespace;
 
 		if (options.customElement === true) {
 			this.customElement = {
