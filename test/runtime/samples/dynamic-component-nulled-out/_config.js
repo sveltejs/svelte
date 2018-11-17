@@ -6,13 +6,13 @@ export default {
 	nestedTransitions: true,
 
 	test(assert, component, target) {
-		const state = component.get();
+		const Foo = component.Foo;
 
 		component.Foo = null;
 
 		assert.htmlEqual(target.innerHTML, ``);
 
-		component.Foo = state.Foo;
+		component.Foo = Foo;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>Foo</p>

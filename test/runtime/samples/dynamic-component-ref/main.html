@@ -1,9 +1,7 @@
 <script>
-	export let test;
-
 	import Foo from './Foo.html';
 
-	export let foo = Foo;
+	export let test;
 </script>
 
-<svelte:component this={foo} ref:test/>
+<svelte:component this={Foo} ref:test/>

@@ -4,9 +4,7 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		const { Bar } = component.get();
-
-		component.x = Bar;
+		component.x = component.Bar;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>Bar</p>
