@@ -115,6 +115,7 @@ export default function dom(
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
 					return [
+						// TODO only what's needed by the template
 						() => ({ ${(component.declarations).join(', ')} }),
 						props => {
 							// TODO only do this for export let|var
