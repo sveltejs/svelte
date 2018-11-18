@@ -650,9 +650,9 @@ export default class ElementWrapper extends Wrapper {
 					});
 
 					block.builders.init.addBlock(deindent`
-						${name}.$on("${handler.name}", function(event) {
+						function ${name}(event) {
 							ctx.${handler_name}.call(this, event, ctx);
-						});
+						}
 					`);
 				} else {
 					name = `ctx.${handler_name}`;

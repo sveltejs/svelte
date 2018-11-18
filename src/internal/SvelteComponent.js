@@ -71,10 +71,12 @@ export class SvelteComponent {
 	}
 
 	$set(values) {
-		this.$$.inject_props(values);
-		run_all(this.$$onprops);
+		if (this.$$) {
+			this.$$.inject_props(values);
+			run_all(this.$$onprops);
 
-		for (const key in values) this.$$make_dirty(key);
+			for (const key in values) this.$$make_dirty(key);
+		}
 	}
 
 	$$update() {
@@ -85,10 +87,12 @@ export class SvelteComponent {
 	}
 
 	$$destroy(detach) {
-		this.$$fragment.d(detach);
-		run_all(this.$$ondestroy);
+		if (this.$$) {
+			this.$$fragment.d(detach);
+			run_all(this.$$ondestroy);
 
-		// TODO null out other refs
-		this.$$ondestroy = null;
+			// TODO null out other refs
+			this.$$ondestroy = this.$$fragment = this.$$ = null;
+		}
 	}
 }

@@ -109,7 +109,10 @@ export default class Expression {
 				if (isReference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
-					if (currentScope.has(name)) return;
+					if (currentScope.has(name)) {
+						contextual_dependencies.add(name);
+						return;
+					}
 
 					if (component.helpers.has(name)) {
 						let object = node;
@@ -121,7 +124,6 @@ export default class Expression {
 					}
 
 					expression.usesContext = true;
-					contextual_dependencies.add(name);
 
 					if (!isSynthetic && !isEventHandler) {
 						// <option> value attribute could be synthetic — avoid double editing
