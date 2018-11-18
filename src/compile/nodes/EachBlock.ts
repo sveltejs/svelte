@@ -36,13 +36,6 @@ export default class EachBlock extends Node {
 		unpackDestructuring(this.contexts, info.context, '');
 
 		this.contexts.forEach(context => {
-			if (component.helpers.has(context.key.name)) {
-				component.warn(context.key, {
-					code: `each-context-clash`,
-					message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
-				});
-			}
-
 			this.scope.add(context.key.name, this.expression.dependencies);
 		});
 

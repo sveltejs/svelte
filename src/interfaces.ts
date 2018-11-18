@@ -68,11 +68,6 @@ export interface CompileOptions {
 	nestedTransitions?: boolean;
 }
 
-export interface ShorthandImport {
-	name: string;
-	source: string;
-};
-
 export interface Visitor {
 	enter: (node: Node) => void;
 	leave?: (node: Node) => void;

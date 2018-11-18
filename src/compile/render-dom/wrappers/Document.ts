@@ -20,7 +20,7 @@ export default class DocumentWrapper extends Wrapper {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			component.addSourcemapLocations(handler.expression);
 
-			const isCustomEvent = component.events.has(handler.name);
+			const isCustomEvent = false; // TODO!!!
 
 			let usesState = handler.dependencies.size > 0;
 

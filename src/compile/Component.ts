@@ -116,16 +116,7 @@ export default class Component {
 
 	properties: Map<string, Node>;
 
-	defaultExport: Node;
 	imports: Node[];
-	shorthandImports: ShorthandImport[];
-	helpers: Set<string>;
-	components: Set<string>;
-	events: Set<string>;
-	methods: Set<string>;
-	animations: Set<string>;
-	transitions: Set<string>;
-	actions: Set<string>;
 	namespace: string;
 	hasComponents: boolean;
 	javascript: string;
@@ -172,14 +163,6 @@ export default class Component {
 		this.options = options;
 
 		this.imports = [];
-		this.shorthandImports = [];
-		this.helpers = new Set();
-		this.components = new Set();
-		this.events = new Set();
-		this.methods = new Set();
-		this.animations = new Set();
-		this.transitions = new Set();
-		this.actions = new Set();
 
 		this.declarations = [];
 		this.exports = [];
@@ -300,7 +283,7 @@ export default class Component {
 
 		const sharedPath = options.shared || 'svelte/internal.js';
 
-		const module = wrapModule(result, format, name, options, banner, sharedPath, importedHelpers, this.imports, this.shorthandImports, this.source);
+		const module = wrapModule(result, format, name, options, banner, sharedPath, importedHelpers, this.imports, this.source);
 
 		const parts = module.split('✂]');
 		const finalChunk = parts.pop();

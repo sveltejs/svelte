@@ -43,7 +43,7 @@ export default class WindowWrapper extends Wrapper {
 			// TODO verify that it's a valid callee (i.e. built-in or declared method)
 			component.addSourcemapLocations(handler.expression);
 
-			const isCustomEvent = component.events.has(handler.name);
+			const isCustomEvent = false; // TODO!!!
 
 			let usesState = handler.expression.dependencies.size > 0;
 
@@ -58,7 +58,7 @@ export default class WindowWrapper extends Wrapper {
 				block.addVariable(handler_name);
 
 				block.builders.hydrate.addBlock(deindent`
-					${handler_name} = %events-${handler.name}.call(#component, window, function(event) {
+					${handler_name} = ctx.${handler.name}.call(#component, window, function(event) {
 						(${handler_body})(event);
 					});
 				`);

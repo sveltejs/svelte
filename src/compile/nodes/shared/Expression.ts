@@ -82,7 +82,7 @@ export default class Expression {
 		const dependencies = new Set();
 		const contextual_dependencies = new Set();
 
-		const { code, helpers } = component;
+		const { code } = component;
 
 		let { map, scope: currentScope } = createScopes(info);
 
@@ -111,15 +111,6 @@ export default class Expression {
 
 					if (currentScope.has(name)) {
 						contextual_dependencies.add(name);
-						return;
-					}
-
-					if (component.helpers.has(name)) {
-						let object = node;
-						while (object.type === 'MemberExpression') object = object.object;
-
-						const alias = component.templateVars.get(`helpers-${name}`);
-						if (alias !== name) code.overwrite(object.start, object.end, alias);
 						return;
 					}
 
