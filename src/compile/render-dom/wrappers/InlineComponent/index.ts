@@ -54,7 +54,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		this.node.handlers.forEach(handler => {
-			block.addDependencies(handler.dependencies);
+			block.addDependencies(handler.expression.dependencies);
 		});
 
 		this.var = (
@@ -428,14 +428,48 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				${beforecreate}
 
-				${this.node.handlers.map(handler => deindent`
-					${name}.$on("${handler.name}", function(event) {
-						(${handler.snippet || `() => { throw new Error('TODO shorthand events'); }`})(event);
-					});
-				`)}
-
 				${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
 			`);
+
+			this.node.handlers.forEach(handler => {
+				let { snippet } = handler;
+				if (!snippet) snippet = `() => { throw new Error('TODO shorthand events'); }`;
+
+				// get a name for the event handler that is globally unique
+				const handler_name = component.getUniqueName(
+					`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+				);
+
+				if (handler.expression.contextual_dependencies.size > 0) {
+					const deps = Array.from(handler.expression.contextual_dependencies);
+
+					component.event_handlers.push({
+						name: handler_name,
+						body: deindent`
+							function ${handler_name}(event, { ${deps.join(', ')} }) {
+								(${snippet})(event);
+							}
+						`
+					});
+
+					block.builders.init.addBlock(deindent`
+						${name}.$on("${handler.name}", function(event) {
+							ctx.${handler_name}.call(this, event, ctx);
+						});
+					`);
+				} else {
+					component.event_handlers.push({
+						name: handler_name,
+						body: deindent`
+							function ${handler_name}(event) {
+								(${snippet})(event);
+							}
+						`
+					});
+
+					block.builders.init.addLine(`${name}.$on("${handler.name}", ctx.${handler_name});`);
+				}
+			});
 
 			block.builders.create.addLine(`${name}.$$fragment.c();`);
 

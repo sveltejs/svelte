@@ -54,11 +54,12 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 export default class Expression {
-	component: Component;
+	startnent: Component;
 	node: any;
 	snippet: string;
 	references: Set<string>;
 	dependencies: Set<string>;
+	contextual_dependencies: Set<string>;
 
 	usesContext = false;
 	usesEvent = false;
@@ -79,6 +80,7 @@ export default class Expression {
 		this.snippet = `[✂${info.start}-${info.end}✂]`;
 
 		const dependencies = new Set();
+		const contextual_dependencies = new Set();
 
 		const { code, helpers } = component;
 
@@ -119,6 +121,7 @@ export default class Expression {
 					}
 
 					expression.usesContext = true;
+					contextual_dependencies.add(name);
 
 					if (!isSynthetic && !isEventHandler) {
 						// <option> value attribute could be synthetic — avoid double editing
@@ -153,6 +156,7 @@ export default class Expression {
 		});
 
 		this.dependencies = dependencies;
+		this.contextual_dependencies = contextual_dependencies;
 	}
 
 	getPrecedence() {

@@ -12,8 +12,7 @@ const validBuiltins = new Set(['set', 'fire', 'destroy']);
 export default class EventHandler extends Node {
 	name: string;
 	modifiers: Set<string>;
-	dependencies: Set<string>;
-	expression: Node;
+	expression: Expression;
 	callee: any; // TODO
 
 	usesComponent: boolean;
@@ -31,15 +30,13 @@ export default class EventHandler extends Node {
 		this.name = info.name;
 		this.modifiers = new Set(info.modifiers);
 
-		this.dependencies = new Set();
-
 		if (info.expression) {
 			this.expression = new Expression(component, parent, template_scope, info.expression, true);
 			this.snippet = this.expression.snippet;
 
 			let { scope, map } = createScopes(info.expression);
 
-			walk(this.expression, {
+			walk(info.expression, {
 				enter: (node, parent) => {
 					if (map.has(node)) {
 						scope = map.get(node);

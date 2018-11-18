@@ -45,7 +45,7 @@ export default class WindowWrapper extends Wrapper {
 
 			const isCustomEvent = component.events.has(handler.name);
 
-			let usesState = handler.dependencies.size > 0;
+			let usesState = handler.expression.dependencies.size > 0;
 
 			const handler_name = block.getUniqueName(`onwindow${handler.name}`);
 			const handler_body = deindent`

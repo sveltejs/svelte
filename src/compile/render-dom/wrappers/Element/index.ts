@@ -170,7 +170,7 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		node.handlers.forEach(handler => {
-			block.addDependencies(handler.dependencies);
+			block.addDependencies(handler.expression.dependencies);
 		});
 
 		if (this.parent) {
@@ -609,7 +609,6 @@ export default class ElementWrapper extends Wrapper {
 			const { isCustomEvent } = handler;
 
 			// get a name for the event handler that is globally unique
-			// if hoisted, locally unique otherwise
 			const handler_name = component.getUniqueName(
 				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
@@ -634,15 +633,40 @@ export default class ElementWrapper extends Wrapper {
 				if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
 				if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
 
-				component.event_handlers.push({
-					name: handler_name,
-					body: deindent`
-						function ${handler_name}(event) {
-							${modifiers}
-							(${handler.snippet})(event);
-						}
-					`
-				});
+				let name;
+
+				if (handler.expression.contextual_dependencies.size > 0) {
+					name = handler_name;
+
+					const deps = Array.from(handler.expression.contextual_dependencies);
+
+					component.event_handlers.push({
+						name: handler_name,
+						body: deindent`
+							function ${handler_name}(event, { ${deps.join(', ')} }) {
+								(${handler.snippet})(event);
+							}
+						`
+					});
+
+					block.builders.init.addBlock(deindent`
+						${name}.$on("${handler.name}", function(event) {
+							ctx.${handler_name}.call(this, event, ctx);
+						});
+					`);
+				} else {
+					name = `ctx.${handler_name}`;
+
+					component.event_handlers.push({
+						name: handler_name,
+						body: deindent`
+							function ${handler_name}(event) {
+								${modifiers}
+								(${handler.snippet})(event);
+							}
+						`
+					});
+				}
 
 				const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
 				if (opts.length) {
@@ -651,19 +675,19 @@ export default class ElementWrapper extends Wrapper {
 						: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
 					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ctx.${handler_name}, ${optString});`
+						`@addListener(${this.var}, "${handler.name}", ${name}, ${optString});`
 					);
 
 					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ctx.${handler_name}, ${optString});`
+						`@removeListener(${this.var}, "${handler.name}", ${name}, ${optString});`
 					);
 				} else {
 					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ctx.${handler_name});`
+						`@addListener(${this.var}, "${handler.name}", ${name});`
 					);
 
 					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ctx.${handler_name});`
+						`@removeListener(${this.var}, "${handler.name}", ${name});`
 					);
 				}
 			}
