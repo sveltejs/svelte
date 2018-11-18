@@ -109,10 +109,7 @@ export default class Expression {
 				if (isReference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
-					if (currentScope.has(name)) {
-						contextual_dependencies.add(name);
-						return;
-					}
+					if (currentScope.has(name)) return;
 
 					expression.usesContext = true;
 
@@ -124,6 +121,8 @@ export default class Expression {
 					}
 
 					if (scope.names.has(name)) {
+						contextual_dependencies.add(name);
+
 						scope.dependenciesForName.get(name).forEach(dependency => {
 							dependencies.add(dependency);
 						});
