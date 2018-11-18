@@ -7,7 +7,7 @@
 
 <Modal ref:modal>
 	<span>{letter}</span>
-	<select bind:value='letter'>
+	<select bind:value={letter}>
 		{#each letters as letter}
 			<option value="{letter}">{letter}</option>
 		{/each}

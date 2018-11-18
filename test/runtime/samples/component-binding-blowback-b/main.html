@@ -1,6 +1,6 @@
 <script>
 	import Nested from './Nested.html';
-	
+
 	export let count;
 	export let idToValue = Object.create(null);
 
@@ -11,7 +11,7 @@
 	}
 </script>
 
-<input type='number' bind:value='count'>
+<input type='number' bind:value={count}>
 
 <ol>
 	{#each ids as id}

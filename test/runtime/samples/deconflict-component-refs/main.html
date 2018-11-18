@@ -2,7 +2,7 @@
 	{#each components as component}
 		<li>
 			{#if component.edit}
-				<input ref:name bind:value=component.name />
+				<input ref:name bind:value={component}.name />
 			{:else}
 				{component.name}
 			{/if}

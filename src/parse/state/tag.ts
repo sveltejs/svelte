@@ -388,23 +388,9 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== 1 && get_directive_type(name.slice(0, colon_index));
 
-	let value;
-
-	if (parser.eat('=')) {
-		if (type === 'Binding') {
-			// TODO should this be a special case? tbh this whole thing
-			// could use a lil refactoring probably
-			const quote = parser.read(/['"']/);
-			const expression = readExpression(parser);
-			value = [{ type: 'MustacheTag', start: expression.start, end: expression.end, expression }];
-
-			if (quote) parser.eat(quote, true);
-		} else {
-			value = readAttributeValue(parser);
-		}
-	} else {
-		value = true;
-	}
+	const value = parser.eat('=')
+		? readAttributeValue(parser)
+		: true;
 
 	const end = parser.index;
 
@@ -415,19 +401,23 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 			start,
 			end,
 			type,
-			name: directive_name
+			name: directive_name,
+			expression: value[0] && value[0].expression
 		};
-
-		if (type === 'Binding') {
-			directive.value = value[0] && value[0].expression;
-		} else {
-			directive.expression = value[0] && value[0].expression;
-		}
 
 		if (type === 'Transition') {
 			const direction = name.slice(0, colon_index);
 			directive.intro = direction === 'in' || direction === 'transition';
 			directive.outro = direction === 'out' || direction === 'transition';
+		}
+
+		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
+			directive.expression = {
+				start: directive.start + colon_index + 1,
+				end: directive.end,
+				type: 'Identifier',
+				name: directive.name
+			};
 		}
 
 		return directive;

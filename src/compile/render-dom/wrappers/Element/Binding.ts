@@ -31,7 +31,7 @@ export default class BindingWrapper {
 		this.node = node;
 		this.parent = parent;
 
-		const { dependencies } = this.node.value;
+		const { dependencies } = this.node.expression;
 
 		block.addDependencies(dependencies);
 
@@ -46,7 +46,7 @@ export default class BindingWrapper {
 		if (node.isContextual) {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
-			const { name } = getObject(this.node.value.node);
+			const { name } = getObject(this.node.expression.node);
 			const eachBlock = block.contextOwners.get(name);
 
 			eachBlock.hasBinding = true;
@@ -73,17 +73,17 @@ export default class BindingWrapper {
 
 		let updateConditions: string[] = [];
 
-		const { name } = getObject(this.node.value.node);
-		const { snippet } = this.node.value;
+		const { name } = getObject(this.node.expression.node);
+		const { snippet } = this.node.expression;
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,
 		// we need to tell the component to update all the values `selected` might be
 		// pointing to
 		// TODO should this happen in preprocess?
-		const dependencies = new Set(this.node.value.dependencies);
+		const dependencies = new Set(this.node.expression.dependencies);
 
-		this.node.value.dependencies.forEach((prop: string) => {
+		this.node.expression.dependencies.forEach((prop: string) => {
 			const indirectDependencies = renderer.component.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
@@ -102,7 +102,7 @@ export default class BindingWrapper {
 
 		// special cases
 		if (this.node.name === 'group') {
-			const bindingGroup = getBindingGroup(renderer, this.node.value.node);
+			const bindingGroup = getBindingGroup(renderer, this.node.expression.node);
 
 			block.builders.hydrate.addLine(
 				`(#component.$$bindingGroups[${bindingGroup}] || (#component.$$bindingGroups[${bindingGroup}] = [])).push(${parent.var});`
@@ -135,7 +135,7 @@ export default class BindingWrapper {
 			updateDom = null;
 		}
 
-		const dependencyArray = [...this.node.value.dependencies]
+		const dependencyArray = [...this.node.expression.dependencies]
 
 		if (dependencyArray.length === 1) {
 			updateConditions.push(`changed.${dependencyArray[0]}`)
@@ -217,8 +217,8 @@ function getEventHandler(
 	let dependenciesArray = [...dependencies].filter(prop => prop[0] !== '$');
 
 	if (binding.node.isContextual) {
-		const tail = binding.node.value.node.type === 'MemberExpression'
-			? getTailSnippet(binding.node.value.node)
+		const tail = binding.node.expression.node.type === 'MemberExpression'
+			? getTailSnippet(binding.node.expression.node)
 			: '';
 
 		const head = block.bindings.get(name);
@@ -233,7 +233,7 @@ function getEventHandler(
 		};
 	}
 
-	if (binding.node.value.node.type === 'MemberExpression') {
+	if (binding.node.expression.node.type === 'MemberExpression') {
 		// This is a little confusing, and should probably be tidied up
 		// at some point. It addresses a tricky bug (#893), wherein
 		// Svelte tries to `set()` a computed property, which throws an
@@ -293,7 +293,7 @@ function getValueFromDom(
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
-		const bindingGroup = getBindingGroup(renderer, binding.node.value.node);
+		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
 			return `@getBindingGroupValue(#component.$$bindingGroups[${bindingGroup}])`;
 		}

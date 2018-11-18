@@ -1,4 +1,4 @@
-<select bind:value='selected'>
+<select bind:value={selected}>
 	{#each tasks as task}
 		<option value='{task}'>{task.description}</option>
 	{/each}
