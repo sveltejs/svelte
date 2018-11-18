@@ -15,7 +15,7 @@ export default {
 		<p>hello alice</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const input = target.querySelector('input');
 
 		assert.equal(input.value, 'alice');
@@ -23,7 +23,7 @@ export default {
 		const event = new window.Event('input');
 
 		input.value = 'bob';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>

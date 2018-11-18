@@ -13,14 +13,14 @@ export default {
 		<p>hello world</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const input = target.querySelector('input');
 		assert.equal(input.value, 'world');
 
 		const event = new window.Event('input');
 
 		input.value = 'everybody';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>

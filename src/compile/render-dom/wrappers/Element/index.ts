@@ -16,6 +16,7 @@ import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
+import addToSet from '../../../../utils/addToSet';
 
 const events = [
 	{
@@ -438,7 +439,11 @@ export default class ElementWrapper extends Wrapper {
 
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
+			const deps = new Set();
+
 			group.bindings.forEach(binding => {
+				addToSet(deps, binding.dependencies);
+
 				if (!binding.updateDom) return;
 
 				const updateConditions = needsLock ? [`!${lock}`] : [];
@@ -449,20 +454,7 @@ export default class ElementWrapper extends Wrapper {
 				);
 			});
 
-			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
 			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
-
-			const props = new Set();
-			const storeProps = new Set();
-			group.bindings.forEach(binding => {
-				binding.handler.props.forEach(prop => {
-					props.add(prop);
-				});
-
-				binding.handler.storeProps.forEach(prop => {
-					storeProps.add(prop);
-				});
-			}); // TODO use stringifyProps here, once indenting is fixed
 
 			// media bindings — awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
@@ -473,21 +465,23 @@ export default class ElementWrapper extends Wrapper {
 				block.addVariable(animation_frame);
 			}
 
-			block.builders.init.addBlock(deindent`
-				function ${handler}() {
-					${
-						animation_frame && deindent`
-							cancelAnimationFrame(${animation_frame});
-							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+			// TODO figure out how to handle locks
+
+			this.renderer.component.event_handlers.push({
+				name: handler,
+				body: deindent`
+					function ${handler}() {
+						${
+							animation_frame && deindent`
+								cancelAnimationFrame(${animation_frame});
+								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+						}
+						${mutations.length > 0 && mutations}
+						${Array.from(deps).map(dep => `$$make_dirty('${dep}');`)}
+						console.log('changed');
 					}
-					${usesStore && `var $ = #component.store.get();`}
-					${needsLock && `${lock} = true;`}
-					${mutations.length > 0 && mutations}
-					${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
-					${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
-					${needsLock && `${lock} = false;`}
-				}
-			`);
+				`
+			});
 
 			group.events.forEach(name => {
 				if (name === 'resize') {
@@ -496,7 +490,7 @@ export default class ElementWrapper extends Wrapper {
 					block.addVariable(resize_listener);
 
 					block.builders.mount.addLine(
-						`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
+						`${resize_listener} = @addResizeListener(${this.var}, ctx.${handler});`
 					);
 
 					block.builders.destroy.addLine(
@@ -504,11 +498,11 @@ export default class ElementWrapper extends Wrapper {
 					);
 				} else {
 					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${name}", ${handler});`
+						`@addListener(${this.var}, "${name}", ctx.${handler});`
 					);
 
 					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${name}", ${handler});`
+						`@removeListener(${this.var}, "${name}", ctx.${handler});`
 					);
 				}
 			});

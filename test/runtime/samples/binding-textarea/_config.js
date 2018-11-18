@@ -13,14 +13,14 @@ export default {
 		<p>some text</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const textarea = target.querySelector('textarea');
 		assert.equal(textarea.value, 'some text');
 
 		const event = new window.Event('input');
 
 		textarea.value = 'hello';
-		textarea.dispatchEvent(event);
+		await textarea.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<textarea></textarea>

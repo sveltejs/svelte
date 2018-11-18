@@ -74,7 +74,12 @@ export default class BindingWrapper {
 		let updateConditions: string[] = [];
 
 		const { name } = getObject(this.node.expression.node);
+
 		const { snippet } = this.node.expression;
+
+		// TODO unfortunate code is necessary because we need to use `ctx`
+		// inside the fragment, but not inside the <script>
+		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,
@@ -94,7 +99,7 @@ export default class BindingWrapper {
 
 		// view to model
 		const valueFromDom = getValueFromDom(renderer, this.parent, this);
-		const handler = getEventHandler(this, renderer, block, name, snippet, dependencies, valueFromDom);
+		const handler = getEventHandler(this, renderer, block, name, contextless_snippet, dependencies, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this, snippet);
@@ -154,7 +159,8 @@ export default class BindingWrapper {
 			initialUpdate: initialUpdate,
 			needsLock: !isReadOnly && needsLock,
 			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
-			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute()
+			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
+			dependencies: this.node.expression.dependencies
 		};
 	}
 }
@@ -213,7 +219,6 @@ function getEventHandler(
 	dependencies: Set<string>,
 	value: string
 ) {
-	const storeDependencies = [...dependencies].filter(prop => prop[0] === '$').map(prop => prop.slice(1));
 	let dependenciesArray = [...dependencies].filter(prop => prop[0] !== '$');
 
 	if (binding.node.isContextual) {
@@ -226,51 +231,27 @@ function getEventHandler(
 		return {
 			usesContext: true,
 			usesState: true,
-			usesStore: storeDependencies.length > 0,
 			mutation: `${head()}${tail} = ${value};`,
-			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`),
-			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
+			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`)
 		};
 	}
 
 	if (binding.node.expression.node.type === 'MemberExpression') {
-		// This is a little confusing, and should probably be tidied up
-		// at some point. It addresses a tricky bug (#893), wherein
-		// Svelte tries to `set()` a computed property, which throws an
-		// error in dev mode. a) it's possible that we should be
-		// replacing computations with *their* dependencies, and b)
-		// we should probably populate `component.target.readonly` sooner so
-		// that we don't have to do the `.some()` here
-		dependenciesArray = dependenciesArray.filter(prop => !renderer.component.computations.some(computation => computation.key === prop));
-
 		return {
 			usesContext: false,
 			usesState: true,
-			usesStore: storeDependencies.length > 0,
-			mutation: `${snippet} = ${value}`,
-			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`),
-			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
+			mutation: `${snippet} = ${value};`,
+			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`)
 		};
 	}
 
-	let props;
-	let storeProps;
-
-	if (name[0] === '$') {
-		props = [];
-		storeProps = [`${name.slice(1)}: ${value}`];
-	} else {
-		props = [`${name}: ${value}`];
-		storeProps = [];
-	}
+	const props = [`${name}: ${value}`];
 
 	return {
 		usesContext: false,
 		usesState: false,
-		usesStore: false,
-		mutation: null,
-		props,
-		storeProps
+		mutation: `${snippet} = ${value};`,
+		props
 	};
 }
 
@@ -311,5 +292,5 @@ function getValueFromDom(
 	}
 
 	// everything else
-	return `${element.var}.${name}`;
+	return `this.${name}`;
 }

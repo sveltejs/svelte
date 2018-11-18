@@ -121,7 +121,7 @@ export default function(node, renderer, options) {
 	}
 
 	node.bindings.forEach(binding => {
-		const { name, value: { snippet } } = binding;
+		const { name, expression: { snippet } } = binding;
 
 		if (name === 'group') {
 			// TODO server-render group bindings
