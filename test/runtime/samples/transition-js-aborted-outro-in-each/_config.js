@@ -8,7 +8,7 @@ export default {
 	},
 
 	test(assert, component, target, window, raf) {
-		const { things } = component.get();
+		const { things } = component;
 
 		component.things = [];
 		const spans = target.querySelectorAll('span');

@@ -521,7 +521,7 @@ export default class ElementWrapper extends Wrapper {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
+					`if (!(${allInitialStateIsDefined})) #component.$$root._beforecreate.push(${handler});`
 				);
 			}
 
@@ -529,7 +529,7 @@ export default class ElementWrapper extends Wrapper {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`#component.root._beforecreate.push(${handler});`
+					`#component.$$root._beforecreate.push(${handler});`
 				);
 			}
 		});
@@ -723,10 +723,10 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = `ctx.${intro.name}`;
 
-			block.builders.intro.addConditional(`#component.root._intro`, deindent`
+			block.builders.intro.addConditional(`#component.$$root.$$intro`, deindent`
 				if (${name}) ${name}.invalidate();
 
-				#component.root._aftercreate.push(() => {
+				@after_update(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
@@ -760,8 +760,8 @@ export default class ElementWrapper extends Wrapper {
 					`);
 				}
 
-				block.builders.intro.addConditional(`#component.root._intro`, deindent`
-					#component.root._aftercreate.push(() => {
+				block.builders.intro.addConditional(`#component.$$root.$$intro`, deindent`
+					@after_update(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
 					});

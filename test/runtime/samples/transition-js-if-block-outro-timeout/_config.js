@@ -14,7 +14,7 @@ export default {
 		assert.equal(window.getComputedStyle(div).opacity, 0);
 
 		raf.tick(600);
-		assert.equal(component.refs.div, undefined);
+		assert.equal(component.div, undefined);
 		assert.equal(target.querySelector('div'), undefined);
 	}
 };

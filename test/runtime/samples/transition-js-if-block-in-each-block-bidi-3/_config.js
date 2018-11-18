@@ -1,6 +1,6 @@
 export default {
 	props: {
-		foo: false,
+		visible: false,
 		threshold: 5
 	},
 

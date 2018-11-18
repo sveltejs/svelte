@@ -84,7 +84,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const name = this.var;
 
 		const componentInitProperties = [
-			`root: #component.root`
+			`root: #component.$$root`
 		];
 
 		if (this.fragment) {
@@ -289,7 +289,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			beforecreate = deindent`
-				#component.root._beforecreate.push(() => {
+				#component.$$root._beforecreate.push(() => {
 					${name}._bind({ ${this.node.bindings.map(b => `${quoteNameIfNecessary(b.name)}: 1`).join(', ')} }, ${name}.get());
 				});
 			`;
@@ -377,7 +377,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = new ${switch_value}(${switch_props}(ctx));
 
 						${this.node.bindings.length > 0 && deindent`
-						#component.root._beforecreate.push(() => {
+						#component.$$root._beforecreate.push(() => {
 							const changed = {};
 							${this.node.bindings.map(binding => deindent`
 							if (${binding.value.snippet} === void 0) changed.${binding.name} = 1;`)}
