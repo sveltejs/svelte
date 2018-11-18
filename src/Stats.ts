@@ -96,11 +96,12 @@ export default class Stats {
 			}
 		});
 
+		// TODO
 		const hooks: Record<string, boolean> = component && {
-			oncreate: !!component.templateProperties.oncreate,
-			ondestroy: !!component.templateProperties.ondestroy,
-			onstate: !!component.templateProperties.onstate,
-			onupdate: !!component.templateProperties.onupdate
+			oncreate: false,
+			ondestroy: false,
+			onstate: false,
+			onupdate: false
 		};
 
 		return {

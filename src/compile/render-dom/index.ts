@@ -109,14 +109,20 @@ export default function dom(
 	} else {
 		const refs = Array.from(component.refs);
 
+		const declarations = component.declarations.concat(
+			component.event_handlers.map(handler => handler.name)
+		);
+
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteComponent {
 				$$init($$make_dirty) {
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
+					${component.event_handlers.map(handler => handler.body)}
+
 					return [
 						// TODO only what's needed by the template
-						() => ({ ${(component.declarations).join(', ')} }),
+						() => ({ ${declarations.join(', ')} }),
 						props => {
 							// TODO only do this for export let|var
 							${(component.exports.map(name =>
@@ -147,8 +153,6 @@ export default function dom(
 			}
 		`);
 	}
-
-	const immutable = templateProperties.immutable ? templateProperties.immutable.value.value : options.immutable;
 
 	let result = builder.toString();
 

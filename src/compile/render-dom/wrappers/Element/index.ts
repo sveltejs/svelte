@@ -606,60 +606,43 @@ export default class ElementWrapper extends Wrapper {
 		const { component } = renderer;
 
 		this.node.handlers.forEach(handler => {
-			const isCustomEvent = component.events.has(handler.name);
-
-			const target = handler.shouldHoist ? 'this' : this.var;
+			const { isCustomEvent } = handler;
 
 			// get a name for the event handler that is globally unique
 			// if hoisted, locally unique otherwise
-			const handlerName = (handler.shouldHoist ? component : block).getUniqueName(
+			const handler_name = component.getUniqueName(
 				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
 			const component_name = block.alias('component'); // can't use #component, might be hoisted
 
-			// create the handler body
-			const handlerBody = deindent`
-				${handler.shouldHoist && (
-					handler.usesComponent || handler.usesContext
-						? `const { ${[handler.usesComponent && 'component', handler.usesContext && 'ctx'].filter(Boolean).join(', ')} } = ${target}._svelte;`
-						: null
-				)}
-
-				${handler.snippet ?
-					handler.snippet :
-					`${component_name}.fire("${handler.name}", event);`}
-			`;
-
 			if (isCustomEvent) {
-				block.addVariable(handlerName);
+				throw new Error(`TODO figure out custom events`);
+				block.addVariable(handler_name);
 
 				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(${component_name}, ${this.var}, function(event) {
-						${handlerBody}
+					${handler_name} = ctx.${handler.name}.call(${component_name}, ${this.var}, function(event) {
+						${handler.snippet}
 					});
 				`);
 
 				block.builders.destroy.addLine(deindent`
-					${handlerName}.destroy();
+					${handler_name}.destroy();
 				`);
 			} else {
 				const modifiers = [];
 				if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
 				if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
 
-				const handlerFunction = deindent`
-					function ${handlerName}(event) {
-						${modifiers}
-						(${handlerBody})(event);
-					}
-				`;
-
-				if (handler.shouldHoist) {
-					renderer.blocks.push(handlerFunction);
-				} else {
-					block.builders.init.addBlock(handlerFunction);
-				}
+				component.event_handlers.push({
+					name: handler_name,
+					body: deindent`
+						function ${handler_name}(event) {
+							${modifiers}
+							(${handler.snippet})(event);
+						}
+					`
+				});
 
 				const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
 				if (opts.length) {
@@ -668,19 +651,19 @@ export default class ElementWrapper extends Wrapper {
 						: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
 					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ${handlerName}, ${optString});`
+						`@addListener(${this.var}, "${handler.name}", ctx.${handler_name}, ${optString});`
 					);
 
 					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ${handlerName}, ${optString});`
+						`@removeListener(${this.var}, "${handler.name}", ctx.${handler_name}, ${optString});`
 					);
 				} else {
 					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ${handlerName});`
+						`@addListener(${this.var}, "${handler.name}", ctx.${handler_name});`
 					);
 
 					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
+						`@removeListener(${this.var}, "${handler.name}", ctx.${handler_name});`
 					);
 				}
 			}

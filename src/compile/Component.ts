@@ -10,7 +10,7 @@ import namespaces from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
 import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
-import { createScopes, extractNames } from '../utils/annotateWithScopes';
+import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
 import getName from '../utils/getName';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
@@ -24,6 +24,7 @@ import checkForDupes from './validate/js/utils/checkForDupes';
 import propValidators from './validate/js/propValidators';
 import fuzzymatch from './validate/utils/fuzzymatch';
 import flattenReference from '../utils/flattenReference';
+import { instrument } from '../utils/instrument';
 
 interface Computation {
 	key: string;
@@ -102,6 +103,7 @@ export default class Component {
 	name: string;
 	options: CompileOptions;
 	fragment: Fragment;
+	scope: Scope;
 
 	meta: {
 		namespace?: string;
@@ -124,24 +126,13 @@ export default class Component {
 	animations: Set<string>;
 	transitions: Set<string>;
 	actions: Set<string>;
-	importedComponents: Map<string, string>;
 	namespace: string;
 	hasComponents: boolean;
-	computations: Computation[];
-	templateProperties: Record<string, Node>;
 	javascript: string;
-
-	used: {
-		components: Set<string>;
-		helpers: Set<string>;
-		events: Set<string>;
-		animations: Set<string>;
-		transitions: Set<string>;
-		actions: Set<string>;
-	};
 
 	declarations: string[];
 	exports: Array<{ name: string, as: string }>;
+	event_handlers: Array<{ name: string, body: string }>;
 	props: string[];
 
 	refCallees: Node[];
@@ -189,19 +180,10 @@ export default class Component {
 		this.animations = new Set();
 		this.transitions = new Set();
 		this.actions = new Set();
-		this.importedComponents = new Map();
-
-		this.used = {
-			components: new Set(),
-			helpers: new Set(),
-			events: new Set(),
-			animations: new Set(),
-			transitions: new Set(),
-			actions: new Set(),
-		};
 
 		this.declarations = [];
 		this.exports = [];
+		this.event_handlers = [];
 
 		this.refs = new Set();
 		this.refCallees = [];
@@ -230,8 +212,6 @@ export default class Component {
 		this.aliases = new Map();
 		this.usedNames = new Set();
 
-		this.computations = [];
-		this.templateProperties = {};
 		this.properties = new Map();
 
 		this.walkJs();
@@ -486,6 +466,7 @@ export default class Component {
 		});
 
 		let { scope, map, globals } = createScopes(js.content);
+		this.scope = scope;
 
 		scope.declarations.forEach(name => {
 			this.userVars.add(name);
@@ -546,7 +527,7 @@ export default class Component {
 		const top_scope = scope;
 
 		walk(js.content, {
-			enter(node) {
+			enter: (node, parent) => {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
@@ -555,15 +536,9 @@ export default class Component {
 					const { name } = flattenReference(node.left);
 
 					if (scope.findOwner(name) === top_scope) {
-						// TODO verify that it needs to be reactive, i.e. is
-						// used in the template (and not just in an event
-						// handler or transition etc)
-
-						// TODO handle arrow function expressions etc
-						code.appendLeft(node.end, `; $$make_dirty('${name}')`);
+						this.instrument(node, parent, name);
 					}
 				}
-
 			},
 
 			leave(node) {
@@ -580,6 +555,21 @@ export default class Component {
 		while (/\s/.test(source[b - 1])) b -= 1;
 
 		this.javascript = a !== b ? `[✂${a}-${b}✂]` : '';
+	}
+
+	instrument(node, parent, name) {
+		// TODO only make values reactive if they're used
+		// in the template
+
+		if (parent.type === 'ArrowFunctionExpression' && node === parent.body) {
+			// TODO don't do the $$result dance if this is an event handler
+			this.code.prependRight(node.start, `{ const $$result = `);
+			this.code.appendLeft(node.end, `; $$make_dirty('${name}'); return $$result; }`);
+		}
+
+		else {
+			this.code.appendLeft(node.end, `; $$make_dirty('${name}')`);
+		}
 	}
 }
 

@@ -26,8 +26,6 @@ export default class Transition extends Node {
 			});
 		}
 
-		this.component.used.transitions.add(this.name);
-
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
 			: null;

@@ -11,8 +11,6 @@ export default class Action extends Node {
 
 		this.name = info.name;
 
-		component.used.actions.add(this.name);
-
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
 			: null;

@@ -47,36 +47,42 @@ export default class WindowWrapper extends Wrapper {
 
 			let usesState = handler.dependencies.size > 0;
 
-			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
-			const handlerBody = deindent`
+			const handler_name = block.getUniqueName(`onwindow${handler.name}`);
+			const handler_body = deindent`
 				${usesState && `var ctx = #component.get();`}
 				${handler.snippet}
 			`;
 
 			if (isCustomEvent) {
 				// TODO dry this out
-				block.addVariable(handlerName);
+				block.addVariable(handler_name);
 
 				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(#component, window, function(event) {
-						(${handlerBody})(event);
+					${handler_name} = %events-${handler.name}.call(#component, window, function(event) {
+						(${handler_body})(event);
 					});
 				`);
 
 				block.builders.destroy.addLine(deindent`
-					${handlerName}.destroy();
+					${handler_name}.destroy();
 				`);
 			} else {
-				block.builders.init.addBlock(deindent`
-					function ${handlerName}(event) {
-						(${handlerBody})(event);
-					}
-					window.addEventListener("${handler.name}", ${handlerName});
-				`);
+				component.event_handlers.push({
+					name: handler_name,
+					body: deindent`
+						function ${handler_name}(event) {
+							(${handler.snippet})(event);
+						}
+					`
+				});
 
-				block.builders.destroy.addBlock(deindent`
-					window.removeEventListener("${handler.name}", ${handlerName});
-				`);
+				block.builders.init.addLine(
+					`window.addEventListener("${handler.name}", ctx.${handler_name});`
+				);
+
+				block.builders.destroy.addLine(
+					`window.removeEventListener("${handler.name}", ctx.${handler_name});`
+				);
 			}
 		});
 
@@ -106,7 +112,7 @@ export default class WindowWrapper extends Wrapper {
 		const timeout = block.getUniqueName(`window_updating_timeout`);
 
 		Object.keys(events).forEach(event => {
-			const handlerName = block.getUniqueName(`onwindow${event}`);
+			const handler_name = block.getUniqueName(`onwindow${event}`);
 			const props = events[event];
 
 			if (event === 'scroll') {
@@ -138,7 +144,7 @@ export default class WindowWrapper extends Wrapper {
 				});
 			}
 
-			const handlerBody = deindent`
+			const handler_body = deindent`
 				${event === 'scroll' && deindent`
 					if (${lock}) return;
 					${lock} = true;
@@ -154,14 +160,14 @@ export default class WindowWrapper extends Wrapper {
 			`;
 
 			block.builders.init.addBlock(deindent`
-				function ${handlerName}(event) {
-					${handlerBody}
+				function ${handler_name}(event) {
+					${handler_body}
 				}
-				window.addEventListener("${event}", ${handlerName});
+				window.addEventListener("${event}", ${handler_name});
 			`);
 
 			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("${event}", ${handlerName});
+				window.removeEventListener("${event}", ${handler_name});
 			`);
 		});
 
@@ -189,15 +195,15 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const handlerName = block.getUniqueName(`onlinestatuschanged`);
+			const handler_name = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
-				function ${handlerName}(event) {
+				function ${handler_name}(event) {
 					${component.options.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
 					${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				}
-				window.addEventListener("online", ${handlerName});
-				window.addEventListener("offline", ${handlerName});
+				window.addEventListener("online", ${handler_name});
+				window.addEventListener("offline", ${handler_name});
 			`);
 
 			// add initial value
@@ -206,8 +212,8 @@ export default class WindowWrapper extends Wrapper {
 			);
 
 			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("online", ${handlerName});
-				window.removeEventListener("offline", ${handlerName});
+				window.removeEventListener("online", ${handler_name});
+				window.removeEventListener("offline", ${handler_name});
 			`);
 		}
 	}

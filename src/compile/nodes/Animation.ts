@@ -11,8 +11,6 @@ export default class Animation extends Node {
 
 		this.name = info.name;
 
-		component.used.animations.add(this.name);
-
 		if (parent.animation) {
 			component.error(this, {
 				code: `duplicate-animation`,

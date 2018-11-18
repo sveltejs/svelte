@@ -65,7 +65,7 @@ export default class Expression {
 
 	thisReferences: Array<{ start: number, end: number }>;
 
-	constructor(component, parent, scope, info) {
+	constructor(component, parent, scope, info, isEventHandler?: boolean) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -113,8 +113,6 @@ export default class Expression {
 						let object = node;
 						while (object.type === 'MemberExpression') object = object.object;
 
-						component.used.helpers.add(name);
-
 						const alias = component.templateVars.get(`helpers-${name}`);
 						if (alias !== name) code.overwrite(object.start, object.end, alias);
 						return;
@@ -122,7 +120,7 @@ export default class Expression {
 
 					expression.usesContext = true;
 
-					if (!isSynthetic) {
+					if (!isSynthetic && !isEventHandler) {
 						// <option> value attribute could be synthetic — avoid double editing
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
