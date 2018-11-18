@@ -15,7 +15,5 @@ export default {
 
 		component.x = 6;
 		assert.htmlEqual(target.innerHTML, ``);
-
-		component.destroy();
 	}
 };

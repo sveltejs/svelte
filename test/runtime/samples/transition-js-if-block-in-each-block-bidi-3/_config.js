@@ -12,7 +12,7 @@ export default {
 		<div>5</div>
 	`,
 
-	test ( assert, component, target, window, raf ) {
+	test(assert, component, target, window, raf) {
 		const divs = target.querySelectorAll('div');
 
 		raf.tick(100);
@@ -31,7 +31,5 @@ export default {
 			<div>4</div>
 			<div>5</div>
 		`);
-
-		component.destroy();
 	}
 };

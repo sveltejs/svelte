@@ -5,11 +5,9 @@ export default {
 
 	html: '1, 3, 5, 7, 9',
 
-	test ( assert, component, target ) {
-		component.numbers = [ 10, 11, 12, 13, 14, 15, 16 ];
+	test(assert, component, target) {
+		component.numbers = [10, 11, 12, 13, 14, 15, 16];
 
-		assert.htmlEqual( target.innerHTML, `11, 13, 15` );
-
-		component.destroy();
+		assert.htmlEqual(target.innerHTML, `11, 13, 15`);
 	}
 };

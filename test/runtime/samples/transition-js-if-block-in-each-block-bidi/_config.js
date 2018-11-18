@@ -11,7 +11,7 @@ export default {
 		<div>5</div>
 	`,
 
-	test ( assert, component, target, window, raf ) {
+	test(assert, component, target, window, raf) {
 		const divs = target.querySelectorAll('div');
 
 		assert.equal(divs[0].foo, 0);
@@ -20,9 +20,9 @@ export default {
 		assert.equal(divs[0].foo, 1);
 
 		component.threshold = 4;
-		assert.equal( divs[4].foo, 1 );
+		assert.equal(divs[4].foo, 1);
 
-		raf.tick( 200 );
+		raf.tick(200);
 		assert.htmlEqual(target.innerHTML, `
 			<div>1</div>
 			<div>2</div>
@@ -31,15 +31,13 @@ export default {
 		`);
 
 		component.threshold = 3;
-		assert.equal( divs[3].foo, 1 );
+		assert.equal(divs[3].foo, 1);
 
-		raf.tick( 300 );
+		raf.tick(300);
 		assert.htmlEqual(target.innerHTML, `
 			<div>1</div>
 			<div>2</div>
 			<div>3</div>
 		`);
-
-		component.destroy();
 	}
 };

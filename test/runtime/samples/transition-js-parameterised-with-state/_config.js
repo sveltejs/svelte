@@ -15,7 +15,5 @@ export default {
 		assert.equal(div.foo, 200);
 
 		raf.tick(101);
-
-		component.destroy();
 	},
 };

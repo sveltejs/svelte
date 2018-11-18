@@ -29,7 +29,5 @@ export default {
 		raf.tick(250);
 		assert.deepEqual(component.intros.sort(), ['a', 'a', 'b', 'b', 'c', 'c', 'd', 'd']);
 		assert.equal(component.introCount, 4);
-
-		component.destroy();
 	}
 };

@@ -7,17 +7,15 @@ export default {
 		<p>x is greater than 10</p>
 	`,
 
-	test ( assert, component, target ) {
+	test(assert, component, target) {
 		component.x = 4;
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<p>x is less than 5</p>
-		` );
+		`);
 
 		component.x = 6;
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<p>x is between 5 and 10</p>
-		` );
-
-		component.destroy();
+		`);
 	}
 };

@@ -18,7 +18,7 @@ export default {
 			values.push(current.foo);
 		});
 
-		component.destroy();
+		component.$destroy();
 
 		assert.deepEqual(values, [2]);
 		assert.equal(valueOnDestroy, 2);

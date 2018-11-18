@@ -4,7 +4,7 @@ export default {
 	},
 
 	test(assert, component) {
-		component.destroy();
+		component.$destroy();
 		component.x = 2;
 	}
 };

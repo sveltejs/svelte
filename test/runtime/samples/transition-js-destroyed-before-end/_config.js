@@ -12,7 +12,7 @@ export default {
 		raf.tick(50);
 		assert.equal(div.foo, 0.5);
 
-		component.destroy();
+		component.$destroy();
 
 		raf.tick(100);
 	},

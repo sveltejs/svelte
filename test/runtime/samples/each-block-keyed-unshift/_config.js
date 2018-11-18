@@ -16,7 +16,5 @@ export default {
 			<p>b</p>
 			<p>c</p>
 		`);
-
-		component.destroy();
 	}
 };

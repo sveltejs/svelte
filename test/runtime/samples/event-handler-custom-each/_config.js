@@ -8,25 +8,23 @@ export default {
 		<p>fromState: </p>
 	`,
 
-	test ( assert, component, target, window ) {
-		const event = new window.MouseEvent( 'click' );
+	test(assert, component, target, window) {
+		const event = new window.MouseEvent('click');
 
-		const buttons = target.querySelectorAll( 'button' );
+		const buttons = target.querySelectorAll('button');
 
-		buttons[1].dispatchEvent( event );
+		buttons[1].dispatchEvent(event);
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<button>foo</button>
 			<button>bar</button>
 			<button>baz</button>
 
 			<p>fromDom: bar</p>
 			<p>fromState: bar</p>
-		` );
+		`);
 
-		assert.equal( component.fromDom, 'bar' );
-		assert.equal( component.fromState, 'bar' );
-
-		component.destroy();
+		assert.equal(component.fromDom, 'bar');
+		assert.equal(component.fromState, 'bar');
 	}
 };

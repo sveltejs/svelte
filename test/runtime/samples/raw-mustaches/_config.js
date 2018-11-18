@@ -9,12 +9,12 @@ export default {
 
 	html: `before${ns}<span><em>raw html!!!\\o/</span></em>${ns}after`,
 
-	test ( assert, component, target ) {
+	test(assert, component, target) {
 		component.raw = '';
-		assert.equal( target.innerHTML, `before${ns}${ns}after` );
+		assert.equal(target.innerHTML, `before${ns}${ns}after`);
 		component.raw = 'how about <strong>unclosed elements?';
-		assert.equal( target.innerHTML, `before${ns}how about <strong>unclosed elements?</strong>${ns}after` );
-		component.destroy();
-		assert.equal( target.innerHTML, '' );
+		assert.equal(target.innerHTML, `before${ns}how about <strong>unclosed elements?</strong>${ns}after`);
+		component.$destroy();
+		assert.equal(target.innerHTML, '');
 	}
 };

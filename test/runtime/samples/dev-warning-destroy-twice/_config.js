@@ -11,8 +11,8 @@ export default {
 			warnings.push(warning);
 		};
 
-		component.destroy();
-		component.destroy();
+		component.$destroy();
+		component.$destroy();
 
 		assert.deepEqual(warnings, [
 			`Component was already destroyed`
