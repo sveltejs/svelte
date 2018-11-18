@@ -54,7 +54,7 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 export default class Expression {
-	startnent: Component;
+	component: Component;
 	node: any;
 	snippet: string;
 	references: Set<string>;
