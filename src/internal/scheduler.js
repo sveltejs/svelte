@@ -3,6 +3,8 @@ let update_scheduled = false;
 const dirty_components = [];
 const after_update_callbacks = [];
 
+export const intro = { enabled: false };
+
 export function schedule_update(component) {
 	dirty_components.push(component);
 	if (!update_scheduled) {

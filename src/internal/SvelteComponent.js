@@ -1,4 +1,4 @@
-import { schedule_update, flush } from './scheduler.js';
+import { schedule_update, flush, intro } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
 import { run_all } from './utils.js';
 import { blankObject } from './utils.js';
@@ -35,10 +35,10 @@ export class SvelteComponent {
 		this.$$fragment = this.$$create_fragment(this, this.$$.get_state());
 
 		if (options.target) {
-			this.$$intro = false; // TODO can we put this in the scheduler instead?
+			intro.enabled = false;
 			this.$$mount(options.target);
 			flush();
-			this.$$intro = true;
+			intro.enabled = true;
 		}
 	}
 
