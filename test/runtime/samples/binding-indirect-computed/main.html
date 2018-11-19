@@ -13,7 +13,7 @@
 	}
 </script>
 
-<select bind:value="selected.letter">
+<select bind:value={selected.letter}>
 	{#each uppercase as letter}
 		<option value="{letter}">{letter}</option>
 	{/each}

@@ -1,4 +1,6 @@
 export default {
+	solo: 1,
+
 	props: {
 		user: {
 			name: 'alice',

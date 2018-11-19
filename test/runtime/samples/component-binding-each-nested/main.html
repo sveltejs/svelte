@@ -6,7 +6,7 @@
 </script>
 
 {#each a as x}
-	<Widget bind:value='x.name'/>
+	<Widget bind:value={x.name}/>
 {/each}
 
 <p>{a.map(getName).join(', ')}</p>

@@ -30,7 +30,7 @@
 </script>
 
 <ComponentSelector {components} bind:selectedComponent/>
-<Editor bind:code='selectedComponent.source' />
+<Editor bind:code={selectedComponent.source} />
 
 <pre>
 {compiled}
