@@ -1,5 +1,5 @@
 import deindent from '../../utils/deindent';
-import { stringify, escape } from '../../utils/stringify';
+import { stringify } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
 import Component from '../Component';

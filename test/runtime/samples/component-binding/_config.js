@@ -1,5 +1,4 @@
 export default {
-	solo: 1,
 	'skip-ssr': true, // TODO delete this line, once binding works
 
 	html: `

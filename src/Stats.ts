@@ -1,4 +1,4 @@
-import { Node, Warning } from './interfaces';
+import { Warning } from './interfaces';
 import Component from './compile/Component';
 
 const now = (typeof process !== 'undefined' && process.hrtime)

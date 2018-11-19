@@ -1,8 +1,6 @@
 import readExpression from '../read/expression';
 import readScript from '../read/script';
 import readStyle from '../read/style';
-import { readDirective } from '../read/directives';
-import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
 import { Parser } from '../index';

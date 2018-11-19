@@ -1,17 +1,12 @@
-import { parseExpressionAt } from 'acorn';
 import MagicString, { Bundle } from 'magic-string';
-import isReference from 'is-reference';
 import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import deindent from '../utils/deindent';
 import reservedNames from '../utils/reservedNames';
 import namespaces from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
-import nodeToString from '../utils/nodeToString';
 import wrapModule from './wrapModule';
 import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
-import getName from '../utils/getName';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -19,72 +14,7 @@ import * as internal from '../internal/index';
 import { Node, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
-import checkForComputedKeys from './validate/js/utils/checkForComputedKeys';
-import checkForDupes from './validate/js/utils/checkForDupes';
-import fuzzymatch from './validate/utils/fuzzymatch';
 import flattenReference from '../utils/flattenReference';
-
-interface Computation {
-	key: string;
-	deps: string[];
-	hasRestParam: boolean;
-}
-
-interface Declaration {
-	type: string;
-	name: string;
-	node: Node;
-	block: string;
-}
-
-function detectIndentation(str: string) {
-	const pattern = /^[\t\s]{1,4}/gm;
-	let match;
-
-	while (match = pattern.exec(str)) {
-		if (match[0][0] === '\t') return '\t';
-		if (match[0].length === 2) return '  ';
-	}
-
-	return '    ';
-}
-
-function getIndentationLevel(str: string, b: number) {
-	let a = b;
-	while (a > 0 && str[a - 1] !== '\n') a -= 1;
-	return /^\s*/.exec(str.slice(a, b))[0];
-}
-
-function getIndentExclusionRanges(node: Node) {
-	// TODO can we fold this into a different pass?
-	const ranges: Node[] = [];
-	walk(node, {
-		enter(node: Node) {
-			if (node.type === 'TemplateElement') ranges.push(node);
-		}
-	});
-	return ranges;
-}
-
-function increaseIndentation(
-	code: MagicString,
-	start: number,
-	end: number,
-	indentationLevel: string,
-	ranges: Node[]
-) {
-	const str = code.original.slice(start, end);
-	const lines = str.split('\n');
-
-	let c = start;
-	lines.forEach(line => {
-		if (line) {
-			code.prependRight(c, '\t\t\t'); // TODO detect indentation
-		}
-
-		c += line.length + 1;
-	});
-}
 
 // We need to tell estree-walker that it should always
 // look for an `else` block, otherwise it might get

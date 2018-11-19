@@ -2,7 +2,7 @@ import Node from './shared/Node';
 import Binding from './Binding';
 import EventHandler from './EventHandler';
 import flattenReference from '../../utils/flattenReference';
-import fuzzymatch from '../validate/utils/fuzzymatch';
+import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 
 const validBindings = [

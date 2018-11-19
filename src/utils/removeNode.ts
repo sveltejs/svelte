@@ -1,5 +1,4 @@
 import MagicString from 'magic-string';
-import getName from '../utils/getName';
 import { Node } from '../interfaces';
 
 const keys = {
@@ -44,16 +43,4 @@ export function removeNode(code: MagicString, parent: Node, node: Node) {
 	code.remove(a, b);
 	list.splice(i, 1);
 	return;
-}
-
-export function removeObjectKey(code: MagicString, node: Node, key: string) {
-	if (node.type !== 'ObjectExpression') return;
-
-	let i = node.properties.length;
-	while (i--) {
-		const property = node.properties[i];
-		if (property.key.type === 'Identifier' && getName(property.key) === key) {
-			removeNode(code, node, property);
-		}
-	}
 }

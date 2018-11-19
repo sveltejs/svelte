@@ -1,3 +1,10 @@
+export default function fuzzymatch(name: string, names: string[]) {
+	const set = new FuzzySet(names);
+	const matches = set.get(name);
+
+	return matches && matches[0] && matches[0][0] > 0.7 ? matches[0][1] : null;
+}
+
 // adapted from https://github.com/Glench/fuzzyset.js/blob/master/lib/fuzzyset.js
 // BSD Licensed
 
@@ -86,7 +93,7 @@ function sortDescending(a, b) {
 	return b[0] - a[0];
 }
 
-export default class FuzzySet {
+class FuzzySet {
 	exactSet: object;
 	matchDict: object;
 	items: object;

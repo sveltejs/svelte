@@ -1,13 +1,8 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
-import addToSet from '../../utils/addToSet';
 import flattenReference from '../../utils/flattenReference';
-import validCalleeObjects from '../../utils/validCalleeObjects';
-import list from '../../utils/list';
 import { createScopes } from '../../utils/annotateWithScopes';
 import { walk } from 'estree-walker';
-
-const validBuiltins = new Set(['set', 'fire', 'destroy']);
 
 export default class EventHandler extends Node {
 	name: string;
