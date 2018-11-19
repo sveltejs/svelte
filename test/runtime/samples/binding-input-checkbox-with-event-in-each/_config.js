@@ -18,7 +18,7 @@ export default {
 	`,
 
 	test(assert, component, target, window) {
-		const { cats } = component.get();
+		const { cats } = component;
 		const newCats = cats.slice();
 		newCats.push({
 			name: "cat " + cats.length,

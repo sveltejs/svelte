@@ -7,7 +7,7 @@ export default {
 
 	test(assert, component) {
 		component.$destroy();
-		const { foo } = component.get();
+		const { foo } = component;
 		assert.equal(foo, undefined);
 	}
 }

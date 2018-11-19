@@ -23,7 +23,7 @@ export default {
 		inputs[1].value = 'w';
 		inputs[1].dispatchEvent(new window.MouseEvent('input'));
 
-		assert.deepEqual(component.get(), {
+		assert.deepEqual(component, {
 			foo: {
 				bar: ['x', 'w', 'z']
 			}

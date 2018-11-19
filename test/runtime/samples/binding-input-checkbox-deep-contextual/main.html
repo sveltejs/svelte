@@ -1,8 +1,8 @@
 <script>
 	export let items;
 
-	function numCompleted() {
-		return items.reduce( ( total, item ) => total + ( item.completed ? 1 : 0 ), 0 );
+	export function numCompleted() {
+		return items.reduce((total, item) => total + (item.completed ? 1 : 0), 0);
 	}
 </script>
 

@@ -8,7 +8,7 @@ export default {
 	preserveIdentifiers: true,
 
 	test(assert, component, target) {
-		const { tagList } = component.get();
+		const { tagList } = component;
 		tagList.push('two');
 		component.tagList = tagList;
 

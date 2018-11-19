@@ -21,7 +21,7 @@ export default {
 		inputs[1].value = 'Oz';
 		inputs[1].dispatchEvent(new window.Event('input'));
 
-		const { people } = component.get();
+		const { people } = component;
 
 		assert.deepEqual(people, [
 			{ name: { first: 'Doctor', last: 'Oz' } }

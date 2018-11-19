@@ -12,7 +12,7 @@ export default {
 	},
 
 	test(assert, component, target) {
-		const { things } = component.get();
+		const { things } = component;
 
 		component.things = things.reverse();
 
