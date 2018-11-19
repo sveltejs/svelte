@@ -13,7 +13,7 @@ export default {
 
 	test(assert, component, target, window) {
 		let triggered = false;
-		component.refs.nested.on('state', ({ changed }) => {
+		component.nested.on('state', ({ changed }) => {
 			if (changed.field2) triggered = true;
 		});
 

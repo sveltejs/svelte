@@ -3,7 +3,7 @@ export default {
 	html: `<div><h3>Called 0 times.</h3></div>`,
 
 	test(assert, component, target, window) {
-		var nested = component.refs.nested;
+		var nested = component.nested;
 		nested.on('state', ({ changed }) => {
 			if (changed.foo) {
 				nested.set({ count: nested.get().count + 1 });

@@ -1,5 +1,5 @@
 export default {
 	test(assert, component) {
-		assert.equal(component.refs.one.snapshot, 2);
+		assert.equal(component.one.snapshot, 2);
 	}
 };

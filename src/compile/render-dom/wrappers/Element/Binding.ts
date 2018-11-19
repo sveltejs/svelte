@@ -270,8 +270,8 @@ function getValueFromDom(
 	// <select bind:value='selected>
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
-			`@selectMultipleValue(${element.var})` :
-			`@selectValue(${element.var})`;
+			`@selectMultipleValue(this)` :
+			`@selectValue(this)`;
 	}
 
 	const type = node.getStaticAttributeValue('type');
@@ -283,16 +283,16 @@ function getValueFromDom(
 			return `@getBindingGroupValue(#component.$$bindingGroups[${bindingGroup}])`;
 		}
 
-		return `${element.var}.__value`;
+		return `this.__value`;
 	}
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `@toNumber(${element.var}.${name})`;
+		return `@toNumber(this.${name})`;
 	}
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
-		return `@timeRangesToArray(${element.var}.${name})`
+		return `@timeRangesToArray(this.${name})`
 	}
 
 	// everything else

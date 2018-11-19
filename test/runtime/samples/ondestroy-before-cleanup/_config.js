@@ -1,6 +1,6 @@
 export default {
 	test(assert, component, target) {
-		const top = component.refs.top;
+		const top = component.top;
 		const div = target.querySelector('div');
 
 		component.visible = false;

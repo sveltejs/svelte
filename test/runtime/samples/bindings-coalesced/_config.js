@@ -1,6 +1,6 @@
 export default {
 	test(assert, component) {
-		const { foo, p } = component.refs;
+		const { foo, p } = component;
 
 		const values = [];
 

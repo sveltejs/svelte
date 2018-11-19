@@ -4,6 +4,6 @@ export default {
 	`,
 
 	test(assert, component) {
-		component.refs.nested.set({ foo: 'b' });
+		component.nested.set({ foo: 'b' });
 	}
 };

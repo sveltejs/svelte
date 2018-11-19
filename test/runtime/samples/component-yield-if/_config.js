@@ -2,7 +2,7 @@ export default {
 	html: '<div><p></p></div>',
 
 	test ( assert, component, target ) {
-		const widget = component.refs.widget;
+		const widget = component.widget;
 
 		assert.equal( widget.get().show, false );
 
