@@ -46,7 +46,7 @@ export default class EventHandler extends Node {
 						const { name } = flattenReference(node.left);
 
 						if (!scope.has(name)) {
-							component.instrument(node, parent, name);
+							component.instrument(node, parent, name, true);
 						}
 					}
 				},

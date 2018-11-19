@@ -20,4 +20,4 @@
 	}
 </script>
 
-<button use:tap='{event => x = event.x, y = event.y}'>{x}, {y}</button>
+<button use:tap='{event => (x = event.x, y = event.y)}'>{x}, {y}</button>

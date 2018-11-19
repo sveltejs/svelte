@@ -100,7 +100,6 @@ export default function(node, renderer, options) {
 	let open = `\${@validateSsrComponent(${expression}, '${node.name}')._render(__result, ${props}`;
 
 	const component_options = [];
-	component_options.push(`store: options.store`);
 
 	if (node.children.length) {
 		const target: AppendTarget = {

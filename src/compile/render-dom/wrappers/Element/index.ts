@@ -750,7 +750,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = `ctx.${intro.name}`;
 
-			block.builders.intro.addConditional(`#component.$$root.$$intro`, deindent`
+			block.builders.intro.addConditional(`@intro.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
 
 				@after_update(() => {
@@ -787,7 +787,7 @@ export default class ElementWrapper extends Wrapper {
 					`);
 				}
 
-				block.builders.intro.addConditional(`#component.$$root.$$intro`, deindent`
+				block.builders.intro.addConditional(`@intro.enabled`, deindent`
 					@after_update(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);

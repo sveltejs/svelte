@@ -16,15 +16,13 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import * as internal from '../internal/index';
-import { Node, ShorthandImport, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
+import { Node, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import checkForComputedKeys from './validate/js/utils/checkForComputedKeys';
 import checkForDupes from './validate/js/utils/checkForDupes';
-import propValidators from './validate/js/propValidators';
 import fuzzymatch from './validate/utils/fuzzymatch';
 import flattenReference from '../utils/flattenReference';
-import { instrument } from '../utils/instrument';
 
 interface Computation {
 	key: string;
@@ -519,7 +517,7 @@ export default class Component {
 					const { name } = flattenReference(node.left);
 
 					if (scope.findOwner(name) === top_scope) {
-						this.instrument(node, parent, name);
+						this.instrument(node, parent, name, false);
 					}
 				}
 			},
@@ -540,14 +538,18 @@ export default class Component {
 		this.javascript = a !== b ? `[✂${a}-${b}✂]` : '';
 	}
 
-	instrument(node, parent, name) {
+	instrument(node, parent, name, is_event_handler) {
 		// TODO only make values reactive if they're used
 		// in the template
 
 		if (parent.type === 'ArrowFunctionExpression' && node === parent.body) {
-			// TODO don't do the $$result dance if this is an event handler
-			this.code.prependRight(node.start, `{ const $$result = `);
-			this.code.appendLeft(node.end, `; $$make_dirty('${name}'); return $$result; }`);
+			if (is_event_handler) {
+				this.code.prependRight(node.start, `{ `);
+				this.code.appendLeft(node.end, `; $$make_dirty('${name}'); }`);
+			} else {
+				this.code.prependRight(node.start, `{ const $$result = `);
+				this.code.appendLeft(node.end, `; $$make_dirty('${name}'); return $$result; }`);
+			}
 		}
 
 		else {
