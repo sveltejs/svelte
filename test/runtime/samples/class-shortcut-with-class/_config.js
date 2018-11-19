@@ -1,16 +1,17 @@
 export default {
 	props: {
-		"is-active": true,
-		isSelected: true,
+		foo: true,
+		bar: true,
 		myClass: 'one two'
 	},
-	html: `<div class="one two is-active isSelected"></div>`,
 
-	test ( assert, component, target, window ) {
-		component.undefined = false;
+	html: `<div class="one two foo bar"></div>`,
 
-		assert.htmlEqual( target.innerHTML, `
-			<div class="one two isSelected"></div>
-		` );
+	test(assert, component, target, window) {
+		component.foo = false;
+
+		assert.htmlEqual(target.innerHTML, `
+			<div class="one two bar"></div>
+		`);
 	}
 };
