@@ -16,7 +16,7 @@ export default {
 		const clicked = [];
 
 		component.$on('clicked', event => {
-			clicked.push(event.node);
+			clicked.push(event.detail.node);
 		});
 
 		buttons[1].dispatchEvent(event);
