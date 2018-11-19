@@ -439,10 +439,12 @@ export default class ElementWrapper extends Wrapper {
 
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
-			const deps = new Set();
+			const dependencies = new Set();
+			const contextual_dependencies = new Set();
 
 			group.bindings.forEach(binding => {
-				addToSet(deps, binding.dependencies);
+				addToSet(dependencies, binding.dependencies);
+				addToSet(contextual_dependencies, binding.handler.contextual_dependencies);
 
 				if (!binding.updateDom) return;
 
@@ -467,21 +469,52 @@ export default class ElementWrapper extends Wrapper {
 
 			// TODO figure out how to handle locks
 
-			this.renderer.component.event_handlers.push({
-				name: handler,
-				body: deindent`
+			let callee;
+
+			// TODO dry this out — similar code for event handlers and component bindings
+			if (contextual_dependencies.size > 0) {
+				const deps = Array.from(contextual_dependencies);
+
+				block.builders.init.addBlock(deindent`
 					function ${handler}() {
-						${
-							animation_frame && deindent`
-								cancelAnimationFrame(${animation_frame});
-								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-						}
-						${mutations.length > 0 && mutations}
-						${Array.from(deps).map(dep => `$$make_dirty('${dep}');`)}
-						console.log('changed');
+						ctx.${handler}.call(this, ctx);
 					}
-				`
-			});
+				`);
+
+				this.renderer.component.event_handlers.push({
+					name: handler,
+					body: deindent`
+						function ${handler}({ ${deps.join(', ')} }) {
+							${
+								animation_frame && deindent`
+									cancelAnimationFrame(${animation_frame});
+									if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+							}
+							${mutations.length > 0 && mutations}
+							${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+						}
+					`
+				});
+
+				callee = handler;
+			} else {
+				this.renderer.component.event_handlers.push({
+					name: handler,
+					body: deindent`
+						function ${handler}() {
+							${
+								animation_frame && deindent`
+									cancelAnimationFrame(${animation_frame});
+									if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+							}
+							${mutations.length > 0 && mutations}
+							${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+						}
+					`
+				});
+
+				callee = `ctx.${handler}`;
+			}
 
 			group.events.forEach(name => {
 				if (name === 'resize') {
@@ -490,7 +523,7 @@ export default class ElementWrapper extends Wrapper {
 					block.addVariable(resize_listener);
 
 					block.builders.mount.addLine(
-						`${resize_listener} = @addResizeListener(${this.var}, ctx.${handler});`
+						`${resize_listener} = @addResizeListener(${this.var}, ${callee});`
 					);
 
 					block.builders.destroy.addLine(
@@ -498,11 +531,11 @@ export default class ElementWrapper extends Wrapper {
 					);
 				} else {
 					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${name}", ctx.${handler});`
+						`@addListener(${this.var}, "${name}", ${callee});`
 					);
 
 					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${name}", ctx.${handler});`
+						`@removeListener(${this.var}, "${name}", ${callee});`
 					);
 				}
 			});

@@ -44,13 +44,13 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (binding.isContextual) {
 				// we need to ensure that the each block creates a context including
 				// the list and the index, if they're not otherwise referenced
-				const { name } = getObject(binding.value.node);
+				const { name } = getObject(binding.expression.node);
 				const eachBlock = block.contextOwners.get(name);
 
 				eachBlock.hasBinding = true;
 			}
 
-			block.addDependencies(binding.value.dependencies);
+			block.addDependencies(binding.expression.dependencies);
 		});
 
 		this.node.handlers.forEach(handler => {
@@ -200,24 +200,24 @@ export default class InlineComponentWrapper extends Wrapper {
 			const builder = new CodeBuilder();
 
 			this.node.bindings.forEach((binding: Binding) => {
-				let { name: key } = getObject(binding.value.node);
+				let { name: key } = getObject(binding.expression.node);
 
 				let setFromChild;
 
 				if (binding.isContextual) {
-					const computed = isComputed(binding.value.node);
-					const tail = binding.value.node.type === 'MemberExpression' ? getTailSnippet(binding.value.node) : '';
+					const computed = isComputed(binding.expression.node);
+					const tail = binding.expression.node.type === 'MemberExpression' ? getTailSnippet(binding.expression.node) : '';
 
-					const head = block.bindings.get(key);
+					const { object, property, snippet } = block.bindings.get(key)();
 
-					const lhs = binding.value.node.type === 'MemberExpression'
-						? binding.value.snippet
-						: `${head()}${tail} = childState${quotePropIfNecessary(binding.name)}`;
+					const lhs = binding.expression.node.type === 'MemberExpression'
+						? binding.expression.snippet
+						: `${snippet} = childState${quotePropIfNecessary(binding.name)}`;
 
 					setFromChild = deindent`
 						${lhs} = childState${quotePropIfNecessary(binding.name)};
 
-						${[...binding.value.dependencies]
+						${[...binding.expression.dependencies]
 							.map((name: string) => {
 								const isStoreProp = name[0] === '$';
 								const prop = isStoreProp ? name.slice(1) : name;
@@ -239,9 +239,9 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (isStoreProp) hasStoreBindings = true;
 					else hasLocalBindings = true;
 
-					if (binding.value.node.type === 'MemberExpression') {
+					if (binding.expression.node.type === 'MemberExpression') {
 						setFromChild = deindent`
-							${binding.value.snippet} = childState${quotePropIfNecessary(binding.name)};
+							${binding.expression.snippet} = childState${quotePropIfNecessary(binding.name)};
 							${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(key)};
 						`;
 					}
@@ -252,8 +252,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				statements.push(deindent`
-					if (${binding.value.snippet} !== void 0) {
-						${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet};
+					if (${binding.expression.snippet} !== void 0) {
+						${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
 						${name_updating}${quotePropIfNecessary(binding.name)} = true;
 					}`
 				);
@@ -264,9 +264,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				);
 
 				updates.push(deindent`
-					if (!${name_updating}${quotePropIfNecessary(binding.name)} && ${[...binding.value.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-						${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet};
-						${name_updating}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet} !== void 0;
+					if (!${name_updating}${quotePropIfNecessary(binding.name)} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+						${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
+						${name_updating}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet} !== void 0;
 					}
 				`);
 			});
@@ -380,7 +380,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						#component.$$root._beforecreate.push(() => {
 							const changed = {};
 							${this.node.bindings.map(binding => deindent`
-							if (${binding.value.snippet} === void 0) changed.${binding.name} = 1;`)}
+							if (${binding.expression.snippet} === void 0) changed.${binding.name} = 1;`)}
 							${name}._bind(changed, ${name}.get());
 						});`}
 						${name}.$$fragment.c();

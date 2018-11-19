@@ -101,7 +101,11 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.contextOwners.set(prop.key.name, this);
 
 			// TODO this doesn't feel great
-			this.block.bindings.set(prop.key.name, () => `ctx.${this.vars.each_block_value}[ctx.${this.indexName}]${prop.tail}`);
+			this.block.bindings.set(prop.key.name, () => ({
+				object: this.vars.each_block_value,
+				property: this.indexName,
+				snippet: `${this.vars.each_block_value}[${this.indexName}]${prop.tail}`
+			}));
 		});
 
 		if (this.node.index) {

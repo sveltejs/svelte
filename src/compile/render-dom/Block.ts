@@ -11,7 +11,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, () => string>;
+	bindings?: Map<string, () => { object: string, property: string, snippet: string }>;
 	contextOwners?: Map<string, EachBlockWrapper>;
 	dependencies?: Set<string>;
 }
@@ -29,7 +29,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, () => string>;
+	bindings: Map<string, () => { object: string, property: string, snippet: string }>;
 	contextOwners: Map<string, EachBlockWrapper>;
 
 	builders: {

@@ -160,7 +160,8 @@ export default class BindingWrapper {
 			needsLock: !isReadOnly && needsLock,
 			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
 			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
-			dependencies: this.node.expression.dependencies
+			dependencies: this.node.expression.dependencies,
+			contextual_dependencies: this.node.expression.contextual_dependencies
 		};
 	}
 }
@@ -226,13 +227,14 @@ function getEventHandler(
 			? getTailSnippet(binding.node.expression.node)
 			: '';
 
-		const head = block.bindings.get(name);
+		const { object, property, snippet } = block.bindings.get(name)();
 
 		return {
 			usesContext: true,
 			usesState: true,
-			mutation: `${head()}${tail} = ${value};`,
-			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`)
+			mutation: `${snippet}${tail} = ${value};`,
+			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`),
+			contextual_dependencies: new Set([object, property])
 		};
 	}
 
@@ -241,7 +243,8 @@ function getEventHandler(
 			usesContext: false,
 			usesState: true,
 			mutation: `${snippet} = ${value};`,
-			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`)
+			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`),
+			contextual_dependencies: new Set()
 		};
 	}
 
@@ -251,7 +254,8 @@ function getEventHandler(
 		usesContext: false,
 		usesState: false,
 		mutation: `${snippet} = ${value};`,
-		props
+		props,
+		contextual_dependencies: new Set()
 	};
 }
 
