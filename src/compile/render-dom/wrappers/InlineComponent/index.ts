@@ -83,9 +83,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const name = this.var;
 
-		const componentInitProperties = [
-			`root: #component.$$root`
-		];
+		const componentInitProperties = [];
 
 		if (this.fragment) {
 			const slots = Array.from(this._slots).map(name => `${quoteNameIfNecessary(name)}: @createFragment()`);

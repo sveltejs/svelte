@@ -10,9 +10,6 @@ export class SvelteComponent {
 		this.$$onupdate = [];
 		this.$$ondestroy = [];
 
-		// TODO can we get rid of references to $$root and put
-		// the relevant code in the scheduler instead?
-		this.$$root = options.root || this;
 		this.$$callbacks = blankObject();
 		this.$$slotted = options.slots;
 
