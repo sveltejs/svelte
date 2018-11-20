@@ -36,7 +36,7 @@ export class SvelteComponent {
 		this.$$fragment = this.$$create_fragment(this, this.$$.get_state());
 
 		if (options.target) {
-			intro.enabled = false;
+			intro.enabled = !!options.intro;
 			this.$$mount(options.target);
 			flush();
 			intro.enabled = true;
@@ -91,7 +91,7 @@ export class SvelteComponent {
 
 	$$mount(target, anchor) {
 		this.$$fragment.c();
-		this.$$fragment.m(target, anchor);
+		this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
 		this.$$.inject_refs(this.$$refs);
 
 		const ondestroy = this.$$onmount.map(fn => fn()).filter(Boolean);

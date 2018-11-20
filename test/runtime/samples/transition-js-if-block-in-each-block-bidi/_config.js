@@ -11,6 +11,8 @@ export default {
 		<div>5</div>
 	`,
 
+	intro: true,
+
 	test(assert, component, target, window, raf) {
 		const divs = target.querySelectorAll('div');
 

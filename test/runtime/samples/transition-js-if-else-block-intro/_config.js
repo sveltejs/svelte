@@ -1,4 +1,6 @@
 export default {
+	intro: true,
+
 	test(assert, component, target, window, raf) {
 		assert.equal(target.querySelector('div'), component.no);
 		assert.equal(component.no.foo, 0);

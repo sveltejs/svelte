@@ -7,6 +7,8 @@ export default {
 		]
 	},
 
+	intro: true,
+
 	test(assert, component, target, window, raf) {
 		let divs = target.querySelectorAll('div');
 		assert.equal(divs[0].foo, 0);

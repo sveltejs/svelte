@@ -11,8 +11,9 @@ export default {
 		promise
 	},
 
+	intro: true,
+
 	test(assert, component, target, window, raf) {
-		component.visible = true;
 		let p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');

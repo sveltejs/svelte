@@ -5,6 +5,7 @@ export default {
 
 	test(assert, component, target, window, raf) {
 		const div = target.querySelector('div');
+
 		assert.equal(div.foo, 0);
 		assert.equal(div.oof, 1);
 

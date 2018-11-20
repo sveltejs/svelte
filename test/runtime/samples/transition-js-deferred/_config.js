@@ -1,6 +1,4 @@
 export default {
-	skipIntroByDefault: true,
-
 	test(assert, component, target, window, raf) {
 		component.visible = true;
 
