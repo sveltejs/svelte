@@ -22,7 +22,7 @@ export default class DocumentWrapper extends Wrapper {
 
 			const isCustomEvent = false; // TODO!!!
 
-			let usesState = handler.dependencies.size > 0;
+			let usesState = handler.expression.dependencies.size > 0;
 
 			handler.render(component, block, 'document', false); // TODO hoist?
 

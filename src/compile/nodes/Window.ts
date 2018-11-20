@@ -32,10 +32,10 @@ export default class Window extends Node {
 			}
 
 			else if (node.type === 'Binding') {
-				if (node.value.type !== 'Identifier') {
-					const { parts } = flattenReference(node.value);
+				if (node.expression.type !== 'Identifier') {
+					const { parts } = flattenReference(node.expression);
 
-					component.error(node.value, {
+					component.error(node.expression, {
 						code: `invalid-binding`,
 						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
 					});
