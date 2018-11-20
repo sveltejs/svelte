@@ -54,8 +54,6 @@ export default class Component {
 	event_handlers: Array<{ name: string, body: string }>;
 	props: string[];
 
-	refCallees: Node[];
-
 	code: MagicString;
 
 	indirectDependencies: Map<string, Set<string>>;
@@ -97,7 +95,6 @@ export default class Component {
 		this.event_handlers = [];
 
 		this.refs = new Set();
-		this.refCallees = [];
 
 		this.indirectDependencies = new Map();
 

@@ -6,11 +6,11 @@ export default {
 		<p>count: 0</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const click = new window.MouseEvent('click');
 		const button = target.querySelector('button');
 
-		button.dispatchEvent(click);
+		await button.dispatchEvent(click);
 
 		assert.equal(component.x, 1);
 		assert.htmlEqual(target.innerHTML, `
@@ -18,7 +18,7 @@ export default {
 			<p>count: 1</p>
 		`);
 
-		button.dispatchEvent(click);
+		await button.dispatchEvent(click);
 
 		assert.equal(component.x, 2);
 		assert.htmlEqual(target.innerHTML, `

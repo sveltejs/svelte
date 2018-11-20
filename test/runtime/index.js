@@ -118,7 +118,7 @@ describe.only("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -187,7 +187,7 @@ describe.only("runtime", () => {
 							skipIntroByDefault: compileOptions.skipIntroByDefault,
 							nestedTransitions: compileOptions.nestedTransitions,
 							dev: compileOptions.dev
-						}, compile); // eslint-disable-line no-console
+						}, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
@@ -199,7 +199,7 @@ describe.only("runtime", () => {
 							hydratable: hydrate,
 							skipIntroByDefault: compileOptions.skipIntroByDefault,
 							nestedTransitions: compileOptions.nestedTransitions
-						}, compile);
+						}, svelte.compile);
 					}
 
 					flush();

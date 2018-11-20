@@ -192,73 +192,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			name_updating = block.alias(`${name}_updating`);
 			block.addVariable(name_updating, '{}');
 
-			let hasLocalBindings = false;
-			let hasStoreBindings = false;
-
-			const builder = new CodeBuilder();
-
 			this.node.bindings.forEach((binding: Binding) => {
-				let { name: key } = getObject(binding.expression.node);
-
-				let setFromChild;
-
-				if (binding.isContextual) {
-					const computed = isComputed(binding.expression.node);
-					const tail = binding.expression.node.type === 'MemberExpression' ? getTailSnippet(binding.expression.node) : '';
-
-					const { object, property, snippet } = block.bindings.get(key)();
-
-					const lhs = binding.expression.node.type === 'MemberExpression'
-						? binding.expression.snippet
-						: `${snippet} = childState${quotePropIfNecessary(binding.name)}`;
-
-					setFromChild = deindent`
-						${lhs} = childState${quotePropIfNecessary(binding.name)};
-
-						${[...binding.expression.dependencies]
-							.map((name: string) => {
-								const isStoreProp = name[0] === '$';
-								const prop = isStoreProp ? name.slice(1) : name;
-								const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-								if (isStoreProp) hasStoreBindings = true;
-								else hasLocalBindings = true;
-
-								return `${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(name)};`;
-							})}
-					`;
-				}
-
-				else {
-					const isStoreProp = key[0] === '$';
-					const prop = isStoreProp ? key.slice(1) : key;
-					const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-					if (isStoreProp) hasStoreBindings = true;
-					else hasLocalBindings = true;
-
-					if (binding.expression.node.type === 'MemberExpression') {
-						setFromChild = deindent`
-							${binding.expression.snippet} = childState${quotePropIfNecessary(binding.name)};
-							${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(key)};
-						`;
-					}
-
-					else {
-						setFromChild = `${newState}${quotePropIfNecessary(prop)} = childState${quotePropIfNecessary(binding.name)};`;
-					}
-				}
-
 				statements.push(deindent`
 					if (${binding.expression.snippet} !== void 0) {
 						${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
 						${name_updating}${quotePropIfNecessary(binding.name)} = true;
 					}`
-				);
-
-				builder.addConditional(
-					`!${name_updating}${quotePropIfNecessary(binding.name)} && changed${quotePropIfNecessary(binding.name)}`,
-					setFromChild
 				);
 
 				updates.push(deindent`
@@ -270,27 +209,6 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 
 			block.maintainContext = true; // TODO put this somewhere more logical
-
-			const initialisers = [
-				hasLocalBindings && 'newState = {}',
-				hasStoreBindings && 'newStoreState = {}',
-			].filter(Boolean).join(', ');
-
-			// TODO use component.$on('state', ...) instead of _bind
-			componentInitProperties.push(deindent`
-				_bind(changed, childState) {
-					var ${initialisers};
-					${builder}
-					${hasLocalBindings && `#component.$set(newState);`}
-					${name_updating} = {};
-				}
-			`);
-
-			beforecreate = deindent`
-				#component.$$root._beforecreate.push(() => {
-					${name}._bind({ ${this.node.bindings.map(b => `${quoteNameIfNecessary(b.name)}: 1`).join(', ')} }, ${name}.get());
-				});
-			`;
 		}
 
 		this.node.handlers.forEach(handler => {
@@ -494,6 +412,31 @@ export default class InlineComponentWrapper extends Wrapper {
 				${this.node.ref && `if (#component.$$refs.${this.node.ref.name} === ${name}) #component.$$refs.${this.node.ref.name} = null;`}
 			`);
 		}
+
+		this.node.bindings.forEach(binding => {
+			const binding_name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
+
+			if (binding.expression.contextual_dependencies.size > 0) {
+				throw new Error(`TODO bindings with contextual dependencies`);
+			} else {
+				const lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end);
+				const deps = Array.from(binding.expression.dependencies);
+
+				component.event_handlers.push({
+					name: binding_name,
+					body: deindent`
+						function ${binding_name}(value) {
+							${lhs} = value;
+							${deps.map(dep => `$$make_dirty('${dep}');`)}
+						}
+					`
+				});
+
+				block.builders.init.addBlock(deindent`
+					${this.var}.$$bind('${binding.name}', ctx.${binding_name});
+				`);
+			}
+		});
 
 		if (component.options.nestedTransitions) {
 			block.builders.outro.addLine(

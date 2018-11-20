@@ -12,10 +12,7 @@ export default function dom(
 ) {
 	const format = options.format || 'es';
 
-	const {
-		name,
-		templateProperties
-	} = component;
+	const { name } = component;
 
 	const renderer = new Renderer(component, options);
 

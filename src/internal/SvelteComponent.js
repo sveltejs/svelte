@@ -10,12 +10,16 @@ export class SvelteComponent {
 		this.$$onupdate = [];
 		this.$$ondestroy = [];
 
+		this.$$bindings = blankObject();
 		this.$$callbacks = blankObject();
 		this.$$slotted = options.slots;
 
 		set_current_component(this);
 		const [get_state, inject_props, inject_refs] = this.$$init(
-			key => this.$$make_dirty(key)
+			key => {
+				this.$$make_dirty(key);
+				if (this.$$bindings[key]) this.$$bindings[key](get_state()[key]);
+			}
 		);
 
 		this.$$ = { get_state, inject_props, inject_refs };
@@ -39,6 +43,10 @@ export class SvelteComponent {
 		}
 	}
 
+	$destroy() {
+		this.$$destroy(true);
+	}
+
 	$on(type, callback) {
 		const callbacks = (this.$$callbacks[type] || (this.$$callbacks[type] = []));
 		callbacks.push(callback);
@@ -49,8 +57,28 @@ export class SvelteComponent {
 		};
 	}
 
-	$destroy() {
-		this.$$destroy(true);
+	$set(values) {
+		if (this.$$) {
+			this.$$.inject_props(values);
+			run_all(this.$$onprops);
+
+			for (const key in values) this.$$make_dirty(key);
+		}
+	}
+
+	$$bind(name, callback) {
+		this.$$bindings[name] = callback;
+		callback(this.$$.get_state()[name]);
+	}
+
+	$$destroy(detach) {
+		if (this.$$) {
+			this.$$fragment.d(detach);
+			run_all(this.$$ondestroy);
+
+			// TODO null out other refs
+			this.$$ondestroy = this.$$fragment = this.$$ = null;
+		}
 	}
 
 	$$make_dirty(key) {
@@ -71,29 +99,10 @@ export class SvelteComponent {
 		this.$$onmount = [];
 	}
 
-	$set(values) {
-		if (this.$$) {
-			this.$$.inject_props(values);
-			run_all(this.$$onprops);
-
-			for (const key in values) this.$$make_dirty(key);
-		}
-	}
-
 	$$update() {
 		this.$$fragment.p(this.$$dirty, this.$$.get_state());
 		this.$$.inject_refs(this.$$refs);
 		run_all(this.$$onupdate);
 		this.$$dirty = null;
-	}
-
-	$$destroy(detach) {
-		if (this.$$) {
-			this.$$fragment.d(detach);
-			run_all(this.$$ondestroy);
-
-			// TODO null out other refs
-			this.$$ondestroy = this.$$fragment = this.$$ = null;
-		}
 	}
 }
