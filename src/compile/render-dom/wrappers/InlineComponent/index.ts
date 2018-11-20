@@ -99,7 +99,6 @@ export default class InlineComponentWrapper extends Wrapper {
 		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
 		const name_changes = block.getUniqueName(`${name}_changes`);
 		let name_updating: string;
-		let beforecreate: string = null;
 
 		const updates: string[] = [];
 
@@ -186,9 +185,39 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 		}
 
-		if (this.node.bindings.length) {
-			renderer.hasComplexBindings = true;
+		const munged_bindings = this.node.bindings.map(binding => {
+			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
 
+			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
+			const dependencies = Array.from(binding.expression.dependencies);
+			const lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+
+			const args = ['value'];
+			if (contextual_dependencies.length > 0) {
+				args.push(`{ ${contextual_dependencies.join(', ')} }`);
+
+				block.builders.init.addBlock(deindent`
+					function ${name}(value) {
+						ctx.${name}.call(null, value, ctx);
+					}
+				`);
+			}
+
+			const body = deindent`
+				function ${name}(${args.join(', ')}) {
+					${lhs} = value;
+					${dependencies.map(dep => `$$make_dirty('${dep}');`)}
+				}
+			`;
+
+			component.event_handlers.push({ name, body });
+
+			return contextual_dependencies.length > 0
+				? `${this.var}.$$bind('${binding.name}', ${name});`
+				: `${this.var}.$$bind('${binding.name}', ctx.${name});`;
+		});
+
+		if (this.node.bindings.length) {
 			name_updating = block.alias(`${name}_updating`);
 			block.addVariable(name_updating, '{}');
 
@@ -238,7 +267,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				if (${switch_value}) {
 					var ${name} = new ${switch_value}(${switch_props}(ctx));
 
-					${beforecreate}
+					${munged_bindings}
 				}
 
 				${this.node.handlers.map(handler => deindent`
@@ -292,13 +321,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${switch_value}) {
 						${name} = new ${switch_value}(${switch_props}(ctx));
 
-						${this.node.bindings.length > 0 && deindent`
-						#component.$$root._beforecreate.push(() => {
-							const changed = {};
-							${this.node.bindings.map(binding => deindent`
-							if (${binding.expression.snippet} === void 0) changed.${binding.name} = 1;`)}
-							${name}._bind(changed, ${name}.get());
-						});`}
+						${munged_bindings}
 						${name}.$$fragment.c();
 
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
@@ -342,7 +365,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					${componentInitProperties.join(',\n')}
 				});
 
-				${beforecreate}
+				${munged_bindings}
 
 				${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
 			`);
@@ -412,31 +435,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				${this.node.ref && `if (#component.$$refs.${this.node.ref.name} === ${name}) #component.$$refs.${this.node.ref.name} = null;`}
 			`);
 		}
-
-		this.node.bindings.forEach(binding => {
-			const binding_name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
-
-			if (binding.expression.contextual_dependencies.size > 0) {
-				throw new Error(`TODO bindings with contextual dependencies`);
-			} else {
-				const lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end);
-				const deps = Array.from(binding.expression.dependencies);
-
-				component.event_handlers.push({
-					name: binding_name,
-					body: deindent`
-						function ${binding_name}(value) {
-							${lhs} = value;
-							${deps.map(dep => `$$make_dirty('${dep}');`)}
-						}
-					`
-				});
-
-				block.builders.init.addBlock(deindent`
-					${this.var}.$$bind('${binding.name}', ctx.${binding_name});
-				`);
-			}
-		});
 
 		if (component.options.nestedTransitions) {
 			block.builders.outro.addLine(

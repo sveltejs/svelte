@@ -60,7 +60,7 @@ export class SvelteComponent {
 	$set(values) {
 		if (this.$$) {
 			this.$$.inject_props(values);
-			run_all(this.$$onprops);
+			run_all(this.$$onprops); // TODO should this be deferred until the update?
 
 			for (const key in values) this.$$make_dirty(key);
 		}

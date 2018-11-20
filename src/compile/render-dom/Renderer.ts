@@ -22,7 +22,6 @@ export default class Renderer {
 
 	hasIntroTransitions: boolean;
 	hasOutroTransitions: boolean;
-	hasComplexBindings: boolean;
 
 	constructor(component: Component, options: CompileOptions) {
 		this.component = component;

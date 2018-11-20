@@ -9,7 +9,7 @@ export function schedule_update(component) {
 	dirty_components.push(component);
 	if (!update_scheduled) {
 		update_scheduled = true;
-		queueMicrotask(flush);
+		queue_microtask(flush);
 	}
 }
 
@@ -29,6 +29,6 @@ export function flush() {
 	update_scheduled = false;
 }
 
-function queueMicrotask(callback) {
+function queue_microtask(callback) {
 	Promise.resolve().then(callback);
 }

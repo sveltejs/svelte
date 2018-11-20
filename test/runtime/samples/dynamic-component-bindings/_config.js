@@ -8,10 +8,10 @@ export default {
 		<input>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		let input = target.querySelector('input');
 		input.value = 'abc';
-		input.dispatchEvent(new window.Event('input'));
+		await input.dispatchEvent(new window.Event('input'));
 
 		assert.equal(component.y, 'abc');
 
@@ -24,7 +24,7 @@ export default {
 
 		input = target.querySelector('input');
 		input.checked = true;
-		input.dispatchEvent(new window.Event('change'));
+		await input.dispatchEvent(new window.Event('change'));
 
 		assert.equal(component.z, true);
 	}
