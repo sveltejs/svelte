@@ -27,7 +27,7 @@
     "prepare": "npm run build",
     "dev": "rollup -c -w",
     "pretest": "npm run build",
-    "posttest": "agadoo shared.js",
+    "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "npm run lint && npm test",
     "prettier": "prettier --write \"src/**/*.ts\""
   },
