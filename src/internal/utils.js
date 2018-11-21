@@ -44,3 +44,7 @@ export function blankObject() {
 export function run_all(fns) {
 	fns.forEach(run);
 }
+
+export function is_function(thing) {
+	return typeof thing === 'function';
+}

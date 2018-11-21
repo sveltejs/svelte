@@ -1,6 +1,6 @@
 import { schedule_update, flush, intro } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
-import { run_all } from './utils.js';
+import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
 
 export class $$Component {
@@ -45,6 +45,7 @@ export class $$Component {
 
 	$destroy() {
 		this.$$destroy(true);
+		this.$$update = this.$$destroy = noop;
 	}
 
 	$on(type, callback) {
@@ -74,8 +75,9 @@ export class $$Component {
 			this.$$fragment.d(detach);
 			run_all(this.$$onDestroy);
 
-			// TODO null out other refs
-			this.$$onDestroy = this.$$fragment = this.$$ = null;
+			// TODO null out other refs, including this.$$ (but need to
+			// preserve final state?)
+			this.$$onDestroy = this.$$fragment = null;
 		}
 	}
 
@@ -93,7 +95,7 @@ export class $$Component {
 		this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
 		this.$$.inject_refs(this.$$refs);
 
-		const onDestroy = this.$$onMount.map(fn => fn()).filter(Boolean);
+		const onDestroy = this.$$onMount.map(run).filter(is_function);
 		this.$$onDestroy.push(...onDestroy);
 		this.$$onMount = [];
 	}
