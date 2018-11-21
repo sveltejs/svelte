@@ -5,6 +5,7 @@ import flattenReference from '../../../utils/flattenReference';
 import { createScopes } from '../../../utils/annotateWithScopes';
 import { Node } from '../../../interfaces';
 import addToSet from '../../../utils/addToSet';
+import globalWhitelist from '../../../utils/globalWhitelist';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -124,6 +125,7 @@ export default class Expression {
 					const { name, nodes } = flattenReference(node);
 
 					if (currentScope.has(name)) return;
+					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
 
 					expression.usesContext = true;
 
