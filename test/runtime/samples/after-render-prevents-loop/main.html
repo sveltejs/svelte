@@ -1,0 +1,13 @@
+<script>
+	import { afterRender } from 'svelte';
+
+	export let value;
+	let mirror;
+
+	afterRender(() => {
+		mirror = value;
+	});
+</script>
+
+<p>{value}</p>
+<p>{mirror}</p>

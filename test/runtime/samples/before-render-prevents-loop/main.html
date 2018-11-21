@@ -1,13 +1,13 @@
 <script>
 	import { beforeRender } from 'svelte';
 
-	export let foo;
-	export let bar;
+	export let value;
+	let mirror;
 
 	beforeRender(() => {
-		bar = foo.toUpperCase();
+		mirror = value;
 	});
 </script>
 
-<p>{foo}</p>
-<p>{bar}</p>
+<p>{value}</p>
+<p>{mirror}</p>

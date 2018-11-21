@@ -7,8 +7,8 @@ export default {
 		assert.deepEqual(order, [
 			'beforeRender',
 			'render',
-			'oncreate',
-			'afterRender'
+			'afterRender',
+			'onMount'
 		]);
 
 		order.length = 0;

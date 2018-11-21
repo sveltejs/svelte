@@ -2,19 +2,19 @@ export default {
 	'skip-ssr': true,
 
 	props: {
-		foo: 'woo!'
+		value: 'hello!'
 	},
 
 	html: `
-		<p>woo!</p>
-		<p>WOO!</p>
+		<p>hello!</p>
+		<p>hello!</p>
 	`,
 
 	test(assert, component, target) {
-		component.foo = 'yeah!';
+		component.value = 'goodbye!';
 		assert.htmlEqual(target.innerHTML, `
-			<p>yeah!</p>
-			<p>YEAH!</p>
+			<p>goodbye!</p>
+			<p>goodbye!</p>
 		`);
 	}
 };
