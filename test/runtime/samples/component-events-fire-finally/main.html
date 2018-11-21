@@ -1,8 +1,0 @@
-<script>
-	import { createEventDispatcher } from 'svelte';
-
-	const dispatch = createEventDispatcher();
-</script>
-
-<button on:click="{() => dispatch('foo', true)}">throw</button>
-<button on:click="{() => dispatch('foo', false)}">don't throw</button>
