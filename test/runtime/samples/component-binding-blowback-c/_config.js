@@ -14,11 +14,11 @@ export default {
 		</ol>
 	`,
 
-	test (assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const input = target.querySelector('input');
 
 		input.value = 4;
-		input.dispatchEvent(new window.Event('input'));
+		await input.dispatchEvent(new window.Event('input'));
 
 		assert.htmlEqual(target.innerHTML, `
 			<input type='number'>

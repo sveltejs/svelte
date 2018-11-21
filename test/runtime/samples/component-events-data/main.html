@@ -6,5 +6,5 @@
 </script>
 
 <div>
-	<Widget on:select='{event => dispatch("select", event.selection)}'/>
+	<Widget on:select='{event => dispatch("select", event.detail.selection)}'/>
 </div>

@@ -30,12 +30,12 @@ export default {
 		<pre>ONE SOURCE\nTWO SOURCE</pre>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const event = new window.MouseEvent('input');
 		const textarea = target.querySelector('textarea');
 
 		textarea.value = 'one source changed';
-		textarea.dispatchEvent(event);
+		await textarea.dispatchEvent(event);
 
 		assert.equal(component.compiled, 'ONE SOURCE CHANGED\nTWO SOURCE');
 		assert.htmlEqual(target.innerHTML, `
@@ -65,7 +65,7 @@ export default {
 		assert.equal(textarea.value, 'two source');
 
 		textarea.value = 'two source changed';
-		textarea.dispatchEvent(event);
+		await textarea.dispatchEvent(event);
 
 		assert.equal(component.compiled, 'ONE SOURCE CHANGED\nTWO SOURCE CHANGED');
 		assert.htmlEqual(target.innerHTML, `

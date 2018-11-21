@@ -9,5 +9,5 @@
 </script>
 
 {#each fields as field}
-	<Nested {field} bind:value='values[field]'/>
+	<Nested {field} bind:value={values[field]}/>
 {/each}

@@ -4,19 +4,19 @@ export default {
 		<label>lastname <input></label>
 	`,
 
-	test ( assert, component, target, window ) {
-		const input = new window.Event( 'input' );
-		const inputs = target.querySelectorAll( 'input' );
+	async test(assert, component, target, window) {
+		const input = new window.Event('input');
+		const inputs = target.querySelectorAll('input');
 
 		inputs[0].value = 'Ada';
-		inputs[0].dispatchEvent(input);
+		await inputs[0].dispatchEvent(input);
 		assert.deepEqual(component.values, {
 			firstname: 'Ada',
 			lastname: ''
 		});
 
 		inputs[1].value = 'Lovelace';
-		inputs[1].dispatchEvent(input);
+		await inputs[1].dispatchEvent(input);
 		assert.deepEqual(component.values, {
 			firstname: 'Ada',
 			lastname: 'Lovelace'
