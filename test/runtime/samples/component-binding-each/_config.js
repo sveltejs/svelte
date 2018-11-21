@@ -18,7 +18,7 @@ export default {
 		inputs[0].value = 'blah';
 		await inputs[0].dispatchEvent(event);
 
-		assert.deepEqual(component.a, [ 'blah', 'bar', 'baz' ]);
+		assert.deepEqual(component.a, ['blah', 'bar', 'baz']);
 		assert.htmlEqual(target.innerHTML, `
 			<input><input><input>
 			<p>blah, bar, baz</p>
