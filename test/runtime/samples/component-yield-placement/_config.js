@@ -12,13 +12,13 @@ export default {
 		</div>
 	`,
 
-	test ( assert, component, target, window ) {
-		const button = target.querySelector( 'button' );
-		const click = new window.MouseEvent( 'click' );
+	test(assert, component, target, window) {
+		const button = target.querySelector('button');
+		const click = new window.MouseEvent('click');
 
-		button.dispatchEvent( click );
+		button.dispatchEvent(click);
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<button>show modal</button>
 		`);
 	}
