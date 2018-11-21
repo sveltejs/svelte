@@ -1,10 +1,10 @@
 <script>
-	import { onprops } from 'svelte';
+	import { beforeRender } from 'svelte';
 
 	export let item;
 	export let foo = 'XX';
 
-	onprops(() => {
+	beforeRender(() => {
 		foo = item;
 	});
 </script>

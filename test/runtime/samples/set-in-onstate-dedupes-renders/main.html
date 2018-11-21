@@ -1,12 +1,12 @@
 <script>
-	import { onprops } from 'svelte';
+	import { beforeRender } from 'svelte';
 
 	import Widget from './Widget.html';
 
 	export let foo = { x: 1 };
 	export let bar = { x: 1 };
 
-	onprops(() => {
+	beforeRender(() => {
 		bar = foo;
 	});
 </script>

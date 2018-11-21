@@ -1,11 +1,11 @@
 <script>
-	import { onprops } from 'svelte';
+	import { beforeRender } from 'svelte';
 	import Nested from './Nested.html';
 
 	export let snapshots;
 	export let visibleThings = [];
 
-	onprops(() => {
+	beforeRender(() => {
 		if (!snapshots) {
 			// first run
 			snapshots = [];

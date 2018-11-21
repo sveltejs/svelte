@@ -6,11 +6,11 @@ export default {
 		<p>2</p>
 	`,
 
-	test ( assert, component, target ) {
+	test(assert, component, target) {
 		component.foo = 2;
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<p>2</p>
 			<p>4</p>
-		` );
+		`);
 	}
 };

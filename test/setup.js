@@ -17,12 +17,12 @@ require.extensions['.js'] = function(module, filename) {
 			exports.push(name);
 			return `${type} ${name}`;
 		})
-		.replace(/^export \{([^}]+)\}/gm, (match, names) => {
+		.replace(/^export \{([^}]+)\}(?: from ['"]([^'"]+)['"];?)?/gm, (match, names, source) => {
 			names.split(',').filter(Boolean).forEach(name => {
 				exports.push(name);
 			});
 
-			return '';
+			return source ? `const { ${names} } = require("${source}");` : '';
 		})
 		.replace(/^export function (\w+)/gm, 'exports.$1 = function $1');
 

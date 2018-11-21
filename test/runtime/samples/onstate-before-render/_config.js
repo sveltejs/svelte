@@ -5,10 +5,10 @@ export default {
 
 	test(assert, component, target) {
 		assert.deepEqual(order, [
-			'onprops',
+			'beforeRender',
 			'render',
 			'oncreate',
-			'onupdate'
+			'afterRender'
 		]);
 
 		order.length = 0;

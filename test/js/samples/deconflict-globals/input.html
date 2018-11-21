@@ -1,9 +1,9 @@
 <script>
-	import { onmount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let foo = 'bar';
 
-	onmount(() => {
+	onMount(() => {
 		alert(JSON.stringify(data()));
 	});
 </script>

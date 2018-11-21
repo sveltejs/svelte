@@ -1,20 +1,20 @@
 <script>
-	import { onmount, onprops, onupdate } from 'svelte';
+	import { onMount, beforeRender, afterRender } from 'svelte';
 
 	export let onstateRanBeforeOncreate;
 	export let onupdateRanBeforeOncreate;
 	let onpropsRan;
 	let onupdateRan;
 
-	onprops(() => {
+	beforeRender(() => {
 		onstateRan = true;
 	});
 
-	onupdate(() => {
+	afterRender(() => {
 		onupdateRan = true;
 	});
 
-	onmount(() => {
+	onMount(() => {
 		onpropsRanBeforeOncreate = onpropsRan;
 		onupdateRanBeforeOncreate = onupdateRan;
 	});

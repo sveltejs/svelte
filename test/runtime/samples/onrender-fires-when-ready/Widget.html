@@ -1,11 +1,11 @@
 <script>
-	import { onmount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let x;
 
 	export let inDocument;
 
-	onmount(() => {
+	onMount(() => {
 		inDocument = document.contains(x);
 	});
 </script>

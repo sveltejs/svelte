@@ -1,13 +1,13 @@
 <script>
-	import { ondestroy, onmount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	export let events;
 
-	onmount(() => {
+	onMount(() => {
 		events = ['create'];
 	});
 
-	ondestroy(() => {
+	onDestroy(() => {
 		events.push('destroy');
 	});
 </script>

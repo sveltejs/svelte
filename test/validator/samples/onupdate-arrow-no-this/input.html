@@ -1,5 +1,5 @@
 <script>
-	import { onupdate } from 'svelte';
+	import { afterRender } from 'svelte';
 
-	onupdate(() => console.log('updating'));
+	afterRender(() => console.log('updating'));
 </script>

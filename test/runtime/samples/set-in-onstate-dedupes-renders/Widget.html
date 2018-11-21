@@ -1,10 +1,10 @@
 <script>
-	import { onprops } from 'svelte';
+	import { beforeRender } from 'svelte';
 
 	export let foo;
 	export let bar;
 
-	onprops(() => {
+	beforeRender(() => {
 		if (foo.x !== bar.x) {
 			throw new Error('mismatch');
 		}

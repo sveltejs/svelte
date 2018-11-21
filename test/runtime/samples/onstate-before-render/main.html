@@ -1,5 +1,5 @@
 <script>
-	import { onmount, onprops, onupdate } from 'svelte';
+	import { onMount, beforeRender, afterRender } from 'svelte';
 
 	import order from './order.js';
 
@@ -8,15 +8,15 @@
 		return x;
 	}
 
-	onprops(() => {
-		order.push('onprops');
+	beforeRender(() => {
+		order.push('beforeRender');
 	});
 
-	onupdate(() => {
-		order.push('onupdate');
+	afterRender(() => {
+		order.push('afterRender');
 	});
 
-	onmount(() => {
+	onMount(() => {
 		order.push('oncreate');
 	});
 </script>

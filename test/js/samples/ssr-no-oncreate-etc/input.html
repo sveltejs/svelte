@@ -5,14 +5,14 @@
 </script>
 
 <script>
-	import { ondestroy, onmount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
-	onmount(() => {
+	onMount(() => {
 		console.log('oncreate');
 	});
 
-	ondestroy(() => {
-		console.log('ondestroy');
+	onDestroy(() => {
+		console.log('onDestroy');
 	});
 
 	function foo() {

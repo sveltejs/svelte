@@ -1,11 +1,11 @@
 <svelte:meta tag="my-app"/>
 
 <script>
-	import { onmount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let wasCreated;
 
-	onmount(() => {
+	onMount(() => {
 		wasCreated = true;
 	});
 </script>

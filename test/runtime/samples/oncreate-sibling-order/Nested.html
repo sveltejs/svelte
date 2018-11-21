@@ -1,11 +1,11 @@
 <script>
-	import { onmount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	import result from './result.js';
 
 	export let name;
 
-	onmount(() => {
+	onMount(() => {
 		result.push(`oncreate ${name}`);
 	});
 </script>

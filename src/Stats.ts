@@ -99,9 +99,9 @@ export default class Stats {
 		// TODO
 		const hooks: Record<string, boolean> = component && {
 			oncreate: false,
-			ondestroy: false,
+			onDestroy: false,
 			onstate: false,
-			onupdate: false
+			afterRender: false
 		};
 
 		return {

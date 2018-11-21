@@ -1,6 +1,6 @@
 [{
-	"code": "invalid-ondestroy-property",
-	"message": "'ondestroy' should be a function expression, not an arrow function expression",
+	"code": "invalid-onDestroy-property",
+	"message": "'onDestroy' should be a function expression, not an arrow function expression",
 	"pos": 29,
 	"start": {
 		"line": 3,

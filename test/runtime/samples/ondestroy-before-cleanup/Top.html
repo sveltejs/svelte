@@ -1,10 +1,10 @@
 <script>
-	import { ondestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 
 	export let element;
 	export let refOnDestroy;
 
-	ondestroy(() => {
+	onDestroy(() => {
 		refOnDestroy = element;
 	});
 </script>

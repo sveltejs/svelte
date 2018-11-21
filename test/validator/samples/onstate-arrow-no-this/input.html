@@ -1,5 +1,5 @@
 <script>
-	import { onprops } from 'svelte';
+	import { beforeRender } from 'svelte';
 
-	onprops(() => console.log('updating'));
+	beforeRender(() => console.log('updating'));
 </script>

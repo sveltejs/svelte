@@ -33,7 +33,7 @@ export function handlePromise(promise, info) {
 
 			// TODO is some of this redundant?
 			info.component.$$.inject_refs(info.component.$$refs);
-			run_all(info.component.$$onupdate);
+			run_all(info.component.$$afterRender);
 			flush();
 		}
 

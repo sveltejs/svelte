@@ -1,10 +1,10 @@
 <script>
-	import { onmount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let foo = 1;
 	export let bar;
 
-	onmount(() => {
+	onMount(() => {
 		foo = undefined;
 	});
 </script>

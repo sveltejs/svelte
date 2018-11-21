@@ -5,10 +5,10 @@ import { blankObject } from './utils.js';
 
 export class $$Component {
 	constructor(options) {
-		this.$$onprops = [];
-		this.$$onmount = [];
-		this.$$onupdate = [];
-		this.$$ondestroy = [];
+		this.$$beforeRender = [];
+		this.$$onMount = [];
+		this.$$afterRender = [];
+		this.$$onDestroy = [];
 
 		this.$$bindings = blankObject();
 		this.$$callbacks = blankObject();
@@ -60,8 +60,6 @@ export class $$Component {
 	$set(values) {
 		if (this.$$) {
 			this.$$.inject_props(values);
-			run_all(this.$$onprops); // TODO should this be deferred until the update?
-
 			for (const key in values) this.$$make_dirty(key);
 		}
 	}
@@ -74,10 +72,10 @@ export class $$Component {
 	$$destroy(detach) {
 		if (this.$$) {
 			this.$$fragment.d(detach);
-			run_all(this.$$ondestroy);
+			run_all(this.$$onDestroy);
 
 			// TODO null out other refs
-			this.$$ondestroy = this.$$fragment = this.$$ = null;
+			this.$$onDestroy = this.$$fragment = this.$$ = null;
 		}
 	}
 
@@ -90,19 +88,21 @@ export class $$Component {
 	}
 
 	$$mount(target, anchor) {
+		run_all(this.$$beforeRender);
 		this.$$fragment.c();
 		this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
 		this.$$.inject_refs(this.$$refs);
 
-		const ondestroy = this.$$onmount.map(fn => fn()).filter(Boolean);
-		this.$$ondestroy.push(...ondestroy);
-		this.$$onmount = [];
+		const onDestroy = this.$$onMount.map(fn => fn()).filter(Boolean);
+		this.$$onDestroy.push(...onDestroy);
+		this.$$onMount = [];
 	}
 
 	$$update() {
+		run_all(this.$$beforeRender);
 		this.$$fragment.p(this.$$dirty, this.$$.get_state());
 		this.$$.inject_refs(this.$$refs);
-		run_all(this.$$onupdate);
+		run_all(this.$$afterRender);
 		this.$$dirty = null;
 	}
 }

@@ -2,7 +2,7 @@
      Perhaps add on:introend etc on the elements? -->
 
 <script>
-	import { onmount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// [svelte-upgrade suggestion]
 	// manually refactor all references to __this
@@ -20,7 +20,7 @@
 		};
 	}
 
-	onmount(() => {
+	onMount(() => {
 		__this.intros = [];
 		__this.outros = [];
 		__this.introCount = 0;
