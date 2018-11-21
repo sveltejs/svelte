@@ -4,6 +4,7 @@ import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
 import { createScopes } from '../../../utils/annotateWithScopes';
 import { Node } from '../../../interfaces';
+import addToSet from '../../../utils/addToSet';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -104,6 +105,19 @@ export default class Expression {
 
 				if (node.type === 'ThisExpression') {
 					expression.thisReferences.push(node);
+				}
+
+				if (node.type === 'CallExpression') {
+					if (node.callee.type === 'Identifier') {
+						const dependencies_for_invocation = component.findDependenciesForFunctionCall(node.callee.name);
+						if (dependencies_for_invocation) {
+							addToSet(dependencies, dependencies_for_invocation);
+						} else {
+							dependencies.add('$$BAIL$$');
+						}
+					} else {
+						dependencies.add('$$BAIL$$');
+					}
 				}
 
 				if (isReference(node, parent)) {

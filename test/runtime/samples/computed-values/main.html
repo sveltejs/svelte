@@ -2,13 +2,11 @@
 	export let a = 1;
 	export let b = 2;
 
-	function c() {
+	export function c() {
 		return a + b;
 	}
 
-	function cSquared() {
-		return c() * c();
-	}
+	export const cSquared = () => c() * c();
 </script>
 
 <p>{a} + {b} = {c()}</p>

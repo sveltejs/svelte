@@ -360,6 +360,11 @@ export default class Component {
 		});
 	}
 
+	findDependenciesForFunctionCall(name) {
+		// TODO
+		return null;
+	}
+
 	walkJs() {
 		const { js } = this.ast;
 		if (!js) return;

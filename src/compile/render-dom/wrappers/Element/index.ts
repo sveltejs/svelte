@@ -588,7 +588,7 @@ export default class ElementWrapper extends Wrapper {
 		this.node.attributes
 			.filter(attr => attr.type === 'Attribute' || attr.type === 'Spread')
 			.forEach(attr => {
-				const condition = attr.dependencies.size > 0
+				const condition = (attr.dependencies.size > 0 && !attr.dependencies.has('$$BAIL$$'))
 					? `(${[...attr.dependencies].map(d => `changed.${d}`).join(' || ')})`
 					: null;
 

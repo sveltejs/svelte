@@ -44,16 +44,22 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 						.join(' + ');
 
 				if (propDependencies.size) {
-					const dependencies = Array.from(propDependencies);
-					const condition = (
-						(block.hasOutros ? `!#current || ` : '') +
-						dependencies.map(dependency => `changed.${dependency}`).join(' || ')
-					);
+					if (propDependencies.has('$$BAIL$$')) {
+						block.builders.update.addLine(
+							`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
+						);
+					} else {
+						const dependencies = Array.from(propDependencies);
+						const condition = (
+							(block.hasOutros ? `!#current || ` : '') +
+							dependencies.map(dependency => `changed.${dependency}`).join(' || ')
+						);
 
-					block.builders.update.addConditional(
-						condition,
-						`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
-					);
+						block.builders.update.addConditional(
+							condition,
+							`@setStyle(${this.parent.var}, "${prop.key}", ${value});`
+						);
+					}
 				}
 			} else {
 				value = stringify(prop.value[0].data);

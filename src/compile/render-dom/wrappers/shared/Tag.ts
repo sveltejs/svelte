@@ -48,9 +48,13 @@ export default class Tag extends Wrapper {
 
 			const updateCachedValue = `${value} !== (${value} = ${snippet})`;
 
-			const condition = this.node.shouldCache ?
-				(dependencies.size ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue) :
-				changedCheck;
+			const condition = dependencies.has('$$BAIL$$')
+				? updateCachedValue
+				: this.node.shouldCache
+					? dependencies.size > 0
+						? `(${changedCheck}) && ${updateCachedValue}`
+						: updateCachedValue
+					: changedCheck;
 
 			block.builders.update.addConditional(
 				condition,

@@ -134,6 +134,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				this.node.attributes.forEach(attr => {
 					const { name, dependencies } = attr;
 
+					// TODO probably need to account for $$BAIL$$ but
+					// not totally sure how. will come back to it
 					const condition = dependencies.size > 0 && (dependencies.size !== allDependencies.size)
 						? `(${[...dependencies].map(d => `changed.${d}`).join(' || ')})`
 						: null;
