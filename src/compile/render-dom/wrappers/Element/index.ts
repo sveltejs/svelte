@@ -446,7 +446,7 @@ export default class ElementWrapper extends Wrapper {
 
 			group.bindings.forEach(binding => {
 				addToSet(dependencies, binding.dependencies);
-				addToSet(contextual_dependencies, binding.handler.contextual_dependencies);
+				addToSet(contextual_dependencies, binding.contextual_dependencies);
 
 				if (!binding.updateDom) return;
 
