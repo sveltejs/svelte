@@ -69,6 +69,7 @@ export default class Component {
 	templateVars: Map<string, string>;
 	aliases: Map<string, string>;
 	usedNames: Set<string>;
+	init_uses_self = false;
 
 	locator: (search: number, startIndex?: number) => {
 		line: number,

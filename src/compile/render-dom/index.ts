@@ -121,6 +121,7 @@ export default function dom(
 		builder.addBlock(deindent`
 			class ${name} extends ${superclass} {
 				$$init($$make_dirty) {
+					${component.init_uses_self && `const $$self = this;`}
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
 					${component.event_handlers.map(handler => handler.body)}

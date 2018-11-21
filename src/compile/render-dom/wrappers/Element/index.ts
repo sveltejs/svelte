@@ -171,7 +171,9 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		node.handlers.forEach(handler => {
-			block.addDependencies(handler.expression.dependencies);
+			if (handler.expression) {
+				block.addDependencies(handler.expression.dependencies);
+			}
 		});
 
 		if (this.parent) {
@@ -662,7 +664,7 @@ export default class ElementWrapper extends Wrapper {
 
 				let name;
 
-				if (handler.expression.contextual_dependencies.size > 0) {
+				if (handler.expression && handler.expression.contextual_dependencies.size > 0) {
 					name = handler_name;
 
 					const deps = Array.from(handler.expression.contextual_dependencies);

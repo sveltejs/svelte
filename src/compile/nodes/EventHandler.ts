@@ -3,6 +3,7 @@ import Expression from './shared/Expression';
 import flattenReference from '../../utils/flattenReference';
 import { createScopes } from '../../utils/annotateWithScopes';
 import { walk } from 'estree-walker';
+import Component from '../Component';
 
 export default class EventHandler extends Node {
 	name: string;
@@ -19,7 +20,7 @@ export default class EventHandler extends Node {
 	args: Expression[];
 	snippet: string;
 
-	constructor(component, parent, template_scope, info) {
+	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
 
 		this.name = info.name;
@@ -53,7 +54,8 @@ export default class EventHandler extends Node {
 				}
 			});
 		} else {
-			this.snippet = null; // TODO handle shorthand events here?
+			component.init_uses_self = true;
+			this.snippet = `e => @bubble($$self, e)`
 		}
 
 		// TODO figure out what to do about custom events
