@@ -30,7 +30,9 @@ export function createEventDispatcher() {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
 			const event = new window.CustomEvent(type, { detail });
-			callbacks.slice().forEach(fn => fn(event));
+			callbacks.slice().forEach(fn => {
+				fn.call(component, event);
+			});
 		}
 	};
 }
