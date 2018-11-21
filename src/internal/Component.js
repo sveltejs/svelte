@@ -3,7 +3,7 @@ import { set_current_component } from './lifecycle.js'
 import { run_all } from './utils.js';
 import { blankObject } from './utils.js';
 
-export class SvelteComponent {
+export class $$Component {
 	constructor(options) {
 		this.$$onprops = [];
 		this.$$onmount = [];
@@ -104,5 +104,15 @@ export class SvelteComponent {
 		this.$$.inject_refs(this.$$refs);
 		run_all(this.$$onupdate);
 		this.$$dirty = null;
+	}
+}
+
+export class $$ComponentDev extends $$Component {
+	constructor(options) {
+		if (!options || !options.target) {
+			throw new Error(`'target' is a required option`);
+		}
+
+		super(options);
 	}
 }

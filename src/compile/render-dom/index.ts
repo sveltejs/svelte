@@ -110,8 +110,16 @@ export default function dom(
 			component.event_handlers.map(handler => handler.name)
 		);
 
+		const superclass = component.alias(options.dev ? '$$ComponentDev' : '$$Component');
+
+		if (options.dev && !options.hydratable) {
+			block.builders.hydrate.addLine(
+				'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
+			);
+		}
+
 		builder.addBlock(deindent`
-			class ${name} extends @SvelteComponent {
+			class ${name} extends ${superclass} {
 				$$init($$make_dirty) {
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 

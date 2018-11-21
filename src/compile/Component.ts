@@ -201,10 +201,13 @@ export default class Component {
 			return sigil.slice(1) + name;
 		});
 
-		const importedHelpers = Array.from(helpers).concat('SvelteComponent').sort().map(name => {
-			const alias = this.alias(name);
-			return { name, alias };
-		});
+		const importedHelpers = Array.from(helpers)
+			.concat(options.dev ? '$$ComponentDev' : '$$Component')
+			.sort()
+			.map(name => {
+				const alias = this.alias(name);
+				return { name, alias };
+			});
 
 		const sharedPath = options.shared || 'svelte/internal.js';
 

@@ -8,4 +8,4 @@ export * from './spread.js';
 export * from './ssr.js';
 export * from './transitions.js';
 export * from './utils.js';
-export * from './SvelteComponent.js';
+export * from './Component.js';

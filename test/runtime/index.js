@@ -3,6 +3,8 @@ import chalk from 'chalk';
 import * as path from "path";
 import * as fs from "fs";
 import * as acorn from "acorn";
+import { rollup } from 'rollup';
+import virtual from 'rollup-plugin-virtual';
 import { transitionManager } from "../../internal.js";
 
 import {
@@ -213,35 +215,52 @@ describe.only("runtime", () => {
 		runTest(dir, internal, true);
 	});
 
-	it("fails if options.target is missing in dev mode", () => {
-		const { js } = svelte$.compile(`<div></div>`, {
-			format: "iife",
+	async function create_component(src = '<div></div>') {
+		const { js } = svelte$.compile(src, {
+			format: "es", // TODO change this to esm
 			name: "SvelteComponent",
 			dev: true
 		});
 
-		const SvelteComponent = eval(
-			`(function () { ${js.code}; return SvelteComponent; }())`
+		const bundle = await rollup({
+			input: 'main.js',
+			plugins: [
+				virtual({
+					'main.js': js.code
+				}),
+				{
+					resolveId: (importee, importer) => {
+						if (importee.startsWith('svelte/')) {
+							return importee.replace('svelte', process.cwd());
+						}
+					}
+				}
+			]
+		});
+
+		const result = await bundle.generate({
+			format: 'iife',
+			name: 'App'
+		});
+
+		return eval(
+			`(function () { ${result.code}; return App; }())`
 		);
+	}
+
+	it("fails if options.target is missing in dev mode", async () => {
+		const App = await create_component();
 
 		assert.throws(() => {
-			new SvelteComponent();
+			new App();
 		}, /'target' is a required option/);
 	});
 
-	it("fails if options.hydrate is true but the component is non-hydratable", () => {
-		const { js } = svelte$.compile(`<div></div>`, {
-			format: "iife",
-			name: "SvelteComponent",
-			dev: true
-		});
-
-		const SvelteComponent = eval(
-			`(function () { ${js.code}; return SvelteComponent; }())`
-		);
+	it("fails if options.hydrate is true but the component is non-hydratable", async () => {
+		const App = await create_component();
 
 		assert.throws(() => {
-			new SvelteComponent({
+			new App({
 				target: {},
 				hydrate: true
 			});
