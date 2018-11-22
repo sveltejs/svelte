@@ -98,6 +98,8 @@ export class $$Component {
 		const onDestroy = this.$$onMount.map(run).filter(is_function);
 		this.$$onDestroy.push(...onDestroy);
 		this.$$onMount = [];
+
+		run_all(this.$$afterRender);
 	}
 
 	$$update() {
