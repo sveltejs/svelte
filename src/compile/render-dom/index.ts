@@ -149,6 +149,8 @@ export default function dom(
 			`
 		];
 
+		const debug_name = `<${component.customElement ? component.tag : name}>`;
+
 		if (component.options.dev) {
 			// TODO check no uunexpected props were passed, as well as
 			// checking that expected ones were passed
@@ -157,8 +159,6 @@ export default function dom(
 				.filter(name => !component.initialised_declarations.has(name));
 
 			if (expected.length) {
-				const debug_name = `<${component.customElement ? component.tag : name}>`;
-
 				body.push(deindent`
 					$$checkProps() {
 						const state = this.$$.get_state();
@@ -190,7 +190,7 @@ export default function dom(
 			} else if (component.options.dev) {
 				body.push(deindent`
 					set ${x.as}(value) {
-						throw new Error("${x.as} is read-only");
+						throw new Error("${debug_name}: Cannot set read-only property '${x.as}'");
 					}
 				`);
 			}
