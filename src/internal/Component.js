@@ -1,4 +1,4 @@
-import { schedule_update, flush, intro } from './scheduler.js';
+import { after_render, flush, intro, schedule_update } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
@@ -33,11 +33,13 @@ export class $$Component {
 			this.$$.inject_props(options.props);
 		}
 
+		run_all(this.$$beforeRender);
 		this.$$fragment = this.$$create_fragment(this, this.$$.get_state());
 
 		if (options.target) {
 			intro.enabled = !!options.intro;
 			this.$$mount(options.target);
+
 			flush();
 			intro.enabled = true;
 		}
@@ -90,7 +92,6 @@ export class $$Component {
 	}
 
 	$$mount(target, anchor) {
-		run_all(this.$$beforeRender);
 		this.$$fragment.c();
 		this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
 		this.$$.inject_refs(this.$$refs);
@@ -99,15 +100,16 @@ export class $$Component {
 		this.$$onDestroy.push(...onDestroy);
 		this.$$onMount = [];
 
-		run_all(this.$$afterRender);
+		this.$$afterRender.forEach(after_render);
 	}
 
 	$$update() {
 		run_all(this.$$beforeRender);
 		this.$$fragment.p(this.$$dirty, this.$$.get_state());
 		this.$$.inject_refs(this.$$refs);
-		run_all(this.$$afterRender);
 		this.$$dirty = null;
+
+		this.$$afterRender.forEach(after_render);
 	}
 }
 

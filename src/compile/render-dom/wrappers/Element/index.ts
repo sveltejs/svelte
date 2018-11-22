@@ -757,7 +757,7 @@ export default class ElementWrapper extends Wrapper {
 			block.builders.intro.addConditional(`@intro.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
 
-				@after_update(() => {
+				@after_render(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
@@ -792,7 +792,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 
 				block.builders.intro.addConditional(`@intro.enabled`, deindent`
-					@after_update(() => {
+					@after_render(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
 					});

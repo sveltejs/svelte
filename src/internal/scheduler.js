@@ -1,7 +1,7 @@
 let update_scheduled = false;
 
-const dirty_components = [];
-const after_update_callbacks = [];
+let dirty_components = [];
+const after_render_callbacks = [];
 
 export const intro = { enabled: false };
 
@@ -13,18 +13,33 @@ export function schedule_update(component) {
 	}
 }
 
-export function after_update(fn) {
-	after_update_callbacks.push(fn);
+export function after_render(fn) {
+	after_render_callbacks.push(fn);
 }
 
 export function flush() {
-	while (dirty_components.length) {
-		dirty_components.pop().$$update();
-	}
+	const seen_callbacks = new Set();
 
-	while (after_update_callbacks.length) {
-		after_update_callbacks.shift()();
-	}
+	do {
+		// first, call beforeRender functions
+		// and update components
+		while (dirty_components.length) {
+			dirty_components.shift().$$update();
+		}
+
+		// then, once components are updated, call
+		// afterRender functions. This may cause
+		// subsequent updates...
+		while (after_render_callbacks.length) {
+			const callback = after_render_callbacks.pop();
+			if (!seen_callbacks.has(callback)) {
+				callback();
+
+				// ...so guard against infinite loops
+				seen_callbacks.add(callback);
+			}
+		}
+	} while (dirty_components.length);
 
 	update_scheduled = false;
 }
