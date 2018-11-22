@@ -61,7 +61,8 @@ export default function dom(
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
 
 	if (component.customElement) {
-		const props = component.props || Array.from(component.expectedProperties);
+		// TODO use `export` to determine this
+		const props = Array.from(component.expectedProperties);
 
 		builder.addBlock(deindent`
 			class ${name} extends HTMLElement {
@@ -118,8 +119,8 @@ export default function dom(
 			);
 		}
 
-		builder.addBlock(deindent`
-			class ${name} extends ${superclass} {
+		const body = [
+			deindent`
 				$$init($$make_dirty) {
 					${component.init_uses_self && `const $$self = this;`}
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
@@ -145,17 +146,59 @@ export default function dom(
 				$$create_fragment(${component.alias('component')}, ctx) {
 					${block.getContents()}
 				}
+			`
+		];
 
-				${component.exports.map(x => deindent`
+		if (component.options.dev) {
+			// TODO check no uunexpected props were passed, as well as
+			// checking that expected ones were passed
+			const expected = component.exports
+				.map(x => x.name)
+				.filter(name => !component.initialised_declarations.has(name));
+
+			if (expected.length) {
+				const debug_name = `<${component.customElement ? component.tag : name}>`;
+
+				body.push(deindent`
+					$$checkProps() {
+						const state = this.$$.get_state();
+						${expected.map(name => deindent`
+
+						if (state.${name} === undefined) {
+							console.warn("${debug_name} was created without expected data property '${name}'");
+						}
+						`)}
+					}
+				`);
+			}
+		}
+
+		component.exports.forEach(x => {
+			body.push(deindent`
 				get ${x.as}() {
 					return this.$$.get_state().${x.name};
 				}
+			`);
 
-				set ${x.as}(value) {
-					this.$set({ ${x.name}: value });
-					@flush();
-				}
-				`)}
+			if (component.writable_declarations.has(x.as)) {
+				body.push(deindent`
+					set ${x.as}(value) {
+						this.$set({ ${x.name}: value });
+						@flush();
+					}
+				`);
+			} else if (component.options.dev) {
+				body.push(deindent`
+					set ${x.as}(value) {
+						throw new Error("${x.as} is read-only");
+					}
+				`);
+			}
+		});
+
+		builder.addBlock(deindent`
+			class ${name} extends ${superclass} {
+				${body.join('\n\n')}
 			}
 		`);
 	}

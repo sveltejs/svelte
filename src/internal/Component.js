@@ -116,6 +116,7 @@ export class $$ComponentDev extends $$Component {
 		}
 
 		super(options);
+		this.$$checkProps();
 	}
 
 	$destroy() {
@@ -123,5 +124,9 @@ export class $$ComponentDev extends $$Component {
 		this.$$destroy = () => {
 			console.warn(`Component was already destroyed`);
 		};
+	}
+
+	$$checkProps() {
+		// noop by default
 	}
 }

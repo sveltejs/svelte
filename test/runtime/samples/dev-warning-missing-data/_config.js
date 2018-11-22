@@ -1,4 +1,6 @@
 export default {
+	solo: 1,
+
 	compileOptions: {
 		dev: true
 	},

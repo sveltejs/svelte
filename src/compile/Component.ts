@@ -15,6 +15,7 @@ import { Node, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
+import addToSet from '../utils/addToSet';
 
 // We need to tell estree-walker that it should always
 // look for an `else` block, otherwise it might get
@@ -44,31 +45,32 @@ export default class Component {
 
 	properties: Map<string, Node>;
 
-	imports: Node[];
+	imports: Node[] = [];
 	namespace: string;
 	hasComponents: boolean;
 	javascript: string;
 
-	declarations: string[];
-	exports: Array<{ name: string, as: string }>;
-	event_handlers: Array<{ name: string, body: string }>;
-	props: string[];
+	declarations: string[] = [];
+	writable_declarations: Set<string> = new Set();
+	initialised_declarations: Set<string> = new Set();
+	exports: Array<{ name: string, as: string }> = [];
+	event_handlers: Array<{ name: string, body: string }> = [];
 
 	code: MagicString;
 
-	indirectDependencies: Map<string, Set<string>>;
-	expectedProperties: Set<string>;
-	refs: Set<string>;
+	indirectDependencies: Map<string, Set<string>> = new Map();
+	expectedProperties: Set<string> = new Set();
+	refs: Set<string> = new Set();
 
 	file: string;
 	locate: (c: number) => { line: number, column: number };
 
 	stylesheet: Stylesheet;
 
-	userVars: Set<string>;
-	templateVars: Map<string, string>;
-	aliases: Map<string, string>;
-	usedNames: Set<string>;
+	userVars: Set<string> = new Set();
+	templateVars: Map<string, string> = new Map();
+	aliases: Map<string, string> = new Map();
+	usedNames: Set<string> = new Set();
 	init_uses_self = false;
 
 	locator: (search: number, startIndex?: number) => {
@@ -89,37 +91,16 @@ export default class Component {
 		this.source = source;
 		this.options = options;
 
-		this.imports = [];
-
-		this.declarations = [];
-		this.exports = [];
-		this.event_handlers = [];
-
-		this.refs = new Set();
-
-		this.indirectDependencies = new Map();
-
 		this.file = options.filename && (
 			typeof process !== 'undefined' ? options.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : options.filename
 		);
 		this.locate = getLocator(this.source);
-
-		// track which properties are needed, so we can provide useful info
-		// in dev mode
-		this.expectedProperties = new Set();
 
 		this.code = new MagicString(source);
 
 		// styles
 		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
-
-		// allow compiler to deconflict user's `import { flush } from 'whatever'` and
-		// Svelte's builtin `import { flush, ... } from 'svelte/internal.ts'`;
-		this.userVars = new Set();
-		this.templateVars = new Map();
-		this.aliases = new Map();
-		this.usedNames = new Set();
 
 		this.properties = new Map();
 
@@ -150,6 +131,7 @@ export default class Component {
 
 		if (!this.ast.js) {
 			this.declarations = Array.from(this.expectedProperties);
+			addToSet(this.writable_declarations, this.expectedProperties);
 
 			this.exports = this.declarations.map(name => ({
 				name,
@@ -390,6 +372,9 @@ export default class Component {
 			this.declarations.push(name);
 		});
 
+		this.writable_declarations = scope.writable_declarations;
+		this.initialised_declarations = scope.initialised_declarations;
+
 		globals.forEach(name => {
 			this.userVars.add(name);
 		});
@@ -401,7 +386,7 @@ export default class Component {
 				this.error(node, {
 					code: `default-export`,
 					message: `A component cannot have a default export`
-				})
+				});
 			}
 
 			if (node.type === 'ExportNamedDeclaration') {

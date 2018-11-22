@@ -54,21 +54,28 @@ export function createScopes(expression: Node) {
 export class Scope {
 	parent: Scope;
 	block: boolean;
-	declarations: Set<string>;
+
+	declarations: Set<string> = new Set();
+	writable_declarations: Set<string> = new Set();
+	initialised_declarations: Set<string> = new Set();
 
 	constructor(parent: Scope, block: boolean) {
 		this.parent = parent;
 		this.block = block;
-		this.declarations = new Set();
 	}
 
 	addDeclaration(node: Node) {
 		if (node.kind === 'var' && !this.block && this.parent) {
 			this.parent.addDeclaration(node);
 		} else if (node.type === 'VariableDeclaration') {
+			const writable = node.kind !== 'const';
+			const initialised = !!node.init;
+
 			node.declarations.forEach((declarator: Node) => {
 				extractNames(declarator.id).forEach(name => {
 					this.declarations.add(name);
+					if (writable) this.writable_declarations.add(name);
+					if (initialised) this.initialised_declarations.add(name);
 				});
 			});
 		} else {
