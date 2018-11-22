@@ -119,10 +119,22 @@ export default function dom(
 			);
 		}
 
+		// TODO injecting CSS this way is kinda dirty. Maybe it should be an
+		// explicit opt-in, or something?
+		const should_add_css = (
+			!component.options.customElement &&
+			component.stylesheet.hasStyles &&
+			options.css !== false
+		);
+
 		const body = [
 			deindent`
 				$$init($$make_dirty) {
 					${component.init_uses_self && `const $$self = this;`}
+
+					${should_add_css &&
+					`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
+
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
 					${component.event_handlers.map(handler => handler.body)}

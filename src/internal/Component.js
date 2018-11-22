@@ -96,9 +96,14 @@ export class $$Component {
 		this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
 		this.$$.inject_refs(this.$$refs);
 
-		const onDestroy = this.$$onMount.map(run).filter(is_function);
-		this.$$onDestroy.push(...onDestroy);
-		this.$$onMount = [];
+		// onMount happens after the initial afterRender. Because
+		// afterRender callbacks happen in reverse order (inner first)
+		// we schedule onMount callbacks before afterRender callbacks
+		after_render(() => {
+			const onDestroy = this.$$onMount.map(run).filter(is_function);
+			this.$$onDestroy.push(...onDestroy);
+			this.$$onMount = [];
+		});
 
 		this.$$afterRender.forEach(after_render);
 	}
