@@ -89,10 +89,10 @@ export default class WindowWrapper extends Wrapper {
 		this.node.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				renderer.readonly.add(binding.value.node.name);
+				renderer.readonly.add(binding.expression.node.name);
 			}
 
-			bindings[binding.name] = binding.value.node.name;
+			bindings[binding.name] = binding.expression.node.name;
 
 			// bind:online is a special case, we need to listen for two separate events
 			if (binding.name === 'online') return;
@@ -102,7 +102,7 @@ export default class WindowWrapper extends Wrapper {
 
 			if (!events[associatedEvent]) events[associatedEvent] = [];
 			events[associatedEvent].push({
-				name: binding.value.node.name,
+				name: binding.expression.node.name,
 				value: property
 			});
 		});
