@@ -252,10 +252,47 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.maintainContext = true; // TODO put this somewhere more logical
 		}
 
-		this.node.handlers.forEach(handler => {
-			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
-			// handler.render(component, block, this.var, false); // TODO hoist when possible
-			if (handler.usesContext) block.maintainContext = true; // TODO is there a better place to put this?
+		const munged_handlers = this.node.handlers.map(handler => {
+			let { snippet } = handler;
+
+			// get a name for the event handler that is globally unique
+			const handler_name = component.getUniqueName(
+				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
+			);
+
+			if (handler.expression.contextual_dependencies.size > 0) {
+				block.maintainContext = true; // TODO is there a better place to put this?
+
+				const deps = Array.from(handler.expression.contextual_dependencies);
+
+				component.event_handlers.push({
+					name: handler_name,
+					body: deindent`
+						function ${handler_name}(event, { ${deps.join(', ')} }) {
+							(${snippet})(event);
+						}
+					`
+				});
+
+				block.builders.init.addBlock(deindent`
+					function ${handler.name}(event) {
+						ctx.${handler_name}.call(this, event, ctx);
+					}
+				`);
+
+				return `${name}.$on("${handler.name}", ${handler_name})`;
+			}
+
+			component.event_handlers.push({
+				name: handler_name,
+				body: deindent`
+					function ${handler_name}(event) {
+						(${snippet})(event);
+					}
+				`
+			});
+
+			return `${name}.$on("${handler.name}", ctx.${handler_name})`;
 		});
 
 		if (this.node.name === 'svelte:component') {
@@ -280,15 +317,8 @@ export default class InlineComponentWrapper extends Wrapper {
 					var ${name} = new ${switch_value}(${switch_props}(ctx));
 
 					${munged_bindings}
+					${munged_handlers}
 				}
-
-				${this.node.handlers.map(handler => deindent`
-					function ${handler.var}(event) {
-						(${handler.snippet || `() => { throw new Error('TODO shorthand events'); }`})(event);
-					}
-
-					if (${name}) ${name}.$on("${handler.name}", ${handler.var});
-				`)}
 			`);
 
 			block.builders.create.addLine(
@@ -334,6 +364,8 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = new ${switch_value}(${switch_props}(ctx));
 
 						${munged_bindings}
+						${munged_handlers}
+
 						${name}.$$fragment.c();
 
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
@@ -378,49 +410,10 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 
 				${munged_bindings}
+				${munged_handlers}
 
 				${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
 			`);
-
-			this.node.handlers.forEach(handler => {
-				let { snippet } = handler;
-				if (!snippet) snippet = `() => { throw new Error('TODO shorthand events'); }`;
-
-				// get a name for the event handler that is globally unique
-				const handler_name = component.getUniqueName(
-					`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
-				);
-
-				if (handler.expression.contextual_dependencies.size > 0) {
-					const deps = Array.from(handler.expression.contextual_dependencies);
-
-					component.event_handlers.push({
-						name: handler_name,
-						body: deindent`
-							function ${handler_name}(event, { ${deps.join(', ')} }) {
-								(${snippet})(event);
-							}
-						`
-					});
-
-					block.builders.init.addBlock(deindent`
-						${name}.$on("${handler.name}", function(event) {
-							ctx.${handler_name}.call(this, event, ctx);
-						});
-					`);
-				} else {
-					component.event_handlers.push({
-						name: handler_name,
-						body: deindent`
-							function ${handler_name}(event) {
-								(${snippet})(event);
-							}
-						`
-					});
-
-					block.builders.init.addLine(`${name}.$on("${handler.name}", ctx.${handler_name});`);
-				}
-			});
 
 			block.builders.create.addLine(`${name}.$$fragment.c();`);
 

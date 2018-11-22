@@ -15,8 +15,8 @@ export default {
 			<p>red one</p>
 		`);
 
-		component.x = true;
 		component.foo = 'two';
+		component.x = true;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>green two</p>

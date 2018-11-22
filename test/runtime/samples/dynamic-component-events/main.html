@@ -6,4 +6,4 @@
 	export let selected;
 </script>
 
-<svelte:component this="{ x ? Foo : Bar }" on:select='{event => selected = event.detail.id}'/>
+<svelte:component this="{x ? Foo : Bar}" on:select="{e => selected = e.detail.id}"/>

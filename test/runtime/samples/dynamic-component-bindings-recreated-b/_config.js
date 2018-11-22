@@ -9,20 +9,16 @@ export default {
 	`,
 
 	test(assert, component, target) {
-		// TODO replace this with component.set({ foo: undefined }) post-#1488
-		// component.set({ foo: undefined });
-		// delete component._state.foo;
-
-		component.x = false;
 		component.foo = undefined;
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>parent red</p>
 			<p>red red</p>
 		`);
 
-		component.x = true;
 		component.foo = undefined;
+		component.x = true;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>parent green</p>
