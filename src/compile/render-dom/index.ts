@@ -113,7 +113,7 @@ export default function dom(
 		const superclass = component.alias(options.dev ? '$$ComponentDev' : '$$Component');
 
 		if (options.dev && !options.hydratable) {
-			block.builders.hydrate.addLine(
+			block.builders.claim.addLine(
 				'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
 			);
 		}

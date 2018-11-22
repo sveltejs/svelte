@@ -117,4 +117,11 @@ export class $$ComponentDev extends $$Component {
 
 		super(options);
 	}
+
+	$destroy() {
+		super.$destroy();
+		this.$$destroy = () => {
+			console.warn(`Component was already destroyed`);
+		};
+	}
 }

@@ -9,7 +9,7 @@ export default {
 
 		let answer;
 		component.$on('foo', event => {
-			answer = event.answer;
+			answer = event.detail.answer;
 		});
 
 		button.dispatchEvent(event);

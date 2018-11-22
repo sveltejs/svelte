@@ -54,7 +54,9 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		this.node.handlers.forEach(handler => {
-			block.addDependencies(handler.expression.dependencies);
+			if (handler.expression) {
+				block.addDependencies(handler.expression.dependencies);
+			}
 		});
 
 		this.var = (
@@ -260,7 +262,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
 
-			if (handler.expression.contextual_dependencies.size > 0) {
+			if (handler.expression && handler.expression.contextual_dependencies.size > 0) {
 				block.maintainContext = true; // TODO is there a better place to put this?
 
 				const deps = Array.from(handler.expression.contextual_dependencies);
