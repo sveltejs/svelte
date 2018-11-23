@@ -256,7 +256,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const munged_handlers = this.node.handlers.map(handler => {
-			return `${name}.$on("${handler.name}", ${handler.snippet})`;
+			return `${name}.$on("${handler.name}", ${handler.snippet});`;
 		});
 
 		if (this.node.name === 'svelte:component') {

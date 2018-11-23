@@ -4,6 +4,7 @@ import flattenReference from '../../utils/flattenReference';
 import { createScopes } from '../../utils/annotateWithScopes';
 import { walk } from 'estree-walker';
 import Component from '../Component';
+import deindent from '../../utils/deindent';
 
 export default class EventHandler extends Node {
 	name: string;
@@ -33,7 +34,17 @@ export default class EventHandler extends Node {
 			this.usesContext = this.expression.usesContext;
 		} else {
 			component.init_uses_self = true;
-			this.snippet = `e => @bubble($$self, e)`
+
+			const name = component.getUniqueName(`${this.name}_handler`);
+			component.declarations.push(name);
+
+			component.partly_hoisted.push(deindent`
+				function ${name}(event) {
+					@bubble($$self, event);
+				}
+			`);
+
+			this.snippet = `ctx.${name}`;
 		}
 
 		// TODO figure out what to do about custom events
