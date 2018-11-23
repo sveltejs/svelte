@@ -13,14 +13,14 @@ export default {
 		<p>number 42</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const input = target.querySelector('input');
 		assert.equal(input.value, '42');
 
 		const event = new window.Event('input');
 
 		input.value = '43';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.equal(component.count, 43);
 		assert.htmlEqual(target.innerHTML, `
@@ -37,7 +37,7 @@ export default {
 
 		// empty string should be treated as undefined
 		input.value = '';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.equal(component.count, undefined);
 		assert.htmlEqual(target.innerHTML, `

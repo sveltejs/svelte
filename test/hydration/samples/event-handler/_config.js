@@ -11,11 +11,11 @@ export default {
 		};
 	},
 
-	test(assert, target, snapshot, component, window) {
+	async test(assert, target, snapshot, component, window) {
 		const button = target.querySelector('button');
 		assert.equal(button, snapshot.button);
 
-		button.dispatchEvent(new window.MouseEvent('click'));
+		await button.dispatchEvent(new window.MouseEvent('click'));
 
 		assert.ok(component.clicked);
 		assert.htmlEqual(target.innerHTML, `

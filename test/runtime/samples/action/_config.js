@@ -3,18 +3,18 @@ export default {
 		<button>action</button>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const button = target.querySelector('button');
 		const eventEnter = new window.MouseEvent('mouseenter');
 		const eventLeave = new window.MouseEvent('mouseleave');
 
-		button.dispatchEvent(eventEnter);
+		await button.dispatchEvent(eventEnter);
 		assert.htmlEqual(target.innerHTML, `
 			<button>action</button>
 			<div class="tooltip">Perform an Action</div>
 		`);
 
-		button.dispatchEvent(eventLeave);
+		await button.dispatchEvent(eventLeave);
 		assert.htmlEqual(target.innerHTML, `
 			<button>action</button>
 		`);

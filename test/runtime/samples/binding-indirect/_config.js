@@ -32,7 +32,7 @@ export default {
 		<p>shake it all about</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const input = target.querySelector('input');
 		const select = target.querySelector('select');
 		const options = target.querySelectorAll('option');
@@ -40,7 +40,7 @@ export default {
 		const change = new window.Event('change');
 
 		input.checked = true;
-		input.dispatchEvent(change);
+		await input.dispatchEvent(change);
 
 		assert.ok(component.tasks[0].done);
 		assert.htmlEqual(target.innerHTML, `
@@ -62,12 +62,12 @@ export default {
 		`);
 
 		options[1].selected = true;
-		select.dispatchEvent(change);
+		await select.dispatchEvent(change);
 		assert.equal(component.selected, tasks[1]);
 		assert.ok(!input.checked);
 
 		input.checked = true;
-		input.dispatchEvent(change);
+		await input.dispatchEvent(change);
 
 		assert.ok(component.tasks[1].done);
 		assert.htmlEqual(target.innerHTML, `

@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import './main.html';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<my-app/>';
 	const el = target.querySelector('my-app');
 	const counter = el.shadowRoot.querySelector('my-counter');
@@ -10,7 +10,7 @@ export default function (target) {
 	assert.equal(counter.count, 0);
 	assert.equal(counter.shadowRoot.innerHTML, `<button>count: 0</button>`);
 
-	button.dispatchEvent(new MouseEvent('click'));
+	await button.dispatchEvent(new MouseEvent('click'));
 
 	assert.equal(counter.count, 1);
 	assert.equal(counter.shadowRoot.innerHTML, `<button>count: 1</button>`);
