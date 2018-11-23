@@ -124,8 +124,13 @@ export default class Component {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
 
+		this.fragment = new Fragment(this, ast.html);
+		if (!this.customElement) this.stylesheet.reify();
+
+		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
+
 		if (!this.ast.js) {
-			this.declarations = Array.from(this.expectedProperties);
+			this.declarations.push(...this.expectedProperties);
 			addToSet(this.writable_declarations, this.expectedProperties);
 
 			this.exports = this.declarations.map(name => ({
@@ -133,12 +138,6 @@ export default class Component {
 				as: name
 			}));
 		}
-
-		this.fragment = new Fragment(this, ast.html);
-		// this.walkTemplate();
-		if (!this.customElement) this.stylesheet.reify();
-
-		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 	}
 
 	addSourcemapLocations(node: Node) {
