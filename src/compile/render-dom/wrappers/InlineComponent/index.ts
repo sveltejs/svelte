@@ -256,41 +256,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const munged_handlers = this.node.handlers.map(handler => {
-			let { snippet } = handler;
-
-			// get a name for the event handler that is globally unique
-			const handler_name = component.getUniqueName(
-				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
-			);
-			component.declarations.push(handler_name);
-
-			if (handler.expression && handler.expression.contextual_dependencies.size > 0) {
-				block.maintainContext = true; // TODO is there a better place to put this?
-
-				const deps = Array.from(handler.expression.contextual_dependencies);
-
-				component.partly_hoisted.push(deindent`
-					function ${handler_name}(event, { ${deps.join(', ')} }) {
-						(${snippet})(event);
-					}
-				`);
-
-				block.builders.init.addBlock(deindent`
-					function ${handler.name}(event) {
-						ctx.${handler_name}.call(this, event, ctx);
-					}
-				`);
-
-				return `${name}.$on("${handler.name}", ${handler_name})`;
-			}
-
-			component.partly_hoisted.push(deindent`
-				function ${handler_name}(event) {
-					(${snippet})(event);
-				}
-			`);
-
-			return `${name}.$on("${handler.name}", ctx.${handler_name})`;
+			return `${name}.$on("${handler.name}", ${handler.snippet})`;
 		});
 
 		if (this.node.name === 'svelte:component') {

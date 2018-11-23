@@ -633,62 +633,38 @@ export default class ElementWrapper extends Wrapper {
 		const { component } = renderer;
 
 		this.node.handlers.forEach(handler => {
-			const { isCustomEvent } = handler;
+			const modifiers = [];
+			if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
+			if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
 
-			// get a name for the event handler that is globally unique
-			const handler_name = component.getUniqueName(
-				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
-			);
+			const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
+			if (opts.length) {
+				const optString = (opts.length === 1 && opts[0] === 'capture')
+					? 'true'
+					: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
-			const component_name = block.alias('component'); // can't use #component, might be hoisted
+				block.builders.hydrate.addLine(
+					`@addListener(${this.var}, "${handler.name}", ${handler.snippet}, ${optString});`
+				);
 
-			if (isCustomEvent) {
-				throw new Error(`TODO figure out custom events`);
-				block.addVariable(handler_name);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handler_name} = ctx.${handler.name}.call(${component_name}, ${this.var}, function(event) {
-						${handler.snippet}
-					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handler_name}.destroy();
-				`);
+				block.builders.destroy.addLine(
+					`@removeListener(${this.var}, "${handler.name}", ${handler.snippet}, ${optString});`
+				);
 			} else {
-				const modifiers = [];
-				if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
-				if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
+				block.builders.hydrate.addLine(
+					`@addListener(${this.var}, "${handler.name}", ${handler.snippet});`
+				);
 
-				let name = handler.expression.snippet;
-
-				const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
-				if (opts.length) {
-					const optString = (opts.length === 1 && opts[0] === 'capture')
-						? 'true'
-						: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
-
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ${name}, ${optString});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ${name}, ${optString});`
-					);
-				} else {
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ${name});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ${name});`
-					);
-				}
+				block.builders.destroy.addLine(
+					`@removeListener(${this.var}, "${handler.name}", ${handler.snippet});`
+				);
 			}
 
-			handler.expression.declarations.forEach(declaration => {
-				block.builders.init.addBlock(declaration);
-			});
+			if (handler.expression) {
+				handler.expression.declarations.forEach(declaration => {
+					block.builders.init.addBlock(declaration);
+				});
+			}
 		});
 	}
 
