@@ -40,50 +40,15 @@ export default class WindowWrapper extends Wrapper {
 		const bindings: Record<string, string> = {};
 
 		this.node.handlers.forEach(handler => {
-			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			component.addSourcemapLocations(handler.expression);
+			const { snippet } = handler.expression;
 
-			const isCustomEvent = false; // TODO!!!
+			block.builders.init.addLine(
+				`window.addEventListener("${handler.name}", ${snippet});`
+			);
 
-			let usesState = handler.expression.dependencies.size > 0;
-
-			const handler_name = block.getUniqueName(`onwindow${handler.name}`);
-			const handler_body = deindent`
-				${usesState && `var ctx = #component.get();`}
-				${handler.snippet}
-			`;
-
-			if (isCustomEvent) {
-				// TODO dry this out
-				block.addVariable(handler_name);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handler_name} = ctx.${handler.name}.call(#component, window, function(event) {
-						(${handler_body})(event);
-					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handler_name}.destroy();
-				`);
-			} else {
-				component.event_handlers.push({
-					name: handler_name,
-					body: deindent`
-						function ${handler_name}(event) {
-							(${handler.snippet})(event);
-						}
-					`
-				});
-
-				block.builders.init.addLine(
-					`window.addEventListener("${handler.name}", ctx.${handler_name});`
-				);
-
-				block.builders.destroy.addLine(
-					`window.removeEventListener("${handler.name}", ctx.${handler_name});`
-				);
-			}
+			block.builders.destroy.addLine(
+				`window.removeEventListener("${handler.name}", ${snippet});`
+			);
 		});
 
 		this.node.bindings.forEach(binding => {

@@ -191,6 +191,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const munged_bindings = this.node.bindings.map(binding => {
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
+			component.declarations.push(name);
 
 			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 			const dependencies = Array.from(binding.expression.dependencies);
@@ -224,7 +225,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			`;
 
-			component.event_handlers.push({ name, body });
+			component.partly_hoisted.push(body);
 
 			return contextual_dependencies.length > 0
 				? `${this.var}.$$bind('${binding.name}', ${name});`
@@ -261,20 +262,18 @@ export default class InlineComponentWrapper extends Wrapper {
 			const handler_name = component.getUniqueName(
 				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
 			);
+			component.declarations.push(handler_name);
 
 			if (handler.expression && handler.expression.contextual_dependencies.size > 0) {
 				block.maintainContext = true; // TODO is there a better place to put this?
 
 				const deps = Array.from(handler.expression.contextual_dependencies);
 
-				component.event_handlers.push({
-					name: handler_name,
-					body: deindent`
-						function ${handler_name}(event, { ${deps.join(', ')} }) {
-							(${snippet})(event);
-						}
-					`
-				});
+				component.partly_hoisted.push(deindent`
+					function ${handler_name}(event, { ${deps.join(', ')} }) {
+						(${snippet})(event);
+					}
+				`);
 
 				block.builders.init.addBlock(deindent`
 					function ${handler.name}(event) {
@@ -285,14 +284,11 @@ export default class InlineComponentWrapper extends Wrapper {
 				return `${name}.$on("${handler.name}", ${handler_name})`;
 			}
 
-			component.event_handlers.push({
-				name: handler_name,
-				body: deindent`
-					function ${handler_name}(event) {
-						(${snippet})(event);
-					}
-				`
-			});
+			component.partly_hoisted.push(deindent`
+				function ${handler_name}(event) {
+					(${snippet})(event);
+				}
+			`);
 
 			return `${name}.$on("${handler.name}", ctx.${handler_name})`;
 		});

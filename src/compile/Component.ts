@@ -54,7 +54,8 @@ export default class Component {
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
 	exports: Array<{ name: string, as: string }> = [];
-	event_handlers: Array<{ name: string, body: string }> = [];
+	partly_hoisted: string[] = [];
+	fully_hoisted: string[] = [];
 
 	code: MagicString;
 
@@ -192,7 +193,9 @@ export default class Component {
 				return { name, alias };
 			});
 
-		const sharedPath = options.shared || 'svelte/internal.js';
+		const sharedPath = typeof options.shared === 'string'
+			? options.shared
+			: 'svelte/internal.js';
 
 		const module = wrapModule(result, format, name, options, banner, sharedPath, importedHelpers, this.imports, this.source);
 

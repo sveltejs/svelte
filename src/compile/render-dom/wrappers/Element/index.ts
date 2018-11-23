@@ -292,7 +292,8 @@ export default class ElementWrapper extends Wrapper {
 
 		const eventHandlerOrBindingUsesContext = (
 			this.bindings.some(binding => binding.node.usesContext) ||
-			this.node.handlers.some(handler => handler.usesContext)
+			this.node.handlers.some(handler => handler.usesContext) ||
+			this.node.actions.some(action => action.usesContext)
 		);
 
 		if (hasHoistedEventHandlerOrBinding) {
@@ -438,6 +439,7 @@ export default class ElementWrapper extends Wrapper {
 
 		groups.forEach(group => {
 			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
+			this.renderer.component.declarations.push(handler);
 
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
@@ -485,37 +487,31 @@ export default class ElementWrapper extends Wrapper {
 					}
 				`);
 
-				this.renderer.component.event_handlers.push({
-					name: handler,
-					body: deindent`
-						function ${handler}({ ${deps.join(', ')} }) {
-							${
-								animation_frame && deindent`
-									cancelAnimationFrame(${animation_frame});
-									if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-							}
-							${mutations.length > 0 && mutations}
-							${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+				this.renderer.component.partly_hoisted.push(deindent`
+					function ${handler}({ ${deps.join(', ')} }) {
+						${
+							animation_frame && deindent`
+								cancelAnimationFrame(${animation_frame});
+								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 						}
-					`
-				});
+						${mutations.length > 0 && mutations}
+						${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+					}
+				`);
 
 				callee = handler;
 			} else {
-				this.renderer.component.event_handlers.push({
-					name: handler,
-					body: deindent`
-						function ${handler}() {
-							${
-								animation_frame && deindent`
-									cancelAnimationFrame(${animation_frame});
-									if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-							}
-							${mutations.length > 0 && mutations}
-							${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+				this.renderer.component.partly_hoisted.push(deindent`
+					function ${handler}() {
+						${
+							animation_frame && deindent`
+								cancelAnimationFrame(${animation_frame});
+								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 						}
-					`
-				});
+						${mutations.length > 0 && mutations}
+						${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+					}
+				`);
 
 				callee = `ctx.${handler}`;
 			}
@@ -664,40 +660,7 @@ export default class ElementWrapper extends Wrapper {
 				if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
 				if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
 
-				let name;
-
-				if (handler.expression && handler.expression.contextual_dependencies.size > 0) {
-					name = handler_name;
-
-					const deps = Array.from(handler.expression.contextual_dependencies);
-
-					component.event_handlers.push({
-						name: handler_name,
-						body: deindent`
-							function ${handler_name}(event, { ${deps.join(', ')} }) {
-								(${handler.snippet})(event);
-							}
-						`
-					});
-
-					block.builders.init.addBlock(deindent`
-						function ${name}(event) {
-							ctx.${handler_name}.call(this, event, ctx);
-						}
-					`);
-				} else {
-					name = `ctx.${handler_name}`;
-
-					component.event_handlers.push({
-						name: handler_name,
-						body: deindent`
-							function ${handler_name}(event) {
-								${modifiers}
-								(${handler.snippet})(event);
-							}
-						`
-					});
-				}
+				let name = handler.expression.snippet;
 
 				const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
 				if (opts.length) {
@@ -722,6 +685,10 @@ export default class ElementWrapper extends Wrapper {
 					);
 				}
 			}
+
+			handler.expression.declarations.forEach(declaration => {
+				block.builders.init.addBlock(declaration);
+			});
 		});
 	}
 
@@ -855,6 +822,10 @@ export default class ElementWrapper extends Wrapper {
 			if (expression) {
 				snippet = expression.snippet;
 				dependencies = expression.dependencies;
+
+				expression.declarations.forEach(declaration => {
+					block.builders.init.addBlock(declaration);
+				});
 			}
 
 			const name = block.getUniqueName(

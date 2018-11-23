@@ -107,10 +107,6 @@ export default function dom(
 	} else {
 		const refs = Array.from(component.refs);
 
-		const declarations = component.declarations.concat(
-			component.event_handlers.map(handler => handler.name)
-		);
-
 		const superclass = component.alias(options.dev ? '$$ComponentDev' : '$$Component');
 
 		if (options.dev && !options.hydratable) {
@@ -137,11 +133,11 @@ export default function dom(
 
 					${component.javascript || component.exports.map(x => `let ${x.name};`)}
 
-					${component.event_handlers.map(handler => handler.body)}
+					${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
 					return [
 						// TODO only what's needed by the template
-						() => ({ ${declarations.join(', ')} }),
+						() => ({ ${component.declarations.join(', ')} }),
 						props => {
 							// TODO only do this for export let|var
 							${(component.exports.map(name =>
@@ -209,6 +205,8 @@ export default function dom(
 		});
 
 		builder.addBlock(deindent`
+			${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+
 			class ${name} extends ${superclass} {
 				${body.join('\n\n')}
 			}

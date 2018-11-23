@@ -295,8 +295,8 @@ export default class Block {
 				properties.addBlock(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
-						${this.maintainContext && `ctx = _ctx;`}
+					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? 'new_ctx' : 'ctx'}) {
+						${this.maintainContext && `ctx = new_ctx;`}
 						${this.builders.update}
 					},
 				`);
