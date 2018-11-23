@@ -2,7 +2,7 @@
 	function enter(node, callback) {
 		function handleKeydown(event) {
 			if (event.which === 13) {
-				callback();
+				callback(event);
 			}
 		}
 
@@ -16,4 +16,4 @@
 	}
 </script>
 
-<input use:enter='{() => event.target.blur()}'>
+<input use:enter='{e => e.target.blur()}'>

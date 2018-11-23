@@ -8,12 +8,12 @@ export default {
 		<p>second: </p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const event = new window.MouseEvent('click');
 
 		const buttons = target.querySelectorAll('button');
 
-		buttons[1].dispatchEvent(event);
+		await buttons[1].dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<button>0: foo</button>
