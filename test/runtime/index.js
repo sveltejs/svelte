@@ -1,8 +1,6 @@
 import assert from "assert";
-import chalk from 'chalk';
 import * as path from "path";
 import * as fs from "fs";
-import * as acorn from "acorn";
 import { rollup } from 'rollup';
 import virtual from 'rollup-plugin-virtual';
 import { transitionManager } from "../../internal.js";
@@ -12,8 +10,7 @@ import {
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual,
-	spaces
+	setupHtmlEqual
 } from "../helpers.js";
 
 const main = path.resolve('index.js');
