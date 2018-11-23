@@ -256,6 +256,12 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const munged_handlers = this.node.handlers.map(handler => {
+			if (handler.expression) {
+				handler.expression.declarations.forEach(declaration => {
+					block.builders.init.addBlock(declaration);
+				});
+			}
+
 			return `${name}.$on("${handler.name}", ${handler.snippet});`;
 		});
 
