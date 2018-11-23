@@ -5,7 +5,7 @@ export default {
 		letter: 'b'
 	},
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		component.modal.toggle();
 
 		assert.htmlEqual(target.innerHTML, `
@@ -22,7 +22,7 @@ export default {
 		const change = new window.MouseEvent('change');
 
 		select.options[2].selected = true;
-		select.dispatchEvent(change);
+		await select.dispatchEvent(change);
 		assert.equal(component.letter, 'c');
 
 		assert.deepEqual(Array.from(select.options).map(o => o.selected), [

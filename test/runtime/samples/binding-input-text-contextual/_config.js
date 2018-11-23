@@ -35,7 +35,7 @@ export default {
 		assert.equal(inputs[0].value, 'one');
 
 		inputs[1].value = 'four';
-		inputs[1].dispatchEvent(event);
+		await inputs[1].dispatchEvent(event);
 
 		assert.equal(items[1], 'four');
 		assert.htmlEqual(target.innerHTML, `

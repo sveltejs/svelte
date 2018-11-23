@@ -5,8 +5,6 @@ const values = [
 ];
 
 export default {
-	solo: 1,
-
 	props: {
 		values,
 		selected: values[1]

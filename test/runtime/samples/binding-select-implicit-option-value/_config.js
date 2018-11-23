@@ -24,7 +24,7 @@ export default {
 		<p>foo: 2</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 
@@ -34,7 +34,7 @@ export default {
 		const change = new window.Event('change');
 
 		options[2].selected = true;
-		select.dispatchEvent(change);
+		await select.dispatchEvent(change);
 
 		assert.equal(component.foo, 3);
 		assert.htmlEqual( target.innerHTML, `

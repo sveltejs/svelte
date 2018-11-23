@@ -15,14 +15,14 @@ export default {
 		<input value=world>
 	`,
 
-	test(assert, component, target, window) {
+	async test(assert, component, target, window) {
 		const input = target.querySelector('input');
 		assert.equal(input.value, 'world');
 
 		const event = new window.Event('input');
 
 		input.value = 'everybody';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.equal(input.value, 'everybody');
 		assert.htmlEqual(target.innerHTML, `

@@ -12,6 +12,6 @@ export default {
 
 		foo.double();
 
-		assert.deepEqual(values, [6]);
+		assert.deepEqual(values, ['6']);
 	}
 };
