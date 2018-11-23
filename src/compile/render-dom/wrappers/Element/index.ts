@@ -540,15 +540,15 @@ export default class ElementWrapper extends Wrapper {
 				}
 			});
 
-			const allInitialStateIsDefined = group.bindings
-				.map(binding => `'${binding.object}' in ctx`)
-				.join(' && ');
+			const someInitialStateIsUndefined = group.bindings
+				.map(binding => `${binding.snippet} === void 0`)
+				.join(' || ');
 
 			if (this.node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`if (!(${allInitialStateIsDefined})) #component.$$root._beforecreate.push(${handler});`
+					`if (${someInitialStateIsUndefined}) @after_render(() => ${callee}.call(${this.var}));`
 				);
 			}
 
@@ -556,7 +556,7 @@ export default class ElementWrapper extends Wrapper {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`#component.$$root._beforecreate.push(${handler});`
+					`@after_render(() => ${callee}.call(${this.var}));`
 				);
 			}
 		});

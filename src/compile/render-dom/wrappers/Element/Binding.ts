@@ -153,7 +153,8 @@ export default class BindingWrapper {
 		return {
 			name: this.node.name,
 			object: name,
-			handler: handler,
+			handler,
+			snippet,
 			usesContext: handler.usesContext,
 			updateDom: updateDom,
 			initialUpdate: initialUpdate,
@@ -281,7 +282,8 @@ function getValueFromDom(
 	if (name === 'group') {
 		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue(#component.$$bindingGroups[${bindingGroup}])`;
+			renderer.component.init_uses_self = true;
+			return `@getBindingGroupValue($$self.$$bindingGroups[${bindingGroup}])`;
 		}
 
 		return `this.__value`;
