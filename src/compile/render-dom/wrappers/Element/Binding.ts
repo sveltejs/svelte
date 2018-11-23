@@ -160,7 +160,8 @@ export default class BindingWrapper {
 			needsLock: !isReadOnly && needsLock,
 			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
 			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
-			dependencies: this.node.expression.dependencies,
+			// dependencies: this.node.expression.dependencies,
+			dependencies,
 			contextual_dependencies: this.node.expression.contextual_dependencies
 		};
 	}
