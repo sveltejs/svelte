@@ -130,10 +130,11 @@ export default class Component {
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 		if (!this.ast.js) {
-			this.declarations.push(...this.expectedProperties);
+			const props = [...this.expectedProperties];
+			this.declarations.push(...props);
 			addToSet(this.writable_declarations, this.expectedProperties);
 
-			this.exports = this.declarations.map(name => ({
+			this.exports = props.map(name => ({
 				name,
 				as: name
 			}));
