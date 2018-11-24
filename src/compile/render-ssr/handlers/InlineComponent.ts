@@ -1,6 +1,6 @@
 import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
 import getObject from '../../../utils/getObject';
-import getTailSnippet from '../../../utils/getTailSnippet';
+import { get_tail_snippet } from '../../../utils/get_tail_snippet';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
 import deindent from '../../../utils/deindent';
 
@@ -18,7 +18,7 @@ export default function(node, renderer, options) {
 	const bindingProps = node.bindings.map(binding => {
 		const { name } = getObject(binding.value.node);
 		const tail = binding.value.node.type === 'MemberExpression'
-			? getTailSnippet(binding.value.node)
+			? get_tail_snippet(binding.value.node)
 			: '';
 
 		return `${quoteNameIfNecessary(binding.name)}: ctx${quotePropIfNecessary(name)}${tail}`;

@@ -6,7 +6,7 @@ import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flattenReference from '../../../../utils/flattenReference';
-import getTailSnippet from '../../../../utils/getTailSnippet';
+import { get_tail } from '../../../../utils/get_tail_snippet';
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -99,7 +99,7 @@ export default class BindingWrapper {
 
 		// view to model
 		const valueFromDom = getValueFromDom(renderer, this.parent, this);
-		const handler = getEventHandler(this, block, name, contextless_snippet, valueFromDom);
+		const handler = getEventHandler(this, renderer, block, name, contextless_snippet, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this, snippet);
@@ -161,7 +161,6 @@ export default class BindingWrapper {
 			needsLock: !isReadOnly && needsLock,
 			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
 			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
-			// dependencies: this.node.expression.dependencies,
 			dependencies,
 			contextual_dependencies: this.node.expression.contextual_dependencies
 		};
@@ -215,15 +214,18 @@ function getBindingGroup(renderer: Renderer, value: Node) {
 
 function getEventHandler(
 	binding: BindingWrapper,
+	renderer: Renderer,
 	block: Block,
 	name: string,
 	snippet: string,
 	value: string
 ) {
 	if (binding.node.isContextual) {
-		const tail = binding.node.expression.node.type === 'MemberExpression'
-			? getTailSnippet(binding.node.expression.node)
-			: '';
+		let tail = '';
+		if (binding.node.expression.node.type === 'MemberExpression') {
+			const { start, end } = get_tail(binding.node.expression.node);
+			tail = renderer.component.source.slice(start, end);
+		}
 
 		const { object, property, snippet } = block.bindings.get(name)();
 

@@ -9,10 +9,8 @@ import stringifyProps from '../../../../utils/stringifyProps';
 import addToSet from '../../../../utils/addToSet';
 import deindent from '../../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
-import CodeBuilder from '../../../../utils/CodeBuilder';
 import getObject from '../../../../utils/getObject';
 import Binding from '../../../nodes/Binding';
-import getTailSnippet from '../../../../utils/getTailSnippet';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
