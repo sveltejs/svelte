@@ -15,20 +15,6 @@ export default class Tag extends Wrapper {
 		block.addDependencies(node.expression.dependencies);
 	}
 
-	render(block: Block, parentNode: string, parentNodes: string) {
-		const { init } = this.renameThisMethod(
-			block,
-			value => `@setData(${this.var}, ${value});`
-		);
-
-		block.addElement(
-			this.var,
-			`@createText(${init})`,
-			parentNodes && `@claimText(${parentNodes}, ${init})`,
-			parentNode
-		);
-	}
-
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)
