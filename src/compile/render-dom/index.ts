@@ -10,7 +10,7 @@ export default function dom(
 	component: Component,
 	options: CompileOptions
 ) {
-	const format = options.format || 'es';
+	const format = options.format || 'esm';
 
 	const { name } = component;
 

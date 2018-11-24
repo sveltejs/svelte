@@ -7,7 +7,7 @@ prog
 	.command('compile <input>')
 
 	.option('-o, --output', 'Output (if absent, prints to stdout)')
-	.option('-f, --format', 'Type of output (amd, cjs, es, iife, umd)')
+	.option('-f, --format', 'Type of output (cjs or esm)', 'esm')
 	.option('-g, --globals', 'Comma-separate list of `module ID:Global` pairs')
 	.option('-n, --name', 'Name for IIFE/UMD export (inferred from filename by default)')
 	.option('-m, --sourcemap', 'Generate sourcemap (`-m inline` for inline map)')

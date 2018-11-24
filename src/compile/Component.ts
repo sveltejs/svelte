@@ -147,7 +147,7 @@ export default class Component {
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
-		if (!this.ast.js) {
+		if (!this.ast.js.find(script => get_context(script) === 'default')) {
 			const props = [...this.expectedProperties];
 			this.declarations.push(...props);
 			addToSet(this.writable_declarations, this.expectedProperties);
@@ -378,9 +378,8 @@ export default class Component {
 
 	extract_imports_and_exports(content, imports, exports) {
 		const { code } = this;
-		const body = content.body.slice(); // TODO do we need to mutate the original?
 
-		body.forEach(node => {
+		content.body.forEach(node => {
 			if (node.type === 'ExportDefaultDeclaration') {
 				this.error(node, {
 					code: `default-export`,
@@ -415,7 +414,7 @@ export default class Component {
 			// imports need to be hoisted out of the IIFE
 			// TODO hoist other stuff where possible
 			else if (node.type === 'ImportDeclaration') {
-				removeNode(code, content.start, content.end, body, node);
+				removeNode(code, content.start, content.end, content.body, node);
 				imports.push(node);
 
 				node.specifiers.forEach((specifier: Node) => {

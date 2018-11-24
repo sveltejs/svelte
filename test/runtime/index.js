@@ -83,6 +83,7 @@ describe.only("runtime", () => {
 					delete require.cache[file];
 				});
 
+			let mod;
 			let SvelteComponent;
 
 			let unintendedError = null;
@@ -115,9 +116,10 @@ describe.only("runtime", () => {
 					};
 
 					try {
-						SvelteComponent = require(`./samples/${dir}/main.html`);
+						mod = require(`./samples/${dir}/main.html`);
+						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate }, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, hydratable: hydrate }, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -165,6 +167,7 @@ describe.only("runtime", () => {
 						return Promise.resolve(config.test({
 							assert,
 							component,
+							mod,
 							target,
 							window,
 							raf
@@ -187,7 +190,6 @@ describe.only("runtime", () => {
 						failed.add(dir);
 						showOutput(cwd, {
 							internal,
-							format: 'cjs',
 							hydratable: hydrate,
 							dev: compileOptions.dev
 						}, svelte.compile); // eslint-disable-line no-console
@@ -198,7 +200,6 @@ describe.only("runtime", () => {
 					if (config.show) {
 						showOutput(cwd, {
 							internal,
-							format: 'cjs',
 							hydratable: hydrate
 						}, svelte.compile);
 					}
@@ -216,7 +217,7 @@ describe.only("runtime", () => {
 
 	async function create_component(src = '<div></div>') {
 		const { js } = svelte$.compile(src, {
-			format: "es", // TODO change this to esm
+			format: "esm",
 			name: "SvelteComponent",
 			dev: true
 		});

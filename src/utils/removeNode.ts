@@ -32,6 +32,5 @@ export function removeNode(
 	}
 
 	code.remove(a, b);
-	body.splice(i, 1);
 	return;
 }

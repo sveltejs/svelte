@@ -35,7 +35,7 @@ export interface Warning {
 	toString: () => string;
 }
 
-export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';
+export type ModuleFormat = 'esm' | 'cjs' | 'eval';
 
 export interface CompileOptions {
 	format?: ModuleFormat;
