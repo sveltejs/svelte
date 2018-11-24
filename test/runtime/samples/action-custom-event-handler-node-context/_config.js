@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	html: '<button>10</button>',
 

@@ -3,7 +3,7 @@ export default {
 
 	skip: true, // some weird stuff happening with JSDOM 11
 	// skip: /^v4/.test(process.version), // node 4 apparently does some dumb stuff
-	'skip-ssr': true, // there's some kind of weird bug with this test... it compiles with the wrong require.extensions hook for some bizarre reason
+	skip_if_ssr: true, // there's some kind of weird bug with this test... it compiles with the wrong require.extensions hook for some bizarre reason
 
 	async test(assert, component, target, window) {
 		const event = new window.Event('resize');

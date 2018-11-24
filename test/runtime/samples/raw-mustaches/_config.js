@@ -1,7 +1,7 @@
 const ns = '<noscript></noscript>';
 
 export default {
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	props: {
 		raw: '<span><em>raw html!!!\\o/</span></em>'

@@ -100,7 +100,7 @@ describe("ssr", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		if (config["skip-ssr"]) return;
+		if (config.skip_if_ssr) return;
 
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);

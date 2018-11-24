@@ -1,7 +1,7 @@
 export default {
 	// This is a bit of a funny one — there's no equivalent attribute,
 	// so it can't be server-rendered
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	props: {
 		indeterminate: true

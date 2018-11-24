@@ -1,7 +1,7 @@
 import order from './order.js';
 
 export default {
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	test(assert, component, target) {
 		assert.deepEqual(order, [

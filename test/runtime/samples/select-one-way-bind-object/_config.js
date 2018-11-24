@@ -1,7 +1,7 @@
 const items = [ {}, {} ];
 
 export default {
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	props: {
 		foo: items[0],

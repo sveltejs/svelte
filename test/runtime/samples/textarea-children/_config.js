@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true, // SSR behaviour is awkwardly different
+	skip_if_ssr: true, // SSR behaviour is awkwardly different
 
 	props: {
 		foo: 42

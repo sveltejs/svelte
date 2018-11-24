@@ -3,7 +3,7 @@
 export default {
 	skip: true, // TODO
 
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	html: `
 		<div><p>first thing (true)</p></div>
