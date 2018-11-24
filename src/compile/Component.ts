@@ -168,7 +168,7 @@ export default class Component {
 		const helpers = new Set();
 
 		// TODO use same regex for both
-		result = result.replace(options.generate === 'ssr' ? /(@+|#+|%+)(\w*(?:-\w*)?)/g : /(%+|@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+		result = result.replace(options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 			if (sigil === '@') {
 				if (name in internal) {
 					if (options.dev && `${name}Dev` in internal) name = `${name}Dev`;
@@ -176,10 +176,6 @@ export default class Component {
 				}
 
 				return this.alias(name);
-			}
-
-			if (sigil === '%') {
-				return this.templateVars.get(name);
 			}
 
 			return sigil.slice(1) + name;

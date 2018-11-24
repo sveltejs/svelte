@@ -5,10 +5,7 @@ import Slot from '../../nodes/Slot';
 import { quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
 import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
-
-function sanitize(name) {
-	return name.replace(/[^a-zA-Z]+/g, '_').replace(/^_/, '').replace(/_$/, '');
-}
+import sanitize from '../../../utils/sanitize';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;

@@ -8,6 +8,7 @@ import addToSet from '../../../utils/addToSet';
 import globalWhitelist from '../../../utils/globalWhitelist';
 import deindent from '../../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
+import sanitize from '../../../utils/sanitize';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -194,7 +195,9 @@ export default class Expression {
 						// the return value doesn't matter
 					}
 
-					const name = component.getUniqueName(get_function_name(node, owner));
+					const name = component.getUniqueName(
+						sanitize(get_function_name(node, owner))
+					);
 
 					const args = contextual_dependencies.size > 0
 						? [`{ ${[...contextual_dependencies].join(', ')} }`]
