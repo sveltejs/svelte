@@ -335,7 +335,7 @@ export default class ElementWrapper extends Wrapper {
 			block.builders.mount.addBlock(this.initialUpdate);
 		}
 
-		if (nodes) {
+		if (nodes && this.renderer.options.hydratable) {
 			block.builders.claim.addLine(
 				`${nodes}.forEach(@detachNode);`
 			);

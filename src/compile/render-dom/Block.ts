@@ -162,7 +162,10 @@ export default class Block {
 	) {
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
-		this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
+
+		if (this.renderer.options.hydratable) {
+			this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
+		}
 
 		if (parentNode) {
 			this.builders.mount.addLine(`@append(${parentNode}, ${name});`);
@@ -259,14 +262,14 @@ export default class Block {
 			`);
 		}
 
-		if (this.renderer.options.hydratable) {
+		if (this.renderer.options.hydratable || !this.builders.claim.isEmpty()) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
 				properties.addBlock(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'l: function claim' : 'l'}(nodes) {
 						${this.builders.claim}
-						${!this.builders.hydrate.isEmpty() && `this.h();`}
+						${this.renderer.options.hydratable && !this.builders.hydrate.isEmpty() && `this.h();`}
 					},
 				`);
 			}

@@ -160,7 +160,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			${info}.block.c();
 		`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addBlock(deindent`
 				${info}.block.l(${parentNodes});
 			`);

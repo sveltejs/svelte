@@ -38,7 +38,7 @@ export class $$Component {
 
 		if (options.target) {
 			intro.enabled = !!options.intro;
-			this.$$mount(options.target);
+			this.$$mount(options.target, options.anchor, options.hydrate);
 
 			flush();
 			intro.enabled = true;
@@ -91,9 +91,14 @@ export class $$Component {
 		this.$$dirty[key] = true;
 	}
 
-	$$mount(target, anchor) {
-		this.$$fragment.c();
-		this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
+	$$mount(target, anchor, hydrate) {
+		if (hydrate) {
+			this.$$fragment.l(target.childNodes);
+		} else {
+			this.$$fragment.c();
+			this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
+		}
+
 		this.$$.inject_refs(this.$$refs);
 
 		// onMount happens after the initial afterRender. Because

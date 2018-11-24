@@ -185,7 +185,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		block.builders.create.addLine(`${if_name}${name}.c();`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addLine(
 				`${if_name}${name}.l(${parentNodes});`
 			);

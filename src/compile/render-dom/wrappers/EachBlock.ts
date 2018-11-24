@@ -316,7 +316,7 @@ export default class EachBlockWrapper extends Wrapper {
 			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].c();
 		`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addBlock(deindent`
 				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].l(${parentNodes});
 			`);
@@ -389,7 +389,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addBlock(deindent`
 				for (var #i = 0; #i < ${iterations}.length; #i += 1) {
 					${iterations}[#i].l(${parentNodes});

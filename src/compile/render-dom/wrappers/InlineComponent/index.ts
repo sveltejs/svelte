@@ -293,7 +293,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`if (${name}) ${name}.$$fragment.c();`
 			);
 
-			if (parentNodes) {
+			if (parentNodes && this.renderer.options.hydratable) {
 				block.builders.claim.addLine(
 					`if (${name}) ${name}.$$fragment.l(${parentNodes});`
 				);
@@ -385,7 +385,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.create.addLine(`${name}.$$fragment.c();`);
 
-			if (parentNodes) {
+			if (parentNodes && this.renderer.options.hydratable) {
 				block.builders.claim.addLine(
 					`${name}.$$fragment.l(${parentNodes});`
 				);
