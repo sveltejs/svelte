@@ -1,4 +1,6 @@
 export default {
+	solo: 1,
+
 	html: `
 		<p><span class=''>1</span></p>
 		<p><span class='selected'>2</span></p>
@@ -29,7 +31,7 @@ export default {
 		const click = new window.MouseEvent('click');
 		const spans = target.querySelectorAll('span');
 
-		spans[0].dispatchEvent(click);
+		await spans[0].dispatchEvent(click);
 
 		assert.equal(component.currentIdentifier, 1);
 		assert.htmlEqual(target.innerHTML, `
@@ -58,7 +60,7 @@ export default {
 			<p><span class='selected'>1</span></p>
 		`);
 
-		spans[0].dispatchEvent(click);
+		await spans[0].dispatchEvent(click);
 
 		assert.equal(component.currentIdentifier, null);
 		assert.htmlEqual(target.innerHTML, `
