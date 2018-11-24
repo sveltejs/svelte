@@ -5,9 +5,6 @@ const promise = new Promise(f => {
 });
 
 export default {
-	skipIntroByDefault: true,
-	nestedTransitions: true,
-
 	props: {
 		x: false,
 		promise

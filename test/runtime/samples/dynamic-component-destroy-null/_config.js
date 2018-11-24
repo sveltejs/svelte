@@ -3,8 +3,6 @@ export default {
 		x: true
 	},
 
-	nestedTransitions: true,
-
 	test(assert, component) {
 		component.x = false;
 	}

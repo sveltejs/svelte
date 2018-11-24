@@ -10,8 +10,6 @@ export default {
 		</div>
 	`,
 
-	nestedTransitions: true,
-
 	test(assert, component, target) {
 		component.visible = false;
 

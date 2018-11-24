@@ -13,8 +13,6 @@ export default {
 		</li>
 	`,
 
-	nestedTransitions: true,
-
 	test(assert, component, target, window, raf) {
 		component.folder.open = false;
 		assert.htmlEqual(target.innerHTML, `

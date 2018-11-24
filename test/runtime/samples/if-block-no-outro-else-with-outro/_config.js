@@ -1,6 +1,4 @@
 export default {
-	nestedTransitions: true,
-
 	html: `
 		<div>A wild component appears</div>
 		<p>x</p>

@@ -1,7 +1,4 @@
 export default {
-	nestedTransitions: true,
-	skipIntroByDefault: true,
-
 	props: {
 		visible: true,
 		things: [ 'a', 'b', 'c' ]

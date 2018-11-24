@@ -48,27 +48,6 @@ describe('parse', () => {
 		});
 	});
 
-	// TODO remove in v3
-	it('handles errors with options.onerror', () => {
-		let errored = false;
-
-		svelte.compile(`<h1>unclosed`, {
-			onerror(err) {
-				errored = true;
-				assert.equal(err.message, `<h1> was left open`);
-			}
-		});
-
-		assert.ok(errored);
-	});
-
-	// TODO remove in v3
-	it('throws without options.onerror', () => {
-		assert.throws(() => {
-			svelte.compile(`<h1>unclosed`);
-		}, /<h1> was left open/);
-	});
-
 	it('includes AST in svelte.compile output', () => {
 		const source = fs.readFileSync(`test/parser/samples/attribute-dynamic/input.html`, 'utf-8');
 

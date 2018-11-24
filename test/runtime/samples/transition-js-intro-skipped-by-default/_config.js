@@ -1,6 +1,4 @@
 export default {
-	skipIntroByDefault: true,
-
 	test(assert, component, target, window, raf) {
 		const div = target.querySelector('div');
 		assert.equal(div.foo, undefined);

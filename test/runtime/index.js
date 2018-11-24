@@ -55,6 +55,8 @@ describe.only("runtime", () => {
 
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
 
+		if (hydrate && config.skip_if_hydrate) return;
+
 		if (config.solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
@@ -74,8 +76,6 @@ describe.only("runtime", () => {
 			compileOptions.shared = internal;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
-			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
-			compileOptions.nestedTransitions = config.nestedTransitions;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -117,7 +117,7 @@ describe.only("runtime", () => {
 					try {
 						SvelteComponent = require(`./samples/${dir}/main.html`);
 					} catch (err) {
-						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, format: 'cjs', hydratable: hydrate }, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -183,8 +183,6 @@ describe.only("runtime", () => {
 							internal,
 							format: 'cjs',
 							hydratable: hydrate,
-							skipIntroByDefault: compileOptions.skipIntroByDefault,
-							nestedTransitions: compileOptions.nestedTransitions,
 							dev: compileOptions.dev
 						}, svelte.compile); // eslint-disable-line no-console
 						throw err;
@@ -195,9 +193,7 @@ describe.only("runtime", () => {
 						showOutput(cwd, {
 							internal,
 							format: 'cjs',
-							hydratable: hydrate,
-							skipIntroByDefault: compileOptions.skipIntroByDefault,
-							nestedTransitions: compileOptions.nestedTransitions
+							hydratable: hydrate
 						}, svelte.compile);
 					}
 

@@ -3,8 +3,6 @@ export default {
 		<p>Foo</p>
 	`,
 
-	nestedTransitions: true,
-
 	test(assert, component, target) {
 		const Bar = component.Bar;
 

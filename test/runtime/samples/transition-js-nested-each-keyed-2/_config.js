@@ -1,6 +1,4 @@
 export default {
-	nestedTransitions: true,
-
 	props: {
 		x: true,
 		things: ['a', 'b']

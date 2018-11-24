@@ -1,6 +1,7 @@
 export default {
-	skipIntroByDefault: true,
 	intro: true,
+
+	skip_if_hydrate: true,
 
 	test(assert, component, target, window, raf) {
 		const div = target.querySelector('div');

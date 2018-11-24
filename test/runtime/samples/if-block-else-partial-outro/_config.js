@@ -8,8 +8,6 @@ export default {
 		<span>1</span>
 	`,
 
-	nestedTransitions: true,
-
 	test(assert, component, target) {
 		component.x = 2;
 		assert.htmlEqual(target.innerHTML, `

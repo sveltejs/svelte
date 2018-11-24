@@ -1,6 +1,4 @@
 export default {
-	skipIntroByDefault: true,
-
 	props: {
 		visible: true
 	},

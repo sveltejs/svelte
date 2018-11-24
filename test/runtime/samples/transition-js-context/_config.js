@@ -1,7 +1,7 @@
 export default {
-	intro: true,
-
 	test(assert, component, target, window, raf) {
+		component.visible = true;
+
 		const div = target.querySelector('div');
 		assert.equal(div.foo, 42);
 

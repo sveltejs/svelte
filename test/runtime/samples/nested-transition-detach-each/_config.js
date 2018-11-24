@@ -8,9 +8,7 @@ export default {
 	html: ``,
 
 	compileOptions: {
-		dev: true,
-		nestedTransitions: true,
-		skipIntroByDefault: true,
+		dev: true
 	},
 
 	test(assert, component, target, window, raf) {

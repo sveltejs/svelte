@@ -1,7 +1,4 @@
 export default {
-	skipIntroByDefault: true,
-	nestedTransitions: true,
-
 	props: {
 		x: false
 	},

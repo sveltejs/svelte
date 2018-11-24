@@ -11,8 +11,6 @@ export default {
 		</div>
 	`,
 
-	nestedTransitions: true,
-
 	test(assert, component, target, window, raf) {
 		const div = target.querySelector('div');
 		const { appendChild, insertBefore } = div;
