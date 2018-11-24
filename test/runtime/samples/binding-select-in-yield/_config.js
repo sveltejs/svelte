@@ -6,7 +6,7 @@ export default {
 	},
 
 	async test(assert, component, target, window) {
-		component.modal.toggle();
+		await component.modal.toggle();
 
 		assert.htmlEqual(target.innerHTML, `
 			<span>b</span>
@@ -41,8 +41,8 @@ export default {
 			</select>
 		`);
 
-		component.modal.toggle();
-		component.modal.toggle();
+		await component.modal.toggle();
+		await component.modal.toggle();
 
 		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
 			false,
