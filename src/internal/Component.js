@@ -75,8 +75,8 @@ export class $$Component {
 
 	$$destroy(detach) {
 		if (this.$$) {
-			this.$$fragment.d(detach);
 			run_all(this.$$onDestroy);
+			this.$$fragment.d(detach);
 
 			// TODO null out other refs, including this.$$ (but need to
 			// preserve final state?)
