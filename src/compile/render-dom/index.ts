@@ -123,6 +123,25 @@ export default function dom(
 			options.css !== false
 		);
 
+		const props = component.exports.filter(x => component.writable_declarations.has(x.name));
+
+		const inject_props = props.length > 0
+			? deindent`
+				props => {
+					${props.map(prop =>
+					`if ('${prop.as}' in props) ${prop.name} = props.${prop.as};`)}
+				}
+			`
+			: `@noop`;
+
+		const inject_refs = refs.length > 0
+			? deindent`
+				refs => {
+					${refs.map(name => `${name} = refs.${name};`)}
+				}
+			`
+			: `@noop`;
+
 		const body = [
 			deindent`
 				$$init($$make_dirty) {
@@ -138,16 +157,8 @@ export default function dom(
 					return [
 						// TODO only what's needed by the template
 						() => ({ ${component.declarations.join(', ')} }),
-						props => {
-							// TODO only do this for export let|var
-							${(component.exports.map(name =>
-							`if ('${name.as}' in props) ${name.as} = props.${name.as};`
-							))}
-						},
-						refs => {
-							// TODO only if we have some refs
-							${refs.map(name => `${name} = refs.${name};`)}
-						}
+						${inject_props},
+						${inject_refs}
 					];
 				}
 
