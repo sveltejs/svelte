@@ -12,7 +12,7 @@ export class $$Component {
 
 		this.$$bindings = blankObject();
 		this.$$callbacks = blankObject();
-		this.$$slotted = options.slots;
+		this.$$slotted = options.slots || {};
 
 		set_current_component(this);
 		const [get_state, inject_props, inject_refs] = this.$$init(
