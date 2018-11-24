@@ -99,7 +99,7 @@ export default class BindingWrapper {
 
 		// view to model
 		const valueFromDom = getValueFromDom(renderer, this.parent, this);
-		const handler = getEventHandler(this, renderer, block, name, contextless_snippet, dependencies, valueFromDom);
+		const handler = getEventHandler(this, block, name, contextless_snippet, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this, snippet);
@@ -215,15 +215,11 @@ function getBindingGroup(renderer: Renderer, value: Node) {
 
 function getEventHandler(
 	binding: BindingWrapper,
-	renderer: Renderer,
 	block: Block,
 	name: string,
 	snippet: string,
-	dependencies: Set<string>,
 	value: string
 ) {
-	let dependenciesArray = [...dependencies].filter(prop => prop[0] !== '$');
-
 	if (binding.node.isContextual) {
 		const tail = binding.node.expression.node.type === 'MemberExpression'
 			? getTailSnippet(binding.node.expression.node)
@@ -233,9 +229,7 @@ function getEventHandler(
 
 		return {
 			usesContext: true,
-			usesState: true,
 			mutation: `${snippet}${tail} = ${value};`,
-			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`),
 			contextual_dependencies: new Set([object, property])
 		};
 	}
@@ -243,20 +237,14 @@ function getEventHandler(
 	if (binding.node.expression.node.type === 'MemberExpression') {
 		return {
 			usesContext: false,
-			usesState: true,
 			mutation: `${snippet} = ${value};`,
-			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`),
 			contextual_dependencies: new Set()
 		};
 	}
 
-	const props = [`${name}: ${value}`];
-
 	return {
 		usesContext: false,
-		usesState: false,
 		mutation: `${snippet} = ${value};`,
-		props,
 		contextual_dependencies: new Set()
 	};
 }
