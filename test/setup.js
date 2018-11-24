@@ -1,7 +1,5 @@
 const fs = require('fs');
-const path = require('path');
 
-require('console-group').install();
 require('source-map-support').install();
 
 process.env.TEST = true;
