@@ -1,5 +1,5 @@
 export default {
-	test(assert, component) {
+	async test(assert, component) {
 		const { foo, p } = component;
 
 		const values = [];
@@ -10,7 +10,7 @@ export default {
 			}
 		});
 
-		foo.double();
+		await foo.double();
 
 		assert.deepEqual(values, ['6']);
 	}
