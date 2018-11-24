@@ -479,17 +479,15 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 
 			const update = deindent`
-				if (${condition}) {
-					${this.vars.each_block_value} = ${snippet};
+				${this.vars.each_block_value} = ${snippet};
 
-					for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
-						const child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
+				for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
+					const child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 
-						${forLoopBody}
-					}
-
-					${destroy}
+					${forLoopBody}
 				}
+
+				${destroy}
 			`;
 
 			if (bail) {
