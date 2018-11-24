@@ -107,6 +107,7 @@ function compileFile(input, output, options) {
 	let compiled;
 
 	try {
+		delete options.sourceMap; // compiler doesn't use this option
 		compiled = svelte.compile(source, options);
 	} catch (err) {
 		error(err);

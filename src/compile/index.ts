@@ -1,3 +1,4 @@
+import { SourceMapGenerator, SourceMapConsumer } from 'source-map';
 import { assign } from '../shared';
 import Stats from '../Stats';
 import parse from '../parse/index';
@@ -89,7 +90,21 @@ export default function compile(source: string, options: CompileOptions = {}) {
 			return renderSSR(component, options);
 		}
 
-		return renderDOM(component, options);
+		const result = renderDOM(component, options);
+
+		if (options.sourceMap) {
+			const inputConsumer = new SourceMapConsumer(options.sourceMap);
+
+			const jsSourceMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(result.js.map));
+			jsSourceMap.applySourceMap(inputConsumer);
+			result.js.map = jsSourceMap.toJSON();
+
+			const cssSourceMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(result.css.map));
+			cssSourceMap.applySourceMap(inputConsumer);
+			result.css.map = cssSourceMap.toJSON();
+		}
+
+		return result;
 	} catch (err) {
 		onerror(err);
 	}

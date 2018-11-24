@@ -57,6 +57,7 @@ export interface CompileOptions {
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
 	css?: boolean;
+	sourceMap?: string | object;
 
 	preserveComments?: boolean | false;
 
