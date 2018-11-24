@@ -109,30 +109,25 @@ export default class WindowWrapper extends Wrapper {
 				});
 			}
 
-			const handler_body = deindent`
-				${event === 'scroll' && deindent`
-					if (${lock}) return;
-					${lock} = true;
-				`}
-				${component.options.dev && `component._updatingReadonlyProperty = true;`}
-
-				#component.set({
-					${props.map(prop => `${prop.name}: this.${prop.value}`)}
-				});
-
-				${component.options.dev && `component._updatingReadonlyProperty = false;`}
-				${event === 'scroll' && `${lock} = false;`}
-			`;
+			component.declarations.push(handler_name);
+			component.partly_hoisted.push(deindent`
+				function ${handler_name}() {
+					${event === 'scroll' && deindent`
+						if (${lock}) return;
+						${lock} = true;
+					`}
+					${props.map(prop => `${prop.name} = window.${prop.value}; $$make_dirty('${prop.name}');`)}
+					${event === 'scroll' && `${lock} = false;`}
+				}
+			`);
 
 			block.builders.init.addBlock(deindent`
-				function ${handler_name}(event) {
-					${handler_body}
-				}
-				window.addEventListener("${event}", ${handler_name});
+				window.addEventListener("${event}", ctx.${handler_name});
+				@after_render(ctx.${handler_name});
 			`);
 
 			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("${event}", ${handler_name});
+				window.removeEventListener("${event}", ctx.${handler_name});
 			`);
 		});
 

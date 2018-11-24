@@ -199,7 +199,7 @@ export default function dom(
 				}
 			`);
 
-			if (component.writable_declarations.has(x.as)) {
+			if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
 				body.push(deindent`
 					set ${x.as}(value) {
 						this.$set({ ${x.name}: value });
