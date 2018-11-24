@@ -676,7 +676,10 @@ export default class ElementWrapper extends Wrapper {
 		);
 
 		block.builders.destroy.addLine(
-			`if (${ref} === ${this.var}) ${ref} = null;`
+			`if (${ref} === ${this.var}) {
+				${ref} = null;
+				#component.$$.inject_refs(#component.$$refs);
+			}`
 		);
 	}
 

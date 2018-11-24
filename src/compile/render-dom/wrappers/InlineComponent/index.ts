@@ -344,6 +344,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${this.node.ref && deindent`
 						if (#component.$$refs.${this.node.ref.name} === ${name}) {
 							#component.$$refs.${this.node.ref.name} = null;
+							#component.$$.inject_refs(#component.$$refs);
 						}`}
 					}
 				}
@@ -398,9 +399,14 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
-			block.builders.destroy.addLine(deindent`
+			block.builders.destroy.addBlock(deindent`
 				${name}.$destroy(${parentNode ? '' : 'detach'});
-				${this.node.ref && `if (#component.$$refs.${this.node.ref.name} === ${name}) #component.$$refs.${this.node.ref.name} = null;`}
+				${this.node.ref && deindent`
+					if (#component.$$refs.${this.node.ref.name} === ${name}) {
+						#component.$$refs.${this.node.ref.name} = null;
+						#component.$$.inject_refs(#component.$$refs);
+					}
+				`}
 			`);
 		}
 
