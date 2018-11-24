@@ -101,7 +101,13 @@ export class $$Component {
 		// we schedule onMount callbacks before afterRender callbacks
 		after_render(() => {
 			const onDestroy = this.$$onMount.map(run).filter(is_function);
-			this.$$onDestroy.push(...onDestroy);
+			if (this.$$onDestroy) {
+				this.$$onDestroy.push(...onDestroy);
+			} else {
+				// Edge case — component was destroyed immediately,
+				// most likely as a result of a binding initialising
+				run_all(onDestroy);
+			}
 			this.$$onMount = [];
 		});
 
