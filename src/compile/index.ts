@@ -5,7 +5,6 @@ import renderDOM from './render-dom/index';
 import renderSSR from './render-ssr/index';
 import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
-import deprecate from '../utils/deprecate';
 
 function normalize_options(options: CompileOptions): CompileOptions {
 	let normalized = assign({ generate: 'dom', dev: false }, options);

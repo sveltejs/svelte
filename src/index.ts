@@ -1,6 +1,5 @@
 import compile from './compile/index';
 import { CompileOptions } from './interfaces';
-import deprecate from './utils/deprecate';
 
 export function create(source: string, options: CompileOptions = {}) {
 	options.format = 'eval';
