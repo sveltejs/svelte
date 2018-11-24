@@ -17,6 +17,8 @@ import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
 import addToSet from '../../../../utils/addToSet';
+import addEventHandlers from '../shared/addEventHandlers';
+import addActions from '../shared/addActions';
 
 const events = [
 	{
@@ -629,43 +631,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addEventHandlers(block: Block) {
-		const { renderer } = this;
-		const { component } = renderer;
-
-		this.node.handlers.forEach(handler => {
-			const modifiers = [];
-			if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
-			if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
-
-			const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
-			if (opts.length) {
-				const optString = (opts.length === 1 && opts[0] === 'capture')
-					? 'true'
-					: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
-
-				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${handler.name}", ${handler.snippet}, ${optString});`
-				);
-
-				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${handler.name}", ${handler.snippet}, ${optString});`
-				);
-			} else {
-				block.builders.hydrate.addLine(
-					`@addListener(${this.var}, "${handler.name}", ${handler.snippet});`
-				);
-
-				block.builders.destroy.addLine(
-					`@removeListener(${this.var}, "${handler.name}", ${handler.snippet});`
-				);
-			}
-
-			if (handler.expression) {
-				handler.expression.declarations.forEach(declaration => {
-					block.builders.init.addBlock(declaration);
-				});
-			}
-		});
+		addEventHandlers(block, this.var, this.node.handlers);
 	}
 
 	addRef(block: Block) {
@@ -795,44 +761,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addActions(block: Block) {
-		this.node.actions.forEach(action => {
-			const { expression } = action;
-			let snippet, dependencies;
-			if (expression) {
-				snippet = expression.snippet;
-				dependencies = expression.dependencies;
-
-				expression.declarations.forEach(declaration => {
-					block.builders.init.addBlock(declaration);
-				});
-			}
-
-			const name = block.getUniqueName(
-				`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
-			);
-
-			block.addVariable(name);
-			const fn = `ctx.${action.name}`;
-
-			block.builders.mount.addLine(
-				`${name} = ${fn}.call(null, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
-			);
-
-			if (dependencies && dependencies.size > 0) {
-				let conditional = `typeof ${name}.update === 'function' && `;
-				const deps = [...dependencies].map(dependency => `changed.${dependency}`).join(' || ');
-				conditional += dependencies.size > 1 ? `(${deps})` : deps;
-
-				block.builders.update.addConditional(
-					conditional,
-					`${name}.update.call(null, ${snippet});`
-				);
-			}
-
-			block.builders.destroy.addLine(
-				`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy();`
-			);
-		});
+		addActions(block, this.var, this.node.actions);
 	}
 
 	addClasses(block: Block) {

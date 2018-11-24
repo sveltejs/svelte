@@ -3,6 +3,9 @@ import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Wrapper from './shared/Wrapper';
 import deindent from '../../../utils/deindent';
+import addEventHandlers from './shared/addEventHandlers';
+import Window from '../../nodes/Window';
+import addActions from './shared/addActions';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -28,6 +31,8 @@ const readonly = new Set([
 ]);
 
 export default class WindowWrapper extends Wrapper {
+	node: Window;
+
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Node) {
 		super(renderer, block, parent, node);
 	}
@@ -39,17 +44,8 @@ export default class WindowWrapper extends Wrapper {
 		const events = {};
 		const bindings: Record<string, string> = {};
 
-		this.node.handlers.forEach(handler => {
-			const { snippet } = handler.expression;
-
-			block.builders.init.addLine(
-				`window.addEventListener("${handler.name}", ${snippet});`
-			);
-
-			block.builders.destroy.addLine(
-				`window.removeEventListener("${handler.name}", ${snippet});`
-			);
-		});
+		addActions(block, 'window', this.node.actions);
+		addEventHandlers(block, 'window', this.node.handlers);
 
 		this.node.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to

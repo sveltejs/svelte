@@ -14,6 +14,6 @@
 	}
 </script>
 
-<svelte:window on:esc="{() => escaped = true}" />
+<svelte:window use:esc="{() => escaped = true}" />
 
 <p>escaped: {escaped}</p>
