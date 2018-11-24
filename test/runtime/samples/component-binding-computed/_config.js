@@ -4,7 +4,7 @@ export default {
 		<label>lastname <input></label>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = new window.Event('input');
 		const inputs = target.querySelectorAll('input');
 

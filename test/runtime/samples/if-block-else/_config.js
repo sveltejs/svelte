@@ -9,7 +9,7 @@ export default {
 		<p>not bar</p>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.foo = false;
 		assert.htmlEqual( target.innerHTML, `
 			<p>not foo</p>

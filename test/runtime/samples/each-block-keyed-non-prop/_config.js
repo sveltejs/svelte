@@ -9,7 +9,7 @@ export default {
 		<p>baz</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const [p1, p2, p3] = target.querySelectorAll('p');
 
 		component.words = ['foo', 'baz'];

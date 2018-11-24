@@ -1,5 +1,5 @@
 export default {
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const promise = Promise.resolve().then(() => {
 			component.answer = 42;
 		});

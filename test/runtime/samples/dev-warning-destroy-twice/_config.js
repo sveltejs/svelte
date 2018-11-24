@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 
-	test(assert, component) {
+	test({ assert, component }) {
 		const warn = console.warn; // eslint-disable-line no-console
 
 		const warnings = [];

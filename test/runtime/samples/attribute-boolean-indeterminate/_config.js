@@ -11,7 +11,7 @@ export default {
 		<input type='checkbox'>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const input = target.querySelector('input');
 
 		assert.ok(input.indeterminate);

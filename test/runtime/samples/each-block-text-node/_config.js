@@ -5,7 +5,7 @@ export default {
 
 	html: '(alpaca)(baboon)(capybara)',
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.animals = [ 'caribou', 'dogfish' ];
 		assert.htmlEqual( target.innerHTML, '(caribou)(dogfish)' );
 		component.animals = [];

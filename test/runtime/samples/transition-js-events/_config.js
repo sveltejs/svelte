@@ -6,7 +6,7 @@ export default {
 
 	intro: true,
 
-	test (assert, component, target, window, raf) {
+	test({ assert, component, target, window, raf }) {
 		raf.tick(50);
 		assert.deepEqual(component.intros.sort(), ['a', 'b', 'c', 'd']);
 		assert.equal(component.intro_count, 4);

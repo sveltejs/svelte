@@ -3,7 +3,7 @@ export default {
 		x: true
 	},
 
-	test(assert, component) {
+	test({ assert, component }) {
 		component.x = false;
 	}
 };

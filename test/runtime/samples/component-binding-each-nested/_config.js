@@ -11,7 +11,7 @@ export default {
 		<p>foo, bar, baz</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('input');
 		const inputs = target.querySelectorAll('input');
 

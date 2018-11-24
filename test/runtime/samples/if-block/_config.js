@@ -5,7 +5,7 @@ export default {
 
 	html: '<p>i am visible</p>',
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.visible = false;
 		assert.htmlEqual( target.innerHTML, '' );
 		component.visible = true;

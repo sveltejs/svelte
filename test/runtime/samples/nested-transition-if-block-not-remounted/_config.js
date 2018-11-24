@@ -11,7 +11,7 @@ export default {
 		</div>
 	`,
 
-	test(assert, component, target, window, raf) {
+	test({ assert, component, target, window, raf }) {
 		const div = target.querySelector('div');
 		const { appendChild, insertBefore } = div;
 

@@ -8,7 +8,7 @@ export default {
 
 	html: `<input type="text">`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const input = target.querySelector('input');
 		assert.equal(input.type, 'text');
 		assert.equal(input.value, '42');

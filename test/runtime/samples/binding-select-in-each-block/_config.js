@@ -17,7 +17,7 @@ export default {
 		items: [{ value: 'hullo' }, { value: 'world' }]
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const selects = [...target.querySelectorAll('select')];
 
 		const change = new window.Event('change');

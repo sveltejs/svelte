@@ -8,7 +8,7 @@ export default {
 		<p>c</p>
 	`,
 
-	test (assert, component, target) {
+	test({ assert, component, target }) {
 		component.titles = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
 
 		assert.htmlEqual(target.innerHTML, `

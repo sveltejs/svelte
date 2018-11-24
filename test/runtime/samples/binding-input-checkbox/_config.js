@@ -13,7 +13,7 @@ export default {
 		<p>true</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		assert.equal(input.checked, true);
 

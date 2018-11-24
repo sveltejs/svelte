@@ -11,7 +11,7 @@ export default {
 
 	html: `waiting`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		fulfil(9000);
 
 		return thePromise

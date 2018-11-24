@@ -9,7 +9,7 @@ export default {
 		<button>baz</button>
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const buttons = target.querySelectorAll('button');
 		const event = new window.MouseEvent('click');
 

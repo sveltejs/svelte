@@ -9,7 +9,7 @@ export default {
 		<p>selected: nothing</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.items = [ 'one', 'two', 'three' ];
 		component.selected = 'two';
 

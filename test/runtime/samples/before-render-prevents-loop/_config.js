@@ -10,7 +10,7 @@ export default {
 		<p>hello!</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.value = 'goodbye!';
 		assert.htmlEqual(target.innerHTML, `
 			<p>goodbye!</p>

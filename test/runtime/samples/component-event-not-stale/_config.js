@@ -3,7 +3,7 @@ export default {
 		value: 1,
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const buttons = target.querySelectorAll('button');
 		const click = new window.MouseEvent('click');
 

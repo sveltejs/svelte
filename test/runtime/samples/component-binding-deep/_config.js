@@ -9,7 +9,7 @@ export default {
 		<p>foo</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('input');
 		const input = target.querySelector('input');
 

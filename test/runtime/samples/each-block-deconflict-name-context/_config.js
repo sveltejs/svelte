@@ -17,7 +17,7 @@ export default {
 		<input value=z>
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
 		inputs[1].value = 'w';

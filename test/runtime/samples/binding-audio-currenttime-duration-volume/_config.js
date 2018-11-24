@@ -4,7 +4,7 @@ export default {
 	// instead
 	skip: true,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		assert.equal(component.t, 0);
 		assert.equal(component.d, 0);
 		assert.equal(component.v, 0.5);

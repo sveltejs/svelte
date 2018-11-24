@@ -11,7 +11,7 @@ export default {
 
 	html: ``,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		fulfil(42);
 
 		return thePromise

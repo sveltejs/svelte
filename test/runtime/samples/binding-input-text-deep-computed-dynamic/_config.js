@@ -18,7 +18,7 @@ export default {
 		<pre>{"foo":"a","bar":"b","baz":"c"}</pre>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		const event = new window.Event('input');
 

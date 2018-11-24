@@ -27,7 +27,7 @@ export default {
 		</div>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = [...target.querySelectorAll('input')];
 		const items = component.items;
 		const event = new window.Event('input');

@@ -3,7 +3,7 @@
 export default {
 	html: '<input>',
 
-	test(assert, component) {
+	test({ assert, component }) {
 		component.input.focus();
 
 		// this should NOT trigger blur event

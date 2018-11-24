@@ -3,7 +3,7 @@ export default {
 		<p>Foo</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const Bar = component.Bar;
 
 		component.Bar = null;

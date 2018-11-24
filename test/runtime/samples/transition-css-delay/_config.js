@@ -1,5 +1,5 @@
 export default {
-	test(assert, component, target, window, raf) {
+	test({ assert, component, target, window, raf }) {
 		component.visible = true;
 		const div = target.querySelector('div');
 		assert.strictEqual(div.style.opacity, '0');

@@ -4,7 +4,7 @@ export default {
 		<span>2</span>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.list = [3, 4];
 
 		assert.htmlEqual(target.innerHTML, `

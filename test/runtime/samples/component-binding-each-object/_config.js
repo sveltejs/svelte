@@ -7,7 +7,7 @@ export default {
 		<span>foo</span><span>bar</span><span>baz</span>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.a = [
 			{ id: 'yep' },
 			{ id: 'nope' }

@@ -9,7 +9,7 @@ export default {
 		<button disabled>click me</button>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const button = target.querySelector('button');
 
 		assert.ok(button.disabled);

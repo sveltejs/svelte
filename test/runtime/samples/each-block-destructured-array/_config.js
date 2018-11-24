@@ -11,7 +11,7 @@ export default {
 		<p>eagle: wings</p>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.animalPawsEntries = [['foo', 'bar']];
 		assert.htmlEqual( target.innerHTML, `
 			<p>foo: bar</p>

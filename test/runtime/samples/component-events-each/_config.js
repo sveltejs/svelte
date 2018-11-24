@@ -11,7 +11,7 @@ export default {
 		</div>
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const buttons = target.querySelectorAll('button');
 
 		const clicks = [];

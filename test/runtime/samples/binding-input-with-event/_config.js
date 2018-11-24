@@ -3,7 +3,7 @@ export default {
 		a: 42
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		assert.equal(input.value, '42');
 

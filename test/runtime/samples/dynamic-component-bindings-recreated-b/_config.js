@@ -8,7 +8,7 @@ export default {
 		<p>green green</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.foo = undefined;
 		component.x = false;
 

@@ -11,7 +11,7 @@ export default {
 		<p>2: implement client-side hydration</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const [ p1, p2 ] = target.querySelectorAll('p');
 
 		component.todos = [

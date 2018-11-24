@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 
-	test(assert, component) {
+	test({ assert, component }) {
 		try {
 			component.width = 99;
 			throw new Error('Expected an error');

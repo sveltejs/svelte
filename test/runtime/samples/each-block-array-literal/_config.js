@@ -4,7 +4,7 @@ export default {
 		<button>eagle</button>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		assert.htmlEqual(target.innerHTML,`
 			<button>racoon</button>
 			<button>eagle</button>

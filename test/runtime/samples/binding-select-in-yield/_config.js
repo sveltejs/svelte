@@ -5,7 +5,7 @@ export default {
 		letter: 'b'
 	},
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		await component.modal.toggle();
 
 		assert.htmlEqual(target.innerHTML, `

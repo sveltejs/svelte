@@ -3,7 +3,7 @@ export default {
 		<div><p>Hello</p></div>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		assert.equal( component.data, 'Hello' );
 
 		component.data = 'World';

@@ -1,4 +1,4 @@
-export function test ({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
+export function test({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
 	const expected = locateInSource( '.foo' );
 
 	const start = locateInGeneratedCss( '.foo' );

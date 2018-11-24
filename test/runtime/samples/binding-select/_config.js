@@ -27,7 +27,7 @@ export default {
 		selected: 'one',
 	},
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 

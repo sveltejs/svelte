@@ -9,7 +9,7 @@ export default {
 		<p>capybara</p>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.animals = [ 'alpaca', 'baboon', 'caribou', 'dogfish' ];
 		assert.htmlEqual( target.innerHTML, `
 			<p>alpaca</p>

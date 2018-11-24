@@ -11,7 +11,7 @@ export default {
 		<p>4</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.things = [0, 0, 0];
 
 		assert.htmlEqual(target.innerHTML, `

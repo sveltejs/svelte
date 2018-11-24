@@ -7,7 +7,7 @@ export default {
 
 	html: ``,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.props = {
 			a: 2,
 		};

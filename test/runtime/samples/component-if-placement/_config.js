@@ -9,7 +9,7 @@ export default {
 		<span>After</span>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.flag = false;
 		assert.htmlEqual( target.innerHTML, `
 			<span>Before</span>

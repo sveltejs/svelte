@@ -7,7 +7,7 @@ export default {
 
 	html: `<div><p>does not change</p></div>`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const p = target.querySelector('p');
 
 		component.raw = '<p>does not change</p>';

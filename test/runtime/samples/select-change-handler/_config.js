@@ -4,7 +4,7 @@ export default {
 		selected: 'b'
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		assert.equal(select.value, 'b');
 

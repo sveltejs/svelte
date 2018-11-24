@@ -9,7 +9,7 @@ export default {
 		<div>2</div>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.ones = [{ text: '11' }];
 
 		assert.htmlEqual(target.innerHTML, `

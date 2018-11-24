@@ -15,7 +15,7 @@ export default {
 		<p>Doctor Who</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
 		inputs[1].value = 'Oz';

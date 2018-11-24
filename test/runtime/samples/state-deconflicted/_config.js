@@ -22,7 +22,7 @@ export default {
 		</ul>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.states = [
 			'Maine',
 			'Maryland',

@@ -3,7 +3,7 @@ export default {
 		z: 'z'
 	},
 
-	test(assert, component, target, window, raf) {
+	test({ assert, component, target, window, raf }) {
 		assert.equal(target.querySelector('div'), component.no);
 
 		component.x = true;

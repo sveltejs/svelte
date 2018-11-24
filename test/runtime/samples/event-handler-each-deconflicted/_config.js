@@ -11,7 +11,7 @@ export default {
 		<p>clicked: neither</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const buttons = target.querySelectorAll('button');
 		const event = new window.MouseEvent('click');
 

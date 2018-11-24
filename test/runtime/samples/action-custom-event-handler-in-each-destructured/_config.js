@@ -8,7 +8,7 @@ export default {
 		<p>second: </p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('click');
 
 		const buttons = target.querySelectorAll('button');

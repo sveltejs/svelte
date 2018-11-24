@@ -1,7 +1,7 @@
 export default {
 	html: `<div data-named="value" data-foo="bar">red</div>`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		const div = target.querySelector( 'div' );
 
 		assert.equal( div.dataset.foo, 'bar' );

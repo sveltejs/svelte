@@ -1,7 +1,7 @@
 export default {
 	html: '<button>+1</button>\n\n<p>0</p>',
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const button = target.querySelector('button');
 		const event = new window.MouseEvent('click');
 

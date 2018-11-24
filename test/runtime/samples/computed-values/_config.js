@@ -4,7 +4,7 @@ export default {
 		<p>3 * 3 = 9</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.a = 3;
 		assert.equal(component.c(), 5);
 		assert.equal(component.cSquared(), 25);

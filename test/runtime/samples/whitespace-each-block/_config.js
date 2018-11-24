@@ -3,7 +3,7 @@ export default {
 		characters: ['a', 'b', 'c']
 	},
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		assert.equal(
 			target.textContent,
 			`a b c `

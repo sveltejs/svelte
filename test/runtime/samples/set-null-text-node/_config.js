@@ -3,7 +3,7 @@ export default {
 
 	html: 'foo is null',
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.foo = 42;
 		assert.htmlEqual(target.innerHTML, 'foo is 42');
 

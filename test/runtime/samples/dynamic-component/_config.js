@@ -7,7 +7,7 @@ export default {
 		<p>true, therefore Foo</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `

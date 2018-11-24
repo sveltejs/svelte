@@ -10,7 +10,7 @@ export default {
 		<div></div>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.selected = 'three';
 		assert.htmlEqual(target.innerHTML, `
 			<div></div>

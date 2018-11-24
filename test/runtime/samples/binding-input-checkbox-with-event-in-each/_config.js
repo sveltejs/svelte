@@ -17,7 +17,7 @@ export default {
 		<input type="checkbox">
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const { cats } = component;
 		const newCats = cats.slice();
 		newCats.push({

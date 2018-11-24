@@ -1,5 +1,5 @@
 export default {
-	async test(assert, component) {
+	async test({ assert, component }) {
 		const { foo, p } = component;
 
 		const values = [];

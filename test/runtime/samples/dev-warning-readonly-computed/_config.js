@@ -7,7 +7,7 @@ export default {
 		a: 42
 	},
 
-	test ( assert, component ) {
+	test({ assert, component }) {
 		try {
 			component.foo = 1;
 			throw new Error( 'Expected an error' );

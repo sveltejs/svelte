@@ -13,7 +13,7 @@ export default {
 		<p>loading...</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		fulfil(42);
 
 		return thePromise

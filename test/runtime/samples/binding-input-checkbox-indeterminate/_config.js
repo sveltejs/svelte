@@ -11,7 +11,7 @@ export default {
 		<p>indeterminate? true</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		assert.equal(input.checked, false);
 		assert.equal(input.indeterminate, true);

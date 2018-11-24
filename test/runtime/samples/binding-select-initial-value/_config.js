@@ -27,7 +27,7 @@ export default {
 		selected: 'b',
 	},
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 

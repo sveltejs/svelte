@@ -13,7 +13,7 @@ export default {
 		<p>number 42</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		assert.equal(input.value, '42');
 

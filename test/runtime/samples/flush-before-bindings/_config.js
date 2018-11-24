@@ -10,7 +10,7 @@ export default {
 		<div><p>second thing (true)</p></div>
 	`,
 
-	test(assert, component) {
+	test({ assert, component }) {
 		const visibleThings = component.visibleThings;
 		assert.deepEqual(visibleThings, ['first thing', 'second thing']);
 

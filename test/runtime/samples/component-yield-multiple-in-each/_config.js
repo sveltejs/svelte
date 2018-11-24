@@ -5,7 +5,7 @@ export default {
 		<p>Hello Charles</p>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.people = [ 'Alice', 'Charles', 'Bob' ];
 
 		assert.htmlEqual( target.innerHTML, `

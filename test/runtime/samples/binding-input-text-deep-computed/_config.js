@@ -16,7 +16,7 @@ export default {
 		<p>hello alice</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 
 		assert.equal(input.value, 'alice');

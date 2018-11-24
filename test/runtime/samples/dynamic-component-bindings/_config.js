@@ -8,7 +8,7 @@ export default {
 		<input>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		let input = target.querySelector('input');
 		input.value = 'abc';
 		await input.dispatchEvent(new window.Event('input'));

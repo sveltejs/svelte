@@ -1,5 +1,5 @@
 export default {
-	test(assert, component) {
+	test({ assert, component }) {
 		let count = 0;
 
 		component.$on('state', ({ changed }) => {

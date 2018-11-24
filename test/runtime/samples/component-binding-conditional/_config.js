@@ -6,7 +6,7 @@ export default {
 		<p>y: bar</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `

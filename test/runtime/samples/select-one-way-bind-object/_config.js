@@ -8,7 +8,7 @@ export default {
 		items
 	},
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		const options = target.querySelectorAll( 'option' );
 
 		assert.equal( options[0].selected, true );

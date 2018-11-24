@@ -33,7 +33,7 @@ export default {
 		<p>1 completed</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = [ ...target.querySelectorAll('input') ];
 
 		assert.ok(inputs[0].checked);

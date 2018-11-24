@@ -32,7 +32,7 @@ export default {
 		<p>shake it all about</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		const select = target.querySelector('select');
 		const options = target.querySelectorAll('option');

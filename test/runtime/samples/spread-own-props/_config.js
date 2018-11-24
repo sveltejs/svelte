@@ -13,7 +13,7 @@ export default {
 		<p>quux: core</p></div>
 	`,
 
-	async test(assert, component, target) {
+	async test({ assert, component, target }) {
 		await component.$set({
 			foo: 'wut',
 			baz: 40 + 3,

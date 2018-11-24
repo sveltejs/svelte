@@ -15,7 +15,7 @@ export default {
 		<p>quux: core</p></div>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.props = {
 			foo: 'wut',
 			baz: 40 + 3,

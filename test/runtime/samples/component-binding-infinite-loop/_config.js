@@ -25,7 +25,7 @@ export default {
 		<p><span class=''>1</span></p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const click = new window.MouseEvent('click');
 		const spans = target.querySelectorAll('span');
 

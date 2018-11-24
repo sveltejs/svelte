@@ -11,7 +11,7 @@ export default {
 		</svg>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.foo = ['a', 'b'];
 
 		assert.htmlEqual(target.innerHTML, `

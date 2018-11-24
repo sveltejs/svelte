@@ -24,7 +24,7 @@ export default {
 		<p>foo: 2</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 

@@ -1,5 +1,5 @@
 export default {
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		assert.deepEqual(component.events, []);
 
 		const event1 = new window.Event('mouseenter');

@@ -15,7 +15,7 @@ export default {
 		<p>baz x: initial</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const click = new window.MouseEvent('click');
 		const buttons = [...target.querySelectorAll('button')];
 

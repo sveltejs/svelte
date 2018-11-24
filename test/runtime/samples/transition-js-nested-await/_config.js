@@ -10,7 +10,7 @@ export default {
 		promise
 	},
 
-	test(assert, component, target, window, raf) {
+	test({ assert, component, target, window, raf }) {
 		component.x = true;
 		fulfil();
 

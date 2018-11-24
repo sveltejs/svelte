@@ -1,5 +1,5 @@
 export default {
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const allow = target.querySelector('.allow-propagation');
 		const stop = target.querySelector('.stop-propagation');
 

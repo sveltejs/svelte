@@ -7,7 +7,7 @@ export default {
 		<span>1</span>
 	`,
 
-	async test(assert, component, target) {
+	async test({ assert, component, target }) {
 		await component.list.update();
 
 		assert.htmlEqual(target.innerHTML, `

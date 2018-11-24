@@ -19,7 +19,7 @@ export default {
 		<div><input value=three><p>three</p></div>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = [...target.querySelectorAll('input')];
 
 		assert.equal(inputs[0].value, 'one');

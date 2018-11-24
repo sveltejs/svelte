@@ -8,7 +8,7 @@ export default {
 		<p>green one</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `

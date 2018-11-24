@@ -30,7 +30,7 @@ export default {
 		<pre>ONE SOURCE\nTWO SOURCE</pre>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('input');
 		const textarea = target.querySelector('textarea');
 

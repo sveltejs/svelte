@@ -12,7 +12,7 @@ export default {
 		after
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.animals = [];
 		assert.htmlEqual(target.innerHTML, `
 			before

@@ -4,7 +4,7 @@ export default {
 	// TODO is sibling onMount order important?
 	skip: true,
 
-	test(assert) {
+	test({ assert }) {
 		assert.deepEqual(result, [
 			'onMount foo',
 			'onMount bar'

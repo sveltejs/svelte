@@ -16,7 +16,7 @@ export default {
 		<div>baz</div>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `

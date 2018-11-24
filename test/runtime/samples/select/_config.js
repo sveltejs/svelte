@@ -14,7 +14,7 @@ export default {
 		</select>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		assert.htmlEqual(target.innerHTML,`
 			<select>
 				<option value="a">One</option>

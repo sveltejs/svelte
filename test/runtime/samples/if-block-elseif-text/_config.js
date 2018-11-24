@@ -7,7 +7,7 @@ export default {
 		before-if-after
 	`,
 
-	test (assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = 4;
 		assert.htmlEqual(target.innerHTML, `
 			before-elseif-after

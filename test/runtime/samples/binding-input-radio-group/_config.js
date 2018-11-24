@@ -25,7 +25,7 @@ export default {
 
 		<p>Beta</p>`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, false);
 		assert.equal(inputs[1].checked, true);

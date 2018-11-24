@@ -162,7 +162,13 @@ describe.only("runtime", () => {
 					}
 
 					if (config.test) {
-						return Promise.resolve(config.test(assert, component, target, window, raf)).then(() => {
+						return Promise.resolve(config.test({
+							assert,
+							component,
+							target,
+							window,
+							raf
+						})).then(() => {
 							component.$destroy();
 						});
 					} else {

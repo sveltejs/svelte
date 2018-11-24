@@ -5,7 +5,7 @@ export default {
 		foo: 42
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('click');
 		const button = target.querySelector('button');
 

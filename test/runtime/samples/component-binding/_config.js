@@ -6,7 +6,7 @@ export default {
 		<p>count: 0</p>
 	`,
 
-	async test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const click = new window.MouseEvent('click');
 		const button = target.querySelector('button');
 

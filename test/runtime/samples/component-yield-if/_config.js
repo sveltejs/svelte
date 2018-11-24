@@ -1,7 +1,7 @@
 export default {
 	html: '<div><p></p></div>',
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const { widget } = component;
 
 		assert.equal(widget.show, false);

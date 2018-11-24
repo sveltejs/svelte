@@ -11,7 +11,7 @@ export default {
 		<p class='2'></p>
 	`,
 
-	test(assert, component) {
+	test({ assert, component }) {
 		counter.count = 0;
 
 		component.x = 3;

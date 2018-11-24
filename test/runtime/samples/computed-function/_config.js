@@ -1,7 +1,7 @@
 export default {
 	html: '<p>50</p>',
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.range = [50, 100];
 		assert.htmlEqual(target.innerHTML, '<p>75</p>');
 

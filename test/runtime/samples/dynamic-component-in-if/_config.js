@@ -3,7 +3,7 @@ export default {
 		<p>Foo</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = component.Bar;
 
 		assert.htmlEqual(target.innerHTML, `

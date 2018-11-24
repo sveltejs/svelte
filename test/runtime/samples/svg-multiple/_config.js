@@ -11,7 +11,7 @@ export default {
 		<svg><rect x="0" y="0" width="100" height="100"></rect></svg>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		const svgs = target.querySelectorAll( 'svg' );
 		const rects = target.querySelectorAll( 'rect' );
 

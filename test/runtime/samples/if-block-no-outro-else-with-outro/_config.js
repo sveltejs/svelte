@@ -11,7 +11,7 @@ export default {
 		<input type=text value=x>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		component.x = 'y';
 		assert.htmlEqual(target.innerHTML, `
 			<div>A wild component appears</div>

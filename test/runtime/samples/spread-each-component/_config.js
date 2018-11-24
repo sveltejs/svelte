@@ -11,7 +11,7 @@ export default {
 		]
 	},
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const { things } = component;
 
 		component.things = things.reverse();

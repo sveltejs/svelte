@@ -5,7 +5,7 @@ export default {
 
 	html: '<div><p>i am a widget</p></div>',
 
-	test(assert, component) {
+	test({ assert, component }) {
 		let count = 0;
 
 		component.$on('widgetTornDown', function() {

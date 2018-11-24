@@ -6,7 +6,7 @@ export default {
 		go: { deeper: 'core' }
 	},
 	html: `<div><p>foo: lol</p>\n<p>baz: 42 (number)</p>\n<p>qux: this is a piece of string</p>\n<p>quux: core</p></div>`,
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.bar = 'wut';
 		component.x = 3;
 		component.compound = 'rather boring';

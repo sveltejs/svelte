@@ -9,7 +9,7 @@ export default {
 		after
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		component.visible = false;
 		assert.htmlEqual( target.innerHTML, `
 			before
