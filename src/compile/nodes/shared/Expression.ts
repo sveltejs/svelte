@@ -96,6 +96,7 @@ export default class Expression {
 		const isSynthetic = owner.isSynthetic;
 
 		let function_expression;
+		let pending_assignments = new Set();
 
 		walk(info, {
 			enter(node: any, parent: any, key: string) {
@@ -149,9 +150,9 @@ export default class Expression {
 					if (node.type === 'AssignmentExpression') {
 						// TODO handle destructuring assignments
 						const { name } = flattenReference(node.left);
+						pending_assignments.add(name);
 
-						code.prependRight(node.start, `($$make_dirty('${name}'), `);
-						code.appendLeft(node.end, ')');
+						// code.appendLeft(node.end, `; $$make_dirty('${name}')`);
 					}
 				} else {
 					if (node.type === 'AssignmentExpression') {
@@ -183,6 +184,16 @@ export default class Expression {
 				if (map.has(node)) currentScope = currentScope.parent;
 
 				if (node === function_expression) {
+					if (pending_assignments.size > 0) {
+						if (node.type !== 'ArrowFunctionExpression') {
+							// this should never happen!
+							throw new Error(`Well that's odd`);
+						}
+
+						// TOOD optimisation — if this is an event handler,
+						// the return value doesn't matter
+					}
+
 					const name = component.getUniqueName(get_function_name(node, owner));
 
 					const args = contextual_dependencies.size > 0
@@ -198,7 +209,20 @@ export default class Expression {
 
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
-						body = `{\n\treturn ${body};\n}`;
+						if (pending_assignments.size > 0) {
+							const insert = [...pending_assignments].map(name => `$$make_dirty('${name}');`);
+							pending_assignments = new Set();
+
+							body = deindent`
+								{
+									const $$result = ${body};
+									${insert}
+									return $$result;
+								}
+							`;
+						} else {
+							body = `{\n\treturn ${body};\n}`;
+						}
 					}
 
 					const fn = deindent`
@@ -234,6 +258,25 @@ export default class Expression {
 					function_expression = null;
 					dependencies = expression_dependencies;
 					contextual_dependencies = expression_contextual_dependencies;
+				}
+
+				if (/Statement/.test(node.type)) {
+					if (pending_assignments.size > 0) {
+						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
+
+						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
+							if (node.argument) {
+								code.overwrite(node.start, node.argument.start, `var $$result = `);
+								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
+							} else {
+								code.prependRight(node.start, `${insert}; `);
+							}
+						} else {
+							code.appendLeft(node.end, `; ${insert}`);
+						}
+
+						pending_assignments = new Set();
+					}
 				}
 			}
 		});
