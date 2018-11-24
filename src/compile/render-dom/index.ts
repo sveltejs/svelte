@@ -123,19 +123,24 @@ export default function dom(
 
 		const props = component.exports.filter(x => component.writable_declarations.has(x.name));
 
-		const inject_props = props.length > 0
+		const inject_props = component.meta.props || props.length > 0
 			? deindent`
-				props => {
+				$$props => {
+					${component.meta.props && deindent`
+					if (!${component.meta.props}) ${component.meta.props} = {};
+					@assign(${component.meta.props}, $$props);
+					$$make_dirty('${component.meta.props_object}');
+					`}
 					${props.map(prop =>
-					`if ('${prop.as}' in props) ${prop.name} = props.${prop.as};`)}
+					`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
 				}
 			`
 			: `@noop`;
 
 		const inject_refs = refs.length > 0
 			? deindent`
-				refs => {
-					${refs.map(name => `${name} = refs.${name};`)}
+				$$refs => {
+					${refs.map(name => `${name} = $$refs.${name};`)}
 				}
 			`
 			: `@noop`;

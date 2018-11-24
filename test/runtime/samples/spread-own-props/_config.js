@@ -1,11 +1,9 @@
 export default {
 	props: {
-		props: {
-			foo: 'lol',
-			baz: 40 + 2,
-			qux: `this is a ${'piece of'} string`,
-			quux: 'core'
-		}
+		foo: 'lol',
+		baz: 40 + 2,
+		qux: `this is a ${'piece of'} string`,
+		quux: 'core'
 	},
 
 	html: `
@@ -15,13 +13,13 @@ export default {
 		<p>quux: core</p></div>
 	`,
 
-	test(assert, component, target) {
-		component.props = {
+	async test(assert, component, target) {
+		await component.$set({
 			foo: 'wut',
 			baz: 40 + 3,
 			qux: `this is a ${'rather boring'} string`,
 			quux: 'heart'
-		};
+		});
 
 		assert.htmlEqual(target.innerHTML, `
 			<div><p>foo: wut</p>

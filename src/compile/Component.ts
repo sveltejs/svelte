@@ -17,6 +17,14 @@ import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
 import addToSet from '../utils/addToSet';
 
+type Meta = {
+	namespace?: string;
+	tag?: string;
+	immutable?: boolean;
+	props?: string;
+	props_object?: string;
+};
+
 // We need to tell estree-walker that it should always
 // look for an `else` block, otherwise it might get
 // the wrong idea about the shape of each/if blocks
@@ -34,11 +42,7 @@ export default class Component {
 	fragment: Fragment;
 	scope: Scope;
 
-	meta: {
-		namespace?: string;
-		tag?: string;
-		immutable?: boolean;
-	};
+	meta: Meta;
 
 	customElement: CustomElementOptions;
 	tag: string;
@@ -108,12 +112,12 @@ export default class Component {
 		this.walkJs();
 		this.name = this.alias(name);
 
-		const meta = process_meta(this, this.ast.html.children);
-		this.namespace = namespaces[meta.namespace] || meta.namespace;
+		this.meta = process_meta(this, this.ast.html.children);
+		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
 
 		if (options.customElement === true) {
 			this.customElement = {
-				tag: meta.tag,
+				tag: this.meta.tag,
 				props: [] // TODO!!!
 			};
 		} else {
@@ -478,66 +482,78 @@ export default class Component {
 	}
 }
 
-type Meta = {
-	namespace?: string;
-	tag?: string;
-	immutable?: boolean;
-};
-
 function process_meta(component, nodes) {
 	const meta: Meta = {};
 	const node = nodes.find(node => node.name === 'svelte:meta');
 
 	if (node) {
 		node.attributes.forEach(attribute => {
-			if (attribute.type !== 'Attribute') {
-				// TODO implement bindings on <svelte:meta>
-				component.error(attribute, {
-					code: `invalid-meta-attribute`,
-					message: `<svelte:meta> can only have 'tag' and 'namespace' attributes`
-				});
-			}
+			if (attribute.type === 'Attribute') {
+				const { name, value } = attribute;
 
-			const { name, value } = attribute;
-
-			if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
-				component.error(attribute, {
-					code: `invalid-meta-attribute`,
-					message: `<svelte:meta> cannot have dynamic attributes`
-				});
-			}
-
-			const { data } = value[0];
-
-			switch (name) {
-				case 'tag':
-				case 'namespace':
-					if (!data) {
-						component.error(attribute, {
-							code: `invalid-meta-attribute`,
-							message: `<svelte:meta> ${name} attribute must have a string value`
-						});
-					}
-
-					meta[name] = data;
-					break;
-
-				case 'immutable':
-					if (data && (data !== 'true' && data !== 'false')) {
-						component.error(attribute, {
-							code: `invalid-meta-attribute`,
-							message: `<svelte:meta> immutable attribute must be true or false`
-						});
-					}
-
-					meta.immutable = data !== 'false';
-
-				default:
+				if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
 					component.error(attribute, {
 						code: `invalid-meta-attribute`,
-						message: `<svelte:meta> unknown attribute`
+						message: `<svelte:meta> cannot have dynamic attributes`
 					});
+				}
+
+				const { data } = value[0];
+
+				switch (name) {
+					case 'tag':
+					case 'namespace':
+						if (!data) {
+							component.error(attribute, {
+								code: `invalid-meta-attribute`,
+								message: `<svelte:meta> ${name} attribute must have a string value`
+							});
+						}
+
+						meta[name] = data;
+						break;
+
+					case 'immutable':
+						if (data && (data !== 'true' && data !== 'false')) {
+							component.error(attribute, {
+								code: `invalid-meta-attribute`,
+								message: `<svelte:meta> immutable attribute must be true or false`
+							});
+						}
+
+						meta.immutable = data !== 'false';
+
+					default:
+						component.error(attribute, {
+							code: `invalid-meta-attribute`,
+							message: `<svelte:meta> unknown attribute`
+						});
+				}
 			}
+
+			else if (attribute.type === 'Binding') {
+				if (attribute.name !== 'props') {
+					component.error(attribute, {
+						code: `invalid-meta-attribute`,
+						message: `<svelte:meta> only supports bind:props`
+					});
+				}
+
+				const { start, end } = attribute.expression;
+				const { name } = flattenReference(attribute.expression);
+
+				meta.props = `[✂${start}-${end}✂]`;
+				meta.props_object = name;
+			}
+
+			else {
+				component.error(attribute, {
+					code: `invalid-meta-attribute`,
+					message: `<svelte:meta> can only have static 'tag', 'namespace' and 'immutable' attributes, or a bind:props directive`
+				});
+			}
+
+
 		});
 	}
 
