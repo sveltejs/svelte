@@ -68,9 +68,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 		}
 
-		if (renderer.component.options.nestedTransitions) {
-			block.addOutro();
-		}
+		block.addOutro();
 	}
 
 	render(
@@ -318,14 +316,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.update.addBlock(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
-						${component.options.nestedTransitions
-						? deindent`
 						@groupOutros();
 						const old_component = ${name};
 						old_component.$$fragment.o(() => {
 							old_component.$destroy();
-						});`
-						: `${name}.$destroy();`}
+						});
 					}
 
 					if (${switch_value}) {
@@ -409,11 +404,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 		}
 
-		if (component.options.nestedTransitions) {
-			block.builders.outro.addLine(
-				`if (${name}) ${name}.$$fragment.o(#outrocallback);`
-			);
-		}
+		block.builders.outro.addLine(
+			`if (${name}) ${name}.$$fragment.o(#outrocallback);`
+		);
 	}
 
 	remount(name: string) {

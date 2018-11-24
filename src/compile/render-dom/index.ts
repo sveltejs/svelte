@@ -18,9 +18,7 @@ export default function dom(
 
 	const { block } = renderer;
 
-	if (component.options.nestedTransitions) {
-		block.hasOutroMethod = true;
-	}
+	block.hasOutroMethod = true;
 
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.addLine(`this.c = @noop;`);

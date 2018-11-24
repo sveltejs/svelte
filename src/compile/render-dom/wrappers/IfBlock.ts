@@ -125,10 +125,8 @@ export default class IfBlockWrapper extends Wrapper {
 
 		createBranches(this.node);
 
-		if (component.options.nestedTransitions) {
-			if (hasIntros) block.addIntro();
-			if (hasOutros) block.addOutro();
-		}
+		if (hasIntros) block.addIntro();
+		if (hasOutros) block.addOutro();
 
 		blocks.forEach(block => {
 			block.hasUpdateMethod = isDynamic;
@@ -163,19 +161,17 @@ export default class IfBlockWrapper extends Wrapper {
 			if (hasOutros) {
 				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
 
-				if (this.renderer.options.nestedTransitions) {
-					block.builders.outro.addBlock(deindent`
-						if (${name}) ${name}.o(#outrocallback);
-						else #outrocallback();
-					`);
-				}
+				block.builders.outro.addBlock(deindent`
+					if (${name}) ${name}.o(#outrocallback);
+					else #outrocallback();
+				`);
 			} else {
 				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
 			}
 		} else {
 			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
 
-			if (hasOutros && this.renderer.options.nestedTransitions) {
+			if (hasOutros) {
 				block.builders.outro.addBlock(deindent`
 					if (${name}) ${name}.o(#outrocallback);
 					else #outrocallback();

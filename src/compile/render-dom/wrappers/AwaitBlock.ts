@@ -112,7 +112,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		this.then.block.hasOutroMethod = hasOutros;
 		this.catch.block.hasOutroMethod = hasOutros;
 
-		if (hasOutros && this.renderer.options.nestedTransitions) {
+		if (hasOutros) {
 			block.addOutro();
 		}
 	}
@@ -206,7 +206,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			`);
 		}
 
-		if (this.pending.block.hasOutroMethod && this.renderer.options.nestedTransitions) {
+		if (this.pending.block.hasOutroMethod) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, 3);

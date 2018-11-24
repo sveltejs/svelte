@@ -344,7 +344,7 @@ export default class EachBlockWrapper extends Wrapper {
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
-		if (this.block.hasOutros && this.renderer.component.options.nestedTransitions) {
+		if (this.block.hasOutros) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
@@ -501,7 +501,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		}
 
-		if (outroBlock && this.renderer.component.options.nestedTransitions) {
+		if (outroBlock) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				${iterations} = ${iterations}.filter(Boolean);
