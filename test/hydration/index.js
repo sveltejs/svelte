@@ -1,6 +1,6 @@
-import assert from 'assert';
-import path from 'path';
-import fs from 'fs';
+import * as assert from 'assert';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import {
 	showOutput,

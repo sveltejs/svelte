@@ -1,7 +1,7 @@
-import assert from "assert";
+import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import glob from 'tiny-glob/sync.js';
+import * as glob from 'tiny-glob/sync.js';
 
 import {
 	showOutput,

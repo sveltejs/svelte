@@ -1,5 +1,5 @@
-import assert from 'assert';
-import fs from 'fs';
+import * as assert from 'assert';
+import * as fs from 'fs';
 import { svelte, tryToLoadJson } from '../helpers.js';
 
 describe('parse', () => {

@@ -1,4 +1,4 @@
-import assert from 'assert';
+import * as assert from 'assert';
 import { svelte } from '../helpers.js';
 
 describe('preprocess', () => {

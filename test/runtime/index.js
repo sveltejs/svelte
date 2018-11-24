@@ -1,8 +1,8 @@
-import assert from "assert";
+import * as assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
-import virtual from 'rollup-plugin-virtual';
+import * as virtual from 'rollup-plugin-virtual';
 import { transitionManager } from "../../internal.js";
 
 import {
@@ -119,7 +119,7 @@ describe.only("runtime", () => {
 						mod = require(`./samples/${dir}/main.html`);
 						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, { internal, hydratable: hydrate }, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, hydratable: hydrate, format: 'cjs' }, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -191,7 +191,8 @@ describe.only("runtime", () => {
 						showOutput(cwd, {
 							internal,
 							hydratable: hydrate,
-							dev: compileOptions.dev
+							dev: compileOptions.dev,
+							format: 'cjs'
 						}, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
@@ -200,7 +201,8 @@ describe.only("runtime", () => {
 					if (config.show) {
 						showOutput(cwd, {
 							internal,
-							hydratable: hydrate
+							hydratable: hydrate,
+							format: 'cjs'
 						}, svelte.compile);
 					}
 

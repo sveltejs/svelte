@@ -8,9 +8,10 @@ require.extensions['.js'] = function(module, filename) {
 	const exports = [];
 
 	var code = fs.readFileSync(filename, 'utf-8')
-		.replace(/^import (?:\* as )?(\w+) from ['"]([^'"]+)['"];?/gm, 'var $1 = require("$2");')
+		.replace(/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm, 'var $1 = require("$2");')
+		.replace(/^import (\w+) from ['"]([^'"]+)['"];?/gm, 'var {default: $1} = require("$2");')
 		.replace(/^import {([^}]+)} from ['"](.+)['"];?/gm, 'var {$1} = require("$2");')
-		.replace(/^export default /gm, 'module.exports = ')
+		.replace(/^export default /gm, 'exports.default = ')
 		.replace(/^export (const|let|var|class|function) (\w+)/gm, (match, type, name) => {
 			exports.push(name);
 			return `${type} ${name}`;

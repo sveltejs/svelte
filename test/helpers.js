@@ -1,9 +1,9 @@
-import jsdom from 'jsdom';
-import assert from 'assert';
-import glob from 'tiny-glob/sync.js';
-import fs from 'fs';
-import path from 'path';
-import chalk from 'chalk';
+import * as jsdom from 'jsdom';
+import * as assert from 'assert';
+import * as glob from 'tiny-glob/sync.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as chalk from 'chalk';
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
