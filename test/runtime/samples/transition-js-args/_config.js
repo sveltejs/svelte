@@ -1,9 +1,7 @@
 export default {
-	skipIntroByDefault: true,
-	nestedTransitions: true,
-	intro: true,
-
 	test(assert, component, target, window, raf) {
+		component.visible = true;
+
 		const div = target.querySelector('div');
 
 		assert.equal(div.foo, 0);

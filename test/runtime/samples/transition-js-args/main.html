@@ -1,4 +1,6 @@
 <script>
+	export let visible = false;
+
 	function foo(node, params) {
 		return {
 			duration: 100,
@@ -10,4 +12,6 @@
 	}
 </script>
 
-<div transition:foo></div>
+{#if visible}
+	<div transition:foo></div>
+{/if}
