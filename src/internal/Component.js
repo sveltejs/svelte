@@ -2,6 +2,7 @@ import { after_render, flush, intro, schedule_update } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
+import { children } from './dom.js';
 
 export class $$Component {
 	constructor(options) {
@@ -93,7 +94,8 @@ export class $$Component {
 
 	$$mount(target, anchor, hydrate) {
 		if (hydrate) {
-			this.$$fragment.l(target.childNodes);
+			this.$$fragment.l(children(target));
+			this.$$fragment.m(target, anchor); // TODO can we avoid moving DOM?
 		} else {
 			this.$$fragment.c();
 			this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);

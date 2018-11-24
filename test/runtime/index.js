@@ -258,7 +258,7 @@ describe.only("runtime", () => {
 
 		assert.throws(() => {
 			new App({
-				target: {},
+				target: { childNodes: [] },
 				hydrate: true
 			});
 		}, /options.hydrate only works if the component was compiled with the `hydratable: true` option/);
