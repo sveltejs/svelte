@@ -1,4 +1,5 @@
 import { SourceMap } from 'magic-string';
+import { SourceMapConsumer, SourceMapGenerator } from 'source-map';
 
 export interface PreprocessOptions {
 	markup?: (options: {
@@ -31,6 +32,24 @@ function parseAttributes(str: string) {
 	return attrs;
 }
 
+function addMappings(generator: SourceMapConsumer, map: string | object) {
+	const consumer = new SourceMapConsumer(map);
+	consumer.eachMapping(mapping => {
+		generator.addMapping({
+			source: mapping.source,
+			name: mapping.name,
+			original: {
+				line: mapping.originalLine,
+				column: mapping.originalColumn
+			},
+			generated: {
+				line: mapping.generatedLine,
+				column: mapping.generatedColumn
+			}
+		});
+	});
+}
+
 async function replaceTagContents(
 	source,
 	type: 'script' | 'style',
@@ -50,15 +69,49 @@ async function replaceTagContents(
 		});
 
 		if (processed && processed.code) {
-			return (
+			const code = (
 				source.slice(0, match.index) +
 				`<${type}>${processed.code}</${type}>` +
 				source.slice(match.index + match[0].length)
 			);
+
+			// Shift sourcemap to the appropriate line
+			if (processed.map) {
+				const consumer = new SourceMapConsumer(processed.map);
+
+				// Line number of the match
+				let line = 0;
+				for(let i = 0; i <= match.index; i = source.indexOf('\n', i + 1)) {
+					line++;
+				}
+
+				// Skip the <tag ...>
+				line++;
+
+				const generator = new SourceMapGenerator({ file: options.filename })
+				consumer.eachMapping(mapping => {
+					generator.addMapping({
+					  source: mapping.source,
+						name: mapping.name,
+					  original: {
+							line: mapping.originalLine + line,
+							column: mapping.originalColumn
+						},
+					  generated: {
+							line: mapping.generatedLine + line,
+							column: mapping.generatedColumn
+						}
+					});
+				});
+
+				return { code, map: generator.toJSON() };
+			}
+
+			return { code };
 		}
 	}
 
-	return source;
+	return { code: source };
 }
 
 export default async function preprocess(
@@ -66,6 +119,9 @@ export default async function preprocess(
 	options: PreprocessOptions
 ) {
 	const { markup, style, script } = options;
+
+
+	let markupMap: SourceMapGenerator;
 
 	if (!!markup) {
 		const processed: {
@@ -77,14 +133,32 @@ export default async function preprocess(
 		});
 
 		source = processed.code;
+		if (processed.map) {
+			markupMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(processed.map));
+		}
 	}
 
+	let allMaps = new SourceMapGenerator({ file: options.filename });
+
 	if (!!style) {
-		source = await replaceTagContents(source, 'style', style, options);
+		const { code, map } = await replaceTagContents(source, 'style', style, options);
+		source = code;
+		if (map) {
+			addMappings(allMaps, map);
+		}
 	}
 
 	if (!!script) {
-		source = await replaceTagContents(source, 'script', script, options);
+		const { code, map } = await replaceTagContents(source, 'script', script, options);
+		source = code;
+		if (map) {
+			addMappings(allMaps, map);
+		}
+	}
+
+	if (markupMap) {
+		markupMap.applySourceMap(new SourceMapConsumer(allMaps.toString()));
+		allMaps = markupMap;
 	}
 
 	return {
@@ -95,6 +169,10 @@ export default async function preprocess(
 
 		toString() {
 			return source;
+		},
+
+		getMap() {
+			return allMaps.toJSON();
 		}
 	};
 }
