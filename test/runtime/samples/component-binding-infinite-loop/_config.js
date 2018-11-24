@@ -1,6 +1,4 @@
 export default {
-	solo: 1,
-
 	html: `
 		<p><span class=''>1</span></p>
 		<p><span class='selected'>2</span></p>
