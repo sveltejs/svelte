@@ -32,6 +32,17 @@ childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
+function get_context(script) {
+	const context = script.attributes.find(attribute => attribute.name === 'context');
+	if (!context) return 'default';
+
+	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
+		throw new Error(`context attribute must be static`);
+	}
+
+	return context.value[0].data;
+}
+
 export default class Component {
 	stats: Stats;
 
@@ -52,12 +63,14 @@ export default class Component {
 	imports: Node[] = [];
 	namespace: string;
 	hasComponents: boolean;
+	module_javascript: string;
 	javascript: string;
 
 	declarations: string[] = [];
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
 	exports: Array<{ name: string, as: string }> = [];
+	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
 
@@ -109,7 +122,8 @@ export default class Component {
 
 		this.properties = new Map();
 
-		this.walkJs();
+		this.walk_module_js();
+		this.walk_instance_js();
 		this.name = this.alias(name);
 
 		this.meta = process_meta(this, this.ast.html.children);
@@ -197,7 +211,18 @@ export default class Component {
 			? options.shared
 			: 'svelte/internal.js';
 
-		const module = wrapModule(result, format, name, options, banner, sharedPath, importedHelpers, this.imports, this.source);
+		const module = wrapModule(
+			result,
+			format,
+			name,
+			options,
+			banner,
+			sharedPath,
+			importedHelpers,
+			this.imports,
+			this.module_exports,
+			this.source
+		);
 
 		const parts = module.split('✂]');
 		const finalChunk = parts.pop();
@@ -351,38 +376,9 @@ export default class Component {
 		return null;
 	}
 
-	walkJs() {
-		const { js } = this.ast;
-		if (!js) return;
-
-		this.addSourcemapLocations(js.content);
-
-		const { code, source, imports } = this;
-
-		const indent = code.getIndentString();
-		code.indent(indent, {
-			exclude: [
-				[0, js.content.start],
-				[js.content.end, source.length]
-			]
-		});
-
-		let { scope, map, globals } = createScopes(js.content);
-		this.scope = scope;
-
-		scope.declarations.forEach(name => {
-			this.userVars.add(name);
-			this.declarations.push(name);
-		});
-
-		this.writable_declarations = scope.writable_declarations;
-		this.initialised_declarations = scope.initialised_declarations;
-
-		globals.forEach(name => {
-			this.userVars.add(name);
-		});
-
-		const body = js.content.body.slice(); // slice, because we're going to be mutating the original
+	extract_imports_and_exports(content, imports, exports) {
+		const { code } = this;
+		const body = content.body.slice(); // TODO do we need to mutate the original?
 
 		body.forEach(node => {
 			if (node.type === 'ExportDefaultDeclaration') {
@@ -397,18 +393,18 @@ export default class Component {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
-								this.exports.push({ name, as: name });
+								exports.push({ name, as: name });
 							});
 						});
 					} else {
 						const { name } = node.declaration.id;
-						this.exports.push({ name, as: name });
+						exports.push({ name, as: name });
 					}
 
 					code.remove(node.start, node.declaration.start);
 				} else {
 					node.specifiers.forEach(specifier => {
-						this.exports.push({
+						exports.push({
 							name: specifier.local.name,
 							as: specifier.exported.name
 						});
@@ -419,7 +415,7 @@ export default class Component {
 			// imports need to be hoisted out of the IIFE
 			// TODO hoist other stuff where possible
 			else if (node.type === 'ImportDeclaration') {
-				removeNode(code, js.content, node);
+				removeNode(code, content.start, content.end, body, node);
 				imports.push(node);
 
 				node.specifiers.forEach((specifier: Node) => {
@@ -428,10 +424,63 @@ export default class Component {
 				});
 			}
 		});
+	}
+
+	walk_module_js() {
+		const script = this.ast.js.find(script => get_context(script) === 'module');
+		if (!script) return;
+
+		this.addSourcemapLocations(script.content);
+
+		// TODO unindent
+
+		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
+
+		let a = script.content.start;
+		while (/\s/.test(this.source[a])) a += 1;
+
+		let b = script.content.end;
+		while (/\s/.test(this.source[b - 1])) b -= 1;
+
+		this.module_javascript = a !== b ? `[✂${a}-${b}✂]` : null;
+	}
+
+	walk_instance_js() {
+		const script = this.ast.js.find(script => get_context(script) === 'default');
+		if (!script) return;
+
+		this.addSourcemapLocations(script.content);
+
+		const { code, source, imports } = this;
+
+		const indent = code.getIndentString();
+		code.indent(indent, {
+			exclude: [
+				[0, script.content.start],
+				[script.content.end, source.length]
+			]
+		});
+
+		let { scope, map, globals } = createScopes(script.content);
+		this.scope = scope;
+
+		scope.declarations.forEach(name => {
+			this.userVars.add(name);
+			this.declarations.push(name);
+		});
+
+		this.writable_declarations = scope.writable_declarations;
+		this.initialised_declarations = scope.initialised_declarations;
+
+		globals.forEach(name => {
+			this.userVars.add(name);
+		});
+
+		this.extract_imports_and_exports(script.content, this.imports, this.exports);
 
 		const top_scope = scope;
 
-		walk(js.content, {
+		walk(script.content, {
 			enter: (node, parent) => {
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -453,10 +502,10 @@ export default class Component {
 			}
 		});
 
-		let a = js.content.start;
+		let a = script.content.start;
 		while (/\s/.test(source[a])) a += 1;
 
-		let b = js.content.end;
+		let b = script.content.end;
 		while (/\s/.test(source[b - 1])) b -= 1;
 
 		this.javascript = a !== b ? `[✂${a}-${b}✂]` : '';

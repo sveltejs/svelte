@@ -219,6 +219,8 @@ export default function dom(
 		});
 
 		builder.addBlock(deindent`
+			${component.module_javascript}
+
 			${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 
 			class ${name} extends ${superclass} {

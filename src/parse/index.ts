@@ -19,13 +19,13 @@ export class Parser {
 	readonly filename?: string;
 	readonly customElement: CustomElementOptions | true;
 
-	index: number;
-	stack: Array<Node>;
+	index = 0;
+	stack: Array<Node> = [];
 
 	html: Node;
-	css: Node;
-	js: Node;
-	metaTags: {};
+	css: Node[] = [];
+	js: Node[] = [];
+	metaTags = {};
 
 	allowBindings: boolean;
 
@@ -40,19 +40,12 @@ export class Parser {
 
 		this.allowBindings = options.bind !== false;
 
-		this.index = 0;
-		this.stack = [];
-		this.metaTags = {};
-
 		this.html = {
 			start: null,
 			end: null,
 			type: 'Fragment',
 			children: [],
 		};
-
-		this.css = null;
-		this.js = null;
 
 		this.stack.push(this.html);
 

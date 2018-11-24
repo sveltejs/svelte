@@ -1,46 +1,37 @@
 import MagicString from 'magic-string';
 import { Node } from '../interfaces';
 
-const keys = {
-	ObjectExpression: 'properties',
-	Program: 'body',
-};
-
-const offsets = {
-	ObjectExpression: [1, -1],
-	Program: [0, 0],
-};
-
-export function removeNode(code: MagicString, parent: Node, node: Node) {
-	const key = keys[parent.type];
-	const offset = offsets[parent.type];
-	if (!key || !offset) throw new Error(`not implemented: ${parent.type}`);
-
-	const list = parent[key];
-	const i = list.indexOf(node);
+export function removeNode(
+	code: MagicString,
+	start: number,
+	end: number,
+	body: Node,
+	node: Node
+) {
+	const i = body.indexOf(node);
 	if (i === -1) throw new Error('node not in list');
 
 	let a;
 	let b;
 
-	if (list.length === 1) {
+	if (body.length === 1) {
 		// remove everything, leave {}
-		a = parent.start + offset[0];
-		b = parent.end + offset[1];
+		a = start;
+		b = end;
 	} else if (i === 0) {
 		// remove everything before second node, including comments
-		a = parent.start + offset[0];
+		a = start;
 		while (/\s/.test(code.original[a])) a += 1;
 
-		b = list[i].end;
+		b = body[i].end;
 		while (/[\s,]/.test(code.original[b])) b += 1;
 	} else {
 		// remove the end of the previous node to the end of this one
-		a = list[i - 1].end;
+		a = body[i - 1].end;
 		b = node.end;
 	}
 
 	code.remove(a, b);
-	list.splice(i, 1);
+	body.splice(i, 1);
 	return;
 }

@@ -231,16 +231,8 @@ export default function tag(parser: Parser) {
 	if (specials.has(name) && parser.stack.length === 1) {
 		const special = specials.get(name);
 
-		if (parser[special.property]) {
-			parser.index = start;
-			parser.error({
-				code: `duplicate-${name}`,
-				message: `You can only have one top-level <${name}> tag per component`
-			});
-		}
-
 		parser.eat('>', true);
-		parser[special.property] = special.read(parser, start, element.attributes);
+		parser[special.property].push(special.read(parser, start, element.attributes));
 		return;
 	}
 

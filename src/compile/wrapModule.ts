@@ -19,9 +19,12 @@ export default function wrapModule(
 	sharedPath: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
+	module_exports: string[],
 	source: string
 ): string {
-	if (format === 'es') return es(code, name, options, banner, sharedPath, helpers, imports, source);
+	if (format === 'es') {
+		return es(code, name, options, banner, sharedPath, helpers, imports, module_exports, source);
+	}
 
 	const dependencies = imports.map((declaration, i) => {
 		const defaultImport = declaration.specifiers.find(
@@ -77,6 +80,7 @@ function es(
 	sharedPath: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
+	module_exports: string[],
 	source: string
 ) {
 	const importHelpers = helpers.length > 0 && (
@@ -95,7 +99,8 @@ function es(
 		${importBlock}
 
 		${code}
-		export default ${name};`;
+		export default ${name};
+		${module_exports.length > 0 && `export { ${module_exports.join(', ')} };`}`;
 }
 
 function amd(
