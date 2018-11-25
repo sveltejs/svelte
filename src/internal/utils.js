@@ -48,3 +48,11 @@ export function run_all(fns) {
 export function is_function(thing) {
 	return typeof thing === 'function';
 }
+
+export function safe_not_equal(a, b) {
+	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+}
+
+export function not_equal(a, b) {
+	return a != a ? b == b : a !== b;
+}

@@ -145,33 +145,10 @@ export default function dom(
 			`
 			: `@noop`;
 
-		const body = [
-			deindent`
-				$$init($$make_dirty) {
-					${component.init_uses_self && `const $$self = this;`}
-
-					${should_add_css &&
-					`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
-
-					${component.javascript || component.exports.map(x => `let ${x.name};`)}
-
-					${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
-
-					return [
-						// TODO only what's needed by the template
-						() => ({ ${component.declarations.join(', ')} }),
-						${inject_props},
-						${inject_refs}
-					];
-				}
-
-				$$create_fragment(${component.alias('component')}, ctx) {
-					${block.getContents()}
-				}
-			`
-		];
+		const body = [];
 
 		const debug_name = `<${component.customElement ? component.tag : name}>`;
+		const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
 
 		if (component.options.dev) {
 			// TODO check no uunexpected props were passed, as well as
@@ -219,11 +196,35 @@ export default function dom(
 		});
 
 		builder.addBlock(deindent`
+			function $$create_fragment(${component.alias('component')}, ctx) {
+				${block.getContents()}
+			}
+
 			${component.module_javascript}
 
 			${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 
+			function $$init($$self, $$make_dirty) {
+				${should_add_css &&
+				`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
+
+				${component.javascript || component.exports.map(x => `let ${x.name};`)}
+
+				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
+
+				return [
+					// TODO only what's needed by the template
+					() => ({ ${component.declarations.join(', ')} }),
+					${inject_props},
+					${inject_refs}
+				];
+			}
+
 			class ${name} extends ${superclass} {
+				constructor(options) {
+					super(options, $$init, $$create_fragment, ${not_equal});
+				}
+
 				${body.join('\n\n')}
 			}
 		`);

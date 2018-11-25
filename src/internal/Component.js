@@ -5,7 +5,7 @@ import { blankObject } from './utils.js';
 import { children } from './dom.js';
 
 export class $$Component {
-	constructor(options) {
+	constructor(options, init, create_fragment, not_equal) {
 		this.$$beforeRender = [];
 		this.$$onMount = [];
 		this.$$afterRender = [];
@@ -16,14 +16,15 @@ export class $$Component {
 		this.$$slotted = options.slots || {};
 
 		set_current_component(this);
-		const [get_state, inject_props, inject_refs] = this.$$init(
+		const [get_state, inject_props, inject_refs] = init(
+			this,
 			key => {
 				this.$$make_dirty(key);
 				if (this.$$bindings[key]) this.$$bindings[key](get_state()[key]);
 			}
 		);
 
-		this.$$ = { get_state, inject_props, inject_refs };
+		this.$$ = { get_state, inject_props, inject_refs, not_equal };
 
 		this.$$refs = {};
 
@@ -35,7 +36,7 @@ export class $$Component {
 		}
 
 		run_all(this.$$beforeRender);
-		this.$$fragment = this.$$create_fragment(this, this.$$.get_state());
+		this.$$fragment = create_fragment(this, this.$$.get_state());
 
 		if (options.target) {
 			intro.enabled = !!options.intro;
@@ -63,8 +64,11 @@ export class $$Component {
 
 	$set(values) {
 		if (this.$$) {
+			const state = this.$$.get_state();
 			this.$$.inject_props(values);
-			for (const key in values) this.$$make_dirty(key);
+			for (const key in values) {
+				if (this.$$.not_equal(state[key], values[key])) this.$$make_dirty(key);
+			}
 		}
 	}
 
@@ -137,7 +141,7 @@ export class $$ComponentDev extends $$Component {
 			throw new Error(`'target' is a required option`);
 		}
 
-		super(options);
+		super(...arguments);
 		this.$$checkProps();
 	}
 
