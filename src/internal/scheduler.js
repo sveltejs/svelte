@@ -45,5 +45,7 @@ export function flush() {
 }
 
 function queue_microtask(callback) {
-	Promise.resolve().then(callback);
+	Promise.resolve().then(() => {
+		if (update_scheduled) callback();
+	});
 }
