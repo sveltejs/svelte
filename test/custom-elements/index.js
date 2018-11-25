@@ -1,8 +1,9 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import * as http from 'http';
 import { rollup } from 'rollup';
-import virtual from 'rollup-plugin-virtual';
-import Nightmare from 'nightmare';
+import * as virtual from 'rollup-plugin-virtual';
+import * as Nightmare from 'nightmare';
 import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
 
 const page = `
@@ -49,6 +50,8 @@ describe('custom-elements', function() {
 		if (dir[0] === '.') return;
 
 		const solo = /\.solo$/.test(dir);
+		const internal = path.resolve('internal.js');
+		const index = path.resolve('index.js');
 
 		(solo ? it.only : it)(dir, () => {
 			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
@@ -57,6 +60,16 @@ describe('custom-elements', function() {
 				input: `test/custom-elements/samples/${dir}/test.js`,
 				plugins: [
 					{
+						resolveId(importee) {
+							if (importee === 'svelte/internal.js') {
+								return internal;
+							}
+
+							if (importee === 'svelte') {
+								return index;
+							}
+						},
+
 						transform(code, id) {
 							if (id.endsWith('.html')) {
 								const compiled = svelte.compile(code, {
