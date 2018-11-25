@@ -92,6 +92,7 @@ childKeys.Attribute = ['value'];
 
 export default class Component {
 	stats: Stats;
+	disableWarn: boolean;
 
 	ast: Ast;
 	source: string;
@@ -164,6 +165,7 @@ export default class Component {
 		stats: Stats
 	) {
 		this.stats = stats;
+		this.disableWarn = false;
 
 		this.ast = ast;
 		this.source = source;
@@ -541,6 +543,10 @@ export default class Component {
 			message: string
 		}
 	) {
+		if (this.disableWarn) {
+			return;
+		}
+
 		if (!this.locator) {
 			this.locator = getLocator(this.source, { offsetLine: 1 });
 		}
