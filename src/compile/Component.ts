@@ -502,11 +502,6 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
-		// const { scope, map, globals } = createScopes(script.content);
-		// scope.declarations.forEach((node, name) => {
-		// 	this.node_for_declaration.set(name, node);
-		// });
-
 		// TODO unindent
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
@@ -518,16 +513,6 @@ export default class Component {
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
-
-		const { code, source, imports } = this;
-
-		const indent = code.getIndentString();
-		code.indent(indent, {
-			exclude: [
-				[0, script.content.start],
-				[script.content.end, source.length]
-			]
-		});
 
 		let { scope, map, globals } = createScopes(script.content);
 		this.module_scope = scope;
