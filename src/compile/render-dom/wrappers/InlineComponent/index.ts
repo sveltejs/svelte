@@ -93,12 +93,11 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const statements: string[] = [];
+		const updates: string[] = [];
+		const postupdates: string[] = [];
 
 		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
 		const name_changes = block.getUniqueName(`${name}_changes`);
-		let name_updating: string;
-
-		const updates: string[] = [];
 
 		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
 
@@ -197,6 +196,23 @@ export default class InlineComponentWrapper extends Wrapper {
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
 			component.declarations.push(name);
 
+			const updating = block.getUniqueName(`updating_${binding.name}`);
+			block.addVariable(updating);
+
+			statements.push(deindent`
+				if (${binding.expression.snippet} !== void 0) {
+					${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
+				}`
+			);
+
+			updates.push(deindent`
+				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+					${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
+				}
+			`);
+
+			postupdates.push(updating);
+
 			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
 			const dependencies = Array.from(binding.expression.dependencies);
 
@@ -217,7 +233,17 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.builders.init.addBlock(deindent`
 					function ${name}(value) {
+						${updating} = true;
 						ctx.${name}.call(null, value, ctx);
+					}
+				`);
+
+				block.maintainContext = true; // TODO put this somewhere more logical
+			} else {
+				block.builders.init.addBlock(deindent`
+					function ${name}(value) {
+						${updating} = true;
+						ctx.${name}.call(null, value);
 					}
 				`);
 			}
@@ -231,33 +257,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return contextual_dependencies.length > 0
-				? `${this.var}.$$bind('${binding.name}', ${name});`
-				: `${this.var}.$$bind('${binding.name}', ctx.${name});`;
+			return `${this.var}.$$bind('${binding.name}', ${name});`;
 		});
-
-		if (this.node.bindings.length) {
-			name_updating = block.alias(`${name}_updating`);
-			block.addVariable(name_updating, '{}');
-
-			this.node.bindings.forEach((binding: Binding) => {
-				statements.push(deindent`
-					if (${binding.expression.snippet} !== void 0) {
-						${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
-						${name_updating}${quotePropIfNecessary(binding.name)} = true;
-					}`
-				);
-
-				updates.push(deindent`
-					if (!${name_updating}${quotePropIfNecessary(binding.name)} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-						${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
-						${name_updating}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet} !== void 0;
-					}
-				`);
-			});
-
-			block.maintainContext = true; // TODO put this somewhere more logical
-		}
 
 		const munged_handlers = this.node.handlers.map(handler => {
 			if (handler.expression) {
@@ -360,8 +361,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.builders.update.addBlock(deindent`
 					else if (${switch_value}) {
 						${name}.$set(${name_changes});
-						${this.node.bindings.length && `${name_updating} = {};`}
 					}
+
+					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
@@ -401,7 +403,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.builders.update.addBlock(deindent`
 					${updates}
 					${name}.$set(${name_changes});
-					${this.node.bindings.length && `${name_updating} = {};`}
+					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
