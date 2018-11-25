@@ -60,6 +60,9 @@ export default class Component {
 
 	properties: Map<string, Node>;
 
+	instance_script: Node;
+	module_script: Node;
+
 	imports: Node[] = [];
 	namespace: string;
 	hasComponents: boolean;
@@ -69,6 +72,7 @@ export default class Component {
 	declarations: string[] = [];
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
+	node_for_declaration: Map<string, Node> = new Map();
 	exports: Array<{ name: string, as: string }> = [];
 	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
@@ -122,6 +126,9 @@ export default class Component {
 
 		this.properties = new Map();
 
+		this.module_script = ast.js.find(script => get_context(script) === 'module');
+		this.instance_script = ast.js.find(script => get_context(script) === 'default');
+
 		this.walk_module_js();
 		this.walk_instance_js();
 		this.name = this.alias(name);
@@ -147,7 +154,7 @@ export default class Component {
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
-		if (!this.ast.js.find(script => get_context(script) === 'default')) {
+		if (!this.instance_script) {
 			const props = [...this.expectedProperties];
 			this.declarations.push(...props);
 			addToSet(this.writable_declarations, this.expectedProperties);
@@ -425,8 +432,18 @@ export default class Component {
 		});
 	}
 
+	extract_javascript(script) {
+		let a = script.content.start;
+		while (/\s/.test(this.source[a])) a += 1;
+
+		let b = script.content.end;
+		while (/\s/.test(this.source[b - 1])) b -= 1;
+
+		return a !== b ? `[✂${a}-${b}✂]` : null;
+	}
+
 	walk_module_js() {
-		const script = this.ast.js.find(script => get_context(script) === 'module');
+		const script = this.module_script;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
@@ -434,18 +451,11 @@ export default class Component {
 		// TODO unindent
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
-
-		let a = script.content.start;
-		while (/\s/.test(this.source[a])) a += 1;
-
-		let b = script.content.end;
-		while (/\s/.test(this.source[b - 1])) b -= 1;
-
-		this.module_javascript = a !== b ? `[✂${a}-${b}✂]` : null;
+		this.module_javascript = this.extract_javascript(script);
 	}
 
 	walk_instance_js() {
-		const script = this.ast.js.find(script => get_context(script) === 'default');
+		const script = this.instance_script;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
@@ -501,13 +511,7 @@ export default class Component {
 			}
 		});
 
-		let a = script.content.start;
-		while (/\s/.test(source[a])) a += 1;
-
-		let b = script.content.end;
-		while (/\s/.test(source[b - 1])) b -= 1;
-
-		this.javascript = a !== b ? `[✂${a}-${b}✂]` : '';
+		this.javascript = this.extract_javascript(script);
 	}
 
 	instrument(node, parent, name, is_event_handler) {
