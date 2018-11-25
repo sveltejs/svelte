@@ -462,6 +462,7 @@ export default class Component {
 
 					code.remove(node.start, node.declaration.start);
 				} else {
+					removeNode(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
 						exports.push({
 							name: specifier.local.name,
