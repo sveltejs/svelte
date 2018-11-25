@@ -25,7 +25,7 @@ function should_ignore({ start, code, frame }: Warning) {
 		return false;
 	}
 
-	const regex = new RegExp(`(?:${start.line - 1}:\\s*|${start.line}:[^\\n]+)<!--\\s*warn-disable\\s+${code}.*?-->`);
+	const regex = new RegExp(`(?:${start.line - 1}:\\s*<!--\\s*svelte-disable-next-line|${start.line}:[^\\n]+<!--\\s*svelte-disable-line)\\s+${code}.*?-->`);
 	return regex.test(frame);
 }
 
