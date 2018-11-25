@@ -814,9 +814,9 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	remount(name: string) {
-		const slot = this.attributes.find(attribute => attribute.name === 'slot');
+		const slot = this.attributes.find(attribute => attribute.node.name === 'slot');
 		if (slot) {
-			const prop = quotePropIfNecessary(slot.chunks[0].data);
+			const prop = quotePropIfNecessary(slot.node.chunks[0].data);
 			return `@append(${name}.$$slotted${prop}, ${this.var});`;
 		}
 
