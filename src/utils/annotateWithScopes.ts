@@ -12,18 +12,18 @@ export function createScopes(expression: Node) {
 		enter(node: Node, parent: Node) {
 			if (/Function/.test(node.type)) {
 				if (node.type === 'FunctionDeclaration') {
-					scope.declarations.add(node.id.name);
+					scope.declarations.set(node.id.name, node);
 					scope = new Scope(scope, false);
 					map.set(node, scope);
 				} else {
 					scope = new Scope(scope, false);
 					map.set(node, scope);
-					if (node.id) scope.declarations.add(node.id.name);
+					if (node.id) scope.declarations.set(node.id.name, node);
 				}
 
 				node.params.forEach((param: Node) => {
 					extractNames(param).forEach(name => {
-						scope.declarations.add(name);
+						scope.declarations.set(name, node);
 					});
 				});
 			} else if (/For(?:In|Of)Statement/.test(node.type)) {
@@ -55,7 +55,7 @@ export class Scope {
 	parent: Scope;
 	block: boolean;
 
-	declarations: Set<string> = new Set();
+	declarations: Map<string, Node> = new Map();
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
 
@@ -73,13 +73,13 @@ export class Scope {
 
 			node.declarations.forEach((declarator: Node) => {
 				extractNames(declarator.id).forEach(name => {
-					this.declarations.add(name);
+					this.declarations.set(name, node);
 					if (writable) this.writable_declarations.add(name);
 					if (initialised) this.initialised_declarations.add(name);
 				});
 			});
 		} else {
-			this.declarations.add(node.id.name);
+			this.declarations.set(node.id.name, node);
 		}
 	}
 

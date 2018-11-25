@@ -16,6 +16,7 @@ import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
 import addToSet from '../utils/addToSet';
+import isReference from 'is-reference';
 
 type Meta = {
 	namespace?: string;
@@ -51,7 +52,8 @@ export default class Component {
 	name: string;
 	options: CompileOptions;
 	fragment: Fragment;
-	scope: Scope;
+	module_scope: Scope;
+	module_scope_map: WeakMap<Node, Scope>;
 
 	meta: Meta;
 
@@ -379,8 +381,59 @@ export default class Component {
 	}
 
 	findDependenciesForFunctionCall(name) {
-		// TODO
-		return null;
+		const declaration = this.node_for_declaration.get(name);
+
+		const dependencies = new Set();
+
+		if (!declaration) {
+			// Global or module-scoped function — can't have
+			// local state as dependency by definition
+			return dependencies;
+		}
+
+		let { module_scope, module_scope_map: map } = this;
+		let scope = module_scope;
+
+		const component = this;
+		let bail = false;
+
+		walk(declaration, {
+			enter(node, parent) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (isReference(node, parent)) {
+					const { name } = flattenReference(node);
+					if (scope.findOwner(name) === module_scope) {
+						dependencies.add(name);
+					}
+				}
+
+				if (node.type === 'CallExpression') {
+					if (node.callee.type === 'Identifier') {
+						const call_dependencies = component.findDependenciesForFunctionCall(node.callee.name);
+						if (!call_dependencies) {
+							bail = true;
+							return this.skip();
+						}
+
+						addToSet(dependencies, call_dependencies);
+					} else {
+						bail = true;
+						return this.skip();
+					}
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+			}
+		});
+
+		return bail ? null : dependencies;
 	}
 
 	extract_imports_and_exports(content, imports, exports) {
@@ -448,6 +501,11 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
+		// const { scope, map, globals } = createScopes(script.content);
+		// scope.declarations.forEach((node, name) => {
+		// 	this.node_for_declaration.set(name, node);
+		// });
+
 		// TODO unindent
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
@@ -471,11 +529,14 @@ export default class Component {
 		});
 
 		let { scope, map, globals } = createScopes(script.content);
-		this.scope = scope;
+		this.module_scope = scope;
+		this.module_scope_map = map;
 
-		scope.declarations.forEach(name => {
+		scope.declarations.forEach((node, name) => {
 			this.userVars.add(name);
 			this.declarations.push(name);
+
+			this.node_for_declaration.set(name, node);
 		});
 
 		this.writable_declarations = scope.writable_declarations;
