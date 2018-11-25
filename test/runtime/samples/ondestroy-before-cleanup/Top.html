@@ -1,11 +1,11 @@
 <script>
 	import { onDestroy } from 'svelte';
+	import container from './container.js';
 
-	export let element;
-	export let refOnDestroy;
+	let element;
 
 	onDestroy(() => {
-		refOnDestroy = element;
+		container.div = element;
 	});
 </script>
 
