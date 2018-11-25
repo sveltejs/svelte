@@ -11,22 +11,11 @@ function normalize_options(options: CompileOptions): CompileOptions {
 	let normalized = assign({ generate: 'dom', dev: false }, options);
 	const { onwarn } = normalized;
 
-	normalized.onwarn = (warning: Warning) => {
-		if (!should_ignore(warning)) {
-			onwarn ? onwarn(warning, default_onwarn) : default_onwarn(warning);
-		}
-	}
+	normalized.onwarn = onwarn
+		? (warning: Warning) => onwarn(warning, default_onwarn)
+		: default_onwarn;
 
 	return normalized;
-}
-
-function should_ignore({ start, code, frame }: Warning) {
-	if (!(start && code && frame)) {
-		return false;
-	}
-
-	const regex = new RegExp(`(?:${start.line - 1}:\\s*<!--\\s*svelte-disable-next-line|${start.line}:[^\\n]+<!--\\s*svelte-disable-line)\\s+${code}.*?-->`);
-	return regex.test(frame);
 }
 
 function default_onwarn({ start, message }: Warning) {

@@ -556,6 +556,13 @@ export default class Component {
 
 		const frame = getCodeFrame(this.source, start.line - 1, start.column);
 
+		if (start && warning.code && frame) {
+			const regex = new RegExp(`(?:${start.line - 1}:\\s*<!--\\s*svelte-disable-next-line|${start.line}:[^\\n]+<!--\\s*svelte-disable-line)\\s+${warning.code}.*?-->`);
+			if (regex.test(frame)) {
+				return;
+			}
+		}
+
 		this.stats.warn({
 			code: warning.code,
 			message: warning.message,
