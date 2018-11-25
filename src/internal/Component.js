@@ -85,6 +85,7 @@ export class $$Component {
 			// TODO null out other refs, including this.$$ (but need to
 			// preserve final state?)
 			this.$$onDestroy = this.$$fragment = null;
+			this.$$.get_state = () => ({});
 		}
 	}
 
@@ -137,7 +138,7 @@ export class $$Component {
 
 export class $$ComponentDev extends $$Component {
 	constructor(options) {
-		if (!options || !options.target) {
+		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error(`'target' is a required option`);
 		}
 

@@ -112,6 +112,14 @@ export default class InlineComponentWrapper extends Wrapper {
 			componentInitProperties.push(`props: ${name_initial_data}`);
 		}
 
+		if (component.options.dev) {
+			// TODO this is a terrible hack, but without it the component
+			// will complain that options.target is missing. This would
+			// work better if components had separate public and private
+			// APIs
+			componentInitProperties.push(`$$inline: true`);
+		}
+
 		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length)) {
 			updates.push(`var ${name_changes} = {};`);
 		}

@@ -1,4 +1,4 @@
-import path from 'path';
+import * as path from 'path';
 
 export default {
 	compileOptions: {
@@ -11,9 +11,9 @@ export default {
 
 		assert.deepEqual(h1.__svelte_meta.loc, {
 			file: path.relative(process.cwd(), path.resolve(__dirname, 'main.html')),
-			line: 0,
+			line: 4,
 			column: 0,
-			char: 0
+			char: 51
 		});
 
 		assert.deepEqual(p.__svelte_meta.loc, {
