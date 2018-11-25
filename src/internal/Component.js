@@ -1,4 +1,4 @@
-import { after_render, flush, intro, schedule_update } from './scheduler.js';
+import { add_render_callback, flush, intro, schedule_update } from './scheduler.js';
 import { set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
@@ -111,7 +111,7 @@ export class $$Component {
 		// onMount happens after the initial afterRender. Because
 		// afterRender callbacks happen in reverse order (inner first)
 		// we schedule onMount callbacks before afterRender callbacks
-		after_render(() => {
+		add_render_callback(() => {
 			const onDestroy = this.$$onMount.map(run).filter(is_function);
 			if (this.$$onDestroy) {
 				this.$$onDestroy.push(...onDestroy);
@@ -123,7 +123,7 @@ export class $$Component {
 			this.$$onMount = [];
 		});
 
-		this.$$afterRender.forEach(after_render);
+		this.$$afterRender.forEach(add_render_callback);
 	}
 
 	$$update() {
@@ -132,7 +132,7 @@ export class $$Component {
 		this.$$.inject_refs(this.$$refs);
 		this.$$dirty = null;
 
-		this.$$afterRender.forEach(after_render);
+		this.$$afterRender.forEach(add_render_callback);
 	}
 }
 

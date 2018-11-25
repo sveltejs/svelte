@@ -21,7 +21,7 @@ function tryToReadFile(file) {
 
 describe("ssr", () => {
 	before(() => {
-		require("../../ssr/register")({
+		require("../../register")({
 			extensions: ['.svelte', '.html'],
 			store: true
 		});
@@ -112,7 +112,7 @@ describe("ssr", () => {
 
 			const compileOptions = config.compileOptions || {};
 
-			require("../../ssr/register")(compileOptions);
+			require("../../register")(compileOptions);
 
 			try {
 				const component = require(`../runtime/samples/${dir}/main.html`);

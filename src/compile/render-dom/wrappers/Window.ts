@@ -119,7 +119,7 @@ export default class WindowWrapper extends Wrapper {
 
 			block.builders.init.addBlock(deindent`
 				window.addEventListener("${event}", ctx.${handler_name});
-				@after_render(ctx.${handler_name});
+				@add_render_callback(ctx.${handler_name});
 			`);
 
 			block.builders.destroy.addBlock(deindent`

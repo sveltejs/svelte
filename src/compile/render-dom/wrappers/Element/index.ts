@@ -550,7 +550,7 @@ export default class ElementWrapper extends Wrapper {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`if (${someInitialStateIsUndefined}) @after_render(() => ${callee}.call(${this.var}));`
+					`if (${someInitialStateIsUndefined}) @add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 
@@ -558,7 +558,7 @@ export default class ElementWrapper extends Wrapper {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`@after_render(() => ${callee}.call(${this.var}));`
+					`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 		});
@@ -669,7 +669,7 @@ export default class ElementWrapper extends Wrapper {
 			block.builders.intro.addConditional(`@intro.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
 
-				@after_render(() => {
+				@add_render_callback(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
@@ -704,7 +704,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 
 				block.builders.intro.addConditional(`@intro.enabled`, deindent`
-					@after_render(() => {
+					@add_render_callback(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
 					});
