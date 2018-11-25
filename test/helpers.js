@@ -10,7 +10,7 @@ import * as chalk from 'chalk';
 export function loadSvelte(test) {
 	process.env.TEST = test ? 'true' : '';
 
-	const resolved = require.resolve('../compiler/svelte.js');
+	const resolved = require.resolve('../compiler.js');
 
 	delete require.cache[resolved];
 	return require(resolved);

@@ -337,8 +337,6 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_bindings}
 						${munged_handlers}
 
-						${name}.$$fragment.c();
-
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
 						${name}.$$mount(${updateMountNode}, ${anchor});
 
@@ -424,7 +422,7 @@ export default class InlineComponentWrapper extends Wrapper {
 	}
 
 	remount(name: string) {
-		return `${this.var}.$$mount(${name}.$$slotted.default, null);`;
+		return `${this.var}.$$fragment.m(${name}.$$slotted.default, null);`;
 	}
 }
 
