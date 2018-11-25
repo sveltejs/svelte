@@ -39,7 +39,7 @@ export default [
 			dir: 'cli',
 			format: 'cjs',
 			paths: {
-				svelte: '../compiler/svelte.js'
+				svelte: '../compiler.js'
 			}
 		},
 		external: ['fs', 'path', 'os', 'svelte'],
