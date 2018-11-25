@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { compile } from '../index.ts';
+const fs = require('fs');
+const path = require('path');
+const { compile } = require('./compiler.js');
 
 let compileOptions = {
 	extensions: ['.html']
@@ -10,7 +10,7 @@ function capitalise(name) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
-export default function register(options) {
+function register(options) {
 	if (options.extensions) {
 		compileOptions.extensions.forEach(deregisterExtension);
 		options.extensions.forEach(registerExtension);
@@ -43,3 +43,5 @@ function registerExtension(extension) {
 }
 
 registerExtension('.html');
+
+module.exports = register;

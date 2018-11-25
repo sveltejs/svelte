@@ -25,34 +25,9 @@ export default [
 			})
 		],
 		output: {
-			file: 'compiler/svelte.js',
+			file: 'compiler.js',
 			format: 'umd',
 			name: 'svelte',
-			sourcemap: true
-		}
-	},
-
-	/* ssr/register.js */
-	{
-		input: 'src/ssr/register.js',
-		plugins: [
-			resolve(),
-			commonjs(),
-			buble({
-				include: 'src/**',
-				exclude: 'src/internal/**',
-				target: {
-					node: 4
-				}
-			})
-		],
-		external: [path.resolve('src/index.ts'), 'fs', 'path'],
-		output: {
-			file: 'ssr/register.js',
-			format: 'cjs',
-			paths: {
-				[path.resolve('src/index.ts')]: '../compiler/svelte.js'
-			},
 			sourcemap: true
 		}
 	},
