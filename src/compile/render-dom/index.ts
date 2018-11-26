@@ -102,7 +102,7 @@ export default function dom(
 
 	const body = [];
 
-	const debug_name = `<${component.customElement ? component.tag : name}>`;
+	const debug_name = `<${component.customElement ? component.customElement.tag : name}>`;
 	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
@@ -141,7 +141,7 @@ export default function dom(
 				const state = this.$$.get();
 				${expected.map(name => deindent`
 
-				if (state.${name} === undefined) {
+				if (state.${name} === undefined${component.customElement && ` && !('${name}' in this.attributes)`}) {
 					console.warn("${debug_name} was created without expected data property '${name}'");
 				}`)}
 			`;
@@ -183,6 +183,8 @@ export default function dom(
 					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
 					@init(this, { target: this.shadowRoot }, define, create_fragment, ${not_equal});
+
+					${dev_props_check}
 
 					if (options) {
 						if (options.target) {
