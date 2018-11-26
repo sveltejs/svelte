@@ -1,3 +1,5 @@
+import { run_all } from './utils.js';
+
 let update_scheduled = false;
 
 let dirty_components = [];
@@ -29,7 +31,7 @@ export function flush() {
 		// first, call beforeRender functions
 		// and update components
 		while (dirty_components.length) {
-			dirty_components.shift().$$update();
+			update(dirty_components.shift().$$);
 		}
 
 		while (binding_callbacks.length) binding_callbacks.pop()();
@@ -49,6 +51,17 @@ export function flush() {
 	} while (dirty_components.length);
 
 	update_scheduled = false;
+}
+
+function update($$) {
+	if ($$.fragment) {
+		run_all($$.before_render);
+		$$.fragment.p($$.dirty, $$.get());
+		$$.inject_refs($$.refs);
+		$$.dirty = null;
+
+		$$.after_render.forEach(add_render_callback);
+	}
 }
 
 function queue_microtask(callback) {

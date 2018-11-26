@@ -1,59 +1,121 @@
 import { add_render_callback, flush, intro, schedule_update } from './scheduler.js';
-import { set_current_component } from './lifecycle.js'
+import { current_component, set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
 import { children } from './dom.js';
 
+export function bind(component, name, callback) {
+	component.$$.bound[name] = callback;
+	callback(component.$$.get()[name]);
+}
+
+export function mount_component({ $$: { fragment }}, target, anchor, hydrate) {
+	if (hydrate) {
+		fragment.l(children(target));
+		fragment.m(target, anchor); // TODO can we avoid moving DOM?
+	} else {
+		fragment.c();
+		fragment[fragment.i ? 'i' : 'm'](target, anchor);
+	}
+
+	component.$$.inject_refs(component.$$.refs);
+
+	// onMount happens after the initial afterRender. Because
+	// afterRender callbacks happen in reverse order (inner first)
+	// we schedule onMount callbacks before afterRender callbacks
+	add_render_callback(() => {
+		const onDestroy = component.$$.on_mount.map(run).filter(is_function);
+		if (component.$$.on_destroy) {
+			component.$$.on_destroy.push(...onDestroy);
+		} else {
+			// Edge case — component was destroyed immediately,
+			// most likely as a result of a binding initialising
+			run_all(onDestroy);
+		}
+		component.$$.on_mount = [];
+	});
+
+	component.$$.after_render.forEach(add_render_callback);
+}
+
+function destroy(component, detach) {
+	if (component.$$) {
+		run_all(component.$$.on_destroy);
+		component.$$.fragment.d(detach);
+
+		// TODO null out other refs, including component.$$ (but need to
+		// preserve final state?)
+		component.$$.on_destroy = component.$$.fragment = null;
+		component.$$.get = () => ({});
+	}
+}
+
+function make_dirty(component, key) {
+	if (!component.$$.dirty) {
+		schedule_update(component);
+		component.$$.dirty = {};
+	}
+	component.$$.dirty[key] = true;
+}
+
 export class $$Component {
 	constructor(options, init, create_fragment, not_equal) {
-		this.$$beforeRender = [];
-		this.$$onMount = [];
-		this.$$afterRender = [];
-		this.$$onDestroy = [];
-
-		this.$$bindings = blankObject();
-		this.$$callbacks = blankObject();
-		this.$$slotted = options.slots || {};
-
+		const previous_component = current_component;
 		set_current_component(this);
-		const [get_state, inject_props, inject_refs] = init(
-			this,
-			key => {
-				this.$$make_dirty(key);
-				if (this.$$bindings[key]) this.$$bindings[key](get_state()[key]);
-			}
-		);
 
-		this.$$ = { get_state, inject_props, inject_refs, not_equal };
+		this.$$ = {
+			fragment: null,
 
-		this.$$refs = {};
+			// state
+			get: null,
+			set: noop,
+			inject_refs: noop,
+			not_equal,
+			bound: blankObject(),
 
-		this.$$dirty = null;
-		this.$$bindingGroups = []; // TODO find a way to not have this here?
+			// lifecycle
+			on_mount: [],
+			on_destroy: [],
+			before_render: [],
+			after_render: [],
+
+			// everything else
+			callbacks: blankObject(),
+			slotted: options.slots || {},
+			refs: {},
+			dirty: null,
+			binding_groups: []
+		};
+
+		init(this, key => {
+			make_dirty(this, key);
+			if (this.$$.bound[key]) this.$$.bound[key](this.$$.get()[key]);
+		});
 
 		if (options.props) {
-			this.$$.inject_props(options.props);
+			this.$$.set(options.props);
 		}
 
-		run_all(this.$$beforeRender);
-		this.$$fragment = create_fragment(this, this.$$.get_state());
+		run_all(this.$$.before_render);
+		this.$$.fragment = create_fragment(this, this.$$.get());
 
 		if (options.target) {
 			intro.enabled = !!options.intro;
-			this.$$mount(options.target, options.anchor, options.hydrate);
-
+			mount_component(this, options.target, options.anchor, options.hydrate);
 			flush();
 			intro.enabled = true;
 		}
+
+		set_current_component(previous_component);
 	}
 
 	$destroy() {
-		this.$$destroy(true);
-		this.$$update = this.$$destroy = noop;
+		destroy(this, true);
+		this.$destroy = noop;
 	}
 
 	$on(type, callback) {
-		const callbacks = (this.$$callbacks[type] || (this.$$callbacks[type] = []));
+		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
 		return () => {
@@ -64,75 +126,12 @@ export class $$Component {
 
 	$set(values) {
 		if (this.$$) {
-			const state = this.$$.get_state();
-			this.$$.inject_props(values);
+			const state = this.$$.get();
+			this.$$.set(values);
 			for (const key in values) {
-				if (this.$$.not_equal(state[key], values[key])) this.$$make_dirty(key);
+				if (this.$$.not_equal(state[key], values[key])) make_dirty(this, key);
 			}
 		}
-	}
-
-	$$bind(name, callback) {
-		this.$$bindings[name] = callback;
-		callback(this.$$.get_state()[name]);
-	}
-
-	$$destroy(detach) {
-		if (this.$$) {
-			run_all(this.$$onDestroy);
-			this.$$fragment.d(detach);
-
-			// TODO null out other refs, including this.$$ (but need to
-			// preserve final state?)
-			this.$$onDestroy = this.$$fragment = null;
-			this.$$.get_state = () => ({});
-		}
-	}
-
-	$$make_dirty(key) {
-		if (!this.$$dirty) {
-			schedule_update(this);
-			this.$$dirty = {};
-		}
-		this.$$dirty[key] = true;
-	}
-
-	$$mount(target, anchor, hydrate) {
-		if (hydrate) {
-			this.$$fragment.l(children(target));
-			this.$$fragment.m(target, anchor); // TODO can we avoid moving DOM?
-		} else {
-			this.$$fragment.c();
-			this.$$fragment[this.$$fragment.i ? 'i' : 'm'](target, anchor);
-		}
-
-		this.$$.inject_refs(this.$$refs);
-
-		// onMount happens after the initial afterRender. Because
-		// afterRender callbacks happen in reverse order (inner first)
-		// we schedule onMount callbacks before afterRender callbacks
-		add_render_callback(() => {
-			const onDestroy = this.$$onMount.map(run).filter(is_function);
-			if (this.$$onDestroy) {
-				this.$$onDestroy.push(...onDestroy);
-			} else {
-				// Edge case — component was destroyed immediately,
-				// most likely as a result of a binding initialising
-				run_all(onDestroy);
-			}
-			this.$$onMount = [];
-		});
-
-		this.$$afterRender.forEach(add_render_callback);
-	}
-
-	$$update() {
-		run_all(this.$$beforeRender);
-		this.$$fragment.p(this.$$dirty, this.$$.get_state());
-		this.$$.inject_refs(this.$$refs);
-		this.$$dirty = null;
-
-		this.$$afterRender.forEach(add_render_callback);
 	}
 }
 
@@ -148,7 +147,7 @@ export class $$ComponentDev extends $$Component {
 
 	$destroy() {
 		super.$destroy();
-		this.$$destroy = () => {
+		this.$destroy = () => {
 			console.warn(`Component was already destroyed`);
 		};
 	}

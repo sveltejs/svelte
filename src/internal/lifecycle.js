@@ -1,30 +1,30 @@
-let current_component;
+export let current_component;
 
 export function set_current_component(component) {
 	current_component = component;
 }
 
 export function beforeRender(fn) {
-	current_component.$$beforeRender.push(fn);
+	current_component.$$.before_render.push(fn);
 }
 
 export function onMount(fn) {
-	current_component.$$onMount.push(fn);
+	current_component.$$.on_mount.push(fn);
 }
 
 export function afterRender(fn) {
-	current_component.$$afterRender.push(fn);
+	current_component.$$.after_render.push(fn);
 }
 
 export function onDestroy(fn) {
-	current_component.$$onDestroy.push(fn);
+	current_component.$$.on_destroy.push(fn);
 }
 
 export function createEventDispatcher() {
 	const component = current_component;
 
 	return (type, detail) => {
-		const callbacks = component.$$callbacks[type];
+		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
@@ -41,7 +41,7 @@ export function createEventDispatcher() {
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
 export function bubble(component, event) {
-	const callbacks = component.$$callbacks[event.type];
+	const callbacks = component.$$.callbacks[event.type];
 
 	if (callbacks) {
 		callbacks.slice().forEach(fn => fn(event));

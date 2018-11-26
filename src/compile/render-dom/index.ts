@@ -72,35 +72,19 @@ export default function dom(
 					return ${JSON.stringify(props)};
 				}
 
-				${props.map(prop => deindent`
-					get ${prop}() {
-						return this.get().${prop};
-					}
-
-					set ${prop}(value) {
-						this.set({ ${prop}: value });
-					}
-				`).join('\n\n')}
-
 				${renderer.slots.size && deindent`
-					connectedCallback() {
-						Object.keys(this.$$slotted).forEach(key => {
-							this.appendChild(this.$$slotted[key]);
-						});
-					}`}
+				connectedCallback() {
+					Object.keys(this.$$.slotted).forEach(key => {
+						this.appendChild(this.$$.slotted[key]);
+					});
+				}`}
 
 				attributeChangedCallback(attr, oldValue, newValue) {
-					this.set({ [attr]: newValue });
+					this[attr] = newValue;
 				}
-
-				${(component.hasComponents || renderer.hasComplexBindings || templateProperties.oncreate || renderer.hasIntroTransitions) && deindent`
-					connectedCallback() {
-						@flush(this);
-					}
-				`}
 			}
 
-			customElements.define("${component.tag}", ${name});
+			customElements.define("${component.customElement.tag}", ${name});
 		`);
 	} else {
 		const refs = Array.from(component.refs);
@@ -123,7 +107,7 @@ export default function dom(
 
 		const props = component.exports.filter(x => component.writable_declarations.has(x.name));
 
-		const inject_props = component.meta.props || props.length > 0
+		const set = component.meta.props || props.length > 0
 			? deindent`
 				$$props => {
 					${component.meta.props && deindent`
@@ -135,7 +119,7 @@ export default function dom(
 					`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
 				}
 			`
-			: `@noop`;
+			: null;
 
 		const inject_refs = refs.length > 0
 			? deindent`
@@ -143,7 +127,7 @@ export default function dom(
 					${refs.map(name => `${name} = $$refs.${name};`)}
 				}
 			`
-			: `@noop`;
+			: null;
 
 		const body = [];
 
@@ -160,7 +144,7 @@ export default function dom(
 			if (expected.length) {
 				body.push(deindent`
 					$$checkProps() {
-						const state = this.$$.get_state();
+						const state = this.$$.get();
 						${expected.map(name => deindent`
 
 						if (state.${name} === undefined) {
@@ -175,7 +159,7 @@ export default function dom(
 		component.exports.forEach(x => {
 			body.push(deindent`
 				get ${x.as}() {
-					return this.$$.get_state().${x.name};
+					return this.$$.get().${x.name};
 				}
 			`);
 
@@ -212,12 +196,12 @@ export default function dom(
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
-				return [
-					// TODO only what's needed by the template
-					() => ({ ${component.declarations.join(', ')} }),
-					${inject_props},
-					${inject_refs}
-				];
+				// TODO only what's needed by the template
+				$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
+
+				${set && `$$self.$$.set = ${set};`}
+
+				${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
 			}
 
 			class ${name} extends ${superclass} {

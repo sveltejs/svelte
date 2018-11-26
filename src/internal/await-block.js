@@ -32,8 +32,8 @@ export function handlePromise(promise, info) {
 			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
 
 			// TODO is some of this redundant?
-			info.component.$$.inject_refs(info.component.$$refs);
-			run_all(info.component.$$afterRender);
+			info.component.$$.inject_refs(info.component.$$.refs);
+			run_all(info.component.$$.after_render);
 			flush();
 		}
 

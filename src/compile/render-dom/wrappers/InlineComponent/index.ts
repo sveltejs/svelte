@@ -88,7 +88,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
 
 			this.fragment.nodes.forEach((child: Wrapper) => {
-				child.render(block, `${this.var}.$$slotted.default`, 'nodes');
+				child.render(block, `${this.var}.$$.slotted.default`, 'nodes');
 			});
 		}
 
@@ -257,7 +257,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return `@add_binding_callback(() => ${this.var}.$$bind('${binding.name}', ${name}));`;
+			return `@add_binding_callback(() => @bind(${this.var}, '${binding.name}', ${name}));`;
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
@@ -297,19 +297,19 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.create.addLine(
-				`if (${name}) ${name}.$$fragment.c();`
+				`if (${name}) ${name}.$$.fragment.c();`
 			);
 
 			if (parentNodes && this.renderer.options.hydratable) {
 				block.builders.claim.addLine(
-					`if (${name}) ${name}.$$fragment.l(${parentNodes});`
+					`if (${name}) ${name}.$$.fragment.l(${parentNodes});`
 				);
 			}
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}.$$mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
+					@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 				}
 			`);
 
@@ -327,7 +327,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@groupOutros();
 						const old_component = ${name};
-						old_component.$$fragment.o(() => {
+						old_component.$$.fragment.o(() => {
 							old_component.$destroy();
 						});
 					}
@@ -339,19 +339,19 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_handlers}
 
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
-						${name}.$$mount(${updateMountNode}, ${anchor});
+						@mount_component(${name}, ${updateMountNode}, ${anchor});
 
 						${this.node.handlers.map(handler => deindent`
 							${name}.$on("${handler.name}", ${handler.var});
 						`)}
 
-						${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
+						${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 					} else {
 						${name} = null;
 						${this.node.ref && deindent`
-						if (#component.$$refs.${this.node.ref.name} === ${name}) {
-							#component.$$refs.${this.node.ref.name} = null;
-							#component.$$.inject_refs(#component.$$refs);
+						if (#component.$$.refs.${this.node.ref.name} === ${name}) {
+							#component.$$.refs.${this.node.ref.name} = null;
+							#component.$$.inject_refs(#component.$$.refs);
 						}`}
 					}
 				}
@@ -384,19 +384,19 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_bindings}
 				${munged_handlers}
 
-				${this.node.ref && `#component.$$refs.${this.node.ref.name} = ${name};`}
+				${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 			`);
 
-			block.builders.create.addLine(`${name}.$$fragment.c();`);
+			block.builders.create.addLine(`${name}.$$.fragment.c();`);
 
 			if (parentNodes && this.renderer.options.hydratable) {
 				block.builders.claim.addLine(
-					`${name}.$$fragment.l(${parentNodes});`
+					`${name}.$$.fragment.l(${parentNodes});`
 				);
 			}
 
 			block.builders.mount.addLine(
-				`${name}.$$mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+				`@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
 			if (updates.length) {
@@ -410,21 +410,21 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.destroy.addBlock(deindent`
 				${name}.$destroy(${parentNode ? '' : 'detach'});
 				${this.node.ref && deindent`
-					if (#component.$$refs.${this.node.ref.name} === ${name}) {
-						#component.$$refs.${this.node.ref.name} = null;
-						#component.$$.inject_refs(#component.$$refs);
+					if (#component.$$.refs.${this.node.ref.name} === ${name}) {
+						#component.$$.refs.${this.node.ref.name} = null;
+						#component.$$.inject_refs(#component.$$.refs);
 					}
 				`}
 			`);
 		}
 
 		block.builders.outro.addLine(
-			`if (${name}) ${name}.$$fragment.o(#outrocallback);`
+			`if (${name}) ${name}.$$.fragment.o(#outrocallback);`
 		);
 	}
 
 	remount(name: string) {
-		return `${this.var}.$$fragment.m(${name}.$$slotted.default, null);`;
+		return `${this.var}.$$.fragment.m(${name}.$$.slotted.default, null);`;
 	}
 }
 

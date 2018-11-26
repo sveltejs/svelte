@@ -216,7 +216,7 @@ export default class ElementWrapper extends Wrapper {
 		let initialMountNode;
 
 		if (this.slotOwner) {
-			initialMountNode = `${this.slotOwner.var}.$$slotted${prop}`;
+			initialMountNode = `${this.slotOwner.var}.$$.slotted${prop}`;
 		} else {
 			initialMountNode = parentNode;
 		}
@@ -635,7 +635,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addRef(block: Block) {
-		const ref = `#component.$$refs.${this.node.ref.name}`;
+		const ref = `#component.$$.refs.${this.node.ref.name}`;
 
 		block.builders.mount.addLine(
 			`${ref} = ${this.var};`
@@ -644,7 +644,7 @@ export default class ElementWrapper extends Wrapper {
 		block.builders.destroy.addLine(
 			`if (${ref} === ${this.var}) {
 				${ref} = null;
-				#component.$$.inject_refs(#component.$$refs);
+				#component.$$.inject_refs(#component.$$.refs);
 			}`
 		);
 	}
@@ -817,10 +817,10 @@ export default class ElementWrapper extends Wrapper {
 		const slot = this.attributes.find(attribute => attribute.node.name === 'slot');
 		if (slot) {
 			const prop = quotePropIfNecessary(slot.node.chunks[0].data);
-			return `@append(${name}.$$slotted${prop}, ${this.var});`;
+			return `@append(${name}.$$.slotted${prop}, ${this.var});`;
 		}
 
-		return `@append(${name}.$$slotted.default, ${this.var});`;
+		return `@append(${name}.$$.slotted.default, ${this.var});`;
 	}
 
 	addCssClass(className = this.component.stylesheet.id) {

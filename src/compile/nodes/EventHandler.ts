@@ -1,8 +1,5 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
-import flattenReference from '../../utils/flattenReference';
-import { createScopes } from '../../utils/annotateWithScopes';
-import { walk } from 'estree-walker';
 import Component from '../Component';
 import deindent from '../../utils/deindent';
 
