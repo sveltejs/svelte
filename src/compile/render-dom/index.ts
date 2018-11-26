@@ -133,6 +133,7 @@ export default function dom(
 
 		const debug_name = `<${component.customElement ? component.tag : name}>`;
 		const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
+		let dev_props_check;
 
 		if (component.options.dev) {
 			// TODO check no uunexpected props were passed, as well as
@@ -142,17 +143,14 @@ export default function dom(
 				.filter(name => !component.initialised_declarations.has(name));
 
 			if (expected.length) {
-				body.push(deindent`
-					$$checkProps() {
-						const state = this.$$.get();
-						${expected.map(name => deindent`
+				dev_props_check = deindent`
+					const state = this.$$.get();
+					${expected.map(name => deindent`
 
-						if (state.${name} === undefined) {
-							console.warn("${debug_name} was created without expected data property '${name}'");
-						}
-						`)}
-					}
-				`);
+					if (state.${name} === undefined) {
+						console.warn("${debug_name} was created without expected data property '${name}'");
+					}`)}
+				`;
 			}
 		}
 
@@ -180,7 +178,7 @@ export default function dom(
 		});
 
 		builder.addBlock(deindent`
-			function $$create_fragment(${component.alias('component')}, ctx) {
+			function create_fragment(${component.alias('component')}, ctx) {
 				${block.getContents()}
 			}
 
@@ -188,7 +186,7 @@ export default function dom(
 
 			${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 
-			function $$init($$self, $$make_dirty) {
+			function define($$self, $$make_dirty) {
 				${should_add_css &&
 				`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
 
@@ -206,7 +204,10 @@ export default function dom(
 
 			class ${name} extends ${superclass} {
 				constructor(options) {
-					super(options, $$init, $$create_fragment, ${not_equal});
+					super(${options.dev && `options`});
+					@init(this, options, define, create_fragment, ${not_equal});
+
+					${dev_props_check}
 				}
 
 				${body.join('\n\n')}

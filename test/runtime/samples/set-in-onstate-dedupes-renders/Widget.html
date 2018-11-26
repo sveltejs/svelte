@@ -1,10 +1,10 @@
 <script>
-	import { beforeRender } from 'svelte';
+	import { beforeUpdate } from 'svelte';
 
 	export let foo;
 	export let bar;
 
-	beforeRender(() => {
+	beforeUpdate(() => {
 		if (foo.x !== bar.x) {
 			throw new Error('mismatch');
 		}

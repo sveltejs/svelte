@@ -9,7 +9,9 @@ export function bind(component, name, callback) {
 	callback(component.$$.get()[name]);
 }
 
-export function mount_component({ $$: { fragment }}, target, anchor, hydrate) {
+export function mount_component(component, target, anchor, hydrate) {
+	const { fragment, refs, inject_refs, on_mount, on_destroy, after_render } = component.$$;
+
 	if (hydrate) {
 		fragment.l(children(target));
 		fragment.m(target, anchor); // TODO can we avoid moving DOM?
@@ -18,24 +20,24 @@ export function mount_component({ $$: { fragment }}, target, anchor, hydrate) {
 		fragment[fragment.i ? 'i' : 'm'](target, anchor);
 	}
 
-	component.$$.inject_refs(component.$$.refs);
+	inject_refs(refs);
 
 	// onMount happens after the initial afterUpdate. Because
 	// afterUpdate callbacks happen in reverse order (inner first)
 	// we schedule onMount callbacks before afterUpdate callbacks
 	add_render_callback(() => {
-		const onDestroy = component.$$.on_mount.map(run).filter(is_function);
-		if (component.$$.on_destroy) {
-			component.$$.on_destroy.push(...onDestroy);
+		const new_on_destroy = on_mount.map(run).filter(is_function);
+		if (on_destroy) {
+			on_destroy.push(...new_on_destroy);
 		} else {
 			// Edge case — component was destroyed immediately,
 			// most likely as a result of a binding initialising
-			run_all(onDestroy);
+			run_all(new_on_destroy);
 		}
 		component.$$.on_mount = [];
 	});
 
-	component.$$.after_render.forEach(add_render_callback);
+	after_render.forEach(add_render_callback);
 }
 
 function destroy(component, detach) {
@@ -58,57 +60,57 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
-export class $$Component {
-	constructor(options, init, create_fragment, not_equal) {
-		const previous_component = current_component;
-		set_current_component(this);
+export function init(component, options, define, create_fragment, not_equal) {
+	const previous_component = current_component;
+	set_current_component(component);
 
-		this.$$ = {
-			fragment: null,
+	component.$$ = {
+		fragment: null,
 
-			// state
-			get: null,
-			set: noop,
-			inject_refs: noop,
-			not_equal,
-			bound: blankObject(),
+		// state
+		get: null,
+		set: noop,
+		inject_refs: noop,
+		not_equal,
+		bound: blankObject(),
 
-			// lifecycle
-			on_mount: [],
-			on_destroy: [],
-			before_render: [],
-			after_render: [],
+		// lifecycle
+		on_mount: [],
+		on_destroy: [],
+		before_render: [],
+		after_render: [],
 
-			// everything else
-			callbacks: blankObject(),
-			slotted: options.slots || {},
-			refs: {},
-			dirty: null,
-			binding_groups: []
-		};
+		// everything else
+		callbacks: blankObject(),
+		slotted: options.slots || {},
+		refs: {},
+		dirty: null,
+		binding_groups: []
+	};
 
-		init(this, key => {
-			make_dirty(this, key);
-			if (this.$$.bound[key]) this.$$.bound[key](this.$$.get()[key]);
-		});
+	define(component, key => {
+		make_dirty(component, key);
+		if (component.$$.bound[key]) component.$$.bound[key](component.$$.get()[key]);
+	});
 
-		if (options.props) {
-			this.$$.set(options.props);
-		}
-
-		run_all(this.$$.before_render);
-		this.$$.fragment = create_fragment(this, this.$$.get());
-
-		if (options.target) {
-			intro.enabled = !!options.intro;
-			mount_component(this, options.target, options.anchor, options.hydrate);
-			flush();
-			intro.enabled = true;
-		}
-
-		set_current_component(previous_component);
+	if (options.props) {
+		component.$$.set(options.props);
 	}
 
+	run_all(component.$$.before_render);
+	component.$$.fragment = create_fragment(component, component.$$.get());
+
+	if (options.target) {
+		intro.enabled = !!options.intro;
+		mount_component(component, options.target, options.anchor, options.hydrate);
+		flush();
+		intro.enabled = true;
+	}
+
+	set_current_component(previous_component);
+}
+
+export class $$Component {
 	$destroy() {
 		destroy(this, true);
 		this.$destroy = noop;
@@ -141,8 +143,7 @@ export class $$ComponentDev extends $$Component {
 			throw new Error(`'target' is a required option`);
 		}
 
-		super(...arguments);
-		this.$$checkProps();
+		super();
 	}
 
 	$destroy() {
@@ -150,9 +151,5 @@ export class $$ComponentDev extends $$Component {
 		this.$destroy = () => {
 			console.warn(`Component was already destroyed`);
 		};
-	}
-
-	$$checkProps() {
-		// noop by default
 	}
 }

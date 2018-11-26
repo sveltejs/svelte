@@ -1,5 +1,5 @@
 <script>
-	import { beforeRender, onMount } from 'svelte';
+	import { beforeUpdate, onMount } from 'svelte';
 
 	let mounted;
 	export let count = 0;
@@ -9,7 +9,7 @@
 		mounted = true;
 	});
 
-	beforeRender(() => {
+	beforeUpdate(() => {
 		if (mounted) count += 1;
 	});
 </script>

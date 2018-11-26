@@ -1,10 +1,10 @@
 <script>
-	import { beforeRender } from 'svelte';
+	import { beforeUpdate } from 'svelte';
 
 	export let item;
 	export let foo = 'XX';
 
-	beforeRender(() => {
+	beforeUpdate(() => {
 		foo = item;
 	});
 </script>

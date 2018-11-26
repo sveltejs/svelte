@@ -1,12 +1,12 @@
 <script>
-	import { afterRender } from 'svelte';
+	import { afterUpdate } from 'svelte';
 
 	export let a;
 	export let b;
 
 	export let value;
 
-	afterRender(() => {
+	afterUpdate(() => {
 		b.textContent = a.textContent;
 	});
 </script>

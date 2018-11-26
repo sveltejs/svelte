@@ -1,10 +1,10 @@
 <script>
-	import { afterRender } from 'svelte';
+	import { afterUpdate } from 'svelte';
 
 	export let value;
 	let mirror;
 
-	afterRender(() => {
+	afterUpdate(() => {
 		mirror = value;
 	});
 </script>

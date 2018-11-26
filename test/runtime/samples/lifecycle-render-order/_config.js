@@ -5,9 +5,9 @@ export default {
 
 	test({ assert, component, target }) {
 		assert.deepEqual(order, [
-			'beforeRender',
+			'beforeUpdate',
 			'render',
-			'afterRender',
+			'afterUpdate',
 			'onMount'
 		]);
 

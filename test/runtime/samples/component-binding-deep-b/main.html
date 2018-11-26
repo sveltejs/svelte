@@ -1,5 +1,5 @@
 <script>
-	import { beforeRender } from 'svelte';
+	import { beforeUpdate } from 'svelte';
 
 	import Editor from './Editor.html';
 	import ComponentSelector from './ComponentSelector.html';
@@ -10,7 +10,7 @@
 
 	let previouslySelectedComponent;
 
-	beforeRender(() => {
+	beforeUpdate(() => {
 		components.forEach(component => {
 			if (component === selectedComponent) return;
 			component.compiled = component.source.toUpperCase();

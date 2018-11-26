@@ -4,7 +4,7 @@ export default {
 			oncreate: true,
 			onDestroy: false,
 			onstate: false,
-			afterRender: false
+			afterUpdate: false
 		});
 	}
 };

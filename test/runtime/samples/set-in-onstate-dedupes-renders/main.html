@@ -1,12 +1,12 @@
 <script>
-	import { beforeRender } from 'svelte';
+	import { beforeUpdate } from 'svelte';
 
 	import Widget from './Widget.html';
 
 	export let foo = { x: 1 };
 	export let bar = { x: 1 };
 
-	beforeRender(() => {
+	beforeUpdate(() => {
 		bar = foo;
 	});
 </script>
