@@ -85,11 +85,17 @@ describe.only('hydration', () => {
 					assert.equal(target.innerHTML, '');
 				}
 			} catch (err) {
-				showOutput(cwd, { shared: 'svelte/shared.js' }); // eslint-disable-line no-console
+				showOutput(cwd, {
+					shared: 'svelte/internal.js',
+					hydratable: true
+				});
 				throw err;
 			}
 
-			if (config.show) showOutput(cwd, { shared: 'svelte/shared.js' });
+			if (config.show) showOutput(cwd, {
+				shared: 'svelte/internal.js',
+				hydratable: true
+			});
 		});
 	}
 
