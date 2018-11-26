@@ -58,150 +58,143 @@ export default function dom(
 	const expectedProperties = Array.from(component.expectedProperties);
 	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
 
+	const refs = Array.from(component.refs);
+
+	const superclass = component.alias(options.dev ? 'SvelteComponentDev' : 'SvelteComponent');
+
+	if (options.dev && !options.hydratable) {
+		block.builders.claim.addLine(
+			'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
+		);
+	}
+
+	// TODO injecting CSS this way is kinda dirty. Maybe it should be an
+	// explicit opt-in, or something?
+	const should_add_css = (
+		!component.options.customElement &&
+		component.stylesheet.hasStyles &&
+		options.css !== false
+	);
+
+	const props = component.exports.filter(x => component.writable_declarations.has(x.name));
+
+	const set = component.meta.props || props.length > 0
+		? deindent`
+			$$props => {
+				${component.meta.props && deindent`
+				if (!${component.meta.props}) ${component.meta.props} = {};
+				@assign(${component.meta.props}, $$props);
+				$$make_dirty('${component.meta.props_object}');
+				`}
+				${props.map(prop =>
+				`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
+			}
+		`
+		: null;
+
+	const inject_refs = refs.length > 0
+		? deindent`
+			$$refs => {
+				${refs.map(name => `${name} = $$refs.${name};`)}
+			}
+		`
+		: null;
+
+	const body = [];
+
+	const debug_name = `<${component.customElement ? component.tag : name}>`;
+	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
+	let dev_props_check;
+
+	component.exports.forEach(x => {
+		body.push(deindent`
+			get ${x.as}() {
+				return this.$$.get().${x.name};
+			}
+		`);
+
+		if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
+			body.push(deindent`
+				set ${x.as}(value) {
+					this.$set({ ${x.name}: value });
+					@flush();
+				}
+			`);
+		} else if (component.options.dev) {
+			body.push(deindent`
+				set ${x.as}(value) {
+					throw new Error("${debug_name}: Cannot set read-only property '${x.as}'");
+				}
+			`);
+		}
+	});
+
+	if (component.options.dev) {
+		// TODO check no uunexpected props were passed, as well as
+		// checking that expected ones were passed
+		const expected = component.exports
+			.map(x => x.name)
+			.filter(name => !component.initialised_declarations.has(name));
+
+		if (expected.length) {
+			dev_props_check = deindent`
+				const state = this.$$.get();
+				${expected.map(name => deindent`
+
+				if (state.${name} === undefined) {
+					console.warn("${debug_name} was created without expected data property '${name}'");
+				}`)}
+			`;
+		}
+	}
+
+	builder.addBlock(deindent`
+		function create_fragment(${component.alias('component')}, ctx) {
+			${block.getContents()}
+		}
+
+		${component.module_javascript}
+
+		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+
+		function define($$self, $$make_dirty) {
+			${should_add_css &&
+			`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
+
+			${component.javascript || component.exports.map(x => `let ${x.name};`)}
+
+			${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
+
+			// TODO only what's needed by the template
+			$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
+
+			${set && `$$self.$$.set = ${set};`}
+
+			${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
+		}
+	`);
+
 	if (component.customElement) {
-		// TODO use `export` to determine this
-		const props = Array.from(component.expectedProperties);
+		// TODO observedAttributes
 
 		builder.addBlock(deindent`
-			class ${name} extends HTMLElement {
-				constructor(options = {}) {
+			class ${name} extends @SvelteElement {
+				constructor() {
 					super();
+					@init(this, { target: this.shadowRoot }, define, create_fragment, ${not_equal});
 				}
 
 				static get observedAttributes() {
-					return ${JSON.stringify(props)};
+					return [];
 				}
 
-				${renderer.slots.size && deindent`
-				connectedCallback() {
-					Object.keys(this.$$.slotted).forEach(key => {
-						this.appendChild(this.$$.slotted[key]);
-					});
-				}`}
-
-				attributeChangedCallback(attr, oldValue, newValue) {
-					this[attr] = newValue;
-				}
+				${body.join('\n\n')}
 			}
 
 			customElements.define("${component.customElement.tag}", ${name});
 		`);
 	} else {
-		const refs = Array.from(component.refs);
-
-		const superclass = component.alias(options.dev ? '$$ComponentDev' : '$$Component');
-
-		if (options.dev && !options.hydratable) {
-			block.builders.claim.addLine(
-				'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
-			);
-		}
-
-		// TODO injecting CSS this way is kinda dirty. Maybe it should be an
-		// explicit opt-in, or something?
-		const should_add_css = (
-			!component.options.customElement &&
-			component.stylesheet.hasStyles &&
-			options.css !== false
-		);
-
-		const props = component.exports.filter(x => component.writable_declarations.has(x.name));
-
-		const set = component.meta.props || props.length > 0
-			? deindent`
-				$$props => {
-					${component.meta.props && deindent`
-					if (!${component.meta.props}) ${component.meta.props} = {};
-					@assign(${component.meta.props}, $$props);
-					$$make_dirty('${component.meta.props_object}');
-					`}
-					${props.map(prop =>
-					`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
-				}
-			`
-			: null;
-
-		const inject_refs = refs.length > 0
-			? deindent`
-				$$refs => {
-					${refs.map(name => `${name} = $$refs.${name};`)}
-				}
-			`
-			: null;
-
-		const body = [];
-
-		const debug_name = `<${component.customElement ? component.tag : name}>`;
-		const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
-		let dev_props_check;
-
-		if (component.options.dev) {
-			// TODO check no uunexpected props were passed, as well as
-			// checking that expected ones were passed
-			const expected = component.exports
-				.map(x => x.name)
-				.filter(name => !component.initialised_declarations.has(name));
-
-			if (expected.length) {
-				dev_props_check = deindent`
-					const state = this.$$.get();
-					${expected.map(name => deindent`
-
-					if (state.${name} === undefined) {
-						console.warn("${debug_name} was created without expected data property '${name}'");
-					}`)}
-				`;
-			}
-		}
-
-		component.exports.forEach(x => {
-			body.push(deindent`
-				get ${x.as}() {
-					return this.$$.get().${x.name};
-				}
-			`);
-
-			if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
-				body.push(deindent`
-					set ${x.as}(value) {
-						this.$set({ ${x.name}: value });
-						@flush();
-					}
-				`);
-			} else if (component.options.dev) {
-				body.push(deindent`
-					set ${x.as}(value) {
-						throw new Error("${debug_name}: Cannot set read-only property '${x.as}'");
-					}
-				`);
-			}
-		});
-
 		builder.addBlock(deindent`
-			function create_fragment(${component.alias('component')}, ctx) {
-				${block.getContents()}
-			}
-
-			${component.module_javascript}
-
-			${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
-
-			function define($$self, $$make_dirty) {
-				${should_add_css &&
-				`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
-
-				${component.javascript || component.exports.map(x => `let ${x.name};`)}
-
-				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
-
-				// TODO only what's needed by the template
-				$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
-
-				${set && `$$self.$$.set = ${set};`}
-
-				${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
-			}
-
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});

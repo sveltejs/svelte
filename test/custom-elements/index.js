@@ -15,7 +15,7 @@ const page = `
 
 const assert = fs.readFileSync('test/custom-elements/assert.js', 'utf-8');
 
-describe('custom-elements', function() {
+describe.only('custom-elements', function() {
 	this.timeout(10000);
 
 	let svelte;
@@ -104,12 +104,13 @@ describe('custom-elements', function() {
 						})
 						.then(result => {
 							if (result) console.log(result);
+							nightmare.end();
 						})
 						.catch(message => {
 							console.log(addLineNumbers(bundle));
+							nightmare.end();
 							throw new Error(message);
-						})
-						.then(() => nightmare.end());
+						});
 				});
 
 

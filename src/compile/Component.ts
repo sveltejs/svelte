@@ -133,7 +133,7 @@ export default class Component {
 
 		this.walk_module_js();
 		this.walk_instance_js();
-		this.name = this.alias(name);
+		this.name = this.getUniqueName(name);
 
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
@@ -209,7 +209,7 @@ export default class Component {
 		});
 
 		const importedHelpers = Array.from(helpers)
-			.concat(options.dev ? '$$ComponentDev' : '$$Component')
+			.concat(options.dev ? 'SvelteComponentDev' : 'SvelteComponent')
 			.sort()
 			.map(name => {
 				const alias = this.alias(name);
