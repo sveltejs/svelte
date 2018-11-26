@@ -17,7 +17,7 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-describe('hydration', () => {
+describe.only('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
@@ -48,7 +48,7 @@ describe('hydration', () => {
 			const cwd = path.resolve(`test/hydration/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = path.resolve('shared.js');
+			compileOptions.shared = path.resolve('internal.js');
 			compileOptions.dev = config.dev;
 			compileOptions.hydrate = true;
 
@@ -60,7 +60,7 @@ describe('hydration', () => {
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require(`${cwd}/main.html`);
+					SvelteComponent = require(`${cwd}/main.html`).default;
 				} catch (err) {
 					throw err;
 				}
@@ -73,7 +73,7 @@ describe('hydration', () => {
 				const component = new SvelteComponent({
 					target,
 					hydrate: true,
-					data: config.data
+					props: config.props
 				});
 
 				assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
