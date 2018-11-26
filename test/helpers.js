@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import * as glob from 'tiny-glob/sync.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as chalk from 'chalk';
+import * as colors from 'kleur';
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -162,7 +162,7 @@ export function addLineNumbers(code) {
 			while (i.length < 3) i = ` ${i}`;
 
 			return (
-				chalk.grey(`  ${i}: `) +
+				colors.gray(`  ${i}: `) +
 				line.replace(/^\t+/, match => match.split('\t').join('    '))
 			);
 		})
@@ -191,7 +191,7 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 		);
 
 		console.log( // eslint-disable-line no-console
-			`\n>> ${chalk.cyan.bold(file)}\n${addLineNumbers(js.code)}\n<< ${chalk.cyan.bold(file)}`
+			`\n>> ${colors.cyan.bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan.bold(file)}`
 		);
 	});
 }

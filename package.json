@@ -53,7 +53,6 @@
     "acorn": "^5.4.1",
     "acorn-dynamic-import": "^3.0.0",
     "agadoo": "^1.0.1",
-    "chalk": "^2.4.0",
     "codecov": "^3.0.0",
     "css-tree": "1.0.0-alpha22",
     "eslint": "^5.3.0",
