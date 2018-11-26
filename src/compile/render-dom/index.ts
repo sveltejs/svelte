@@ -1,5 +1,5 @@
 import deindent from '../../utils/deindent';
-import { stringify } from '../../utils/stringify';
+import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
 import globalWhitelist from '../../utils/globalWhitelist';
 import Component from '../Component';
@@ -175,17 +175,29 @@ export default function dom(
 	`);
 
 	if (component.customElement) {
-		// TODO observedAttributes
-
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteElement {
-				constructor() {
+				constructor(options) {
 					super();
+
+					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+
 					@init(this, { target: this.shadowRoot }, define, create_fragment, ${not_equal});
+
+					if (options) {
+						if (options.target) {
+							@insert(options.target, this, options.anchor);
+						}
+
+						if (options.props) {
+							this.$set(options.props);
+							@flush();
+						}
+					}
 				}
 
 				static get observedAttributes() {
-					return [];
+					return ${JSON.stringify(component.exports.map(x => x.as))};
 				}
 
 				${body.join('\n\n')}

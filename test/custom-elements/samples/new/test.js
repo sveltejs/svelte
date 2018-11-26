@@ -4,7 +4,7 @@ import CustomElement from './main.html';
 export default function (target) {
 	new CustomElement({
 		target,
-		data: {
+		props: {
 			name: 'world'
 		}
 	});
