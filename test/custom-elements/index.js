@@ -50,10 +50,11 @@ describe.only('custom-elements', function() {
 		if (dir[0] === '.') return;
 
 		const solo = /\.solo$/.test(dir);
+		const skip = /\.skip$/.test(dir);
 		const internal = path.resolve('internal.js');
 		const index = path.resolve('index.js');
 
-		(solo ? it.only : it)(dir, () => {
+		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
 
 			return rollup({
@@ -104,12 +105,13 @@ describe.only('custom-elements', function() {
 						})
 						.then(result => {
 							if (result) console.log(result);
-							nightmare.end();
+							return nightmare.end();
 						})
 						.catch(message => {
 							console.log(addLineNumbers(bundle));
-							nightmare.end();
-							throw new Error(message);
+							return nightmare.end().then(() => {
+								throw new Error(message);
+							});
 						});
 				});
 
