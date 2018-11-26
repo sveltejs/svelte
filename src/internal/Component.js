@@ -20,9 +20,9 @@ export function mount_component({ $$: { fragment }}, target, anchor, hydrate) {
 
 	component.$$.inject_refs(component.$$.refs);
 
-	// onMount happens after the initial afterRender. Because
-	// afterRender callbacks happen in reverse order (inner first)
-	// we schedule onMount callbacks before afterRender callbacks
+	// onMount happens after the initial afterUpdate. Because
+	// afterUpdate callbacks happen in reverse order (inner first)
+	// we schedule onMount callbacks before afterUpdate callbacks
 	add_render_callback(() => {
 		const onDestroy = component.$$.on_mount.map(run).filter(is_function);
 		if (component.$$.on_destroy) {

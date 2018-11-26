@@ -4,7 +4,7 @@ export function set_current_component(component) {
 	current_component = component;
 }
 
-export function beforeRender(fn) {
+export function beforeUpdate(fn) {
 	current_component.$$.before_render.push(fn);
 }
 
@@ -12,7 +12,7 @@ export function onMount(fn) {
 	current_component.$$.on_mount.push(fn);
 }
 
-export function afterRender(fn) {
+export function afterUpdate(fn) {
 	current_component.$$.after_render.push(fn);
 }
 

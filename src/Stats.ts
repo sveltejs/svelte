@@ -101,7 +101,7 @@ export default class Stats {
 			oncreate: false,
 			onDestroy: false,
 			onstate: false,
-			afterRender: false
+			afterUpdate: false
 		};
 
 		return {

@@ -28,7 +28,7 @@ export function flush() {
 	const seen_callbacks = new Set();
 
 	do {
-		// first, call beforeRender functions
+		// first, call beforeUpdate functions
 		// and update components
 		while (dirty_components.length) {
 			update(dirty_components.shift().$$);
@@ -37,7 +37,7 @@ export function flush() {
 		while (binding_callbacks.length) binding_callbacks.pop()();
 
 		// then, once components are updated, call
-		// afterRender functions. This may cause
+		// afterUpdate functions. This may cause
 		// subsequent updates...
 		while (render_callbacks.length) {
 			const callback = render_callbacks.pop();
