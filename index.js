@@ -1,7 +1,7 @@
 export {
 	onMount,
 	onDestroy,
-	beforeRender,
-	afterRender,
+	beforeUpdate,
+	afterUpdate,
 	createEventDispatcher
 } from './internal.js';
