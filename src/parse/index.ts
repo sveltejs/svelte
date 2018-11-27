@@ -220,6 +220,16 @@ export default function parse(
 	options: ParserOptions = {}
 ): Ast {
 	const parser = new Parser(template, options);
+
+	// TODO we way want to allow multiple <style> tags —
+	// one scoped, one global. for now, only allow one
+	if (parser.css.length > 1) {
+		parser.error({
+			code: 'duplicate-style',
+			message: 'You can only have one top-level <style> tag per component'
+		}, parser.css[1].start);
+	}
+
 	return {
 		html: parser.html,
 		css: parser.css,

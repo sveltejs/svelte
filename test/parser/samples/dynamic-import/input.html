@@ -1,9 +1,9 @@
 <script>
-	export default {
-		oncreate() {
-			import('./foo.js').then(foo => {
-				console.log(foo.default);
-			});
-		}
-	}
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		import('./foo.js').then(foo => {
+			console.log(foo.default);
+		});
+	});
 </script>

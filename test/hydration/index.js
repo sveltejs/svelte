@@ -17,7 +17,7 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-describe.only('hydration', () => {
+describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 

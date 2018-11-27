@@ -1,6 +1,7 @@
 import Node from './shared/Node';
 import getObject from '../../utils/getObject';
 import Expression from './shared/Expression';
+import Component from '../Component';
 
 export default class Binding extends Node {
 	name: string;
@@ -10,8 +11,15 @@ export default class Binding extends Node {
 	obj: string;
 	prop: string;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
+
+		if (info.expression.type !== 'Identifier' && info.expression.node.type !== 'MemberExpression') {
+			component.error(info, {
+				code: 'invalid-directive-value',
+				message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
+			});
+		}
 
 		this.name = info.name;
 		this.expression = new Expression(component, this, scope, info.expression);
