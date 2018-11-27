@@ -14,7 +14,7 @@ export default class Binding extends Node {
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		if (info.expression.type !== 'Identifier' && info.expression.node.type !== 'MemberExpression') {
+		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
 			component.error(info, {
 				code: 'invalid-directive-value',
 				message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'

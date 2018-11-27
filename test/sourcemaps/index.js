@@ -5,18 +5,19 @@ import { loadConfig, svelte } from "../helpers.js";
 import { SourceMapConsumer } from "source-map";
 import { getLocator } from "locate-character";
 
-describe("sourcemaps", () => {
+describe.only("sourcemaps", () => {
 	fs.readdirSync("test/sourcemaps/samples").forEach(dir => {
 		if (dir[0] === ".") return;
 
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo/.test(dir);
+		const skip = /\.skip/.test(dir);
 
 		if (solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(solo ? it.only : it)(dir, () => {
+		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./sourcemaps/samples/${dir}/_config.js`);
 
 			const filename = path.resolve(
