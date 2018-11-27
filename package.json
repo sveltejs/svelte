@@ -8,8 +8,8 @@
   },
   "files": [
     "cli",
-    "compiler/*.js",
-    "ssr/*.js",
+    "compiler.js",
+    "register.js",
     "index.js",
     "internal.js",
     "svelte",
