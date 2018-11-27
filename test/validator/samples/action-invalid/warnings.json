@@ -1,6 +1,6 @@
 [{
-	"code": "missing-action",
-	"message": "Missing action 'whatever'",
+	"code": "missing-declaration",
+	"message": "'whatever' is not defined",
 	"pos": 5,
 	"start": {
 		"line": 1,

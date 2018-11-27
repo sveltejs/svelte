@@ -17,6 +17,7 @@ import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
 import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
+import TemplateScope from './nodes/shared/TemplateScope';
 
 type Meta = {
 	namespace?: string;
@@ -53,7 +54,8 @@ export default class Component {
 	options: CompileOptions;
 	fragment: Fragment;
 	module_scope: Scope;
-	module_scope_map: WeakMap<Node, Scope>;
+	instance_scope: Scope;
+	instance_scope_map: WeakMap<Node, Scope>;
 
 	meta: Meta;
 
@@ -391,8 +393,8 @@ export default class Component {
 			return dependencies;
 		}
 
-		let { module_scope, module_scope_map: map } = this;
-		let scope = module_scope;
+		let { instance_scope, instance_scope_map: map } = this;
+		let scope = instance_scope;
 
 		const component = this;
 		let bail = false;
@@ -405,7 +407,7 @@ export default class Component {
 
 				if (isReference(node, parent)) {
 					const { name } = flattenReference(node);
-					if (scope.findOwner(name) === module_scope) {
+					if (scope.findOwner(name) === instance_scope) {
 						dependencies.add(name);
 					}
 				}
@@ -502,6 +504,9 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
+		let { scope } = createScopes(script.content);
+		this.module_scope = scope;
+
 		// TODO unindent
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
@@ -515,8 +520,8 @@ export default class Component {
 		this.addSourcemapLocations(script.content);
 
 		let { scope, map, globals } = createScopes(script.content);
-		this.module_scope = scope;
-		this.module_scope_map = map;
+		this.instance_scope = scope;
+		this.instance_scope_map = map;
 
 		scope.declarations.forEach((node, name) => {
 			this.userVars.add(name);
@@ -559,6 +564,18 @@ export default class Component {
 		});
 
 		this.javascript = this.extract_javascript(script);
+	}
+
+	warn_if_undefined(node, template_scope: TemplateScope) {
+		const { name } = node;
+		if (this.module_scope && this.module_scope.declarations.has(name)) return;
+		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
+		if (template_scope.names.has(name)) return;
+
+		this.warn(node, {
+			code: 'missing-declaration',
+			message: `'${name}' is not defined`
+		});
 	}
 
 	instrument(node, parent, name, is_event_handler) {

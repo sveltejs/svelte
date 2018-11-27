@@ -20,6 +20,8 @@ export default class InlineComponent extends Node {
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
+		component.warn_if_undefined(info, scope);
+
 		component.hasComponents = true;
 
 		this.name = info.name;

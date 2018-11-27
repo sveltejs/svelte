@@ -1,6 +1,6 @@
 [{
-	"code": "missing-component",
-	"message": "Widget component is not defined",
+	"code": "missing-declaration",
+	"message": "'Widget' is not defined",
 	"start": {
 		"line": 2,
 		"column": 1,

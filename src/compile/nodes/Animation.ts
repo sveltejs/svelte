@@ -9,6 +9,8 @@ export default class Animation extends Node {
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 
+		component.warn_if_undefined(info, scope);
+
 		this.name = info.name;
 
 		if (parent.animation) {

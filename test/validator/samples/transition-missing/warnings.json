@@ -1,6 +1,6 @@
 [{
-	"code": "missing-transition",
-	"message": "Missing transition 'foo'",
+	"code": "missing-declaration",
+	"message": "'foo' is not defined",
 	"start": {
 		"line": 1,
 		"column": 5,

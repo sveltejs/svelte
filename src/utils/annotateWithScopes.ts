@@ -10,7 +10,11 @@ export function createScopes(expression: Node) {
 
 	walk(expression, {
 		enter(node: Node, parent: Node) {
-			if (/Function/.test(node.type)) {
+			if (node.type === 'ImportDeclaration') {
+				node.specifiers.forEach(specifier => {
+					scope.declarations.set(specifier.local.name, specifier);
+				});
+			} else if (/Function/.test(node.type)) {
 				if (node.type === 'FunctionDeclaration') {
 					scope.declarations.set(node.id.name, node);
 					scope = new Scope(scope, false);

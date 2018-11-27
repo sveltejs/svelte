@@ -1,6 +1,6 @@
 [{
-	"code": "missing-animation",
-	"message": "Missing animation 'foo'",
+	"code": "missing-declaration",
+	"message": "'foo' is not defined",
 	"start": {
 		"line": 2,
 		"column": 6,
