@@ -1,6 +1,6 @@
 [{
-	"code": "invalid-namespace-property",
-	"message": "The 'namespace' property must be a string literal representing a valid namespace",
+	"code": "invalid-namespace-attribute",
+	"message": "The 'namespace' attribute must be a string literal representing a valid namespace",
 	"pos": 79,
 	"start": {
 		"line": 5,

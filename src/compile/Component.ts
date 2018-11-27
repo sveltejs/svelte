@@ -604,7 +604,7 @@ function process_meta(component, nodes) {
 					case 'namespace':
 						if (!data) {
 							component.error(attribute, {
-								code: `invalid-meta-attribute`,
+								code: `invalid-${name}-attribute`,
 								message: `<svelte:meta> ${name} attribute must have a string value`
 							});
 						}
@@ -615,7 +615,7 @@ function process_meta(component, nodes) {
 					case 'immutable':
 						if (data && (data !== 'true' && data !== 'false')) {
 							component.error(attribute, {
-								code: `invalid-meta-attribute`,
+								code: `invalid-immutable-attribute`,
 								message: `<svelte:meta> immutable attribute must be true or false`
 							});
 						}
@@ -633,7 +633,7 @@ function process_meta(component, nodes) {
 			else if (attribute.type === 'Binding') {
 				if (attribute.name !== 'props') {
 					component.error(attribute, {
-						code: `invalid-meta-attribute`,
+						code: `invalid-meta-binding`,
 						message: `<svelte:meta> only supports bind:props`
 					});
 				}

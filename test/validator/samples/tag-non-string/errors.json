@@ -1,5 +1,5 @@
 [{
-	"code": "invalid-tag-property",
+	"code": "invalid-tag-attribute",
 	"message": "'tag' must be a string literal",
 	"start": {
 		"line": 3,

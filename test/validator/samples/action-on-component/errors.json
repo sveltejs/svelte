@@ -1,15 +1,15 @@
 [{
 	"code": "invalid-action",
 	"message": "Actions can only be applied to DOM elements, not components",
-	"pos": 8,
+	"pos": 84,
 	"start": {
-		"line": 1,
+		"line": 7,
 		"column": 8,
-		"character": 8
+		"character": 84
 	},
 	"end": {
-		"line": 1,
+		"line": 7,
 		"column": 15,
-		"character": 15
+		"character": 91
 	}
 }]

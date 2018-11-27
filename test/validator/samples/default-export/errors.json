@@ -1,0 +1,15 @@
+[{
+	"code": "default-export",
+	"message": "A component cannot have a default export",
+	"pos": 10,
+	"start": {
+		"line": 2,
+		"column": 1,
+		"character": 10
+	},
+	"end": {
+		"line": 2,
+		"column": 19,
+		"character": 28
+	}
+}]

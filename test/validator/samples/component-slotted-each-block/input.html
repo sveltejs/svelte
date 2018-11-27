@@ -1,15 +1,9 @@
+<script>
+	import Nested from './Nested.html';
+</script>
+
 <Nested>
 	{#each things as thing}
 		<div slot='foo'>{thing}</div>
 	{/each}
 </Nested>
-
-<script>
-	import Nested from './Nested.html';
-
-	export default {
-		components: {
-			Nested
-		}
-	};
-</script>

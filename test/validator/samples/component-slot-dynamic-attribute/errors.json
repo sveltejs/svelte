@@ -2,14 +2,14 @@
 	"code": "invalid-slot-attribute",
 	"message": "slot attribute cannot have a dynamic value",
 	"start": {
-		"line": 2,
+		"line": 6,
 		"column": 9,
-		"character": 18
+		"character": 75
 	},
 	"end": {
-		"line": 2,
-		"column": 21,
-		"character": 30
+		"line": 6,
+		"column": 19,
+		"character": 85
 	},
-	"pos": 18
+	"pos": 75
 }]
