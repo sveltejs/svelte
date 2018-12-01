@@ -1,7 +1,6 @@
-import assert from 'assert';
+import * as assert from 'assert';
 import * as fs from 'fs';
-import { parse } from 'acorn';
-import { addLineNumbers, env, normalizeHtml, svelte } from '../helpers.js';
+import { env, normalizeHtml, svelte } from '../helpers.js';
 
 function tryRequire(file) {
 	try {
@@ -23,16 +22,7 @@ function normalizeWarning(warning) {
 	return warning;
 }
 
-function checkCodeIsValid(code) {
-	try {
-		parse(code);
-	} catch (err) {
-		console.error(addLineNumbers(code));
-		throw new Error(err.message);
-	}
-}
-
-describe('css', () => {
+describe.only('css', () => {
 	fs.readdirSync('test/css/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
@@ -51,64 +41,54 @@ describe('css', () => {
 				.replace(/\s+$/, '');
 
 			const expectedWarnings = (config.warnings || []).map(normalizeWarning);
-			const domWarnings = [];
-			const ssrWarnings = [];
+			const warnings = [];
 
-			const dom = svelte.compile(
+			const { js, css } = svelte.compile(
 				input,
 				Object.assign(config, {
-					format: 'iife',
+					format: 'cjs',
 					name: 'SvelteComponent',
 					onwarn: warning => {
-						domWarnings.push(warning);
+						warnings.push(warning);
 					}
 				})
 			);
 
-			const ssr = svelte.compile(
-				input,
-				Object.assign(config, {
-					format: 'iife',
-					generate: 'ssr',
-					name: 'SvelteComponent',
-					onwarn: warning => {
-						ssrWarnings.push(warning);
-					}
-				})
-			);
+			// we do this here, rather than in the expected.html !== null
+			// block, to verify that valid code was generated
+			const fn = new Function('module', 'exports', 'require', js.code);
 
-			// check the code is valid
-			checkCodeIsValid(dom.js.code);
-			checkCodeIsValid(ssr.js.code);
+			console.log(warnings);
+			console.log(expectedWarnings);
+			assert.deepEqual(warnings.map(normalizeWarning), expectedWarnings);
 
-			assert.equal(dom.css.code, ssr.css.code);
-
-			assert.deepEqual(
-				domWarnings.map(normalizeWarning),
-				ssrWarnings.map(normalizeWarning)
-			);
-			assert.deepEqual(domWarnings.map(normalizeWarning), expectedWarnings);
-
-			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css.code);
+			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, css.code);
 			const expected = {
 				html: read(`test/css/samples/${dir}/expected.html`),
 				css: read(`test/css/samples/${dir}/expected.css`)
 			};
 
-			assert.equal(dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
+			assert.equal(css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
 				const window = env();
 
-				// dom
+				const module = { exports: {} };
+				fn(module, module.exports, id => {
+					if (id === 'svelte') return require('../../index.js');
+					if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../'));
+
+					return require(id);
+				});
+
+				const { default: Component, $render } = module.exports;
+
 				try {
-					const Component = eval(
-						`(function () { ${dom.js.code}; return SvelteComponent; }())`
-					);
+					// dom
 					const target = window.document.querySelector('main');
 
-					new Component({ target, data: config.data });
+					new Component({ target, props: config.props });
 					const html = target.innerHTML;
 
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
@@ -119,26 +99,17 @@ describe('css', () => {
 					);
 
 					window.document.head.innerHTML = ''; // remove added styles
-				} catch (err) {
-					console.log(dom.js.code);
-					throw err;
-				}
 
-				// ssr
-				try {
-					const component = eval(
-						`(function () { ${ssr.js.code}; return SvelteComponent; }())`
-					);
-
+					// ssr
 					assert.equal(
 						normalizeHtml(
 							window,
-							component.render(config.data).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
+							$render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);
 				} catch (err) {
-					console.log(ssr.js.code);
+					console.log(js.code);
 					throw err;
 				}
 			}
