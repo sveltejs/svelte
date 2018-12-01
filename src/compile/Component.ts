@@ -225,7 +225,7 @@ export default class Component {
 			name,
 			options,
 			banner,
-			options.sveltePath ? `${options.sveltePath}/internal.js` : `svelte/internal.js`,
+			options.sveltePath,
 			importedHelpers,
 			this.imports,
 			this.module_exports,

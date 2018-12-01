@@ -21,17 +21,19 @@ export default function wrapModule(
 	name: string,
 	options: CompileOptions,
 	banner: string,
-	sharedPath: string,
+	sveltePath = 'svelte',
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
 	module_exports: Export[],
 	source: string
 ): string {
+	const internalPath = `${sveltePath}/internal.js`;
+
 	if (format === 'esm') {
-		return esm(code, name, options, banner, sharedPath, helpers, imports, module_exports, source);
+		return esm(code, name, options, banner, sveltePath, internalPath, helpers, imports, module_exports, source);
 	}
 
-	if (format === 'cjs') return cjs(code, name, banner, sharedPath, helpers, imports, module_exports);
+	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internalPath, helpers, imports, module_exports);
 	if (format === 'eval') return expr(code, name, options, banner, imports);
 
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
@@ -42,19 +44,28 @@ function esm(
 	name: string,
 	options: CompileOptions,
 	banner: string,
-	sharedPath: string,
+	sveltePath: string,
+	internalPath: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
 	module_exports: Export[],
 	source: string
 ) {
 	const importHelpers = helpers.length > 0 && (
-		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(sharedPath)};`
+		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(internalPath)};`
 	);
 
 	const importBlock = imports.length > 0 && (
 		imports
-			.map((declaration: Node) => source.slice(declaration.start, declaration.end))
+			.map((declaration: Node) => {
+				const import_source = declaration.source.value === 'svelte' ? sveltePath : declaration.source.value;
+
+				return (
+					source.slice(declaration.start, declaration.source.start) +
+					JSON.stringify(import_source) +
+					source.slice(declaration.source.end, declaration.end)
+				);
+			})
 			.join('\n')
 	);
 
@@ -72,7 +83,8 @@ function cjs(
 	code: string,
 	name: string,
 	banner: string,
-	sharedPath: string,
+	sveltePath: string,
+	internalPath: string,
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
 	module_exports: Export[]
@@ -80,7 +92,7 @@ function cjs(
 	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ');
 
 	const helperBlock = helpers.length > 0 && (
-		`const { ${helperDeclarations} } = require(${JSON.stringify(sharedPath)});\n`
+		`const { ${helperDeclarations} } = require(${JSON.stringify(internalPath)});\n`
 	);
 
 	const requires = imports.map(node => {
@@ -102,7 +114,11 @@ function cjs(
 			lhs = `{ ${properties.join(', ')} }`;
 		}
 
-		return `const ${lhs} = require("${node.source.value}");`
+		const source = node.source.value === 'svelte'
+			? sveltePath
+			: node.source.value;
+
+		return `const ${lhs} = require("${source}");`
 	});
 
 	const exports = [`exports.default = ${name};`].concat(
