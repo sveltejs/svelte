@@ -1,5 +1,6 @@
 import { SourceMap } from 'magic-string';
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map';
+import getCodeFrame from '../utils/getCodeFrame.js';
 
 export interface PreprocessOptions {
 	markup?: (options: {
@@ -62,52 +63,67 @@ async function replaceTagContents(
 	if (match) {
 		const attributes: Record<string, string | boolean> = parseAttributes(match[1]);
 		const content: string = match[2];
-		const processed: { code: string, map?: SourceMap | string } = await preprocessor({
-			content,
-			attributes,
-			filename : options.filename
-		});
 
-		if (processed && processed.code) {
-			const code = (
-				source.slice(0, match.index) +
-				`<${type}>${processed.code}</${type}>` +
-				source.slice(match.index + match[0].length)
-			);
+		// Line number of the match
+		let line = 0;
+		for (let i = 0; i <= match.index; i = source.indexOf('\n', i + 1)) {
+			line++;
+		}
 
-			// Shift sourcemap to the appropriate line
-			if (processed.map) {
-				const consumer = new SourceMapConsumer(processed.map);
+		line--;
 
-				// Line number of the match
-				let line = 0;
-				for(let i = 0; i <= match.index; i = source.indexOf('\n', i + 1)) {
-					line++;
+		try {
+			const processed: {
+				code: string;
+				map?: SourceMap | string;
+			} = await preprocessor({
+				content,
+				attributes,
+				filename: options.filename,
+			});
+
+			if (processed && processed.code) {
+				const code =
+					source.slice(0, match.index) +
+					`<${type}>${processed.code}</${type}>` +
+					source.slice(match.index + match[0].length);
+
+				// Shift sourcemap to the appropriate line
+				if (processed.map) {
+					const consumer = new SourceMapConsumer(processed.map);
+
+					const generator = new SourceMapGenerator({ file: options.filename });
+					consumer.eachMapping(mapping => {
+						generator.addMapping({
+							source: mapping.source,
+							name: mapping.name,
+							original: {
+								line: mapping.originalLine + line,
+								column: mapping.originalColumn,
+							},
+							generated: {
+								line: mapping.generatedLine + line,
+								column: mapping.generatedColumn,
+							},
+						});
+					});
+
+					return { code, map: generator.toJSON() };
 				}
 
-				// Skip the <tag ...>
-				line++;
-
-				const generator = new SourceMapGenerator({ file: options.filename })
-				consumer.eachMapping(mapping => {
-					generator.addMapping({
-					  source: mapping.source,
-						name: mapping.name,
-					  original: {
-							line: mapping.originalLine + line,
-							column: mapping.originalColumn
-						},
-					  generated: {
-							line: mapping.generatedLine + line,
-							column: mapping.generatedColumn
-						}
-					});
-				});
-
-				return { code, map: generator.toJSON() };
+				return { code };
+			}
+		} catch (err) {
+			if (err.line && err.column) {
+				err.frame = getCodeFrame(source, line + err.line - 1, err.column);
+			} else if (err.start && err.start.line && err.start.column) {
+				err.frame = getCodeFrame(source, line + err.start.line - 1, err.column);
+			} else if (typeof err.start === 'number') {
+				const start = locate(contents, err.start, { offsetLine: 1 });
+				err.frame = getCodeFrame(source, line + start.line - 1, start.column);
 			}
 
-			return { code };
+			throw err;
 		}
 	}
 
@@ -124,17 +140,32 @@ export default async function preprocess(
 	let markupMap: SourceMapGenerator;
 
 	if (!!markup) {
-		const processed: {
-			code: string,
-			map?: SourceMap | string
-		} = await markup({
-			content: source,
-			filename: options.filename
-		});
+		try {
+			const processed: {
+				code: string;
+				map?: SourceMap | string;
+			} = await markup({
+				content: source,
+				filename: options.filename,
+			});
 
-		source = processed.code;
-		if (processed.map) {
-			markupMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(processed.map));
+			source = processed.code;
+			if (processed.map) {
+				markupMap = SourceMapGenerator.fromSourceMap(
+					new SourceMapConsumer(processed.map)
+				);
+			}
+		} catch (err) {
+			if (err.line && err.column) {
+				err.frame = getCodeFrame(source, err.line - 1, err.column);
+			} else if (err.start && err.start.line && err.start.column) {
+				err.frame = getCodeFrame(source, err.start.line - 1, err.column);
+			} else if (typeof err.start === 'number') {
+				const start = locate(source, err.start, { offsetLine: 1 });
+				err.frame = getCodeFrame(source, start.line - 1, start.column);
+			}
+
+			throw err;
 		}
 	}
 
