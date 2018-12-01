@@ -27,6 +27,7 @@ const handlers: Record<string, Handler> = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	Meta: noop,
 	MustacheTag: Tag, // TODO MustacheTag is an anachronism
 	RawMustacheTag: HtmlTag,
 	Slot,

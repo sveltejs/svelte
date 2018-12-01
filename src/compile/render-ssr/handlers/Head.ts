@@ -1,5 +1,5 @@
 export default function(node, renderer, options) {
-	renderer.append('${(__result.head += `');
+	renderer.append('${($$result.head += `');
 
 	renderer.render(node.children, options);
 

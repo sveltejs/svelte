@@ -157,7 +157,7 @@ function stringifyAttribute(attribute: Attribute) {
 				return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
 			}
 
-			return '${@escape(' + chunk.snippet + ')}';
+			return '${@escape(' + chunk.render() + ')}';
 		})
 		.join('');
 }
