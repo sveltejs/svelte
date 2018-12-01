@@ -263,13 +263,16 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
+			// TODO return declarations from handler.render()?
+			const snippet = handler.render();
+
 			if (handler.expression) {
 				handler.expression.declarations.forEach(declaration => {
 					block.builders.init.addBlock(declaration);
 				});
 			}
 
-			return `${name}.$on("${handler.name}", ${handler.render()});`;
+			return `${name}.$on("${handler.name}", ${snippet});`;
 		});
 
 		if (this.node.name === 'svelte:component') {

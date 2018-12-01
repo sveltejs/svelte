@@ -28,7 +28,7 @@ function getName(filename) {
 const sveltePath = process.cwd();
 const internal = path.join(sveltePath, 'internal.js');
 
-describe.only("runtime", () => {
+describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);

@@ -170,16 +170,13 @@ export default class Expression {
 	render() {
 		if (this.rendered) return this.rendered;
 
-		// <option> value attribute could be synthetic — avoid double editing
-		// TODO move this logic into Element?
-		if (this.is_synthetic) return;
-
 		const {
 			component,
 			declarations,
 			scope_map: map,
 			template_scope,
-			owner
+			owner,
+			is_synthetic
 		} = this;
 		let scope = this.scope;
 
@@ -221,7 +218,7 @@ export default class Expression {
 							dependencies.add(name);
 							component.expectedProperties.add(name);
 						}
-					} else {
+					} else if (!is_synthetic) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
