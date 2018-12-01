@@ -108,6 +108,7 @@ export default class Stats {
 			timings,
 			warnings: this.warnings,
 			imports,
+			templateReferences: component && component.expectedProperties,
 			hooks
 		};
 	}
