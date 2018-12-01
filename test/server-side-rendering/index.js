@@ -19,11 +19,13 @@ function tryToReadFile(file) {
 	}
 }
 
+const sveltePath = process.cwd();
+
 describe.only("ssr", () => {
 	before(() => {
 		require("../../register")({
 			extensions: ['.svelte', '.html'],
-			sveltePath: process.cwd()
+			sveltePath
 		});
 
 		return setupHtmlEqual();
@@ -44,22 +46,22 @@ describe.only("ssr", () => {
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/server-side-rendering/samples", dir);
 			try {
-				let $render;
+				let Component;
 
 				const mainHtmlFile = `${dir}/main.html`;
 				const mainSvelteFile = `${dir}/main.svelte`;
 				if (fs.existsSync(mainHtmlFile)) {
-					$render = require(mainHtmlFile).$render;
+					Component = require(mainHtmlFile).default;
 				} else if (fs.existsSync(mainSvelteFile)) {
-					$render = require(mainSvelteFile).$render;
+					Component = require(mainSvelteFile).default;
 				}
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
 				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
 
-				const data = tryToLoadJson(`${dir}/data.json`);
+				const props = tryToLoadJson(`${dir}/data.json`) || undefined;
 
-				const rendered = $render(data);
+				const rendered = Component.render(props);
 				const { html, css, head } = rendered;
 
 				// rendered.toString() === rendered.html
@@ -110,13 +112,13 @@ describe.only("ssr", () => {
 				delete require.cache[resolved];
 			});
 
-			const compileOptions = config.compileOptions || {};
+			const compileOptions = Object.assign({ sveltePath }, config.compileOptions);
 
 			require("../../register")(compileOptions);
 
 			try {
-				const component = require(`../runtime/samples/${dir}/main.html`);
-				const { html } = component.render(config.data, {
+				const Component = require(`../runtime/samples/${dir}/main.html`).default;
+				const { html } = Component.render(config.data, {
 					store: (config.store !== true) && config.store
 				});
 
