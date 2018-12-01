@@ -12,7 +12,11 @@ export default function ssr(
 ) {
 	const renderer = new Renderer();
 
-	const format = options.format || 'cjs';
+	return deindent`
+		function $render($$props) {
+			throw new Error('TODO');
+		}
+	`;
 
 	const { computations, name, templateProperties } = component;
 
@@ -56,7 +60,7 @@ export default function ssr(
 	const debugName = `<${component.customElement ? component.tag : name}>`;
 
 	// TODO concatenate CSS maps
-	const result = (deindent`
+	return (deindent`
 		${js}
 
 		var ${name} = {};
@@ -129,8 +133,6 @@ export default function ssr(
 
 		${templateProperties.preload && `${name}.preload = %preload;`}
 	`).trim();
-
-	return component.generate(result, options, { name, format });
 }
 
 function trim(nodes) {

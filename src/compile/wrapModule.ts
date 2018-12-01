@@ -65,6 +65,7 @@ function esm(
 
 		${code}
 		export default ${name};
+		export { $render };
 		${module_exports.length > 0 && `export { ${module_exports.map(e => e.name === e.as ? e.name : `${e.name} as ${e.as}`).join(', ')} };`}`;
 }
 
@@ -105,7 +106,7 @@ function cjs(
 		return `const ${lhs} = require("${node.source.value}");`
 	});
 
-	const exports = [`exports.default = ${name};`].concat(
+	const exports = [`exports.default = ${name};`, `exports.$render = $render;`].concat(
 		module_exports.map(x => `exports.${x.as} = ${x.name};`)
 	);
 

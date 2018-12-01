@@ -49,10 +49,10 @@ export interface CompileOptions {
 
 	outputFilename?: string;
 	cssOutputFilename?: string;
+	sveltePath?: string;
 
 	dev?: boolean;
 	immutable?: boolean;
-	shared?: boolean | string;
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;

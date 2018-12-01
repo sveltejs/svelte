@@ -54,8 +54,7 @@ export function compile(input, opts) {
 		immutable: opts.immutable,
 		generate: opts.generate || 'dom',
 		customElement: opts.customElement,
-		store: opts.store,
-		shared: opts.shared
+		sveltePath: opts.sveltePath
 	};
 
 	if (isDir) {

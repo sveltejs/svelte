@@ -33,7 +33,7 @@ function registerExtension(extension) {
 		const options = Object.assign({}, compileOptions, {
 			filename,
 			name: capitalise(name),
-			generate: 'ssr'
+			format: 'cjs'
 		});
 
 		const { js } = compile(fs.readFileSync(filename, 'utf-8'), options);

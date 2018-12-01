@@ -22,7 +22,7 @@ function normalizeWarning(warning) {
 	return warning;
 }
 
-describe.only('css', () => {
+describe('css', () => {
 	fs.readdirSync('test/css/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 

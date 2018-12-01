@@ -219,17 +219,13 @@ export default class Component {
 				return { name, alias };
 			});
 
-		const sharedPath = typeof options.shared === 'string'
-			? options.shared
-			: 'svelte/internal.js';
-
 		const module = wrapModule(
 			result,
 			format,
 			name,
 			options,
 			banner,
-			sharedPath,
+			options.sveltePath ? `${options.sveltePath}/internal.js` : `svelte/internal.js`,
 			importedHelpers,
 			this.imports,
 			this.module_exports,
@@ -485,6 +481,10 @@ export default class Component {
 					this.userVars.add(specifier.local.name);
 					this.declarations.push(specifier.local.name); // TODO we don't really want this, but it's convenient for now
 				});
+
+				if (this.options.sveltePath && node.source.value === 'svelte') {
+					code.overwrite(node.source.start, node.source.end, this.options.sveltePath);
+				}
 			}
 		});
 	}

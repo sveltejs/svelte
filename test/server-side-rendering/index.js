@@ -19,11 +19,11 @@ function tryToReadFile(file) {
 	}
 }
 
-describe("ssr", () => {
+describe.only("ssr", () => {
 	before(() => {
 		require("../../register")({
 			extensions: ['.svelte', '.html'],
-			store: true
+			sveltePath: process.cwd()
 		});
 
 		return setupHtmlEqual();
@@ -44,14 +44,14 @@ describe("ssr", () => {
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/server-side-rendering/samples", dir);
 			try {
-				let component;
+				let $render;
 
 				const mainHtmlFile = `${dir}/main.html`;
 				const mainSvelteFile = `${dir}/main.svelte`;
 				if (fs.existsSync(mainHtmlFile)) {
-					component = require(mainHtmlFile);
+					$render = require(mainHtmlFile).$render;
 				} else if (fs.existsSync(mainSvelteFile)) {
-					component = require(mainSvelteFile);
+					$render = require(mainSvelteFile).$render;
 				}
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
@@ -59,7 +59,7 @@ describe("ssr", () => {
 
 				const data = tryToLoadJson(`${dir}/data.json`);
 
-				const rendered = component.render(data);
+				const rendered = $render(data);
 				const { html, css, head } = rendered;
 
 				// rendered.toString() === rendered.html
