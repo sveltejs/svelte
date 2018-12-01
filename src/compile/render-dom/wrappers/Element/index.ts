@@ -10,7 +10,7 @@ import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
 import TextWrapper from '../Text';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
 import deindent from '../../../../utils/deindent';
-import namespaces from '../../../../utils/namespaces';
+import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';

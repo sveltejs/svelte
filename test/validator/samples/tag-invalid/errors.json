@@ -2,14 +2,14 @@
 	"code": "invalid-tag-property",
 	"message": "tag name must be two or more words joined by the '-' character",
 	"start": {
-		"line": 3,
-		"column": 7,
-		"character": 34
+		"line": 1,
+		"column": 13,
+		"character": 13
 	},
 	"end": {
-		"line": 3,
-		"column": 16,
-		"character": 43
+		"line": 1,
+		"column": 26,
+		"character": 26
 	},
-	"pos": 34
+	"pos": 13
 }]

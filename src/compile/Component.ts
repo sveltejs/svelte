@@ -3,7 +3,7 @@ import { walk, childKeys } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
 import reservedNames from '../utils/reservedNames';
-import namespaces from '../utils/namespaces';
+import { namespaces, validNamespaces } from '../utils/namespaces';
 import { removeNode } from '../utils/removeNode';
 import wrapModule from './wrapModule';
 import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
@@ -18,6 +18,7 @@ import flattenReference from '../utils/flattenReference';
 import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
+import fuzzymatch from '../utils/fuzzymatch';
 
 type Meta = {
 	namespace?: string;
@@ -602,42 +603,62 @@ function process_meta(component, nodes) {
 	const meta: Meta = {};
 	const node = nodes.find(node => node.name === 'svelte:meta');
 
+	function get_value(attribute, message) {
+		const { name, value } = attribute;
+
+		if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
+			component.error(attribute, {
+				code: `invalid-${name}-attribute`,
+				message
+			});
+		}
+
+		return value[0].data;
+	}
+
 	if (node) {
 		node.attributes.forEach(attribute => {
 			if (attribute.type === 'Attribute') {
-				const { name, value } = attribute;
-
-				if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
-					component.error(attribute, {
-						code: `invalid-meta-attribute`,
-						message: `<svelte:meta> cannot have dynamic attributes`
-					});
-				}
-
-				const { data } = value[0];
+				const { name } = attribute;
 
 				switch (name) {
 					case 'tag':
-					case 'namespace':
-						if (!data) {
+						const tag = get_value(attribute, `'tag' must be a string literal`);
+
+						if (!/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
-								code: `invalid-${name}-attribute`,
-								message: `<svelte:meta> ${name} attribute must have a string value`
+								code: `invalid-tag-property`,
+								message: `tag name must be two or more words joined by the '-' character`
 							});
 						}
 
-						meta[name] = data;
+						meta.tag = tag;
+						break;
+
+					case 'namespace':
+						const ns = get_value(attribute, `The 'namespace' attribute must be a string literal representing a valid namespace`);
+
+						if (validNamespaces.indexOf(ns) === -1) {
+							const match = fuzzymatch(ns, validNamespaces);
+							if (match) {
+								component.error(attribute, {
+									code: `invalid-namespace-property`,
+									message: `Invalid namespace '${ns}' (did you mean '${match}'?)`
+								});
+							} else {
+								component.error(attribute, {
+									code: `invalid-namespace-property`,
+									message: `Invalid namespace '${ns}'`
+								});
+							}
+						}
+
+						meta.namespace = ns;
 						break;
 
 					case 'immutable':
-						if (data && (data !== 'true' && data !== 'false')) {
-							component.error(attribute, {
-								code: `invalid-immutable-attribute`,
-								message: `<svelte:meta> immutable attribute must be true or false`
-							});
-						}
-
-						meta.immutable = data !== 'false';
+						meta.immutable = get_value(attribute, `immutable attribute must be true or false`) !== 'false';
+						break;
 
 					default:
 						component.error(attribute, {
@@ -668,8 +689,6 @@ function process_meta(component, nodes) {
 					message: `<svelte:meta> can only have static 'tag', 'namespace' and 'immutable' attributes, or a bind:props directive`
 				});
 			}
-
-
 		});
 	}
 

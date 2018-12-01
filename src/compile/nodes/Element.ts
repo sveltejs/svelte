@@ -9,7 +9,7 @@ import Animation from './Animation';
 import Action from './Action';
 import Class from './Class';
 import Text from './Text';
-import * as namespaces from '../../utils/namespaces';
+import { namespaces } from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
