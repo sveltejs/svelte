@@ -33,6 +33,7 @@ function registerExtension(extension) {
 		const options = Object.assign({}, compileOptions, {
 			filename,
 			name: capitalise(name),
+			generate: 'ssr',
 			format: 'cjs'
 		});
 

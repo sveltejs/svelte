@@ -12,13 +12,7 @@ export default function ssr(
 ) {
 	const renderer = new Renderer();
 
-	return deindent`
-		function $render($$props) {
-			throw new Error('TODO');
-		}
-	`;
-
-	const { computations, name, templateProperties } = component;
+	const { name } = component;
 
 	// create main render() function
 	renderer.render(trim(component.fragment.children), Object.assign({
@@ -29,49 +23,20 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	// generate initial state object
 	const expectedProperties = Array.from(component.expectedProperties);
-	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
-
-	const initialState = [];
-	if (globals.length > 0) {
-		initialState.push(`{ ${globals.map(prop => `${prop} : ${prop}`).join(', ')} }`);
-	}
-
-	if (storeProps.length > 0) {
-		const initialize = `_init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`
-		initialState.push(`options.store.${initialize}`);
-	}
-
-	if (templateProperties.data) {
-		initialState.push(`%data()`);
-	} else if (globals.length === 0 && storeProps.length === 0) {
-		initialState.push('{}');
-	}
-
-	initialState.push('ctx');
-
-	let js = null;
-	if (component.javascript) {
-		// TODO
-	}
-
 	const debugName = `<${component.customElement ? component.tag : name}>`;
 
 	// TODO concatenate CSS maps
 	return (deindent`
-		${js}
+		function #define($$props) {
+			${component.javascript}
+
+			return { ${component.declarations.join(', ')} };
+		}
 
 		var ${name} = {};
 
-		${options.filename && `${name}.filename = ${stringify(options.filename)}`};
-
-		${name}.data = function() {
-			return ${templateProperties.data ? `%data()` : `{}`};
-		};
-
-		${name}.render = function(state, options = {}) {
+		${name}.render = function(props = {}, options = {}) {
 			var components = new Set();
 
 			function addComponent(component) {
@@ -79,7 +44,7 @@ export default function ssr(
 			}
 
 			var result = { head: '', addComponent };
-			var html = ${name}._render(result, state, options);
+			var html = ${name}.$$render(result, props, options);
 
 			var cssCode = Array.from(components).map(c => c.css && c.css.code).filter(Boolean).join('\\n');
 
@@ -93,21 +58,10 @@ export default function ssr(
 			};
 		}
 
-		${name}._render = function(__result, ctx, options) {
-			${templateProperties.store && `options.store = %store();`}
-			__result.addComponent(${name});
+		${name}.$$render = function($$result, ${component.javascript ? 'props' : 'ctx'}, options) {
+			${component.javascript && `const ctx = #define(props);`}
 
-			${options.dev && storeProps.length > 0 && !templateProperties.store && deindent`
-				if (!options.store) {
-					throw new Error("${debugName} references store properties, but no store was provided");
-				}
-			`}
-
-			ctx = Object.assign(${initialState.join(', ')});
-
-			${computations.map(
-				({ key }) => `ctx.${key} = %computed-${key}(ctx);`
-			)}
+			$$result.addComponent(${name});
 
 			${renderer.bindings.length &&
 				deindent`
@@ -130,8 +84,6 @@ export default function ssr(
 		};
 
 		var warned = false;
-
-		${templateProperties.preload && `${name}.preload = %preload;`}
 	`).trim();
 }
 

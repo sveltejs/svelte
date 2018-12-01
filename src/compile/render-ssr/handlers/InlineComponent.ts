@@ -16,9 +16,9 @@ export default function(node, renderer, options) {
 	}
 
 	const bindingProps = node.bindings.map(binding => {
-		const { name } = getObject(binding.value.node);
-		const tail = binding.value.node.type === 'MemberExpression'
-			? get_tail_snippet(binding.value.node)
+		const { name } = getObject(binding.expression.node);
+		const tail = binding.expression.node.type === 'MemberExpression'
+			? get_tail_snippet(binding.expression.node)
 			: '';
 
 		return `${quoteNameIfNecessary(binding.name)}: ctx${quotePropIfNecessary(name)}${tail}`;
@@ -65,7 +65,7 @@ export default function(node, renderer, options) {
 			? node.component.name
 			: node.name === 'svelte:component'
 				? `((${node.expression.snippet}) || @missingComponent)`
-				: `%components-${node.name}`
+				: `ctx.${node.name}`
 	);
 
 	node.bindings.forEach(binding => {
@@ -84,7 +84,7 @@ export default function(node, renderer, options) {
 			`${expression}.data`
 		);
 
-		const { name } = getObject(binding.value.node);
+		const { name } = getObject(binding.expression.node);
 
 		renderer.bindings.push(deindent`
 			if (${conditions.reverse().join('&&')}) {
@@ -97,7 +97,7 @@ export default function(node, renderer, options) {
 		`);
 	});
 
-	let open = `\${@validateSsrComponent(${expression}, '${node.name}')._render(__result, ${props}`;
+	let open = `\${@validateSsrComponent(${expression}, '${node.name}').$$render($$result, ${props}`;
 
 	const component_options = [];
 
