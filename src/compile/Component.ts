@@ -481,10 +481,6 @@ export default class Component {
 					this.userVars.add(specifier.local.name);
 					this.declarations.push(specifier.local.name); // TODO we don't really want this, but it's convenient for now
 				});
-
-				if (this.options.sveltePath && node.source.value === 'svelte') {
-					code.overwrite(node.source.start, node.source.end, this.options.sveltePath);
-				}
 			}
 		});
 	}

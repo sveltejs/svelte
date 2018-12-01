@@ -1,5 +1,5 @@
 export default function(node, renderer, options) {
-	const { snippet } = node.expression;
+	const snippet = node.expression.render();
 
 	const props = node.contexts.map(prop => `${prop.key.name}: item${prop.tail}`);
 

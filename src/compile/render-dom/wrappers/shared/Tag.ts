@@ -1,7 +1,6 @@
 import Wrapper from './Wrapper';
 import Renderer from '../../Renderer';
 import Block from '../../Block';
-import Node from '../../../nodes/shared/Node';
 import MustacheTag from '../../../nodes/MustacheTag';
 import RawMustacheTag from '../../../nodes/RawMustacheTag';
 
@@ -19,7 +18,8 @@ export default class Tag extends Wrapper {
 		block: Block,
 		update: ((value: string) => string)
 	) {
-		const { snippet, dependencies } = this.node.expression;
+		const { dependencies } = this.node.expression;
+		const snippet = this.node.expression.render();
 
 		const value = this.node.shouldCache && block.getUniqueName(`${this.var}_value`);
 		const content = this.node.shouldCache ? value : snippet;

@@ -32,7 +32,8 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { dependencies, snippet } = chunk;
+								const { dependencies } = chunk;
+								const snippet = chunk.render();
 
 								dependencies.forEach(d => {
 									propDependencies.add(d);

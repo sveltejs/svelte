@@ -20,7 +20,7 @@ export default class InlineComponent extends Node {
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		if (info.name !== 'svelte:component') {
+		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			component.warn_if_undefined(info, scope);
 			component.expectedProperties.add(info.name);
 		}

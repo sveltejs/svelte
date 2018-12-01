@@ -146,7 +146,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 
 					if (attr.isSpread) {
-						const value = attr.expression.snippet;
+						const value = attr.expression.render();
 						initialProps.push(value);
 
 						changes.push(condition ? `${condition} && ${value}` : value);
@@ -199,15 +199,17 @@ export default class InlineComponentWrapper extends Wrapper {
 			const updating = block.getUniqueName(`updating_${binding.name}`);
 			block.addVariable(updating);
 
+			const snippet = binding.expression.render();
+
 			statements.push(deindent`
-				if (${binding.expression.snippet} !== void 0) {
-					${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
+				if (${snippet} !== void 0) {
+					${name_initial_data}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}`
 			);
 
 			updates.push(deindent`
 				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-					${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.expression.snippet};
+					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}
 			`);
 
@@ -267,14 +269,14 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 			}
 
-			return `${name}.$on("${handler.name}", ${handler.snippet});`;
+			return `${name}.$on("${handler.name}", ${handler.render()});`;
 		});
 
 		if (this.node.name === 'svelte:component') {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
-			const { snippet } = this.node.expression;
+			const snippet = this.node.expression.render();
 
 			block.builders.init.addBlock(deindent`
 				var ${switch_value} = ${snippet};

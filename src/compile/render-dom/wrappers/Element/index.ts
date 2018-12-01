@@ -283,10 +283,6 @@ export default class ElementWrapper extends Wrapper {
 			});
 		}
 
-		let hasHoistedEventHandlerOrBinding = (
-			//(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
-			this.node.handlers.some(handler => handler.shouldHoist)
-		);
 		const eventHandlerOrBindingUsesComponent = (
 			this.bindings.length > 0 ||
 			this.node.handlers.some(handler => handler.usesComponent)
@@ -298,30 +294,8 @@ export default class ElementWrapper extends Wrapper {
 			this.node.actions.some(action => action.usesContext)
 		);
 
-		if (hasHoistedEventHandlerOrBinding) {
-			const initialProps: string[] = [];
-			const updates: string[] = [];
-
-			if (eventHandlerOrBindingUsesComponent) {
-				const component = block.alias('component');
-				initialProps.push(component === 'component' ? 'component' : `component: ${component}`);
-			}
-
-			if (eventHandlerOrBindingUsesContext) {
-				initialProps.push(`ctx`);
-				block.builders.update.addLine(`${node}._svelte.ctx = ctx;`);
-				block.maintainContext = true;
-			}
-
-			if (initialProps.length) {
-				block.builders.hydrate.addBlock(deindent`
-					${node}._svelte = { ${initialProps.join(', ')} };
-				`);
-			}
-		} else {
-			if (eventHandlerOrBindingUsesContext) {
-				block.maintainContext = true;
-			}
+		if (eventHandlerOrBindingUsesContext) {
+			block.maintainContext = true;
 		}
 
 		this.addBindings(block);
@@ -595,7 +569,8 @@ export default class ElementWrapper extends Wrapper {
 					: null;
 
 				if (attr.isSpread) {
-					const { snippet, dependencies } = attr.expression;
+					const { dependencies } = attr.expression;
+					const snippet = attr.expression.render();
 
 					initialProps.push(snippet);
 
@@ -659,7 +634,7 @@ export default class ElementWrapper extends Wrapper {
 		if (intro === outro) {
 			const name = block.getUniqueName(`${this.var}_transition`);
 			const snippet = intro.expression
-				? intro.expression.snippet
+				? intro.expression.render()
 				: '{}';
 
 			block.addVariable(name);
@@ -691,7 +666,7 @@ export default class ElementWrapper extends Wrapper {
 			if (intro) {
 				block.addVariable(introName);
 				const snippet = intro.expression
-					? intro.expression.snippet
+					? intro.expression.render()
 					: '{}';
 
 				const fn = `ctx.${intro.name}`; // TODO add built-in transitions?
@@ -714,7 +689,7 @@ export default class ElementWrapper extends Wrapper {
 			if (outro) {
 				block.addVariable(outroName);
 				const snippet = outro.expression
-					? outro.expression.snippet
+					? outro.expression.render()
 					: '{}';
 
 				const fn = `ctx.${outro.name}`;
@@ -753,7 +728,7 @@ export default class ElementWrapper extends Wrapper {
 			if (${animation}) ${animation}.stop();
 		`);
 
-		const params = this.node.animation.expression ? this.node.animation.expression.snippet : '{}';
+		const params = this.node.animation.expression ? this.node.animation.expression.render() : '{}';
 		block.builders.animate.addBlock(deindent`
 			if (${animation}) ${animation}.stop();
 			${animation} = @wrapAnimation(${this.var}, ${rect}, ctx.${this.node.animation.name}, ${params});
@@ -769,7 +744,7 @@ export default class ElementWrapper extends Wrapper {
 			const { expression, name } = classDir;
 			let snippet, dependencies;
 			if (expression) {
-				snippet = expression.snippet;
+				snippet = expression.render();
 				dependencies = expression.dependencies;
 			} else {
 				snippet = `${quotePropIfNecessary(name)}`;

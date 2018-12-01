@@ -191,7 +191,7 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 		);
 
 		console.log( // eslint-disable-line no-console
-			`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
+			`\n>> ${colors.cyan.bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan.bold(file)}`
 		);
 	});
 }

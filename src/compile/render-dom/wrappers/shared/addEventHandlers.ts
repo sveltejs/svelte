@@ -12,25 +12,28 @@ export default function addEventHandlers(
 		if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
 
 		const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
+
+		const snippet = handler.render();
+
 		if (opts.length) {
 			const optString = (opts.length === 1 && opts[0] === 'capture')
 				? 'true'
 				: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
 			block.builders.hydrate.addLine(
-				`@addListener(${target}, "${handler.name}", ${handler.snippet}, ${optString});`
+				`@addListener(${target}, "${handler.name}", ${snippet}, ${optString});`
 			);
 
 			block.builders.destroy.addLine(
-				`@removeListener(${target}, "${handler.name}", ${handler.snippet}, ${optString});`
+				`@removeListener(${target}, "${handler.name}", ${snippet}, ${optString});`
 			);
 		} else {
 			block.builders.hydrate.addLine(
-				`@addListener(${target}, "${handler.name}", ${handler.snippet});`
+				`@addListener(${target}, "${handler.name}", ${snippet});`
 			);
 
 			block.builders.destroy.addLine(
-				`@removeListener(${target}, "${handler.name}", ${handler.snippet});`
+				`@removeListener(${target}, "${handler.name}", ${snippet});`
 			);
 		}
 

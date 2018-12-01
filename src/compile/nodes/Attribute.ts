@@ -75,7 +75,7 @@ export default class Attribute extends Node {
 		if (this.chunks.length === 1) {
 			return this.chunks[0].type === 'Text'
 				? stringify(this.chunks[0].data)
-				: this.chunks[0].snippet;
+				: this.chunks[0].render();
 		}
 
 		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +
@@ -84,7 +84,7 @@ export default class Attribute extends Node {
 					if (chunk.type === 'Text') {
 						return stringify(chunk.data);
 					} else {
-						return chunk.getPrecedence() <= 13 ? `(${chunk.snippet})` : chunk.snippet;
+						return chunk.getPrecedence() <= 13 ? `(${chunk.render()})` : chunk.render();
 					}
 				})
 				.join(' + ');

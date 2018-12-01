@@ -7,7 +7,7 @@ export default class EventHandler extends Node {
 	name: string;
 	modifiers: Set<string>;
 	expression: Expression;
-	callee: any; // TODO
+	handler_name: string;
 
 	usesComponent: boolean;
 	usesContext: boolean;
@@ -25,9 +25,7 @@ export default class EventHandler extends Node {
 		this.modifiers = new Set(info.modifiers);
 
 		if (info.expression) {
-			this.expression = new Expression(component, this, template_scope, info.expression, true);
-			this.snippet = this.expression.snippet;
-
+			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.usesContext = this.expression.usesContext;
 		} else {
 			component.init_uses_self = true;
@@ -41,10 +39,19 @@ export default class EventHandler extends Node {
 				}
 			`);
 
-			this.snippet = `ctx.${name}`;
-		}
+			this.handler_name = name;
 
-		// TODO figure out what to do about custom events
-		// this.isCustomEvent = component.events.has(this.name);
+			Object.defineProperty(this, 'snippet', {
+				get: () => {
+					throw new Error('here');
+				}
+			});
+		}
+	}
+
+	render() {
+		return this.expression
+			? this.expression.render()
+			: `ctx.${this.handler_name}`;
 	}
 }

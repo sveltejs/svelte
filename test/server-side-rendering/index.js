@@ -118,7 +118,7 @@ describe.only("ssr", () => {
 
 			try {
 				const Component = require(`../runtime/samples/${dir}/main.html`).default;
-				const { html } = Component.render(config.data, {
+				const { html } = Component.render(config.props, {
 					store: (config.store !== true) && config.store
 				});
 

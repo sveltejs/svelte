@@ -25,14 +25,17 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-describe("runtime", () => {
+const sveltePath = process.cwd();
+const internal = path.join(sveltePath, 'internal.js');
+
+describe.only("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename), format: 'cjs' },
+				{ filename, name: getName(filename), format: 'cjs', sveltePath },
 				compileOptions
 			);
 
@@ -48,7 +51,7 @@ describe("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, internal, hydrate) {
+	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
 		const { flush } = require(internal);
@@ -73,7 +76,7 @@ describe("runtime", () => {
 			global.document.title = '';
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = internal;
+			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
 			compileOptions.immutable = config.immutable;
 
@@ -211,10 +214,9 @@ describe("runtime", () => {
 		});
 	}
 
-	const internal = path.resolve("internal.js");
 	fs.readdirSync("test/runtime/samples").forEach(dir => {
-		runTest(dir, internal, false);
-		runTest(dir, internal, true);
+		runTest(dir, false);
+		runTest(dir, true);
 	});
 
 	async function create_component(src = '<div></div>') {

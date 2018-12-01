@@ -11,7 +11,7 @@ export default function addActions(
 		const { expression } = action;
 		let snippet, dependencies;
 		if (expression) {
-			snippet = expression.snippet;
+			snippet = expression.render();
 			dependencies = expression.dependencies;
 
 			expression.declarations.forEach(declaration => {

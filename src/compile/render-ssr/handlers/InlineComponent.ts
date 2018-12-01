@@ -12,7 +12,7 @@ export default function(node, renderer, options) {
 			return escapeTemplate(escape(chunk.data));
 		}
 
-		return '${@escape( ' + chunk.snippet + ')}';
+		return '${@escape( ' + chunk.render() + ')}';
 	}
 
 	const bindingProps = node.bindings.map(binding => {
@@ -34,7 +34,7 @@ export default function(node, renderer, options) {
 				return stringify(chunk.data);
 			}
 
-			return chunk.snippet;
+			return chunk.render();
 		}
 
 		return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
@@ -47,7 +47,7 @@ export default function(node, renderer, options) {
 			node.attributes
 				.map(attribute => {
 					if (attribute.isSpread) {
-						return attribute.expression.snippet;
+						return attribute.expression.render();
 					} else {
 						return `{ ${quoteNameIfNecessary(attribute.name)}: ${getAttributeValue(attribute)} }`;
 					}
@@ -64,7 +64,7 @@ export default function(node, renderer, options) {
 		node.name === 'svelte:self'
 			? node.component.name
 			: node.name === 'svelte:component'
-				? `((${node.expression.snippet}) || @missingComponent)`
+				? `((${node.expression.render()}) || @missingComponent)`
 				: `ctx.${node.name}`
 	);
 
@@ -75,7 +75,7 @@ export default function(node, renderer, options) {
 		while (parent = parent.parent) {
 			if (parent.type === 'IfBlock') {
 				// TODO handle contextual bindings...
-				conditions.push(`(${parent.expression.snippet})`);
+				conditions.push(`(${parent.expression.render()})`);
 			}
 		}
 

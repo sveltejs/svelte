@@ -8,12 +8,14 @@ export default class DocumentWrapper extends Wrapper {
 
 	render(block: Block, parentNode: string, parentNodes: string) {
 		this.node.handlers.forEach(handler => {
+			const snippet = handler.render();
+
 			block.builders.init.addBlock(deindent`
-				document.addEventListener("${handler.name}", ${handler.snippet});
+				document.addEventListener("${handler.name}", ${snippet});
 			`);
 
 			block.builders.destroy.addBlock(deindent`
-				document.removeEventListener("${handler.name}", ${handler.snippet});
+				document.removeEventListener("${handler.name}", ${snippet});
 			`);
 		});
 	}

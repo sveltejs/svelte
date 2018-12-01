@@ -177,7 +177,7 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.hasBinding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
 		if (this.hasBinding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
 
-		const { snippet } = this.node.expression;
+		const snippet = this.node.expression.render();
 
 		block.builders.init.addLine(`var ${this.vars.each_block_value} = ${snippet};`);
 
@@ -299,7 +299,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.builders.init.addBlock(deindent`
-			const ${get_key} = ctx => ${this.node.key.snippet};
+			const ${get_key} = ctx => ${this.node.key.render()};
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);

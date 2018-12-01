@@ -2,13 +2,14 @@ import Component from '../../Component';
 import { walk } from 'estree-walker';
 import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
-import { createScopes } from '../../../utils/annotateWithScopes';
+import { createScopes, Scope } from '../../../utils/annotateWithScopes';
 import { Node } from '../../../interfaces';
 import addToSet from '../../../utils/addToSet';
 import globalWhitelist from '../../../utils/globalWhitelist';
 import deindent from '../../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
 import sanitize from '../../../utils/sanitize';
+import TemplateScope from './TemplateScope';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -60,27 +61,43 @@ const precedence: Record<string, (node?: Node) => number> = {
 
 export default class Expression {
 	component: Component;
+	owner: Wrapper;
 	node: any;
 	snippet: string;
 	references: Set<string>;
 	dependencies: Set<string>;
 	contextual_dependencies: Set<string>;
 
+	template_scope: TemplateScope;
+	scope: Scope;
+	scope_map: WeakMap<Node, Scope>;
+
+	is_synthetic: boolean;
 	declarations: string[] = [];
 	usesContext = false;
 	usesEvent = false;
 
-	constructor(component: Component, owner: Wrapper, scope, info, isEventHandler?: boolean) {
+	rendered: string;
+
+	constructor(component: Component, owner: Wrapper, template_scope: TemplateScope, info) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
 				value: component
+			},
+
+			// TODO remove this, is just for debugging
+			snippet: {
+				get: () => {
+					throw new Error(`cannot access expression.snippet, use expression.render() instead`)
+				}
 			}
 		});
 
 		this.node = info;
-
-		this.snippet = `[✂${info.start}-${info.end}✂]`;
+		this.template_scope = template_scope;
+		this.owner = owner;
+		this.is_synthetic = owner.isSynthetic;
 
 		const expression_dependencies = new Set();
 		const expression_contextual_dependencies = new Set();
@@ -88,18 +105,94 @@ export default class Expression {
 		let dependencies = expression_dependencies;
 		let contextual_dependencies = expression_contextual_dependencies;
 
-		const { declarations } = this;
-		const { code } = component;
-
-		let { map, scope: currentScope } = createScopes(info);
+		let { map, scope } = createScopes(info);
+		this.scope = scope;
+		this.scope_map = map;
 
 		const expression = this;
-		const isSynthetic = owner.isSynthetic;
+
+		// discover dependencies, but don't change the code yet
+		walk(info, {
+			enter(node: any, parent: any, key: string) {
+				// don't manipulate shorthand props twice
+				if (key === 'value' && parent.shorthand) return;
+
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (isReference(node, parent)) {
+					const { name } = flattenReference(node);
+
+					if (scope.has(name)) return;
+					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
+
+					if (template_scope.names.has(name)) {
+						expression.usesContext = true;
+
+						contextual_dependencies.add(name);
+
+						template_scope.dependenciesForName.get(name).forEach(dependency => {
+							dependencies.add(dependency);
+						});
+					} else {
+						dependencies.add(name);
+						component.expectedProperties.add(name);
+					}
+
+					this.skip();
+				}
+
+				if (node.type === 'CallExpression') {
+					// TODO remove this? rely on reactive declarations?
+					if (node.callee.type === 'Identifier') {
+						const dependencies_for_invocation = component.findDependenciesForFunctionCall(node.callee.name);
+						if (dependencies_for_invocation) {
+							addToSet(dependencies, dependencies_for_invocation);
+						} else {
+							dependencies.add('$$BAIL$$');
+						}
+					} else {
+						dependencies.add('$$BAIL$$');
+					}
+				}
+			}
+		});
+
+		this.dependencies = dependencies;
+		this.contextual_dependencies = contextual_dependencies;
+	}
+
+	getPrecedence() {
+		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
+	}
+
+	render() {
+		if (this.rendered) return this.rendered;
+
+		// <option> value attribute could be synthetic — avoid double editing
+		// TODO move this logic into Element?
+		if (this.is_synthetic) return;
+
+		const {
+			component,
+			declarations,
+			scope_map: map,
+			template_scope,
+			owner
+		} = this;
+		let scope = this.scope;
+
+		const { code } = component;
 
 		let function_expression;
 		let pending_assignments = new Set();
 
-		walk(info, {
+		let dependencies: Set<string>;
+		let contextual_dependencies: Set<string>;
+
+		// rewrite code as appropriate
+		walk(this.node, {
 			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
 				if (key === 'value' && parent.shorthand) return;
@@ -108,33 +201,30 @@ export default class Expression {
 				code.addSourcemapLocation(node.end);
 
 				if (map.has(node)) {
-					currentScope = map.get(node);
+					scope = map.get(node);
 				}
 
 				if (isReference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
-					if (currentScope.has(name)) return;
+					if (scope.has(name)) return;
 					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
 
-					if (!isSynthetic && !function_expression) {
-						// <option> value attribute could be synthetic — avoid double editing
+					if (function_expression) {
+						if (template_scope.names.has(name)) {
+							contextual_dependencies.add(name);
+
+							template_scope.dependenciesForName.get(name).forEach(dependency => {
+								dependencies.add(dependency);
+							});
+						} else {
+							dependencies.add(name);
+							component.expectedProperties.add(name);
+						}
+					} else {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
-					}
-
-					if (scope.names.has(name)) {
-						expression.usesContext = true;
-
-						contextual_dependencies.add(name);
-
-						scope.dependenciesForName.get(name).forEach(dependency => {
-							dependencies.add(dependency);
-						});
-					} else {
-						dependencies.add(name);
-						component.expectedProperties.add(name);
 					}
 
 					if (node.type === 'MemberExpression') {
@@ -165,24 +255,11 @@ export default class Expression {
 						dependencies = new Set();
 						contextual_dependencies = new Set();
 					}
-
-					if (node.type === 'CallExpression') {
-						if (node.callee.type === 'Identifier') {
-							const dependencies_for_invocation = component.findDependenciesForFunctionCall(node.callee.name);
-							if (dependencies_for_invocation) {
-								addToSet(dependencies, dependencies_for_invocation);
-							} else {
-								dependencies.add('$$BAIL$$');
-							}
-						} else {
-							dependencies.add('$$BAIL$$');
-						}
-					}
 				}
 			},
 
 			leave(node: Node) {
-				if (map.has(node)) currentScope = currentScope.parent;
+				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
 					if (pending_assignments.size > 0) {
@@ -259,8 +336,8 @@ export default class Expression {
 					}
 
 					function_expression = null;
-					dependencies = expression_dependencies;
-					contextual_dependencies = expression_contextual_dependencies;
+					dependencies = null;
+					contextual_dependencies = null;
 				}
 
 				if (/Statement/.test(node.type)) {
@@ -284,12 +361,7 @@ export default class Expression {
 			}
 		});
 
-		this.dependencies = dependencies;
-		this.contextual_dependencies = contextual_dependencies;
-	}
-
-	getPrecedence() {
-		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
+		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
 	}
 }
 

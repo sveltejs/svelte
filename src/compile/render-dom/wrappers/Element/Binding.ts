@@ -75,7 +75,7 @@ export default class BindingWrapper {
 
 		const { name } = getObject(this.node.expression.node);
 
-		const { snippet } = this.node.expression;
+		const snippet = this.node.expression.render();
 
 		// TODO unfortunate code is necessary because we need to use `ctx`
 		// inside the fragment, but not inside the <script>
