@@ -133,6 +133,10 @@ export default class Component {
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
 
+		if (this.meta.props) {
+			this.has_reactive_assignments = true;
+		}
+
 		if (options.customElement === true && !this.meta.tag) {
 			throw new Error(`No tag name specified`); // TODO better error
 		}

@@ -60,6 +60,10 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
+function empty() {
+	return {};
+}
+
 export function init(component, options, define, create_fragment, not_equal) {
 	const previous_component = current_component;
 	set_current_component(component);
@@ -68,7 +72,7 @@ export function init(component, options, define, create_fragment, not_equal) {
 		fragment: null,
 
 		// state
-		get: null,
+		get: empty,
 		set: noop,
 		inject_refs: noop,
 		not_equal,
@@ -88,14 +92,10 @@ export function init(component, options, define, create_fragment, not_equal) {
 		binding_groups: []
 	};
 
-	define(component, key => {
+	define(component, options.props || {}, key => {
 		make_dirty(component, key);
 		if (component.$$.bound[key]) component.$$.bound[key](component.$$.get()[key]);
 	});
-
-	if (options.props) {
-		component.$$.set(options.props);
-	}
 
 	run_all(component.$$.before_render);
 	component.$$.fragment = create_fragment(component, component.$$.get());
