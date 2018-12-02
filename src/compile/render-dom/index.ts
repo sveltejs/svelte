@@ -168,6 +168,10 @@ export default function dom(
 		});
 	}
 
+	const args = ['$$self'];
+	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props');
+	if (component.has_reactive_assignments) args.push('$$make_dirty');
+
 	builder.addBlock(deindent`
 		function create_fragment(${component.alias('component')}, ctx) {
 			${block.getContents()}
@@ -176,22 +180,37 @@ export default function dom(
 		${component.module_javascript}
 
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
-
-		function ${component.alias('define')}($$self, $$props, $$make_dirty) {
-			${component.javascript || (
-				component.props.length > 0 &&
-				`let { ${component.props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
-			)}
-
-			${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
-
-			$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
-
-			${set && `$$self.$$.set = ${set};`}
-
-			${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
-		}
 	`);
+
+	let has_definition = (
+		component.javascript ||
+		component.props.length > 0 ||
+		component.partly_hoisted.length > 0 ||
+		component.declarations.length > 0
+	);
+
+	const definition = has_definition
+		? component.alias('define')
+		: '@noop';
+
+	if (has_definition) {
+		builder.addBlock(deindent`
+			function ${definition}(${args.join(', ')}) {
+				${component.javascript || (
+					component.props.length > 0 &&
+					`let { ${component.props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
+				)}
+
+				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
+
+				$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
+
+				${set && `$$self.$$.set = ${set};`}
+
+				${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
+			}
+		`);
+	}
 
 	if (options.customElement) {
 		builder.addBlock(deindent`
@@ -201,7 +220,7 @@ export default function dom(
 
 					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, ${component.alias('define')}, create_fragment, ${not_equal});
+					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal});
 
 					${dev_props_check}
 
@@ -221,7 +240,7 @@ export default function dom(
 					return ${JSON.stringify(component.props.map(x => x.as))};
 				}
 
-				${body.join('\n\n')}
+				${body.length > 0 && body.join('\n\n')}
 			}
 
 			customElements.define("${component.tag}", ${name});
@@ -232,12 +251,12 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
-					@init(this, options, define, create_fragment, ${not_equal});
+					@init(this, options, ${definition}, create_fragment, ${not_equal});
 
 					${dev_props_check}
 				}
 
-				${body.join('\n\n')}
+				${body.length > 0 && body.join('\n\n')}
 			}
 		`);
 	}

@@ -193,6 +193,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
+			component.has_reactive_assignments = true;
+
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
 			component.declarations.push(name);
 

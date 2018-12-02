@@ -125,6 +125,8 @@ export default class WindowWrapper extends Wrapper {
 			block.builders.destroy.addBlock(deindent`
 				window.removeEventListener("${event}", ctx.${handler_name});
 			`);
+
+			component.has_reactive_assignments = true;
 		});
 
 		// special case... might need to abstract this out if we add more special cases

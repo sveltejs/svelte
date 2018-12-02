@@ -51,6 +51,7 @@ export default class Component {
 
 	ast: Ast;
 	source: string;
+	code: MagicString;
 	name: string;
 	options: CompileOptions;
 	fragment: Fragment;
@@ -77,8 +78,7 @@ export default class Component {
 	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
-
-	code: MagicString;
+	has_reactive_assignments = false;
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
 	template_references: Set<string> = new Set();
@@ -663,6 +663,8 @@ export default class Component {
 		else {
 			this.code.appendLeft(node.end, `; $$make_dirty('${name}')`);
 		}
+
+		this.has_reactive_assignments = true;
 	}
 }
 

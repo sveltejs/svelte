@@ -239,8 +239,6 @@ export default class Expression {
 						// TODO handle destructuring assignments
 						const { name } = flattenReference(node.left);
 						pending_assignments.add(name);
-
-						// code.appendLeft(node.end, `; $$make_dirty('${name}')`);
 					}
 				} else {
 					if (node.type === 'AssignmentExpression') {
@@ -289,6 +287,8 @@ export default class Expression {
 						if (pending_assignments.size > 0) {
 							const insert = [...pending_assignments].map(name => `$$make_dirty('${name}');`);
 							pending_assignments = new Set();
+
+							component.has_reactive_assignments = true;
 
 							body = deindent`
 								{

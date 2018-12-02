@@ -389,9 +389,7 @@ export default class ElementWrapper extends Wrapper {
 
 		if (this.bindings.length === 0) return;
 
-		if (this.node.name === 'select' || this.isMediaNode()) {
-			this.renderer.hasComplexBindings = true;
-		}
+		renderer.component.has_reactive_assignments = true;
 
 		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
@@ -415,7 +413,7 @@ export default class ElementWrapper extends Wrapper {
 
 		groups.forEach(group => {
 			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
-			this.renderer.component.declarations.push(handler);
+			renderer.component.declarations.push(handler);
 
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
@@ -521,16 +519,12 @@ export default class ElementWrapper extends Wrapper {
 				.join(' || ');
 
 			if (this.node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				renderer.hasComplexBindings = true;
-
 				block.builders.hydrate.addLine(
 					`if (${someInitialStateIsUndefined}) @add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 
 			if (group.events[0] === 'resize') {
-				renderer.hasComplexBindings = true;
-
 				block.builders.hydrate.addLine(
 					`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);

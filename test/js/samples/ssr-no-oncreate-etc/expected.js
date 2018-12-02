@@ -64,3 +64,4 @@ SvelteComponent.css = {
 
 var warned = false;
 export default SvelteComponent;
+export { preload };
