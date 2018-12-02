@@ -17,7 +17,6 @@ export default class Renderer {
 	block: Block;
 	fragment: FragmentWrapper;
 
-	usedNames: Set<string>;
 	fileVar: string;
 
 	hasIntroTransitions: boolean;
@@ -31,7 +30,6 @@ export default class Renderer {
 		this.readonly = new Set();
 		this.slots = new Set();
 
-		this.usedNames = new Set();
 		this.fileVar = options.dev && this.component.getUniqueName('file');
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag

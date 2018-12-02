@@ -38,12 +38,6 @@ export default class EventHandler extends Node {
 			`);
 
 			this.handler_name = name;
-
-			Object.defineProperty(this, 'snippet', {
-				get: () => {
-					throw new Error('here');
-				}
-			});
 		}
 	}
 

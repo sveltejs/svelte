@@ -69,7 +69,7 @@ export default function dom(
 		options.css !== false
 	);
 
-	const props = component.exports.filter(x => component.writable_declarations.has(x.name));
+	const props = component.props.filter(x => component.writable_declarations.has(x.name));
 
 	const set = component.meta.props || props.length > 0
 		? deindent`
@@ -98,7 +98,7 @@ export default function dom(
 	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
-	component.exports.forEach(x => {
+	component.props.forEach(x => {
 		body.push(deindent`
 			get ${x.as}() {
 				return this.$$.get().${x.name};
@@ -124,7 +124,7 @@ export default function dom(
 	if (component.options.dev) {
 		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
-		const expected = component.exports
+		const expected = component.props
 			.map(x => x.name)
 			.filter(name => !component.initialised_declarations.has(name));
 
@@ -181,7 +181,7 @@ export default function dom(
 			${should_add_css &&
 			`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
 
-			${component.javascript || component.exports.map(x => `let ${x.name};`)}
+			${component.javascript || component.props.map(x => `let ${x.name};`)}
 
 			${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
@@ -219,7 +219,7 @@ export default function dom(
 				}
 
 				static get observedAttributes() {
-					return ${JSON.stringify(component.exports.map(x => x.as))};
+					return ${JSON.stringify(component.props.map(x => x.as))};
 				}
 
 				${body.join('\n\n')}

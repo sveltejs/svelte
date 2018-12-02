@@ -96,7 +96,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const updates: string[] = [];
 		const postupdates: string[] = [];
 
-		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
+		const props = block.getUniqueName(`${name}_props`);
 		const name_changes = block.getUniqueName(`${name}_changes`);
 
 		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
@@ -108,7 +108,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length) {
-			componentInitProperties.push(`props: ${name_initial_data}`);
+			componentInitProperties.push(`props: ${props}`);
 		}
 
 		if (component.options.dev) {
@@ -166,7 +166,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				statements.push(deindent`
 					for (var #i = 0; #i < ${levels}.length; #i += 1) {
-						${name_initial_data} = @assign(${name_initial_data}, ${levels}[#i]);
+						${props} = @assign(${props}, ${levels}[#i]);
 					}
 				`);
 
@@ -203,7 +203,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			statements.push(deindent`
 				if (${snippet} !== void 0) {
-					${name_initial_data}${quotePropIfNecessary(binding.name)} = ${snippet};
+					${props}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}`
 			);
 
@@ -286,7 +286,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				function ${switch_props}(ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
-					var ${name_initial_data} = ${attributeObject};`}
+					var ${props} = ${attributeObject};`}
 					${statements}
 					return {
 						${componentInitProperties.join(',\n')}
@@ -380,7 +380,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.init.addBlock(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
-				var ${name_initial_data} = ${attributeObject};`}
+				var ${props} = ${attributeObject};`}
 				${statements}
 				var ${name} = new ${expression}({
 					${componentInitProperties.join(',\n')}
