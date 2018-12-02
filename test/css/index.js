@@ -22,7 +22,21 @@ function normalizeWarning(warning) {
 	return warning;
 }
 
-describe('css', () => {
+function create(code) {
+	const fn = new Function('module', 'exports', 'require', code);
+
+	const module = { exports: {} };
+	fn(module, module.exports, id => {
+		if (id === 'svelte') return require('../../index.js');
+		if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../'));
+
+		return require(id);
+	});
+
+	return module.exports.default;
+}
+
+describe.only('css', () => {
 	fs.readdirSync('test/css/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
@@ -41,54 +55,62 @@ describe('css', () => {
 				.replace(/\s+$/, '');
 
 			const expectedWarnings = (config.warnings || []).map(normalizeWarning);
-			const warnings = [];
+			const domWarnings = [];
+			const ssrWarnings = [];
 
-			const { js, css } = svelte.compile(
+			const dom = svelte.compile(
 				input,
 				Object.assign(config, {
 					format: 'cjs',
 					name: 'SvelteComponent',
 					onwarn: warning => {
-						warnings.push(warning);
+						domWarnings.push(warning);
 					}
 				})
 			);
 
-			// we do this here, rather than in the expected.html !== null
-			// block, to verify that valid code was generated
-			const fn = new Function('module', 'exports', 'require', js.code);
+			const ssr = svelte.compile(
+				input,
+				Object.assign(config, {
+					format: 'cjs',
+					generate: 'ssr',
+					name: 'SvelteComponent',
+					onwarn: warning => {
+						ssrWarnings.push(warning);
+					}
+				})
+			);
 
-			console.log(warnings);
-			console.log(expectedWarnings);
-			assert.deepEqual(warnings.map(normalizeWarning), expectedWarnings);
+			assert.equal(dom.css.code, ssr.css.code);
 
-			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, css.code);
+			assert.deepEqual(
+				domWarnings.map(normalizeWarning),
+				ssrWarnings.map(normalizeWarning)
+			);
+			assert.deepEqual(domWarnings.map(normalizeWarning), expectedWarnings);
+
+			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css.code);
 			const expected = {
 				html: read(`test/css/samples/${dir}/expected.html`),
 				css: read(`test/css/samples/${dir}/expected.css`)
 			};
 
-			assert.equal(css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
+			assert.equal(dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
+
+			// we do this here, rather than in the expected.html !== null
+			// block, to verify that valid code was generated
+			const ClientComponent = create(dom.js.code);
+			const ServerComponent = create(ssr.js.code);
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
 				const window = env();
 
-				const module = { exports: {} };
-				fn(module, module.exports, id => {
-					if (id === 'svelte') return require('../../index.js');
-					if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../'));
-
-					return require(id);
-				});
-
-				const { default: Component, $render } = module.exports;
-
+				// dom
 				try {
-					// dom
 					const target = window.document.querySelector('main');
 
-					new Component({ target, props: config.props });
+					new ClientComponent({ target, data: config.data });
 					const html = target.innerHTML;
 
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
@@ -99,17 +121,22 @@ describe('css', () => {
 					);
 
 					window.document.head.innerHTML = ''; // remove added styles
+				} catch (err) {
+					console.log(dom.js.code);
+					throw err;
+				}
 
-					// ssr
+				// ssr
+				try {
 					assert.equal(
 						normalizeHtml(
 							window,
-							$render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
+							ServerComponent.render(config.data).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);
 				} catch (err) {
-					console.log(js.code);
+					console.log(ssr.js.code);
 					throw err;
 				}
 			}
