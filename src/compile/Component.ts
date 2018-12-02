@@ -68,7 +68,6 @@ export default class Component {
 	module_script: Node;
 
 	imports: Node[] = [];
-	hasComponents: boolean;
 	module_javascript: string;
 	javascript: string;
 
@@ -90,18 +89,18 @@ export default class Component {
 	file: string;
 	locate: (c: number) => { line: number, column: number };
 
+	// TODO this does the same as component.locate! remove one or the other
+	locator: (search: number, startIndex?: number) => {
+		line: number,
+		column: number
+	};
+
 	stylesheet: Stylesheet;
 
 	userVars: Set<string> = new Set();
 	templateVars: Map<string, string> = new Map();
 	aliases: Map<string, string> = new Map();
 	usedNames: Set<string> = new Set();
-	init_uses_self = false;
-
-	locator: (search: number, startIndex?: number) => {
-		line: number,
-		column: number
-	};
 
 	constructor(
 		ast: Ast,

@@ -25,8 +25,6 @@ export default class InlineComponent extends Node {
 			component.template_references.add(info.name);
 		}
 
-		component.hasComponents = true;
-
 		this.name = info.name;
 
 		this.expression = this.name === 'svelte:component'

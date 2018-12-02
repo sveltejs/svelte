@@ -272,7 +272,6 @@ function getValueFromDom(
 	if (name === 'group') {
 		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			renderer.component.init_uses_self = true;
 			return `@getBindingGroupValue($$self.$$.binding_groups[${bindingGroup}])`;
 		}
 

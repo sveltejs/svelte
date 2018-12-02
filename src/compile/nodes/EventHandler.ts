@@ -28,8 +28,6 @@ export default class EventHandler extends Node {
 			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.usesContext = this.expression.usesContext;
 		} else {
-			component.init_uses_self = true;
-
 			const name = component.getUniqueName(`${this.name}_handler`);
 			component.declarations.push(name);
 
