@@ -373,16 +373,18 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	uniqueNames.add(name);
 
+	let end = parser.index;
+
 	parser.allowWhitespace();
 
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== 1 && get_directive_type(name.slice(0, colon_index));
 
-	const value = parser.eat('=')
-		? readAttributeValue(parser)
-		: true;
-
-	const end = parser.index;
+	let value: any[] | true = true;
+	if (parser.eat('=')) {
+		value = readAttributeValue(parser);
+		end = parser.index;
+	}
 
 	if (type) {
 		const directive_name = name.slice(colon_index + 1);

@@ -204,7 +204,6 @@ export default class Component {
 		});
 
 		const importedHelpers = Array.from(helpers)
-			.concat(options.dev ? 'SvelteComponentDev' : 'SvelteComponent')
 			.sort()
 			.map(name => {
 				const alias = this.alias(name);

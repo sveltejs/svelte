@@ -29,8 +29,8 @@ function create_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			if (!audio_updating && !isNaN(ctx.currentTime ) && changed.currentTime) audio.currentTime = ctx.currentTime ;
-			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused ) && changed.paused) audio[audio_is_paused ? "pause" : "play"]();
+			if (!audio_updating && !isNaN(ctx.currentTime) && changed.currentTime) audio.currentTime = ctx.currentTime;
+			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused) && changed.paused) audio[audio_is_paused ? "pause" : "play"]();
 			if (!audio_updating && !isNaN(ctx.volume) && changed.volume) audio.volume = ctx.volume;
 		},
 
@@ -58,7 +58,7 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$make_dirty) {
+function define($$self, $$props, $$make_dirty) {
 	// TODO some of these are read-only...
 	let { buffered, seekable, played, currentTime, duration, paused, volume } = $$props;
 

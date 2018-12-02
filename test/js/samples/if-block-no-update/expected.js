@@ -97,7 +97,6 @@ function create_fragment(component, ctx) {
 function define($$self, $$props) {
 	let { foo } = $$props;
 
-	// TODO only what's needed by the template
 	$$self.$$.get = () => ({ foo });
 
 	$$self.$$.set = $$props => {

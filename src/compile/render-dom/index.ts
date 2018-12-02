@@ -53,8 +53,6 @@ export default function dom(
 
 	const refs = Array.from(component.refs);
 
-	const superclass = component.alias(options.dev ? 'SvelteComponentDev' : 'SvelteComponent');
-
 	if (options.dev && !options.hydratable) {
 		block.builders.claim.addLine(
 			'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
@@ -182,7 +180,7 @@ export default function dom(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 	`);
 
-	let has_definition = (
+	const has_definition = (
 		component.javascript ||
 		component.props.length > 0 ||
 		component.partly_hoisted.length > 0 ||
@@ -246,8 +244,10 @@ export default function dom(
 			customElements.define("${component.tag}", ${name});
 		`);
 	} else {
+		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
+
 		builder.addBlock(deindent`
-			class ${name} extends ${superclass} {
+			class ${name} extends @${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
 					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}

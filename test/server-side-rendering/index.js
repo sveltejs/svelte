@@ -21,7 +21,7 @@ function tryToReadFile(file) {
 
 const sveltePath = process.cwd();
 
-describe.only("ssr", () => {
+describe("ssr", () => {
 	before(() => {
 		require("../../register")({
 			extensions: ['.svelte', '.html'],

@@ -23,11 +23,12 @@ export default function ssr(
 
 	// TODO concatenate CSS maps
 	return (deindent`
+		${component.javascript && deindent`
 		function #define($$props) {
 			${component.javascript}
 
 			return { ${component.declarations.join(', ')} };
-		}
+		}`}
 
 		var ${name} = {};
 

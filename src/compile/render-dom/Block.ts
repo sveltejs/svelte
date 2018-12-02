@@ -246,7 +246,7 @@ export default class Block {
 		}
 
 		if (this.builders.create.isEmpty() && this.builders.hydrate.isEmpty()) {
-			properties.addBlock(`c: @noop,`);
+			properties.addLine(`c: @noop,`);
 		} else {
 			const hydrate = !this.builders.hydrate.isEmpty() && (
 				this.renderer.options.hydratable
@@ -264,7 +264,7 @@ export default class Block {
 
 		if (this.renderer.options.hydratable || !this.builders.claim.isEmpty()) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
-				properties.addBlock(`l: @noop,`);
+				properties.addLine(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'l: function claim' : 'l'}(nodes) {
@@ -284,7 +284,7 @@ export default class Block {
 		}
 
 		if (this.builders.mount.isEmpty()) {
-			properties.addBlock(`m: @noop,`);
+			properties.addLine(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				${dev ? 'm: function mount' : 'm'}(#target, anchor) {
@@ -295,7 +295,7 @@ export default class Block {
 
 		if (this.hasUpdateMethod || this.maintainContext) {
 			if (this.builders.update.isEmpty() && !this.maintainContext) {
-				properties.addBlock(`p: @noop,`);
+				properties.addLine(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? 'new_ctx' : 'ctx'}) {
@@ -324,7 +324,7 @@ export default class Block {
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			if (this.builders.mount.isEmpty()) {
-				properties.addBlock(`i: @noop,`);
+				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
@@ -336,7 +336,7 @@ export default class Block {
 			}
 
 			if (this.builders.outro.isEmpty()) {
-				properties.addBlock(`o: @run,`);
+				properties.addLine(`o: @run,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
@@ -351,7 +351,7 @@ export default class Block {
 		}
 
 		if (this.builders.destroy.isEmpty()) {
-			properties.addBlock(`d: @noop`);
+			properties.addLine(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
 				${dev ? 'd: function destroy' : 'd'}(detach) {

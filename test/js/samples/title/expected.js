@@ -8,7 +8,6 @@ function create_fragment(component, ctx) {
 
 	return {
 		c: noop,
-
 		m: noop,
 
 		p(changed, ctx) {
@@ -18,9 +17,7 @@ function create_fragment(component, ctx) {
 		},
 
 		i: noop,
-
 		o: run,
-
 		d: noop
 	};
 }

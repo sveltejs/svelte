@@ -116,9 +116,9 @@ class Declaration {
 		if (!this.node.property) return; // @apply, and possibly other weird cases?
 
 		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children  ?
-			this.node.value.children[0] :
-			this.node.value;
+		const first = this.node.value.children
+			? this.node.value.children[0]
+			: this.node.value;
 
 		let start = first.start;
 		while (/\s/.test(code.original[start])) start += 1;
