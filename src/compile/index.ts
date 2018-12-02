@@ -7,6 +7,7 @@ import renderSSR from './render-ssr/index';
 import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
 import deprecate from '../utils/deprecate';
+import { relative } from 'path';
 
 function normalize_options(options: CompileOptions): CompileOptions {
 	let normalized = assign({ generate: 'dom', dev: false }, options);
@@ -93,13 +94,24 @@ export default function compile(source: string, options: CompileOptions = {}) {
 		const result = renderDOM(component, options);
 
 		if (options.sourceMap) {
+			const cwd = process.cwd();
 			const inputConsumer = new SourceMapConsumer(options.sourceMap);
 
-			const jsSourceMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(result.js.map));
+			result.js.map.sources = result.js.map.sources.map(file =>
+				relative(cwd, file)
+			);
+			const jsSourceMap = SourceMapGenerator.fromSourceMap(
+				new SourceMapConsumer(result.js.map)
+			);
 			jsSourceMap.applySourceMap(inputConsumer);
 			result.js.map = jsSourceMap.toJSON();
 
-			const cssSourceMap = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(result.css.map));
+			result.css.map.sources = result.css.map.sources.map(file =>
+				relative(cwd, file)
+			);
+			const cssSourceMap = SourceMapGenerator.fromSourceMap(
+				new SourceMapConsumer(result.css.map)
+			);
 			cssSourceMap.applySourceMap(inputConsumer);
 			result.css.map = cssSourceMap.toJSON();
 		}

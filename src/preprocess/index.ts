@@ -1,6 +1,7 @@
 import { SourceMap } from 'magic-string';
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map';
 import getCodeFrame from '../utils/getCodeFrame.js';
+import { relative } from 'path';
 
 export interface PreprocessOptions {
 	markup?: (options: {
@@ -92,7 +93,9 @@ async function replaceTagContents(
 				if (processed.map) {
 					const consumer = new SourceMapConsumer(processed.map);
 
-					const generator = new SourceMapGenerator({ file: options.filename });
+					const generator = new SourceMapGenerator({
+						file: relative(process.cwd(), options.filename),
+					});
 					consumer.eachMapping(mapping => {
 						generator.addMapping({
 							source: mapping.source,
@@ -169,7 +172,9 @@ export default async function preprocess(
 		}
 	}
 
-	let allMaps = new SourceMapGenerator({ file: options.filename });
+	let allMaps = new SourceMapGenerator({
+		file: relative(process.cwd(), options.filename),
+	});
 
 	if (!!style) {
 		const { code, map } = await replaceTagContents(source, 'style', style, options);
