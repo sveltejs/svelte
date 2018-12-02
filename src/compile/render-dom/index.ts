@@ -1,21 +1,19 @@
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
-import globalWhitelist from '../../utils/globalWhitelist';
 import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
+import { walk } from 'estree-walker';
+import flattenReference from '../../utils/flattenReference';
 
 export default function dom(
 	component: Component,
 	options: CompileOptions
 ) {
-	const format = options.format || 'esm';
-
 	const { name } = component;
 
 	const renderer = new Renderer(component, options);
-
 	const { block } = renderer;
 
 	block.hasOutroMethod = true;
@@ -52,11 +50,6 @@ export default function dom(
 	blocks.forEach(block => {
 		builder.addBlock(block.toString());
 	});
-
-	const debugName = `<${component.customElement ? component.tag : name}>`;
-
-	const expectedProperties = Array.from(component.expectedProperties);
-	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
 
 	const refs = Array.from(component.refs);
 
@@ -146,6 +139,34 @@ export default function dom(
 				}`)}
 			`;
 		}
+	}
+
+	// instrument assignments
+	if (component.instance_script) {
+		let scope = component.instance_scope;
+		let map = component.instance_scope_map;
+
+		walk(component.instance_script.content, {
+			enter: (node, parent) => {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (node.type === 'AssignmentExpression') {
+					const { name } = flattenReference(node.left);
+
+					if (scope.findOwner(name) === component.instance_scope) {
+						component.instrument(node, parent, name, false);
+					}
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+			}
+		});
 	}
 
 	builder.addBlock(deindent`

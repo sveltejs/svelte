@@ -536,30 +536,6 @@ export default class Component {
 
 		this.extract_imports_and_exports(script.content, this.imports, this.exports);
 
-		const top_scope = scope;
-
-		walk(script.content, {
-			enter: (node, parent) => {
-				if (map.has(node)) {
-					scope = map.get(node);
-				}
-
-				if (node.type === 'AssignmentExpression') {
-					const { name } = flattenReference(node.left);
-
-					if (scope.findOwner(name) === top_scope) {
-						this.instrument(node, parent, name, false);
-					}
-				}
-			},
-
-			leave(node) {
-				if (map.has(node)) {
-					scope = scope.parent;
-				}
-			}
-		});
-
 		this.javascript = this.extract_javascript(script);
 	}
 
