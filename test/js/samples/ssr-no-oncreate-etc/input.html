@@ -1,4 +1,4 @@
-<script scope="shared">
+<script context="module">
 	export function preload(input) {
 		return output;
 	}
@@ -8,7 +8,7 @@
 	import { onDestroy, onMount } from 'svelte';
 
 	onMount(() => {
-		console.log('oncreate');
+		console.log('onMount');
 	});
 
 	onDestroy(() => {

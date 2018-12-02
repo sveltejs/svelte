@@ -2,7 +2,7 @@
 	export let bar;
 
 	function handleFoo(bar) {
-		console.log( bar );
+		console.log(bar);
 	}
 
 	function foo(node, callback) {
@@ -10,4 +10,4 @@
 	}
 </script>
 
-<button on:foo='{() => handleFoo( bar )}'>foo</button>
+<button use:foo='{() => handleFoo(bar)}'>foo</button>
