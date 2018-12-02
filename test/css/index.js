@@ -110,7 +110,7 @@ describe.only('css', () => {
 				try {
 					const target = window.document.querySelector('main');
 
-					new ClientComponent({ target, data: config.data });
+					new ClientComponent({ target, props: config.props });
 					const html = target.innerHTML;
 
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
@@ -131,7 +131,7 @@ describe.only('css', () => {
 					assert.equal(
 						normalizeHtml(
 							window,
-							ServerComponent.render(config.data).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
+							ServerComponent.render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);
