@@ -177,15 +177,14 @@ export default function dom(
 
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 
-		function define($$self, $$make_dirty) {
-			${should_add_css &&
-			`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
-
-			${component.javascript || component.props.map(x => `let ${x.name};`)}
+		function ${component.alias('define')}($$self, $$props, $$make_dirty) {
+			${component.javascript || (
+				component.props.length > 0 &&
+				`let { ${component.props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
+			)}
 
 			${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
-			// TODO only what's needed by the template
 			$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
 
 			${set && `$$self.$$.set = ${set};`}
@@ -202,7 +201,7 @@ export default function dom(
 
 					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
-					@init(this, { target: this.shadowRoot }, define, create_fragment, ${not_equal});
+					@init(this, { target: this.shadowRoot }, ${component.alias('define')}, create_fragment, ${not_equal});
 
 					${dev_props_check}
 
@@ -232,6 +231,7 @@ export default function dom(
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && `options`});
+					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
 					@init(this, options, define, create_fragment, ${not_equal});
 
 					${dev_props_check}

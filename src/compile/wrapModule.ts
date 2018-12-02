@@ -75,6 +75,7 @@ function esm(
 		${importBlock}
 
 		${code}
+
 		export default ${name};
 		${module_exports.length > 0 && `export { ${module_exports.map(e => e.name === e.as ? e.name : `${e.name} as ${e.as}`).join(', ')} };`}`;
 }

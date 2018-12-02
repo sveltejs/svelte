@@ -47,8 +47,6 @@ function create_fragment(component, ctx) {
 }
 
 function define($$self, $$props, $$make_dirty) {
-	if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
-
 	let { foo = 42 } = $$props;
 
 	$$self.$$.get = () => ({ foo });
@@ -61,6 +59,7 @@ function define($$self, $$props, $$make_dirty) {
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
+		if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
 		init(this, options, define, create_fragment, safe_not_equal);
 	}
 
@@ -73,4 +72,5 @@ class SvelteComponent extends SvelteComponent_1 {
 		flush();
 	}
 }
+
 export default SvelteComponent;

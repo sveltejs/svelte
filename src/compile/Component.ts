@@ -506,27 +506,132 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
-		let { scope, map, globals } = createScopes(script.content);
-		this.instance_scope = scope;
+		let { scope: instance_scope, map, globals } = createScopes(script.content);
+		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
 
-		scope.declarations.forEach((node, name) => {
+		instance_scope.declarations.forEach((node, name) => {
 			this.userVars.add(name);
 			this.declarations.push(name);
 
 			this.node_for_declaration.set(name, node);
 		});
 
-		this.writable_declarations = scope.writable_declarations;
-		this.initialised_declarations = scope.initialised_declarations;
+		this.writable_declarations = instance_scope.writable_declarations;
+		this.initialised_declarations = instance_scope.initialised_declarations;
 
 		globals.forEach(name => {
 			this.userVars.add(name);
 		});
 
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
-
+		this.rewrite_props();
 		this.javascript = this.extract_javascript(script);
+	}
+
+	rewrite_props() {
+		const { instance_scope, instance_scope_map: map } = this;
+		let scope = instance_scope;
+
+		// TODO we will probably end up wanting to use this elsewhere
+		const exported = new Set();
+		this.props.forEach(prop => {
+			exported.add(prop.name);
+		});
+
+		const coalesced_declarations = [];
+		let current_group;
+
+		walk(this.instance_script.content, {
+			enter(node) {
+				if (/Function/.test(node.type)) {
+					current_group = null;
+					return this.skip();
+				}
+
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (node.type === 'VariableDeclaration') {
+					if (node.kind === 'var' || scope === instance_scope) {
+						let has_exports = false;
+						let has_only_exports = true;
+
+						node.declarations.forEach(declarator => {
+							extractNames(declarator.id).forEach(name => {
+								if (exported.has(name)) {
+									has_exports = true;
+								} else {
+									has_only_exports = false;
+								}
+							});
+						});
+
+						if (has_only_exports) {
+							if (current_group && current_group[current_group.length - 1].kind !== node.kind) {
+								current_group = null;
+							}
+
+							// rewrite as a group, later
+							if (!current_group) {
+								current_group = [];
+								coalesced_declarations.push(current_group);
+							}
+
+							current_group.push(node);
+						} else {
+							if (has_exports) {
+								// rewrite in place
+								throw new Error('TODO rewrite prop declaration in place');
+							}
+
+							current_group = null;
+						}
+					}
+				} else {
+					current_group = null;
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+			}
+		});
+
+		coalesced_declarations.forEach(group => {
+			const kind = group[0].kind;
+			let replacement = '';
+
+			let combining = false;
+
+			group.forEach(node => {
+				node.declarations.forEach(({ id, init }) => {
+					if (id.type === 'Identifier') {
+						const value = init
+							? this.code.slice(id.start, init.end)
+							: this.code.slice(id.start, id.end);
+
+						if (combining) {
+							replacement += `, ${value}`;
+						} else {
+							replacement += `${kind} { ${value}`;
+							combining = true;
+						}
+					} else {
+						throw new Error('TODO destructured declarations');
+					}
+				});
+			});
+
+			if (combining) {
+				replacement += ' } = $$props;';
+			}
+
+			this.code.overwrite(group[0].start, group[group.length - 1].end, replacement);
+		});
 	}
 
 	warn_if_undefined(node, template_scope: TemplateScope) {

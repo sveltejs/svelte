@@ -54,7 +54,7 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$make_dirty) {
+function define($$self, $$props, $$make_dirty) {
 	let { y } = $$props;
 
 	function onwindowscroll() {
@@ -64,7 +64,6 @@ function define($$self, $$make_dirty) {
 		window_updating = false;
 	}
 
-	// TODO only what's needed by the template
 	$$self.$$.get = () => ({ y, onwindowscroll });
 
 	$$self.$$.set = $$props => {
