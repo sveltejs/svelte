@@ -1,9 +1,7 @@
 import deindent from '../../utils/deindent';
 import Component from '../Component';
-import globalWhitelist from '../../utils/globalWhitelist';
 import { CompileOptions } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
-import CodeBuilder from '../../utils/CodeBuilder';
 import Renderer from './Renderer';
 
 export default function ssr(
@@ -19,12 +17,9 @@ export default function ssr(
 		locate: component.locate
 	}, options));
 
-	const css = component.customElement ?
+	const css = options.customElement ?
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
-
-	const expectedProperties = Array.from(component.expectedProperties);
-	const debugName = `<${component.customElement ? component.tag : name}>`;
 
 	// TODO concatenate CSS maps
 	return (deindent`

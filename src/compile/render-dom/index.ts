@@ -27,12 +27,12 @@ export default function dom(
 		builder.addLine(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !component.customElement);
+	const css = component.stylesheet.render(options.filename, !options.customElement);
 	const styles = component.stylesheet.hasStyles && stringify(options.dev ?
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { onlyEscapeAtSymbol: true });
 
-	if (styles && component.options.css !== false && !component.customElement) {
+	if (styles && component.options.css !== false && !options.customElement) {
 		builder.addBlock(deindent`
 			function @add_css() {
 				var style = @createElement("style");
@@ -64,7 +64,7 @@ export default function dom(
 	// TODO injecting CSS this way is kinda dirty. Maybe it should be an
 	// explicit opt-in, or something?
 	const should_add_css = (
-		!component.options.customElement &&
+		!options.customElement &&
 		component.stylesheet.hasStyles &&
 		options.css !== false
 	);
@@ -95,7 +95,6 @@ export default function dom(
 
 	const body = [];
 
-	const debug_name = `<${component.customElement ? component.customElement.tag : name}>`;
 	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
@@ -116,7 +115,7 @@ export default function dom(
 		} else if (component.options.dev) {
 			body.push(deindent`
 				set ${x.as}(value) {
-					throw new Error("${debug_name}: Cannot set read-only property '${x.as}'");
+					throw new Error("<${component.tag}>: Cannot set read-only property '${x.as}'");
 				}
 			`);
 		}
@@ -134,8 +133,8 @@ export default function dom(
 				const state = this.$$.get();
 				${expected.map(name => deindent`
 
-				if (state.${name} === undefined${component.customElement && ` && !('${name}' in this.attributes)`}) {
-					console.warn("${debug_name} was created without expected data property '${name}'");
+				if (state.${name} === undefined${options.customElement && ` && !('${name}' in this.attributes)`}) {
+					console.warn("<${component.tag}> was created without expected data property '${name}'");
 				}`)}
 			`;
 		}
@@ -195,7 +194,7 @@ export default function dom(
 		}
 	`);
 
-	if (component.customElement) {
+	if (options.customElement) {
 		builder.addBlock(deindent`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
@@ -226,7 +225,7 @@ export default function dom(
 				${body.join('\n\n')}
 			}
 
-			customElements.define("${component.customElement.tag}", ${name});
+			customElements.define("${component.tag}", ${name});
 		`);
 	} else {
 		builder.addBlock(deindent`

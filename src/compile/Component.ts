@@ -59,8 +59,7 @@ export default class Component {
 	instance_scope_map: WeakMap<Node, Scope>;
 
 	meta: Meta;
-
-	customElement: CustomElementOptions;
+	namespace: string;
 	tag: string;
 
 	properties: Map<string, Node>;
@@ -69,7 +68,6 @@ export default class Component {
 	module_script: Node;
 
 	imports: Node[] = [];
-	namespace: string;
 	hasComponents: boolean;
 	module_javascript: string;
 	javascript: string;
@@ -86,7 +84,7 @@ export default class Component {
 	code: MagicString;
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
-	expectedProperties: Set<string> = new Set();
+	template_references: Set<string> = new Set();
 	refs: Set<string> = new Set();
 
 	file: string;
@@ -141,28 +139,25 @@ export default class Component {
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
 
-		if (options.customElement === true) {
-			this.customElement = {
-				tag: this.meta.tag,
-				props: [] // TODO!!!
-			};
-		} else {
-			this.customElement = options.customElement;
-		}
-
-		if (this.customElement && !this.customElement.tag) {
+		if (options.customElement === true && !this.meta.tag) {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
 
+		this.tag = options.customElement
+			? options.customElement === true
+				? this.meta.tag
+				: <string>options.customElement
+			: this.name;
+
 		this.fragment = new Fragment(this, ast.html);
-		if (!this.customElement) this.stylesheet.reify();
+		if (!options.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
 
 		if (!this.instance_script) {
-			const props = [...this.expectedProperties];
+			const props = [...this.template_references];
 			this.declarations.push(...props);
-			addToSet(this.writable_declarations, this.expectedProperties);
+			addToSet(this.writable_declarations, this.template_references);
 
 			this.exports = props.map(name => ({
 				name,
@@ -270,7 +265,7 @@ export default class Component {
 
 		addString(finalChunk);
 
-		const css = this.customElement ?
+		const css = options.customElement ?
 			{ code: null, map: null } :
 			this.stylesheet.render(options.cssOutputFilename, true);
 

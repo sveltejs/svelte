@@ -137,7 +137,7 @@ export default class Expression {
 						});
 					} else {
 						dependencies.add(name);
-						component.expectedProperties.add(name);
+						component.template_references.add(name);
 					}
 
 					this.skip();
@@ -216,7 +216,7 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.expectedProperties.add(name);
+							component.template_references.add(name);
 						}
 					} else if (!is_synthetic) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
