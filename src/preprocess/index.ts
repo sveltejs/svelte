@@ -92,10 +92,11 @@ async function replaceTagContents(
 				// Shift sourcemap to the appropriate line
 				if (processed.map) {
 					const consumer = new SourceMapConsumer(processed.map);
-
-					const generator = new SourceMapGenerator({
-						file: relative(process.cwd(), options.filename),
-					});
+					const generator = new SourceMapGenerator(
+						options.filename
+							? { file: relative(process.cwd(), options.filename) }
+							: {}
+					);
 					consumer.eachMapping(mapping => {
 						generator.addMapping({
 							source: mapping.source,
@@ -172,9 +173,9 @@ export default async function preprocess(
 		}
 	}
 
-	let allMaps = new SourceMapGenerator({
-		file: relative(process.cwd(), options.filename),
-	});
+	let allMaps = new SourceMapGenerator(
+		options.filename ? { file: relative(process.cwd(), options.filename) } : {}
+	);
 
 	if (!!style) {
 		const { code, map } = await replaceTagContents(source, 'style', style, options);
