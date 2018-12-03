@@ -17,13 +17,21 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
+const sveltePath = process.cwd();
+
 describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
 		require.extensions['.html'] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename), hydratable: true, format: 'cjs' },
+				{
+					filename,
+					name: getName(filename),
+					hydratable: true,
+					format: 'cjs',
+					sveltePath
+				},
 				compileOptions
 			);
 
