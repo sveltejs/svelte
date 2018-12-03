@@ -12,74 +12,68 @@ export default function ssr(
 
 	const { name } = component;
 
-	// create main render() function
+	// create $$render function
 	renderer.render(trim(component.fragment.children), Object.assign({
 		locate: component.locate
 	}, options));
 
+	// TODO concatenate CSS maps
 	const css = options.customElement ?
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	// TODO concatenate CSS maps
+	let setup;
+
+	if (component.javascript) {
+		setup = component.javascript;
+	} else if (component.props.length > 0) {
+		const props = component.props.map(prop => {
+			return prop.as === prop.name
+				? prop.as
+				: `${prop.as}: ${prop.name}`
+		});
+
+		setup = `let { ${props.join(', ')} } = $$props;`
+	}
+
+	// TODO only do this for props with a default value
+	const parent_bindings = component.javascript
+		? component.props.map(prop => {
+			return `if ($$props.${prop.as} === void 0 && $$bindings.${prop.as} && ${prop.name} !== void 0) $$bindings.${prop.as}(${prop.name});`;
+		})
+		: [];
+
+	const main = renderer.has_bindings
+		? deindent`
+			let $$settled;
+			let $$rendered;
+
+			do {
+				$$settled = true;
+
+				$$rendered = \`${renderer.code}\`;
+			} while (!$$settled);
+
+			return $$rendered;
+		`
+		: `return \`${renderer.code}\`;`;
+
 	return (deindent`
-		${component.javascript && deindent`
-		function #define($$props) {
-			${component.javascript}
-
-			return { ${component.declarations.join(', ')} };
-		}`}
-
-		var ${name} = {};
-
-		${name}.render = function(props = {}, options = {}) {
-			var components = new Set();
-
-			function addComponent(component) {
-				components.add(component);
-			}
-
-			var result = { head: '', addComponent };
-			var html = ${name}.$$render(result, props, options);
-
-			var cssCode = Array.from(components).map(c => c.css && c.css.code).filter(Boolean).join('\\n');
-
-			return {
-				html,
-				head: result.head,
-				css: { code: cssCode, map: null },
-				toString() {
-					return html;
-				}
-			};
-		}
-
-		${name}.$$render = function($$result, ${component.javascript ? 'props' : 'ctx'}, options) {
-			${component.javascript && `const ctx = #define(props);`}
-
-			$$result.addComponent(${name});
-
-			${renderer.bindings.length &&
-				deindent`
-				var settled = false;
-				var tmp;
-
-				while (!settled) {
-					settled = true;
-
-					${renderer.bindings.join('\n\n')}
-				}
-			`}
-
-			return \`${renderer.code}\`;
-		};
-
-		${name}.css = {
+		${css.code && deindent`
+		const #css = {
 			code: ${css.code ? stringify(css.code) : `''`},
 			map: ${css.map ? stringify(css.map.toString()) : 'null'}
-		};
+		};`}
 
-		var warned = false;
+		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+			${setup}
+
+			${parent_bindings}
+
+			${css.code && `$$result.css.add(#css);`}
+
+			${main}
+		});
 	`).trim();
 }
 

@@ -1,5 +1,6 @@
 import Renderer from '../Renderer';
 import { CompileOptions } from '../../../interfaces';
+import { snip } from '../utils';
 
 export default function(node, renderer: Renderer, options: CompileOptions) {
 	renderer.append('${(function(__value) { if(@isPromise(__value)) return `');
@@ -10,6 +11,6 @@ export default function(node, renderer: Renderer, options: CompileOptions) {
 
 	renderer.render(node.then.children, options);
 
-	const snippet = node.expression.render();
+	const snippet = snip(node.expression);
 	renderer.append(`\`;}(Object.assign({}, ctx, { ${node.value}: __value }));}(${snippet})) }`);
 }

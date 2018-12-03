@@ -1,6 +1,4 @@
 import Component from './../../Component';
-import Block from '../../render-dom/Block';
-import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {
 	readonly start: number;

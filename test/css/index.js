@@ -36,7 +36,7 @@ function create(code) {
 	return module.exports.default;
 }
 
-describe.only('css', () => {
+describe('css', () => {
 	fs.readdirSync('test/css/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 

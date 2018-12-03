@@ -39,15 +39,9 @@ const handlers: Record<string, Handler> = {
 type AppendTarget = any; // TODO
 
 export default class Renderer {
-	bindings: string[];
-	code: string;
-	targets: AppendTarget[];
-
-	constructor() {
-		this.bindings = [];
-		this.code = '';
-		this.targets = [];
-	}
+	has_bindings = false;
+	code = '';
+	targets: AppendTarget[] = [];
 
 	append(code: string) {
 		if (this.targets.length) {

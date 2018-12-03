@@ -11,6 +11,7 @@ export default class EachBlock extends Node {
 
 	block: Block;
 	expression: Expression;
+	context_node: Node;
 
 	iterations: string;
 	index: string;
@@ -28,6 +29,7 @@ export default class EachBlock extends Node {
 
 		this.expression = new Expression(component, this, scope, info.expression);
 		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
+		this.context_node = info.context;
 		this.index = info.index;
 
 		this.scope = scope.child();

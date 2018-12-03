@@ -1,8 +1,8 @@
 <script>
 	import Foo from './Foo.html';
 
-	export let y;
 	export let x;
+	export let y;
 </script>
 
-{y}<Foo bind:y={x}/>{y}
+{y}<Foo bind:x={y}/>{y}

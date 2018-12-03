@@ -167,6 +167,7 @@ export default class Expression {
 		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
 	}
 
+	// TODO move this into a render-dom wrapper?
 	render() {
 		if (this.rendered) return this.rendered;
 

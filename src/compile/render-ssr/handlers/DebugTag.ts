@@ -7,10 +7,9 @@ export default function(node, renderer, options) {
 	const { line, column } = options.locate(node.start + 1);
 
 	const obj = node.expressions.length === 0
-		? `ctx`
+		? `{}`
 		: `{ ${node.expressions
 			.map(e => e.node.name)
-			.map(name => `${name}: ctx.${name}`)
 			.join(', ')} }`;
 
 	const str = '${@debug(' + `${filename && stringify(filename)}, ${line}, ${column}, ${obj})}`;

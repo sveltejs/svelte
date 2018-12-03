@@ -11,7 +11,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import * as internal from '../internal/index';
-import { Node, Ast, CompileOptions, CustomElementOptions } from '../interfaces';
+import { Node, Ast, CompileOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
