@@ -96,7 +96,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		const updates: string[] = [];
 		const postupdates: string[] = [];
 
-		const props = block.getUniqueName(`${name}_props`);
+		let props;
 		const name_changes = block.getUniqueName(`${name}_changes`);
 
 		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
@@ -111,6 +111,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (!usesSpread && this.node.bindings.length === 0) {
 				componentInitProperties.push(`props: ${attributeObject}`);
 			} else {
+				props = block.getUniqueName(`${name}_props`);
 				componentInitProperties.push(`props: ${props}`);
 			}
 		}
@@ -292,7 +293,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				function ${switch_props}(ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
-					var ${props} = ${attributeObject};`}
+					${props && `const ${props} = ${attributeObject};`}`}
 					${statements}
 					return {
 						${componentInitProperties.join(',\n')}
@@ -386,7 +387,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.init.addBlock(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
-				var ${props} = ${attributeObject};`}
+				${props && `const ${props} = ${attributeObject};`}`}
 				${statements}
 				var ${name} = new ${expression}({
 					${componentInitProperties.join(',\n')}
