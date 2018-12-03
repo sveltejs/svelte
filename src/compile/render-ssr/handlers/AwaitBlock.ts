@@ -7,10 +7,10 @@ export default function(node, renderer: Renderer, options: CompileOptions) {
 
 	renderer.render(node.pending.children, options);
 
-	renderer.append('`; return function(ctx) { return `');
+	renderer.append('`; return function(' + (node.value || '') + ') { return `');
 
 	renderer.render(node.then.children, options);
 
 	const snippet = snip(node.expression);
-	renderer.append(`\`;}(Object.assign({}, ctx, { ${node.value}: __value }));}(${snippet})) }`);
+	renderer.append(`\`;}(__value);}(${snippet})) }`);
 }

@@ -5,10 +5,10 @@
 
 	onMount(() => {
 		events = ['mount'];
-	});
 
-	onDestroy(() => {
-		events.push('destroy');
+		return () => {
+			events.push('destroy');
+		};
 	});
 </script>
 

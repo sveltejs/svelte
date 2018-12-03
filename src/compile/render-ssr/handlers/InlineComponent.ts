@@ -70,7 +70,7 @@ export default function(node, renderer: Renderer, options) {
 				.concat(binding_props.map(p => `{ ${p} }`))
 				.join(', ')
 		})`;
-	} else if (node.attributes.length || binding_props.length) {
+	} else {
 		props = stringifyProps(
 			node.attributes
 				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
