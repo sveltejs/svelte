@@ -46,7 +46,7 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function define($$self, $$props) {
 	let { foo = 42 } = $$props;
 
 	$$self.$$.get = () => ({ foo });

@@ -108,7 +108,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length) {
-			componentInitProperties.push(`props: ${props}`);
+			if (!usesSpread && this.node.bindings.length === 0) {
+				componentInitProperties.push(`props: ${attributeObject}`);
+			} else {
+				componentInitProperties.push(`props: ${props}`);
+			}
 		}
 
 		if (component.options.dev) {

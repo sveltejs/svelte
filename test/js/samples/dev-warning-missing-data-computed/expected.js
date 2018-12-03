@@ -39,7 +39,6 @@ function create_fragment(component, ctx) {
 
 		i: function intro(target, anchor) {
 			if (current) return;
-
 			this.m(target, anchor);
 		},
 

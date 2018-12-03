@@ -19,6 +19,11 @@ export default function deindent(
 			expression = expression.length ? expression.join('\n') : null;
 		}
 
+		// discard empty codebuilders
+		if (expression && expression.isEmpty && expression.isEmpty()) {
+			expression = null;
+		}
+
 		if (expression || expression === '') {
 			const value = String(expression).replace(
 				/\n/g,

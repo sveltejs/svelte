@@ -2,19 +2,12 @@
 import { SvelteComponent as SvelteComponent_1, flush, init, noop, run, safe_not_equal } from "svelte/internal.js";
 
 function create_fragment(component, ctx) {
-	var current;
-
 	return {
 		c: noop,
-
 		m: noop,
-
 		p: noop,
-
 		i: noop,
-
 		o: run,
-
 		d: noop
 	};
 }

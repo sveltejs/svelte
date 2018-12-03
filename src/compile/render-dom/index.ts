@@ -6,6 +6,7 @@ import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import flattenReference from '../../utils/flattenReference';
+import stringifyProps from '../../utils/stringifyProps';
 
 export default function dom(
 	component: Component,
@@ -201,7 +202,7 @@ export default function dom(
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
-				$$self.$$.get = () => ({ ${component.declarations.join(', ')} });
+				$$self.$$.get = () => (${stringifyProps(component.declarations)});
 
 				${set && `$$self.$$.set = ${set};`}
 
