@@ -69,7 +69,7 @@ export class Scope {
 	}
 
 	addDeclaration(node: Node) {
-		if (node.kind === 'var' && !this.block && this.parent) {
+		if (node.kind === 'var' && this.block && this.parent) {
 			this.parent.addDeclaration(node);
 		} else if (node.type === 'VariableDeclaration') {
 			const writable = node.kind !== 'const';

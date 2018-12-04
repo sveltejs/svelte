@@ -19,6 +19,7 @@ import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
+import { remove_indentation } from '../utils/remove_indentation';
 
 type Meta = {
 	namespace?: string;
@@ -74,6 +75,8 @@ export default class Component {
 	props: Array<{ name: string, as: string }> = [];
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
+	hoistable_names: Set<string> = new Set();
+	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
 	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
@@ -479,13 +482,26 @@ export default class Component {
 	}
 
 	extract_javascript(script) {
+		if (script.content.body.length === this.hoistable_nodes.size) return null;
+
 		let a = script.content.start;
 		while (/\s/.test(this.source[a])) a += 1;
+
+		let result = '';
+
+		script.content.body.forEach(node => {
+			if (this.hoistable_nodes.has(node)) {
+				result += `[✂${a}-${node.start}✂]/* HOISTED */`;
+				a = node.end;
+			}
+		});
 
 		let b = script.content.end;
 		while (/\s/.test(this.source[b - 1])) b -= 1;
 
-		return a !== b ? `[✂${a}-${b}✂]` : null;
+		if (a !== b) result += `[✂${a}-${b}✂]`;
+
+		return result || null;
 	}
 
 	walk_module_js() {
@@ -529,6 +545,7 @@ export default class Component {
 
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
 		this.rewrite_props();
+		this.hoist_instance_declarations();
 		this.javascript = this.extract_javascript(script);
 	}
 
@@ -635,6 +652,103 @@ export default class Component {
 
 			this.code.overwrite(group[0].start, group[group.length - 1].end, replacement);
 		});
+	}
+
+	hoist_instance_declarations() {
+		// we can safely hoist `const` declarations that are
+		// initialised to literals, and functions that don't
+		// reference instance variables other than other
+		// hoistable functions. TODO others?
+
+		const { hoistable_names, hoistable_nodes } = this;
+
+		const top_level_function_declarations = new Map();
+
+		this.instance_script.content.body.forEach(node => {
+			if (node.kind === 'const') { // TODO or let or var, if never reassigned in <script> or template
+				if (node.declarations.every(d => d.init.type === 'Literal')) {
+					node.declarations.forEach(d => {
+						hoistable_names.add(d.id.name);
+					});
+
+					hoistable_nodes.add(node);
+				}
+			}
+
+			if (node.type === 'FunctionDeclaration') {
+				top_level_function_declarations.set(node.id.name, node);
+			}
+		});
+
+		const checked = new Set();
+		let walking = new Set();
+
+		const is_hoistable = fn_declaration => {
+			const instance_scope = this.instance_scope;
+			let scope = this.instance_scope;
+			let map = this.instance_scope_map;
+
+			let hoistable = true;
+
+			// handle cycles
+			walking.add(fn_declaration);
+
+			walk(fn_declaration, {
+				enter(node, parent) {
+					if (map.has(node)) {
+						scope = map.get(node);
+					}
+
+					if (isReference(node, parent)) {
+						const { name } = flattenReference(node);
+						const owner = scope.findOwner(name);
+
+						if (owner === instance_scope) {
+							if (name === fn_declaration.id.name) return;
+							if (hoistable_names.has(name)) return;
+
+							if (top_level_function_declarations.has(name)) {
+								const other_declaration = top_level_function_declarations.get(name);
+
+								if (walking.has(other_declaration)) {
+									hoistable = false;
+								} else if (!is_hoistable(other_declaration)) {
+									hoistable = false;
+								}
+							}
+
+							else {
+								hoistable = false;
+							}
+						}
+
+						this.skip();
+					}
+				},
+
+				leave(node) {
+					if (map.has(node)) {
+						scope = scope.parent;
+					}
+				}
+			});
+
+			checked.add(fn_declaration);
+			walking.delete(fn_declaration);
+
+			return hoistable;
+		};
+
+		for (const [name, node] of top_level_function_declarations) {
+			if (!checked.has(node) && is_hoistable(node)) {
+				hoistable_names.add(name);
+				hoistable_nodes.add(node);
+
+				remove_indentation(this.code, node);
+
+				this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
+			}
+		}
 	}
 
 	warn_if_undefined(node, template_scope: TemplateScope) {
