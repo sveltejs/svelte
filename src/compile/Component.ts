@@ -570,7 +570,7 @@ export default class Component {
 		let current_group;
 
 		walk(this.instance_script.content, {
-			enter(node) {
+			enter(node, parent) {
 				if (/Function/.test(node.type)) {
 					current_group = null;
 					return this.skip();
@@ -617,7 +617,9 @@ export default class Component {
 						}
 					}
 				} else {
-					current_group = null;
+					if (node.type !== 'ExportNamedDeclaration') {
+						if (!parent) current_group = null;
+					}
 				}
 			},
 
