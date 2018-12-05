@@ -621,8 +621,9 @@ export default class ElementWrapper extends Wrapper {
 		block: Block
 	) {
 		const { intro, outro } = this.node;
-
 		if (!intro && !outro) return;
+
+		const { component } = this.renderer;
 
 		if (intro === outro) {
 			const name = block.getUniqueName(`${this.var}_transition`);
@@ -632,7 +633,7 @@ export default class ElementWrapper extends Wrapper {
 
 			block.addVariable(name);
 
-			const fn = `ctx.${intro.name}`;
+			const fn = component.qualify(intro.name);
 
 			block.builders.intro.addConditional(`@intro.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
@@ -662,7 +663,7 @@ export default class ElementWrapper extends Wrapper {
 					? intro.expression.render()
 					: '{}';
 
-				const fn = `ctx.${intro.name}`; // TODO add built-in transitions?
+				const fn = component.qualify(intro.name); // TODO add built-in transitions?
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
@@ -685,7 +686,7 @@ export default class ElementWrapper extends Wrapper {
 					? outro.expression.render()
 					: '{}';
 
-				const fn = `ctx.${outro.name}`;
+				const fn = component.qualify(outro.name);
 
 				block.builders.intro.addBlock(deindent`
 					if (${outroName}) ${outroName}.abort(1);

@@ -34,7 +34,7 @@ export function exclude(src, prop) {
 }
 
 export function run(fn) {
-	fn();
+	return fn();
 }
 
 export function blankObject() {

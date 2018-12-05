@@ -764,6 +764,8 @@ export default class Component {
 		if (this.hoistable_names.has(name)) return name;
 		if (this.imported_declarations.has(name)) return name;
 		if (this.declarations.indexOf(name) === -1) return name;
+
+		this.template_references.add(name); // TODO we can probably remove most other occurrences of this
 		return `ctx.${name}`;
 	}
 

@@ -219,7 +219,7 @@ export default class Expression {
 							dependencies.add(name);
 							component.template_references.add(name);
 						}
-					} else if (!is_synthetic && !component.hoistable_names.has(name)) {
+					} else if (!is_synthetic && !component.hoistable_names.has(name) && !component.imported_declarations.has(name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');

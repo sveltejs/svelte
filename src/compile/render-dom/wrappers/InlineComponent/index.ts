@@ -202,6 +202,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
 			component.declarations.push(name);
+			component.template_references.add(name);
 
 			const updating = block.getUniqueName(`updating_${binding.name}`);
 			block.addVariable(updating);
@@ -293,7 +294,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				function ${switch_props}(ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
-					${props && `const ${props} = ${attributeObject};`}`}
+					${props && `let ${props} = ${attributeObject};`}`}
 					${statements}
 					return ${stringifyProps(component_opts)};
 				}
@@ -385,7 +386,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.init.addBlock(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
-				${props && `const ${props} = ${attributeObject};`}`}
+				${props && `let ${props} = ${attributeObject};`}`}
 				${statements}
 				var ${name} = new ${expression}(${stringifyProps(component_opts)});
 

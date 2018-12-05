@@ -8,15 +8,7 @@ export default class EventHandler extends Node {
 	modifiers: Set<string>;
 	expression: Expression;
 	handler_name: string;
-
-	usesComponent: boolean;
 	usesContext: boolean;
-	usesEventObject: boolean;
-	isCustomEvent: boolean;
-
-	insertionPoint: number;
-	args: Expression[];
-	snippet: string;
 
 	constructor(component: Component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
@@ -42,8 +34,9 @@ export default class EventHandler extends Node {
 	}
 
 	render() {
-		return this.expression
-			? this.expression.render()
-			: `ctx.${this.handler_name}`;
+		if (this.expression) return this.expression.render();
+
+		this.component.template_references.add(this.handler_name);
+		return `ctx.${this.handler_name}`;
 	}
 }

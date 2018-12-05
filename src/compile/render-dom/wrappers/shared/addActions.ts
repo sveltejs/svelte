@@ -30,6 +30,8 @@ export default function addActions(
 			? action.name
 			: `ctx.${action.name}`;
 
+		component.template_references.add(action.name);
+
 		block.builders.mount.addLine(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
