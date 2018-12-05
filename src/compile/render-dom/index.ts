@@ -235,7 +235,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${component.props.length > 0 || component.meta.props && deindent`
+						${(component.props.length > 0 || component.meta.props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();

@@ -817,7 +817,7 @@ function process_meta(component, nodes) {
 			});
 		}
 
-		return value[0].data;
+		return value[0] ? value[0].data : true;
 	}
 
 	if (node) {
