@@ -403,17 +403,16 @@ export default class ElementWrapper extends Wrapper {
 		if (lock) block.addVariable(lock, 'false');
 
 		const groups = events
-			.map(event => {
-				return {
-					events: event.eventNames,
-					bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
-				};
-			})
+			.map(event => ({
+				events: event.eventNames,
+				bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
+			}))
 			.filter(group => group.bindings.length);
 
 		groups.forEach(group => {
 			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
 			renderer.component.declarations.push(handler);
+			renderer.component.template_references.add(handler);
 
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
@@ -707,6 +706,8 @@ export default class ElementWrapper extends Wrapper {
 	addAnimation(block: Block) {
 		if (!this.node.animation) return;
 
+		const { component } = this.renderer;
+
 		const rect = block.getUniqueName('rect');
 		const animation = block.getUniqueName('animation');
 
@@ -723,14 +724,20 @@ export default class ElementWrapper extends Wrapper {
 		`);
 
 		const params = this.node.animation.expression ? this.node.animation.expression.render() : '{}';
+
+		let { name } = this.node.animation;
+		if (!component.hoistable_names.has(name) && !component.imported_declarations.has(name)) {
+			name = `ctx.${name}`;
+		}
+
 		block.builders.animate.addBlock(deindent`
 			if (${animation}) ${animation}.stop();
-			${animation} = @wrapAnimation(${this.var}, ${rect}, ctx.${this.node.animation.name}, ${params});
+			${animation} = @wrapAnimation(${this.var}, ${rect}, ${name}, ${params});
 		`);
 	}
 
 	addActions(block: Block) {
-		addActions(block, this.var, this.node.actions);
+		addActions(this.renderer.component, block, this.var, this.node.actions);
 	}
 
 	addClasses(block: Block) {

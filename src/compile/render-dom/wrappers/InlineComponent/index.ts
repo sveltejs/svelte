@@ -81,11 +81,11 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const name = this.var;
 
-		const componentInitProperties = [];
+		const component_opts = [];
 
 		if (this.fragment) {
 			const slots = Array.from(this._slots).map(name => `${quoteNameIfNecessary(name)}: @createFragment()`);
-			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
+			component_opts.push(`slots: { ${slots.join(', ')} }`);
 
 			this.fragment.nodes.forEach((child: Wrapper) => {
 				child.render(block, `${this.var}.$$.slotted.default`, 'nodes');
@@ -109,10 +109,10 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.attributes.length || this.node.bindings.length) {
 			if (!usesSpread && this.node.bindings.length === 0) {
-				componentInitProperties.push(`props: ${attributeObject}`);
+				component_opts.push(`props: ${attributeObject}`);
 			} else {
 				props = block.getUniqueName(`${name}_props`);
-				componentInitProperties.push(`props: ${props}`);
+				component_opts.push(`props: ${props}`);
 			}
 		}
 
@@ -121,7 +121,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private
 			// APIs
-			componentInitProperties.push(`$$inline: true`);
+			component_opts.push(`$$inline: true`);
 		}
 
 		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length)) {
@@ -295,9 +295,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
 					${props && `const ${props} = ${attributeObject};`}`}
 					${statements}
-					return {
-						${componentInitProperties.join(',\n')}
-					};
+					return ${stringifyProps(component_opts)};
 				}
 
 				if (${switch_value}) {
@@ -383,15 +381,13 @@ export default class InlineComponentWrapper extends Wrapper {
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: `ctx.${this.node.name}`;
+				: component.qualify(this.node.name);
 
 			block.builders.init.addBlock(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
 				${props && `const ${props} = ${attributeObject};`}`}
 				${statements}
-				var ${name} = new ${expression}({
-					${componentInitProperties.join(',\n')}
-				});
+				var ${name} = new ${expression}(${stringifyProps(component_opts)});
 
 				${munged_bindings}
 				${munged_handlers}

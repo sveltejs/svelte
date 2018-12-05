@@ -1,8 +1,10 @@
 import Renderer from '../../Renderer';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
+import Component from '../../../Component';
 
 export default function addActions(
+	component: Component,
 	block: Block,
 	target: string,
 	actions: Action[]
@@ -24,7 +26,9 @@ export default function addActions(
 		);
 
 		block.addVariable(name);
-		const fn = `ctx.${action.name}`;
+		const fn = component.imported_declarations.has(action.name) || component.hoistable_names.has(action.name)
+			? action.name
+			: `ctx.${action.name}`;
 
 		block.builders.mount.addLine(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`

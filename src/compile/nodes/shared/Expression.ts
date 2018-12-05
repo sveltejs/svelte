@@ -219,7 +219,7 @@ export default class Expression {
 							dependencies.add(name);
 							component.template_references.add(name);
 						}
-					} else if (!is_synthetic) {
+					} else if (!is_synthetic && !component.hoistable_names.has(name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
@@ -317,6 +317,7 @@ export default class Expression {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(fn);
 						component.declarations.push(name);
+						component.template_references.add(name);
 						code.overwrite(node.start, node.end, `ctx.${name}`);
 					}
 
@@ -324,6 +325,7 @@ export default class Expression {
 						// we need a combo block/init recipe
 						component.partly_hoisted.push(fn);
 						component.declarations.push(name);
+						component.template_references.add(name);
 						code.overwrite(node.start, node.end, name);
 
 						declarations.push(deindent`

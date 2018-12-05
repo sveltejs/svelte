@@ -44,5 +44,14 @@ class SvelteComponent extends SvelteComponent_1 {
 		this.$set({ x: value });
 		flush();
 	}
+
+	get a() {
+		return this.$$.get().a;
+	}
+
+	get b() {
+		return this.$$.get().b;
+	}
 }
+
 export default SvelteComponent;

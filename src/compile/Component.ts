@@ -75,6 +75,7 @@ export default class Component {
 	props: Array<{ name: string, as: string }> = [];
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
+	imported_declarations: Set<string> = new Set();
 	hoistable_names: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
@@ -468,21 +469,27 @@ export default class Component {
 			}
 
 			// imports need to be hoisted out of the IIFE
-			// TODO hoist other stuff where possible
 			else if (node.type === 'ImportDeclaration') {
 				removeNode(code, content.start, content.end, content.body, node);
 				imports.push(node);
 
 				node.specifiers.forEach((specifier: Node) => {
 					this.userVars.add(specifier.local.name);
-					this.declarations.push(specifier.local.name); // TODO we don't really want this, but it's convenient for now
+					this.imported_declarations.add(specifier.local.name);
 				});
 			}
 		});
 	}
 
 	extract_javascript(script) {
-		if (script.content.body.length === this.hoistable_nodes.size) return null;
+		const nodes_to_include = script.content.body.filter(node => {
+			if (this.hoistable_nodes.has(node)) return false;
+			if (node.type === 'ImportDeclaration') return false;
+			if (node.type === 'ExportDeclaration' && node.specifiers.length > 0) return false;
+			return true;
+		});
+
+		if (nodes_to_include.length === 0) return null;
 
 		let a = script.content.start;
 		while (/\s/.test(this.source[a])) a += 1;
@@ -749,6 +756,13 @@ export default class Component {
 				this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
 			}
 		}
+	}
+
+	qualify(name) {
+		if (this.hoistable_names.has(name)) return name;
+		if (this.imported_declarations.has(name)) return name;
+		if (this.declarations.indexOf(name) === -1) return name;
+		return `ctx.${name}`;
 	}
 
 	warn_if_undefined(node, template_scope: TemplateScope) {

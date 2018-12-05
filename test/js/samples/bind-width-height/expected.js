@@ -36,9 +36,8 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$make_dirty) {
-	let w;
-	let h;
+function define($$self, $$props, $$make_dirty) {
+	let { w, h } = $$props;
 
 	function div_resize_handler() {
 		w = this.offsetWidth;

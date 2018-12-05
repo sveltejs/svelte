@@ -181,11 +181,18 @@ export default function dom(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 	`);
 
+	const declarations = component.declarations.filter(name => {
+		if (component.props.find(p => p.as === name)) return true;
+		if (component.hoistable_names.has(name)) return false;
+		if (component.imported_declarations.has(name)) return false;
+		return component.template_references.has(name);
+	});
+
 	const has_definition = (
 		component.javascript ||
 		component.props.length > 0 ||
 		component.partly_hoisted.length > 0 ||
-		component.declarations.length > 0
+		declarations.length > 0
 	);
 
 	const definition = has_definition
@@ -202,7 +209,7 @@ export default function dom(
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
-				$$self.$$.get = () => (${stringifyProps(component.declarations)});
+				${declarations.length > 0 && `$$self.$$.get = () => (${stringifyProps(declarations)});`}
 
 				${set && `$$self.$$.set = ${set};`}
 
@@ -228,10 +235,11 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
+						${component.props.length > 0 || component.meta.props && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
-						}
+						}`}
 					}
 				}
 

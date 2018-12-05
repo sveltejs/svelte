@@ -44,7 +44,7 @@ export default class WindowWrapper extends Wrapper {
 		const events = {};
 		const bindings: Record<string, string> = {};
 
-		addActions(block, 'window', this.node.actions);
+		addActions(component, block, 'window', this.node.actions);
 		addEventHandlers(block, 'window', this.node.handlers);
 
 		this.node.bindings.forEach(binding => {
@@ -106,6 +106,7 @@ export default class WindowWrapper extends Wrapper {
 			}
 
 			component.declarations.push(handler_name);
+			component.template_references.add(handler_name);
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
 					${event === 'scroll' && deindent`
