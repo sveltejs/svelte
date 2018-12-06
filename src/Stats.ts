@@ -96,20 +96,11 @@ export default class Stats {
 			}
 		});
 
-		// TODO
-		const hooks: Record<string, boolean> = component && {
-			oncreate: false,
-			onDestroy: false,
-			onstate: false,
-			afterUpdate: false
-		};
-
 		return {
 			timings,
 			warnings: this.warnings,
 			imports,
-			templateReferences: component && component.template_references,
-			hooks
+			templateReferences: component && component.template_references
 		};
 	}
 
