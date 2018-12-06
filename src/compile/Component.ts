@@ -110,8 +110,9 @@ export default class Component {
 		options: CompileOptions,
 		stats: Stats
 	) {
-		this.stats = stats;
+		this.name = this.getUniqueName(name);
 
+		this.stats = stats;
 		this.ast = ast;
 		this.source = source;
 		this.options = options;
@@ -149,7 +150,6 @@ export default class Component {
 
 		this.walk_module_js();
 		this.walk_instance_js();
-		this.name = this.getUniqueName(name);
 
 		this.fragment = new Fragment(this, ast.html);
 		if (!options.customElement) this.stylesheet.reify();
