@@ -58,6 +58,13 @@ export default function ssr(
 		`
 		: `return \`${renderer.code}\`;`;
 
+	const blocks = [
+		setup,
+		parent_bindings.join('\n'),
+		css.code && `$$result.css.add(#css);`,
+		main
+	].filter(Boolean);
+
 	return (deindent`
 		${css.code && deindent`
 		const #css = {
@@ -70,13 +77,7 @@ export default function ssr(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
-			${setup}
-
-			${parent_bindings}
-
-			${css.code && `$$result.css.add(#css);`}
-
-			${main}
+			${blocks.join('\n\n')}
 		});
 	`).trim();
 }

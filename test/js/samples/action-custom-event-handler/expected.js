@@ -48,6 +48,8 @@ function define($$self, $$props) {
 
 	/* HOISTED */
 
+	/* HOISTED */
+
 	function foo_function() {
 		return handleFoo(bar);
 	}
