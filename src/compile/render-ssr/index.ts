@@ -65,6 +65,10 @@ export default function ssr(
 			map: ${css.map ? stringify(css.map.toString()) : 'null'}
 		};`}
 
+		${component.module_javascript}
+
+		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+
 		const ${name} = @create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 			${setup}
 

@@ -3,6 +3,8 @@ import { SvelteComponent as SvelteComponent_1, flush, init, noop, run, safe_not_
 import { onMount } from "svelte";
 
 function create_fragment(component, ctx) {
+	var current;
+
 	return {
 		c: noop,
 		m: noop,

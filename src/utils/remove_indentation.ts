@@ -16,18 +16,14 @@ export function remove_indentation(code: MagicString, node: Node) {
 		}
 	});
 
-	let dirty = false;
+	const str = code.original.slice(node.start, node.end);
 
-	const str = code.original
-		.slice(node.start, node.end)
-		.replace(pattern, (match, i) => {
-			const index = node.start + i;
-			while (excluded[0] && excluded[0].end < index) excluded.shift();
-			if (excluded[0] && excluded[0].start < index) return match;
+	let match;
+	while (match = pattern.exec(str)) {
+		const index = node.start + match.index;
+		while (excluded[0] && excluded[0].end < index) excluded.shift();
+		if (excluded[0] && excluded[0].start < index) continue;
 
-			dirty = true;
-			return '';
-		});
-
-	if (dirty) code.overwrite(node.start, node.end, str);
+		code.remove(index, index + indent.length);
+	}
 }

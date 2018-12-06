@@ -523,6 +523,7 @@ export default class Component {
 		// TODO unindent
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
+		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
 	}
 
