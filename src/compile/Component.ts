@@ -130,10 +130,6 @@ export default class Component {
 		this.module_script = ast.js.find(script => get_context(script) === 'module');
 		this.instance_script = ast.js.find(script => get_context(script) === 'default');
 
-		this.walk_module_js();
-		this.walk_instance_js();
-		this.name = this.getUniqueName(name);
-
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
 
@@ -150,6 +146,10 @@ export default class Component {
 				? this.meta.tag
 				: <string>options.customElement
 			: this.name;
+
+		this.walk_module_js();
+		this.walk_instance_js();
+		this.name = this.getUniqueName(name);
 
 		this.fragment = new Fragment(this, ast.html);
 		if (!options.customElement) this.stylesheet.reify();
@@ -558,7 +558,8 @@ export default class Component {
 	}
 
 	rewrite_props() {
-		const { instance_scope, instance_scope_map: map } = this;
+		const component = this;
+		const { code, instance_scope, instance_scope_map: map, meta } = this;
 		let scope = instance_scope;
 
 		// TODO we will probably end up wanting to use this elsewhere
@@ -583,11 +584,36 @@ export default class Component {
 
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
+						let has_meta_props = false;
 						let has_exports = false;
 						let has_only_exports = true;
 
 						node.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
+								if (name === meta.props_object) {
+									if (exported.has(name)) {
+										component.error(declarator, {
+											code: 'exported-meta-props',
+											message: `Cannot export props binding`
+										});
+									}
+
+									if (declarator.id.type !== 'Identifier') {
+										component.error(declarator, {
+											code: 'todo',
+											message: `props binding in destructured declaration is not yet supported`
+										});
+									}
+
+									if (declarator.id.end === declarator.end) {
+										code.appendLeft(declarator.end, ' = $$props');
+									} else {
+										code.overwrite(declarator.id.end, declarator.end, ' = $$props');
+									}
+
+									has_meta_props = true;
+								}
+
 								if (exported.has(name)) {
 									has_exports = true;
 								} else {
