@@ -77,14 +77,14 @@ export default class Element extends Node {
 	type: 'Element';
 	name: string;
 	scope: any; // TODO
-	attributes: Attribute[];
-	actions: Action[];
-	bindings: Binding[];
-	classes: Class[];
-	handlers: EventHandler[];
-	intro?: Transition;
-	outro?: Transition;
-	animation?: Animation;
+	attributes: Attribute[] = [];
+	actions: Action[] = [];
+	bindings: Binding[] = [];
+	classes: Class[] = [];
+	handlers: EventHandler[] = [];
+	intro?: Transition = null;
+	outro?: Transition = null;
+	animation?: Animation = null;
 	children: Node[];
 
 	ref: Ref;
@@ -106,16 +106,6 @@ export default class Element extends Node {
 				message: `<${this.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
 			});
 		}
-
-		this.attributes = [];
-		this.actions = [];
-		this.bindings = [];
-		this.classes = [];
-		this.handlers = [];
-
-		this.intro = null;
-		this.outro = null;
-		this.animation = null;
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {

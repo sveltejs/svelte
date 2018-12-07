@@ -15,6 +15,7 @@
 						"end": 12,
 						"type": "Transition",
 						"name": "fade",
+						"modifiers": [],
 						"expression": null,
 						"intro": true,
 						"outro": false

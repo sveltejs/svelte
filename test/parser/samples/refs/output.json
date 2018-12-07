@@ -15,6 +15,7 @@
 						"end": 15,
 						"type": "Ref",
 						"name": "foo",
+						"modifiers": [],
 						"expression": null
 					}
 				],

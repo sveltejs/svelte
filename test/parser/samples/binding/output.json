@@ -15,6 +15,7 @@
 						"end": 24,
 						"type": "Binding",
 						"name": "value",
+						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
 							"start": 19,

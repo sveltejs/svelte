@@ -15,6 +15,7 @@
 						"end": 16,
 						"type": "Binding",
 						"name": "foo",
+						"modifiers": [],
 						"expression": {
 							"start": 13,
 							"end": 16,

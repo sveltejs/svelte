@@ -388,13 +388,14 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	}
 
 	if (type) {
-		const directive_name = name.slice(colon_index + 1);
+		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		const directive = {
 			start,
 			end,
 			type,
 			name: directive_name,
+			modifiers,
 			expression: (value[0] && value[0].expression) || null
 		};
 

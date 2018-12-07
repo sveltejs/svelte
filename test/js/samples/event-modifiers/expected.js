@@ -4,6 +4,12 @@ import { SvelteComponent as SvelteComponent_1, addListener, append, createElemen
 function create_fragment(component, ctx) {
 	var div, button0, text1, button1, text3, button2, current;
 
+	function click_handler(event) {
+		event.stopPropagation();
+		event.preventDefault();
+		handleClick(event);
+	}
+
 	return {
 		c() {
 			div = createElement("div");
@@ -15,9 +21,9 @@ function create_fragment(component, ctx) {
 			text3 = createText("\n\t");
 			button2 = createElement("button");
 			button2.textContent = "or me!";
-			addListener(button0, "click|stopPropagation|preventDefault", handleClick);
-			addListener(button1, "click|once|capture", handleClick);
-			addListener(button2, "click|capture", handleClick);
+			addListener(button0, click_handler);
+			addListener(button1, "click", handleClick, { once: true, capture: true });
+			addListener(button2, "click", handleClick, true);
 			addListener(div, "touchstart", handleTouchstart, { passive: true });
 		},
 
@@ -45,9 +51,9 @@ function create_fragment(component, ctx) {
 				detachNode(div);
 			}
 
-			removeListener(button0, "click|stopPropagation|preventDefault", handleClick);
-			removeListener(button1, "click|once|capture", handleClick);
-			removeListener(button2, "click|capture", handleClick);
+			removeListener(button0, click_handler);
+			removeListener(button1, "click", handleClick, { once: true, capture: true });
+			removeListener(button2, "click", handleClick, true);
 			removeListener(div, "touchstart", handleTouchstart, { passive: true });
 		}
 	};

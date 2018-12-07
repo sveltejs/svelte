@@ -26,6 +26,7 @@
 								"end": 50,
 								"type": "Animation",
 								"name": "flip",
+								"modifiers": [],
 								"expression": null
 							}
 						],
