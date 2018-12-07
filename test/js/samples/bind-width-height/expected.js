@@ -47,6 +47,11 @@ function define($$self, $$props, $$make_dirty) {
 	}
 
 	$$self.$$.get = () => ({ w, h, div_resize_handler });
+
+	$$self.$$.set = $$props => {
+		if ('w' in $$props) w = $$props.w;
+		if ('h' in $$props) h = $$props.h;
+	};
 }
 
 class SvelteComponent extends SvelteComponent_1 {

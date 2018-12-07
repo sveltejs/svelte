@@ -58,7 +58,6 @@ function create_fragment(component, ctx) {
 }
 
 function define($$self, $$props, $$make_dirty) {
-	// TODO some of these are read-only...
 	let { buffered, seekable, played, currentTime, duration, paused, volume } = $$props;
 
 	function audio_timeupdate_handler() {

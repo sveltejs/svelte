@@ -232,7 +232,8 @@ export default function tag(parser: Parser) {
 		const special = specials.get(name);
 
 		parser.eat('>', true);
-		parser[special.property].push(special.read(parser, start, element.attributes));
+		const content = special.read(parser, start, element.attributes);
+		if (content) parser[special.property].push(content);
 		return;
 	}
 
