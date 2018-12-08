@@ -442,23 +442,25 @@ export default class Component {
 		let a = script.content.start;
 		while (/\s/.test(this.source[a])) a += 1;
 
+		let b = a;
+
 		let result = '';
 
 		script.content.body.forEach((node, i) => {
 			if (this.hoistable_nodes.has(node) || this.reactive_declaration_nodes.has(node)) {
-				result += `[✂${a}-${node.start}✂]`;
+				if (a !== b) result += `[✂${a}-${b}✂]`;
 				a = node.end;
-
-				if (i < script.content.body.length - 1) {
-					while (a < this.source.length && /\s/.test(this.source[a])) a += 1;
-				}
 			}
+
+			b = node.end;
 		});
 
-		let b = script.content.end;
+		// while (/\s/.test(this.source[a - 1])) a -= 1;
+
+		b = script.content.end;
 		while (/\s/.test(this.source[b - 1])) b -= 1;
 
-		if (a !== b) result += `[✂${a}-${b}✂]`;
+		if (a < b) result += `[✂${a}-${b}✂]`;
 
 		return result || null;
 	}

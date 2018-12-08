@@ -72,4 +72,5 @@ class SvelteComponent extends SvelteComponent_1 {
 		flush();
 	}
 }
+
 export default SvelteComponent;
