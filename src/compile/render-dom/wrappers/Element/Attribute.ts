@@ -168,11 +168,9 @@ export default class AttributeWrapper {
 
 				const updateCachedValue = `${last} !== (${last} = ${value})`;
 
-				const condition = this.node.dependencies.has('$$BAIL$$')
-					? updateCachedValue
-					: shouldCache
-						? (dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue)
-						: changedCheck;
+				const condition = shouldCache
+					? (dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue)
+					: changedCheck;
 
 				block.builders.update.addConditional(
 					condition,

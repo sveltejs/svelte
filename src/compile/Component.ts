@@ -376,62 +376,6 @@ export default class Component {
 		});
 	}
 
-	findDependenciesForFunctionCall(name) {
-		const declaration = this.node_for_declaration.get(name);
-
-		const dependencies = new Set();
-
-		if (!declaration) {
-			// Global or module-scoped function — can't have
-			// local state as dependency by definition
-			return dependencies;
-		}
-
-		let { instance_scope, instance_scope_map: map } = this;
-		let scope = instance_scope;
-
-		const component = this;
-		let bail = false;
-
-		walk(declaration, {
-			enter(node, parent) {
-				if (map.has(node)) {
-					scope = map.get(node);
-				}
-
-				if (isReference(node, parent)) {
-					const { name } = flattenReference(node);
-					if (scope.findOwner(name) === instance_scope) {
-						dependencies.add(name);
-					}
-				}
-
-				if (node.type === 'CallExpression') {
-					if (node.callee.type === 'Identifier') {
-						const call_dependencies = component.findDependenciesForFunctionCall(node.callee.name);
-						if (!call_dependencies) {
-							bail = true;
-							return this.skip();
-						}
-
-						addToSet(dependencies, call_dependencies);
-					} else {
-						bail = true;
-						return this.skip();
-					}
-				}
-			},
-
-			leave(node) {
-				if (map.has(node)) {
-					scope = map.get(node);
-				}
-			}
-		});
-
-		return bail ? null : dependencies;
-	}
-
 	extract_imports_and_exports(content, imports, exports) {
 		const { code } = this;
 

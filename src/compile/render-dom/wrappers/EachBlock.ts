@@ -426,9 +426,6 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		// TODO do this for keyed blocks as well
-		const bail = allDependencies.has('$$BAIL$$');
-
 		const condition = Array.from(allDependencies)
 			.map(dependency => `changed.${dependency}`)
 			.join(' || ');
@@ -490,15 +487,11 @@ export default class EachBlockWrapper extends Wrapper {
 				${destroy}
 			`;
 
-			if (bail) {
-				block.builders.update.addBlock(update);
-			} else {
-				block.builders.update.addBlock(deindent`
-					if (${condition}) {
-						${update}
-					}
-				`);
-			}
+			block.builders.update.addBlock(deindent`
+				if (${condition}) {
+					${update}
+				}
+			`);
 		}
 
 		if (outroBlock) {

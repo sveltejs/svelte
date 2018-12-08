@@ -142,20 +142,6 @@ export default class Expression {
 
 					this.skip();
 				}
-
-				if (node.type === 'CallExpression') {
-					// TODO remove this? rely on reactive declarations?
-					if (node.callee.type === 'Identifier') {
-						const dependencies_for_invocation = component.findDependenciesForFunctionCall(node.callee.name);
-						if (dependencies_for_invocation) {
-							addToSet(dependencies, dependencies_for_invocation);
-						} else {
-							dependencies.add('$$BAIL$$');
-						}
-					} else {
-						dependencies.add('$$BAIL$$');
-					}
-				}
 			}
 		});
 
