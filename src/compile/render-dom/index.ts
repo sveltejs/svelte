@@ -98,11 +98,19 @@ export default function dom(
 	let dev_props_check;
 
 	component.props.forEach(x => {
-		body.push(deindent`
-			get ${x.as}() {
-				return this.$$.get().${x.name};
-			}
-		`);
+		if (component.imported_declarations.has(x.name) || component.hoistable_names.has(x.name)) {
+			body.push(deindent`
+				get ${x.as}() {
+					return ${x.name};
+				}
+			`);
+		} else {
+			body.push(deindent`
+				get ${x.as}() {
+					return this.$$.get().${x.name};
+				}
+			`);
+		}
 
 		if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
 			body.push(deindent`
@@ -181,18 +189,23 @@ export default function dom(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 	`);
 
-	const declarations = component.declarations.filter(name => {
-		if (component.props.find(p => p.as === name)) return true;
+	const filtered_declarations = component.declarations.filter(name => {
 		if (component.hoistable_names.has(name)) return false;
 		if (component.imported_declarations.has(name)) return false;
+		if (component.props.find(p => p.as === name)) return true;
 		return component.template_references.has(name);
+	});
+
+	const filtered_props = component.props.filter(prop => {
+		if (component.hoistable_names.has(prop.name)) return false;
+		if (component.imported_declarations.has(prop.name)) return false;
 	});
 
 	const has_definition = (
 		component.javascript ||
-		component.props.length > 0 ||
+		filtered_props.length > 0 ||
 		component.partly_hoisted.length > 0 ||
-		declarations.length > 0
+		filtered_declarations.length > 0
 	);
 
 	const definition = has_definition
@@ -203,13 +216,13 @@ export default function dom(
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${component.javascript || (
-					component.props.length > 0 &&
-					`let { ${component.props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
+					filtered_props.length > 0 &&
+					`let { ${filtered_props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
 				)}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
-				${declarations.length > 0 && `$$self.$$.get = () => (${stringifyProps(declarations)});`}
+				${filtered_declarations.length > 0 && `$$self.$$.get = () => (${stringifyProps(filtered_declarations)});`}
 
 				${set && `$$self.$$.set = ${set};`}
 

@@ -711,6 +711,10 @@ export default class Component {
 				}
 			}
 
+			if (node.type === 'ExportNamedDeclaration' && node.declaration && node.declaration.type === 'FunctionDeclaration') {
+				top_level_function_declarations.set(node.declaration.id.name, node);
+			}
+
 			if (node.type === 'FunctionDeclaration') {
 				top_level_function_declarations.set(node.id.name, node);
 			}
@@ -720,6 +724,10 @@ export default class Component {
 		let walking = new Set();
 
 		const is_hoistable = fn_declaration => {
+			if (fn_declaration.type === 'ExportNamedDeclaration') {
+				fn_declaration = fn_declaration.declaration;
+			}
+
 			const instance_scope = this.instance_scope;
 			let scope = this.instance_scope;
 			let map = this.instance_scope_map;
