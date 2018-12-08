@@ -20,6 +20,7 @@ import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation } from '../utils/remove_indentation';
+import getObject from '../utils/getObject';
 
 type Meta = {
 	namespace?: string;
@@ -82,6 +83,8 @@ export default class Component {
 	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
+	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
+	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
@@ -428,6 +431,7 @@ export default class Component {
 	extract_javascript(script) {
 		const nodes_to_include = script.content.body.filter(node => {
 			if (this.hoistable_nodes.has(node)) return false;
+			if (this.reactive_declaration_nodes.has(node)) return false;
 			if (node.type === 'ImportDeclaration') return false;
 			if (node.type === 'ExportDeclaration' && node.specifiers.length > 0) return false;
 			return true;
@@ -440,10 +444,14 @@ export default class Component {
 
 		let result = '';
 
-		script.content.body.forEach(node => {
-			if (this.hoistable_nodes.has(node)) {
-				result += `[✂${a}-${node.start}✂]/* HOISTED */`;
+		script.content.body.forEach((node, i) => {
+			if (this.hoistable_nodes.has(node) || this.reactive_declaration_nodes.has(node)) {
+				result += `[✂${a}-${node.start}✂]`;
 				a = node.end;
+
+				if (i < script.content.body.length - 1) {
+					while (a < this.source.length && /\s/.test(this.source[a])) a += 1;
+				}
 			}
 		});
 
@@ -498,6 +506,7 @@ export default class Component {
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
 		this.rewrite_props();
 		this.hoist_instance_declarations();
+		this.extract_reactive_declarations();
 		this.javascript = this.extract_javascript(script);
 	}
 
@@ -737,6 +746,111 @@ export default class Component {
 				this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
 			}
 		}
+	}
+
+	extract_reactive_declarations() {
+		const component = this;
+
+		const unsorted_reactive_declarations = [];
+
+		this.instance_script.content.body.forEach(node => {
+			if (node.type === 'LabeledStatement') {
+				this.reactive_declaration_nodes.add(node);
+
+				const assignees = new Set();
+				const dependencies = new Set();
+
+				let scope = this.instance_scope;
+				let map = this.instance_scope_map;
+
+				walk(node.body, {
+					enter(node, parent) {
+						if (map.has(node)) {
+							scope = map.get(node);
+						}
+
+						if (parent && parent.type === 'AssignmentExpression' && node === parent.left) {
+							return this.skip();
+						}
+
+						if (node.type === 'AssignmentExpression') {
+							assignees.add(getObject(node.left).name);
+						} else if (node.type === 'UpdateExpression') {
+							assignees.add(getObject(node.argument).name);
+							this.skip();
+						} else if (isReference(node, parent)) {
+							const { name } = getObject(node);
+							if (component.declarations.indexOf(name) !== -1) {
+								dependencies.add(name);
+							}
+							this.skip();
+						}
+					},
+
+					leave(node) {
+						if (map.has(node)) {
+							scope = scope.parent;
+						}
+					}
+				});
+
+				unsorted_reactive_declarations.push({
+					assignees,
+					dependencies,
+					node,
+					snippet: node.body.type === 'BlockStatement'
+						? `[✂${node.body.start}-${node.end}✂]`
+						: `{ [✂${node.body.start}-${node.end}✂] }`
+				});
+			}
+		});
+
+		const lookup = new Map();
+		let seen;
+
+		unsorted_reactive_declarations.forEach(declaration => {
+			declaration.assignees.forEach(name => {
+				if (!lookup.has(name)) {
+					lookup.set(name, []);
+				}
+
+				// TODO warn or error if a name is assigned to in
+				// multiple reactive declarations?
+				lookup.get(name).push(declaration);
+			});
+		});
+
+		const add_declaration = declaration => {
+			if (seen.has(declaration)) {
+				this.error(declaration.node, {
+					code: 'cyclical-reactive-declaration',
+					message: 'Cyclical dependency detected'
+				});
+			}
+
+			seen.add(declaration);
+
+			if (declaration.dependencies.size === 0) {
+				this.error(declaration.node, {
+					code: 'invalid-reactive-declaration',
+					message: 'Invalid reactive declaration — must depend on local state'
+				});
+			}
+
+			declaration.dependencies.forEach(name => {
+				const earlier_declarations = lookup.get(name);
+				if (earlier_declarations) earlier_declarations.forEach(add_declaration);
+			});
+
+			if (this.reactive_declarations.indexOf(declaration) === -1) {
+				this.reactive_declarations.push(declaration);
+			}
+		};
+
+		unsorted_reactive_declarations.forEach(declaration => {
+			seen = new Set();
+			add_declaration(declaration);
+		});
 	}
 
 	qualify(name) {

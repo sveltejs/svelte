@@ -7,14 +7,15 @@
 
 	export let y = 1;
 
-	function xGetter() {
+	let xGetter;
+	export let x;
+
+	$: {
 		_x = y * 2;
-		return getX;
+		xGetter = getX;
 	}
 
-	export function x() {
-		return xGetter()();
-	}
+	$: x = xGetter();
 </script>
 
-<p>{x()}</p>
+<p>{x}</p>

@@ -46,10 +46,6 @@ function foo(node, callback) {
 function define($$self, $$props) {
 	let { bar } = $$props;
 
-	/* HOISTED */
-
-	/* HOISTED */
-
 	function foo_function() {
 		return handleFoo(bar);
 	}

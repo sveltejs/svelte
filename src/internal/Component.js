@@ -74,6 +74,7 @@ export function init(component, options, define, create_fragment, not_equal) {
 		// state
 		get: empty,
 		set: noop,
+		update: noop,
 		inject_refs: noop,
 		not_equal,
 		bound: blankObject(),
@@ -97,6 +98,7 @@ export function init(component, options, define, create_fragment, not_equal) {
 		if (component.$$.bound[key]) component.$$.bound[key](component.$$.get()[key]);
 	});
 
+	component.$$.update();
 	run_all(component.$$.before_render);
 	component.$$.fragment = create_fragment(component, component.$$.get());
 

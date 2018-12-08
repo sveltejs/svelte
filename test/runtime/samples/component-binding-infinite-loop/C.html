@@ -2,18 +2,18 @@
 	export let currentIdentifier;
 	export let identifier;
 
-	function isCurrentlySelected() {
-		return currentIdentifier === identifier;
-	}
+	let isCurrentlySelected;
 
 	function toggle() {
-		currentIdentifier = isCurrentlySelected() ? null : identifier
+		currentIdentifier = isCurrentlySelected ? null : identifier
 	}
+
+	$: isCurrentlySelected = currentIdentifier === identifier;
 </script>
 
 <span
 	on:click="{toggle}"
-	class="{isCurrentlySelected() ? 'selected' : ''}"
+	class="{isCurrentlySelected ? 'selected' : ''}"
 >
 	<slot></slot>
 </span>

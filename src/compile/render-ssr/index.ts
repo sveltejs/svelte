@@ -51,12 +51,17 @@ export default function ssr(
 			do {
 				$$settled = true;
 
+				${component.reactive_declarations.map(d => d.snippet)}
+
 				$$rendered = \`${renderer.code}\`;
 			} while (!$$settled);
 
 			return $$rendered;
 		`
-		: `return \`${renderer.code}\`;`;
+		: deindent`
+			${component.reactive_declarations.map(d => d.snippet)}
+
+			return \`${renderer.code}\`;`;
 
 	const blocks = [
 		setup,

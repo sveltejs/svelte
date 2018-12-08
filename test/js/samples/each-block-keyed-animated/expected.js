@@ -123,8 +123,6 @@ function foo(node, animation, params) {
 function define($$self, $$props) {
 	let { things } = $$props;
 
-	/* HOISTED */
-
 	$$self.$$.get = () => ({ things });
 
 	$$self.$$.set = $$props => {

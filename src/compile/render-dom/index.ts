@@ -7,6 +7,7 @@ import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
 import flattenReference from '../../utils/flattenReference';
 import stringifyProps from '../../utils/stringifyProps';
+import addToSet from '../../utils/addToSet';
 
 export default function dom(
 	component: Component,
@@ -206,12 +207,18 @@ export default function dom(
 		component.javascript ||
 		filtered_props.length > 0 ||
 		component.partly_hoisted.length > 0 ||
-		filtered_declarations.length > 0
+		filtered_declarations.length > 0 ||
+		component.reactive_declarations.length > 0
 	);
 
 	const definition = has_definition
 		? component.alias('define')
 		: '@noop';
+
+	const all_reactive_dependencies = new Set();
+	component.reactive_declarations.forEach(d => {
+		addToSet(all_reactive_dependencies, d.dependencies);
+	});
 
 	if (has_definition) {
 		builder.addBlock(deindent`
@@ -226,6 +233,14 @@ export default function dom(
 				${filtered_declarations.length > 0 && `$$self.$$.get = () => (${stringifyProps(filtered_declarations)});`}
 
 				${set && `$$self.$$.set = ${set};`}
+
+				${component.reactive_declarations.length > 0 && deindent`
+				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
+					${component.reactive_declarations.map(d => deindent`
+					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}
+					`)}
+				};
+				`}
 
 				${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
 			}

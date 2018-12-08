@@ -23,10 +23,6 @@ const SvelteComponent = create_ssr_component(($$result, $$props, $$bindings, $$s
 		console.log('onDestroy');
 	});
 
-	/* HOISTED */
-
-	/* HOISTED */
-
 	return ``;
 });
 

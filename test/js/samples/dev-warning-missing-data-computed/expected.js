@@ -28,11 +28,11 @@ function create_fragment(component, ctx) {
 		},
 
 		p: function update(changed, ctx) {
-			if (text0_value !== (text0_value = Math.max(0, ctx.foo))) {
+			if ((changed.foo) && text0_value !== (text0_value = Math.max(0, ctx.foo))) {
 				setData(text0, text0_value);
 			}
 
-			if ((changed.bar || changed.foo) && text2_value !== (text2_value = ctx.bar())) {
+			if ((changed.bar) && text2_value !== (text2_value = ctx.bar())) {
 				setData(text2, text2_value);
 			}
 		},

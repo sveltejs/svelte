@@ -55,6 +55,7 @@ export function flush() {
 
 function update($$) {
 	if ($$.fragment) {
+		$$.update($$.dirty);
 		run_all($$.before_render);
 		$$.fragment.p($$.dirty, $$.get());
 		$$.inject_refs($$.refs);
