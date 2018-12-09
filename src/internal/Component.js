@@ -9,16 +9,10 @@ export function bind(component, name, callback) {
 	callback(component.$$.get()[name]);
 }
 
-export function mount_component(component, target, anchor, hydrate) {
+export function mount_component(component, target, anchor) {
 	const { fragment, refs, inject_refs, on_mount, on_destroy, after_render } = component.$$;
 
-	if (hydrate) {
-		fragment.l(children(target));
-		fragment.m(target, anchor); // TODO can we avoid moving DOM?
-	} else {
-		fragment.c();
-		fragment[fragment.i ? 'i' : 'm'](target, anchor);
-	}
+	fragment[fragment.i ? 'i' : 'm'](target, anchor);
 
 	inject_refs(refs);
 
@@ -104,7 +98,14 @@ export function init(component, options, define, create_fragment, not_equal) {
 
 	if (options.target) {
 		intro.enabled = !!options.intro;
-		mount_component(component, options.target, options.anchor, options.hydrate);
+
+		if (options.hydrate) {
+			component.$$.fragment.l(children(options.target));
+		} else {
+			component.$$.fragment.c();
+		}
+
+		mount_component(component, options.target, options.anchor);
 		flush();
 		intro.enabled = true;
 	}

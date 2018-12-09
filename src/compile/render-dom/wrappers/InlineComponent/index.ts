@@ -348,6 +348,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_handlers}
 
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
+						${name}.$$.fragment.c();
 						@mount_component(${name}, ${updateMountNode}, ${anchor});
 
 						${this.node.handlers.map(handler => deindent`
