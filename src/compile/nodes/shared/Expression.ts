@@ -65,8 +65,9 @@ export default class Expression {
 	node: any;
 	snippet: string;
 	references: Set<string>;
-	dependencies: Set<string>;
-	contextual_dependencies: Set<string>;
+	dependencies: Set<string> = new Set();
+	contextual_dependencies: Set<string> = new Set();
+	dynamic_dependencies: Set<string> = new Set();
 
 	template_scope: TemplateScope;
 	scope: Scope;
@@ -99,17 +100,31 @@ export default class Expression {
 		this.owner = owner;
 		this.is_synthetic = owner.isSynthetic;
 
-		const expression_dependencies = new Set();
-		const expression_contextual_dependencies = new Set();
-
-		let dependencies = expression_dependencies;
-		let contextual_dependencies = expression_contextual_dependencies;
+		const { dependencies, contextual_dependencies, dynamic_dependencies } = this;
 
 		let { map, scope } = createScopes(info);
 		this.scope = scope;
 		this.scope_map = map;
 
 		const expression = this;
+		let function_expression;
+
+		function add_dependency(name) {
+			dependencies.add(name);
+
+			if (!function_expression) {
+				// dynamic_dependencies is used to create `if (changed.foo || ...)`
+				// conditions — it doesn't apply if the dependency is inside a
+				// function, and it only applies if the dependency is writable
+				if (component.instance_script) {
+					if (component.writable_declarations.has(name)) {
+						dynamic_dependencies.add(name);
+					}
+				} else {
+					dynamic_dependencies.add(name);
+				}
+			}
+		}
 
 		// discover dependencies, but don't change the code yet
 		walk(info, {
@@ -119,6 +134,10 @@ export default class Expression {
 
 				if (map.has(node)) {
 					scope = map.get(node);
+				}
+
+				if (!function_expression && /FunctionExpression/.test(node.type)) {
+					function_expression = node;
 				}
 
 				if (isReference(node, parent)) {
@@ -132,21 +151,26 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						template_scope.dependenciesForName.get(name).forEach(dependency => {
-							dependencies.add(dependency);
-						});
+						template_scope.dependenciesForName.get(name).forEach(add_dependency);
 					} else {
-						dependencies.add(name);
+						add_dependency(name);
 						component.template_references.add(name);
 					}
 
 					this.skip();
 				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+
+				if (node === function_expression) {
+					function_expression = null;
+				}
 			}
 		});
-
-		this.dependencies = dependencies;
-		this.contextual_dependencies = contextual_dependencies;
 	}
 
 	getPrecedence() {

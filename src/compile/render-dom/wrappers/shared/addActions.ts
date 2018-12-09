@@ -14,7 +14,7 @@ export default function addActions(
 		let snippet, dependencies;
 		if (expression) {
 			snippet = expression.render();
-			dependencies = expression.dependencies;
+			dependencies = expression.dynamic_dependencies;
 
 			expression.declarations.forEach(declaration => {
 				block.builders.init.addBlock(declaration);
