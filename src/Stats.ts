@@ -97,6 +97,7 @@ export default class Stats {
 		});
 
 		return {
+			props: component.props.map(prop => prop.as),
 			timings,
 			warnings: this.warnings,
 			imports,
