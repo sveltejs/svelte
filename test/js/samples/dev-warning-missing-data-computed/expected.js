@@ -4,15 +4,15 @@ import { SvelteComponentDev, addLoc, append, createElement, createText, detachNo
 const file = undefined;
 
 function create_fragment(component, ctx) {
-	var p, text0_value = Math.max(0, ctx.foo), text0, text1, text2_value = ctx.bar(), text2, current;
+	var p, text0_value = Math.max(0, ctx.foo), text0, text1, text2, current;
 
 	return {
 		c: function create() {
 			p = createElement("p");
 			text0 = createText(text0_value);
 			text1 = createText("\n\t");
-			text2 = createText(text2_value);
-			addLoc(p, file, 8, 0, 77);
+			text2 = createText(ctx.bar);
+			addLoc(p, file, 7, 0, 67);
 		},
 
 		l: function claim(nodes) {
@@ -32,8 +32,8 @@ function create_fragment(component, ctx) {
 				setData(text0, text0_value);
 			}
 
-			if ((changed.bar) && text2_value !== (text2_value = ctx.bar())) {
-				setData(text2, text2_value);
+			if (changed.bar) {
+				setData(text2, ctx.bar);
 			}
 		},
 
@@ -52,17 +52,19 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function define($$self, $$props, $$make_dirty) {
 	let { foo } = $$props;
 
-	function bar() {
-		return foo * 2;
-	}
+	let bar;
 
 	$$self.$$.get = () => ({ foo, bar });
 
 	$$self.$$.set = $$props => {
 		if ('foo' in $$props) foo = $$props.foo;
+	};
+
+	$$self.$$.update = ($$dirty = { foo: 1 }) => {
+		if ($$dirty.foo) { bar = foo * 2; $$make_dirty('bar'); }
 	};
 }
 

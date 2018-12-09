@@ -47,10 +47,9 @@ export default class TitleWrapper extends Wrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { dependencies } = chunk.expression;
 								const snippet = chunk.expression.render();
 
-								dependencies.forEach(d => {
+								chunk.expression.dynamic_dependencies.forEach(d => {
 									allDependencies.add(d);
 								});
 

@@ -11,14 +11,14 @@ export default class Tag extends Wrapper {
 		super(renderer, block, parent, node);
 		this.cannotUseInnerHTML();
 
-		block.addDependencies(node.expression.dependencies);
+		block.addDependencies(node.expression.dynamic_dependencies);
 	}
 
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)
 	) {
-		const { dependencies } = this.node.expression;
+		const dependencies = this.node.expression.dynamic_dependencies;
 		const snippet = this.node.expression.render();
 
 		const value = this.node.shouldCache && block.getUniqueName(`${this.var}_value`);

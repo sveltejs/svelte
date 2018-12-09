@@ -31,7 +31,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.cannotUseInnerHTML();
 
 		if (this.node.expression) {
-			block.addDependencies(this.node.expression.dependencies);
+			block.addDependencies(this.node.expression.dynamic_dependencies);
 		}
 
 		this.node.attributes.forEach(attr => {
@@ -48,12 +48,12 @@ export default class InlineComponentWrapper extends Wrapper {
 				eachBlock.hasBinding = true;
 			}
 
-			block.addDependencies(binding.expression.dependencies);
+			block.addDependencies(binding.expression.dynamic_dependencies);
 		});
 
 		this.node.handlers.forEach(handler => {
 			if (handler.expression) {
-				block.addDependencies(handler.expression.dependencies);
+				block.addDependencies(handler.expression.dynamic_dependencies);
 			}
 		});
 
@@ -214,7 +214,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			updates.push(deindent`
-				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+				if (!${updating} && ${[...binding.expression.dynamic_dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
 					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}
 			`);

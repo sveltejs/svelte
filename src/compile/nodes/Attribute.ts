@@ -33,7 +33,7 @@ export default class Attribute extends Node {
 			this.isSynthetic = false;
 
 			this.expression = new Expression(component, this, scope, info.expression);
-			this.dependencies = this.expression.dependencies;
+			this.dependencies = this.expression.dynamic_dependencies;
 			this.chunks = null;
 
 			this.isDynamic = true; // TODO not necessarily
@@ -54,7 +54,7 @@ export default class Attribute extends Node {
 
 					const expression = new Expression(component, this, scope, node.expression);
 
-					addToSet(this.dependencies, expression.dependencies);
+					addToSet(this.dependencies, expression.dynamic_dependencies);
 					return expression;
 				});
 
