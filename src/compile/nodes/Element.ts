@@ -337,7 +337,7 @@ export default class Element extends Node {
 			}
 
 			if (name === 'slot') {
-				if (attribute.isDynamic) {
+				if (!attribute.isStatic) {
 					component.error(attribute, {
 						code: `invalid-slot-attribute`,
 						message: `slot attribute cannot have a dynamic value`
@@ -425,7 +425,7 @@ export default class Element extends Node {
 
 			if (!attribute) return null;
 
-			if (attribute.isDynamic) {
+			if (!attribute.isStatic) {
 				component.error(attribute, {
 					code: `invalid-type`,
 					message: `'type' attribute cannot be dynamic if input uses two-way binding`
@@ -464,7 +464,7 @@ export default class Element extends Node {
 						(attribute: Attribute) => attribute.name === 'multiple'
 					);
 
-					if (attribute && attribute.isDynamic) {
+					if (attribute && !attribute.isStatic) {
 						component.error(attribute, {
 							code: `dynamic-multiple-attribute`,
 							message: `'multiple' attribute cannot be dynamic if select uses two-way binding`

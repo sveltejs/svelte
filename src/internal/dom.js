@@ -78,6 +78,20 @@ export function addListener(node, event, handler, options) {
 	return () => node.removeEventListener(event, handler, options);
 }
 
+export function preventDefault(fn) {
+	return function(event) {
+		event.preventDefault();
+		return fn.call(this, event);
+	};
+}
+
+export function stopPropagation(fn) {
+	return function(event) {
+		event.stopPropagation();
+		return fn.call(this, event);
+	};
+}
+
 export function setAttribute(node, attribute, value) {
 	if (value == null) node.removeAttribute(attribute);
 	else node.setAttribute(attribute, value);

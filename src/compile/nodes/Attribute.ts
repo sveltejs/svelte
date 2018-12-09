@@ -17,6 +17,7 @@ export default class Attribute extends Node {
 	isSpread: boolean;
 	isTrue: boolean;
 	isDynamic: boolean;
+	isStatic: boolean;
 	isSynthetic: boolean;
 	shouldCache: boolean;
 	expression?: Expression;
@@ -37,12 +38,14 @@ export default class Attribute extends Node {
 			this.chunks = null;
 
 			this.isDynamic = true; // TODO not necessarily
+			this.isStatic = false;
 			this.shouldCache = false; // TODO does this mean anything here?
 		}
 
 		else {
 			this.name = info.name;
 			this.isTrue = info.value === true;
+			this.isStatic = true;
 			this.isSynthetic = info.synthetic;
 
 			this.dependencies = new Set();
@@ -51,6 +54,8 @@ export default class Attribute extends Node {
 				? []
 				: info.value.map(node => {
 					if (node.type === 'Text') return node;
+
+					this.isStatic = false;
 
 					const expression = new Expression(component, this, scope, node.expression);
 

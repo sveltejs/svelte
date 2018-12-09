@@ -7,13 +7,11 @@ export default function addEventHandlers(
 	handlers: EventHandler[]
 ) {
 	handlers.forEach(handler => {
-		const modifiers = [];
-		if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
-		if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
+		let snippet = handler.render();
+		if (handler.modifiers.has('preventDefault')) snippet = `@preventDefault(${snippet})`;
+		if (handler.modifiers.has('stopPropagation')) snippet = `@stopPropagation(${snippet})`;
 
 		const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
-
-		const snippet = handler.render();
 
 		if (opts.length) {
 			const optString = (opts.length === 1 && opts[0] === 'capture')
