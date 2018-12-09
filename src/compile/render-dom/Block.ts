@@ -47,6 +47,8 @@ export default class Block {
 		destroy: CodeBuilder;
 	};
 
+	event_listeners: string[] = [];
+
 	maintainContext: boolean;
 	hasAnimation: boolean;
 	hasIntros: boolean;
@@ -232,6 +234,30 @@ export default class Block {
 
 		if (this.autofocus) {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
+		}
+
+		if (this.event_listeners.length > 0) {
+			this.addVariable('#dispose');
+
+			if (this.event_listeners.length === 1) {
+				this.builders.hydrate.addLine(
+					`#dispose = ${this.event_listeners[0]};`
+				);
+
+				this.builders.destroy.addLine(
+					`#dispose();`
+				)
+			} else {
+				this.builders.hydrate.addBlock(deindent`
+					#dispose = [
+						${this.event_listeners.join(',\n')}
+					];
+				`);
+
+				this.builders.destroy.addLine(
+					`@run_all(#dispose);`
+				);
+			}
 		}
 
 		const properties = new CodeBuilder();

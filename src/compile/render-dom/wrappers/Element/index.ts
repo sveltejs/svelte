@@ -503,12 +503,8 @@ export default class ElementWrapper extends Wrapper {
 						`${resize_listener}.cancel();`
 					);
 				} else {
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${name}", ${callee});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${name}", ${callee});`
+					block.event_listeners.push(
+						`@addListener(${this.var}, "${name}", ${callee})`
 					);
 				}
 			});

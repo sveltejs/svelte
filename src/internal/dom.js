@@ -75,10 +75,7 @@ export function createComment() {
 
 export function addListener(node, event, handler, options) {
 	node.addEventListener(event, handler, options);
-}
-
-export function removeListener(node, event, handler, options) {
-	node.removeEventListener(event, handler, options);
+	return () => node.removeEventListener(event, handler, options);
 }
 
 export function setAttribute(node, attribute, value) {

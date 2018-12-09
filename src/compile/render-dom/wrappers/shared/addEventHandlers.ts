@@ -20,20 +20,12 @@ export default function addEventHandlers(
 				? 'true'
 				: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
 
-			block.builders.hydrate.addLine(
-				`@addListener(${target}, "${handler.name}", ${snippet}, ${optString});`
-			);
-
-			block.builders.destroy.addLine(
-				`@removeListener(${target}, "${handler.name}", ${snippet}, ${optString});`
+			block.event_listeners.push(
+				`@addListener(${target}, "${handler.name}", ${snippet}, ${optString})`
 			);
 		} else {
-			block.builders.hydrate.addLine(
-				`@addListener(${target}, "${handler.name}", ${snippet});`
-			);
-
-			block.builders.destroy.addLine(
-				`@removeListener(${target}, "${handler.name}", ${snippet});`
+			block.event_listeners.push(
+				`@addListener(${target}, "${handler.name}", ${snippet})`
 			);
 		}
 
