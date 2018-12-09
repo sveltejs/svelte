@@ -64,7 +64,9 @@ function define($$self, $$props, $$make_dirty) {
 	};
 
 	$$self.$$.update = ($$dirty = { foo: 1 }) => {
-		if ($$dirty.foo) { bar = foo * 2; $$make_dirty('bar'); }
+		if ($$dirty.foo) {
+			bar = foo * 2; $$make_dirty('bar');
+		}
 	};
 }
 

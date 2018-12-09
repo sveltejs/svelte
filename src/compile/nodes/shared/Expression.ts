@@ -4,12 +4,12 @@ import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
 import { createScopes, Scope } from '../../../utils/annotateWithScopes';
 import { Node } from '../../../interfaces';
-import addToSet from '../../../utils/addToSet';
 import globalWhitelist from '../../../utils/globalWhitelist';
 import deindent from '../../../utils/deindent';
 import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
 import sanitize from '../../../utils/sanitize';
 import TemplateScope from './TemplateScope';
+import getObject from '../../../utils/getObject';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -248,7 +248,7 @@ export default class Expression {
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
 						// TODO handle destructuring assignments
-						const { name } = flattenReference(node.left);
+						const { name } = getObject(node.left);
 						pending_assignments.add(name);
 					}
 				} else {
@@ -296,7 +296,7 @@ export default class Expression {
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
 						if (pending_assignments.size > 0) {
-							const insert = [...pending_assignments].map(name => `$$make_dirty('${name}');`);
+							const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
 							pending_assignments = new Set();
 
 							component.has_reactive_assignments = true;

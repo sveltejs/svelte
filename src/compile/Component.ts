@@ -19,8 +19,9 @@ import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
-import { remove_indentation } from '../utils/remove_indentation';
+import { remove_indentation, add_indentation } from '../utils/indentation';
 import getObject from '../utils/getObject';
+import deindent from '../utils/deindent';
 
 type Meta = {
 	namespace?: string;
@@ -614,34 +615,36 @@ export default class Component {
 
 		coalesced_declarations.forEach(group => {
 			const kind = group[0].kind;
-			let replacement = '';
+			let c = 0;
 
 			let combining = false;
 
 			group.forEach(node => {
-				node.declarations.forEach(({ id, init }) => {
+				node.declarations.forEach(declarator => {
+					const { id, init } = declarator;
+
 					if (id.type === 'Identifier') {
 						const value = init
 							? this.code.slice(id.start, init.end)
 							: this.code.slice(id.start, id.end);
 
 						if (combining) {
-							replacement += `, ${value}`;
+							code.overwrite(c, id.start, ', ');
 						} else {
-							replacement += `${kind} { ${value}`;
+							code.appendLeft(id.start, '{ ');
 							combining = true;
 						}
 					} else {
 						throw new Error('TODO destructured declarations');
 					}
+
+					c = declarator.end;
 				});
 			});
 
 			if (combining) {
-				replacement += ' } = $$props;';
+				code.prependRight(c, ' } = $$props');
 			}
-
-			this.code.overwrite(group[0].start, group[group.length - 1].end, replacement);
 		});
 	}
 
@@ -796,13 +799,18 @@ export default class Component {
 					}
 				});
 
+				add_indentation(this.code, node.body, 2);
+
 				unsorted_reactive_declarations.push({
 					assignees,
 					dependencies,
 					node,
 					snippet: node.body.type === 'BlockStatement'
 						? `[✂${node.body.start}-${node.end}✂]`
-						: `{ [✂${node.body.start}-${node.end}✂] }`
+						: deindent`
+							{
+								[✂${node.body.start}-${node.end}✂]
+							}`
 				});
 			}
 		});

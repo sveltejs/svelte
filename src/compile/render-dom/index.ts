@@ -13,7 +13,7 @@ export default function dom(
 	component: Component,
 	options: CompileOptions
 ) {
-	const { name } = component;
+	const { name, code } = component;
 
 	const renderer = new Renderer(component, options);
 	const { block } = renderer;
@@ -153,18 +153,12 @@ export default function dom(
 		let scope = component.instance_scope;
 		let map = component.instance_scope_map;
 
+		let pending_assignments = new Set();
+
 		walk(component.instance_script.content, {
 			enter: (node, parent) => {
 				if (map.has(node)) {
 					scope = map.get(node);
-				}
-
-				if (node.type === 'AssignmentExpression') {
-					const { name } = getObject(node.left);
-
-					if (scope.findOwner(name) === component.instance_scope) {
-						component.instrument(node, parent, name, false);
-					}
 				}
 			},
 
@@ -172,8 +166,50 @@ export default function dom(
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
+
+				if (node.type === 'AssignmentExpression') {
+					const { name } = getObject(node.left);
+
+					if (scope.findOwner(name) === component.instance_scope) {
+						pending_assignments.add(name);
+						component.has_reactive_assignments = true;
+					}
+				}
+
+				if (pending_assignments.size > 0) {
+					if (node.type === 'ArrowFunctionExpression') {
+						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join(';');
+						pending_assignments = new Set();
+
+						code.prependRight(node.body.start, `{ const $$result = `);
+						code.appendLeft(node.body.end, `; ${insert}; return $$result; }`);
+
+						pending_assignments = new Set();
+					}
+
+					else if (/Statement/.test(node.type)) {
+						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
+
+						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
+							if (node.argument) {
+								code.overwrite(node.start, node.argument.start, `var $$result = `);
+								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
+							} else {
+								code.prependRight(node.start, `${insert}; `);
+							}
+						} else {
+							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
+						}
+
+						pending_assignments = new Set();
+					}
+				}
 			}
 		});
+
+		if (pending_assignments.size > 0) {
+			throw new Error(`TODO this should not happen!`);
+		}
 	}
 
 	const args = ['$$self'];
@@ -237,8 +273,7 @@ export default function dom(
 				${component.reactive_declarations.length > 0 && deindent`
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
 					${component.reactive_declarations.map(d => deindent`
-					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}
-					`)}
+					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}`)}
 				};
 				`}
 
