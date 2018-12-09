@@ -5,9 +5,9 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
 import { walk } from 'estree-walker';
-import flattenReference from '../../utils/flattenReference';
 import stringifyProps from '../../utils/stringifyProps';
 import addToSet from '../../utils/addToSet';
+import getObject from '../../utils/getObject';
 
 export default function dom(
 	component: Component,
@@ -160,7 +160,7 @@ export default function dom(
 				}
 
 				if (node.type === 'AssignmentExpression') {
-					const { name } = flattenReference(node.left);
+					const { name } = getObject(node.left);
 
 					if (scope.findOwner(name) === component.instance_scope) {
 						component.instrument(node, parent, name, false);
