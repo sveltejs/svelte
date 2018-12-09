@@ -148,7 +148,7 @@ export default class WindowWrapper extends Wrapper {
 				${component.options.dev && `component._updatingReadonlyProperty = true;`}
 
 				#component.set({
-					${props.map(prop => `${prop.name}: this.${prop.value}`)}
+					${props.map(prop => `${prop.name}: this.${prop.value},`)}
 				});
 
 				${component.options.dev && `component._updatingReadonlyProperty = false;`}
