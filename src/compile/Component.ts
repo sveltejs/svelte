@@ -883,27 +883,6 @@ export default class Component {
 			message: `'${name}' is not defined`
 		});
 	}
-
-	instrument(node, parent, name, is_event_handler) {
-		// TODO only make values reactive if they're used
-		// in the template
-
-		if (parent.type === 'ArrowFunctionExpression' && node === parent.body) {
-			if (is_event_handler) {
-				this.code.prependRight(node.start, `{ `);
-				this.code.appendLeft(node.end, `; $$make_dirty('${name}'); }`);
-			} else {
-				this.code.prependRight(node.start, `{ const $$result = `);
-				this.code.appendLeft(node.end, `; $$make_dirty('${name}'); return $$result; }`);
-			}
-		}
-
-		else {
-			this.code.appendLeft(node.end, `; $$make_dirty('${name}')`);
-		}
-
-		this.has_reactive_assignments = true;
-	}
 }
 
 function process_meta(component, nodes) {
