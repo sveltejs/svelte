@@ -25,8 +25,8 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
-const sveltePath = process.cwd();
-const internal = path.join(sveltePath, 'internal.js');
+const sveltePath = process.cwd().split('\\').join('/');
+const internal = `${sveltePath}/internal.js`;
 
 describe("runtime", () => {
 	before(() => {
@@ -39,9 +39,7 @@ describe("runtime", () => {
 				compileOptions
 			);
 
-			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
-
-			const code = js.code.replace(/require\("svelte"\)/g, `require(${JSON.stringify(main)})`);
+			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8"), options);
 
 			return module._compile(code, filename);
 		};
