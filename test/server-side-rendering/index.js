@@ -19,7 +19,7 @@ function tryToReadFile(file) {
 	}
 }
 
-const sveltePath = process.cwd();
+const sveltePath = process.cwd().split('\\').join('/');
 
 describe("ssr", () => {
 	before(() => {
