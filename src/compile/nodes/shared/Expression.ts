@@ -2,7 +2,7 @@ import Component from '../../Component';
 import { walk } from 'estree-walker';
 import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
-import { createScopes, Scope } from '../../../utils/annotateWithScopes';
+import { createScopes, Scope, extractNames } from '../../../utils/annotateWithScopes';
 import { Node } from '../../../interfaces';
 import globalWhitelist from '../../../utils/globalWhitelist';
 import deindent from '../../../utils/deindent';
@@ -247,9 +247,15 @@ export default class Expression {
 
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
-						// TODO handle destructuring assignments
-						const { name } = getObject(node.left);
-						pending_assignments.add(name);
+						const names = node.left.type === 'MemberExpression'
+							? [getObject(node.left).name]
+							: extractNames(node.left);
+
+						names.forEach(name => {
+							if (!scope.declarations.has(name)) {
+								pending_assignments.add(name);
+							}
+						});
 					}
 				} else {
 					if (node.type === 'AssignmentExpression') {
