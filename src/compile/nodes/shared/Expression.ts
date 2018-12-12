@@ -256,6 +256,12 @@ export default class Expression {
 								pending_assignments.add(name);
 							}
 						});
+					} else if (node.type === 'UpdateExpression') {
+						const { name } = getObject(node.argument);
+
+						if (!scope.declarations.has(name)) {
+							pending_assignments.add(name);
+						}
 					}
 				} else {
 					if (node.type === 'AssignmentExpression') {

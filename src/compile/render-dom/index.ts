@@ -181,6 +181,15 @@ export default function dom(
 					});
 				}
 
+				else if (node.type === 'UpdateExpression') {
+					const { name } = getObject(node.argument);
+
+					if (scope.findOwner(name) === component.instance_scope) {
+						pending_assignments.add(name);
+						component.has_reactive_assignments = true;
+					}
+				}
+
 				if (pending_assignments.size > 0) {
 					if (node.type === 'ArrowFunctionExpression') {
 						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join(';');
