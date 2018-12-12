@@ -30,7 +30,7 @@ export function createScopes(expression: Node) {
 						scope.declarations.set(name, node);
 					});
 				});
-			} else if (/For(?:In|Of)Statement/.test(node.type)) {
+			} else if (/For(?:In|Of)?Statement/.test(node.type)) {
 				scope = new Scope(scope, true);
 				map.set(node, scope);
 			} else if (node.type === 'BlockStatement') {

@@ -377,6 +377,7 @@ export default class Expression {
 							code.appendLeft(node.end, `; ${insert}`);
 						}
 
+						component.has_reactive_assignments = true;
 						pending_assignments = new Set();
 					}
 				}
