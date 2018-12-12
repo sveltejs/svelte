@@ -8,6 +8,7 @@ import { walk } from 'estree-walker';
 import stringifyProps from '../../utils/stringifyProps';
 import addToSet from '../../utils/addToSet';
 import getObject from '../../utils/getObject';
+import { extractNames } from '../../utils/annotateWithScopes';
 
 export default function dom(
 	component: Component,
@@ -168,12 +169,16 @@ export default function dom(
 				}
 
 				if (node.type === 'AssignmentExpression') {
-					const { name } = getObject(node.left);
+					const names = node.left.type === 'MemberExpression'
+						? [getObject(node.left).name]
+						: extractNames(node.left);
 
-					if (scope.findOwner(name) === component.instance_scope) {
-						pending_assignments.add(name);
-						component.has_reactive_assignments = true;
-					}
+					names.forEach(name => {
+						if (scope.findOwner(name) === component.instance_scope) {
+							pending_assignments.add(name);
+							component.has_reactive_assignments = true;
+						}
+					});
 				}
 
 				if (pending_assignments.size > 0) {
