@@ -41,7 +41,7 @@ describe("runtime", () => {
 
 			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
 
-			const code = js.code.replace(/require\("svelte"\)/g, `require("${main}")`);
+			const code = js.code.replace(/require\("svelte"\)/g, `require(${JSON.stringify(main)})`);
 
 			return module._compile(code, filename);
 		};
