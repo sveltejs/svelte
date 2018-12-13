@@ -38,17 +38,6 @@ childKeys.EachBlock = childKeys.IfBlock = ['children', 'else'];
 childKeys.Attribute = ['value'];
 childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
-function get_context(script) {
-	const context = script.attributes.find(attribute => attribute.name === 'context');
-	if (!context) return 'default';
-
-	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-		throw new Error(`context attribute must be static`);
-	}
-
-	return context.value[0].data;
-}
-
 export default class Component {
 	stats: Stats;
 
@@ -132,8 +121,25 @@ export default class Component {
 		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
 
-		this.module_script = ast.js.find(script => get_context(script) === 'module');
-		this.instance_script = ast.js.find(script => get_context(script) === 'default');
+		const module_scripts = ast.js.filter(script => this.get_context(script) === 'module');
+		const instance_scripts = ast.js.filter(script => this.get_context(script) === 'default');
+
+		if (module_scripts.length > 1) {
+			this.error(module_scripts[1], {
+				code: `invalid-script`,
+				message: `A component can only have one <script context="module"> element`
+			});
+		}
+
+		if (instance_scripts.length > 1) {
+			this.error(instance_scripts[1], {
+				code: `invalid-script`,
+				message: `A component can only have one instance-level <script> element`
+			});
+		}
+
+		this.module_script = module_scripts[0];
+		this.instance_script = instance_scripts[0];
 
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
@@ -883,6 +889,29 @@ export default class Component {
 			code: 'missing-declaration',
 			message: `'${name}' is not defined`
 		});
+	}
+
+	get_context(script) {
+		const context = script.attributes.find(attribute => attribute.name === 'context');
+		if (!context) return 'default';
+
+		if (context.value.length !== 1 || context.value[0].type !== 'Text') {
+			this.error(script, {
+				code: 'invalid-script',
+				message: `context attribute must be static`
+			});
+		}
+
+		const value = context.value[0].data;
+
+		if (value !== 'module') {
+			this.error(context, {
+				code: `invalid-script`,
+				message: `If the context attribute is supplied, its value must be "module"`
+			});
+		}
+
+		return value;
 	}
 }
 
