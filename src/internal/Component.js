@@ -87,12 +87,15 @@ export function init(component, options, define, create_fragment, not_equal) {
 		binding_groups: []
 	};
 
+	let ready = false;
+
 	define(component, options.props || {}, key => {
-		make_dirty(component, key);
+		if (ready) make_dirty(component, key);
 		if (component.$$.bound[key]) component.$$.bound[key](component.$$.get()[key]);
 	});
 
 	component.$$.update();
+	ready = true;
 	run_all(component.$$.before_render);
 	component.$$.fragment = create_fragment(component, component.$$.get());
 
