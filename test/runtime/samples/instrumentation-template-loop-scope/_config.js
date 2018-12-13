@@ -1,8 +1,6 @@
 export default {
 	html: `
 		<button>foo</button>
-		<button>bar</button>
-
 		<p>x: 0</p>
 	`,
 
@@ -13,8 +11,6 @@ export default {
 		await buttons[0].dispatchEvent(click);
 		assert.htmlEqual(target.innerHTML, `
 			<button>foo</button>
-			<button>bar</button>
-
 			<p>x: 42</p>
 		`);
 	}
