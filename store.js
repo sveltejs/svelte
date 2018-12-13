@@ -24,7 +24,7 @@ export function readable(start, value) {
 				if (index !== -1) subscribers.splice(index, 1);
 
 				if (subscribers.length === 0) {
-					stop();
+					stop && stop();
 					stop = null;
 				}
 			};
