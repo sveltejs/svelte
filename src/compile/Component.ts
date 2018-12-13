@@ -848,6 +848,7 @@ export default class Component {
 			}
 
 			declaration.dependencies.forEach(name => {
+				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
 				if (earlier_declarations) earlier_declarations.forEach(add_declaration);
 			});
