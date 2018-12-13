@@ -270,13 +270,16 @@ export default function dom(
 		addToSet(all_reactive_dependencies, d.dependencies);
 	});
 
+	const user_code = component.javascript || (
+		component.ast.js.length === 0 && filtered_props.length > 0
+			? `let { ${filtered_props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
+			: null
+	);
+
 	if (has_definition) {
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
-				${component.javascript || (
-					filtered_props.length > 0 &&
-					`let { ${filtered_props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
-				)}
+				${user_code}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 

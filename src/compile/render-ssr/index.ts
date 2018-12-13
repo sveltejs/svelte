@@ -22,18 +22,18 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	let setup;
+	let user_code;
 
 	if (component.javascript) {
-		setup = component.javascript;
-	} else if (component.props.length > 0) {
+		user_code = component.javascript;
+	} else if (component.ast.js.length === 0 && component.props.length > 0) {
 		const props = component.props.map(prop => {
 			return prop.as === prop.name
 				? prop.as
 				: `${prop.as}: ${prop.name}`
 		});
 
-		setup = `let { ${props.join(', ')} } = $$props;`
+		user_code = `let { ${props.join(', ')} } = $$props;`
 	}
 
 	// TODO only do this for props with a default value
@@ -64,7 +64,7 @@ export default function ssr(
 			return \`${renderer.code}\`;`;
 
 	const blocks = [
-		setup,
+		user_code,
 		parent_bindings.join('\n'),
 		css.code && `$$result.css.add(#css);`,
 		main
