@@ -759,7 +759,7 @@ export default class Component {
 		const unsorted_reactive_declarations = [];
 
 		this.instance_script.content.body.forEach(node => {
-			if (node.type === 'LabeledStatement') {
+			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
 				const assignees = new Set();
