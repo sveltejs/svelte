@@ -141,7 +141,7 @@ export default class Expression {
 				}
 
 				if (isReference(node, parent)) {
-					const { name } = flattenReference(node);
+					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
 					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
@@ -155,6 +155,8 @@ export default class Expression {
 					} else {
 						add_dependency(name);
 						component.template_references.add(name);
+
+						component.warn_if_undefined(nodes[0], template_scope, true);
 					}
 
 					this.skip();

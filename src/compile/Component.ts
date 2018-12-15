@@ -22,6 +22,7 @@ import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
 import getObject from '../utils/getObject';
 import deindent from '../utils/deindent';
+import globalWhitelist from '../utils/globalWhitelist';
 
 type Meta = {
 	namespace?: string;
@@ -879,11 +880,14 @@ export default class Component {
 		return `ctx.${name}`;
 	}
 
-	warn_if_undefined(node, template_scope: TemplateScope) {
+	warn_if_undefined(node, template_scope: TemplateScope, allow_implicit?: boolean) {
 		const { name } = node;
-		if (this.module_scope && this.module_scope.declarations.has(name)) return;
+
+		if (allow_implicit && !this.instance_script) return;
 		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
+		if (this.module_scope && this.module_scope.declarations.has(name)) return;
 		if (template_scope.names.has(name)) return;
+		if (globalWhitelist.has(name)) return;
 
 		this.warn(node, {
 			code: 'missing-declaration',

@@ -21,5 +21,18 @@
 		]
 	},
 	"css": [],
-	"js": []
+	"js": [
+		{
+			"start": 0,
+			"end": 43,
+			"attributes": [],
+			"content": {
+				"type": "Program",
+				"start": 8,
+				"end": 34,
+				"body": [],
+				"sourceType": "module"
+			}
+		}
+	]
 }
