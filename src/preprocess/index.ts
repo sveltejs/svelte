@@ -1,4 +1,5 @@
 import { SourceMap } from 'magic-string';
+import replaceAsync from '../utils/replaceAsync';
 
 export interface PreprocessOptions {
 	markup?: (options: {
@@ -16,6 +17,11 @@ export type Preprocessor = (options: {
 	filename?: string
 }) => { code: string, map?: SourceMap | string };
 
+interface Processed {
+	code: string;
+	map?: SourceMap | string;
+}
+
 function parseAttributeValue(value: string) {
 	return /^['"]/.test(value) ?
 		value.slice(1, -1) :
@@ -31,60 +37,32 @@ function parseAttributes(str: string) {
 	return attrs;
 }
 
-async function replaceTagContents(
-	source,
-	type: 'script' | 'style',
-	preprocessor: Preprocessor,
-	options: PreprocessOptions
-) {
-	const exp = new RegExp(`<${type}([\\S\\s]*?)>([\\S\\s]*?)<\\/${type}>`, 'ig');
-	const match = exp.exec(source);
-
-	if (match) {
-		const attributes: Record<string, string | boolean> = parseAttributes(match[1]);
-		const content: string = match[2];
-		const processed: { code: string, map?: SourceMap | string } = await preprocessor({
-			content,
-			attributes,
-			filename : options.filename
-		});
-
-		if (processed && processed.code) {
-			return (
-				source.slice(0, match.index) +
-				`<${type}>${processed.code}</${type}>` +
-				source.slice(match.index + match[0].length)
-			);
-		}
-	}
-
-	return source;
-}
-
 export default async function preprocess(
 	source: string,
 	options: PreprocessOptions
 ) {
-	const { markup, style, script } = options;
-
-	if (!!markup) {
-		const processed: {
-			code: string,
-			map?: SourceMap | string
-		} = await markup({
+	if (options.markup) {
+		const processed: Processed = await options.markup({
 			content: source,
-			filename: options.filename
+			filename: options.filename,
 		});
-
-		source = processed.code;
+		source = processed ? processed.code : source;
 	}
-
-	if (!!style) {
-		source = await replaceTagContents(source, 'style', style, options);
-	}
-
-	if (!!script) {
-		source = await replaceTagContents(source, 'script', script, options);
+	if (options.style || options.script) {
+		source = await replaceAsync(
+			source,
+			/<(script|style)([^]*?)>([^]*?)<\/\1>/gi,
+			async (match, type, attributes, content) => {
+				const processed: Processed =
+					type in options &&
+					(await options[type]({
+						content,
+						attributes: parseAttributes(attributes),
+						filename: options.filename,
+					}));
+				return processed ? `<${type}>${processed.code}</${type}>` : match;
+			}
+		);
 	}
 
 	return {
