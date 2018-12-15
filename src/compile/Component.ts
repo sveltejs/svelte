@@ -857,12 +857,14 @@ export default class Component {
 			declaration.dependencies.forEach(name => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
-				if (earlier_declarations) earlier_declarations.forEach(add_declaration);
+				if (earlier_declarations) earlier_declarations.forEach(declaration => {
+					if (this.reactive_declarations.indexOf(declaration) === -1) {
+						add_declaration(declaration);
+					}
+				});
 			});
 
-			if (this.reactive_declarations.indexOf(declaration) === -1) {
-				this.reactive_declarations.push(declaration);
-			}
+			this.reactive_declarations.push(declaration);
 		};
 
 		unsorted_reactive_declarations.forEach(declaration => {
