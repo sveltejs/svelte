@@ -8,9 +8,7 @@ function create_main_fragment(component, ctx) {
 		if (window_updating) return;
 		window_updating = true;
 
-		component.set({
-			y: this.pageYOffset
-		});
+		component.set({ y: this.pageYOffset });
 		window_updating = false;
 	}
 	window.addEventListener("scroll", onwindowscroll);
