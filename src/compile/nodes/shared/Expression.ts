@@ -10,6 +10,7 @@ import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
 import sanitize from '../../../utils/sanitize';
 import TemplateScope from './TemplateScope';
 import getObject from '../../../utils/getObject';
+import { nodes_match } from '../../../utils/nodes_match';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -253,11 +254,21 @@ export default class Expression {
 							? [getObject(node.left).name]
 							: extractNames(node.left);
 
-						names.forEach(name => {
-							if (!scope.declarations.has(name)) {
-								pending_assignments.add(name);
-							}
-						});
+						if (node.operator === '=' && nodes_match(node.left, node.right)) {
+							const dirty = names.filter(name => {
+								return !scope.declarations.has(name);
+							});
+
+							if (dirty.length) component.has_reactive_assignments = true;
+
+							code.overwrite(node.start, node.end, dirty.map(n => `$$make_dirty('${n}')`).join('; '));
+						} else {
+							names.forEach(name => {
+								if (!scope.declarations.has(name)) {
+									pending_assignments.add(name);
+								}
+							});
+						}
 					} else if (node.type === 'UpdateExpression') {
 						const { name } = getObject(node.argument);
 
