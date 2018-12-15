@@ -276,7 +276,7 @@ export default class Expression {
 				}
 			},
 
-			leave(node: Node) {
+			leave(node: Node, parent: Node) {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
@@ -373,6 +373,9 @@ export default class Expression {
 							} else {
 								code.prependRight(node.start, `${insert}; `);
 							}
+						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
+							code.prependRight(node.start, '{ ');
+							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert}; }`);
 						} else {
 							code.appendLeft(node.end, `; ${insert}`);
 						}
