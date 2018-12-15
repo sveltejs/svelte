@@ -390,6 +390,15 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
+		if (value[0]) {
+			if (value.length > 1 || value[0].type === 'Text') {
+				parser.error({
+					code: `invalid-directive-value`,
+					message: `Directive value must be a JavaScript expression enclosed in curly braces`
+				}, value[0].start);
+			}
+		}
+
 		const directive = {
 			start,
 			end,
