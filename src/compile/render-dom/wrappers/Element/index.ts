@@ -529,7 +529,7 @@ export default class ElementWrapper extends Wrapper {
 				renderer.hasComplexBindings = true;
 
 				block.builders.hydrate.addLine(
-					`#component.root._beforecreate.push(${handler});`
+					`#component.root._aftercreate.push(${handler});`
 				);
 			}
 		});

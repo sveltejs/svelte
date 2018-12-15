@@ -12,7 +12,7 @@ function create_main_fragment(component, ctx) {
 		c() {
 			div = createElement("div");
 			div.textContent = "some content";
-			component.root._beforecreate.push(div_resize_handler);
+			component.root._aftercreate.push(div_resize_handler);
 		},
 
 		m(target, anchor) {
