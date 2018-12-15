@@ -3,6 +3,7 @@ import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Wrapper from './shared/Wrapper';
 import deindent from '../../../utils/deindent';
+import stringifyProps from '../../../utils/stringifyProps';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -147,9 +148,7 @@ export default class WindowWrapper extends Wrapper {
 				`}
 				${component.options.dev && `component._updatingReadonlyProperty = true;`}
 
-				#component.set({
-					${props.map(prop => `${prop.name}: this.${prop.value},`)}
-				});
+				#component.set(${stringifyProps(props.map(prop => `${prop.name}: this.${prop.value}`))});
 
 				${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				${event === 'scroll' && `${lock} = false;`}
