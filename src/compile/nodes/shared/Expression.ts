@@ -364,20 +364,26 @@ export default class Expression {
 
 				if (/Statement/.test(node.type)) {
 					if (pending_assignments.size > 0) {
-						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
+						const has_semi = code.original[node.end - 1] === ';';
+
+						const insert = (
+							(has_semi ? ' ' : '; ') +
+							[...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ')
+						);
+
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
 								code.overwrite(node.start, node.argument.start, `var $$result = `);
-								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
+								code.appendLeft(node.argument.end, `${insert}; return $$result`);
 							} else {
 								code.prependRight(node.start, `${insert}; `);
 							}
 						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
 							code.prependRight(node.start, '{ ');
-							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert}; }`);
+							code.appendLeft(node.end, `${insert}; }`);
 						} else {
-							code.appendLeft(node.end, `; ${insert}`);
+							code.appendLeft(node.end, `${insert};`);
 						}
 
 						component.has_reactive_assignments = true;
