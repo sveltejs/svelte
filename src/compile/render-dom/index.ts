@@ -9,6 +9,7 @@ import stringifyProps from '../../utils/stringifyProps';
 import addToSet from '../../utils/addToSet';
 import getObject from '../../utils/getObject';
 import { extractNames } from '../../utils/annotateWithScopes';
+import { nodes_match } from '../../utils/nodes_match';
 
 export default function dom(
 	component: Component,
@@ -173,12 +174,22 @@ export default function dom(
 						? [getObject(node.left).name]
 						: extractNames(node.left);
 
-					names.forEach(name => {
-						if (scope.findOwner(name) === component.instance_scope) {
-							pending_assignments.add(name);
-							component.has_reactive_assignments = true;
-						}
-					});
+					if (node.operator === '=' && nodes_match(node.left, node.right)) {
+						const dirty = names.filter(name => {
+							return scope.findOwner(name) === component.instance_scope;
+						});
+
+						if (dirty.length) component.has_reactive_assignments = true;
+
+						code.overwrite(node.start, node.end, dirty.map(n => `$$make_dirty('${n}')`).join('; '));
+					} else {
+						names.forEach(name => {
+							if (scope.findOwner(name) === component.instance_scope) {
+								pending_assignments.add(name);
+								component.has_reactive_assignments = true;
+							}
+						});
+					}
 				}
 
 				else if (node.type === 'UpdateExpression') {
