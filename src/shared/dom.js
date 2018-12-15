@@ -101,7 +101,7 @@ export function setAttributes(node, attributes) {
 export function setCustomElementData(node, prop, value) {
 	if (prop in node) {
 		node[prop] = value;
-	} else if (value) {
+	} else if (value != null) {
 		setAttribute(node, prop, value);
 	} else {
 		node.removeAttribute(prop);
