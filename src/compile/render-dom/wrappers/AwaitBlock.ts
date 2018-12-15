@@ -174,9 +174,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		block.builders.mount.addBlock(deindent`
 			${info}.block.${hasTransitions ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
-			if (${info}.anchor == null) {
-				${info}.anchor = ${anchor};
-			}
+			${info}.anchor = ${anchor};
 		`);
 
 		const conditions = [];
