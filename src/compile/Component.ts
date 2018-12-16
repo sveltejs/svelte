@@ -882,7 +882,12 @@ export default class Component {
 	}
 
 	warn_if_undefined(node, template_scope: TemplateScope, allow_implicit?: boolean) {
-		const { name } = node;
+		let { name } = node;
+
+		if (allow_implicit && name[0] === '$') {
+			name = name.slice(1);
+			this.has_reactive_assignments = true;
+		}
 
 		if (allow_implicit && !this.instance_script) return;
 		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;

@@ -118,7 +118,7 @@ export default class Expression {
 				// conditions — it doesn't apply if the dependency is inside a
 				// function, and it only applies if the dependency is writable
 				if (component.instance_script) {
-					if (component.writable_declarations.has(name)) {
+					if (component.writable_declarations.has(name) || name[0] === '$') {
 						dynamic_dependencies.add(name);
 					}
 				} else {
