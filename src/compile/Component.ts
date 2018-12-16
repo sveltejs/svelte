@@ -428,6 +428,13 @@ export default class Component {
 				imports.push(node);
 
 				node.specifiers.forEach((specifier: Node) => {
+					if (specifier.local.name[0] === '$') {
+						this.error(specifier.local, {
+							code: 'illegal-declaration',
+							message: `The $ prefix is reserved, and cannot be used for variable and import names`
+						});
+					}
+
 					this.userVars.add(specifier.local.name);
 					this.imported_declarations.add(specifier.local.name);
 				});
@@ -481,7 +488,14 @@ export default class Component {
 		let { scope } = createScopes(script.content);
 		this.module_scope = scope;
 
-		// TODO unindent
+		scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				this.error(node, {
+					code: 'illegal-declaration',
+					message: `The $ prefix is reserved, and cannot be used for variable and import names`
+				});
+			}
+		});
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
 		remove_indentation(this.code, script.content);
@@ -497,6 +511,15 @@ export default class Component {
 		let { scope: instance_scope, map, globals } = createScopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
+
+		instance_scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				this.error(node, {
+					code: 'illegal-declaration',
+					message: `The $ prefix is reserved, and cannot be used for variable and import names`
+				});
+			}
+		});
 
 		instance_scope.declarations.forEach((node, name) => {
 			this.userVars.add(name);
