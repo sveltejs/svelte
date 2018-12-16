@@ -17,6 +17,7 @@ prog
 	.option('--no-css', `Don't include CSS (useful with SSR)`)
 	.option('--immutable', 'Support immutable data structures')
 	.option('--shared', 'Don\'t include shared helpers')
+	.option('--customElement', 'Generate a custom element')
 
 	.example('compile App.html > App.js')
 	.example('compile src -o dest')
