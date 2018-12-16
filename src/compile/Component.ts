@@ -813,10 +813,19 @@ export default class Component {
 							assignees.add(getObject(node.argument).name);
 							this.skip();
 						} else if (isReference(node, parent)) {
-							const { name } = getObject(node);
+							const object = getObject(node);
+							const { name } = object;
+
 							if (component.declarations.indexOf(name) !== -1) {
 								dependencies.add(name);
+							} else if (name[0] === '$') {
+								component.warn_if_undefined(object, null);
+
+								// cheeky hack
+								component.template_references.add(name);
+								dependencies.add(name);
 							}
+
 							this.skip();
 						}
 					},
@@ -907,7 +916,7 @@ export default class Component {
 	warn_if_undefined(node, template_scope: TemplateScope, allow_implicit?: boolean) {
 		let { name } = node;
 
-		if (allow_implicit && name[0] === '$') {
+		if (name[0] === '$') {
 			name = name.slice(1);
 			this.has_reactive_assignments = true;
 		}
@@ -915,7 +924,7 @@ export default class Component {
 		if (allow_implicit && !this.instance_script) return;
 		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
 		if (this.module_scope && this.module_scope.declarations.has(name)) return;
-		if (template_scope.names.has(name)) return;
+		if (template_scope && template_scope.names.has(name)) return;
 		if (globalWhitelist.has(name)) return;
 
 		this.warn(node, {
