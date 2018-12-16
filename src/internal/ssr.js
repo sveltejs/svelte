@@ -98,3 +98,9 @@ export function create_ssr_component($$render) {
 		$$render
 	};
 }
+
+export function get_store_value(store) {
+	let value;
+	store.subscribe(_ => value = _)();
+	return value;
+}
