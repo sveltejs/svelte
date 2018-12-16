@@ -1,14 +1,15 @@
 export default {
-	data: {
+	props: {
 		myClass: 'one two'
 	},
+
 	html: `<div class="one two three"></div>`,
 
-	test ( assert, component, target, window ) {
-		component.set({ myClass: 'one' });
+	test({ assert, component, target, window }) {
+		component.myClass = 'one';
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<div class="one three"></div>
-		` );
+		`);
 	}
 };

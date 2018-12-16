@@ -1,21 +1,11 @@
-<Widget bind:value='deep.name'/>
-
-<p>{deep.name}</p>
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		data () {
-			return {
-				deep: {
-					name: 'foo'
-				}
-			};
-		},
-
-		components: {
-			Widget
-		}
+	export let deep = {
+		name: 'foo'
 	};
 </script>
+
+<Widget bind:value={deep.name}/>
+
+<p>{deep.name}</p>

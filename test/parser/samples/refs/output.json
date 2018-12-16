@@ -14,13 +14,15 @@
 						"start": 8,
 						"end": 15,
 						"type": "Ref",
-						"name": "foo"
+						"name": "foo",
+						"modifiers": [],
+						"expression": null
 					}
 				],
 				"children": []
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

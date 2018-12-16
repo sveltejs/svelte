@@ -1,5 +1,5 @@
-import assert from 'assert';
-import fs from 'fs';
+import * as assert from 'assert';
+import * as fs from 'fs';
 import { svelte, tryToLoadJson } from '../helpers.js';
 
 describe('parse', () => {
@@ -23,13 +23,15 @@ describe('parse', () => {
 			const expectedError = tryToLoadJson(`test/parser/samples/${dir}/error.json`);
 
 			try {
-				const actual = svelte.parse(input, options);
+				const { ast } = svelte.compile(input, Object.assign(options, {
+					generate: false
+				}));
 
-				fs.writeFileSync(`test/parser/samples/${dir}/_actual.json`, JSON.stringify(actual, null, '\t'));
+				fs.writeFileSync(`test/parser/samples/${dir}/_actual.json`, JSON.stringify(ast, null, '\t'));
 
-				assert.deepEqual(actual.html, expectedOutput.html);
-				assert.deepEqual(actual.css, expectedOutput.css);
-				assert.deepEqual(actual.js, expectedOutput.js);
+				assert.deepEqual(ast.html, expectedOutput.html);
+				assert.deepEqual(ast.css, expectedOutput.css);
+				assert.deepEqual(ast.js, expectedOutput.js);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
@@ -46,34 +48,5 @@ describe('parse', () => {
 				}
 			}
 		});
-	});
-
-	// TODO remove in v3
-	it('handles errors with options.onerror', () => {
-		let errored = false;
-
-		svelte.compile(`<h1>unclosed`, {
-			onerror(err) {
-				errored = true;
-				assert.equal(err.message, `<h1> was left open`);
-			}
-		});
-
-		assert.ok(errored);
-	});
-
-	// TODO remove in v3
-	it('throws without options.onerror', () => {
-		assert.throws(() => {
-			svelte.compile(`<h1>unclosed`);
-		}, /<h1> was left open/);
-	});
-
-	it('includes AST in svelte.compile output', () => {
-		const source = fs.readFileSync(`test/parser/samples/attribute-dynamic/input.html`, 'utf-8');
-
-		const { ast } = svelte.compile(source);
-		const parsed = svelte.parse(source);
-		assert.deepEqual(ast, parsed);
 	});
 });

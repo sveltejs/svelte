@@ -1,9 +1,12 @@
-<script>
-	export default {
-		tag: 'my-app',
+<svelte:meta tag="my-app"/>
 
-		oncreate() {
-			this.wasCreated = true;
-		}
-	};
+<script>
+	import { onMount } from 'svelte';
+
+	export let wasCreated;
+
+	onMount(() => {
+		wasCreated = true;
+	});
 </script>
+

@@ -1,13 +1,7 @@
-<span>{foo}</span>
-
 <script>
 	import { get } from './get.js';
 
-	export default {
-		data () {
-			return {
-				foo: get()
-			};
-		}
-	};
+	export let foo = get();
 </script>
+
+<span>{foo}</span>

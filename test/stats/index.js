@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import assert from 'assert';
+import * as assert from 'assert';
 import { svelte, loadConfig, tryToLoadJson } from '../helpers.js';
 
 describe('stats', () => {
@@ -30,14 +30,13 @@ describe('stats', () => {
 
 			try {
 				result = svelte.compile(input, config.options);
+				config.test(assert, result.stats);
+
+				if (result.stats.warnings.length || expectedWarnings.length) {
+					// TODO check warnings are added to stats.warnings
+				}
 			} catch (e) {
 				error = e;
-			}
-
-			config.test(assert, result.stats);
-
-			if (result.stats.warnings.length || expectedWarnings.length) {
-				// TODO check warnings are added to stats.warnings
 			}
 
 			if (error || expectedError) {

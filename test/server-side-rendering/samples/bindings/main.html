@@ -1,8 +1,5 @@
-<input bind:value=foo >
- <script>
-	export default {
-		data() {
-			return { foo: 'bar' };
-		}
-	};
+<script>
+	export let foo = 'bar';
 </script>
+
+<input bind:value={foo} >

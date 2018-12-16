@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		titles: [{ name: 'b' }, { name: 'c' }]
 	},
 
@@ -8,17 +8,13 @@ export default {
 		<p>c</p>
 	`,
 
-	test (assert, component, target) {
-		component.set({
-			titles: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
-		});
+	test({ assert, component, target }) {
+		component.titles = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>a</p>
 			<p>b</p>
 			<p>c</p>
 		`);
-
-		component.destroy();
 	}
 };

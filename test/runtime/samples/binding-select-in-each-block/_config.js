@@ -13,11 +13,11 @@ export default {
 		</select>
 	`,
 
-	data: {
+	props: {
 		items: [{ value: 'hullo' }, { value: 'world' }]
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const selects = [...target.querySelectorAll('select')];
 
 		const change = new window.Event('change');
@@ -25,7 +25,7 @@ export default {
 		selects[1].options[0].selected = true;
 		selects[1].dispatchEvent(change);
 
-		assert.deepEqual(component.get().items, [
+		assert.deepEqual(component.items, [
 			{ value: 'hullo' }, { value: 'hullo' }
 		]);
 	}

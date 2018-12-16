@@ -1,13 +1,15 @@
+import { snip } from '../utils';
+
 export default function(node, renderer, options) {
-	const { snippet } = node.expression;
+	const snippet = snip(node.expression);
 
-	const props = node.contexts.map(prop => `${prop.key.name}: item${prop.tail}`);
+	const { start, end } = node.context_node;
 
-	const getContext = node.index
-		? `(item, i) => Object.assign({}, ctx, { ${props.join(', ')}, ${node.index}: i })`
-		: `item => Object.assign({}, ctx, { ${props.join(', ')} })`;
+	const ctx = node.index
+		? `([✂${start}-${end}✂], ${node.index})`
+		: `([✂${start}-${end}✂])`
 
-	const open = `\${ ${node.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${getContext}, ctx => \``;
+	const open = `\${${node.else ? `${snippet}.length ? ` : ''}@each(${snippet}, ${ctx} => \``;
 	renderer.append(open);
 
 	renderer.render(node.children, options);

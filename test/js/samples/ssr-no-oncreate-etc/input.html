@@ -1,27 +1,25 @@
+<script context="module">
+	export function preload(input) {
+		return output;
+	}
+</script>
+
 <script>
-	export default {
-		oncreate() {
-			console.log('oncreate');
-		},
+	import { onDestroy, onMount } from 'svelte';
 
-		ondestroy() {
-			console.log('ondestroy');
-		},
+	onMount(() => {
+		console.log('onMount');
+	});
 
-		methods: {
-			foo() {
-				console.log('foo');
-			}
-		},
+	onDestroy(() => {
+		console.log('onDestroy');
+	});
 
-		events: {
-			swipe(node, callback) {
-				// TODO implement
-			}
-		},
+	function foo() {
+		console.log('foo');
+	}
 
-		preload(input) {
-			return output;
-		}
-	};
+	function swipe(node, callback) {
+		// TODO implement
+	}
 </script>

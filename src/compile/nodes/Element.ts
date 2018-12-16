@@ -9,10 +9,10 @@ import Animation from './Animation';
 import Action from './Action';
 import Class from './Class';
 import Text from './Text';
-import * as namespaces from '../../utils/namespaces';
+import { namespaces } from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
-import fuzzymatch from '../validate/utils/fuzzymatch';
+import fuzzymatch from '../../utils/fuzzymatch';
 import Ref from './Ref';
 import list from '../../utils/list';
 
@@ -77,14 +77,14 @@ export default class Element extends Node {
 	type: 'Element';
 	name: string;
 	scope: any; // TODO
-	attributes: Attribute[];
-	actions: Action[];
-	bindings: Binding[];
-	classes: Class[];
-	handlers: EventHandler[];
-	intro?: Transition;
-	outro?: Transition;
-	animation?: Animation;
+	attributes: Attribute[] = [];
+	actions: Action[] = [];
+	bindings: Binding[] = [];
+	classes: Class[] = [];
+	handlers: EventHandler[] = [];
+	intro?: Transition = null;
+	outro?: Transition = null;
+	animation?: Animation = null;
 	children: Node[];
 
 	ref: Ref;
@@ -106,16 +106,6 @@ export default class Element extends Node {
 				message: `<${this.name}> is an SVG element – did you forget to add { namespace: 'svg' } ?`
 			});
 		}
-
-		this.attributes = [];
-		this.actions = [];
-		this.bindings = [];
-		this.classes = [];
-		this.handlers = [];
-
-		this.intro = null;
-		this.outro = null;
-		this.animation = null;
 
 		if (this.name === 'textarea') {
 			if (info.children.length > 0) {
@@ -347,7 +337,7 @@ export default class Element extends Node {
 			}
 
 			if (name === 'slot') {
-				if (attribute.isDynamic) {
+				if (!attribute.isStatic) {
 					component.error(attribute, {
 						code: `invalid-slot-attribute`,
 						message: `slot attribute cannot have a dynamic value`
@@ -435,7 +425,7 @@ export default class Element extends Node {
 
 			if (!attribute) return null;
 
-			if (attribute.isDynamic) {
+			if (!attribute.isStatic) {
 				component.error(attribute, {
 					code: `invalid-type`,
 					message: `'type' attribute cannot be dynamic if input uses two-way binding`
@@ -474,7 +464,7 @@ export default class Element extends Node {
 						(attribute: Attribute) => attribute.name === 'multiple'
 					);
 
-					if (attribute && attribute.isDynamic) {
+					if (attribute && !attribute.isStatic) {
 						component.error(attribute, {
 							code: `dynamic-multiple-attribute`,
 							message: `'multiple' attribute cannot be dynamic if select uses two-way binding`
@@ -658,10 +648,10 @@ export default class Element extends Node {
 		const slot = this.attributes.find(attribute => attribute.name === 'slot');
 		if (slot) {
 			const prop = quotePropIfNecessary(slot.chunks[0].data);
-			return `@append(${name}._slotted${prop}, ${this.var});`;
+			return `@append(${name}.$$.slotted${prop}, ${this.var});`;
 		}
 
-		return `@append(${name}._slotted.default, ${this.var});`;
+		return `@append(${name}.$$.slotted.default, ${this.var});`;
 	}
 
 	addCssClass(className = this.component.stylesheet.id) {

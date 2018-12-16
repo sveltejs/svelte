@@ -7,10 +7,10 @@ export default {
 
 	preserveIdentifiers: true,
 
-	test(assert, component, target) {
-		const { tagList } = component.get();
+	test({ assert, component, target }) {
+		const { tagList } = component;
 		tagList.push('two');
-		component.set({ tagList });
+		component.tagList = tagList;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>

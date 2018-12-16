@@ -1,3 +1,9 @@
+<script>
+	import Two from './Two.html';
+
+	export let message;
+</script>
+
 <div>green: {message}</div>
 
 <!-- Two styles should *not* be included -->
@@ -8,11 +14,3 @@
 		color: green;
 	}
 </style>
-
-<script>
-	import Two from './Two.html';
-
-	export default {
-		components: { Two }
-	};
-</script>

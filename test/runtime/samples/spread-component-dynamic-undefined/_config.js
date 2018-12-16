@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		props: {
 			a: 1,
 		},
@@ -7,12 +7,10 @@ export default {
 
 	html: ``,
 
-	test(assert, component, target) {
-		component.set({
-			props: {
-				a: 2,
-			},
-		});
+	test({ assert, component, target }) {
+		component.props = {
+			a: 2,
+		};
 
 		assert.htmlEqual(target.innerHTML, ``);
 	},

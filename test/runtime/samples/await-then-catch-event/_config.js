@@ -4,7 +4,7 @@ let thePromise = new Promise(f => {
 });
 
 export default {
-	data: {
+	props: {
 		thePromise
 	},
 
@@ -12,34 +12,34 @@ export default {
 		<p>loading...</p>
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		fulfil(42);
 
 		return thePromise
-			.then(() => {
+			.then(async () => {
 				assert.htmlEqual(target.innerHTML, `
 					<button>click me</button>
 				`);
 
-				const { button } = component.refs;
+				const { button } = component;
 
 				const click = new window.MouseEvent('click');
 				button.dispatchEvent(click);
 
-				assert.equal(component.get().clicked, 42);
+				assert.equal(component.clicked, 42);
 
 				thePromise = Promise.resolve(43);
-				component.set({ thePromise });
+				component.thePromise = thePromise;
 
 				return thePromise;
 			})
 			.then(() => {
-				const { button } = component.refs;
+				const { button } = component;
 
 				const click = new window.MouseEvent('click');
 				button.dispatchEvent(click);
 
-				assert.equal(component.get().clicked, 43);
+				assert.equal(component.clicked, 43);
 			});
 	}
 };

@@ -1,23 +1,16 @@
+<script>
+	import Modal from './Modal.html';
+
+	export let modal;
+	export let letter;
+	export let letters = ['a', 'b', 'c'];
+</script>
+
 <Modal ref:modal>
 	<span>{letter}</span>
-	<select bind:value='letter'>
+	<select bind:value={letter}>
 		{#each letters as letter}
 			<option value="{letter}">{letter}</option>
 		{/each}
 	</select>
 </Modal>
-
-<script>
-	import Modal from './Modal.html';
-
-	export default {
-		data () {
-			return {
-				letters: ['a', 'b', 'c']
-			};
-		},
-		components: {
-			Modal
-		}
-	};
-</script>

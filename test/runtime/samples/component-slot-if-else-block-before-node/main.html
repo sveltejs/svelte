@@ -1,3 +1,9 @@
+<script>
+	import Nested from './Nested.html';
+
+	export let enabled;
+</script>
+
 <Nested>
 	{#if !enabled}
 		<p>disabled</p>
@@ -7,13 +13,3 @@
 
 	<p>unconditional</p>
 </Nested>
-
-<script>
-	import Nested from './Nested.html';
-
-	export default {
-		components: {
-			Nested
-		}
-	};
-</script>

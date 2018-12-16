@@ -17,6 +17,7 @@ export default class Attribute extends Node {
 	isSpread: boolean;
 	isTrue: boolean;
 	isDynamic: boolean;
+	isStatic: boolean;
 	isSynthetic: boolean;
 	shouldCache: boolean;
 	expression?: Expression;
@@ -33,16 +34,18 @@ export default class Attribute extends Node {
 			this.isSynthetic = false;
 
 			this.expression = new Expression(component, this, scope, info.expression);
-			this.dependencies = this.expression.dependencies;
+			this.dependencies = this.expression.dynamic_dependencies;
 			this.chunks = null;
 
 			this.isDynamic = true; // TODO not necessarily
+			this.isStatic = false;
 			this.shouldCache = false; // TODO does this mean anything here?
 		}
 
 		else {
 			this.name = info.name;
 			this.isTrue = info.value === true;
+			this.isStatic = true;
 			this.isSynthetic = info.synthetic;
 
 			this.dependencies = new Set();
@@ -52,9 +55,11 @@ export default class Attribute extends Node {
 				: info.value.map(node => {
 					if (node.type === 'Text') return node;
 
+					this.isStatic = false;
+
 					const expression = new Expression(component, this, scope, node.expression);
 
-					addToSet(this.dependencies, expression.dependencies);
+					addToSet(this.dependencies, expression.dynamic_dependencies);
 					return expression;
 				});
 
@@ -75,7 +80,7 @@ export default class Attribute extends Node {
 		if (this.chunks.length === 1) {
 			return this.chunks[0].type === 'Text'
 				? stringify(this.chunks[0].data)
-				: this.chunks[0].snippet;
+				: this.chunks[0].render();
 		}
 
 		return (this.chunks[0].type === 'Text' ? '' : `"" + `) +
@@ -84,7 +89,7 @@ export default class Attribute extends Node {
 					if (chunk.type === 'Text') {
 						return stringify(chunk.data);
 					} else {
-						return chunk.getPrecedence() <= 13 ? `(${chunk.snippet})` : chunk.snippet;
+						return chunk.getPrecedence() <= 13 ? `(${chunk.render()})` : chunk.render();
 					}
 				})
 				.join(' + ');

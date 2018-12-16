@@ -1,11 +1,5 @@
-<p><slot></slot></p>
-
 <script>
-	export default {
-		data () {
-			return {
-				data: 'this should not appear'
-			};
-		}
-	};
+	export let data = 'this should not appear';
 </script>
+
+<p><slot></slot></p>

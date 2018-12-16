@@ -1,12 +1,17 @@
-<h3>Called {count} times.</h3>
-
 <script>
-	export default {
-		data() {
-			return {
-				count: 0,
-				foo: { bar: 'baz' }
-			};
-		}
-	}
+	import { beforeUpdate, onMount } from 'svelte';
+
+	let mounted;
+	export let count = 0;
+	export let foo = { bar: 'baz' };
+
+	onMount(() => {
+		mounted = true;
+	});
+
+	beforeUpdate(() => {
+		if (mounted) count += 1;
+	});
 </script>
+
+<h3>Called {count} times.</h3>

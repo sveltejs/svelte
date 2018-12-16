@@ -2,8 +2,15 @@ import Component from '../../Component';
 import { walk } from 'estree-walker';
 import isReference from 'is-reference';
 import flattenReference from '../../../utils/flattenReference';
-import { createScopes } from '../../../utils/annotateWithScopes';
+import { createScopes, Scope, extractNames } from '../../../utils/annotateWithScopes';
 import { Node } from '../../../interfaces';
+import globalWhitelist from '../../../utils/globalWhitelist';
+import deindent from '../../../utils/deindent';
+import Wrapper from '../../render-dom/wrappers/shared/Wrapper';
+import sanitize from '../../../utils/sanitize';
+import TemplateScope from './TemplateScope';
+import getObject from '../../../utils/getObject';
+import { nodes_match } from '../../../utils/nodes_match';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -55,40 +62,148 @@ const precedence: Record<string, (node?: Node) => number> = {
 
 export default class Expression {
 	component: Component;
+	owner: Wrapper;
 	node: any;
 	snippet: string;
 	references: Set<string>;
-	dependencies: Set<string>;
+	dependencies: Set<string> = new Set();
+	contextual_dependencies: Set<string> = new Set();
+	dynamic_dependencies: Set<string> = new Set();
 
+	template_scope: TemplateScope;
+	scope: Scope;
+	scope_map: WeakMap<Node, Scope>;
+
+	is_synthetic: boolean;
+	declarations: string[] = [];
 	usesContext = false;
 	usesEvent = false;
 
-	thisReferences: Array<{ start: number, end: number }>;
+	rendered: string;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, owner: Wrapper, template_scope: TemplateScope, info) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
 				value: component
+			},
+
+			// TODO remove this, is just for debugging
+			snippet: {
+				get: () => {
+					throw new Error(`cannot access expression.snippet, use expression.render() instead`)
+				}
 			}
 		});
 
 		this.node = info;
-		this.thisReferences = [];
+		this.template_scope = template_scope;
+		this.owner = owner;
+		this.is_synthetic = owner.isSynthetic;
 
-		this.snippet = `[✂${info.start}-${info.end}✂]`;
+		const { dependencies, contextual_dependencies, dynamic_dependencies } = this;
 
-		const dependencies = new Set();
+		let { map, scope } = createScopes(info);
+		this.scope = scope;
+		this.scope_map = map;
 
-		const { code, helpers } = component;
-
-		let { map, scope: currentScope } = createScopes(info);
-
-		const isEventHandler = parent.type === 'EventHandler';
 		const expression = this;
-		const isSynthetic = parent.isSynthetic;
+		let function_expression;
 
+		function add_dependency(name) {
+			dependencies.add(name);
+
+			if (!function_expression) {
+				// dynamic_dependencies is used to create `if (changed.foo || ...)`
+				// conditions — it doesn't apply if the dependency is inside a
+				// function, and it only applies if the dependency is writable
+				if (component.instance_script) {
+					if (component.writable_declarations.has(name)) {
+						dynamic_dependencies.add(name);
+					}
+				} else {
+					dynamic_dependencies.add(name);
+				}
+			}
+		}
+
+		// discover dependencies, but don't change the code yet
 		walk(info, {
+			enter(node: any, parent: any, key: string) {
+				// don't manipulate shorthand props twice
+				if (key === 'value' && parent.shorthand) return;
+
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (!function_expression && /FunctionExpression/.test(node.type)) {
+					function_expression = node;
+				}
+
+				if (isReference(node, parent)) {
+					const { name, nodes } = flattenReference(node);
+
+					if (scope.has(name)) return;
+					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
+
+					if (template_scope.names.has(name)) {
+						expression.usesContext = true;
+
+						contextual_dependencies.add(name);
+
+						template_scope.dependenciesForName.get(name).forEach(add_dependency);
+					} else {
+						add_dependency(name);
+						component.template_references.add(name);
+
+						component.warn_if_undefined(nodes[0], template_scope, true);
+					}
+
+					this.skip();
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+
+				if (node === function_expression) {
+					function_expression = null;
+				}
+			}
+		});
+	}
+
+	getPrecedence() {
+		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
+	}
+
+	// TODO move this into a render-dom wrapper?
+	render() {
+		if (this.rendered) return this.rendered;
+
+		const {
+			component,
+			declarations,
+			scope_map: map,
+			template_scope,
+			owner,
+			is_synthetic
+		} = this;
+		let scope = this.scope;
+
+		const { code } = component;
+
+		let function_expression;
+		let pending_assignments = new Set();
+
+		let dependencies: Set<string>;
+		let contextual_dependencies: Set<string>;
+
+		// rewrite code as appropriate
+		walk(this.node, {
 			enter(node: any, parent: any, key: string) {
 				// don't manipulate shorthand props twice
 				if (key === 'value' && parent.shorthand) return;
@@ -97,51 +212,30 @@ export default class Expression {
 				code.addSourcemapLocation(node.end);
 
 				if (map.has(node)) {
-					currentScope = map.get(node);
-					return;
-				}
-
-				if (node.type === 'ThisExpression') {
-					expression.thisReferences.push(node);
+					scope = map.get(node);
 				}
 
 				if (isReference(node, parent)) {
 					const { name, nodes } = flattenReference(node);
 
-					if (name === 'event' && isEventHandler) {
-						expression.usesEvent = true;
-						return;
-					}
+					if (scope.has(name)) return;
+					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
 
-					if (currentScope.has(name)) return;
+					if (function_expression) {
+						if (template_scope.names.has(name)) {
+							contextual_dependencies.add(name);
 
-					if (component.helpers.has(name)) {
-						let object = node;
-						while (object.type === 'MemberExpression') object = object.object;
-
-						component.used.helpers.add(name);
-
-						const alias = component.templateVars.get(`helpers-${name}`);
-						if (alias !== name) code.overwrite(object.start, object.end, alias);
-						return;
-					}
-
-					expression.usesContext = true;
-
-					if (!isSynthetic) {
-						// <option> value attribute could be synthetic — avoid double editing
+							template_scope.dependenciesForName.get(name).forEach(dependency => {
+								dependencies.add(dependency);
+							});
+						} else {
+							dependencies.add(name);
+							component.template_references.add(name);
+						}
+					} else if (!is_synthetic && !component.hoistable_names.has(name) && !component.imported_declarations.has(name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
-					}
-
-					if (scope.names.has(name)) {
-						scope.dependenciesForName.get(name).forEach(dependency => {
-							dependencies.add(dependency);
-						});
-					} else {
-						dependencies.add(name);
-						component.expectedProperties.add(name);
 					}
 
 					if (node.type === 'MemberExpression') {
@@ -153,25 +247,177 @@ export default class Expression {
 
 					this.skip();
 				}
+
+				if (function_expression) {
+					if (node.type === 'AssignmentExpression') {
+						const names = node.left.type === 'MemberExpression'
+							? [getObject(node.left).name]
+							: extractNames(node.left);
+
+						if (node.operator === '=' && nodes_match(node.left, node.right)) {
+							const dirty = names.filter(name => {
+								return !scope.declarations.has(name);
+							});
+
+							if (dirty.length) component.has_reactive_assignments = true;
+
+							code.overwrite(node.start, node.end, dirty.map(n => `$$make_dirty('${n}')`).join('; '));
+						} else {
+							names.forEach(name => {
+								if (!scope.declarations.has(name)) {
+									pending_assignments.add(name);
+								}
+							});
+						}
+					} else if (node.type === 'UpdateExpression') {
+						const { name } = getObject(node.argument);
+
+						if (!scope.declarations.has(name)) {
+							pending_assignments.add(name);
+						}
+					}
+				} else {
+					if (node.type === 'AssignmentExpression') {
+						// TODO should this be a warning/error? `<p>{foo = 1}</p>`
+					}
+
+					if (node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
+						function_expression = node;
+						dependencies = new Set();
+						contextual_dependencies = new Set();
+					}
+				}
 			},
 
 			leave(node: Node, parent: Node) {
-				if (map.has(node)) currentScope = currentScope.parent;
+				if (map.has(node)) scope = scope.parent;
+
+				if (node === function_expression) {
+					if (pending_assignments.size > 0) {
+						if (node.type !== 'ArrowFunctionExpression') {
+							// this should never happen!
+							throw new Error(`Well that's odd`);
+						}
+
+						// TOOD optimisation — if this is an event handler,
+						// the return value doesn't matter
+					}
+
+					const name = component.getUniqueName(
+						sanitize(get_function_name(node, owner))
+					);
+
+					const args = contextual_dependencies.size > 0
+						? [`{ ${[...contextual_dependencies].join(', ')} }`]
+						: [];
+
+					let original_params;
+
+					if (node.params.length > 0) {
+						original_params = code.slice(node.params[0].start, node.params[node.params.length - 1].end);
+						args.push(original_params);
+					}
+
+					let body = code.slice(node.body.start, node.body.end).trim();
+					if (node.body.type !== 'BlockStatement') {
+						if (pending_assignments.size > 0) {
+							const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
+							pending_assignments = new Set();
+
+							component.has_reactive_assignments = true;
+
+							body = deindent`
+								{
+									const $$result = ${body};
+									${insert}
+									return $$result;
+								}
+							`;
+						} else {
+							body = `{\n\treturn ${body};\n}`;
+						}
+					}
+
+					const fn = deindent`
+						function ${name}(${args.join(', ')}) ${body}
+					`;
+
+					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
+						// we can hoist this out of the component completely
+						component.fully_hoisted.push(fn);
+						code.overwrite(node.start, node.end, name);
+					}
+
+					else if (contextual_dependencies.size === 0) {
+						// function can be hoisted inside the component init
+						component.partly_hoisted.push(fn);
+						component.declarations.push(name);
+						component.template_references.add(name);
+						code.overwrite(node.start, node.end, `ctx.${name}`);
+					}
+
+					else {
+						// we need a combo block/init recipe
+						component.partly_hoisted.push(fn);
+						component.declarations.push(name);
+						component.template_references.add(name);
+						code.overwrite(node.start, node.end, name);
+
+						declarations.push(deindent`
+							function ${name}(${original_params ? '...args' : ''}) {
+								return ctx.${name}(ctx${original_params ? ', ...args' : ''});
+							}
+						`);
+					}
+
+					function_expression = null;
+					dependencies = null;
+					contextual_dependencies = null;
+				}
+
+				if (/Statement/.test(node.type)) {
+					if (pending_assignments.size > 0) {
+						const has_semi = code.original[node.end - 1] === ';';
+
+						const insert = (
+							(has_semi ? ' ' : '; ') +
+							[...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ')
+						);
+
+
+						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
+							if (node.argument) {
+								code.overwrite(node.start, node.argument.start, `var $$result = `);
+								code.appendLeft(node.argument.end, `${insert}; return $$result`);
+							} else {
+								code.prependRight(node.start, `${insert}; `);
+							}
+						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
+							code.prependRight(node.start, '{ ');
+							code.appendLeft(node.end, `${insert}; }`);
+						} else {
+							code.appendLeft(node.end, `${insert};`);
+						}
+
+						component.has_reactive_assignments = true;
+						pending_assignments = new Set();
+					}
+				}
 			}
 		});
 
-		this.dependencies = dependencies;
+		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
+	}
+}
+
+function get_function_name(node, parent) {
+	if (parent.type === 'EventHandler') {
+		return `${parent.name}_handler`;
 	}
 
-	getPrecedence() {
-		return this.node.type in precedence ? precedence[this.node.type](this.node) : 0;
+	if (parent.type === 'Action') {
+		return `${parent.name}_function`;
 	}
 
-	overwriteThis(name) {
-		this.thisReferences.forEach(ref => {
-			this.component.code.overwrite(ref.start, ref.end, name, {
-				storeName: true
-			});
-		});
-	}
+	return 'func';
 }

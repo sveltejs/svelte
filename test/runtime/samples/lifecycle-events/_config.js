@@ -1,7 +1,8 @@
 export default {
-	test(assert, component) {
-		assert.deepEqual(component.events, ['create']);
-		component.destroy();
-		assert.deepEqual(component.events, ['create', 'destroy']);
+	test({ assert, component }) {
+		const { events } = component;
+		assert.deepEqual(events, ['mount']);
+		component.$destroy();
+		assert.deepEqual(events, ['mount', 'destroy']);
 	}
 };

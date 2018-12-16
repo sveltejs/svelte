@@ -7,9 +7,8 @@ export default {
 		</svg>
 	`,
 
-	test ( assert, component, target ) {
-		const circle = target.querySelector( 'circle' );
-		assert.equal( circle.getAttribute( 'class' ), 'red' );
-		component.destroy();
+	test({ assert, component, target }) {
+		const circle = target.querySelector('circle');
+		assert.equal(circle.getAttribute('class'), 'red');
 	}
 };

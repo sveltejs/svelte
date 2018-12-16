@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: true
 	},
 
@@ -8,25 +8,17 @@ export default {
 		<p>green green</p>
 	`,
 
-	test(assert, component, target) {
-		// TODO replace this with component.set({ foo: undefined }) post-#1488
-		// component.set({ foo: undefined });
-		// delete component._state.foo;
-
-		component.set({
-			x: false,
-			foo: undefined
-		});
+	test({ assert, component, target }) {
+		component.foo = undefined;
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>parent red</p>
 			<p>red red</p>
 		`);
 
-		component.set({
-			x: true,
-			foo: undefined
-		});
+		component.foo = undefined;
+		component.x = true;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>parent green</p>

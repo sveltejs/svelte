@@ -7,12 +7,13 @@ let promise = new Promise((f, r) => {
 });
 
 export default {
-	data: {
+	props: {
 		promise
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ visible: true });
+	intro: true,
+
+	test({ assert, component, target, window, raf }) {
 		let p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');

@@ -1,15 +1,9 @@
-<my-widget class="foo" {items}/>
+<svelte:meta tag="custom-element"/>
 
 <script>
 	import './my-widget.html';
 
-	export default {
-		tag: 'custom-element',
-
-		data() {
-			return {
-				items: ['a', 'b', 'c']
-			};
-		}
-	};
+	export let items = ['a', 'b', 'c'];
 </script>
+
+<my-widget class="foo" {items}/>

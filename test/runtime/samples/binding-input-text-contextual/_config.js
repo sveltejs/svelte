@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		items: ['one', 'two', 'three'],
 	},
 
@@ -27,15 +27,15 @@ export default {
 		</div>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = [...target.querySelectorAll('input')];
-		const items = component.get().items;
+		const items = component.items;
 		const event = new window.Event('input');
 
 		assert.equal(inputs[0].value, 'one');
 
 		inputs[1].value = 'four';
-		inputs[1].dispatchEvent(event);
+		await inputs[1].dispatchEvent(event);
 
 		assert.equal(items[1], 'four');
 		assert.htmlEqual(target.innerHTML, `
@@ -52,7 +52,7 @@ export default {
 
 		items[2] = 'five';
 
-		component.set({ items });
+		component.items = items;
 		assert.equal(inputs[2].value, 'five');
 		assert.htmlEqual(target.innerHTML, `
 			<div>

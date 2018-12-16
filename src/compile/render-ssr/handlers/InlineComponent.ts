@@ -1,106 +1,94 @@
 import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
 import getObject from '../../../utils/getObject';
-import getTailSnippet from '../../../utils/getTailSnippet';
+import { get_tail_snippet } from '../../../utils/get_tail_snippet';
 import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
 import deindent from '../../../utils/deindent';
+import { snip } from '../utils';
+import Renderer from '../Renderer';
+import stringifyProps from '../../../utils/stringifyProps';
 
 type AppendTarget = any; // TODO
 
-export default function(node, renderer, options) {
-	function stringifyAttribute(chunk: Node) {
+function stringifyAttribute(chunk: Node) {
+	if (chunk.type === 'Text') {
+		return escapeTemplate(escape(chunk.data));
+	}
+
+	return '${@escape( ' + snip(chunk) + ')}';
+}
+
+function getAttributeValue(attribute) {
+	if (attribute.isTrue) return `true`;
+	if (attribute.chunks.length === 0) return `''`;
+
+	if (attribute.chunks.length === 1) {
+		const chunk = attribute.chunks[0];
 		if (chunk.type === 'Text') {
-			return escapeTemplate(escape(chunk.data));
+			return stringify(chunk.data);
 		}
 
-		return '${@escape( ' + chunk.snippet + ')}';
+		return snip(chunk);
 	}
 
-	const bindingProps = node.bindings.map(binding => {
-		const { name } = getObject(binding.value.node);
-		const tail = binding.value.node.type === 'MemberExpression'
-			? getTailSnippet(binding.value.node)
-			: '';
+	return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
+}
 
-		return `${quoteNameIfNecessary(binding.name)}: ctx${quotePropIfNecessary(name)}${tail}`;
+function stringifyObject(props) {
+	return props.length > 0
+		? `{ ${props.join(', ')} }`
+		: `{};`
+}
+
+export default function(node, renderer: Renderer, options) {
+	const binding_props = [];
+	const binding_fns = [];
+
+	node.bindings.forEach(binding => {
+		renderer.has_bindings = true;
+
+		// TODO this probably won't work for contextual bindings
+		const snippet = snip(binding.expression);
+
+		binding_props.push(`${binding.name}: ${snippet}`);
+		binding_fns.push(`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
-
-	function getAttributeValue(attribute) {
-		if (attribute.isTrue) return `true`;
-		if (attribute.chunks.length === 0) return `''`;
-
-		if (attribute.chunks.length === 1) {
-			const chunk = attribute.chunks[0];
-			if (chunk.type === 'Text') {
-				return stringify(chunk.data);
-			}
-
-			return chunk.snippet;
-		}
-
-		return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
-	}
 
 	const usesSpread = node.attributes.find(attr => attr.isSpread);
 
-	const props = usesSpread
-		? `Object.assign(${
+	let props;
+
+	if (usesSpread) {
+		props = `Object.assign(${
 			node.attributes
 				.map(attribute => {
 					if (attribute.isSpread) {
-						return attribute.expression.snippet;
+						return snip(attribute.expression);
 					} else {
-						return `{ ${quoteNameIfNecessary(attribute.name)}: ${getAttributeValue(attribute)} }`;
+						return `{ ${attribute.name}: ${getAttributeValue(attribute)} }`;
 					}
 				})
-				.concat(bindingProps.map(p => `{ ${p} }`))
+				.concat(binding_props.map(p => `{ ${p} }`))
 				.join(', ')
-		})`
-		: `{ ${node.attributes
-			.map(attribute => `${quoteNameIfNecessary(attribute.name)}: ${getAttributeValue(attribute)}`)
-			.concat(bindingProps)
-			.join(', ')} }`;
+		})`;
+	} else {
+		props = stringifyProps(
+			node.attributes
+				.map(attribute => `${attribute.name}: ${getAttributeValue(attribute)}`)
+				.concat(binding_props)
+		);
+	}
+
+	const bindings = stringifyProps(binding_fns);
 
 	const expression = (
 		node.name === 'svelte:self'
 			? node.component.name
 			: node.name === 'svelte:component'
-				? `((${node.expression.snippet}) || @missingComponent)`
-				: `%components-${node.name}`
+				? `((${snip(node.expression)}) || @missingComponent)`
+				: node.name
 	);
 
-	node.bindings.forEach(binding => {
-		const conditions = [];
-
-		let parent = node;
-		while (parent = parent.parent) {
-			if (parent.type === 'IfBlock') {
-				// TODO handle contextual bindings...
-				conditions.push(`(${parent.expression.snippet})`);
-			}
-		}
-
-		conditions.push(
-			`!('${binding.name}' in ctx)`,
-			`${expression}.data`
-		);
-
-		const { name } = getObject(binding.value.node);
-
-		renderer.bindings.push(deindent`
-			if (${conditions.reverse().join('&&')}) {
-				tmp = ${expression}.data();
-				if ('${name}' in tmp) {
-					ctx${quotePropIfNecessary(binding.name)} = tmp.${name};
-					settled = false;
-				}
-			}
-		`);
-	});
-
-	let open = `\${@validateSsrComponent(${expression}, '${node.name}')._render(__result, ${props}`;
-
-	const component_options = [];
-	component_options.push(`store: options.store`);
+	const slot_fns = [];
 
 	if (node.children.length) {
 		const target: AppendTarget = {
@@ -112,19 +100,16 @@ export default function(node, renderer, options) {
 
 		renderer.render(node.children, options);
 
-		const slotted = Object.keys(target.slots)
-			.map(name => `${quoteNameIfNecessary(name)}: () => \`${target.slots[name]}\``)
-			.join(', ');
-
-		component_options.push(`slotted: { ${slotted} }`);
+		Object.keys(target.slots).forEach(name => {
+			slot_fns.push(
+				`${quoteNameIfNecessary(name)}: () => \`${target.slots[name]}\``
+			);
+		});
 
 		renderer.targets.pop();
 	}
 
-	if (component_options.length) {
-		open += `, { ${component_options.join(', ')} }`;
-	}
+	const slots = stringifyProps(slot_fns);
 
-	renderer.append(open);
-	renderer.append(')}');
+	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
 }

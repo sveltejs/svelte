@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		props: {
 			foo: 'lol',
 			baz: 40 + 2,
@@ -8,18 +8,26 @@ export default {
 		}
 	},
 
-	html: `<div><p>foo: lol</p>\n<p>baz: 42 (number)</p>\n<p>qux: named</p>\n<p>quux: core</p></div>`,
+	html: `
+		<div><p>foo: lol</p>
+		<p>baz: 42 (number)</p>
+		<p>qux: named</p>
+		<p>quux: core</p></div>
+	`,
 
-	test ( assert, component, target ) {
-		component.set({
-			props: {
-				foo: 'wut',
-				baz: 40 + 3,
-				qux: `this is a ${'rather boring'} string`,
-				quux: 'heart'
-			}
-		});
+	test({ assert, component, target }) {
+		component.props = {
+			foo: 'wut',
+			baz: 40 + 3,
+			qux: `this is a ${'rather boring'} string`,
+			quux: 'heart'
+		};
 
-		assert.equal( target.innerHTML, `<div><p>foo: wut</p>\n<p>baz: 43 (number)</p>\n<p>qux: named</p>\n<p>quux: heart</p></div>` );
+		assert.htmlEqual(target.innerHTML, `
+			<div><p>foo: wut</p>
+			<p>baz: 43 (number)</p>
+			<p>qux: named</p>
+			<p>quux: heart</p></div>
+		`);
 	}
 };

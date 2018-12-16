@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: 11
 	},
 
@@ -7,17 +7,15 @@ export default {
 		before-if-after
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ x: 4 });
-		assert.htmlEqual( target.innerHTML, `
+	test({ assert, component, target }) {
+		component.x = 4;
+		assert.htmlEqual(target.innerHTML, `
 			before-elseif-after
-		` );
+		`);
 
-		component.set({ x: 6 });
-		assert.htmlEqual( target.innerHTML, `
+		component.x = 6;
+		assert.htmlEqual(target.innerHTML, `
 			before-else-after
-		` );
-
-		component.destroy();
+		`);
 	}
 };

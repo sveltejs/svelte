@@ -1,17 +1,10 @@
-<div>
-	<Widget ref:widget>{data}</Widget>
-</div>
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		components: { Widget },
-
-		data() {
-			return {
-				data: "Hello"
-			};
-		}
-	};
+	export let widget;
+	export let data = "Hello";
 </script>
+
+<div>
+	<Widget ref:widget>{data}</Widget>
+</div>

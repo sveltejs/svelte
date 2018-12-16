@@ -1,12 +1,12 @@
 export default {
-	data: {
+	props: {
 		adjective: 'custom'
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		assert.equal(window.document.title, 'a custom title');
 
-		component.set({ adjective: 'different' });
+		component.adjective = 'different';
 		assert.equal(window.document.title, 'a different title');
 	}
 };

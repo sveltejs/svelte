@@ -6,7 +6,7 @@ import Block from '../../Block';
 import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flattenReference from '../../../../utils/flattenReference';
-import getTailSnippet from '../../../../utils/getTailSnippet';
+import { get_tail } from '../../../../utils/get_tail_snippet';
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -31,14 +31,14 @@ export default class BindingWrapper {
 		this.node = node;
 		this.parent = parent;
 
-		const { dependencies } = this.node.value;
+		const { dynamic_dependencies } = this.node.expression;
 
-		block.addDependencies(dependencies);
+		block.addDependencies(dynamic_dependencies);
 
 		// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 		if (parent.node.name === 'select') {
-			parent.selectBindingDependencies = dependencies;
-			dependencies.forEach((prop: string) => {
+			parent.selectBindingDependencies = dynamic_dependencies;
+			dynamic_dependencies.forEach((prop: string) => {
 				parent.renderer.component.indirectDependencies.set(prop, new Set());
 			});
 		}
@@ -46,7 +46,7 @@ export default class BindingWrapper {
 		if (node.isContextual) {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
-			const { name } = getObject(this.node.value.node);
+			const { name } = getObject(this.node.expression.node);
 			const eachBlock = block.contextOwners.get(name);
 
 			eachBlock.hasBinding = true;
@@ -73,17 +73,22 @@ export default class BindingWrapper {
 
 		let updateConditions: string[] = [];
 
-		const { name } = getObject(this.node.value.node);
-		const { snippet } = this.node.value;
+		const { name } = getObject(this.node.expression.node);
+
+		const snippet = this.node.expression.render();
+
+		// TODO unfortunate code is necessary because we need to use `ctx`
+		// inside the fragment, but not inside the <script>
+		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,
 		// we need to tell the component to update all the values `selected` might be
 		// pointing to
 		// TODO should this happen in preprocess?
-		const dependencies = new Set(this.node.value.dependencies);
+		const dependencies = new Set(this.node.expression.dependencies);
 
-		this.node.value.dependencies.forEach((prop: string) => {
+		this.node.expression.dependencies.forEach((prop: string) => {
 			const indirectDependencies = renderer.component.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
@@ -94,7 +99,7 @@ export default class BindingWrapper {
 
 		// view to model
 		const valueFromDom = getValueFromDom(renderer, this.parent, this);
-		const handler = getEventHandler(this, renderer, block, name, snippet, dependencies, valueFromDom);
+		const handler = getEventHandler(this, renderer, block, name, contextless_snippet, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this, snippet);
@@ -102,14 +107,14 @@ export default class BindingWrapper {
 
 		// special cases
 		if (this.node.name === 'group') {
-			const bindingGroup = getBindingGroup(renderer, this.node.value.node);
+			const bindingGroup = getBindingGroup(renderer, this.node.expression.node);
 
 			block.builders.hydrate.addLine(
-				`#component._bindingGroups[${bindingGroup}].push(${parent.var});`
+				`(#component.$$.binding_groups[${bindingGroup}] || (#component.$$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
 			);
 
 			block.builders.destroy.addLine(
-				`#component._bindingGroups[${bindingGroup}].splice(#component._bindingGroups[${bindingGroup}].indexOf(${parent.var}), 1);`
+				`#component.$$.binding_groups[${bindingGroup}].splice(#component.$$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
 			);
 		}
 
@@ -135,7 +140,7 @@ export default class BindingWrapper {
 			updateDom = null;
 		}
 
-		const dependencyArray = [...this.node.value.dependencies]
+		const dependencyArray = [...this.node.expression.dynamic_dependencies]
 
 		if (dependencyArray.length === 1) {
 			updateConditions.push(`changed.${dependencyArray[0]}`)
@@ -148,13 +153,16 @@ export default class BindingWrapper {
 		return {
 			name: this.node.name,
 			object: name,
-			handler: handler,
+			handler,
+			snippet,
 			usesContext: handler.usesContext,
 			updateDom: updateDom,
 			initialUpdate: initialUpdate,
 			needsLock: !isReadOnly && needsLock,
 			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
-			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute()
+			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
+			dependencies,
+			contextual_dependencies: this.node.expression.contextual_dependencies
 		};
 	}
 }
@@ -210,67 +218,36 @@ function getEventHandler(
 	block: Block,
 	name: string,
 	snippet: string,
-	dependencies: Set<string>,
 	value: string
 ) {
-	const storeDependencies = [...dependencies].filter(prop => prop[0] === '$').map(prop => prop.slice(1));
-	let dependenciesArray = [...dependencies].filter(prop => prop[0] !== '$');
-
 	if (binding.node.isContextual) {
-		const tail = binding.node.value.node.type === 'MemberExpression'
-			? getTailSnippet(binding.node.value.node)
-			: '';
+		let tail = '';
+		if (binding.node.expression.node.type === 'MemberExpression') {
+			const { start, end } = get_tail(binding.node.expression.node);
+			tail = renderer.component.source.slice(start, end);
+		}
 
-		const head = block.bindings.get(name);
+		const { object, property, snippet } = block.bindings.get(name)();
 
 		return {
 			usesContext: true,
-			usesState: true,
-			usesStore: storeDependencies.length > 0,
-			mutation: `${head()}${tail} = ${value};`,
-			props: dependenciesArray.map(prop => `${prop}: ctx.${prop}`),
-			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
+			mutation: `${snippet}${tail} = ${value};`,
+			contextual_dependencies: new Set([object, property])
 		};
 	}
 
-	if (binding.node.value.node.type === 'MemberExpression') {
-		// This is a little confusing, and should probably be tidied up
-		// at some point. It addresses a tricky bug (#893), wherein
-		// Svelte tries to `set()` a computed property, which throws an
-		// error in dev mode. a) it's possible that we should be
-		// replacing computations with *their* dependencies, and b)
-		// we should probably populate `component.target.readonly` sooner so
-		// that we don't have to do the `.some()` here
-		dependenciesArray = dependenciesArray.filter(prop => !renderer.component.computations.some(computation => computation.key === prop));
-
+	if (binding.node.expression.node.type === 'MemberExpression') {
 		return {
 			usesContext: false,
-			usesState: true,
-			usesStore: storeDependencies.length > 0,
-			mutation: `${snippet} = ${value}`,
-			props: dependenciesArray.map((prop: string) => `${prop}: ctx.${prop}`),
-			storeProps: storeDependencies.map(prop => `${prop}: $.${prop}`)
+			mutation: `${snippet} = ${value};`,
+			contextual_dependencies: new Set()
 		};
-	}
-
-	let props;
-	let storeProps;
-
-	if (name[0] === '$') {
-		props = [];
-		storeProps = [`${name.slice(1)}: ${value}`];
-	} else {
-		props = [`${name}: ${value}`];
-		storeProps = [];
 	}
 
 	return {
 		usesContext: false,
-		usesState: false,
-		usesStore: false,
-		mutation: null,
-		props,
-		storeProps
+		mutation: `${snippet} = ${value};`,
+		contextual_dependencies: new Set()
 	};
 }
 
@@ -285,31 +262,31 @@ function getValueFromDom(
 	// <select bind:value='selected>
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
-			`@selectMultipleValue(${element.var})` :
-			`@selectValue(${element.var})`;
+			`@selectMultipleValue(this)` :
+			`@selectValue(this)`;
 	}
 
 	const type = node.getStaticAttributeValue('type');
 
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
-		const bindingGroup = getBindingGroup(renderer, binding.node.value.node);
+		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue(#component._bindingGroups[${bindingGroup}])`;
+			return `@getBindingGroupValue($$self.$$.binding_groups[${bindingGroup}])`;
 		}
 
-		return `${element.var}.__value`;
+		return `this.__value`;
 	}
 
 	// <input type='range|number' bind:value>
 	if (type === 'range' || type === 'number') {
-		return `@toNumber(${element.var}.${name})`;
+		return `@toNumber(this.${name})`;
 	}
 
 	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
-		return `@timeRangesToArray(${element.var}.${name})`
+		return `@timeRangesToArray(this.${name})`
 	}
 
 	// everything else
-	return `${element.var}.${name}`;
+	return `this.${name}`;
 }

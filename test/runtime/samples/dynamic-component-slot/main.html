@@ -1,3 +1,15 @@
+<script>
+	import Foo from './Foo.html';
+	import Bar from './Bar.html';
+	import Baz from './Baz.html';
+
+	export let x;
+	export let tag = 'you\'re it';
+	export let foo;
+	export let bar;
+	export let things = ['a', 'b', 'c'];
+</script>
+
 <svelte:component this="{ x ? Foo : Bar }" x='{x}'>
 	<p>element</p>
 
@@ -21,25 +33,3 @@
 
 	<div slot='other'>what goes up must come down</div>
 </svelte:component>
-
-<script>
-	import Foo from './Foo.html';
-	import Bar from './Bar.html';
-	import Baz from './Baz.html';
-
-	export default {
-		data() {
-			return {
-				Foo,
-				Bar,
-
-				tag: 'you\'re it',
-				things: ['a', 'b', 'c']
-			};
-		},
-
-		components: {
-			Baz
-		}
-	};
-</script>

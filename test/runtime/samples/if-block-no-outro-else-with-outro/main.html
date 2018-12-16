@@ -1,21 +1,14 @@
+<script>
+	export let foo;
+	export let x = 'x';
+
+	import Widget from './Widget.html';
+</script>
+
 {#if foo}
 	<p>foo</p>
 {:else}
 	<Widget/>
 	<p>{x}</p>
-	<input type="text" bind:value=x />
+	<input type="text" bind:value={x} />
 {/if}
-
-<script>
-	export default {
-		components: {
-			Widget: './Widget.html'
-		},
-
-		data() {
-			return {
-				x: 'x'
-			};
-		}
-	};
-</script>

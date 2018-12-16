@@ -1,4 +1,4 @@
-<div on:some-event='set({ visible: !visible })'>toggle</div>
+<div on:some-event='{() => visible = !visible}'>toggle</div>
 
 {#if visible}
 	<p>hello!</p>

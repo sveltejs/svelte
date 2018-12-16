@@ -3,6 +3,7 @@ import isVoidElementName from '../../../utils/isVoidElementName';
 import Attribute from '../../nodes/Attribute';
 import Node from '../../nodes/shared/Node';
 import { escape, escapeTemplate } from '../../../utils/stringify';
+import { snip } from '../utils';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
@@ -60,7 +61,7 @@ export default function(node, renderer, options) {
 
 	const classExpr = node.classes.map((classDir: Class) => {
 		const { expression, name } = classDir;
-		const snippet = expression ? expression.snippet : `ctx${quotePropIfNecessary(name)}`;
+		const snippet = expression ? snip(expression) : `ctx${quotePropIfNecessary(name)}`;
 		return `${snippet} ? "${name}" : ""`;
 	}).join(', ');
 
@@ -71,7 +72,7 @@ export default function(node, renderer, options) {
 		const args = [];
 		node.attributes.forEach(attribute => {
 			if (attribute.isSpread) {
-				args.push(attribute.expression.snippet);
+				args.push(snip(attribute.expression));
 			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
 					textareaContents = stringifyAttribute(attribute);
@@ -83,7 +84,7 @@ export default function(node, renderer, options) {
 					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${attribute.chunks[0].snippet} }`);
+					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else {
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringifyAttribute(attribute)}\` }`);
 				}
@@ -105,13 +106,13 @@ export default function(node, renderer, options) {
 				attribute.chunks[0].type !== 'Text'
 			) {
 				// a boolean attribute with one non-Text chunk
-				openingTag += '${' + attribute.chunks[0].snippet + ' ? " ' + attribute.name + '" : "" }';
+				openingTag += '${' + snip(attribute.chunks[0]) + ' ? " ' + attribute.name + '" : "" }';
 			} else if (attribute.name === 'class' && classExpr) {
 				addClassAttribute = false;
 				openingTag += ` class="\${[\`${stringifyAttribute(attribute)}\`, ${classExpr}].join(' ').trim() }"`;
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
-				const { snippet } = attribute.chunks[0];
+				const snippet = snip(attribute.chunks[0]);
 
 				openingTag += '${(v => v == null ? "" : ` ' + name + '="${@escape(' + snippet + ')}"`)(' + snippet + ')}';
 			} else {
@@ -121,11 +122,12 @@ export default function(node, renderer, options) {
 	}
 
 	node.bindings.forEach(binding => {
-		const { name, value: { snippet } } = binding;
+		const { name, expression } = binding;
 
 		if (name === 'group') {
 			// TODO server-render group bindings
 		} else {
+			const snippet = snip(expression);
 			openingTag += ' ${(v => v ? ("' + name + '" + (v === true ? "" : "=" + JSON.stringify(v))) : "")(' + snippet + ')}';
 		}
 	});
@@ -156,7 +158,7 @@ function stringifyAttribute(attribute: Attribute) {
 				return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
 			}
 
-			return '${@escape(' + chunk.snippet + ')}';
+			return '${@escape(' + snip(chunk) + ')}';
 		})
 		.join('');
 }

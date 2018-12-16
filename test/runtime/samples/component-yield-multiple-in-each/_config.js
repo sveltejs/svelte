@@ -5,10 +5,8 @@ export default {
 		<p>Hello Charles</p>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({
-			people: [ 'Alice', 'Charles', 'Bob' ]
-		});
+	test({ assert, component, target }) {
+		component.people = [ 'Alice', 'Charles', 'Bob' ];
 
 		assert.htmlEqual( target.innerHTML, `
 			<p>Hello Alice</p>

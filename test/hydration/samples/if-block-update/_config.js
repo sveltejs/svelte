@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		foo: true,
 		bar: false
 	},
@@ -17,7 +17,8 @@ export default {
 
 		assert.equal(p, snapshot.p);
 
-		component.set({ foo: false, bar: true });
+		component.foo = false;
+		component.bar = true;
 		assert.htmlEqual(target.innerHTML, `<p>bar!</p>`);
 	}
 };

@@ -1,9 +1,5 @@
-<LazyLoad load="{() => import('./Foo.html')}"/>
-
 <script>
-	export default {
-		components: {
-			LazyLoad
-		}
-	};
+	import LazyLoad from './LazyLoad.html';
 </script>
+
+<LazyLoad load="{() => import('./Foo.html')}"/>

@@ -1,4 +1,4 @@
-export function test ({ assert, smc, locateInSource, locateInGenerated }) {
+export function test({ assert, smc, locateInSource, locateInGenerated }) {
 	const expected = locateInSource( 'foo.bar.baz' );
 
 	let start;

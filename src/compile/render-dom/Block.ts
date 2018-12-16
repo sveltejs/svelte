@@ -11,7 +11,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: string;
-	bindings?: Map<string, () => string>;
+	bindings?: Map<string, () => { object: string, property: string, snippet: string }>;
 	contextOwners?: Map<string, EachBlockWrapper>;
 	dependencies?: Set<string>;
 }
@@ -29,7 +29,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, () => string>;
+	bindings: Map<string, () => { object: string, property: string, snippet: string }>;
 	contextOwners: Map<string, EachBlockWrapper>;
 
 	builders: {
@@ -46,6 +46,8 @@ export default class Block {
 		outro: CodeBuilder;
 		destroy: CodeBuilder;
 	};
+
+	event_listeners: string[] = [];
 
 	maintainContext: boolean;
 	hasAnimation: boolean;
@@ -162,7 +164,10 @@ export default class Block {
 	) {
 		this.addVariable(name);
 		this.builders.create.addLine(`${name} = ${renderStatement};`);
-		this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
+
+		if (this.renderer.options.hydratable) {
+			this.builders.claim.addLine(`${name} = ${claimStatement || renderStatement};`);
+		}
 
 		if (parentNode) {
 			this.builders.mount.addLine(`@append(${parentNode}, ${name});`);
@@ -212,7 +217,7 @@ export default class Block {
 		return new Block(Object.assign({}, this, { key: null }, options, { parent: this }));
 	}
 
-	toString() {
+	getContents(localKey?: string) {
 		const { dev } = this.renderer.options;
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
@@ -231,11 +236,33 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
+		if (this.event_listeners.length > 0) {
+			this.addVariable('#dispose');
+
+			if (this.event_listeners.length === 1) {
+				this.builders.hydrate.addLine(
+					`#dispose = ${this.event_listeners[0]};`
+				);
+
+				this.builders.destroy.addLine(
+					`#dispose();`
+				)
+			} else {
+				this.builders.hydrate.addBlock(deindent`
+					#dispose = [
+						${this.event_listeners.join(',\n')}
+					];
+				`);
+
+				this.builders.destroy.addLine(
+					`@run_all(#dispose);`
+				);
+			}
+		}
+
 		const properties = new CodeBuilder();
 
-		let localKey;
-		if (this.key) {
-			localKey = this.getUniqueName('key');
+		if (localKey) {
 			properties.addBlock(`key: ${localKey},`);
 		}
 
@@ -245,7 +272,7 @@ export default class Block {
 		}
 
 		if (this.builders.create.isEmpty() && this.builders.hydrate.isEmpty()) {
-			properties.addBlock(`c: @noop,`);
+			properties.addLine(`c: @noop,`);
 		} else {
 			const hydrate = !this.builders.hydrate.isEmpty() && (
 				this.renderer.options.hydratable
@@ -261,14 +288,14 @@ export default class Block {
 			`);
 		}
 
-		if (this.renderer.options.hydratable) {
+		if (this.renderer.options.hydratable || !this.builders.claim.isEmpty()) {
 			if (this.builders.claim.isEmpty() && this.builders.hydrate.isEmpty()) {
-				properties.addBlock(`l: @noop,`);
+				properties.addLine(`l: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'l: function claim' : 'l'}(nodes) {
 						${this.builders.claim}
-						${!this.builders.hydrate.isEmpty() && `this.h();`}
+						${this.renderer.options.hydratable && !this.builders.hydrate.isEmpty() && `this.h();`}
 					},
 				`);
 			}
@@ -283,7 +310,7 @@ export default class Block {
 		}
 
 		if (this.builders.mount.isEmpty()) {
-			properties.addBlock(`m: @noop,`);
+			properties.addLine(`m: @noop,`);
 		} else {
 			properties.addBlock(deindent`
 				${dev ? 'm: function mount' : 'm'}(#target, anchor) {
@@ -294,11 +321,11 @@ export default class Block {
 
 		if (this.hasUpdateMethod || this.maintainContext) {
 			if (this.builders.update.isEmpty() && !this.maintainContext) {
-				properties.addBlock(`p: @noop,`);
+				properties.addLine(`p: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? '_ctx' : 'ctx'}) {
-						${this.maintainContext && `ctx = _ctx;`}
+					${dev ? 'p: function update' : 'p'}(changed, ${this.maintainContext ? 'new_ctx' : 'ctx'}) {
+						${this.maintainContext && `ctx = new_ctx;`}
 						${this.builders.update}
 					},
 				`);
@@ -323,7 +350,7 @@ export default class Block {
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			if (this.builders.mount.isEmpty()) {
-				properties.addBlock(`i: @noop,`);
+				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
@@ -335,7 +362,7 @@ export default class Block {
 			}
 
 			if (this.builders.outro.isEmpty()) {
-				properties.addBlock(`o: @run,`);
+				properties.addLine(`o: @run,`);
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
@@ -350,7 +377,7 @@ export default class Block {
 		}
 
 		if (this.builders.destroy.isEmpty()) {
-			properties.addBlock(`d: @noop`);
+			properties.addLine(`d: @noop`);
 		} else {
 			properties.addBlock(deindent`
 				${dev ? 'd: function destroy' : 'd'}(detach) {
@@ -360,21 +387,31 @@ export default class Block {
 		}
 
 		return deindent`
+			${this.variables.size > 0 &&
+				`var ${Array.from(this.variables.keys())
+					.map(key => {
+						const init = this.variables.get(key);
+						return init !== undefined ? `${key} = ${init}` : key;
+					})
+					.join(', ')};`}
+
+			${!this.builders.init.isEmpty() && this.builders.init}
+
+			return {
+				${properties}
+			};
+		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
+			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
+		});
+	}
+
+	toString() {
+		const localKey = this.key && this.getUniqueName('key');
+
+		return deindent`
 			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(#component${this.key ? `, ${localKey}` : ''}, ctx) {
-				${this.variables.size > 0 &&
-					`var ${Array.from(this.variables.keys())
-						.map(key => {
-							const init = this.variables.get(key);
-							return init !== undefined ? `${key} = ${init}` : key;
-						})
-						.join(', ')};`}
-
-				${!this.builders.init.isEmpty() && this.builders.init}
-
-				return {
-					${properties}
-				};
+			function ${this.name}(#component, ${this.key ? `${localKey}, ` : ''}ctx) {
+				${this.getContents(localKey)}
 			}
 		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
 			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;

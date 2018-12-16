@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import assert from "assert";
+import * as assert from "assert";
 import { svelte, loadConfig, tryToLoadJson } from "../helpers.js";
 
 describe("validate", () => {

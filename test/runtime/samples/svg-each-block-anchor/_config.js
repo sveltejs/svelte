@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		foo: ['a'],
 		bar: ['c']
 	},
@@ -11,8 +11,8 @@ export default {
 		</svg>
 	`,
 
-	test(assert, component, target) {
-		component.set({ foo: ['a', 'b'] });
+	test({ assert, component, target }) {
+		component.foo = ['a', 'b'];
 
 		assert.htmlEqual(target.innerHTML, `
 			<svg>

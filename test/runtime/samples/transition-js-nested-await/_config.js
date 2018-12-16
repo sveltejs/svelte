@@ -5,16 +5,13 @@ const promise = new Promise(f => {
 });
 
 export default {
-	skipIntroByDefault: true,
-	nestedTransitions: true,
-
-	data: {
+	props: {
 		x: false,
 		promise
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ x: true });
+	test({ assert, component, target, window, raf }) {
+		component.x = true;
 		fulfil();
 
 		return promise.then(() => {
@@ -24,7 +21,7 @@ export default {
 			raf.tick(100);
 			assert.equal(div.foo, 1);
 
-			component.set({ x: false });
+			component.x = false;
 			assert.htmlEqual(target.innerHTML, '<div></div>');
 
 			raf.tick(150);

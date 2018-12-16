@@ -3,7 +3,9 @@ import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Wrapper from './shared/Wrapper';
 import deindent from '../../../utils/deindent';
-import stringifyProps from '../../../utils/stringifyProps';
+import addEventHandlers from './shared/addEventHandlers';
+import Window from '../../nodes/Window';
+import addActions from './shared/addActions';
 
 const associatedEvents = {
 	innerWidth: 'resize',
@@ -29,6 +31,8 @@ const readonly = new Set([
 ]);
 
 export default class WindowWrapper extends Wrapper {
+	node: Window;
+
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Node) {
 		super(renderer, block, parent, node);
 	}
@@ -40,56 +44,16 @@ export default class WindowWrapper extends Wrapper {
 		const events = {};
 		const bindings: Record<string, string> = {};
 
-		this.node.handlers.forEach(handler => {
-			// TODO verify that it's a valid callee (i.e. built-in or declared method)
-			component.addSourcemapLocations(handler.expression);
-
-			const isCustomEvent = component.events.has(handler.name);
-
-			let usesState = handler.dependencies.size > 0;
-
-			handler.render(component, block, 'window', false); // TODO hoist?
-
-			const handlerName = block.getUniqueName(`onwindow${handler.name}`);
-			const handlerBody = deindent`
-				${usesState && `var ctx = #component.get();`}
-				${handler.snippet};
-			`;
-
-			if (isCustomEvent) {
-				// TODO dry this out
-				block.addVariable(handlerName);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(#component, window, function(event) {
-						${handlerBody}
-					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handlerName}.destroy();
-				`);
-			} else {
-				block.builders.init.addBlock(deindent`
-					function ${handlerName}(event) {
-						${handlerBody}
-					}
-					window.addEventListener("${handler.name}", ${handlerName});
-				`);
-
-				block.builders.destroy.addBlock(deindent`
-					window.removeEventListener("${handler.name}", ${handlerName});
-				`);
-			}
-		});
+		addActions(component, block, 'window', this.node.actions);
+		addEventHandlers(block, 'window', this.node.handlers);
 
 		this.node.bindings.forEach(binding => {
 			// in dev mode, throw if read-only values are written to
 			if (readonly.has(binding.name)) {
-				renderer.readonly.add(binding.value.node.name);
+				renderer.readonly.add(binding.expression.node.name);
 			}
 
-			bindings[binding.name] = binding.value.node.name;
+			bindings[binding.name] = binding.expression.node.name;
 
 			// bind:online is a special case, we need to listen for two separate events
 			if (binding.name === 'online') return;
@@ -99,7 +63,7 @@ export default class WindowWrapper extends Wrapper {
 
 			if (!events[associatedEvent]) events[associatedEvent] = [];
 			events[associatedEvent].push({
-				name: binding.value.node.name,
+				name: binding.expression.node.name,
 				value: property
 			});
 		});
@@ -109,7 +73,7 @@ export default class WindowWrapper extends Wrapper {
 		const timeout = block.getUniqueName(`window_updating_timeout`);
 
 		Object.keys(events).forEach(event => {
-			const handlerName = block.getUniqueName(`onwindow${event}`);
+			const handler_name = block.getUniqueName(`onwindow${event}`);
 			const props = events[event];
 
 			if (event === 'scroll') {
@@ -141,35 +105,35 @@ export default class WindowWrapper extends Wrapper {
 				});
 			}
 
-			const handlerBody = deindent`
-				${event === 'scroll' && deindent`
-					if (${lock}) return;
-					${lock} = true;
-				`}
-				${component.options.dev && `component._updatingReadonlyProperty = true;`}
-
-				#component.set(${stringifyProps(props.map(prop => `${prop.name}: this.${prop.value}`))});
-
-				${component.options.dev && `component._updatingReadonlyProperty = false;`}
-				${event === 'scroll' && `${lock} = false;`}
-			`;
+			component.declarations.push(handler_name);
+			component.template_references.add(handler_name);
+			component.partly_hoisted.push(deindent`
+				function ${handler_name}() {
+					${event === 'scroll' && deindent`
+						if (${lock}) return;
+						${lock} = true;
+					`}
+					${props.map(prop => `${prop.name} = window.${prop.value}; $$make_dirty('${prop.name}');`)}
+					${event === 'scroll' && `${lock} = false;`}
+				}
+			`);
 
 			block.builders.init.addBlock(deindent`
-				function ${handlerName}(event) {
-					${handlerBody}
-				}
-				window.addEventListener("${event}", ${handlerName});
+				window.addEventListener("${event}", ctx.${handler_name});
+				@add_render_callback(ctx.${handler_name});
 			`);
 
 			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("${event}", ${handlerName});
+				window.removeEventListener("${event}", ctx.${handler_name});
 			`);
+
+			component.has_reactive_assignments = true;
 		});
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
 			block.builders.init.addBlock(deindent`
-				#component.on("state", ({ changed, current }) => {
+				#component.$on("state", ({ changed, current }) => {
 					if (${
 						[bindings.scrollX, bindings.scrollY].map(
 							binding => binding && `changed["${binding}"]`
@@ -190,15 +154,15 @@ export default class WindowWrapper extends Wrapper {
 
 		// another special case. (I'm starting to think these are all special cases.)
 		if (bindings.online) {
-			const handlerName = block.getUniqueName(`onlinestatuschanged`);
+			const handler_name = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
-				function ${handlerName}(event) {
+				function ${handler_name}(event) {
 					${component.options.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
 					${component.options.dev && `component._updatingReadonlyProperty = false;`}
 				}
-				window.addEventListener("online", ${handlerName});
-				window.addEventListener("offline", ${handlerName});
+				window.addEventListener("online", ${handler_name});
+				window.addEventListener("offline", ${handler_name});
 			`);
 
 			// add initial value
@@ -207,8 +171,8 @@ export default class WindowWrapper extends Wrapper {
 			);
 
 			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("online", ${handlerName});
-				window.removeEventListener("offline", ${handlerName});
+				window.removeEventListener("online", ${handler_name});
+				window.removeEventListener("offline", ${handler_name});
 			`);
 		}
 	}

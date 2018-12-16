@@ -15,6 +15,7 @@
 						"end": 28,
 						"type": "Action",
 						"name": "tooltip",
+						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
 							"start": 20,
@@ -27,6 +28,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

@@ -3,7 +3,7 @@ export default {
 		css: false
 	},
 
-	test ( assert, component, target, window ) {
+	test({ assert, component, target, window }) {
 		const [ control, test ] = target.querySelectorAll( 'p' );
 
 		assert.equal( window.getComputedStyle( control ).color, '' );

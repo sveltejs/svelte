@@ -1,13 +1,9 @@
-{#await promise then value}
-	<Foo {value} />
-{/await}
-
 <script>
 	import Foo from './Foo.html';
 
-	export default {
-		components: {
-			Foo
-		}
-	};
+	export let promise;
 </script>
+
+{#await promise then value}
+	<Foo {value} />
+{/await}

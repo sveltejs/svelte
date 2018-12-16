@@ -1,7 +1,7 @@
-<h1>Hello {name}!</h1>
+<svelte:meta tag="custom-element"/>
 
 <script>
-	export default {
-		tag: 'custom-element'
-	};
+	export let name;
 </script>
+
+<h1>Hello {name}!</h1>

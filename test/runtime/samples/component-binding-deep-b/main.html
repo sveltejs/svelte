@@ -1,44 +1,37 @@
+<script>
+	import { beforeUpdate } from 'svelte';
+
+	import Editor from './Editor.html';
+	import ComponentSelector from './ComponentSelector.html';
+
+	export let components;
+	export let selectedComponent;
+	export let compiled;
+
+	let previouslySelectedComponent;
+
+	beforeUpdate(() => {
+		components.forEach(component => {
+			if (component === selectedComponent) return;
+			component.compiled = component.source.toUpperCase();
+		});
+
+		if (selectedComponent !== previouslySelectedComponent) {
+			selectedComponent.compiled = selectedComponent.source.toUpperCase();
+			updateBundle();
+
+			previouslySelectedComponent = selectedComponent;
+		}
+	});
+
+	function updateBundle() {
+		compiled = components.map(component => component.compiled).join('\n');
+	}
+</script>
+
 <ComponentSelector {components} bind:selectedComponent/>
-<Editor bind:code='selectedComponent.source' />
+<Editor bind:code={selectedComponent.source} />
 
 <pre>
 {compiled}
 </pre>
-
-<script>
-	import Editor from './Editor.html';
-	import ComponentSelector from './ComponentSelector.html';
-
-	export default {
-		components: {
-			ComponentSelector,
-			Editor
-		},
-
-		onstate({ changed, current }) {
-			const { selectedComponent } = this.get();
-
-			if (changed.components) {
-				components.forEach(component => {
-					if (component === selectedComponent) return;
-					component.compiled = component.source.toUpperCase();
-				});
-			}
-
-			if (changed.selectedComponent) {
-				selectedComponent.compiled = selectedComponent.source.toUpperCase();
-				this.updateBundle();
-			}
-		},
-
-		methods: {
-			updateBundle() {
-				const components = this.get('components');
-
-				const compiled = components.map(component => component.compiled).join('\n');
-
-				this.set({ compiled });
-			}
-		}
-	}
-</script>

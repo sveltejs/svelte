@@ -1,5 +1,5 @@
 {#each items as item}
-	<button on:click='set({ selected: item })'>{item}</button>
+	<button on:click='{() => selected = item}'>{item}</button>
 {/each}
 
 <p>selected: {selected}</p>

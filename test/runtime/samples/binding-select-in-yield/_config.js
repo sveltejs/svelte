@@ -1,12 +1,12 @@
 export default {
 	html: ``,
 
-	data: {
+	props: {
 		letter: 'b'
 	},
 
-	test ( assert, component, target, window ) {
-		component.refs.modal.toggle();
+	async test({ assert, component, target, window }) {
+		await component.modal.toggle();
 
 		assert.htmlEqual(target.innerHTML, `
 			<span>b</span>
@@ -22,8 +22,8 @@ export default {
 		const change = new window.MouseEvent('change');
 
 		select.options[2].selected = true;
-		select.dispatchEvent(change);
-		assert.equal(component.get().letter, 'c');
+		await select.dispatchEvent(change);
+		assert.equal(component.letter, 'c');
 
 		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
 			false,
@@ -41,8 +41,8 @@ export default {
 			</select>
 		`);
 
-		component.refs.modal.toggle();
-		component.refs.modal.toggle();
+		await component.modal.toggle();
+		await component.modal.toggle();
 
 		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
 			false,

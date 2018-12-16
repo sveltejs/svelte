@@ -1,19 +1,19 @@
 export default {
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
-	data: {
-		foo: false
+	props: {
+		foo: false,
 	},
 
-	test ( assert, component, target ) {
-		const inputs = target.querySelectorAll( 'input' );
+	test({ assert, component, target }) {
+		const inputs = target.querySelectorAll('input');
 
-		assert.ok( inputs[0].checked );
-		assert.ok( !inputs[1].checked );
+		assert.ok(inputs[0].checked);
+		assert.ok(!inputs[1].checked);
 
-		component.set( { foo: true } );
+		component.foo = true;
 
-		assert.ok( !inputs[0].checked );
-		assert.ok( inputs[1].checked );
-	}
+		assert.ok(!inputs[0].checked);
+		assert.ok(inputs[1].checked);
+	},
 };

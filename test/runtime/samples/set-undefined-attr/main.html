@@ -1,14 +1,12 @@
-<div {foo} {bar}></div>
-
 <script>
-	export default {
-		data: () => ({
-			foo: 1,
-			bar: undefined
-		}),
+	import { onMount } from 'svelte';
 
-		oncreate () {
-			this.set({ foo: undefined });
-		}
-	};
+	export let foo = 1;
+	export let bar;
+
+	onMount(() => {
+		foo = undefined;
+	});
 </script>
+
+<div {foo} {bar}></div>

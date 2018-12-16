@@ -80,8 +80,8 @@ export default class EachBlockWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 		this.cannotUseInnerHTML();
 
-		const { dependencies } = node.expression;
-		block.addDependencies(dependencies);
+		const { dynamic_dependencies } = node.expression;
+		block.addDependencies(dynamic_dependencies);
 
 		this.block = block.child({
 			comment: createDebuggingComment(this.node, this.renderer.component),
@@ -101,7 +101,11 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.contextOwners.set(prop.key.name, this);
 
 			// TODO this doesn't feel great
-			this.block.bindings.set(prop.key.name, () => `ctx.${this.vars.each_block_value}[ctx.${this.indexName}]${prop.tail}`);
+			this.block.bindings.set(prop.key.name, () => ({
+				object: this.vars.each_block_value,
+				property: this.indexName,
+				snippet: `${this.vars.each_block_value}[${this.indexName}]${prop.tail}`
+			}));
 		});
 
 		if (this.node.index) {
@@ -173,7 +177,7 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.hasBinding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
 		if (this.hasBinding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
 
-		const { snippet } = this.node.expression;
+		const snippet = this.node.expression.render();
 
 		block.builders.init.addLine(`var ${this.vars.each_block_value} = ${snippet};`);
 
@@ -295,7 +299,7 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.builders.init.addBlock(deindent`
-			const ${get_key} = ctx => ${this.node.key.snippet};
+			const ${get_key} = ctx => ${this.node.key.render()};
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
@@ -312,7 +316,7 @@ export default class EachBlockWrapper extends Wrapper {
 			for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].c();
 		`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addBlock(deindent`
 				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].l(${parentNodes});
 			`);
@@ -340,7 +344,7 @@ export default class EachBlockWrapper extends Wrapper {
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
 		`);
 
-		if (this.block.hasOutros && this.renderer.component.options.nestedTransitions) {
+		if (this.block.hasOutros) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
@@ -385,7 +389,7 @@ export default class EachBlockWrapper extends Wrapper {
 			}
 		`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addBlock(deindent`
 				for (var #i = 0; #i < ${iterations}.length; #i += 1) {
 					${iterations}[#i].l(${parentNodes});
@@ -422,7 +426,6 @@ export default class EachBlockWrapper extends Wrapper {
 			`);
 		}
 
-		// TODO do this for keyed blocks as well
 		const condition = Array.from(allDependencies)
 			.map(dependency => `changed.${dependency}`)
 			.join(' || ');
@@ -472,22 +475,26 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			}
 
+			const update = deindent`
+				${this.vars.each_block_value} = ${snippet};
+
+				for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
+					const child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
+
+					${forLoopBody}
+				}
+
+				${destroy}
+			`;
+
 			block.builders.update.addBlock(deindent`
 				if (${condition}) {
-					${this.vars.each_block_value} = ${snippet};
-
-					for (var #i = ${start}; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
-						const child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
-
-						${forLoopBody}
-					}
-
-					${destroy}
+					${update}
 				}
 			`);
 		}
 
-		if (outroBlock && this.renderer.component.options.nestedTransitions) {
+		if (outroBlock) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				${iterations} = ${iterations}.filter(Boolean);
@@ -501,6 +508,6 @@ export default class EachBlockWrapper extends Wrapper {
 
 	remount(name: string) {
 		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${this.vars.iterations}.length; #i += 1) ${this.vars.iterations}[#i].m(${name}._slotted.default, null);`;
+		return `for (var #i = 0; #i < ${this.vars.iterations}.length; #i += 1) ${this.vars.iterations}[#i].m(${name}.$$.slotted.default, null);`;
 	}
 }

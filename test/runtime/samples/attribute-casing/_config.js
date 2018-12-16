@@ -11,7 +11,7 @@ export default {
 		</svg>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const attr = sel => target.querySelector(sel).attributes[0].name;
 
 		assert.equal(attr('div'), 'class');

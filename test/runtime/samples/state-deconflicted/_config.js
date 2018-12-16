@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		state: 'deconflicted',
 		states: [
 			'Alabama',
@@ -22,19 +22,17 @@ export default {
 		</ul>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({
-			states: [
-				'Maine',
-				'Maryland',
-				'Massachusetts',
-				'Michigan',
-				'Minnesota',
-				'Mississippi',
-				'Missouri',
-				'Montana'
-			]
-		});
+	test({ assert, component, target }) {
+		component.states = [
+			'Maine',
+			'Maryland',
+			'Massachusetts',
+			'Michigan',
+			'Minnesota',
+			'Mississippi',
+			'Missouri',
+			'Montana'
+		];
 
 		assert.htmlEqual( target.innerHTML, `
 			<p>Current state: deconflicted</p>

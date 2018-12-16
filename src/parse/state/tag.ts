@@ -1,8 +1,6 @@
 import readExpression from '../read/expression';
 import readScript from '../read/script';
 import readStyle from '../read/style';
-import { readDirective } from '../read/directives';
-import { trimStart, trimEnd } from '../../utils/trim';
 import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
 import { Parser } from '../index';
@@ -13,6 +11,7 @@ const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const metaTags = new Map([
 	['svelte:document', 'Document'],
 	['svelte:window', 'Window'],
+	['svelte:meta', 'Meta'],
 	['svelte:head', 'Head']
 ]);
 
@@ -232,16 +231,9 @@ export default function tag(parser: Parser) {
 	if (specials.has(name) && parser.stack.length === 1) {
 		const special = specials.get(name);
 
-		if (parser[special.property]) {
-			parser.index = start;
-			parser.error({
-				code: `duplicate-${name}`,
-				message: `You can only have one top-level <${name}> tag per component`
-			});
-		}
-
 		parser.eat('>', true);
-		parser[special.property] = special.read(parser, start, element.attributes);
+		const content = special.read(parser, start, element.attributes);
+		if (content) parser[special.property].push(content);
 		return;
 	}
 
@@ -382,20 +374,75 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 
 	uniqueNames.add(name);
 
+	let end = parser.index;
+
 	parser.allowWhitespace();
 
-	const directive = readDirective(parser, start, name);
-	if (directive) return directive;
+	const colon_index = name.indexOf(':');
+	const type = colon_index !== 1 && get_directive_type(name.slice(0, colon_index));
 
-	let value = parser.eat('=') ? readAttributeValue(parser) : true;
+	let value: any[] | true = true;
+	if (parser.eat('=')) {
+		value = readAttributeValue(parser);
+		end = parser.index;
+	}
+
+	if (type) {
+		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+
+		if (value[0]) {
+			if (value.length > 1 || value[0].type === 'Text') {
+				parser.error({
+					code: `invalid-directive-value`,
+					message: `Directive value must be a JavaScript expression enclosed in curly braces`
+				}, value[0].start);
+			}
+		}
+
+		const directive = {
+			start,
+			end,
+			type,
+			name: directive_name,
+			modifiers,
+			expression: (value[0] && value[0].expression) || null
+		};
+
+		if (type === 'Transition') {
+			const direction = name.slice(0, colon_index);
+			directive.intro = direction === 'in' || direction === 'transition';
+			directive.outro = direction === 'out' || direction === 'transition';
+		}
+
+		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
+			directive.expression = {
+				start: directive.start + colon_index + 1,
+				end: directive.end,
+				type: 'Identifier',
+				name: directive.name
+			};
+		}
+
+		return directive;
+	}
 
 	return {
 		start,
-		end: parser.index,
+		end,
 		type: 'Attribute',
 		name,
 		value,
 	};
+}
+
+function get_directive_type(name) {
+	if (name === 'use') return 'Action';
+	if (name === 'animate') return 'Animation';
+	if (name === 'bind') return 'Binding';
+	if (name === 'class') return 'Class';
+	if (name === 'on') return 'EventHandler';
+	if (name === 'ref') return 'Ref';
+	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }
 
 function readAttributeValue(parser: Parser) {

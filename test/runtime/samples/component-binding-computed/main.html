@@ -1,22 +1,13 @@
-{#each fields as field}
-	<Nested {field} bind:value='values[field]'/>
-{/each}
-
 <script>
 	import Nested from './Nested.html';
 
-	export default {
-		data: function () {
-			return {
-				fields: ['firstname', 'lastname'],
-				values: {
-					firstname: '',
-					lastname: ''
-				}
-			};
-		},
-		components: {
-			Nested
-		}
+	export let fields = ['firstname', 'lastname'];
+	export let values = {
+		firstname: '',
+		lastname: ''
 	};
 </script>
+
+{#each fields as field}
+	<Nested {field} bind:value={values[field]}/>
+{/each}

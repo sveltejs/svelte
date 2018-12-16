@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		animals: [ 'alpaca', 'baboon', 'capybara' ]
 	},
 
@@ -9,8 +9,8 @@ export default {
 		<p>capybara</p>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ animals: [ 'alpaca', 'baboon', 'caribou', 'dogfish' ] });
+	test({ assert, component, target }) {
+		component.animals = [ 'alpaca', 'baboon', 'caribou', 'dogfish' ];
 		assert.htmlEqual( target.innerHTML, `
 			<p>alpaca</p>
 			<p>baboon</p>
@@ -18,7 +18,7 @@ export default {
 			<p>dogfish</p>
 		` );
 
-		component.set({ animals: [] });
+		component.animals = [];
 		assert.htmlEqual( target.innerHTML, '' );
 	}
 };

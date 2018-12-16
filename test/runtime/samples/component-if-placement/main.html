@@ -1,3 +1,8 @@
+<script>
+	import Component from './Component.html';
+	export let flag;
+</script>
+
 <span>Before</span>
 {#if flag}
 	<Component/>
@@ -5,10 +10,3 @@
 	<Component/>
 {/if}
 <span>After</span>
-
-<script>
-	import Component from './Component.html';
-	export default {
-		components: { Component }
-	};
-</script>

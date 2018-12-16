@@ -1,7 +1,7 @@
 export default {
 	skip: true, // JSDOM
 
-	data: {
+	props: {
 		selected: [ 'two', 'three' ]
 	},
 
@@ -15,7 +15,7 @@ export default {
 		<p>selected: two, three</p>
 	`,
 
-	test ( assert, component, target, window ) {
+	test({ assert, component, target, window }) {
 		const select = target.querySelector( 'select' );
 		const options = [ ...target.querySelectorAll( 'option' ) ];
 
@@ -24,7 +24,7 @@ export default {
 		options[1].selected = false;
 		select.dispatchEvent( change );
 
-		assert.deepEqual( component.get().selected, [ 'three' ] );
+		assert.deepEqual( component.selected, [ 'three' ] );
 		assert.htmlEqual( target.innerHTML, `
 			<select multiple>
 				<option>one</option>
@@ -38,7 +38,7 @@ export default {
 		options[0].selected = true;
 		select.dispatchEvent( change );
 
-		assert.deepEqual( component.get().selected, [ 'one', 'three' ] );
+		assert.deepEqual( component.selected, [ 'one', 'three' ] );
 		assert.htmlEqual( target.innerHTML, `
 			<select multiple>
 				<option>one</option>
@@ -49,7 +49,7 @@ export default {
 			<p>selected: one, three</p>
 		` );
 
-		component.set({ selected: [ 'one', 'two' ] });
+		component.selected = [ 'one', 'two' ];
 
 		assert.ok( options[0].selected );
 		assert.ok( options[1].selected );

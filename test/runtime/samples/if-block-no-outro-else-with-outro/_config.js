@@ -1,6 +1,4 @@
 export default {
-	nestedTransitions: true,
-
 	html: `
 		<div>A wild component appears</div>
 		<p>x</p>
@@ -13,8 +11,8 @@ export default {
 		<input type=text value=x>
 	`,
 
-	test(assert, component, target) {
-		component.set({ x: 'y' });
+	test({ assert, component, target }) {
+		component.x = 'y';
 		assert.htmlEqual(target.innerHTML, `
 			<div>A wild component appears</div>
 			<p>y</p>

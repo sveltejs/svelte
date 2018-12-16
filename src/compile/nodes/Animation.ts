@@ -9,21 +9,14 @@ export default class Animation extends Node {
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		this.name = info.name;
+		component.warn_if_undefined(info, scope);
 
-		component.used.animations.add(this.name);
+		this.name = info.name;
 
 		if (parent.animation) {
 			component.error(this, {
 				code: `duplicate-animation`,
 				message: `An element can only have one 'animate' directive`
-			});
-		}
-
-		if (!component.animations.has(this.name)) {
-			component.error(this, {
-				code: `missing-animation`,
-				message: `Missing animation '${this.name}'`
 			});
 		}
 

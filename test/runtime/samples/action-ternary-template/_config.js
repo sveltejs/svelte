@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		target: 'World!',
 		display: true,
 	},
@@ -8,13 +8,13 @@ export default {
 		<h1></h1>
 	`,
 
-	test ( assert, component, target, window ) {
-		const header = target.querySelector( 'h1' );
-		const eventClick = new window.MouseEvent( 'click' );
+	async test({ assert, component, target, window }) {
+		const header = target.querySelector('h1');
+		const click = new window.MouseEvent('click');
 
-		header.dispatchEvent( eventClick );
-		assert.htmlEqual( target.innerHTML, `
+		await header.dispatchEvent(click);
+		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello World!</h1>
-		` );
-	}
+		`);
+	},
 };

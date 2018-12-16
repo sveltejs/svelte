@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		active: true
 	},
 
@@ -8,21 +8,21 @@ export default {
 		message: 'Unused CSS selector',
 		start: {
 			column: 1,
-			line: 12,
-			character: 169
+			line: 17,
+			character: 222
 		},
 		end: {
 			column: 20,
-			line: 12,
-			character: 188
+			line: 17,
+			character: 241
 		},
-		pos: 169,
+		pos: 222,
 		frame: `
-			10:   }
-			11:
-			12:   ref:button.inactive {
+			15:   }
+			16:
+			17:   ref:button.inactive {
 			      ^
-			13:     color: green;
-			14:   }`
+			18:     color: green;
+			19:   }`
 	}]
 };

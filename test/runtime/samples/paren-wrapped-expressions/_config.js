@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		a: 'foo',
 		b: true,
 		c: [ 1, 2, 3 ],

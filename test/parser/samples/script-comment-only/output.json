@@ -1,25 +1,38 @@
 {
 	"html": {
-		"start": 0,
-		"end": 11,
+		"start": 45,
+		"end": 56,
 		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 11,
+				"start": 43,
+				"end": 45,
+				"type": "Text",
+				"data": "\n\n"
+			},
+			{
+				"start": 45,
+				"end": 56,
 				"type": "Element",
 				"name": "div",
 				"attributes": [],
 				"children": []
-			},
-			{
-				"start": 11,
-				"end": 13,
-				"type": "Text",
-				"data": "\n\n"
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": [
+		{
+			"start": 0,
+			"end": 43,
+			"attributes": [],
+			"content": {
+				"type": "Program",
+				"start": 8,
+				"end": 34,
+				"body": [],
+				"sourceType": "module"
+			}
+		}
+	]
 }

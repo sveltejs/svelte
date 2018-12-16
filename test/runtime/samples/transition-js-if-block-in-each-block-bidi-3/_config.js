@@ -1,6 +1,6 @@
 export default {
-	data: {
-		foo: false,
+	props: {
+		visible: false,
 		threshold: 5
 	},
 
@@ -12,17 +12,17 @@ export default {
 		<div>5</div>
 	`,
 
-	test ( assert, component, target, window, raf ) {
+	test({ assert, component, target, window, raf }) {
 		const divs = target.querySelectorAll('div');
 
 		raf.tick(100);
 
-		component.set({ threshold: 4 });
+		component.threshold = 4;
 		raf.tick(150);
-		component.set({ threshold: 5 });
+		component.threshold = 5;
 		raf.tick(200);
 
-		component.set({ threshold: 5.5 });
+		component.threshold = 5.5;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>1</div>
@@ -31,7 +31,5 @@ export default {
 			<div>4</div>
 			<div>5</div>
 		`);
-
-		component.destroy();
 	}
 };

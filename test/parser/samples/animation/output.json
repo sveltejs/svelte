@@ -26,6 +26,7 @@
 								"end": 50,
 								"type": "Animation",
 								"name": "flip",
+								"modifiers": [],
 								"expression": null
 							}
 						],
@@ -54,6 +55,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

@@ -5,7 +5,7 @@ let promise = new Promise(f => {
 });
 
 export default {
-	data: {
+	props: {
 		promise
 	},
 
@@ -13,7 +13,7 @@ export default {
 		<p>loading...</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		fulfil(42);
 
 		return promise
@@ -26,9 +26,7 @@ export default {
 					fulfil = f;
 				});
 
-				component.set({
-					promise
-				});
+				component.promise = promise;
 
 				assert.htmlEqual(target.innerHTML, `
 					<p>loading...</p>

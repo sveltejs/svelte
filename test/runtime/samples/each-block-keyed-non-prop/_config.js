@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		words: ['foo', 'bar', 'baz']
 	},
 
@@ -9,12 +9,10 @@ export default {
 		<p>baz</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const [p1, p2, p3] = target.querySelectorAll('p');
 
-		component.set({
-			words: ['foo', 'baz'],
-		});
+		component.words = ['foo', 'baz'];
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>foo</p>

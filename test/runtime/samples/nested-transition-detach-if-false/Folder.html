@@ -1,9 +1,30 @@
+<script>
+	export let dir;
+	export let open = true;
+
+	function get_items() {
+		return dir === 'a'
+			? [
+				{
+					filename: 'a/b',
+					isDir: true
+				}
+			]
+			: [
+				{
+					filename: 'a/b/c',
+					isDir: false
+				}
+			];
+	}
+</script>
+
 <li>
 	<span>{dir}</span>
 
 	{#if open}
 		<ul>
-			{#each items as item (item.filename)}
+			{#each get_items() as item (item.filename)}
 				{#if item.isDir}
 					<svelte:self dir={item.filename}/>
 				{:else}
@@ -13,32 +34,3 @@
 		</ul>
 	{/if}
 </li>
-
-<script>
-	export default {
-		data() {
-			return {
-				items: [],
-				open: true
-			};
-		},
-
-		computed: {
-			items: ({ dir }) => {
-				return dir === 'a'
-					? [
-						{
-							filename: 'a/b',
-							isDir: true
-						}
-					]
-					: [
-						{
-							filename: 'a/b/c',
-							isDir: false
-						}
-					];
-			}
-		}
-	};
-</script>

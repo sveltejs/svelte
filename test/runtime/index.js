@@ -1,19 +1,19 @@
-import assert from "assert";
-import chalk from 'chalk';
+import * as assert from "assert";
 import * as path from "path";
 import * as fs from "fs";
-import * as acorn from "acorn";
-import { transitionManager } from "../../shared.js";
+import { rollup } from 'rollup';
+import * as virtual from 'rollup-plugin-virtual';
+import { transitionManager } from "../../internal.js";
 
 import {
 	showOutput,
 	loadConfig,
 	loadSvelte,
 	env,
-	setupHtmlEqual,
-	spaces
+	setupHtmlEqual
 } from "../helpers.js";
 
+const main = path.resolve('index.js');
 let svelte$;
 let svelte;
 
@@ -25,6 +25,9 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
+const sveltePath = process.cwd().split('\\').join('/');
+const internal = `${sveltePath}/internal.js`;
+
 describe("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
@@ -32,13 +35,13 @@ describe("runtime", () => {
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename), format: 'cjs' },
+				{ filename, name: getName(filename), format: 'cjs', sveltePath },
 				compileOptions
 			);
 
-			const { js } = compile(fs.readFileSync(filename, "utf-8"), options);
+			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8"), options);
 
-			return module._compile(js.code, filename);
+			return module._compile(code, filename);
 		};
 
 		return setupHtmlEqual();
@@ -46,16 +49,20 @@ describe("runtime", () => {
 
 	const failed = new Set();
 
-	function runTest(dir, shared, hydrate) {
+	function runTest(dir, hydrate) {
 		if (dir[0] === ".") return;
 
+		const { flush } = require(internal);
+
 		const config = loadConfig(`./runtime/samples/${dir}/_config.js`);
+
+		if (hydrate && config.skip_if_hydrate) return;
 
 		if (config.solo && process.env.CI) {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} (${shared ? 'shared' : 'inline'} helpers${hydrate ? ', hydration' : ''})`, () => {
+		(config.skip ? it.skip : config.solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -67,12 +74,9 @@ describe("runtime", () => {
 			global.document.title = '';
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = shared;
+			compileOptions.sveltePath = sveltePath;
 			compileOptions.hydratable = hydrate;
-			compileOptions.store = !!config.store;
 			compileOptions.immutable = config.immutable;
-			compileOptions.skipIntroByDefault = config.skipIntroByDefault;
-			compileOptions.nestedTransitions = config.nestedTransitions;
 
 			Object.keys(require.cache)
 				.filter(x => x.endsWith(".html"))
@@ -80,6 +84,7 @@ describe("runtime", () => {
 					delete require.cache[file];
 				});
 
+			let mod;
 			let SvelteComponent;
 
 			let unintendedError = null;
@@ -112,9 +117,10 @@ describe("runtime", () => {
 					};
 
 					try {
-						SvelteComponent = require(`./samples/${dir}/main.html`);
+						mod = require(`./samples/${dir}/main.html`);
+						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile); // eslint-disable-line no-console
+						showOutput(cwd, { internal, hydratable: hydrate, format: 'cjs' }, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -134,8 +140,7 @@ describe("runtime", () => {
 					const options = Object.assign({}, {
 						target,
 						hydrate,
-						data: config.data,
-						store: (config.store !== true && config.store),
+						props: config.props,
 						intro: config.intro
 					}, config.options || {});
 
@@ -160,11 +165,18 @@ describe("runtime", () => {
 					}
 
 					if (config.test) {
-						return Promise.resolve(config.test(assert, component, target, window, raf)).then(() => {
-							component.destroy();
+						return Promise.resolve(config.test({
+							assert,
+							component,
+							mod,
+							target,
+							window,
+							raf
+						})).then(() => {
+							component.$destroy();
 						});
 					} else {
-						component.destroy();
+						component.$destroy();
 						assert.htmlEqual(target.innerHTML, "");
 					}
 				})
@@ -178,60 +190,80 @@ describe("runtime", () => {
 					} else {
 						failed.add(dir);
 						showOutput(cwd, {
-							shared,
-							format: 'cjs',
+							internal,
 							hydratable: hydrate,
-							store: !!compileOptions.store,
-							skipIntroByDefault: compileOptions.skipIntroByDefault,
-							nestedTransitions: compileOptions.nestedTransitions,
-							dev: compileOptions.dev
-						}, compile); // eslint-disable-line no-console
+							dev: compileOptions.dev,
+							format: 'cjs'
+						}, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
-					if (config.show) showOutput(cwd, { shared, format: 'cjs', hydratable: hydrate, store: !!compileOptions.store, skipIntroByDefault: compileOptions.skipIntroByDefault, nestedTransitions: compileOptions.nestedTransitions }, compile);
+					if (config.show) {
+						showOutput(cwd, {
+							internal,
+							hydratable: hydrate,
+							format: 'cjs'
+						}, svelte.compile);
+					}
+
+					flush();
 				});
 		});
 	}
 
-	const shared = path.resolve("shared.js");
 	fs.readdirSync("test/runtime/samples").forEach(dir => {
-		runTest(dir, shared, false);
-		runTest(dir, shared, true);
-		runTest(dir, null, false);
+		runTest(dir, false);
+		runTest(dir, true);
 	});
 
-	it("fails if options.target is missing in dev mode", () => {
-		const { js } = svelte$.compile(`<div></div>`, {
-			format: "iife",
+	async function create_component(src = '<div></div>') {
+		const { js } = svelte$.compile(src, {
+			format: "esm",
 			name: "SvelteComponent",
 			dev: true
 		});
 
-		const SvelteComponent = eval(
-			`(function () { ${js.code}; return SvelteComponent; }())`
+		const bundle = await rollup({
+			input: 'main.js',
+			plugins: [
+				virtual({
+					'main.js': js.code
+				}),
+				{
+					resolveId: (importee, importer) => {
+						if (importee.startsWith('svelte/')) {
+							return importee.replace('svelte', process.cwd());
+						}
+					}
+				}
+			]
+		});
+
+		const result = await bundle.generate({
+			format: 'iife',
+			name: 'App'
+		});
+
+		return eval(
+			`(function () { ${result.code}; return App; }())`
 		);
+	}
+
+	it("fails if options.target is missing in dev mode", async () => {
+		const App = await create_component();
 
 		assert.throws(() => {
-			new SvelteComponent();
+			new App();
 		}, /'target' is a required option/);
 	});
 
-	it("fails if options.hydrate is true but the component is non-hydratable", () => {
-		const { js } = svelte$.compile(`<div></div>`, {
-			format: "iife",
-			name: "SvelteComponent",
-			dev: true
-		});
-
-		const SvelteComponent = eval(
-			`(function () { ${js.code}; return SvelteComponent; }())`
-		);
+	it("fails if options.hydrate is true but the component is non-hydratable", async () => {
+		const App = await create_component();
 
 		assert.throws(() => {
-			new SvelteComponent({
-				target: {},
+			new App({
+				target: { childNodes: [] },
 				hydrate: true
 			});
 		}, /options.hydrate only works if the component was compiled with the `hydratable: true` option/);

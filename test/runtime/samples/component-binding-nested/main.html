@@ -1,11 +1,9 @@
-<p>x: {x}</p>
-
-<Foo bind:x/>
-
 <script>
 	import Foo from './Foo.html';
 
-	export default {
-		components: { Foo }
-	};
+	export let x;
 </script>
+
+<p>x: {x}</p>
+
+<Foo bind:x/>

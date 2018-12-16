@@ -3,15 +3,15 @@
 export default {
 	skip: true, // TODO
 
-	'skip-ssr': true,
+	skip_if_ssr: true,
 
 	html: `
 		<div><p>first thing (true)</p></div>
 		<div><p>second thing (true)</p></div>
 	`,
 
-	test(assert, component) {
-		const visibleThings = component.get().visibleThings;
+	test({ assert, component }) {
+		const visibleThings = component.visibleThings;
 		assert.deepEqual(visibleThings, ['first thing', 'second thing']);
 
 		const snapshots = component.snapshots;

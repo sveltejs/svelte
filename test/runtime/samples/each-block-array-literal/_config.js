@@ -4,7 +4,7 @@ export default {
 		<button>eagle</button>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		assert.htmlEqual(target.innerHTML,`
 			<button>racoon</button>
 			<button>eagle</button>
@@ -14,6 +14,6 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		button.dispatchEvent(event);
-		assert.equal(component.get().clicked, 'racoon');
+		assert.equal(component.clicked, 'racoon');
 	},
 };

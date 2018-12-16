@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: true,
 		value: 'one'
 	},
@@ -11,9 +11,7 @@ export default {
 		</div>
 	`,
 
-	nestedTransitions: true,
-
-	test(assert, component, target, window, raf) {
+	test({ assert, component, target, window, raf }) {
 		const div = target.querySelector('div');
 		const { appendChild, insertBefore } = div;
 
@@ -21,6 +19,6 @@ export default {
 			throw new Error('DOM was mutated');
 		};
 
-		component.set({ value: 'two' });
+		component.value = 'two';
 	},
 };

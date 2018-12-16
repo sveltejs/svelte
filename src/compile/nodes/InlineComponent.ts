@@ -20,20 +20,12 @@ export default class InlineComponent extends Node {
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		component.hasComponents = true;
+		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
+			component.warn_if_undefined(info, scope);
+			component.template_references.add(info.name);
+		}
 
 		this.name = info.name;
-
-		if (this.name !== 'svelte:self' && this.name !== 'svelte:component') {
-			if (!component.components.has(this.name)) {
-				component.error(this, {
-					code: `missing-component`,
-					message: `${this.name} component is not defined`
-				});
-			}
-
-			component.used.components.add(this.name);
-		}
 
 		this.expression = this.name === 'svelte:component'
 			? new Expression(component, this, scope, info.expression)

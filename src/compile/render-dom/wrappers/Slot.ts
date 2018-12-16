@@ -5,10 +5,7 @@ import Slot from '../../nodes/Slot';
 import { quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
 import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
-
-function sanitize(name) {
-	return name.replace(/[^a-zA-Z]+/g, '_').replace(/^_/, '').replace(/_$/, '');
-}
+import sanitize from '../../../utils/sanitize';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -49,7 +46,7 @@ export default class SlotWrapper extends Wrapper {
 
 		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
 		const prop = quotePropIfNecessary(slotName);
-		block.addVariable(content_name, `#component._slotted${prop}`);
+		block.addVariable(content_name, `#component.$$.slotted${prop}`);
 
 		// TODO can we use isDomNode instead of type === 'Element'?
 		const needsAnchorBefore = this.prev ? this.prev.node.type !== 'Element' : !parentNode;
@@ -107,7 +104,7 @@ export default class SlotWrapper extends Wrapper {
 
 		// if the slot is unmounted, move nodes back into the document fragment,
 		// so that it can be reinserted later
-		// TODO so that this can work with public API, component._slotted should
+		// TODO so that this can work with public API, component.$$.slotted should
 		// be all fragments, derived from options.slots. Not === options.slots
 		const unmountLeadin = block.builders.destroy.toString() !== destroyBefore
 			? `else`

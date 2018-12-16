@@ -15,7 +15,7 @@ export default {
 		</ul>
 	`,
 
-	data: {
+	props: {
 		components: [
 			{ name: 'foo', edit: true },
 			{ name: 'bar', edit: false },

@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		people: [{ name: { first: 'Doctor', last: 'Who' } }],
 	},
 
@@ -15,13 +15,13 @@ export default {
 		<p>Doctor Who</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
 		inputs[1].value = 'Oz';
-		inputs[1].dispatchEvent(new window.Event('input'));
+		await inputs[1].dispatchEvent(new window.Event('input'));
 
-		const { people } = component.get();
+		const { people } = component;
 
 		assert.deepEqual(people, [
 			{ name: { first: 'Doctor', last: 'Oz' } }
@@ -34,7 +34,7 @@ export default {
 		`);
 
 		people[0].name.first = 'Frank';
-		component.set({ people });
+		component.people = people;
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>

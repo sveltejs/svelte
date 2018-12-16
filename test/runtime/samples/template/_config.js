@@ -7,7 +7,7 @@ export default {
 		</template>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const template = target.querySelector('template');
 
 		assert.htmlEqual(template.innerHTML, `

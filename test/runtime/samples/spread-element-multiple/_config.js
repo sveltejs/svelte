@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		a: {
 			'data-one': 1,
 			'data-two': 2,
@@ -14,16 +14,14 @@ export default {
 		<div data-one="1" data-two="2" data-b="overridden" data-d="deeeeee" >test</div>
 	`,
 
-	test(assert, component, target) {
-		component.set({
-			a: {
-				'data-one': 10
-			},
-			c: {
-				'data-c': 'new'
-			},
-			d: 'DEEEEEE'
-		});
+	test({ assert, component, target }) {
+		component.a = {
+			'data-one': 10
+		};
+		component.c = {
+			'data-c': 'new'
+		};
+		component.d = 'DEEEEEE';
 
 		assert.htmlEqual(
 			target.innerHTML,

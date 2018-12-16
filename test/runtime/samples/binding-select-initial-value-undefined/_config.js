@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true, // TODO would be nice to fix this in SSR as well
+	skip_if_ssr: true, // TODO would be nice to fix this in SSR as well
 
 	html: `
 		<p>selected: a</p>
@@ -13,13 +13,11 @@ export default {
 		<p>selected: a</p>
 	`,
 
-	test ( assert, component, target ) {
-		const select = target.querySelector( 'select' );
-		const options = [ ...target.querySelectorAll( 'option' ) ];
+	test({ assert, component, target }) {
+		const select = target.querySelector('select');
+		const options = [...target.querySelectorAll('option')];
 
-		assert.equal( select.value, 'a' );
-		assert.ok( options[0].selected );
-
-		component.destroy();
+		assert.equal(select.value, 'a');
+		assert.ok(options[0].selected);
 	}
 };

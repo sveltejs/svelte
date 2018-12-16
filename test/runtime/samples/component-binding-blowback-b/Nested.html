@@ -1,8 +1,9 @@
-<li>
-	<slot></slot>
-</li>
-
 <script>
+	import { onMount } from 'svelte';
+
+	export let value;
+	export let id;
+
 	const initialValues = {
 		'id-0': 'zero',
 		'id-1': 'one',
@@ -10,9 +11,11 @@
 		'id-3': 'three'
 	};
 
-	export default {
-		oncreate() {
-			this.set({ value: initialValues[this.get().id] });
-		}
-	};
+	onMount(() => {
+		value = initialValues[id];
+	});
 </script>
+
+<li>
+	<slot></slot>
+</li>

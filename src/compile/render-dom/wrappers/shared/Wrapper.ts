@@ -87,6 +87,6 @@ export default class Wrapper {
 	}
 
 	remount(name: string) {
-		return `${this.var}.m(${name}._slotted.default, null);`;
+		return `${this.var}.m(${name}.$$.slotted.default, null);`;
 	}
 }

@@ -1,5 +1,6 @@
 import Node from './shared/Node';
 import Expression from './shared/Expression';
+import Component from '../Component';
 
 export default class Transition extends Node {
 	type: 'Transition';
@@ -7,15 +8,10 @@ export default class Transition extends Node {
 	directive: string;
 	expression: Expression;
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
 
-		if (!component.transitions.has(info.name)) {
-			component.error(info, {
-				code: `missing-transition`,
-				message: `Missing transition '${info.name}'`
-			});
-		}
+		component.warn_if_undefined(info, scope);
 
 		this.name = info.name;
 		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out';
@@ -32,8 +28,6 @@ export default class Transition extends Node {
 				message
 			});
 		}
-
-		this.component.used.transitions.add(this.name);
 
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)

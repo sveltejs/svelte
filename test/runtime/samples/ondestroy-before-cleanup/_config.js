@@ -1,9 +1,13 @@
+import container from './container.js';
+
 export default {
-	test(assert, component, target) {
-		const top = component.refs.top;
+	test({ assert, component, target }) {
+		container.div = null;
+
+		const top = component.top;
 		const div = target.querySelector('div');
 
-		component.set({ visible: false });
-		assert.equal(top.refOnDestroy, div);
+		component.visible = false;
+		assert.equal(container.div, div);
 	}
 };

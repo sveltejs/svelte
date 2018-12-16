@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		show: true
 	},
 
@@ -7,19 +7,19 @@ export default {
 		<button>Hide</button>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const click = new window.MouseEvent('click');
 
-		target.querySelector('button').dispatchEvent(click);
+		await target.querySelector('button').dispatchEvent(click);
 
-		assert.equal(component.get().show, false);
+		assert.equal(component.show, false);
 		assert.htmlEqual(target.innerHTML, `
 			<button>Show</button>
 		`);
 
-		target.querySelector('button').dispatchEvent(click);
+		await target.querySelector('button').dispatchEvent(click);
 
-		assert.equal(component.get().show, true);
+		assert.equal(component.show, true);
 		assert.htmlEqual(target.innerHTML, `
 			<button>Hide</button>
 		`);

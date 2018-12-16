@@ -5,11 +5,10 @@ export default {
 		</svg>
 	`,
 
-	test ( assert, component, target ) {
-		const circles = target.querySelectorAll( 'circle' );
-		assert.equal( circles[0].namespaceURI, 'http://www.w3.org/2000/svg' );
-		assert.equal( circles[1].namespaceURI, 'http://www.w3.org/2000/svg' );
-		assert.equal( circles[2].namespaceURI, 'http://www.w3.org/2000/svg' );
-		component.destroy();
+	test({ assert, component, target }) {
+		const circles = target.querySelectorAll('circle');
+		assert.equal(circles[0].namespaceURI, 'http://www.w3.org/2000/svg');
+		assert.equal(circles[1].namespaceURI, 'http://www.w3.org/2000/svg');
+		assert.equal(circles[2].namespaceURI, 'http://www.w3.org/2000/svg');
 	}
 };

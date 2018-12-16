@@ -2,7 +2,6 @@ import readContext from '../read/context';
 import readExpression from '../read/expression';
 import { whitespace } from '../../utils/patterns';
 import { trimStart, trimEnd } from '../../utils/trim';
-import reservedNames from '../../utils/reservedNames';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
 

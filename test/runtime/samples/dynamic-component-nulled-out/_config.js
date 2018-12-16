@@ -3,16 +3,14 @@ export default {
 		<p>Foo</p>
 	`,
 
-	nestedTransitions: true,
+	test({ assert, component, target }) {
+		const Bar = component.Bar;
 
-	test(assert, component, target) {
-		const state = component.get();
-
-		component.set({ Foo: null });
+		component.Bar = null;
 
 		assert.htmlEqual(target.innerHTML, ``);
 
-		component.set({ Foo: state.Foo });
+		component.Bar = Bar;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>Foo</p>

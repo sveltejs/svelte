@@ -1,10 +1,9 @@
-<RenamedComponentOne/><RenamedComponentTwo/>
-
 <script>
 	import ComponentOne from './ComponentOne.html';
 	import ComponentTwo from './ComponentTwo.html';
 
-	export default {
-		components: { RenamedComponentOne: ComponentOne, RenamedComponentTwo: ComponentTwo },
-	};
+	const RenamedComponentOne = ComponentOne;
+	const RenamedComponentTwo = ComponentTwo;
 </script>
+
+<RenamedComponentOne/><RenamedComponentTwo/>

@@ -1,7 +1,7 @@
-import assert from "assert";
+import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import glob from 'tiny-glob/sync.js';
+import * as glob from 'tiny-glob/sync.js';
 
 import {
 	showOutput,
@@ -19,11 +19,13 @@ function tryToReadFile(file) {
 	}
 }
 
+const sveltePath = process.cwd().split('\\').join('/');
+
 describe("ssr", () => {
 	before(() => {
-		require("../../ssr/register")({
+		require("../../register")({
 			extensions: ['.svelte', '.html'],
-			store: true
+			sveltePath
 		});
 
 		return setupHtmlEqual();
@@ -44,26 +46,23 @@ describe("ssr", () => {
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/server-side-rendering/samples", dir);
 			try {
-				let component;
+				let Component;
 
 				const mainHtmlFile = `${dir}/main.html`;
 				const mainSvelteFile = `${dir}/main.svelte`;
 				if (fs.existsSync(mainHtmlFile)) {
-					component = require(mainHtmlFile);
+					Component = require(mainHtmlFile).default;
 				} else if (fs.existsSync(mainSvelteFile)) {
-					component = require(mainSvelteFile);
+					Component = require(mainSvelteFile).default;
 				}
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
 				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
 
-				const data = tryToLoadJson(`${dir}/data.json`);
+				const props = tryToLoadJson(`${dir}/data.json`) || undefined;
 
-				const rendered = component.render(data);
+				const rendered = Component.render(props);
 				const { html, css, head } = rendered;
-
-				// rendered.toString() === rendered.html
-				assert.equal(rendered, html);
 
 				fs.writeFileSync(`${dir}/_actual.html`, html);
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
@@ -100,7 +99,7 @@ describe("ssr", () => {
 			throw new Error("Forgot to remove `solo: true` from test");
 		}
 
-		if (config["skip-ssr"]) return;
+		if (config.skip_if_ssr) return;
 
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
@@ -110,13 +109,13 @@ describe("ssr", () => {
 				delete require.cache[resolved];
 			});
 
-			const compileOptions = config.compileOptions || {};
+			const compileOptions = Object.assign({ sveltePath }, config.compileOptions);
 
-			require("../../ssr/register")(compileOptions);
+			require("../../register")(compileOptions);
 
 			try {
-				const component = require(`../runtime/samples/${dir}/main.html`);
-				const { html } = component.render(config.data, {
+				const Component = require(`../runtime/samples/${dir}/main.html`).default;
+				const { html } = Component.render(config.props, {
 					store: (config.store !== true) && config.store
 				});
 

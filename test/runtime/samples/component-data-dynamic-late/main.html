@@ -1,17 +1,10 @@
-{#if foo}
-	<Widget p='{q}'/>
-{/if}
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		data: () => ({
-			foo: false
-		}),
-
-		components: {
-			Widget
-		}
-	};
+	export let foo = false;
+	export let q;
 </script>
+
+{#if foo}
+	<Widget p='{q}'/>
+{/if}

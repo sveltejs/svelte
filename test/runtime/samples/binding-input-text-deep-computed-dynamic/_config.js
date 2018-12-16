@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		prop: 'bar',
 		obj: {
 			foo: 'a',
@@ -18,7 +18,7 @@ export default {
 		<pre>{"foo":"a","bar":"b","baz":"c"}</pre>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		const event = new window.Event('input');
 
@@ -26,7 +26,7 @@ export default {
 
 		// edit bar
 		input.value = 'e';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>
@@ -34,11 +34,11 @@ export default {
 		`);
 
 		// edit baz
-		component.set({ prop: 'baz' });
+		component.prop = 'baz';
 		assert.equal(input.value, 'c');
 
 		input.value = 'f';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>
@@ -46,11 +46,11 @@ export default {
 		`);
 
 		// edit foo
-		component.set({ prop: 'foo' });
+		component.prop = 'foo';
 		assert.equal(input.value, 'a');
 
 		input.value = 'd';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>

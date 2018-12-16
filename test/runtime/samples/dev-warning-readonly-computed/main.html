@@ -1,7 +1,7 @@
 <script>
-	export default {
-		computed: {
-			foo: ({ a }) => a + 1
-		}
-	};
+	export let a;
+
+	export function foo() {
+		return a + 1;
+	}
 </script>

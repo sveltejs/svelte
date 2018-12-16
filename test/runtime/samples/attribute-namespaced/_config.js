@@ -1,5 +1,5 @@
 export default {
-	data: { foo: 'bar' },
+	props: { foo: 'bar' },
 
 	html: `
 		<svg>
@@ -7,7 +7,7 @@ export default {
 		</svg>
 	`,
 
-	test ( assert, component, target ) {
+	test({ assert, component, target }) {
 		const use = target.querySelector( 'use' );
 		assert.equal( use.getAttributeNS( 'http://www.w3.org/1999/xlink', 'href' ), '#bar' );
 	}

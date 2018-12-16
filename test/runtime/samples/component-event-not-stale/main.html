@@ -1,20 +1,15 @@
-<Button on:click="handleClick()">one</Button>
-<Button on:click="fire('value', {value})">two</Button>
-
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import Button from './Button.html';
 
-	export default {
-		components: {
-			Button
-		},
+	const dispatch = createEventDispatcher();
 
-		methods: {
-			handleClick() {
-				const { value } = this.get();
-				this.fire('value', { value });
-			}
-		}
+	export let value;
 
+	function handleClick() {
+		dispatch('value', { value });
 	}
 </script>
+
+<Button on:click="{handleClick}">one</Button>
+<Button on:click="{() => dispatch('value', {value})}">two</Button>

@@ -1,35 +1,36 @@
 {
 	"html": {
 		"start": 0,
-		"end": 38,
+		"end": 40,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 38,
+				"end": 40,
 				"type": "Element",
 				"name": "input",
 				"attributes": [
 					{
 						"start": 7,
-						"end": 37,
+						"end": 39,
 						"type": "Action",
 						"name": "tooltip",
+						"modifiers": [],
 						"expression": {
 							"type": "CallExpression",
-							"start": 20,
-							"end": 36,
+							"start": 21,
+							"end": 37,
 							"callee": {
 								"type": "Identifier",
-								"start": 20,
-								"end": 21,
+								"start": 21,
+								"end": 22,
 								"name": "t"
 							},
 							"arguments": [
 								{
 									"type": "Literal",
-									"start": 22,
-									"end": 35,
+									"start": 23,
+									"end": 36,
 									"value": "tooltip msg",
 									"raw": "'tooltip msg'"
 								}
@@ -41,6 +42,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

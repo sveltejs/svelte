@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		items: ['foo', 'bar', 'baz'],
 	},
 
@@ -9,14 +9,14 @@ export default {
 		<button>baz</button>
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const buttons = target.querySelectorAll('button');
 		const event = new window.MouseEvent('click');
 
 		const clicked = [];
 
-		component.on('clicked', event => {
-			clicked.push(event.node);
+		component.$on('clicked', event => {
+			clicked.push(event.detail.node);
 		});
 
 		buttons[1].dispatchEvent(event);

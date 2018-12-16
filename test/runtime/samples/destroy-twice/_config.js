@@ -1,6 +1,6 @@
 export default {
-	test(assert, component) {
-		component.destroy();
-		component.destroy();
+	test({ assert, component }) {
+		component.$destroy();
+		component.$destroy();
 	}
 };

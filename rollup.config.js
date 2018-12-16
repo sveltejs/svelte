@@ -20,39 +20,14 @@ export default [
 			json(),
 			typescript({
 				include: 'src/**',
-				exclude: 'src/shared/**',
+				exclude: 'src/internal/**',
 				typescript: require('typescript')
 			})
 		],
 		output: {
-			file: 'compiler/svelte.js',
+			file: 'compiler.js',
 			format: 'umd',
 			name: 'svelte',
-			sourcemap: true
-		}
-	},
-
-	/* ssr/register.js */
-	{
-		input: 'src/ssr/register.js',
-		plugins: [
-			resolve(),
-			commonjs(),
-			buble({
-				include: 'src/**',
-				exclude: 'src/shared/**',
-				target: {
-					node: 4
-				}
-			})
-		],
-		external: [path.resolve('src/index.ts'), 'fs', 'path'],
-		output: {
-			file: 'ssr/register.js',
-			format: 'cjs',
-			paths: {
-				[path.resolve('src/index.ts')]: '../compiler/svelte.js'
-			},
 			sourcemap: true
 		}
 	},
@@ -64,7 +39,7 @@ export default [
 			dir: 'cli',
 			format: 'cjs',
 			paths: {
-				svelte: '../compiler/svelte.js'
+				svelte: '../compiler.js'
 			}
 		},
 		external: ['fs', 'path', 'os', 'svelte'],
@@ -79,11 +54,11 @@ export default [
 		experimentalCodeSplitting: true
 	},
 
-	/* shared.js */
+	/* internal.js */
 	{
-		input: 'src/shared/index.js',
+		input: 'src/internal/index.js',
 		output: {
-			file: 'shared.js',
+			file: 'internal.js',
 			format: 'es'
 		}
 	}

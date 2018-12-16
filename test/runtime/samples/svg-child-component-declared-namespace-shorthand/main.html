@@ -1,11 +1,12 @@
-<svg>
-	<Rect x='{x}' y='{y}' width='{width}' height='{height}'/>
-</svg>
-
 <script>
 	import Rect from './Rect.html';
 
-	export default {
-		components: { Rect }
-	};
+	export let x;
+	export let y;
+	export let width;
+	export let height;
 </script>
+
+<svg>
+	<Rect x='{x}' y='{y}' width='{width}' height='{height}'/>
+</svg>

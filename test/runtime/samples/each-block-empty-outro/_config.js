@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		visible: true,
 		empty: []
 	},
@@ -10,10 +10,8 @@ export default {
 		</div>
 	`,
 
-	nestedTransitions: true,
-
-	test(assert, component, target) {
-		component.set({ visible: false });
+	test({ assert, component, target }) {
+		component.visible = false;
 
 		assert.htmlEqual(target.innerHTML, ``);
 	}

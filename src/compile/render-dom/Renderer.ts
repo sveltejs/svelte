@@ -17,12 +17,10 @@ export default class Renderer {
 	block: Block;
 	fragment: FragmentWrapper;
 
-	usedNames: Set<string>;
 	fileVar: string;
 
 	hasIntroTransitions: boolean;
 	hasOutroTransitions: boolean;
-	hasComplexBindings: boolean;
 
 	constructor(component: Component, options: CompileOptions) {
 		this.component = component;
@@ -32,7 +30,6 @@ export default class Renderer {
 		this.readonly = new Set();
 		this.slots = new Set();
 
-		this.usedNames = new Set();
 		this.fileVar = options.dev && this.component.getUniqueName('file');
 
 		// initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
@@ -43,7 +40,7 @@ export default class Renderer {
 		// main block
 		this.block = new Block({
 			renderer: this,
-			name: '@create_main_fragment',
+			name: null,
 			key: null,
 
 			bindings: new Map(),
@@ -64,13 +61,13 @@ export default class Renderer {
 			null
 		);
 
-		this.blocks.push(this.block);
-
 		this.blocks.forEach(block => {
 			if (typeof block !== 'string') {
 				block.assignVariableNames();
 			}
 		});
+
+		this.block.assignVariableNames();
 
 		this.fragment.render(this.block, null, 'nodes');
 	}

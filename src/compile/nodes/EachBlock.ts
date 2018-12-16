@@ -11,6 +11,7 @@ export default class EachBlock extends Node {
 
 	block: Block;
 	expression: Expression;
+	context_node: Node;
 
 	iterations: string;
 	index: string;
@@ -28,6 +29,7 @@ export default class EachBlock extends Node {
 
 		this.expression = new Expression(component, this, scope, info.expression);
 		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
+		this.context_node = info.context;
 		this.index = info.index;
 
 		this.scope = scope.child();
@@ -36,13 +38,6 @@ export default class EachBlock extends Node {
 		unpackDestructuring(this.contexts, info.context, '');
 
 		this.contexts.forEach(context => {
-			if (component.helpers.has(context.key.name)) {
-				component.warn(context.key, {
-					code: `each-context-clash`,
-					message: `Context clashes with a helper. Rename one or the other to eliminate any ambiguity`
-				});
-			}
-
 			this.scope.add(context.key.name, this.expression.dependencies);
 		});
 

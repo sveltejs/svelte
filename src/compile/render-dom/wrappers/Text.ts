@@ -62,6 +62,6 @@ export default class TextWrapper extends Wrapper {
 	}
 
 	remount(name: string) {
-		return `@append(${name}._slotted.default, ${this.var});`;
+		return `@append(${name}.$$.slotted.default, ${this.var});`;
 	}
 }

@@ -1,15 +1,16 @@
 export default {
-	data: {
-		"is-active": true,
-		isSelected: true
+	props: {
+		foo: true,
+		bar: true
 	},
-	html: `<div class="is-active isSelected"></div>`,
 
-	test ( assert, component, target, window ) {
-		component.set({ "is-active": false });
+	html: `<div class="foo bar"></div>`,
 
-		assert.htmlEqual( target.innerHTML, `
-			<div class="isSelected"></div>
-		` );
+	test({ assert, component, target, window }) {
+		component.foo = false;
+
+		assert.htmlEqual(target.innerHTML, `
+			<div class="bar"></div>
+		`);
 	}
 };

@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		animalPawsEntries: [
 			['raccoon', 'hands'],
 			['eagle', 'wings']
@@ -11,8 +11,8 @@ export default {
 		<p>wings</p>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ animalPawsEntries: [['foo', 'bar']] });
+	test({ assert, component, target }) {
+		component.animalPawsEntries = [['foo', 'bar']];
 		assert.htmlEqual( target.innerHTML, `
 			<p>bar</p>
 		`);

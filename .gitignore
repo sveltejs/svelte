@@ -1,10 +1,12 @@
 .DS_Store
 .nyc_output
 node_modules
+*.map
 /cli/
 /compiler/
 /ssr/
-/shared.js
+/internal.js
+/compiler.js
 /scratch/
 /coverage/
 /coverage.lcov/
@@ -13,7 +15,7 @@ node_modules
 /test/sourcemaps/samples/*/output.js.map
 /test/sourcemaps/samples/*/output.css
 /test/sourcemaps/samples/*/output.css.map
-/src/compile/shared.ts
 /store.umd.js
 /yarn-error.log
 _actual*.*
+_*/

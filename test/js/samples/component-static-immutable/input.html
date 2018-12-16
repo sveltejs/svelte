@@ -1,10 +1,7 @@
-<Nested foo='bar'/>
+<svelte:meta immutable/>
 
 <script>
-	export default {
-		immutable: true,
-		components: {
-			Nested: window.Nested
-		}
-	};
+	const Nested = window.Nested;
 </script>
+
+<Nested foo='bar'/>

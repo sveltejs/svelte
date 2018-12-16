@@ -1,6 +1,4 @@
 import Component from './../../Component';
-import Block from '../../render-dom/Block';
-import { trimStart, trimEnd } from '../../../utils/trim';
 
 export default class Node {
 	readonly start: number;
@@ -51,7 +49,7 @@ export default class Node {
 	}
 
 	remount(name: string) {
-		return `${this.var}.m(${name}._slotted.default, null);`;
+		return `${this.var}.m(${name}.$$.slotted.default, null);`;
 	}
 
 	warnIfEmptyBlock() {

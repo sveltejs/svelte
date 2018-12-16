@@ -1,7 +1,7 @@
 import counter from './counter.js';
 
 export default {
-	data: {
+	props: {
 		x: 1,
 		y: 2
 	},
@@ -11,16 +11,18 @@ export default {
 		<p class='2'></p>
 	`,
 
-	test(assert, component) {
+	test({ assert, component }) {
 		counter.count = 0;
 
-		component.set({ x: 3 });
+		component.x = 3;
 		assert.equal(counter.count, 0);
 
-		component.set({ x: 4, y: 5 });
+		component.x = 4;
+		component.y = 5;
 		assert.equal(counter.count, 1);
 
-		component.set({ x: 5, y: 5 });
+		component.x = 5;
+		component.y = 5;
 		assert.equal(counter.count, 1);
 	}
 };

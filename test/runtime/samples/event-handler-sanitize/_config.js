@@ -3,19 +3,19 @@ export default {
 		<div>toggle</div>
 	`,
 
-	test ( assert, component, target, window ) {
-		const div = target.querySelector( 'div' );
-		const event = new window.MouseEvent( 'some-event' );
+	async test({ assert, component, target, window }) {
+		const div = target.querySelector('div');
+		const event = new window.MouseEvent('some-event');
 
-		div.dispatchEvent( event );
-		assert.htmlEqual( target.innerHTML, `
+		await div.dispatchEvent(event);
+		assert.htmlEqual(target.innerHTML, `
 			<div>toggle</div>
 			<p>hello!</p>
-		` );
+		`);
 
-		div.dispatchEvent( event );
-		assert.htmlEqual( target.innerHTML, `
+		await div.dispatchEvent(event);
+		assert.htmlEqual(target.innerHTML, `
 			<div>toggle</div>
-		` );
+		`);
 	}
 };
