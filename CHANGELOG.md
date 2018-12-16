@@ -1,5 +1,12 @@
 # Svelte changelog
 
+## 2.16.0
+
+* Allow multiple window bindings ([#1859](https://github.com/sveltejs/svelte/issues/1859))
+* Add `--customElement` CLI flag ([#1843](https://github.com/sveltejs/svelte/pull/1843))
+* Fix lifecycle order bug with window bindings ([#1743](https://github.com/sveltejs/svelte/issues/1743))
+* Fix order of `await` block next to non-element block ([#1440](https://github.com/sveltejs/svelte/issues/1440))
+
 ## 2.15.4
 
 * IE `classList` fix ([#1868](https://github.com/sveltejs/svelte/pull/1868))
