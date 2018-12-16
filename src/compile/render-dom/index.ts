@@ -284,7 +284,7 @@ export default function dom(
 			: null
 	);
 
-	const reactive_store_subscriptions = reactive_stores
+	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
 		.map(name => deindent`
 			let ${name};
 			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$make_dirty('${name}'); }));
