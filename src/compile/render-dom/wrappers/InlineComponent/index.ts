@@ -219,7 +219,8 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				return `ctx.${fn}(${this.var})`;
+				block.builders.destroy.addLine(`ctx.${fn}(null);`);
+				return `@add_binding_callback(() => ctx.${fn}(${this.var}));`;
 			}
 
 			component.has_reactive_assignments = true;

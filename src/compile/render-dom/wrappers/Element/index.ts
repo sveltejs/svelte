@@ -540,7 +540,8 @@ export default class ElementWrapper extends Wrapper {
 				}
 			`);
 
-			block.builders.mount.addLine(`ctx.${name}(${this.var});`);
+			block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${this.var}));`);
+			block.builders.destroy.addLine(`ctx.${name}(null);`);
 		}
 	}
 
