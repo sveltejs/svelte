@@ -178,6 +178,10 @@ function getDomUpdater(
 		return null;
 	}
 
+	if (binding.node.name === 'this') {
+		return null;
+	}
+
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
 			`@selectOptions(${element.var}, ${snippet})` :
@@ -258,6 +262,10 @@ function getValueFromDom(
 ) {
 	const { node } = element;
 	const { name } = binding.node;
+
+	if (name === 'this') {
+		return `$$node`;
+	}
 
 	// <select bind:value='selected>
 	if (node.name === 'select') {

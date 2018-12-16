@@ -6,7 +6,7 @@
 	export let letters = ['a', 'b', 'c'];
 </script>
 
-<Modal ref:modal>
+<Modal bind:this={modal}>
 	<span>{letter}</span>
 	<select bind:value={letter}>
 		{#each letters as letter}

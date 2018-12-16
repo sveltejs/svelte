@@ -71,18 +71,6 @@ export default class Selector {
 
 				break;
 			}
-
-			i = block.selectors.length;
-			while (i--) {
-				const selector = block.selectors[i];
-
-				if (selector.type === 'RefSelector') {
-					code.overwrite(selector.start, selector.end, `.svelte-ref-${selector.name}`, {
-						contentOnly: true,
-						storeName: false
-					});
-				}
-			}
 		}
 
 		this.blocks.forEach((block, i) => {
@@ -171,15 +159,6 @@ function applySelector(stylesheet: Stylesheet, blocks: Block[], node: Node, stac
 		else if (selector.type === 'TypeSelector') {
 			// remove toLowerCase() in v2, when uppercase elements will be forbidden
 			if (node.name.toLowerCase() !== selector.name.toLowerCase() && selector.name !== '*') return false;
-		}
-
-		else if (selector.type === 'RefSelector') {
-			if (node.ref && node.ref.name === selector.name) {
-				stylesheet.nodesWithRefCssClass.set(selector.name, node);
-				toEncapsulate.push({ node, block });
-				return true;
-			}
-			return;
 		}
 
 		else {

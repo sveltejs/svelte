@@ -5,7 +5,6 @@ import Binding from './Binding';
 import EventHandler from './EventHandler';
 import Expression from './shared/Expression';
 import Component from '../Component';
-import Ref from './Ref';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -15,7 +14,6 @@ export default class InlineComponent extends Node {
 	bindings: Binding[];
 	handlers: EventHandler[];
 	children: Node[];
-	ref: Ref;
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -60,10 +58,6 @@ export default class InlineComponent extends Node {
 
 				case 'EventHandler':
 					this.handlers.push(new EventHandler(component, this, scope, node));
-					break;
-
-				case 'Ref':
-					this.ref = new Ref(component, this, scope, node);
 					break;
 
 				case 'Transition':

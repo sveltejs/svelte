@@ -185,7 +185,6 @@ export default class ElementWrapper extends Wrapper {
 			if (node.classes.length > 0) this.parent.cannotUseInnerHTML();
 			if (node.intro || node.outro) this.parent.cannotUseInnerHTML();
 			if (node.handlers.length > 0) this.parent.cannotUseInnerHTML();
-			if (node.ref) this.parent.cannotUseInnerHTML();
 
 			if (this.node.name === 'option') this.parent.cannotUseInnerHTML();
 
@@ -300,7 +299,6 @@ export default class ElementWrapper extends Wrapper {
 
 		this.addBindings(block);
 		this.addEventHandlers(block);
-		if (this.node.ref) this.addRef(block);
 		this.addAttributes(block);
 		this.addTransitions(block);
 		this.addAnimation(block);
@@ -527,6 +525,24 @@ export default class ElementWrapper extends Wrapper {
 		});
 
 		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
+
+		const this_binding = this.bindings.find(b => b.node.name === 'this');
+		if (this_binding) {
+			const name = renderer.component.getUniqueName(`${this.var}_binding`);
+			renderer.component.declarations.push(name);
+			renderer.component.template_references.add(name);
+
+			const { handler } = this_binding.munge(block);
+
+			renderer.component.partly_hoisted.push(deindent`
+				function ${name}($$node) {
+					${handler.mutation}
+				}
+			`);
+
+			block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${this.var}));`);
+			block.builders.destroy.addLine(`ctx.${name}(null);`);
+		}
 	}
 
 	addAttributes(block: Block) {
@@ -595,21 +611,6 @@ export default class ElementWrapper extends Wrapper {
 
 	addEventHandlers(block: Block) {
 		addEventHandlers(block, this.var, this.node.handlers);
-	}
-
-	addRef(block: Block) {
-		const ref = `#component.$$.refs.${this.node.ref.name}`;
-
-		block.builders.mount.addLine(
-			`${ref} = ${this.var};`
-		);
-
-		block.builders.destroy.addLine(
-			`if (${ref} === ${this.var}) {
-				${ref} = null;
-				#component.$$.inject_refs(#component.$$.refs);
-			}`
-		);
 	}
 
 	addTransitions(

@@ -58,7 +58,6 @@ function update($$) {
 		$$.update($$.dirty);
 		run_all($$.before_render);
 		$$.fragment.p($$.dirty, $$.get());
-		$$.inject_refs($$.refs);
 		$$.dirty = null;
 
 		$$.after_render.forEach(add_render_callback);

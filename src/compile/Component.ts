@@ -80,7 +80,6 @@ export default class Component {
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
 	template_references: Set<string> = new Set();
-	refs: Set<string> = new Set();
 
 	file: string;
 	locate: (c: number) => { line: number, column: number };

@@ -7,7 +7,7 @@
 {#await thePromise}
 	<p>loading...</p>
 {:then theValue}
-	<button ref:button on:click='{() => clicked = theValue}'>click me</button>
+	<button bind:this={button} on:click='{() => clicked = theValue}'>click me</button>
 {:catch theError}
 	<p>oh no! {theError.message}</p>
 {/await}

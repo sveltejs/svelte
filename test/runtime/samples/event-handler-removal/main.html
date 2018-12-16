@@ -5,5 +5,5 @@
 </script>
 
 {#if visible}
-	<input ref:input on:blur='{() => blurred = true}'>
+	<input bind:this={input} on:blur='{() => blurred = true}'>
 {/if}
