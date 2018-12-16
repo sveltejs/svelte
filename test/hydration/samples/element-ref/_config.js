@@ -11,6 +11,6 @@ export default {
 		const h1 = target.querySelector('h1');
 
 		assert.equal(h1, snapshot.h1);
-		assert.equal(component.refs.h1, h1);
+		assert.equal(component.h1, h1);
 	}
 };

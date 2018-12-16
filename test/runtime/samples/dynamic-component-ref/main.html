@@ -1,11 +1,7 @@
-<svelte:component this={foo} ref:test/>
-
 <script>
 	import Foo from './Foo.html';
 
-	export default {
-		data() {
-			return { foo: Foo };
-		}
-	};
+	export let test;
 </script>
+
+<svelte:component this={Foo} ref:test/>

@@ -1,8 +1,8 @@
 export default {
 	html: '',
 
-	test ( assert, component, target, window ) {
-		component.set({ visible: true });
-		assert.equal( component.refs.input, window.document.activeElement );
+	test({ assert, component, target, window }) {
+		component.visible = true;
+		assert.equal(target.querySelector('input'), window.document.activeElement);
 	}
 };

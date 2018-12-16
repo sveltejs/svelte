@@ -1,11 +1,9 @@
-{foo(bar)}
-
 <script>
-	export default {
-		helpers: {
-			foo ( bar ) {
-				return bar * 2;
-			}
-		}
-	};
+	export let bar;
+
+	function foo(bar) {
+		return bar * 2;
+	}
 </script>
+
+{foo(bar)}

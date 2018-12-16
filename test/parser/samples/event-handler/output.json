@@ -17,52 +17,39 @@
 						"name": "click",
 						"modifiers": [],
 						"expression": {
-							"type": "CallExpression",
-							"start": 18,
-							"end": 44,
-							"callee": {
-								"type": "Identifier",
-								"start": 18,
-								"end": 21,
-								"name": "set"
-							},
-							"arguments": [
-								{
-									"type": "ObjectExpression",
-									"start": 22,
+							"type": "ArrowFunctionExpression",
+							"start": 19,
+							"end": 43,
+							"id": null,
+							"generator": false,
+							"expression": true,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "AssignmentExpression",
+								"start": 25,
+								"end": 43,
+								"operator": "=",
+								"left": {
+									"type": "Identifier",
+									"start": 25,
+									"end": 32,
+									"name": "visible"
+								},
+								"right": {
+									"type": "UnaryExpression",
+									"start": 35,
 									"end": 43,
-									"properties": [
-										{
-											"type": "Property",
-											"start": 24,
-											"end": 41,
-											"method": false,
-											"shorthand": false,
-											"computed": false,
-											"key": {
-												"type": "Identifier",
-												"start": 24,
-												"end": 31,
-												"name": "visible"
-											},
-											"value": {
-												"type": "UnaryExpression",
-												"start": 33,
-												"end": 41,
-												"operator": "!",
-												"prefix": true,
-												"argument": {
-													"type": "Identifier",
-													"start": 34,
-													"end": 41,
-													"name": "visible"
-												}
-											},
-											"kind": "init"
-										}
-									]
+									"operator": "!",
+									"prefix": true,
+									"argument": {
+										"type": "Identifier",
+										"start": 36,
+										"end": 43,
+										"name": "visible"
+									}
 								}
-							]
+							}
 						}
 					}
 				],
@@ -111,6 +98,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

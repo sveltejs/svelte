@@ -1,9 +1,5 @@
-<Nested foo={[1, 2, 3]}/>
-
 <script>
-	export default {
-		components: {
-			Nested: window.Nested
-		}
-	};
+	const Nested = window.Nested;
 </script>
+
+<Nested foo={[1, 2, 3]}/>

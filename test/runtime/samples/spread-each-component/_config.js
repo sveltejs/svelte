@@ -4,19 +4,17 @@ export default {
 		<div data-a="3" data-b="4"></div>
 	`,
 
-	data: {
+	props: {
 		things: [
 			{ a: 1, b: 2 },
 			{ a: 3, b: 4 }
 		]
 	},
 
-	test(assert, component, target) {
-		const { things } = component.get();
+	test({ assert, component, target }) {
+		const { things } = component;
 
-		component.set({
-			things: things.reverse()
-		});
+		component.things = things.reverse();
 
 		assert.htmlEqual(target.innerHTML, `
 			<div data-a="3" data-b="4"></div>

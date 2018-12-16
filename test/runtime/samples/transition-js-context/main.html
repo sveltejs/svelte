@@ -1,20 +1,17 @@
-<div transition:foo></div>
-
 <script>
-	export default {
-		data() {
-			return { x: 42 };
-		},
+	export let x = 42;
+	export let visible = false;
 
-		transitions: {
-			foo(node, params) {
-				return {
-					duration: 100,
-					tick: t => {
-						node.foo = this.get().x;
-					}
-				};
+	function foo(node, params) {
+		return {
+			duration: 100,
+			tick: t => {
+				node.foo = x;
 			}
-		}
-	};
+		};
+	}
 </script>
+
+{#if visible}
+	<div transition:foo></div>
+{/if}

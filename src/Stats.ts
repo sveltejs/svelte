@@ -1,4 +1,4 @@
-import { Node, Warning } from './interfaces';
+import { Warning } from './interfaces';
 import Component from './compile/Component';
 
 const now = (typeof process !== 'undefined' && process.hrtime)
@@ -96,21 +96,12 @@ export default class Stats {
 			}
 		});
 
-		const hooks: Record<string, boolean> = component && {
-			oncreate: !!component.templateProperties.oncreate,
-			ondestroy: !!component.templateProperties.ondestroy,
-			onstate: !!component.templateProperties.onstate,
-			onupdate: !!component.templateProperties.onupdate
-		};
-
-		const computed = new Set(component.computations.map(c => c.key));
-
 		return {
-			props: Array.from(component.expectedProperties).filter(key => !computed.has(key)),
+			props: component.props.map(prop => prop.as),
 			timings,
 			warnings: this.warnings,
 			imports,
-			hooks
+			templateReferences: component && component.template_references
 		};
 	}
 

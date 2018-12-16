@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		visible: true
 	},
 
@@ -9,15 +9,15 @@ export default {
 		after
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ visible: false });
+	test({ assert, component, target }) {
+		component.visible = false;
 		assert.htmlEqual( target.innerHTML, `
 			before
 
 			after
 		` );
 
-		component.set({ visible: true });
+		component.visible = true;
 		assert.htmlEqual( target.innerHTML, `
 			before
 			<p>Widget</p>

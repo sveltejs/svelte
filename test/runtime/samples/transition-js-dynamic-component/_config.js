@@ -1,8 +1,5 @@
 export default {
-	nestedTransitions: true,
-	skipIntroByDefault: true,
-
-	data: {
+	props: {
 		x: true,
 	},
 
@@ -10,8 +7,8 @@ export default {
 		<div>a</div>
 	`,
 
-	test (assert, component, target, window, raf) {
-		component.set({ x: false });
+	test({ assert, component, target, window, raf }) {
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>a</div>

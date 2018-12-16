@@ -1,18 +1,16 @@
 export default {
-	skipIntroByDefault: true,
-
-	data: {
+	props: {
 		visible: true
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ visible: false });
+	test({ assert, component, target, window, raf }) {
+		component.visible = false;
 		const div = target.querySelector('div');
 
 		raf.tick(50);
 		assert.equal(div.foo, 0.5);
 
-		component.destroy();
+		component.$destroy();
 
 		raf.tick(100);
 	},

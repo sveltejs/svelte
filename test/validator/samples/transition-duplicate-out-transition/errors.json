@@ -2,14 +2,14 @@
 	"code": "duplicate-transition",
 	"message": "An element cannot have both an 'out' directive and a 'transition' directive",
 	"start": {
-		"line": 1,
+		"line": 6,
 		"column": 13,
-		"character": 13
+		"character": 71
 	},
 	"end": {
-		"line": 1,
+		"line": 6,
 		"column": 27,
-		"character": 27
+		"character": 85
 	},
-	"pos": 13
+	"pos": 71
 }]

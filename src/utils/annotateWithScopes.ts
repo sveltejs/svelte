@@ -10,29 +10,35 @@ export function createScopes(expression: Node) {
 
 	walk(expression, {
 		enter(node: Node, parent: Node) {
-			if (/Function/.test(node.type)) {
+			if (node.type === 'ImportDeclaration') {
+				node.specifiers.forEach(specifier => {
+					scope.declarations.set(specifier.local.name, specifier);
+				});
+			} else if (/Function/.test(node.type)) {
 				if (node.type === 'FunctionDeclaration') {
-					scope.declarations.add(node.id.name);
+					scope.declarations.set(node.id.name, node);
+					scope = new Scope(scope, false);
+					map.set(node, scope);
 				} else {
 					scope = new Scope(scope, false);
 					map.set(node, scope);
-					if (node.id) scope.declarations.add(node.id.name);
+					if (node.id) scope.declarations.set(node.id.name, node);
 				}
 
 				node.params.forEach((param: Node) => {
 					extractNames(param).forEach(name => {
-						scope.declarations.add(name);
+						scope.declarations.set(name, node);
 					});
 				});
-			} else if (/For(?:In|Of)Statement/.test(node.type)) {
+			} else if (/For(?:In|Of)?Statement/.test(node.type)) {
 				scope = new Scope(scope, true);
 				map.set(node, scope);
 			} else if (node.type === 'BlockStatement') {
 				scope = new Scope(scope, true);
 				map.set(node, scope);
-			} else if (/(Function|Class|Variable)Declaration/.test(node.type)) {
+			} else if (/(Class|Variable)Declaration/.test(node.type)) {
 				scope.addDeclaration(node);
-			} else if (isReference(node, parent)) {
+			} else if (node.type === 'Identifier' && isReference(node, parent)) {
 				if (!scope.has(node.name)) {
 					globals.add(node.name);
 				}
@@ -49,72 +55,41 @@ export function createScopes(expression: Node) {
 	return { map, scope, globals };
 }
 
-// TODO remove this in favour of weakmap version
-export default function annotateWithScopes(expression: Node) {
-	const globals = new Set();
-	let scope = new Scope(null, false);
-
-	walk(expression, {
-		enter(node: Node, parent: Node) {
-			if (/Function/.test(node.type)) {
-				if (node.type === 'FunctionDeclaration') {
-					scope.declarations.add(node.id.name);
-				} else {
-					node._scope = scope = new Scope(scope, false);
-					if (node.id) scope.declarations.add(node.id.name);
-				}
-
-				node.params.forEach((param: Node) => {
-					extractNames(param).forEach(name => {
-						scope.declarations.add(name);
-					});
-				});
-			} else if (/For(?:In|Of)Statement/.test(node.type)) {
-				node._scope = scope = new Scope(scope, true);
-			} else if (node.type === 'BlockStatement') {
-				node._scope = scope = new Scope(scope, true);
-			} else if (/(Function|Class|Variable)Declaration/.test(node.type)) {
-				scope.addDeclaration(node);
-			} else if (isReference(node, parent)) {
-				if (!scope.has(node.name)) {
-					globals.add(node.name);
-				}
-			}
-		},
-
-		leave(node: Node) {
-			if (node._scope) {
-				scope = scope.parent;
-			}
-		},
-	});
-
-	return { scope, globals };
-}
-
 export class Scope {
 	parent: Scope;
 	block: boolean;
-	declarations: Set<string>;
+
+	declarations: Map<string, Node> = new Map();
+	writable_declarations: Set<string> = new Set();
+	initialised_declarations: Set<string> = new Set();
 
 	constructor(parent: Scope, block: boolean) {
 		this.parent = parent;
 		this.block = block;
-		this.declarations = new Set();
 	}
 
 	addDeclaration(node: Node) {
-		if (node.kind === 'var' && !this.block && this.parent) {
+		if (node.kind === 'var' && this.block && this.parent) {
 			this.parent.addDeclaration(node);
 		} else if (node.type === 'VariableDeclaration') {
+			const writable = node.kind !== 'const';
+			const initialised = !!node.init;
+
 			node.declarations.forEach((declarator: Node) => {
 				extractNames(declarator.id).forEach(name => {
-					this.declarations.add(name);
+					this.declarations.set(name, node);
+					if (writable) this.writable_declarations.add(name);
+					if (initialised) this.initialised_declarations.add(name);
 				});
 			});
 		} else {
-			this.declarations.add(node.id.name);
+			this.declarations.set(node.id.name, node);
 		}
+	}
+
+	findOwner(name: string): Scope {
+		if (this.declarations.has(name)) return this;
+		return this.parent && this.parent.findOwner(name);
 	}
 
 	has(name: string): boolean {
@@ -124,7 +99,7 @@ export class Scope {
 	}
 }
 
-function extractNames(param: Node) {
+export function extractNames(param: Node) {
 	const names: string[] = [];
 	extractors[param.type](names, param);
 	return names;

@@ -1,12 +1,8 @@
-<Counter bind:count='x'/>
-<p>count: {x}</p>
-
 <script>
 	import Counter from './Counter.html';
 
-	export default {
-		components: {
-			Counter
-		}
-	};
+	export let x;
 </script>
+
+<Counter bind:count={x}/>
+<p>count: {x}</p>

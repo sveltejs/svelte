@@ -10,12 +10,15 @@ import { stringify, escapeHTML, escape } from '../../../../utils/stringify';
 import TextWrapper from '../Text';
 import fixAttributeCasing from '../../../../utils/fixAttributeCasing';
 import deindent from '../../../../utils/deindent';
-import namespaces from '../../../../utils/namespaces';
+import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import { dimensions } from '../../../../utils/patterns';
 import Binding from './Binding';
 import InlineComponentWrapper from '../InlineComponent';
+import addToSet from '../../../../utils/addToSet';
+import addEventHandlers from '../shared/addEventHandlers';
+import addActions from '../shared/addActions';
 
 const events = [
 	{
@@ -165,12 +168,14 @@ export default class ElementWrapper extends Wrapper {
 		// add directive and handler dependencies
 		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
 			if (directive && directive.expression) {
-				block.addDependencies(directive.expression.dependencies);
+				block.addDependencies(directive.expression.dynamic_dependencies);
 			}
 		});
 
 		node.handlers.forEach(handler => {
-			block.addDependencies(handler.dependencies);
+			if (handler.expression) {
+				block.addDependencies(handler.expression.dynamic_dependencies);
+			}
 		});
 
 		if (this.parent) {
@@ -211,7 +216,7 @@ export default class ElementWrapper extends Wrapper {
 		let initialMountNode;
 
 		if (this.slotOwner) {
-			initialMountNode = `${this.slotOwner.var}._slotted${prop}`;
+			initialMountNode = `${this.slotOwner.var}.$$.slotted${prop}`;
 		} else {
 			initialMountNode = parentNode;
 		}
@@ -278,10 +283,6 @@ export default class ElementWrapper extends Wrapper {
 			});
 		}
 
-		let hasHoistedEventHandlerOrBinding = (
-			//(this.hasAncestor('EachBlock') && this.bindings.length > 0) ||
-			this.node.handlers.some(handler => handler.shouldHoist)
-		);
 		const eventHandlerOrBindingUsesComponent = (
 			this.bindings.length > 0 ||
 			this.node.handlers.some(handler => handler.usesComponent)
@@ -289,33 +290,12 @@ export default class ElementWrapper extends Wrapper {
 
 		const eventHandlerOrBindingUsesContext = (
 			this.bindings.some(binding => binding.node.usesContext) ||
-			this.node.handlers.some(handler => handler.usesContext)
+			this.node.handlers.some(handler => handler.usesContext) ||
+			this.node.actions.some(action => action.usesContext)
 		);
 
-		if (hasHoistedEventHandlerOrBinding) {
-			const initialProps: string[] = [];
-			const updates: string[] = [];
-
-			if (eventHandlerOrBindingUsesComponent) {
-				const component = block.alias('component');
-				initialProps.push(component === 'component' ? 'component' : `component: ${component}`);
-			}
-
-			if (eventHandlerOrBindingUsesContext) {
-				initialProps.push(`ctx`);
-				block.builders.update.addLine(`${node}._svelte.ctx = ctx;`);
-				block.maintainContext = true;
-			}
-
-			if (initialProps.length) {
-				block.builders.hydrate.addBlock(deindent`
-					${node}._svelte = { ${initialProps.join(', ')} };
-				`);
-			}
-		} else {
-			if (eventHandlerOrBindingUsesContext) {
-				block.maintainContext = true;
-			}
+		if (eventHandlerOrBindingUsesContext) {
+			block.maintainContext = true;
 		}
 
 		this.addBindings(block);
@@ -331,7 +311,7 @@ export default class ElementWrapper extends Wrapper {
 			block.builders.mount.addBlock(this.initialUpdate);
 		}
 
-		if (nodes) {
+		if (nodes && this.renderer.options.hydratable) {
 			block.builders.claim.addLine(
 				`${nodes}.forEach(@detachNode);`
 			);
@@ -409,9 +389,7 @@ export default class ElementWrapper extends Wrapper {
 
 		if (this.bindings.length === 0) return;
 
-		if (this.node.name === 'select' || this.isMediaNode()) {
-			this.renderer.hasComplexBindings = true;
-		}
+		renderer.component.has_reactive_assignments = true;
 
 		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
@@ -425,20 +403,28 @@ export default class ElementWrapper extends Wrapper {
 		if (lock) block.addVariable(lock, 'false');
 
 		const groups = events
-			.map(event => {
-				return {
-					events: event.eventNames,
-					bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
-				};
-			})
+			.map(event => ({
+				events: event.eventNames,
+				bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
+			}))
 			.filter(group => group.bindings.length);
 
 		groups.forEach(group => {
 			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
+			renderer.component.declarations.push(handler);
+			renderer.component.template_references.add(handler);
 
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
+			const dependencies = new Set();
+			const contextual_dependencies = new Set();
+
 			group.bindings.forEach(binding => {
+				// TODO this is a mess
+				addToSet(dependencies, binding.dependencies);
+				addToSet(contextual_dependencies, binding.contextual_dependencies);
+				addToSet(contextual_dependencies, binding.handler.contextual_dependencies);
+
 				if (!binding.updateDom) return;
 
 				const updateConditions = needsLock ? [`!${lock}`] : [];
@@ -449,20 +435,7 @@ export default class ElementWrapper extends Wrapper {
 				);
 			});
 
-			const usesStore = group.bindings.some(binding => binding.handler.usesStore);
 			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
-
-			const props = new Set();
-			const storeProps = new Set();
-			group.bindings.forEach(binding => {
-				binding.handler.props.forEach(prop => {
-					props.add(prop);
-				});
-
-				binding.handler.storeProps.forEach(prop => {
-					storeProps.add(prop);
-				});
-			}); // TODO use stringifyProps here, once indenting is fixed
 
 			// media bindings — awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
@@ -473,21 +446,48 @@ export default class ElementWrapper extends Wrapper {
 				block.addVariable(animation_frame);
 			}
 
-			block.builders.init.addBlock(deindent`
-				function ${handler}() {
-					${
-						animation_frame && deindent`
-							cancelAnimationFrame(${animation_frame});
-							if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+			// TODO figure out how to handle locks
+
+			let callee;
+
+			// TODO dry this out — similar code for event handlers and component bindings
+			if (contextual_dependencies.size > 0) {
+				const deps = Array.from(contextual_dependencies);
+
+				block.builders.init.addBlock(deindent`
+					function ${handler}() {
+						ctx.${handler}.call(this, ctx);
 					}
-					${usesStore && `var $ = #component.store.get();`}
-					${needsLock && `${lock} = true;`}
-					${mutations.length > 0 && mutations}
-					${props.size > 0 && `#component.set({ ${Array.from(props).join(', ')} });`}
-					${storeProps.size > 0 && `#component.store.set({ ${Array.from(storeProps).join(', ')} });`}
-					${needsLock && `${lock} = false;`}
-				}
-			`);
+				`);
+
+				this.renderer.component.partly_hoisted.push(deindent`
+					function ${handler}({ ${deps.join(', ')} }) {
+						${
+							animation_frame && deindent`
+								cancelAnimationFrame(${animation_frame});
+								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+						}
+						${mutations.length > 0 && mutations}
+						${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+					}
+				`);
+
+				callee = handler;
+			} else {
+				this.renderer.component.partly_hoisted.push(deindent`
+					function ${handler}() {
+						${
+							animation_frame && deindent`
+								cancelAnimationFrame(${animation_frame});
+								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
+						}
+						${mutations.length > 0 && mutations}
+						${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+					}
+				`);
+
+				callee = `ctx.${handler}`;
+			}
 
 			group.events.forEach(name => {
 				if (name === 'resize') {
@@ -496,40 +496,32 @@ export default class ElementWrapper extends Wrapper {
 					block.addVariable(resize_listener);
 
 					block.builders.mount.addLine(
-						`${resize_listener} = @addResizeListener(${this.var}, ${handler});`
+						`${resize_listener} = @addResizeListener(${this.var}, ${callee});`
 					);
 
 					block.builders.destroy.addLine(
 						`${resize_listener}.cancel();`
 					);
 				} else {
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${name}", ${handler});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${name}", ${handler});`
+					block.event_listeners.push(
+						`@addListener(${this.var}, "${name}", ${callee})`
 					);
 				}
 			});
 
-			const allInitialStateIsDefined = group.bindings
-				.map(binding => `'${binding.object}' in ctx`)
-				.join(' && ');
+			const someInitialStateIsUndefined = group.bindings
+				.map(binding => `${binding.snippet} === void 0`)
+				.join(' || ');
 
 			if (this.node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
-				renderer.hasComplexBindings = true;
-
 				block.builders.hydrate.addLine(
-					`if (!(${allInitialStateIsDefined})) #component.root._beforecreate.push(${handler});`
+					`if (${someInitialStateIsUndefined}) @add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 
 			if (group.events[0] === 'resize') {
-				renderer.hasComplexBindings = true;
-
 				block.builders.hydrate.addLine(
-					`#component.root._aftercreate.push(${handler});`
+					`@add_render_callback(() => ${callee}.call(${this.var}));`
 				);
 			}
 		});
@@ -566,7 +558,7 @@ export default class ElementWrapper extends Wrapper {
 					: null;
 
 				if (attr.isSpread) {
-					const { snippet, dependencies } = attr.expression;
+					const snippet = attr.expression.render();
 
 					initialProps.push(snippet);
 
@@ -602,105 +594,21 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	addEventHandlers(block: Block) {
-		const { renderer } = this;
-		const { component } = renderer;
-
-		this.node.handlers.forEach(handler => {
-			const isCustomEvent = component.events.has(handler.name);
-
-			if (handler.callee) {
-				// TODO move handler render method into a wrapper
-				handler.render(this.renderer.component, block, this.var, handler.shouldHoist);
-			}
-
-			const target = handler.shouldHoist ? 'this' : this.var;
-
-			// get a name for the event handler that is globally unique
-			// if hoisted, locally unique otherwise
-			const handlerName = (handler.shouldHoist ? component : block).getUniqueName(
-				`${handler.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_handler`
-			);
-
-			const component_name = block.alias('component'); // can't use #component, might be hoisted
-
-			// create the handler body
-			const handlerBody = deindent`
-				${handler.shouldHoist && (
-					handler.usesComponent || handler.usesContext
-						? `const { ${[handler.usesComponent && 'component', handler.usesContext && 'ctx'].filter(Boolean).join(', ')} } = ${target}._svelte;`
-						: null
-				)}
-
-				${handler.snippet ?
-					handler.snippet :
-					`${component_name}.fire("${handler.name}", event);`}
-			`;
-
-			if (isCustomEvent) {
-				block.addVariable(handlerName);
-
-				block.builders.hydrate.addBlock(deindent`
-					${handlerName} = %events-${handler.name}.call(${component_name}, ${this.var}, function(event) {
-						${handlerBody}
-					});
-				`);
-
-				block.builders.destroy.addLine(deindent`
-					${handlerName}.destroy();
-				`);
-			} else {
-				const modifiers = [];
-				if (handler.modifiers.has('preventDefault')) modifiers.push('event.preventDefault();');
-				if (handler.modifiers.has('stopPropagation')) modifiers.push('event.stopPropagation();');
-
-				const handlerFunction = deindent`
-					function ${handlerName}(event) {
-						${modifiers}
-						${handlerBody}
-					}
-				`;
-
-				if (handler.shouldHoist) {
-					renderer.blocks.push(handlerFunction);
-				} else {
-					block.builders.init.addBlock(handlerFunction);
-				}
-
-				const opts = ['passive', 'once', 'capture'].filter(mod => handler.modifiers.has(mod));
-				if (opts.length) {
-					const optString = (opts.length === 1 && opts[0] === 'capture')
-						? 'true'
-						: `{ ${opts.map(opt => `${opt}: true`).join(', ')} }`;
-
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ${handlerName}, ${optString});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ${handlerName}, ${optString});`
-					);
-				} else {
-					block.builders.hydrate.addLine(
-						`@addListener(${this.var}, "${handler.name}", ${handlerName});`
-					);
-
-					block.builders.destroy.addLine(
-						`@removeListener(${this.var}, "${handler.name}", ${handlerName});`
-					);
-				}
-			}
-		});
+		addEventHandlers(block, this.var, this.node.handlers);
 	}
 
 	addRef(block: Block) {
-		const ref = `#component.refs.${this.node.ref.name}`;
+		const ref = `#component.$$.refs.${this.node.ref.name}`;
 
 		block.builders.mount.addLine(
 			`${ref} = ${this.var};`
 		);
 
 		block.builders.destroy.addLine(
-			`if (${ref} === ${this.var}) ${ref} = null;`
+			`if (${ref} === ${this.var}) {
+				${ref} = null;
+				#component.$$.inject_refs(#component.$$.refs);
+			}`
 		);
 	}
 
@@ -708,23 +616,24 @@ export default class ElementWrapper extends Wrapper {
 		block: Block
 	) {
 		const { intro, outro } = this.node;
-
 		if (!intro && !outro) return;
+
+		const { component } = this.renderer;
 
 		if (intro === outro) {
 			const name = block.getUniqueName(`${this.var}_transition`);
 			const snippet = intro.expression
-				? intro.expression.snippet
+				? intro.expression.render()
 				: '{}';
 
 			block.addVariable(name);
 
-			const fn = `%transitions-${intro.name}`;
+			const fn = component.qualify(intro.name);
 
-			block.builders.intro.addConditional(`#component.root._intro`, deindent`
+			block.builders.intro.addConditional(`@intro.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
 
-				#component.root._aftercreate.push(() => {
+				@add_render_callback(() => {
 					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
@@ -746,10 +655,10 @@ export default class ElementWrapper extends Wrapper {
 			if (intro) {
 				block.addVariable(introName);
 				const snippet = intro.expression
-					? intro.expression.snippet
+					? intro.expression.render()
 					: '{}';
 
-				const fn = `%transitions-${intro.name}`; // TODO add built-in transitions?
+				const fn = component.qualify(intro.name); // TODO add built-in transitions?
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
@@ -758,8 +667,8 @@ export default class ElementWrapper extends Wrapper {
 					`);
 				}
 
-				block.builders.intro.addConditional(`#component.root._intro`, deindent`
-					#component.root._aftercreate.push(() => {
+				block.builders.intro.addConditional(`@intro.enabled`, deindent`
+					@add_render_callback(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
 					});
@@ -769,10 +678,10 @@ export default class ElementWrapper extends Wrapper {
 			if (outro) {
 				block.addVariable(outroName);
 				const snippet = outro.expression
-					? outro.expression.snippet
+					? outro.expression.render()
 					: '{}';
 
-				const fn = `%transitions-${outro.name}`;
+				const fn = component.qualify(outro.name);
 
 				block.builders.intro.addBlock(deindent`
 					if (${outroName}) ${outroName}.abort(1);
@@ -793,6 +702,8 @@ export default class ElementWrapper extends Wrapper {
 	addAnimation(block: Block) {
 		if (!this.node.animation) return;
 
+		const { component } = this.renderer;
+
 		const rect = block.getUniqueName('rect');
 		const animation = block.getUniqueName('animation');
 
@@ -808,48 +719,21 @@ export default class ElementWrapper extends Wrapper {
 			if (${animation}) ${animation}.stop();
 		`);
 
-		const params = this.node.animation.expression ? this.node.animation.expression.snippet : '{}';
+		const params = this.node.animation.expression ? this.node.animation.expression.render() : '{}';
+
+		let { name } = this.node.animation;
+		if (!component.hoistable_names.has(name) && !component.imported_declarations.has(name)) {
+			name = `ctx.${name}`;
+		}
+
 		block.builders.animate.addBlock(deindent`
 			if (${animation}) ${animation}.stop();
-			${animation} = @wrapAnimation(${this.var}, ${rect}, %animations-${this.node.animation.name}, ${params});
+			${animation} = @wrapAnimation(${this.var}, ${rect}, ${name}, ${params});
 		`);
 	}
 
 	addActions(block: Block) {
-		this.node.actions.forEach(action => {
-			const { expression } = action;
-			let snippet, dependencies;
-			if (expression) {
-				snippet = expression.snippet;
-				dependencies = expression.dependencies;
-			}
-
-			const name = block.getUniqueName(
-				`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
-			);
-
-			block.addVariable(name);
-			const fn = `%actions-${action.name}`;
-
-			block.builders.mount.addLine(
-				`${name} = ${fn}.call(#component, ${this.var}${snippet ? `, ${snippet}` : ''}) || {};`
-			);
-
-			if (dependencies && dependencies.size > 0) {
-				let conditional = `typeof ${name}.update === 'function' && `;
-				const deps = [...dependencies].map(dependency => `changed.${dependency}`).join(' || ');
-				conditional += dependencies.size > 1 ? `(${deps})` : deps;
-
-				block.builders.update.addConditional(
-					conditional,
-					`${name}.update.call(#component, ${snippet});`
-				);
-			}
-
-			block.builders.destroy.addLine(
-				`if (${name} && typeof ${name}.destroy === 'function') ${name}.destroy.call(#component);`
-			);
-		});
+		addActions(this.renderer.component, block, this.var, this.node.actions);
 	}
 
 	addClasses(block: Block) {
@@ -857,10 +741,10 @@ export default class ElementWrapper extends Wrapper {
 			const { expression, name } = classDir;
 			let snippet, dependencies;
 			if (expression) {
-				snippet = expression.snippet;
+				snippet = expression.render();
 				dependencies = expression.dependencies;
 			} else {
-				snippet = `ctx${quotePropIfNecessary(name)}`;
+				snippet = `${quotePropIfNecessary(name)}`;
 				dependencies = new Set([name]);
 			}
 			const updater = `@toggleClass(${this.var}, "${name}", ${snippet});`;
@@ -902,13 +786,13 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	remount(name: string) {
-		const slot = this.attributes.find(attribute => attribute.name === 'slot');
+		const slot = this.attributes.find(attribute => attribute.node.name === 'slot');
 		if (slot) {
-			const prop = quotePropIfNecessary(slot.chunks[0].data);
-			return `@append(${name}._slotted${prop}, ${this.var});`;
+			const prop = quotePropIfNecessary(slot.node.chunks[0].data);
+			return `@append(${name}.$$.slotted${prop}, ${this.var});`;
 		}
 
-		return `@append(${name}._slotted.default, ${this.var});`;
+		return `@append(${name}.$$.slotted.default, ${this.var});`;
 	}
 
 	addCssClass(className = this.component.stylesheet.id) {

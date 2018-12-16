@@ -1,13 +1,13 @@
 export default {
-	data: { foo: null },
+	props: { foo: null },
 
 	html: 'foo is null',
 
-	test(assert, component, target) {
-		component.set({ foo: 42 });
+	test({ assert, component, target }) {
+		component.foo = 42;
 		assert.htmlEqual(target.innerHTML, 'foo is 42');
 
-		component.set({ foo: null });
+		component.foo = null;
 		assert.htmlEqual(target.innerHTML, 'foo is null');
 	}
 };

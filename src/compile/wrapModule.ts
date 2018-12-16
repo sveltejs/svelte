@@ -1,6 +1,6 @@
 import deindent from '../utils/deindent';
 import list from '../utils/list';
-import { CompileOptions, ModuleFormat, Node, ShorthandImport } from '../interfaces';
+import { CompileOptions, ModuleFormat, Node } from '../interfaces';
 
 interface Dependency {
 	name: string;
@@ -8,7 +8,12 @@ interface Dependency {
 	source: string;
 }
 
-const wrappers = { es, amd, cjs, iife, umd, eval: expr };
+const wrappers = { esm, cjs, eval: expr };
+
+type Export = {
+	name: string;
+	as: string;
+};
 
 export default function wrapModule(
 	code: string,
@@ -16,14 +21,130 @@ export default function wrapModule(
 	name: string,
 	options: CompileOptions,
 	banner: string,
-	sharedPath: string,
+	sveltePath = 'svelte',
 	helpers: { name: string, alias: string }[],
 	imports: Node[],
-	shorthandImports: ShorthandImport[],
+	module_exports: Export[],
 	source: string
 ): string {
-	if (format === 'es') return es(code, name, options, banner, sharedPath, helpers, imports, shorthandImports, source);
+	const internalPath = `${sveltePath}/internal.js`;
 
+	if (format === 'esm') {
+		return esm(code, name, options, banner, sveltePath, internalPath, helpers, imports, module_exports, source);
+	}
+
+	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internalPath, helpers, imports, module_exports);
+	if (format === 'eval') return expr(code, name, options, banner, imports);
+
+	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
+}
+
+function esm(
+	code: string,
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	sveltePath: string,
+	internalPath: string,
+	helpers: { name: string, alias: string }[],
+	imports: Node[],
+	module_exports: Export[],
+	source: string
+) {
+	const importHelpers = helpers.length > 0 && (
+		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(internalPath)};`
+	);
+
+	const importBlock = imports.length > 0 && (
+		imports
+			.map((declaration: Node) => {
+				const import_source = declaration.source.value === 'svelte' ? sveltePath : declaration.source.value;
+
+				return (
+					source.slice(declaration.start, declaration.source.start) +
+					JSON.stringify(import_source) +
+					source.slice(declaration.source.end, declaration.end)
+				);
+			})
+			.join('\n')
+	);
+
+	return deindent`
+		${banner}
+		${importHelpers}
+		${importBlock}
+
+		${code}
+
+		export default ${name};
+		${module_exports.length > 0 && `export { ${module_exports.map(e => e.name === e.as ? e.name : `${e.name} as ${e.as}`).join(', ')} };`}`;
+}
+
+function cjs(
+	code: string,
+	name: string,
+	banner: string,
+	sveltePath: string,
+	internalPath: string,
+	helpers: { name: string, alias: string }[],
+	imports: Node[],
+	module_exports: Export[]
+) {
+	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ');
+
+	const helperBlock = helpers.length > 0 && (
+		`const { ${helperDeclarations} } = require(${JSON.stringify(internalPath)});\n`
+	);
+
+	const requires = imports.map(node => {
+		let lhs;
+
+		if (node.specifiers[0].type === 'ImportNamespaceSpecifier') {
+			lhs = node.specifiers[0].local.name;
+		} else {
+			const properties = node.specifiers.map(s => {
+				if (s.type === 'ImportDefaultSpecifier') {
+					return `default: ${s.local.name}`;
+				}
+
+				return s.local.name === s.imported.name
+					? s.local.name
+					: `${s.imported.name}: ${s.local.name}`;
+			});
+
+			lhs = `{ ${properties.join(', ')} }`;
+		}
+
+		const source = node.source.value === 'svelte'
+			? sveltePath
+			: node.source.value;
+
+		return `const ${lhs} = require("${source}");`
+	});
+
+	const exports = [`exports.default = ${name};`].concat(
+		module_exports.map(x => `exports.${x.as} = ${x.name};`)
+	);
+
+	return deindent`
+		${banner}
+		"use strict";
+
+		${helperBlock}
+		${requires}
+
+		${code}
+
+		${exports}`
+}
+
+function expr(
+	code: string,
+	name: string,
+	options: CompileOptions,
+	banner: string,
+	imports: Node[]
+) {
 	const dependencies = imports.map((declaration, i) => {
 		const defaultImport = declaration.specifiers.find(
 			(x: Node) =>
@@ -59,187 +180,8 @@ export default function wrapModule(
 		}
 
 		return { name, statements, source: declaration.source.value };
-	})
-	.concat(
-		shorthandImports.map(({ name, source }) => ({
-			name,
-			statements: [
-				`${name} = (${name} && ${name}.__esModule) ? ${name}["default"] : ${name};`,
-			],
-			source,
-		}))
-	);
+	});
 
-	if (format === 'amd') return amd(code, name, options, banner, dependencies);
-	if (format === 'cjs') return cjs(code, name, options, banner, sharedPath, helpers, dependencies);
-	if (format === 'iife') return iife(code, name, options, banner, dependencies);
-	if (format === 'umd') return umd(code, name, options, banner, dependencies);
-	if (format === 'eval') return expr(code, name, options, banner, dependencies);
-
-	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
-}
-
-function es(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	banner: string,
-	sharedPath: string,
-	helpers: { name: string, alias: string }[],
-	imports: Node[],
-	shorthandImports: ShorthandImport[],
-	source: string
-) {
-	const importHelpers = helpers.length > 0 && (
-		`import { ${helpers.map(h => h.name === h.alias ? h.name : `${h.name} as ${h.alias}`).join(', ')} } from ${JSON.stringify(sharedPath)};`
-	);
-
-	const importBlock = imports.length > 0 && (
-		imports
-			.map((declaration: Node) => source.slice(declaration.start, declaration.end))
-			.join('\n')
-	);
-
-	const shorthandImportBlock = shorthandImports.length > 0 && (
-		shorthandImports.map(({ name, source }) => `import ${name} from ${JSON.stringify(source)};`).join('\n')
-	);
-
-	return deindent`
-		${banner}
-		${importHelpers}
-		${importBlock}
-		${shorthandImportBlock}
-
-		${code}
-		export default ${name};`;
-}
-
-function amd(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	banner: string,
-	dependencies: Dependency[]
-) {
-	const sourceString = dependencies.length
-		? `[${dependencies.map(d => `"${removeExtension(d.source)}"`).join(', ')}], `
-		: '';
-
-	const id = options.amd && options.amd.id;
-
-	return deindent`
-		define(${id ? `"${id}", ` : ''}${sourceString}function(${paramString(dependencies)}) { "use strict";
-			${getCompatibilityStatements(dependencies)}
-
-			${code}
-			return ${name};
-		});`;
-}
-
-function cjs(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	banner: string,
-	sharedPath: string,
-	helpers: { name: string, alias: string }[],
-	dependencies: Dependency[]
-) {
-	const helperDeclarations = helpers.map(h => `${h.alias === h.name ? h.name : `${h.name}: ${h.alias}`}`).join(', ');
-
-	const helperBlock = helpers.length > 0 && (
-		`var { ${helperDeclarations} } = require(${JSON.stringify(sharedPath)});\n`
-	);
-
-	const requireBlock = dependencies.length > 0 && (
-		dependencies
-			.map(d => `var ${d.name} = require("${d.source}");`)
-			.join('\n\n')
-	);
-
-	return deindent`
-		${banner}
-		"use strict";
-
-		${helperBlock}
-		${requireBlock}
-		${getCompatibilityStatements(dependencies)}
-
-		${code}
-
-		module.exports = ${name};`
-}
-
-function iife(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	banner: string,
-	dependencies: Dependency[]
-) {
-	if (!options.name) {
-		throw new Error(`Missing required 'name' option for IIFE export`);
-	}
-
-	const globals = getGlobals(dependencies, options);
-
-	return deindent`
-		${banner}
-		var ${options.name} = (function(${paramString(dependencies)}) { "use strict";
-			${getCompatibilityStatements(dependencies)}
-
-			${code}
-			return ${name};
-		}(${globals.join(', ')}));`;
-}
-
-function umd(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	banner: string,
-	dependencies: Dependency[]
-) {
-	if (!options.name) {
-		throw new Error(`Missing required 'name' option for UMD export`);
-	}
-
-	const amdId = options.amd && options.amd.id ? `'${options.amd.id}', ` : '';
-
-	const amdDeps = dependencies.length
-		? `[${dependencies.map(d => `"${removeExtension(d.source)}"`).join(', ')}], `
-		: '';
-
-	const cjsDeps = dependencies
-		.map(d => `require("${d.source}")`)
-		.join(', ');
-
-	const globals = getGlobals(dependencies, options);
-
-	return deindent`
-		${banner}
-		(function(global, factory) {
-			typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory(${cjsDeps}) :
-			typeof define === "function" && define.amd ? define(${amdId}${amdDeps}factory) :
-			(global.${options.name} = factory(${globals.join(', ')}));
-		}(this, (function (${paramString(dependencies)}) { "use strict";
-
-			${getCompatibilityStatements(dependencies)}
-
-			${code}
-
-			return ${name};
-
-		})));`;
-}
-
-function expr(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	banner: string,
-	dependencies: Dependency[]
-) {
 	const globals = getGlobals(dependencies, options);
 
 	return deindent`
@@ -256,11 +198,6 @@ function expr(
 
 function paramString(dependencies: Dependency[]) {
 	return dependencies.map(dep => dep.name).join(', ');
-}
-
-function removeExtension(file: string) {
-	const index = file.lastIndexOf('.');
-	return ~index ? file.slice(0, index) : file;
 }
 
 function getCompatibilityStatements(dependencies: Dependency[]) {

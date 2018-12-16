@@ -1,34 +1,23 @@
-<input type='number' bind:value='count'>
+<script>
+	import Nested from './Nested.html';
+
+	export let count;
+	export let idToValue = Object.create(null);
+
+	function ids() {
+		return new Array(count)
+			.fill(null)
+			.map((_, i) => ({ id: 'id-' + i}))
+			.reverse();
+	}
+</script>
+
+<input type='number' bind:value={count}>
 
 <ol>
-	{#each ids as object (object.id)}
-		<Nested bind:value='idToValue[object.id]' id='{object.id}'>
+	{#each ids() as object (object.id)}
+		<Nested bind:value={idToValue[object.id]} id={object.id}>
 			{object.id}: value is {idToValue[object.id]}
 		</Nested>
 	{/each}
 </ol>
-
-<script>
-	import Nested from './Nested.html';
-
-	export default {
-		data() {
-			return {
-				idToValue: Object.create(null)
-			};
-		},
-
-		computed: {
-			ids({ count }) {
-				return new Array(count)
-					.fill(null)
-					.map((_, i) => ({ id: 'id-' + i}))
-					.reverse();
-			}
-		},
-
-		components: {
-			Nested
-		}
-	};
-</script>

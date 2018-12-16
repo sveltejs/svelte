@@ -9,14 +9,14 @@ export default {
 		<p>foo</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('input');
 		const input = target.querySelector('input');
 
 		input.value = 'blah';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
-		assert.deepEqual(component.get().deep, { name: 'blah' });
+		assert.deepEqual(component.deep, { name: 'blah' });
 		assert.htmlEqual(target.innerHTML, `
 			<input>
 			<p>blah</p>

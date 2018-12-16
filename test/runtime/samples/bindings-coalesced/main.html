@@ -1,12 +1,12 @@
-<Foo ref:foo bind:bar bind:baz/>
-<p ref:p>{bar + baz}</p>
-
 <script>
 	import Foo from './Foo.html';
 
-	export default {
-		components: {
-			Foo
-		}
-	};
+	export let p;
+
+	export let foo;
+	export let bar;
+	export let baz;
 </script>
+
+<Foo ref:foo bind:bar bind:baz/>
+<p ref:p>{bar + baz}</p>

@@ -1,14 +1,11 @@
 export default {
-	skipIntroByDefault: true,
-	nestedTransitions: true,
-
-	data: {
+	props: {
 		x: false,
 		things: ['a']
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ x: true });
+	test({ assert, component, target, window, raf }) {
+		component.x = true;
 
 		const div = target.querySelector('div');
 		assert.equal(div.foo, 0);
@@ -16,7 +13,7 @@ export default {
 		raf.tick(100);
 		assert.equal(div.foo, 1);
 
-		component.set({ x: false });
+		component.x = false;
 		assert.htmlEqual(target.innerHTML, '<div></div>');
 
 		raf.tick(150);

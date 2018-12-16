@@ -1,3 +1,9 @@
+<script>
+	export let foo = true;
+
+	import Component from './Component.html';
+</script>
+
 {#if foo}
 	{#if false}
 		<Component/>
@@ -5,12 +11,3 @@
 		<Component/>
 	{/if}
 {/if}
-
-<script>
-	export default {
-		components: {
-			Component: './Component.html',
-		},
-		data: () => ({ foo: true }),
-	}
-</script>

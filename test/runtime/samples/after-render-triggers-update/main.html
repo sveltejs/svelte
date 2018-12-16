@@ -1,0 +1,15 @@
+<script>
+	import { afterUpdate } from 'svelte';
+
+	export let a;
+	export let b;
+
+	export let value;
+
+	afterUpdate(() => {
+		b.textContent = a.textContent;
+	});
+</script>
+
+<p ref:a>{value}</p>
+<p ref:b></p>

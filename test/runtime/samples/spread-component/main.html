@@ -1,11 +1,9 @@
-<div>
-	<Widget {...props} qux="named"/>
-</div>
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		components: { Widget }
-	};
+	export let props;
 </script>
+
+<div>
+	<Widget {...props} qux="named"/>
+</div>

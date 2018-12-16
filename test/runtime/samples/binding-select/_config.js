@@ -23,23 +23,23 @@ export default {
 		<p>selected: one</p>
 	`,
 
-	data: {
+	props: {
 		selected: 'one',
 	},
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 
 		assert.deepEqual(options, select.options);
-		assert.equal(component.get().selected, 'one');
+		assert.equal(component.selected, 'one');
 
 		const change = new window.Event('change');
 
 		options[1].selected = true;
-		select.dispatchEvent(change);
+		await select.dispatchEvent(change);
 
-		assert.equal(component.get().selected, 'two');
+		assert.equal(component.selected, 'two');
 		assert.htmlEqual(target.innerHTML, `
 			<p>selected: two</p>
 
@@ -52,6 +52,6 @@ export default {
 			<p>selected: two</p>
 		`);
 
-		component.set({ selected: 'three' });
+		component.selected = 'three';
 	},
 };

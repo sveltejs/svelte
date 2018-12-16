@@ -2,14 +2,14 @@
 	"code": "invalid-slotted-content",
 	"message": "Cannot place slotted elements inside an each-block",
 	"start": {
-		"line": 3,
+		"line": 7,
 		"column": 7,
-		"character": 41
+		"character": 98
 	},
 	"end": {
-		"line": 3,
+		"line": 7,
 		"column": 17,
-		"character": 51
+		"character": 108
 	},
-	"pos": 41
+	"pos": 98
 }]

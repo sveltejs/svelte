@@ -15,6 +15,7 @@
 						"end": 20,
 						"type": "Action",
 						"name": "autofocus",
+						"modifiers": [],
 						"expression": null
 					}
 				],
@@ -22,6 +23,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

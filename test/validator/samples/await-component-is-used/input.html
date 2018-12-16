@@ -1,3 +1,9 @@
+<script>
+	import Component from './Component.html';
+
+	export let promise;
+</script>
+
 {#await promise}
 	<p>Loading</p>
 {:then data}
@@ -5,13 +11,3 @@
 {:catch err}
 	<p>Error: {err}</p>
 {/await}
-
-<script>
-	import Component from './Component.html';
-
-	export default {
-		components: {
-			Component
-		}
-	};
-</script>

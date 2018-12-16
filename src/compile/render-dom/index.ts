@@ -1,93 +1,42 @@
 import deindent from '../../utils/deindent';
 import { stringify, escape } from '../../utils/stringify';
 import CodeBuilder from '../../utils/CodeBuilder';
-import globalWhitelist from '../../utils/globalWhitelist';
 import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions } from '../../interfaces';
+import { walk } from 'estree-walker';
+import stringifyProps from '../../utils/stringifyProps';
+import addToSet from '../../utils/addToSet';
+import getObject from '../../utils/getObject';
+import { extractNames } from '../../utils/annotateWithScopes';
+import { nodes_match } from '../../utils/nodes_match';
 
 export default function dom(
 	component: Component,
 	options: CompileOptions
 ) {
-	const format = options.format || 'es';
-
-	const {
-		computations,
-		name,
-		templateProperties
-	} = component;
+	const { name, code } = component;
 
 	const renderer = new Renderer(component, options);
-
 	const { block } = renderer;
 
-	if (component.options.nestedTransitions) {
-		block.hasOutroMethod = true;
-	}
+	block.hasOutroMethod = true;
 
 	// prevent fragment being created twice (#1063)
 	if (options.customElement) block.builders.create.addLine(`this.c = @noop;`);
 
 	const builder = new CodeBuilder();
-	const computationBuilder = new CodeBuilder();
-	const computationDeps = new Set();
-
-	if (computations.length) {
-		computations.forEach(({ key, deps, hasRestParam }) => {
-			if (renderer.readonly.has(key)) {
-				// <svelte:window> bindings
-				throw new Error(
-					`Cannot have a computed value '${key}' that clashes with a read-only property`
-				);
-			}
-
-			renderer.readonly.add(key);
-
-			if (deps) {
-				deps.forEach(dep => {
-					computationDeps.add(dep);
-				});
-
-				const condition = `${deps.map(dep => `changed.${dep}`).join(' || ')}`;
-				const statement = `if (this._differs(state.${key}, (state.${key} = %computed-${key}(state)))) changed.${key} = true;`;
-
-				computationBuilder.addConditional(condition, statement);
-			} else {
-				// computed property depends on entire state object —
-				// these must go at the end
-				computationBuilder.addLine(
-					`if (this._differs(state.${key}, (state.${key} = %computed-${key}(@exclude(state, "${key}"))))) changed.${key} = true;`
-				);
-			}
-		});
-	}
-
-	if (component.javascript) {
-		const componentDefinition = new CodeBuilder();
-		component.declarations.forEach(declaration => {
-			componentDefinition.addBlock(declaration.block);
-		});
-
-		const js = (
-			component.javascript[0] +
-			componentDefinition +
-			component.javascript[1]
-		);
-
-		builder.addBlock(js);
-	}
 
 	if (component.options.dev) {
 		builder.addLine(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !component.customElement);
+	const css = component.stylesheet.render(options.filename, !options.customElement);
 	const styles = component.stylesheet.hasStyles && stringify(options.dev ?
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { onlyEscapeAtSymbol: true });
 
-	if (styles && component.options.css !== false && !component.customElement) {
+	if (styles && component.options.css !== false && !options.customElement) {
 		builder.addBlock(deindent`
 			function @add_css() {
 				var style = @createElement("style");
@@ -106,234 +55,315 @@ export default function dom(
 		builder.addBlock(block.toString());
 	});
 
-	const sharedPath: string = options.shared === true
-		? 'svelte/shared.js'
-		: options.shared || '';
+	const refs = Array.from(component.refs);
 
-	const proto = sharedPath
-		? `@proto`
-		: deindent`
-		{
-			${['destroy', 'get', 'fire', 'on', 'set', '_set', '_stage', '_mount', '_differs']
-				.map(n => `${n}: @${n}`)
-				.join(',\n')}
-		}`;
-
-	const debugName = `<${component.customElement ? component.tag : name}>`;
-
-	// generate initial state object
-	const expectedProperties = Array.from(component.expectedProperties);
-	const globals = expectedProperties.filter(prop => globalWhitelist.has(prop));
-	const storeProps = expectedProperties.filter(prop => prop[0] === '$');
-	const initialState = [];
-
-	if (globals.length > 0) {
-		initialState.push(`{ ${globals.map(prop => `${prop} : ${prop}`).join(', ')} }`);
+	if (options.dev && !options.hydratable) {
+		block.builders.claim.addLine(
+			'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
+		);
 	}
 
-	if (storeProps.length > 0) {
-		initialState.push(`this.store._init([${storeProps.map(prop => `"${prop.slice(1)}"`)}])`);
-	}
+	// TODO injecting CSS this way is kinda dirty. Maybe it should be an
+	// explicit opt-in, or something?
+	const should_add_css = (
+		!options.customElement &&
+		component.stylesheet.hasStyles &&
+		options.css !== false
+	);
 
-	if (templateProperties.data) {
-		initialState.push(`%data()`);
-	} else if (globals.length === 0 && storeProps.length === 0) {
-		initialState.push('{}');
-	}
+	const props = component.props.filter(x => component.writable_declarations.has(x.name));
 
-	initialState.push(`options.data`);
+	const set = component.meta.props || props.length > 0
+		? deindent`
+			$$props => {
+				${component.meta.props && deindent`
+				if (!${component.meta.props}) ${component.meta.props} = {};
+				@assign(${component.meta.props}, $$props);
+				$$make_dirty('${component.meta.props_object}');
+				`}
+				${props.map(prop =>
+				`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
+			}
+		`
+		: null;
 
-	const hasInitHooks = !!(templateProperties.oncreate || templateProperties.onstate || templateProperties.onupdate);
+	const inject_refs = refs.length > 0
+		? deindent`
+			$$refs => {
+				${refs.map(name => `${name} = $$refs.${name};`)}
+			}
+		`
+		: null;
 
-	const constructorBody = deindent`
-		${options.dev && deindent`
-			this._debugName = '${debugName}';
-			${!component.customElement && deindent`
-			if (!options || (!options.target && !options.root)) {
-				throw new Error("'target' is a required option");
-			}`}
-			${storeProps.length > 0 && !templateProperties.store && deindent`
-			if (!options.store) {
-				throw new Error("${debugName} references store properties, but no store was provided");
-			}`}
-		`}
+	const body = [];
 
-		@init(this, options);
-		${templateProperties.store && `this.store = %store();`}
-		${component.refs.size > 0 && `this.refs = {};`}
-		this._state = ${initialState.reduce((state, piece) => `@assign(${state}, ${piece})`)};
-		${storeProps.length > 0 && `this.store._add(this, [${storeProps.map(prop => `"${prop.slice(1)}"`)}]);`}
-		${renderer.metaBindings}
-		${computations.length && `this._recompute({ ${Array.from(computationDeps).map(dep => `${dep}: 1`).join(', ')} }, this._state);`}
-		${options.dev &&
-			Array.from(component.expectedProperties).map(prop => {
-				if (globalWhitelist.has(prop)) return;
-				if (computations.find(c => c.key === prop)) return;
+	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
+	let dev_props_check;
 
-				const message = component.components.has(prop) ?
-					`${debugName} expected to find '${prop}' in \`data\`, but found it in \`components\` instead` :
-					`${debugName} was created without expected data property '${prop}'`;
-
-				const conditions = [`!('${prop}' in this._state)`];
-				if (component.customElement) conditions.push(`!('${prop}' in this.attributes)`);
-
-				return `if (${conditions.join(' && ')}) console.warn("${message}");`
-			})}
-		${renderer.bindingGroups.length &&
-			`this._bindingGroups = [${Array(renderer.bindingGroups.length).fill('[]').join(', ')}];`}
-		this._intro = ${component.options.skipIntroByDefault ? '!!options.intro' : 'true'};
-
-		${templateProperties.onstate && `this._handlers.state = [%onstate];`}
-		${templateProperties.onupdate && `this._handlers.update = [%onupdate];`}
-
-		${(templateProperties.ondestroy || storeProps.length) && (
-			`this._handlers.destroy = [${
-				[templateProperties.ondestroy && `%ondestroy`, storeProps.length && `@removeFromStore`].filter(Boolean).join(', ')
-			}];`
-		)}
-
-		${renderer.slots.size && `this._slotted = options.slots || {};`}
-
-		${component.customElement ?
-			deindent`
-				this.attachShadow({ mode: 'open' });
-				${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
-			` :
-			(component.stylesheet.hasStyles && options.css !== false &&
-			`if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`)
+	component.props.forEach(x => {
+		if (component.imported_declarations.has(x.name) || component.hoistable_names.has(x.name)) {
+			body.push(deindent`
+				get ${x.as}() {
+					return ${x.name};
+				}
+			`);
+		} else {
+			body.push(deindent`
+				get ${x.as}() {
+					return this.$$.get().${x.name};
+				}
+			`);
 		}
 
-		${templateProperties.onstate && `%onstate.call(this, { changed: @assignTrue({}, this._state), current: this._state });`}
+		if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
+			body.push(deindent`
+				set ${x.as}(value) {
+					this.$set({ ${x.name}: value });
+					@flush();
+				}
+			`);
+		} else if (component.options.dev) {
+			body.push(deindent`
+				set ${x.as}(value) {
+					throw new Error("<${component.tag}>: Cannot set read-only property '${x.as}'");
+				}
+			`);
+		}
+	});
 
-		this._fragment = @create_main_fragment(this, this._state);
+	if (component.options.dev) {
+		// TODO check no uunexpected props were passed, as well as
+		// checking that expected ones were passed
+		const expected = component.props
+			.map(x => x.name)
+			.filter(name => !component.initialised_declarations.has(name));
 
-		${hasInitHooks && deindent`
-			this.root._oncreate.push(() => {
-				${templateProperties.oncreate && `%oncreate.call(this);`}
-				this.fire("update", { changed: @assignTrue({}, this._state), current: this._state });
-			});
-		`}
+		if (expected.length) {
+			dev_props_check = deindent`
+				const state = this.$$.get();
+				${expected.map(name => deindent`
 
-		${component.customElement ? deindent`
-			this._fragment.c();
-			this._fragment.${block.hasIntroMethod ? 'i' : 'm'}(this.shadowRoot, null);
+				if (state.${name} === undefined${options.customElement && ` && !('${name}' in this.attributes)`}) {
+					console.warn("<${component.tag}> was created without expected data property '${name}'");
+				}`)}
+			`;
+		}
+	}
 
-			if (options.target) this._mount(options.target, options.anchor);
-		` : deindent`
-			if (options.target) {
-				${component.options.hydratable
-				? deindent`
-				var nodes = @children(options.target);
-				options.hydrate ? this._fragment.l(nodes) : this._fragment.c();
-				nodes.forEach(@detachNode);` :
-				deindent`
-				${options.dev &&
-				`if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`}
-				this._fragment.c();`}
-				this._mount(options.target, options.anchor);
+	// instrument assignments
+	if (component.instance_script) {
+		let scope = component.instance_scope;
+		let map = component.instance_scope_map;
 
-				${(component.hasComponents || renderer.hasComplexBindings || hasInitHooks || renderer.hasIntroTransitions) &&
-				`@flush(this);`}
+		let pending_assignments = new Set();
+
+		walk(component.instance_script.content, {
+			enter: (node, parent) => {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+			},
+
+			leave(node, parent) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+
+				if (node.type === 'AssignmentExpression') {
+					const names = node.left.type === 'MemberExpression'
+						? [getObject(node.left).name]
+						: extractNames(node.left);
+
+					if (node.operator === '=' && nodes_match(node.left, node.right)) {
+						const dirty = names.filter(name => {
+							return scope.findOwner(name) === component.instance_scope;
+						});
+
+						if (dirty.length) component.has_reactive_assignments = true;
+
+						code.overwrite(node.start, node.end, dirty.map(n => `$$make_dirty('${n}')`).join('; '));
+					} else {
+						names.forEach(name => {
+							if (scope.findOwner(name) === component.instance_scope) {
+								pending_assignments.add(name);
+								component.has_reactive_assignments = true;
+							}
+						});
+					}
+				}
+
+				else if (node.type === 'UpdateExpression') {
+					const { name } = getObject(node.argument);
+
+					if (scope.findOwner(name) === component.instance_scope) {
+						pending_assignments.add(name);
+						component.has_reactive_assignments = true;
+					}
+				}
+
+				if (pending_assignments.size > 0) {
+					if (node.type === 'ArrowFunctionExpression') {
+						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join(';');
+						pending_assignments = new Set();
+
+						code.prependRight(node.body.start, `{ const $$result = `);
+						code.appendLeft(node.body.end, `; ${insert}; return $$result; }`);
+
+						pending_assignments = new Set();
+					}
+
+					else if (/Statement/.test(node.type)) {
+						const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
+
+						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
+							if (node.argument) {
+								code.overwrite(node.start, node.argument.start, `var $$result = `);
+								code.appendLeft(node.argument.end, `; ${insert}; return $$result`);
+							} else {
+								code.prependRight(node.start, `${insert}; `);
+							}
+						} else if (parent && /(If|For(In|Of)?|While)Statement/.test(parent.type) && node.type !== 'BlockStatement') {
+							code.prependRight(node.start, '{ ');
+							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert}; }`);
+						} else {
+							code.appendLeft(node.end, `${code.original[node.end - 1] === ';' ? '' : ';'} ${insert};`);
+						}
+
+						pending_assignments = new Set();
+					}
+				}
 			}
-		`}
+		});
 
-		${component.options.skipIntroByDefault && `this._intro = true;`}
-	`;
+		if (pending_assignments.size > 0) {
+			throw new Error(`TODO this should not happen!`);
+		}
+	}
 
-	if (component.customElement) {
-		const props = component.props || Array.from(component.expectedProperties);
+	const args = ['$$self'];
+	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props');
+	if (component.has_reactive_assignments) args.push('$$make_dirty');
 
+	builder.addBlock(deindent`
+		function create_fragment(${component.alias('component')}, ctx) {
+			${block.getContents()}
+		}
+
+		${component.module_javascript}
+
+		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
+	`);
+
+	const filtered_declarations = component.declarations.filter(name => {
+		if (component.hoistable_names.has(name)) return false;
+		if (component.imported_declarations.has(name)) return false;
+		if (component.props.find(p => p.as === name)) return true;
+		return component.template_references.has(name);
+	});
+
+	const filtered_props = component.props.filter(prop => {
+		if (component.hoistable_names.has(prop.name)) return false;
+		if (component.imported_declarations.has(prop.name)) return false;
+		return true;
+	});
+
+	const has_definition = (
+		component.javascript ||
+		filtered_props.length > 0 ||
+		component.partly_hoisted.length > 0 ||
+		filtered_declarations.length > 0 ||
+		component.reactive_declarations.length > 0
+	);
+
+	const definition = has_definition
+		? component.alias('define')
+		: '@noop';
+
+	const all_reactive_dependencies = new Set();
+	component.reactive_declarations.forEach(d => {
+		addToSet(all_reactive_dependencies, d.dependencies);
+	});
+
+	const user_code = component.javascript || (
+		component.ast.js.length === 0 && filtered_props.length > 0
+			? `let { ${filtered_props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
+			: null
+	);
+
+	if (has_definition) {
 		builder.addBlock(deindent`
-			class ${name} extends HTMLElement {
-				constructor(options = {}) {
+			function ${definition}(${args.join(', ')}) {
+				${user_code}
+
+				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
+
+				${filtered_declarations.length > 0 && `$$self.$$.get = () => (${stringifyProps(filtered_declarations)});`}
+
+				${set && `$$self.$$.set = ${set};`}
+
+				${component.reactive_declarations.length > 0 && deindent`
+				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
+					${component.reactive_declarations.map(d => deindent`
+					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}`)}
+				};
+				`}
+
+				${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
+			}
+		`);
+	}
+
+	if (options.customElement) {
+		builder.addBlock(deindent`
+			class ${name} extends @SvelteElement {
+				constructor(options) {
 					super();
-					${constructorBody}
+
+					${css.code && `this.shadowRoot.innerHTML = \`<style>${escape(css.code, { onlyEscapeAtSymbol: true }).replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+
+					@init(this, { target: this.shadowRoot }, ${definition}, create_fragment, ${not_equal});
+
+					${dev_props_check}
+
+					if (options) {
+						if (options.target) {
+							@insert(options.target, this, options.anchor);
+						}
+
+						${(component.props.length > 0 || component.meta.props) && deindent`
+						if (options.props) {
+							this.$set(options.props);
+							@flush();
+						}`}
+					}
 				}
 
 				static get observedAttributes() {
-					return ${JSON.stringify(props)};
+					return ${JSON.stringify(component.props.map(x => x.as))};
 				}
 
-				${props.map(prop => deindent`
-					get ${prop}() {
-						return this.get().${prop};
-					}
-
-					set ${prop}(value) {
-						this.set({ ${prop}: value });
-					}
-				`).join('\n\n')}
-
-				${renderer.slots.size && deindent`
-					connectedCallback() {
-						Object.keys(this._slotted).forEach(key => {
-							this.appendChild(this._slotted[key]);
-						});
-					}`}
-
-				attributeChangedCallback(attr, oldValue, newValue) {
-					this.set({ [attr]: newValue });
-				}
-
-				${(component.hasComponents || renderer.hasComplexBindings || templateProperties.oncreate || renderer.hasIntroTransitions) && deindent`
-					connectedCallback() {
-						@flush(this);
-					}
-				`}
+				${body.length > 0 && body.join('\n\n')}
 			}
-
-			@assign(${name}.prototype, ${proto});
-			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
-			@assign(${name}.prototype, {
-				_mount(target, anchor) {
-					target.insertBefore(this, anchor);
-				}
-			});
 
 			customElements.define("${component.tag}", ${name});
 		`);
 	} else {
-		builder.addBlock(deindent`
-			function ${name}(options) {
-				${constructorBody}
-			}
+		const superclass = options.dev ? 'SvelteComponentDev' : 'SvelteComponent';
 
-			@assign(${name}.prototype, ${proto});
-			${templateProperties.methods && `@assign(${name}.prototype, %methods);`}
+		builder.addBlock(deindent`
+			class ${name} extends @${superclass} {
+				constructor(options) {
+					super(${options.dev && `options`});
+					${should_add_css && `if (!document.getElementById("${component.stylesheet.id}-style")) @add_css();`}
+					@init(this, options, ${definition}, create_fragment, ${not_equal});
+
+					${dev_props_check}
+				}
+
+				${body.length > 0 && body.join('\n\n')}
+			}
 		`);
 	}
 
-	const immutable = templateProperties.immutable ? templateProperties.immutable.value.value : options.immutable;
-
-	builder.addBlock(deindent`
-		${options.dev && deindent`
-			${name}.prototype._checkReadOnly = function _checkReadOnly(newState) {
-				${Array.from(renderer.readonly).map(
-					prop =>
-						`if ('${prop}' in newState && !this._updatingReadonlyProperty) throw new Error("${debugName}: Cannot set read-only property '${prop}'");`
-				)}
-			};
-		`}
-
-		${computations.length ? deindent`
-			${name}.prototype._recompute = function _recompute(changed, state) {
-				${computationBuilder}
-			}
-		` : (!sharedPath && `${name}.prototype._recompute = @noop;`)}
-
-		${templateProperties.setup && `%setup(${name});`}
-
-		${templateProperties.preload && `${name}.preload = %preload;`}
-
-		${immutable && `${name}.prototype._differs = @_differsImmutable;`}
-	`);
-
-	let result = builder.toString();
-
-	return component.generate(result, options, {
-		banner: `/* ${component.file ? `${component.file} ` : ``}generated by Svelte v${"__VERSION__"} */`,
-		sharedPath,
-		name,
-		format,
-	});
+	return builder.toString();
 }

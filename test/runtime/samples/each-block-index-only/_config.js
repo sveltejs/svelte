@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		things: [0, 0, 0, 0, 0]
 	},
 
@@ -11,10 +11,8 @@ export default {
 		<p>4</p>
 	`,
 
-	test(assert, component, target) {
-		component.set({
-			things: [0, 0, 0]
-		});
+	test({ assert, component, target }) {
+		component.things = [0, 0, 0];
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>0</p>

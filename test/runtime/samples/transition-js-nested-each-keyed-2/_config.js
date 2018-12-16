@@ -1,13 +1,11 @@
 export default {
-	nestedTransitions: true,
-
-	data: {
+	props: {
 		x: true,
 		things: ['a', 'b']
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ x: false });
+	test({ assert, component, target, window, raf }) {
+		component.x = false;
 		assert.htmlEqual(target.innerHTML, '');
 	},
 };

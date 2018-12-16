@@ -4,8 +4,8 @@ export default {
 			<p>unconditional</p>
 		</div>`,
 
-	test(assert, component, target) {
-		component.set({ foo: true });
+	test({ assert, component, target }) {
+		component.foo = true;
 		assert.htmlEqual(target.innerHTML, `
 			<div>
 				<p>unconditional</p>

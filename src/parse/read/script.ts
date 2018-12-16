@@ -35,8 +35,6 @@ export default function readScript(parser: Parser, start: number, attributes: No
 		parser.acornError(err);
 	}
 
-	if (!ast.body.length) return null;
-
 	ast.start = scriptStart;
 	return {
 		start,

@@ -1,5 +1,7 @@
+import { snip } from '../utils';
+
 export default function(node, renderer, options) {
-	const { snippet } = node.expression;
+	const snippet = snip(node.expression);
 
 	renderer.append('${ ' + snippet + ' ? `');
 

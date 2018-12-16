@@ -3,7 +3,7 @@ export default {
 		<ul><li>foo</li><li>bar</li><li>baz</li></ul>
 	`,
 
-	data: {
+	props: {
 		components: [ 'foo', 'bar', 'baz' ]
 	}
 };

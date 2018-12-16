@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		a: [{ id: 'foo' }, { id: 'bar' }, { id: 'baz' }]
 	},
 
@@ -7,18 +7,14 @@ export default {
 		<span>foo</span><span>bar</span><span>baz</span>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({
-			a: [
-				{ id: 'yep' },
-				{ id: 'nope' }
-			]
-		});
+	test({ assert, component, target }) {
+		component.a = [
+			{ id: 'yep' },
+			{ id: 'nope' }
+		];
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(target.innerHTML, `
 			<span>yep</span><span>nope</span>
-		` );
-
-		component.destroy();
+		`);
 	}
 };

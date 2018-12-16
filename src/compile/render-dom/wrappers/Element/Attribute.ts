@@ -78,7 +78,7 @@ export default class AttributeWrapper {
 			// DRY it out if that's possible without introducing crazy indirection
 			if (this.node.chunks.length === 1) {
 				// single {tag} — may be a non-string
-				value = this.node.chunks[0].snippet;
+				value = this.node.chunks[0].render();
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
@@ -89,8 +89,8 @@ export default class AttributeWrapper {
 								return stringify(chunk.data);
 							} else {
 								return chunk.getPrecedence() <= 13
-									? `(${chunk.snippet})`
-									: chunk.snippet;
+									? `(${chunk.render()})`
+									: chunk.render();
 							}
 						})
 						.join(' + ');
@@ -99,7 +99,7 @@ export default class AttributeWrapper {
 			const isSelectValueAttribute =
 				name === 'value' && element.node.name === 'select';
 
-			const shouldCache = this.node.shouldCache || isSelectValueAttribute;
+			const shouldCache = (this.node.shouldCache || isSelectValueAttribute);
 
 			const last = shouldCache && block.getUniqueName(
 				`${element.var}_${name.replace(/[^a-zA-Z_$]/g, '_')}_value`
@@ -168,9 +168,9 @@ export default class AttributeWrapper {
 
 				const updateCachedValue = `${last} !== (${last} = ${value})`;
 
-				const condition = shouldCache ?
-					( dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue ) :
-					changedCheck;
+				const condition = shouldCache
+					? (dependencies.length ? `(${changedCheck}) && ${updateCachedValue}` : updateCachedValue)
+					: changedCheck;
 
 				block.builders.update.addConditional(
 					condition,
@@ -215,7 +215,7 @@ export default class AttributeWrapper {
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
 				? chunk.data.replace(/"/g, '\\"')
-				: `\${${chunk.snippet}}`
+				: `\${${chunk.render()}}`
 		})}"`;
 	}
 }

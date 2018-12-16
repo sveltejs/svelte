@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		values: [1, 2, 3],
 		foo: 2
 	},
@@ -24,19 +24,19 @@ export default {
 		<p>foo: 2</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 
 		assert.ok(options[1].selected);
-		assert.equal(component.get().foo, 2);
+		assert.equal(component.foo, 2);
 
 		const change = new window.Event('change');
 
 		options[2].selected = true;
-		select.dispatchEvent(change);
+		await select.dispatchEvent(change);
 
-		assert.equal(component.get().foo, 3);
+		assert.equal(component.foo, 3);
 		assert.htmlEqual( target.innerHTML, `
 			<select>
 				<option value='1'>1</option>

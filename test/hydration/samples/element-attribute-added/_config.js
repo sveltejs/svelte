@@ -1,6 +1,6 @@
 export default {
-	data: {
-		class: 'bar'
+	props: {
+		className: 'bar'
 	},
 
 	snapshot(target) {

@@ -1,18 +1,11 @@
+<script>
+	import Nested from './Nested.html';
+
+	export let list = [1, 2];
+</script>
+
 {#each list as nested}
 	{#if true}
 		<Nested {nested}/>
 	{/if}
 {/each}
-
-<script>
-	import Nested from './Nested.html';
-
-	export default {
-		data: () => ({
-			list: [1, 2]
-		}),
-		components: {
-			Nested
-		}
-	};
-</script>

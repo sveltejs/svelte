@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: true
 	},
 
@@ -16,10 +16,8 @@ export default {
 		<div>baz</div>
 	`,
 
-	test(assert, component, target) {
-		component.set({
-			x: false
-		});
+	test({ assert, component, target }) {
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<h1>Bar</h1>

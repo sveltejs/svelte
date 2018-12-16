@@ -1,42 +1,43 @@
 {
 	"html": {
 		"start": 0,
-		"end": 43,
+		"end": 45,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 43,
+				"end": 45,
 				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
 						"start": 5,
-						"end": 28,
+						"end": 30,
 						"type": "Transition",
 						"name": "style",
+						"modifiers": [],
 						"expression": {
 							"type": "ObjectExpression",
-							"start": 15,
-							"end": 27,
+							"start": 16,
+							"end": 28,
 							"properties": [
 								{
 									"type": "Property",
-									"start": 16,
-									"end": 26,
+									"start": 17,
+									"end": 27,
 									"method": false,
 									"shorthand": false,
 									"computed": false,
 									"key": {
 										"type": "Identifier",
-										"start": 16,
-										"end": 23,
+										"start": 17,
+										"end": 24,
 										"name": "opacity"
 									},
 									"value": {
 										"type": "Literal",
-										"start": 25,
-										"end": 26,
+										"start": 26,
+										"end": 27,
 										"value": 0,
 										"raw": "0"
 									},
@@ -50,8 +51,8 @@
 				],
 				"children": [
 					{
-						"start": 29,
-						"end": 37,
+						"start": 31,
+						"end": 39,
 						"type": "Text",
 						"data": "fades in"
 					}
@@ -59,6 +60,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

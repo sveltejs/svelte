@@ -1,5 +1,19 @@
+<script>
+	export let visible;
+	export let threshold;
+
+	function foo(node) {
+		return {
+			duration: 100,
+			tick: t => {
+				node.foo = t;
+			}
+		};
+	}
+</script>
+
 {#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as number}
-	{#if foo}
+	{#if visible}
 		{#if threshold >= number}
 			<div transition:foo>{number}</div>
 		{/if}
@@ -9,18 +23,3 @@
 		{/if}
 	{/if}
 {/each}
-
-<script>
-	export default {
-		transitions: {
-			foo: function ( node ) {
-				return {
-					duration: 100,
-					tick: t => {
-						node.foo = t;
-					}
-				};
-			}
-		}
-	};
-</script>

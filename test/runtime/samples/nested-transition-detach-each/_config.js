@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		visible: false,
 		rows: [1, 2, 3],
 		cols: ['a', 'b', 'c']
@@ -8,13 +8,11 @@ export default {
 	html: ``,
 
 	compileOptions: {
-		dev: true,
-		nestedTransitions: true,
-		skipIntroByDefault: true,
+		dev: true
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ visible: true });
+	test({ assert, component, target, window, raf }) {
+		component.visible = true;
 		assert.htmlEqual(target.innerHTML, `
 			<div class="row">
 				<div class="cell">1, a</div>
@@ -33,7 +31,7 @@ export default {
 			</div>
 		`);
 
-		component.set({ visible: false });
+		component.visible = false;
 		raf.tick(0);
 		raf.tick(100);
 		assert.htmlEqual(target.innerHTML, ``);

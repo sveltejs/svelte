@@ -1,12 +1,9 @@
-<svelte:component this="{ x ? Foo : Bar }" on:select='set({ selected: event.id })'/>
-
 <script>
 	import Foo from './Foo.html';
 	import Bar from './Bar.html';
 
-	export default {
-		data() {
-			return { Foo, Bar };
-		}
-	};
+	export let x;
+	export let selected;
 </script>
+
+<svelte:component this="{x ? Foo : Bar}" on:select="{e => selected = e.detail.id}"/>

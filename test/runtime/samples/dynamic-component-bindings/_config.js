@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: true
 	},
 
@@ -8,16 +8,14 @@ export default {
 		<input>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		let input = target.querySelector('input');
 		input.value = 'abc';
-		input.dispatchEvent(new window.Event('input'));
+		await input.dispatchEvent(new window.Event('input'));
 
-		assert.equal(component.get().y, 'abc');
+		assert.equal(component.y, 'abc');
 
-		component.set({
-			x: false
-		});
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>bar</p>
@@ -26,8 +24,8 @@ export default {
 
 		input = target.querySelector('input');
 		input.checked = true;
-		input.dispatchEvent(new window.Event('change'));
+		await input.dispatchEvent(new window.Event('change'));
 
-		assert.equal(component.get().z, true);
+		assert.equal(component.z, true);
 	}
 };

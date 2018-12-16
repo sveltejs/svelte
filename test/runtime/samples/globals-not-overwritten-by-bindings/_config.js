@@ -33,7 +33,7 @@ export default {
 		</div>
 	`,
 
-	data: {
+	props: {
 		todos: {
 			first: {
 				description: 'Buy some milk',
@@ -50,14 +50,14 @@ export default {
 		},
 	},
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = document.querySelectorAll('input[type="checkbox"]')[2];
 		const change = new window.Event('change');
 
 		input.checked = true;
-		input.dispatchEvent(change);
+		await input.dispatchEvent(change);
 
-		assert.ok(component.get().todos.third.done);
+		assert.ok(component.todos.third.done);
 		assert.htmlEqual(target.innerHTML, `
 			<div class="todo done">
 				<input type="checkbox">

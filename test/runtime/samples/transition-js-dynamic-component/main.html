@@ -1,12 +1,8 @@
-<svelte:component this="{x ? A : B}"/>
-
 <script>
 	import A from './A.html';
 	import B from './B.html';
 
-	export default {
-		data() {
-			return { A, B };
-		}
-	};
+	export let x;
 </script>
+
+<svelte:component this="{x ? A : B}"/>

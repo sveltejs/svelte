@@ -1,28 +1,18 @@
-<Nested bind:visibleThings="visibleThings" />
-
 <script>
+	import { beforeUpdate } from 'svelte';
 	import Nested from './Nested.html';
 
-	export default {
-		data() {
-			return {
-				visibleThings: []
-			};
-		},
+	export let snapshots;
+	export let visibleThings = [];
 
-		components: {
-			Nested
-		},
-
-		onstate({ current, changed, previous }) {
-			if (!this.snapshots) {
-				// first run
-				this.snapshots = [];
-			}
-
-			if (changed.visibleThings) {
-				this.snapshots.push(current.visibleThings);
-			}
+	beforeUpdate(() => {
+		if (!snapshots) {
+			// first run
+			snapshots = [];
 		}
-	};
+
+		snapshots.push(visibleThings);
+	});
 </script>
+
+<Nested bind:visibleThings={visibleThings} />

@@ -1,11 +1,7 @@
-{#each ['racoon', 'eagle'] as animal}
-	<button on:click="set({clicked: animal})">{animal}</button>
-{/each}
-
 <script>
-	export default {
-		data: () => ({
-			clicked: null,
-		}),
-	};
+	export let clicked = null;
 </script>
+
+{#each ['racoon', 'eagle'] as animal}
+	<button on:click="{() => clicked = animal}">{animal}</button>
+{/each}

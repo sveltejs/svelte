@@ -1,9 +1,10 @@
-{#if x}
-	<Widget :things/>
-{/if}
-
 <script>
-	export default {
-		components: { Widget: './Widget.html' }
-	};
+	export let x;
+	export let things;
+
+	import Widget from './Widget.html';
 </script>
+
+{#if x}
+	<Widget {things}/>
+{/if}

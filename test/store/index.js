@@ -1,197 +1,132 @@
-import fs from 'fs';
-import assert from 'assert';
-import MagicString from 'magic-string';
-import { parse } from 'acorn';
-import { Store } from '../../store.js';
+import * as assert from 'assert';
+import { readable, writable, derive } from '../../store.js';
 
 describe('store', () => {
-	describe('get', () => {
-		it('gets the entire state object', () => {
-			const store = new Store({
-				foo: 'bar'
+	describe('writable', () => {
+		it('creates a writable store', () => {
+			const count = writable(0);
+			const values = [];
+
+			const unsubscribe = count.subscribe(value => {
+				values.push(value);
 			});
 
-			assert.deepEqual(store.get(), { foo: 'bar' });
+			count.set(1);
+			count.update(n => n + 1);
+
+			unsubscribe();
+
+			count.set(3);
+			count.update(n => n + 1);
+
+			assert.deepEqual(values, [0, 1, 2]);
 		});
 	});
 
-	describe('set', () => {
-		it('sets state', () => {
-			const store = new Store();
+	describe('readable', () => {
+		it('creates a readable store', () => {
+			let running;
+			let tick;
 
-			store.set({
-				foo: 'bar'
+			const store = readable(set => {
+				tick = set;
+				running = true;
+
+				set(0);
+
+				return () => {
+					tick = () => {};
+					running = false;
+				};
 			});
 
-			assert.equal(store.get().foo, 'bar');
-		});
-	});
-
-	describe('on', () => {
-		it('listens to an event', () => {
-			let newFoo;
-			let oldFoo;
-
-			const store = new Store({
-				foo: 'bar'
-			});
-
-			store.on('state', ({ changed, current, previous }) => {
-				newFoo = current.foo;
-				oldFoo = previous.foo;
-			});
-
-			store.set({ foo: 'baz' });
-
-			assert.equal(newFoo, 'baz');
-			assert.equal(oldFoo, 'bar');
-		});
-	});
-
-	describe('fire', () => {
-		let answer;
-
-		const store = new Store();
-
-		store.on('custom', event => {
-			answer = event.answer;
-		});
-
-		store.fire('custom', { answer: 42 });
-
-		assert.equal(answer, 42);
-	});
-
-	it('allows user to cancel state change callback', () => {
-		const store = new Store();
-		const handler = store.on('state', () => {});
-
-		assert.doesNotThrow(() => {
-			handler.cancel();
-		}, TypeError, 'this._handlers is undefined');
-	});
-
-	describe('computed', () => {
-		it('computes a property based on data', () => {
-			const store = new Store({
-				foo: 1
-			});
-
-			store.compute('bar', ['foo'], foo => foo * 2);
-			assert.equal(store.get().bar, 2);
+			assert.ok(!running);
 
 			const values = [];
 
-			store.on('state', ({ current }) => {
-				values.push(current.bar);
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
 			});
 
-			store.set({ foo: 2 });
-			assert.deepEqual(values, [4]);
-		});
+			assert.ok(running);
+			tick(1);
+			tick(2);
 
-		it('computes a property based on another computed property', () => {
-			const store = new Store({
-				foo: 1
-			});
+			unsubscribe();
 
-			store.compute('bar', ['foo'], foo => foo * 2);
-			store.compute('baz', ['bar'], bar => bar * 2);
-			assert.equal(store.get().baz, 4);
+			assert.ok(!running);
+			tick(3);
+			tick(4);
 
-			const values = [];
-
-			store.on('state', ({ current }) => {
-				values.push(current.baz);
-			});
-
-			store.set({ foo: 2 });
-			assert.deepEqual(values, [8]);
-		});
-
-		it('prevents computed properties from being set', () => {
-			const store = new Store({
-				foo: 1
-			});
-
-			store.compute('bar', ['foo'], foo => foo * 2);
-
-			assert.throws(() => {
-				store.set({ bar: 'whatever' });
-			}, /'bar' is a read-only computed property/);
-		});
-
-		it('allows multiple dependents to depend on the same computed property', () => {
-			const store = new Store({
-				a: 1
-			});
-
-			store.compute('b', ['a'], a => a * 2);
-			store.compute('c', ['b'], b => b * 3);
-			store.compute('d', ['b'], b => b * 4);
-
-			assert.deepEqual(store.get(), { a: 1, b: 2, c: 6, d: 8 });
-
-			// bit cheeky, testing a private property, but whatever
-			assert.equal(store._sortedComputedProperties.length, 3);
-		});
-
-		it('prevents cyclical dependencies', () => {
-			const store = new Store();
-
-			assert.throws(() => {
-				store.compute('a', ['b'], b => b + 1);
-				store.compute('b', ['c'], c => c + 1);
-				store.compute('c', ['a'], a => a + 1);
-			}, /Cyclical dependency detected between a <-> c/);
-		});
-
-		it('does not falsely report cycles', () => {
-			const store = new Store();
-
-			store.compute('dep4', ['dep1', 'dep2', 'dep3'], (...args) => ['dep4'].concat(...args));
-			store.compute('dep1', ['source'], (...args) => ['dep1'].concat(...args));
-			store.compute('dep2', ['dep1'], (...args) => ['dep2'].concat(...args));
-			store.compute('dep3', ['dep1', 'dep2'], (...args) => ['dep3'].concat(...args));
-			store.set({source: 'source'});
-
-			assert.deepEqual(store.get().dep4, [
-				'dep4',
-				'dep1', 'source',
-				'dep2', 'dep1', 'source',
-				'dep3', 'dep1', 'source',
-				'dep2', 'dep1', 'source'
-			]);
+			assert.deepEqual(values, [0, 1, 2]);
 		});
 	});
 
-	describe('immutable', () => {
-		it('observing state only changes on immutable updates', () => {
-			let newFoo;
-			let oldFoo;
-			let callCount = 0;
-			let value1 = {};
-			let value2 = {};
+	describe('derive', () => {
+		it('maps a single store', () => {
+			const a = writable(1);
+			const b = derive(a, n => n * 2);
 
-			const store = new Store({
-				foo: value1
-			}, { immutable: true });
+			const values = [];
 
-			store.on('state', ({ current, previous }) => {
-				callCount++;
-				newFoo = current.foo;
-				oldFoo = previous.foo;
+			const unsubscribe = b.subscribe(value => {
+				values.push(value);
 			});
 
-			store.set({ foo: value1 });
+			a.set(2);
+			assert.deepEqual(values, [2, 4]);
 
-			assert.equal(callCount, 0);
+			unsubscribe();
 
-			store.set({ foo: value2 });
+			a.set(3);
+			assert.deepEqual(values, [2, 4]);
+		});
 
-			assert.equal(callCount, 1);
-			assert.equal(newFoo, value2);
-			assert.equal(oldFoo, value1);
+		it('maps multiple stores', () => {
+			const a = writable(2);
+			const b = writable(3);
+			const c = derive(([a, b]), ([a, b]) => a * b);
+
+			const values = [];
+
+			const unsubscribe = c.subscribe(value => {
+				values.push(value);
+			});
+
+			a.set(4);
+			b.set(5);
+			assert.deepEqual(values, [6, 12, 20]);
+
+			unsubscribe();
+
+			a.set(6);
+			assert.deepEqual(values, [6, 12, 20]);
+		});
+
+		it('passes optional set function', () => {
+			const number = writable(0);
+			const evens = derive(number, (n, set) => {
+				if (n % 2 === 0) set(n);
+			});
+
+			const values = [];
+
+			const unsubscribe = evens.subscribe(value => {
+				values.push(value);
+			});
+
+			number.set(1);
+			number.set(2);
+			number.set(3);
+			number.set(4);
+			assert.deepEqual(values, [0, 2, 4]);
+
+			unsubscribe();
+
+			number.set(5);
+			number.set(6);
+			number.set(7);
+			assert.deepEqual(values, [0, 2, 4]);
 		});
 	});
 });

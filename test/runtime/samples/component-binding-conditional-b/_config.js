@@ -1,5 +1,5 @@
 export default {
-	'skip-ssr': true, // TODO delete this line, once binding works
+	skip_if_ssr: true, // TODO delete this line, once binding works
 
 	// This test fails, because the Bar y binding is activated before the
 	// Baz x binding, meaning that by the time Foo is created, we already
@@ -13,8 +13,8 @@ export default {
 		<p>y: foo</p>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ x: false });
+	test({ assert, component, target }) {
+		component.x = false;
 
 		assert.htmlEqual( target.innerHTML, `
 			<p>y: foo</p>

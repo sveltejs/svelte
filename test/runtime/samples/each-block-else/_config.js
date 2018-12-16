@@ -1,6 +1,6 @@
 export default {
-	data: {
-		animals: [ 'alpaca', 'baboon', 'capybara' ],
+	props: {
+		animals: ['alpaca', 'baboon', 'capybara'],
 		foo: 'something else'
 	},
 
@@ -12,26 +12,26 @@ export default {
 		after
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ animals: [] });
-		assert.htmlEqual( target.innerHTML, `
+	test({ assert, component, target }) {
+		component.animals = [];
+		assert.htmlEqual(target.innerHTML, `
 			before
 			<p>no animals, but rather something else</p>
 			after
-		` );
+		`);
 
-		component.set({ foo: 'something other' });
-		assert.htmlEqual( target.innerHTML, `
+		component.foo = 'something other';
+		assert.htmlEqual(target.innerHTML, `
 			before
 			<p>no animals, but rather something other</p>
 			after
-		` );
+		`);
 
-		component.set({ animals: ['wombat'] });
-		assert.htmlEqual( target.innerHTML, `
+		component.animals = ['wombat'];
+		assert.htmlEqual(target.innerHTML, `
 			before
 			<p>wombat</p>
 			after
-		` );
+		`);
 	}
 };

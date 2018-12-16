@@ -1,9 +1,12 @@
-<div ref:element></div>
-
 <script>
-	export default {
-		ondestroy() {
-			this.refOnDestroy = this.refs.element;
-		}
-	};
+	import { onDestroy } from 'svelte';
+	import container from './container.js';
+
+	let element;
+
+	onDestroy(() => {
+		container.div = element;
+	});
 </script>
+
+<div ref:element></div>

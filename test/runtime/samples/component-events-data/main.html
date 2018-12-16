@@ -1,11 +1,10 @@
-<div>
-	<Widget on:select='fire("select", event.selection)'/>
-</div>
-
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import Widget from './Widget.html';
 
-	export default {
-		components: { Widget }
-	};
+	const dispatch = createEventDispatcher();
 </script>
+
+<div>
+	<Widget on:select='{event => dispatch("select", event.detail.selection)}'/>
+</div>

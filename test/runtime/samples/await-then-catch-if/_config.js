@@ -5,7 +5,7 @@ const thePromise = new Promise(f => {
 });
 
 export default {
-	data: {
+	props: {
 		show: true,
 		thePromise
 	},
@@ -14,7 +14,7 @@ export default {
 		<p>loading...</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		fulfil(42);
 
 		return thePromise
@@ -23,17 +23,13 @@ export default {
 					<p>the value is 42</p>
 				`);
 
-				component.set({
-					show: false
-				});
+				component.show = false;
 
 				assert.htmlEqual(target.innerHTML, `
 					<p>Else</p>
 				`);
 
-				component.set({
-					show: true
-				});
+				component.show = true;
 
 				return thePromise.then(() => {
 					assert.htmlEqual(target.innerHTML, `

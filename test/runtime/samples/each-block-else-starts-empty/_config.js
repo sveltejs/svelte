@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		animals: [],
 		foo: 'something else'
 	},
@@ -10,12 +10,12 @@ export default {
 		after
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ animals: ['wombat'] });
-		assert.htmlEqual( target.innerHTML, `
+	test({ assert, component, target }) {
+		component.animals = ['wombat'];
+		assert.htmlEqual(target.innerHTML, `
 			before
 			<p>wombat</p>
 			after
-		` );
+		`);
 	}
 };

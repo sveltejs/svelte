@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		animals: [ 'alpaca', 'baboon', 'capybara' ]
 	},
 
@@ -9,22 +9,22 @@ export default {
 		<p>capybara</p>
 	`,
 
-	test ( assert, component, target ) {
-		component.set({ animals: [] });
+	test({ assert, component, target }) {
+		component.animals = [];
 		assert.htmlEqual( target.innerHTML, `
 			<p>no animals</p>
 		` );
 
 		// trigger an 'update' of the else block, to ensure that
 		// non-existent update method is not called
-		component.set({ animals: [] });
+		component.animals = [];
 
-		component.set({ animals: ['wombat'] });
+		component.animals = ['wombat'];
 		assert.htmlEqual( target.innerHTML, `
 			<p>wombat</p>
 		` );
 
-		component.set({ animals: ['dinosaur'] });
+		component.animals = ['dinosaur'];
 		assert.htmlEqual( target.innerHTML, `
 			<p>dinosaur</p>
 		` );

@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: 1,
 		y: false,
 	},
@@ -8,10 +8,8 @@ export default {
 		<span>1</span>
 	`,
 
-	nestedTransitions: true,
-
-	test(assert, component, target) {
-		component.set({ x: 2 });
+	test({ assert, component, target }) {
+		component.x = 2;
 		assert.htmlEqual(target.innerHTML, `
 			<span>2</span>
 		`);

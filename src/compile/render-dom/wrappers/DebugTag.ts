@@ -45,7 +45,7 @@ export default class DebugTagWrapper extends Wrapper {
 
 			const dependencies = new Set();
 			this.node.expressions.forEach(expression => {
-				addToSet(dependencies, expression.dependencies);
+				addToSet(dependencies, expression.dynamic_dependencies);
 			});
 
 			const condition = [...dependencies].map(d => `changed.${d}`).join(' || ');

@@ -1,3 +1,10 @@
+<script>
+	import Level2 from './Level2.html';
+	import Level3 from './Level3.html';
+	
+	export let values;
+</script>
+
 <div class="level1">
 	{#each values as value}
 		<h4>level 1 #{value}</h4>
@@ -8,15 +15,3 @@
 		</Level2>
 	{/each}
 </div>
-
-<script>
-	import Level2 from './Level2.html';
-	import Level3 from './Level3.html';
-	
-	export default {
-		components: {
-			Level2,
-			Level3
-		}
-	};
-</script>

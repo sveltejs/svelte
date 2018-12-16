@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		things: [
 			{ name: 'a' },
 			{ name: 'b' },
@@ -7,15 +7,13 @@ export default {
 		]
 	},
 
-	test ( assert, component, target, window, raf ) {
+	test({ assert, component, target, window, raf }) {
 		const divs = target.querySelectorAll( 'div' );
 
-		component.set({
-			things: [
-				{ name: 'a' },
-				{ name: 'c' }
-			]
-		});
+		component.things = [
+			{ name: 'a' },
+			{ name: 'c' }
+		];
 
 		const divs2 = target.querySelectorAll( 'div' );
 		assert.strictEqual( divs[0], divs2[0] );

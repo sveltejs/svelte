@@ -32,7 +32,7 @@ class IfBlockBranch extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.condition = (<IfBlock>node).expression && (<IfBlock>node).expression.snippet;
+		this.condition = (<IfBlock>node).expression && (<IfBlock>node).expression.render();
 
 		this.block = block.child({
 			comment: createDebuggingComment(node, parent.renderer.component),
@@ -87,7 +87,7 @@ export default class IfBlockWrapper extends Wrapper {
 			this.branches.push(branch);
 
 			blocks.push(branch.block);
-			block.addDependencies(node.expression.dependencies);
+			block.addDependencies(node.expression.dynamic_dependencies);
 
 			if (branch.block.dependencies.size > 0) {
 				isDynamic = true;
@@ -125,10 +125,8 @@ export default class IfBlockWrapper extends Wrapper {
 
 		createBranches(this.node);
 
-		if (component.options.nestedTransitions) {
-			if (hasIntros) block.addIntro();
-			if (hasOutros) block.addOutro();
-		}
+		if (hasIntros) block.addIntro();
+		if (hasOutros) block.addOutro();
 
 		blocks.forEach(block => {
 			block.hasUpdateMethod = isDynamic;
@@ -163,19 +161,17 @@ export default class IfBlockWrapper extends Wrapper {
 			if (hasOutros) {
 				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
 
-				if (this.renderer.options.nestedTransitions) {
-					block.builders.outro.addBlock(deindent`
-						if (${name}) ${name}.o(#outrocallback);
-						else #outrocallback();
-					`);
-				}
+				block.builders.outro.addBlock(deindent`
+					if (${name}) ${name}.o(#outrocallback);
+					else #outrocallback();
+				`);
 			} else {
 				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
 			}
 		} else {
 			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
 
-			if (hasOutros && this.renderer.options.nestedTransitions) {
+			if (hasOutros) {
 				block.builders.outro.addBlock(deindent`
 					if (${name}) ${name}.o(#outrocallback);
 					else #outrocallback();
@@ -185,7 +181,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		block.builders.create.addLine(`${if_name}${name}.c();`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addLine(
 				`${if_name}${name}.l(${parentNodes});`
 			);

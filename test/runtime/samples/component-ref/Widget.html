@@ -1,9 +1,11 @@
-<p>i am a widget</p>
-
 <script>
-	export default {
-		oncreate () {
-			this.isWidget = true;
-		}
-	};
+	import { onMount } from 'svelte';
+
+	export let isWidget;
+
+	onMount(() => {
+		isWidget = true;
+	});
 </script>
+
+<p>i am a widget</p>

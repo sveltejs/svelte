@@ -1,0 +1,11 @@
+<svelte:meta bind:props/>
+
+<script>
+	import Widget from './Widget.html';
+
+	let props;
+</script>
+
+<div>
+	<Widget {...props} qux="named"/>
+</div>

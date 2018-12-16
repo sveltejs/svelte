@@ -5,7 +5,7 @@ let thePromise = new Promise(f => {
 });
 
 export default {
-	data: {
+	props: {
 		thePromise
 	},
 
@@ -13,7 +13,7 @@ export default {
 		<p>loading...</p><p>true!</p>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		fulfil(42);
 
 		return thePromise

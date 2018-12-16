@@ -1,52 +1,44 @@
-<button use:tooltip="tooltip">action</button>
-<svelte:window on:keydown="checkForCtrl(event)" on:keyup="checkForCtrl(event)"/>
-
 <script>
-	export default {
-		data() {
-			return { tooltip: 'Perform an Action' };
-		},
+	export let text = 'Perform an Action';
 
-		methods: {
-			checkForCtrl(event) {
-				if (event.ctrlKey) {
-					this.set({ tooltip: 'Perform an augmented Action' });
-				} else {
-					this.set({ tooltip: 'Perform an Action' });
-				}
-			}
-		},
+	function checkForCtrl(event) {
+		if (event.ctrlKey) {
+			text = 'Perform an augmented Action';
+		} else {
+			text = 'Perform an Action';
+		}
+	}
 
-		actions: {
-			tooltip(node, text) {
-				let tooltip = null;
+	function tooltip(node, text) {
+		let tooltip = null;
 
-				function onMouseEnter() {
-					tooltip = document.createElement('div');
-					tooltip.classList.add('tooltip');
-					tooltip.textContent = text;
-					node.parentNode.appendChild(tooltip);
-				}
+		function onMouseEnter() {
+			tooltip = document.createElement('div');
+			tooltip.classList.add('tooltip');
+			tooltip.textContent = text;
+			node.parentNode.appendChild(tooltip);
+		}
 
-				function onMouseLeave() {
-					if (!tooltip) return;
-					tooltip.remove();
-					tooltip = null;
-				}
+		function onMouseLeave() {
+			if (!tooltip) return;
+			tooltip.remove();
+			tooltip = null;
+		}
 
-				node.addEventListener('mouseenter', onMouseEnter);
-				node.addEventListener('mouseleave', onMouseLeave);
+		node.addEventListener('mouseenter', onMouseEnter);
+		node.addEventListener('mouseleave', onMouseLeave);
 
-				return {
-					update(text) {
-						if (tooltip) tooltip.textContent = text;
-					},
-					destroy() {
-						node.removeEventListener('mouseenter', onMouseEnter);
-						node.removeEventListener('mouseleave', onMouseLeave);
-					}
-				}
+		return {
+			update(text) {
+				if (tooltip) tooltip.textContent = text;
+			},
+			destroy() {
+				node.removeEventListener('mouseenter', onMouseEnter);
+				node.removeEventListener('mouseleave', onMouseLeave);
 			}
 		}
 	}
 </script>
+
+<button use:tooltip="{text}">action</button>
+<svelte:window on:keydown="{checkForCtrl}" on:keyup="{checkForCtrl}"/>

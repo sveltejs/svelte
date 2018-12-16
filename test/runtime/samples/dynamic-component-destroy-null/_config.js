@@ -1,13 +1,9 @@
 export default {
-	data: {
+	props: {
 		x: true
 	},
 
-	nestedTransitions: true,
-
-	test(assert, component) {
-		component.set({
-			x: false
-		});
+	test({ assert, component }) {
+		component.x = false;
 	}
 };

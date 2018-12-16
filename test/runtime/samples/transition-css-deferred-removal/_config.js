@@ -1,10 +1,10 @@
 export default {
-	data: {
+	props: {
 		visible: true
 	},
 
-	test(assert, component, target, window, raf) {
-		component.set({ visible: false });
+	test({ assert, component, target, window, raf }) {
+		component.visible = false;
 
 		const outer = target.querySelector('.outer');
 		const inner = target.querySelector('.inner');

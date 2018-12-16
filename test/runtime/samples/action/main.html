@@ -1,34 +1,30 @@
-<button use:tooltip="'Perform an Action'">action</button>
-
 <script>
-	export default {
-		actions: {
-			tooltip(node, text) {
-				let tooltip = null;
+	function tooltip(node, text) {
+		let tooltip = null;
 
-				function onMouseEnter() {
-					tooltip = document.createElement('div');
-					tooltip.classList.add('tooltip');
-					tooltip.textContent = text;
-					node.parentNode.appendChild(tooltip);
-				}
+		function onMouseEnter() {
+			tooltip = document.createElement('div');
+			tooltip.classList.add('tooltip');
+			tooltip.textContent = text;
+			node.parentNode.appendChild(tooltip);
+		}
 
-				function onMouseLeave() {
-					if (!tooltip) return;
-					tooltip.remove();
-					tooltip = null;
-				}
+		function onMouseLeave() {
+			if (!tooltip) return;
+			tooltip.remove();
+			tooltip = null;
+		}
 
-				node.addEventListener('mouseenter', onMouseEnter);
-				node.addEventListener('mouseleave', onMouseLeave);
-				
-				return {
-					destroy() {
-						node.removeEventListener('mouseenter', onMouseEnter);
-						node.removeEventListener('mouseleave', onMouseLeave);
-					}
-				}
+		node.addEventListener('mouseenter', onMouseEnter);
+		node.addEventListener('mouseleave', onMouseLeave);
+		
+		return {
+			destroy() {
+				node.removeEventListener('mouseenter', onMouseEnter);
+				node.removeEventListener('mouseleave', onMouseLeave);
 			}
 		}
 	}
 </script>
+
+<button use:tooltip="{'Perform an Action'}">action</button>

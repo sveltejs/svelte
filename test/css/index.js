@@ -1,7 +1,6 @@
-import assert from 'assert';
+import * as assert from 'assert';
 import * as fs from 'fs';
-import { parse } from 'acorn';
-import { addLineNumbers, env, normalizeHtml, svelte } from '../helpers.js';
+import { env, normalizeHtml, svelte } from '../helpers.js';
 
 function tryRequire(file) {
 	try {
@@ -23,13 +22,18 @@ function normalizeWarning(warning) {
 	return warning;
 }
 
-function checkCodeIsValid(code) {
-	try {
-		parse(code);
-	} catch (err) {
-		console.error(addLineNumbers(code));
-		throw new Error(err.message);
-	}
+function create(code) {
+	const fn = new Function('module', 'exports', 'require', code);
+
+	const module = { exports: {} };
+	fn(module, module.exports, id => {
+		if (id === 'svelte') return require('../../index.js');
+		if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../'));
+
+		return require(id);
+	});
+
+	return module.exports.default;
 }
 
 describe('css', () => {
@@ -57,7 +61,7 @@ describe('css', () => {
 			const dom = svelte.compile(
 				input,
 				Object.assign(config, {
-					format: 'iife',
+					format: 'cjs',
 					name: 'SvelteComponent',
 					onwarn: warning => {
 						domWarnings.push(warning);
@@ -68,7 +72,7 @@ describe('css', () => {
 			const ssr = svelte.compile(
 				input,
 				Object.assign(config, {
-					format: 'iife',
+					format: 'cjs',
 					generate: 'ssr',
 					name: 'SvelteComponent',
 					onwarn: warning => {
@@ -76,10 +80,6 @@ describe('css', () => {
 					}
 				})
 			);
-
-			// check the code is valid
-			checkCodeIsValid(dom.js.code);
-			checkCodeIsValid(ssr.js.code);
 
 			assert.equal(dom.css.code, ssr.css.code);
 
@@ -97,18 +97,20 @@ describe('css', () => {
 
 			assert.equal(dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz'), expected.css);
 
+			// we do this here, rather than in the expected.html !== null
+			// block, to verify that valid code was generated
+			const ClientComponent = create(dom.js.code);
+			const ServerComponent = create(ssr.js.code);
+
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
 				const window = env();
 
 				// dom
 				try {
-					const Component = eval(
-						`(function () { ${dom.js.code}; return SvelteComponent; }())`
-					);
 					const target = window.document.querySelector('main');
 
-					new Component({ target, data: config.data });
+					new ClientComponent({ target, props: config.props });
 					const html = target.innerHTML;
 
 					fs.writeFileSync(`test/css/samples/${dir}/_actual.html`, html);
@@ -126,14 +128,10 @@ describe('css', () => {
 
 				// ssr
 				try {
-					const component = eval(
-						`(function () { ${ssr.js.code}; return SvelteComponent; }())`
-					);
-
 					assert.equal(
 						normalizeHtml(
 							window,
-							component.render(config.data).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
+							ServerComponent.render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz')
 						),
 						normalizeHtml(window, expected.html)
 					);

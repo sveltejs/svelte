@@ -1,24 +1,25 @@
 {
 	"html": {
 		"start": 0,
-		"end": 35,
+		"end": 37,
 		"type": "Fragment",
 		"children": [
 			{
 				"start": 0,
-				"end": 35,
+				"end": 37,
 				"type": "Element",
 				"name": "input",
 				"attributes": [
 					{
 						"start": 7,
-						"end": 34,
+						"end": 36,
 						"type": "Action",
 						"name": "tooltip",
+						"modifiers": [],
 						"expression": {
 							"type": "Literal",
-							"start": 20,
-							"end": 33,
+							"start": 21,
+							"end": 34,
 							"value": "tooltip msg",
 							"raw": "'tooltip msg'"
 						}
@@ -28,6 +29,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

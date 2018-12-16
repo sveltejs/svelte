@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		name: 'world'
 	},
 
@@ -10,7 +10,7 @@ export default {
 		};
 	},
 
-	test(assert, target, snapshot, component, window) {
+	async test(assert, target, snapshot, component, window) {
 		const input = target.querySelector('input');
 		const p = target.querySelector('p');
 
@@ -18,9 +18,9 @@ export default {
 		assert.equal(p, snapshot.p);
 
 		input.value = 'everybody';
-		input.dispatchEvent(new window.Event('input'));
+		await input.dispatchEvent(new window.Event('input'));
 
-		assert.equal(component.get().name, 'everybody');
+		assert.equal(component.name, 'everybody');
 		assert.htmlEqual(target.innerHTML, `
 			<input>
 			<p>Hello everybody!</p>

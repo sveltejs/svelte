@@ -35,7 +35,7 @@ export interface Warning {
 	toString: () => string;
 }
 
-export type ModuleFormat = 'es' | 'amd' | 'cjs' | 'iife' | 'umd' | 'eval';
+export type ModuleFormat = 'esm' | 'cjs' | 'eval';
 
 export interface CompileOptions {
 	format?: ModuleFormat;
@@ -49,10 +49,10 @@ export interface CompileOptions {
 
 	outputFilename?: string;
 	cssOutputFilename?: string;
+	sveltePath?: string;
 
 	dev?: boolean;
 	immutable?: boolean;
-	shared?: boolean | string;
 	hydratable?: boolean;
 	legacy?: boolean;
 	customElement?: CustomElementOptions | true;
@@ -61,17 +61,7 @@ export interface CompileOptions {
 	preserveComments?: boolean | false;
 
 	onwarn?: (warning: Warning) => void;
-
-	// to remove in v3
-	onerror?: (error: Error) => void;
-	skipIntroByDefault?: boolean;
-	nestedTransitions?: boolean;
 }
-
-export interface ShorthandImport {
-	name: string;
-	source: string;
-};
 
 export interface Visitor {
 	enter: (node: Node) => void;

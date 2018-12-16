@@ -9,7 +9,7 @@ export default function deindent(
 
 	let result = strings[0].replace(start, '').replace(pattern, '');
 
-	let trailingIndentation = getTrailingIndentation(result);
+	let current_indentation = get_current_indentation(result);
 
 	for (let i = 1; i < strings.length; i += 1) {
 		let expression = values[i - 1];
@@ -19,10 +19,15 @@ export default function deindent(
 			expression = expression.length ? expression.join('\n') : null;
 		}
 
+		// discard empty codebuilders
+		if (expression && expression.isEmpty && expression.isEmpty()) {
+			expression = null;
+		}
+
 		if (expression || expression === '') {
 			const value = String(expression).replace(
 				/\n/g,
-				`\n${trailingIndentation}`
+				`\n${current_indentation}`
 			);
 			result += value + string;
 		} else {
@@ -31,14 +36,18 @@ export default function deindent(
 			result = result.slice(0, c) + string;
 		}
 
-		trailingIndentation = getTrailingIndentation(result);
+		current_indentation = get_current_indentation(result);
 	}
 
 	return result.trim().replace(/\t+$/gm, '');
 }
 
-function getTrailingIndentation(str: string) {
-	let i = str.length;
-	while (str[i - 1] === ' ' || str[i - 1] === '\t') i -= 1;
-	return str.slice(i, str.length);
+function get_current_indentation(str: string) {
+	let a = str.length;
+	while (a > 0 && str[a - 1] !== '\n') a -= 1;
+
+	let b = a;
+	while (b < str.length && /\s/.test(str[b])) b += 1;
+
+	return str.slice(a, b);
 }

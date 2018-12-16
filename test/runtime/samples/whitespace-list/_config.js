@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		// so it doesn't use innerHTML
 		one: 'one',
 		two: 'two',
@@ -14,7 +14,7 @@ export default {
 		</ul>
 	`,
 
-	test(assert, component, target) {
+	test({ assert, component, target }) {
 		const ul = target.querySelector('ul');
 
 		assert.equal(ul.childNodes.length, 5);

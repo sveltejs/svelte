@@ -1,9 +1,9 @@
-<p>Hello world!</p>
-
 <script>
-	export default {
-		onrender () {
-			console.log( 'here' );
-		}
-	};
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		console.log('here');
+	});
 </script>
+
+<p>Hello world!</p>

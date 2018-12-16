@@ -1,6 +1,5 @@
 export default {
-	test(assert, component) {
-		const Component = component.constructor;
-		assert.deepEqual(Component.preload({ foo: 1 }), { bar: 2 });
+	test({ assert, mod }) {
+		assert.deepEqual(mod.preload({ foo: 1 }), { bar: 2 });
 	}
 };

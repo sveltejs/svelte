@@ -1,6 +1,6 @@
-import assert from 'assert';
-import path from 'path';
-import fs from 'fs';
+import * as assert from 'assert';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import {
 	showOutput,
@@ -17,13 +17,21 @@ function getName(filename) {
 	return base[0].toUpperCase() + base.slice(1);
 }
 
+const sveltePath = process.cwd();
+
 describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
 		require.extensions['.html'] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename), hydratable: true, format: 'cjs' },
+				{
+					filename,
+					name: getName(filename),
+					hydratable: true,
+					format: 'cjs',
+					sveltePath
+				},
 				compileOptions
 			);
 
@@ -48,7 +56,7 @@ describe('hydration', () => {
 			const cwd = path.resolve(`test/hydration/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = path.resolve('shared.js');
+			compileOptions.shared = path.resolve('internal.js');
 			compileOptions.dev = config.dev;
 			compileOptions.hydrate = true;
 
@@ -60,7 +68,7 @@ describe('hydration', () => {
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require(`${cwd}/main.html`);
+					SvelteComponent = require(`${cwd}/main.html`).default;
 				} catch (err) {
 					throw err;
 				}
@@ -73,7 +81,7 @@ describe('hydration', () => {
 				const component = new SvelteComponent({
 					target,
 					hydrate: true,
-					data: config.data
+					props: config.props
 				});
 
 				assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
@@ -85,11 +93,17 @@ describe('hydration', () => {
 					assert.equal(target.innerHTML, '');
 				}
 			} catch (err) {
-				showOutput(cwd, { shared: 'svelte/shared.js' }); // eslint-disable-line no-console
+				showOutput(cwd, {
+					shared: 'svelte/internal.js',
+					hydratable: true
+				});
 				throw err;
 			}
 
-			if (config.show) showOutput(cwd, { shared: 'svelte/shared.js' });
+			if (config.show) showOutput(cwd, {
+				shared: 'svelte/internal.js',
+				hydratable: true
+			});
 		});
 	}
 

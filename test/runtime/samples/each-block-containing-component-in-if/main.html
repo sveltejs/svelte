@@ -1,13 +1,10 @@
-<div>
-	<Nested {show} {fields}/>
-</div>
-
 <script>
 	import Nested from './Nested.html';
 
-	export default {
-		components: {
-			Nested
-		}
-	};
+	export let show;
+	export let fields;
 </script>
+
+<div>
+	<Nested {show} {fields}/>
+</div>

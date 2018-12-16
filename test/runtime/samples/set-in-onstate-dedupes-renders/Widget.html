@@ -1,13 +1,14 @@
-<div>{foo.x}</div>
-
 <script>
-	export default {
-		onstate({ current, changed }) {
-			if (changed.foo || changed.bar) {
-				if (current.foo.x !== current.bar.x) {
-					throw new Error('mismatch');
-				}
-			}
+	import { beforeUpdate } from 'svelte';
+
+	export let foo;
+	export let bar;
+
+	beforeUpdate(() => {
+		if (foo.x !== bar.x) {
+			throw new Error('mismatch');
 		}
-	};
+	});
 </script>
+
+<div>{foo.x}</div>

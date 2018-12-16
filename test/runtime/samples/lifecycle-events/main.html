@@ -1,13 +1,15 @@
-<div></div>
-
 <script>
-	export default {
-		oncreate() {
-			this.events = ['create'];
-		},
+	import { onDestroy, onMount } from 'svelte';
 
-		ondestroy() {
-			this.events.push('destroy');
-		}
-	};
+	export let events;
+
+	onMount(() => {
+		events = ['mount'];
+
+		return () => {
+			events.push('destroy');
+		};
+	});
 </script>
+
+<div></div>

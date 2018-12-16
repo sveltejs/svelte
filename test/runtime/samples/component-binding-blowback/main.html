@@ -1,22 +1,12 @@
-{#if x}
-	<Widget bind:foo='bar.baz'/>
-{/if}
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		data: function () {
-			return {
-				x: false,
-				bar: {
-					baz: 42
-				}
-			};
-		},
-
-		components: {
-			Widget
-		}
+	export let x = false;
+	export let bar = {
+		baz: 42
 	};
 </script>
+
+{#if x}
+	<Widget bind:foo={bar.baz}/>
+{/if}

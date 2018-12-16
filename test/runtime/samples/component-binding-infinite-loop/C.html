@@ -1,23 +1,19 @@
+<script>
+	export let currentIdentifier;
+	export let identifier;
+
+	let isCurrentlySelected;
+
+	function toggle() {
+		currentIdentifier = isCurrentlySelected ? null : identifier
+	}
+
+	$: isCurrentlySelected = currentIdentifier === identifier;
+</script>
+
 <span
-	on:click="toggle()"
+	on:click="{toggle}"
 	class="{isCurrentlySelected ? 'selected' : ''}"
 >
 	<slot></slot>
 </span>
-
-<script>
-export default {
-	computed: {
-		isCurrentlySelected: ({ currentIdentifier, identifier }) => currentIdentifier === identifier
-	},
-	methods: {
-		toggle() {
-			const isCurrentlySelected = this.get().isCurrentlySelected
-
-			this.set({
-				currentIdentifier: isCurrentlySelected ? null : this.get().identifier
-			})
-		}
-	}
-}
-</script>

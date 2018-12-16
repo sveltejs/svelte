@@ -2,14 +2,14 @@
 	"code": "duplicate-animation",
 	"message": "An element can only have one 'animate' directive",
 	"start": {
-		"line": 2,
+		"line": 7,
 		"column": 18,
-		"character": 50
+		"character": 108
 	},
 	"end": {
-		"line": 2,
+		"line": 7,
 		"column": 29,
-		"character": 61
+		"character": 119
 	},
-	"pos": 50
+	"pos": 108
 }]

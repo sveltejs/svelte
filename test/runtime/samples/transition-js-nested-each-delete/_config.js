@@ -1,29 +1,26 @@
 export default {
-	nestedTransitions: true,
-	skipIntroByDefault: true,
-
-	data: {
+	props: {
 		visible: true,
-		things: [ 'a', 'b', 'c' ]
+		things: ['a', 'b', 'c']
 	},
 
-	test ( assert, component, target, window, raf ) {
+	test({ assert, component, target, window, raf }) {
 		assert.htmlEqual(target.innerHTML, `
 			<div>a</div>
 			<div>b</div>
 			<div>c</div>
 		`);
 
-		component.set({ things: [ 'a' ] });
+		component.things = ['a'];
 
-		raf.tick( 100 );
+		raf.tick(100);
 		assert.htmlEqual(target.innerHTML, `
 			<div>a</div>
 		`);
 
-		component.set({ visible: false });
+		component.visible = false;
 
-		raf.tick( 200 );
+		raf.tick(200);
 		assert.htmlEqual(target.innerHTML, '');
 	}
 };

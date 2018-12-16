@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: true,
 		foo: 'one'
 	},
@@ -8,19 +8,15 @@ export default {
 		<p>green one</p>
 	`,
 
-	test(assert, component, target) {
-		component.set({
-			x: false
-		});
+	test({ assert, component, target }) {
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>red one</p>
 		`);
 
-		component.set({
-			x: true,
-			foo: 'two'
-		});
+		component.foo = 'two';
+		component.x = true;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>green two</p>

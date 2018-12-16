@@ -3,12 +3,8 @@ export default {
 		<p>Foo</p>
 	`,
 
-	test(assert, component, target) {
-		const { Bar } = component.get();
-
-		component.set({
-			x: Bar
-		});
+	test({ assert, component, target }) {
+		component.x = component.Bar;
 
 		assert.htmlEqual(target.innerHTML, `
 			<p>Bar</p>

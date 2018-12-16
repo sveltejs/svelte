@@ -1,9 +1,11 @@
+<script>
+	export let items;
+
+	import Widget from './Widget.html';
+</script>
+
 {#each items as item}
 	<Widget {item}/>
 {:else}
 	No items.
 {/each}
-
-<script>
-	export default { components: { Widget: './Widget.html' } };
-</script>

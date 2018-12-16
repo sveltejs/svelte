@@ -1,4 +1,4 @@
 export default {
-	data: { foo: 'foo' },
+	props: { foo: 'foo' },
 	html: `<div>foo @ foo # foo</div>`,
 };

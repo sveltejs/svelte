@@ -1,10 +1,10 @@
 export default {
-	data: {
+	props: {
 		x: 1
 	},
 
-	test(assert, component) {
-		component.destroy();
-		component.set({ x: 2 });
+	test({ assert, component }) {
+		component.$destroy();
+		component.x = 2;
 	}
 };

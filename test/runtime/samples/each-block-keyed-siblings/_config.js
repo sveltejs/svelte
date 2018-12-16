@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		ones: [{ text: '1' }],
 		twos: [{ text: '2' }],
 	},
@@ -9,10 +9,8 @@ export default {
 		<div>2</div>
 	`,
 
-	test(assert, component, target) {
-		component.set({
-			ones: [{ text: '11' }]
-		});
+	test({ assert, component, target }) {
+		component.ones = [{ text: '11' }];
 
 		assert.htmlEqual(target.innerHTML, `
 			<div>11</div>

@@ -1,20 +1,11 @@
+<script>
+	export let hidden = true;
+
+	export function toggle() {
+		hidden = !hidden;
+	}
+</script>
+
 {#if !hidden}
 	<slot></slot>
 {/if}
-
-<script>
-	export default {
-		data () {
-			return {
-				hidden: true
-			};
-		},
-		methods: {
-			toggle () {
-				this.set({
-					hidden: !this.get().hidden
-				});
-			}
-		}
-	};
-</script>

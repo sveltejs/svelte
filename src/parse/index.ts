@@ -19,13 +19,13 @@ export class Parser {
 	readonly filename?: string;
 	readonly customElement: CustomElementOptions | true;
 
-	index: number;
-	stack: Array<Node>;
+	index = 0;
+	stack: Array<Node> = [];
 
 	html: Node;
-	css: Node;
-	js: Node;
-	metaTags: {};
+	css: Node[] = [];
+	js: Node[] = [];
+	metaTags = {};
 
 	allowBindings: boolean;
 
@@ -40,19 +40,12 @@ export class Parser {
 
 		this.allowBindings = options.bind !== false;
 
-		this.index = 0;
-		this.stack = [];
-		this.metaTags = {};
-
 		this.html = {
 			start: null,
 			end: null,
 			type: 'Fragment',
 			children: [],
 		};
-
-		this.css = null;
-		this.js = null;
 
 		this.stack.push(this.html);
 
@@ -227,6 +220,16 @@ export default function parse(
 	options: ParserOptions = {}
 ): Ast {
 	const parser = new Parser(template, options);
+
+	// TODO we way want to allow multiple <style> tags —
+	// one scoped, one global. for now, only allow one
+	if (parser.css.length > 1) {
+		parser.error({
+			code: 'duplicate-style',
+			message: 'You can only have one top-level <style> tag per component'
+		}, parser.css[1].start);
+	}
+
 	return {
 		html: parser.html,
 		css: parser.css,

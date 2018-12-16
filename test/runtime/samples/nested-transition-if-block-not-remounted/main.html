@@ -1,14 +1,12 @@
+<script>
+	export let x;
+
+	import Span from './Span.html';
+</script>
+
 <div>
 	{#if x}
-		<input on:input="set({ value: this.value })">
+		<input on:input="{() => value = this.value}">
 		<Span>x</Span>
 	{/if}
 </div>
-
-<script>
-	export default {
-		components: {
-			Span: './Span.html'
-		}
-	};
-</script>

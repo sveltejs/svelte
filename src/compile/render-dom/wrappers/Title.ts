@@ -4,6 +4,7 @@ import Block from '../Block';
 import Title from '../../nodes/Title';
 import FragmentWrapper from './Fragment';
 import { stringify } from '../../../utils/stringify';
+import addToSet from '../../../utils/addToSet';
 
 export default class TitleWrapper extends Wrapper {
 	node: Title;
@@ -32,12 +33,8 @@ export default class TitleWrapper extends Wrapper {
 			if (this.node.children.length === 1) {
 				// single {tag} — may be a non-string
 				const { expression } = this.node.children[0];
-				const { dependencies, snippet } = this.node.children[0].expression;
-
-				value = snippet;
-				dependencies.forEach(d => {
-					allDependencies.add(d);
-				});
+				value = expression.render();
+				addToSet(allDependencies, expression.dynamic_dependencies);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
@@ -47,9 +44,9 @@ export default class TitleWrapper extends Wrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const { dependencies, snippet } = chunk.expression;
+								const snippet = chunk.expression.render();
 
-								dependencies.forEach(d => {
+								chunk.expression.dynamic_dependencies.forEach(d => {
 									allDependencies.add(d);
 								});
 

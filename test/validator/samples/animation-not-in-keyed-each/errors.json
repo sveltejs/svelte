@@ -2,14 +2,14 @@
 	"code": "invalid-animation",
 	"message": "An element that use the animate directive must be the immediate child of a keyed each block",
 	"start": {
-		"line": 2,
+		"line": 6,
 		"column": 6,
-		"character": 30
+		"character": 69
 	},
 	"end": {
-		"line": 2,
+		"line": 6,
 		"column": 17,
-		"character": 41
+		"character": 80
 	},
-	"pos": 30
+	"pos": 69
 }]

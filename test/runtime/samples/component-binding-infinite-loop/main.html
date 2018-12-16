@@ -1,17 +1,8 @@
-<A bind:currentIdentifier />
-<A bind:currentIdentifier />
-
 <script>
-import A from './A.html';
+	import A from './A.html';
 
-export default {
-	data() {
-		return {
-			currentIdentifier: 2
-		}
-	},
-	components: {
-		A
-	}
-}
+	export let currentIdentifier = 2;
 </script>
+
+<A bind:currentIdentifier />
+<A bind:currentIdentifier />

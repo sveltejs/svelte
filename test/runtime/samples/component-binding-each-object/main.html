@@ -1,13 +1,9 @@
-{#each a as x}
-	<Widget bind:value='x'/>
-{/each}
-
 <script>
 	import Widget from './Widget.html';
 
-	export default {
-		components: {
-			Widget
-		}
-	};
+	export let a;
 </script>
+
+{#each a as x}
+	<Widget bind:value={x}/>
+{/each}

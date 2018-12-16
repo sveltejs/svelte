@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		prop: 'name',
 		user: {
 			name: 'alice',
@@ -16,7 +16,7 @@ export default {
 		<p>hello alice</p>
 	`,
 
-	test(assert, component, target, window) {
+	async test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 
 		assert.equal(input.value, 'alice');
@@ -24,17 +24,17 @@ export default {
 		const event = new window.Event('input');
 
 		input.value = 'bob';
-		input.dispatchEvent(event);
+		await input.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
 			<input>
 			<p>hello bob</p>
 		`);
 
-		const user = component.get().user;
+		const user = component.user;
 		user.name = 'carol';
 
-		component.set({ user });
+		component.user = user;
 		assert.equal(input.value, 'carol');
 		assert.htmlEqual(target.innerHTML, `
 			<input>

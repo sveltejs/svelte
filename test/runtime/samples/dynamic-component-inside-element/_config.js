@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		x: true
 	},
 
@@ -7,10 +7,8 @@ export default {
 		<div><p>true, therefore Foo</p></div>
 	`,
 
-	test(assert, component, target) {
-		component.set({
-			x: false
-		});
+	test({ assert, component, target }) {
+		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `
 			<div><p>false, therefore Bar</p></div>

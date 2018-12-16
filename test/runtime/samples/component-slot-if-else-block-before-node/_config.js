@@ -3,8 +3,8 @@ export default {
 		<p>disabled</p>
 		<p>unconditional</p>`,
 
-	test(assert, component, target) {
-		component.set({ enabled: true });
+	test({ assert, component, target }) {
+		component.enabled = true;
 		assert.htmlEqual(target.innerHTML, `
 			<p>enabled</p>
 			<p>unconditional</p>

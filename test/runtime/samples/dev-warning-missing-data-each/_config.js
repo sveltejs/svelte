@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 
-	data: {
+	props: {
 		letters: [
 			{
 				id: 1,

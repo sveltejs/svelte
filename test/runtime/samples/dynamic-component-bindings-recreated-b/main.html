@@ -1,16 +1,10 @@
-<p>parent {foo}</p>
-<svelte:component this="{x ? Green : Red}" bind:foo />
-
 <script>
 	import Green from './Green.html';
 	import Red from './Red.html';
 
-	export default {
-		data() {
-			return {
-				Green,
-				Red
-			};
-		}
-	};
+	export let foo;
+	export let x;
 </script>
+
+<p>parent {foo}</p>
+<svelte:component this="{x ? Green : Red}" bind:foo />

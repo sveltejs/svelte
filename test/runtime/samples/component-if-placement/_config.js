@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		flag: true
 	},
 
@@ -9,8 +9,8 @@ export default {
 		<span>After</span>
 	`,
 
-	test ( assert, component, target ) {
-		component.set( { flag: false } );
+	test({ assert, component, target }) {
+		component.flag = false;
 		assert.htmlEqual( target.innerHTML, `
 			<span>Before</span>
 			<span>Component</span>

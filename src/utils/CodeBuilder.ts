@@ -35,7 +35,8 @@ export default class CodeBuilder {
 	addConditional(condition: string, body: string) {
 		this.reifyConditions();
 
-		body = body.replace(/^/gm, `${this.indent}\t`);
+		const indent = this.indent + (condition ? '\t' : '');
+		body = body.replace(/^/gm, indent);
 
 		if (condition === this.lastCondition) {
 			this.result += `\n${body}`;
@@ -44,7 +45,11 @@ export default class CodeBuilder {
 				this.result += `\n${this.indent}}`;
 			}
 
-			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}${this.indent}if (${condition}) {\n${body}`;
+			const block = condition
+				? `if (${condition}) {\n${body}`
+				: body;
+
+			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}${this.indent}${block}`;
 			this.lastCondition = condition;
 		}
 

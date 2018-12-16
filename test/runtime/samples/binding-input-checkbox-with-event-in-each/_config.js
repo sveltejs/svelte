@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		cats: [
 			{
 				name: "cat 0",
@@ -17,14 +17,14 @@ export default {
 		<input type="checkbox">
 	`,
 
-	test(assert, component, target, window) {
-		const { cats } = component.get();
+	test({ assert, component, target, window }) {
+		const { cats } = component;
 		const newCats = cats.slice();
 		newCats.push({
 			name: "cat " + cats.length,
 			checked: false,
 		});
-		component.set({ cats: newCats });
+		component.cats = newCats;
 
 		let inputs = target.querySelectorAll('input');
 		assert.equal(inputs.length, 3);

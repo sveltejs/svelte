@@ -1,14 +1,14 @@
 export default {
-	data: {
+	props: {
 		visible: true
 	},
 
 	html: '<p>i am visible</p>',
 
-	test ( assert, component, target ) {
-		component.set({ visible: false });
+	test({ assert, component, target }) {
+		component.visible = false;
 		assert.htmlEqual( target.innerHTML, '' );
-		component.set({ visible: true });
+		component.visible = true;
 		assert.htmlEqual( target.innerHTML, '<p>i am visible</p>' );
 	}
 };

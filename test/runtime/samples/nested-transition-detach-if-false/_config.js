@@ -13,10 +13,8 @@ export default {
 		</li>
 	`,
 
-	nestedTransitions: true,
-
-	test(assert, component, target, window, raf) {
-		component.refs.folder.set({ open: false });
+	test({ assert, component, target, window, raf }) {
+		component.folder.open = false;
 		assert.htmlEqual(target.innerHTML, `
 			<li>
 				<span>a</span>

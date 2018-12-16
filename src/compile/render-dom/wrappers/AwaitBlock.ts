@@ -67,7 +67,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		this.cannotUseInnerHTML();
 
-		block.addDependencies(this.node.expression.dependencies);
+		block.addDependencies(this.node.expression.dynamic_dependencies);
 
 		let isDynamic = false;
 		let hasIntros = false;
@@ -112,7 +112,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		this.then.block.hasOutroMethod = hasOutros;
 		this.catch.block.hasOutroMethod = hasOutros;
 
-		if (hasOutros && this.renderer.options.nestedTransitions) {
+		if (hasOutros) {
 			block.addOutro();
 		}
 	}
@@ -125,7 +125,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const anchor = this.getOrCreateAnchor(block, parentNode, parentNodes);
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
-		const { snippet } = this.node.expression;
+		const snippet = this.node.expression.render();
 
 		const info = block.getUniqueName(`info`);
 		const promise = block.getUniqueName(`promise`);
@@ -160,7 +160,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			${info}.block.c();
 		`);
 
-		if (parentNodes) {
+		if (parentNodes && this.renderer.options.hydratable) {
 			block.builders.claim.addBlock(deindent`
 				${info}.block.l(${parentNodes});
 			`);
@@ -207,7 +207,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			`);
 		}
 
-		if (this.pending.block.hasOutroMethod && this.renderer.options.nestedTransitions) {
+		if (this.pending.block.hasOutroMethod) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				const ${countdown} = @callAfter(#outrocallback, 3);

@@ -9,35 +9,41 @@
 				"end": 61,
 				"type": "Element",
 				"name": "textarea",
-				"attributes": [],
-				"children": [
+				"attributes": [
 					{
-						"start": 10,
-						"end": 40,
-						"type": "Text",
-						"data": "\n\t<p>not actually an element. "
-					},
-					{
-						"start": 40,
-						"end": 45,
-						"type": "MustacheTag",
-						"expression": {
-							"type": "Identifier",
-							"start": 41,
-							"end": 44,
-							"name": "foo"
-						}
-					},
-					{
-						"start": 45,
-						"end": 50,
-						"type": "Text",
-						"data": "</p>\n"
+						"type": "Attribute",
+						"name": "value",
+						"value": [
+							{
+								"start": 10,
+								"end": 40,
+								"type": "Text",
+								"data": "\n\t<p>not actually an element. "
+							},
+							{
+								"start": 40,
+								"end": 45,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 41,
+									"end": 44,
+									"name": "foo"
+								}
+							},
+							{
+								"start": 45,
+								"end": 50,
+								"type": "Text",
+								"data": "</p>\n"
+							}
+						]
 					}
-				]
+				],
+				"children": []
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		things: ['one', 'two', 'three'],
 		selected: 'two'
 	},
@@ -10,8 +10,8 @@ export default {
 		<div></div>
 	`,
 
-	test(assert, component, target) {
-		component.set({ selected: 'three' });
+	test({ assert, component, target }) {
+		component.selected = 'three';
 		assert.htmlEqual(target.innerHTML, `
 			<div></div>
 			<div class=""></div>

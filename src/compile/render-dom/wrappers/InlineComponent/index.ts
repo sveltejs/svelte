@@ -9,10 +9,8 @@ import stringifyProps from '../../../../utils/stringifyProps';
 import addToSet from '../../../../utils/addToSet';
 import deindent from '../../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
-import CodeBuilder from '../../../../utils/CodeBuilder';
 import getObject from '../../../../utils/getObject';
 import Binding from '../../../nodes/Binding';
-import getTailSnippet from '../../../../utils/getTailSnippet';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
@@ -33,7 +31,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.cannotUseInnerHTML();
 
 		if (this.node.expression) {
-			block.addDependencies(this.node.expression.dependencies);
+			block.addDependencies(this.node.expression.dynamic_dependencies);
 		}
 
 		this.node.attributes.forEach(attr => {
@@ -44,17 +42,19 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (binding.isContextual) {
 				// we need to ensure that the each block creates a context including
 				// the list and the index, if they're not otherwise referenced
-				const { name } = getObject(binding.value.node);
+				const { name } = getObject(binding.expression.node);
 				const eachBlock = block.contextOwners.get(name);
 
 				eachBlock.hasBinding = true;
 			}
 
-			block.addDependencies(binding.value.dependencies);
+			block.addDependencies(binding.expression.dynamic_dependencies);
 		});
 
 		this.node.handlers.forEach(handler => {
-			block.addDependencies(handler.dependencies);
+			if (handler.expression) {
+				block.addDependencies(handler.expression.dynamic_dependencies);
+			}
 		});
 
 		this.var = (
@@ -68,9 +68,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
 		}
 
-		if (renderer.component.options.nestedTransitions) {
-			block.addOutro();
-		}
+		block.addOutro();
 	}
 
 	render(
@@ -83,28 +81,23 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const name = this.var;
 
-		const componentInitProperties = [
-			`root: #component.root`,
-			`store: #component.store`
-		];
+		const component_opts = [];
 
 		if (this.fragment) {
 			const slots = Array.from(this._slots).map(name => `${quoteNameIfNecessary(name)}: @createFragment()`);
-			componentInitProperties.push(`slots: { ${slots.join(', ')} }`);
+			component_opts.push(`slots: { ${slots.join(', ')} }`);
 
 			this.fragment.nodes.forEach((child: Wrapper) => {
-				child.render(block, `${this.var}._slotted.default`, 'nodes');
+				child.render(block, `${this.var}.$$.slotted.default`, 'nodes');
 			});
 		}
 
 		const statements: string[] = [];
-
-		const name_initial_data = block.getUniqueName(`${name}_initial_data`);
-		const name_changes = block.getUniqueName(`${name}_changes`);
-		let name_updating: string;
-		let beforecreate: string = null;
-
 		const updates: string[] = [];
+		const postupdates: string[] = [];
+
+		let props;
+		const name_changes = block.getUniqueName(`${name}_changes`);
 
 		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
 
@@ -115,7 +108,20 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 		if (this.node.attributes.length || this.node.bindings.length) {
-			componentInitProperties.push(`data: ${name_initial_data}`);
+			if (!usesSpread && this.node.bindings.length === 0) {
+				component_opts.push(`props: ${attributeObject}`);
+			} else {
+				props = block.getUniqueName(`${name}_props`);
+				component_opts.push(`props: ${props}`);
+			}
+		}
+
+		if (component.options.dev) {
+			// TODO this is a terrible hack, but without it the component
+			// will complain that options.target is missing. This would
+			// work better if components had separate public and private
+			// APIs
+			component_opts.push(`$$inline: true`);
 		}
 
 		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length)) {
@@ -143,7 +149,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 
 					if (attr.isSpread) {
-						const value = attr.expression.snippet;
+						const value = attr.expression.render();
 						initialProps.push(value);
 
 						changes.push(condition ? `${condition} && ${value}` : value);
@@ -163,7 +169,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				statements.push(deindent`
 					for (var #i = 0; #i < ${levels}.length; #i += 1) {
-						${name_initial_data} = @assign(${name_initial_data}, ${levels}[#i]);
+						${props} = @assign(${props}, ${levels}[#i]);
 					}
 				`);
 
@@ -189,167 +195,130 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 		}
 
-		if (this.node.bindings.length) {
-			renderer.hasComplexBindings = true;
+		const munged_bindings = this.node.bindings.map(binding => {
+			component.has_reactive_assignments = true;
 
-			name_updating = block.alias(`${name}_updating`);
-			block.addVariable(name_updating, '{}');
+			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
+			component.declarations.push(name);
+			component.template_references.add(name);
 
-			let hasLocalBindings = false;
-			let hasStoreBindings = false;
+			const updating = block.getUniqueName(`updating_${binding.name}`);
+			block.addVariable(updating);
 
-			const builder = new CodeBuilder();
+			const snippet = binding.expression.render();
 
-			this.node.bindings.forEach((binding: Binding) => {
-				let { name: key } = getObject(binding.value.node);
+			statements.push(deindent`
+				if (${snippet} !== void 0) {
+					${props}${quotePropIfNecessary(binding.name)} = ${snippet};
+				}`
+			);
 
-				let setFromChild;
-
-				if (binding.isContextual) {
-					const computed = isComputed(binding.value.node);
-					const tail = binding.value.node.type === 'MemberExpression' ? getTailSnippet(binding.value.node) : '';
-
-					const head = block.bindings.get(key);
-
-					const lhs = binding.value.node.type === 'MemberExpression'
-						? binding.value.snippet
-						: `${head()}${tail} = childState${quotePropIfNecessary(binding.name)}`;
-
-					setFromChild = deindent`
-						${lhs} = childState${quotePropIfNecessary(binding.name)};
-
-						${[...binding.value.dependencies]
-							.map((name: string) => {
-								const isStoreProp = name[0] === '$';
-								const prop = isStoreProp ? name.slice(1) : name;
-								const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-								if (isStoreProp) hasStoreBindings = true;
-								else hasLocalBindings = true;
-
-								return `${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(name)};`;
-							})}
-					`;
-				}
-
-				else {
-					const isStoreProp = key[0] === '$';
-					const prop = isStoreProp ? key.slice(1) : key;
-					const newState = isStoreProp ? 'newStoreState' : 'newState';
-
-					if (isStoreProp) hasStoreBindings = true;
-					else hasLocalBindings = true;
-
-					if (binding.value.node.type === 'MemberExpression') {
-						setFromChild = deindent`
-							${binding.value.snippet} = childState${quotePropIfNecessary(binding.name)};
-							${newState}${quotePropIfNecessary(prop)} = ctx${quotePropIfNecessary(key)};
-						`;
-					}
-
-					else {
-						setFromChild = `${newState}${quotePropIfNecessary(prop)} = childState${quotePropIfNecessary(binding.name)};`;
-					}
-				}
-
-				statements.push(deindent`
-					if (${binding.value.snippet} !== void 0) {
-						${name_initial_data}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet};
-						${name_updating}${quotePropIfNecessary(binding.name)} = true;
-					}`
-				);
-
-				builder.addConditional(
-					`!${name_updating}${quotePropIfNecessary(binding.name)} && changed${quotePropIfNecessary(binding.name)}`,
-					setFromChild
-				);
-
-				updates.push(deindent`
-					if (!${name_updating}${quotePropIfNecessary(binding.name)} && ${[...binding.value.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
-						${name_changes}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet};
-						${name_updating}${quotePropIfNecessary(binding.name)} = ${binding.value.snippet} !== void 0;
-					}
-				`);
-			});
-
-			block.maintainContext = true; // TODO put this somewhere more logical
-
-			const initialisers = [
-				hasLocalBindings && 'newState = {}',
-				hasStoreBindings && 'newStoreState = {}',
-			].filter(Boolean).join(', ');
-
-			// TODO use component.on('state', ...) instead of _bind
-			componentInitProperties.push(deindent`
-				_bind(changed, childState) {
-					var ${initialisers};
-					${builder}
-					${hasStoreBindings && `#component.store.set(newStoreState);`}
-					${hasLocalBindings && `#component._set(newState);`}
-					${name_updating} = {};
+			updates.push(deindent`
+				if (!${updating} && ${[...binding.expression.dynamic_dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}
 			`);
 
-			beforecreate = deindent`
-				#component.root._beforecreate.push(() => {
-					${name}._bind({ ${this.node.bindings.map(b => `${quoteNameIfNecessary(b.name)}: 1`).join(', ')} }, ${name}.get());
-				});
-			`;
-		}
+			postupdates.push(updating);
 
-		this.node.handlers.forEach(handler => {
-			handler.var = block.getUniqueName(`${this.var}_${handler.name}`); // TODO this is hacky
-			handler.render(component, block, this.var, false); // TODO hoist when possible
-			if (handler.usesContext) block.maintainContext = true; // TODO is there a better place to put this?
+			const contextual_dependencies = Array.from(binding.expression.contextual_dependencies);
+			const dependencies = Array.from(binding.expression.dependencies);
+
+			let lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+
+			if (binding.isContextual && binding.expression.node.type === 'Identifier') {
+				// bind:x={y} — we can't just do `y = x`, we need to
+				// to `array[index] = x;
+				const { name } = binding.expression.node;
+				const { object, property, snippet } = block.bindings.get(name)();
+				lhs = snippet;
+				contextual_dependencies.push(object, property);
+			}
+
+			const args = ['value'];
+			if (contextual_dependencies.length > 0) {
+				args.push(`{ ${contextual_dependencies.join(', ')} }`);
+
+				block.builders.init.addBlock(deindent`
+					function ${name}(value) {
+						${updating} = true;
+						ctx.${name}.call(null, value, ctx);
+					}
+				`);
+
+				block.maintainContext = true; // TODO put this somewhere more logical
+			} else {
+				block.builders.init.addBlock(deindent`
+					function ${name}(value) {
+						${updating} = true;
+						ctx.${name}.call(null, value);
+					}
+				`);
+			}
+
+			const body = deindent`
+				function ${name}(${args.join(', ')}) {
+					${lhs} = value;
+					${dependencies.map(dep => `$$make_dirty('${dep}');`)}
+				}
+			`;
+
+			component.partly_hoisted.push(body);
+
+			return `@add_binding_callback(() => @bind(${this.var}, '${binding.name}', ${name}));`;
+		});
+
+		const munged_handlers = this.node.handlers.map(handler => {
+			// TODO return declarations from handler.render()?
+			const snippet = handler.render();
+
+			if (handler.expression) {
+				handler.expression.declarations.forEach(declaration => {
+					block.builders.init.addBlock(declaration);
+				});
+			}
+
+			return `${name}.$on("${handler.name}", ${snippet});`;
 		});
 
 		if (this.node.name === 'svelte:component') {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
-			const { snippet } = this.node.expression;
+			const snippet = this.node.expression.render();
 
 			block.builders.init.addBlock(deindent`
 				var ${switch_value} = ${snippet};
 
 				function ${switch_props}(ctx) {
 					${(this.node.attributes.length || this.node.bindings.length) && deindent`
-					var ${name_initial_data} = ${attributeObject};`}
+					${props && `let ${props} = ${attributeObject};`}`}
 					${statements}
-					return {
-						${componentInitProperties.join(',\n')}
-					};
+					return ${stringifyProps(component_opts)};
 				}
 
 				if (${switch_value}) {
 					var ${name} = new ${switch_value}(${switch_props}(ctx));
 
-					${beforecreate}
+					${munged_bindings}
+					${munged_handlers}
 				}
-
-				${this.node.handlers.map(handler => deindent`
-					function ${handler.var}(event) {
-						${handler.snippet || `#component.fire("${handler.name}", event);`}
-					}
-
-					if (${name}) ${name}.on("${handler.name}", ${handler.var});
-				`)}
 			`);
 
 			block.builders.create.addLine(
-				`if (${name}) ${name}._fragment.c();`
+				`if (${name}) ${name}.$$.fragment.c();`
 			);
 
-			if (parentNodes) {
+			if (parentNodes && this.renderer.options.hydratable) {
 				block.builders.claim.addLine(
-					`if (${name}) ${name}._fragment.l(${parentNodes});`
+					`if (${name}) ${name}.$$.fragment.l(${parentNodes});`
 				);
 			}
 
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
-					${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
+					@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+					${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 				}
 			`);
 
@@ -365,41 +334,34 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.update.addBlock(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
-						${component.options.nestedTransitions
-						? deindent`
 						@groupOutros();
 						const old_component = ${name};
-						old_component._fragment.o(() => {
-							old_component.destroy();
-						});`
-						: `${name}.destroy();`}
+						old_component.$$.fragment.o(() => {
+							old_component.$destroy();
+						});
 					}
 
 					if (${switch_value}) {
 						${name} = new ${switch_value}(${switch_props}(ctx));
 
-						${this.node.bindings.length > 0 && deindent`
-						#component.root._beforecreate.push(() => {
-							const changed = {};
-							${this.node.bindings.map(binding => deindent`
-							if (${binding.value.snippet} === void 0) changed.${binding.name} = 1;`)}
-							${name}._bind(changed, ${name}.get());
-						});`}
-						${name}._fragment.c();
+						${munged_bindings}
+						${munged_handlers}
 
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
-						${name}._mount(${updateMountNode}, ${anchor});
+						${name}.$$.fragment.c();
+						@mount_component(${name}, ${updateMountNode}, ${anchor});
 
 						${this.node.handlers.map(handler => deindent`
-							${name}.on("${handler.name}", ${handler.var});
+							${name}.$on("${handler.name}", ${handler.var});
 						`)}
 
-						${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
+						${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 					} else {
 						${name} = null;
 						${this.node.ref && deindent`
-						if (#component.refs.${this.node.ref.name} === ${name}) {
-							#component.refs.${this.node.ref.name} = null;
+						if (#component.$$.refs.${this.node.ref.name} === ${name}) {
+							#component.$$.refs.${this.node.ref.name} = null;
+							#component.$$.inject_refs(#component.$$.refs);
 						}`}
 					}
 				}
@@ -408,72 +370,69 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					else if (${switch_value}) {
-						${name}._set(${name_changes});
-						${this.node.bindings.length && `${name_updating} = {};`}
+						${name}.$set(${name_changes});
 					}
+
+					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
-			block.builders.destroy.addLine(`if (${name}) ${name}.destroy(${parentNode ? '' : 'detach'});`);
+			block.builders.destroy.addLine(`if (${name}) ${name}.$destroy(${parentNode ? '' : 'detach'});`);
 		} else {
 			const expression = this.node.name === 'svelte:self'
 				? component.name
-				: `%components-${this.node.name}`;
+				: component.qualify(this.node.name);
 
 			block.builders.init.addBlock(deindent`
 				${(this.node.attributes.length || this.node.bindings.length) && deindent`
-				var ${name_initial_data} = ${attributeObject};`}
+				${props && `let ${props} = ${attributeObject};`}`}
 				${statements}
-				var ${name} = new ${expression}({
-					${componentInitProperties.join(',\n')}
-				});
+				var ${name} = new ${expression}(${stringifyProps(component_opts)});
 
-				${beforecreate}
+				${munged_bindings}
+				${munged_handlers}
 
-				${this.node.handlers.map(handler => deindent`
-					${name}.on("${handler.name}", function(event) {
-						${handler.snippet || `#component.fire("${handler.name}", event);`}
-					});
-				`)}
-
-				${this.node.ref && `#component.refs.${this.node.ref.name} = ${name};`}
+				${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 			`);
 
-			block.builders.create.addLine(`${name}._fragment.c();`);
+			block.builders.create.addLine(`${name}.$$.fragment.c();`);
 
-			if (parentNodes) {
+			if (parentNodes && this.renderer.options.hydratable) {
 				block.builders.claim.addLine(
-					`${name}._fragment.l(${parentNodes});`
+					`${name}.$$.fragment.l(${parentNodes});`
 				);
 			}
 
 			block.builders.mount.addLine(
-				`${name}._mount(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
+				`@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					${updates}
-					${name}._set(${name_changes});
-					${this.node.bindings.length && `${name_updating} = {};`}
+					${name}.$set(${name_changes});
+					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
 
-			block.builders.destroy.addLine(deindent`
-				${name}.destroy(${parentNode ? '' : 'detach'});
-				${this.node.ref && `if (#component.refs.${this.node.ref.name} === ${name}) #component.refs.${this.node.ref.name} = null;`}
+			block.builders.destroy.addBlock(deindent`
+				${name}.$destroy(${parentNode ? '' : 'detach'});
+				${this.node.ref && deindent`
+					if (#component.$$.refs.${this.node.ref.name} === ${name}) {
+						#component.$$.refs.${this.node.ref.name} = null;
+						#component.$$.inject_refs(#component.$$.refs);
+					}
+				`}
 			`);
 		}
 
-		if (component.options.nestedTransitions) {
-			block.builders.outro.addLine(
-				`if (${name}) ${name}._fragment.o(#outrocallback);`
-			);
-		}
+		block.builders.outro.addLine(
+			`if (${name}) ${name}.$$.fragment.o(#outrocallback);`
+		);
 	}
 
 	remount(name: string) {
-		return `${this.var}._mount(${name}._slotted.default, null);`;
+		return `${this.var}.$$.fragment.m(${name}.$$.slotted.default, null);`;
 	}
 }
 

@@ -1,30 +1,18 @@
+<script>
+	import Visibility from './Visibility.html';
+	import counter from './counter.js';
+
+	export let things = ['first thing', 'second thing'];
+	export let visibilityMap = {};
+
+	function visibleThings() {
+		counter.count += 1;
+		return things.filter(text => visibilityMap[text]);
+	}
+</script>
+
 {#each things as thing}
 	<Visibility bind:isVisible="visibilityMap[thing]">
 		<p>{thing} ({visibilityMap[thing]})</p>
 	</Visibility>
 {/each}
-
-<script>
-	import Visibility from './Visibility.html';
-	import counter from './counter.js';
-
-	export default {
-		data() {
-			return {
-				things: ['first thing', 'second thing'],
-				visibilityMap: {}
-			};
-		},
-
-		computed: {
-			visibleThings: ({ things, visibilityMap }) => {
-				counter.count += 1;
-				return things.filter(text => visibilityMap[text]);
-			}
-		},
-
-		components: {
-			Visibility
-		}
-	};
-</script>

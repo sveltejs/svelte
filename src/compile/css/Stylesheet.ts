@@ -116,9 +116,9 @@ class Declaration {
 		if (!this.node.property) return; // @apply, and possibly other weird cases?
 
 		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children  ?
-			this.node.value.children[0] :
-			this.node.value;
+		const first = this.node.value.children
+			? this.node.value.children[0]
+			: this.node.value;
 
 		let start = first.start;
 		while (/\s/.test(code.original[start])) start += 1;
@@ -264,15 +264,15 @@ export default class Stylesheet {
 		this.nodesWithCssClass = new Set();
 		this.nodesWithRefCssClass = new Map();
 
-		if (ast.css && ast.css.children.length) {
-			this.id = `svelte-${hash(ast.css.content.styles)}`;
+		if (ast.css[0] && ast.css[0].children.length) {
+			this.id = `svelte-${hash(ast.css[0].content.styles)}`;
 
 			this.hasStyles = true;
 
 			const stack: (Rule | Atrule)[] = [];
 			let currentAtrule: Atrule = null;
 
-			walk(this.ast.css, {
+			walk(ast.css[0], {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
 						const last = stack[stack.length - 1];

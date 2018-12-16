@@ -15,7 +15,8 @@
 						"end": 24,
 						"type": "Binding",
 						"name": "value",
-						"value": {
+						"modifiers": [],
+						"expression": {
 							"type": "Identifier",
 							"start": 19,
 							"end": 23,
@@ -27,6 +28,6 @@
 			}
 		]
 	},
-	"css": null,
-	"js": null
+	"css": [],
+	"js": []
 }

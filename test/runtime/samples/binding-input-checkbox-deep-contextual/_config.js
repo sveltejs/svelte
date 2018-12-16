@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		items: [
 			{ description: 'one', completed: true },
 			{ description: 'two', completed: false },
@@ -33,32 +33,32 @@ export default {
 		<p>1 completed</p>
 	`,
 
-	test ( assert, component, target, window ) {
-		const inputs = [ ...target.querySelectorAll( 'input' ) ];
+	async test({ assert, component, target, window }) {
+		const inputs = [ ...target.querySelectorAll('input') ];
 
-		assert.ok( inputs[0].checked );
-		assert.ok( !inputs[1].checked );
-		assert.ok( !inputs[2].checked );
+		assert.ok(inputs[0].checked);
+		assert.ok(!inputs[1].checked);
+		assert.ok(!inputs[2].checked);
 
-		const event = new window.Event( 'change' );
+		const event = new window.Event('change');
 
 		inputs[1].checked = true;
-		inputs[1].dispatchEvent( event );
+		await inputs[1].dispatchEvent(event);
 
-		assert.equal( component.get().numCompleted, 2 );
-		assert.htmlEqual( target.innerHTML, `
+		assert.equal(component.numCompleted, 2);
+		assert.htmlEqual(target.innerHTML, `
 			<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>
 			<p>2 completed</p>
-		` );
+		`);
 
-		const items = component.get().items;
+		const items = component.items;
 		items[2].completed = true;
 
-		component.set({ items });
-		assert.ok( inputs[2].checked );
-		assert.htmlEqual( target.innerHTML, `
+		component.items = items;
+		assert.ok(inputs[2].checked);
+		assert.htmlEqual(target.innerHTML, `
 			<div><input type="checkbox"><p>one</p></div><div><input type="checkbox"><p>two</p></div><div><input type="checkbox"><p>three</p></div>
 			<p>3 completed</p>
-		` );
+		`);
 	}
 };

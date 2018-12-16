@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		foo: {
 			bar: ['x', 'y', 'z']
 		}
@@ -17,16 +17,14 @@ export default {
 		<input value=z>
 	`,
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
 		inputs[1].value = 'w';
 		inputs[1].dispatchEvent(new window.MouseEvent('input'));
 
-		assert.deepEqual(component.get(), {
-			foo: {
-				bar: ['x', 'w', 'z']
-			}
+		assert.deepEqual(component.foo, {
+			bar: ['x', 'w', 'z']
 		});
 	}
 };

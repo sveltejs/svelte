@@ -1,3 +1,9 @@
+<script>
+	import Foo from './Foo.html';
+
+	export let thePromise;
+</script>
+
 <Foo>
 	{#await thePromise}
 		<p>loading...</p>
@@ -7,11 +13,3 @@
 		<p>oh no! {theError.message}</p>
 	{/await}
 </Foo>
-
-<script>
-	import Foo from './Foo.html';
-
-	export default {
-		components: { Foo }
-	};
-</script>

@@ -1,4 +1,4 @@
-<button on:click='set({ visible: !visible })'>toggle</button>
+<button on:click="{() => visible = !visible}">toggle</button>
 
 {#if visible}
 	<p>hello!</p>

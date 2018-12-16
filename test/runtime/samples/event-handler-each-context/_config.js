@@ -1,5 +1,5 @@
 export default {
-	data: {
+	props: {
 		items: [
 			'whatever'
 		],
@@ -7,15 +7,15 @@ export default {
 		bar: 'right'
 	},
 
-	test(assert, component, target, window) {
+	test({ assert, component, target, window }) {
 		const button = target.querySelector('button');
 		const event = new window.MouseEvent('click');
 
 		button.dispatchEvent(event);
-		assert.equal(component.get().foo, 'right');
+		assert.equal(component.foo, 'right');
 
-		component.set({ bar: 'left' });
+		component.bar = 'left';
 		button.dispatchEvent(event);
-		assert.equal(component.get().foo, 'left');
+		assert.equal(component.foo, 'left');
 	}
 };

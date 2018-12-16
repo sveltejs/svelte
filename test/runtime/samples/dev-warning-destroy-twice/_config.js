@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 
-	test(assert, component) {
+	test({ assert, component }) {
 		const warn = console.warn; // eslint-disable-line no-console
 
 		const warnings = [];
@@ -11,8 +11,8 @@ export default {
 			warnings.push(warning);
 		};
 
-		component.destroy();
-		component.destroy();
+		component.$destroy();
+		component.$destroy();
 
 		assert.deepEqual(warnings, [
 			`Component was already destroyed`
