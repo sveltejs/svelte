@@ -38,12 +38,10 @@ export default function readStyle(parser: Parser, start: number, attributes: Nod
 					const b = node.children[i + 1];
 
 					if (isRefSelector(a, b)) {
-						node.children.splice(i, 2, {
-							type: 'RefSelector',
-							start: a.loc.start.offset,
-							end: b.loc.end.offset,
-							name: b.name
-						});
+						parser.error({
+							code: `invalid-ref-selector`,
+							message: 'ref selectors are no longer supported'
+						}, a.loc.start.offset);
 					}
 				}
 			}

@@ -390,6 +390,13 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
+		if (type === 'Ref') {
+			parser.error({
+				code: `invalid-ref-directive`,
+				message: `The ref directive is no longer supported — use \`bind:this={${directive_name}}\` instead`
+			}, start);
+		}
+
 		if (value[0]) {
 			if (value.length > 1 || value[0].type === 'Text') {
 				parser.error({

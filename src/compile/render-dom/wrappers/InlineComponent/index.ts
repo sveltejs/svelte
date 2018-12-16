@@ -345,7 +345,6 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
 					@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 				}
 			`);
 
@@ -381,15 +380,8 @@ export default class InlineComponentWrapper extends Wrapper {
 						${this.node.handlers.map(handler => deindent`
 							${name}.$on("${handler.name}", ${handler.var});
 						`)}
-
-						${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 					} else {
 						${name} = null;
-						${this.node.ref && deindent`
-						if (#component.$$.refs.${this.node.ref.name} === ${name}) {
-							#component.$$.refs.${this.node.ref.name} = null;
-							#component.$$.inject_refs(#component.$$.refs);
-						}`}
 					}
 				}
 			`);
@@ -418,8 +410,6 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				${munged_bindings}
 				${munged_handlers}
-
-				${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 			`);
 
 			block.builders.create.addLine(`${name}.$$.fragment.c();`);
@@ -444,12 +434,6 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.destroy.addBlock(deindent`
 				${name}.$destroy(${parentNode ? '' : 'detach'});
-				${this.node.ref && deindent`
-					if (#component.$$.refs.${this.node.ref.name} === ${name}) {
-						#component.$$.refs.${this.node.ref.name} = null;
-						#component.$$.inject_refs(#component.$$.refs);
-					}
-				`}
 			`);
 		}
 
