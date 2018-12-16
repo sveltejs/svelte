@@ -342,9 +342,6 @@ export default class Stylesheet {
 		this.nodesWithCssClass.forEach((node: Node) => {
 			node.addCssClass();
 		});
-		this.nodesWithRefCssClass.forEach((node: Node, name: String) => {
-			node.addCssClass(`svelte-ref-${name}`);
-		})
 	}
 
 	render(cssOutputFilename: string, shouldTransformSelectors: boolean) {

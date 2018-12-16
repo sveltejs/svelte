@@ -196,6 +196,33 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
+			if (binding.name === 'this') {
+				const fn = component.getUniqueName(`${this.var}_binding`);
+				component.declarations.push(fn);
+				component.template_references.add(fn);
+
+				let lhs;
+
+				if (binding.isContextual && binding.expression.node.type === 'Identifier') {
+					// bind:x={y} — we can't just do `y = x`, we need to
+					// to `array[index] = x;
+					const { name } = binding.expression.node;
+					const { object, property, snippet } = block.bindings.get(name)();
+					lhs = snippet;
+				} else {
+					lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
+				}
+
+				component.partly_hoisted.push(deindent`
+					function ${fn}($$component) {
+						${lhs} = $$component;
+					}
+				`);
+
+				block.builders.destroy.addLine(`ctx.${fn}(null);`);
+				return `@add_binding_callback(() => ctx.${fn}(${this.var}));`;
+			}
+
 			component.has_reactive_assignments = true;
 
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
@@ -318,7 +345,6 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.mount.addBlock(deindent`
 				if (${name}) {
 					@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
-					${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 				}
 			`);
 
@@ -354,15 +380,8 @@ export default class InlineComponentWrapper extends Wrapper {
 						${this.node.handlers.map(handler => deindent`
 							${name}.$on("${handler.name}", ${handler.var});
 						`)}
-
-						${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 					} else {
 						${name} = null;
-						${this.node.ref && deindent`
-						if (#component.$$.refs.${this.node.ref.name} === ${name}) {
-							#component.$$.refs.${this.node.ref.name} = null;
-							#component.$$.inject_refs(#component.$$.refs);
-						}`}
 					}
 				}
 			`);
@@ -391,8 +410,6 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				${munged_bindings}
 				${munged_handlers}
-
-				${this.node.ref && `#component.$$.refs.${this.node.ref.name} = ${name};`}
 			`);
 
 			block.builders.create.addLine(`${name}.$$.fragment.c();`);
@@ -417,12 +434,6 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			block.builders.destroy.addBlock(deindent`
 				${name}.$destroy(${parentNode ? '' : 'detach'});
-				${this.node.ref && deindent`
-					if (#component.$$.refs.${this.node.ref.name} === ${name}) {
-						#component.$$.refs.${this.node.ref.name} = null;
-						#component.$$.inject_refs(#component.$$.refs);
-					}
-				`}
 			`);
 		}
 

@@ -13,7 +13,6 @@ import { namespaces } from '../../utils/namespaces';
 import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
-import Ref from './Ref';
 import list from '../../utils/list';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
@@ -86,8 +85,6 @@ export default class Element extends Node {
 	outro?: Transition = null;
 	animation?: Animation = null;
 	children: Node[];
-
-	ref: Ref;
 	namespace: string;
 
 	constructor(component, parent, scope, info: any) {
@@ -179,10 +176,6 @@ export default class Element extends Node {
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
-					break;
-
-				case 'Ref':
-					this.ref = new Ref(component, this, scope, node);
 					break;
 
 				default:
@@ -551,7 +544,7 @@ export default class Element extends Node {
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
 				}
-			} else {
+			} else if (name !== 'this') {
 				component.error(binding, {
 					code: `invalid-binding`,
 					message: `'${binding.name}' is not a valid binding`

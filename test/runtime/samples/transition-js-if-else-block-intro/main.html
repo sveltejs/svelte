@@ -15,7 +15,7 @@
 </script>
 
 {#if x}
-	<div ref:yes in:foo>yes</div>
+	<div bind:this={yes} in:foo>yes</div>
 {:else}
-	<div ref:no in:foo>no</div>
+	<div bind:this={no} in:foo>no</div>
 {/if}

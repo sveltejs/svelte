@@ -13,5 +13,5 @@
 </script>
 
 {#if visible}
-	<div out:fade style="opacity: 1;" ref:div>yes</div>
+	<div out:fade style="opacity: 1;" bind:this={div}>yes</div>
 {/if}
