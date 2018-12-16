@@ -37,7 +37,13 @@ export default function ssr(
 	}
 
 	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
-	const reactive_store_values = reactive_stores.map(name => `const ${name} = @get_store_value(${name.slice(1)});`)
+	const reactive_store_values = reactive_stores.map(name => {
+		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
+
+		return component.options.dev
+			? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
+			: assignment;
+	});
 
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript

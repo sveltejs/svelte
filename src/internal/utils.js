@@ -56,3 +56,9 @@ export function safe_not_equal(a, b) {
 export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
+
+export function validate_store(store, name) {
+	if (!store || typeof store.subscribe !== 'function') {
+		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+	}
+}

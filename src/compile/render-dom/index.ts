@@ -287,6 +287,7 @@ export default function dom(
 	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
 		.map(name => deindent`
 			let ${name};
+			${component.options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$make_dirty('${name}'); }));
 		`)
 		.join('\n\n');
