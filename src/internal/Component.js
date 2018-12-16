@@ -10,11 +10,9 @@ export function bind(component, name, callback) {
 }
 
 export function mount_component(component, target, anchor) {
-	const { fragment, refs, inject_refs, on_mount, on_destroy, after_render } = component.$$;
+	const { fragment, on_mount, on_destroy, after_render } = component.$$;
 
 	fragment[fragment.i ? 'i' : 'm'](target, anchor);
-
-	inject_refs(refs);
 
 	// onMount happens after the initial afterUpdate. Because
 	// afterUpdate callbacks happen in reverse order (inner first)
@@ -69,7 +67,6 @@ export function init(component, options, define, create_fragment, not_equal) {
 		get: empty,
 		set: noop,
 		update: noop,
-		inject_refs: noop,
 		not_equal,
 		bound: blankObject(),
 
@@ -82,7 +79,6 @@ export function init(component, options, define, create_fragment, not_equal) {
 		// everything else
 		callbacks: blankObject(),
 		slotted: options.slots || {},
-		refs: {},
 		dirty: null,
 		binding_groups: []
 	};

@@ -55,8 +55,6 @@ export default function dom(
 		builder.addBlock(block.toString());
 	});
 
-	const refs = Array.from(component.refs);
-
 	if (options.dev && !options.hydratable) {
 		block.builders.claim.addLine(
 			'throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");'
@@ -83,14 +81,6 @@ export default function dom(
 				`}
 				${props.map(prop =>
 				`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
-			}
-		`
-		: null;
-
-	const inject_refs = refs.length > 0
-		? deindent`
-			$$refs => {
-				${refs.map(name => `${name} = $$refs.${name};`)}
 			}
 		`
 		: null;
@@ -307,8 +297,6 @@ export default function dom(
 					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}`)}
 				};
 				`}
-
-				${inject_refs && `$$self.$$.inject_refs = ${inject_refs};`}
 			}
 		`);
 	}
