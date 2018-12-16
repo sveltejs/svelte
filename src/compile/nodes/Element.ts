@@ -551,7 +551,7 @@ export default class Element extends Node {
 						message: `'${binding.name}' is not a valid binding on void elements like <${this.name}>. Use a wrapper element instead`
 					});
 				}
-			} else {
+			} else if (name !== 'this') {
 				component.error(binding, {
 					code: `invalid-binding`,
 					message: `'${binding.name}' is not a valid binding`

@@ -4,6 +4,6 @@
 	export let nested;
 </script>
 
-<Nested ref:nested>
+<Nested bind:this={nested}>
 	<p>override default slot</p>
 </Nested>

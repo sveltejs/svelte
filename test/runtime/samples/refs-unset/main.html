@@ -4,7 +4,7 @@
 </script>
 
 {#if x}
-	<canvas ref:foo data-x='true'></canvas>
+	<canvas bind:this={foo} data-x='true'></canvas>
 {:else}
-	<canvas ref:foo data-x='false'></canvas>
+	<canvas bind:this={foo} data-x='false'></canvas>
 {/if}
