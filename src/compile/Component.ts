@@ -428,6 +428,13 @@ export default class Component {
 				imports.push(node);
 
 				node.specifiers.forEach((specifier: Node) => {
+					if (specifier.local.name[0] === '$') {
+						this.error(specifier.local, {
+							code: 'illegal-declaration',
+							message: `The $ prefix is reserved, and cannot be used for variable and import names`
+						});
+					}
+
 					this.userVars.add(specifier.local.name);
 					this.imported_declarations.add(specifier.local.name);
 				});
@@ -481,7 +488,14 @@ export default class Component {
 		let { scope } = createScopes(script.content);
 		this.module_scope = scope;
 
-		// TODO unindent
+		scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				this.error(node, {
+					code: 'illegal-declaration',
+					message: `The $ prefix is reserved, and cannot be used for variable and import names`
+				});
+			}
+		});
 
 		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
 		remove_indentation(this.code, script.content);
@@ -497,6 +511,15 @@ export default class Component {
 		let { scope: instance_scope, map, globals } = createScopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
+
+		instance_scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				this.error(node, {
+					code: 'illegal-declaration',
+					message: `The $ prefix is reserved, and cannot be used for variable and import names`
+				});
+			}
+		});
 
 		instance_scope.declarations.forEach((node, name) => {
 			this.userVars.add(name);
@@ -790,10 +813,19 @@ export default class Component {
 							assignees.add(getObject(node.argument).name);
 							this.skip();
 						} else if (isReference(node, parent)) {
-							const { name } = getObject(node);
+							const object = getObject(node);
+							const { name } = object;
+
 							if (component.declarations.indexOf(name) !== -1) {
 								dependencies.add(name);
+							} else if (name[0] === '$') {
+								component.warn_if_undefined(object, null);
+
+								// cheeky hack
+								component.template_references.add(name);
+								dependencies.add(name);
 							}
+
 							this.skip();
 						}
 					},
@@ -882,12 +914,17 @@ export default class Component {
 	}
 
 	warn_if_undefined(node, template_scope: TemplateScope, allow_implicit?: boolean) {
-		const { name } = node;
+		let { name } = node;
+
+		if (name[0] === '$') {
+			name = name.slice(1);
+			this.has_reactive_assignments = true;
+		}
 
 		if (allow_implicit && !this.instance_script) return;
 		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
 		if (this.module_scope && this.module_scope.declarations.has(name)) return;
-		if (template_scope.names.has(name)) return;
+		if (template_scope && template_scope.names.has(name)) return;
 		if (globalWhitelist.has(name)) return;
 
 		this.warn(node, {

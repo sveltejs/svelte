@@ -257,11 +257,15 @@ export default function dom(
 		return true;
 	});
 
+	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
+	filtered_declarations.push(...reactive_stores);
+
 	const has_definition = (
 		component.javascript ||
 		filtered_props.length > 0 ||
 		component.partly_hoisted.length > 0 ||
 		filtered_declarations.length > 0 ||
+		reactive_stores.length > 0 ||
 		component.reactive_declarations.length > 0
 	);
 
@@ -280,12 +284,22 @@ export default function dom(
 			: null
 	);
 
+	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
+		.map(name => deindent`
+			let ${name};
+			${component.options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$make_dirty('${name}'); }));
+		`)
+		.join('\n\n');
+
 	if (has_definition) {
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${user_code}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
+
+				${reactive_store_subscriptions}
 
 				${filtered_declarations.length > 0 && `$$self.$$.get = () => (${stringifyProps(filtered_declarations)});`}
 

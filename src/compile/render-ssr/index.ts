@@ -36,6 +36,15 @@ export default function ssr(
 		user_code = `let { ${props.join(', ')} } = $$props;`
 	}
 
+	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
+	const reactive_store_values = reactive_stores.map(name => {
+		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
+
+		return component.options.dev
+			? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
+			: assignment;
+	});
+
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript
 		? component.props.map(prop => {
@@ -51,6 +60,8 @@ export default function ssr(
 			do {
 				$$settled = true;
 
+				${reactive_store_values}
+
 				${component.reactive_declarations.map(d => d.snippet)}
 
 				$$rendered = \`${renderer.code}\`;
@@ -59,6 +70,8 @@ export default function ssr(
 			return $$rendered;
 		`
 		: deindent`
+			${reactive_store_values}
+
 			${component.reactive_declarations.map(d => d.snippet)}
 
 			return \`${renderer.code}\`;`;
