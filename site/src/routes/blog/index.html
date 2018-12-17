@@ -1,0 +1,91 @@
+<script context="module">
+	export async function preload() {
+		const posts = await this.fetch(`api/blog`).then(r => r.json());
+		return { posts };
+	}
+</script>
+
+<script>
+	export let posts;
+</script>
+
+<svelte:head>
+	<title>Svelte • The magical disappearing UI framework</title>
+</svelte:head>
+
+<div class='posts grid stretch'>
+	{#each posts as post}
+	<article class='post'>
+		<a rel='prefetch' href='blog/{post.slug}' title='Read the article »'>
+			<h2>{post.metadata.title}</h2>
+			<p>{post.metadata.description}</p>
+		</a>
+
+		<div class='byline'>
+			<a href='{post.metadata.authorURL}'>{post.metadata.author}</a>
+			<time datetime='{post.metadata.pubdate}'>{post.metadata.dateString}</time>
+		</div>
+	</article>
+	{/each}
+</div>
+
+<style>
+	.posts {
+		/* prevent scroll bar pop-in when navigating to post */
+		/* yes this is hacktacular */
+		min-height: calc(100vh - var(--nav-h));
+
+		padding: 10rem var(--side-page);
+		background-color: var(--back-light)
+	}
+
+	.post {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		padding: 4rem 3.2rem 2.4rem;
+		background-color: var(--back);
+		border-radius: var(--border-r);
+		box-shadow: .2rem .2rem .8rem .1rem rgba(58, 58, 58, .25);
+		text-align: center;
+	}
+
+	h2 {
+		display: inline-block;
+		margin: 1.6rem 0;
+		color: var(--second);
+		max-width: 18em;
+	}
+
+	.post > p {
+		font-size: var(--h5);
+		max-width: 30em;
+	}
+
+	/* fast link-reset */
+	.posts a { all: unset; cursor: pointer }
+
+	.posts a:hover,
+	.posts a:hover > h2 {
+		color: var(--flash)
+	}
+
+
+	.byline {
+		width: 100%;
+		margin-top: 4rem;
+		padding: 1.6rem 0 0 0;
+		border-top: var(--border-w) solid var(--second);
+		font: 300 var(--code-fs)/1.7 var(--font-mono);
+	}
+
+	.byline a {
+		display: block;
+		color: var(--second);
+		font-weight: 600;
+	}
+
+	.byline a:hover { color: var(--flash) }
+</style>

@@ -1,0 +1,18 @@
+version: "{build}"
+
+shallow_clone: true
+
+init:
+  - git config --global core.autocrlf false
+
+build: off
+
+environment:
+  matrix:
+    # node.js
+    - nodejs_version: stable
+
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - npm install cypress
+  - npm install

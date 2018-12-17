@@ -1,0 +1,19 @@
+<textarea bind:value='markdown' resize='none'></textarea>
+<div class='output'>{@html marked(markdown)}</div>
+
+<style>
+	textarea {
+		width: 100%;
+		height: 50%;
+	}
+</style>
+
+<script>
+	import marked from 'marked';
+
+	export default {
+		helpers: {
+			marked
+		}
+	};
+</script>

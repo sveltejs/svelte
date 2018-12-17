@@ -1,0 +1,482 @@
+<script context="module">
+	// export async function preload({ query }) {
+	// 	return {
+	// 		examples,
+	// 		version: query.version || 'latest',
+	// 		components: [],
+	// 		data: {},
+	// 		name: 'loading...',
+	// 		json5: '{}',
+	// 		gist: null
+	// 	};
+	// }
+</script>
+
+<script>
+	import { onMount } from 'svelte';
+	import { observe } from 'svelte-extras';
+	import { locate } from 'locate-character';
+	import * as fleece from 'golden-fleece';
+	import CodeMirror from './_components/CodeMirror.html';
+	import ModuleEditor from './_components/ModuleEditor.html';
+	import Viewer from './_components/Viewer.html';
+	import ComponentSelector from './_components/ComponentSelector.html';
+	import AppControls from './_components/AppControls.html';
+	import SplitPane from './_components/SplitPane.html';
+	import examples from '../../../content/examples/manifest.json';
+
+	export let query;
+
+	const refs = {};
+
+	const version = query.version || 'latest';
+	let components = [];
+	let data = {};
+	let name = 'loading...';
+	let json5 = '{}';
+	let gist = null;
+	let uid = 0;
+
+	let selectedComponent = null;
+	let sourceError = null;
+	let runtimeError = null;
+
+	let sourceErrorLoc, runtimeErrorLoc, url;
+
+	$: if (sourceError && selectedComponent) {
+		sourceErrorLoc = sourceError.filename === `${selectedComponent.name}.${selectedComponent.type}`
+			? sourceError.start
+			: null;
+	}
+
+	$: if (runtimeError && selectedComponent) {
+		runtimeErrorLoc = runtimeError.filename === `${selectedComponent.name}.${selectedComponent.type}`
+			? runtimeError.start
+			: null;
+	}
+
+	$: {
+		const params = [];
+		if (version !== 'latest') params.push(`version=${version}`);
+
+		if (query.gist) params.push(`gist=${gist.id}`);
+		else if (query.data) params.push(`data=${query.data}`);
+		else if (query.demo) params.push(`demo=${query.demo}`);
+
+		url = params.length > 0
+			? `repl?${params.join('&')}`
+			: 'repl';
+	}
+
+	const slugs = new Set();
+	examples.forEach(group => {
+		group.examples.forEach(example => {
+			slugs.add(example.slug);
+		});
+	});
+
+	function tryParseData(encoded) {
+		try {
+			const base64 = decodeURIComponent(encoded);
+			const json = atob(base64);
+			return JSON.parse(json);
+		} catch (err) {
+			console.error(err.message);
+			return {};
+		}
+	}
+
+	function createComponent() {
+		const newComponent = {
+			name: uid++ ? `Component${uid}` : 'Component1',
+			type: 'html',
+			source: '',
+			edit: true
+		};
+
+		components = components.concat(newComponent);
+
+		// TODO need an intermediate flush here?
+		selectedComponent = null;
+		selectedComponent = newComponent;
+
+		document.getElementById(newComponent.name).scrollIntoView(false);
+		refs.selector.focusLast();
+	}
+
+	function removeComponent() {
+		const component = selectedComponent;
+
+		if (component.name === 'App') {
+			// App.html can't be removed
+			component.source = '';
+			selectedComponent = component;
+		} else {
+			const index = components.indexOf(component);
+			if (~index) {
+				components = components.slice(0, index).concat(components.slice(index + 1));
+			} else {
+				console.error(`Could not find component! That's... odd`);
+			}
+
+			selectedComponent = components[index] || components[components.length - 1];
+		}
+	}
+
+	function resizePanes(panes) {
+		panes.forEach(pane => {
+			refs[pane].resize();
+		});
+	}
+
+	function updateData(current) {
+		const data = fleece.evaluate(json5);
+
+		for (const key in data) {
+			data[key] = current[key];
+		}
+
+		json5 = fleece.patch(json5, data);
+	}
+
+	function navigate(filename) {
+		const name = filename.replace(/\.html$/, '');
+
+		if (selectedComponent.name === name) return;
+		selectedComponent = components.find(c => c.name === name);
+	}
+
+	function stringifyComponents(components) {
+		return JSON.stringify(
+			components.map(component => {
+				return {
+					name: component.name,
+					source: component.source
+				};
+			})
+		);
+	}
+
+	let worker;
+
+	onMount(async () => {
+		worker = new Worker('/repl-worker.js');
+
+		function listener(event) {
+			switch (event.data.type) {
+				case 'version':
+					version = event.data.version;
+					break;
+
+				case 'result':
+					// TODO
+					// const { bundle, dom, ssr, warningCount, error } = event.data;
+
+					// if (error) {
+					// 	this.set({
+					// 		bundle: null,
+					// 		dom: null,
+					// 		ssr: null,
+					// 		sourceError: error,
+					// 		runtimeError: null,
+					// 		warningCount,
+					// 		compilerReady: true
+					// 	});
+					// } else {
+					// 	this.set({
+					// 		bundle,
+					// 		dom,
+					// 		ssr,
+					// 		sourceError: null,
+					// 		runtimeError: null,
+					// 		warningCount,
+					// 		compilerReady: true
+					// 	});
+					// }
+			}
+		}
+
+		worker.addEventListener('message', listener);
+
+		worker.postMessage({ type: 'init', version });
+
+		return () => {
+			worker.removeEventListener('message', listener);
+			worker.terminate();
+		};
+	});
+
+	onMount(() => {
+		if (query.gist) {
+			fetch(`gist/${query.gist}`).then(r => r.json()).then(gist => {
+				name = gist.description;
+				json5 = '{}';
+
+				components = Object.keys(gist.files)
+					.map(file => {
+						const dot = file.lastIndexOf('.');
+						if (!~dot) return;
+
+						const source = gist.files[file].content;
+
+						// while we're here...
+						if (file === 'data.json' || file === 'data.json5') json5 = source;
+
+						return {
+							name: file.slice(0, dot),
+							type: file.slice(dot + 1),
+							source
+						};
+					})
+					.filter(x => x.type === 'html' || x.type === 'js')
+					.sort((a, b) => {
+						if (a.name === 'App' && a.type === 'html') return -1;
+						if (b.name === 'App' && b.type === 'html') return 1;
+
+						if (a.type !== b.type) return a.type === 'html' ? -1 : 1;
+
+						return a.name < b.name ? -1 : 1;
+					});
+
+				selectedComponent = components[0];
+			});
+		} else {
+			if (!query.demo) query.demo = 'hello-world';
+		}
+	});
+
+	$: if (worker && components.length > 0) {
+		worker.postMessage({ type: 'bundle', components });
+	}
+
+	let last_selected_component;
+	$: {
+		// slightly counterintuitively, we only want to rebundle if
+		// this is the *same* component — not if we've just selected
+		// a different one
+		if (selectedComponent === last_selected_component) {
+			if (worker && components.length > 0) {
+				worker.postMessage({ type: 'bundle', components });
+			}
+		}
+
+		// recompile the currently selected component
+		if (selectedComponent) {
+			if (selectedComponent.type === 'html') {
+				worker.postMessage({ type: 'compile', component: selectedComponent });
+			} else {
+				compiled = selectedComponent.source;
+			}
+		}
+
+		last_selected_component = selectedComponent;
+	}
+
+	$: if (demo) {
+		fetch(`api/${slugs.has(demo) ? 'examples' : 'guide/demo'}examples/${demo}`).then(async response => {
+			if (response.ok) {
+				const demo = await r.json();
+
+				name = demo.title;
+				json5 = demo.json5 || '{}';
+				components = demo.components;
+				selectedComponent = components[0];
+			}
+		});
+	}
+
+	$: try {
+		data= fleece.evaluate(json5);
+		dataError = null;
+		dataErrorLoc = null;
+	} catch (err) {
+		dataError = err;
+		dataErrorLoc = err && err.loc;
+	}
+
+	$: {
+		history.replaceState({}, 'x', url);
+	}
+</script>
+
+<svelte:head>
+	<title>Svelte REPL</title>
+</svelte:head>
+
+<div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
+	<AppControls
+		{examples}
+		{bundle}
+		{components}
+		{data}
+		{json5}
+		{gist}
+		bind:name
+		bind:zen_mode
+		on:select="{e => (demo = e.detail.slug, gist = null)}"
+		on:forked="{e => gist = e.detail.gist}"
+	/>
+
+	<div class='repl-inner'>
+		<SplitPane type=horizontal on:resize="{() => resizePanes(['editor', 'data'])}">
+			<section slot=a class="input">
+				<ComponentSelector
+				bind:this={refs.selector}
+				{components}
+				bind:selectedComponent
+				on:create={createComponent}
+				on:remove={removeComponent}
+			/>
+
+			<ModuleEditor
+				bind:this={refs.editor}
+				bind:selectedComponent
+				{compiled}
+				error={sourceError}
+				errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
+				{warningCount}
+				on:navigate={navigate}
+			/>
+		</section>
+
+		<div slot=b style='height: 100%;'>
+			<SplitPane type=vertical on:resize="{() => resizePanes(['data'])}">
+				<div class=pane slot=a>
+					<h3 class='show-if-mobile'>Rendered component</h3>
+					{#if compilerReady}
+					<Viewer
+						{bundle}
+						{dom}
+						{ssr}
+						{data}
+						{sourceError}
+						bind:error={runtimeError}
+						on:data="{e => updateData(e.detail.current)}"
+						on:navigate={navigate}
+					/>
+					{:else}
+					<p class='loading'>loading Svelte compiler...</p>
+					{/if}
+				</div>
+				<div class=pane slot=b>
+					<h3 class='show-if-mobile'>data.json5</h3>
+					<CodeMirror
+						bind:this={refs.data}
+						mode="json"
+						bind:code={json5}
+						error={dataError}
+						errorLoc={dataErrorLoc}
+					/>
+				</div>
+			</SplitPane>
+		</div>
+		</SplitPane>
+	</div>
+</div>
+
+<style>
+	.repl-outer {
+		min-height: calc(100vh - var(--nav-h));
+	}
+
+	.repl-inner { height: 100% }
+	.pane       { width: 100%; height: 100% }
+
+	h3 {
+		margin: 4rem 0 0 0;
+		padding: 0 2.4rem .8rem;
+		font-size: 1.3rem;
+	}
+
+	@media (min-width: 768px) {
+		.show-if-mobile { display: none }
+
+		.repl-outer {
+			min-height: auto;
+			min-height: calc(100vh - var(--nav-h));
+			background-color: var(--back);
+			overflow: hidden;
+		}
+
+		.repl-outer.zen-mode {
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			z-index: 11;
+		}
+
+		section { height: 100% }
+	}
+
+	.loading {
+		text-align: center;
+		color: var(--second);
+		font-weight: 300;
+		margin: 2em 0 0 0;
+		opacity: 0;
+		animation: fade-in .4s;
+		animation-delay: .2s;
+		animation-fill-mode: both;
+	}
+
+	@keyframes fade-in {
+		0%   { opacity: 0 }
+		100% { opacity: 1 }
+	}
+
+	.input {
+		padding: 2.4em 0 0 0;
+		perspective: 1800px;
+		perspective-origin: 50% 0%;
+	}
+
+	@media (min-width: 768px) {
+		.input {
+			perspective-origin: 50% 50%;
+		}
+	}
+
+	.repl-inner :global(.message) {
+		position: relative;
+		border-radius: var(--border-r);
+		margin: 0;
+		padding: 1.2rem 1.6rem 1.2rem 4.4rem;
+		vertical-align: middle;
+		font: 300 1.2rem/1.7 var(--font-ui);
+		color: white;
+	}
+
+	.repl-inner :global(.message::before) {
+		content: '!';
+		position: absolute;
+		left: 1.2rem;
+		top: 1.1rem;
+		width: 1rem;
+		height: 1rem;
+		text-align: center;
+		line-height: 1;
+		padding: .4rem;
+		border-radius: 50%;
+		color: white;
+		border: .2rem solid white;
+	}
+
+	.repl-inner :global(.error.message) {
+		background-color: #da106e;
+	}
+
+	.repl-inner :global(.warning.message) {
+		background-color: #e47e0a;
+	}
+
+	.repl-inner :global(.info.message) {
+		background-color: var(--second);
+		animation: fade-in .4s .2s both;
+	}
+
+	.repl-inner :global(.error) :global(.filename) {
+		cursor: pointer;
+	}
+</style>

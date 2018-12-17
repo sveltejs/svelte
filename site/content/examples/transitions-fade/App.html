@@ -1,0 +1,13 @@
+<input type='checkbox' bind:checked=visible> visible
+
+{#if visible}
+	<p transition:fade>fades in and out</p>
+{/if}
+
+<script>
+	import { fade } from 'svelte-transitions';
+
+	export default {
+		transitions: { fade }
+	};
+</script>

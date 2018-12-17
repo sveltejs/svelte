@@ -1,0 +1,26 @@
+<!-- https://github.com/eugenkiss/7guis/wiki#temperature-converter -->
+<input bind:value='celsius' type='number'> °c =
+<input bind:value='fahrenheit' type='number'> °f
+
+<style>
+	input {
+		width: 5em;
+	}
+</style>
+
+<script>
+	export default {
+		onstate: function ({ changed, current }) {
+			if (changed.celsius) {
+				this.set({
+					fahrenheit: +(32 + (9 / 5 * current.celsius)).toFixed(1)
+				});
+			}
+			if (changed.fahrenheit) {
+				this.set({
+					celsius: +(5 / 9 * (current.fahrenheit - 32)).toFixed(1)
+				});
+			}
+		}
+	}
+</script>

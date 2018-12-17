@@ -1,0 +1,49 @@
+<button class='toast' on:click='reload()'>
+	Site has been updated — tap to reload
+</button>
+
+<style>
+	.toast {
+	  position: fixed;
+	  left: 0;
+	  bottom: 0;
+	  margin: 0;
+	  border-radius: 0;
+	  width: 100%;
+	  background-color: var(--prime);
+	  cursor: pointer;
+	  color: white;
+	  padding: 3.2rem 4rem;
+	  text-align: left;
+	  font: 300 var(--h6) var(--font-ui);
+	  z-index: 99;
+	  animation: slide-up 0.4s ease-out;
+	}
+	@keyframes slide-up {
+	  0% {
+	    transform: translate(0, 100%);
+	  }
+	  100% {
+	    transform: translate(0, 0);
+	  }
+	}
+</style>
+
+<script>
+	export default {
+		methods: {
+			reload() {
+				window.location.reload();
+			}
+		},
+		setup(Toast) {
+			Toast.show = () => {
+				const target = document.createDocumentFragment();
+				new Toast({ target });
+
+				document.body.appendChild(target);
+				Toast.show = () => {};
+			};
+		}
+	};
+</script>

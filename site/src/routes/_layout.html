@@ -1,0 +1,28 @@
+<script>
+	import InlineSvg from '../components/inline-svg.html';
+	import DebugCss from '../components/debug-css.html';
+	import Nav from '../components/top-nav.html';
+
+	export let child;
+
+	const dev = process.env.NODE_ENV === 'development';
+</script>
+
+{#if dev}
+	<DebugCss style='bottom:4rem; right:3rem;' />
+{/if}
+
+<InlineSvg />
+<Nav segment={child.segment} />
+<main role='main'>
+	<svelte:component this={child.component} {...child.props} />
+</main>
+
+<style>
+	main {
+		position: relative;
+		margin: 0 auto;
+		padding: var(--nav-h) 0 0 0;
+		overflow-x: hidden;
+	}
+</style>

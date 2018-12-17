@@ -1,0 +1,81 @@
+<!--
+  NOTE
+  from time to time <input type="color"> is crashing on chrome!
+  no idea why?
+  even with all extensions off
+-->
+{#if color}
+<input ref:prop class="color" on:input="change(this)" type="color" name={color} /> {/if}
+
+{#if text}
+<input ref:prop on:input="change(this)" type="text" name={text} />
+{/if}
+
+
+<style>
+  input,
+  input:active,
+  input:focus {
+    border: none;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=text] {
+    border: .1rem solid var(--text);
+    padding: .8rem 1.4rem;
+    font: 300 var(--code-fs)/1.7 var(--font-mono);
+    color: var(--second);
+    text-indent: 0;
+    transition: all .2s var(--out-back);
+  }
+
+   input[type=text]:focus {
+    border-color: var(--flash);
+    color: var(--flash);
+    text-indent: .8rem;
+  }
+
+  .color {
+    position: relative;
+    top: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* input-color-reset */
+  ::-webkit-color-swatch {
+    border: none
+  }
+
+  ::-webkit-color-swatch-wrapper {
+    padding: 0
+  }
+
+  ::-moz-color-swatch,
+  ::-moz-focus-inner {
+    border: none
+  }
+
+  ::-moz-focus-inner {
+    padding: 0
+  }
+</style>
+
+<script>
+  import CustomProps from '../utils/css-custom-properties.js';
+
+  export default {
+    oncreate() {
+      this.cssprop = new CustomProps();
+      let prop = this.refs.prop;
+      prop.value = this.cssprop.get(prop.name);
+    },
+
+    methods: {
+      change(prop) {
+        return this.cssprop.set(prop.name, prop.value)
+      }
+    }
+  };
+</script>

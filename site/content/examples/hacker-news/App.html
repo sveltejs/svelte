@@ -1,0 +1,66 @@
+<svelte:window on:hashchange='hashchange()'/>
+
+<main>
+	{#if item}
+		<Item {item}/>
+	{:elseif page}
+		<List {page}/>
+	{/if}
+</main>
+
+<style>
+	main {
+		position: relative;
+		max-width: 800px;
+		margin: 0 auto;
+		min-height: 101vh;
+		padding: 1em;
+	}
+
+	main :global(.meta) {
+		color: #999;
+		font-size: 12px;
+		margin: 0 0 1em 0;
+	}
+
+	main :global(a) {
+		color: rgb(0,0,150);
+	}
+</style>
+
+<script>
+	import List from './List.html';
+	import Item from './Item.html';
+
+	export default {
+		components: { List, Item },
+
+		oncreate() {
+			this.hashchange();
+		},
+
+		methods: {
+			async hashchange() {
+				// the poor man's router!
+				const path = window.location.hash.slice(1);
+
+				if (path.startsWith('/item')) {
+					const id = path.slice(6);
+					const item = await fetch(`https://node-hnapi.herokuapp.com/item/${id}`).then(r => r.json());
+
+					this.set({ item });
+
+					window.scrollTo(0,0);
+				} else if (path.startsWith('/top')) {
+					const page = +path.slice(5);
+					this.set({
+						item: null,
+						page
+					});
+				} else {
+					window.location.hash = '/top/1';
+				}
+			}
+		}
+	};
+</script>

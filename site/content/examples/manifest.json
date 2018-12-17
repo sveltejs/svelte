@@ -1,0 +1,175 @@
+[
+	{
+		"name": "Basics",
+		"examples": [
+			{
+				"slug": "hello-world",
+				"title": "Hello World!"
+			},
+			{
+				"slug": "if-blocks",
+				"title": "If blocks"
+			},
+			{
+				"slug": "each-blocks",
+				"title": "Each blocks"
+			},
+			{
+				"slug": "scoped-styles",
+				"title": "Scoped styles"
+			}
+		]
+	},
+	{
+		"name": "Two-way bindings",
+		"examples": [
+			{
+				"slug": "binding-input-text",
+				"title": "Text input"
+			},
+			{
+				"slug": "binding-input-numeric",
+				"title": "Numeric input"
+			},
+			{
+				"slug": "binding-textarea",
+				"title": "Textarea"
+			},
+			{
+				"slug": "binding-input-checkbox",
+				"title": "Checkbox input"
+			},
+			{
+				"slug": "binding-input-checkbox-group",
+				"title": "Checkbox input (grouped)"
+			},
+			{
+				"slug": "binding-input-radio",
+				"title": "Radio input"
+			},
+			{
+				"slug": "binding-media-elements",
+				"title": "Media elements"
+			}
+		]
+	},
+	{
+		"name": "Nested components",
+		"examples": [
+			{
+				"slug": "nested-components",
+				"title": "Nested components"
+			},
+			{
+				"slug": "modal-with-slot",
+				"title": "Modal with <slot>"
+			},
+			{
+				"slug": "self-references",
+				"title": "Self-references"
+			}
+		]
+	},
+	{
+		"name": "SVG and dataviz",
+		"examples": [
+			{
+				"slug": "svg-clock",
+				"title": "SVG Clock"
+			},
+			{
+				"slug": "line-chart",
+				"title": "Line/area chart"
+			},
+			{
+				"slug": "bar-chart",
+				"title": "Bar chart"
+			},
+			{
+				"slug": "scatterplot",
+				"title": "Scatterplot"
+			}
+		]
+	},
+	{
+		"name": "Transitions",
+		"examples": [
+			{
+				"slug": "transitions-fade",
+				"title": "Simple fade"
+			},
+			{
+				"slug": "transitions-fly",
+				"title": "Parameterised"
+			},
+			{
+				"slug": "transitions-in-out",
+				"title": "In and out"
+			},
+			{
+				"slug": "transitions-custom",
+				"title": "Custom CSS"
+			}
+		]
+	},
+	{
+		"name": "Async data",
+		"examples": [
+			{
+				"slug": "await-block",
+				"title": "Await block"
+			}
+		]
+	},
+	{
+		"name": "7guis",
+		"examples": [
+			{
+				"slug": "7guis-counter",
+				"title": "Counter"
+			},
+			{
+				"slug": "7guis-temperature",
+				"title": "Temperature converter"
+			},
+			{
+				"slug": "7guis-flight-booker",
+				"title": "Flight booker"
+			},
+			{
+				"slug": "7guis-timer",
+				"title": "Timer"
+			},
+			{
+				"slug": "7guis-crud",
+				"title": "CRUD"
+			},
+			{
+				"slug": "7guis-circles",
+				"title": "Circles"
+			}
+		]
+	},
+	{
+		"name": "<:Window>",
+		"examples": [
+			{
+				"slug": "parallax",
+				"title": "Parallax"
+			}
+		]
+	},
+	{
+		"name": "Miscellaneous",
+		"examples": [
+			{
+				"slug": "hacker-news",
+				"title": "Hacker News"
+			},
+			{
+				"slug": "immutable",
+				"title": "Immutable data"
+			}
+		]
+	}
+]

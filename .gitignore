@@ -19,3 +19,6 @@ node_modules
 /yarn-error.log
 _actual*.*
 _*/
+
+/site/cypress/screenshots/
+/site/__sapper__/

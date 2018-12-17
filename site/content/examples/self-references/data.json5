@@ -1,0 +1,32 @@
+{
+  "node": {
+    "name": "Fruit",
+    "children": [
+      {
+        "name": "Red",
+        "children": [
+          {
+            "name": "Cherry"
+          },
+          {
+            "name": "Strawberry"
+          }
+        ]
+      },
+      {
+        "name": "Green",
+        "children": [
+          {
+            "name": "Apple"
+          },
+          {
+            "name": "Pear"
+          },
+          {
+            "name": "Lime"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,203 @@
+<script>
+	import Icon from '../components/icon.html';
+	import Logo from '../components/logo.html';
+	import Iso from '../components/isometry.html';
+</script>
+
+<svelte:head>
+	<title>Svelte • The magical disappearing UI framework</title>
+</svelte:head>
+
+<section class='container'>
+	<div class='logo'>
+		<Logo size={90} />
+		<h1>SVELTE</h1>
+		<h2>The magical disappearing<br />UI framework</h2>
+	</div>
+
+	<!-- possibly not the best solution - better use classes for button? -->
+	<a rel='prefetch' href='guide' class='learn-btn'>
+		<button class='bg-prime white'>Learn Svelte
+			<Icon name='arrow-right' /></button>
+	</a>
+</section>
+
+<section class='container py0 align-c'>
+	<ul class='grid stretch'>
+		<li class='box bg-prime white'>
+			<Logo size={88} outer='none' inner='fill:none; stroke:white;' />
+			<h2 style='padding:2.4rem 0 0 0'>Solved: The web's JavaScript bloat crisis</h2>
+			<p>Svelte turns your templates into tiny, framework-less vanilla JavaScript</p>
+		</li>
+		<li class='box bg-flash white'>
+			<Logo size={88} outer='none' inner='fill:none; stroke:white;' />
+			<h2 style='padding:2.4rem 0 0 0'>Simple and familiar</h2>
+			<p>Build apps out of composable, easy-to-write blocks using languages you already know</p>
+		</li>
+		<li class='box bg-second white'>
+			<Logo size={88} outer='none' inner='fill:none; stroke:white;' />
+			<h2 style='padding:2.4rem 0 0 0'>Super fast, rock solid</h2>
+			<p>Compile-time static analysis ensures the browser does no more work than it needs to</p>
+		</li>
+	</ul>
+</section>
+
+<section class='container'>
+	<ul class='grid half'>
+		<li>
+			<h2>The why-headline here</h2>
+			<p><b>Copyplat</b> – We captured the WHAT? above. Why another framework. Some facts, the reasons behind. Why is svelte better. OK, we link to @Richs post on this for more Details, but here we extract it in three sentences and some illustrations or charts.</p>
+		</li>
+		<li class='align-c cols-2'>
+			<Iso size={180} style='fill:var(--flash); stroke:var(--second)' />
+			<Iso size={180} style='fill:#ccc; stroke:var(--second)' />
+			<Iso size={180} style='fill:var(--prime); stroke:var(--second)' />
+			<p class='legend'><b>– fig 1 –</b><br />informative grafics here</p>
+		</li>
+	</ul>
+	<h6 class='bg-second white'>NOTE<br /> I didn't spend much time on contents or the right Illustrations here. Let's
+		discuss look'n'feel first.</h6>
+</section>
+
+<section class='container back-light'>
+	<ul class='grid'>
+		<li class='align-c cols-2'>
+			<Iso size={140} style='fill:var(--flash); stroke:var(--second)' />
+			<Iso size={140} style='fill:#ccc; stroke:var(--second)' />
+			<Iso size={140} style='fill:var(--prime); stroke:var(--second)' />
+			<p class='legend'><b>– fig 2 –</b><br />informative grafics here</p>
+		</li>
+		<li>
+			<h2>The how-headline here</h2>
+			<p>
+				<b>Copyplat</b> – How did svelte accomplish this? Why better than others?
+				Blindtext. Fera voluptatis debitis aut laut harum sitiandus. Ant labo. Nequod modisquia illabo. Nametur sequis ut
+				entiberibeat facerfe rovitatemqui beatis minvenis consequi quid quo et.
+			</p>
+		</li>
+	</ul>
+</section>
+
+<section class='container'>
+	<ul class='grid half'>
+		<li>
+			<h2>The benefits-headline here</h2>
+			<p>
+				<b>Copyplat</b> – Blindtext. Fera voluptatis debitis aut laut harum sitiandus. Ant labo. Nequod modisquia illabo. Nametur sequis ut entiberibeat facerfe rovitatemqui beatis minvenis consequi quid quo et.
+			</p>
+		</li>
+		<li class='align-c'>
+			<Iso size={120} style='fill:var(--flash); stroke:var(--second)' />
+			<Iso size={80} style='fill:#ccc; stroke:var(--second)' />
+			<Iso size={50} style='fill:var(--prime); stroke:var(--second)' />
+			<p class='legend'><b>– fig 3 –</b><br />informative grafics here</p>
+		</li>
+	</ul>
+</section>
+
+<section class='container bg-second'>
+	<a rel='prefetch' href='themer' class='learn-btn'>
+			<button class='back prime'>just because we can
+				<Icon name='arrow-right' /></button>
+		</a>
+</section>
+
+
+<style>
+	.container {
+		padding: 10rem var(--side-page);
+	}
+
+	.container ul {
+		list-style: none;
+	}
+
+	/* max line-length ~60 chars */
+	li:not(.box) > p {
+		max-width: var(--linemax)
+	}
+
+	/* darken text for accesibility */
+	:global(.back-light) {
+		--text: hsl(36, 3%, 44%);
+	}
+
+	.logo {
+		text-align: center;
+	}
+
+	.logo > :global(svg) {
+		position: relative;
+	}
+
+	.logo > h1 {
+		margin: 2rem 0;
+		font-size: 4.8rem;
+		color: var(--second);
+	}
+
+	.logo > h2 {
+		position: relative;
+		font-size: 1.7rem;
+		text-align: center;
+		animation: slow-fade-demo 6s var(--inout-cubic) infinite;
+	}
+
+	.learn-btn {
+		all: unset;
+  	cursor: pointer;
+		display: block;
+		margin-top: 4rem;
+		text-align: center;
+	}
+
+	.legend { padding-top: 4rem }
+
+	.box {
+		padding-top: 3.2rem
+	}
+
+	.box > h2 {
+		padding: 2.4rem 0;
+		font-size: var(--h5);
+	}
+
+	.box > p {
+		font-size: var(--h5);
+	}
+
+	h6 {
+		max-width: 25em;
+		padding: 2.4rem;
+		border-radius: var(--border-r);
+		font: 300 1rem/1.4 var(--font-mono);
+		text-align: center;
+	}
+
+	/* simple placeholder-animation */
+	@keyframes slow-fade-demo {
+		0%, 75%, 100% { opacity: 1 }
+		85% { opacity: 0 }
+	}
+
+	@media screen and (min-width: 870px) {
+		.logo {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.logo > h1 {
+			position: relative;
+			top: -.8rem;
+			font-size: 5.6rem;
+			margin: 2rem 2rem 0 1rem;
+		}
+
+		.logo > h2 {
+			top: .6rem;
+			text-align: left;
+		}
+	}
+</style>

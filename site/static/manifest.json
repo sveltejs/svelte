@@ -1,0 +1,20 @@
+{
+	"background_color": "#ffffff",
+	"theme_color": "#aa1e1e",
+	"name": "TODO",
+	"short_name": "TODO",
+	"display": "minimal-ui",
+	"start_url": "/",
+	"icons": [
+		{
+			"src": "svelte-logo-192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "svelte-logo-512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	]
+}

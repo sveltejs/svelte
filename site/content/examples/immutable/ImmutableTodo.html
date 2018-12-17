@@ -1,0 +1,17 @@
+<!-- the text will flash red whenever
+     the `todo` object changes -->
+<span ref:span>{todo.text}</span>
+
+<script>
+	export default {
+		// try commenting this out
+		immutable: true,
+
+		onupdate({ changed, current, previous }) {
+			this.refs.span.style.color = 'red';
+			setTimeout(() => {
+				this.refs.span.style.color = 'black';
+			}, 400);
+		}
+	};
+</script>
