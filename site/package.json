@@ -12,7 +12,9 @@
     "test": "run-p --race dev cy:run"
   },
   "dependencies": {
+    "codemirror": "^5.42.0",
     "compression": "^1.7.1",
+    "do-not-zip": "^1.0.0",
     "express": "^4.16.4",
     "golden-fleece": "^1.0.9",
     "marked": "^0.5.2",

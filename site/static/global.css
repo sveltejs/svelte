@@ -26,9 +26,11 @@
 }
 
 body {
-	--font: aller, sans-serif;
-	--font-alt: asap-bold, sans-serif;
-	/* --font-mono: overpass, monospace; */
+	/* --font: aller, sans-serif; */
+	--font: 'Overpass', sans-serif;
+	/* --font-alt: asap-bold, sans-serif; */
+	--font-alt: 'Overpass', sans-serif;
+	--font-mono: 'Overpass Mono', monospace;
 	--font-ui: var(--font-mono);
 	/* ui-elements: buttons, forms etc. */
 }
@@ -212,9 +214,9 @@ button {
   --bttn-outline: var(--border-w);
   --bttn-font: var(--font-ui);
   --bttn-calc-h: calc(var(--bttn-h) - var(--bttn-outline) * 2);
-  --bttn-hover: linear-gradient(
+  /* --bttn-hover: linear-gradient(
     to top, rgba(0,0,0,.05), rgba(0,0,0,.05)
-  );
+  ); */
   --bttn-active: linear-gradient(
     to top, rgba(255,255,255,.1), rgba(255,255,255,.1)
   );

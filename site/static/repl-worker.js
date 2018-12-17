@@ -1,4 +1,42 @@
-global.window = self; // egregious hack to get magic-string to work in a worker
+self.window = self; // egregious hack to get magic-string to work in a worker
+
+let ready = false;
+let pending_components;
+let pending_component;
+
+self.addEventListener('message', async event => {
+	switch (event.data.type) {
+		case 'version':
+			self.postMessage({
+				type: 'version',
+				version: await init(event.data.version)
+			}, '*');
+
+			break;
+
+		case 'bundle':
+			if (ready) {
+				self.postMessage({
+					type: 'bundled',
+					result: await bundle(event.data.components)
+				}, '*');
+			} else {
+				pending_components = event.data.components;
+			}
+			break;
+
+		case 'compile':
+			if (ready) {
+				self.postMessage({
+					type: 'compiled',
+					result: await compile(event.data.component)
+				}, '*');
+			} else {
+				pending_component = event.data.component;
+			}
+			break;
+	}
+});
 
 const commonCompilerOptions = {
 	cascade: false,
@@ -8,34 +46,48 @@ const commonCompilerOptions = {
 	dev: true,
 };
 
-const svelteCache = new Map();
+async function init(version) {
+	// TODO use local versions
+	importScripts(
+		`https://unpkg.com/svelte@${version}/compiler/svelte.js`,
+		`https://unpkg.com/rollup/dist/rollup.browser.js`
+	);
 
-function loadSvelte(version) {
-	if (!svelteCache.has(version)) {
-		if (version === 'local') {
-			svelteCache.set(version, import(/* webpackChunkName: "svelte" */ 'svelte'));
-		} else {
-			svelteCache.set(version, new Promise((fulfil => {
-				importScripts(`https://unpkg.com/svelte@${version}/compiler/svelte.js`);
-				fulfil(global.svelte);
-			})))
-		}
+	console.log(1);
+	console.log({
+		svelte: self.svelte,
+		rollup: self.rollup
+	});
+	console.log({
+		svelte,
+		rollup
+	});
+	console.log(2);
+
+	self.postMessage({
+		type: 'version',
+		version: version === 'local' ? version : svelte.VERSION
+	}, '*');
+
+	ready = true;
+
+	if (pending_components) {
+		self.postMessage({
+			type: 'bundled',
+			result: await bundle(pending_components)
+		}, '*');
+
+		pending_components = null;
 	}
 
-	return svelteCache.get(version).then(svelte => {
-		global.svelte = svelte;
-	});
-}
+	if (pending_component) {
+		self.postMessage({
+			type: 'compiled',
+			result: await compile(pending_component)
+		}, '*');
 
-export async function init(version) {
-	await Promise.all([
-		import(/* webpackChunkName: "rollup" */ 'rollup/dist/rollup.browser.js').then(r => {
-			global.rollup = r;
-		}),
-		loadSvelte(version)
-	]);
-
-	return version === 'local' ? version : svelte.VERSION;
+		pending_component = null;
+	}
 }
 
 let cached = {
@@ -104,8 +156,8 @@ async function getBundle(mode, cache, lookup) {
 	return { bundle, info, error: null, warningCount };
 }
 
-export async function bundle(components) {
-	console.clear();
+async function bundle(components) {
+	// console.clear();
 	console.log(`running Svelte compiler version %c${svelte.VERSION}`, 'font-weight: bold');
 
 	const token = currentToken = {};
@@ -194,7 +246,7 @@ export async function bundle(components) {
 	}
 }
 
-export function compile(component) {
+function compile(component) {
 	try {
 		const { js } = svelte.compile(component.source, Object.assign({
 			// TODO make options configurable

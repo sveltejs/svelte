@@ -14,15 +14,10 @@
 
 <script>
 	import { onMount } from 'svelte';
-	import { observe } from 'svelte-extras';
 	import { locate } from 'locate-character';
 	import * as fleece from 'golden-fleece';
-	import CodeMirror from './_components/CodeMirror.html';
-	import ModuleEditor from './_components/ModuleEditor.html';
-	import Viewer from './_components/Viewer.html';
-	import ComponentSelector from './_components/ComponentSelector.html';
 	import AppControls from './_components/AppControls.html';
-	import SplitPane from './_components/SplitPane.html';
+	import Repl from './_components/Repl.html';
 	import examples from '../../../content/examples/manifest.json';
 
 	export let query;
@@ -31,31 +26,15 @@
 
 	const version = query.version || 'latest';
 	let components = [];
+	let selectedComponent;
 	let data = {};
 	let name = 'loading...';
 	let json5 = '{}';
 	let gist = null;
-	let uid = 0;
+	let zen_mode = false;
+	let bundle;
 
-	let selectedComponent = null;
-	let sourceError = null;
-	let runtimeError = null;
-
-	let sourceErrorLoc, runtimeErrorLoc, url;
-
-	$: if (sourceError && selectedComponent) {
-		sourceErrorLoc = sourceError.filename === `${selectedComponent.name}.${selectedComponent.type}`
-			? sourceError.start
-			: null;
-	}
-
-	$: if (runtimeError && selectedComponent) {
-		runtimeErrorLoc = runtimeError.filename === `${selectedComponent.name}.${selectedComponent.type}`
-			? runtimeError.start
-			: null;
-	}
-
-	$: {
+	$: if (typeof history !== 'undefined') {
 		const params = [];
 		if (version !== 'latest') params.push(`version=${version}`);
 
@@ -63,9 +42,11 @@
 		else if (query.data) params.push(`data=${query.data}`);
 		else if (query.demo) params.push(`demo=${query.demo}`);
 
-		url = params.length > 0
+		const url = params.length > 0
 			? `repl?${params.join('&')}`
 			: 'repl';
+
+		history.replaceState({}, 'x', url);
 	}
 
 	const slugs = new Set();
@@ -84,66 +65,6 @@
 			console.error(err.message);
 			return {};
 		}
-	}
-
-	function createComponent() {
-		const newComponent = {
-			name: uid++ ? `Component${uid}` : 'Component1',
-			type: 'html',
-			source: '',
-			edit: true
-		};
-
-		components = components.concat(newComponent);
-
-		// TODO need an intermediate flush here?
-		selectedComponent = null;
-		selectedComponent = newComponent;
-
-		document.getElementById(newComponent.name).scrollIntoView(false);
-		refs.selector.focusLast();
-	}
-
-	function removeComponent() {
-		const component = selectedComponent;
-
-		if (component.name === 'App') {
-			// App.html can't be removed
-			component.source = '';
-			selectedComponent = component;
-		} else {
-			const index = components.indexOf(component);
-			if (~index) {
-				components = components.slice(0, index).concat(components.slice(index + 1));
-			} else {
-				console.error(`Could not find component! That's... odd`);
-			}
-
-			selectedComponent = components[index] || components[components.length - 1];
-		}
-	}
-
-	function resizePanes(panes) {
-		panes.forEach(pane => {
-			refs[pane].resize();
-		});
-	}
-
-	function updateData(current) {
-		const data = fleece.evaluate(json5);
-
-		for (const key in data) {
-			data[key] = current[key];
-		}
-
-		json5 = fleece.patch(json5, data);
-	}
-
-	function navigate(filename) {
-		const name = filename.replace(/\.html$/, '');
-
-		if (selectedComponent.name === name) return;
-		selectedComponent = components.find(c => c.name === name);
 	}
 
 	function stringifyComponents(components) {
@@ -168,9 +89,9 @@
 					version = event.data.version;
 					break;
 
-				case 'result':
+				case 'bundled':
 					// TODO
-					// const { bundle, dom, ssr, warningCount, error } = event.data;
+					// const { bundle, dom, ssr, warningCount, error } = event.data.result;
 
 					// if (error) {
 					// 	this.set({
@@ -193,6 +114,9 @@
 					// 		compilerReady: true
 					// 	});
 					// }
+
+				case 'compiled':
+					// TODO
 			}
 		}
 
@@ -240,8 +164,8 @@
 
 				selectedComponent = components[0];
 			});
-		} else {
-			if (!query.demo) query.demo = 'hello-world';
+		} else if (!query.demo) {
+			query.demo = 'hello-world';
 		}
 	});
 
@@ -272,10 +196,10 @@
 		last_selected_component = selectedComponent;
 	}
 
-	$: if (demo) {
-		fetch(`api/${slugs.has(demo) ? 'examples' : 'guide/demo'}examples/${demo}`).then(async response => {
+	function load_demo(slug) {
+		fetch(`api/${slugs.has(query.demo) ? 'examples' : 'guide/demo'}/${query.demo}`).then(async response => {
 			if (response.ok) {
-				const demo = await r.json();
+				const demo = await response.json();
 
 				name = demo.title;
 				json5 = demo.json5 || '{}';
@@ -285,101 +209,16 @@
 		});
 	}
 
-	$: try {
-		data= fleece.evaluate(json5);
-		dataError = null;
-		dataErrorLoc = null;
-	} catch (err) {
-		dataError = err;
-		dataErrorLoc = err && err.loc;
-	}
-
-	$: {
-		history.replaceState({}, 'x', url);
+	$: if (process.browser && query.demo) {
+		load_demo(query.demo);
 	}
 </script>
-
-<svelte:head>
-	<title>Svelte REPL</title>
-</svelte:head>
-
-<div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
-	<AppControls
-		{examples}
-		{bundle}
-		{components}
-		{data}
-		{json5}
-		{gist}
-		bind:name
-		bind:zen_mode
-		on:select="{e => (demo = e.detail.slug, gist = null)}"
-		on:forked="{e => gist = e.detail.gist}"
-	/>
-
-	<div class='repl-inner'>
-		<SplitPane type=horizontal on:resize="{() => resizePanes(['editor', 'data'])}">
-			<section slot=a class="input">
-				<ComponentSelector
-				bind:this={refs.selector}
-				{components}
-				bind:selectedComponent
-				on:create={createComponent}
-				on:remove={removeComponent}
-			/>
-
-			<ModuleEditor
-				bind:this={refs.editor}
-				bind:selectedComponent
-				{compiled}
-				error={sourceError}
-				errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
-				{warningCount}
-				on:navigate={navigate}
-			/>
-		</section>
-
-		<div slot=b style='height: 100%;'>
-			<SplitPane type=vertical on:resize="{() => resizePanes(['data'])}">
-				<div class=pane slot=a>
-					<h3 class='show-if-mobile'>Rendered component</h3>
-					{#if compilerReady}
-					<Viewer
-						{bundle}
-						{dom}
-						{ssr}
-						{data}
-						{sourceError}
-						bind:error={runtimeError}
-						on:data="{e => updateData(e.detail.current)}"
-						on:navigate={navigate}
-					/>
-					{:else}
-					<p class='loading'>loading Svelte compiler...</p>
-					{/if}
-				</div>
-				<div class=pane slot=b>
-					<h3 class='show-if-mobile'>data.json5</h3>
-					<CodeMirror
-						bind:this={refs.data}
-						mode="json"
-						bind:code={json5}
-						error={dataError}
-						errorLoc={dataErrorLoc}
-					/>
-				</div>
-			</SplitPane>
-		</div>
-		</SplitPane>
-	</div>
-</div>
 
 <style>
 	.repl-outer {
 		min-height: calc(100vh - var(--nav-h));
 	}
 
-	.repl-inner { height: 100% }
 	.pane       { width: 100%; height: 100% }
 
 	h3 {
@@ -389,9 +228,9 @@
 	}
 
 	@media (min-width: 768px) {
-		.show-if-mobile { display: none }
-
 		.repl-outer {
+			display: grid;
+			grid-template-rows: 5.6rem 1fr;
 			min-height: auto;
 			min-height: calc(100vh - var(--nav-h));
 			background-color: var(--back);
@@ -406,8 +245,6 @@
 			left: 0;
 			z-index: 11;
 		}
-
-		section { height: 100% }
 	}
 
 	.loading {
@@ -428,55 +265,31 @@
 
 	.input {
 		padding: 2.4em 0 0 0;
-		perspective: 1800px;
-		perspective-origin: 50% 0%;
-	}
-
-	@media (min-width: 768px) {
-		.input {
-			perspective-origin: 50% 50%;
-		}
-	}
-
-	.repl-inner :global(.message) {
-		position: relative;
-		border-radius: var(--border-r);
-		margin: 0;
-		padding: 1.2rem 1.6rem 1.2rem 4.4rem;
-		vertical-align: middle;
-		font: 300 1.2rem/1.7 var(--font-ui);
-		color: white;
-	}
-
-	.repl-inner :global(.message::before) {
-		content: '!';
-		position: absolute;
-		left: 1.2rem;
-		top: 1.1rem;
-		width: 1rem;
-		height: 1rem;
-		text-align: center;
-		line-height: 1;
-		padding: .4rem;
-		border-radius: 50%;
-		color: white;
-		border: .2rem solid white;
-	}
-
-	.repl-inner :global(.error.message) {
-		background-color: #da106e;
-	}
-
-	.repl-inner :global(.warning.message) {
-		background-color: #e47e0a;
-	}
-
-	.repl-inner :global(.info.message) {
-		background-color: var(--second);
-		animation: fade-in .4s .2s both;
-	}
-
-	.repl-inner :global(.error) :global(.filename) {
-		cursor: pointer;
 	}
 </style>
+
+<svelte:head>
+	<title>Svelte REPL</title>
+</svelte:head>
+
+<div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
+	<AppControls
+		{examples}
+		{bundle}
+		{components}
+		{data}
+		{json5}
+		{gist}
+		bind:name
+		bind:zen_mode
+		on:select="{e => (query.demo = e.detail.slug, gist = null)}"
+		on:forked="{e => gist = e.detail.gist}"
+	/>
+
+	<Repl
+		bind:selectedComponent
+		{components}
+		{data}
+		{json5}
+	/>
+</div>
