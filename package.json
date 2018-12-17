@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.0.0-alpha3",
+  "version": "3.0.0-alpha6",
   "description": "The magical disappearing UI framework",
   "main": "index.js",
   "bin": {
@@ -12,6 +12,7 @@
     "register.js",
     "index.js",
     "internal.js",
+    "store.js",
     "svelte",
     "README.md"
   ],
