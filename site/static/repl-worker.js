@@ -6,20 +6,19 @@ let pending_component;
 
 self.addEventListener('message', async event => {
 	switch (event.data.type) {
-		case 'version':
-			self.postMessage({
+		case 'init':
+			postMessage({
 				type: 'version',
 				version: await init(event.data.version)
-			}, '*');
-
+			});
 			break;
 
 		case 'bundle':
 			if (ready) {
-				self.postMessage({
+				postMessage({
 					type: 'bundled',
 					result: await bundle(event.data.components)
-				}, '*');
+				});
 			} else {
 				pending_components = event.data.components;
 			}
@@ -27,10 +26,10 @@ self.addEventListener('message', async event => {
 
 		case 'compile':
 			if (ready) {
-				self.postMessage({
+				postMessage({
 					type: 'compiled',
 					result: await compile(event.data.component)
-				}, '*');
+				});
 			} else {
 				pending_component = event.data.component;
 			}
@@ -53,41 +52,26 @@ async function init(version) {
 		`https://unpkg.com/rollup/dist/rollup.browser.js`
 	);
 
-	console.log(1);
-	console.log({
-		svelte: self.svelte,
-		rollup: self.rollup
-	});
-	console.log({
-		svelte,
-		rollup
-	});
-	console.log(2);
-
-	self.postMessage({
-		type: 'version',
-		version: version === 'local' ? version : svelte.VERSION
-	}, '*');
-
-	ready = true;
-
 	if (pending_components) {
-		self.postMessage({
+		postMessage({
 			type: 'bundled',
 			result: await bundle(pending_components)
-		}, '*');
+		});
 
 		pending_components = null;
 	}
 
 	if (pending_component) {
-		self.postMessage({
+		postMessage({
 			type: 'compiled',
 			result: await compile(pending_component)
-		}, '*');
+		});
 
 		pending_component = null;
 	}
+
+	ready = true;
+	return version === 'local' ? version : svelte.VERSION;
 }
 
 let cached = {

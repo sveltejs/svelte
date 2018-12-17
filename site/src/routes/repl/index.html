@@ -24,7 +24,7 @@
 
 	const refs = {};
 
-	const version = query.version || 'latest';
+	let version = query.version || 'latest';
 	let components = [];
 	let selectedComponent;
 	let data = {};
@@ -78,58 +78,6 @@
 		);
 	}
 
-	let worker;
-
-	onMount(async () => {
-		worker = new Worker('/repl-worker.js');
-
-		function listener(event) {
-			switch (event.data.type) {
-				case 'version':
-					version = event.data.version;
-					break;
-
-				case 'bundled':
-					// TODO
-					// const { bundle, dom, ssr, warningCount, error } = event.data.result;
-
-					// if (error) {
-					// 	this.set({
-					// 		bundle: null,
-					// 		dom: null,
-					// 		ssr: null,
-					// 		sourceError: error,
-					// 		runtimeError: null,
-					// 		warningCount,
-					// 		compilerReady: true
-					// 	});
-					// } else {
-					// 	this.set({
-					// 		bundle,
-					// 		dom,
-					// 		ssr,
-					// 		sourceError: null,
-					// 		runtimeError: null,
-					// 		warningCount,
-					// 		compilerReady: true
-					// 	});
-					// }
-
-				case 'compiled':
-					// TODO
-			}
-		}
-
-		worker.addEventListener('message', listener);
-
-		worker.postMessage({ type: 'init', version });
-
-		return () => {
-			worker.removeEventListener('message', listener);
-			worker.terminate();
-		};
-	});
-
 	onMount(() => {
 		if (query.gist) {
 			fetch(`gist/${query.gist}`).then(r => r.json()).then(gist => {
@@ -168,33 +116,6 @@
 			query.demo = 'hello-world';
 		}
 	});
-
-	$: if (worker && components.length > 0) {
-		worker.postMessage({ type: 'bundle', components });
-	}
-
-	let last_selected_component;
-	$: {
-		// slightly counterintuitively, we only want to rebundle if
-		// this is the *same* component — not if we've just selected
-		// a different one
-		if (selectedComponent === last_selected_component) {
-			if (worker && components.length > 0) {
-				worker.postMessage({ type: 'bundle', components });
-			}
-		}
-
-		// recompile the currently selected component
-		if (selectedComponent) {
-			if (selectedComponent.type === 'html') {
-				worker.postMessage({ type: 'compile', component: selectedComponent });
-			} else {
-				compiled = selectedComponent.source;
-			}
-		}
-
-		last_selected_component = selectedComponent;
-	}
 
 	function load_demo(slug) {
 		fetch(`api/${slugs.has(query.demo) ? 'examples' : 'guide/demo'}/${query.demo}`).then(async response => {
@@ -287,6 +208,7 @@
 	/>
 
 	<Repl
+		bind:version
 		bind:selectedComponent
 		{components}
 		{data}
