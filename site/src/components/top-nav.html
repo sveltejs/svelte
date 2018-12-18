@@ -27,45 +27,6 @@
 	}
 </script>
 
-<div class='{open ? "open": "closed"} mousecatcher' on:click="{() => open = false}" />
-
-<header>
-	<a href='.' class='logo' title='Homepage'>
-		<Logo size={40} />
-		<h2 class='logotype'>Svelte</h2>
-	</a>
-
-	<div class='flex-auto' />
-
-	<span class='menu-link' on:click="{toggleOpen}">
-		{#if open}
-		<Icon name='close' />
-		{:else}
-		<Icon name='menu' />
-		{/if}
-	</span>
-
-	<nav bind:this={nav} class='{open ? "open": "closed"}' on:click="{() => open = false}" >
-		<div class='flex-auto' />
-		<ul class='primary'>
-			<li><a rel='prefetch' class='{segment === "guide" ? "active": ""}' href='guide'>Guide</a></li>
-			<li><a rel='prefetch' class='{segment === "repl" ? "active": ""}' href='repl'>REPL</a></li>
-			<li><a rel='prefetch' class='{segment === "blog" ? "active": ""}' href='blog'>Blog</a></li>
-			<li><a href='https://sapper-redesign.now.sh'>Sapper</a></li>
-		</ul>
-
-		<div class='flex-auto' />
-		<ul class='primary'>
-			<li><a href='https://discord.gg/yy75DKs' title='Discord Chat'>
-					<Icon name='message-square' />
-				</a></li>
-			<li><a href='https://github.com/sveltejs/svelte' title='Github Repo'>
-					<Icon name='github' />
-				</a></li>
-		</ul>
-	</nav>
-</header>
-
 <style>
 	/* Unfortunately I'm not able to  understand mousecatcher */
 	.mousecatcher {
@@ -101,7 +62,7 @@
 		padding: 0 var(--side-nav);
 		margin: 0 auto;
 		background-color: rgba(255, 255, 255, .93);
-		box-shadow: 0 .3rem .9rem -.2rem rgba(0,0,0,.5);
+		box-shadow: 0 -0.4rem 0.9rem 0.2rem rgba(0,0,0,.5);
 		font-family: var(--font-ui);
 		z-index: 10;
 	}
@@ -118,6 +79,12 @@
 		transition: transform .1s var(--in-cubic);
 		z-index: 5;
 		user-select: none;
+	}
+
+	h2 {
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-weight: 300;
 	}
 
 	.open {
@@ -152,22 +119,33 @@
 	.logo {
 		position: relative;
 		top: .3rem;
-		width: 16rem;
+		width: 18rem;
 		color: var(--second);
 		-webkit-tap-highlight-color: transparent;
 		-webkit-touch-callout: none;
 		z-index: 11;
+		padding: 0.5em 0;
 	}
 
 	.logotype {
 		display: none;
 		font-size: 2.8rem;
 		letter-spacing: .12em;
+		line-height: 1;
+		margin: 0;
 	}
 
-	.logo :global(svg) {
-		float: left;
-		margin-right: .6rem;
+	.home {
+		position: relative;
+		top: 0;
+		width: 18rem;
+		color: var(--second);
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		z-index: 11;
+		padding: 0.5rem 0 0.3rem 4.2rem;
+		background: url(/logo.svg) 0 50% no-repeat;
+		background-size: auto 100%;
 	}
 
 	.active {
@@ -203,3 +181,44 @@
 		.logotype { display: block }
 	}
 </style>
+
+<div class='{open ? "open": "closed"} mousecatcher' on:click="{() => open = false}" />
+
+<header>
+	<span class='menu-link' on:click="{toggleOpen}">
+		{#if open}
+			<Icon name='close' />
+		{:else}
+			<Icon name='menu' />
+		{/if}
+	</span>
+
+	<nav bind:this={nav} class='{open ? "open": "closed"}' on:click="{() => open = false}" >
+		<a href='.' class="home" title='Homepage'>
+			<h2 class='logotype'>Svelte</h2>
+		</a>
+
+		<ul class='primary'>
+			<li><a rel='prefetch' class='{segment === "guide" ? "active": ""}' href='guide'>Guide</a></li>
+			<li><a rel='prefetch' class='{segment === "repl" ? "active": ""}' href='repl'>REPL</a></li>
+			<li><a rel='prefetch' class='{segment === "blog" ? "active": ""}' href='blog'>Blog</a></li>
+			<li><a href='https://sapper-redesign.now.sh'>Sapper</a></li>
+
+			<li>
+				<a href='https://discord.gg/yy75DKs' title='Discord Chat'>
+					<Icon name='message-square' />
+				</a>
+			</li>
+
+			<li>
+				<a href='https://github.com/sveltejs/svelte' title='Github Repo'>
+					<Icon name='github' />
+				</a>
+			</li>
+		</ul>
+
+		<!-- <ul class='secondary'>
+
+		</ul> -->
+	</nav>
+</header>

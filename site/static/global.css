@@ -86,7 +86,7 @@ a:focus {
 -----------------------------------------------
 */
 :root {
-	--nav-h:      10rem;
+	--nav-h:       6rem;
 	--top-offset:  6rem;
 	--sidebar-w:  24rem;
 	--code-w:      48em;
@@ -110,7 +110,8 @@ a:focus {
 	--prime:      #ff3e00;
 	--second:     #676778;
 	--flash:       #40b3ff;
-	--text:       #a19e9b; /* hsl(36, 3%, 62%) */
+	--heading:    #333;
+	--text:       #555; /* hsl(36, 3%, 62%) */
 	--border-w:   .3rem;     /* border-width  */
 	--border-r:   .4rem;     /* border-radius */
 }
@@ -122,8 +123,8 @@ a:focus {
 	--h6:      1.4rem;
 	--h5:      1.6rem;
 	--h4:      1.8rem;
-	--h3:      1.6rem;
-	--h2:        2rem;
+	--h3:      2.4rem;
+	--h2:        3rem;
 	--h1:      3.2rem;
 	--linemax:   32em;      /* max line-length */
 	--lh:      calc(4/2.2); /* base line-height */
@@ -136,17 +137,23 @@ body {
 	color: var(--text);
 }
 
-h1, h2, h3, h4, h5, h6, p, li, blockquote {
-	margin-bottom: .8rem;
+h1, h2, h3, h4, h5, h6, li, blockquote {
+	margin: 0;
+	color: var(--heading);
 }
 
-h1, h2, h3, h4, h5, h6 { font-weight: 300 }
+h1, h2, h3, h4, h5, h6 { font-weight: 700 }
 h6 { font-size: var(--h6) }
 h5 { font-size: var(--h5) }
 h4 { font-size: var(--h4) }
 h3 { font-size: var(--h3) }
 h2 { font-size: var(--h2) }
 h1 { font-size: var(--h1) }
+
+p {
+	line-height: 1.35;
+	margin: 0 0 1em 0;
+}
 
 .b, b, strong { font-weight: 500 }
 
@@ -181,20 +188,12 @@ tt, code, kbd, samp {
 /*	opinionated styles --------------------- */
 h1, h2 {
 	font-family: var(--font-alt);
-	letter-spacing: 0.17em;
-	text-transform: uppercase;
-	line-height: calc(4/2.5);
+	line-height: 1.2;
 	pointer-events: none;
 }
 
-h1 { letter-spacing: 0.1em }
-
 li:not(.white) > h2 {
 	color: var(--second)
-}
-
-h3 {
-	font-family: var(--font-ui);
 }
 
 blockquote {
@@ -205,6 +204,10 @@ blockquote {
 	font-family: var(--font);
 	font-size: var(--h5);
 	max-width: 38.3em;
+}
+
+blockquote :last-child {
+	margin: 0;
 }
 
 
@@ -294,7 +297,7 @@ button[outline] {
   visibility: hidden;
 	transform: scaleX(0);
 	transform-origin: left center;
-  transition: all .3s var(--out-back);
+  transition: all .15s var(--out-cubic);
   z-index: -1;
 }
 
@@ -317,8 +320,9 @@ a:hover > .icon { stroke: var(--flash) }
 
 .listify ol > li,
 .listify ul > li {
-  margin-bottom: 0.8rem;
   max-width: calc(var(--linemax) - var(--list-padding));
+  line-height: 1.35;
+  margin: 0 0 0.8em 0;
 }
 
 .listify ul > li:before {

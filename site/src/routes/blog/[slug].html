@@ -14,10 +14,10 @@
 </svelte:head>
 
 <article class='post linkify listify'>
+	<p class='byline'><a href='{post.metadata.authorURL}'>{post.metadata.author}</a> <time datetime='{post.metadata.pubdate}'>{post.metadata.dateString}</time></p>
+
 	<h1>{post.metadata.title}</h1>
 	<p class='standfirst'>{post.metadata.description}</p>
-
-	<p class='byline'><a href='{post.metadata.authorURL}'>{post.metadata.author}</a> <time datetime='{post.metadata.pubdate}'>{post.metadata.dateString}</time></p>
 
 	{@html post.html}
 </article>
@@ -29,8 +29,8 @@
 
 	.byline {
 		font-size: 0.8em;
-		border-top: 1px solid #eee;
-		padding: 0.5em 0;
+		border-bottom: 1px solid #eee;
+		padding: 0;
 	}
 
 	.post h1 {
@@ -39,9 +39,7 @@
 	}
 
 	.post :global(h2) {
-		margin-top: 16rem;
-		padding: 4rem 1.6rem 5.6rem;
-		border-top: var(--border-w) solid var(--second);
+		margin: 2em 0 0.5em 0;
 		color: var(--second);
 	}
 
@@ -63,7 +61,9 @@
 	}
 
 	.standfirst {
-		font-size: var(--h2);
+		font-size: var(--h4);
+		color: var(--second);
+		margin: 0 0 2em 0;
 	}
 
 	.post :global(aside) {
