@@ -210,29 +210,11 @@ blockquote {
 
 /*  buttons -------------------------------- */
 button {
-  --bttn-h: 4rem;
-  --bttn-outline: var(--border-w);
-  --bttn-font: var(--font-ui);
-  --bttn-calc-h: calc(var(--bttn-h) - var(--bttn-outline) * 2);
-  /* --bttn-hover: linear-gradient(
-    to top, rgba(0,0,0,.05), rgba(0,0,0,.05)
-  ); */
-  --bttn-active: linear-gradient(
-    to top, rgba(255,255,255,.1), rgba(255,255,255,.1)
-  );
-
-  position: relative;
-  margin: 0 .8rem .8rem 0;
-  vertical-align: middle;
-  white-space: nowrap;
-  display: inline-block;
-  zoom: 1;
-  border: none transparent;
-	font: 1.3rem var(--bttn-font);
-	border-radius: var(--border-r);
+  font-family: inherit;
+  font-size: inherit;
+  background-color: transparent;
+  border: none;
   color: currentColor;
-  letter-spacing: .05em;
-  cursor: pointer;
 }
 
 button:focus { outline: 0 }
@@ -257,11 +239,11 @@ button {
   transition: all .1s;
 }
 
-button:hover  { background-image: var(--bttn-hover) }
+/* button:hover  { background-image: var(--bttn-hover) }
 button:active {
 	mix-blend-mode: overlay;
 	background-image: var(--bttn-active)
-}
+} */
 
 /*  options */
 button[outline] {

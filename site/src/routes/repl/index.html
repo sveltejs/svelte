@@ -137,7 +137,9 @@
 
 <style>
 	.repl-outer {
+		position: relative;
 		min-height: calc(100vh - var(--nav-h));
+		--pane-controls-h: 4.2rem;
 	}
 
 	.pane       { width: 100%; height: 100% }
@@ -150,12 +152,12 @@
 
 	@media (min-width: 768px) {
 		.repl-outer {
-			display: grid;
-			grid-template-rows: 5.6rem 1fr;
-			min-height: auto;
-			min-height: calc(100vh - var(--nav-h));
+			height: calc(100vh - var(--nav-h));
 			background-color: var(--back);
 			overflow: hidden;
+			--app-controls-h: 5.6rem;
+			padding: var(--app-controls-h) 0 0 0;
+			box-sizing: border-box;
 		}
 
 		.repl-outer.zen-mode {
