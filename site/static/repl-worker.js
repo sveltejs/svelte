@@ -4,21 +4,27 @@ let ready = false;
 let pending_components;
 let pending_component;
 
+let version;
+
 self.addEventListener('message', async event => {
 	switch (event.data.type) {
 		case 'init':
+			version = await init(event.data.version);
 			postMessage({
 				type: 'version',
-				version: await init(event.data.version)
+				version
 			});
 			break;
 
 		case 'bundle':
 			if (ready) {
-				postMessage({
-					type: 'bundled',
-					result: await bundle(event.data.components)
-				});
+				const result = await bundle(event.data.components);
+				if (result) {
+					postMessage({
+						type: 'bundled',
+						result
+					});
+				}
 			} else {
 				pending_components = event.data.components;
 			}
@@ -26,9 +32,10 @@ self.addEventListener('message', async event => {
 
 		case 'compile':
 			if (ready) {
+				const result = await compile(event.data.component);
 				postMessage({
 					type: 'compiled',
-					result: await compile(event.data.component)
+					result
 				});
 			} else {
 				pending_component = event.data.component;
@@ -48,23 +55,27 @@ const commonCompilerOptions = {
 async function init(version) {
 	// TODO use local versions
 	importScripts(
-		`https://unpkg.com/svelte@${version}/compiler/svelte.js`,
+		`https://unpkg.com/svelte@${version}/compiler.js`,
 		`https://unpkg.com/rollup/dist/rollup.browser.js`
 	);
 
 	if (pending_components) {
-		postMessage({
-			type: 'bundled',
-			result: await bundle(pending_components)
-		});
+		const result = await bundle(pending_components);
+		if (result) {
+			postMessage({
+				type: 'bundled',
+				result
+			});
+		}
 
 		pending_components = null;
 	}
 
 	if (pending_component) {
+		const result = await compile(pending_component);
 		postMessage({
 			type: 'compiled',
-			result: await compile(pending_component)
+			result
 		});
 
 		pending_component = null;
@@ -81,6 +92,22 @@ let cached = {
 
 let currentToken;
 
+const is_svelte_module = id => id === 'svelte' || id.startsWith('svelte/');
+
+const cache = new Map();
+function fetch_if_uncached(url) {
+	if (!cache.has(url)) {
+		cache.set(url, fetch(url)
+			.then(r => r.text())
+			.catch(err => {
+				console.error(err);
+				cache.delete(url);
+			}));
+	}
+
+	return cache.get(url);
+}
+
 async function getBundle(mode, cache, lookup) {
 	let bundle;
 	let error;
@@ -92,13 +119,26 @@ async function getBundle(mode, cache, lookup) {
 		bundle = await rollup.rollup({
 			input: './App.html',
 			external: id => {
-				return id[0] !== '.';
+				if (id[0] === '.') return false;
+				if (is_svelte_module(id)) return false;
+				if (id.startsWith('https://')) return false;
+				return true;
 			},
 			plugins: [{
 				resolveId(importee, importer) {
+					// v3 hack
+					if (importee === `svelte`) return `https://unpkg.com/svelte@${version}/index.js`;
+					if (importee.startsWith(`svelte`)) return `https://unpkg.com/svelte@${version}/${importee.slice(7)}`;
+
+					if (importer && importer.startsWith(`https://`)) {
+						return new URL(importee, importer).href;
+					}
+
 					if (importee in lookup) return importee;
 				},
 				load(id) {
+					if (id.startsWith(`https://`)) return fetch_if_uncached(id);
+
 					if (id in lookup) return lookup[id].source;
 				},
 				transform(code, id) {
@@ -108,7 +148,7 @@ async function getBundle(mode, cache, lookup) {
 
 					const { js, css, stats } = svelte.compile(code, Object.assign({
 						generate: mode,
-						format: 'es',
+						format: 'esm',
 						name: name,
 						filename: name + '.html',
 						onwarn: warning => {
@@ -117,12 +157,6 @@ async function getBundle(mode, cache, lookup) {
 							warningCount += 1;
 						},
 					}, commonCompilerOptions));
-
-					if (stats) {
-						if (Object.keys(stats.hooks).filter(hook => stats.hooks[hook]).length > 0) info.usesHooks = true;
-					} else if (/[^_]oncreate/.test(code)) {
-						info.usesHooks = true;
-					}
 
 					return js;
 				}

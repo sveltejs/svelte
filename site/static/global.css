@@ -232,12 +232,12 @@ button > svg {
 }
 
 /*  default */
-button {
+/* button {
   min-height: var(--bttn-h);
   line-height: var(--bttn-h);
   padding: 0 1.6rem;
   transition: all .1s;
-}
+} */
 
 /* button:hover  { background-image: var(--bttn-hover) }
 button:active {
