@@ -6,7 +6,7 @@ title: Introduction
 
 Svelte is a tool for building fast web applications.
 
-It is similar to JavaScript frameworks such as React, Angular, Vue, and Ractive, which all share a goal of making it easy to build slick interactive user interfaces.
+It is similar to JavaScript frameworks such as React and Vue, which share a goal of making it easy to build slick interactive user interfaces.
 
 But there's a crucial difference: Svelte converts your app into ideal JavaScript at *build time*, rather than interpreting your application code at *run time*. This means you don't pay the performance cost of the framework's abstractions, and you don't incur a penalty when your app first loads.
 
@@ -17,9 +17,7 @@ You can build your entire app with Svelte, or you can add it incrementally to an
 
 ### Understanding Svelte components
 
-In Svelte, an application is composed from one or more *components*. A component is a reusable self-contained block of code that encapsulates markup, styles and behaviours that belong together.
-
-Like Ractive and Vue, Svelte promotes the concept of *single-file components*: a component is just an `.html` file. Here's a simple example:
+In Svelte, an application is composed from one or more _components_. A component is a reusable self-contained block of code that encapsulates markup, styles and behaviours that belong together, written into an `.html` file. Here's a simple example:
 
 ```html
 <!--{ title: 'Hello world!' }-->
@@ -42,15 +40,15 @@ Svelte turns this into a JavaScript module that you can import into your app:
 import App from './App.html';
 
 const app = new App({
-	target: document.querySelector('main'),
-	data: { name: 'world' }
+  target: document.querySelector('main'),
+  props: { name: 'world' },
 });
 
-// change the data associated with the template
-app.set({ name: 'everybody' });
+// change the component's "name" prop. We'll learn about props (aka properties) below
+app.name = 'everybody';
 
 // detach the component and clean everything up
-app.destroy();
+app.$destroy();
 ```
 
 Congratulations, you've just learned about half of Svelte's API!
@@ -60,7 +58,7 @@ Congratulations, you've just learned about half of Svelte's API!
 
 Normally, this is the part where the instructions might tell you to add the framework to your page as a `<script>` tag. But because Svelte runs at build time, it works a little bit differently.
 
-The best way to use Svelte is to integrate it into your build system – there are plugins for Rollup, Browserify, Gulp and others, with more on the way. See [here](https://github.com/sveltejs/svelte/#svelte) for an up-to-date list.
+The best way to use Svelte is to integrate it into your build system – there are plugins for Rollup, Webpack and others, with more on the way. See [here](https://github.com/sveltejs/svelte/#svelte) for an up-to-date list.
 
 > You will need to have [Node.js](https://nodejs.org/en/) installed, and have some familiarity with the command line
 

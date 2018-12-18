@@ -1,14 +1,16 @@
 ---
-title: Component API
+title: API reference
 ---
+
+## TODO MAKE THIS CURRENT, INCLUDE svelte, svelte/store, ETC ETC
 
 As we saw above, you create a component instance with the `new` keyword:
 
 ```js
 /* { filename: 'main.js' } */
-import MyComponent from './MyComponent.html';
+import App from './App.html';
 
-const component = new MyComponent({
+const component = new App({
 	// `target` is the only required option. This is the
 	// DOM element your component will be appended to
 	target: document.querySelector('main'),
@@ -18,9 +20,9 @@ const component = new MyComponent({
 	// DOM element, which must be a child of `target`
 	anchor: document.querySelector('main #child'),
 
-	// `data` is optional.
-	// A component can have default data – we'll learn about that later.
-	data: {
+	// `props` is optional. A component can also have
+	// default props – we'll learn about that later.
+	props: {
 		questions: [
 			'life',
 			'the universe',
@@ -31,10 +33,16 @@ const component = new MyComponent({
 });
 ```
 
-Every Svelte component instance has a small number of methods you can use to control it, in addition to any [custom methods](guide#custom-methods) you add.
+Normally, you'd interact with a component by getting and setting *props*:
+
+```js
+console.log(component.answer); // 42
+component.answer =
+
+Every Svelte component instance has three built-in methods:
 
 
-### component.set(state)
+### component.$set(props)
 
 This updates the component's state with the new values provided and causes the DOM to update. `state` must be a plain old JavaScript object (POJO). Any properties *not* included in `state` will remain as they were.
 

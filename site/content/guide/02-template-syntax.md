@@ -4,12 +4,10 @@ title: Template syntax
 
 Rather than reinventing the wheel, Svelte templates are built on foundations that have stood the test of time: HTML, CSS and JavaScript. There's very little extra stuff to learn.
 
-> Svelte version 1 had a slightly different template syntax. You can upgrade older components automatically using [svelte-upgrade](https://github.com/sveltejs/svelte-upgrade).
-
 
 ### Tags
 
-Tags allow you to bind data to your template. Whenever your data changes (for example after `component.set(...)`), the DOM updates automatically. You can use any JavaScript expression in templates, and it will also automatically update:
+Tags allow you to bind data to your template. Whenever your data changes (for example after `component.a = 3`), the DOM updates automatically. You can use any JavaScript expression in templates, and it will also automatically update:
 
 ```html
 <!-- { title: 'Template tags' } -->
@@ -213,33 +211,18 @@ You can use destructuring patterns on the elements of the array:
 }
 ```
 
-If you want to iterate over an object you can use `Object.entries(object)` which returns the object's properties as `[key, value]` pairs:
-
-```html
-<!--{ title: 'Iterating over objects' }-->
-<h1>Cats and Dogs</h1>
-
-{#each Object.entries(animals) as [animal, names]}
-	<p>{animal}: {names.join(" and ")}</p>
-{/each}
-```
-
-```json
-/* { hidden: true } */
-{
-	animals: {
-		Cats: ["Buzz", "Stella"],
-		Dogs: ["Hector", "Victoria"]
-	}
-}
-```
-
 ### Await blocks
 
 You can represent the three states of a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) — pending, fulfilled and rejected — with an `await` block:
 
 ```html
 <!--{ title: 'Await blocks' }-->
+<script>
+	const promise = new Promise(fulfil => {
+		setTimeout(() => fulfil(42), 3000);
+	});
+</script>
+
 {#await promise}
 	<p>wait for it...</p>
 {:then answer}
@@ -247,18 +230,6 @@ You can represent the three states of a [Promise](https://developer.mozilla.org/
 {:catch error}
 	<p>well that's odd</p>
 {/await}
-
-<script>
-	export default {
-		data() {
-			return {
-				promise: new Promise(fulfil => {
-					setTimeout(() => fulfil(42), 3000);
-				})
-			};
-		}
-	};
-</script>
 ```
 
 If the expression in `{#await expression}` *isn't* a promise, Svelte skips ahead to the `then` section.
@@ -266,12 +237,12 @@ If the expression in `{#await expression}` *isn't* a promise, Svelte skips ahead
 
 ### Directives
 
-Directives allow you to add special instructions for adding [event handlers](guide#event-handlers), [bindings](guide#bindings), [referencing elements](guide#refs) and so on. We'll cover each of those in later stages of this guide – for now, all you need to know is that directives can be identified by the `:` character:
+Directives allow you to add special instructions for adding [event handlers](guide#event-handlers), [bindings](guide#bindings), [transitions](guide#transitions) and so on. We'll cover each of those in later stages of this guide – for now, all you need to know is that directives can be identified by the `:` character:
 
 ```html
 <!--{ title: 'Element directives' }-->
 <p>Count: {count}</p>
-<button on:click="set({ count: count + 1 })">+1</button>
+<button on:click="{() => count += 1}">+1</button>
 ```
 
 ```json
@@ -290,7 +261,7 @@ To inspect data as it changes and flows through your app, use a `{@debug ...}` t
 
 ```html
 <!--{ title: 'Debug tags' }-->
-<input bind:value=name>
+<input bind:value={name}>
 
 {@debug name}
 <h1>Hello {name}!</h1>

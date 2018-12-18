@@ -33,19 +33,15 @@ If you don't know what kind of component to render until the app runs — in ot
 
 ```html
 <!-- { title: '<svelte:component> tags' } -->
-<input type=checkbox bind:checked=foo> foo
-<svelte:component this="{foo ? Red : Blue}" name="thing"/>
-
 <script>
 	import Red from './Red.html';
 	import Blue from './Blue.html';
 
-	export default {
-		data() {
-			return { Red, Blue }
-		}
-	};
+	let foo = true;
 </script>
+
+<input type=checkbox bind:checked={foo}> foo
+<svelte:component this="{foo ? Red : Blue}" name="thing"/>
 ```
 
 ```html
@@ -58,56 +54,7 @@ If you don't know what kind of component to render until the app runs — in ot
 <p style="color: blue">Blue {name}</p>
 ```
 
-> Note that `Red` and `Blue` are items in `data`, *not* `components`, unlike if we were doing `<Red>` or `<Blue>`.
-
-The expression inside the `this="{...}"` can be any valid JavaScript expression. For example, it could be a [computed property](guide#computed-properties):
-
-```html
-<!-- { title: '<svelte:component> with computed' } -->
-<label><input type=radio bind:group=size value=small> small</label>
-<label><input type=radio bind:group=size value=medium> medium</label>
-<label><input type=radio bind:group=size value=large> large</label>
-
-<svelte:component this={Size}/>
-
-<script>
-	import Small from './Small.html';
-	import Medium from './Medium.html';
-	import Large from './Large.html';
-
-	export default {
-		computed: {
-			Size: ({size}) => {
-				if (size === 'small') return Small;
-				if (size === 'medium') return Medium;
-				return Large;
-			}
-		}
-	};
-</script>
-```
-
-```html
-<!--{ filename: 'Small.html' }-->
-<p style="font-size: 12px">small</p>
-```
-
-```html
-<!--{ filename: 'Medium.html' }-->
-<p style="font-size: 18px">medium</p>
-```
-
-```html
-<!--{ filename: 'Large.html' }-->
-<p style="font-size: 32px">LARGE</p>
-```
-
-```json
-/* { hidden: true } */
-{
-	size: "medium"
-}
-```
+The expression inside the `this="{...}"` can be any valid JavaScript expression.
 
 
 ### `<svelte:window>`
@@ -116,13 +63,7 @@ The `<svelte:window>` tag gives you a convenient way to declaratively add event 
 
 ```html
 <!-- { title: '<svelte:window> tags' } -->
-<svelte:window on:keydown="set({ key: event.key, keyCode: event.keyCode })"/>
-
-{#if key}
-	<p><kbd>{key === ' ' ? 'Space' : key}</kbd> (code {keyCode})</p>
-{:else}
-	<p>click in this window and press any key</p>
-{/if}
+<svelte:window on:keydown="{e => (key = event.key, keyCode = e.keyCode)}"/>
 
 <style>
 	kbd {
@@ -136,16 +77,19 @@ The `<svelte:window>` tag gives you a convenient way to declaratively add event 
 		font-family: Inconsolata;
 	}
 </style>
+
+{#if key}
+	<p><kbd>{key === ' ' ? 'Space' : key}</kbd> (code {keyCode})</p>
+{:else}
+	<p>click in this window and press any key</p>
+{/if}
 ```
 
 You can also bind to certain values — so far `innerWidth`, `outerWidth`, `innerHeight`, `outerHeight`, `scrollX`, `scrollY` and `online`:
 
 ```html
 <!-- { title: '<svelte:window> bindings' } -->
-<svelte:window bind:scrollY=y/>
-
-<div class="background"></div>
-<p class="fixed">user has scrolled {y} pixels</p>
+<svelte:window bind:scrollY={y}/>
 
 <style>
 	.background {
@@ -164,10 +108,15 @@ You can also bind to certain values — so far `innerWidth`, `outerWidth`, `inne
 		color: white;
 	}
 </style>
+
+<div class="background"></div>
+<p class="fixed">user has scrolled {y} pixels</p>
 ```
 
 
 ### `<svelte:document>`
+
+TODO REPLACE THIS WITH svelte:body
 
 The `<svelte:document>` tag, just like `<svelte:window>`, gives you a convenient way to declaratively add event listeners to the `document` object. This is useful for listening to events that don't fire on `window`, such as `mouseenter` and `mouseleave`.
 

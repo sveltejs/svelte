@@ -1,17 +1,17 @@
 ---
-title: Directives
+title: Events
 ---
-
-Directives are element or component-level instructions to Svelte. They look like attributes, except with a `:` character.
-
-### Event handlers
 
 In most applications, you'll need to respond to the user's actions. In Svelte, this is done with the `on:[event]` directive.
 
+### Element events
+
+When used on an element, `on:click={handler}` is equivalent to calling `element.addEventListener('click', handler)`. When the element is removed, Svelte calls `removeEventListener` automatically.
+
 ```html
-<!-- { title: 'Event handlers' } -->
+<!-- { title: 'Inline event handlers' } -->
 <p>Count: {count}</p>
-<button on:click="set({ count: count + 1 })">+1</button>
+<button on:click="{() => count += 1}">+1</button>
 ```
 
 ```json
@@ -21,60 +21,33 @@ In most applications, you'll need to respond to the user's actions. In Svelte, t
 }
 ```
 
-When the user clicks the button, Svelte calls `component.set(...)` with the provided arguments. You can call any method belonging to the component (whether [built-in](guide#component-api) or [custom](guide#custom-methods)), and any data property (or computed property) that's in scope:
+For more complicated behaviours, you'll probably want to declare an event handler in your `<script>` block:
 
 ```html
-<!-- { title: 'Calling custom methods' } -->
-<p>Select a category:</p>
-
-{#each categories as category}
-	<button on:click="select(category)">select {category}</button>
-{/each}
-
+<!-- { title: 'Event handlers' } -->
 <script>
-	export default {
-		data() {
-			return {
-				categories: [
-					'animal',
-					'vegetable',
-					'mineral'
-				]
-			}
-		},
+	let count = 0;
 
-		methods: {
-			select(name) {
-				alert(`selected ${name}`); // seriously, please don't do this
-			}
-		}
-	};
-</script>
-```
+	function incrementOrDecrement(event) {
+		const d = event.shiftKey
+			? -1
+			: +1;
 
-You can also access the `event` object in the method call:
-
-```html
-<!-- { title: 'Accessing `event`' } -->
-<div on:mousemove="set({ x: event.clientX, y: event.clientY })">
-	coords: {x},{y}
-</div>
-
-<style>
-	div {
-		border: 1px solid purple;
-		width: 100%;
-		height: 100%;
+		count += d;
 	}
-</style>
+</script>
+
+<p>Count: {count}</p>
+<button on:click={incrementOrDecrement}>update</button>
 ```
 
-The target node can be referenced as `this`, meaning you can do this sort of thing:
-
-```html
-<!-- { title: 'Calling node methods' } -->
-<input on:focus="this.select()" value="click to select">
+```json
+/* { hidden: true } */
+{
+	count: 0
+}
 ```
+
 
 ### Event handler modifiers
 
@@ -82,26 +55,24 @@ While you can invoke methods like `event.stopPropagation` directly...
 
 ```html
 <!-- { repl: false } -->
-<div on:click="event.stopPropagation()">...</div>
+<div on:click="{e => e.stopPropagation()}">...</div>
 ```
 
 ...it gets annoying if you want to combine that with some other behaviour:
 
 ```html
 <!-- { repl: false } -->
-<div on:click="setFoo(event)">...</div>
-
 <script>
-	export default {
-		methods: {
-			setFoo(event) {
-				event.stopPropagation();
-				event.preventDefault();
-				this.set({ foo: true });
-			}
-		}
-	};
+	let foo = false;
+
+	function toggleFoo(event) {
+		event.stopPropagation();
+		event.preventDefault();
+		foo = !foo;
+	}
 </script>
+
+<div on:click={toggleFoo}>...</div>
 ```
 
 For that reason, Svelte lets you use *event modifiers*:
@@ -114,16 +85,13 @@ For that reason, Svelte lets you use *event modifiers*:
 
 > `passive` and `once` are not implemented in `legacy` mode
 
-The example above can be achieved with modifiers — no need for a custom method:
+The example above can be achieved with modifiers — no need for a separate event handler:
 
 ```html
 <!-- { repl: false } -->
-<div on:click|stopPropagation|preventDefault="set({ foo: true })">...</div>
+<div on:click|stopPropagation|preventDefault="{() => foo = !foo}">...</div>
 ```
 
-### Custom events
-
-You can define your own custom events to handle complex user interactions like dragging and swiping. See the earlier section on [custom event handlers](guide#custom-event-handlers) for more information.
 
 ### Component events
 

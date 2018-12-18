@@ -10,10 +10,6 @@ Your component template can have a `<style>` tag, like so:
 
 ```html
 <!--{ title: 'Scoped styles' }-->
-<div class="foo">
-	Big red Comic Sans
-</div>
-
 <style>
 	.foo {
 		color: red;
@@ -21,6 +17,10 @@ Your component template can have a `<style>` tag, like so:
 		font-family: 'Comic Sans MS';
 	}
 </style>
+
+<div class="foo">
+	Big red Comic Sans
+</div>
 ```
 
 
@@ -41,9 +41,9 @@ Styles will *only* apply to the current component, unless you opt in to cascadin
 
 ```html
 <!-- { repl: false } -->
-<div>
-	<Widget/>
-</div>
+<script>
+	import Widget from './Widget.html';
+</script>
 
 <style>
 	p {
@@ -59,13 +59,9 @@ Styles will *only* apply to the current component, unless you opt in to cascadin
 	}
 </style>
 
-<script>
-	import Widget from './Widget.html';
-
-	export default {
-		components: { Widget }
-	};
-</script>
+<div>
+	<Widget/>
+</div>
 ```
 
 > Scoped styles are *not* dynamic – they are shared between all instances of a component. In other words you can't use `{tags}` inside your CSS.
@@ -75,27 +71,27 @@ Styles will *only* apply to the current component, unless you opt in to cascadin
 
 Svelte will identify and remove styles that are not being used in your app. It will also emit a warning so that you can remove them from the source.
 
-For rules *not* to be removed, they must apply to the component's markup. As far as Svelte is concerned `.active` is unused in the following code and should be removed:
+For rules *not* to be removed, they must apply to the component's markup. As far as Svelte is concerned `.bold` is unused in the following code and should be removed:
 
 ```html
 <!-- { repl: false } -->
 <div>
-	<p ref:paragraph>this text is not bold</p>
+	<p bind:this={paragraph}>this text is not bold</p>
 </div>
 
 <style>
-	.active {
+	.bold {
 		color: bold;
 	}
 </style>
 
 <script>
-	export default {
-		oncreate() {
-			const { active } = this.get();
-			if (active) this.refs.paragraph.classList.add('active');
-		}
-	};
+	import { onMount } from 'svelte';
+
+	let paragraph;
+	onMount(() => {
+		paragraph.classList.add('bold');
+	});
 </script>
 ```
 
@@ -104,7 +100,7 @@ Instead of manually manipulating the DOM, you should always use the `class` attr
 ```html
 <!-- { repl: false } -->
 <div>
-	<p class="{active ? 'active' : ''}">this text is bold</p>
+	<p class:bold={bold}>this text is bold</p>
 </div>
 ```
 
@@ -113,30 +109,10 @@ If that's impossible for some reason, you can use `:global(...)`:
 ```html
 <!-- { repl: false } -->
 <style>
-	div :global(.active) {
+	div :global(.bold) {
 		color: bold;
 	}
 </style>
 ```
 
 The same applies to the contents of `{@html ...}` tags.
-
-
-### Special selectors
-
-If you have a [ref](guide#refs) on an element, you can use it as a CSS selector. The `ref:*` selector has the same specificity as a class or attribute selector.
-
-
-```html
-<!--{ title: 'Styling with refs' }-->
-<div ref:foo>
-	yeah!
-</div>
-
-<style>
-	ref:foo {
-		color: magenta;
-		font-size: 5em;
-	}
-</style>
-```
