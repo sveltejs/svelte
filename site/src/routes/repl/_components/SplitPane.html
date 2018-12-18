@@ -1,9 +1,11 @@
 <script>
+	import * as yootils from 'yootils';
 	import { createEventDispatcher } from 'svelte';
 
 	const dispatch = createEventDispatcher();
 
 	export let type;
+	export let min = 50;
 
 	const refs = {};
 	const side = type === 'horizontal' ? 'left' : 'top';
@@ -15,9 +17,15 @@
 	function setPos(event) {
 		const { top, bottom, left, right } = refs.container.getBoundingClientRect();
 
-		pos = 100 * (type === 'vertical'
-			? (event.clientY - top) / (bottom - top)
-			: (event.clientX - left) / (right - left));
+		const extents = type === 'vertical' ? [top, bottom] : [left, right];
+
+		const px = yootils.clamp(
+			type === 'vertical' ? event.clientY : event.clientX,
+			extents[0] + min,
+			extents[1] - min
+		);
+
+		pos = 100 * (px - extents[0]) / (extents[1] - extents[0]);
 
 		dispatch('change');
 	}

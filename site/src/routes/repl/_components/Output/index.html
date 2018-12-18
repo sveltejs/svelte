@@ -27,8 +27,10 @@
 		/* width: 50%;
 		height: 100%; */
 		text-align: left;
+		position: relative;
 		font: 300 1.2rem/1.5 var(--font-ui);
 		border-bottom: var(--border-w) solid transparent;
+		padding: 1.2rem 1.5rem 0.8rem 1.5rem;
 	}
 
 	button.active {
@@ -38,6 +40,11 @@
 
 	div {
 		height: 100%;
+	}
+
+	h3 {
+		font: 300 1.2rem/1.5 var(--font-ui);
+		padding: 1.2rem 0 0.8rem 1rem;
 	}
 </style>
 
@@ -74,6 +81,10 @@
 		</div>
 
 		<section slot="b">
+			<h3>
+				Props editor
+			</h3>
+
 			<CodeMirror
 				mode="json"
 				bind:code={json5}
@@ -95,7 +106,11 @@
 		</div>
 
 		<section slot="b">
-			compiler options go here
+			<h3>
+				Compiler options
+			</h3>
+
+			<div>TODO</div>
 		</section>
 	</SplitPane>
 {/if}

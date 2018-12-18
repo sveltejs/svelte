@@ -19,7 +19,8 @@
     "golden-fleece": "^1.0.9",
     "marked": "^0.5.2",
     "prismjs": "^1.15.0",
-    "sirv": "^0.2.0"
+    "sirv": "^0.2.0",
+    "yootils": "0.0.14"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
