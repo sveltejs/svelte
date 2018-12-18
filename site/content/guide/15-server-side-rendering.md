@@ -21,7 +21,7 @@ const { js } = svelte.compile(source, {
 Alternatively, an easy way to use the server-side renderer is to *register* it:
 
 ```js
-require('svelte/ssr/register');
+require('svelte/register.js');
 ```
 
 Now you can `require` your components:
@@ -33,7 +33,7 @@ const Thing = require('./components/Thing.html');
 If you prefer to use a different file extension, you can pass options like so:
 
 ```js
-require('svelte/ssr/register')({
+require('svelte/register.js')({
 	extensions: ['.svelte']
 });
 ```
@@ -41,37 +41,20 @@ require('svelte/ssr/register')({
 
 ### Server-side API
 
-Components have a different API in Node.js – rather than creating instances with `set(...)` and `get()` methods, a component is an object with a `render(data, options)` method:
+Components have a different API in Node.js – rather than being a constructor that you use with the `new` keyword, a component is an object with a `render(data, options)` method:
 
 ```js
-require('svelte/ssr/register');
+require('svelte/register.js');
 const Thing = require('./components/Thing.html');
 
-const data = { answer: 42 };
-const { html, css, head } = Thing.render(data);
+const props = { answer: 42 };
+const { html, css, head } = Thing.render(props);
 ```
 
-All your [default data](guide#default-data), [computed properties](guide#computed-properties), [helpers](guide#helpers) and [nested components](guide#nested-components) will work as expected.
-
-Any `oncreate` functions or component methods will *not* run — these only apply to client-side components.
+[Lifecycle hooks](guide#lifecycle-hooks) will *not* run, with the exception of `onDestroy`, because the component is never 'mounted'.
 
 > The SSR compiler will generate a CommonJS module for each of your components – meaning that `import` and `export` statements are converted into their `require` and `module.exports` equivalents. If your components have non-component dependencies, they must also work as CommonJS modules in Node. If you're using ES2015 modules, we recommend the [`esm`](https://github.com/standard-things/esm) module for automatically converting them to CommonJS.
 
-
-
-#### Using stores
-
-If your components use [stores](guide#state-management), use the second argument:
-
-```js
-const { Store } = require('svelte/store.umd.js');
-
-const { html } = Thing.render(data, {
-	store: new Store({
-		foo: 'bar'
-	})
-});
-```
 
 
 #### Rendering styles
