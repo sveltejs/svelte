@@ -25,7 +25,7 @@ Like any attribute, the `class` attribute can be set using regular JavaScript. S
 
 That's a little verbose though, so the `class:` directive gives you a simpler way to achieve the same thing:
 
-```diff
+```html
 <!-- { title: 'Dynamic classes using directives' } -->
 <script>
 	let isActive = false;
@@ -47,7 +47,7 @@ That's a little verbose though, so the `class:` directive gives you a simpler wa
 
 As with any directive, you can use any JavaScript expression. If it's a variable name that matches the class name, you can use a shorthand:
 
-```diff
+```html
 <!-- { title: 'Dynamic classes using directives' } -->
 <script>
 -	let isActive = false;
