@@ -76,6 +76,51 @@ The target node can be referenced as `this`, meaning you can do this sort of thi
 <input on:focus="this.select()" value="click to select">
 ```
 
+### Event handler modifiers
+
+While you can invoke methods like `event.stopPropagation` directly...
+
+```html
+<!-- { repl: false } -->
+<div on:click="event.stopPropagation()">...</div>
+```
+
+...it gets annoying if you want to combine that with some other behaviour:
+
+```html
+<!-- { repl: false } -->
+<div on:click="setFoo(event)">...</div>
+
+<script>
+	export default {
+		methods: {
+			setFoo(event) {
+				event.stopPropagation();
+				event.preventDefault();
+				this.set({ foo: true });
+			}
+		}
+	};
+</script>
+```
+
+For that reason, Svelte lets you use *event modifiers*:
+
+- [`preventDefault`](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault)
+- [`stopPropagation`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation)
+- [`passive`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Parameters) — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
+- [`once`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Parameters) — removes the listener after the first invocation
+- [`capture`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#Parameter)
+
+> `passive` and `once` are not implemented in `legacy` mode
+
+The example above can be achieved with modifiers — no need for a custom method:
+
+```html
+<!-- { repl: false } -->
+<div on:click|stopPropagation|preventDefault="set({ foo: true })">...</div>
+```
+
 ### Custom events
 
 You can define your own custom events to handle complex user interactions like dragging and swiping. See the earlier section on [custom event handlers](guide#custom-event-handlers) for more information.
@@ -379,7 +424,7 @@ Some bindings are *one-way*, meaning that the values are read-only. Most are *tw
 | Name                                                            | Applies to                                   | Kind                 |
 |-----------------------------------------------------------------|----------------------------------------------|----------------------|
 | `value`                                                         | `<input>` `<textarea>` `<select>`            | <span>Two-way</span> |
-| `checked`                                                       | `<input type=checkbox>`                      | <span>Two-way</span> |
+| `checked` `indeterminate`                                       | `<input type=checkbox>`                      | <span>Two-way</span> |
 | `group` (see note)                                              | `<input type=checkbox>` `<input type=radio>` | <span>Two-way</span> |
 | `currentTime` `paused` `played` `volume`                        | `<audio>` `<video>`                          | <span>Two-way</span> |
 | `buffered` `duration` `seekable`                                | `<audio>` `<video>`                          | <span>One-way</span> |
@@ -419,6 +464,8 @@ Here is a complete example of using two way bindings with a form:
 	name: "world"
 }
 ```
+
+> 'two way' bindings allow you to update a value in a nested property as seen in [checkbox input](repl?demo=binding-input-checkbox).
 
 ### Actions
 

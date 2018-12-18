@@ -29,7 +29,7 @@ Sometimes, a component needs to embed itself recursively — for example if you 
 
 ### `<svelte:component>`
 
-If you don't know what kind of component to render until the app runs — in other words, it's driven by state — you can use `<svelte:component>`:
+If you don't know what kind of component to render until the app runs — in other words, it's driven by state (aka a dynamic component) — you can use `<svelte:component>`:
 
 ```html
 <!-- { title: '<svelte:component> tags' } -->
@@ -165,6 +165,11 @@ You can also bind to certain values — so far `innerWidth`, `outerWidth`, `inne
 	}
 </style>
 ```
+
+
+### `<svelte:document>`
+
+The `<svelte:document>` tag, just like `<svelte:window>`, gives you a convenient way to declaratively add event listeners to the `document` object. This is useful for listening to events that don't fire on `window`, such as `mouseenter` and `mouseleave`.
 
 
 ### `<svelte:head>`

@@ -39,8 +39,7 @@ You can also use tags in attributes:
 	hideParagraph: false
 }
 ```
-[Boolean attributes](https://www.w3.org/TR/html5/infrastructure.html#sec-boolean-attributes) like `hidden` will be omitted if the tag expression evaluates to false.
-
+[Boolean attributes](https://www.w3.org/TR/html5/infrastructure.html#sec-boolean-attributes) like `hidden` will be omitted if the tag expression evaluates to false. Attributes will be removed from the element if their value is `undefined` or `null`.
 
 ### HTML
 

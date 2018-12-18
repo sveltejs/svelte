@@ -28,7 +28,7 @@ Each instance of `Store` has `get`, `set`, `on` and `fire` methods that behave i
 ```js
 const { name } = store.get(); // 'world'
 
-store.on('state', ({ current }) => {
+store.on('state', ({ current, changed, previous }) => {
 	console.log(`hello ${current.name}`);
 });
 

@@ -9,12 +9,17 @@ As we saw above, you create a component instance with the `new` keyword:
 import MyComponent from './MyComponent.html';
 
 const component = new MyComponent({
-	// `target` is the only required option – the element
-	// to render the component to
+	// `target` is the only required option. This is the
+	// DOM element your component will be appended to
 	target: document.querySelector('main'),
 
-	// `data` is optional. A component can also have
-	// default data – we'll learn about that later.
+	// `anchor` is optional.
+	// The component is inserted immediately before this
+	// DOM element, which must be a child of `target`
+	anchor: document.querySelector('main #child'),
+
+	// `data` is optional.
+	// A component can have default data – we'll learn about that later.
 	data: {
 		questions: [
 			'life',

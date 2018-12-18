@@ -8,17 +8,18 @@ Svelte is a tool for building fast web applications.
 
 It is similar to JavaScript frameworks such as React, Angular, Vue, and Ractive, which all share a goal of making it easy to build slick interactive user interfaces.
 
-But there's a crucial difference: Svelte converts your app into ideal JavaScript at _build time_, rather than interpreting your application code at _run time_. This means you don't pay the performance cost of the framework's abstractions, and you don't incur a penalty when your app first loads.
+But there's a crucial difference: Svelte converts your app into ideal JavaScript at *build time*, rather than interpreting your application code at *run time*. This means you don't pay the performance cost of the framework's abstractions, and you don't incur a penalty when your app first loads.
 
 You can build your entire app with Svelte, or you can add it incrementally to an existing codebase. You can also ship components as standalone packages that work anywhere, without the overhead of a dependency on a conventional framework.
 
 [Read the introductory blog post](/blog/frameworks-without-the-framework) to learn more about Svelte's goals and philosophy.
 
+
 ### Understanding Svelte components
 
-In Svelte, an application is composed from one or more _components_. A component is a reusable self-contained block of code that encapsulates markup, styles and behaviours that belong together.
+In Svelte, an application is composed from one or more *components*. A component is a reusable self-contained block of code that encapsulates markup, styles and behaviours that belong together.
 
-Like Ractive and Vue, Svelte promotes the concept of _single-file components_: a component is just an `.html` file. Here's a simple example:
+Like Ractive and Vue, Svelte promotes the concept of *single-file components*: a component is just an `.html` file. Here's a simple example:
 
 ```html
 <!--{ title: 'Hello world!' }-->
@@ -28,11 +29,11 @@ Like Ractive and Vue, Svelte promotes the concept of _single-file components_: a
 ```json
 /* { hidden: true } */
 {
-  "name": "world"
+	name: 'world'
 }
 ```
 
-> Wherever you see <svg class="icon" style="color:var(--text)"><use xlink:href='#maximize-2' /></svg> links, click through for an interactive example
+> Wherever you see <strong style="font-weight: 700; font-size: 16px; font-family: Inconsolata, monospace; color: rgba(170,30,30, 0.8)">REPL</strong> links, click through for an interactive example
 
 Svelte turns this into a JavaScript module that you can import into your app:
 
@@ -41,8 +42,8 @@ Svelte turns this into a JavaScript module that you can import into your app:
 import App from './App.html';
 
 const app = new App({
-  target: document.querySelector('main'),
-  data: { name: 'world' },
+	target: document.querySelector('main'),
+	data: { name: 'world' }
 });
 
 // change the data associated with the template
@@ -54,6 +55,7 @@ app.destroy();
 
 Congratulations, you've just learned about half of Svelte's API!
 
+
 ### Getting started
 
 Normally, this is the part where the instructions might tell you to add the framework to your page as a `<script>` tag. But because Svelte runs at build time, it works a little bit differently.
@@ -64,7 +66,7 @@ The best way to use Svelte is to integrate it into your build system – there 
 
 #### Getting started using the REPL
 
-Going to the [REPL](/repl) and pressing the _download_ button on any of the examples will give you a .zip file containing everything you need to run that example locally. Just unzip it, `cd` to the directory, and run `npm install` and `npm run dev`. See [this blog post](/blog/the-easiest-way-to-get-started) for more information.
+Going to the [REPL](/repl) and pressing the *download* button on any of the examples will give you a .zip file containing everything you need to run that example locally. Just unzip it, `cd` to the directory, and run `npm install` and `npm run dev`. See [this blog post](/blog/the-easiest-way-to-get-started) for more information.
 
 #### Getting started using degit
 
@@ -85,8 +87,8 @@ npm run dev
 
 You can use any git repo you like — these are the 'official' templates:
 
-- [sveltejs/template](https://github.com/sveltejs/template) — this is what you get by downloading from the REPL
-- [sveltejs/template-webpack](https://github.com/sveltejs/template-webpack) — similar, but uses [webpack](https://webpack.js.org/) instead of [Rollup](https://rollupjs.org/guide/en)
+* [sveltejs/template](https://github.com/sveltejs/template) — this is what you get by downloading from the REPL
+* [sveltejs/template-webpack](https://github.com/sveltejs/template-webpack) — similar, but uses [webpack](https://webpack.js.org/) instead of [Rollup](https://rollupjs.org/guide/en)
 
 #### Getting started using the CLI
 
@@ -99,8 +101,7 @@ If you've installed `svelte` globally, you can use `svelte --help` for a complet
 svelte compile MyComponent.html > MyComponent.js
 svelte compile -i MyComponent.html -o MyComponent.js
 
-# Generate a UMD module from MyComponent.html,
-# inferring its name from the filename ('MyComponent')
+# Generate a UMD module from MyComponent.html, inferring its name from the filename ('MyComponent')
 svelte compile -f umd MyComponent.html > MyComponent.js
 
 # Generate a UMD module, specifying the name
