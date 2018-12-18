@@ -18,7 +18,6 @@ node_modules
 /store.umd.js
 /yarn-error.log
 _actual*.*
-_*/
 
 /site/cypress/screenshots/
 /site/__sapper__/

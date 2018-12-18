@@ -1,0 +1,37 @@
+<script>
+	import CodeMirror from '../CodeMirror.html';
+
+	export let selectedComponent;
+	export let error;
+	export let errorLoc;
+	export let warningCount = 0;
+</script>
+
+<style>
+	.editor-wrapper {
+		z-index: 5;
+		background: var(--back-light);
+	}
+
+	@media (min-width: 768px) {
+		.editor-wrapper {
+			/* make it easier to interact with scrollbar */
+			padding-right: 8px;
+			height: auto;
+			/* height: 100%; */
+		}
+	}
+</style>
+
+<div class="editor-wrapper">
+	{#if selectedComponent}
+		<CodeMirror
+			mode="{selectedComponent.type === 'js' ? 'javascript' : 'handlebars'}"
+			bind:code={selectedComponent.source}
+			{error}
+			{errorLoc}
+			{warningCount}
+			on:navigate
+		/>
+	{/if}
+</div>

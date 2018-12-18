@@ -1,0 +1,101 @@
+<script>
+	import SplitPane from '../SplitPane.html';
+	import Viewer from './Viewer.html';
+	import CodeMirror from '../CodeMirror.html';
+
+	export let bundle
+	export let compiled;
+	export let dom;
+	export let ssr;
+	export let data;
+	export let json5;
+	export let sourceError;
+	export let runtimeError;
+	export let dataError;
+	export let dataErrorLoc;
+
+	let view = 'result';
+</script>
+
+<style>
+	.view-toggle {
+		height: var(--pane-controls-h);
+		border-bottom: 1px solid #eee;
+	}
+
+	button {
+		/* width: 50%;
+		height: 100%; */
+		text-align: left;
+		font: 300 1.2rem/1.5 var(--font-ui);
+		border-bottom: var(--border-w) solid transparent;
+	}
+
+	button.active {
+		border-bottom: var(--border-w) solid var(--prime);
+		color: var(--second);
+	}
+
+	div {
+		height: 100%;
+	}
+</style>
+
+<div class="view-toggle">
+	<button
+		class:active="{view === 'result'}"
+		on:click="{() => view = 'result'}"
+	>Result</button>
+
+	<button
+		class:active="{view === 'code'}"
+		on:click="{() => view = 'code'}"
+	>Compiled code</button>
+</div>
+
+
+{#if view === 'result'}
+	<SplitPane type="vertical">
+		<div slot="a">
+			{#if bundle}
+				<Viewer
+					{bundle}
+					{dom}
+					{ssr}
+					{data}
+					{sourceError}
+					bind:error={runtimeError}
+					on:data="{e => updateData(e.detail.current)}"
+					on:navigate={navigate}
+				/>
+			{:else}
+				<p class="loading">loading Svelte compiler...</p>
+			{/if}
+		</div>
+
+		<section slot="b">
+			<CodeMirror
+				mode="json"
+				bind:code={json5}
+				error={dataError}
+				errorLoc={dataErrorLoc}
+			/>
+		</section>
+	</SplitPane>
+{:else}
+	<SplitPane type="vertical">
+		<div slot="a">
+			<CodeMirror
+				mode="javascript"
+				code={compiled}
+				error={sourceError}
+				errorLoc={sourceErrorLoc}
+				readonly
+			/>
+		</div>
+
+		<section slot="b">
+			compiler options go here
+		</section>
+	</SplitPane>
+{/if}

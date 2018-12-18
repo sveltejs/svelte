@@ -1,0 +1,27 @@
+<script>
+	import ComponentSelector from './ComponentSelector.html';
+	import ModuleEditor from './ModuleEditor.html';
+
+	export let components;
+	export let selectedComponent;
+	export let sourceError;
+	export let sourceErrorLoc;
+	export let runtimeErrorLoc;
+	export let warningCount;
+</script>
+
+<ComponentSelector
+	{components}
+	bind:selectedComponent
+	on:create
+	on:remove
+	on:select
+/>
+
+<ModuleEditor
+	bind:selectedComponent
+	error={sourceError}
+	errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
+	{warningCount}
+	on:navigate
+/>

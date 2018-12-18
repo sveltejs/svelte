@@ -1,0 +1,66 @@
+<script>
+	import { user, logout } from '../../../user.js';
+
+	let showMenu = false;
+	let name;
+
+	$: name = $user.displayName || $user.username;
+</script>
+
+<div class="user" on:mouseenter="{() => showMenu = true}" on:mouseleave="{() => showMenu = false}">
+	<span>{name}</span>
+	<img alt="{name} avatar" src="{$user.photo}">
+
+	{#if showMenu}
+		<div class="menu">
+			<button on:click={logout}>log out</button>
+		</div>
+	{/if}
+</div>
+
+<style>
+	.user {
+		position: relative;
+		float: right;
+		display: block;
+		padding: .5em 2.2em 0 .8em;
+		line-height: 1;
+		z-index: 99;
+		height: 2.5em;
+	}
+
+	span {
+		/* position: relative; padding: 0 2em 0 0; */
+		line-height: 1;
+		display: inline-block;
+		padding: .05em 0;
+		font-family: Rajdhani;
+		font-weight: 400;
+	}
+
+	img {
+		position: absolute;
+		top: .2em;
+		right: 0;
+		width: 1.6em;
+		height: 1.6em;
+		border-radius: 50%;
+	}
+
+	.menu {
+		position: absolute;
+		min-width: calc(100% + .1em);
+		background-color: #f4f4f4;
+		padding: .5em;
+		z-index: 99;
+		top: calc(2.5em - 1px);
+		border-bottom: 1px solid #eee;
+		border-left: 1px solid #eee;
+		right: 0;
+		text-align: left;
+	}
+
+	.menu button {
+		background-color: transparent;
+	}
+</style>
