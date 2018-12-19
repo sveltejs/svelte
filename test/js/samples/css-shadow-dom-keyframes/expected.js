@@ -59,5 +59,7 @@ assign(SvelteComponent.prototype, {
 	}
 });
 
-customElements.define("custom-element", SvelteComponent);
+if (!customElements.get("custom-element")) {
+	customElements.define("custom-element", SvelteComponent);
+}
 export default SvelteComponent;

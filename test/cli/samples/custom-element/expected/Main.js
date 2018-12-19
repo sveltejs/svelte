@@ -67,7 +67,9 @@ assign(Main.prototype, {
 	}
 });
 
-customElements.define("my-element", Main);
+if (!customElements.get("my-element")) {
+	customElements.define("my-element", Main);
+}
 
 Main.prototype._recompute = noop;
 
