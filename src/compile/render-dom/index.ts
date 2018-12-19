@@ -290,7 +290,9 @@ export default function dom(
 				}
 			});
 
-			customElements.define("${component.tag}", ${name});
+			if (!customElements.get(${component.tag})) {
+				customElements.define("${component.tag}", ${name});
+			}
 		`);
 	} else {
 		builder.addBlock(deindent`
