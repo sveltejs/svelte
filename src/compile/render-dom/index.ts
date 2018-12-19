@@ -290,7 +290,7 @@ export default function dom(
 				}
 			});
 
-			if (!customElements.get(${component.tag})) {
+			if (!customElements.get("${component.tag}")) {
 				customElements.define("${component.tag}", ${name});
 			}
 		`);
