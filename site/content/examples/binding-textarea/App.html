@@ -1,5 +1,11 @@
-<textarea bind:value='markdown' resize='none'></textarea>
-<div class='output'>{@html marked(markdown)}</div>
+<script>
+	import marked from 'marked';
+
+	export let markdown;
+</script>
+
+<textarea bind:value={markdown} resize="none"></textarea>
+<div class="output">{@html marked(markdown)}</div>
 
 <style>
 	textarea {
@@ -7,13 +13,3 @@
 		height: 50%;
 	}
 </style>
-
-<script>
-	import marked from 'marked';
-
-	export default {
-		helpers: {
-			marked
-		}
-	};
-</script>

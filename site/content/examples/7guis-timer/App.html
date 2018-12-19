@@ -1,3 +1,42 @@
+<script>
+	import { onDestroy, onMount } from 'svelte';
+
+	// [svelte-upgrade suggestion]
+	// manually refactor all references to __this
+	const __this = {};
+
+	export let elapsed = 0;
+	export let duration = 5000;
+	export let start;
+
+	onMount(() => {
+		reset();
+
+		const update = () => {
+			__this.frame = requestAnimationFrame(update);
+			const elapsed = window.performance.now() - start;
+
+			if (elapsed > duration) return;
+
+			elapsed = elapsed;
+		};
+
+		update();
+	});
+
+	onDestroy(() => {
+		if (__this.frame) {
+			cancelAnimationFrame(__this.frame);
+		}
+	});
+
+	// [svelte-upgrade suggestion]
+	// review these functions and remove unnecessary 'export' keywords
+	export function reset() {
+		start = window.performance.now();
+	}
+</script>
+
 <!-- https://github.com/eugenkiss/7guis/wiki#timer -->
 <label>
 	elapsed time:
@@ -11,43 +50,4 @@
 	<input type='range' bind:value='duration' min='1' max='20000'>
 </label>
 
-<button on:click='reset()'>reset</button>
-
-<script>
-	export default {
-		data() {
-			return { elapsed: 0, duration: 5000 };
-		},
-
-		oncreate() {
-			this.reset();
-
-			const update = () => {
-				this.frame = requestAnimationFrame(update);
-
-				const { start, duration } = this.get();
-				const elapsed = window.performance.now() - start;
-
-				if (elapsed > duration) return;
-
-				this.set({ elapsed });
-			};
-
-			update();
-		},
-
-		ondestroy() {
-			if (this.frame) {
-				cancelAnimationFrame(this.frame);
-			}
-		},
-
-		methods: {
-			reset() {
-				this.set({
-					start: window.performance.now()
-				});
-			}
-		}
-	};
-</script>
+<button on:click='{reset}'>reset</button>

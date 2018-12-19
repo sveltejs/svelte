@@ -1,21 +1,21 @@
 <!-- this binds `sy` to the current value of `window.scrollY` -->
-<svelte:window bind:scrollY='sy'/>
+<svelte:window bind:scrollY={sy}/>
 
 <!-- try changing the values that `sy` is multiplied by -
      values closer to 0 appear further away -->
-<div class='parallax-container'>
-	<img style='transform: translate(0,{-sy * 0.2}px)' src='http://www.firewatchgame.com/images/parallax/parallax0.png'>
-	<img style='transform: translate(0,{-sy * 0.3}px)' src='http://www.firewatchgame.com/images/parallax/parallax1.png'>
-	<img style='transform: translate(0,{-sy * 0.4}px)' src='http://www.firewatchgame.com/images/parallax/parallax3.png'>
-	<img style='transform: translate(0,{-sy * 0.5}px)' src='http://www.firewatchgame.com/images/parallax/parallax5.png'>
-	<img style='transform: translate(0,{-sy * 0.6}px)' src='http://www.firewatchgame.com/images/parallax/parallax7.png'>
+<div class="parallax-container">
+	<img style="transform: translate(0,{-sy * 0.2}px)" src="http://www.firewatchgame.com/images/parallax/parallax0.png">
+	<img style="transform: translate(0,{-sy * 0.3}px)" src="http://www.firewatchgame.com/images/parallax/parallax1.png">
+	<img style="transform: translate(0,{-sy * 0.4}px)" src="http://www.firewatchgame.com/images/parallax/parallax3.png">
+	<img style="transform: translate(0,{-sy * 0.5}px)" src="http://www.firewatchgame.com/images/parallax/parallax5.png">
+	<img style="transform: translate(0,{-sy * 0.6}px)" src="http://www.firewatchgame.com/images/parallax/parallax7.png">
 </div>
 
-<div class='text'>
-	<small style='
+<div class="text">
+	<small style="
 		transform: translate(0,{-sy * 1.5}px);
 		opacity: {1 - Math.max( 0, sy / 80 )}
-	'>(scroll down)</small>
+	">(scroll down)</small>
 	<span>parallax has never been this easy</span>
 </div>
 

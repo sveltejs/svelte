@@ -1,4 +1,10 @@
-<div class='modal-background' on:click='fire("close")'></div>
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+</script>
+
+<div class='modal-background' on:click='{() => dispatch("close")}'></div>
 
 <div class='modal'>
 	<slot name='header'></slot>
@@ -6,7 +12,7 @@
 	<slot></slot>
 	<hr>
 
-	<button on:click='fire("close")'>close modal</button>
+	<button on:click='{() => dispatch("close")}'>close modal</button>
 </div>
 
 <style>

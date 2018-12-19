@@ -1,6 +1,12 @@
+<script>
+	import Modal from './Modal.html';
+
+	export let showModal;
+</script>
+
 {#if showModal}
-	<Modal on:close='set({ showModal: false })'>
-		<h2 slot='header'>
+	<Modal on:close="{() => showModal = false}">
+		<h2 slot="header">
 			modal
 			<small><em>adjective</em>  mod·al \ˈmō-dəl\</small>
 		</h2>
@@ -14,20 +20,10 @@
 			<li>of or relating to a statistical mode</li>
 		</ol>
 
-		<a href='https://www.merriam-webster.com/dictionary/modal'>merriam-webster.com</a>
+		<a href="https://www.merriam-webster.com/dictionary/modal">merriam-webster.com</a>
 	</Modal>
 {:else}
-	<button on:click='set({ showModal: true })'>
+	<button on:click="{() => showModal = true}">
 		show modal
 	</button>
 {/if}
-
-<script>
-	import Modal from './Modal.html';
-
-	export default {
-		components: {
-			Modal
-		}
-	};
-</script>

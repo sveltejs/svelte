@@ -1,7 +1,18 @@
+<script>
+	export let item;
+	export let i;
+	export let offset;
+
+	function comment_text() {
+		const c = item.comments_count;
+		return `${c} ${c === 1 ? 'comment' : 'comments'}`;
+	}
+</script>
+
 <article>
 	<span>{i + offset + 1}</span>
-	<h2><a target='_blank' href='{item.url}'>{item.title}</a></h2>
-	<p class='meta'><a href='#/item/{item.id}'>{comment_text}</a> by {item.user} {item.time_ago}</p>
+	<h2><a target="_blank" href={item.url}>{item.title}</a></h2>
+	<p class="meta"><a href="#/item/{item.id}">{comment_text()}</a> by {item.user} {item.time_ago}</p>
 </article>
 
 <style>
@@ -25,14 +36,3 @@
 		color: #333;
 	}
 </style>
-
-<script>
-	export default {
-		computed: {
-			comment_text({ item }) {
-				const c = item.comments_count;
-				return `${c} ${c === 1 ? 'comment' : 'comments'}`;
-			}
-		}
-	};
-</script>

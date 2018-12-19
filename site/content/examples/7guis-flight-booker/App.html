@@ -1,62 +1,30 @@
-<!-- https://github.com/eugenkiss/7guis/wiki#flight-booker -->
-<select bind:value='isReturn'>
-	<option value='{false}'>one-way flight</option>
-	<option value='{true}'>return flight</option>
-</select>
-
-<input type='date' bind:value='start'>
-<input type='date' bind:value='end' disabled='{!isReturn}'>
-
-<button
-	on:click='bookFlight()'
-	disabled='{ isReturn && ( startDate >= endDate ) }'
->book</button>
-
-<style>
-	select, input, button {
-		display: block;
-		margin: 0.5em 0;
-		font-size: inherit;
-	}
-</style>
-
 <script>
-	export default {
-		data() {
-			const tomorrow = new Date(Date.now() + 86400000);
+	const tomorrow = new Date(Date.now() + 86400000);
 
-			const tomorrowAsString = [
-				tomorrow.getFullYear(),
-				pad(tomorrow.getMonth() + 1, 2),
-				pad(tomorrow.getDate(), 2)
-			].join('-');
+	const tomorrowAsString = [
+		tomorrow.getFullYear(),
+		pad(tomorrow.getMonth() + 1, 2),
+		pad(tomorrow.getDate(), 2)
+	].join('-');
 
-			return {
-				start: tomorrowAsString,
-				end: tomorrowAsString,
-				type: 'oneway'
-			};
-		},
+	let start = tomorrowAsString;
+	let end = tomorrowAsString;
+	let isReturn = false;
 
-		computed: {
-			startDate: ({ start }) => convertToDate(start),
-			endDate: ({ end }) => convertToDate(end)
-		},
+	const startDate = () => convertToDate(start);
+	const endDate = () => convertToDate(end);
 
-		methods: {
-			bookFlight() {
-				const { startDate, endDate, isReturn } = this.get();
-				const type = isReturn ? 'return' : 'one-way';
 
-				let message = `You have booked a ${type} flight, leaving ${startDate.toDateString()}`;
-				if (type === 'return') {
-					message += ` and returning ${endDate.toDateString()}`;
-				}
+	function bookFlight() {
+		const type = isReturn ? 'return' : 'one-way';
 
-				alert(message);
-			}
+		let message = `You have booked a ${type} flight, leaving ${startDate().toDateString()}`;
+		if (type === 'return') {
+			message += ` and returning ${endDate().toDateString()}`;
 		}
-	};
+
+		alert(message);
+	}
 
 	function convertToDate(str) {
 		var split = str.split('-');
@@ -69,3 +37,25 @@
 		return x;
 	}
 </script>
+
+<style>
+	select, input, button {
+		display: block;
+		margin: 0.5em 0;
+		font-size: inherit;
+	}
+</style>
+
+<!-- https://github.com/eugenkiss/7guis/wiki#flight-booker -->
+<select bind:value={isReturn}>
+	<option value={false}>one-way flight</option>
+	<option value={true}>return flight</option>
+</select>
+
+<input type=date bind:value={start}>
+<input type=date bind:value={end} disabled={!isReturn}>
+
+<button
+	on:click={bookFlight}
+	disabled="{isReturn && (startDate() >= endDate())}"
+>book</button>

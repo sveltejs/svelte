@@ -1,19 +1,68 @@
-<!-- https://github.com/eugenkiss/7guis/wiki#crud -->
-<input placeholder='filter prefix' bind:value='prefix'>
+<script>
+	import { beforeUpdate } from 'svelte';
 
-<select bind:value='i' size='5'>
+	export let people = [];
+
+	let prefix = '';
+	let first = '';
+	let last = '';
+	let i = 0;
+
+	const filteredPeople = () => {
+		if (!prefix) return people;
+
+		prefix = prefix.toLowerCase();
+		return people.filter(person => {
+			const name = `${person.last}, ${person.first}`;
+			return name.toLowerCase().startsWith(prefix);
+		});
+	};
+
+	const selected = () => filteredPeople()[i];
+
+	function create() {
+		people = people.concat({ first, last });
+		i = people.length - 1;
+		first = last = '';
+	}
+
+	function update() {
+		people[i] = { first, last };
+	}
+
+	function remove() {
+		people.splice(i, 1);
+		people = people;
+
+		first = last = '';
+		i = Math.min(i, people.length - 1);
+	}
+
+	beforeUpdate(() => {
+		const person = selected();
+		if (person) {
+			first = person.first;
+			last = person.last;
+		}
+	});
+</script>
+
+<!-- https://github.com/eugenkiss/7guis/wiki#crud -->
+<input placeholder="filter prefix" bind:value={prefix}>
+
+<select bind:value={i} size={5}>
 	{#each filteredPeople as person, i}
-		<option value='{i}'>{person.last}, {person.first}</option>
+		<option value={i}>{person.last}, {person.first}</option>
 	{/each}
 </select>
 
-<label><input bind:value='first' placeholder='first'></label>
-<label><input bind:value='last' placeholder='last'></label>
+<label><input bind:value={first} placeholder="first"></label>
+<label><input bind:value={last} placeholder="last"></label>
 
 <div class='buttons'>
-	<button on:click='create()' disabled='{!first || !last}'>create</button>
-	<button on:click='update()' disabled='{!first || !last || !selected}'>update</button>
-	<button on:click='remove()' disabled='{!selected}'>delete</button>
+	<button on:click={create} disabled="{!first || !last}">create</button>
+	<button on:click={update} disabled="{!first || !last || !selected()}">update</button>
+	<button on:click={remove} disabled="{!selected()}">delete</button>
 </div>
 
 <style>
@@ -37,76 +86,3 @@
 		clear: both;
 	}
 </style>
-
-<script>
-	export default {
-		data() {
-			return {
-				prefix: '',
-				first: '',
-				last: '',
-				people: [],
-				selected: null
-			};
-		},
-
-		computed: {
-			selected: ({ filteredPeople, i }) => {
-				return filteredPeople[i];
-			},
-
-			filteredPeople({ people, prefix }) {
-				if (!prefix) return people;
-
-				prefix = prefix.toLowerCase();
-				return people.filter(person => {
-					const name = `${person.last}, ${person.first}`;
-					return name.toLowerCase().startsWith(prefix);
-				});
-			}
-		},
-
-		onstate({ changed, current }) {
-			if (changed.selected && current.selected) {
-				this.set(current.selected);
-			}
-		},
-
-		methods: {
-			create() {
-				const { first, last, people } = this.get();
-
-				people.push({ first, last });
-
-				this.set({
-					people,
-					first: '',
-					last: '',
-					i: people.length - 1
-				});
-			},
-
-			update() {
-				const { first, last, selected, people } = this.get();
-
-				selected.first = first;
-				selected.last = last;
-
-				this.set({ people });
-			},
-
-			remove() {
-				const { people, selected, i } = this.get();
-				const index = people.indexOf(selected);
-				people.splice(index, 1);
-
-				this.set({
-					people,
-					first: '',
-					last: '',
-					i: Math.min(i, people.length - 1)
-				});
-			}
-		}
-	};
-</script>

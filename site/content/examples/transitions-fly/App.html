@@ -1,13 +1,11 @@
-<input type='checkbox' bind:checked=visible> visible
-
-{#if visible}
-	<p transition:fly='{y: 200, duration: 1000}'>flies 200 pixels up, slowly</p>
-{/if}
-
 <script>
 	import { fly } from 'svelte-transitions';
 
-	export default {
-		transitions: { fly }
-	};
+	export let visible;
 </script>
+
+<input type=checkbox bind:checked={visible}> visible
+
+{#if visible}
+	<p transition:fly="{{y: 200, duration: 1000}}">flies 200 pixels up, slowly</p>
+{/if}

@@ -1,3 +1,28 @@
+<script>
+	import { onMount } from 'svelte';
+
+	export let time = new Date();
+	let hours, minutes, seconds;
+
+	$: {
+		// this block runs reactively, whenever
+		// `time` changes
+		hours = time.getHours();
+		minutes = time.getMinutes();
+		seconds = time.getSeconds();
+	}
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			time = new Date();
+		}, 1000);
+
+		return () => {
+			clearInterval(interval);
+		};
+	});
+</script>
+
 <svg viewBox='-50 -50 100 100'>
 	<circle class='clock-face' r='48'/>
 
@@ -73,29 +98,3 @@
 		stroke-width: 3;
 	}
 </style>
-
-<script>
-	export default {
-		data() {
-			return {
-				time: new Date()
-			};
-		},
-
-		computed: {
-			hours: ({ time }) => time.getHours(),
-			minutes: ({ time }) => time.getMinutes(),
-			seconds: ({ time }) => time.getSeconds()
-		},
-
-		oncreate() {
-			this.interval = setInterval(() => {
-				this.set({ time: new Date() });
-			}, 1000);
-		},
-
-		ondestroy() {
-			clearInterval(this.interval);
-		}
-	};
-</script>

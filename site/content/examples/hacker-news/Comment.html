@@ -1,11 +1,11 @@
 <article>
-	<p class='meta'>{comment.user} {comment.time_ago}</p>
+	<p class="meta">{comment.user} {comment.time_ago}</p>
 
 	{@html comment.content}
 
-	<div class='replies'>
+	<div class="replies">
 		{#each comment.comments as child}
-			<svelte:self comment='{child}'/>
+			<svelte:self comment={child}/>
 		{/each}
 	</div>
 </article>

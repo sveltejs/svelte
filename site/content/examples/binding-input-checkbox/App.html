@@ -1,7 +1,7 @@
 {#each todos as todo}
-	<div class='todo {todo.done ? "done": ""}'>
-		<input type='checkbox' bind:checked='todo.done'>
-		<input type='text' bind:value='todo.description'>
+	<div class="todo {todo.done ? 'done': ''}">
+		<input type=checkbox bind:checked={todo.done}>
+		<input type=text bind:value={todo.description}>
 	</div>
 {/each}
 

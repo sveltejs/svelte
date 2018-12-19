@@ -1,3 +1,70 @@
+<script>
+	// [svelte-upgrade suggestion]
+	// manually refactor all references to __this
+	const __this = {
+		get: () => ({ i, undoStack, circles, selected, adjusting, adjusted })
+	};
+
+	export let i = 0;
+	export let undoStack = [[]];
+	export let circles = [];
+	export let selected;
+	export let adjusting = false;
+	export let adjusted = false;
+
+	// [svelte-upgrade suggestion]
+	// review these functions and remove unnecessary 'export' keywords
+	export function handleClick(event) {
+		if (__this.get().adjusting) {
+			adjusting = false;
+
+			// if nothing changed, rewind
+			if (__this.get().adjusted) push();
+			return;
+		}
+
+		const circle = {
+			cx: event.clientX,
+			cy: event.clientY,
+			r: 50
+		};
+
+		const circles = __this.get().circles;
+		circles.push(circle);
+		circles = circles, selected = circle;
+
+		push();
+	}
+
+	export function adjust(event) {
+		event.preventDefault();
+		if (!__this.get().selected) return;
+		adjusting = true, adjusted = false;
+	}
+
+	export function select(circle, event) {
+		if (!__this.get().adjusting) {
+			event.stopPropagation();
+			selected = circle;
+		}
+	}
+
+	export function push() {
+		undoStack.splice(++i);
+		undoStack.push(clone(circles));
+		i = i, undoStack = undoStack;
+	}
+
+	export function travel(d) {
+		const circles = clone(undoStack[i += d]);
+		circles = circles, i = i, adjusting = false;
+	}
+
+	function clone(circles) {
+		return circles.map(({ cx, cy, r }) => ({ cx, cy, r }));
+	}
+</script>
+
 <!--
 https://github.com/eugenkiss/7guis/wiki#circle-drawer
 
@@ -7,14 +74,14 @@ radius of the selected circle.
 -->
 
 <div class='controls'>
-	<button on:click='travel(-1)' disabled='{i === 0}'>undo</button>
-	<button on:click='travel(+1)' disabled='{i === undoStack.length -1}'>redo</button>
+	<button on:click='{() => travel(-1)}' disabled='{i === 0}'>undo</button>
+	<button on:click='{() => travel(+1)}' disabled='{i === undoStack.length -1}'>redo</button>
 </div>
 
-<svg on:click='handleClick(event)' on:contextmenu='adjust(event)'>
+<svg on:click='{handleClick}' on:contextmenu='{adjust}'>
 	{#each circles as circle}
 		<circle cx='{circle.cx}' cy='{circle.cy}' r='{circle.r}'
-			on:click='select(circle, event)'
+			on:click='{event => select(circle, event)}'
 			fill='{circle === selected ? "#ccc": "white"}'
 		/>
 	{/each}
@@ -23,7 +90,7 @@ radius of the selected circle.
 {#if adjusting}
 	<div class='adjuster'>
 		<p>adjust diameter of circle at {selected.cx}, {selected.cy}</p>
-		<input type='range' bind:value='selected.r' on:input='set({ adjusted: true })'>
+		<input type='range' bind:value='selected.r' on:input='{() => adjusted = true}'>
 	</div>
 {/if}
 
@@ -59,72 +126,3 @@ radius of the selected circle.
 		width: 100%;
 	}
 </style>
-
-<script>
-	export default {
-		data() {
-			return {
-				i: 0,
-				undoStack: [[]],
-				adjusting: false,
-				adjusted: false,
-				circles: []
-			};
-		},
-
-		methods: {
-			handleClick(event) {
-				if (this.get().adjusting) {
-					this.set({ adjusting: false });
-
-					// if nothing changed, rewind
-					if (this.get().adjusted) this.push();
-					return;
-				}
-
-				const circle = {
-					cx: event.clientX,
-					cy: event.clientY,
-					r: 50
-				};
-
-				const circles = this.get().circles;
-				circles.push(circle);
-				this.set({ circles, selected: circle });
-
-				this.push();
-			},
-
-			adjust(event) {
-				event.preventDefault();
-				if (!this.get().selected) return;
-				this.set({ adjusting: true, adjusted: false });
-			},
-
-			select(circle, event) {
-				if (!this.get().adjusting) {
-					event.stopPropagation();
-					this.set({ selected: circle });
-				}
-			},
-
-			// undo stack management
-			push() {
-				let { i, undoStack, circles } = this.get();
-				undoStack.splice(++i);
-				undoStack.push(clone(circles));
-				this.set({ i, undoStack });
-			},
-
-			travel(d) {
-				let { i, undoStack } = this.get();
-				const circles = clone(undoStack[i += d]);
-				this.set({ circles, i, adjusting: false });
-			}
-		}
-	};
-
-	function clone(circles) {
-		return circles.map(({ cx, cy, r }) => ({ cx, cy, r }));
-	}
-</script>

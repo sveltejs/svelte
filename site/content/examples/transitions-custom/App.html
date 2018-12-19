@@ -1,7 +1,31 @@
-<input type='checkbox' bind:checked=visible> visible
+<script>
+	import * as eases from 'eases-jsnext';
+	import { fade } from 'svelte-transitions';
+
+	export let visible;
+
+	const wheee = (node, params) => {
+		return {
+			duration: params.duration,
+			css: t => {
+				const eased = eases.elasticOut(t);
+
+				return `
+					transform: scale(${eased}) rotate(${eased * 1080}deg);
+					color: hsl(
+						${~~(t * 360)},
+						${Math.min(100, 1000 - 1000 * t)}%,
+						${Math.min(50, 500 - 500 * t)}%
+					);`
+			}
+		};
+	};
+</script>
+
+<input type=checkbox bind:checked={visible}> visible
 
 {#if visible}
-	<div class='centered' in:wheee='{duration: 8000}' out:fade>
+	<div class="centered" in:wheee="{{duration: 8000}}" out:fade>
 		<span>wheeee!!!!!</span>
 	</div>
 {/if}
@@ -20,31 +44,3 @@
 		font-size: 4em;
 	}
 </style>
-
-<script>
-	import * as eases from 'eases-jsnext';
-	import { fade } from 'svelte-transitions';
-
-	export default {
-		transitions: {
-			wheee: (node, params) => {
-				return {
-					duration: params.duration,
-					css: t => {
-						const eased = eases.elasticOut(t);
-
-						return `
-							transform: scale(${eased}) rotate(${eased * 1080}deg);
-							color: hsl(
-								${~~(t * 360)},
-								${Math.min(100, 1000 - 1000 * t)}%,
-								${Math.min(50, 500 - 500 * t)}%
-							);`
-					}
-				};
-			},
-
-			fade
-		}
-	};
-</script>

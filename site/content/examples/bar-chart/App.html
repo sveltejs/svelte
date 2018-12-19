@@ -1,4 +1,56 @@
-<svelte:window on:resize='resize()'/>
+<script>
+	import { onMount } from 'svelte';
+
+	export let svg;
+
+	import { scaleLinear } from 'd3-scale';
+
+	var xScale = scaleLinear();
+	var yScale = scaleLinear();
+
+	export let xTicks = [1990, 1995, 2000, 2005, 2010, 2015];
+	export let width = 500;
+	export let padding = { top: 20, right: 15, bottom: 20, left: 25 };
+	export let height = 200;
+	export let yTicks = [0, 5, 10, 15, 20];
+	export let points;
+	export let tick;
+
+	function formatMobile(tick) {
+		return "'" + tick % 100;
+	}
+
+	function barWidth() {
+		var innerWidth = width - (padding.left + padding.right);
+		return innerWidth / xTicks.length;
+	}
+
+	function xScale() {
+		return xScale()
+			.domain([0, xTicks.length])
+			.range([padding.left, width - padding.right]);
+	}
+
+	function yScale() {
+		return yScale()
+			.domain([0, Math.max.apply(null, yTicks)])
+			.range([height - padding.bottom, padding.top]);
+	}
+
+	onMount(() => {
+		resize();
+	});
+
+	// [svelte-upgrade suggestion]
+	// review these functions and remove unnecessary 'export' keywords
+	export function resize() {
+		var bcr = svg.getBoundingClientRect();
+
+		width = bcr.right - bcr.left, height = bcr.bottom - bcr.top;
+	}
+</script>
+
+<svelte:window on:resize='{resize}'/>
 
 <div class='chart'>
 	<h2>US birthrate by year</h2>
@@ -6,7 +58,7 @@
 		<!-- y axis -->
 		<g class='axis y-axis' transform='translate(0,{padding.top})'>
 			{#each yTicks as tick}
-				<g class='tick tick-{tick}' transform='translate(0, {yScale(tick) - padding.bottom})'>
+				<g class='tick tick-{tick}' transform='translate(0, {yScale()(tick) - padding.bottom})'>
 					<line x2='100%'></line>
 					<text y='-4'>{tick} {tick === 20 ? ' per 1,000 population' : ''}</text>
 				</g>
@@ -16,8 +68,8 @@
 		<!-- x axis -->
 		<g class='axis x-axis'>
 			{#each points as point, i}
-				<g class='tick tick-{tick}' transform='translate({xScale(i)},{height})'>
-					<text x='{barWidth/2}' y='-4'>{width > 380 ? point.year : formatMobile(point.year)}</text>
+				<g class='tick tick-{tick}' transform='translate({xScale()(i)},{height})'>
+					<text x='{barWidth()/2}' y='-4'>{width > 380 ? point.year : formatMobile(point.year)}</text>
 				</g>
 			{/each}
 		</g>
@@ -25,10 +77,10 @@
 		<g class='bars'>
 			{#each points as point, i}
 			<rect
-				x='{xScale(i) + 2}'
-				y='{yScale(point.birthrate)}'
-				width='{ barWidth - 4 }'
-				height='{ height - padding.bottom - yScale(point.birthrate) }'
+				x='{xScale()(i) + 2}'
+				y='{yScale()(point.birthrate)}'
+				width='{ barWidth() - 4 }'
+				height='{ height - padding.bottom - yScale()(point.birthrate) }'
 				></rect>
 			{/each}
 		</g>
@@ -71,62 +123,3 @@
 		opacity: 0.65;
 	}
 </style>
-
-<script>
-	import { scaleLinear } from 'd3-scale';
-
-	var xScale = scaleLinear();
-	var yScale = scaleLinear();
-
-	export default {
-		data: function () {
-			return {
-				padding: { top: 20, right: 15, bottom: 20, left: 25 },
-				height: 200,
-				width: 500,
-				xTicks: [1990, 1995, 2000, 2005, 2010, 2015],
-				yTicks: [0, 5, 10, 15, 20]
-			};
-		},
-
-		helpers: {
-			formatMobile: function (tick) {
-				return "'" + tick % 100;
-			}
-		},
-
-		computed: {
-			barWidth: function ({ xTicks, width, padding }) {
-				var innerWidth = width - (padding.left + padding.right);
-				return innerWidth / xTicks.length;
-			},
-
-			xScale: function ({ padding, width, xTicks }) {
-				return xScale
-					.domain([0, xTicks.length])
-					.range([padding.left, width - padding.right]);
-			},
-
-			yScale: function ({ padding, height, yTicks }) {
-				return yScale
-					.domain([0, Math.max.apply(null, yTicks)])
-					.range([height - padding.bottom, padding.top]);
-			}
-		},
-
-		oncreate() {
-			this.resize();
-		},
-
-		methods: {
-			resize: function () {
-				var bcr = this.refs.svg.getBoundingClientRect();
-
-				this.set({
-					width: bcr.right - bcr.left,
-					height: bcr.bottom - bcr.top
-				});
-			}
-		}
-	};
-</script>
