@@ -28,6 +28,7 @@ So far, our `<script>` tags have been running in the context of a component *ins
 Occasionally, you want code to run once *per module* instead. For that, we use `context="module"`:
 
 ```html
+<!-- { title: 'Module context' } -->
 <script context="module">
 	console.log(`this will run once`);
 	const answer = 42;

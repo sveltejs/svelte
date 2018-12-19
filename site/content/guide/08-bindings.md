@@ -94,202 +94,68 @@ Here is a complete example of using two way bindings with a form:
 
 > 'two way' bindings allow you to update a value in a nested property as seen in [checkbox input](repl?demo=binding-input-checkbox).
 
-### Actions
 
-Actions let you decorate elements with additional functionality. Actions are functions which may return an object with lifecycle methods, `update` and `destroy`. The action will be called when its element is added to the DOM.
+### bind:this
 
-Use actions for things like:
-* tooltips
-* lazy loading images as the page is scrolled, e.g. `<img use:lazyload data-src='giant-photo.jpg'/>`
-* capturing link clicks for your client router
-* adding drag and drop
+There's a special binding that exists on all elements and components — `this`. It allows you to store a reference to a DOM node or component instance so that you can interact with it programmatically:
 
 ```html
-<!-- { title: 'Actions' } -->
-<button on:click="toggleLanguage()" use:tooltip="translations[language].tooltip">
-	{language}
-</button>
+<!-- { title: 'Refs' } -->
+<canvas bind:this={canvas} width={200} height={200}></canvas>
 
 <script>
-	export default {
-		actions: {
-			tooltip(node, text) {
-				const tooltip = document.createElement('div');
-				tooltip.textContent = text;
+	import { onMount } from 'svelte';
+	import createRenderer from './createRenderer.js';
 
-				Object.assign(tooltip.style, {
-					position: 'absolute',
-					background: 'black',
-					color: 'white',
-					padding: '0.5em 1em',
-					fontSize: '12px',
-					pointerEvents: 'none',
-					transform: 'translate(5px, -50%)',
-					borderRadius: '2px',
-					transition: 'opacity 0.4s'
-				});
+	let canvas;
 
-				function position() {
-					const { top, right, bottom } = node.getBoundingClientRect();
-					tooltip.style.top = `${(top + bottom) / 2}px`;
-					tooltip.style.left = `${right}px`;
-				}
+	onMount(() => {
+		const ctx = canvas.getContext('2d');
+		const renderer = createRenderer(canvas, ctx);
 
-				function append() {
-					document.body.appendChild(tooltip);
-					tooltip.style.opacity = 0;
-					setTimeout(() => tooltip.style.opacity = 1);
-					position();
-				}
+		// stop updating the canvas when
+		// the component is destroyed
+		return renderer.stop;
+	});
+</script>
+```
 
-				function remove() {
-					tooltip.remove();
-				}
+```js
+/* { filename: 'createRenderer.js', hidden: true } */
+export default function createRenderer(canvas, ctx) {
+	let running = true;
+	loop();
 
-				node.addEventListener('mouseenter', append);
-				node.addEventListener('mouseleave', remove);
-
-				return {
-					update(text) {
-						tooltip.textContent = text;
-						position();
-					},
-
-					destroy() {
-						tooltip.remove();
-						node.removeEventListener('mouseenter', append);
-						node.removeEventListener('mouseleave', remove);
-					}
-				}
-			}
-		},
-
-		methods: {
-			toggleLanguage() {
-				const { language } = this.get();
-
-				this.set({
-					language: language === 'english' ? 'latin' : 'english'
-				});
-			}
+	return {
+		stop: () => {
+			running = false;
 		}
 	};
-</script>
-```
 
-```json
-/* { hidden: true } */
-{
-	language: "english",
-	translations: {
-		english: {
-			tooltip: "Switch Languages",
-		},
-		latin: {
-			tooltip: "Itchsway Anguageslay",
-		},
-	}
-}
-```
+	function loop() {
+		if (!running) return;
+		requestAnimationFrame(loop);
 
-### Classes
+		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-Classes let you toggle element classes on and off. To use classes add the directive `class` followed by a colon and the class name you want toggled (`class:the-class-name="anExpression"`). The expression inside the directive's quotes will be evaluated and toggle the class on and off depending on the truthiness of the expression's result. You can only add class directives to elements.
+		for (let p = 0; p < imageData.data.length; p += 4) {
+			const i = p / 4;
+			const x = i % canvas.width;
+			const y = i / canvas.height >>> 0;
 
-This example adds the class `active` to `<li>` elements when the `url` property matches the path their links target.
+			const t = window.performance.now();
 
-```html
-<!-- { title: 'Classes' } -->
-<ul class="links">
-	<li class:active="url === '/'"><a href="/" on:click="goto(event)">Home</a></li>
-	<li class:active="url.startsWith('/blog')"><a href="/blog/" on:click="goto(event)">Blog</a></li>
-	<li class:active="url.startsWith('/about')"><a href="/about/" on:click="goto(event)">About</a></li>
-</ul>
+			const r = 64 + (128 * x / canvas.width) + (64 * Math.sin(t / 1000));
+			const g = 64 + (128 * y / canvas.height) + (64 * Math.cos(t / 1000));
+			const b = 128;
 
-<script>
-	export default {
-		methods: {
-			goto(event) {
-				event.preventDefault();
-				this.set({ url: event.target.pathname });
-			}
+			imageData.data[p + 0] = r;
+			imageData.data[p + 1] = g;
+			imageData.data[p + 2] = b;
+			imageData.data[p + 3] = 255;
 		}
-	}
-</script>
 
-<style>
-	.links {
-		list-style: none;
+		ctx.putImageData(imageData, 0, 0);
 	}
-	.links li {
-		float: left;
-		padding: 10px;
-	}
-	/* classes added this way are processed with encapsulated styles, no need for :global() */
-	.active {
-		background: #eee;
-	}
-</style>
-```
-
-```json
-/* { hidden: true } */
-{
-	"url": "/"
-}
-```
-
-Classes will work with an existing class attribute on your element. If you find yourself adding multiple ternary statements inside a class attribute, classes can simplify your component. Classes are recognized by the compiler and <a href="guide#scoped-styles">scoped correctly</a>.
-
-If your class name is the same as a property in your component's state, you can use the shorthand of a class binding which drops the expression (`class:myProp`).
-
-Note that class names with dashes in them do not usually make good shorthand classes since the property will also need a dash in it. The example below uses a computed property to make working with this easier, but it may be easier to not use the shorthand in cases like this.
-
-```html
-<!-- { title: 'Classes shorthand' } -->
-<div class:active class:is-selected class:isAdmin>
-	<p>Active? {active}</p>
-	<p>Selected? {isSelected}</p>
-</div>
-<button on:click="set({ active: !active })">Toggle Active</button>
-<button on:click="set({ isSelected: !isSelected })">Toggle Selected</button>
-<button on:click="set({ isAdmin: !isAdmin })">Toggle Admin</button>
-
-<script>
-export default {
-	computed: {
-		// Because shorthand relfects the var name, you must use component.set({ "is-selected": true }) or use a computed
-		// property like this. It might be better to avoid shorthand for class names which are not valid variable names.
-		"is-selected": ({ isSelected }) => isSelected
-	}
-}
-</script>
-
-<style>
-	div {
-		width: 300px;
-		border: 1px solid #ccc;
-		background: #eee;
-		margin-bottom: 10px;
-	}
-	.active {
-		background: #fff;
-	}
-	.is-selected {
-		border-color: #99bbff;
-		box-shadow: 0 0 6px #99bbff;
-	}
-	.isAdmin {
-		outline: 2px solid red;
-	}
-</style>
-```
-
-```json
-/* { hidden: true } */
-{
-	"active": true,
-	"isSelected": false,
-	"isAdmin": false,
 }
 ```
