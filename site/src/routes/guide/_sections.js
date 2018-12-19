@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as fleece from 'golden-fleece';
-import process_markdown from '../_process_markdown.js';
+import process_markdown from '../../utils/_process_markdown.js';
 import marked from 'marked';
 
 import prismjs from 'prismjs'; // prism-highlighter – smaller footprint [hljs: 192.5k]

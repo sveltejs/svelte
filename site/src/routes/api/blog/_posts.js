@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import process_markdown from '../_process_markdown.js';
+import process_markdown from '../../../utils/_process_markdown.js';
 import marked from 'marked';
 
 // import hljs from 'highlight.js';
