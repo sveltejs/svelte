@@ -10,6 +10,7 @@
 	export let warningCount;
 </script>
 
+<!-- TODO would be nice if events bubbled -->
 <ComponentSelector
 	{components}
 	bind:selectedComponent
@@ -19,9 +20,10 @@
 />
 
 <ModuleEditor
-	bind:selectedComponent
+	component={selectedComponent}
 	error={sourceError}
 	errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
 	{warningCount}
+	on:change
 	on:navigate
 />

@@ -1,0 +1,55 @@
+<script>
+	import { createEventDispatcher } from 'svelte';
+	import * as fleece from 'golden-fleece';
+	import CodeMirror from '../CodeMirror.html';
+
+	const dispatch = createEventDispatcher();
+
+	export let value;
+	let json5;
+
+	if (value === undefined) {
+		json5 = 'undefined';
+	} else {
+		json5 = fleece.stringify(value);
+	}
+
+	$: try {
+		value = fleece.evaluate(json5);
+	} catch (err) {
+		console.error(Object.keys(err));
+		// TODO show in UI
+	}
+
+	function handleChange(event) {
+		try {
+			const value = fleece.evaluate(event.detail.value);
+			dispatch('change', { value });
+		} catch (err) {
+			// TODO indicate error
+		}
+	}
+</script>
+
+<style>
+	.prop-editor {
+		border: 1px solid #eee;
+	}
+</style>
+
+<div class="prop-editor">
+	<CodeMirror
+		mode="json"
+		bind:code={json5}
+		lineNumbers={false}
+		on:change={handleChange}
+		flex
+	/>
+</div>
+
+<!-- <CodeMirror
+	mode="json"
+	bind:code={json5}
+	error={dataError}
+	errorLoc={dataErrorLoc}
+/> -->

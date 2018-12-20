@@ -1,3 +1,16 @@
+<script context="module">
+	let codemirror_promise;
+	let _CodeMirror;
+
+	if (process.browser) {
+		codemirror_promise = import(/* webpackChunkName: "codemirror" */ './_codemirror.js');
+
+		codemirror_promise.then(mod => {
+			_CodeMirror = mod.default;
+		});
+	}
+</script>
+
 <script>
 	import { onMount, beforeUpdate, createEventDispatcher } from 'svelte';
 
@@ -9,6 +22,8 @@
 	export let error;
 	export let errorLoc;
 	export let warningCount = 0;
+	export let flex = false;
+	export let lineNumbers = true;
 
 	let w;
 	let h;
@@ -29,12 +44,12 @@
 	};
 
 	const refs = {};
-	let CodeMirror;
 	let editor;
 	let updating = false;
 	let marker;
 	let error_line;
 	let destroyed = false;
+	let CodeMirror;
 
 	$: if (CodeMirror) {
 		createEditor(mode);
@@ -79,9 +94,13 @@
 	}
 
 	onMount(() => {
-		import(/* webpackChunkName: "codemirror" */ './_codemirror.js').then(mod => {
-			CodeMirror = mod.default;
-		});
+		if (_CodeMirror) {
+			CodeMirror = _CodeMirror;
+		} else {
+			codemirror_promise.then(mod => {
+				CodeMirror = mod.default;
+			});
+		}
 
 		return () => {
 			destroyed = true;
@@ -101,7 +120,7 @@
 		}
 
 		editor = CodeMirror.fromTextArea(refs.editor, {
-			lineNumbers: true,
+			lineNumbers,
 			lineWrapping: true,
 			indentWithTabs: true,
 			indentUnit: 2,
@@ -117,6 +136,7 @@
 			if (!updating) {
 				updating = true;
 				code = instance.getValue();
+				dispatch('change', { value: code });
 			}
 		});
 
@@ -131,9 +151,18 @@
 
 	.codemirror-container :global(.CodeMirror) {
 		height: 100%;
-		background: var(--background);
+		/* background: var(--background); */
+		background: transparent;
 		font: 300 var(--code-fs)/1.7 var(--font-mono);
 		color: var(--base);
+	}
+
+	.codemirror-container.flex :global(.CodeMirror) {
+		height: auto;
+	}
+
+	.codemirror-container.flex :global(.CodeMirror-lines) {
+		padding: 0;
 	}
 
 	@media (min-width: 768px) {
@@ -186,7 +215,7 @@
 	- just started to transfer colors from prism to codemirror
 -----------------------------------------------
 -->
-<div class='codemirror-container' bind:offsetWidth={w} bind:offsetHeight={h}>
+<div class='codemirror-container' class:flex bind:offsetWidth={w} bind:offsetHeight={h}>
 	<textarea tabindex='2' bind:this={refs.editor}></textarea>
 
 	{#if error}

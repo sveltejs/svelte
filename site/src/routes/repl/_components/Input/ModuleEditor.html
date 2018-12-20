@@ -1,7 +1,7 @@
 <script>
 	import CodeMirror from '../CodeMirror.html';
 
-	export let selectedComponent;
+	export let component;
 	export let error;
 	export let errorLoc;
 	export let warningCount = 0;
@@ -24,13 +24,14 @@
 </style>
 
 <div class="editor-wrapper">
-	{#if selectedComponent}
+	{#if component}
 		<CodeMirror
-			mode="{selectedComponent.type === 'js' ? 'javascript' : 'handlebars'}"
-			bind:code={selectedComponent.source}
+			mode="{component.type === 'js' ? 'javascript' : 'handlebars'}"
+			bind:code={component.source}
 			{error}
 			{errorLoc}
 			{warningCount}
+			on:change
 			on:navigate
 		/>
 	{/if}

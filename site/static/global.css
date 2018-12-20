@@ -339,7 +339,6 @@ a:hover > .icon { stroke: var(--flash) }
 
 /*  tables --------------------------------- */
 table {
-	margin: 4rem 0;
 	width: 100%;
 	font-size: var(--h5);
 }

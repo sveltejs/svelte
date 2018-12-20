@@ -5,8 +5,10 @@
 
 	const dispatch = createEventDispatcher();
 
-	export let components;
+	export let components = [];
 	export let selectedComponent;
+
+	let editing = null;
 
 	// let previous_components;
 
@@ -20,7 +22,7 @@
 
 	function selectComponent(component, selectedComponent) {
 		if (selectedComponent != component) {
-			selectedComponent.edit = false;
+			editing = null;
 		}
 
 		dispatch('select', { component });
@@ -28,7 +30,7 @@
 
 	function editTab(component, selectedComponent) {
 		if (selectedComponent === component) {
-			selectedComponent.edit = true; // TODO can we make this local state?
+			editing = selectedComponent;
 		}
 	}
 
@@ -36,7 +38,7 @@
 		const match = /(.+)\.(html|js)$/.exec(selectedComponent.name);
 		selectedComponent.name = match ? match[1] : selectedComponent.name;
 		if (match && match[2]) selectedComponent.type = match[2];
-		selectedComponent.edit = false;
+		editing = null;
 
 		components = components; // TODO necessary?
 	}
@@ -51,12 +53,34 @@
 			event.target.select();
 		});
 	}
+
+	let uid = 1;
+
+	function addNew() {
+		const component = {
+			name: uid++ ? `Component${uid}` : 'Component1',
+			type: 'html',
+			source: ''
+		};
+
+		editing = component;
+
+		setTimeout(() => {
+			// TODO we can do this without IDs
+			document.getElementById(component.name).scrollIntoView(false);
+			// selectedComponent = component;
+		});
+
+		dispatch('create', { component });
+		dispatch('select', { component });
+	}
 </script>
 
 <style>
 	.component-selector {
 		position: relative;
 		border-bottom: 1px solid #eee;
+		overflow: hidden;
 	}
 
 	.file-tabs {
@@ -66,7 +90,7 @@
 		white-space: nowrap;
 		overflow-x: auto;
 		overflow-y: hidden;
-		height: 100%;
+		height: 10em;
 	}
 
 	.file-tabs button {
@@ -146,11 +170,11 @@
 		width: 5rem;
 		height: 100%;
 		text-align: center;
+		background-color: white;
 	}
 
 	.add-new:hover {
 		color: var(--flash);
-		background-color: white;
 	}
 </style>
 
@@ -169,8 +193,8 @@
 						App.html
 					</div>
 				{:else}
-					{#if component.edit}
-						<span class="input-sizer">{component.name + (/\./.test(component.name) ? '' : '.html')}</span>
+					{#if component === editing}
+						<span class="input-sizer">{component.name + (/\./.test(component.name) ? '' : `.${component.type}`)}</span>
 
 						<input
 							autofocus
@@ -198,7 +222,7 @@
 		{/each}
 	</div>
 
-	<button class="add-new" on:click="{() => dispatch('create')}" title="add new component">
+	<button class="add-new" on:click="{addNew}" title="add new component">
 		<Icon name="plus" />
 	</button>
 </div>

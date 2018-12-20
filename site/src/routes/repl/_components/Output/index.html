@@ -1,20 +1,36 @@
 <script>
 	import SplitPane from '../SplitPane.html';
 	import Viewer from './Viewer.html';
+	import PropEditor from './PropEditor.html';
 	import CodeMirror from '../CodeMirror.html';
 
 	export let bundle
 	export let compiled;
 	export let dom;
 	export let ssr;
-	export let data;
+	export let props;
+	export let values;
 	export let json5;
 	export let sourceError;
 	export let runtimeError;
 	export let dataError;
 	export let dataErrorLoc;
 
+	// refs
+	let viewer;
+	const propEditors = {};
+
 	let view = 'result';
+
+	function setPropFromViewer(prop, value) {
+		// console.log(`setting prop from component`, prop, value);
+		// propEditors[prop].setValue(value);
+	}
+
+	function setPropFromEditor(prop, value) {
+		console.log(`setting prop from editor`, prop, value);
+		viewer.setProp(prop, value);
+	}
 </script>
 
 <style>
@@ -46,6 +62,27 @@
 		font: 300 1.2rem/1.5 var(--font-ui);
 		padding: 1.2rem 0 0.8rem 1rem;
 	}
+
+	.loading.message {
+		position: absolute !important;
+		background-color: #666;
+		top: 1em;
+		left: 50%;
+		transform: translate(-50%,0);
+	}
+
+	.props {
+		display: grid;
+		padding: 0.5em;
+		grid-template-columns: auto 1fr;
+		grid-template-rows: min-content;
+		grid-column-gap: 0.5em;
+		overflow-y: auto;
+	}
+
+	.options {
+		padding: 0.5em;
+	}
 </style>
 
 <div class="view-toggle">
@@ -66,31 +103,39 @@
 		<div slot="a">
 			{#if bundle}
 				<Viewer
+					bind:this={viewer}
 					{bundle}
 					{dom}
 					{ssr}
 					{data}
+					bind:values
+					{props}
 					{sourceError}
 					bind:error={runtimeError}
 					on:data="{e => updateData(e.detail.current)}"
 					on:navigate={navigate}
+					on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
 				/>
 			{:else}
-				<p class="loading">loading Svelte compiler...</p>
+				<!-- TODO componentise this -->
+				<p class="loading message">loading Svelte compiler...</p>
 			{/if}
 		</div>
 
 		<section slot="b">
-			<h3>
-				Props editor
-			</h3>
+			<h3>Props editor</h3>
 
-			<CodeMirror
-				mode="json"
-				bind:code={json5}
-				error={dataError}
-				errorLoc={dataErrorLoc}
-			/>
+			<div class="props">
+				{#each props.sort() as prop (prop)}
+					<code style="display: block; whitespace: pre;">{prop}</code>
+
+					<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
+					<PropEditor
+						value={values[prop]}
+						on:change="{e => setPropFromEditor(prop, e.detail.value)}"
+					/>
+				{/each}
+			</div>
 		</section>
 	</SplitPane>
 {:else}
@@ -106,11 +151,9 @@
 		</div>
 
 		<section slot="b">
-			<h3>
-				Compiler options
-			</h3>
+			<h3>Compiler options</h3>
 
-			<div>TODO</div>
+			<div class="options">TODO</div>
 		</section>
 	</SplitPane>
 {/if}

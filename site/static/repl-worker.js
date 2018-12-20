@@ -1,10 +1,10 @@
 self.window = self; // egregious hack to get magic-string to work in a worker
 
-let ready = false;
-let pending_components;
-let pending_component;
-
 let version;
+let fulfil_ready;
+const ready = new Promise(f => {
+	fulfil_ready = f;
+});
 
 self.addEventListener('message', async event => {
 	switch (event.data.type) {
@@ -17,30 +17,21 @@ self.addEventListener('message', async event => {
 			break;
 
 		case 'bundle':
-			if (ready) {
-				const result = await bundle(event.data.components);
-				if (result) {
-					postMessage({
-						type: 'bundled',
-						result
-					});
-				}
-			} else {
-				pending_components = event.data.components;
-			}
+			await ready;
+			postMessage({
+				type: 'bundled',
+				result: await bundle(event.data.components)
+			});
 			break;
 
 		case 'compile':
-			if (ready) {
-				const result = await compile(event.data.component);
-				postMessage({
-					type: 'compiled',
-					result
-				});
-			} else {
-				pending_component = event.data.component;
-			}
+			await ready;
+			postMessage({
+				type: 'compiled',
+				result: compile(event.data.component, event.data.entry)
+			});
 			break;
+
 	}
 });
 
@@ -59,29 +50,7 @@ async function init(version) {
 		`https://unpkg.com/rollup/dist/rollup.browser.js`
 	);
 
-	if (pending_components) {
-		const result = await bundle(pending_components);
-		if (result) {
-			postMessage({
-				type: 'bundled',
-				result
-			});
-		}
-
-		pending_components = null;
-	}
-
-	if (pending_component) {
-		const result = await compile(pending_component);
-		postMessage({
-			type: 'compiled',
-			result
-		});
-
-		pending_component = null;
-	}
-
-	ready = true;
+	fulfil_ready();
 	return version === 'local' ? version : svelte.VERSION;
 }
 
@@ -264,19 +233,19 @@ async function bundle(components) {
 	}
 }
 
-function compile(component) {
+function compile(component, entry) {
 	try {
-		const { js } = svelte.compile(component.source, Object.assign({
+		const { js, stats } = svelte.compile(component.source, Object.assign({
 			// TODO make options configurable
 			name: component.name,
 			filename: component.name + '.html',
 		}, commonCompilerOptions));
 
-		return js.code;
+		return { code: js.code, props: entry ? stats.props : null };
 	} catch (err) {
 		let result = `/* Error compiling component\n\n${err.message}`;
 		if (err.frame) result += `\n${err.frame}`;
 		result += `\n\n*/`;
-		return result;
+		return { code: result, props: null };
 	}
 }

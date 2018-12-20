@@ -8,9 +8,18 @@
 	export let bundle;
 	export let dom;
 	export let ssr;
-	export let data;
+	export let values;
+	export let props;
 	export let sourceError;
 	export let error;
+
+	export function setProp(prop, value) {
+		if (component) {
+			component[prop] = value;
+		}
+	}
+
+	let component;
 
 	const refs = {};
 	const importCache = {};
@@ -70,8 +79,6 @@
 	let init;
 
 	onMount(() => {
-		let component;
-
 		refs.child.addEventListener('load', () => {
 			const iframe = refs.child;
 			const body = iframe.contentDocument.body;
@@ -150,7 +157,7 @@
 				const createHtml = () => {
 					try {
 						evalInIframe(`${ssr.code}
-							var rendered = SvelteComponent.render(${JSON.stringify(data)});
+							var rendered = SvelteComponent.render(${JSON.stringify(values)});
 
 							if (rendered.css.code) {
 								var style = document.createElement('style');
@@ -183,7 +190,7 @@
 
 							var component = new SvelteComponent({
 								target: document.body,
-								data: ${JSON.stringify(data)}
+								props: ${JSON.stringify(values)}
 							});`);
 
 						component = window.app = window.component = iframe.contentWindow.component;
@@ -249,17 +256,18 @@
 				toDestroy = component;
 				component = null;
 
-				if (data !== undefined) init();
+				if (values !== undefined) init();
 			};
 
-			data_handler = data => {
+			values_handler = values => {
+				console.log({ values });
 				if (updating) return;
 
 				try {
 					if (component) {
 						error = null;
 						updating = true;
-						component.$set(data);
+						component.$set(values);
 						updating = false;
 					} else {
 						init();
@@ -274,16 +282,35 @@
 					error = e;
 				}
 			};
+
+			props_handler = props => {
+				if (!component) {
+					// TODO can this happen?
+					console.error(`no component to bind to`);
+					return;
+				}
+
+				props.forEach(prop => {
+					// TODO should there be a public API for binding?
+					// e.g. `component.$watch(prop, handler)`?
+					// (answer: probably)
+					component.$$.bound[prop] = value => {
+						dispatch('binding', { prop, value });
+					};
+				});
+			};
 		});
 	});
 
 	function noop(){}
 	let run = noop;
 	let bundle_handler = noop;
-	let data_handler = noop;
+	let values_handler = noop;
+	let props_handler = noop;
 
 	$: bundle_handler(bundle);
-	$: data_handler(data);
+	$: values_handler(values);
+	$: props_handler(props);
 </script>
 
 <style>

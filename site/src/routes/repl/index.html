@@ -1,45 +1,25 @@
-<script context="module">
-	// export async function preload({ query }) {
-	// 	return {
-	// 		examples,
-	// 		version: query.version || 'latest',
-	// 		components: [],
-	// 		data: {},
-	// 		name: 'loading...',
-	// 		json5: '{}',
-	// 		gist: null
-	// 	};
-	// }
-</script>
-
 <script>
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
 	import * as fleece from 'golden-fleece';
-	import AppControls from './_components/AppControls.html';
+	import AppControls from './_components/AppControls/index.html';
 	import Repl from './_components/Repl.html';
 	import examples from '../../../content/examples/manifest.json';
 
 	export let query;
 
-	const refs = {};
-
 	let version = query.version || 'alpha';
-	let components = [];
+	let components;
 	let selectedComponent;
-	let data = {};
+	let values = {};
 	let name = 'loading...';
-	let json5 = '{}';
-	let gist = null;
 	let zen_mode = false;
-	let bundle;
 
 	$: if (typeof history !== 'undefined') {
 		const params = [];
-		if (version !== 'latest') params.push(`version=${version}`);
 
-		if (query.gist) params.push(`gist=${gist.id}`);
-		else if (query.data) params.push(`data=${query.data}`);
+		if (version !== 'latest') params.push(`version=${version}`);
+		if (query.gist) params.push(`gist=${query.gist}`);
 		else if (query.demo) params.push(`demo=${query.demo}`);
 
 		const url = params.length > 0
@@ -56,33 +36,11 @@
 		});
 	});
 
-	function tryParseData(encoded) {
-		try {
-			const base64 = decodeURIComponent(encoded);
-			const json = atob(base64);
-			return JSON.parse(json);
-		} catch (err) {
-			console.error(err.message);
-			return {};
-		}
-	}
-
-	function stringifyComponents(components) {
-		return JSON.stringify(
-			components.map(component => {
-				return {
-					name: component.name,
-					source: component.source
-				};
-			})
-		);
-	}
-
 	onMount(() => {
 		if (query.gist) {
 			fetch(`gist/${query.gist}`).then(r => r.json()).then(gist => {
 				name = gist.description;
-				json5 = '{}';
+				values = {};
 
 				components = Object.keys(gist.files)
 					.map(file => {
@@ -92,7 +50,9 @@
 						const source = gist.files[file].content;
 
 						// while we're here...
-						if (file === 'data.json' || file === 'data.json5') json5 = source;
+						if (file === 'data.json' || file === 'data.json5') {
+							values = tryParseData(source) || {};
+						}
 
 						return {
 							name: file.slice(0, dot),
@@ -118,16 +78,29 @@
 	});
 
 	function load_demo(slug) {
-		fetch(`api/${slugs.has(query.demo) ? 'examples' : 'guide/demo'}/${query.demo}`).then(async response => {
+		const url = slugs.has(query.demo)
+			? `api/examples/${query.demo}`
+			: `guide/demo/${query.demo}.json`;
+
+		fetch(url).then(async response => {
 			if (response.ok) {
 				const demo = await response.json();
 
 				name = demo.title;
-				json5 = demo.json5 || '{}';
+				values = tryParseData(demo.json5) || {}; // TODO make this more error-resistant
 				components = demo.components;
+
 				selectedComponent = components[0];
 			}
 		});
+	}
+
+	function tryParseData(json5) {
+		try {
+			return fleece.evaluate(json5);
+		} catch (err) {
+			return null;
+		}
 	}
 
 	$: if (process.browser && query.demo) {
@@ -198,22 +171,19 @@
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
 	<AppControls
 		{examples}
-		{bundle}
 		{components}
-		{data}
-		{json5}
-		{gist}
-		bind:name
+		{values}
+		{name}
+		gist_id={query.gist}
 		bind:zen_mode
-		on:select="{e => (query.demo = e.detail.slug, gist = null)}"
-		on:forked="{e => gist = e.detail.gist}"
+		on:select="{e => query = Object.assign({}, query, { demo: e.detail.slug, gist: null })}"
+		on:forked="{e => query = Object.assign({}, query, { demo: null, gist: e.detail.gist })}"
 	/>
 
 	<Repl
 		bind:version
-		bind:selectedComponent
 		{components}
-		{data}
-		{json5}
+		{selectedComponent}
+		{values}
 	/>
 </div>
