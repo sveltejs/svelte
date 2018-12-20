@@ -16,7 +16,7 @@
 
 	// refs
 	let viewer;
-	const propEditors = {};
+	const setters = {};
 
 	let view = 'result';
 
@@ -27,7 +27,8 @@
 	}
 
 	function setPropFromViewer(prop, value) {
-		// propEditors[prop].setValue(value);
+		// console.log(setters, prop, value);
+		// setters[prop](value);
 		updateValues(prop, value);
 	}
 
