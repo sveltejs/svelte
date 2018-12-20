@@ -5,39 +5,29 @@
 
 	const dispatch = createEventDispatcher();
 
-	export let components = [];
-	export let selectedComponent;
+	export let component_store;
+	export let selected_store;
 
 	let editing = null;
 
-	// let previous_components;
-
-	// $: {
-	// 	// bit of a hack...
-	// 	if (components !== previous_components) {
-	// 		selectedComponent = components[0];
-	// 		previous_components = components;
-	// 	}
-	// }
-
-	function selectComponent(component, selectedComponent) {
-		if (selectedComponent != component) {
+	function selectComponent(component) {
+		if ($selected_store != component) {
 			editing = null;
 		}
 
-		dispatch('select', { component });
+		selected_store.set(component);
 	}
 
-	function editTab(component, selectedComponent) {
-		if (selectedComponent === component) {
-			editing = selectedComponent;
+	function editTab(component) {
+		if ($selected_store === component) {
+			editing = $selected_store;
 		}
 	}
 
-	function closeEdit(selectedComponent) {
-		const match = /(.+)\.(html|js)$/.exec(selectedComponent.name);
-		selectedComponent.name = match ? match[1] : selectedComponent.name;
-		if (match && match[2]) selectedComponent.type = match[2];
+	function closeEdit() {
+		const match = /(.+)\.(html|js)$/.exec($selected_store.name);
+		$selected_store.name = match ? match[1] : $selected_store.name;
+		if (match && match[2]) $selected_store.type = match[2];
 		editing = null;
 
 		components = components; // TODO necessary?
@@ -68,11 +58,10 @@
 		setTimeout(() => {
 			// TODO we can do this without IDs
 			document.getElementById(component.name).scrollIntoView(false);
-			// selectedComponent = component;
 		});
 
-		dispatch('create', { component });
-		dispatch('select', { component });
+		component_store.update(components => components.concat(component));
+		selected_store.set(component);
 	}
 </script>
 
@@ -180,12 +169,12 @@
 
 <div class="component-selector">
 	<div class="file-tabs" on:dblclick="{() => dispatch('create')}">
-		{#each components as component}
+		{#each $component_store as component}
 			<button
 				id={component.name}
-				class:active="{component === selectedComponent}"
+				class:active="{component === $selected_store}"
 				data-name={component.name}
-				on:click="{() => selectComponent(component, selectedComponent)}"
+				on:click="{() => selectComponent(component)}"
 				on:dblclick="{e => e.stopPropagation()}"
 			>
 				{#if component.name == 'App'}
@@ -200,14 +189,14 @@
 							autofocus
 							bind:value={component.name}
 							on:focus={selectInput}
-							on:blur="{() => closeEdit(selectedComponent)}"
+							on:blur="{() => closeEdit()}"
 							use:enter="{e => e.target.blur()}"
 						>
 					{:else}
 						<div
 							class="editable"
 							title="edit component name"
-							on:click="{() => editTab(component, selectedComponent)}"
+							on:click="{() => editTab(component)}"
 						>
 							{component.name}.{component.type}
 						</div>

@@ -1,58 +1,38 @@
 self.window = self; // egregious hack to get magic-string to work in a worker
 
 let version;
-let fulfil_ready;
-const ready = new Promise(f => {
-	fulfil_ready = f;
-});
+
+let fulfil;
+let ready = new Promise(f => fulfil = f);
 
 self.addEventListener('message', async event => {
 	switch (event.data.type) {
 		case 'init':
-			version = await init(event.data.version);
-			postMessage({
-				type: 'version',
-				version
-			});
+			version = event.data.version;
+
+			importScripts(
+				`https://unpkg.com/svelte@${version}/compiler.js`,
+				`https://unpkg.com/rollup/dist/rollup.browser.js`
+			);
+			fulfil();
+
 			break;
 
 		case 'bundle':
-			await ready;
-			postMessage({
-				type: 'bundled',
-				result: await bundle(event.data.components)
-			});
-			break;
+			if (event.data.components.length === 0) return;
 
-		case 'compile':
 			await ready;
-			postMessage({
-				type: 'compiled',
-				result: compile(event.data.component, event.data.entry)
-			});
-			break;
+			postMessage(
+				await bundle(event.data.components)
+			);
 
+			break;
 	}
 });
 
 const commonCompilerOptions = {
-	cascade: false,
-	store: true,
-	skipIntroByDefault: true,
-	nestedTransitions: true,
 	dev: true,
 };
-
-async function init(version) {
-	// TODO use local versions
-	importScripts(
-		`https://unpkg.com/svelte@${version}/compiler.js`,
-		`https://unpkg.com/rollup/dist/rollup.browser.js`
-	);
-
-	fulfil_ready();
-	return version === 'local' ? version : svelte.VERSION;
-}
 
 let cached = {
 	dom: null,
@@ -107,7 +87,6 @@ async function getBundle(mode, cache, lookup) {
 				},
 				load(id) {
 					if (id.startsWith(`https://`)) return fetch_if_uncached(id);
-
 					if (id in lookup) return lookup[id].source;
 				},
 				transform(code, id) {
@@ -230,22 +209,5 @@ async function bundle(components) {
 				stack: e.stack
 			})
 		};
-	}
-}
-
-function compile(component, entry) {
-	try {
-		const { js, stats } = svelte.compile(component.source, Object.assign({
-			// TODO make options configurable
-			name: component.name,
-			filename: component.name + '.html',
-		}, commonCompilerOptions));
-
-		return { code: js.code, props: entry ? stats.props : null };
-	} catch (err) {
-		let result = `/* Error compiling component\n\n${err.message}`;
-		if (err.frame) result += `\n${err.frame}`;
-		result += `\n\n*/`;
-		return { code: result, props: null };
 	}
 }

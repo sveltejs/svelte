@@ -8,7 +8,7 @@
 	export let bundle;
 	export let dom;
 	export let ssr;
-	export let values;
+	export let values_store;
 	export let props;
 	export let sourceError;
 	export let error;
@@ -157,7 +157,7 @@
 				const createHtml = () => {
 					try {
 						evalInIframe(`${ssr.code}
-							var rendered = SvelteComponent.render(${JSON.stringify(values)});
+							var rendered = SvelteComponent.render(${JSON.stringify($values_store)});
 
 							if (rendered.css.code) {
 								var style = document.createElement('style');
@@ -190,7 +190,7 @@
 
 							var component = new SvelteComponent({
 								target: document.body,
-								props: ${JSON.stringify(values)}
+								props: ${JSON.stringify($values_store)}
 							});`);
 
 						component = window.app = window.component = iframe.contentWindow.component;
@@ -256,31 +256,7 @@
 				toDestroy = component;
 				component = null;
 
-				if (values !== undefined) init();
-			};
-
-			values_handler = values => {
-				console.log({ values });
-				if (updating) return;
-
-				try {
-					if (component) {
-						error = null;
-						updating = true;
-						component.$set(values);
-						updating = false;
-					} else {
-						init();
-					}
-				} catch (e) {
-					const loc = getLocationFromStack(e.stack, bundle.map);
-					if (loc) {
-						e.filename = loc.source;
-						e.loc = { line: loc.line, column: loc.column };
-					}
-
-					error = e;
-				}
+				init();
 			};
 
 			props_handler = props => {
@@ -296,6 +272,9 @@
 					// (answer: probably)
 					component.$$.bound[prop] = value => {
 						dispatch('binding', { prop, value });
+						values_store.update(values => Object.assign({}, values, {
+							[prop]: value
+						}));
 					};
 				});
 			};
@@ -305,12 +284,15 @@
 	function noop(){}
 	let run = noop;
 	let bundle_handler = noop;
-	let values_handler = noop;
 	let props_handler = noop;
 
 	$: bundle_handler(bundle);
-	$: values_handler(values);
 	$: props_handler(props);
+
+	// pending https://github.com/sveltejs/svelte/issues/1889
+	$: {
+		$values_store;
+	}
 </script>
 
 <style>

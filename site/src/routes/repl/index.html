@@ -8,19 +8,26 @@
 
 	export let query;
 
-	let version = query.version || 'alpha';
-	let components;
-	let selectedComponent;
-	let values = {};
+	let version = query.version;
+	let demo = query.demo || 'hello-world';
+	let gist = query.gist;
+
+	let app = {
+		components: [],
+		values: {}
+	};
+
 	let name = 'loading...';
 	let zen_mode = false;
+
+	let repl;
 
 	$: if (typeof history !== 'undefined') {
 		const params = [];
 
 		if (version !== 'latest') params.push(`version=${version}`);
-		if (query.gist) params.push(`gist=${query.gist}`);
-		else if (query.demo) params.push(`demo=${query.demo}`);
+		if (gist) params.push(`gist=${gist}`);
+		else if (demo) params.push(`demo=${demo}`);
 
 		const url = params.length > 0
 			? `repl?${params.join('&')}`
@@ -37,17 +44,24 @@
 	});
 
 	onMount(() => {
-		if (query.gist) {
-			fetch(`gist/${query.gist}`).then(r => r.json()).then(gist => {
-				name = gist.description;
-				values = {};
+		fetch(`https://unpkg.com/svelte@${version || 'alpha'}/package.json`)
+			.then(r => r.json())
+			.then(pkg => {
+				version = pkg.version;
+			});
 
-				components = Object.keys(gist.files)
+		if (gist) {
+			fetch(`gist/${gist}`).then(r => r.json()).then(({ description, files }) => {
+				name = description;
+
+				const values = {};
+
+				const components = Object.keys(files)
 					.map(file => {
 						const dot = file.lastIndexOf('.');
 						if (!~dot) return;
 
-						const source = gist.files[file].content;
+						const source = files[file].content;
 
 						// while we're here...
 						if (file === 'data.json' || file === 'data.json5') {
@@ -70,27 +84,26 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				selectedComponent = components[0];
+				app = { components, values };
 			});
-		} else if (!query.demo) {
-			query.demo = 'hello-world';
 		}
 	});
 
 	function load_demo(slug) {
-		const url = slugs.has(query.demo)
-			? `api/examples/${query.demo}`
-			: `guide/demo/${query.demo}.json`;
+		const url = slugs.has(slug)
+			? `api/examples/${slug}`
+			: `guide/demo/${slug}.json`;
 
 		fetch(url).then(async response => {
 			if (response.ok) {
-				const demo = await response.json();
+				const data = await response.json();
 
-				name = demo.title;
-				values = tryParseData(demo.json5) || {}; // TODO make this more error-resistant
-				components = demo.components;
+				name = data.title;
 
-				selectedComponent = components[0];
+				app = {
+					values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
+					components: data.components
+				};
 			}
 		});
 	}
@@ -103,8 +116,8 @@
 		}
 	}
 
-	$: if (process.browser && query.demo) {
-		load_demo(query.demo);
+	$: if (process.browser && demo) {
+		load_demo(demo);
 	}
 </script>
 
@@ -171,19 +184,16 @@
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
 	<AppControls
 		{examples}
-		{components}
-		{values}
+		{app}
 		{name}
-		gist_id={query.gist}
+		{gist}
+		{repl}
 		bind:zen_mode
-		on:select="{e => query = Object.assign({}, query, { demo: e.detail.slug, gist: null })}"
-		on:forked="{e => query = Object.assign({}, query, { demo: null, gist: e.detail.gist })}"
+		on:select="{e => (demo = e.detail.slug, gist = null)}"
+		on:forked="{e => (demo = null, gist = e.detail.gist)}"
 	/>
 
-	<Repl
-		bind:version
-		{components}
-		{selectedComponent}
-		{values}
-	/>
+	{#if process.browser}
+		<Repl bind:this={repl} {version} {app}/>
+	{/if}
 </div>

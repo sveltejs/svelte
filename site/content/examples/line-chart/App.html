@@ -23,7 +23,7 @@
 		.domain([minX, maxX])
 		.range([padding.left, width - padding.right]);
 
-	$: yScale = scaleLinear
+	$: yScale = scaleLinear()
 		.domain([Math.min.apply(null, yTicks), Math.max.apply(null, yTicks)])
 		.range([height - padding.bottom, padding.top]);
 
@@ -50,7 +50,7 @@
 <div class="chart">
 	<h2>Arctic sea ice minimum</h2>
 
-	<svg ref:svg>
+	<svg bind:this={svg}>
 		<!-- y axis -->
 		<g class="axis y-axis" transform="translate(0, {padding.top})">
 			{#each yTicks as tick}

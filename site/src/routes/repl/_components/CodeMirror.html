@@ -84,7 +84,7 @@
 	let previous_error_line;
 	$: if (editor) {
 		if (previous_error_line != null) {
-			editor.removeLineClass(previousLine, 'wrap', 'error-line')
+			editor.removeLineClass(previous_error_line, 'wrap', 'error-line')
 		}
 
 		if (error_line && (error_line !== previous_error_line)) {

@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { writable } from 'svelte/store';
 	import * as fleece from 'golden-fleece';
 	import SplitPane from './SplitPane.html';
 	import CodeMirror from './CodeMirror.html';
@@ -7,151 +8,146 @@
 	import Output from './Output/index.html';
 
 	export let version;
-	export let components;
-	export let selectedComponent;
-	export let values;
+	export let app;
+
+	let component_store = writable([]);
+	let values_store = writable({});
+	let selected_store = writable(null);
+
+	$: {
+		component_store.set(app.components);
+		values_store.set(app.values);
+		selected_store.set(app.components[0]);
+	}
+
+	$: {
+		// necessary pending https://github.com/sveltejs/svelte/issues/1889
+		$component_store;
+	}
+
+	let workers;
 
 	let bundle = null;
 	let dom;
 	let ssr;
 	let sourceError = null;
 	let runtimeError = null;
-	let dataError = null;
-	let dataErrorLoc = null;
 	let warningCount = 0;
 	let code = '';
 	let uid = 0;
-	let props = [];
+	let props = null;
 	let sourceErrorLoc;
 	let runtimeErrorLoc;
 
-	let worker;
-
 	onMount(async () => {
-		worker = new Worker('/repl-worker.js');
+		workers = {
+			compiler: new Worker('/workers/compiler.js'),
+			bundler: new Worker('/workers/bundler.js')
+		};
 
-		function listener(event) {
-			switch (event.data.type) {
-				case 'version':
-					version = event.data.version;
-					break;
+		workers.compiler.postMessage({ type: 'init', version });
+		workers.compiler.onmessage = event => {
+			code = event.data.code;
+			if (event.data.props) props = event.data.props;
+		};
 
-				case 'bundled':
-					({ bundle, dom, ssr, warningCount, error: sourceError } = event.data.result);
-					console.log(dom, sourceError);
-					runtimeError = null;
-					break;
-
-				case 'compiled':
-					code = event.data.result.code;
-					if (event.data.result.props) props = event.data.result.props;
-					break;
-			}
-		}
-
-		worker.addEventListener('message', listener);
-
-		worker.postMessage({ type: 'init', version });
+		workers.bundler.postMessage({ type: 'init', version });
+		workers.bundler.onmessage = event => {
+			({ bundle, dom, ssr, warningCount, error: sourceError } = event.data);
+			if (sourceError) console.error(sourceError);
+			runtimeError = null;
+		};
 
 		return () => {
-			worker.removeEventListener('message', listener);
-			worker.terminate();
+			workers.compiler.terminate();
+			workers.bundler.terminate();
 		};
 	});
 
 	function removeComponent() {
-		const component = selectedComponent;
+		const selected = $selected_store;
 
-		if (component.name === 'App') {
+		if (selected.name === 'App') {
 			// App.html can't be removed
-			component.source = '';
-			selectedComponent = component;
+			selected.source = '';
+			// $selected_store.set(selected);
 		} else {
-			const index = components.indexOf(component);
+			const components = $component_store;
+			const index = components.indexOf(selected);
+
 			if (~index) {
-				components = components.slice(0, index).concat(components.slice(index + 1));
+				component_store.set(components.slice(0, index).concat(components.slice(index + 1)));
 			} else {
 				console.error(`Could not find component! That's... odd`);
 			}
 
-			selectedComponent = components[index] || components[components.length - 1];
+			selected_store.set(components[index] || components[components.length - 1]);
 		}
 	}
 
 	function compile(component) {
 		if (component.type === 'html') {
-			worker.postMessage({
+			workers.compiler.postMessage({
 				type: 'compile',
-				component,
-				entry: component === components[0]
+				source: component.source,
+				options: {
+					name: component.name,
+					filename: `${component.name}.html`
+				},
+				entry: component === $component_store[0]
 			});
 		} else {
 			code = component.source;
 		}
 	}
 
-	function handleSelect(event) {
-		console.log(`handleSelect`);
+	function handleChange(event) {
+		selected_store.update(component => {
+			// TODO this is a bit hacky — we're relying on mutability
+			// so that updating component_store works... might be better
+			// if a) components had unique IDs, b) we tracked selected
+			// *index* rather than component, and c) `selected` was
+			// derived from `components` and `index`
+			component.source = event.detail.value;
+			return component;
+		});
 
-		selectedComponent = event.detail.component;
-		// compile(selectedComponent);
-	}
-
-	function handleChange() {
-		console.log(`handleChange`);
+		component_store.update(c => c);
 
 		// recompile selected component
-		compile(selectedComponent);
+		compile($selected_store);
 
 		// regenerate bundle (TODO do this in a separate worker?)
-		worker.postMessage({ type: 'bundle', components });
-	}
-
-	function updateData(current) {
-		const data = fleece.evaluate(json5);
-
-		for (const key in data) {
-			data[key] = current[key];
-		}
-
-		json5 = fleece.patch(json5, data);
+		workers.bundler.postMessage({ type: 'bundle', components: $component_store });
 	}
 
 	function navigate(filename) {
 		const name = filename.replace(/\.html$/, '');
 
-		if (selectedComponent.name === name) return;
-		selectedComponent = components.find(c => c.name === name);
+		console.error(`TODO navigate`);
+
+		// if (selected.name === name) return;
+		// selected = components.find(c => c.name === name);
 	}
 
-	$: if (sourceError && selectedComponent) {
-		sourceErrorLoc = sourceError.filename === `${selectedComponent.name}.${selectedComponent.type}`
+	$: if (sourceError && $selected_store) {
+		sourceErrorLoc = sourceError.filename === `${$selected_store.name}.${$selected_store.type}`
 			? sourceError.start
 			: null;
 	}
 
-	$: if (runtimeError && selectedComponent) {
-		runtimeErrorLoc = runtimeError.filename === `${selectedComponent.name}.${selectedComponent.type}`
+	$: if (runtimeError && $selected_store) {
+		runtimeErrorLoc = runtimeError.filename === `${$selected_store.name}.${$selected_store.type}`
 			? runtimeError.start
 			: null;
 	}
 
-	$: if (worker && components) {
-		console.log(`posting`, worker, components);
-		worker.postMessage({ type: 'bundle', components });
+	$: if (workers && app.components) {
+		workers.bundler.postMessage({ type: 'bundle', components: app.components });
 	}
 
-	$: if (worker && selectedComponent) {
-		compile(selectedComponent);
-	}
-
-	$: try {
-		data= fleece.evaluate(json5);
-		dataError = null;
-		dataErrorLoc = null;
-	} catch (err) {
-		dataError = err;
-		dataErrorLoc = err && err.loc;
+	$: if (workers && $selected_store) {
+		compile($selected_store);
 	}
 </script>
 
@@ -239,13 +235,12 @@
 	<SplitPane type="horizontal">
 		<section slot=a>
 			<Input
-				bind:components
-				{selectedComponent}
+				{component_store}
+				{selected_store}
+				{values_store}
 				error={sourceError}
 				errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
 				{warningCount}
-				on:create="{e => components = components.concat(e.detail.component)}"
-				on:select="{e => selectedComponent = e.detail.component}"
 				on:remove={removeComponent}
 				on:change="{handleChange}"
 			/>
@@ -253,16 +248,16 @@
 
 		<section slot=b style='height: 100%;'>
 			<Output
+				{version}
+				{selected_store}
 				{code}
 				{bundle}
 				{ssr}
 				{dom}
 				{props}
-				{values}
+				{values_store}
 				{sourceError}
 				{runtimeError}
-				{dataError}
-				{dataErrorLoc}
 			/>
 		</section>
 	</SplitPane>

@@ -6,27 +6,29 @@
 	const dispatch = createEventDispatcher();
 
 	export let value;
-	let json5;
+
+	let error;
+	let code;
 
 	if (value === undefined) {
-		json5 = 'undefined';
+		code = 'undefined';
 	} else {
-		json5 = fleece.stringify(value);
+		code = fleece.stringify(value);
 	}
 
 	$: try {
-		value = fleece.evaluate(json5);
-	} catch (err) {
-		console.error(Object.keys(err));
-		// TODO show in UI
+		value = fleece.evaluate(code);
+	} catch (e) {
+		error = e;
 	}
 
 	function handleChange(event) {
 		try {
 			const value = fleece.evaluate(event.detail.value);
+			error = null;
 			dispatch('change', { value });
-		} catch (err) {
-			// TODO indicate error
+		} catch (e) {
+			error = e;
 		}
 	}
 </script>
@@ -35,21 +37,19 @@
 	.prop-editor {
 		border: 1px solid #eee;
 	}
+
+	.error {
+		background-color: rgba(218, 16, 96, 0.1);
+		border: 1px solid #da106e;
+	}
 </style>
 
-<div class="prop-editor">
+<div class="prop-editor" class:error title="{error && error.message}">
 	<CodeMirror
 		mode="json"
-		bind:code={json5}
+		bind:code
 		lineNumbers={false}
 		on:change={handleChange}
 		flex
 	/>
 </div>
-
-<!-- <CodeMirror
-	mode="json"
-	bind:code={json5}
-	error={dataError}
-	errorLoc={dataErrorLoc}
-/> -->

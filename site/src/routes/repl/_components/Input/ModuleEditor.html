@@ -27,7 +27,7 @@
 	{#if component}
 		<CodeMirror
 			mode="{component.type === 'js' ? 'javascript' : 'handlebars'}"
-			bind:code={component.source}
+			code={component.source}
 			{error}
 			{errorLoc}
 			{warningCount}

@@ -5,16 +5,14 @@
 	import CodeMirror from '../CodeMirror.html';
 
 	export let bundle
-	export let compiled;
+	export let code;
 	export let dom;
 	export let ssr;
 	export let props;
-	export let values;
+	export let values_store;
 	export let json5;
 	export let sourceError;
 	export let runtimeError;
-	export let dataError;
-	export let dataErrorLoc;
 
 	// refs
 	let viewer;
@@ -22,14 +20,20 @@
 
 	let view = 'result';
 
+	function updateValues(prop, value) {
+		values_store.update(v => Object.assign({}, v, {
+			[prop]: value
+		}));
+	}
+
 	function setPropFromViewer(prop, value) {
-		// console.log(`setting prop from component`, prop, value);
 		// propEditors[prop].setValue(value);
+		updateValues(prop, value);
 	}
 
 	function setPropFromEditor(prop, value) {
-		console.log(`setting prop from editor`, prop, value);
 		viewer.setProp(prop, value);
+		updateValues(prop, value);
 	}
 </script>
 
@@ -75,8 +79,8 @@
 		display: grid;
 		padding: 0.5em;
 		grid-template-columns: auto 1fr;
-		grid-template-rows: min-content;
-		grid-column-gap: 0.5em;
+		grid-auto-rows: min-content;
+		grid-gap: 0.5em;
 		overflow-y: auto;
 	}
 
@@ -107,8 +111,7 @@
 					{bundle}
 					{dom}
 					{ssr}
-					{data}
-					bind:values
+					{values_store}
 					{props}
 					{sourceError}
 					bind:error={runtimeError}
@@ -125,17 +128,27 @@
 		<section slot="b">
 			<h3>Props editor</h3>
 
-			<div class="props">
-				{#each props.sort() as prop (prop)}
-					<code style="display: block; whitespace: pre;">{prop}</code>
+			{#if props}
+				{#if props.length > 0}
+					<div class="props">
+						{#each props.sort() as prop (prop)}
+							<code style="display: block; whitespace: pre;">{prop}</code>
 
-					<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
-					<PropEditor
-						value={values[prop]}
-						on:change="{e => setPropFromEditor(prop, e.detail.value)}"
-					/>
-				{/each}
-			</div>
+							<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
+							<PropEditor
+								value={$values_store[prop]}
+								on:change="{e => setPropFromEditor(prop, e.detail.value)}"
+							/>
+						{/each}
+					</div>
+				{:else}
+					<div style="padding: 0.5em">
+						<!-- TODO explain distincion between logic-less and logic-ful components? -->
+						<!-- TODO style the <a> so it looks like a link -->
+						<p>This component has no props — <a href="guide#external-properties">declare props with the export keyword</a></p>
+					</div>
+				{/if}
+			{/if}
 		</section>
 	</SplitPane>
 {:else}
@@ -143,7 +156,7 @@
 		<div slot="a">
 			<CodeMirror
 				mode="javascript"
-				code={compiled}
+				{code}
 				error={sourceError}
 				errorLoc={sourceErrorLoc}
 				readonly
