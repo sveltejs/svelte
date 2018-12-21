@@ -10,6 +10,19 @@
 	export let version = 'alpha'; // TODO change this to latest when the time comes
 	export let app;
 
+	export function toJSON() {
+		// TODO there's a bug here — Svelte hoists this function because
+		// it wrongly things that $component_store is global. Needs to
+		// factor in $ variables when determining hoistability
+
+		version; // workaround
+
+		return {
+			components: $component_store,
+			values: $values_store
+		};
+	}
+
 	let component_store = writable([]);
 	let values_store = writable({});
 	let selected_store = writable(null);
@@ -23,6 +36,7 @@
 	$: {
 		// necessary pending https://github.com/sveltejs/svelte/issues/1889
 		$component_store;
+		$values_store;
 	}
 
 	let workers;

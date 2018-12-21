@@ -1,4 +1,5 @@
 <script>
+	import * as fleece from 'golden-fleece';
 	import { createEventDispatcher } from 'svelte';
 	import ExampleSelector from './ExampleSelector.html';
 	import UserMenu from './UserMenu.html';
@@ -234,7 +235,6 @@ export default app;` });
 		>
 	</div>
 
-	<div style="flex: 1 0 auto" />
 	<div style="text-align: right; margin-right:.4rem">
 		<button class="icon" on:click="{() => zen_mode = !zen_mode}" title="fullscreen editor">
 			{#if zen_mode}

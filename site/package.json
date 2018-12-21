@@ -24,6 +24,7 @@
     "express-session": "^1.15.6",
     "golden-fleece": "^1.0.9",
     "marked": "^0.5.2",
+    "node-fetch": "^2.3.0",
     "passport": "^0.4.0",
     "passport-github": "^1.1.0",
     "prismjs": "^1.15.0",
