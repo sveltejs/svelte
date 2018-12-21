@@ -89,7 +89,7 @@ a:focus {
 	--nav-h:       6rem;
 	--top-offset:  6rem;
 	--sidebar-w:  24rem;
-	--code-w:      48em;
+	--code-w:      72em;
 	--side-nav:  4.8rem;
 	--side-page:   var(--side-nav);
 
@@ -126,7 +126,7 @@ a:focus {
 	--h3:      2.4rem;
 	--h2:        3rem;
 	--h1:      3.2rem;
-	--linemax:   32em;      /* max line-length */
+	--linemax:   42em;      /* max line-length */
 	--lh:      calc(4/2.2); /* base line-height */
 }
 
@@ -158,7 +158,7 @@ p {
 .b, b, strong { font-weight: 500 }
 
 i, em {
-	color: var(--prime);
+	/* color: var(--prime); */
 	font-style: normal;
 }
 
@@ -202,8 +202,11 @@ blockquote {
 	padding: 2rem 2.4rem 1.8rem 2.4rem;
 	border-radius: var(--border-r);
 	font-family: var(--font);
+	max-width: var(--linemax);
+}
+
+blockquote p {
 	font-size: var(--h5);
-	max-width: 38.3em;
 }
 
 blockquote :last-child {
@@ -399,7 +402,7 @@ table span {
 
 .open-in-repl {
 	position: absolute;
-	margin-top: 5.4rem;
+	margin-top: 4rem;
 	margin-left: -2.5rem;
 	width: 3.6rem;
 	height: 3.6rem;

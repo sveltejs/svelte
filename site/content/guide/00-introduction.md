@@ -17,7 +17,7 @@ You can build your entire app with Svelte, or you can add it incrementally to an
 
 ### Understanding Svelte components
 
-In Svelte, an application is composed from one or more _components_. A component is a reusable self-contained block of code that encapsulates markup, styles and behaviours that belong together, written into an `.html` file. Here's a simple example:
+In Svelte, an application is composed from one or more *components*. A component is a reusable self-contained block of code that encapsulates markup, styles and behaviours that belong together, written into an `.html` file. Here's a simple example:
 
 ```html
 <!--{ title: 'Hello world!' }-->

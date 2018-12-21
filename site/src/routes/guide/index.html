@@ -72,29 +72,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Learn Svelte</title>
-</svelte:head>
-
-<div bind:this={container} class='content linkify listify'>
-	{#each sections as section}
-	<section id='{section.slug}'>
-		<h2>
-			{section.metadata.title}
-			<small>
-				<a href='https://github.com/sveltejs/svelte.technology/edit/master/content/guide/{section.file}' title='edit this section'>
-					<Icon name='edit' /></a>
-			</small>
-		</h2>
-		{@html section.html}
-	</section>
-	{/each}
-</div>
-
-<aside class='sidebar'>
-	<GuideContents {sections} />
-</aside>
-
 <style>
 	.sidebar {
 		display: none;
@@ -147,6 +124,16 @@
 		padding: 6.4rem 0 1.6rem 0;
 	}
 
+	.content :global(.icon) {
+		width: 20px;
+		height: 20px;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		fill: none;
+	}
+
 	/* max line-length ~60 chars */
 	section > :global(p) {
 		max-width: var(--linemax)
@@ -182,3 +169,26 @@
 		background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#40b3ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12' y2='17'/%3E%3C/svg%3E");
 	}
 </style>
+
+<svelte:head>
+	<title>Learn Svelte</title>
+</svelte:head>
+
+<div bind:this={container} class='content linkify listify'>
+	{#each sections as section}
+	<section id='{section.slug}'>
+		<h2>
+			{section.metadata.title}
+			<small>
+				<a href='https://github.com/sveltejs/svelte.technology/edit/master/content/guide/{section.file}' title='edit this section'>
+					<Icon name='edit' /></a>
+			</small>
+		</h2>
+		{@html section.html}
+	</section>
+	{/each}
+</div>
+
+<aside class='sidebar'>
+	<GuideContents {sections} />
+</aside>
