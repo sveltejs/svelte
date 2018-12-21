@@ -73,16 +73,22 @@
 </script>
 
 <style>
-	.sidebar {
+	aside {
 		display: none;
 		position: fixed;
 		left: 0;
 		top: var(--nav-h);
 		width: var(--sidebar-w);
 		height: calc(100vh - var(--nav-h));
+		overflow: hidden;
+	}
+
+	.sidebar {
 		padding: var(--top-offset) 3.2rem var(--top-offset) 0;
 		font-family: var(--font-ui);
 		overflow-y: auto;
+		height: 100%;
+		width: calc(var(--sidebar-w) + 5rem);
 	}
 
 	.content {
@@ -95,7 +101,7 @@
 	}
 
 	@media (min-width: 52em) { /* can't use vars in @media :( */
-		.sidebar {
+		aside {
 			display: block;
 			left: var(--side-nav);
 		}
@@ -107,7 +113,7 @@
 	}
 
 	@media (min-width: 89.6rem) { /* can't use vars in @media :( */
-		.sidebar {
+		aside {
 			display: block;
 			left: calc(50% - 60rem);
 		}
@@ -205,6 +211,8 @@
 	{/each}
 </div>
 
-<aside class='sidebar'>
-	<GuideContents {sections} />
+<aside class="sidebar-container">
+	<div class="sidebar">
+		<GuideContents {sections} />
+	</div>
 </aside>
