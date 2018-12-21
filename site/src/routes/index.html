@@ -12,7 +12,7 @@
 
 <!-- <svelte:window bind:scrollY={sy}/> -->
 
-<section class='container'>
+<section class="hero container">
 	<img class="logo" src="logo.svg" style="transform: translate(0,{sy * 0.2}px)">
 
 	<h2>What if web apps could write themselves?</h2>
@@ -92,7 +92,7 @@
 		will-change: transform;
 	}
 
-	h1 {
+	.hero h1 {
 		text-align: center;
 		margin: 2rem 0;
 		font-size: 6rem;
@@ -102,7 +102,7 @@
 		text-transform: uppercase;
 	}
 
-	h2 {
+	.hero h2 {
 		text-align: center;
 		display: block;
 		position: relative;
@@ -110,6 +110,8 @@
 		text-align: center;
 		width: 100%;
 		text-transform: lowercase;
+		font-weight: 300;
+		opacity: 0.7;
 	}
 
 	.learn-btn {
@@ -150,7 +152,7 @@
 	}
 
 	@media screen and (min-width: 870px) {
-		h1 {
+		.hero h1 {
 			position: relative;
 			top: -.8rem;
 			font-size: 18rem;
