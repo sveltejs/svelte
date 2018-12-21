@@ -1,9 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { enter } from '../events.js';
 
 	export let examples;
-	export let name;
 
 	const dispatch = createEventDispatcher();
 </script>
@@ -20,11 +18,6 @@
 			</optgroup>
 		{/each}
 	</select>
-
-	<div class='visible'>
-		<span class='widther'>{name}</span>
-		<input bind:value={name} on:focus="{e => e.target.select()}" use:enter="{e => e.target.blur()}">
-	</div>
 </div>
 
 <style>

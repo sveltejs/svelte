@@ -6,6 +6,7 @@
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../_utils/downloadBlob.js';
 	import { user } from '../../../../user.js';
+	import { enter } from '../events.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -198,22 +199,37 @@ export default app;` });
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
-	<div class="icon" style="position: relative; width: 3.2rem; margin-top:-.5rem">
-		<Icon name="menu" />
+	<div>
+		<div class="icon" style="position: relative; width: 3.2rem; top: -.2rem">
+			<Icon name="menu" />
+
+			<select
+				class="hidden-select"
+				on:change="{e => dispatch('select', { slug: e.target.value })}"
+			>
+				<option value={null} disabled>Select an example</option>
+
+				{#each examples as group}
+					<optgroup label={group.name}>
+						{#each group.examples as example}
+							<option value={example.slug}>{example.title}</option>
+						{/each}
+					</optgroup>
+				{/each}
+			</select>
+		</div>
+
+		<ExampleSelector {examples} on:select />
+
+		<input
+			bind:value={name}
+			on:focus="{e => e.target.select()}"
+			use:enter="{e => e.target.blur()}"
+		>
 	</div>
 
-	<ExampleSelector {examples} bind:name on:select />
-
 	<div style="flex: 1 0 auto" />
-	<div style="text-align: right; margin-right:.8rem">
-		{#if $user}
-			<UserMenu />
-		{:else}
-			<a class="icon" on:click={login} href="auth/login" title="Login to save">
-				<Icon name="log-in" />
-			</a>
-		{/if}
-
+	<div style="text-align: right; margin-right:.4rem">
 		<button class="icon" on:click="{() => zen_mode = !zen_mode}" title="fullscreen editor">
 			{#if zen_mode}
 				<Icon name="close" />
@@ -249,6 +265,15 @@ export default app;` });
 				<Icon name="save" />
 			</a>
 		{/if}
+
+		{#if $user}
+			<UserMenu />
+		{:else}
+			<button class="icon" on:click={login}>
+				<Icon name="log-in" />
+				&nbsp;Log in to save
+			</button>
+		{/if}
 	</div>
 </div>
 
@@ -267,16 +292,46 @@ export default app;` });
 		color: white;
 	}
 
+	.hidden-select {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		opacity: 0.0001;
+		top: 0;
+		left: 0;
+	}
+
 	.icon {
-		padding: 0 .8rem;
-		opacity: .5;
+		display: inline-block;
+		padding: 0.2em;
+		opacity: .7;
 		transition: opacity .3s;
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		/* width: 1.6em;
+		height: 1.6em; */
+		line-height: 1;
+		margin: 0 0 0 0.4em;
 	}
 
 	.icon:hover    { opacity: 1 }
 	.icon:disabled { opacity: .3 }
 
 	.icon[title^='fullscreen'] { display: none }
+
+	input {
+		background: transparent;
+		border: none;
+		color: currentColor;
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		opacity: 0.7;
+		outline: none;
+	}
+
+	input:focus {
+		opacity: 1;
+	}
 
 	@media (min-width: 768px) {
 		.icon[title^='fullscreen'] { display: inline }
