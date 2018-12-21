@@ -87,19 +87,35 @@
 
 	.content {
 		width: 100%;
+		max-width: calc(var(--main-width) + 2 * var(--side-nav));
+		margin: 0 auto;
 		-moz-tab-size: 2;
-		padding: var(--top-offset) var(--side-page);
+		padding: var(--top-offset) var(--side-nav);
 		tab-size: 2;
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 52em) { /* can't use vars in @media :( */
 		.sidebar {
 			display: block;
-			left: var(--side-page);
+			left: var(--side-nav);
 		}
 
 		.content {
-			padding-left: calc(var(--side-page) + var(--sidebar-w) + 4rem);
+			max-width: none;
+			padding-left: 32rem;
+		}
+	}
+
+	@media (min-width: 89.6rem) { /* can't use vars in @media :( */
+		.sidebar {
+			display: block;
+			left: calc(50% - 60rem);
+		}
+
+		.content {
+			max-width: none;
+			padding-left: calc(50% - 30rem);
+			padding-right: calc(50% - 50rem);
 		}
 	}
 

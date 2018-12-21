@@ -11,6 +11,7 @@
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
     "deploy": "npm run stage && now alias",
+    "prestage": "npm run sapper",
     "stage": "now"
   },
   "dependencies": {
