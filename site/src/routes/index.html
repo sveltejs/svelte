@@ -12,9 +12,9 @@
 
 <!-- <svelte:window bind:scrollY={sy}/> -->
 
-<section class="hero container">
-	<img class="logo" src="logo.svg" style="transform: translate(0,{sy * 0.2}px)">
+<img alt="Svelte logo" class="logo" src="logo.svg" style="transform: translate(0,{sy * 0.2}px)">
 
+<section class="hero container">
 	<h2>What if web apps could write themselves?</h2>
 	<h1>Svelte</h1>
 </section>
@@ -65,6 +65,7 @@
 
 <style>
 	.container {
+		position: relative;
 		margin: 10rem var(--side-page);
 	}
 
@@ -125,6 +126,8 @@
 
 	.box {
 		padding: 2em;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.box > h2 {
@@ -141,6 +144,7 @@
 
 	.box a {
 		text-align: right;
+		margin-top: auto;
 	}
 
 	h6 {
