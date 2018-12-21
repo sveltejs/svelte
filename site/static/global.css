@@ -1,38 +1,8 @@
-@font-face {
-	font-family: 'aller';
-	font-display: auto;
-	src: url('fonts/aller-subset/aller_lt-web.woff2') format('woff2'),
-		url('fonts/aller-subset/aller_lt-web.woff') format('woff');
-	font-weight: 300;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: 'aller';
-	font-display: auto;
-	src: url('fonts/aller-subset/aller_rg-web.woff2') format('woff2'),
-		url('fonts/aller-subset/aller_rg-web.woff') format('woff');
-	font-weight: 500;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: 'asap-bold';
-	font-display: auto;
-	src: url('fonts/asap-subset/asap-bold-web.woff2') format('woff2'),
-		url('fonts/asap-subset/asap-bold-web.woff') format('woff');
-	font-weight: normal;
-	font-style: normal;
-}
-
 body {
-	/* --font: aller, sans-serif; */
 	--font: 'Overpass', sans-serif;
-	/* --font-alt: asap-bold, sans-serif; */
 	--font-alt: 'Overpass', sans-serif;
 	--font-mono: 'Overpass Mono', monospace;
 	--font-ui: var(--font-mono);
-	/* ui-elements: buttons, forms etc. */
 }
 
 /*	base reset ----------------------------- */
@@ -110,8 +80,8 @@ a:focus {
 	--prime:      #ff3e00;
 	--second:     #676778;
 	--flash:       #40b3ff;
-	--heading:    #333;
-	--text:       #555; /* hsl(36, 3%, 62%) */
+	--heading:    var(--second);
+	--text:       #333; /* hsl(36, 3%, 62%) */
 	--border-w:   .3rem;     /* border-width  */
 	--border-r:   .4rem;     /* border-radius */
 }
@@ -155,12 +125,7 @@ p {
 	margin: 0 0 1em 0;
 }
 
-.b, b, strong { font-weight: 500 }
-
-i, em {
-	/* color: var(--prime); */
-	font-style: normal;
-}
+.b, b, strong { font-weight: 700 }
 
 tt, code, kbd, samp {
 	font: 300 var(--code-fs)/1.7 var(--font-mono);
@@ -216,48 +181,34 @@ blockquote :last-child {
 
 /*  buttons -------------------------------- */
 button {
-  font-family: inherit;
-  font-size: inherit;
-  background-color: transparent;
-  border: none;
-  color: currentColor;
+	font-family: inherit;
+	font-size: inherit;
+	background-color: transparent;
+	border: none;
+	color: currentColor;
 }
 
 button:focus { outline: 0 }
 
 button[disabled] {
-  opacity: .55;
-  pointer-events: none;
+	opacity: .55;
+	pointer-events: none;
 }
 
 button > svg {
-  position: relative;
-  top: -.1rem;
-  width: 2rem !important;
-  height: 2rem !important;
+	position: relative;
+	top: -.1rem;
+	width: 2rem !important;
+	height: 2rem !important;
 }
-
-/*  default */
-/* button {
-  min-height: var(--bttn-h);
-  line-height: var(--bttn-h);
-  padding: 0 1.6rem;
-  transition: all .1s;
-} */
-
-/* button:hover  { background-image: var(--bttn-hover) }
-button:active {
-	mix-blend-mode: overlay;
-	background-image: var(--bttn-active)
-} */
 
 /*  options */
 button[outline] {
-  min-height: var(--bttn-calc-h);
-  line-height: var(--bttn-calc-h);
-  border: var(--bttn-outline) solid currentColor;
-  background-color: white;
-  color: currentColor;
+	min-height: var(--bttn-calc-h);
+	line-height: var(--bttn-calc-h);
+	border: var(--bttn-outline) solid currentColor;
+	background-color: white;
+	color: currentColor;
 }
 
 /*  links -------------------------------------
@@ -277,36 +228,36 @@ button[outline] {
 	position: relative;
 	padding: 0 .4rem .1rem;
 	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
-  user-select: none;
+	user-select: none;
 	white-space: nowrap;
 	color: inherit;
 	transition: color .2s;
 }
 
 .linkify a:not(.open-in-repl):hover  {
-  color: var(--flash);
+	color: var(--flash);
 }
 
 .linkify a:not(.open-in-repl):before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: .2rem;
-  bottom: -.2rem;
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: .2rem;
+	bottom: -.2rem;
 	left: 0;
 	white-space: nowrap;
 	background: var(--prime);
 	border-radius: var(--border-r);
-  visibility: hidden;
+	visibility: hidden;
 	transform: scaleX(0);
 	transform-origin: left center;
-  transition: all .15s var(--out-cubic);
-  z-index: -1;
+	transition: all .15s var(--out-cubic);
+	z-index: -1;
 }
 
 .linkify a:not(.open-in-repl):hover:before  {
-  visibility: visible;
-  transform: scaleX(1);
+	visibility: visible;
+	transform: scaleX(1);
 }
 
 a:hover > .icon { stroke: var(--flash) }
@@ -314,18 +265,18 @@ a:hover > .icon { stroke: var(--flash) }
 /*  lists ---------------------------------- */
 .listify ol,
 .listify ul {
-  --list-padding: 2.9rem;
+	--list-padding: 2.9rem;
 
-  list-style: none;
-  color: currentColor;
-  margin-left: var(--list-padding);
+	list-style: none;
+	color: currentColor;
+	margin-left: var(--list-padding);
 }
 
 .listify ol > li,
 .listify ul > li {
-  max-width: calc(var(--linemax) - var(--list-padding));
-  line-height: 1.35;
-  margin: 0 0 0.8em 0;
+	max-width: calc(var(--linemax) - var(--list-padding));
+	line-height: 1.35;
+	margin: 0 0 0.8em 0;
 }
 
 .listify ul > li:before {
@@ -386,7 +337,7 @@ table span {
 	max-width: none;
 	margin: 0 auto;
 	padding: 1.6rem 0 4rem .8rem;
-  font: 1.2rem/1.6 var(--font-ui);
+	font: 1.2rem/1.6 var(--font-ui);
 }
 
 .filename {
@@ -396,8 +347,8 @@ table span {
 }
 
 .box {
-  padding: 2.4rem 3.2rem;
-  border-radius: var(--border-r);
+	padding: 2.4rem 3.2rem;
+	border-radius: var(--border-r);
 }
 
 .open-in-repl {
@@ -442,12 +393,12 @@ table span {
 	.grid.half,
 	.grid { grid-template-columns: repeat(2, 1fr) }
 	.grid > .cols-2,
-  .grid > .cols-3 { grid-column: span 2 }
+	.grid > .cols-3 { grid-column: span 2 }
 }
 
 @media screen and (min-width: 1100px) {
 	.grid { grid-template-columns: repeat(3, 1fr) }
 	.grid > .cols-2 { grid-column: span 2 }
-  .grid > .cols-3 { grid-column: span 3 }
+	.grid > .cols-3 { grid-column: span 3 }
 }
 
