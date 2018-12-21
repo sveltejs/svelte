@@ -11,6 +11,7 @@ import deindent from '../../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
 import getObject from '../../../../utils/getObject';
 import Binding from '../../../nodes/Binding';
+import flattenReference from '../../../../utils/flattenReference';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
@@ -196,12 +197,15 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
+			component.has_reactive_assignments = true;
+
 			if (binding.name === 'this') {
 				const fn = component.getUniqueName(`${this.var}_binding`);
 				component.declarations.push(fn);
 				component.template_references.add(fn);
 
 				let lhs;
+				let object;
 
 				if (binding.isContextual && binding.expression.node.type === 'Identifier') {
 					// bind:x={y} — we can't just do `y = x`, we need to
@@ -209,21 +213,23 @@ export default class InlineComponentWrapper extends Wrapper {
 					const { name } = binding.expression.node;
 					const { object, property, snippet } = block.bindings.get(name)();
 					lhs = snippet;
+
+					// TODO we need to invalidate... something
 				} else {
+					object = flattenReference(binding.expression.node).name;
 					lhs = component.source.slice(binding.expression.node.start, binding.expression.node.end).trim();
 				}
 
 				component.partly_hoisted.push(deindent`
 					function ${fn}($$component) {
 						${lhs} = $$component;
+						${object && `$$make_dirty('${object}');`}
 					}
 				`);
 
 				block.builders.destroy.addLine(`ctx.${fn}(null);`);
 				return `@add_binding_callback(() => ctx.${fn}(${this.var}));`;
 			}
-
-			component.has_reactive_assignments = true;
 
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
 			component.declarations.push(name);
