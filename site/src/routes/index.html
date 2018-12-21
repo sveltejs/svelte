@@ -2,110 +2,70 @@
 	import Icon from '../components/icon.html';
 	import Logo from '../components/logo.html';
 	import Iso from '../components/isometry.html';
+
+	let sy = 0;
 </script>
 
 <svelte:head>
 	<title>Svelte • The magical disappearing UI framework</title>
 </svelte:head>
 
-<section class='container'>
-	<div class='logo'>
-		<Logo size={90} />
-		<h1>SVELTE</h1>
-		<h2>The magical disappearing<br />UI framework</h2>
-	</div>
+<!-- <svelte:window bind:scrollY={sy}/> -->
 
-	<!-- possibly not the best solution - better use classes for button? -->
-	<a rel='prefetch' href='guide' class='learn-btn'>
-		<button class='bg-prime white'>Learn Svelte
-			<Icon name='arrow-right' /></button>
-	</a>
+<section class='container'>
+	<img class="logo" src="logo.svg" style="transform: translate(0,{sy * 0.2}px)">
+
+	<h2>What if web apps could write themselves?</h2>
+	<h1>Svelte</h1>
 </section>
 
-<section class='container py0 align-c'>
+<section class='container'>
 	<ul class='grid stretch'>
 		<li class='box bg-prime white'>
-			<Logo size={88} outer='none' inner='fill:none; stroke:white;' />
-			<h2 style='padding:2.4rem 0 0 0'>Solved: The web's JavaScript bloat crisis</h2>
-			<p>Svelte turns your templates into tiny, framework-less vanilla JavaScript</p>
+			<h2 style='padding:2.4rem 0 0 0'>Write less code</h2>
+			<p>Write boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
+
+			<a href="TODO-blog-post-on-loc">learn more</a>
 		</li>
+
 		<li class='box bg-flash white'>
-			<Logo size={88} outer='none' inner='fill:none; stroke:white;' />
-			<h2 style='padding:2.4rem 0 0 0'>Simple and familiar</h2>
-			<p>Build apps out of composable, easy-to-write blocks using languages you already know</p>
+			<h2 style='padding:2.4rem 0 0 0'>No virtual DOM overhead</h2>
+			<p>Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays fast</p>
+
+			<a href="TODO-blog-post-on-vdom-overhead">learn more</a>
 		</li>
+
 		<li class='box bg-second white'>
-			<Logo size={88} outer='none' inner='fill:none; stroke:white;' />
-			<h2 style='padding:2.4rem 0 0 0'>Super fast, rock solid</h2>
-			<p>Compile-time static analysis ensures the browser does no more work than it needs to</p>
+			<h2 style='padding:2.4rem 0 0 0'>Truly reactive</h2>
+			<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
+
+			<a href="TODO-blog-post-on-reactivity">learn more</a>
 		</li>
 	</ul>
 </section>
 
-<section class='container'>
-	<ul class='grid half'>
-		<li>
-			<h2>The why-headline here</h2>
-			<p><b>Copyplat</b> – We captured the WHAT? above. Why another framework. Some facts, the reasons behind. Why is svelte better. OK, we link to @Richs post on this for more Details, but here we extract it in three sentences and some illustrations or charts.</p>
-		</li>
-		<li class='align-c cols-2'>
-			<Iso size={180} style='fill:var(--flash); stroke:var(--second)' />
-			<Iso size={180} style='fill:#ccc; stroke:var(--second)' />
-			<Iso size={180} style='fill:var(--prime); stroke:var(--second)' />
-			<p class='legend'><b>– fig 1 –</b><br />informative grafics here</p>
-		</li>
-	</ul>
-	<h6 class='bg-second white'>NOTE<br /> I didn't spend much time on contents or the right Illustrations here. Let's
-		discuss look'n'feel first.</h6>
+<section class="container grid half">
+	<div>
+		<p>Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a <em>compile step</em> that happens when you build your app.</p>
+
+		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
+	</div>
+
+	<div>
+		<p>TODO a video intro</p>
+	</div>
 </section>
 
-<section class='container back-light'>
-	<ul class='grid'>
-		<li class='align-c cols-2'>
-			<Iso size={140} style='fill:var(--flash); stroke:var(--second)' />
-			<Iso size={140} style='fill:#ccc; stroke:var(--second)' />
-			<Iso size={140} style='fill:var(--prime); stroke:var(--second)' />
-			<p class='legend'><b>– fig 2 –</b><br />informative grafics here</p>
-		</li>
-		<li>
-			<h2>The how-headline here</h2>
-			<p>
-				<b>Copyplat</b> – How did svelte accomplish this? Why better than others?
-				Blindtext. Fera voluptatis debitis aut laut harum sitiandus. Ant labo. Nequod modisquia illabo. Nametur sequis ut
-				entiberibeat facerfe rovitatemqui beatis minvenis consequi quid quo et.
-			</p>
-		</li>
-	</ul>
+<section class="container grid half">
+	<p>TODO finish building this page. Ideas: Who's using Svelte? Example code (interactive, ideally). What else?</p>
 </section>
 
-<section class='container'>
-	<ul class='grid half'>
-		<li>
-			<h2>The benefits-headline here</h2>
-			<p>
-				<b>Copyplat</b> – Blindtext. Fera voluptatis debitis aut laut harum sitiandus. Ant labo. Nequod modisquia illabo. Nametur sequis ut entiberibeat facerfe rovitatemqui beatis minvenis consequi quid quo et.
-			</p>
-		</li>
-		<li class='align-c'>
-			<Iso size={120} style='fill:var(--flash); stroke:var(--second)' />
-			<Iso size={80} style='fill:#ccc; stroke:var(--second)' />
-			<Iso size={50} style='fill:var(--prime); stroke:var(--second)' />
-			<p class='legend'><b>– fig 3 –</b><br />informative grafics here</p>
-		</li>
-	</ul>
-</section>
-
-<section class='container bg-second'>
-	<a rel='prefetch' href='themer' class='learn-btn'>
-			<button class='back prime'>just because we can
-				<Icon name='arrow-right' /></button>
-		</a>
-</section>
+<!-- TODO example code transformation (interactive REPL?) -->
 
 
 <style>
 	.container {
-		padding: 10rem var(--side-page);
+		margin: 10rem var(--side-page);
 	}
 
 	.container ul {
@@ -123,48 +83,62 @@
 	}
 
 	.logo {
+		position: absolute;
+		left: -120px;
+		top: -120px;
+		width: 80vmin;
+		height: 80vmin;
+		opacity: 0.1;
+		will-change: transform;
+	}
+
+	h1 {
 		text-align: center;
-	}
-
-	.logo > :global(svg) {
-		position: relative;
-	}
-
-	.logo > h1 {
 		margin: 2rem 0;
-		font-size: 4.8rem;
-		color: var(--header);
-		font-weight: 300;
+		font-size: 6rem;
+		color: var(--heading);
+		font-weight: 100;
+		letter-spacing: .12em;
+		text-transform: uppercase;
 	}
 
-	.logo > h2 {
-		position: relative;
-		font-size: 1.7rem;
+	h2 {
 		text-align: center;
-		animation: slow-fade-demo 6s var(--inout-cubic) infinite;
+		display: block;
+		position: relative;
+		font-size: 3.2rem;
+		text-align: center;
+		width: 100%;
+		text-transform: lowercase;
 	}
 
 	.learn-btn {
 		all: unset;
-  	cursor: pointer;
+		cursor: pointer;
 		display: block;
 		margin-top: 4rem;
-		text-align: center;
 	}
 
 	.legend { padding-top: 4rem }
 
 	.box {
-		padding-top: 3.2rem
+		padding: 2em;
 	}
 
 	.box > h2 {
-		padding: 2.4rem 0;
-		font-size: var(--h5);
+		padding: 0;
+		margin: 0 0 0.5em 0;
+		font-size: var(--h2);
+		color: white;
+		text-align: left;
 	}
 
 	.box > p {
 		font-size: var(--h5);
+	}
+
+	.box a {
+		text-align: right;
 	}
 
 	h6 {
@@ -175,30 +149,12 @@
 		text-align: center;
 	}
 
-	/* simple placeholder-animation */
-	@keyframes slow-fade-demo {
-		0%, 75%, 100% { opacity: 1 }
-		85% { opacity: 0 }
-	}
-
 	@media screen and (min-width: 870px) {
-		.logo {
-			display: flex;
-			flex-wrap: wrap;
-			align-items: center;
-			justify-content: center;
-		}
-
-		.logo > h1 {
+		h1 {
 			position: relative;
 			top: -.8rem;
-			font-size: 5.6rem;
+			font-size: 18rem;
 			margin: 2rem 2rem 0 1rem;
-		}
-
-		.logo > h2 {
-			top: .6rem;
-			text-align: left;
 		}
 	}
 </style>

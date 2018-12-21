@@ -325,7 +325,6 @@ table span {
 
 /*	helper styles -------------------------- */
 .flex-auto { flex: 1 0 auto }
-.align-c  { text-align: center }
 
 .py0 {
 	padding-top: 0 !important;
