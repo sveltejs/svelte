@@ -39,8 +39,6 @@
 	function stringify(value) {
 		if (value === undefined) return '<undefined>';
 
-		console.log(value);
-
 		const code = previous_code
 			? fleece.patch(previous_code, value)
 			: fleece.stringify(value);

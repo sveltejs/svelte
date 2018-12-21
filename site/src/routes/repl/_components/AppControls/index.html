@@ -54,6 +54,9 @@
 	async function fork(intentWasSave) {
 		saving = true;
 
+		const { components, values } = repl.toJSON();
+		const json5 = fleece.stringify(values); // TODO preserve the original code
+
 		try {
 			const r = await fetch(`gist/create`, {
 				method: 'POST',
@@ -102,6 +105,9 @@
 		}
 
 		saving = true;
+
+		const { components, values } = repl.toJSON();
+		const json5 = fleece.stringify(values); // TODO preserve the original code
 
 		try {
 			const files = {};

@@ -21,3 +21,5 @@ _actual*.*
 
 /site/cypress/screenshots/
 /site/__sapper__/
+/site/.env
+/site/.sessions
