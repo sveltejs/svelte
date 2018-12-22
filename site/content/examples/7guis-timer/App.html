@@ -1,53 +1,41 @@
+<!-- https://eugenkiss.github.io/7guis/tasks#timer -->
+
 <script>
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 
-	// [svelte-upgrade suggestion]
-	// manually refactor all references to __this
-	const __this = {};
+	let elapsed = 0;
+	let duration = 5000;
 
-	export let elapsed = 0;
-	export let duration = 5000;
-	export let start;
+	let last_time = window.performance.now();
+	let frame;
 
-	onMount(() => {
-		reset();
+	(function update() {
+		frame = requestAnimationFrame(update);
 
-		const update = () => {
-			__this.frame = requestAnimationFrame(update);
-			const elapsed = window.performance.now() - start;
+		const time = window.performance.now();
+		elapsed += Math.min(
+			time - last_time,
+			duration - elapsed
+		);
 
-			if (elapsed > duration) return;
-
-			elapsed = elapsed;
-		};
-
-		update();
-	});
+		last_time = time;
+	}());
 
 	onDestroy(() => {
-		if (__this.frame) {
-			cancelAnimationFrame(__this.frame);
-		}
+		cancelAnimationFrame(frame);
 	});
-
-	// [svelte-upgrade suggestion]
-	// review these functions and remove unnecessary 'export' keywords
-	export function reset() {
-		start = window.performance.now();
-	}
 </script>
 
-<!-- https://github.com/eugenkiss/7guis/wiki#timer -->
 <label>
 	elapsed time:
-	<progress value='{elapsed / duration}'></progress>
+	<progress value="{elapsed / duration}"></progress>
 </label>
 
-<div>{ ( elapsed / 1000 ).toFixed( 1 ) }s</div>
+<div>{(elapsed / 1000).toFixed(1)}s</div>
 
 <label>
 	duration:
-	<input type='range' bind:value='duration' min='1' max='20000'>
+	<input type="range" bind:value={duration} min="1" max="20000">
 </label>
 
-<button on:click='{reset}'>reset</button>
+<button on:click="{() => elapsed = 0}">reset</button>
