@@ -77,8 +77,8 @@ async function getBundle(mode, cache, lookup) {
 			plugins: [{
 				resolveId(importee, importer) {
 					// v3 hack
-					if (importee === `svelte`) return `https://unpkg.com/svelte@${version}/index.js`;
-					if (importee.startsWith(`svelte`)) return `https://unpkg.com/svelte@${version}/${importee.slice(7)}`;
+					if (importee === `svelte`) return `https://unpkg.com/svelte@${version}/index.mjs`;
+					if (importee.startsWith(`svelte`)) return `https://unpkg.com/svelte@${version}/${importee.slice(7)}.mjs`;
 
 					if (importer && importer.startsWith(`https://`)) {
 						return new URL(importee, importer).href;
