@@ -1,7 +1,7 @@
 <script>
 	import { user, logout } from '../../../../user.js';
 
-	let showMenu = true;
+	let showMenu = false;
 	let name;
 
 	$: name = $user.displayName || $user.username;

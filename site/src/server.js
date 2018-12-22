@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import express from 'express';
 import compression from 'compression';
 import session from 'express-session';
@@ -8,8 +8,6 @@ import sessionFileStore from 'session-file-store';
 import serve from 'serve-static';
 import devalue from 'devalue';
 import * as sapper from '../__sapper__/server.js';
-
-dotenv.config();
 
 const app = express();
 
