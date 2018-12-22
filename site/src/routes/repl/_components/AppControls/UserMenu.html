@@ -1,0 +1,85 @@
+<script>
+	import { user, logout } from '../../../../user.js';
+
+	let showMenu = false;
+	let name;
+
+	$: name = $user.displayName || $user.username;
+</script>
+
+<div class="user" on:mouseenter="{() => showMenu = true}" on:mouseleave="{() => showMenu = false}">
+	<span>{name}</span>
+	<img alt="{name} avatar" src="{$user.photo}">
+
+	{#if showMenu}
+		<div class="menu">
+			<button on:click={logout}>Log out</button>
+		</div>
+	{/if}
+</div>
+
+<style>
+	.user {
+		position: relative;
+		display: inline-block;
+		padding: 0em 3.2rem 0 1.6rem;
+		line-height: 1;
+		z-index: 99;
+	}
+
+	.user::after {
+		/* embiggen hit zone, so log out menu doesn't disappear */
+		position: absolute;
+		content: '';
+		width: 100%;
+		height: 3.2rem;
+		left: 0;
+		top: 0;
+	}
+
+	span {
+		/* position: relative; padding: 0 2em 0 0; */
+		line-height: 1;
+		display: inline-block;
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		opacity: 0.7;
+	}
+
+	.user:hover span {
+		opacity: 1;
+	}
+
+	img {
+		position: absolute;
+		top: -0.05em;
+		right: 0;
+		width: 2.4rem;
+		height: 2.4rem;
+		border: 1px solid rgba(255,255,255,0.3);
+		border-radius: 0.2rem;
+	}
+
+	.menu {
+		position: absolute;
+		width: calc(100% - 0rem);
+		top: 3rem;
+		left: 0rem;
+		background-color: var(--second);
+		padding: 0.8rem 1.6rem;
+		z-index: 99;
+		text-align: left;
+		border-radius: 0.4rem;
+	}
+
+	.menu button {
+		background-color: transparent;
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		/* opacity: 0.7; */
+	}
+
+	.menu button:hover {
+		opacity: 1;
+	}
+</style>

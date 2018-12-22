@@ -1,0 +1,224 @@
+<script>
+	import Icon from './icon.html';
+	import Logo from './logo.html';
+
+	export let segment;
+
+	let open = false;
+	let nav;
+
+	function toggleOpen() {
+		// if the menu is closing, scroll back to the top *after* it
+		// shuts. otherwise, scroll back to the top immediately
+		// (just in case the user reopened before it happened).
+		// The reason we don't just do it when the menu opens is
+		// that the scrollbar visibly flashes
+		if (open) {
+			setTimeout(() => {
+				if (!open) {
+					nav.scrollTop = 0;
+				}
+			}, 350);
+		} else {
+			nav.scrollTop = 0;
+		}
+
+		open = !open;
+	}
+</script>
+
+<style>
+	/* Unfortunately I'm not able to  understand mousecatcher */
+	.mousecatcher {
+		position: fixed;
+		left: 0;
+		top: 0;
+		width: 120vw;
+		height: 100vh;
+		background-color: black;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity .4s;
+		z-index: 3;
+	}
+
+	.mousecatcher.open {
+		pointer-events: all;
+		opacity: .3;
+	}
+
+	@keyframes fadein {
+		from { opacity: 0 }
+		to   { opacity: 1 }
+	}
+
+	header {
+		position: fixed;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+		height: var(--nav-h);
+		padding: 0 var(--side-nav);
+		margin: 0 auto;
+		background-color: white;
+		box-shadow: 0 -0.4rem 0.9rem 0.2rem rgba(0,0,0,.5);
+		font-family: var(--font-ui);
+		z-index: 10;
+	}
+
+	nav {
+		position: fixed;
+		width: calc(var(--sidebar-w) + 6rem);
+		height: calc(100vh - var(--nav-h));
+		top: var(--nav-h);
+		padding: 6rem 3rem 6rem 6rem;
+		background-color: hsla(240, 8%, 15%, .9);
+		box-shadow: .3rem .3rem .6rem -.2rem rgba(0,0,0,.7);
+		transform: translate(-120vw, 0);
+		transition: transform .1s var(--in-cubic);
+		z-index: 5;
+		user-select: none;
+	}
+
+	h2 {
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-weight: 300;
+	}
+
+	.open {
+		transform: translate(-5rem,0);
+		transition: transform .2s var(--out-cubic);
+		overflow-y: auto;
+	}
+
+	.primary    { list-style: none }
+	.primary li { display: inline }
+
+	.primary:first-of-type li {
+		display: block;
+	}
+
+	.primary li a {
+		font-size: var(--h6);
+		padding: 0 .8rem;
+	}
+
+	.primary :global(svg) {
+		width: 2rem;
+		height: 2rem;
+	}
+
+	.menu-link {
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+	}
+
+	.logo {
+		position: relative;
+		top: .3rem;
+		width: 18rem;
+		color: var(--second);
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		z-index: 11;
+		padding: 0.5em 0;
+	}
+
+	.logotype {
+		display: none;
+		font-size: 2.8rem;
+		letter-spacing: .12em;
+		line-height: 1;
+		margin: 0;
+	}
+
+	.home {
+		position: relative;
+		top: 0;
+		width: 18rem;
+		color: var(--second);
+		-webkit-tap-highlight-color: transparent;
+		-webkit-touch-callout: none;
+		z-index: 11;
+		padding: 0.5rem 0 0.3rem 4.2rem;
+		background: url(/logo.svg) 0 50% no-repeat;
+		background-size: auto 100%;
+	}
+
+	.active {
+		color: var(--prime)
+	}
+
+	/*  media-queries -------------------------- */
+	@media (min-width: 768px) {
+		.mousecatcher,
+		.menu-link,
+		.secondary { display: none }
+
+		nav {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: var(--nav-h);
+			padding: 0 var(--side-nav) 0 var(--side-nav);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			background-color: transparent;
+			transform: none;
+			transition: none;
+			box-shadow: none;
+		}
+
+		.primary:first-of-type li {
+			display: inline;
+		}
+
+		.logotype { display: block }
+	}
+</style>
+
+<div class='{open ? "open": "closed"} mousecatcher' on:click="{() => open = false}" />
+
+<header>
+	<span class='menu-link' on:click="{toggleOpen}">
+		{#if open}
+			<Icon name='close' />
+		{:else}
+			<Icon name='menu' />
+		{/if}
+	</span>
+
+	<nav bind:this={nav} class='{open ? "open": "closed"}' on:click="{() => open = false}" >
+		<a href='.' class="home" title='Homepage'>
+			<h2 class='logotype'>Svelte</h2>
+		</a>
+
+		<ul class='primary'>
+			<li><a rel='prefetch' class='{segment === "guide" ? "active": ""}' href='guide'>Guide</a></li>
+			<li><a rel='prefetch' class='{segment === "repl" ? "active": ""}' href='repl'>REPL</a></li>
+			<li><a rel='prefetch' class='{segment === "blog" ? "active": ""}' href='blog'>Blog</a></li>
+			<li><a href='https://sapper-redesign.now.sh'>Sapper</a></li>
+
+			<li>
+				<a href='https://discord.gg/yy75DKs' title='Discord Chat'>
+					<Icon name='message-square' />
+				</a>
+			</li>
+
+			<li>
+				<a href='https://github.com/sveltejs/svelte' title='Github Repo'>
+					<Icon name='github' />
+				</a>
+			</li>
+		</ul>
+
+		<!-- <ul class='secondary'>
+
+		</ul> -->
+	</nav>
+</header>

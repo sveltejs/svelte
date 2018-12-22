@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang='en' class="theme-default typo-default">
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width'>
+	<meta name='theme-color' content='#aa1e1e'>
+
+	%sapper.base%
+
+	<link rel='stylesheet' href='global.css'>
+	<link href=prism.css rel=stylesheet>
+	<link rel='manifest' href='manifest.json'>
+	<link rel='icon' type='image/png' href='favicon.png'>
+
+	<link href="https://fonts.googleapis.com/css?family=Overpass+Mono|Overpass:100,300,700" rel="stylesheet">
+
+	<!-- Sapper generates a <style> tag containing critical CSS
+	     for the current page. CSS for the rest of the app is
+	     lazily loaded when it precaches secondary pages -->
+	%sapper.styles%
+
+	<!-- This contains the contents of the <svelte:head> component, if
+	     the current page has one -->
+	%sapper.head%
+</head>
+<body>
+	<!-- The application will be rendered inside this element,
+	     because `app/client.js` references it -->
+	<div id='sapper'>%sapper.html%</div>
+
+	<!-- Sapper creates a <script> tag containing `app/client.js`
+	     and anything else it needs to hydrate the app and
+	     initialise the router -->
+	%sapper.scripts%
+</body>
+</html>

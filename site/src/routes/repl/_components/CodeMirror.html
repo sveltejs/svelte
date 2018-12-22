@@ -1,0 +1,252 @@
+<script context="module">
+	let codemirror_promise;
+	let _CodeMirror;
+
+	if (process.browser) {
+		codemirror_promise = import(/* webpackChunkName: "codemirror" */ './_codemirror.js');
+
+		codemirror_promise.then(mod => {
+			_CodeMirror = mod.default;
+		});
+	}
+</script>
+
+<script>
+	import { onMount, beforeUpdate, createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+
+	export let mode;
+	export let code;
+	export let readonly;
+	export let error;
+	export let errorLoc;
+	export let warningCount = 0;
+	export let flex = false;
+	export let lineNumbers = true;
+
+	let w;
+	let h;
+
+	export function resize() {
+		editor.refresh();
+	}
+
+	const modes = {
+		json: {
+			name: 'javascript',
+			json: true
+		},
+		handlebars: {
+			name: 'handlebars',
+			base: 'text/html'
+		}
+	};
+
+	const refs = {};
+	let editor;
+	let updating = false;
+	let marker;
+	let error_line;
+	let destroyed = false;
+	let CodeMirror;
+
+	$: if (CodeMirror) {
+		createEditor(mode);
+	}
+
+	$: if (editor && !updating && code != null) {
+		updating = true;
+		editor.setValue(code);
+	}
+
+	$: if (editor && w && h) {
+		editor.refresh();
+	}
+
+	$: {
+		if (marker) marker.clear();
+
+		if (errorLoc) {
+			const line = errorLoc.line - 1;
+			const ch = errorLoc.column;
+
+			marker = editor.markText({ line, ch }, { line, ch: ch + 1 }, {
+				className: 'error-loc'
+			});
+
+			error_line = line;
+		} else {
+			error_line = null;
+		}
+	}
+
+	let previous_error_line;
+	$: if (editor) {
+		if (previous_error_line != null) {
+			editor.removeLineClass(previous_error_line, 'wrap', 'error-line')
+		}
+
+		if (error_line && (error_line !== previous_error_line)) {
+			editor.addLineClass(error_line, 'wrap', 'error-line');
+			previous_error_line = error_line;
+		}
+	}
+
+	onMount(() => {
+		if (_CodeMirror) {
+			CodeMirror = _CodeMirror;
+		} else {
+			codemirror_promise.then(mod => {
+				CodeMirror = mod.default;
+			});
+		}
+
+		return () => {
+			destroyed = true;
+			if (editor) editor.toTextArea();
+		}
+	});
+
+	beforeUpdate(() => {
+		updating = false;
+	});
+
+	function createEditor(mode) {
+		if (destroyed) return;
+
+		if (editor) {
+			editor.toTextArea();
+		}
+
+		editor = CodeMirror.fromTextArea(refs.editor, {
+			lineNumbers,
+			lineWrapping: true,
+			indentWithTabs: true,
+			indentUnit: 2,
+			tabSize: 2,
+			value: code,
+			mode: modes[mode] || {
+				name: mode
+			},
+			readOnly: readonly
+		});
+
+		editor.on('change', instance => {
+			if (!updating) {
+				updating = true;
+				code = instance.getValue();
+				dispatch('change', { value: code });
+			}
+		});
+
+		editor.refresh();
+	}
+</script>
+
+<style>
+	.codemirror-container {
+		width: 100%;
+	}
+
+	.codemirror-container :global(.CodeMirror) {
+		height: 100%;
+		/* background: var(--background); */
+		background: transparent;
+		font: 300 var(--code-fs)/1.7 var(--font-mono);
+		color: var(--base);
+	}
+
+	.codemirror-container.flex :global(.CodeMirror) {
+		height: auto;
+	}
+
+	.codemirror-container.flex :global(.CodeMirror-lines) {
+		padding: 0;
+	}
+
+	@media (min-width: 768px) {
+		.codemirror-container {
+			height: 100%;
+			border: none;
+		}
+
+		.codemirror-container :global(.CodeMirror) {
+			height: 100%;
+		}
+	}
+
+	.codemirror-container :global(.CodeMirror-gutters) {
+		padding: 0 1.6rem 0 .8rem;
+		border: none;
+	}
+
+	.codemirror-container .message {
+		position: absolute;
+		bottom: 2.4rem;
+		left: 2.4rem;
+		z-index: 20;
+	}
+
+	.codemirror-container :global(.error-loc) {
+		position: relative;
+		border-bottom: 2px solid #da106e;
+	}
+
+	.codemirror-container :global(.error-line) {
+		background-color: rgba(200, 0, 0, .05);
+	}
+
+	.loading,
+	.error {
+		text-align: center;
+		color: #999;
+		font-weight: 300;
+		margin: 2.4rem 0 0 0;
+	}
+
+	textarea { width: 100%; border: none }
+</style>
+
+<!--
+-----------------------------------------------
+	syntax-highlighting [prism]
+	NOTE
+	- just started to transfer colors from prism to codemirror
+-----------------------------------------------
+-->
+<div class='codemirror-container' class:flex bind:offsetWidth={w} bind:offsetHeight={h}>
+	<textarea tabindex='2' bind:this={refs.editor}></textarea>
+
+	{#if error}
+		<p class='error message'>
+			{#if error.loc}
+				<strong>
+					{#if error.filename}
+						<span
+							class='filename'
+							on:click="{() => dispatch('navigate', { filename: error.filename })}"
+						>{error.filename}</span>
+					{/if}
+
+					({error.loc.line}:{error.loc.column})
+				</strong>
+			{/if}
+
+			{error.message}
+		</p>
+	{:elseif warningCount > 0}
+		<p class='warning message'>
+			Compiled, but with {warningCount} {warningCount === 1 ? 'warning' : 'warnings'} — check the console for details
+		</p>
+	{/if}
+</div>
+
+{#if !CodeMirror}
+	<p class='loading'>loading editor...</p>
+{/if}
+
+<!-- TODO -->
+<!-- {:catch err}
+<p class='error'>error loading CodeMirror</p>
+{/await} -->

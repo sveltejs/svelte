@@ -1,0 +1,278 @@
+<script>
+	import { onMount } from 'svelte';
+	import { writable } from 'svelte/store';
+	import * as fleece from 'golden-fleece';
+	import SplitPane from './SplitPane.html';
+	import CodeMirror from './CodeMirror.html';
+	import Input from './Input/index.html';
+	import Output from './Output/index.html';
+
+	export let version = 'alpha'; // TODO change this to latest when the time comes
+	export let app;
+
+	export function toJSON() {
+		// TODO there's a bug here — Svelte hoists this function because
+		// it wrongly things that $component_store is global. Needs to
+		// factor in $ variables when determining hoistability
+
+		version; // workaround
+
+		return {
+			components: $component_store,
+			values: $values_store
+		};
+	}
+
+	let component_store = writable([]);
+	let values_store = writable({});
+	let selected_store = writable(null);
+
+	$: {
+		component_store.set(app.components);
+		values_store.set(app.values);
+		selected_store.set(app.components[0]);
+	}
+
+	$: {
+		// necessary pending https://github.com/sveltejs/svelte/issues/1889
+		$component_store;
+		$values_store;
+	}
+
+	let workers;
+
+	let bundle = null;
+	let dom;
+	let ssr;
+	let sourceError = null;
+	let runtimeError = null;
+	let warningCount = 0;
+	let code = '';
+	let uid = 0;
+	let props = null;
+	let sourceErrorLoc;
+	let runtimeErrorLoc;
+
+	onMount(async () => {
+		workers = {
+			compiler: new Worker('/workers/compiler.js'),
+			bundler: new Worker('/workers/bundler.js')
+		};
+
+		workers.compiler.postMessage({ type: 'init', version });
+		workers.compiler.onmessage = event => {
+			code = event.data.code;
+			if (event.data.props) props = event.data.props;
+		};
+
+		workers.bundler.postMessage({ type: 'init', version });
+		workers.bundler.onmessage = event => {
+			({ bundle, dom, ssr, warningCount, error: sourceError } = event.data);
+			if (sourceError) console.error(sourceError);
+			runtimeError = null;
+		};
+
+		return () => {
+			workers.compiler.terminate();
+			workers.bundler.terminate();
+		};
+	});
+
+	function removeComponent() {
+		const selected = $selected_store;
+
+		if (selected.name === 'App') {
+			// App.html can't be removed
+			selected.source = '';
+			// $selected_store.set(selected);
+		} else {
+			const components = $component_store;
+			const index = components.indexOf(selected);
+
+			if (~index) {
+				component_store.set(components.slice(0, index).concat(components.slice(index + 1)));
+			} else {
+				console.error(`Could not find component! That's... odd`);
+			}
+
+			selected_store.set(components[index] || components[components.length - 1]);
+		}
+	}
+
+	function compile(component) {
+		if (component.type === 'html') {
+			workers.compiler.postMessage({
+				type: 'compile',
+				source: component.source,
+				options: {
+					name: component.name,
+					filename: `${component.name}.html`
+				},
+				entry: component === $component_store[0]
+			});
+		} else {
+			code = component.source;
+		}
+	}
+
+	function handleChange(event) {
+		selected_store.update(component => {
+			// TODO this is a bit hacky — we're relying on mutability
+			// so that updating component_store works... might be better
+			// if a) components had unique IDs, b) we tracked selected
+			// *index* rather than component, and c) `selected` was
+			// derived from `components` and `index`
+			component.source = event.detail.value;
+			return component;
+		});
+
+		component_store.update(c => c);
+
+		// recompile selected component
+		compile($selected_store);
+
+		// regenerate bundle (TODO do this in a separate worker?)
+		workers.bundler.postMessage({ type: 'bundle', components: $component_store });
+	}
+
+	function navigate(filename) {
+		const name = filename.replace(/\.html$/, '');
+
+		console.error(`TODO navigate`);
+
+		// if (selected.name === name) return;
+		// selected = components.find(c => c.name === name);
+	}
+
+	$: if (sourceError && $selected_store) {
+		sourceErrorLoc = sourceError.filename === `${$selected_store.name}.${$selected_store.type}`
+			? sourceError.start
+			: null;
+	}
+
+	$: if (runtimeError && $selected_store) {
+		runtimeErrorLoc = runtimeError.filename === `${$selected_store.name}.${$selected_store.type}`
+			? runtimeError.start
+			: null;
+	}
+
+	$: if (workers && app.components) {
+		workers.bundler.postMessage({ type: 'bundle', components: app.components });
+	}
+
+	$: if (workers && $selected_store) {
+		compile($selected_store);
+	}
+</script>
+
+<style>
+	.repl-inner { height: 100% }
+
+	.repl-inner :global(section) {
+		position: relative;
+		padding: 4.2rem 0 0 0;
+		height: 100%;
+	}
+
+	.repl-inner :global(section) > :global(*):first-child {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 4.2rem;
+	}
+
+	.repl-inner :global(section) > :global(*):last-child {
+		width: 100%;
+		height: 100%;
+	}
+
+	.repl-inner :global(.message) {
+		position: relative;
+		border-radius: var(--border-r);
+		margin: 0;
+		padding: 1.2rem 1.6rem 1.2rem 4.4rem;
+		vertical-align: middle;
+		font: 300 1.2rem/1.7 var(--font-ui);
+		color: white;
+	}
+
+	.repl-inner :global(.message::before) {
+		content: '!';
+		position: absolute;
+		left: 1.2rem;
+		top: 1.1rem;
+		width: 1rem;
+		height: 1rem;
+		text-align: center;
+		line-height: 1;
+		padding: .4rem;
+		border-radius: 50%;
+		color: white;
+		border: .2rem solid white;
+	}
+
+	.repl-inner :global(.error.message) {
+		background-color: #da106e;
+	}
+
+	.repl-inner :global(.warning.message) {
+		background-color: #e47e0a;
+	}
+
+	.repl-inner :global(.info.message) {
+		background-color: var(--second);
+		animation: fade-in .4s .2s both;
+	}
+
+	.repl-inner :global(.error) :global(.filename) {
+		cursor: pointer;
+	}
+
+	@media (min-width: 768px) {
+		.show-if-mobile { display: none }
+
+		.repl-outer.zen-mode {
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			z-index: 11;
+		}
+
+		section { height: 100% }
+	}
+</style>
+
+<div class="repl-inner">
+	<SplitPane type="horizontal">
+		<section slot=a>
+			<Input
+				{component_store}
+				{selected_store}
+				{values_store}
+				error={sourceError}
+				errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
+				{warningCount}
+				on:remove={removeComponent}
+				on:change="{handleChange}"
+			/>
+		</section>
+
+		<section slot=b style='height: 100%;'>
+			<Output
+				{version}
+				{selected_store}
+				{code}
+				{bundle}
+				{ssr}
+				{dom}
+				{props}
+				{values_store}
+				{sourceError}
+				{runtimeError}
+			/>
+		</section>
+	</SplitPane>
+</div>

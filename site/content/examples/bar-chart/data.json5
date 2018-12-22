@@ -1,0 +1,28 @@
+{
+  "points": [
+    {
+      "year": 1990,
+      "birthrate": 16.7
+    },
+    {
+      "year": 1995,
+      "birthrate": 14.6
+    },
+    {
+      "year": 2000,
+      "birthrate": 14.4
+    },
+    {
+      "year": 2005,
+      "birthrate": 14
+    },
+    {
+      "year": 2010,
+      "birthrate": 13
+    },
+    {
+      "year": 2015,
+      "birthrate": 12.4
+    }
+  ]
+}
