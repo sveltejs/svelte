@@ -77,7 +77,7 @@ a:focus {
 /*	theme vars ----------------------------- */
 .theme-default {
 	--back:       #ffffff;
-	--back-light: #f6f7f8;
+	--back-light: #fbfcfd;
 	--prime:      #ff3e00;
 	--second:     #676778;
 	--flash:       #40b3ff;

@@ -7,12 +7,12 @@
 /*	colors --------------------------------- */
 pre[class*='language-'] {
 	--background: var(--back-light);
-	--base:       #9b978b;
-	--comment:    #afbfcf;
-	--keyword:    #5ba3d3;
-	--function:   #db794b;
-	--string:     #b69b61;
-	--number:     #86af75;
+	--base:       hsl(45, 7%, 45%);
+	--comment:    hsl(210, 25%, 60%);
+	--keyword:    hsl(204, 58%, 45%);
+	--function:   hsl(19, 67%, 45%);
+	--string:     hsl(41, 37%, 45%);
+	--number:     hsl(102, 27%, 50%);
 	--tags:       var(--function);
 	--important:  var(--string);
 }
