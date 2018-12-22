@@ -5,7 +5,8 @@
 	import CodeMirror from '../CodeMirror.html';
 
 	export let bundle
-	export let code;
+	export let js;
+	export let css;
 	export let dom;
 	export let ssr;
 	export let props;
@@ -97,9 +98,14 @@
 	>Result</button>
 
 	<button
-		class:active="{view === 'code'}"
-		on:click="{() => view = 'code'}"
-	>Compiled code</button>
+		class:active="{view === 'js'}"
+		on:click="{() => view = 'js'}"
+	>JS output</button>
+
+	<button
+		class:active="{view === 'css'}"
+		on:click="{() => view = 'css'}"
+	>CSS output</button>
 </div>
 
 
@@ -157,7 +163,7 @@
 		<div slot="a">
 			<CodeMirror
 				mode="javascript"
-				{code}
+				code="{view === 'js' ? js : css}"
 				error={sourceError}
 				errorLoc={sourceErrorLoc}
 				readonly
