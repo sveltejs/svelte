@@ -1,25 +1,26 @@
+<!--
+https://github.com/eugenkiss/7guis/wiki#circle-drawer
+
+Click on the canvas to draw a circle. Click on a circle
+to select it. Right-click on the canvas to adjust the
+radius of the selected circle.
+-->
+
 <script>
-	// [svelte-upgrade suggestion]
-	// manually refactor all references to __this
-	const __this = {
-		get: () => ({ i, undoStack, circles, selected, adjusting, adjusted })
-	};
+	let i = 0;
+	let undoStack = [[]];
+	let circles = [];
+	let selected;
+	let adjusting = false;
+	let adjusted = false;
 
-	export let i = 0;
-	export let undoStack = [[]];
-	export let circles = [];
-	export let selected;
-	export let adjusting = false;
-	export let adjusted = false;
-
-	// [svelte-upgrade suggestion]
-	// review these functions and remove unnecessary 'export' keywords
-	export function handleClick(event) {
-		if (__this.get().adjusting) {
+	function handleClick(event) {
+		if (adjusting) {
 			adjusting = false;
 
-			// if nothing changed, rewind
-			if (__this.get().adjusted) push();
+			// if circle was adjusted,
+			// push to the stack
+			if (adjusted) push();
 			return;
 		}
 
@@ -29,70 +30,40 @@
 			r: 50
 		};
 
-		const circles = __this.get().circles;
-		circles.push(circle);
-		circles = circles, selected = circle;
+		circles = circles.concat(circle);
+		selected = circle;
 
 		push();
 	}
 
-	export function adjust(event) {
-		event.preventDefault();
-		if (!__this.get().selected) return;
-		adjusting = true, adjusted = false;
+	function adjust(event) {
+		selected.r = +event.target.value;
+		circles = circles;
+		adjusted = true;
 	}
 
-	export function select(circle, event) {
-		if (!__this.get().adjusting) {
+	function select(circle, event) {
+		if (!adjusting) {
 			event.stopPropagation();
 			selected = circle;
 		}
 	}
 
-	export function push() {
-		undoStack.splice(++i);
-		undoStack.push(clone(circles));
-		i = i, undoStack = undoStack;
+	function push() {
+		const newUndoStack = undoStack.slice(0, ++i);
+		newUndoStack.push(clone(circles));
+		undoStack = newUndoStack;
 	}
 
-	export function travel(d) {
-		const circles = clone(undoStack[i += d]);
-		circles = circles, i = i, adjusting = false;
+	function travel(d) {
+		circles = clone(undoStack[i += d]);
+		adjusting = false;
 	}
 
 	function clone(circles) {
 		return circles.map(({ cx, cy, r }) => ({ cx, cy, r }));
 	}
 </script>
-
-<!--
-https://github.com/eugenkiss/7guis/wiki#circle-drawer
-
-Click on the canvas to draw a circle. Click on a circle
-to select it. Right-click on the canvas to adjust the
-radius of the selected circle.
--->
-
-<div class='controls'>
-	<button on:click='{() => travel(-1)}' disabled='{i === 0}'>undo</button>
-	<button on:click='{() => travel(+1)}' disabled='{i === undoStack.length -1}'>redo</button>
-</div>
-
-<svg on:click='{handleClick}' on:contextmenu='{adjust}'>
-	{#each circles as circle}
-		<circle cx='{circle.cx}' cy='{circle.cy}' r='{circle.r}'
-			on:click='{event => select(circle, event)}'
-			fill='{circle === selected ? "#ccc": "white"}'
-		/>
-	{/each}
-</svg>
-
-{#if adjusting}
-	<div class='adjuster'>
-		<p>adjust diameter of circle at {selected.cx}, {selected.cy}</p>
-		<input type='range' bind:value='selected.r' on:input='{() => adjusted = true}'>
-	</div>
-{/if}
 
 <style>
 	.controls {
@@ -119,10 +90,38 @@ radius of the selected circle.
 		transform: translate(-50%,-50%);
 		padding: 1em;
 		text-align: center;
-		background-color: rgba(255,255,255,0.5);
+		background-color: rgba(255,255,255,0.7);
+		border-radius: 4px;
 	}
 
 	input[type='range'] {
 		width: 100%;
 	}
 </style>
+
+<div class="controls">
+	<button on:click="{() => travel(-1)}" disabled="{i === 0}">undo</button>
+	<button on:click="{() => travel(+1)}" disabled="{i === undoStack.length -1}">redo</button>
+
+	i: {i}
+</div>
+
+<svg on:click={handleClick} >
+	{#each circles as circle}
+		<circle cx={circle.cx} cy={circle.cy} r={circle.r}
+			on:click="{event => select(circle, event)}"
+			on:contextmenu|stopPropagation|preventDefault="{() => {
+				adjusting = !adjusting;
+				if (adjusting) selected = circle;
+			}}"
+			fill="{circle === selected ? '#ccc': 'white'}"
+		/>
+	{/each}
+</svg>
+
+{#if adjusting}
+	<div class="adjuster">
+		<p>adjust diameter of circle at {selected.cx}, {selected.cy}</p>
+		<input type="range" value={selected.r} on:input={adjust}>
+	</div>
+{/if}
