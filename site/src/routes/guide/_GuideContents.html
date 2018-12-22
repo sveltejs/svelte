@@ -1,0 +1,95 @@
+<script>
+	import { onMount } from 'svelte';
+	import Icon from '../../components/icon.html';
+
+	export let sections = [];
+	export let active_section = null;
+
+	onMount(() => {
+		//	------------------------------------------
+		//	TODO – smooth-scroll
+		//	must be something that makes more sense
+		//	this one is too annoying (area too tall)
+		//	maybe svelte-transitions are a solution?
+		//	unfortunately I have no idea how. For now.
+		//	------------------------------------------
+		// methods: {
+		// 	scrollTo(e, item) {
+		// 		e.preventDefault();
+		// 		let top = document.querySelector('#' + item).getBoundingClientRect().top;
+		// 		window.scrollTo({
+		// 			top,
+		// 			behavior: "smooth"
+		// 		});
+		// 	}
+		// },
+
+		const onhashchange = _ => {
+			// TODO wire this up
+			// this.store.set({active_section: window.location.hash.slice(1) });
+		};
+
+		window.addEventListener('hashchange', onhashchange, false);
+		onhashchange();
+
+		return () => {
+			window.removeEventListener('hashchange', onhashchange, false);
+		};
+	});
+</script>
+
+<ul class='guide-toc'>
+	{#each sections as section}
+	<li>
+		<a class='section {section.slug === active_section ? "active": ""}' href='guide#{section.slug}'>
+			{section.metadata.title} {#if section.slug === active_section}
+			<Icon name='arrow-right' /> {/if}
+		</a>
+
+		{#each section.subsections as subsection}
+		<!-- see <script> below: on:click='scrollTo(event, subsection.slug)' -->
+		<a class='subsection {subsection.slug === active_section ? "active": ""}' href='guide#{subsection.slug}'>
+			{subsection.title} {#if subsection.slug === active_section}
+			<Icon name='arrow-right' /> {/if}
+		</a>
+		{/each}
+	</li>
+	{/each}
+</ul>
+
+<style>
+	.guide-toc {
+		--section-clr: white;
+	}
+
+	.guide-toc li {
+		display: block;
+		line-height: 2;
+		margin: 0 0 4.8rem 0;
+	}
+
+	.section {
+		display: block;
+		padding: 0 0 .8rem 0;
+		font: 300 var(--h6) var(--font-alt);
+		color: var(--section-clr);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+	}
+
+	.subsection {
+		display: block;
+		font-size: var(--code-fs);
+		padding: .2rem 0;
+	}
+
+	.section:hover,
+	.subsection:hover { color: var(--flash) }
+	.active           { color: var(--prime) }
+
+	@media screen and (min-width: 768px) {
+		.guide-toc {
+			--section-clr: black;
+		}
+	}
+</style>

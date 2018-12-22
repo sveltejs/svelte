@@ -1,0 +1,28 @@
+<!--
+-----------------------------------------------
+	svg svelte-isometry 1.0
+	- first simple try to simplify iso-grafics
+-----------------------------------------------
+-->
+
+<script>
+	export let style = '';
+	export let size = '';
+</script>
+
+<svg class='svelte-iso' viewBox='0 0 128 128' width={size} height={size}>
+	<polygon {style} points="107.94 92 107.94 36 64.01 8 20.06 35.99 20.06 92.01 64 120 107.94 92" />
+	<polyline {style} points="107.94 36 64.01 64 64 120" />
+	<line {style} x1="64.01" y1="64" x2="20.06" y2="35.99" />
+</svg>
+
+<style>
+	.svelte-iso {
+		position: relative;
+		vertical-align: middle;
+		stroke-miterlimit: 10;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+</style>

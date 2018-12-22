@@ -1,0 +1,218 @@
+<script context="module">
+	export async function preload() {
+		const sections = await this.fetch(`guide.json`).then(r => r.json());
+		return { sections };
+	}
+</script>
+
+<script>
+	import { onMount } from 'svelte';
+	import GuideContents from './_GuideContents.html';
+	import Icon from '../../components/icon.html';
+
+	// NOT YET
+	// get offset from css-vars (for smooth-scroll)
+	// import CustomProperties from '../../utils/css-custom-properties.js'
+
+	export let sections;
+	let active_section;
+
+	let container;
+
+	onMount(() => {
+		const anchors = container.querySelectorAll('[id]');
+		let positions;
+
+		const onresize = () => {
+			const { top } = container.getBoundingClientRect();
+			positions = [].map.call(anchors, anchor => {
+				return anchor.getBoundingClientRect().top - top;
+			});
+		}
+
+		let last_id = window.location.hash.slice(1);
+
+		const onscroll = () => {
+			const top = -window.scrollY;
+
+			let i = anchors.length;
+			while (i--) {
+				if (positions[i] + top < 40) {
+					const anchor = anchors[i];
+					const { id } = anchor;
+
+					if (id !== last_id) {
+						active_section = id;
+						last_id = id;
+					}
+
+					return;
+				}
+			}
+		};
+
+		window.addEventListener('scroll', onscroll, true);
+		window.addEventListener('resize', onresize, true);
+
+		// wait for fonts to load...
+		const timeouts = [
+			setTimeout(onresize, 1000),
+			setTimeout(onresize, 5000)
+		];
+
+		onresize();
+		onscroll();
+
+		return () => {
+			window.removeEventListener('scroll', onscroll, true);
+			window.removeEventListener('resize', onresize, true);
+
+			timeouts.forEach(timeout => clearTimeout(timeout));
+		};
+	});
+</script>
+
+<style>
+	aside {
+		display: none;
+		position: fixed;
+		left: 0;
+		top: var(--nav-h);
+		width: var(--sidebar-w);
+		height: calc(100vh - var(--nav-h));
+		overflow: hidden;
+	}
+
+	.sidebar {
+		padding: var(--top-offset) 3.2rem var(--top-offset) 0;
+		font-family: var(--font-ui);
+		overflow-y: auto;
+		height: 100%;
+		width: calc(var(--sidebar-w) + 5rem);
+	}
+
+	.content {
+		width: 100%;
+		max-width: calc(var(--main-width) + 2 * var(--side-nav));
+		margin: 0 auto;
+		-moz-tab-size: 2;
+		padding: var(--top-offset) var(--side-nav);
+		tab-size: 2;
+	}
+
+	@media (min-width: 52em) { /* can't use vars in @media :( */
+		aside {
+			display: block;
+			left: var(--side-nav);
+		}
+
+		.content {
+			max-width: none;
+			padding-left: 32rem;
+		}
+	}
+
+	@media (min-width: 89.6rem) { /* can't use vars in @media :( */
+		aside {
+			display: block;
+			left: calc(50% - 60rem);
+		}
+
+		.content {
+			max-width: none;
+			padding-left: calc(50% - 30rem);
+			padding-right: calc(50% - 50rem);
+		}
+	}
+
+	.content h2 {
+		margin-top: 16rem;
+		padding: 2rem 1.6rem 5.6rem 0.2rem;
+		border-top: 2px solid var(--second);
+		color: var(--second);
+		line-height: 1;
+	}
+
+	.content section:first-of-type > h2 {
+		margin-top: 0;
+	}
+
+	.content :global(h3),
+	.content :global(h3 > code) {
+		pointer-events: none;
+		font-weight: 700;
+		font-size: var(--h3);
+		color: var(--second);
+		padding: 6.4rem 0 1.6rem 0;
+	}
+
+	.content :global(.icon) {
+		width: 20px;
+		height: 20px;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		fill: none;
+	}
+
+	/* max line-length ~60 chars */
+	section > :global(p) {
+		max-width: var(--linemax)
+	}
+
+	small {
+		font-size: var(--h5);
+		float: right;
+		pointer-events: all;
+		color: var(--prime);
+		cursor: pointer;
+	}
+
+	/* no linkify on these */
+	small a        { all: unset }
+	small a:before { all: unset }
+
+
+	section :global(blockquote) {
+		color: var(--flash);
+		border: 2px solid currentColor;
+		padding-left: 8.8rem;
+	}
+
+	section :global(blockquote::before) {
+		content: ' ';
+		position: absolute;
+		top: 1.5rem;
+		left: 3.2rem;
+		width: 3rem;
+		height: 3rem;
+		background-repeat: no-repeat;
+		background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#40b3ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12' y2='17'/%3E%3C/svg%3E");
+	}
+</style>
+
+<svelte:head>
+	<title>Learn Svelte</title>
+</svelte:head>
+
+<div bind:this={container} class='content linkify listify'>
+	{#each sections as section}
+	<section id='{section.slug}'>
+		<h2>
+			{section.metadata.title}
+			<small>
+				<a href='https://github.com/sveltejs/svelte/edit/master/site/content/guide/{section.file}' title='edit this section'>
+					<Icon name='edit' /></a>
+			</small>
+		</h2>
+		{@html section.html}
+	</section>
+	{/each}
+</div>
+
+<aside class="sidebar-container">
+	<div class="sidebar">
+		<GuideContents {sections} />
+	</div>
+</aside>

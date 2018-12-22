@@ -17,4 +17,8 @@ node_modules
 /test/sourcemaps/samples/*/output.css.map
 /yarn-error.log
 _actual*.*
-_*/
+
+/site/cypress/screenshots/
+/site/__sapper__/
+/site/.env
+/site/.sessions

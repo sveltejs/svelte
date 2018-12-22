@@ -695,6 +695,7 @@ export default class Component {
 					});
 
 					hoistable_nodes.add(node);
+					this.fully_hoisted.push(`[✂${node.start}-${node.end}✂]`);
 				}
 			}
 

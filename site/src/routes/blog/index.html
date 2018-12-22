@@ -1,0 +1,123 @@
+<script context="module">
+	export async function preload() {
+		const posts = await this.fetch(`api/blog`).then(r => r.json());
+		return { posts };
+	}
+</script>
+
+<script>
+	export let posts;
+</script>
+
+<svelte:head>
+	<title>Svelte • The magical disappearing UI framework</title>
+</svelte:head>
+
+<div class='posts stretch'>
+	{#each posts as post}
+		<article class='post' data-pubdate={post.metadata.dateString}>
+			<a rel='prefetch' href='blog/{post.slug}' title='Read the article »'>
+				<h2>{post.metadata.title}</h2>
+				<p>{post.metadata.description}</p>
+			</a>
+		</article>
+	{/each}
+</div>
+
+<style>
+	.posts {
+		/* display: grid; */
+		grid-template-columns: 1fr 1fr;
+		grid-gap: 1em;
+		/* prevent scroll bar pop-in when navigating to post */
+		/* yes this is hacktacular */
+		min-height: calc(100vh - var(--nav-h));
+
+		padding: 10rem var(--side-page);
+		/* background-color: var(--back-light) */
+	}
+
+	.post {
+		/* display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		padding: 4rem 3.2rem 2.4rem; */
+	}
+
+	h2 {
+		display: inline-block;
+		margin: 2rem 0 0.5rem 0;
+		color: var(--second);
+		/* max-width: 18em; */
+		font-size: 2rem;
+	}
+
+	.post:first-child {
+		margin: 0 0 2em 0;
+		border-bottom: 1px solid #eee;
+	}
+
+	.post:first-child h2 {
+		font-size: 4rem;
+	}
+
+	.post:first-child::before {
+		content: 'Latest post • ' attr(data-pubdate);
+		font-weight: 300;
+		color: #aaa;
+		text-transform: uppercase;
+	}
+
+	.post:nth-child(2)::before {
+		content: 'Older posts';
+		font-weight: 300;
+		color: #aaa;
+		text-transform: uppercase;
+	}
+
+	/* .post:first-child .byline::after {
+		content: 'Latest post';
+		font-weight: 700;
+		color: var(--second);
+		text-transform: uppercase;
+		margin-left: 1em;
+	} */
+
+
+	.post p {
+		font-size: var(--h5);
+		max-width: 30em;
+		color: var(--second);
+	}
+
+	/* fast link-reset */
+	/* .posts a { all: unset; cursor: pointer } */
+
+	.post > a {
+		display: block;
+	}
+
+	.posts a:hover,
+	.posts a:hover > h2 {
+		color: var(--flash)
+	}
+
+	.byline {
+		/* width: 100%; */
+		padding: 1.6rem 0 0 0;
+		/* border-bottom: 1px solid var(--second); */
+		font: 300 var(--code-fs)/1.7 var(--font-mono);
+	}
+
+	time {
+		/* border-bottom: 1px solid var(--second); */
+	}
+
+	.byline a {
+		color: var(--second);
+	}
+
+	.byline a:hover { color: var(--flash) }
+</style>

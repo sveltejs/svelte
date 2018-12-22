@@ -68,9 +68,9 @@ export default class WindowWrapper extends Wrapper {
 			});
 		});
 
-		const lock = block.getUniqueName(`window_updating`);
-		const clear = block.getUniqueName(`clear_window_updating`);
-		const timeout = block.getUniqueName(`window_updating_timeout`);
+		const scrolling = block.getUniqueName(`scrolling`);
+		const clear_scrolling = block.getUniqueName(`clear_scrolling`);
+		const scrolling_timeout = block.getUniqueName(`scrolling_timeout`);
 
 		Object.keys(events).forEach(event => {
 			const handler_name = block.getUniqueName(`onwindow${event}`);
@@ -78,9 +78,9 @@ export default class WindowWrapper extends Wrapper {
 
 			if (event === 'scroll') {
 				// TODO other bidirectional bindings...
-				block.addVariable(lock, 'false');
-				block.addVariable(clear, `function() { ${lock} = false; }`);
-				block.addVariable(timeout);
+				block.addVariable(scrolling, 'false');
+				block.addVariable(clear_scrolling, `() => { ${scrolling} = false }`);
+				block.addVariable(scrolling_timeout);
 
 				const condition = [
 					bindings.scrollX && `"${bindings.scrollX}" in this._state`,
@@ -97,34 +97,39 @@ export default class WindowWrapper extends Wrapper {
 					${x && `${x} = window.pageXOffset;`}
 					${y && `${y} = window.pageYOffset;`}
 				`);
+
+				block.event_listeners.push(deindent`
+					@addListener(window, "${event}", () => {
+						${scrolling} = true;
+						clearTimeout(${scrolling_timeout});
+						${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
+						ctx.${handler_name}();
+					})
+				`);
 			} else {
 				props.forEach(prop => {
 					renderer.metaBindings.addLine(
 						`this._state.${prop.name} = window.${prop.value};`
 					);
 				});
+
+				block.event_listeners.push(deindent`
+					@addListener(window, "${event}", ctx.${handler_name});
+				`);
 			}
 
 			component.declarations.push(handler_name);
 			component.template_references.add(handler_name);
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
-					${event === 'scroll' && deindent`
-						if (${lock}) return;
-						${lock} = true;
-					`}
 					${props.map(prop => `${prop.name} = window.${prop.value}; $$make_dirty('${prop.name}');`)}
-					${event === 'scroll' && `${lock} = false;`}
 				}
 			`);
 
-			block.builders.init.addBlock(deindent`
-				window.addEventListener("${event}", ctx.${handler_name});
-				@add_render_callback(ctx.${handler_name});
-			`);
 
-			block.builders.destroy.addBlock(deindent`
-				window.removeEventListener("${event}", ctx.${handler_name});
+
+			block.builders.init.addBlock(deindent`
+				@add_render_callback(ctx.${handler_name});
 			`);
 
 			component.has_reactive_assignments = true;
@@ -132,23 +137,21 @@ export default class WindowWrapper extends Wrapper {
 
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
-			block.builders.init.addBlock(deindent`
-				#component.$on("state", ({ changed, current }) => {
-					if (${
-						[bindings.scrollX, bindings.scrollY].map(
-							binding => binding && `changed["${binding}"]`
-						).filter(Boolean).join(' || ')
-					} && !${lock}) {
-						${lock} = true;
-						clearTimeout(${timeout});
-						window.scrollTo(${
-							bindings.scrollX ? `current["${bindings.scrollX}"]` : `window.pageXOffset`
-						}, ${
-							bindings.scrollY ? `current["${bindings.scrollY}"]` : `window.pageYOffset`
-						});
-						${timeout} = setTimeout(${clear}, 100);
-					}
-				});
+			block.builders.update.addBlock(deindent`
+				if (${
+					[bindings.scrollX, bindings.scrollY].filter(Boolean).map(
+						b => `changed.${b}`
+					).join(' || ')
+				} && !${scrolling}) {
+					${scrolling} = true;
+					clearTimeout(${scrolling_timeout});
+					window.scrollTo(${
+						bindings.scrollX ? `current["${bindings.scrollX}"]` : `window.pageXOffset`
+					}, ${
+						bindings.scrollY ? `current["${bindings.scrollY}"]` : `window.pageYOffset`
+					});
+					${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
+				}
 			`);
 		}
 

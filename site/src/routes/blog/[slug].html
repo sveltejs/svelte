@@ -1,0 +1,76 @@
+<script context="module">
+	export async function preload({ params }) {
+		const post = await this.fetch(`api/blog/${params.slug}`).then(r => r.json());
+		return { post };
+	}
+</script>
+
+<script>
+	export let post;
+</script>
+
+<svelte:head>
+	<title>{post.metadata.title}</title>
+</svelte:head>
+
+<article class='post linkify listify'>
+	<p class='byline'><a href='{post.metadata.authorURL}'>{post.metadata.author}</a> <time datetime='{post.metadata.pubdate}'>{post.metadata.dateString}</time></p>
+
+	<h1>{post.metadata.title}</h1>
+	<p class='standfirst'>{post.metadata.description}</p>
+
+	{@html post.html}
+</article>
+
+<style>
+	.post {
+		padding: var(--top-offset) var(--side-page);
+	}
+
+	.byline {
+		font-size: 0.8em;
+		border-bottom: 1px solid #eee;
+		padding: 0;
+	}
+
+	.post h1 {
+		color: var(--second);
+		max-width: 20em;
+	}
+
+	.post :global(h2) {
+		margin: 2em 0 0.5em 0;
+		color: var(--second);
+	}
+
+	.post p,
+	.post :global(p) {
+		max-width: var(--linemax)
+	}
+
+	.post :global(figure) {
+		margin-top: 1.6rem
+	}
+
+	.post :global(figcaption) {
+		color: var(--second)
+	}
+
+	.post :global(video) {
+		width: 100%;
+	}
+
+	.standfirst {
+		font-size: var(--h4);
+		color: var(--second);
+		margin: 0 0 2em 0;
+	}
+
+	.post :global(aside) {
+		float: right;
+		margin: 0 0 1em 1em;
+		width: 16rem;
+		color: var(--second);
+		z-index: 2;
+	}
+</style>

@@ -1,0 +1,404 @@
+body {
+	--font: 'Overpass', sans-serif;
+	--font-alt: 'Overpass', sans-serif;
+	--font-mono: 'Overpass Mono', monospace;
+	--font-ui: var(--font-mono);
+}
+
+/*	base reset ----------------------------- */
+html {
+	font-size: 62.5%;
+	-ms-text-size-adjust: 62.5%;
+	-webkit-text-size-adjust: 62.5%;
+	-ms-overflow-style: -ms-autohiding-scrollbar;
+	overflow-y: scroll;
+	box-sizing: border-box;
+	border-collapse: collapse;
+}
+
+* {
+	box-sizing: inherit;
+	margin: 0;
+	padding: 0;
+}
+
+/*	links reset ---------------------------- */
+a {
+	text-decoration: none;
+	cursor: pointer;
+	color: inherit;
+}
+
+a:hover,
+a:active {
+	color: var(--flash);
+}
+
+a:focus {
+	outline: none
+}
+
+/*
+-----------------------------------------------
+	global styles
+
+	NOTE
+	– !important overrides class-definitions
+	- some vars change inside media-queries!
+-----------------------------------------------
+*/
+
+/*	constants and calc -----------------------
+	- commonly used values
+	- under normal conditions, there's no need to touch these
+	- look confusing/cluttering at first,
+		but they simplify life immensely
+-----------------------------------------------
+*/
+:root {
+	--nav-h:       6rem;
+	--top-offset:  6rem;
+	--sidebar-w:  24rem;
+	--main-width: 80rem;
+	--code-w:      72em;
+	--side-nav:  4.8rem;
+	--side-page:   var(--side-nav);
+
+	/* easings */
+	--in-cubic:    cubic-bezier(0.55, 0.055, 0.675, 0.19);
+	--out-cubic:   cubic-bezier(0.215, 0.61, 0.355, 1);
+	--inout-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+	--in-back:     cubic-bezier(0.6, -0.28, 0.735, 0.045);
+	--out-back:    cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	--inout-back:  cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/*	theme vars ----------------------------- */
+.theme-default {
+	--back:       #ffffff;
+	--back-light: #fbfcfd;
+	--prime:      #ff3e00;
+	--second:     #676778;
+	--flash:       #40b3ff;
+	--heading:    var(--second);
+	--text:       #333; /* hsl(36, 3%, 62%) */
+	--border-w:   .3rem;     /* border-width  */
+	--border-r:   .4rem;     /* border-radius */
+}
+
+/*	typo vars ------------------------------ */
+.typo-default {
+	--unit:     .8rem;
+	--code-fs: 1.3rem;
+	--h6:      1.4rem;
+	--h5:      1.6rem;
+	--h4:      1.8rem;
+	--h3:      2.4rem;
+	--h2:        3rem;
+	--h1:      3.2rem;
+	--linemax:   42em;      /* max line-length */
+	--lh:      calc(4/2.2); /* base line-height */
+}
+
+/*	typography ----------------------------- */
+body {
+	font: 300 var(--h4)/var(--lh) var(--font);
+	background-color: var(--back);
+	color: var(--text);
+}
+
+h1, h2, h3, h4, h5, h6, li, blockquote {
+	margin: 0;
+	color: var(--heading);
+}
+
+h1, h2, h3, h4, h5, h6 { font-weight: 700 }
+h6 { font-size: var(--h6) }
+h5 { font-size: var(--h5) }
+h4 { font-size: var(--h4) }
+h3 { font-size: var(--h3) }
+h2 { font-size: var(--h2) }
+h1 { font-size: var(--h1) }
+
+p {
+	line-height: 1.35;
+	margin: 0 0 1em 0;
+}
+
+.b, b, strong { font-weight: 700 }
+
+tt, code, kbd, samp {
+	font: 300 var(--code-fs)/1.7 var(--font-mono);
+}
+
+:not(pre) > p > code {
+	position: relative;
+	top: -.1rem;
+	padding: .3rem .8rem .5rem;
+	margin: 0 .2rem;
+	border-radius: 0.3em;
+	white-space: nowrap;
+	background: var(--back-light);
+	border-top: .1rem solid #e5e5e9;
+	border-left: .1rem solid #e5e5e9;
+	/* color: inherit; */
+	color: #8f9196;
+}
+
+::selection {
+	background: var(--flash);
+	color: white;
+}
+
+/*	opinionated styles --------------------- */
+h1, h2 {
+	font-family: var(--font-alt);
+	line-height: 1.2;
+	pointer-events: none;
+}
+
+li:not(.white) > h2 {
+	color: var(--second)
+}
+
+blockquote {
+	position: relative;
+	margin: 1.6rem 0 2.4rem;
+	padding: 2rem 2.4rem 1.8rem 2.4rem;
+	border-radius: var(--border-r);
+	font-family: var(--font);
+	max-width: var(--linemax);
+}
+
+blockquote p {
+	font-size: var(--h5);
+}
+
+blockquote :last-child {
+	margin: 0;
+}
+
+
+/*  buttons -------------------------------- */
+button {
+	font-family: inherit;
+	font-size: inherit;
+	background-color: transparent;
+	border: none;
+	color: currentColor;
+}
+
+button:focus { outline: 0 }
+
+button[disabled] {
+	opacity: .55;
+	pointer-events: none;
+}
+
+button > svg {
+	position: relative;
+	top: -.1rem;
+	width: 2rem !important;
+	height: 2rem !important;
+}
+
+/*  options */
+button[outline] {
+	min-height: var(--bttn-calc-h);
+	line-height: var(--bttn-calc-h);
+	border: var(--bttn-outline) solid currentColor;
+	background-color: white;
+	color: currentColor;
+}
+
+/*  links -------------------------------------
+		- idea from https://up.docs.apex.sh
+
+		How can this be solved?
+		Setup for all links is risky/tricky
+
+		We need global <a>-styles and <ul>-styles inside markdown.
+		These bleed into places, where not wanted (i.e. nav, homepage)
+		Same with lists - see below
+
+		THIS WAY IS SHITTY!!
+		I'm too blind to see...
+*/
+.linkify a:not(.open-in-repl) {
+	position: relative;
+	padding: 0 .4rem .1rem;
+	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
+	user-select: none;
+	white-space: nowrap;
+	color: inherit;
+	transition: color .2s;
+}
+
+.linkify a:not(.open-in-repl):hover  {
+	color: var(--flash);
+}
+
+.linkify a:not(.open-in-repl):before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: .2rem;
+	bottom: -.2rem;
+	left: 0;
+	white-space: nowrap;
+	background: var(--prime);
+	border-radius: var(--border-r);
+	visibility: hidden;
+	transform: scaleX(0);
+	transform-origin: left center;
+	transition: all .15s var(--out-cubic);
+	z-index: -1;
+}
+
+.linkify a:not(.open-in-repl):hover:before  {
+	visibility: visible;
+	transform: scaleX(1);
+}
+
+a:hover > .icon { stroke: var(--flash) }
+
+/*  lists ---------------------------------- */
+.listify ol,
+.listify ul {
+	--list-padding: 2.9rem;
+
+	list-style: none;
+	color: currentColor;
+	margin-left: var(--list-padding);
+}
+
+.listify ol > li,
+.listify ul > li {
+	max-width: calc(var(--linemax) - var(--list-padding));
+	line-height: 1.35;
+	margin: 0 0 0.8em 0;
+}
+
+.listify ul > li:before {
+	content: '';
+	position: absolute;
+	margin-top: 1.4rem;
+	margin-left: calc(var(--list-padding) * -1);
+	background-color: currentColor;
+	width: .8em;
+	height: .2rem;
+}
+
+.listify ol { list-style: decimal }
+
+/*  tables --------------------------------- */
+table {
+	width: 100%;
+	font-size: var(--h5);
+}
+
+td, th {
+	text-align: left;
+	border-bottom: 1px solid #eee;
+	padding: 0.4rem 0.8rem 0.4rem 0;
+}
+
+table code,
+table span {
+	white-space: pre;
+}
+
+/*	grid ----------------------------------- */
+.grid,
+.grid.half {
+	display: grid;
+	grid-gap: 2.4rem;
+	grid-template-columns: 1fr;
+	align-items: center;
+}
+
+.grid.stretch { align-items: stretch }
+
+.grid > .cols-2,
+.grid > .cols-3 { grid-column: span 1 }
+
+
+/*	helper styles -------------------------- */
+.flex-auto { flex: 1 0 auto }
+
+.py0 {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.legend, figcaption,
+.post aside {
+	max-width: none;
+	margin: 0 auto;
+	padding: 1.6rem 0 4rem .8rem;
+	font: 1.2rem/1.6 var(--font-ui);
+}
+
+.filename {
+	display: inline-block;
+	padding: 1.6rem 0 0 1rem;
+	font: var(--h6) var(--font-ui);
+}
+
+.box {
+	padding: 2.4rem 3.2rem;
+	border-radius: var(--border-r);
+}
+
+.open-in-repl {
+	position: absolute;
+	margin-top: 4rem;
+	margin-left: -2.5rem;
+	width: 3.6rem;
+	height: 3.6rem;
+	padding: .9rem;
+	background-color: var(--back-light);
+	border-radius: 50%;
+	border-left: .1rem solid #c7c6c6;
+}
+
+/*	theme colors --------------------------- */
+.prime      { color: var(--prime) !important }
+.second     { color: var(--second) !important }
+.flash       { color: var(--flash) !important }
+.black      { color: black !important }
+.white      { color: white !important }
+
+.back       { background-color: var(--back) !important }
+.back-light { background-color: var(--back-light) !important }
+.bg-prime   { background-color: var(--prime) !important }
+.bg-second  { background-color: var(--second) !important }
+.bg-flash    { background-color: var(--flash) !important }
+
+
+/*
+-----------------------------------------------
+  media-queries
+-----------------------------------------------
+*/
+@media screen and (min-width: 768px) {
+	:root {
+		--side-page:  14vw;
+		--top-offset: 10rem;
+	}
+}
+
+@media screen and (min-width: 840px) {
+	.grid.half,
+	.grid { grid-template-columns: repeat(2, 1fr) }
+	.grid > .cols-2,
+	.grid > .cols-3 { grid-column: span 2 }
+}
+
+@media screen and (min-width: 1100px) {
+	.grid { grid-template-columns: repeat(3, 1fr) }
+	.grid > .cols-2 { grid-column: span 2 }
+	.grid > .cols-3 { grid-column: span 3 }
+}
+

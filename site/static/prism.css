@@ -1,0 +1,95 @@
+/*
+-----------------------------------------------
+	syntax-highlighting [prism]
+-----------------------------------------------
+*/
+
+/*	colors --------------------------------- */
+pre[class*='language-'] {
+	--background: var(--back-light);
+	--base:       hsl(45, 7%, 45%);
+	--comment:    hsl(210, 25%, 60%);
+	--keyword:    hsl(204, 58%, 45%);
+	--function:   hsl(19, 67%, 45%);
+	--string:     hsl(41, 37%, 45%);
+	--number:     hsl(102, 27%, 50%);
+	--tags:       var(--function);
+	--important:  var(--string);
+}
+
+/*	type-base ------------------------------ */
+code[class*='language-'],
+pre[class*='language-'] {
+	background: none;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	font: 300 var(--code-fs)/1.7 var(--font-mono);
+	color: var(--base);
+	tab-size: 2;
+	-webkit-hyphens: none;
+	hyphens: none;
+}
+
+/*	code-blocks ---------------------------- */
+pre[class*='language-'] {
+	overflow: auto;
+	padding: 1.5rem 2rem;
+	margin: .8rem 0 2.4rem;
+	max-width: var(--code-w);
+	border-radius: var(--border-r);
+	box-shadow: 1px 1px 0.1rem rgba(68, 68, 68, 0.05) inset;
+}
+
+:not(pre) > code[class*='language-'],
+pre[class*='language-'] {
+	background: var(--background);
+}
+
+/*	tokens --------------------------------- */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata       { color: var(--comment) }
+
+.token.punctuation { color: var(--base) }
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted      { color: var(--tags) }
+
+.token.boolean,
+.token.number       { color: var(--number) }
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted      { color: var(--string) }
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable       { color: var(--base) }
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name     { color: var(--function) }
+
+.token.keyword        { color: var(--keyword) }
+
+.token.regex,
+.token.important      { color: var(--important) }
+
+.token.important,
+.token.bold   { font-weight: bold }
+.token.italic { font-style: italic }
+.token.entity { cursor: help }
