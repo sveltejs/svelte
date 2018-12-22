@@ -86,8 +86,26 @@
 	}
 
 	.box a {
+		position: relative;
 		text-align: right;
 		margin-top: auto;
+		padding: 0 1.2em 0 0;
+	}
+
+	.box a:hover {
+		color: white;
+		text-decoration: underline;
+	}
+
+	.box a::after {
+		content: '';
+		position: absolute;
+		display: block;
+		right: 0;
+		top: 0.4em;
+		width: 1em;
+		height: 1em;
+		background: url(/icons/arrow-right.svg);
 	}
 
 	h6 {
