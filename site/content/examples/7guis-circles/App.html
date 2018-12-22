@@ -1,5 +1,5 @@
 <!--
-https://github.com/eugenkiss/7guis/wiki#circle-drawer
+https://eugenkiss.github.io/7guis/tasks#circle
 
 Click on the canvas to draw a circle. Click on a circle
 to select it. Right-click on the canvas to adjust the
@@ -102,8 +102,6 @@ radius of the selected circle.
 <div class="controls">
 	<button on:click="{() => travel(-1)}" disabled="{i === 0}">undo</button>
 	<button on:click="{() => travel(+1)}" disabled="{i === undoStack.length -1}">redo</button>
-
-	i: {i}
 </div>
 
 <svg on:click={handleClick} >
