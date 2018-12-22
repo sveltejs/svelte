@@ -81,7 +81,7 @@ async function getBundle(mode, cache, lookup) {
 					if (importee.startsWith(`svelte`)) return `https://unpkg.com/svelte@${version}/${importee.slice(7)}.mjs`;
 
 					if (importer && importer.startsWith(`https://`)) {
-						return new URL(importee, importer).href;
+						return new URL(`${importee}.mjs`, importer).href;
 					}
 
 					if (importee in lookup) return importee;
