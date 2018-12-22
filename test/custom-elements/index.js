@@ -51,8 +51,8 @@ describe('custom-elements', function() {
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);
-		const internal = path.resolve('internal.js');
-		const index = path.resolve('index.js');
+		const internal = path.resolve('internal.mjs');
+		const index = path.resolve('index.mjs');
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./custom-elements/samples/${dir}/_config.js`);
@@ -62,7 +62,7 @@ describe('custom-elements', function() {
 				plugins: [
 					{
 						resolveId(importee) {
-							if (importee === 'svelte/internal.js') {
+							if (importee === 'svelte/internal') {
 								return internal;
 							}
 
