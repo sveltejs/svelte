@@ -62,7 +62,7 @@ describe('custom-elements', function() {
 				plugins: [
 					{
 						resolveId(importee) {
-							if (importee === 'svelte/internal.js') {
+							if (importee === 'svelte/internal') {
 								return internal;
 							}
 
