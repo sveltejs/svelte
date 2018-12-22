@@ -21,7 +21,8 @@ self.addEventListener('message', async event => {
 });
 
 const commonCompilerOptions = {
-	dev: false
+	dev: false,
+	css: false
 };
 
 function compile({ source, options, entry }) {
