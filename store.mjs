@@ -1,4 +1,4 @@
-import { run_all, noop } from './internal.js';
+import { run_all, noop } from './internal';
 
 export function readable(start, value) {
 	const subscribers = [];
