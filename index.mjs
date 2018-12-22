@@ -4,4 +4,4 @@ export {
 	beforeUpdate,
 	afterUpdate,
 	createEventDispatcher
-} from './internal.js';
+} from './internal';
