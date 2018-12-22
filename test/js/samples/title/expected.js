@@ -22,28 +22,28 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { custom } = $$props;
-
-	$$self.$$.get = () => ({ custom });
 
 	$$self.$$.set = $$props => {
 		if ('custom' in $$props) custom = $$props.custom;
 	};
+
+	return { custom };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get custom() {
-		return this.$$.get().custom;
+		return this.$$.ctx.custom;
 	}
 
-	set custom(value) {
-		this.$set({ custom: value });
+	set custom(custom) {
+		this.$set({ custom });
 		flush();
 	}
 }

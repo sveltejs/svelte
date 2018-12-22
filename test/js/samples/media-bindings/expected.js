@@ -54,7 +54,7 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let { buffered, seekable, played, currentTime, duration, paused, volume } = $$props;
 
 	function audio_timeupdate_handler() {
@@ -62,38 +62,48 @@ function define($$self, $$props, $$make_dirty) {
 		if (!audio.paused) audio_animationframe = requestAnimationFrame(audio_timeupdate_handler);
 		played = timeRangesToArray(this.played);
 		currentTime = this.currentTime;
-		$$make_dirty('played');
-		$$make_dirty('currentTime');
+		$$invalidate('played', played);
+		$$invalidate('currentTime', currentTime);
 	}
 
 	function audio_durationchange_handler() {
 		duration = this.duration;
-		$$make_dirty('duration');
+		$$invalidate('duration', duration);
 	}
 
 	function audio_play_pause_handler() {
 		paused = this.paused;
-		$$make_dirty('paused');
+		$$invalidate('paused', paused);
 	}
 
 	function audio_progress_handler() {
 		buffered = timeRangesToArray(this.buffered);
-		$$make_dirty('buffered');
+		$$invalidate('buffered', buffered);
 	}
 
 	function audio_loadedmetadata_handler() {
 		buffered = timeRangesToArray(this.buffered);
 		seekable = timeRangesToArray(this.seekable);
-		$$make_dirty('buffered');
-		$$make_dirty('seekable');
+		$$invalidate('buffered', buffered);
+		$$invalidate('seekable', seekable);
 	}
 
 	function audio_volumechange_handler() {
 		volume = this.volume;
-		$$make_dirty('volume');
+		$$invalidate('volume', volume);
 	}
 
-	$$self.$$.get = () => ({
+	$$self.$$.set = $$props => {
+		if ('buffered' in $$props) buffered = $$props.buffered;
+		if ('seekable' in $$props) seekable = $$props.seekable;
+		if ('played' in $$props) played = $$props.played;
+		if ('currentTime' in $$props) currentTime = $$props.currentTime;
+		if ('duration' in $$props) duration = $$props.duration;
+		if ('paused' in $$props) paused = $$props.paused;
+		if ('volume' in $$props) volume = $$props.volume;
+	};
+
+	return {
 		buffered,
 		seekable,
 		played,
@@ -107,85 +117,75 @@ function define($$self, $$props, $$make_dirty) {
 		audio_progress_handler,
 		audio_loadedmetadata_handler,
 		audio_volumechange_handler
-	});
-
-	$$self.$$.set = $$props => {
-		if ('buffered' in $$props) buffered = $$props.buffered;
-		if ('seekable' in $$props) seekable = $$props.seekable;
-		if ('played' in $$props) played = $$props.played;
-		if ('currentTime' in $$props) currentTime = $$props.currentTime;
-		if ('duration' in $$props) duration = $$props.duration;
-		if ('paused' in $$props) paused = $$props.paused;
-		if ('volume' in $$props) volume = $$props.volume;
 	};
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get buffered() {
-		return this.$$.get().buffered;
+		return this.$$.ctx.buffered;
 	}
 
-	set buffered(value) {
-		this.$set({ buffered: value });
+	set buffered(buffered) {
+		this.$set({ buffered });
 		flush();
 	}
 
 	get seekable() {
-		return this.$$.get().seekable;
+		return this.$$.ctx.seekable;
 	}
 
-	set seekable(value) {
-		this.$set({ seekable: value });
+	set seekable(seekable) {
+		this.$set({ seekable });
 		flush();
 	}
 
 	get played() {
-		return this.$$.get().played;
+		return this.$$.ctx.played;
 	}
 
-	set played(value) {
-		this.$set({ played: value });
+	set played(played) {
+		this.$set({ played });
 		flush();
 	}
 
 	get currentTime() {
-		return this.$$.get().currentTime;
+		return this.$$.ctx.currentTime;
 	}
 
-	set currentTime(value) {
-		this.$set({ currentTime: value });
+	set currentTime(currentTime) {
+		this.$set({ currentTime });
 		flush();
 	}
 
 	get duration() {
-		return this.$$.get().duration;
+		return this.$$.ctx.duration;
 	}
 
-	set duration(value) {
-		this.$set({ duration: value });
+	set duration(duration) {
+		this.$set({ duration });
 		flush();
 	}
 
 	get paused() {
-		return this.$$.get().paused;
+		return this.$$.ctx.paused;
 	}
 
-	set paused(value) {
-		this.$set({ paused: value });
+	set paused(paused) {
+		this.$set({ paused });
 		flush();
 	}
 
 	get volume() {
-		return this.$$.get().volume;
+		return this.$$.ctx.volume;
 	}
 
-	set volume(value) {
-		this.$set({ volume: value });
+	set volume(volume) {
+		this.$set({ volume });
 		flush();
 	}
 }

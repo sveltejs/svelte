@@ -261,7 +261,7 @@ export default class Expression {
 
 							if (dirty.length) component.has_reactive_assignments = true;
 
-							code.overwrite(node.start, node.end, dirty.map(n => `$$make_dirty('${n}')`).join('; '));
+							code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
 						} else {
 							names.forEach(name => {
 								if (!scope.declarations.has(name)) {
@@ -321,7 +321,7 @@ export default class Expression {
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
 						if (pending_assignments.size > 0) {
-							const insert = [...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ');
+							const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ');
 							pending_assignments = new Set();
 
 							component.has_reactive_assignments = true;
@@ -329,7 +329,7 @@ export default class Expression {
 							body = deindent`
 								{
 									const $$result = ${body};
-									${insert}
+									${insert};
 									return $$result;
 								}
 							`;
@@ -381,9 +381,8 @@ export default class Expression {
 
 						const insert = (
 							(has_semi ? ' ' : '; ') +
-							[...pending_assignments].map(name => `$$make_dirty('${name}')`).join('; ')
+							[...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ')
 						);
-
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {

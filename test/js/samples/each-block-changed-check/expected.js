@@ -145,10 +145,8 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { comments, elapsed, time, foo } = $$props;
-
-	$$self.$$.get = () => ({ comments, elapsed, time, foo });
 
 	$$self.$$.set = $$props => {
 		if ('comments' in $$props) comments = $$props.comments;
@@ -156,47 +154,49 @@ function define($$self, $$props) {
 		if ('time' in $$props) time = $$props.time;
 		if ('foo' in $$props) foo = $$props.foo;
 	};
+
+	return { comments, elapsed, time, foo };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get comments() {
-		return this.$$.get().comments;
+		return this.$$.ctx.comments;
 	}
 
-	set comments(value) {
-		this.$set({ comments: value });
+	set comments(comments) {
+		this.$set({ comments });
 		flush();
 	}
 
 	get elapsed() {
-		return this.$$.get().elapsed;
+		return this.$$.ctx.elapsed;
 	}
 
-	set elapsed(value) {
-		this.$set({ elapsed: value });
+	set elapsed(elapsed) {
+		this.$set({ elapsed });
 		flush();
 	}
 
 	get time() {
-		return this.$$.get().time;
+		return this.$$.ctx.time;
 	}
 
-	set time(value) {
-		this.$set({ time: value });
+	set time(time) {
+		this.$set({ time });
 		flush();
 	}
 
 	get foo() {
-		return this.$$.get().foo;
+		return this.$$.ctx.foo;
 	}
 
-	set foo(value) {
-		this.$set({ foo: value });
+	set foo(foo) {
+		this.$set({ foo });
 		flush();
 	}
 }

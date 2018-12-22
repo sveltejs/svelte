@@ -49,20 +49,20 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
 	function foo() {
-		if (true) { x += 1; $$make_dirty('x'); }
+		if (true) { x += 1; $$invalidate('x', x); }
 	}
 
-	$$self.$$.get = () => ({ x, foo });
+	return { x, foo };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 }
 

@@ -52,12 +52,10 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	let bar;
-
-	$$self.$$.get = () => ({ foo, bar });
 
 	$$self.$$.set = $$props => {
 		if ('foo' in $$props) foo = $$props.foo;
@@ -65,28 +63,30 @@ function define($$self, $$props, $$make_dirty) {
 
 	$$self.$$.update = ($$dirty = { foo: 1 }) => {
 		if ($$dirty.foo) {
-			bar = foo * 2; $$make_dirty('bar');
+			bar = foo * 2; $$invalidate('bar', bar);
 		}
 	};
+
+	return { foo, bar };
 }
 
 class SvelteComponent extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 
-		const state = this.$$.get();
-		if (state.foo === undefined) {
+		const { ctx } = this.$$;
+		if (ctx.foo === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'foo'");
 		}
 	}
 
 	get foo() {
-		return this.$$.get().foo;
+		return this.$$.ctx.foo;
 	}
 
-	set foo(value) {
-		this.$set({ foo: value });
+	set foo(foo) {
+		this.$set({ foo });
 		flush();
 	}
 }

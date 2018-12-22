@@ -34,7 +34,7 @@ export function flush() {
 			update(dirty_components.shift().$$);
 		}
 
-		while (binding_callbacks.length) binding_callbacks.pop()();
+		while (binding_callbacks.length) binding_callbacks.shift()();
 
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
@@ -57,7 +57,7 @@ function update($$) {
 	if ($$.fragment) {
 		$$.update($$.dirty);
 		run_all($$.before_render);
-		$$.fragment.p($$.dirty, $$.get());
+		$$.fragment.p($$.dirty, $$.ctx);
 		$$.dirty = null;
 
 		$$.after_render.forEach(add_render_callback);
