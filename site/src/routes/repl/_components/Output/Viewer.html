@@ -99,10 +99,10 @@
 
 				event.preventDefault();
 
-				if (el.href.startsWith(top.location.href)) {
-					const hash = el.href.replace(top.location.href, '');
-					if (hash[0] === '#') {
-						iframe.contentWindow.location.hash = hash;
+				if (el.href.startsWith(top.location.origin)) {
+					const url = new URL(el.href);
+					if (url.hash[0] === '#') {
+						iframe.contentWindow.location.hash = url.hash;
 						return;
 					}
 				}
