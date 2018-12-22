@@ -22,9 +22,10 @@ self.addEventListener('message', async event => {
 			if (event.data.components.length === 0) return;
 
 			await ready;
-			postMessage(
-				await bundle(event.data.components)
-			);
+			const result = await bundle(event.data.components);
+			if (result) {
+				postMessage(result);
+			}
 
 			break;
 	}
@@ -143,7 +144,10 @@ async function bundle(components) {
 			throw dom.error;
 		}
 
-		if (token !== currentToken) return;
+		if (token !== currentToken) {
+			console.error(`aborted`);
+			return;
+		}
 
 		cached.dom = dom.bundle;
 

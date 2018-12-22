@@ -10,7 +10,9 @@
 
 	let version = query.version;
 	let demo = query.demo || 'hello-world';
-	let gist = query.gist;
+	let gist_id = query.gist;
+
+	let gist;
 
 	let app = {
 		components: [],
@@ -25,7 +27,7 @@
 		const params = [];
 
 		if (version !== 'latest') params.push(`version=${version}`);
-		if (gist) params.push(`gist=${gist}`);
+		if (gist_id) params.push(`gist=${gist_id}`);
 		else if (demo) params.push(`demo=${demo}`);
 
 		const url = params.length > 0
@@ -49,11 +51,14 @@
 				version = pkg.version;
 			});
 
-		if (gist) {
-			fetch(`gist/${gist}`).then(r => r.json()).then(({ description, files }) => {
+		if (gist_id) {
+			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
+				gist = data;
+				const { id, description, files } = data;
+
 				name = description;
 
-				const values = {};
+				let values = {};
 
 				const components = Object.keys(files)
 					.map(file => {
@@ -103,8 +108,17 @@
 					values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
 					components: data.components
 				};
+
+				gist = null;
 			}
 		});
+	}
+
+	function handle_fork(event) {
+		console.log(event);
+		demo = null;
+		gist = event.detail.gist;
+		gist_id = gist.id;
 	}
 
 	function tryParseData(json5) {
@@ -189,7 +203,7 @@
 		{repl}
 		bind:zen_mode
 		on:select="{e => (demo = e.detail.slug, gist = null)}"
-		on:forked="{e => (demo = null, gist = e.detail.gist)}"
+		on:forked={handle_fork}
 	/>
 
 	{#if process.browser}

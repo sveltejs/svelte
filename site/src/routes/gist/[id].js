@@ -4,7 +4,15 @@ import { body } from './_utils.js';
 export async function get(req, res) {
 	const { id } = req.params;
 
-	const r = await fetch(`https://api.github.com/gists/${id}`);
+	const headers = {};
+	const user = req.session.passport && req.session.passport.user;
+	if (user) {
+		headers.Authorization = `token ${user.token}`;
+	}
+
+	const r = await fetch(`https://api.github.com/gists/${id}`, {
+		headers
+	});
 
 	res.writeHead(r.status, {
 		'Content-Type': 'application/json'

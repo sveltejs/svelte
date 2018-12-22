@@ -29,8 +29,12 @@
 		return new Promise(f => setTimeout(f, ms));
 	}
 
+	$: {
+		console.log({ canSave });
+	}
+
 	let canSave;
-	$: canSave = !!$user && !!gist && $user.id == gist.owner.id; // comparing number and string
+	$: canSave = !!$user && !!gist && !!gist.owner && $user.id == gist.owner.id; // comparing number and string
 
 	function handleKeydown(event) {
 		if (event.which === 83 && (isMac ? event.metaKey : event.ctrlKey)) {
@@ -268,7 +272,7 @@ export default app;` });
 
 		{#if gist}
 			<a class="icon" href={gist.html_url} title="link to gist">
-				<Icon name="save" />
+				<Icon name="link" />
 			</a>
 		{/if}
 

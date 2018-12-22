@@ -1,7 +1,7 @@
 <script>
 	import { user, logout } from '../../../../user.js';
 
-	let showMenu = false;
+	let showMenu = true;
 	let name;
 
 	$: name = $user.displayName || $user.username;
@@ -13,7 +13,7 @@
 
 	{#if showMenu}
 		<div class="menu">
-			<button on:click={logout}>log out</button>
+			<button on:click={logout}>Log out</button>
 		</div>
 	{/if}
 </div>
@@ -21,46 +21,65 @@
 <style>
 	.user {
 		position: relative;
-		float: right;
-		display: block;
-		padding: .5em 2.2em 0 .8em;
+		display: inline-block;
+		padding: 0em 3.2rem 0 1.6rem;
 		line-height: 1;
 		z-index: 99;
-		height: 2.5em;
+	}
+
+	.user::after {
+		/* embiggen hit zone, so log out menu doesn't disappear */
+		position: absolute;
+		content: '';
+		width: 100%;
+		height: 3.2rem;
+		left: 0;
+		top: 0;
 	}
 
 	span {
 		/* position: relative; padding: 0 2em 0 0; */
 		line-height: 1;
 		display: inline-block;
-		padding: .05em 0;
-		font-family: Rajdhani;
-		font-weight: 400;
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		opacity: 0.7;
+	}
+
+	.user:hover span {
+		opacity: 1;
 	}
 
 	img {
 		position: absolute;
-		top: .2em;
+		top: -0.05em;
 		right: 0;
-		width: 1.6em;
-		height: 1.6em;
-		border-radius: 50%;
+		width: 2.4rem;
+		height: 2.4rem;
+		border: 1px solid rgba(255,255,255,0.3);
+		border-radius: 0.2rem;
 	}
 
 	.menu {
 		position: absolute;
-		min-width: calc(100% + .1em);
-		background-color: #f4f4f4;
-		padding: .5em;
+		width: calc(100% - 0rem);
+		top: 3rem;
+		left: 0rem;
+		background-color: var(--second);
+		padding: 0.8rem 1.6rem;
 		z-index: 99;
-		top: calc(2.5em - 1px);
-		border-bottom: 1px solid #eee;
-		border-left: 1px solid #eee;
-		right: 0;
 		text-align: left;
+		border-radius: 0.4rem;
 	}
 
 	.menu button {
 		background-color: transparent;
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		/* opacity: 0.7; */
+	}
+
+	.menu button:hover {
+		opacity: 1;
 	}
 </style>
