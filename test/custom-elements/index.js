@@ -15,7 +15,7 @@ const page = `
 
 const assert = fs.readFileSync('test/custom-elements/assert.js', 'utf-8');
 
-describe.skip('custom-elements', function() {
+describe('custom-elements', function() {
 	this.timeout(10000);
 
 	let svelte;
