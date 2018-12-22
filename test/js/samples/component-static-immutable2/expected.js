@@ -36,16 +36,16 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self) {
+function instance($$self) {
 	const Nested = window.Nested;
 
-	$$self.$$.get = () => ({ Nested });
+	return { Nested };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, not_equal);
+		init(this, options, instance, create_fragment, not_equal);
 	}
 }
 

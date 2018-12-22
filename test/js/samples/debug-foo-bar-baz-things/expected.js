@@ -139,10 +139,8 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { things, foo, bar, baz } = $$props;
-
-	$$self.$$.get = () => ({ things, foo, bar, baz });
 
 	$$self.$$.set = $$props => {
 		if ('things' in $$props) things = $$props.things;
@@ -150,61 +148,63 @@ function define($$self, $$props) {
 		if ('bar' in $$props) bar = $$props.bar;
 		if ('baz' in $$props) baz = $$props.baz;
 	};
+
+	return { things, foo, bar, baz };
 }
 
 class SvelteComponent extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 
-		const state = this.$$.get();
-		if (state.things === undefined) {
+		const { ctx } = this.$$;
+		if (ctx.things === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'things'");
 		}
-		if (state.foo === undefined) {
+		if (ctx.foo === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'foo'");
 		}
-		if (state.bar === undefined) {
+		if (ctx.bar === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'bar'");
 		}
-		if (state.baz === undefined) {
+		if (ctx.baz === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'baz'");
 		}
 	}
 
 	get things() {
-		return this.$$.get().things;
+		return this.$$.ctx.things;
 	}
 
-	set things(value) {
-		this.$set({ things: value });
+	set things(things) {
+		this.$set({ things });
 		flush();
 	}
 
 	get foo() {
-		return this.$$.get().foo;
+		return this.$$.ctx.foo;
 	}
 
-	set foo(value) {
-		this.$set({ foo: value });
+	set foo(foo) {
+		this.$set({ foo });
 		flush();
 	}
 
 	get bar() {
-		return this.$$.get().bar;
+		return this.$$.ctx.bar;
 	}
 
-	set bar(value) {
-		this.$set({ bar: value });
+	set bar(bar) {
+		this.$set({ bar });
 		flush();
 	}
 
 	get baz() {
-		return this.$$.get().baz;
+		return this.$$.ctx.baz;
 	}
 
-	set baz(value) {
-		this.$set({ baz: value });
+	set baz(baz) {
+		this.$set({ baz });
 		flush();
 	}
 }

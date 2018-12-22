@@ -45,29 +45,29 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { foo = 42 } = $$props;
-
-	$$self.$$.get = () => ({ foo });
 
 	$$self.$$.set = $$props => {
 		if ('foo' in $$props) foo = $$props.foo;
 	};
+
+	return { foo };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
 		if (!document.getElementById("svelte-1a7i8ec-style")) add_css();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get foo() {
-		return this.$$.get().foo;
+		return this.$$.ctx.foo;
 	}
 
-	set foo(value) {
-		this.$set({ foo: value });
+	set foo(foo) {
+		this.$set({ foo });
 		flush();
 	}
 }

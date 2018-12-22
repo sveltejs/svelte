@@ -249,10 +249,8 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { a, b, c, d, e } = $$props;
-
-	$$self.$$.get = () => ({ a, b, c, d, e });
 
 	$$self.$$.set = $$props => {
 		if ('a' in $$props) a = $$props.a;
@@ -261,56 +259,58 @@ function define($$self, $$props) {
 		if ('d' in $$props) d = $$props.d;
 		if ('e' in $$props) e = $$props.e;
 	};
+
+	return { a, b, c, d, e };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get a() {
-		return this.$$.get().a;
+		return this.$$.ctx.a;
 	}
 
-	set a(value) {
-		this.$set({ a: value });
+	set a(a) {
+		this.$set({ a });
 		flush();
 	}
 
 	get b() {
-		return this.$$.get().b;
+		return this.$$.ctx.b;
 	}
 
-	set b(value) {
-		this.$set({ b: value });
+	set b(b) {
+		this.$set({ b });
 		flush();
 	}
 
 	get c() {
-		return this.$$.get().c;
+		return this.$$.ctx.c;
 	}
 
-	set c(value) {
-		this.$set({ c: value });
+	set c(c) {
+		this.$set({ c });
 		flush();
 	}
 
 	get d() {
-		return this.$$.get().d;
+		return this.$$.ctx.d;
 	}
 
-	set d(value) {
-		this.$set({ d: value });
+	set d(d) {
+		this.$set({ d });
 		flush();
 	}
 
 	get e() {
-		return this.$$.get().e;
+		return this.$$.ctx.e;
 	}
 
-	set e(value) {
-		this.$set({ e: value });
+	set e(e) {
+		this.$set({ e });
 		flush();
 	}
 }
