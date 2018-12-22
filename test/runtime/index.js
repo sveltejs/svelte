@@ -233,7 +233,7 @@ describe("runtime", () => {
 				{
 					resolveId: (importee, importer) => {
 						if (importee.startsWith('svelte/')) {
-							return importee.replace('svelte', process.cwd());
+							return importee.replace('svelte', process.cwd()) + '.mjs';
 						}
 					}
 				}
