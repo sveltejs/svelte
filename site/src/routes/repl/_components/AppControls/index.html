@@ -1,7 +1,6 @@
 <script>
 	import * as fleece from 'golden-fleece';
 	import { createEventDispatcher } from 'svelte';
-	import ExampleSelector from './ExampleSelector.html';
 	import UserMenu from './UserMenu.html';
 	import Icon from '../../../../components/icon.html';
 	import * as doNotZip from 'do-not-zip';
@@ -27,10 +26,6 @@
 
 	function wait(ms) {
 		return new Promise(f => setTimeout(f, ms));
-	}
-
-	$: {
-		console.log({ canSave });
 	}
 
 	let canSave;
@@ -229,8 +224,6 @@ export default app;` });
 				{/each}
 			</select>
 		</div>
-
-		<ExampleSelector {examples} on:select />
 
 		<input
 			bind:value={name}
