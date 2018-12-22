@@ -128,5 +128,27 @@ describe('store', () => {
 			number.set(7);
 			assert.deepEqual(values, [0, 2, 4]);
 		});
+
+		it('prevents glitches', () => {
+			const lastname = writable('Jekyll');
+			const firstname = derive(lastname, n => n === 'Jekyll' ? 'Henry' : 'Edward');
+
+			const fullname = derive([firstname, lastname], names => names.join(' '));
+
+			const values = [];
+
+			const unsubscribe = fullname.subscribe(value => {
+				values.push(value);
+			});
+
+			lastname.set('Hyde');
+
+			assert.deepEqual(values, [
+				'Henry Jekyll',
+				'Edward Hyde'
+			]);
+
+			unsubscribe();
+		});
 	});
 });

@@ -1,14 +1,12 @@
-import path from 'path';
 import replace from 'rollup-plugin-replace';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
 import typescript from 'rollup-plugin-typescript';
-import buble from 'rollup-plugin-buble';
 import pkg from './package.json';
 
 export default [
-	/* compiler/svelte.js */
+	/* compiler.js */
 	{
 		input: 'src/index.ts',
 		plugins: [
@@ -54,12 +52,38 @@ export default [
 		experimentalCodeSplitting: true
 	},
 
-	/* internal.js */
+	/* index.js */
+	{
+		input: 'index.mjs',
+		output: {
+			file: 'index.js',
+			format: 'cjs'
+		},
+		external: name => name !== 'index.mjs'
+	},
+
+	/* internal.[m]js */
 	{
 		input: 'src/internal/index.js',
+		output: [
+			{
+				file: 'internal.mjs',
+				format: 'esm'
+			},
+			{
+				file: 'internal.js',
+				format: 'cjs'
+			}
+		]
+	},
+
+	/* store.js */
+	{
+		input: 'store.mjs',
 		output: {
-			file: 'internal.js',
-			format: 'es'
-		}
-	}
+			file: 'store.js',
+			format: 'cjs'
+		},
+		external: name => name !== 'store.mjs'
+	},
 ];

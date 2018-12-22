@@ -27,7 +27,7 @@ export default function wrapModule(
 	module_exports: Export[],
 	source: string
 ): string {
-	const internalPath = `${sveltePath}/internal.js`;
+	const internalPath = `${sveltePath}/internal`;
 
 	if (format === 'esm') {
 		return esm(code, name, options, banner, sveltePath, internalPath, helpers, imports, module_exports, source);
