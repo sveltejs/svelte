@@ -1,20 +1,13 @@
 <script>
-	import InlineSvg from '../components/inline-svg.html';
-	import DebugCss from '../components/debug-css.html';
-	import Nav from '../components/top-nav.html';
+	import InlineSvg from '../components/InlineSvg.html';
+	import Nav from '../components/TopNav.html';
 
 	export let child;
-
-	const dev = process.env.NODE_ENV === 'development';
 </script>
-
-{#if dev}
-	<DebugCss style='bottom:4rem; right:3rem;' />
-{/if}
 
 <InlineSvg />
 <Nav segment={child.segment} />
-<main role='main'>
+<main>
 	<svelte:component this={child.component} {...child.props} />
 </main>
 
