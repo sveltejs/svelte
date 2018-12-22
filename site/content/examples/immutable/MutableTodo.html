@@ -1,17 +1,13 @@
 <script>
-	import { afterRender } from 'svelte';
+	import { afterUpdate } from 'svelte';
+	import flash from './flash.js';
 
 	export let todo;
 	let span;
 
-	afterRender(() => {
-		span.style.color = 'red';
-		setTimeout(() => {
-			span.style.color = 'black';
-		}, 400);
-	});
+	flash(() => span);
 </script>
 
 <!-- the text will flash red whenever
      the `todo` object changes -->
-<span ref:span>{todo.text}</span>
+<span bind:this={span}>{todo.text}</span>
