@@ -44,33 +44,33 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let { value } = $$props;
 
 	function input_change_input_handler() {
 		value = toNumber(this.value);
-		$$make_dirty('value');
+		$$invalidate('value', value);
 	}
-
-	$$self.$$.get = () => ({ value, input_change_input_handler });
 
 	$$self.$$.set = $$props => {
 		if ('value' in $$props) value = $$props.value;
 	};
+
+	return { value, input_change_input_handler };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get value() {
-		return this.$$.get().value;
+		return this.$$.ctx.value;
 	}
 
 	set value(value) {
-		this.$set({ value: value });
+		this.$set({ value });
 		flush();
 	}
 }

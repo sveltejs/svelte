@@ -466,7 +466,7 @@ export default class ElementWrapper extends Wrapper {
 								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 						}
 						${mutations.length > 0 && mutations}
-						${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+						${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
 					}
 				`);
 
@@ -480,7 +480,7 @@ export default class ElementWrapper extends Wrapper {
 								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
 						}
 						${mutations.length > 0 && mutations}
-						${Array.from(dependencies).map(dep => `$$make_dirty('${dep}');`)}
+						${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
 					}
 				`);
 
@@ -537,7 +537,7 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.partly_hoisted.push(deindent`
 				function ${name}($$node) {
 					${handler.mutation}
-					$$make_dirty('${object}');
+					$$invalidate('${object}', ${object});
 				}
 			`);
 

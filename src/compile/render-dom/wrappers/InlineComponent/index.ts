@@ -223,7 +223,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				component.partly_hoisted.push(deindent`
 					function ${fn}($$component) {
 						${lhs} = $$component;
-						${object && `$$make_dirty('${object}');`}
+						${object && `$$invalidate('${object}', ${object});`}
 					}
 				`);
 
@@ -274,8 +274,9 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				block.builders.init.addBlock(deindent`
 					function ${name}(value) {
-						${updating} = true;
-						ctx.${name}.call(null, value, ctx);
+						if (ctx.${name}.call(null, value, ctx)) {
+							${updating} = true;
+						}
 					}
 				`);
 
@@ -283,8 +284,9 @@ export default class InlineComponentWrapper extends Wrapper {
 			} else {
 				block.builders.init.addBlock(deindent`
 					function ${name}(value) {
-						${updating} = true;
-						ctx.${name}.call(null, value);
+						if (ctx.${name}.call(null, value)) {
+							${updating} = true;
+						}
 					}
 				`);
 			}
@@ -292,7 +294,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const body = deindent`
 				function ${name}(${args.join(', ')}) {
 					${lhs} = value;
-					${dependencies.map(dep => `$$make_dirty('${dep}');`)}
+					return $$invalidate('${dependencies[0]}', ${dependencies[0]});
 				}
 			`;
 
