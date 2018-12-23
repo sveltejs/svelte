@@ -6,12 +6,14 @@
 
 	export let type;
 	export let min = 50;
+	export let min1 = min;
+	export let min2 = min;
+	export let pos = 50;
 
 	const refs = {};
 	const side = type === 'horizontal' ? 'left' : 'top';
 	const dimension = type === 'horizontal' ? 'width' : 'height';
 
-	let pos = 50;
 	let dragging = false;
 
 	function setPos(event) {
