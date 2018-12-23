@@ -171,13 +171,15 @@
 	async function download() {
 		downloading = true;
 
+		const { components, imports, values } = repl.toJSON();
+
 		const files = await (await fetch('/svelte-app.json')).json();
 
-		if (bundle.imports.length > 0) {
+		if (imports.length > 0) {
 			const idx = files.findIndex(({ path }) => path === 'package.json');
 			const pkg = JSON.parse(files[idx].data);
 			const deps = {};
-			bundle.imports.forEach(mod => {
+			imports.forEach(mod => {
 				const match = /^(@[^\/]+\/)?[^@\/]+/.exec(mod);
 				deps[match[0]] = 'latest';
 			});
@@ -191,7 +193,7 @@
 
 var app = new App({
 	target: document.body,
-	props: ${JSON.stringify(data, null, '\t').replace(/\n/g, '\n\t')}
+	props: ${JSON.stringify(values, null, '\t').replace(/\n/g, '\n\t')}
 });
 
 export default app;` });

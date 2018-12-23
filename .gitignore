@@ -7,6 +7,8 @@ node_modules
 /index.js
 /internal.*
 /store.js
+/easing.js
+/transition.js
 /scratch/
 /coverage/
 /coverage.lcov/
@@ -22,3 +24,5 @@ _actual*.*
 /site/__sapper__/
 /site/.env
 /site/.sessions
+/site/static/svelte-app.json
+/site/scripts/svelte-app

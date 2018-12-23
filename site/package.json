@@ -5,13 +5,13 @@
   "scripts": {
     "dev": "sapper dev",
     "sapper": "sapper build --legacy",
-    "export": "sapper export --legacy",
+    "update_template": "sh ./scripts/update_template.sh",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
     "deploy": "npm run stage && now alias",
-    "prestage": "npm run sapper",
+    "prestage": "npm run update_template && npm run sapper",
     "stage": "now"
   },
   "dependencies": {
@@ -50,7 +50,7 @@
     "rollup-plugin-replace": "^2.0.0",
     "rollup-plugin-svelte": "^4.2.1",
     "rollup-plugin-terser": "^1.0.1",
-    "sapper": "^0.25.0-alpha1",
-    "svelte": "^3.0.0-alpha7"
+    "sapper": "^0.25.0-alpha2",
+    "svelte": "^3.0.0-alpha10"
   }
 }

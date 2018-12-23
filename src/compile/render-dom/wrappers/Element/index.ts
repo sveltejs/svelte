@@ -403,7 +403,9 @@ export default class ElementWrapper extends Wrapper {
 		const groups = events
 			.map(event => ({
 				events: event.eventNames,
-				bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
+				bindings: mungedBindings
+					.filter(binding => binding.name !== 'this')
+					.filter(binding => event.filter(this.node, binding.name))
 			}))
 			.filter(group => group.bindings.length);
 
@@ -494,7 +496,7 @@ export default class ElementWrapper extends Wrapper {
 					block.addVariable(resize_listener);
 
 					block.builders.mount.addLine(
-						`${resize_listener} = @addResizeListener(${this.var}, ${callee});`
+						`${resize_listener} = @addResizeListener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
 					block.builders.destroy.addLine(
@@ -632,7 +634,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = component.qualify(intro.name);
 
-			block.builders.intro.addConditional(`@intro.enabled`, deindent`
+			block.builders.intro.addConditional(`@intros.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
 
 				@add_render_callback(() => {
@@ -669,7 +671,7 @@ export default class ElementWrapper extends Wrapper {
 					`);
 				}
 
-				block.builders.intro.addConditional(`@intro.enabled`, deindent`
+				block.builders.intro.addConditional(`@intros.enabled`, deindent`
 					@add_render_callback(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
