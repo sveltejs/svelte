@@ -12,7 +12,7 @@ export default function (target) {
 	target.innerHTML = '<my-app foo=yes />';
 
 	assert.equal(warnings.length, 1);
-	assert.equal(warnings[0], `<my-app> was created without expected data property 'bar'`);
+	assert.equal(warnings[0], `<my-app> was created without expected prop 'bar'`);
 
 	console.warn = warn;
 }
