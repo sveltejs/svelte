@@ -276,7 +276,7 @@ export default app;` });
 		{:else}
 			<button class="icon" on:click={login}>
 				<Icon name="log-in" />
-				&nbsp;Log in to save
+				<span>&nbsp;Log in to save</span>
 			</button>
 		{/if}
 	</div>
@@ -307,6 +307,8 @@ export default app;` });
 	}
 
 	.icon {
+		position: relative;
+		top: -0.1rem;
 		display: inline-block;
 		padding: 0.2em;
 		opacity: .7;
@@ -338,8 +340,15 @@ export default app;` });
 		opacity: 1;
 	}
 
-	@media (min-width: 768px) {
-		.icon[title^='fullscreen'] { display: inline }
+	button span {
+		display: none;
 	}
 
+	@media (min-width: 768px) {
+		.icon[title^='fullscreen'] { display: inline }
+
+		button span {
+			display: inline-block;
+		}
+	}
 </style>
