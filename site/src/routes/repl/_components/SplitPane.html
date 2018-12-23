@@ -126,33 +126,22 @@
 		height: 1px;
 	}
 
-	/* @media (max-width: 767px) {
-		.pane {
-			override divider-set dimensions
-			width: 100% !important;
-			height: auto !important;
-		}
-	} */
+	.left, .right, .divider {
+		display: block;
+	}
 
-	/* @media (min-width: 768px) { */
-		.left, .right, .divider {
-			display: block;
+	.left, .right {
+		height: 100%;
+		float: left;
+	}
 
-		}
+	.top, .bottom {
+		position: absolute;
+		width: 100%;
+	}
 
-		.left, .right {
-			height: 100%;
-			float: left;
-		}
-
-		.top, .bottom {
-			position: absolute;
-			width: 100%;
-		}
-
-		.top { top: 0; }
-		.bottom { bottom: 0; }
-	/* } */
+	.top { top: 0; }
+	.bottom { bottom: 0; }
 </style>
 
 <div class="container" bind:this={refs.container}>

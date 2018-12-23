@@ -148,6 +148,8 @@
 	.codemirror-container {
 		position: relative;
 		width: 100%;
+		height: 100%;
+		border: none;
 	}
 
 	.codemirror-container :global(.CodeMirror) {
@@ -164,17 +166,6 @@
 
 	.codemirror-container.flex :global(.CodeMirror-lines) {
 		padding: 0;
-	}
-
-	@media (min-width: 768px) {
-		.codemirror-container {
-			height: 100%;
-			border: none;
-		}
-
-		.codemirror-container :global(.CodeMirror) {
-			height: 100%;
-		}
 	}
 
 	.codemirror-container :global(.CodeMirror-gutters) {

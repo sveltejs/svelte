@@ -250,7 +250,7 @@
 		transform: translate(-50%,0);
 	}
 
-	@media (min-width: 768px) {
+	@media (min-width: 600px) {
 		.container {
 			height: 100%;
 		}
@@ -272,7 +272,7 @@
 
 <div class="container" bind:clientWidth={width}>
 	<div class="repl-inner" class:offset="{show_output}">
-		<SplitPane type="horizontal" fixed="{768 > width}" pos={60} fixed_pos={50}>
+		<SplitPane type="horizontal" fixed="{600 > width}" pos={60} fixed_pos={50}>
 			<section slot=a>
 				<Input
 					{component_store}
