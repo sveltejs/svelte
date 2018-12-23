@@ -6,7 +6,7 @@ let dirty_components = [];
 const binding_callbacks = [];
 const render_callbacks = [];
 
-export const intro = { enabled: false };
+export const intros = { enabled: false };
 
 export function schedule_update(component) {
 	dirty_components.push(component);

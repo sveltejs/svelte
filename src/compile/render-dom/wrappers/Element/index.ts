@@ -632,7 +632,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = component.qualify(intro.name);
 
-			block.builders.intro.addConditional(`@intro.enabled`, deindent`
+			block.builders.intro.addConditional(`@intros.enabled`, deindent`
 				if (${name}) ${name}.invalidate();
 
 				@add_render_callback(() => {
@@ -669,7 +669,7 @@ export default class ElementWrapper extends Wrapper {
 					`);
 				}
 
-				block.builders.intro.addConditional(`@intro.enabled`, deindent`
+				block.builders.intro.addConditional(`@intros.enabled`, deindent`
 					@add_render_callback(() => {
 						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
