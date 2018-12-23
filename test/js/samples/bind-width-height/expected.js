@@ -13,7 +13,7 @@ function create_fragment(component, ctx) {
 
 		m(target, anchor) {
 			insert(target, div, anchor);
-			div_resize_listener = addResizeListener(div, ctx.div_resize_handler);
+			div_resize_listener = addResizeListener(div, ctx.div_resize_handler.bind(div));
 			current = true;
 		},
 
