@@ -131,30 +131,30 @@ export function quadOut(t) {
 	return -t * (t - 2.0);
 }
 
-export function quarticInOut(t) {
+export function quartInOut(t) {
 	return t < 0.5
 		? +8.0 * Math.pow(t, 4.0)
 		: -8.0 * Math.pow(t - 1.0, 4.0) + 1.0;
 }
 
-export function quarticIn(t) {
+export function quartIn(t) {
 	return Math.pow(t, 4.0);
 }
 
-export function quarticOut(t) {
+export function quartOut(t) {
 	return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
 }
 
-export function qinticInOut(t) {
+export function quintInOut(t) {
 	if ((t *= 2) < 1) return 0.5 * t * t * t * t * t;
 	return 0.5 * ((t -= 2) * t * t * t * t + 2);
 }
 
-export function qinticIn(t) {
+export function quintIn(t) {
 	return t * t * t * t * t;
 }
 
-export function qinticOut(t) {
+export function quintOut(t) {
 	return --t * t * t * t * t + 1;
 }
 
