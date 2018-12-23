@@ -5,13 +5,13 @@
   "scripts": {
     "dev": "sapper dev",
     "sapper": "sapper build --legacy",
-    "export": "sapper export --legacy",
+    "update_template": "sh ./scripts/update_template.sh",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
     "deploy": "npm run stage && now alias",
-    "prestage": "npm run sapper",
+    "prestage": "npm run update_template && npm run sapper",
     "stage": "now"
   },
   "dependencies": {
