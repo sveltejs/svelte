@@ -1,4 +1,4 @@
-import { add_render_callback, flush, intro, schedule_update } from './scheduler.js';
+import { add_render_callback, flush, intros, schedule_update } from './scheduler.js';
 import { current_component, set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
@@ -101,7 +101,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 	$$.fragment = create_fragment(component, $$.ctx);
 
 	if (options.target) {
-		intro.enabled = !!options.intro;
+		intros.enabled = !!options.intro;
 
 		if (options.hydrate) {
 			$$.fragment.l(children(options.target));
@@ -111,7 +111,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 
 		mount_component(component, options.target, options.anchor);
 		flush();
-		intro.enabled = true;
+		intros.enabled = true;
 	}
 
 	set_current_component(previous_component);
