@@ -3,10 +3,16 @@
 	import Nav from '../components/TopNav.html';
 
 	export let child;
+	export let path;
 </script>
 
 <InlineSvg />
-<Nav segment={child.segment} />
+{#if path !== '/repl/embed'}
+	<Nav segment={child.segment} />
+{/if}
+
+{@debug path}
+
 <main>
 	<svelte:component this={child.component} {...child.props} />
 </main>
