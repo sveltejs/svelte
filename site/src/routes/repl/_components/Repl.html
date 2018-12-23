@@ -249,6 +249,7 @@
 
 	@media (min-width: 768px) {
 		.repl-inner {
+			width: 100%;
 			height: 100%;
 		}
 
@@ -263,7 +264,7 @@
 	}
 </style>
 
-<div class="repl-inner" class:offset="{show_output}" bind:offsetWidth={width}>
+<div class="repl-inner" class:offset="{show_output}" bind:clientWidth={width}>
 	<SplitPane type="horizontal" fixed="{768 > width}" pos={60} fixed_pos={60}>
 		<section slot=a>
 			<Input

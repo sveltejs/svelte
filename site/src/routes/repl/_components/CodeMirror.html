@@ -18,9 +18,9 @@
 
 	export let mode;
 	export let code;
-	export let readonly;
-	export let error;
-	export let errorLoc;
+	export let readonly = false;
+	export let error = null;
+	export let errorLoc = null;
 	export let warningCount = 0;
 	export let flex = false;
 	export let lineNumbers = true;
@@ -146,6 +146,7 @@
 
 <style>
 	.codemirror-container {
+		position: relative;
 		width: 100%;
 	}
 
