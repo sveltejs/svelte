@@ -403,7 +403,9 @@ export default class ElementWrapper extends Wrapper {
 		const groups = events
 			.map(event => ({
 				events: event.eventNames,
-				bindings: mungedBindings.filter(binding => event.filter(this.node, binding.name))
+				bindings: mungedBindings
+					.filter(binding => binding.name !== 'this')
+					.filter(binding => event.filter(this.node, binding.name))
 			}))
 			.filter(group => group.bindings.length);
 
