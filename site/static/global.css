@@ -60,7 +60,7 @@ a:focus {
 	--sidebar-w:  24rem;
 	--main-width: 80rem;
 	--code-w:      72em;
-	--side-nav:  4.8rem;
+	--side-nav:   .8rem;
 	--side-page:   var(--side-nav);
 
 	/* easings */
@@ -390,6 +390,7 @@ table span {
 	:root {
 		--side-page:  14vw;
 		--top-offset: 10rem;
+		--side-nav: 4.8rem;
 	}
 }
 
