@@ -41,48 +41,48 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { color, x, y } = $$props;
-
-	$$self.$$.get = () => ({ color, x, y });
 
 	$$self.$$.set = $$props => {
 		if ('color' in $$props) color = $$props.color;
 		if ('x' in $$props) x = $$props.x;
 		if ('y' in $$props) y = $$props.y;
 	};
+
+	return { color, x, y };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get color() {
-		return this.$$.get().color;
+		return this.$$.ctx.color;
 	}
 
-	set color(value) {
-		this.$set({ color: value });
+	set color(color) {
+		this.$set({ color });
 		flush();
 	}
 
 	get x() {
-		return this.$$.get().x;
+		return this.$$.ctx.x;
 	}
 
-	set x(value) {
-		this.$set({ x: value });
+	set x(x) {
+		this.$set({ x });
 		flush();
 	}
 
 	get y() {
-		return this.$$.get().y;
+		return this.$$.ctx.y;
 	}
 
-	set y(value) {
-		this.$set({ y: value });
+	set y(y) {
+		this.$set({ y });
 		flush();
 	}
 }

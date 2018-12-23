@@ -122,7 +122,7 @@ export default class WindowWrapper extends Wrapper {
 			component.template_references.add(handler_name);
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
-					${props.map(prop => `${prop.name} = window.${prop.value}; $$make_dirty('${prop.name}');`)}
+					${props.map(prop => `${prop.name} = window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
 				}
 			`);
 

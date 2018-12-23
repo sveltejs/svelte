@@ -56,32 +56,32 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let { y } = $$props;
 
 	function onwindowscroll() {
-		y = window.pageYOffset; $$make_dirty('y');
+		y = window.pageYOffset; $$invalidate('y', y);
 	}
-
-	$$self.$$.get = () => ({ y, onwindowscroll });
 
 	$$self.$$.set = $$props => {
 		if ('y' in $$props) y = $$props.y;
 	};
+
+	return { y, onwindowscroll };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get y() {
-		return this.$$.get().y;
+		return this.$$.ctx.y;
 	}
 
-	set y(value) {
-		this.$set({ y: value });
+	set y(y) {
+		this.$set({ y });
 		flush();
 	}
 }

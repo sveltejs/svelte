@@ -139,46 +139,46 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { things, foo } = $$props;
-
-	$$self.$$.get = () => ({ things, foo });
 
 	$$self.$$.set = $$props => {
 		if ('things' in $$props) things = $$props.things;
 		if ('foo' in $$props) foo = $$props.foo;
 	};
+
+	return { things, foo };
 }
 
 class SvelteComponent extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 
-		const state = this.$$.get();
-		if (state.things === undefined) {
+		const { ctx } = this.$$;
+		if (ctx.things === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'things'");
 		}
-		if (state.foo === undefined) {
+		if (ctx.foo === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'foo'");
 		}
 	}
 
 	get things() {
-		return this.$$.get().things;
+		return this.$$.ctx.things;
 	}
 
-	set things(value) {
-		this.$set({ things: value });
+	set things(things) {
+		this.$set({ things });
 		flush();
 	}
 
 	get foo() {
-		return this.$$.get().foo;
+		return this.$$.ctx.foo;
 	}
 
-	set foo(value) {
-		this.$set({ foo: value });
+	set foo(foo) {
+		this.$set({ foo });
 		flush();
 	}
 }

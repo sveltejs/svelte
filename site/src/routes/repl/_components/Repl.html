@@ -47,7 +47,8 @@
 	let sourceError = null;
 	let runtimeError = null;
 	let warningCount = 0;
-	let code = '';
+	let js = '';
+	let css = '';
 	let uid = 0;
 	let props = null;
 	let sourceErrorLoc;
@@ -61,7 +62,8 @@
 
 		workers.compiler.postMessage({ type: 'init', version });
 		workers.compiler.onmessage = event => {
-			code = event.data.code;
+			js = event.data.js;
+			css = event.data.css;
 			if (event.data.props) props = event.data.props;
 		};
 
@@ -111,7 +113,7 @@
 				entry: component === $component_store[0]
 			});
 		} else {
-			code = component.source;
+			js = css = `/* Select a component to see its compiled code */`;
 		}
 	}
 
@@ -264,7 +266,8 @@
 			<Output
 				{version}
 				{selected_store}
-				{code}
+				{js}
+				{css}
 				{bundle}
 				{ssr}
 				{dom}
