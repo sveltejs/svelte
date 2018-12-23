@@ -7,6 +7,8 @@ node_modules
 /index.js
 /internal.*
 /store.js
+/easing.js
+/transition.js
 /scratch/
 /coverage/
 /coverage.lcov/
