@@ -52,16 +52,6 @@ export default [
 		experimentalCodeSplitting: true
 	},
 
-	/* index.js */
-	{
-		input: 'index.mjs',
-		output: {
-			file: 'index.js',
-			format: 'cjs'
-		},
-		external: name => name !== 'index.mjs'
-	},
-
 	/* internal.[m]js */
 	{
 		input: 'src/internal/index.js',
@@ -77,13 +67,13 @@ export default [
 		]
 	},
 
-	/* store.js */
-	{
-		input: 'store.mjs',
+	// runtime API
+	...['index', 'store', 'easing', 'transition'].map(name => ({
+		input: `${name}.mjs`,
 		output: {
-			file: 'store.js',
+			file: `${name}.js`,
 			format: 'cjs'
 		},
-		external: name => name !== 'store.mjs'
-	},
+		external: id => id !== `${name}.mjs`
+	}))
 ];

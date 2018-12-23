@@ -131,10 +131,10 @@ export default function dom(
 		if (expected.length) {
 			dev_props_check = deindent`
 				const { ctx } = this.$$;
+				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
 				${expected.map(name => deindent`
-
-				if (ctx.${name} === undefined${options.customElement && ` && !('${name}' in this.attributes)`}) {
-					console.warn("<${component.tag}> was created without expected data property '${name}'");
+				if (ctx.${name} === undefined && !('${name}' in props)) {
+					console.warn("<${component.tag}> was created without expected prop '${name}'");
 				}`)}
 			`;
 		}

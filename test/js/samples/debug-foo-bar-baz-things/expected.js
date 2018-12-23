@@ -158,17 +158,18 @@ class SvelteComponent extends SvelteComponentDev {
 		init(this, options, instance, create_fragment, safe_not_equal);
 
 		const { ctx } = this.$$;
-		if (ctx.things === undefined) {
-			console.warn("<SvelteComponent> was created without expected data property 'things'");
+		const props = options.props || {};
+		if (ctx.things === undefined && !('things' in props)) {
+			console.warn("<SvelteComponent> was created without expected prop 'things'");
 		}
-		if (ctx.foo === undefined) {
-			console.warn("<SvelteComponent> was created without expected data property 'foo'");
+		if (ctx.foo === undefined && !('foo' in props)) {
+			console.warn("<SvelteComponent> was created without expected prop 'foo'");
 		}
-		if (ctx.bar === undefined) {
-			console.warn("<SvelteComponent> was created without expected data property 'bar'");
+		if (ctx.bar === undefined && !('bar' in props)) {
+			console.warn("<SvelteComponent> was created without expected prop 'bar'");
 		}
-		if (ctx.baz === undefined) {
-			console.warn("<SvelteComponent> was created without expected data property 'baz'");
+		if (ctx.baz === undefined && !('baz' in props)) {
+			console.warn("<SvelteComponent> was created without expected prop 'baz'");
 		}
 	}
 
