@@ -4,7 +4,7 @@ export default {
 	},
 
 	warnings: [
-		`<Main$> was created without expected data property 'foo'`,
-		`<Main$> was created without expected data property 'bar'`
+		`<Main$> was created without expected prop 'foo'`,
+		`<Main$> was created without expected prop 'bar'`
 	]
 };
