@@ -117,5 +117,6 @@ There are four 'hooks' provided by Svelte for adding control logic — `onMount`
 <button on:click="{() => count += 1}">
 	Trigger an update ({count})
 </button>
+```
 
 > Lifecycle hooks do *not* run in server-side rendering (SSR) mode, with the exception of `onDestroy`. More on SSR later.
