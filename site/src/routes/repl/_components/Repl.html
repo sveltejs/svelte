@@ -54,6 +54,9 @@
 	let sourceErrorLoc;
 	let runtimeErrorLoc;
 
+	let width = typeof window !== 'undefined' ? window.innerWidth : 300;
+	let show_output = false;
+
 	onMount(async () => {
 		workers = {
 			compiler: new Worker('/workers/compiler.js'),
@@ -168,7 +171,11 @@
 </script>
 
 <style>
-	.repl-inner { height: 100% }
+	.repl-inner {
+		width: 200%;
+		height: calc(100% - 4.2rem);
+		transition: transform 0.3s;
+	}
 
 	.repl-inner :global(section) {
 		position: relative;
@@ -231,13 +238,32 @@
 		cursor: pointer;
 	}
 
+	.input-output-toggle {
+		position: absolute;
+	}
+
+	.offset {
+		transform: translate(-50%,0);
+	}
+
 	@media (min-width: 768px) {
-		section { height: 100% }
+		.repl-inner {
+			height: 100%;
+		}
+
+		.input-output-toggle {
+			display: none;
+		}
+
+		.offset {
+			transition: none;
+			transform: none;
+		}
 	}
 </style>
 
-<div class="repl-inner">
-	<SplitPane type="horizontal" pos={60}>
+<div class="repl-inner" class:offset="{show_output}" bind:offsetWidth={width}>
+	<SplitPane type="horizontal" fixed="{768 > width}" pos={60} fixed_pos={60}>
 		<section slot=a>
 			<Input
 				{component_store}
@@ -268,3 +294,9 @@
 		</section>
 	</SplitPane>
 </div>
+
+<label class="input-output-toggle">
+	<span>input</span>
+	<input type="checkbox" bind:checked={show_output}>
+	<span>output</span>
+</label>
