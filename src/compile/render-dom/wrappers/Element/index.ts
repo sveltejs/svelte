@@ -494,7 +494,7 @@ export default class ElementWrapper extends Wrapper {
 					block.addVariable(resize_listener);
 
 					block.builders.mount.addLine(
-						`${resize_listener} = @addResizeListener(${this.var}, ${callee});`
+						`${resize_listener} = @addResizeListener(${this.var}, ${callee}.bind(${this.var}));`
 					);
 
 					block.builders.destroy.addLine(
