@@ -151,6 +151,7 @@
 
 	@media (min-width: 768px) {
 		.repl-outer {
+			margin: 0 -4.8rem; /* can't do calc(0 - var(--side-nav)) */
 			height: calc(100vh - var(--nav-h));
 			background-color: var(--back);
 			overflow: hidden;

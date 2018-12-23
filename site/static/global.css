@@ -230,16 +230,21 @@ button[outline] {
 	padding: 0 .4rem .1rem;
 	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
 	user-select: none;
-	white-space: nowrap;
+	/* white-space: nowrap; */
 	color: inherit;
-	transition: color .2s;
+	transition: color .2s, border .2s, padding .2s;
 }
 
 .linkify a:not(.open-in-repl):hover  {
 	color: var(--flash);
 }
 
-.linkify a:not(.open-in-repl):before {
+.linkify a:not(.open-in-repl):hover {
+	padding: 0 .4rem 0;
+	border-bottom: .2rem solid hsla(15, 100%, 50%, 1);
+}
+
+/* .linkify a:not(.open-in-repl):before {
 	content: '';
 	position: absolute;
 	width: 100%;
@@ -259,7 +264,7 @@ button[outline] {
 .linkify a:not(.open-in-repl):hover:before  {
 	visibility: visible;
 	transform: scaleX(1);
-}
+} */
 
 a:hover > .icon { stroke: var(--flash) }
 
