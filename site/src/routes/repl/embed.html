@@ -87,49 +87,12 @@
 		--pane-controls-h: 4.2rem;
 	}
 
-	.pane { width: 100%; height: 100% }
-
-	h3 {
-		margin: 4rem 0 0 0;
-		padding: 0 2.4rem .8rem;
-		font-size: 1.3rem;
-	}
-
 	@media (min-width: 768px) {
 		.repl-outer {
 			background-color: var(--back);
 			overflow: hidden;
 			box-sizing: border-box;
 		}
-
-		.repl-outer.zen-mode {
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			top: 0;
-			left: 0;
-			z-index: 11;
-		}
-	}
-
-	.loading {
-		text-align: center;
-		color: var(--second);
-		font-weight: 300;
-		margin: 2em 0 0 0;
-		opacity: 0;
-		animation: fade-in .4s;
-		animation-delay: .2s;
-		animation-fill-mode: both;
-	}
-
-	@keyframes fade-in {
-		0%   { opacity: 0 }
-		100% { opacity: 1 }
-	}
-
-	.input {
-		padding: 2.4em 0 0 0;
 	}
 </style>
 

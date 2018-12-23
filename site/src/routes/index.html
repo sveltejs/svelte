@@ -58,15 +58,6 @@
 		opacity: 0.7;
 	}
 
-	.learn-btn {
-		all: unset;
-		cursor: pointer;
-		display: block;
-		margin-top: 4rem;
-	}
-
-	.legend { padding-top: 4rem }
-
 	.box {
 		padding: 2em;
 		display: flex;
@@ -106,14 +97,6 @@
 		width: 1em;
 		height: 1em;
 		background: url(/icons/arrow-right.svg);
-	}
-
-	h6 {
-		max-width: 25em;
-		padding: 2.4rem;
-		border-radius: var(--border-r);
-		font: 300 1rem/1.4 var(--font-mono);
-		text-align: center;
 	}
 
 	.example {
@@ -197,7 +180,11 @@
 		<p>Svelte components are written in HTML files. Just add data.</p>
 	</div>
 
-	<iframe src="/repl/embed?gist=0eb9e3a2d22b981b67924c326ed1293a" scrolling="no"></iframe>
+	<iframe
+		title="Hello world example"
+		src="/repl/embed?gist=0eb9e3a2d22b981b67924c326ed1293a"
+		scrolling="no"
+	></iframe>
 </section>
 
 <section class="container grid example linkify">
@@ -205,7 +192,11 @@
 		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
 	</div>
 
-	<iframe src="/repl/embed?gist=ea123e7c4e7edc809670eb2dcab25b56" scrolling="no"></iframe>
+	<iframe
+		title="Scoped styles example"
+		src="/repl/embed?gist=ea123e7c4e7edc809670eb2dcab25b56"
+		scrolling="no"
+	></iframe>
 </section>
 
 <section class="container grid example linkify">
@@ -213,7 +204,11 @@
 		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
 	</div>
 
-	<iframe src="/repl/embed?gist=7b7908b677eb0c374e17f1c5b6287e6e" scrolling="no"></iframe>
+	<iframe
+		title="Reactivity example"
+		src="/repl/embed?gist=7b7908b677eb0c374e17f1c5b6287e6e"
+		scrolling="no"
+	></iframe>
 </section>
 
 <section class="container grid example linkify">
@@ -221,7 +216,11 @@
 		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
 	</div>
 
-	<iframe src="/repl/embed?gist=c5336bba9eb1195bb2403aa04ff25186" scrolling="no"></iframe>
+	<iframe
+		title="Transitions example"
+		src="/repl/embed?gist=c5336bba9eb1195bb2403aa04ff25186"
+		scrolling="no"
+	></iframe>
 </section>
 
 <section class="container grid half">
