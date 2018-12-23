@@ -409,12 +409,10 @@ export default class Block {
 		const localKey = this.key && this.getUniqueName('key');
 
 		return deindent`
-			${this.comment && `// ${escape(this.comment)}`}
-			function ${this.name}(#component, ${this.key ? `${localKey}, ` : ''}ctx) {
+			${this.comment && `// ${this.comment}`}
+			function ${this.name}(${this.alias('component')}, ${this.key ? `${localKey}, ` : ''}ctx) {
 				${this.getContents(localKey)}
 			}
-		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
-			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
-		});
+		`;
 	}
 }
