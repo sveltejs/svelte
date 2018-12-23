@@ -11,8 +11,6 @@
 	<Nav segment={child.segment} />
 {/if}
 
-{@debug path}
-
 <main>
 	<svelte:component this={child.component} {...child.props} />
 </main>
@@ -21,7 +19,7 @@
 	main {
 		position: relative;
 		margin: 0 auto;
-		padding: var(--nav-h) 0 0 0;
+		padding: var(--nav-h) var(--side-nav) 0 var(--side-nav);
 		overflow-x: hidden;
 	}
 </style>
