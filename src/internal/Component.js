@@ -6,7 +6,7 @@ import { children } from './dom.js';
 
 export function bind(component, name, callback) {
 	component.$$.bound[name] = callback;
-	callback(component.$$.get()[name]);
+	callback(component.$$.ctx[name]);
 }
 
 export function mount_component(component, target, anchor) {
@@ -40,7 +40,7 @@ function destroy(component, detach) {
 		// TODO null out other refs, including component.$$ (but need to
 		// preserve final state?)
 		component.$$.on_destroy = component.$$.fragment = null;
-		component.$$.get = () => ({});
+		component.$$.ctx = {};
 	}
 }
 
@@ -52,19 +52,15 @@ function make_dirty(component, key) {
 	component.$$.dirty[key] = true;
 }
 
-function empty() {
-	return {};
-}
-
-export function init(component, options, define, create_fragment, not_equal) {
+export function init(component, options, instance, create_fragment, not_equal) {
 	const previous_component = current_component;
 	set_current_component(component);
 
-	component.$$ = {
+	const $$ = component.$$ = {
 		fragment: null,
+		ctx: null,
 
 		// state
-		get: empty,
 		set: noop,
 		update: noop,
 		not_equal,
@@ -85,23 +81,32 @@ export function init(component, options, define, create_fragment, not_equal) {
 
 	let ready = false;
 
-	define(component, options.props || {}, key => {
-		if (ready) make_dirty(component, key);
-		if (component.$$.bound[key]) component.$$.bound[key](component.$$.get()[key]);
+	$$.ctx = instance(component, options.props || {}, (key, value) => {
+		if ($$.bound[key]) $$.bound[key](value);
+
+		if ($$.ctx) {
+			const changed = not_equal(value, $$.ctx[key]);
+			if (ready && changed) {
+				make_dirty(component, key);
+			}
+
+			$$.ctx[key] = value;
+			return changed;
+		}
 	});
 
-	component.$$.update();
+	$$.update();
 	ready = true;
-	run_all(component.$$.before_render);
-	component.$$.fragment = create_fragment(component, component.$$.get());
+	run_all($$.before_render);
+	$$.fragment = create_fragment(component, $$.ctx);
 
 	if (options.target) {
 		intro.enabled = !!options.intro;
 
 		if (options.hydrate) {
-			component.$$.fragment.l(children(options.target));
+			$$.fragment.l(children(options.target));
 		} else {
-			component.$$.fragment.c();
+			$$.fragment.c();
 		}
 
 		mount_component(component, options.target, options.anchor);
@@ -148,10 +153,13 @@ if (typeof HTMLElement !== 'undefined') {
 
 		$set(values) {
 			if (this.$$) {
-				const state = this.$$.get();
-				this.$$.set(values);
+				const { ctx, set, not_equal } = this.$$;
+				set(values);
 				for (const key in values) {
-					if (this.$$.not_equal(state[key], values[key])) make_dirty(this, key);
+					if (not_equal(ctx[key], values[key])) {
+						ctx[key] = values[key];
+						make_dirty(this, key);
+					}
 				}
 			}
 		}
@@ -176,10 +184,14 @@ export class SvelteComponent {
 
 	$set(values) {
 		if (this.$$) {
-			const state = this.$$.get();
-			this.$$.set(values);
+			const { ctx, set, not_equal } = this.$$;
+			set(values);
+
 			for (const key in values) {
-				if (this.$$.not_equal(state[key], values[key])) make_dirty(this, key);
+				if (not_equal(ctx[key], values[key])) {
+					ctx[key] = values[key];
+					make_dirty(this, key);
+				}
 			}
 		}
 	}

@@ -36,45 +36,45 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let { w, h } = $$props;
 
 	function div_resize_handler() {
 		w = this.offsetWidth;
 		h = this.offsetHeight;
-		$$make_dirty('w');
-		$$make_dirty('h');
+		$$invalidate('w', w);
+		$$invalidate('h', h);
 	}
-
-	$$self.$$.get = () => ({ w, h, div_resize_handler });
 
 	$$self.$$.set = $$props => {
 		if ('w' in $$props) w = $$props.w;
 		if ('h' in $$props) h = $$props.h;
 	};
+
+	return { w, h, div_resize_handler };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get w() {
-		return this.$$.get().w;
+		return this.$$.ctx.w;
 	}
 
-	set w(value) {
-		this.$set({ w: value });
+	set w(w) {
+		this.$set({ w });
 		flush();
 	}
 
 	get h() {
-		return this.$$.get().h;
+		return this.$$.ctx.h;
 	}
 
-	set h(value) {
-		this.$set({ h: value });
+	set h(h) {
+		this.$set({ h });
 		flush();
 	}
 }

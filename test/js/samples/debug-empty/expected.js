@@ -54,33 +54,33 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { name } = $$props;
-
-	$$self.$$.get = () => ({ name });
 
 	$$self.$$.set = $$props => {
 		if ('name' in $$props) name = $$props.name;
 	};
+
+	return { name };
 }
 
 class SvelteComponent extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 
-		const state = this.$$.get();
-		if (state.name === undefined) {
+		const { ctx } = this.$$;
+		if (ctx.name === undefined) {
 			console.warn("<SvelteComponent> was created without expected data property 'name'");
 		}
 	}
 
 	get name() {
-		return this.$$.get().name;
+		return this.$$.ctx.name;
 	}
 
-	set name(value) {
-		this.$set({ name: value });
+	set name(name) {
+		this.$set({ name });
 		flush();
 	}
 }

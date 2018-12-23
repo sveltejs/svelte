@@ -63,28 +63,28 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props) {
+function instance($$self, $$props) {
 	let { current } = $$props;
-
-	$$self.$$.get = () => ({ current });
 
 	$$self.$$.set = $$props => {
 		if ('current' in $$props) current = $$props.current;
 	};
+
+	return { current };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get current() {
-		return this.$$.get().current;
+		return this.$$.ctx.current;
 	}
 
-	set current(value) {
-		this.$set({ current: value });
+	set current(current) {
+		this.$set({ current });
 		flush();
 	}
 }

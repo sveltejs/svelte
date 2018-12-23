@@ -37,7 +37,8 @@ Normally, you'd interact with a component by getting and setting *props*:
 
 ```js
 console.log(component.answer); // 42
-component.answer =
+component.answer = 420;
+```
 
 Every Svelte component instance has three built-in methods:
 

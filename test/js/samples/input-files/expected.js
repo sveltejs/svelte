@@ -41,33 +41,33 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function define($$self, $$props, $$make_dirty) {
+function instance($$self, $$props, $$invalidate) {
 	let { files } = $$props;
 
 	function input_input_handler() {
 		files = this.files;
-		$$make_dirty('files');
+		$$invalidate('files', files);
 	}
-
-	$$self.$$.get = () => ({ files, input_input_handler });
 
 	$$self.$$.set = $$props => {
 		if ('files' in $$props) files = $$props.files;
 	};
+
+	return { files, input_input_handler };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
 		super();
-		init(this, options, define, create_fragment, safe_not_equal);
+		init(this, options, instance, create_fragment, safe_not_equal);
 	}
 
 	get files() {
-		return this.$$.get().files;
+		return this.$$.ctx.files;
 	}
 
-	set files(value) {
-		this.$set({ files: value });
+	set files(files) {
+		this.$set({ files });
 		flush();
 	}
 }

@@ -27,12 +27,12 @@ const commonCompilerOptions = {
 
 function compile({ source, options, entry }) {
 	try {
-		const { js, stats } = svelte.compile(
+		const { js, css, stats } = svelte.compile(
 			source,
 			Object.assign({}, commonCompilerOptions, options)
 		);
 
-		return { code: js.code, props: entry ? stats.props : null };
+		return { js: js.code, css: css.code, props: entry ? stats.props : null };
 	} catch (err) {
 		let result = `/* Error compiling component\n\n${err.message}`;
 		if (err.frame) result += `\n${err.frame}`;
