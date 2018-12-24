@@ -408,11 +408,12 @@ a:hover > .icon { stroke: var(--flash) }
 .listify ul > li:before {
 	content: '';
 	position: absolute;
-	margin-top: 1.4rem;
-	margin-left: calc(var(--list-padding) * -1);
-	background-color: currentColor;
-	width: .8em;
-	height: .2rem;
+	margin-top: 1.1rem;
+	margin-left: -1.8rem;
+	background-color: var(--second);
+	width: .8rem;
+	height: 0.8rem;
+	border-radius: 2px;
 }
 
 .listify ol { list-style: decimal }
