@@ -1,3 +1,90 @@
+/* fonts */
+
+/* overpass-100normal - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100;
+	src:
+		local('Overpass Thin '),
+		local('Overpass-Thin'),
+		url('fonts/overpass/overpass-latin-100.woff2') format('woff2');
+}
+
+/* overpass-100italic - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 100;
+	src:
+		local('Overpass Thin italic'),
+		local('Overpass-Thinitalic'),
+		url('fonts/overpass/overpass-latin-100italic.woff2') format('woff2');
+}
+
+/* overpass-300normal - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 300;
+	src:
+		local('Overpass Light '),
+		local('Overpass-Light'),
+		url('fonts/overpass/overpass-latin-300.woff2') format('woff2');
+}
+
+/* overpass-300italic - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 300;
+	src:
+		local('Overpass Light italic'),
+		local('Overpass-Lightitalic'),
+		url('fonts/overpass/overpass-latin-300italic.woff2') format('woff2');
+}
+
+/* overpass-700normal - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 700;
+	src:
+		local('Overpass Bold '),
+		local('Overpass-Bold'),
+		url('fonts/overpass/overpass-latin-700.woff2') format('woff2');
+}
+
+/* overpass-700italic - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 700;
+	src:
+		local('Overpass Bold italic'),
+		local('Overpass-Bolditalic'),
+		url('fonts/overpass/overpass-latin-700italic.woff2') format('woff2');
+}
+
+/* overpass-mono-400normal - latin */
+@font-face {
+	font-family: 'Overpass Mono';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400;
+	src:
+		local('Overpass Mono Regular '),
+		local('Overpass Mono-Regular'),
+		url('fonts/overpass-mono/overpass-mono-latin-400.woff2') format('woff2');
+}
+
+
 body {
 	--font: 'Overpass', sans-serif;
 	--font-alt: 'Overpass', sans-serif;
@@ -90,7 +177,7 @@ a:focus {
 .typo-default {
 	--unit:     .8rem;
 	--code-fs: 1.3rem;
-	--h6:      1.4rem;
+	--h6:      1.6rem;
 	--h5:      1.6rem;
 	--h4:      1.8rem;
 	--h3:      2.4rem;
@@ -383,6 +470,64 @@ table span {
 
 /*
 -----------------------------------------------
+  inputs
+-----------------------------------------------
+*/
+
+input[type="checkbox"] {
+	/* display: block; */
+	position: relative;
+	height: 1em;
+	width: calc(100% - 0.6em);
+	max-width: 2em;
+	top: -2px;
+	border-radius: 0.5em;
+	-webkit-appearance: none;
+	outline: none;
+	margin: 0 0.6em 0 0;
+}
+
+input[type="checkbox"]::before {
+	content: "";
+	position: absolute;
+	display: block;
+	height: 100%;
+	width: 100%;
+	border-radius: 1em;
+	top: 0px;
+	left: 0px;
+	background: var(--second);
+	box-sizing: border-box;
+	-webkit-transition: .25s ease-out;
+	padding: 2px;
+	box-sizing: content-box;
+}
+
+input[type="checkbox"]:checked::before {
+	background: var(--prime);
+}
+
+input[type="checkbox"]::after {
+	content: "";
+	position: absolute;
+	display: block;
+	height: 1em;
+	width: 1em;
+	top: 2px;
+	left: 2px;
+	border-radius: 1em;
+	background: white;
+	box-shadow: 0 0px 1px rgba(0,0,0,.4), 0 4px 2px rgba(0,0,0,.1);
+	-webkit-transition: .2s ease-out;
+}
+
+input[type="checkbox"]:checked::after {
+	left: calc(100% - 9px);
+}
+
+
+/*
+-----------------------------------------------
   media-queries
 -----------------------------------------------
 */
@@ -406,4 +551,3 @@ table span {
 	.grid > .cols-2 { grid-column: span 2 }
 	.grid > .cols-3 { grid-column: span 3 }
 }
-
