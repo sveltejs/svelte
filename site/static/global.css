@@ -245,12 +245,8 @@ tt, code, kbd, samp {
 
 code {
 	position: relative;
-	top: -.1rem;
-	padding: .3rem .8rem .5rem;
-	margin: 0 .2rem;
 	border-radius: 0.3em;
 	white-space: nowrap;
-	background: #f9f9f9;
 	/* border-top: .1rem solid #e5e5e9;
 	border-left: .1rem solid #e5e5e9; */
 	/* color: inherit; */
@@ -259,10 +255,7 @@ code {
 }
 
 pre code {
-	background: transparent;
-	padding: 0;
 	top: 0;
-	margin: 0;
 	white-space: inherit;
 }
 
@@ -462,7 +455,7 @@ table span {
 .post aside {
 	max-width: none;
 	margin: 0 auto;
-	padding: 1.6rem 0 4rem .8rem;
+	padding: 1.6rem 0 0 .8rem;
 	font: 1.2rem/1.6 var(--font-ui);
 }
 
