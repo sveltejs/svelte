@@ -4,11 +4,7 @@
 	import Repl from './_components/Repl.html';
 
 	export let query;
-
-	let version = query.version;
-	let gist_id = query.gist;
-
-	let gist;
+	let version = query.version || 'alpha';
 
 	let app = {
 		components: [],
@@ -18,15 +14,14 @@
 	let name = 'loading...';
 
 	onMount(() => {
-		fetch(`https://unpkg.com/svelte@${version || 'alpha'}/package.json`)
+		fetch(`https://unpkg.com/svelte@${version}/package.json`)
 			.then(r => r.json())
 			.then(pkg => {
 				version = pkg.version;
 			});
 
-		if (gist_id) {
-			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {
-				gist = data;
+		if (query.gist) {
+			fetch(`gist/${query.gist}`).then(r => r.json()).then(data => {
 				const { id, description, files } = data;
 
 				name = description;
@@ -63,8 +58,19 @@
 
 				app = { components, values };
 			});
-		} else {
-			// TODO err...
+		} else if (query.demo) {
+			const url = `api/examples/${query.demo}`;
+
+			fetch(url).then(async response => {
+				if (response.ok) {
+					const data = await response.json();
+
+					app = {
+						values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
+						components: data.components
+					};
+				}
+			});
 		}
 	});
 
