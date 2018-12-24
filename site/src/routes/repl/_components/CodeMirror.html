@@ -24,6 +24,7 @@
 	export let warningCount = 0;
 	export let flex = false;
 	export let lineNumbers = true;
+	export let tab = true;
 
 	let w;
 	let h;
@@ -129,7 +130,11 @@
 			mode: modes[mode] || {
 				name: mode
 			},
-			readOnly: readonly
+			readOnly: readonly,
+			extraKeys: {
+				Tab: tab,
+				'Shift-Tab': tab
+			}
 		});
 
 		editor.on('change', instance => {
@@ -150,6 +155,7 @@
 		width: 100%;
 		height: 100%;
 		border: none;
+		line-height: 1.5;
 	}
 
 	.codemirror-container :global(.CodeMirror) {
@@ -197,7 +203,39 @@
 		margin: 2.4rem 0 0 0;
 	}
 
-	textarea { width: 100%; border: none }
+	.loading {
+		background-color: #666;
+	}
+
+	textarea {
+		visibility: hidden;
+	}
+
+	pre {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+		border: none;
+		padding: 4px 4px 4px 57px;
+		resize: none;
+		font-family: var(--font-mono);
+		font-size: 1.3rem;
+		line-height: 1.7;
+		user-select: none;
+		pointer-events: none;
+		color: #ccc;
+	}
+
+	.flex pre {
+		padding: 0 0 0 4px;
+		height: auto;
+	}
+
+	.flex .loading {
+		display: none;
+	}
 </style>
 
 <!--
@@ -208,7 +246,12 @@
 -----------------------------------------------
 -->
 <div class='codemirror-container' class:flex bind:offsetWidth={w} bind:offsetHeight={h}>
-	<textarea tabindex='2' bind:this={refs.editor}></textarea>
+	<textarea
+		tabindex='2'
+		bind:this={refs.editor}
+		readonly
+		value={code}
+	></textarea>
 
 	{#if error}
 		<p class='error message'>
@@ -232,13 +275,11 @@
 			Compiled, but with {warningCount} {warningCount === 1 ? 'warning' : 'warnings'} — check the console for details
 		</p>
 	{/if}
+
+	{#if !CodeMirror}
+		<pre style="position: absolute; left: 0; top: 0"
+		>{code}</pre>
+
+		<p class='loading message'>loading editor...</p>
+	{/if}
 </div>
-
-{#if !CodeMirror}
-	<p class='loading'>loading editor...</p>
-{/if}
-
-<!-- TODO -->
-<!-- {:catch err}
-<p class='error'>error loading CodeMirror</p>
-{/await} -->
