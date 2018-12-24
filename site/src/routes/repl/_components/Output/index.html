@@ -1,6 +1,7 @@
 <script>
 	import SplitPane from '../SplitPane.html';
 	import Viewer from './Viewer.html';
+	import CompilerOptions from './CompilerOptions.html';
 	import PropEditor from './PropEditor.html';
 	import CodeMirror from '../CodeMirror.html';
 
@@ -68,7 +69,7 @@
 		color: #333;
 	}
 
-	div {
+	div[slot] {
 		height: 100%;
 	}
 
@@ -93,17 +94,6 @@
 		grid-auto-rows: min-content;
 		grid-gap: 0.5em;
 		overflow-y: auto;
-	}
-
-	.options {
-		padding: 0.5em;
-	}
-
-	label {
-		font-family: var(--font-ui);
-		font-size: 1.3rem;
-		padding: 0.2rem 1.2rem;
-		display: block;
 	}
 </style>
 
@@ -187,35 +177,7 @@
 		<section slot="b">
 			<h3>Compiler options</h3>
 
-			<!-- TODO style radio buttons -->
-			<label>
-				<input type="radio" bind:group={compileOptions.generate} value="dom"> dom
-				<input type="radio" bind:group={compileOptions.generate} value="ssr"> ssr
-			</label>
-
-			<label>
-				<input type="checkbox" bind:checked={compileOptions.dev}> dev
-			</label>
-
-			<label>
-				<input type="checkbox" bind:checked={compileOptions.css}> css
-			</label>
-
-			<label>
-				<input type="checkbox" bind:checked={compileOptions.hydratable}> hydratable
-			</label>
-
-			<label>
-				<input type="checkbox" bind:checked={compileOptions.customElement}> customElement
-			</label>
-
-			<label>
-				<input type="checkbox" bind:checked={compileOptions.immutable}> immutable
-			</label>
-
-			<label>
-				<input type="checkbox" bind:checked={compileOptions.legacy}> legacy
-			</label>
+			<CompilerOptions bind:options={compileOptions}/>
 		</section>
 	</SplitPane>
 {/if}
