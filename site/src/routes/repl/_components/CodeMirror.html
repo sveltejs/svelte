@@ -18,9 +18,9 @@
 
 	export let mode;
 	export let code;
-	export let readonly;
-	export let error;
-	export let errorLoc;
+	export let readonly = false;
+	export let error = null;
+	export let errorLoc = null;
 	export let warningCount = 0;
 	export let flex = false;
 	export let lineNumbers = true;
@@ -146,7 +146,10 @@
 
 <style>
 	.codemirror-container {
+		position: relative;
 		width: 100%;
+		height: 100%;
+		border: none;
 	}
 
 	.codemirror-container :global(.CodeMirror) {
@@ -163,17 +166,6 @@
 
 	.codemirror-container.flex :global(.CodeMirror-lines) {
 		padding: 0;
-	}
-
-	@media (min-width: 768px) {
-		.codemirror-container {
-			height: 100%;
-			border: none;
-		}
-
-		.codemirror-container :global(.CodeMirror) {
-			height: 100%;
-		}
 	}
 
 	.codemirror-container :global(.CodeMirror-gutters) {

@@ -11,7 +11,6 @@ html {
 	-ms-text-size-adjust: 62.5%;
 	-webkit-text-size-adjust: 62.5%;
 	-ms-overflow-style: -ms-autohiding-scrollbar;
-	overflow-y: scroll;
 	box-sizing: border-box;
 	border-collapse: collapse;
 }
@@ -61,7 +60,7 @@ a:focus {
 	--sidebar-w:  24rem;
 	--main-width: 80rem;
 	--code-w:      72em;
-	--side-nav:  4.8rem;
+	--side-nav:   .8rem;
 	--side-page:   var(--side-nav);
 
 	/* easings */
@@ -230,16 +229,21 @@ button[outline] {
 	padding: 0 .4rem .1rem;
 	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
 	user-select: none;
-	white-space: nowrap;
+	/* white-space: nowrap; */
 	color: inherit;
-	transition: color .2s;
+	transition: color .2s, border .2s, padding .2s;
 }
 
 .linkify a:not(.open-in-repl):hover  {
 	color: var(--flash);
 }
 
-.linkify a:not(.open-in-repl):before {
+.linkify a:not(.open-in-repl):hover {
+	padding: 0 .4rem 0;
+	border-bottom: .2rem solid hsla(15, 100%, 50%, 1);
+}
+
+/* .linkify a:not(.open-in-repl):before {
 	content: '';
 	position: absolute;
 	width: 100%;
@@ -259,7 +263,7 @@ button[outline] {
 .linkify a:not(.open-in-repl):hover:before  {
 	visibility: visible;
 	transform: scaleX(1);
-}
+} */
 
 a:hover > .icon { stroke: var(--flash) }
 
@@ -386,6 +390,7 @@ table span {
 	:root {
 		--side-page:  14vw;
 		--top-offset: 10rem;
+		--side-nav: 4.8rem;
 	}
 }
 
