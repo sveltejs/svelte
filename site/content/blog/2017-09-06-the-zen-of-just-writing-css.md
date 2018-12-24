@@ -28,7 +28,9 @@ The consequence of all this is the **append-only stylesheet**. There's no way of
 
 The idea behind SFCs is simple: you write your components in an HTML file that (optionally) contains a `<style>` and `<script>` attribute describing the component's styles and behaviour. Svelte, Ractive, Vue and Polymer all follow this basic pattern.
 
-<aside>[Read the introductory blog post](https://svelte.technology/blog/frameworks-without-the-framework) if you're new to Svelte. Or [read](https://twitter.com/padolsey/status/899717303234908160) [the](https://twitter.com/sveltejs/status/901818357644701696) [testimonials](https://twitter.com/sveltejs/status/901818106309476352).</aside>
+<aside>
+	<p><a href="https://svelte.technology/blog/frameworks-without-the-framework">Read the introductory blog post</a> if you're new to Svelte. Or <a href="https://twitter.com/padolsey/status/899717303234908160">read</a> <a href="https://twitter.com/sveltejs/status/901818357644701696">the</a> <a href="https://twitter.com/sveltejs/status/901818106309476352">testimonials</a>.</p>
+</aside>
 
 (For the rest of this article we'll be using Svelte, obviously. But if the idea of using a template language makes you shudder — your fears are misplaced, but that's a topic for another day — then just use Vue which lets you use JSX in your SFCs.)
 
