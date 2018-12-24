@@ -224,7 +224,7 @@ h2 { font-size: var(--h2) }
 h1 { font-size: var(--h1) }
 
 p, ol, ul {
-	line-height: 1.35;
+	line-height: 1.5;
 	margin: 0 0 1em 0;
 	/* font-family: var(--font-system); */
 }
@@ -384,7 +384,7 @@ a:hover > .icon { stroke: var(--flash) }
 .listify ol > li,
 .listify ul > li {
 	max-width: calc(var(--linemax) - var(--list-padding));
-	line-height: 1.35;
+	line-height: 1.5;
 	margin: 0 0 0.4rem 0;
 }
 
