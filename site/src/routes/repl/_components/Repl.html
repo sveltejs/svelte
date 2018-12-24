@@ -56,6 +56,16 @@
 	let sourceErrorLoc;
 	let runtimeErrorLoc;
 
+	let compileOptions = {
+		generate: 'dom',
+		dev: false,
+		css: false,
+		hydratable: false,
+		customElement: false,
+		immutable: false,
+		legacy: false
+	};
+
 	let width = typeof window !== 'undefined' ? window.innerWidth : 300;
 	let show_output = false;
 
@@ -106,15 +116,15 @@
 		}
 	}
 
-	function compile(component) {
+	function compile(component, options) {
 		if (component.type === 'html') {
 			workers.compiler.postMessage({
 				type: 'compile',
 				source: component.source,
-				options: {
+				options: Object.assign({
 					name: component.name,
 					filename: `${component.name}.html`
-				},
+				}, options),
 				entry: component === $component_store[0]
 			});
 		} else {
@@ -136,7 +146,7 @@
 		component_store.update(c => c);
 
 		// recompile selected component
-		compile($selected_store);
+		compile($selected_store, compileOptions);
 
 		// regenerate bundle (TODO do this in a separate worker?)
 		workers.bundler.postMessage({ type: 'bundle', components: $component_store });
@@ -168,7 +178,7 @@
 	}
 
 	$: if (workers && $selected_store) {
-		compile($selected_store);
+		compile($selected_store, compileOptions);
 	}
 </script>
 
@@ -288,6 +298,7 @@
 
 			<section slot=b style='height: 100%;'>
 				<Output
+					bind:compileOptions
 					{version}
 					{selected_store}
 					{js}

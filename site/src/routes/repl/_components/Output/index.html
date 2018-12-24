@@ -15,6 +15,7 @@
 	export let sourceError;
 	export let sourceErrorLoc;
 	export let runtimeError;
+	export let compileOptions;
 
 	// refs
 	let viewer;
@@ -56,14 +57,15 @@
 		height: 100%; */
 		text-align: left;
 		position: relative;
-		font: 300 1.2rem/1.5 var(--font-ui);
+		font: 300 1.2rem/1.5 var(--font);
 		border-bottom: var(--border-w) solid transparent;
 		padding: 1.2rem 0.8rem 0.8rem 0.8rem;
+		color: #999;
 	}
 
 	button.active {
 		border-bottom: var(--border-w) solid var(--prime);
-		color: var(--second);
+		color: #333;
 	}
 
 	div {
@@ -71,8 +73,9 @@
 	}
 
 	h3 {
-		font: 300 1.2rem/1.5 var(--font-ui);
+		font: 700 1.2rem/1.5 var(--font);
 		padding: 1.2rem 0 0.8rem 1rem;
+		color: var(--text);
 	}
 
 	.loading.message {
@@ -94,6 +97,13 @@
 
 	.options {
 		padding: 0.5em;
+	}
+
+	label {
+		font-family: var(--font-ui);
+		font-size: 1.3rem;
+		padding: 0.2rem 1.2rem;
+		display: block;
 	}
 </style>
 
@@ -153,10 +163,10 @@
 						{/each}
 					</div>
 				{:else}
-					<div style="padding: 0.5em">
+					<div style="padding: 0.5em" class="linkify">
 						<!-- TODO explain distincion between logic-less and logic-ful components? -->
 						<!-- TODO style the <a> so it looks like a link -->
-						<p>This component has no props — <a href="guide#external-properties">declare props with the export keyword</a></p>
+						<p style="font-size: 1.3rem; color: var(--second)">This component has no props — <a href="guide#external-properties">declare props with the export keyword</a></p>
 					</div>
 				{/if}
 			{/if}
@@ -177,7 +187,35 @@
 		<section slot="b">
 			<h3>Compiler options</h3>
 
-			<div class="options">TODO</div>
+			<!-- TODO style radio buttons -->
+			<label>
+				<input type="radio" bind:group={compileOptions.generate} value="dom"> dom
+				<input type="radio" bind:group={compileOptions.generate} value="ssr"> ssr
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={compileOptions.dev}> dev
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={compileOptions.css}> css
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={compileOptions.hydratable}> hydratable
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={compileOptions.customElement}> customElement
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={compileOptions.immutable}> immutable
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={compileOptions.legacy}> legacy
+			</label>
 		</section>
 	</SplitPane>
 {/if}
