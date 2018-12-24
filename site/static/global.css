@@ -219,6 +219,7 @@ body {
 h1, h2, h3, h4, h5, h6, blockquote {
 	margin: 0;
 	color: var(--heading);
+	position: relative;
 }
 
 h1, h2, h3, h4, h5, h6 { font-weight: 700 }
@@ -257,6 +258,7 @@ code {
 pre code {
 	top: 0;
 	white-space: inherit;
+	background-color: none;
 }
 
 ::selection {
@@ -268,7 +270,6 @@ pre code {
 h1, h2 {
 	font-family: var(--font);
 	line-height: 1.2;
-	pointer-events: none;
 }
 
 li:not(.white) > h2 {
@@ -407,6 +408,7 @@ a:hover > .icon { stroke: var(--flash) }
 	width: .8rem;
 	height: 0.8rem;
 	border-radius: 2px;
+	opacity: 0.7;
 }
 
 .listify ol { list-style: decimal }
