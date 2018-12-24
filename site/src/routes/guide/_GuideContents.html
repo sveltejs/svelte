@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, afterUpdate } from 'svelte';
 	import Icon from '../../components/Icon.html';
 
 	export let sections = [];
@@ -36,24 +36,57 @@
 			window.removeEventListener('hashchange', onhashchange, false);
 		};
 	});
+
+	let ul;
+
+	afterUpdate(() => {
+		const active = ul.querySelector('.active');
+
+		if (active) {
+			const { top, bottom } = active.getBoundingClientRect();
+
+			const min = 200;
+			const max = window.innerHeight - 200;
+
+			if (top > max) {
+				ul.parentNode.scrollBy({
+					top: top - max,
+					left: 0,
+					behavior: 'smooth'
+				});
+			} else if (bottom < min) {
+				ul.parentNode.scrollBy({
+					top: bottom - min,
+					left: 0,
+					behavior: 'smooth'
+				});
+			}
+		}
+	});
 </script>
 
-<ul class='guide-toc'>
+<ul bind:this={ul} class="guide-toc">
 	{#each sections as section}
-	<li>
-		<a class='section {section.slug === active_section ? "active": ""}' href='guide#{section.slug}'>
-			{section.metadata.title} {#if section.slug === active_section}
-			<Icon name='arrow-right' /> {/if}
-		</a>
+		<li>
+			<a class="section" class:active="{section.slug === active_section}" href="guide#{section.slug}">
+				{section.metadata.title}
 
-		{#each section.subsections as subsection}
-		<!-- see <script> below: on:click='scrollTo(event, subsection.slug)' -->
-		<a class='subsection {subsection.slug === active_section ? "active": ""}' href='guide#{subsection.slug}'>
-			{subsection.title} {#if subsection.slug === active_section}
-			<Icon name='arrow-right' /> {/if}
-		</a>
-		{/each}
-	</li>
+				{#if section.slug === active_section}
+					<Icon name="arrow-right" />
+				{/if}
+			</a>
+
+			{#each section.subsections as subsection}
+				<!-- see <script> below: on:click='scrollTo(event, subsection.slug)' -->
+				<a class="subsection" class:active="{subsection.slug === active_section}" href="guide#{subsection.slug}">
+					{subsection.title}
+
+					{#if subsection.slug === active_section}
+						<Icon name="arrow-right" />
+					{/if}
+				</a>
+			{/each}
+		</li>
 	{/each}
 </ul>
 

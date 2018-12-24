@@ -3,14 +3,12 @@ title: Transitions
 ---
 
 
-### Transitions
-
 Transitions allow elements to enter and leave the DOM gracefully, rather than suddenly appearing and disappearing.
 
 ```html
 <!-- { title: 'Transitions' } -->
 <script>
-	import { fade } from 'svelte/transition.js';
+	import { fade } from 'svelte/transition';
 	let visible = false;
 </script>
 
@@ -21,12 +19,12 @@ Transitions allow elements to enter and leave the DOM gracefully, rather than su
 {/if}
 ```
 
-Transitions can have parameters — typically `delay` and `duration`, but often others, depending on the transition in question. For example, here's the `fly` transition from the [svelte-transitions](https://github.com/sveltejs/svelte-transitions) package:
+Transitions can have parameters — typically `delay` and `duration`, but often others, depending on the transition in question. For example, here's the `fly` transition:
 
 ```html
 <!-- { title: 'Transition with parameters' } -->
 <script>
-	import { fly } from 'svelte-transitions';
+	import { fly } from 'svelte/transition';
 	let visible = false;
 </script>
 
@@ -36,6 +34,9 @@ Transitions can have parameters — typically `delay` and `duration`, but often 
 	<p transition:fly="{{y: 200, duration: 1000}}">flies 200 pixels up, slowly</p>
 {/if}
 ```
+
+
+### In and out
 
 An element can have separate `in` and `out` transitions:
 
@@ -53,7 +54,27 @@ An element can have separate `in` and `out` transitions:
 {/if}
 ```
 
-Transitions are simple functions that take a `node` and any provided `parameters` and return an object with the following properties:
+
+### Built-in transitions
+
+Svelte comes with a handful of ready-to-use transitions:
+
+```html
+<!-- { repl: false } -->
+<script>
+	import {
+		fade,
+		fly,
+		slide,
+		draw
+	} from 'svelte/transition';
+</script>
+```
+
+
+### Custom transitions
+
+You can also make your own. Transitions are simple functions that take a `node` and any provided `parameters` and return an object with the following properties:
 
 * `duration` — how long the transition takes in milliseconds
 * `delay` — milliseconds before the transition starts

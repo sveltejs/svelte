@@ -6,7 +6,7 @@
 </script>
 
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, afterUpdate } from 'svelte';
 	import GuideContents from './_GuideContents.html';
 	import Icon from '../../components/Icon.html';
 
@@ -18,6 +18,7 @@
 	let active_section;
 
 	let container;
+	let aside;
 
 	onMount(() => {
 		const anchors = container.querySelectorAll('[id]');
@@ -148,21 +149,54 @@
 		margin-top: 0;
 	}
 
+	.content :global(.offset-anchor) {
+		position: relative;
+		display: block;
+		top: calc(-1 * (var(--nav-h) + var(--top-offset) - 1rem));
+		width: 0;
+		height: 0;
+	}
+
+	.content :global(.anchor) {
+		position: absolute;
+		display: block;
+		background: url(/icons/link.svg) 0 50% no-repeat;
+		background-size: 1em 1em;
+		width: 1.4em;
+		height: 1em;
+		left: -1.3em;
+		opacity: 0;
+		transition: opacity 0.2s;
+		border: none !important; /* TODO get rid of linkify */
+	}
+
+	.content :global(h2):hover :global(.anchor),
+	.content :global(h3):hover :global(.anchor) {
+		opacity: 1;
+	}
+
 	.content :global(h3),
 	.content :global(h3 > code) {
-		pointer-events: none;
 		font-weight: 700;
 		font-size: var(--h3);
 		color: var(--second);
-		padding: 6.4rem 0 1.6rem 0;
+		margin: 6.4rem 0 1.6rem 0;
 		background: transparent;
+		line-height: 1;
 	}
 
 	.content :global(code) {
 		padding: .3rem .8rem .3rem;
 		margin: 0 0.2rem;
 		top: -.1rem;
-		background: #f9f9f9;
+		background: #f4f4f4;
+	}
+
+	.content :global(pre) :global(code) {
+		padding: 0;
+		margin: 0;
+		top: 0;
+		background: transparent;
 	}
 
 	.content :global(.icon) {
@@ -194,9 +228,14 @@
 
 
 	section :global(blockquote) {
-		color: var(--flash);
-		border: 2px solid currentColor;
+		color: hsl(204, 100%, 50%);
+		border: 2px solid var(--flash);
 		padding-left: 8.8rem;
+	}
+
+	section :global(blockquote) :global(code) {
+		background: hsl(204, 100%, 95%) !important;
+		color: hsl(204, 100%, 50%);
 	}
 
 	section :global(blockquote::before) {
@@ -217,8 +256,11 @@
 
 <div bind:this={container} class='content linkify listify'>
 	{#each sections as section}
-	<section id='{section.slug}'>
+	<section data-id={section.slug}>
 		<h2>
+			<span class="offset-anchor" id={section.slug}></span>
+			<a href="#{section.slug}" class="anchor" aria-hidden></a>
+
 			{section.metadata.title}
 			<small>
 				<a href='https://github.com/sveltejs/svelte/edit/master/site/content/guide/{section.file}' title='edit this section'>
@@ -230,8 +272,8 @@
 	{/each}
 </div>
 
-<aside class="sidebar-container">
+<aside bind:this={aside} class="sidebar-container">
 	<div class="sidebar">
-		<GuideContents {sections} />
+		<GuideContents {sections} {active_section} />
 	</div>
 </aside>
