@@ -44,6 +44,28 @@
 		url('fonts/overpass/overpass-latin-300italic.woff2') format('woff2');
 }
 
+/* overpass-400normal - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: normal;
+	font-weight: 400;
+	src:
+		local('Overpass Light '),
+		local('Overpass-Light'),
+		url('fonts/overpass/overpass-latin-400.woff2') format('woff2');
+}
+
+/* overpass-400italic - latin */
+@font-face {
+	font-family: 'Overpass';
+	font-style: italic;
+	font-weight: 400;
+	src:
+		local('Overpass Light italic'),
+		local('Overpass-Lightitalic'),
+		url('fonts/overpass/overpass-latin-400italic.woff2') format('woff2');
+}
+
 /* overpass-700normal - latin */
 @font-face {
 	font-family: 'Overpass';
@@ -83,6 +105,7 @@ body {
 	--font-alt: 'Overpass', sans-serif;
 	--font-mono: 'Overpass Mono', monospace;
 	--font-ui: var(--font-mono);
+	--font-system: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
 
 /*	base reset ----------------------------- */
@@ -187,7 +210,7 @@ body {
 	color: var(--text);
 }
 
-h1, h2, h3, h4, h5, h6, li, blockquote {
+h1, h2, h3, h4, h5, h6, blockquote {
 	margin: 0;
 	color: var(--heading);
 }
@@ -200,15 +223,16 @@ h3 { font-size: var(--h3) }
 h2 { font-size: var(--h2) }
 h1 { font-size: var(--h1) }
 
-p {
+p, ol, ul {
 	line-height: 1.35;
 	margin: 0 0 1em 0;
+	/* font-family: var(--font-system); */
 }
 
 .b, b, strong { font-weight: 700 }
 
 tt, code, kbd, samp {
-	font: 300 var(--code-fs)/1.7 var(--font-mono);
+	font: 400 var(--code-fs)/1.7 var(--font-mono);
 }
 
 :not(pre) > p > code {
@@ -361,7 +385,7 @@ a:hover > .icon { stroke: var(--flash) }
 .listify ul > li {
 	max-width: calc(var(--linemax) - var(--list-padding));
 	line-height: 1.35;
-	margin: 0 0 0.8em 0;
+	margin: 0 0 0.4rem 0;
 }
 
 .listify ul > li:before {
