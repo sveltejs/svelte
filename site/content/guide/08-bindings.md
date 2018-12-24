@@ -92,7 +92,7 @@ Here is a complete example of using two way bindings with a form:
 }
 ```
 
-> 'two way' bindings allow you to update a value in a nested property as seen in [checkbox input](repl?demo=binding-input-checkbox).
+> 'two way' bindings allow you to update a value in a nested property as seen in [this checkbox input example](repl?demo=binding-input-checkbox).
 
 
 ### bind:this
