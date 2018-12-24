@@ -68,7 +68,7 @@
 		workers.compiler.postMessage({ type: 'init', version });
 		workers.compiler.onmessage = event => {
 			js = event.data.js;
-			css = event.data.css;
+			css = event.data.css || `/* Add a <style> tag to see compiled CSS */`;
 			if (event.data.props) props = event.data.props;
 		};
 

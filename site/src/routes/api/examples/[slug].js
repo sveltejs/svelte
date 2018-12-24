@@ -53,22 +53,21 @@ function createExample(slug) {
 export function get(req, res) {
 	const { slug } = req.params;
 
-	if (!slugs.has(slug)) {
+	try {
+		if (!lookup.has(slug) || process.env.NODE_ENV !== 'production') {
+			lookup.set(slug, createExample(slug));
+		}
+
+		res.writeHead(200, {
+			'Content-Type': 'application/json'
+		});
+
+		res.end(lookup.get(slug));
+	} catch (err) {
 		res.writeHead(404, {
 			'Content-Type': 'application/json'
 		});
 
 		res.end(JSON.stringify({ error: 'not found' }));
-		return;
 	}
-
-	if (!lookup.has(slug) || process.env.NODE_ENV !== 'production') {
-		lookup.set(slug, createExample(slug));
-	}
-
-	res.writeHead(200, {
-		'Content-Type': 'application/json'
-	});
-
-	res.end(lookup.get(slug));
 }
