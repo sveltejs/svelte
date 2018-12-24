@@ -137,35 +137,29 @@
 <style>
 	.repl-outer {
 		position: relative;
-		min-height: calc(100vh - var(--nav-h));
+		height: calc(100vh - var(--nav-h));
+		--app-controls-h: 5.6rem;
 		--pane-controls-h: 4.2rem;
+		overflow: hidden;
+		background-color: var(--back);
+		padding: var(--app-controls-h) 0 0 0;
+		margin: 0 -0.8rem;
+		box-sizing: border-box;
 	}
 
-	.pane       { width: 100%; height: 100% }
-
-	h3 {
-		margin: 4rem 0 0 0;
-		padding: 0 2.4rem .8rem;
-		font-size: 1.3rem;
+	.zen-mode {
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		z-index: 11;
 	}
 
-	@media (min-width: 768px) {
+	.pane { width: 100%; height: 100% }
+
+	@media (min-width: 600px) {
 		.repl-outer {
-			height: calc(100vh - var(--nav-h));
-			background-color: var(--back);
-			overflow: hidden;
-			--app-controls-h: 5.6rem;
-			padding: var(--app-controls-h) 0 0 0;
-			box-sizing: border-box;
-		}
-
-		.repl-outer.zen-mode {
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			top: 0;
-			left: 0;
-			z-index: 11;
+			margin: 0 -4.8rem; /* can't do calc(0 - var(--side-nav)) */
 		}
 	}
 

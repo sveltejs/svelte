@@ -1,0 +1,77 @@
+<style>
+	.input-output-toggle {
+		display: grid;
+		position: absolute;
+		user-select: none;
+		grid-template-columns: 1fr 40px 1fr;
+		grid-gap: 0.5em;
+		align-items: center;
+		width: 100%;
+		height: 4.2rem;
+		border-top: 1px solid var(--second);
+	}
+
+	input {
+		display: block;
+		position: relative;
+		height: 1em;
+		width: calc(100% - 0.6em);
+		top: -2px;
+		border-radius: 0.5em;
+		-webkit-appearance: none;
+		outline: none;
+		margin: 0 0.6em 0 0;
+	}
+
+	input::before {
+		content: "";
+		position: absolute;
+		display: block;
+		height: 100%;
+		width: 100%;
+		border-radius: 1em;
+		top: 0px;
+		left: 0px;
+		background: var(--second);
+		box-sizing: border-box;
+		-webkit-transition: .25s ease-out;
+		padding: 2px;
+		box-sizing: content-box;
+	}
+
+	input:checked::before {
+		background: var(--prime);
+	}
+
+	input::after {
+		content: "";
+		position: absolute;
+		display: block;
+		height: 1em;
+		width: 1em;
+		top: 2px;
+		left: 2px;
+		border-radius: 1em;
+		background: white;
+		box-shadow: 0 0px 1px rgba(0,0,0,.4), 0 4px 2px rgba(0,0,0,.1);
+		-webkit-transition: .2s ease-out;
+	}
+
+	input:checked::after {
+		left: calc(100% - 9px);
+	}
+
+	span {
+		color: #ccc;
+	}
+
+	.active {
+		color: #555;
+	}
+</style>
+
+<label class="input-output-toggle">
+	<span class:active={!checked} style="text-align: right">input</span>
+	<input type="checkbox" bind:checked>
+	<span class:active={checked}>output</span>
+</label>
