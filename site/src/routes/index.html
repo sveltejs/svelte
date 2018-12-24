@@ -110,9 +110,35 @@
 	h6 {
 		max-width: 25em;
 		padding: 2.4rem;
+	}
+
+	.example {
+		background: var(--second);
+		color: white;
+		padding: 0.8rem;
+		border-radius: var(--border-r);
+	}
+
+	.example > div:first-child {
+		padding: 0.8rem;
+	}
+
+	iframe {
+		display: block;
+		width: 100%;
+		height: 420px;
+		border: none;
 		border-radius: var(--border-r);
 		font: 300 1rem/1.4 var(--font-mono);
 		text-align: center;
+	}
+
+	@media (min-width: 920px) {
+		.example {
+			display: grid;
+			grid-template-columns: 1fr 4fr;
+			align-items: start;
+		}
 	}
 
 	@media screen and (min-width: 870px) {
@@ -173,6 +199,54 @@
 	<div>
 		<p>TODO a video intro</p>
 	</div>
+</section>
+
+<section class="container example linkify">
+	<div>
+		<p>Svelte components are written in HTML files. Just add data.</p>
+	</div>
+
+	<iframe
+		title="Hello world example"
+		src="/repl/embed?demo=homepage-demo-hello-world"
+		scrolling="no"
+	></iframe>
+</section>
+
+<section class="container example linkify">
+	<div>
+		<p>CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="TODO-blog-post-on-css-in-js">use your favourite CSS-in-JS library</a>.</p>
+	</div>
+
+	<iframe
+		title="Hello world example"
+		src="/repl/embed?demo=homepage-demo-scoped-styles"
+		scrolling="no"
+	></iframe>
+</section>
+
+<section class="container example linkify">
+	<div>
+		<p>Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.</p>
+	</div>
+
+	<iframe
+		title="Hello world example"
+		src="/repl/embed?demo=homepage-demo-reactivity"
+		scrolling="no"
+	></iframe>
+</section>
+
+<section class="container example linkify">
+	<div>
+		<p>Build beautiful UIs with a powerful, performant transition engine built right into the framework.</p>
+	</div>
+
+	<iframe
+		title="Hello world example"
+		src="/repl/embed?demo=homepage-demo-transitions"
+		scrolling="no"
+	></iframe>
 </section>
 
 <section class="container grid half">
