@@ -10,6 +10,7 @@
 
 	export let version = 'alpha'; // TODO change this to latest when the time comes
 	export let app;
+	export let embedded = false;
 
 	export function toJSON() {
 		// TODO there's a bug here — Svelte hoists this function because
@@ -310,6 +311,7 @@
 					{values_store}
 					{sourceError}
 					{runtimeError}
+					{embedded}
 				/>
 			</section>
 		</SplitPane>

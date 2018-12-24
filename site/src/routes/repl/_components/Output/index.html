@@ -5,7 +5,7 @@
 	import PropEditor from './PropEditor.html';
 	import CodeMirror from '../CodeMirror.html';
 
-	export let bundle
+	export let bundle;
 	export let js;
 	export let css;
 	export let dom;
@@ -17,6 +17,7 @@
 	export let sourceErrorLoc;
 	export let runtimeError;
 	export let compileOptions;
+	export let embedded;
 
 	// refs
 	let viewer;
@@ -166,6 +167,14 @@
 			{/if}
 		</section>
 	</SplitPane>
+{:elseif embedded}
+	<CodeMirror
+		mode="javascript"
+		code="{view === 'js' ? js : css}"
+		error={sourceError}
+		errorLoc={sourceErrorLoc}
+		readonly
+	/>
 {:else}
 	<SplitPane type="vertical" pos={67}>
 		<div slot="a">
