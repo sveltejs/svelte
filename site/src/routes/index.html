@@ -8,7 +8,8 @@
 <style>
 	.container {
 		position: relative;
-		margin: 10rem var(--side-page);
+		margin: 10rem auto;
+		max-width: 120rem;
 	}
 
 	.container ul {
@@ -56,15 +57,6 @@
 		font-weight: 300;
 		opacity: 0.7;
 	}
-
-	.learn-btn {
-		all: unset;
-		cursor: pointer;
-		display: block;
-		margin-top: 4rem;
-	}
-
-	.legend { padding-top: 4rem }
 
 	.box {
 		padding: 2em;
@@ -129,8 +121,6 @@
 		height: 420px;
 		border: none;
 		border-radius: var(--border-r);
-		font: 300 1rem/1.4 var(--font-mono);
-		text-align: center;
 	}
 
 	@media (min-width: 920px) {
@@ -168,7 +158,7 @@
 	<ul class='grid stretch'>
 		<li class='box bg-prime white'>
 			<h2 style='padding:2.4rem 0 0 0'>Write less code</h2>
-			<p>Write boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
+			<p>Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
 
 			<a href="TODO-blog-post-on-loc">learn more</a>
 		</li>
@@ -189,11 +179,13 @@
 	</ul>
 </section>
 
-<section class="container grid half">
+<section class="container grid half linkify">
 	<div>
 		<p>Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a <em>compile step</em> that happens when you build your app.</p>
 
 		<p>Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.</p>
+
+		<p><a href="TODO-svelte-3-blog-post">Read the introductory blog post</a> to learn more.</p>
 	</div>
 
 	<div>

@@ -5,13 +5,17 @@
 	const dispatch = createEventDispatcher();
 
 	export let type;
+	export let pos = 50;
+	export let fixed = false;
+	export let fixed_pos = pos;
 	export let min = 50;
+	// export let min1 = min;
+	// export let min2 = min;
 
 	const refs = {};
 	const side = type === 'horizontal' ? 'left' : 'top';
 	const dimension = type === 'horizontal' ? 'width' : 'height';
 
-	let pos = 50;
 	let dragging = false;
 
 	function setPos(event) {
@@ -122,45 +126,36 @@
 		height: 1px;
 	}
 
-	@media (max-width: 767px) {
-		.pane {
-			/* override divider-set dimensions */
-			width: 100% !important;
-			height: auto !important;
-		}
+	.left, .right, .divider {
+		display: block;
 	}
 
-	@media (min-width: 768px) {
-		.left, .right, .divider {
-			display: block;
-
-		}
-
-		.left, .right {
-			height: 100%;
-			float: left;
-		}
-
-		.top, .bottom {
-			position: absolute;
-			width: 100%;
-		}
-
-		.top { top: 0; }
-		.bottom { bottom: 0; }
+	.left, .right {
+		height: 100%;
+		float: left;
 	}
+
+	.top, .bottom {
+		position: absolute;
+		width: 100%;
+	}
+
+	.top { top: 0; }
+	.bottom { bottom: 0; }
 </style>
 
 <div class="container" bind:this={refs.container}>
-	<div class="pane" style="{dimension}: {pos}%;">
+	<div class="pane" style="{dimension}: {fixed ? fixed_pos : pos}%;">
 		<slot name="a"></slot>
 	</div>
 
-	<div class="pane" style="{dimension}: {100 - pos}%;">
+	<div class="pane" style="{dimension}: {100 - (fixed ? fixed_pos : pos)}%;">
 		<slot name="b"></slot>
 	</div>
 
-	<div class="{type} divider" style="{side}: calc({pos}% - 8px)" use:drag={setPos}></div>
+	{#if !fixed}
+		<div class="{type} divider" style="{side}: calc({pos}% - 8px)" use:drag={setPos}></div>
+	{/if}
 </div>
 
 {#if dragging}

@@ -168,7 +168,7 @@
 </style>
 
 <div class="component-selector">
-	<div class="file-tabs" on:dblclick="{() => dispatch('create')}">
+	<div class="file-tabs" on:dblclick="{addNew}">
 		{#each $component_store as component}
 			<button
 				id={component.name}

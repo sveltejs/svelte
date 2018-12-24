@@ -13,6 +13,7 @@
 	export let values_store;
 	export let json5;
 	export let sourceError;
+	export let sourceErrorLoc;
 	export let runtimeError;
 
 	// refs
@@ -37,12 +38,17 @@
 		viewer.setProp(prop, value);
 		updateValues(prop, value);
 	}
+
+	function navigate(event) {
+		// TODO handle navigation from error messages
+	}
 </script>
 
 <style>
 	.view-toggle {
 		height: var(--pane-controls-h);
 		border-bottom: 1px solid #eee;
+		white-space: nowrap;
 	}
 
 	button {
@@ -108,9 +114,8 @@
 	>CSS output</button>
 </div>
 
-
 {#if view === 'result'}
-	<SplitPane type="vertical">
+	<SplitPane type="vertical" pos={67}>
 		<div slot="a">
 			{#if bundle}
 				<Viewer
@@ -122,7 +127,6 @@
 					{props}
 					{sourceError}
 					bind:error={runtimeError}
-					on:data="{e => updateData(e.detail.current)}"
 					on:navigate={navigate}
 					on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
 				/>
@@ -159,7 +163,7 @@
 		</section>
 	</SplitPane>
 {:else}
-	<SplitPane type="vertical">
+	<SplitPane type="vertical" pos={67}>
 		<div slot="a">
 			<CodeMirror
 				mode="javascript"

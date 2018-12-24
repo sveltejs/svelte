@@ -3,10 +3,14 @@
 	import Nav from '../components/TopNav.html';
 
 	export let child;
+	export let path;
 </script>
 
 <InlineSvg />
-<Nav segment={child.segment} />
+{#if path !== '/repl/embed'}
+	<Nav segment={child.segment} />
+{/if}
+
 <main>
 	<svelte:component this={child.component} {...child.props} />
 </main>
@@ -15,7 +19,7 @@
 	main {
 		position: relative;
 		margin: 0 auto;
-		padding: var(--nav-h) 0 0 0;
+		padding: var(--nav-h) var(--side-nav) 0 var(--side-nav);
 		overflow-x: hidden;
 	}
 </style>

@@ -22,7 +22,8 @@
 	.user {
 		position: relative;
 		display: inline-block;
-		padding: 0em 3.2rem 0 1.6rem;
+		padding: 0em 1.2rem 0 1.6rem;
+		height: 0.8em;
 		line-height: 1;
 		z-index: 99;
 	}
@@ -40,7 +41,7 @@
 	span {
 		/* position: relative; padding: 0 2em 0 0; */
 		line-height: 1;
-		display: inline-block;
+		display: none;
 		font-family: var(--font-ui);
 		font-size: 1.3rem;
 		opacity: 0.7;
@@ -54,17 +55,18 @@
 		position: absolute;
 		top: -0.05em;
 		right: 0;
-		width: 2.4rem;
-		height: 2.4rem;
+		width: 2.1rem;
+		height: 2.1rem;
 		border: 1px solid rgba(255,255,255,0.3);
 		border-radius: 0.2rem;
 	}
 
 	.menu {
 		position: absolute;
-		width: calc(100% - 0rem);
+		width: calc(100% + 1.6rem);
+		min-width: 6em;
 		top: 3rem;
-		left: 0rem;
+		right: -1.6rem;
 		background-color: var(--second);
 		padding: 0.8rem 1.6rem;
 		z-index: 99;
@@ -81,5 +83,20 @@
 
 	.menu button:hover {
 		opacity: 1;
+	}
+
+	@media (min-width: 600px) {
+		.user {
+			padding: 0em 3.2rem 0 1.6rem;
+		}
+
+		img {
+			width: 2.4rem;
+			height: 2.4rem;
+		}
+
+		span {
+			display: inline-block;
+		}
 	}
 </style>

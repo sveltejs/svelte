@@ -6,6 +6,7 @@
 	import CodeMirror from './CodeMirror.html';
 	import Input from './Input/index.html';
 	import Output from './Output/index.html';
+	import InputOutputToggle from './InputOutputToggle.html';
 
 	export let version = 'alpha'; // TODO change this to latest when the time comes
 	export let app;
@@ -55,6 +56,9 @@
 	let sourceErrorLoc;
 	let runtimeErrorLoc;
 
+	let width = typeof window !== 'undefined' ? window.innerWidth : 300;
+	let show_output = false;
+
 	onMount(async () => {
 		workers = {
 			compiler: new Worker('/workers/compiler.js'),
@@ -64,7 +68,7 @@
 		workers.compiler.postMessage({ type: 'init', version });
 		workers.compiler.onmessage = event => {
 			js = event.data.js;
-			css = event.data.css;
+			css = event.data.css || `/* Add a <style> tag to see compiled CSS */`;
 			if (event.data.props) props = event.data.props;
 		};
 
@@ -169,7 +173,17 @@
 </script>
 
 <style>
-	.repl-inner { height: 100% }
+	.container {
+		position: relative;
+		width: 100%;
+		height: calc(100% - 4.2rem);
+	}
+
+	.repl-inner {
+		width: 200%;
+		height: 100%;
+		transition: transform 0.3s;
+	}
 
 	.repl-inner :global(section) {
 		position: relative;
@@ -232,51 +246,63 @@
 		cursor: pointer;
 	}
 
-	@media (min-width: 768px) {
-		.show-if-mobile { display: none }
+	.offset {
+		transform: translate(-50%,0);
+	}
 
-		.repl-outer.zen-mode {
-			position: fixed;
-			width: 100%;
+	@media (min-width: 600px) {
+		.container {
 			height: 100%;
-			top: 0;
-			left: 0;
-			z-index: 11;
 		}
 
-		section { height: 100% }
+		.repl-inner {
+			width: 100%;
+		}
+
+		.input-output-toggle {
+			display: none;
+		}
+
+		.offset {
+			transition: none;
+			transform: none;
+		}
 	}
 </style>
 
-<div class="repl-inner">
-	<SplitPane type="horizontal">
-		<section slot=a>
-			<Input
-				{component_store}
-				{selected_store}
-				{values_store}
-				error={sourceError}
-				errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
-				{warningCount}
-				on:remove={removeComponent}
-				on:change="{handleChange}"
-			/>
-		</section>
+<div class="container" bind:clientWidth={width}>
+	<div class="repl-inner" class:offset="{show_output}">
+		<SplitPane type="horizontal" fixed="{600 > width}" pos={60} fixed_pos={50}>
+			<section slot=a>
+				<Input
+					{component_store}
+					{selected_store}
+					{values_store}
+					error={sourceError}
+					errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
+					{warningCount}
+					on:remove={removeComponent}
+					on:change="{handleChange}"
+				/>
+			</section>
 
-		<section slot=b style='height: 100%;'>
-			<Output
-				{version}
-				{selected_store}
-				{js}
-				{css}
-				{bundle}
-				{ssr}
-				{dom}
-				{props}
-				{values_store}
-				{sourceError}
-				{runtimeError}
-			/>
-		</section>
-	</SplitPane>
+			<section slot=b style='height: 100%;'>
+				<Output
+					{version}
+					{selected_store}
+					{js}
+					{css}
+					{bundle}
+					{ssr}
+					{dom}
+					{props}
+					{values_store}
+					{sourceError}
+					{runtimeError}
+				/>
+			</section>
+		</SplitPane>
+	</div>
 </div>
+
+<InputOutputToggle bind:checked={show_output}/>
