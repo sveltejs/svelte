@@ -15,7 +15,7 @@ Because of that, getting started with it can be a little bit confusing at first.
 
 The [Svelte REPL](https://svelte.technology/repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
 
-<aside>You'll need to have [Node.js](https://nodejs.org/) installed, and know how to use the terminal</aside>
+<aside><p>You'll need to have <a href="https://nodejs.org/">Node.js</a> installed, and know how to use the terminal</p></aside>
 
 At some point, your app will outgrow the REPL. Click the **download** button to save a `svelte-app.zip` file to your computer and uncompress it.
 
