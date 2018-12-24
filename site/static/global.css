@@ -11,17 +11,6 @@
 		url('fonts/overpass/overpass-latin-100.woff2') format('woff2');
 }
 
-/* overpass-100italic - latin */
-@font-face {
-	font-family: 'Overpass';
-	font-style: italic;
-	font-weight: 100;
-	src:
-		local('Overpass Thin italic'),
-		local('Overpass-Thinitalic'),
-		url('fonts/overpass/overpass-latin-100italic.woff2') format('woff2');
-}
-
 /* overpass-300normal - latin */
 @font-face {
 	font-family: 'Overpass';
@@ -31,17 +20,6 @@
 		local('Overpass Light '),
 		local('Overpass-Light'),
 		url('fonts/overpass/overpass-latin-300.woff2') format('woff2');
-}
-
-/* overpass-300italic - latin */
-@font-face {
-	font-family: 'Overpass';
-	font-style: italic;
-	font-weight: 300;
-	src:
-		local('Overpass Light italic'),
-		local('Overpass-Lightitalic'),
-		url('fonts/overpass/overpass-latin-300italic.woff2') format('woff2');
 }
 
 /* overpass-400normal - latin */
@@ -55,17 +33,6 @@
 		url('fonts/overpass/overpass-latin-400.woff2') format('woff2');
 }
 
-/* overpass-400italic - latin */
-@font-face {
-	font-family: 'Overpass';
-	font-style: italic;
-	font-weight: 400;
-	src:
-		local('Overpass Light italic'),
-		local('Overpass-Lightitalic'),
-		url('fonts/overpass/overpass-latin-400italic.woff2') format('woff2');
-}
-
 /* overpass-700normal - latin */
 @font-face {
 	font-family: 'Overpass';
@@ -77,33 +44,72 @@
 		url('fonts/overpass/overpass-latin-700.woff2') format('woff2');
 }
 
-/* overpass-700italic - latin */
+/* fira-mono-400normal - latin */
 @font-face {
-	font-family: 'Overpass';
-	font-style: italic;
-	font-weight: 700;
-	src:
-		local('Overpass Bold italic'),
-		local('Overpass-Bolditalic'),
-		url('fonts/overpass/overpass-latin-700italic.woff2') format('woff2');
-}
-
-/* overpass-mono-400normal - latin */
-@font-face {
-	font-family: 'Overpass Mono';
+	font-family: 'Fira Mono';
 	font-style: normal;
 	font-weight: 400;
 	src:
-		local('Overpass Mono Regular '),
-		local('Overpass Mono-Regular'),
-		url('fonts/overpass-mono/overpass-mono-latin-400.woff2') format('woff2');
+		local('Fira Mono Regular '),
+		local('Fira Mono-Regular'),
+		url('fonts/fira-mono/fira-mono-latin-400.woff2') format('woff2');
+}
+
+/* roboto-400normal - latin */
+@font-face {
+	font-family: 'Roboto';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400;
+	src:
+		local('Roboto Regular '),
+		local('Roboto-Regular'),
+		url('fonts/roboto/roboto-latin-400.woff2') format('woff2');
+}
+
+/* roboto-400italic - latin */
+@font-face {
+	font-family: 'Roboto';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 400;
+	src:
+		local('Roboto Regular italic'),
+		local('Roboto-Regularitalic'),
+		url('fonts/roboto/roboto-latin-400italic.woff2') format('woff2');
+}
+
+/* roboto-500normal - latin */
+@font-face {
+	font-family: 'Roboto';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 500;
+	src:
+		local('Roboto Medium '),
+		local('Roboto-Medium'),
+		url('fonts/roboto/roboto-latin-500.woff2') format('woff2');
+}
+
+/* roboto-500italic - latin */
+@font-face {
+	font-family: 'Roboto';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 500;
+	src:
+		local('Roboto Medium italic'),
+		local('Roboto-Mediumitalic'),
+		url('fonts/roboto/roboto-latin-500italic.woff2') format('woff2');
 }
 
 
 body {
 	--font: 'Overpass', sans-serif;
-	--font-alt: 'Overpass', sans-serif;
-	--font-mono: 'Overpass Mono', monospace;
+	/* --font: 'Roboto', 'sans-serif'; */
+	/* --font-mono: 'Overpass Mono', monospace; */
+	/* --font-mono: 'IBM Plex Mono'; */
+	--font-mono: 'Fira Mono';
 	--font-ui: var(--font-mono);
 	--font-system: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
@@ -205,7 +211,7 @@ a:focus {
 
 /*	typography ----------------------------- */
 body {
-	font: 300 var(--h4)/var(--lh) var(--font);
+	font: 400 var(--h4)/var(--lh) var(--font);
 	background-color: var(--back);
 	color: var(--text);
 }
@@ -226,27 +232,38 @@ h1 { font-size: var(--h1) }
 p, ol, ul {
 	line-height: 1.5;
 	margin: 0 0 1em 0;
+	font-family: Roboto;
+	-webkit-font-smoothing: antialiased;
 	/* font-family: var(--font-system); */
 }
 
-.b, b, strong { font-weight: 700 }
+.b, b, strong { font-weight: 500 }
 
 tt, code, kbd, samp {
 	font: 400 var(--code-fs)/1.7 var(--font-mono);
 }
 
-:not(pre) > p > code {
+code {
 	position: relative;
 	top: -.1rem;
 	padding: .3rem .8rem .5rem;
 	margin: 0 .2rem;
 	border-radius: 0.3em;
 	white-space: nowrap;
-	background: var(--back-light);
-	border-top: .1rem solid #e5e5e9;
-	border-left: .1rem solid #e5e5e9;
+	background: #f9f9f9;
+	/* border-top: .1rem solid #e5e5e9;
+	border-left: .1rem solid #e5e5e9; */
 	/* color: inherit; */
-	color: #8f9196;
+	color: #444;
+	-webkit-font-smoothing: initial;
+}
+
+pre code {
+	background: transparent;
+	padding: 0;
+	top: 0;
+	margin: 0;
+	white-space: inherit;
 }
 
 ::selection {
@@ -256,7 +273,7 @@ tt, code, kbd, samp {
 
 /*	opinionated styles --------------------- */
 h1, h2 {
-	font-family: var(--font-alt);
+	font-family: var(--font);
 	line-height: 1.2;
 	pointer-events: none;
 }
@@ -330,7 +347,7 @@ button[outline] {
 */
 .linkify a:not(.open-in-repl) {
 	position: relative;
-	padding: 0 .4rem .1rem;
+	padding: 0 0 .1rem 0;
 	border-bottom: .1rem solid hsla(15, 100%, 50%, 0.5); /* muted --prime */
 	user-select: none;
 	/* white-space: nowrap; */
@@ -343,7 +360,7 @@ button[outline] {
 }
 
 .linkify a:not(.open-in-repl):hover {
-	padding: 0 .4rem 0;
+	padding: 0;
 	border-bottom: .2rem solid hsla(15, 100%, 50%, 1);
 }
 
