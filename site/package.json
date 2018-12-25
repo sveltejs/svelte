@@ -11,7 +11,7 @@
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
     "deploy": "npm run stage && now alias",
-    "prestage": "npm run update_template && npm run sapper",
+    "prestage": "npm run update_template && node scripts/get-contributors.js && npm run sapper",
     "stage": "now"
   },
   "dependencies": {
