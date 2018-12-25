@@ -69,10 +69,6 @@
 		font-weight: 300;
 	}
 
-	.open {
-		overflow-y: auto;
-	}
-
 	.primary {
 		list-style: none;
 		font-family: var(--font);
@@ -117,7 +113,6 @@
 
 	ul.open li {
 		display: block;
-		/* padding: 1.7rem 0 0; */
 		text-align: right
 	}
 
@@ -131,7 +126,6 @@
 	}
 
 	ul.open li a {
-		font-size: var(--h6);
 		padding: 2rem .7rem 0 .8rem;
 		display: block;
 	}
@@ -187,6 +181,24 @@
 		ul {
 			padding: 0;
 			background: none;
+		}
+
+		ul.open {
+			padding: 0;
+			background: white;
+			border: none;
+			align-self: initial;
+		}
+
+		ul.open li {
+			display: inline;
+			text-align: left;
+		}
+
+		ul.open li a {
+			font-size: var(--h6);
+			padding: 0 .8rem;
+			display: inline;
 		}
 
 		ul::after {
