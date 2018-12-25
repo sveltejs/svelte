@@ -1,6 +1,7 @@
 <script>
 	import Icon from '../components/Icon.html';
 	import Logo from '../components/Logo.html';
+	import contributors from './_contributors.js';
 
 	let sy = 0;
 </script>
@@ -132,10 +133,21 @@
 
 	a.cta {
 		background-color: var(--prime);
-    padding: 0.5em 1.8em 0.5em 1em;
-    border-radius: var(--border-r);
-    color: white;
-    position: relative;
+		padding: 0.5em 1.8em 0.5em 1em;
+		border-radius: var(--border-r);
+		color: white;
+		position: relative;
+	}
+
+	.contributor {
+		width: 2.4em;
+		height: 2.4em;
+		border-radius: 50%;
+		text-indent: -9999px;
+		display: inline-block;
+		background-size: 100% 100%;
+		margin: 0 0.5em 0.5em 0;
+		border: 1px solid var(--second);
 	}
 
 	@media (min-width: 920px) {
@@ -267,8 +279,21 @@ npm run dev & open http://localhost:5000
 	></iframe>
 </section>
 
-<section class="container grid half">
-	<p>TODO finish building this page. Ideas: Who's using Svelte? Example code (interactive, ideally). What else?</p>
+<section class="container linkify">
+	<h3>Who's using Svelte?</h3>
+	<p>TODO. See <a href="https://github.com/sveltejs/svelte.technology/issues/379">this issue</a></p>
 </section>
 
-<!-- TODO example code transformation (interactive REPL?) -->
+<section class="container linkify">
+	<h3>Contributors</h3>
+
+	<p>Svelte is free and open source software, made possible by the work of dozens of volunteers. <a href="https://github.com/sveltejs/svelte">Join us!</a></p>
+
+	{#each contributors as contributor}
+		<a
+			class="contributor"
+			style="background-image: url({contributor.src})"
+			href="https://github.com/{contributor.name}"
+		>{contributor.name}</a>
+	{/each}
+</section>
