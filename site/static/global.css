@@ -169,7 +169,7 @@ a:focus {
 	--sidebar-w:  24rem;
 	--main-width: 80rem;
 	--code-w:      72em;
-	--side-nav:   .8rem;
+	--side-nav:  1.6rem;
 	--side-page:   var(--side-nav);
 
 	/* easings */
