@@ -170,9 +170,11 @@
 		border: none !important; /* TODO get rid of linkify */
 	}
 
-	.content :global(h2):hover :global(.anchor),
-	.content :global(h3):hover :global(.anchor) {
-		opacity: 1;
+	@media (min-width: 768px) {
+		.content :global(h2):hover :global(.anchor),
+		.content :global(h3):hover :global(.anchor) {
+			opacity: 1;
+		}
 	}
 
 	.content :global(h3),
