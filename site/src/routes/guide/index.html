@@ -342,6 +342,6 @@
 	</div>
 
 	<button on:click="{() => show_contents = !show_contents}">
-		<Icon name="menu"/>
+		<Icon name="{show_contents? 'close' : 'menu'}"/>
 	</button>
 </aside>
