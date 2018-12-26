@@ -6,6 +6,7 @@
 	export let segment;
 
 	let open = false;
+	let visible = true;
 
 	// TODO remove this post-https://github.com/sveltejs/svelte/issues/1914
 	let ul;
@@ -28,6 +29,14 @@
 			});
 		};
 	});
+
+	let last_scroll = 0;
+	function handle_scroll() {
+		const scroll = window.pageYOffset;
+		visible = (scroll < 50 || scroll < last_scroll);
+
+		last_scroll = scroll;
+	}
 </script>
 
 <style>
@@ -45,6 +54,12 @@
 		font-family: var(--font);
 		z-index: 10;
 		user-select: none;
+		transform: translate(0,calc(-100% - 1rem));
+		transition: transform 0.2s;
+	}
+
+	header.visible {
+		transform: none;
 	}
 
 	nav {
@@ -64,15 +79,21 @@
 	}
 
 	h2 {
+		display: block;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
 		font-weight: 300;
+		font-size: 2.8rem;
+		letter-spacing: .12em;
+		line-height: 1;
+		margin: 0;
+		top: .1rem;
 	}
 
 	.primary {
 		list-style: none;
 		font-family: var(--font);
 		margin: 0;
+		line-height: 1;
 	}
 
 	li {
@@ -87,7 +108,7 @@
 	ul {
 		position: relative;
 		padding: 0 2em 0 0;
-		background: url(/icons/chevron.svg) calc(100% - 1em) 70% no-repeat;
+		background: url(/icons/chevron.svg) calc(100% - 1em) 0.05em no-repeat;
 		background-size: 1em 1em;
 	}
 
@@ -126,7 +147,7 @@
 	}
 
 	ul.open li a {
-		padding: 2rem .7rem 0 .8rem;
+		padding: 2.3rem .7rem 0 .8rem;
 		display: block;
 	}
 
@@ -150,14 +171,6 @@
 		-webkit-touch-callout: none;
 		z-index: 11;
 		padding: 0.5em 0;
-	}
-
-	.logotype {
-		display: block;
-		font-size: 2.8rem;
-		letter-spacing: .12em;
-		line-height: 1;
-		margin: 0;
 	}
 
 	.home {
@@ -215,12 +228,12 @@
 	}
 </style>
 
-<svelte:window on:click="{() => open = false}"/>
+<svelte:window on:click="{() => open = false}" on:scroll={handle_scroll}/>
 
-<header>
+<header class:visible="{visible || open}">
 	<nav>
 		<a rel="prefetch" href='.' class="home" title='Homepage'>
-			<h2 class='logotype'>Svelte</h2>
+			<h2>Svelte</h2>
 		</a>
 
 		<ul
