@@ -19,7 +19,7 @@ Here, we're using [Aphrodite](https://github.com/Khan/aphrodite) to generate sco
 
 <iframe
 	title="Aphrodite example"
-	src="/repl/embed?gist=01345cf1c2c9ec0dfd617c2e2adb7bf7"
+	src="/repl/embed?gist=ad495ff5ba9ceefe5984fe62c1f15e19"
 	scrolling="no"
 ></iframe>
 
