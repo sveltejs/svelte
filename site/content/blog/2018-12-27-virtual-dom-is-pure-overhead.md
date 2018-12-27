@@ -93,7 +93,7 @@ if (changed.name) {
 }
 ```
 
-(This is, of course, almost exactly the update code that Svelte generates!)
+(This is almost exactly the update code that Svelte generates. Unlike traditional UI frameworks, Svelte is a compiler that knows at *build time* how things could change in your app, rather than waiting to do the work at *run time*.)
 
 
 ## It's not just the diffing though
@@ -143,6 +143,6 @@ Svelte is explicitly designed to prevent you from ending up in that situation.
 
 ## Why do frameworks use the virtual DOM then?
 
-It's important to understand that virtual DOM *isn't a feature*. It's a means to an end — the end being declarative, state-driven UI development. Virtual DOM is valuable because it allows you to build apps without thinking about state transitions, with performance that is *generally good enough*. That means less buggy code, and more time spent on creative tasks instead of tedious ones.
+It's important to understand that virtual DOM *isn't a feature*. It's a means to an end, the end being declarative, state-driven UI development. Virtual DOM is valuable because it allows you to build apps without thinking about state transitions, with performance that is *generally good enough*. That means less buggy code, and more time spent on creative tasks instead of tedious ones.
 
-But it turns out that we can achieve a similar programming model without using virtual DOM. And that's why Svelte exists.
+But it turns out that we can achieve a similar programming model without using virtual DOM — and that's where Svelte comes in.
