@@ -123,7 +123,7 @@
 				const missingImports = bundle.imports.filter(x => !importCache[x]);
 
 				const removeStyles = () => {
-					const styles = iframe.contentDocument.querySelectorAll('style');
+					const styles = iframe.contentDocument.querySelectorAll('style.svelte');
 					let i = styles.length;
 					while (i--) styles[i].parentNode.removeChild(styles[i]);
 				};
@@ -161,6 +161,7 @@
 
 							if (rendered.css.code) {
 								var style = document.createElement('style');
+								style.className = 'svelte';
 								style.textContent = rendered.css.code;
 								document.head.appendChild(style);
 							}
