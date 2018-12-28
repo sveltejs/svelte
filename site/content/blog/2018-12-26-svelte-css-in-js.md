@@ -15,7 +15,7 @@ But Svelte's style handling does have some limitations. It's too difficult to sh
 
 ## For example
 
-Here, we're using [Aphrodite](https://github.com/Khan/aphrodite) to generate scoped class names that can be used across multiple components:
+Here, we're using [Emotion](https://emotion.sh) to generate scoped class names that can be used across multiple components:
 
 <iframe
 	title="Aphrodite example"
