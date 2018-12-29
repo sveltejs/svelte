@@ -139,14 +139,14 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { things, foo, bar, baz } = $$props;
 
 	$$self.$$.set = $$props => {
-		if ('things' in $$props) things = $$props.things;
-		if ('foo' in $$props) foo = $$props.foo;
-		if ('bar' in $$props) bar = $$props.bar;
-		if ('baz' in $$props) baz = $$props.baz;
+		if ('things' in $$props) $$invalidate('things', things = $$props.things);
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
+		if ('baz' in $$props) $$invalidate('baz', baz = $$props.baz);
 	};
 
 	return { things, foo, bar, baz };
