@@ -228,6 +228,8 @@ export default function dom(
 		if (pending_assignments.size > 0) {
 			throw new Error(`TODO this should not happen!`);
 		}
+
+		component.rewrite_props();
 	}
 
 	const args = ['$$self'];
