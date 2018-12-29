@@ -93,14 +93,14 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate('volume', volume);
 	}
 
-	$$self.$$.set = $$props => {
-		if ('buffered' in $$props) buffered = $$props.buffered;
-		if ('seekable' in $$props) seekable = $$props.seekable;
-		if ('played' in $$props) played = $$props.played;
-		if ('currentTime' in $$props) currentTime = $$props.currentTime;
-		if ('duration' in $$props) duration = $$props.duration;
-		if ('paused' in $$props) paused = $$props.paused;
-		if ('volume' in $$props) volume = $$props.volume;
+	$$self.$set = $$props => {
+		if ('buffered' in $$props) $$invalidate('buffered', buffered = $$props.buffered);
+		if ('seekable' in $$props) $$invalidate('seekable', seekable = $$props.seekable);
+		if ('played' in $$props) $$invalidate('played', played = $$props.played);
+		if ('currentTime' in $$props) $$invalidate('currentTime', currentTime = $$props.currentTime);
+		if ('duration' in $$props) $$invalidate('duration', duration = $$props.duration);
+		if ('paused' in $$props) $$invalidate('paused', paused = $$props.paused);
+		if ('volume' in $$props) $$invalidate('volume', volume = $$props.volume);
 	};
 
 	return {

@@ -63,8 +63,8 @@ function instance($$self, $$props, $$invalidate) {
 		y = window.pageYOffset; $$invalidate('y', y);
 	}
 
-	$$self.$$.set = $$props => {
-		if ('y' in $$props) y = $$props.y;
+	$$self.$set = $$props => {
+		if ('y' in $$props) $$invalidate('y', y = $$props.y);
 	};
 
 	return { y, onwindowscroll };
