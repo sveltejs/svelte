@@ -52,7 +52,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate('value', value);
 	}
 
-	$$self.$$.set = $$props => {
+	$$self.$set = $$props => {
 		if ('value' in $$props) $$invalidate('value', value = $$props.value);
 	};
 

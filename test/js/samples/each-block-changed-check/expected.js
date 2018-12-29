@@ -148,7 +148,7 @@ function create_fragment(component, ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { comments, elapsed, time, foo } = $$props;
 
-	$$self.$$.set = $$props => {
+	$$self.$set = $$props => {
 		if ('comments' in $$props) $$invalidate('comments', comments = $$props.comments);
 		if ('elapsed' in $$props) $$invalidate('elapsed', elapsed = $$props.elapsed);
 		if ('time' in $$props) $$invalidate('time', time = $$props.time);

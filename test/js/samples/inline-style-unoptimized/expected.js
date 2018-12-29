@@ -50,7 +50,7 @@ function create_fragment(component, ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { style, key, value } = $$props;
 
-	$$self.$$.set = $$props => {
+	$$self.$set = $$props => {
 		if ('style' in $$props) $$invalidate('style', style = $$props.style);
 		if ('key' in $$props) $$invalidate('key', key = $$props.key);
 		if ('value' in $$props) $$invalidate('value', value = $$props.value);

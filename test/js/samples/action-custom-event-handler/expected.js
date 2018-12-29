@@ -50,7 +50,7 @@ function instance($$self, $$props, $$invalidate) {
 		return handleFoo(bar);
 	}
 
-	$$self.$$.set = $$props => {
+	$$self.$set = $$props => {
 		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
 	};
 

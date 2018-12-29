@@ -25,7 +25,7 @@ function instance($$self, $$props, $$invalidate) {
 		return x * 3;
 	}
 
-	$$self.$$.set = $$props => {
+	$$self.$set = $$props => {
 		if ('x' in $$props) $$invalidate('x', x = $$props.x);
 	};
 
