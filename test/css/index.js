@@ -69,6 +69,8 @@ describe('css', () => {
 				})
 			);
 
+			assert.deepEqual(dom.stats.warnings, domWarnings);
+
 			const ssr = svelte.compile(
 				input,
 				Object.assign(config, {
@@ -80,6 +82,8 @@ describe('css', () => {
 					}
 				})
 			);
+
+			assert.deepEqual(dom.stats.warnings, domWarnings);
 
 			assert.equal(dom.css.code, ssr.css.code);
 
