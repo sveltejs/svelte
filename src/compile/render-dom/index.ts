@@ -80,7 +80,7 @@ export default function dom(
 				$$invalidate('${component.meta.props_object}', ${component.meta.props_object});
 				`}
 				${props.map(prop =>
-				`if ('${prop.as}' in $$props) ${prop.name} = $$props.${prop.as};`)}
+				`if ('${prop.as}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.as});`)}
 			}
 		`
 		: null;
@@ -231,8 +231,7 @@ export default function dom(
 	}
 
 	const args = ['$$self'];
-	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props');
-	if (component.has_reactive_assignments) args.push('$$invalidate');
+	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props', '$$invalidate');
 
 	builder.addBlock(deindent`
 		function create_fragment(${component.alias('component')}, ctx) {

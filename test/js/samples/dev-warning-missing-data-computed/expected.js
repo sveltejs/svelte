@@ -58,7 +58,7 @@ function instance($$self, $$props, $$invalidate) {
 	let bar;
 
 	$$self.$$.set = $$props => {
-		if ('foo' in $$props) foo = $$props.foo;
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
 	};
 
 	$$self.$$.update = ($$dirty = { foo: 1 }) => {

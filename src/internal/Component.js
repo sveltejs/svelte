@@ -152,16 +152,7 @@ if (typeof HTMLElement !== 'undefined') {
 		}
 
 		$set(values) {
-			if (this.$$) {
-				const { ctx, set, not_equal } = this.$$;
-				set(values);
-				for (const key in values) {
-					if (not_equal(ctx[key], values[key])) {
-						ctx[key] = values[key];
-						make_dirty(this, key);
-					}
-				}
-			}
+			this.$$.set(values);
 		}
 	}
 }
@@ -183,17 +174,7 @@ export class SvelteComponent {
 	}
 
 	$set(values) {
-		if (this.$$) {
-			const { ctx, set, not_equal } = this.$$;
-			set(values);
-
-			for (const key in values) {
-				if (not_equal(ctx[key], values[key])) {
-					ctx[key] = values[key];
-					make_dirty(this, key);
-				}
-			}
-		}
+		this.$$.set(values);
 	}
 }
 

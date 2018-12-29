@@ -36,11 +36,11 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { data } = $$props;
 
 	$$self.$$.set = $$props => {
-		if ('data' in $$props) data = $$props.data;
+		if ('data' in $$props) $$invalidate('data', data = $$props.data);
 	};
 
 	return { data };

@@ -43,7 +43,7 @@ function foo(node, callback) {
 	// code goes here
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 
 	function foo_function() {
@@ -51,7 +51,7 @@ function instance($$self, $$props) {
 	}
 
 	$$self.$$.set = $$props => {
-		if ('bar' in $$props) bar = $$props.bar;
+		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
 	};
 
 	return { bar, foo_function };

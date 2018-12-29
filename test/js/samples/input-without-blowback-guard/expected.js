@@ -49,7 +49,7 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$$.set = $$props => {
-		if ('foo' in $$props) foo = $$props.foo;
+		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
 	};
 
 	return { foo, input_change_handler };

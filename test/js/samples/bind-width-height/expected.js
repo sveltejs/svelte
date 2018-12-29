@@ -47,8 +47,8 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$$.set = $$props => {
-		if ('w' in $$props) w = $$props.w;
-		if ('h' in $$props) h = $$props.h;
+		if ('w' in $$props) $$invalidate('w', w = $$props.w);
+		if ('h' in $$props) $$invalidate('h', h = $$props.h);
 	};
 
 	return { w, h, div_resize_handler };

@@ -90,11 +90,11 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { things } = $$props;
 
 	$$self.$$.set = $$props => {
-		if ('things' in $$props) things = $$props.things;
+		if ('things' in $$props) $$invalidate('things', things = $$props.things);
 	};
 
 	return { things };
