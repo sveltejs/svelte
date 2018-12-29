@@ -126,7 +126,9 @@ describe("runtime", () => {
 
 					global.window = window;
 
-					// Put the constructor on window for testing
+					if (config.before_test) config.before_test();
+
+					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
 
 					const target = window.document.querySelector("main");
@@ -208,6 +210,8 @@ describe("runtime", () => {
 					}
 
 					flush();
+
+					if (config.after_test) config.after_test();
 				});
 		});
 	}

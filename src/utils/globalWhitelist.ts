@@ -19,6 +19,7 @@ export default new Set([
 	'Object',
 	'parseFloat',
 	'parseInt',
+	'process',
 	'Promise',
 	'RegExp',
 	'Set',
