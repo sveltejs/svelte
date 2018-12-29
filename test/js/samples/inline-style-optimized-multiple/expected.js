@@ -41,13 +41,13 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { color, x, y } = $$props;
 
-	$$self.$$.set = $$props => {
-		if ('color' in $$props) color = $$props.color;
-		if ('x' in $$props) x = $$props.x;
-		if ('y' in $$props) y = $$props.y;
+	$$self.$set = $$props => {
+		if ('color' in $$props) $$invalidate('color', color = $$props.color);
+		if ('x' in $$props) $$invalidate('x', x = $$props.x);
+		if ('y' in $$props) $$invalidate('y', y = $$props.y);
 	};
 
 	return { color, x, y };

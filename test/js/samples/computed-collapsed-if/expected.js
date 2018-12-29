@@ -14,7 +14,7 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { x } = $$props;
 
 	function a() {
@@ -25,8 +25,8 @@ function instance($$self, $$props) {
 		return x * 3;
 	}
 
-	$$self.$$.set = $$props => {
-		if ('x' in $$props) x = $$props.x;
+	$$self.$set = $$props => {
+		if ('x' in $$props) $$invalidate('x', x = $$props.x);
 	};
 
 	return { x, a, b };

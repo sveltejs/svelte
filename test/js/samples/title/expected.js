@@ -22,11 +22,11 @@ function create_fragment(component, ctx) {
 	};
 }
 
-function instance($$self, $$props) {
+function instance($$self, $$props, $$invalidate) {
 	let { custom } = $$props;
 
-	$$self.$$.set = $$props => {
-		if ('custom' in $$props) custom = $$props.custom;
+	$$self.$set = $$props => {
+		if ('custom' in $$props) $$invalidate('custom', custom = $$props.custom);
 	};
 
 	return { custom };
