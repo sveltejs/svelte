@@ -6,17 +6,6 @@ import renderSSR from './render-ssr/index';
 import { CompileOptions, Warning, Ast } from '../interfaces';
 import Component from './Component';
 
-function normalize_options(options: CompileOptions): CompileOptions {
-	let normalized = assign({ generate: 'dom', dev: false }, options);
-	const { onwarn } = normalized;
-
-	normalized.onwarn = onwarn
-		? (warning: Warning) => onwarn(warning, default_onwarn)
-		: default_onwarn;
-
-	return normalized;
-}
-
 function default_onwarn({ start, message }: Warning) {
 	if (start) {
 		console.warn(`(${start.line}:${start.column}) – ${message}`);
@@ -45,10 +34,12 @@ function validate_options(options: CompileOptions, stats: Stats) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = normalize_options(options);
+	options = assign({ generate: 'dom', dev: false }, options);
 
 	const stats = new Stats({
 		onwarn: options.onwarn
+			? (warning: Warning) => options.onwarn(warning, default_onwarn)
+			: default_onwarn
 	});
 
 	let ast: Ast;

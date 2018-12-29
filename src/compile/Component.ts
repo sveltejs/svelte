@@ -164,7 +164,7 @@ export default class Component {
 		this.fragment = new Fragment(this, ast.html);
 		if (!options.customElement) this.stylesheet.reify();
 
-		this.stylesheet.warnOnUnusedSelectors(options.onwarn);
+		this.stylesheet.warnOnUnusedSelectors(stats);
 
 		if (!this.instance_script) {
 			const props = [...this.template_references];
@@ -229,6 +229,7 @@ export default class Component {
 			format,
 			name,
 			options,
+			this.stats,
 			banner,
 			options.sveltePath,
 			importedHelpers,

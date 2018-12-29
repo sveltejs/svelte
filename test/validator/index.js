@@ -83,43 +83,26 @@ describe("validate", () => {
 	});
 
 	it("warns if options.name is not capitalised", () => {
-		const warnings = [];
-		svelte.compile("<div></div>", {
+		const { stats } = svelte.compile("<div></div>", {
 			name: "lowercase",
-			onwarn(warning) {
-				warnings.push({
-					code: warning.code,
-					message: warning.message,
-					pos: warning.pos,
-					start: warning.start
-				});
-			},
 			generate: false
 		});
-		assert.deepEqual(warnings, [
-			{
-				code: `options-lowercase-name`,
-				message: "options.name should be capitalised",
-				pos: undefined,
-				start: undefined
-			}
-		]);
+
+		assert.deepEqual(stats.warnings.map(w => ({
+			code: w.code,
+			message: w.message
+		})), [{
+			code: `options-lowercase-name`,
+			message: "options.name should be capitalised"
+		}]);
 	});
 
 	it("does not warn if options.name begins with non-alphabetic character", () => {
-		const warnings = [];
-		svelte.compile("<div></div>", {
+		const { stats } = svelte.compile("<div></div>", {
 			name: "_",
-			onwarn(warning) {
-				warnings.push({
-					code: warning.code,
-					message: warning.message,
-					pos: warning.pos,
-					start: warning.start
-				});
-			},
 			generate: false
 		});
-		assert.deepEqual(warnings, []);
+		
+		assert.deepEqual(stats.warnings, []);
 	});
 });
