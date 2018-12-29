@@ -1,0 +1,8 @@
+<script>
+	export let items;
+	export let nodes = [];
+</script>
+
+{#each items as item, i (item)}
+	<div bind:this={nodes[i]}>{item}</div>
+{/each}

@@ -282,11 +282,6 @@ export default class ElementWrapper extends Wrapper {
 			});
 		}
 
-		const eventHandlerOrBindingUsesComponent = (
-			this.bindings.length > 0 ||
-			this.node.handlers.some(handler => handler.usesComponent)
-		);
-
 		const eventHandlerOrBindingUsesContext = (
 			this.bindings.some(binding => binding.node.usesContext) ||
 			this.node.handlers.some(handler => handler.usesContext) ||
@@ -534,17 +529,46 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.declarations.push(name);
 			renderer.component.template_references.add(name);
 
-			const { handler, object } = this_binding.munge(block);
+			const munged = this_binding.munge(block);
+			const { handler, object } = munged;
 
-			renderer.component.partly_hoisted.push(deindent`
-				function ${name}($$node) {
-					${handler.mutation}
-					$$invalidate('${object}', ${object});
-				}
-			`);
+			// TODO this really is spectacularly confusing,
+			// the whole mess needs cleaning up
+			const contextual_dependencies = new Set();
+			addToSet(contextual_dependencies, munged.contextual_dependencies);
+			addToSet(contextual_dependencies, handler.contextual_dependencies);
 
-			block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${this.var}));`);
-			block.builders.destroy.addLine(`ctx.${name}(null);`);
+			let fn;
+
+			if (contextual_dependencies.size > 0) {
+				block.builders.init.addBlock(deindent`
+					function ${name}() {
+						ctx.${name}(${this.var}, ctx);
+					}
+				`);
+
+				fn = deindent`
+					function ${name}($$node, { ${[...contextual_dependencies].join(', ')} }) {
+						${handler.mutation}
+						$$invalidate('${object}', ${object});
+					}
+				`;
+
+				block.builders.mount.addLine(`@add_binding_callback(${name});`);
+				block.builders.destroy.addLine(`ctx.${name}(null, ctx);`);
+			} else {
+				fn = deindent`
+					function ${name}($$node) {
+						${handler.mutation}
+						$$invalidate('${object}', ${object});
+					}
+				`;
+
+				block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${this.var}));`);
+				block.builders.destroy.addLine(`ctx.${name}(null);`);
+			}
+
+			renderer.component.partly_hoisted.push(fn);
 		}
 	}
 
