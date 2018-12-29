@@ -300,7 +300,7 @@ export default function dom(
 
 				${reactive_store_subscriptions}
 
-				${set && `$$self.$$.set = ${set};`}
+				${set && `$$self.$set = ${set};`}
 
 				${component.reactive_declarations.length > 0 && deindent`
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {

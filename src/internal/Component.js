@@ -151,8 +151,8 @@ if (typeof HTMLElement !== 'undefined') {
 			};
 		}
 
-		$set(values) {
-			this.$$.set(values);
+		$set() {
+			// overridden by instance, if it has props
 		}
 	}
 }
@@ -173,8 +173,8 @@ export class SvelteComponent {
 		};
 	}
 
-	$set(values) {
-		this.$$.set(values);
+	$set() {
+		// overridden by instance, if it has props
 	}
 }
 
