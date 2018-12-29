@@ -26,24 +26,12 @@
 
 <style>
 	.posts {
-		/* display: grid; */
 		grid-template-columns: 1fr 1fr;
 		grid-gap: 1em;
-		/* prevent scroll bar pop-in when navigating to post */
-		/* yes this is hacktacular */
 		min-height: calc(100vh - var(--nav-h));
-
-		padding: 10rem var(--side-page);
-		/* background-color: var(--back-light) */
-	}
-
-	.post {
-		/* display: flex;
-		flex-direction: column;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		align-items: center;
-		padding: 4rem 3.2rem 2.4rem; */
+		padding: var(--top-offset) 0;
+		max-width: var(--main-width);
+		margin: 0 auto;
 	}
 
 	h2 {
@@ -82,9 +70,6 @@
 		max-width: 30em;
 		color: var(--second);
 	}
-
-	/* fast link-reset */
-	/* .posts a { all: unset; cursor: pointer } */
 
 	.post > a {
 		display: block;

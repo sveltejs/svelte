@@ -4,6 +4,7 @@
 
 	export let sections = [];
 	export let active_section = null;
+	export let show_contents;
 
 	onMount(() => {
 		//	------------------------------------------
@@ -40,6 +41,10 @@
 	let ul;
 
 	afterUpdate(() => {
+		// bit of a hack — prevent sidebar scrolling if
+		// TOC is open on mobile
+		if (show_contents && window.innerWidth < 832) return;
+
 		const active = ul.querySelector('.active');
 
 		if (active) {
@@ -65,6 +70,33 @@
 	});
 </script>
 
+<style>
+	.guide-toc li {
+		display: block;
+		line-height: 1.2;
+		margin: 0 0 4.8rem 0;
+	}
+
+	.section {
+		display: block;
+		padding: 0 0 .8rem 0;
+		font: 400 var(--h6) var(--font);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+	}
+
+	.subsection {
+		display: block;
+		font-size: 1.6rem;
+		font-family: var(--font);
+		padding: 0.3em 0;
+	}
+
+	.section:hover,
+	.subsection:hover { color: var(--flash) }
+	.active           { color: var(--prime) }
+</style>
+
 <ul bind:this={ul} class="guide-toc">
 	{#each sections as section}
 		<li>
@@ -89,40 +121,3 @@
 		</li>
 	{/each}
 </ul>
-
-<style>
-	.guide-toc {
-		--section-clr: white;
-	}
-
-	.guide-toc li {
-		display: block;
-		line-height: 2;
-		margin: 0 0 4.8rem 0;
-	}
-
-	.section {
-		display: block;
-		padding: 0 0 .8rem 0;
-		font: 400 var(--h6) var(--font);
-		color: var(--section-clr);
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-	}
-
-	.subsection {
-		display: block;
-		font-size: 1.6rem;
-		font-family: var(--font);
-	}
-
-	.section:hover,
-	.subsection:hover { color: var(--flash) }
-	.active           { color: var(--prime) }
-
-	@media screen and (min-width: 768px) {
-		.guide-toc {
-			--section-clr: black;
-		}
-	}
-</style>

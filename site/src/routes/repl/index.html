@@ -143,7 +143,7 @@
 		overflow: hidden;
 		background-color: var(--back);
 		padding: var(--app-controls-h) 0 0 0;
-		margin: 0 -0.8rem;
+		margin: 0 calc(var(--side-nav) * -1);
 		box-sizing: border-box;
 	}
 
@@ -156,12 +156,6 @@
 	}
 
 	.pane { width: 100%; height: 100% }
-
-	@media (min-width: 600px) {
-		.repl-outer {
-			margin: 0 -4.8rem; /* can't do calc(0 - var(--side-nav)) */
-		}
-	}
 
 	.loading {
 		text-align: center;
