@@ -585,7 +585,7 @@ export default class Element extends Node {
 
 				if (modifier === 'passive') {
 					if (passiveEvents.has(handler.name)) {
-						if (!handler.usesEventObject) {
+						if (handler.canMakePassive) {
 							component.warn(handler, {
 								code: 'redundant-event-modifier',
 								message: `Touch event handlers that don't use the 'event' object are passive by default`
@@ -609,7 +609,7 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passiveEvents.has(handler.name) && !handler.usesEventObject && !handler.modifiers.has('preventDefault')) {
+			if (passiveEvents.has(handler.name) && handler.canMakePassive && !handler.modifiers.has('preventDefault')) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}
