@@ -137,24 +137,10 @@ export default class ElementWrapper extends Wrapper {
 			return new AttributeWrapper(this, block, attribute);
 		});
 
-		let has_bindings;
-		const binding_lookup = {};
-		this.node.bindings.forEach(binding => {
-			binding_lookup[binding.name] = binding;
-			has_bindings = true;
-		});
-
-		const type = this.node.getStaticAttributeValue('type');
-
 		// ordinarily, there'll only be one... but we need to handle
 		// the rare case where an element can have multiple bindings,
 		// e.g. <audio bind:paused bind:currentTime>
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
-
-		// TODO remove this, it's just useful during refactoring
-		if (has_bindings && !this.bindings.length) {
-			throw new Error(`no binding was created`);
-		}
 
 		if (node.intro || node.outro) {
 			if (node.intro) block.addIntro();
@@ -783,10 +769,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		return null;
-	}
-
-	isMediaNode() {
-		return this.node.name === 'audio' || this.node.name === 'video';
 	}
 
 	remount(name: string) {
