@@ -4,22 +4,54 @@ import { SvelteComponent as SvelteComponent_1, addListener, add_render_callback,
 function create_fragment(component, ctx) {
 	var audio, audio_is_paused = true, audio_updating = false, audio_animationframe, current, dispose;
 
+	function audio_timeupdate_handler() {
+		cancelAnimationFrame(audio_animationframe);
+		if (!audio.paused) audio_animationframe = requestAnimationFrame(audio_timeupdate_handler);
+		audio_updating = true;
+		ctx.audio_timeupdate_handler(audio);
+	}
+
+	function audio_durationchange_handler() {
+		audio_updating = true;
+		ctx.audio_durationchange_handler(audio);
+	}
+
+	function audio_play_pause_handler() {
+		audio_updating = true;
+		ctx.audio_durationchange_handler(audio);
+	}
+
+	function audio_progress_handler() {
+		audio_updating = true;
+		ctx.audio_progress_handler(audio);
+	}
+
+	function audio_loadedmetadata_handler() {
+		audio_updating = true;
+		ctx.audio_loadedmetadata_handler(audio);
+	}
+
+	function audio_volumechange_handler() {
+		audio_updating = true;
+		ctx.audio_volumechange_handler(audio);
+	}
+
 	return {
 		c() {
 			audio = createElement("audio");
-			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(() => ctx.audio_timeupdate_handler.call(audio));
-			if (ctx.duration === void 0) add_render_callback(() => ctx.audio_durationchange_handler.call(audio));
-			if (ctx.buffered === void 0) add_render_callback(() => ctx.audio_progress_handler.call(audio));
-			if (ctx.buffered === void 0 || ctx.seekable === void 0) add_render_callback(() => ctx.audio_loadedmetadata_handler.call(audio));
+			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(audio_timeupdate_handler);
+			if (ctx.duration === void 0) add_render_callback(audio_durationchange_handler);
+			if (ctx.buffered === void 0) add_render_callback(audio_progress_handler);
+			if (ctx.buffered === void 0 || ctx.seekable === void 0) add_render_callback(audio_loadedmetadata_handler);
 
 			dispose = [
-				addListener(audio, "timeupdate", ctx.audio_timeupdate_handler),
-				addListener(audio, "durationchange", ctx.audio_durationchange_handler),
-				addListener(audio, "play", ctx.audio_play_pause_handler),
-				addListener(audio, "pause", ctx.audio_play_pause_handler),
-				addListener(audio, "progress", ctx.audio_progress_handler),
-				addListener(audio, "loadedmetadata", ctx.audio_loadedmetadata_handler),
-				addListener(audio, "volumechange", ctx.audio_volumechange_handler)
+				addListener(audio, "timeupdate", audio_timeupdate_handler),
+				addListener(audio, "durationchange", audio_durationchange_handler),
+				addListener(audio, "play", audio_play_pause_handler),
+				addListener(audio, "pause", audio_play_pause_handler),
+				addListener(audio, "progress", audio_progress_handler),
+				addListener(audio, "loadedmetadata", audio_loadedmetadata_handler),
+				addListener(audio, "volumechange", audio_volumechange_handler)
 			];
 		},
 
@@ -35,6 +67,8 @@ function create_fragment(component, ctx) {
 			if (!audio_updating && !isNaN(ctx.currentTime) && changed.currentTime) audio.currentTime = ctx.currentTime;
 			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused) && changed.paused) audio[audio_is_paused ? "pause" : "play"]();
 			if (!audio_updating && !isNaN(ctx.volume) && changed.volume) audio.volume = ctx.volume;
+
+			audio_updating = false;
 		},
 
 		i(target, anchor) {
@@ -57,40 +91,30 @@ function create_fragment(component, ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { buffered, seekable, played, currentTime, duration, paused, volume } = $$props;
 
-	function audio_timeupdate_handler() {
-		cancelAnimationFrame(audio_animationframe);
-		if (!audio.paused) audio_animationframe = requestAnimationFrame(audio_timeupdate_handler);
-		played = timeRangesToArray(this.played);
-		currentTime = this.currentTime;
-		$$invalidate('played', played);
-		$$invalidate('currentTime', currentTime);
+	function audio_timeupdate_handler(audio) {
+		$$invalidate('played', played = timeRangesToArray(audio.played));
+		$$invalidate('currentTime', currentTime = audio.currentTime);
 	}
 
-	function audio_durationchange_handler() {
-		duration = this.duration;
-		$$invalidate('duration', duration);
+	function audio_durationchange_handler(audio) {
+		$$invalidate('duration', duration = audio.duration);
 	}
 
-	function audio_play_pause_handler() {
-		paused = this.paused;
-		$$invalidate('paused', paused);
+	function audio_play_pause_handler(audio) {
+		$$invalidate('paused', paused = audio.paused);
 	}
 
-	function audio_progress_handler() {
-		buffered = timeRangesToArray(this.buffered);
-		$$invalidate('buffered', buffered);
+	function audio_progress_handler(audio) {
+		$$invalidate('buffered', buffered = timeRangesToArray(audio.buffered));
 	}
 
-	function audio_loadedmetadata_handler() {
-		buffered = timeRangesToArray(this.buffered);
-		seekable = timeRangesToArray(this.seekable);
-		$$invalidate('buffered', buffered);
-		$$invalidate('seekable', seekable);
+	function audio_loadedmetadata_handler(audio) {
+		$$invalidate('buffered', buffered = timeRangesToArray(audio.buffered));
+		$$invalidate('seekable', seekable = timeRangesToArray(audio.seekable));
 	}
 
-	function audio_volumechange_handler() {
-		volume = this.volume;
-		$$invalidate('volume', volume);
+	function audio_volumechange_handler(audio) {
+		$$invalidate('volume', volume = audio.volume);
 	}
 
 	$$self.$set = $$props => {
