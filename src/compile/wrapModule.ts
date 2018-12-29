@@ -1,6 +1,7 @@
 import deindent from '../utils/deindent';
 import list from '../utils/list';
 import { CompileOptions, ModuleFormat, Node } from '../interfaces';
+import Stats from '../Stats';
 
 interface Dependency {
 	name: string;
@@ -20,6 +21,7 @@ export default function wrapModule(
 	format: ModuleFormat,
 	name: string,
 	options: CompileOptions,
+	stats: Stats,
 	banner: string,
 	sveltePath = 'svelte',
 	helpers: { name: string, alias: string }[],
@@ -34,7 +36,7 @@ export default function wrapModule(
 	}
 
 	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internalPath, helpers, imports, module_exports);
-	if (format === 'eval') return expr(code, name, options, banner, imports);
+	if (format === 'eval') return expr(code, name, options, stats, banner, imports);
 
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
@@ -142,6 +144,7 @@ function expr(
 	code: string,
 	name: string,
 	options: CompileOptions,
+	stats: Stats,
 	banner: string,
 	imports: Node[]
 ) {
@@ -182,7 +185,7 @@ function expr(
 		return { name, statements, source: declaration.source.value };
 	});
 
-	const globals = getGlobals(dependencies, options);
+	const globals = getGlobals(dependencies, options, stats);
 
 	return deindent`
 		(function (${paramString(dependencies)}) { "use strict";
@@ -212,8 +215,8 @@ function getCompatibilityStatements(dependencies: Dependency[]) {
 	return statements.join('\n');
 }
 
-function getGlobals(dependencies: Dependency[], options: CompileOptions) {
-	const { globals, onwarn } = options;
+function getGlobals(dependencies: Dependency[], options: CompileOptions, stats: Stats) {
+	const { globals } = options;
 	const globalFn = getGlobalFn(globals);
 
 	return dependencies.map(d => {
@@ -225,12 +228,10 @@ function getGlobals(dependencies: Dependency[], options: CompileOptions) {
 					`Could not determine name for imported module '${d.source}' – use options.globals`
 				);
 			} else {
-				const warning = {
+				stats.warn({
 					code: `options-missing-globals`,
 					message: `No name was supplied for imported module '${d.source}'. Guessing '${d.name}', but you should use options.globals`,
-				};
-
-				onwarn(warning);
+				});
 			}
 
 			name = d.name;
