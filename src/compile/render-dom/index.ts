@@ -279,7 +279,7 @@ export default function dom(
 
 	const user_code = component.javascript || (
 		component.ast.js.length === 0 && filtered_props.length > 0
-			? `let { ${filtered_props.map(x => x.name === x.as ? x.as : `${x.as}: ${x.name}`).join(', ')} } = $$props;`
+			? `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
 			: null
 	);
 
