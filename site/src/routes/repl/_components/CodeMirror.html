@@ -120,7 +120,7 @@
 			editor.toTextArea();
 		}
 
-		editor = CodeMirror.fromTextArea(refs.editor, {
+		const opts = {
 			lineNumbers,
 			lineWrapping: true,
 			indentWithTabs: true,
@@ -130,12 +130,15 @@
 			mode: modes[mode] || {
 				name: mode
 			},
-			readOnly: readonly,
-			extraKeys: {
-				Tab: tab,
-				'Shift-Tab': tab
-			}
-		});
+			readOnly: readonly
+		};
+
+		if (!tab) opts.extraKeys = {
+			Tab: tab,
+			'Shift-Tab': tab
+		};
+
+		editor = CodeMirror.fromTextArea(refs.editor, opts);
 
 		editor.on('change', instance => {
 			if (!updating) {
