@@ -114,6 +114,8 @@ describe("ssr", () => {
 			require("../../register")(compileOptions);
 
 			try {
+				if (config.before_test) config.before_test();
+
 				const Component = require(`../runtime/samples/${dir}/main.html`).default;
 				const { html } = Component.render(config.props, {
 					store: (config.store !== true) && config.store
@@ -124,6 +126,8 @@ describe("ssr", () => {
 				} else if (config.html) {
 					assert.htmlEqual(html, config.html);
 				}
+
+				if (config.after_test) config.after_test();
 			} catch (err) {
 				if (config.error) {
 					if (typeof config.error === 'function') {
