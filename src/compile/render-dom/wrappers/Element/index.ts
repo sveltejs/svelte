@@ -410,7 +410,7 @@ export default class ElementWrapper extends Wrapper {
 			.filter(group => group.bindings.length);
 
 		groups.forEach(group => {
-			const handler = block.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
+			const handler = renderer.component.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
 			renderer.component.declarations.push(handler);
 			renderer.component.template_references.add(handler);
 
