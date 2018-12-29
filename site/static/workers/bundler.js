@@ -12,7 +12,7 @@ self.addEventListener('message', async event => {
 
 			importScripts(
 				`https://unpkg.com/svelte@${version}/compiler.js`,
-				`https://unpkg.com/rollup/dist/rollup.browser.js`
+				`https://unpkg.com/rollup@0.68/dist/rollup.browser.js`
 			);
 			fulfil();
 

@@ -10,15 +10,12 @@
 	import GuideContents from './_GuideContents.html';
 	import Icon from '../../components/Icon.html';
 
-	// NOT YET
-	// get offset from css-vars (for smooth-scroll)
-	// import CustomProperties from '../../utils/css-custom-properties.js'
-
 	export let sections;
 	let active_section;
 
 	let container;
 	let aside;
+	let show_contents = false;
 
 	onMount(() => {
 		const anchors = container.querySelectorAll('[id]');
@@ -75,65 +72,130 @@
 
 <style>
 	aside {
-		display: none;
+		/* display: none; */
 		position: fixed;
-		left: 0;
-		top: var(--nav-h);
-		width: var(--sidebar-w);
-		height: calc(100vh - var(--nav-h));
+		background-color: white;
+		left: 0.8rem;
+		bottom: 0.8rem;
+		width: 2em;
+		height: 2em;
 		overflow: hidden;
+		border: 1px solid #eee;
+		box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
+		border-radius: var(--border-r);
+		padding: 1.6rem;
+		transition: width 0.2s, height 0.2s;
+	}
+
+	aside button {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 3.4rem;
+		height: 3.4rem;
+	}
+
+	aside.open {
+		width: calc(100vw - 1.6rem);
+		height: calc(100vh - var(--nav-h) - 7rem);
+	}
+
+	aside.open::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		bottom: calc(100vh - var(--nav-h) - 10.8rem);
+		width: 100%;
+		height: 2em;
+		background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
+		pointer-events: none;
+		z-index: 2;
 	}
 
 	aside::after {
 		content: '';
 		position: absolute;
 		left: 0;
-		bottom: 0;
+		bottom: 1.9em;
 		width: 100%;
-		height: var(--top-offset);
+		height: 2em;
 		background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,1) 100%);
 		pointer-events: none;
 	}
 
 	.sidebar {
-		padding: var(--top-offset) 3.2rem var(--top-offset) 0;
+		position: absolute;
 		font-family: var(--font);
 		overflow-y: auto;
-		height: 100%;
-		width: calc(var(--sidebar-w) + 5rem);
+		width: calc(100vw - 4.8rem);
+		height: calc(100vh - var(--nav-h) - 10.8rem);
+		padding: 2em 0;
+		bottom: 2em;
 	}
 
 	.content {
 		width: 100%;
-		max-width: calc(var(--main-width) + 2 * var(--side-nav));
+		max-width: calc(var(--main-width) + var(--side-nav));
 		margin: 0 auto;
 		-moz-tab-size: 2;
-		padding: var(--top-offset) var(--side-nav);
+		padding: var(--top-offset) 0;
 		tab-size: 2;
 	}
 
-	@media (min-width: 52em) { /* can't use vars in @media :( */
+	@media (min-width: 832px) { /* can't use vars in @media :( */
 		aside {
 			display: block;
+			width: var(--sidebar-w);
+			height: calc(100vh - var(--nav-h));
+			top: var(--nav-h);
 			left: var(--side-nav);
+			overflow: hidden;
+			box-shadow: none;
+			border: none;
+			overflow: hidden;
+			padding: 0;
+		}
+
+		aside.open::before {
+			display: none;
+		}
+
+		aside::after {
+			content: '';
+			bottom: 0;
+			height: var(--top-offset);
+		}
+
+		aside button {
+			display: none;
+		}
+
+		.sidebar {
+			padding: var(--top-offset) 3.2rem var(--top-offset) 0;
+			font-family: var(--font);
+			overflow-y: auto;
+			height: 100%;
+			bottom: auto;
+			width: calc(var(--sidebar-w) + 5rem);
 		}
 
 		.content {
 			max-width: none;
-			padding-left: 32rem;
+			padding-left: 28rem;
 		}
 	}
 
-	@media (min-width: 89.6rem) { /* can't use vars in @media :( */
+	@media (min-width: 1200px) { /* can't use vars in @media :( */
 		aside {
 			display: block;
-			left: calc(50% - 60rem);
+			left: calc(50vw - (60rem - var(--side-nav)));
 		}
 
 		.content {
-			max-width: none;
-			padding-left: calc(50% - 30rem);
-			padding-right: calc(50% - 50rem);
+			width: 80rem;
+			padding-left: calc(50vw - 32rem);
+			box-sizing: content-box;
+			/* padding-right: calc(50% - 50rem); */
 		}
 	}
 
@@ -170,9 +232,11 @@
 		border: none !important; /* TODO get rid of linkify */
 	}
 
-	.content :global(h2):hover :global(.anchor),
-	.content :global(h3):hover :global(.anchor) {
-		opacity: 1;
+	@media (min-width: 768px) {
+		.content :global(h2):hover :global(.anchor),
+		.content :global(h3):hover :global(.anchor) {
+			opacity: 1;
+		}
 	}
 
 	.content :global(h3),
@@ -272,8 +336,12 @@
 	{/each}
 </div>
 
-<aside bind:this={aside} class="sidebar-container">
-	<div class="sidebar">
-		<GuideContents {sections} {active_section} />
+<aside bind:this={aside} class="sidebar-container" class:open={show_contents}>
+	<div class="sidebar" on:click="{() => show_contents = false}"> <!-- scroll container -->
+		<GuideContents {sections} {active_section} {show_contents} />
 	</div>
+
+	<button on:click="{() => show_contents = !show_contents}">
+		<Icon name="{show_contents? 'close' : 'menu'}"/>
+	</button>
 </aside>
