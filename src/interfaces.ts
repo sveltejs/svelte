@@ -60,7 +60,7 @@ export interface CompileOptions {
 
 	preserveComments?: boolean | false;
 
-	onwarn?: (warning: Warning) => void;
+	onwarn?: (warning: Warning, default_onwarn?: (warning: Warning) => void) => void;
 }
 
 export interface Visitor {
