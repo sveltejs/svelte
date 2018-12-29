@@ -520,7 +520,7 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.declarations.push(name);
 			renderer.component.template_references.add(name);
 
-			const { handler, object } = this_binding.munge(block);
+			const { handler, object } = this_binding;
 
 			renderer.component.partly_hoisted.push(deindent`
 				function ${name}($$node) {

@@ -21,7 +21,11 @@ export default class BindingWrapper {
 	parent: ElementWrapper;
 
 	object: string;
-	handler: any; // TODO
+	handler: {
+		usesContext: boolean;
+		mutation: string;
+		contextual_dependencies: Set<string>
+	};
 	updateDom: string;
 	initialUpdate: string;
 	needsLock: boolean;
@@ -51,6 +55,15 @@ export default class BindingWrapper {
 
 			eachBlock.hasBinding = true;
 		}
+
+		this.object = getObject(this.node.expression.node).name;
+
+		// TODO unfortunate code is necessary because we need to use `ctx`
+		// inside the fragment, but not inside the <script>
+		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
+
+		// view to model
+		this.handler = getEventHandler(this, parent.renderer, block, this.object, contextless_snippet);
 	}
 
 	isReadOnlyMediaAttribute() {
@@ -73,13 +86,7 @@ export default class BindingWrapper {
 
 		let updateConditions: string[] = [];
 
-		const { name } = getObject(this.node.expression.node);
-
 		const snippet = this.node.expression.render();
-
-		// TODO unfortunate code is necessary because we need to use `ctx`
-		// inside the fragment, but not inside the <script>
-		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
 
 		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
 		// and `selected` is an object chosen with a <select>, then when `checked` changes,
@@ -96,10 +103,6 @@ export default class BindingWrapper {
 				});
 			}
 		});
-
-		// view to model
-		const valueFromDom = getValueFromDom(renderer, this.parent, this);
-		const handler = getEventHandler(this, renderer, block, name, contextless_snippet, valueFromDom);
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this, snippet);
@@ -152,10 +155,9 @@ export default class BindingWrapper {
 
 		return {
 			name: this.node.name,
-			object: name,
-			handler,
+			object: this.object,
+			handler: this.handler,
 			snippet,
-			usesContext: handler.usesContext,
 			updateDom: updateDom,
 			initialUpdate: initialUpdate,
 			needsLock: !isReadOnly && needsLock,
@@ -221,9 +223,10 @@ function getEventHandler(
 	renderer: Renderer,
 	block: Block,
 	name: string,
-	snippet: string,
-	value: string
+	snippet: string
 ) {
+	const value = getValueFromDom(renderer, binding.parent, binding);
+
 	if (binding.node.isContextual) {
 		let tail = '';
 		if (binding.node.expression.node.type === 'MemberExpression') {
@@ -231,7 +234,7 @@ function getEventHandler(
 			tail = renderer.component.source.slice(start, end);
 		}
 
-		const { object, property, snippet } = block.bindings.get(name)();
+		const { object, property, snippet } = block.bindings.get(name);
 
 		return {
 			usesContext: true,
