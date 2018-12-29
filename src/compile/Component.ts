@@ -537,7 +537,6 @@ export default class Component {
 		});
 
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
-		this.rewrite_props();
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 		this.javascript = this.extract_javascript(script);
@@ -673,7 +672,7 @@ export default class Component {
 			});
 
 			if (combining) {
-				code.prependRight(c, ' } = $$props');
+				code.appendLeft(c, ' } = $$props');
 			}
 		});
 	}
