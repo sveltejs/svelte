@@ -26,10 +26,9 @@ export default class BindingWrapper {
 		mutation: string;
 		contextual_dependencies: Set<string>
 	};
-	updateDom: string;
+	snippet: string;
 	initialUpdate: string;
 	needsLock: boolean;
-	updateCondition: string;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper) {
 		this.node = node;
@@ -64,39 +63,25 @@ export default class BindingWrapper {
 
 		// view to model
 		this.handler = getEventHandler(this, parent.renderer, block, this.object, contextless_snippet);
-	}
 
-	isReadOnlyMediaAttribute() {
-		return readOnlyMediaAttributes.has(this.node.name);
-	}
-
-	munge(block: Block) {
-		const { parent } = this;
-		const { renderer } = parent;
-
-		const needsLock = (
-			parent.node.name !== 'input' ||
-			!/radio|checkbox|range|color/.test(parent.node.getStaticAttributeValue('type'))
-		);
+		this.snippet = this.node.expression.render();
 
 		const isReadOnly = (
 			(parent.node.isMediaNode() && readOnlyMediaAttributes.has(this.node.name)) ||
 			dimensions.test(this.node.name)
 		);
 
-		let updateConditions: string[] = [];
+		this.needsLock = !isReadOnly && (
+			parent.node.name !== 'input' ||
+			!/radio|checkbox|range|color/.test(parent.node.getStaticAttributeValue('type'))
+		);
+	}
 
-		const snippet = this.node.expression.render();
-
-		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
-		// and `selected` is an object chosen with a <select>, then when `checked` changes,
-		// we need to tell the component to update all the values `selected` might be
-		// pointing to
-		// TODO should this happen in preprocess?
+	get_dependencies() {
 		const dependencies = new Set(this.node.expression.dependencies);
 
 		this.node.expression.dependencies.forEach((prop: string) => {
-			const indirectDependencies = renderer.component.indirectDependencies.get(prop);
+			const indirectDependencies = this.parent.renderer.component.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
 					dependencies.add(indirectDependency);
@@ -104,8 +89,24 @@ export default class BindingWrapper {
 			}
 		});
 
+		return dependencies;
+	}
+
+	isReadOnlyMediaAttribute() {
+		return readOnlyMediaAttributes.has(this.node.name);
+	}
+
+	render(block: Block, lock: string) {
+		// bind:offsetWidth and bind:offsetHeight — readonly
+		if (dimensions.test(this.node.name)) return;
+
+		const { parent } = this;
+		const { renderer } = parent;
+
+		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
+
 		// model to view
-		let updateDom = getDomUpdater(parent, this, snippet);
+		let updateDom = getDomUpdater(parent, this);
 		let initialUpdate = updateDom;
 
 		// special cases
@@ -122,7 +123,7 @@ export default class BindingWrapper {
 		}
 
 		if (this.node.name === 'currentTime' || this.node.name === 'volume') {
-			updateConditions.push(`!isNaN(${snippet})`);
+			updateConditions.push(`!isNaN(${this.snippet})`);
 
 			if (this.node.name === 'currentTime') initialUpdate = null;
 		}
@@ -132,15 +133,9 @@ export default class BindingWrapper {
 			const last = block.getUniqueName(`${parent.var}_is_paused`);
 			block.addVariable(last, 'true');
 
-			updateConditions.push(`${last} !== (${last} = ${snippet})`);
+			updateConditions.push(`${last} !== (${last} = ${this.snippet})`);
 			updateDom = `${parent.var}[${last} ? "pause" : "play"]();`;
 			initialUpdate = null;
-		}
-
-		// bind:offsetWidth and bind:offsetHeight
-		if (dimensions.test(this.node.name)) {
-			initialUpdate = null;
-			updateDom = null;
 		}
 
 		const dependencyArray = [...this.node.expression.dynamic_dependencies]
@@ -153,26 +148,21 @@ export default class BindingWrapper {
 			)
 		}
 
-		return {
-			name: this.node.name,
-			object: this.object,
-			handler: this.handler,
-			snippet,
-			updateDom: updateDom,
-			initialUpdate: initialUpdate,
-			needsLock: !isReadOnly && needsLock,
-			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
-			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
-			dependencies,
-			contextual_dependencies: this.node.expression.contextual_dependencies
-		};
+		if (updateDom) {
+			block.builders.update.addLine(
+				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${updateDom}` : updateDom
+			);
+		}
+
+		if (initialUpdate) {
+			block.builders.mount.addBlock(initialUpdate);
+		}
 	}
 }
 
 function getDomUpdater(
 	element: ElementWrapper,
-	binding: BindingWrapper,
-	snippet: string
+	binding: BindingWrapper
 ) {
 	const { node } = element;
 
@@ -186,21 +176,21 @@ function getDomUpdater(
 
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
-			`@selectOptions(${element.var}, ${snippet})` :
-			`@selectOption(${element.var}, ${snippet})`;
+			`@selectOptions(${element.var}, ${binding.snippet})` :
+			`@selectOption(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
 		const type = node.getStaticAttributeValue('type');
 
 		const condition = type === 'checkbox'
-			? `~${snippet}.indexOf(${element.var}.__value)`
-			: `${element.var}.__value === ${snippet}`;
+			? `~${binding.snippet}.indexOf(${element.var}.__value)`
+			: `${element.var}.__value === ${binding.snippet}`;
 
 		return `${element.var}.checked = ${condition};`
 	}
 
-	return `${element.var}.${binding.node.name} = ${snippet};`;
+	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
 function getBindingGroup(renderer: Renderer, value: Node) {

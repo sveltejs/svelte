@@ -90,7 +90,6 @@ export default class ElementWrapper extends Wrapper {
 	attributes: AttributeWrapper[];
 	bindings: Binding[];
 	classDependencies: string[];
-	initialUpdate: string;
 
 	slotOwner?: InlineComponentWrapper;
 	selectBindingDependencies?: Set<string>;
@@ -291,10 +290,6 @@ export default class ElementWrapper extends Wrapper {
 		this.addActions(block);
 		this.addClasses(block);
 
-		if (this.initialUpdate) {
-			block.builders.mount.addBlock(this.initialUpdate);
-		}
-
 		if (nodes && this.renderer.options.hydratable) {
 			block.builders.claim.addLine(
 				`${nodes}.forEach(@detachNode);`
@@ -378,7 +373,8 @@ export default class ElementWrapper extends Wrapper {
 		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
 
 		// TODO munge in constructor
-		const mungedBindings = this.bindings.map(binding => binding.munge(block));
+		// const mungedBindings = this.bindings.map(binding => binding.munge(block));
+		const mungedBindings = this.bindings;
 
 		const lock = mungedBindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
@@ -390,8 +386,8 @@ export default class ElementWrapper extends Wrapper {
 			.map(event => ({
 				events: event.eventNames,
 				bindings: mungedBindings
-					.filter(binding => binding.name !== 'this')
-					.filter(binding => event.filter(this.node, binding.name))
+					.filter(binding => binding.node.name !== 'this')
+					.filter(binding => event.filter(this.node, binding.node.name))
 			}))
 			.filter(group => group.bindings.length);
 
@@ -400,6 +396,7 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.declarations.push(handler);
 			renderer.component.template_references.add(handler);
 
+			// TODO figure out how to handle locks
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
 			const dependencies = new Set();
@@ -407,18 +404,11 @@ export default class ElementWrapper extends Wrapper {
 
 			group.bindings.forEach(binding => {
 				// TODO this is a mess
-				addToSet(dependencies, binding.dependencies);
-				addToSet(contextual_dependencies, binding.contextual_dependencies);
+				addToSet(dependencies, binding.get_dependencies());
+				addToSet(contextual_dependencies, binding.node.expression.contextual_dependencies);
 				addToSet(contextual_dependencies, binding.handler.contextual_dependencies);
 
-				if (!binding.updateDom) return;
-
-				const updateConditions = needsLock ? [`!${lock}`] : [];
-				if (binding.updateCondition) updateConditions.push(binding.updateCondition);
-
-				block.builders.update.addLine(
-					updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
-				);
+				binding.render(block, lock);
 			});
 
 			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
@@ -431,8 +421,6 @@ export default class ElementWrapper extends Wrapper {
 				animation_frame = block.getUniqueName(`${this.var}_animationframe`);
 				block.addVariable(animation_frame);
 			}
-
-			// TODO figure out how to handle locks
 
 			let callee;
 
@@ -499,7 +487,7 @@ export default class ElementWrapper extends Wrapper {
 				.map(binding => `${binding.snippet} === void 0`)
 				.join(' || ');
 
-			if (this.node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
+			if (this.node.name === 'select' || group.bindings.find(binding => binding.node.name === 'indeterminate' || binding.isReadOnlyMediaAttribute())) {
 				block.builders.hydrate.addLine(
 					`if (${someInitialStateIsUndefined}) @add_render_callback(() => ${callee}.call(${this.var}));`
 				);
@@ -511,8 +499,6 @@ export default class ElementWrapper extends Wrapper {
 				);
 			}
 		});
-
-		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 		if (this_binding) {
