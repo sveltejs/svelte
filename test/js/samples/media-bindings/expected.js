@@ -2,18 +2,25 @@
 import { SvelteComponent as SvelteComponent_1, addListener, add_render_callback, createElement, detachNode, flush, init, insert, run, run_all, safe_not_equal, timeRangesToArray } from "svelte/internal";
 
 function create_fragment(component, ctx) {
-	var audio, audio_is_paused = true, audio_updating = false, audio_animationframe, current, dispose;
+	var audio, audio_updating = false, audio_animationframe, audio_is_paused = true, current, dispose;
+
+	function audio_timeupdate_handler() {
+		cancelAnimationFrame(audio_animationframe);
+		if (!audio.paused) audio_animationframe = requestAnimationFrame(audio_timeupdate_handler);
+		audio_updating = true;
+		ctx.audio_timeupdate_handler.call(audio);
+	}
 
 	return {
 		c() {
 			audio = createElement("audio");
-			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(() => ctx.audio_timeupdate_handler.call(audio));
+			if (ctx.played === void 0 || ctx.currentTime === void 0) add_render_callback(audio_timeupdate_handler);
 			if (ctx.duration === void 0) add_render_callback(() => ctx.audio_durationchange_handler.call(audio));
 			if (ctx.buffered === void 0) add_render_callback(() => ctx.audio_progress_handler.call(audio));
 			if (ctx.buffered === void 0 || ctx.seekable === void 0) add_render_callback(() => ctx.audio_loadedmetadata_handler.call(audio));
 
 			dispose = [
-				addListener(audio, "timeupdate", ctx.audio_timeupdate_handler),
+				addListener(audio, "timeupdate", audio_timeupdate_handler),
 				addListener(audio, "durationchange", ctx.audio_durationchange_handler),
 				addListener(audio, "play", ctx.audio_play_pause_handler),
 				addListener(audio, "pause", ctx.audio_play_pause_handler),
@@ -32,9 +39,10 @@ function create_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			if (!audio_updating && !isNaN(ctx.currentTime) && changed.currentTime) audio.currentTime = ctx.currentTime;
-			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused) && changed.paused) audio[audio_is_paused ? "pause" : "play"]();
-			if (!audio_updating && !isNaN(ctx.volume) && changed.volume) audio.volume = ctx.volume;
+			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) audio.currentTime = ctx.currentTime;
+			if (changed.paused && audio_is_paused !== (audio_is_paused = ctx.paused)) audio[audio_is_paused ? "pause" : "play"]();
+			if (changed.volume && !isNaN(ctx.volume)) audio.volume = ctx.volume;
+			audio_updating = false;
 		},
 
 		i(target, anchor) {
@@ -58,8 +66,6 @@ function instance($$self, $$props, $$invalidate) {
 	let { buffered, seekable, played, currentTime, duration, paused, volume } = $$props;
 
 	function audio_timeupdate_handler() {
-		cancelAnimationFrame(audio_animationframe);
-		if (!audio.paused) audio_animationframe = requestAnimationFrame(audio_timeupdate_handler);
 		played = timeRangesToArray(this.played);
 		currentTime = this.currentTime;
 		$$invalidate('played', played);
