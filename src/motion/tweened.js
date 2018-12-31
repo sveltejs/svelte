@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
-import { assign } from 'svelte/internal';
+import { assign, loop } from 'svelte/internal';
 import { linear } from 'svelte/easing';
-import { add_task, is_date } from './utils.js';
+import { is_date } from './utils.js';
 
 function get_interpolator(a, b) {
 	if (a === b || a !== a) return () => a;
@@ -76,7 +76,7 @@ export function tweened(value, defaults = {}) {
 		const start = window.performance.now() + delay;
 		let fn;
 
-		task = add_task(() => {
+		task = loop(() => {
 			const time = window.performance.now();
 			if (time < start) return true;
 

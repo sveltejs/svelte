@@ -1,4 +1,5 @@
 import { transitionManager, linear, generateRule, hash } from './transitions.js';
+import { loop } from './loop.js';
 
 export function wrapAnimation(node, from, fn, params) {
 	if (!from) return;
@@ -68,7 +69,35 @@ export function wrapAnimation(node, from, fn, params) {
 		}
 	};
 
-	transitionManager.add(animation);
+	// transitionManager.add(animation);
+
+	transitionManager.active += 1;
+
+	const { abort, promise } = loop(() => {
+		const now = window.performance.now();
+
+		if (animation.program && now >= animation.program.end) {
+			animation.done();
+		}
+
+		if (animation.pending && now >= animation.pending.start) {
+			animation.start(animation.pending);
+		}
+
+		if (animation.running) {
+			animation.update(now);
+			return true;
+		}
+	});
+
+	promise.then(() => {
+		transitionManager.active -= 1;
+		if (!transitionManager.active) {
+			let i = transitionManager.stylesheet.cssRules.length;
+			while (i--) transitionManager.stylesheet.deleteRule(i);
+			transitionManager.activeRules = {};
+		}
+	});
 
 	if (info.tick) info.tick(0, 1);
 
