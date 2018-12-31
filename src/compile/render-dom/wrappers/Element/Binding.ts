@@ -75,10 +75,7 @@ export default class BindingWrapper {
 			(parent.node.name === 'input' && type === 'file') // TODO others?
 		);
 
-		this.needsLock = !this.isReadOnly && (
-			// TODO others?
-			parent.node.name !== 'input'
-		);
+		this.needsLock = this.node.name === 'currentTime'; // TODO others?
 	}
 
 	get_dependencies() {
@@ -106,6 +103,16 @@ export default class BindingWrapper {
 		const { parent } = this;
 
 		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
+
+		const dependencyArray = [...this.node.expression.dynamic_dependencies]
+
+		if (dependencyArray.length === 1) {
+			updateConditions.push(`changed.${dependencyArray[0]}`)
+		} else if (dependencyArray.length > 1) {
+			updateConditions.push(
+				`(${dependencyArray.map(prop => `changed.${prop}`).join(' || ')})`
+			)
+		}
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this);
@@ -142,16 +149,6 @@ export default class BindingWrapper {
 				if (parent.getStaticAttributeValue('type') === 'file') {
 					updateDom = null;
 				}
-		}
-
-		const dependencyArray = [...this.node.expression.dynamic_dependencies]
-
-		if (dependencyArray.length === 1) {
-			updateConditions.push(`changed.${dependencyArray[0]}`)
-		} else if (dependencyArray.length > 1) {
-			updateConditions.push(
-				`(${dependencyArray.map(prop => `changed.${prop}`).join(' || ')})`
-			)
 		}
 
 		if (updateDom) {

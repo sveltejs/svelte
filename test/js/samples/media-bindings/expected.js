@@ -11,16 +11,6 @@ function create_fragment(component, ctx) {
 		ctx.audio_timeupdate_handler.call(audio);
 	}
 
-	function audio_play_pause_handler() {
-		audio_updating = true;
-		ctx.audio_play_pause_handler.call(audio);
-	}
-
-	function audio_volumechange_handler() {
-		audio_updating = true;
-		ctx.audio_volumechange_handler.call(audio);
-	}
-
 	return {
 		c() {
 			audio = createElement("audio");
@@ -32,11 +22,11 @@ function create_fragment(component, ctx) {
 			dispose = [
 				addListener(audio, "timeupdate", audio_timeupdate_handler),
 				addListener(audio, "durationchange", ctx.audio_durationchange_handler),
-				addListener(audio, "play", audio_play_pause_handler),
-				addListener(audio, "pause", audio_play_pause_handler),
+				addListener(audio, "play", ctx.audio_play_pause_handler),
+				addListener(audio, "pause", ctx.audio_play_pause_handler),
 				addListener(audio, "progress", ctx.audio_progress_handler),
 				addListener(audio, "loadedmetadata", ctx.audio_loadedmetadata_handler),
-				addListener(audio, "volumechange", audio_volumechange_handler)
+				addListener(audio, "volumechange", ctx.audio_volumechange_handler)
 			];
 		},
 
@@ -49,9 +39,9 @@ function create_fragment(component, ctx) {
 		},
 
 		p(changed, ctx) {
-			if (!audio_updating && !isNaN(ctx.currentTime) && changed.currentTime) audio.currentTime = ctx.currentTime;
-			if (!audio_updating && audio_is_paused !== (audio_is_paused = ctx.paused) && changed.paused) audio[audio_is_paused ? "pause" : "play"]();
-			if (!audio_updating && !isNaN(ctx.volume) && changed.volume) audio.volume = ctx.volume;
+			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) audio.currentTime = ctx.currentTime;
+			if (changed.paused && audio_is_paused !== (audio_is_paused = ctx.paused)) audio[audio_is_paused ? "pause" : "play"]();
+			if (changed.volume && !isNaN(ctx.volume)) audio.volume = ctx.volume;
 			audio_updating = false;
 		},
 
