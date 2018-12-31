@@ -682,10 +682,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const params = this.node.animation.expression ? this.node.animation.expression.render() : '{}';
 
-		let { name } = this.node.animation;
-		if (!component.hoistable_names.has(name) && !component.imported_declarations.has(name)) {
-			name = `ctx.${name}`;
-		}
+		const name = component.qualify(this.node.animation.name);
 
 		block.builders.animate.addBlock(deindent`
 			if (${animation}) ${animation}.stop();

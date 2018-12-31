@@ -683,7 +683,7 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_names, hoistable_nodes } = this;
+		const { hoistable_names, hoistable_nodes, imported_declarations } = this;
 
 		const top_level_function_declarations = new Map();
 
@@ -738,6 +738,7 @@ export default class Component {
 						if (owner === instance_scope) {
 							if (name === fn_declaration.id.name) return;
 							if (hoistable_names.has(name)) return;
+							if (imported_declarations.has(name)) return;
 
 							if (top_level_function_declarations.has(name)) {
 								const other_declaration = top_level_function_declarations.get(name);
