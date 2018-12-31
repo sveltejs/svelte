@@ -2,13 +2,9 @@
 	import { linear } from './easing.js';
 	export let things;
 
-	let bar = 1;
-
 	function flip(node, animation, params) {
 		const dx = animation.from.left - animation.to.left;
 		const dy = animation.from.top - animation.to.top;
-
-		bar += 1;
 
 		return {
 			duration: 100,
