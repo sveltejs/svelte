@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { rollup } from 'rollup';
 import * as virtual from 'rollup-plugin-virtual';
-import { transitionManager } from "../../internal.js";
+import { transitionManager, clear_loops } from "../../internal.js";
 
 import {
 	showOutput,
@@ -96,6 +96,7 @@ describe("runtime", () => {
 					// set of hacks to support transition tests
 					transitionManager.running = false;
 					transitionManager.transitions = [];
+					clear_loops();
 
 					const raf = {
 						time: 0,

@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
-import { add_task, is_date } from './utils.js';
+import { loop } from 'svelte/internal';
+import { is_date } from './utils.js';
 
 function get_initial_velocity(value) {
 	if (typeof value === 'number' || is_date(value)) return 0;
@@ -116,7 +117,7 @@ export function spring(value, opts = {}) {
 			last_time = window.performance.now();
 			settled = false;
 
-			task = add_task(() => {
+			task = loop(() => {
 				const time = window.performance.now();
 
 				({ value, settled } = tick_spring(

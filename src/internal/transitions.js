@@ -1,5 +1,6 @@
 import { createElement } from './dom.js';
 import { noop, run } from './utils.js';
+import { loop } from './loop.js';
 
 export function linear(t) {
 	return t;
@@ -83,8 +84,35 @@ export function wrapTransition(component, node, fn, params, intro) {
 			}
 
 			if (!this.running) {
+				transitionManager.active += 1;
+
 				this.running = true;
-				transitionManager.add(this);
+				// transitionManager.add(this);
+				const { abort, promise } = loop(() => {
+					const now = window.performance.now();
+
+					if (this.program && now >= this.program.end) {
+						this.done();
+					}
+
+					if (this.pending && now >= this.pending.start) {
+						this.start(this.pending);
+					}
+
+					if (this.running) {
+						this.update(now);
+						return true;
+					}
+				});
+
+				promise.then(() => {
+					transitionManager.active -= 1;
+					if (!transitionManager.active) {
+						let i = transitionManager.stylesheet.cssRules.length;
+						while (i--) transitionManager.stylesheet.deleteRule(i);
+						transitionManager.activeRules = {};
+					}
+				});
 			}
 		},
 
@@ -173,21 +201,13 @@ export function groupOutros() {
 }
 
 export var transitionManager = {
+	active: 0,
 	running: false,
 	transitions: [],
 	bound: null,
 	stylesheet: null,
 	activeRules: {},
 	promise: null,
-
-	add(transition) {
-		this.transitions.push(transition);
-
-		if (!this.running) {
-			this.running = true;
-			requestAnimationFrame(this.bound || (this.bound = this.next.bind(this)));
-		}
-	},
 
 	addRule(rule, name) {
 		if (!this.stylesheet) {
@@ -199,40 +219,6 @@ export var transitionManager = {
 		if (!this.activeRules[name]) {
 			this.activeRules[name] = true;
 			this.stylesheet.insertRule(`@keyframes ${name} ${rule}`, this.stylesheet.cssRules.length);
-		}
-	},
-
-	next() {
-		this.running = false;
-
-		const now = window.performance.now();
-		let i = this.transitions.length;
-
-		while (i--) {
-			const transition = this.transitions[i];
-
-			if (transition.program && now >= transition.program.end) {
-				transition.done();
-			}
-
-			if (transition.pending && now >= transition.pending.start) {
-				transition.start(transition.pending);
-			}
-
-			if (transition.running) {
-				transition.update(now);
-				this.running = true;
-			} else if (!transition.pending) {
-				this.transitions.splice(i, 1);
-			}
-		}
-
-		if (this.running) {
-			requestAnimationFrame(this.bound);
-		} else if (this.stylesheet) {
-			let i = this.stylesheet.cssRules.length;
-			while (i--) this.stylesheet.deleteRule(i);
-			this.activeRules = {};
 		}
 	},
 
