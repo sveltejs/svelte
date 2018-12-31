@@ -67,6 +67,24 @@ export default [
 		]
 	},
 
+	/* motion.[m]js */
+	{
+		input: 'src/motion/index.js',
+		output: [
+			{
+				file: 'motion.mjs',
+				format: 'esm',
+				paths: id => id.replace('svelte', '.')
+			},
+			{
+				file: 'motion.js',
+				format: 'cjs',
+				paths: id => id.replace('svelte', '.')
+			}
+		],
+		external: id => id.startsWith('svelte/')
+	},
+
 	// runtime API
 	...['index', 'store', 'easing', 'motion', 'transition'].map(name => ({
 		input: `${name}.mjs`,
