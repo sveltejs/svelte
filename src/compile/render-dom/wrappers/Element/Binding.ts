@@ -28,6 +28,7 @@ export default class BindingWrapper {
 	};
 	snippet: string;
 	initialUpdate: string;
+	isReadOnly: boolean;
 	needsLock: boolean;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper) {
@@ -66,14 +67,17 @@ export default class BindingWrapper {
 
 		this.snippet = this.node.expression.render();
 
-		const isReadOnly = (
+		const type = parent.node.getStaticAttributeValue('type');
+
+		this.isReadOnly = (
+			dimensions.test(this.node.name) ||
 			(parent.node.isMediaNode() && readOnlyMediaAttributes.has(this.node.name)) ||
-			dimensions.test(this.node.name)
+			(parent.node.name === 'input' && type === 'file') // TODO others?
 		);
 
-		this.needsLock = !isReadOnly && (
-			parent.node.name !== 'input' ||
-			!/radio|checkbox|range|color/.test(parent.node.getStaticAttributeValue('type'))
+		this.needsLock = !this.isReadOnly && (
+			// TODO others?
+			parent.node.name !== 'input'
 		);
 	}
 
@@ -97,45 +101,47 @@ export default class BindingWrapper {
 	}
 
 	render(block: Block, lock: string) {
-		// bind:offsetWidth and bind:offsetHeight — readonly
-		if (dimensions.test(this.node.name)) return;
+		if (this.isReadOnly) return;
 
 		const { parent } = this;
-		const { renderer } = parent;
 
 		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
 
 		// model to view
 		let updateDom = getDomUpdater(parent, this);
-		let initialUpdate = updateDom;
 
 		// special cases
-		if (this.node.name === 'group') {
-			const bindingGroup = getBindingGroup(renderer, this.node.expression.node);
+		switch (this.node.name) {
+			case 'group':
+				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
 
-			block.builders.hydrate.addLine(
-				`(#component.$$.binding_groups[${bindingGroup}] || (#component.$$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
-			);
+				block.builders.hydrate.addLine(
+					`(#component.$$.binding_groups[${bindingGroup}] || (#component.$$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
+				);
 
-			block.builders.destroy.addLine(
-				`#component.$$.binding_groups[${bindingGroup}].splice(#component.$$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
-			);
-		}
+				block.builders.destroy.addLine(
+					`#component.$$.binding_groups[${bindingGroup}].splice(#component.$$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
+				);
+				break;
 
-		if (this.node.name === 'currentTime' || this.node.name === 'volume') {
-			updateConditions.push(`!isNaN(${this.snippet})`);
+			case 'currentTime':
+			case 'volume':
+				updateConditions.push(`!isNaN(${this.snippet})`);
+				break;
 
-			if (this.node.name === 'currentTime') initialUpdate = null;
-		}
+			case 'paused':
+				// this is necessary to prevent audio restarting by itself
+				const last = block.getUniqueName(`${parent.var}_is_paused`);
+				block.addVariable(last, 'true');
 
-		if (this.node.name === 'paused') {
-			// this is necessary to prevent audio restarting by itself
-			const last = block.getUniqueName(`${parent.var}_is_paused`);
-			block.addVariable(last, 'true');
+				updateConditions.push(`${last} !== (${last} = ${this.snippet})`);
+				updateDom = `${parent.var}[${last} ? "pause" : "play"]();`;
+				break;
 
-			updateConditions.push(`${last} !== (${last} = ${this.snippet})`);
-			updateDom = `${parent.var}[${last} ? "pause" : "play"]();`;
-			initialUpdate = null;
+			case 'value':
+				if (parent.getStaticAttributeValue('type') === 'file') {
+					updateDom = null;
+				}
 		}
 
 		const dependencyArray = [...this.node.expression.dynamic_dependencies]
@@ -154,8 +160,8 @@ export default class BindingWrapper {
 			);
 		}
 
-		if (initialUpdate) {
-			block.builders.mount.addBlock(initialUpdate);
+		if (!/(currentTime|paused)/.test(this.node.name)) {
+			block.builders.mount.addBlock(updateDom);
 		}
 	}
 }

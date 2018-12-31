@@ -370,13 +370,7 @@ export default class ElementWrapper extends Wrapper {
 
 		renderer.component.has_reactive_assignments = true;
 
-		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
-
-		// TODO munge in constructor
-		// const mungedBindings = this.bindings.map(binding => binding.munge(block));
-		const mungedBindings = this.bindings;
-
-		const lock = mungedBindings.some(binding => binding.needsLock) ?
+		const lock = this.bindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
 			null;
 
@@ -385,7 +379,7 @@ export default class ElementWrapper extends Wrapper {
 		const groups = events
 			.map(event => ({
 				events: event.eventNames,
-				bindings: mungedBindings
+				bindings: this.bindings
 					.filter(binding => binding.node.name !== 'this')
 					.filter(binding => event.filter(this.node, binding.node.name))
 			}))
@@ -411,8 +405,6 @@ export default class ElementWrapper extends Wrapper {
 				binding.render(block, lock);
 			});
 
-			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
-
 			// media bindings — awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
 			// own hands
@@ -422,46 +414,34 @@ export default class ElementWrapper extends Wrapper {
 				block.addVariable(animation_frame);
 			}
 
+			const has_local_function = contextual_dependencies.size > 0 || needsLock || animation_frame;
+
 			let callee;
 
 			// TODO dry this out — similar code for event handlers and component bindings
-			if (contextual_dependencies.size > 0) {
-				const deps = Array.from(contextual_dependencies);
-
+			if (has_local_function) {
+				// need to create a block-local function that calls an instance-level function
 				block.builders.init.addBlock(deindent`
 					function ${handler}() {
-						ctx.${handler}.call(this, ctx);
-					}
-				`);
-
-				this.renderer.component.partly_hoisted.push(deindent`
-					function ${handler}({ ${deps.join(', ')} }) {
-						${
-							animation_frame && deindent`
-								cancelAnimationFrame(${animation_frame});
-								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-						}
-						${mutations.length > 0 && mutations}
-						${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
+						${animation_frame && deindent`
+						cancelAnimationFrame(${animation_frame});
+						if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`}
+						${needsLock && `${lock} = true;`}
+						ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
 					}
 				`);
 
 				callee = handler;
 			} else {
-				this.renderer.component.partly_hoisted.push(deindent`
-					function ${handler}() {
-						${
-							animation_frame && deindent`
-								cancelAnimationFrame(${animation_frame});
-								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-						}
-						${mutations.length > 0 && mutations}
-						${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
-					}
-				`);
-
 				callee = `ctx.${handler}`;
 			}
+
+			this.renderer.component.partly_hoisted.push(deindent`
+				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${[...contextual_dependencies].join(', ')} }` : ``}) {
+					${group.bindings.map(b => b.handler.mutation)}
+					${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
+				}
+			`);
 
 			group.events.forEach(name => {
 				if (name === 'resize') {
@@ -488,8 +468,9 @@ export default class ElementWrapper extends Wrapper {
 				.join(' || ');
 
 			if (this.node.name === 'select' || group.bindings.find(binding => binding.node.name === 'indeterminate' || binding.isReadOnlyMediaAttribute())) {
+				const callback = has_local_function ? handler : `() => ${callee}.call(${this.var})`;
 				block.builders.hydrate.addLine(
-					`if (${someInitialStateIsUndefined}) @add_render_callback(() => ${callee}.call(${this.var}));`
+					`if (${someInitialStateIsUndefined}) @add_render_callback(${callback});`
 				);
 			}
 
@@ -499,6 +480,10 @@ export default class ElementWrapper extends Wrapper {
 				);
 			}
 		});
+
+		if (lock) {
+			block.builders.update.addLine(`${lock} = false;`);
+		}
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 		if (this_binding) {
