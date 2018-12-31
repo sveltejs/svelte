@@ -97,15 +97,33 @@ export default class EachBlockWrapper extends Wrapper {
 
 		this.indexName = this.node.index || renderer.component.getUniqueName(`${this.node.context}_index`);
 
+		// hack the sourcemap, so that if data is missing the bug
+		// is easy to find
+		let c = this.node.start + 2;
+		while (renderer.component.source[c] !== 'e') c += 1;
+		renderer.component.code.overwrite(c, c + 4, 'length');
+		const length = `[✂${c}-${c+4}✂]`;
+
+		this.vars = {
+			create_each_block: this.block.name,
+			each_block_value: renderer.component.getUniqueName(`${this.var}_value`),
+			get_each_context: renderer.component.getUniqueName(`get_${this.var}_context`),
+			iterations: block.getUniqueName(`${this.var}_blocks`),
+			length: `[✂${c}-${c+4}✂]`,
+
+			// filled out later
+			anchor: null,
+			mountOrIntro: null
+		};
+
 		node.contexts.forEach(prop => {
 			this.block.contextOwners.set(prop.key.name, this);
 
-			// TODO this doesn't feel great
-			this.block.bindings.set(prop.key.name, () => ({
+			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.indexName,
 				snippet: `${this.vars.each_block_value}[${this.indexName}]${prop.tail}`
-			}));
+			});
 		});
 
 		if (this.node.index) {
@@ -147,30 +165,15 @@ export default class EachBlockWrapper extends Wrapper {
 		const { renderer } = this;
 		const { component } = renderer;
 
-		// hack the sourcemap, so that if data is missing the bug
-		// is easy to find
-		let c = this.node.start + 2;
-		while (component.source[c] !== 'e') c += 1;
-		component.code.overwrite(c, c + 4, 'length');
-		const length = `[✂${c}-${c+4}✂]`;
-
 		const needsAnchor = this.next
 			? !this.next.isDomNode() :
 			!parentNode || !this.parent.isDomNode();
 
-		this.vars = {
-			anchor: needsAnchor
-				? block.getUniqueName(`${this.var}_anchor`)
-				: (this.next && this.next.var) || 'null',
-			create_each_block: this.block.name,
-			each_block_value: renderer.component.getUniqueName(`${this.var}_value`),
-			get_each_context: renderer.component.getUniqueName(`get_${this.var}_context`),
-			iterations: block.getUniqueName(`${this.var}_blocks`),
-			length: `[✂${c}-${c+4}✂]`,
-			mountOrIntro: (this.block.hasIntroMethod || this.block.hasOutroMethod)
-				? 'i'
-				: 'm'
-		};
+		this.vars.anchor = needsAnchor
+			? block.getUniqueName(`${this.var}_anchor`)
+			: (this.next && this.next.var) || 'null';
+
+		this.vars.mountOrIntro = (this.block.hasIntroMethod || this.block.hasOutroMethod) ? 'i' : 'm';
 
 		this.contextProps = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
 
@@ -212,7 +215,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.addBlock(deindent`
-				if (!${this.vars.each_block_value}.${length}) {
+				if (!${this.vars.each_block_value}.${this.vars.length}) {
 					${each_block_else} = ${this.else.block.name}(#component, ctx);
 					${each_block_else}.c();
 				}
@@ -228,9 +231,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 			if (this.else.block.hasUpdateMethod) {
 				block.builders.update.addBlock(deindent`
-					if (!${this.vars.each_block_value}.${length} && ${each_block_else}) {
+					if (!${this.vars.each_block_value}.${this.vars.length} && ${each_block_else}) {
 						${each_block_else}.p(changed, ctx);
-					} else if (!${this.vars.each_block_value}.${length}) {
+					} else if (!${this.vars.each_block_value}.${this.vars.length}) {
 						${each_block_else} = ${this.else.block.name}(#component, ctx);
 						${each_block_else}.c();
 						${each_block_else}.${mountOrIntro}(${initialMountNode}, ${this.vars.anchor});
@@ -241,7 +244,7 @@ export default class EachBlockWrapper extends Wrapper {
 				`);
 			} else {
 				block.builders.update.addBlock(deindent`
-					if (${this.vars.each_block_value}.${length}) {
+					if (${this.vars.each_block_value}.${this.vars.length}) {
 						if (${each_block_else}) {
 							${each_block_else}.d(1);
 							${each_block_else} = null;

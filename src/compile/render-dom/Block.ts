@@ -29,7 +29,7 @@ export default class Block {
 
 	dependencies: Set<string>;
 
-	bindings: Map<string, () => { object: string, property: string, snippet: string }>;
+	bindings: Map<string, { object: string, property: string, snippet: string }>;
 	contextOwners: Map<string, EachBlockWrapper>;
 
 	builders: {
