@@ -8,6 +8,7 @@ node_modules
 /internal.*
 /store.js
 /easing.js
+/motion.js
 /transition.js
 /scratch/
 /coverage/

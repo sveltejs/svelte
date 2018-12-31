@@ -68,7 +68,7 @@ export default [
 	},
 
 	// runtime API
-	...['index', 'store', 'easing', 'transition'].map(name => ({
+	...['index', 'store', 'easing', 'motion', 'transition'].map(name => ({
 		input: `${name}.mjs`,
 		output: {
 			file: `${name}.js`,
