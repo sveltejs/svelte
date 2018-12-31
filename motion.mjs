@@ -90,7 +90,7 @@ function get_interpolator(a, b) {
 	throw new Error(`Cannot interpolate ${type} values`);
 }
 
-export function tween(value, defaults = {}) {
+export function tweened(value, defaults = {}) {
 	const store = writable(value);
 
 	let task;
