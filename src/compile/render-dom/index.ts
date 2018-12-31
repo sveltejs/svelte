@@ -257,6 +257,7 @@ export default function dom(
 	const filtered_props = component.props.filter(prop => {
 		if (component.hoistable_names.has(prop.name)) return false;
 		if (component.imported_declarations.has(prop.name)) return false;
+		if (prop.name[0] === '$') return false;
 		return true;
 	});
 
