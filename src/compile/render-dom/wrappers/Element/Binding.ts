@@ -21,11 +21,15 @@ export default class BindingWrapper {
 	parent: ElementWrapper;
 
 	object: string;
-	handler: any; // TODO
-	updateDom: string;
+	handler: {
+		usesContext: boolean;
+		mutation: string;
+		contextual_dependencies: Set<string>
+	};
+	snippet: string;
 	initialUpdate: string;
+	isReadOnly: boolean;
 	needsLock: boolean;
-	updateCondition: string;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper) {
 		this.node = node;
@@ -51,45 +55,34 @@ export default class BindingWrapper {
 
 			eachBlock.hasBinding = true;
 		}
-	}
 
-	isReadOnlyMediaAttribute() {
-		return readOnlyMediaAttributes.has(this.node.name);
-	}
-
-	munge(block: Block) {
-		const { parent } = this;
-		const { renderer } = parent;
-
-		const needsLock = (
-			parent.node.name !== 'input' ||
-			!/radio|checkbox|range|color/.test(parent.node.getStaticAttributeValue('type'))
-		);
-
-		const isReadOnly = (
-			(parent.node.isMediaNode() && readOnlyMediaAttributes.has(this.node.name)) ||
-			dimensions.test(this.node.name)
-		);
-
-		let updateConditions: string[] = [];
-
-		const { name } = getObject(this.node.expression.node);
-
-		const snippet = this.node.expression.render();
+		this.object = getObject(this.node.expression.node).name;
 
 		// TODO unfortunate code is necessary because we need to use `ctx`
 		// inside the fragment, but not inside the <script>
 		const contextless_snippet = this.parent.renderer.component.source.slice(this.node.expression.node.start, this.node.expression.node.end);
 
-		// special case: if you have e.g. `<input type=checkbox bind:checked=selected.done>`
-		// and `selected` is an object chosen with a <select>, then when `checked` changes,
-		// we need to tell the component to update all the values `selected` might be
-		// pointing to
-		// TODO should this happen in preprocess?
+		// view to model
+		this.handler = getEventHandler(this, parent.renderer, block, this.object, contextless_snippet);
+
+		this.snippet = this.node.expression.render();
+
+		const type = parent.node.getStaticAttributeValue('type');
+
+		this.isReadOnly = (
+			dimensions.test(this.node.name) ||
+			(parent.node.isMediaNode() && readOnlyMediaAttributes.has(this.node.name)) ||
+			(parent.node.name === 'input' && type === 'file') // TODO others?
+		);
+
+		this.needsLock = this.node.name === 'currentTime'; // TODO others?
+	}
+
+	get_dependencies() {
 		const dependencies = new Set(this.node.expression.dependencies);
 
 		this.node.expression.dependencies.forEach((prop: string) => {
-			const indirectDependencies = renderer.component.indirectDependencies.get(prop);
+			const indirectDependencies = this.parent.renderer.component.indirectDependencies.get(prop);
 			if (indirectDependencies) {
 				indirectDependencies.forEach(indirectDependency => {
 					dependencies.add(indirectDependency);
@@ -97,48 +90,19 @@ export default class BindingWrapper {
 			}
 		});
 
-		// view to model
-		const valueFromDom = getValueFromDom(renderer, this.parent, this);
-		const handler = getEventHandler(this, renderer, block, name, contextless_snippet, valueFromDom);
+		return dependencies;
+	}
 
-		// model to view
-		let updateDom = getDomUpdater(parent, this, snippet);
-		let initialUpdate = updateDom;
+	isReadOnlyMediaAttribute() {
+		return readOnlyMediaAttributes.has(this.node.name);
+	}
 
-		// special cases
-		if (this.node.name === 'group') {
-			const bindingGroup = getBindingGroup(renderer, this.node.expression.node);
+	render(block: Block, lock: string) {
+		if (this.isReadOnly) return;
 
-			block.builders.hydrate.addLine(
-				`(#component.$$.binding_groups[${bindingGroup}] || (#component.$$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
-			);
+		const { parent } = this;
 
-			block.builders.destroy.addLine(
-				`#component.$$.binding_groups[${bindingGroup}].splice(#component.$$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
-			);
-		}
-
-		if (this.node.name === 'currentTime' || this.node.name === 'volume') {
-			updateConditions.push(`!isNaN(${snippet})`);
-
-			if (this.node.name === 'currentTime') initialUpdate = null;
-		}
-
-		if (this.node.name === 'paused') {
-			// this is necessary to prevent audio restarting by itself
-			const last = block.getUniqueName(`${parent.var}_is_paused`);
-			block.addVariable(last, 'true');
-
-			updateConditions.push(`${last} !== (${last} = ${snippet})`);
-			updateDom = `${parent.var}[${last} ? "pause" : "play"]();`;
-			initialUpdate = null;
-		}
-
-		// bind:offsetWidth and bind:offsetHeight
-		if (dimensions.test(this.node.name)) {
-			initialUpdate = null;
-			updateDom = null;
-		}
+		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
 
 		const dependencyArray = [...this.node.expression.dynamic_dependencies]
 
@@ -150,27 +114,58 @@ export default class BindingWrapper {
 			)
 		}
 
-		return {
-			name: this.node.name,
-			object: name,
-			handler,
-			snippet,
-			usesContext: handler.usesContext,
-			updateDom: updateDom,
-			initialUpdate: initialUpdate,
-			needsLock: !isReadOnly && needsLock,
-			updateCondition: updateConditions.length ? updateConditions.join(' && ') : undefined,
-			isReadOnlyMediaAttribute: this.isReadOnlyMediaAttribute(),
-			dependencies,
-			contextual_dependencies: this.node.expression.contextual_dependencies
-		};
+		// model to view
+		let updateDom = getDomUpdater(parent, this);
+
+		// special cases
+		switch (this.node.name) {
+			case 'group':
+				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
+
+				block.builders.hydrate.addLine(
+					`(#component.$$.binding_groups[${bindingGroup}] || (#component.$$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
+				);
+
+				block.builders.destroy.addLine(
+					`#component.$$.binding_groups[${bindingGroup}].splice(#component.$$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
+				);
+				break;
+
+			case 'currentTime':
+			case 'volume':
+				updateConditions.push(`!isNaN(${this.snippet})`);
+				break;
+
+			case 'paused':
+				// this is necessary to prevent audio restarting by itself
+				const last = block.getUniqueName(`${parent.var}_is_paused`);
+				block.addVariable(last, 'true');
+
+				updateConditions.push(`${last} !== (${last} = ${this.snippet})`);
+				updateDom = `${parent.var}[${last} ? "pause" : "play"]();`;
+				break;
+
+			case 'value':
+				if (parent.getStaticAttributeValue('type') === 'file') {
+					updateDom = null;
+				}
+		}
+
+		if (updateDom) {
+			block.builders.update.addLine(
+				updateConditions.length ? `if (${updateConditions.join(' && ')}) ${updateDom}` : updateDom
+			);
+		}
+
+		if (!/(currentTime|paused)/.test(this.node.name)) {
+			block.builders.mount.addBlock(updateDom);
+		}
 	}
 }
 
 function getDomUpdater(
 	element: ElementWrapper,
-	binding: BindingWrapper,
-	snippet: string
+	binding: BindingWrapper
 ) {
 	const { node } = element;
 
@@ -184,21 +179,21 @@ function getDomUpdater(
 
 	if (node.name === 'select') {
 		return node.getStaticAttributeValue('multiple') === true ?
-			`@selectOptions(${element.var}, ${snippet})` :
-			`@selectOption(${element.var}, ${snippet})`;
+			`@selectOptions(${element.var}, ${binding.snippet})` :
+			`@selectOption(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
 		const type = node.getStaticAttributeValue('type');
 
 		const condition = type === 'checkbox'
-			? `~${snippet}.indexOf(${element.var}.__value)`
-			: `${element.var}.__value === ${snippet}`;
+			? `~${binding.snippet}.indexOf(${element.var}.__value)`
+			: `${element.var}.__value === ${binding.snippet}`;
 
 		return `${element.var}.checked = ${condition};`
 	}
 
-	return `${element.var}.${binding.node.name} = ${snippet};`;
+	return `${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
 function getBindingGroup(renderer: Renderer, value: Node) {
@@ -221,9 +216,10 @@ function getEventHandler(
 	renderer: Renderer,
 	block: Block,
 	name: string,
-	snippet: string,
-	value: string
+	snippet: string
 ) {
+	const value = getValueFromDom(renderer, binding.parent, binding);
+
 	if (binding.node.isContextual) {
 		let tail = '';
 		if (binding.node.expression.node.type === 'MemberExpression') {
@@ -231,7 +227,7 @@ function getEventHandler(
 			tail = renderer.component.source.slice(start, end);
 		}
 
-		const { object, property, snippet } = block.bindings.get(name)();
+		const { object, property, snippet } = block.bindings.get(name);
 
 		return {
 			usesContext: true,
