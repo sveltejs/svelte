@@ -90,7 +90,6 @@ export default class ElementWrapper extends Wrapper {
 	attributes: AttributeWrapper[];
 	bindings: Binding[];
 	classDependencies: string[];
-	initialUpdate: string;
 
 	slotOwner?: InlineComponentWrapper;
 	selectBindingDependencies?: Set<string>;
@@ -137,24 +136,10 @@ export default class ElementWrapper extends Wrapper {
 			return new AttributeWrapper(this, block, attribute);
 		});
 
-		let has_bindings;
-		const binding_lookup = {};
-		this.node.bindings.forEach(binding => {
-			binding_lookup[binding.name] = binding;
-			has_bindings = true;
-		});
-
-		const type = this.node.getStaticAttributeValue('type');
-
 		// ordinarily, there'll only be one... but we need to handle
 		// the rare case where an element can have multiple bindings,
 		// e.g. <audio bind:paused bind:currentTime>
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
-
-		// TODO remove this, it's just useful during refactoring
-		if (has_bindings && !this.bindings.length) {
-			throw new Error(`no binding was created`);
-		}
 
 		if (node.intro || node.outro) {
 			if (node.intro) block.addIntro();
@@ -305,10 +290,6 @@ export default class ElementWrapper extends Wrapper {
 		this.addActions(block);
 		this.addClasses(block);
 
-		if (this.initialUpdate) {
-			block.builders.mount.addBlock(this.initialUpdate);
-		}
-
 		if (nodes && this.renderer.options.hydratable) {
 			block.builders.claim.addLine(
 				`${nodes}.forEach(@detachNode);`
@@ -389,12 +370,7 @@ export default class ElementWrapper extends Wrapper {
 
 		renderer.component.has_reactive_assignments = true;
 
-		const needsLock = this.node.name !== 'input' || !/radio|checkbox|range|color/.test(this.getStaticAttributeValue('type'));
-
-		// TODO munge in constructor
-		const mungedBindings = this.bindings.map(binding => binding.munge(block));
-
-		const lock = mungedBindings.some(binding => binding.needsLock) ?
+		const lock = this.bindings.some(binding => binding.needsLock) ?
 			block.getUniqueName(`${this.var}_updating`) :
 			null;
 
@@ -403,9 +379,9 @@ export default class ElementWrapper extends Wrapper {
 		const groups = events
 			.map(event => ({
 				events: event.eventNames,
-				bindings: mungedBindings
-					.filter(binding => binding.name !== 'this')
-					.filter(binding => event.filter(this.node, binding.name))
+				bindings: this.bindings
+					.filter(binding => binding.node.name !== 'this')
+					.filter(binding => event.filter(this.node, binding.node.name))
 			}))
 			.filter(group => group.bindings.length);
 
@@ -414,6 +390,7 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.declarations.push(handler);
 			renderer.component.template_references.add(handler);
 
+			// TODO figure out how to handle locks
 			const needsLock = group.bindings.some(binding => binding.needsLock);
 
 			const dependencies = new Set();
@@ -421,21 +398,12 @@ export default class ElementWrapper extends Wrapper {
 
 			group.bindings.forEach(binding => {
 				// TODO this is a mess
-				addToSet(dependencies, binding.dependencies);
-				addToSet(contextual_dependencies, binding.contextual_dependencies);
+				addToSet(dependencies, binding.get_dependencies());
+				addToSet(contextual_dependencies, binding.node.expression.contextual_dependencies);
 				addToSet(contextual_dependencies, binding.handler.contextual_dependencies);
 
-				if (!binding.updateDom) return;
-
-				const updateConditions = needsLock ? [`!${lock}`] : [];
-				if (binding.updateCondition) updateConditions.push(binding.updateCondition);
-
-				block.builders.update.addLine(
-					updateConditions.length ? `if (${updateConditions.join(' && ')}) ${binding.updateDom}` : binding.updateDom
-				);
+				binding.render(block, lock);
 			});
-
-			const mutations = group.bindings.map(binding => binding.handler.mutation).filter(Boolean).join('\n');
 
 			// media bindings — awkward special case. The native timeupdate events
 			// fire too infrequently, so we need to take matters into our
@@ -446,48 +414,34 @@ export default class ElementWrapper extends Wrapper {
 				block.addVariable(animation_frame);
 			}
 
-			// TODO figure out how to handle locks
+			const has_local_function = contextual_dependencies.size > 0 || needsLock || animation_frame;
 
 			let callee;
 
 			// TODO dry this out — similar code for event handlers and component bindings
-			if (contextual_dependencies.size > 0) {
-				const deps = Array.from(contextual_dependencies);
-
+			if (has_local_function) {
+				// need to create a block-local function that calls an instance-level function
 				block.builders.init.addBlock(deindent`
 					function ${handler}() {
-						ctx.${handler}.call(this, ctx);
-					}
-				`);
-
-				this.renderer.component.partly_hoisted.push(deindent`
-					function ${handler}({ ${deps.join(', ')} }) {
-						${
-							animation_frame && deindent`
-								cancelAnimationFrame(${animation_frame});
-								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-						}
-						${mutations.length > 0 && mutations}
-						${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
+						${animation_frame && deindent`
+						cancelAnimationFrame(${animation_frame});
+						if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`}
+						${needsLock && `${lock} = true;`}
+						ctx.${handler}.call(${this.var}${contextual_dependencies.size > 0 ? ', ctx' : ''});
 					}
 				`);
 
 				callee = handler;
 			} else {
-				this.renderer.component.partly_hoisted.push(deindent`
-					function ${handler}() {
-						${
-							animation_frame && deindent`
-								cancelAnimationFrame(${animation_frame});
-								if (!${this.var}.paused) ${animation_frame} = requestAnimationFrame(${handler});`
-						}
-						${mutations.length > 0 && mutations}
-						${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
-					}
-				`);
-
 				callee = `ctx.${handler}`;
 			}
+
+			this.renderer.component.partly_hoisted.push(deindent`
+				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${[...contextual_dependencies].join(', ')} }` : ``}) {
+					${group.bindings.map(b => b.handler.mutation)}
+					${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
+				}
+			`);
 
 			group.events.forEach(name => {
 				if (name === 'resize') {
@@ -513,9 +467,10 @@ export default class ElementWrapper extends Wrapper {
 				.map(binding => `${binding.snippet} === void 0`)
 				.join(' || ');
 
-			if (this.node.name === 'select' || group.bindings.find(binding => binding.name === 'indeterminate' || binding.isReadOnlyMediaAttribute)) {
+			if (this.node.name === 'select' || group.bindings.find(binding => binding.node.name === 'indeterminate' || binding.isReadOnlyMediaAttribute())) {
+				const callback = has_local_function ? handler : `() => ${callee}.call(${this.var})`;
 				block.builders.hydrate.addLine(
-					`if (${someInitialStateIsUndefined}) @add_render_callback(() => ${callee}.call(${this.var}));`
+					`if (${someInitialStateIsUndefined}) @add_render_callback(${callback});`
 				);
 			}
 
@@ -526,7 +481,9 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		this.initialUpdate = mungedBindings.map(binding => binding.initialUpdate).filter(Boolean).join('\n');
+		if (lock) {
+			block.builders.update.addLine(`${lock} = false;`);
+		}
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 		if (this_binding) {
@@ -534,7 +491,7 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.declarations.push(name);
 			renderer.component.template_references.add(name);
 
-			const { handler, object } = this_binding.munge(block);
+			const { handler, object } = this_binding;
 
 			renderer.component.partly_hoisted.push(deindent`
 				function ${name}($$node) {
@@ -783,10 +740,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		return null;
-	}
-
-	isMediaNode() {
-		return this.node.name === 'audio' || this.node.name === 'video';
 	}
 
 	remount(name: string) {

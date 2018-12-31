@@ -7,7 +7,6 @@ export default class Binding extends Node {
 	name: string;
 	expression: Expression;
 	isContextual: boolean;
-	usesContext: boolean;
 	obj: string;
 	prop: string;
 
@@ -34,13 +33,9 @@ export default class Binding extends Node {
 			prop = `[✂${this.expression.node.property.start}-${this.expression.node.property.end}✂]`;
 			if (!this.expression.node.computed) prop = `'${prop}'`;
 			obj = `[✂${this.expression.node.object.start}-${this.expression.node.object.end}✂]`;
-
-			this.usesContext = true;
 		} else {
 			obj = 'ctx';
 			prop = `'${name}'`;
-
-			this.usesContext = scope.names.has(name);
 		}
 
 		this.obj = obj;

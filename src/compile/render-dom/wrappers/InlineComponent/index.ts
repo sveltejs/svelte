@@ -211,7 +211,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					// bind:x={y} — we can't just do `y = x`, we need to
 					// to `array[index] = x;
 					const { name } = binding.expression.node;
-					const { object, property, snippet } = block.bindings.get(name)();
+					const { object, property, snippet } = block.bindings.get(name);
 					lhs = snippet;
 
 					// TODO we need to invalidate... something
@@ -263,7 +263,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				// bind:x={y} — we can't just do `y = x`, we need to
 				// to `array[index] = x;
 				const { name } = binding.expression.node;
-				const { object, property, snippet } = block.bindings.get(name)();
+				const { object, property, snippet } = block.bindings.get(name);
 				lhs = snippet;
 				contextual_dependencies.push(object, property);
 			}
