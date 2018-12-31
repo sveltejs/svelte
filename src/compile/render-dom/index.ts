@@ -174,10 +174,11 @@ export default function dom(
 						code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
 					} else {
 						names.forEach(name => {
-							if (scope.findOwner(name) === component.instance_scope) {
-								pending_assignments.add(name);
-								component.has_reactive_assignments = true;
-							}
+							if (component.imported_declarations.has(name)) return;
+							if (scope.findOwner(name) !== component.instance_scope) return;
+
+							pending_assignments.add(name);
+							component.has_reactive_assignments = true;
 						});
 					}
 				}
@@ -185,10 +186,11 @@ export default function dom(
 				else if (node.type === 'UpdateExpression') {
 					const { name } = getObject(node.argument);
 
-					if (scope.findOwner(name) === component.instance_scope) {
-						pending_assignments.add(name);
-						component.has_reactive_assignments = true;
-					}
+					if (component.imported_declarations.has(name)) return;
+					if (scope.findOwner(name) !== component.instance_scope) return;
+
+					pending_assignments.add(name);
+					component.has_reactive_assignments = true;
 				}
 
 				if (pending_assignments.size > 0) {
