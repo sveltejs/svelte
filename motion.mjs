@@ -293,7 +293,7 @@ export function spring(value, opts = {}) {
 
 	const spring = {
 		set,
-		update: (fn, opts) => set(fn(target_value, value), opts),
+		update: fn => set(fn(target_value, value)),
 		subscribe: store.subscribe,
 		stiffness,
 		damping
