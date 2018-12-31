@@ -264,17 +264,19 @@ export default class Expression {
 							code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
 						} else {
 							names.forEach(name => {
-								if (!scope.declarations.has(name)) {
-									pending_assignments.add(name);
-								}
+								if (scope.declarations.has(name)) return;
+								if (component.imported_declarations.has(name)) return;
+
+								pending_assignments.add(name);
 							});
 						}
 					} else if (node.type === 'UpdateExpression') {
 						const { name } = getObject(node.argument);
 
-						if (!scope.declarations.has(name)) {
-							pending_assignments.add(name);
-						}
+						if (scope.declarations.has(name)) return;
+						if (component.imported_declarations.has(name)) return;
+
+						pending_assignments.add(name);
 					}
 				} else {
 					if (node.type === 'AssignmentExpression') {
