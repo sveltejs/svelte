@@ -24,13 +24,13 @@ export function group_outros() {
 	};
 }
 
-export function wrapTransition(component, node, fn, params, intro) {
-	let config = fn.call(component, node, params);
+export function create_transition(node, fn, params, intro) {
+	let config = fn(node, params);
 	let duration;
 	let ease;
 	let cssText;
 
-	let initialised = false;
+	let ready = false;
 
 	let t = intro ? 0 : 1;
 	let running = false;
@@ -106,14 +106,14 @@ export function wrapTransition(component, node, fn, params, intro) {
 			callback: callback || noop
 		};
 
-		if (intro && !initialised) {
+		if (intro && !ready) {
 			if (config.css && config.delay) {
 				cssText = node.style.cssText;
 				node.style.cssText += config.css(0, 1);
 			}
 
 			if (config.tick) config.tick(0, 1);
-			initialised = true;
+			ready = true;
 		}
 
 		if (!b) {
