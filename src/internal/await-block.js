@@ -11,7 +11,7 @@ export function handlePromise(promise, info) {
 		info.resolved = key && { [key]: value };
 
 		const child_ctx = assign(assign({}, info.ctx), info.resolved);
-		const block = type && (info.current = type)(info.component, child_ctx);
+		const block = type && (info.current = type)(info.$$, child_ctx);
 
 		if (info.block) {
 			if (info.blocks) {
@@ -32,7 +32,7 @@ export function handlePromise(promise, info) {
 			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
 
 			// TODO is some of this redundant?
-			run_all(info.component.$$.after_render);
+			run_all(info.$$.after_render);
 			flush();
 		}
 
