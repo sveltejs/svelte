@@ -9,7 +9,7 @@ function get_each_context(ctx, list, i) {
 }
 
 // (1:0) {#each comments as comment, i}
-function create_each_block(component, ctx) {
+function create_each_block($$, ctx) {
 	var div, strong, text0, text1, span, text2_value = ctx.comment.author, text2, text3, text4_value = ctx.elapsed(ctx.comment.time, ctx.time), text4, text5, text6, raw_value = ctx.comment.html, raw_before;
 
 	return {
@@ -67,7 +67,7 @@ function create_each_block(component, ctx) {
 	};
 }
 
-function create_fragment(component, ctx) {
+function create_fragment($$, ctx) {
 	var text0, p, text1, current;
 
 	var each_value = ctx.comments;
@@ -75,7 +75,7 @@ function create_fragment(component, ctx) {
 	var each_blocks = [];
 
 	for (var i = 0; i < each_value.length; i += 1) {
-		each_blocks[i] = create_each_block(component, get_each_context(ctx, each_value, i));
+		each_blocks[i] = create_each_block($$, get_each_context(ctx, each_value, i));
 	}
 
 	return {
@@ -110,7 +110,7 @@ function create_fragment(component, ctx) {
 					if (each_blocks[i]) {
 						each_blocks[i].p(changed, child_ctx);
 					} else {
-						each_blocks[i] = create_each_block(component, child_ctx);
+						each_blocks[i] = create_each_block($$, child_ctx);
 						each_blocks[i].c();
 						each_blocks[i].m(text0.parentNode, text0);
 					}
