@@ -31,8 +31,6 @@ export function handlePromise(promise, info) {
 			block.c();
 			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
 
-			// TODO is some of this redundant?
-			run_all(info.$$.after_render);
 			flush();
 		}
 
