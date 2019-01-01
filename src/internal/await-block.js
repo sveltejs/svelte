@@ -1,4 +1,4 @@
-import { assign, run_all, isPromise } from './utils.js';
+import { assign, isPromise } from './utils.js';
 import { group_outros } from './transitions.js';
 import { flush } from '../internal/scheduler.js';
 
