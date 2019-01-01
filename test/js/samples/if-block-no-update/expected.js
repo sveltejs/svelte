@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, createComment, createElement, detachNode, flush, init, insert, run, safe_not_equal } from "svelte/internal";
 
 // (3:0) {:else}
-function create_else_block(component, ctx) {
+function create_else_block($$, ctx) {
 	var p;
 
 	return {
@@ -24,7 +24,7 @@ function create_else_block(component, ctx) {
 }
 
 // (1:0) {#if foo}
-function create_if_block(component, ctx) {
+function create_if_block($$, ctx) {
 	var p;
 
 	return {
@@ -45,7 +45,7 @@ function create_if_block(component, ctx) {
 	};
 }
 
-function create_fragment(component, ctx) {
+function create_fragment($$, ctx) {
 	var if_block_anchor, current;
 
 	function select_block_type(ctx) {
@@ -54,7 +54,7 @@ function create_fragment(component, ctx) {
 	}
 
 	var current_block_type = select_block_type(ctx);
-	var if_block = current_block_type(component, ctx);
+	var if_block = current_block_type($$, ctx);
 
 	return {
 		c() {
@@ -71,7 +71,7 @@ function create_fragment(component, ctx) {
 		p(changed, ctx) {
 			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
 				if_block.d(1);
-				if_block = current_block_type(component, ctx);
+				if_block = current_block_type($$, ctx);
 				if_block.c();
 				if_block.m(if_block_anchor.parentNode, if_block_anchor);
 			}
