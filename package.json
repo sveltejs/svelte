@@ -63,7 +63,7 @@
     "eslint-plugin-html": "^4.0.3",
     "eslint-plugin-import": "^2.11.0",
     "estree-walker": "^0.6.0",
-    "is-reference": "^1.1.0",
+    "is-reference": "^1.1.1",
     "jsdom": "^11.8.0",
     "kleur": "^3.0.0",
     "locate-character": "^2.0.5",
