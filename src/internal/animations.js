@@ -13,8 +13,8 @@ export function wrapAnimation(node, from, fn, params) {
 	const duration = 'duration' in info ? info.duration : 300;
 	const delay = 'delay' in info ? info.delay : 0;
 	const ease = info.easing || linear;
-	const start = window.performance.now() + delay;
-	const end = start + duration;
+	const start_time = window.performance.now() + delay;
+	const end = start_time + duration;
 
 	const program = {
 		a: 0,
@@ -22,66 +22,59 @@ export function wrapAnimation(node, from, fn, params) {
 		b: 1,
 		delta: 1,
 		duration,
-		start,
+		start: start_time,
 		end
 	};
 
 	const cssText = node.style.cssText;
 
-	const animation = {
-		pending: delay ? program : null,
-		program: delay ? null : program,
-		running: true,
+	function start() {
+		if (info.css) {
+			if (delay) node.style.cssText = cssText;
 
-		start() {
-			if (info.css) {
-				if (delay) node.style.cssText = cssText;
+			program.name = create_rule(program, ease, info.css);
 
-				program.name = create_rule(program, ease, info.css);
+			node.style.animation = (node.style.animation || '')
+				.split(', ')
+				.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
+				.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
+				.join(', ');
+		}
 
-				node.style.animation = (node.style.animation || '')
-					.split(', ')
-					.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
-					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
-					.join(', ');
-			}
+		running_program = program;
+		pending_program = null;
+	}
 
-			animation.program = program;
-			animation.pending = null;
-		},
+	let running = true;
+	let pending_program = delay ? program : null;
+	let running_program = delay ? null : program;
 
-		update: now => {
+	function stop() {
+		if (info.css) delete_rule(node, program.name);
+		running = false;
+	}
+
+	const { abort, promise } = loop(now => {
+		if (pending_program && now >= pending_program.start) {
+			start();
+		}
+
+		if (running_program && now >= running_program.end) {
+			if (info.tick) info.tick(1, 0);
+			stop();
+		}
+
+		if (!running) {
+			return false;
+		}
+
+		if (running_program) {
 			const p = now - program.start;
 			const t = program.a + program.delta * ease(p / program.duration);
 			if (info.tick) info.tick(t, 1 - t);
-		},
-
-		done() {
-			if (info.tick) info.tick(1, 0);
-			animation.stop();
-		},
-
-		stop() {
-			if (info.css) delete_rule(node, program.name);
-			animation.running = false;
-		}
-	};
-
-	const { abort, promise } = loop(() => {
-		const now = window.performance.now();
-
-		if (animation.program && now >= animation.program.end) {
-			animation.done();
 		}
 
-		if (animation.pending && now >= animation.pending.start) {
-			animation.start(animation.pending);
-		}
-
-		if (animation.running) {
-			animation.update(now);
-			return true;
-		}
+		return true;
 	});
 
 	if (info.tick) info.tick(0, 1);
@@ -89,10 +82,11 @@ export function wrapAnimation(node, from, fn, params) {
 	if (delay) {
 		if (info.css) node.style.cssText += info.css(0, 1);
 	} else {
-		animation.start();
+		start();
 	}
 
-	return animation;
+	// TODO just return the function
+	return { stop };
 }
 
 export function fixPosition(node) {

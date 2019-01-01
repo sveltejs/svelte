@@ -3,7 +3,7 @@ let running = false;
 
 function run_tasks() {
 	tasks.forEach(task => {
-		if (!task[0]()) {
+		if (!task[0](window.performance.now())) {
 			tasks.delete(task);
 			task[1]();
 		}
