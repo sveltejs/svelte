@@ -3,6 +3,8 @@ Adapted from https://github.com/mattdesl
 Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
 */
 
+export { identity as linear } from './internal';
+
 export function backInOut(t) {
 	var s = 1.70158 * 1.525;
 	if ((t *= 2) < 1) return 0.5 * (t * t * ((s + 1) * t - s));
@@ -110,10 +112,6 @@ export function expoIn(t) {
 
 export function expoOut(t) {
 	return t === 1.0 ? t : 1.0 - Math.pow(2.0, -10.0 * t);
-}
-
-export function linear(t) {
-	return t;
 }
 
 export function quadInOut(t) {

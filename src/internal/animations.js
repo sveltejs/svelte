@@ -1,87 +1,85 @@
-import { transitionManager, linear, generateRule, hash } from './transitions.js';
+import { identity as linear, noop } from './utils.js';
+import { loop } from './loop.js';
+import { create_rule, delete_rule } from './style_manager.js';
 
-export function wrapAnimation(node, from, fn, params) {
+export function animate(node, from, fn, params) {
 	if (!from) return;
 
 	const to = node.getBoundingClientRect();
 	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return;
 
-	const info = fn(node, { from, to }, params);
+	const {
+		delay = 0,
+		duration = 300,
+		easing = linear,
+		start: start_time = window.performance.now() + delay,
+		end = start_time + duration,
+		tick = noop,
+		css
+	} = fn(node, { from, to }, params);
 
-	const duration = 'duration' in info ? info.duration : 300;
-	const delay = 'delay' in info ? info.delay : 0;
-	const ease = info.easing || linear;
-	const start = window.performance.now() + delay;
-	const end = start + duration;
-
-	const program = {
-		a: 0,
-		t: 0,
-		b: 1,
-		delta: 1,
-		duration,
-		start,
-		end
-	};
+	let running = true;
+	let started = false;
+	let name;
 
 	const cssText = node.style.cssText;
 
-	const animation = {
-		pending: delay ? program : null,
-		program: delay ? null : program,
-		running: true,
+	function start() {
+		if (css) {
+			if (delay) node.style.cssText = cssText;
 
-		start() {
-			if (info.css) {
-				if (delay) node.style.cssText = cssText;
+			name = create_rule({ a: 0, b: 1, delta: 1, duration }, easing, css);
 
-				const rule = generateRule(program, ease, info.css);
-				program.name = `__svelte_${hash(rule)}`;
-
-				transitionManager.addRule(rule, program.name);
-
-				node.style.animation = (node.style.animation || '')
-					.split(', ')
-					.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
-					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
-					.join(', ');
-			}
-
-			animation.program = program;
-			animation.pending = null;
-		},
-
-		update: now => {
-			const p = now - program.start;
-			const t = program.a + program.delta * ease(p / program.duration);
-			if (info.tick) info.tick(t, 1 - t);
-		},
-
-		done() {
-			if (info.tick) info.tick(1, 0);
-			animation.stop();
-		},
-
-		stop() {
-			if (info.css) transitionManager.deleteRule(node, program.name);
-			animation.running = false;
+			node.style.animation = (node.style.animation || '')
+				.split(', ')
+				.filter(anim => anim && !/__svelte/.test(anim))
+				.concat(`${name} ${duration}ms linear 1 forwards`)
+				.join(', ');
 		}
-	};
 
-	transitionManager.add(animation);
-
-	if (info.tick) info.tick(0, 1);
-
-	if (delay) {
-		if (info.css) node.style.cssText += info.css(0, 1);
-	} else {
-		animation.start();
+		started = true;
 	}
 
-	return animation;
+	function stop() {
+		if (css) delete_rule(node, name);
+		running = false;
+	}
+
+	const { abort, promise } = loop(now => {
+		if (!started && now >= start_time) {
+			start();
+		}
+
+		if (started && now >= end) {
+			tick(1, 0);
+			stop();
+		}
+
+		if (!running) {
+			return false;
+		}
+
+		if (started) {
+			const p = now - start_time;
+			const t = 0 + 1 * easing(p / duration);
+			tick(t, 1 - t);
+		}
+
+		return true;
+	});
+
+	if (delay) {
+		if (css) node.style.cssText += css(0, 1);
+	} else {
+		start();
+	}
+
+	tick(0, 1);
+
+	return stop;
 }
 
-export function fixPosition(node) {
+export function fix_position(node) {
 	const style = getComputedStyle(node);
 
 	if (style.position !== 'absolute' && style.position !== 'fixed') {

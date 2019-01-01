@@ -1,256 +1,175 @@
-import { createElement } from './dom.js';
-import { noop, run } from './utils.js';
+import { identity as linear, noop, run } from './utils.js';
+import { loop } from './loop.js';
+import { create_rule, delete_rule } from './style_manager.js';
 
-export function linear(t) {
-	return t;
-}
+let promise;
 
-export function generateRule({ a, b, delta, duration }, ease, fn) {
-	const step = 16.666 / duration;
-	let keyframes = '{\n';
-
-	for (let p = 0; p <= 1; p += step) {
-		const t = a + delta * ease(p);
-		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
+function wait() {
+	if (!promise) {
+		promise = Promise.resolve();
+		promise.then(() => {
+			promise = null;
+		});
 	}
 
-	return keyframes + `100% {${fn(b, 1 - b)}}\n}`;
+	return promise;
 }
 
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
-export function hash(str) {
-	let hash = 5381;
-	let i = str.length;
+let outros;
 
-	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
-	return hash >>> 0;
-}
-
-export function wrapTransition(component, node, fn, params, intro) {
-	let obj = fn.call(component, node, params);
-	let duration;
-	let ease;
-	let cssText;
-
-	let initialised = false;
-
-	return {
-		t: intro ? 0 : 1,
-		running: false,
-		program: null,
-		pending: null,
-
-		run(b, callback) {
-			if (typeof obj === 'function') {
-				transitionManager.wait().then(() => {
-					obj = obj();
-					this._run(b, callback);
-				});
-			} else {
-				this._run(b, callback);
-			}
-		},
-
-		_run(b, callback) {
-			duration = obj.duration || 300;
-			ease = obj.easing || linear;
-
-			const program = {
-				start: window.performance.now() + (obj.delay || 0),
-				b,
-				callback: callback || noop
-			};
-
-			if (intro && !initialised) {
-				if (obj.css && obj.delay) {
-					cssText = node.style.cssText;
-					node.style.cssText += obj.css(0, 1);
-				}
-
-				if (obj.tick) obj.tick(0, 1);
-				initialised = true;
-			}
-
-			if (!b) {
-				program.group = outros.current;
-				outros.current.remaining += 1;
-			}
-
-			if (obj.delay) {
-				this.pending = program;
-			} else {
-				this.start(program);
-			}
-
-			if (!this.running) {
-				this.running = true;
-				transitionManager.add(this);
-			}
-		},
-
-		start(program) {
-			node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}start`));
-
-			program.a = this.t;
-			program.delta = program.b - program.a;
-			program.duration = duration * Math.abs(program.b - program.a);
-			program.end = program.start + program.duration;
-
-			if (obj.css) {
-				if (obj.delay) node.style.cssText = cssText;
-
-				const rule = generateRule(program, ease, obj.css);
-				transitionManager.addRule(rule, program.name = '__svelte_' + hash(rule));
-
-				node.style.animation = (node.style.animation || '')
-					.split(', ')
-					.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
-					.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
-					.join(', ');
-			}
-
-			this.program = program;
-			this.pending = null;
-		},
-
-		update(now) {
-			const program = this.program;
-			if (!program) return;
-
-			const p = now - program.start;
-			this.t = program.a + program.delta * ease(p / program.duration);
-			if (obj.tick) obj.tick(this.t, 1 - this.t);
-		},
-
-		done() {
-			const program = this.program;
-			this.t = program.b;
-
-			if (obj.tick) obj.tick(this.t, 1 - this.t);
-
-			node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}end`));
-
-			if (!program.b && !program.invalidated) {
-				program.group.callbacks.push(() => {
-					program.callback();
-					if (obj.css) transitionManager.deleteRule(node, program.name);
-				});
-
-				if (--program.group.remaining === 0) {
-					program.group.callbacks.forEach(run);
-				}
-			} else {
-				if (obj.css) transitionManager.deleteRule(node, program.name);
-			}
-
-			this.running = !!this.pending;
-		},
-
-		abort(reset) {
-			if (this.program) {
-				if (reset && obj.tick) obj.tick(1, 0);
-				if (obj.css) transitionManager.deleteRule(node, this.program.name);
-				this.program = this.pending = null;
-				this.running = false;
-			}
-		},
-
-		invalidate() {
-			if (this.program) {
-				this.program.invalidated = true;
-			}
-		}
-	};
-}
-
-export let outros = {};
-
-export function groupOutros() {
-	outros.current = {
+export function group_outros() {
+	outros = {
 		remaining: 0,
 		callbacks: []
 	};
 }
 
-export var transitionManager = {
-	running: false,
-	transitions: [],
-	bound: null,
-	stylesheet: null,
-	activeRules: {},
-	promise: null,
+export function create_transition(node, fn, params, intro) {
+	let config = fn(node, params);
+	let cssText;
 
-	add(transition) {
-		this.transitions.push(transition);
+	let ready = !intro;
+	let t = intro ? 0 : 1;
 
-		if (!this.running) {
-			this.running = true;
-			requestAnimationFrame(this.bound || (this.bound = this.next.bind(this)));
+	let running = false;
+	let running_program = null;
+	let pending_program = null;
+
+	function start(program, delay, duration, easing) {
+		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}start`));
+
+		program.a = t;
+		program.d = program.b - program.a;
+		program.duration = duration * Math.abs(program.b - program.a);
+		program.end = program.start + program.duration;
+
+		if (config.css) {
+			if (delay) node.style.cssText = cssText;
+
+			program.name = create_rule(program, easing, config.css);
+
+			node.style.animation = (node.style.animation || '')
+				.split(', ')
+				.filter(anim => anim && (program.d < 0 || !/__svelte/.test(anim)))
+				.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
+				.join(', ');
 		}
-	},
 
-	addRule(rule, name) {
-		if (!this.stylesheet) {
-			const style = createElement('style');
-			document.head.appendChild(style);
-			transitionManager.stylesheet = style.sheet;
+		running_program = program;
+		pending_program = null;
+	}
+
+	function done() {
+		const program = running_program;
+		running_program = null;
+
+		t = program.b;
+
+		if (config.tick) config.tick(t, 1 - t);
+
+		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}end`));
+
+		if (!program.b && !program.invalidated) {
+			program.group.callbacks.push(() => {
+				program.callback();
+				if (config.css) delete_rule(node, program.name);
+			});
+
+			if (--program.group.remaining === 0) {
+				program.group.callbacks.forEach(run);
+			}
+		} else {
+			if (config.css) delete_rule(node, program.name);
 		}
 
-		if (!this.activeRules[name]) {
-			this.activeRules[name] = true;
-			this.stylesheet.insertRule(`@keyframes ${name} ${rule}`, this.stylesheet.cssRules.length);
-		}
-	},
+		running = !!pending_program;
+	}
 
-	next() {
-		this.running = false;
+	function go(b, callback) {
+		const {
+			delay = 0,
+			duration = 300,
+			easing = linear
+		} = config;
 
-		const now = window.performance.now();
-		let i = this.transitions.length;
+		const program = {
+			start: window.performance.now() + delay,
+			b,
+			callback
+		};
 
-		while (i--) {
-			const transition = this.transitions[i];
-
-			if (transition.program && now >= transition.program.end) {
-				transition.done();
+		if (!ready) {
+			if (config.css && delay) {
+				cssText = node.style.cssText;
+				node.style.cssText += config.css(0, 1);
 			}
 
-			if (transition.pending && now >= transition.pending.start) {
-				transition.start(transition.pending);
-			}
-
-			if (transition.running) {
-				transition.update(now);
-				this.running = true;
-			} else if (!transition.pending) {
-				this.transitions.splice(i, 1);
-			}
+			if (config.tick) config.tick(0, 1);
+			ready = true;
 		}
 
-		if (this.running) {
-			requestAnimationFrame(this.bound);
-		} else if (this.stylesheet) {
-			let i = this.stylesheet.cssRules.length;
-			while (i--) this.stylesheet.deleteRule(i);
-			this.activeRules = {};
+		if (!b) {
+			program.group = outros;
+			outros.remaining += 1;
 		}
-	},
 
-	deleteRule(node, name) {
-		node.style.animation = node.style.animation
-			.split(', ')
-			.filter(anim => anim && anim.indexOf(name) === -1)
-			.join(', ');
-	},
+		if (delay) {
+			pending_program = program;
+		} else {
+			start(program, delay, duration, easing);
+		}
 
-	wait() {
-		if (!transitionManager.promise) {
-			transitionManager.promise = Promise.resolve();
-			transitionManager.promise.then(() => {
-				transitionManager.promise = null;
+		if (!running) {
+			running = true;
+
+			const { abort, promise } = loop(now => {
+				if (running_program && now >= running_program.end) {
+					done();
+				}
+
+				if (pending_program && now >= pending_program.start) {
+					start(pending_program, delay, duration, easing);
+				}
+
+				if (running) {
+					if (running_program) {
+						const p = now - running_program.start;
+						t = running_program.a + running_program.d * easing(p / running_program.duration);
+						if (config.tick) config.tick(t, 1 - t);
+					}
+
+					return true;
+				}
 			});
 		}
-
-		return transitionManager.promise;
 	}
-};
+
+	return {
+		run(b, callback = noop) {
+			if (typeof config === 'function') {
+				wait().then(() => {
+					config = config();
+					go(b, callback);
+				});
+			} else {
+				go(b, callback);
+			}
+		},
+
+		abort(reset) {
+			if (reset && config.tick) config.tick(1, 0);
+
+			if (running_program) {
+				if (config.css) delete_rule(node, running_program.name);
+				running_program = pending_program = null;
+				running = false;
+			}
+		},
+
+		invalidate() {
+			if (running_program) {
+				running_program.invalidated = true;
+			}
+		}
+	};
+}

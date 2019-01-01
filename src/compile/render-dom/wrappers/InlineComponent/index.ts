@@ -368,7 +368,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.update.addBlock(deindent`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
 					if (${name}) {
-						@groupOutros();
+						@group_outros();
 						const old_component = ${name};
 						old_component.$$.fragment.o(() => {
 							old_component.$destroy();

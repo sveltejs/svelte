@@ -106,18 +106,3 @@ export function measure(blocks) {
 	while (i--) rects[blocks[i].key] = blocks[i].node.getBoundingClientRect();
 	return rects;
 }
-
-export function animate(blocks, rects, fn, params) {
-	let i = blocks.length;
-	while (i--) {
-		const block = blocks[i];
-		const from = rects[block.key];
-
-		if (!from) continue;
-		const to = block.node.getBoundingClientRect();
-
-		if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) continue;
-
-
-	}
-}
