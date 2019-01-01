@@ -1,22 +1,6 @@
-import { createElement } from './dom.js';
-import { noop, run } from './utils.js';
+import { identity as linear, noop, run } from './utils.js';
 import { loop } from './loop.js';
-
-export function linear(t) {
-	return t;
-}
-
-export function generateRule({ a, b, delta, duration }, ease, fn) {
-	const step = 16.666 / duration;
-	let keyframes = '{\n';
-
-	for (let p = 0; p <= 1; p += step) {
-		const t = a + delta * ease(p);
-		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
-	}
-
-	return keyframes + `100% {${fn(b, 1 - b)}}\n}`;
-}
+import { add_rule, delete_rule, generate_rule } from './style_manager.js';
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 export function hash(str) {
@@ -84,10 +68,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 			}
 
 			if (!this.running) {
-				transitionManager.active += 1;
-
 				this.running = true;
-				// transitionManager.add(this);
+
 				const { abort, promise } = loop(() => {
 					const now = window.performance.now();
 
@@ -104,15 +86,6 @@ export function wrapTransition(component, node, fn, params, intro) {
 						return true;
 					}
 				});
-
-				promise.then(() => {
-					transitionManager.active -= 1;
-					if (!transitionManager.active) {
-						let i = transitionManager.stylesheet.cssRules.length;
-						while (i--) transitionManager.stylesheet.deleteRule(i);
-						transitionManager.activeRules = {};
-					}
-				});
 			}
 		},
 
@@ -127,8 +100,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 			if (obj.css) {
 				if (obj.delay) node.style.cssText = cssText;
 
-				const rule = generateRule(program, ease, obj.css);
-				transitionManager.addRule(rule, program.name = '__svelte_' + hash(rule));
+				const rule = generate_rule(program, ease, obj.css);
+				add_rule(rule, program.name = '__svelte_' + hash(rule));
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
@@ -152,6 +125,8 @@ export function wrapTransition(component, node, fn, params, intro) {
 
 		done() {
 			const program = this.program;
+			this.program = null;
+
 			this.t = program.b;
 
 			if (obj.tick) obj.tick(this.t, 1 - this.t);
@@ -161,23 +136,24 @@ export function wrapTransition(component, node, fn, params, intro) {
 			if (!program.b && !program.invalidated) {
 				program.group.callbacks.push(() => {
 					program.callback();
-					if (obj.css) transitionManager.deleteRule(node, program.name);
+					if (obj.css) delete_rule(node, program.name);
 				});
 
 				if (--program.group.remaining === 0) {
 					program.group.callbacks.forEach(run);
 				}
 			} else {
-				if (obj.css) transitionManager.deleteRule(node, program.name);
+				if (obj.css) delete_rule(node, program.name);
 			}
 
 			this.running = !!this.pending;
 		},
 
 		abort(reset) {
+			if (reset && obj.tick) obj.tick(1, 0);
+
 			if (this.program) {
-				if (reset && obj.tick) obj.tick(1, 0);
-				if (obj.css) transitionManager.deleteRule(node, this.program.name);
+				if (obj.css) delete_rule(node, this.program.name);
 				this.program = this.pending = null;
 				this.running = false;
 			}
@@ -201,33 +177,7 @@ export function groupOutros() {
 }
 
 export var transitionManager = {
-	active: 0,
-	running: false,
-	transitions: [],
-	bound: null,
-	stylesheet: null,
-	activeRules: {},
 	promise: null,
-
-	addRule(rule, name) {
-		if (!this.stylesheet) {
-			const style = createElement('style');
-			document.head.appendChild(style);
-			transitionManager.stylesheet = style.sheet;
-		}
-
-		if (!this.activeRules[name]) {
-			this.activeRules[name] = true;
-			this.stylesheet.insertRule(`@keyframes ${name} ${rule}`, this.stylesheet.cssRules.length);
-		}
-	},
-
-	deleteRule(node, name) {
-		node.style.animation = node.style.animation
-			.split(', ')
-			.filter(anim => anim && anim.indexOf(name) === -1)
-			.join(', ');
-	},
 
 	wait() {
 		if (!transitionManager.promise) {
