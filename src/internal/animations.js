@@ -1,5 +1,7 @@
-import { transitionManager, linear, generateRule, hash } from './transitions.js';
+import { identity as linear } from './utils.js';
+import { hash } from './transitions.js';
 import { loop } from './loop.js';
+import { add_rule, delete_rule, generate_rule } from './style_manager.js';
 
 export function wrapAnimation(node, from, fn, params) {
 	if (!from) return;
@@ -36,10 +38,10 @@ export function wrapAnimation(node, from, fn, params) {
 			if (info.css) {
 				if (delay) node.style.cssText = cssText;
 
-				const rule = generateRule(program, ease, info.css);
+				const rule = generate_rule(program, ease, info.css);
 				program.name = `__svelte_${hash(rule)}`;
 
-				transitionManager.addRule(rule, program.name);
+				add_rule(rule, program.name);
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
@@ -64,14 +66,10 @@ export function wrapAnimation(node, from, fn, params) {
 		},
 
 		stop() {
-			if (info.css) transitionManager.deleteRule(node, program.name);
+			if (info.css) delete_rule(node, program.name);
 			animation.running = false;
 		}
 	};
-
-	// transitionManager.add(animation);
-
-	transitionManager.active += 1;
 
 	const { abort, promise } = loop(() => {
 		const now = window.performance.now();
@@ -87,15 +85,6 @@ export function wrapAnimation(node, from, fn, params) {
 		if (animation.running) {
 			animation.update(now);
 			return true;
-		}
-	});
-
-	promise.then(() => {
-		transitionManager.active -= 1;
-		if (!transitionManager.active) {
-			let i = transitionManager.stylesheet.cssRules.length;
-			while (i--) transitionManager.stylesheet.deleteRule(i);
-			transitionManager.activeRules = {};
 		}
 	});
 
