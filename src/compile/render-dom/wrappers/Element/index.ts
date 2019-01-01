@@ -595,13 +595,13 @@ export default class ElementWrapper extends Wrapper {
 				if (${name}) ${name}.invalidate();
 
 				@add_render_callback(() => {
-					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
+					if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
 			`);
 
 			block.builders.outro.addBlock(deindent`
-				if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
+				if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0, () => {
 					#outrocallback();
 					${name} = null;
@@ -630,7 +630,7 @@ export default class ElementWrapper extends Wrapper {
 
 				block.builders.intro.addConditional(`@intros.enabled`, deindent`
 					@add_render_callback(() => {
-						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
+						${introName} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
 					});
 				`);
@@ -651,7 +651,7 @@ export default class ElementWrapper extends Wrapper {
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
+					${outroName} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
 					${outroName}.run(0, #outrocallback);
 				`);
 
