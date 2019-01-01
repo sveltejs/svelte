@@ -52,45 +52,31 @@ export default [
 		experimentalCodeSplitting: true
 	},
 
-	/* internal.[m]js */
-	{
-		input: 'src/internal/index.js',
+	/* internal.[m]js, motion.mjs */
+	...['internal', 'motion'].map(name => ({
+		input: `src/${name}/index.js`,
 		output: [
 			{
-				file: 'internal.mjs',
-				format: 'esm'
-			},
-			{
-				file: 'internal.js',
-				format: 'cjs'
-			}
-		]
-	},
-
-	/* motion.[m]js */
-	{
-		input: 'src/motion/index.js',
-		output: [
-			{
-				file: 'motion.mjs',
+				file: `${name}.mjs`,
 				format: 'esm',
-				paths: id => id.replace('svelte', '.')
+				paths: id => id.startsWith('svelte/') && id.replace('svelte', '.')
 			},
 			{
-				file: 'motion.js',
+				file: `${name}.js`,
 				format: 'cjs',
-				paths: id => id.replace('svelte', '.')
+				paths: id => id.startsWith('svelte/') && id.replace('svelte', '.')
 			}
 		],
 		external: id => id.startsWith('svelte/')
-	},
+	})),
 
-	// runtime API
-	...['index', 'store', 'easing', 'motion', 'transition'].map(name => ({
+	// everything else
+	...['index', 'store', 'easing', 'transition'].map(name => ({
 		input: `${name}.mjs`,
 		output: {
 			file: `${name}.js`,
-			format: 'cjs'
+			format: 'cjs',
+			paths: id => id.startsWith('svelte/') && id.replace('svelte', '.')
 		},
 		external: id => id !== `${name}.mjs`
 	}))
