@@ -341,7 +341,7 @@ export default class EachBlockWrapper extends Wrapper {
 		block.builders.update.addBlock(deindent`
 			const ${this.vars.each_block_value} = ${snippet};
 
-			${this.block.hasOutros && `@groupOutros();`}
+			${this.block.hasOutros && `@group_outros();`}
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].r();`}
 			${blocks} = @updateKeyedEach(${blocks}, #component, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.vars.get_each_context});
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
@@ -466,7 +466,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			if (this.block.hasOutros) {
 				destroy = deindent`
-					@groupOutros();
+					@group_outros();
 					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1);
 				`;
 			} else {
