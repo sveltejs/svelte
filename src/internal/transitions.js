@@ -61,9 +61,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 			if (!this.running) {
 				this.running = true;
 
-				const { abort, promise } = loop(() => {
-					const now = window.performance.now();
-
+				const { abort, promise } = loop(now => {
 					if (this.program && now >= this.program.end) {
 						this.done();
 					}
