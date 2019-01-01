@@ -2,7 +2,7 @@ import { identity as linear, noop } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 
-export function wrapAnimation(node, from, fn, params) {
+export function animate(node, from, fn, params) {
 	if (!from) return;
 
 	const to = node.getBoundingClientRect();
@@ -68,19 +68,18 @@ export function wrapAnimation(node, from, fn, params) {
 		return true;
 	});
 
-	tick(0, 1);
-
 	if (delay) {
 		if (css) node.style.cssText += css(0, 1);
 	} else {
 		start();
 	}
 
-	// TODO just return the function
-	return { stop };
+	tick(0, 1);
+
+	return stop;
 }
 
-export function fixPosition(node) {
+export function fix_position(node) {
 	const style = getComputedStyle(node);
 
 	if (style.position !== 'absolute' && style.position !== 'fixed') {
