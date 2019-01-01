@@ -104,9 +104,7 @@ export default class Block {
 		this.getUniqueName = this.renderer.component.getUniqueNameMaker();
 		this.variables = new Map();
 
-		this.aliases = new Map()
-			.set('component', this.getUniqueName('component'))
-			.set('ctx', this.getUniqueName('ctx'));
+		this.aliases = new Map().set('ctx', this.getUniqueName('ctx'));
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
 
 		this.hasUpdateMethod = false; // determined later
@@ -410,7 +408,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${this.comment}`}
-			function ${this.name}(${this.alias('component')}, ${this.key ? `${localKey}, ` : ''}ctx) {
+			function ${this.name}($$, ${this.key ? `${localKey}, ` : ''}ctx) {
 				${this.getContents(localKey)}
 			}
 		`;

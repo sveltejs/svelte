@@ -46,7 +46,7 @@ export default class SlotWrapper extends Wrapper {
 
 		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
 		const prop = quotePropIfNecessary(slotName);
-		block.addVariable(content_name, `#component.$$.slotted${prop}`);
+		block.addVariable(content_name, `$$.slotted${prop}`);
 
 		// TODO can we use isDomNode instead of type === 'Element'?
 		const needsAnchorBefore = this.prev ? this.prev.node.type !== 'Element' : !parentNode;
