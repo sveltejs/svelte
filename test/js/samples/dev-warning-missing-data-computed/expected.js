@@ -3,7 +3,7 @@ import { SvelteComponentDev, addLoc, append, createElement, createText, detachNo
 
 const file = undefined;
 
-function create_fragment(component, ctx) {
+function create_fragment($$, ctx) {
 	var p, text0_value = Math.max(0, ctx.foo), text0, text1, text2, current;
 
 	return {

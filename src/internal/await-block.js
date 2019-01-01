@@ -1,4 +1,4 @@
-import { assign, run_all, isPromise } from './utils.js';
+import { assign, isPromise } from './utils.js';
 import { group_outros } from './transitions.js';
 import { flush } from '../internal/scheduler.js';
 
@@ -11,7 +11,7 @@ export function handlePromise(promise, info) {
 		info.resolved = key && { [key]: value };
 
 		const child_ctx = assign(assign({}, info.ctx), info.resolved);
-		const block = type && (info.current = type)(info.component, child_ctx);
+		const block = type && (info.current = type)(info.$$, child_ctx);
 
 		if (info.block) {
 			if (info.blocks) {
@@ -31,8 +31,6 @@ export function handlePromise(promise, info) {
 			block.c();
 			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
 
-			// TODO is some of this redundant?
-			run_all(info.component.$$.after_render);
 			flush();
 		}
 

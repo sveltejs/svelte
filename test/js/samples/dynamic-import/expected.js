@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, identity, init, mount_component, noop, safe_not_equal } from "svelte/internal";
 import LazyLoad from "./LazyLoad.html";
 
-function create_fragment(component, ctx) {
+function create_fragment($$, ctx) {
 	var current;
 
 	var lazyload = new LazyLoad({ props: { load: func } });
