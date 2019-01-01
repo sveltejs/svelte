@@ -1,15 +1,6 @@
 import { identity as linear, noop, run } from './utils.js';
 import { loop } from './loop.js';
-import { add_rule, delete_rule, generate_rule } from './style_manager.js';
-
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
-export function hash(str) {
-	let hash = 5381;
-	let i = str.length;
-
-	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
-	return hash >>> 0;
-}
+import { create_rule, delete_rule } from './style_manager.js';
 
 export function wrapTransition(component, node, fn, params, intro) {
 	let obj = fn.call(component, node, params);
@@ -100,8 +91,7 @@ export function wrapTransition(component, node, fn, params, intro) {
 			if (obj.css) {
 				if (obj.delay) node.style.cssText = cssText;
 
-				const rule = generate_rule(program, ease, obj.css);
-				add_rule(rule, program.name = '__svelte_' + hash(rule));
+				program.name = create_rule(program, ease, obj.css);
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
