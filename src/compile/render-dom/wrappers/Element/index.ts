@@ -595,13 +595,13 @@ export default class ElementWrapper extends Wrapper {
 				if (${name}) ${name}.invalidate();
 
 				@add_render_callback(() => {
-					if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
+					if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
 			`);
 
 			block.builders.outro.addBlock(deindent`
-				if (!${name}) ${name} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
+				if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0, () => {
 					#outrocallback();
 					${name} = null;
@@ -630,7 +630,7 @@ export default class ElementWrapper extends Wrapper {
 
 				block.builders.intro.addConditional(`@intros.enabled`, deindent`
 					@add_render_callback(() => {
-						${introName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, true);
+						${introName} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
 						${introName}.run(1);
 					});
 				`);
@@ -651,7 +651,7 @@ export default class ElementWrapper extends Wrapper {
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @wrapTransition(#component, ${this.var}, ${fn}, ${snippet}, false);
+					${outroName} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
 					${outroName}.run(0, #outrocallback);
 				`);
 
@@ -666,18 +666,18 @@ export default class ElementWrapper extends Wrapper {
 		const { component } = this.renderer;
 
 		const rect = block.getUniqueName('rect');
-		const animation = block.getUniqueName('animation');
+		const stop_animation = block.getUniqueName('stop_animation');
 
 		block.addVariable(rect);
-		block.addVariable(animation);
+		block.addVariable(stop_animation, '@noop');
 
 		block.builders.measure.addBlock(deindent`
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
 
 		block.builders.fix.addBlock(deindent`
-			@fixPosition(${this.var});
-			if (${animation}) ${animation}.stop();
+			@fix_position(${this.var});
+			${stop_animation}();
 		`);
 
 		const params = this.node.animation.expression ? this.node.animation.expression.render() : '{}';
@@ -685,8 +685,8 @@ export default class ElementWrapper extends Wrapper {
 		const name = component.qualify(this.node.animation.name);
 
 		block.builders.animate.addBlock(deindent`
-			if (${animation}) ${animation}.stop();
-			${animation} = @wrapAnimation(${this.var}, ${rect}, ${name}, ${params});
+			${stop_animation}();
+			${stop_animation} = @animate(${this.var}, ${rect}, ${name}, ${params});
 		`);
 	}
 

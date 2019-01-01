@@ -322,7 +322,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const destroyOldBlock = deindent`
-			@groupOutros();
+			@group_outros();
 			${name}.o(function() {
 				${if_blocks}[${previous_block_index}].d(1);
 				${if_blocks}[${previous_block_index}] = null;
@@ -445,7 +445,7 @@ export default class IfBlockWrapper extends Wrapper {
 		// as that will typically result in glitching
 		const exit = branch.block.hasOutroMethod
 			? deindent`
-				@groupOutros();
+				@group_outros();
 				${name}.o(function() {
 					${name}.d(1);
 					${name} = null;
