@@ -26,48 +26,37 @@ export function group_outros() {
 
 export function create_transition(node, fn, params, intro) {
 	let config = fn(node, params);
-	let duration;
-	let ease;
 	let cssText;
 
-	let ready = false;
-
+	let ready = !intro;
 	let t = intro ? 0 : 1;
+
 	let running = false;
 	let running_program = null;
 	let pending_program = null;
 
-	function start(program) {
+	function start(program, delay, duration, easing) {
 		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}start`));
 
 		program.a = t;
-		program.delta = program.b - program.a;
+		program.d = program.b - program.a;
 		program.duration = duration * Math.abs(program.b - program.a);
 		program.end = program.start + program.duration;
 
 		if (config.css) {
-			if (config.delay) node.style.cssText = cssText;
+			if (delay) node.style.cssText = cssText;
 
-			program.name = create_rule(program, ease, config.css);
+			program.name = create_rule(program, easing, config.css);
 
 			node.style.animation = (node.style.animation || '')
 				.split(', ')
-				.filter(anim => anim && (program.delta < 0 || !/__svelte/.test(anim)))
+				.filter(anim => anim && (program.d < 0 || !/__svelte/.test(anim)))
 				.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
 				.join(', ');
 		}
 
 		running_program = program;
 		pending_program = null;
-	}
-
-	function update(now) {
-		const program = running_program;
-		if (!program) return;
-
-		const p = now - program.start;
-		t = program.a + program.delta * ease(p / program.duration);
-		if (config.tick) config.tick(t, 1 - t);
 	}
 
 	function done() {
@@ -97,17 +86,20 @@ export function create_transition(node, fn, params, intro) {
 	}
 
 	function go(b, callback) {
-		duration = config.duration || 300;
-		ease = config.easing || linear;
+		const {
+			delay = 0,
+			duration = 300,
+			easing = linear
+		} = config;
 
 		const program = {
-			start: window.performance.now() + (config.delay || 0),
+			start: window.performance.now() + delay,
 			b,
-			callback: callback || noop
+			callback
 		};
 
-		if (intro && !ready) {
-			if (config.css && config.delay) {
+		if (!ready) {
+			if (config.css && delay) {
 				cssText = node.style.cssText;
 				node.style.cssText += config.css(0, 1);
 			}
@@ -121,10 +113,10 @@ export function create_transition(node, fn, params, intro) {
 			outros.remaining += 1;
 		}
 
-		if (config.delay) {
+		if (delay) {
 			pending_program = program;
 		} else {
-			start(program);
+			start(program, delay, duration, easing);
 		}
 
 		if (!running) {
@@ -136,11 +128,16 @@ export function create_transition(node, fn, params, intro) {
 				}
 
 				if (pending_program && now >= pending_program.start) {
-					start(pending_program);
+					start(pending_program, delay, duration, easing);
 				}
 
 				if (running) {
-					update(now);
+					if (running_program) {
+						const p = now - running_program.start;
+						t = running_program.a + running_program.d * easing(p / running_program.duration);
+						if (config.tick) config.tick(t, 1 - t);
+					}
+
 					return true;
 				}
 			});
@@ -148,7 +145,7 @@ export function create_transition(node, fn, params, intro) {
 	}
 
 	return {
-		run(b, callback) {
+		run(b, callback = noop) {
 			if (typeof config === 'function') {
 				wait().then(() => {
 					config = config();
