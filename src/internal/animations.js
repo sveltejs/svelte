@@ -1,7 +1,6 @@
 import { identity as linear } from './utils.js';
-import { hash } from './transitions.js';
 import { loop } from './loop.js';
-import { add_rule, delete_rule, generate_rule } from './style_manager.js';
+import { create_rule, delete_rule } from './style_manager.js';
 
 export function wrapAnimation(node, from, fn, params) {
 	if (!from) return;
@@ -38,10 +37,7 @@ export function wrapAnimation(node, from, fn, params) {
 			if (info.css) {
 				if (delay) node.style.cssText = cssText;
 
-				const rule = generate_rule(program, ease, info.css);
-				program.name = `__svelte_${hash(rule)}`;
-
-				add_rule(rule, program.name);
+				program.name = create_rule(program, ease, info.css);
 
 				node.style.animation = (node.style.animation || '')
 					.split(', ')
