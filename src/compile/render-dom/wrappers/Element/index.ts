@@ -666,18 +666,18 @@ export default class ElementWrapper extends Wrapper {
 		const { component } = this.renderer;
 
 		const rect = block.getUniqueName('rect');
-		const animation = block.getUniqueName('animation');
+		const stop_animation = block.getUniqueName('stop_animation');
 
 		block.addVariable(rect);
-		block.addVariable(animation);
+		block.addVariable(stop_animation, '@noop');
 
 		block.builders.measure.addBlock(deindent`
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
 
 		block.builders.fix.addBlock(deindent`
-			@fixPosition(${this.var});
-			if (${animation}) ${animation}.stop();
+			@fix_position(${this.var});
+			${stop_animation}();
 		`);
 
 		const params = this.node.animation.expression ? this.node.animation.expression.render() : '{}';
@@ -685,8 +685,8 @@ export default class ElementWrapper extends Wrapper {
 		const name = component.qualify(this.node.animation.name);
 
 		block.builders.animate.addBlock(deindent`
-			if (${animation}) ${animation}.stop();
-			${animation} = @wrapAnimation(${this.var}, ${rect}, ${name}, ${params});
+			${stop_animation}();
+			${stop_animation} = @animate(${this.var}, ${rect}, ${name}, ${params});
 		`);
 	}
 
