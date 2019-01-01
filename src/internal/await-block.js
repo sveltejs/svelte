@@ -1,5 +1,5 @@
 import { assign, run_all, isPromise } from './utils.js';
-import { groupOutros } from './transitions.js';
+import { group_outros } from './transitions.js';
 import { flush } from '../internal/scheduler.js';
 
 export function handlePromise(promise, info) {
@@ -17,7 +17,7 @@ export function handlePromise(promise, info) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
-						groupOutros();
+						group_outros();
 						block.o(() => {
 							block.d(1);
 							info.blocks[i] = null;
