@@ -98,7 +98,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 	$$.update();
 	ready = true;
 	run_all($$.before_render);
-	$$.fragment = create_fragment(component, $$.ctx);
+	$$.fragment = create_fragment($$, $$.ctx);
 
 	if (options.target) {
 		intros.enabled = !!options.intro;

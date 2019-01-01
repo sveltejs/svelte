@@ -135,7 +135,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		block.maintainContext = true;
 
 		const infoProps = [
-			block.alias('component') === 'component' ? 'component' : `component: #component`,
+			'$$',
 			'ctx',
 			'current: null',
 			this.pending.block.name && `pending: ${this.pending.block.name}`,

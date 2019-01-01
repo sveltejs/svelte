@@ -222,7 +222,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		block.builders.init.addBlock(deindent`
 			var ${current_block_type} = ${select_block_type}(ctx);
-			var ${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
+			var ${name} = ${current_block_type_and}${current_block_type}($$, ctx);
 		`);
 
 		const mountOrIntro = this.branches[0].block.hasIntroMethod ? 'i' : 'm';
@@ -237,7 +237,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const changeBlock = deindent`
 			${if_name}${name}.d(1);
-			${name} = ${current_block_type_and}${current_block_type}(#component, ctx);
+			${name} = ${current_block_type_and}${current_block_type}($$, ctx);
 			${if_name}${name}.c();
 			${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
 		`;
@@ -301,12 +301,12 @@ export default class IfBlockWrapper extends Wrapper {
 		if (hasElse) {
 			block.builders.init.addBlock(deindent`
 				${current_block_type_index} = ${select_block_type}(ctx);
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, ctx);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}]($$, ctx);
 			`);
 		} else {
 			block.builders.init.addBlock(deindent`
 				if (~(${current_block_type_index} = ${select_block_type}(ctx))) {
-					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, ctx);
+					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}]($$, ctx);
 				}
 			`);
 		}
@@ -332,7 +332,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const createNewBlock = deindent`
 			${name} = ${if_blocks}[${current_block_type_index}];
 			if (!${name}) {
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#component, ctx);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}]($$, ctx);
 				${name}.c();
 			}
 			${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
@@ -391,7 +391,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const branch = this.branches[0];
 
 		block.builders.init.addBlock(deindent`
-			var ${name} = (${branch.condition}) && ${branch.block.name}(#component, ctx);
+			var ${name} = (${branch.condition}) && ${branch.block.name}($$, ctx);
 		`);
 
 		const mountOrIntro = branch.block.hasIntroMethod ? 'i' : 'm';
@@ -410,7 +410,7 @@ export default class IfBlockWrapper extends Wrapper {
 					if (${name}) {
 						${name}.p(changed, ctx);
 					} else {
-						${name} = ${branch.block.name}(#component, ctx);
+						${name} = ${branch.block.name}($$, ctx);
 						if (${name}) ${name}.c();
 					}
 
@@ -420,7 +420,7 @@ export default class IfBlockWrapper extends Wrapper {
 					if (${name}) {
 						${name}.p(changed, ctx);
 					} else {
-						${name} = ${branch.block.name}(#component, ctx);
+						${name} = ${branch.block.name}($$, ctx);
 						${name}.c();
 						${name}.m(${updateMountNode}, ${anchor});
 					}
@@ -428,14 +428,14 @@ export default class IfBlockWrapper extends Wrapper {
 			: (branch.block.hasIntroMethod || branch.block.hasOutroMethod)
 				? deindent`
 					if (!${name}) {
-						${name} = ${branch.block.name}(#component, ctx);
+						${name} = ${branch.block.name}($$, ctx);
 						${name}.c();
 					}
 					${name}.i(${updateMountNode}, ${anchor});
 				`
 				: deindent`
 					if (!${name}) {
-						${name} = ${branch.block.name}(#component, ctx);
+						${name} = ${branch.block.name}($$, ctx);
 						${name}.c();
 						${name}.m(${updateMountNode}, ${anchor});
 					}

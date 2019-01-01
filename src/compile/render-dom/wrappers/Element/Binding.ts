@@ -123,11 +123,11 @@ export default class BindingWrapper {
 				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
 
 				block.builders.hydrate.addLine(
-					`(#component.$$.binding_groups[${bindingGroup}] || (#component.$$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
+					`($$.binding_groups[${bindingGroup}] || ($$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
 				);
 
 				block.builders.destroy.addLine(
-					`#component.$$.binding_groups[${bindingGroup}].splice(#component.$$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
+					`$$.binding_groups[${bindingGroup}].splice($$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
 				);
 				break;
 

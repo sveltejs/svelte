@@ -238,7 +238,7 @@ export default function dom(
 	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props', '$$invalidate');
 
 	builder.addBlock(deindent`
-		function create_fragment(${component.alias('component')}, ctx) {
+		function create_fragment($$, ctx) {
 			${block.getContents()}
 		}
 
