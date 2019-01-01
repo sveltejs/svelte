@@ -76,9 +76,8 @@ export function tweened(value, defaults = {}) {
 		const start = window.performance.now() + delay;
 		let fn;
 
-		task = loop(() => {
-			const time = window.performance.now();
-			if (time < start) return true;
+		task = loop(now => {
+			if (now < start) return true;
 
 			if (!started) {
 				fn = interpolate(value, new_value);
@@ -91,7 +90,7 @@ export function tweened(value, defaults = {}) {
 				previous_task = null;
 			}
 
-			const elapsed = time - start;
+			const elapsed = now - start;
 
 			if (elapsed > duration) {
 				store.set(value = new_value);

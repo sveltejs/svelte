@@ -117,20 +117,18 @@ export function spring(value, opts = {}) {
 			last_time = window.performance.now();
 			settled = false;
 
-			task = loop(() => {
-				const time = window.performance.now();
-
+			task = loop(now=> {
 				({ value, settled } = tick_spring(
 					velocity,
 					value,
 					target_value,
 					spring.stiffness,
 					spring.damping,
-					(time - last_time) * 60 / 1000,
+					(now - last_time) * 60 / 1000,
 					threshold
 				));
 
-				last_time = time;
+				last_time = now;
 
 				if (settled) {
 					value = target_value;
