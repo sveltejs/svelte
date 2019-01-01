@@ -539,7 +539,41 @@ export default class Component {
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
+		this.extract_reactive_store_references();
 		this.javascript = this.extract_javascript(script);
+	}
+
+	extract_reactive_store_references() {
+		// TODO this pattern happens a lot... can we abstract it
+		// (or better still, do fewer AST walks)?
+		const component = this;
+		let { instance_scope: scope, instance_scope_map: map } = this;
+
+		walk(this.instance_script.content, {
+			enter(node, parent) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (isReference(node, parent)) {
+					const object = getObject(node);
+					const { name } = object;
+
+					if (name[0] === '$' && !scope.has(name)) {
+						component.warn_if_undefined(object, null);
+
+						// cheeky hack
+						component.template_references.add(name);
+					}
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+			}
+		});
 	}
 
 	rewrite_props() {
@@ -735,7 +769,11 @@ export default class Component {
 						const { name } = flattenReference(node);
 						const owner = scope.findOwner(name);
 
-						if (owner === instance_scope) {
+						if (name[0] === '$' && !owner) {
+							hoistable = false;
+						}
+
+						else if (owner === instance_scope) {
 							if (name === fn_declaration.id.name) return;
 							if (hoistable_names.has(name)) return;
 							if (imported_declarations.has(name)) return;
@@ -818,13 +856,7 @@ export default class Component {
 							const object = getObject(node);
 							const { name } = object;
 
-							if (component.declarations.indexOf(name) !== -1) {
-								dependencies.add(name);
-							} else if (name[0] === '$') {
-								component.warn_if_undefined(object, null);
-
-								// cheeky hack
-								component.template_references.add(name);
+							if (name[0] === '$' || component.declarations.indexOf(name) !== -1) {
 								dependencies.add(name);
 							}
 
