@@ -11,6 +11,7 @@ import sanitize from '../../../utils/sanitize';
 import TemplateScope from './TemplateScope';
 import getObject from '../../../utils/getObject';
 import { nodes_match } from '../../../utils/nodes_match';
+import Block from '../../render-dom/Block';
 
 const binaryOperators: Record<string, number> = {
 	'**': 15,
@@ -86,13 +87,6 @@ export default class Expression {
 		Object.defineProperties(this, {
 			component: {
 				value: component
-			},
-
-			// TODO remove this, is just for debugging
-			snippet: {
-				get: () => {
-					throw new Error(`cannot access expression.snippet, use expression.render() instead`)
-				}
 			}
 		});
 
@@ -181,7 +175,7 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	render() {
+	render(block: Block) {
 		if (this.rendered) return this.rendered;
 
 		const {
@@ -406,6 +400,13 @@ export default class Expression {
 				}
 			}
 		});
+
+		if (declarations.length > 0) {
+			block.maintainContext = true;
+			declarations.forEach(declaration => {
+				block.builders.init.addBlock(declaration);
+			});
+		}
 
 		return this.rendered = `[✂${this.node.start}-${this.node.end}✂]`;
 	}

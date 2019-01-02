@@ -150,7 +150,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 
 					if (attr.isSpread) {
-						const value = attr.expression.render();
+						const value = attr.expression.render(block);
 						initialProps.push(value);
 
 						changes.push(condition ? `${condition} && ${value}` : value);
@@ -238,7 +238,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const updating = block.getUniqueName(`updating_${binding.name}`);
 			block.addVariable(updating);
 
-			const snippet = binding.expression.render();
+			const snippet = binding.expression.render(block);
 
 			statements.push(deindent`
 				if (${snippet} !== void 0) {
@@ -305,13 +305,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const munged_handlers = this.node.handlers.map(handler => {
 			// TODO return declarations from handler.render()?
-			const snippet = handler.render();
-
-			if (handler.expression) {
-				handler.expression.declarations.forEach(declaration => {
-					block.builders.init.addBlock(declaration);
-				});
-			}
+			const snippet = handler.render(block);
 
 			return `${name}.$on("${handler.name}", ${snippet});`;
 		});
@@ -320,7 +314,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const switch_value = block.getUniqueName('switch_value');
 			const switch_props = block.getUniqueName('switch_props');
 
-			const snippet = this.node.expression.render();
+			const snippet = this.node.expression.render(block);
 
 			block.builders.init.addBlock(deindent`
 				var ${switch_value} = ${snippet};

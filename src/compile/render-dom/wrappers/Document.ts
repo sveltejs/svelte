@@ -8,7 +8,7 @@ export default class DocumentWrapper extends Wrapper {
 
 	render(block: Block, parentNode: string, parentNodes: string) {
 		this.node.handlers.forEach(handler => {
-			const snippet = handler.render();
+			const snippet = handler.render(block);
 
 			block.builders.init.addBlock(deindent`
 				document.addEventListener("${handler.name}", ${snippet});
