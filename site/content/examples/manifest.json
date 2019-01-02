@@ -113,6 +113,15 @@
 		]
 	},
 	{
+		"name": "Motion",
+		"examples": [
+			{
+				"slug": "motion-spring",
+				"title": "Spring physics"
+			}
+		]
+	},
+	{
 		"name": "Async data",
 		"examples": [
 			{
