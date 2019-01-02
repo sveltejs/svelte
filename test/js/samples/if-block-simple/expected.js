@@ -40,7 +40,7 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
+		p(ctx) {
 			if (ctx.foo) {
 				if (!if_block) {
 					if_block = create_if_block($$, ctx);
@@ -73,7 +73,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	$$self.$set = $$props => {
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('foo' in $$props) $$invalidate('foo', 0, foo = $$props.foo);
 	};
 
 	return { foo };

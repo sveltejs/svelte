@@ -16,12 +16,12 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.color) {
+		p(ctx, changed) {
+			if (changed & /*color*/1) {
 				setStyle(div, "color", ctx.color);
 			}
 
-			if (changed.x || changed.y) {
+			if (changed & /*x or y*/6) {
 				setStyle(div, "transform", "translate(" + ctx.x + "px," + ctx.y + "px)");
 			}
 		},
@@ -45,9 +45,9 @@ function instance($$self, $$props, $$invalidate) {
 	let { color, x, y } = $$props;
 
 	$$self.$set = $$props => {
-		if ('color' in $$props) $$invalidate('color', color = $$props.color);
-		if ('x' in $$props) $$invalidate('x', x = $$props.x);
-		if ('y' in $$props) $$invalidate('y', y = $$props.y);
+		if ('color' in $$props) $$invalidate('color', 0, color = $$props.color);
+		if ('x' in $$props) $$invalidate('x', 1, x = $$props.x);
+		if ('y' in $$props) $$invalidate('y', 2, y = $$props.y);
 	};
 
 	return { color, x, y };

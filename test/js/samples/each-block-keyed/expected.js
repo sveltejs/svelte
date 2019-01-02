@@ -27,8 +27,8 @@ function create_each_block($$, key_1, ctx) {
 			append(div, text);
 		},
 
-		p(changed, ctx) {
-			if ((changed.things) && text_value !== (text_value = ctx.thing.name)) {
+		p(ctx) {
+			if (text_value !== (text_value = ctx.thing.name)) {
 				setData(text, text_value);
 			}
 		},
@@ -68,9 +68,9 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
+		p(ctx) {
 			const each_value = ctx.things;
-			each_blocks_1 = updateKeyedEach(each_blocks_1, $$, changed, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, destroyBlock, create_each_block, "m", each_anchor, get_each_context);
+			each_blocks_1 = updateKeyedEach(each_blocks_1, $$, 0, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, destroyBlock, create_each_block, "m", each_anchor, get_each_context);
 		},
 
 		i(target, anchor) {
@@ -94,7 +94,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { things } = $$props;
 
 	$$self.$set = $$props => {
-		if ('things' in $$props) $$invalidate('things', things = $$props.things);
+		if ('things' in $$props) $$invalidate('things', 0, things = $$props.things);
 	};
 
 	return { things };

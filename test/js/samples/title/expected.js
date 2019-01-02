@@ -10,8 +10,8 @@ function create_fragment($$, ctx) {
 		c: noop,
 		m: noop,
 
-		p(changed, ctx) {
-			if ((changed.custom) && title_value !== (title_value = "a " + ctx.custom + " title")) {
+		p(ctx) {
+			if (title_value !== (title_value = "a " + ctx.custom + " title")) {
 				document.title = title_value;
 			}
 		},
@@ -26,7 +26,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { custom } = $$props;
 
 	$$self.$set = $$props => {
-		if ('custom' in $$props) $$invalidate('custom', custom = $$props.custom);
+		if ('custom' in $$props) $$invalidate('custom', 0, custom = $$props.custom);
 	};
 
 	return { custom };

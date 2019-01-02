@@ -15,10 +15,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.data) {
-				setStyle(div, "background", "url(data:image/png;base64," + ctx.data + ")");
-			}
+		p(ctx) {
+			setStyle(div, "background", "url(data:image/png;base64," + ctx.data + ")");
 		},
 
 		i(target, anchor) {
@@ -40,7 +38,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { data } = $$props;
 
 	$$self.$set = $$props => {
-		if ('data' in $$props) $$invalidate('data', data = $$props.data);
+		if ('data' in $$props) $$invalidate('data', 0, data = $$props.data);
 	};
 
 	return { data };

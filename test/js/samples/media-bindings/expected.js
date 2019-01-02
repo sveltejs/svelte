@@ -38,10 +38,10 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (!audio_updating && changed.currentTime && !isNaN(ctx.currentTime)) audio.currentTime = ctx.currentTime;
-			if (changed.paused && audio_is_paused !== (audio_is_paused = ctx.paused)) audio[audio_is_paused ? "pause" : "play"]();
-			if (changed.volume && !isNaN(ctx.volume)) audio.volume = ctx.volume;
+		p(ctx, changed) {
+			if (!audio_updating && changed & /*currentTime*/3 && !isNaN(ctx.currentTime)) audio.currentTime = ctx.currentTime;
+			if (changed & /*paused*/5 && audio_is_paused !== (audio_is_paused = ctx.paused)) audio[audio_is_paused ? "pause" : "play"]();
+			if (changed & /*volume*/6 && !isNaN(ctx.volume)) audio.volume = ctx.volume;
 			audio_updating = false;
 		},
 
@@ -68,45 +68,45 @@ function instance($$self, $$props, $$invalidate) {
 	function audio_timeupdate_handler() {
 		played = timeRangesToArray(this.played);
 		currentTime = this.currentTime;
-		$$invalidate('played', played);
-		$$invalidate('currentTime', currentTime);
+		$$invalidate('played', 2, played);
+		$$invalidate('currentTime', 3, currentTime);
 	}
 
 	function audio_durationchange_handler() {
 		duration = this.duration;
-		$$invalidate('duration', duration);
+		$$invalidate('duration', 4, duration);
 	}
 
 	function audio_play_pause_handler() {
 		paused = this.paused;
-		$$invalidate('paused', paused);
+		$$invalidate('paused', 5, paused);
 	}
 
 	function audio_progress_handler() {
 		buffered = timeRangesToArray(this.buffered);
-		$$invalidate('buffered', buffered);
+		$$invalidate('buffered', 0, buffered);
 	}
 
 	function audio_loadedmetadata_handler() {
 		buffered = timeRangesToArray(this.buffered);
 		seekable = timeRangesToArray(this.seekable);
-		$$invalidate('buffered', buffered);
-		$$invalidate('seekable', seekable);
+		$$invalidate('buffered', 0, buffered);
+		$$invalidate('seekable', 1, seekable);
 	}
 
 	function audio_volumechange_handler() {
 		volume = this.volume;
-		$$invalidate('volume', volume);
+		$$invalidate('volume', 6, volume);
 	}
 
 	$$self.$set = $$props => {
-		if ('buffered' in $$props) $$invalidate('buffered', buffered = $$props.buffered);
-		if ('seekable' in $$props) $$invalidate('seekable', seekable = $$props.seekable);
-		if ('played' in $$props) $$invalidate('played', played = $$props.played);
-		if ('currentTime' in $$props) $$invalidate('currentTime', currentTime = $$props.currentTime);
-		if ('duration' in $$props) $$invalidate('duration', duration = $$props.duration);
-		if ('paused' in $$props) $$invalidate('paused', paused = $$props.paused);
-		if ('volume' in $$props) $$invalidate('volume', volume = $$props.volume);
+		if ('buffered' in $$props) $$invalidate('buffered', 0, buffered = $$props.buffered);
+		if ('seekable' in $$props) $$invalidate('seekable', 1, seekable = $$props.seekable);
+		if ('played' in $$props) $$invalidate('played', 2, played = $$props.played);
+		if ('currentTime' in $$props) $$invalidate('currentTime', 3, currentTime = $$props.currentTime);
+		if ('duration' in $$props) $$invalidate('duration', 4, duration = $$props.duration);
+		if ('paused' in $$props) $$invalidate('paused', 5, paused = $$props.paused);
+		if ('volume' in $$props) $$invalidate('volume', 6, volume = $$props.volume);
 	};
 
 	return {

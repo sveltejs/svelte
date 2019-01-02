@@ -24,7 +24,7 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
+		p(ctx) {
 			if (changed.x) {
 				setData(text3, ctx.x);
 			}
@@ -53,7 +53,7 @@ function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
 	function click_handler() {
-		if (true) { x += 1; $$invalidate('x', x); }
+		if (true) { x += 1; $$invalidate('x', 0, x); }
 	}
 
 	return { x, click_handler };

@@ -19,8 +19,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.foo) input.checked = ctx.foo;
+		p(ctx) {
+			input.checked = ctx.foo;
 		},
 
 		i(target, anchor) {
@@ -45,11 +45,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_change_handler() {
 		foo = this.checked;
-		$$invalidate('foo', foo);
+		$$invalidate('foo', 0, foo);
 	}
 
 	$$self.$set = $$props => {
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('foo' in $$props) $$invalidate('foo', 0, foo = $$props.foo);
 	};
 
 	return { foo, input_change_handler };

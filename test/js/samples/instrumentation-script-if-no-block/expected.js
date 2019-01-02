@@ -24,10 +24,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.x) {
-				setData(text3, ctx.x);
-			}
+		p(ctx) {
+			setData(text3, ctx.x);
 		},
 
 		i(target, anchor) {
@@ -53,7 +51,7 @@ function instance($$self, $$props, $$invalidate) {
 	let x = 0;
 
 	function foo() {
-		if (true) { x += 1; $$invalidate('x', x); }
+		if (true) { x += 1; $$invalidate('x', 0, x); }
 	}
 
 	return { x, foo };

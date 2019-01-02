@@ -20,10 +20,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.bar) {
-				div1.dataset.foo = ctx.bar;
-			}
+		p(ctx) {
+			div1.dataset.foo = ctx.bar;
 		},
 
 		i(target, anchor) {
@@ -47,7 +45,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 
 	$$self.$set = $$props => {
-		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
+		if ('bar' in $$props) $$invalidate('bar', 0, bar = $$props.bar);
 	};
 
 	return { bar };

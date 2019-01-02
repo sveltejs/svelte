@@ -44,16 +44,16 @@ function create_each_block($$, ctx) {
 			raw_before.insertAdjacentHTML("afterend", raw_value);
 		},
 
-		p(changed, ctx) {
-			if ((changed.comments) && text2_value !== (text2_value = ctx.comment.author)) {
+		p(ctx, changed) {
+			if ((changed & /*comments*/1) && text2_value !== (text2_value = ctx.comment.author)) {
 				setData(text2, text2_value);
 			}
 
-			if ((changed.elapsed || changed.comments || changed.time) && text4_value !== (text4_value = ctx.elapsed(ctx.comment.time, ctx.time))) {
+			if ((changed & /*elapsed, comments or time*/ 7) && text4_value !== (text4_value = ctx.elapsed(ctx.comment.time, ctx.time))) {
 				setData(text4, text4_value);
 			}
 
-			if ((changed.comments) && raw_value !== (raw_value = ctx.comment.html)) {
+			if ((changed & /*comments*/1) && raw_value !== (raw_value = ctx.comment.html)) {
 				detachAfter(raw_before);
 				raw_before.insertAdjacentHTML("afterend", raw_value);
 			}
@@ -100,15 +100,15 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.comments || changed.elapsed || changed.time) {
+		p(ctx, changed) {
+			if (changed & /*elapsed, comments or time*/ 7) {
 				each_value = ctx.comments;
 
 				for (var i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, changed);
 					} else {
 						each_blocks[i] = create_each_block($$, child_ctx);
 						each_blocks[i].c();
@@ -122,7 +122,7 @@ function create_fragment($$, ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) {
+			if (changed & /*foo*/8) {
 				setData(text1, ctx.foo);
 			}
 		},
@@ -149,10 +149,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { comments, elapsed, time, foo } = $$props;
 
 	$$self.$set = $$props => {
-		if ('comments' in $$props) $$invalidate('comments', comments = $$props.comments);
-		if ('elapsed' in $$props) $$invalidate('elapsed', elapsed = $$props.elapsed);
-		if ('time' in $$props) $$invalidate('time', time = $$props.time);
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('comments' in $$props) $$invalidate('comments', 0, comments = $$props.comments);
+		if ('elapsed' in $$props) $$invalidate('elapsed', 1, elapsed = $$props.elapsed);
+		if ('time' in $$props) $$invalidate('time', 2, time = $$props.time);
+		if ('foo' in $$props) $$invalidate('foo', 3, foo = $$props.foo);
 	};
 
 	return { comments, elapsed, time, foo };

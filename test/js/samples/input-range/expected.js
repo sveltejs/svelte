@@ -23,8 +23,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.value) input.value = ctx.value;
+		p(ctx) {
+			input.value = ctx.value;
 		},
 
 		i(target, anchor) {
@@ -49,11 +49,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_change_input_handler() {
 		value = toNumber(this.value);
-		$$invalidate('value', value);
+		$$invalidate('value', 0, value);
 	}
 
 	$$self.$set = $$props => {
-		if ('value' in $$props) $$invalidate('value', value = $$props.value);
+		if ('value' in $$props) $$invalidate('value', 0, value = $$props.value);
 	};
 
 	return { value, input_change_input_handler };

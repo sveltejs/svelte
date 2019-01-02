@@ -30,10 +30,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p: function update(changed, ctx) {
-			if (changed.name) {
-				setData(text1, ctx.name);
-			}
+		p: function update(ctx) {
+			setData(text1, ctx.name);
 
 			debugger;
 		},
@@ -58,7 +56,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { name } = $$props;
 
 	$$self.$set = $$props => {
-		if ('name' in $$props) $$invalidate('name', name = $$props.name);
+		if ('name' in $$props) $$invalidate('name', 0, name = $$props.name);
 	};
 
 	return { name };

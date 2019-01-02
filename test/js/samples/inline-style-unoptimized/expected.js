@@ -20,12 +20,12 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.style) {
+		p(ctx, changed) {
+			if (changed & /*style*/1) {
 				div0.style.cssText = ctx.style;
 			}
 
-			if ((changed.key || changed.value) && div1_style_value !== (div1_style_value = "" + ctx.key + ": " + ctx.value)) {
+			if (changed & /*key or value*/6 && div1_style_value !== (div1_style_value = "" + ctx.key + ": " + ctx.value)) {
 				div1.style.cssText = div1_style_value;
 			}
 		},
@@ -51,9 +51,9 @@ function instance($$self, $$props, $$invalidate) {
 	let { style, key, value } = $$props;
 
 	$$self.$set = $$props => {
-		if ('style' in $$props) $$invalidate('style', style = $$props.style);
-		if ('key' in $$props) $$invalidate('key', key = $$props.key);
-		if ('value' in $$props) $$invalidate('value', value = $$props.value);
+		if ('style' in $$props) $$invalidate('style', 0, style = $$props.style);
+		if ('key' in $$props) $$invalidate('key', 1, key = $$props.key);
+		if ('value' in $$props) $$invalidate('value', 2, value = $$props.value);
 	};
 
 	return { style, key, value };

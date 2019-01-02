@@ -35,8 +35,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if ((changed.current) && select_value_value !== (select_value_value = ctx.current)) {
+		p(ctx) {
+			if (select_value_value !== (select_value_value = ctx.current)) {
 				for (var i = 0; i < select.options.length; i += 1) {
 					var option = select.options[i];
 
@@ -67,7 +67,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { current } = $$props;
 
 	$$self.$set = $$props => {
-		if ('current' in $$props) $$invalidate('current', current = $$props.current);
+		if ('current' in $$props) $$invalidate('current', 0, current = $$props.current);
 	};
 
 	return { current };

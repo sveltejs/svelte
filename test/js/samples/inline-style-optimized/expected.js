@@ -15,10 +15,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.color) {
-				setStyle(div, "color", ctx.color);
-			}
+		p(ctx) {
+			setStyle(div, "color", ctx.color);
 		},
 
 		i(target, anchor) {
@@ -40,7 +38,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { color } = $$props;
 
 	$$self.$set = $$props => {
-		if ('color' in $$props) $$invalidate('color', color = $$props.color);
+		if ('color' in $$props) $$invalidate('color', 0, color = $$props.color);
 	};
 
 	return { color };

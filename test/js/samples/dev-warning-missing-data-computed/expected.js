@@ -27,12 +27,12 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p: function update(changed, ctx) {
-			if ((changed.foo) && text0_value !== (text0_value = Math.max(0, ctx.foo))) {
+		p: function update(ctx, changed) {
+			if ((changed & /*foo*/1) && text0_value !== (text0_value = Math.max(0, ctx.foo))) {
 				setData(text0, text0_value);
 			}
 
-			if (changed.bar) {
+			if (changed & /*bar*/2) {
 				setData(text2, ctx.bar);
 			}
 		},
@@ -58,12 +58,12 @@ function instance($$self, $$props, $$invalidate) {
 	let bar;
 
 	$$self.$set = $$props => {
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
+		if ('foo' in $$props) $$invalidate('foo', 0, foo = $$props.foo);
 	};
 
-	$$self.$$.update = ($$dirty = { foo: 1 }) => {
-		if ($$dirty.foo) {
-			bar = foo * 2; $$invalidate('bar', bar);
+	$$self.$$.update = ($$dirty = -1) => {
+		if ($$dirty & /*foo*/1) {
+			bar = foo * 2; $$invalidate('bar', 1, bar);
 		}
 	};
 

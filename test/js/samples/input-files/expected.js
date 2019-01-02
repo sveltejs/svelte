@@ -41,11 +41,11 @@ function instance($$self, $$props, $$invalidate) {
 
 	function input_input_handler() {
 		files = this.files;
-		$$invalidate('files', files);
+		$$invalidate('files', 0, files);
 	}
 
 	$$self.$set = $$props => {
-		if ('files' in $$props) $$invalidate('files', files = $$props.files);
+		if ('files' in $$props) $$invalidate('files', 0, files = $$props.files);
 	};
 
 	return { files, input_input_handler };

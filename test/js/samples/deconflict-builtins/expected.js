@@ -22,8 +22,8 @@ function create_each_block($$, ctx) {
 			append(span, text);
 		},
 
-		p(changed, ctx) {
-			if ((changed.createElement) && text_value !== (text_value = ctx.node)) {
+		p(ctx) {
+			if (text_value !== (text_value = ctx.node)) {
 				setData(text, text_value);
 			}
 		},
@@ -65,27 +65,25 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.createElement) {
-				each_value = ctx.createElement;
+		p(ctx) {
+			each_value = ctx.createElement;
 
-				for (var i = 0; i < each_value.length; i += 1) {
-					const child_ctx = get_each_context(ctx, each_value, i);
+			for (var i = 0; i < each_value.length; i += 1) {
+				const child_ctx = get_each_context(ctx, each_value, i);
 
-					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
-					} else {
-						each_blocks[i] = create_each_block($$, child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(each_anchor.parentNode, each_anchor);
-					}
+				if (each_blocks[i]) {
+					each_blocks[i].p(child_ctx);
+				} else {
+					each_blocks[i] = create_each_block($$, child_ctx);
+					each_blocks[i].c();
+					each_blocks[i].m(each_anchor.parentNode, each_anchor);
 				}
-
-				for (; i < each_blocks.length; i += 1) {
-					each_blocks[i].d(1);
-				}
-				each_blocks.length = each_value.length;
 			}
+
+			for (; i < each_blocks.length; i += 1) {
+				each_blocks[i].d(1);
+			}
+			each_blocks.length = each_value.length;
 		},
 
 		i(target, anchor) {

@@ -24,8 +24,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if ((changed.things) && text3_value !== (text3_value = ctx.things.length)) {
+		p(ctx) {
+			if (text3_value !== (text3_value = ctx.things.length)) {
 				setData(text3, text3_value);
 			}
 		},
@@ -54,7 +54,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	function foo() {
 		things.push(1);
-		$$invalidate('things', things);
+		$$invalidate('things', 0, things);
 	}
 
 	return { things, foo };

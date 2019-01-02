@@ -33,12 +33,12 @@ function create_each_block($$, ctx) {
 			insert(target, text1, anchor);
 		},
 
-		p: function update(changed, ctx) {
-			if ((changed.things) && text0_value !== (text0_value = ctx.thing.name)) {
+		p: function update(ctx, changed) {
+			if ((changed & /*things*/1) && text0_value !== (text0_value = ctx.thing.name)) {
 				setData(text0, text0_value);
 			}
 
-			if (changed.foo || changed.bar || changed.baz || changed.things) {
+			if (changed & /*foo, bar, baz or things*/15) {
 				const { foo, bar, baz, thing } = ctx;
 				console.log({ foo, bar, baz, thing });
 				debugger;
@@ -94,8 +94,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p: function update(changed, ctx) {
-			if (changed.things) {
+		p: function update(ctx, changed) {
+			if (changed & /*things*/1) {
 				each_value = ctx.things;
 
 				for (var i = 0; i < each_value.length; i += 1) {
@@ -116,7 +116,7 @@ function create_fragment($$, ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (changed.foo) {
+			if (changed & /*foo*/2) {
 				setData(text2, ctx.foo);
 			}
 		},
@@ -143,10 +143,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { things, foo, bar, baz } = $$props;
 
 	$$self.$set = $$props => {
-		if ('things' in $$props) $$invalidate('things', things = $$props.things);
-		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
-		if ('bar' in $$props) $$invalidate('bar', bar = $$props.bar);
-		if ('baz' in $$props) $$invalidate('baz', baz = $$props.baz);
+		if ('things' in $$props) $$invalidate('things', 0, things = $$props.things);
+		if ('foo' in $$props) $$invalidate('foo', 1, foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate('bar', 2, bar = $$props.bar);
+		if ('baz' in $$props) $$invalidate('baz', 3, baz = $$props.baz);
 	};
 
 	return { things, foo, bar, baz };

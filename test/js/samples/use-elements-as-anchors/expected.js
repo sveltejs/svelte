@@ -164,7 +164,7 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
+		p(ctx) {
 			if (ctx.a) {
 				if (!if_block0) {
 					if_block0 = create_if_block_4($$, ctx);
@@ -253,11 +253,11 @@ function instance($$self, $$props, $$invalidate) {
 	let { a, b, c, d, e } = $$props;
 
 	$$self.$set = $$props => {
-		if ('a' in $$props) $$invalidate('a', a = $$props.a);
-		if ('b' in $$props) $$invalidate('b', b = $$props.b);
-		if ('c' in $$props) $$invalidate('c', c = $$props.c);
-		if ('d' in $$props) $$invalidate('d', d = $$props.d);
-		if ('e' in $$props) $$invalidate('e', e = $$props.e);
+		if ('a' in $$props) $$invalidate('a', 0, a = $$props.a);
+		if ('b' in $$props) $$invalidate('b', 1, b = $$props.b);
+		if ('c' in $$props) $$invalidate('c', 2, c = $$props.c);
+		if ('d' in $$props) $$invalidate('d', 3, d = $$props.d);
+		if ('e' in $$props) $$invalidate('e', 4, e = $$props.e);
 	};
 
 	return { a, b, c, d, e };

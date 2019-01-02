@@ -20,10 +20,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.bar) {
-				setAttribute(div1, "data-foo", ctx.bar);
-			}
+		p(ctx) {
+			setAttribute(div1, "data-foo", ctx.bar);
 		},
 
 		i(target, anchor) {

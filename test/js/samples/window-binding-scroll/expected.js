@@ -26,17 +26,15 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if (changed.y && !scrolling) {
+		p(ctx) {
+			if (!scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
 				window.scrollTo(window.pageXOffset, current["y"]);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (changed.y) {
-				setData(text1, ctx.y);
-			}
+			setData(text1, ctx.y);
 		},
 
 		i(target, anchor) {
@@ -60,11 +58,11 @@ function instance($$self, $$props, $$invalidate) {
 	let { y } = $$props;
 
 	function onwindowscroll() {
-		y = window.pageYOffset; $$invalidate('y', y);
+		y = window.pageYOffset; $$invalidate('y', 0, y);
 	}
 
 	$$self.$set = $$props => {
-		if ('y' in $$props) $$invalidate('y', y = $$props.y);
+		if ('y' in $$props) $$invalidate('y', 0, y = $$props.y);
 	};
 
 	return { y, onwindowscroll };

@@ -24,8 +24,8 @@ function create_fragment($$, ctx) {
 			current = true;
 		},
 
-		p(changed, ctx) {
-			if ((changed.things) && text3_value !== (text3_value = ctx.things.length)) {
+		p(ctx) {
+			if (text3_value !== (text3_value = ctx.things.length)) {
 				setData(text3, text3_value);
 			}
 		},
@@ -52,7 +52,7 @@ function create_fragment($$, ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let things = [];
 
-	function click_handler() { things.push(1); $$invalidate('things', things) }
+	function click_handler() { things.push(1); $$invalidate('things', 0, things) }
 
 	return { things, click_handler };
 }
