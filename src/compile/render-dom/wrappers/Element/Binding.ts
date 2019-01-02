@@ -65,7 +65,7 @@ export default class BindingWrapper {
 		// view to model
 		this.handler = getEventHandler(this, parent.renderer, block, this.object, contextless_snippet);
 
-		this.snippet = this.node.expression.render();
+		this.snippet = this.node.expression.render(block);
 
 		const type = parent.node.getStaticAttributeValue('type');
 

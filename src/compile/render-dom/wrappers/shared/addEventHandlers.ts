@@ -7,7 +7,7 @@ export default function addEventHandlers(
 	handlers: EventHandler[]
 ) {
 	handlers.forEach(handler => {
-		let snippet = handler.render();
+		let snippet = handler.render(block);
 		if (handler.modifiers.has('preventDefault')) snippet = `@preventDefault(${snippet})`;
 		if (handler.modifiers.has('stopPropagation')) snippet = `@stopPropagation(${snippet})`;
 
@@ -25,12 +25,6 @@ export default function addEventHandlers(
 			block.event_listeners.push(
 				`@addListener(${target}, "${handler.name}", ${snippet})`
 			);
-		}
-
-		if (handler.expression) {
-			handler.expression.declarations.forEach(declaration => {
-				block.builders.init.addBlock(declaration);
-			});
 		}
 	});
 }
