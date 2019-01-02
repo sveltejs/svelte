@@ -33,7 +33,7 @@ export default class TitleWrapper extends Wrapper {
 			if (this.node.children.length === 1) {
 				// single {tag} — may be a non-string
 				const { expression } = this.node.children[0];
-				value = expression.render();
+				value = expression.render(block);
 				addToSet(allDependencies, expression.dynamic_dependencies);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
@@ -44,7 +44,7 @@ export default class TitleWrapper extends Wrapper {
 							if (chunk.type === 'Text') {
 								return stringify(chunk.data);
 							} else {
-								const snippet = chunk.expression.render();
+								const snippet = chunk.expression.render(block);
 
 								chunk.expression.dynamic_dependencies.forEach(d => {
 									allDependencies.add(d);
