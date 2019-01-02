@@ -180,7 +180,7 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.hasBinding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
 		if (this.hasBinding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
 
-		const snippet = this.node.expression.render();
+		const snippet = this.node.expression.render(block);
 
 		block.builders.init.addLine(`var ${this.vars.each_block_value} = ${snippet};`);
 

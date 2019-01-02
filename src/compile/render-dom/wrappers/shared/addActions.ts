@@ -12,13 +12,10 @@ export default function addActions(
 	actions.forEach(action => {
 		const { expression } = action;
 		let snippet, dependencies;
-		if (expression) {
-			snippet = expression.render();
-			dependencies = expression.dynamic_dependencies;
 
-			expression.declarations.forEach(declaration => {
-				block.builders.init.addBlock(declaration);
-			});
+		if (expression) {
+			snippet = expression.render(block);
+			dependencies = expression.dynamic_dependencies;
 		}
 
 		const name = block.getUniqueName(

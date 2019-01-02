@@ -2,6 +2,7 @@ import Node from './shared/Node';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import deindent from '../../utils/deindent';
+import Block from '../render-dom/Block';
 
 export default class EventHandler extends Node {
 	name: string;
@@ -52,8 +53,9 @@ export default class EventHandler extends Node {
 		}
 	}
 
-	render() {
-		if (this.expression) return this.expression.render();
+	// TODO move this? it is specific to render-dom
+	render(block: Block) {
+		if (this.expression) return this.expression.render(block);
 
 		this.component.template_references.add(this.handler_name);
 		return `ctx.${this.handler_name}`;
