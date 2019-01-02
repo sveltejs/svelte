@@ -233,7 +233,7 @@ h1 { font-size: var(--h1) }
 p, ol, ul {
 	line-height: 1.5;
 	margin: 0 0 1em 0;
-	font-family: Roboto;
+	font-family: Roboto, sans-serif;
 	-webkit-font-smoothing: antialiased;
 	/* font-family: var(--font-system); */
 }
