@@ -28,7 +28,7 @@ export function animate(node, from, fn, params) {
 		if (css) {
 			if (delay) node.style.cssText = cssText;
 
-			name = create_rule({ a: 0, b: 1, delta: 1, duration }, easing, css);
+			name = create_rule({ a: 0, b: 1, d: 1, duration }, easing, css);
 
 			node.style.animation = (node.style.animation || '')
 				.split(', ')
