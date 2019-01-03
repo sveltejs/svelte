@@ -13,12 +13,12 @@ function hash(str) {
 	return hash >>> 0;
 }
 
-export function create_rule({ a, b, delta, duration }, ease, fn) {
+export function create_rule({ a, b, d, duration }, ease, fn) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
 	for (let p = 0; p <= 1; p += step) {
-		const t = a + delta * ease(p);
+		const t = a + d * ease(p);
 		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
 	}
 
