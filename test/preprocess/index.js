@@ -151,6 +151,10 @@ describe('preprocess', () => {
 			<style type='text/scss' data-foo="bar" bool></style>
 		`;
 
+		const expected = `
+			<style type='text/scss' data-foo="bar" bool>PROCESSED</style>
+		`;
+
 		return svelte.preprocess(source, {
 			style: ({ attributes }) => {
 				assert.deepEqual(attributes, {
@@ -158,7 +162,10 @@ describe('preprocess', () => {
 					'data-foo': 'bar',
 					bool: true
 				});
+				return { code: 'PROCESSED' };
 			}
+		}).then(processed => {
+			assert.equal(processed.toString(), expected);
 		});
 	});
 

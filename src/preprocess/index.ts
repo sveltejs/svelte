@@ -60,7 +60,7 @@ export default async function preprocess(
 						attributes: parseAttributes(attributes),
 						filename: options.filename,
 					}));
-				return processed ? `<${type}>${processed.code}</${type}>` : match;
+				return processed ? `<${type}${attributes}>${processed.code}</${type}>` : match;
 			}
 		);
 	}
