@@ -8,7 +8,6 @@
 	const xTicks = [1980, 1990, 2000, 2010];
 	const padding = { top: 20, right: 15, bottom: 20, left: 25 };
 
-	let svg;
 	let width = 500;
 	let height = 200;
 
@@ -36,10 +35,9 @@
 		return "'" + tick % 100;
 	}
 
+	let svg;
 	function resize() {
-		const bcr = svg.getBoundingClientRect();
-		width = bcr.width;
-		height = bcr.height;
+		({ width, height } = svg.getBoundingClientRect());
 	}
 
 	onMount(resize);

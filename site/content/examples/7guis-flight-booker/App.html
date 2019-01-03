@@ -27,7 +27,7 @@
 	}
 
 	function convertToDate(str) {
-		var split = str.split('-');
+		const split = str.split('-');
 		return new Date(+split[0], +split[1] - 1, +split[2]);
 	}
 
