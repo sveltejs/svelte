@@ -40,34 +40,19 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 ## Example usage
 
 ```js
-import * as svelte from 'svelte';
+import * as svelte from 'svelte/compiler';
 
 const { js, css, ast } = svelte.compile(source, {
-	// the target module format – defaults to 'es' (ES2015 modules), can
-	// also be 'amd', 'cjs', 'umd', 'iife' or 'eval'
-	format: 'umd',
+	// the target module format – defaults to 'esm' (ES2015 modules), can also be 'cjs'
+	format: 'cjs',
 
 	// the filename of the source file, used in e.g. generating sourcemaps
 	filename: 'MyComponent.html',
 
-	// the name of the constructor. Required for 'iife' and 'umd' output,
-	// but otherwise mostly useful for debugging. Defaults to 'SvelteComponent'
-	name: 'MyComponent',
-
-	// for 'amd' and 'umd' output, you can optionally specify an AMD module ID
-	amd: {
-		id: 'my-component'
-	},
-
-	// custom error/warning handlers. By default, errors will throw, and
-	// warnings will be printed to the console. Where applicable, the
-	// error/warning object will have `pos`, `loc` and `frame` properties
-	onerror: err => {
-		console.error( err.message );
-	},
-
+	// custom warning handler. By default, warnings will be printed to the console.
+	// Where applicable, the warning object will have `pos`, `loc` and `frame` properties
 	onwarn: warning => {
-		console.warn( warning.message );
+		console.warn(warning.message);
 	}
 });
 ```
@@ -77,8 +62,7 @@ const { js, css, ast } = svelte.compile(source, {
 
 The Svelte compiler exposes the following API:
 
-* `compile(source [, options]) => { js, css, ast }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, a sourcemap, an AST and transformed CSS.
-* `create(source [, options]) => function` - Compile the component and return the component itself.
+* `compile(source [, options]) => { js, css, ast, stats }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, the transformed CSS, the AST and other information about the component.
 * `preprocess(source, options) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
@@ -88,22 +72,18 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 
 | | **Values** | **Description** | **Default** |
 |---|---|---|---|
-| `generate` | `'dom'`, `'ssr'`, `false` | Whether to generate JavaScript code intended for use on the client (`'dom'`), or for use in server-side rendering (`'ssr'`). If `false`, component will be parsed and validated but no code will be emitted | `'dom'` |
-| `dev` | `true`, `false` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
-| `css` | `true`, `false` | Whether to include code to inject your component's styles into the DOM. | `true` |
-| `hydratable` | `true`, `false` | Whether to support hydration on the compiled component. | `false` |
-| `customElement` | `true`, `false`, `{ tag, props }` | Whether to compile this component to a custom element. If `tag`/`props` are passed, compiles to a custom element and overrides the values exported by the component. | `false` |
-| `bind` | `boolean` | If `false`, disallows `bind:` directives | `true` |
+| `generate` | `'dom'`, `'ssr'`, `false` | Whether to generate JavaScript code intended for use on the client (`'dom'`), or for use in server-side rendering (`'ssr'`). If `false`, component will be parsed and validated but no code will be emitted. | `'dom'` |
+| `dev` | `boolean` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
+| `css` | `boolean` | Whether to include JavaScript code to inject your component's styles into the DOM. | `true` |
+| `hydratable` | `boolean` | Whether to support hydration on the compiled component. | `false` |
+| `customElement` | `boolean`, `{ tag, props }` | Whether to compile this component to a custom element. If `tag`/`props` are passed, compiles to a custom element and overrides the values exported by the component. | `false` |
+| `bind` | `boolean` | If `false`, disallows `bind:` directives. | `true` |
+| `legacy` | `boolean` | Ensures compatibility with very old browsers, at the cost of some extra code. | `false` |
 | | | |
-| `shared` | `true`, `false`, `string` | Whether to import various helpers from a shared external library. When you have a project with multiple components, this reduces the overall size of your JavaScript bundle, at the expense of having immediately-usable component. You can pass a string of the module path to use, or `true` will import from `'svelte/shared.js'`. | `false` |
-| `legacy` | `true`, `false` | Ensures compatibility with very old browsers, at the cost of some extra code. | `false` |
-| | | |
-| `format` | `'es'`, `'amd'`, `'cjs'`, `'umd'`, `'iife'`, `'eval'` | The format to output in the compiled component.<br>`'es'` - ES6/ES2015 module, suitable for consumption by a bundler<br>`'amd'` - AMD module<br>`'cjs'` - CommonJS module<br>`'umd'` - UMD module<br>`'iife'` - IIFE-wrapped function defining a global variable, suitable for use directly in browser<br>`'eval'` - standalone function, suitable for passing to `eval()` | `'es'` for `generate: 'dom'`<br>`'cjs'` for `generate: 'ssr'` |
+| `format` | `'esm'`, `'cjs'` | The format to output in the compiled component.<br>`'esm'` - ES6/ES2015 module, suitable for consumption by a bundler<br>`'cjs'` - CommonJS module | `'esm'` |
 | `name` | `string` | The name of the constructor in the compiled component. | `'SvelteComponent'` |
 | `filename` | `string` | The filename to use in sourcemaps and compiler error and warning messages. | `'SvelteComponent.html'` |
-| `amd`.`id` | `string` | The AMD module ID to use for the `'amd'` and `'umd'` output formats. | `undefined` |
-| `globals` | `object`, `function` | When outputting to the `'umd'`, `'iife'` or `'eval'` formats, an object or function mapping the names of imported dependencies to the names of global variables. | `{}` |
-| `preserveComments` | `boolean` | Include comments in rendering. Currently, only applies to SSR rendering | `false` |
+| `preserveComments` | `boolean` | Include comments in rendering. Currently, only applies to SSR rendering. | `false` |
 | | | |
 | `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. Passed two arguments: the warning object, and another function that is Svelte's default onwarn handling. | (warning is logged to console) |
 
@@ -154,7 +134,7 @@ To install and work on Svelte locally:
 ```bash
 git clone git@github.com:sveltejs/svelte.git
 cd svelte
-npm install
+npm ci
 npm run dev
 ```
 
