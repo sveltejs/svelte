@@ -1,13 +1,11 @@
 <script>
-	export let promise;
+	let promise;
 
-	// [svelte-upgrade suggestion]
-	// review these functions and remove unnecessary 'export' keywords
-	export function findAnswer() {
+	function findAnswer() {
 		promise = new Promise(fulfil => {
-				const delay = 1000 + Math.random() * 3000;
-				setTimeout(() => fulfil(42), delay);
-			});
+			const delay = 1000 + Math.random() * 3000;
+			setTimeout(() => fulfil(42), delay);
+		});
 	}
 </script>
 
