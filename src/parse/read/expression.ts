@@ -1,4 +1,4 @@
-import { parseExpressionAt } from 'acorn';
+import { parseExpressionAt } from '../acorn';
 import { Parser } from '../index';
 
 const literals = new Map([['true', true], ['false', false], ['null', null]]);
@@ -31,13 +31,7 @@ export default function readExpression(parser: Parser) {
 	parser.index = start;
 
 	try {
-		const node = parseExpressionAt(parser.template, parser.index, {
-			ecmaVersion: 9,
-			preserveParens: true,
-			plugins: {
-				dynamicImport: true
-			}
-		});
+		const node = parseExpressionAt(parser.template, parser.index);
 		parser.index = node.end;
 
 		return node;
