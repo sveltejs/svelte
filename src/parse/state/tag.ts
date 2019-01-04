@@ -379,7 +379,7 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	parser.allowWhitespace();
 
 	const colon_index = name.indexOf(':');
-	const type = colon_index !== 1 && get_directive_type(name.slice(0, colon_index));
+	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
