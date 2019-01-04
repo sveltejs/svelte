@@ -1,0 +1,1 @@
+<button on:click="{() => foo()}">{click_handler}</button>
