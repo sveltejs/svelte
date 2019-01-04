@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, append, createElement, detachNode, flush, init, insert, run, safe_not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var select, option0, option1, select_value_value, current;
+	var select, option0, option1, select_value_value, current_1;
 
 	return {
 		c() {
@@ -32,7 +32,7 @@ function create_fragment($$, ctx) {
 				}
 			}
 
-			current = true;
+			current_1 = true;
 		},
 
 		p(changed, ctx) {
@@ -49,7 +49,7 @@ function create_fragment($$, ctx) {
 		},
 
 		i(target, anchor) {
-			if (current) return;
+			if (current_1) return;
 			this.m(target, anchor);
 		},
 
