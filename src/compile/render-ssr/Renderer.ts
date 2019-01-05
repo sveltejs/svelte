@@ -19,9 +19,9 @@ function noop(){}
 
 const handlers: Record<string, Handler> = {
 	AwaitBlock,
+	Body: noop,
 	Comment,
 	DebugTag,
-	Document: noop,
 	EachBlock,
 	Element,
 	Head,

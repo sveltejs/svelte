@@ -1,8 +1,8 @@
 import Node from './shared/Node';
 import EventHandler from './EventHandler';
 
-export default class Document extends Node {
-	type: 'Document';
+export default class Body extends Node {
+	type: 'Body';
 	handlers: EventHandler[];
 
 	constructor(component, parent, scope, info) {
