@@ -34,6 +34,12 @@ export function create_transition(node, fn, params, intro) {
 	let running = false;
 	let running_program = null;
 	let pending_program = null;
+	let animation_name = null;
+
+	function clear_animation() {
+		if (animation_name) delete_rule(node, animation_name);
+		animation_name = null;
+	}
 
 	function start(program, delay, duration, easing) {
 		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}start`));
@@ -46,13 +52,10 @@ export function create_transition(node, fn, params, intro) {
 		if (config.css) {
 			if (delay) node.style.cssText = cssText;
 
-			program.name = create_rule(program, easing, config.css);
+			clear_animation();
+			animation_name = create_rule(program, easing, config.css);
 
-			node.style.animation = (node.style.animation || '')
-				.split(', ')
-				.filter(anim => anim && (program.d < 0 || !/__svelte/.test(anim)))
-				.concat(`${program.name} ${program.duration}ms linear 1 forwards`)
-				.join(', ');
+			node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${program.duration}ms linear 1 forwards`;
 		}
 
 		running_program = program;
@@ -72,14 +75,14 @@ export function create_transition(node, fn, params, intro) {
 		if (!program.b && !program.invalidated) {
 			program.group.callbacks.push(() => {
 				program.callback();
-				if (config.css) delete_rule(node, program.name);
+				clear_animation();
 			});
 
 			if (--program.group.remaining === 0) {
 				program.group.callbacks.forEach(run);
 			}
 		} else {
-			if (config.css) delete_rule(node, program.name);
+			clear_animation();
 		}
 
 		running = !!pending_program;
@@ -157,16 +160,22 @@ export function create_transition(node, fn, params, intro) {
 		},
 
 		abort(reset) {
-			if (reset && config.tick) config.tick(1, 0);
-
-			if (running_program) {
-				if (config.css) delete_rule(node, running_program.name);
-				running_program = pending_program = null;
-				running = false;
+			if (reset) {
+				// if an outro was aborted by an intro, we need
+				// to reset the node to its initial state
+				if (config.tick) config.tick(1, 0);
 			}
+
+			clear_animation();
+
+			running_program = pending_program = null;
+			running = false;
 		},
 
 		invalidate() {
+			// invalidation happens when a (bidirectional) outro is interrupted by an
+			// intro — callbacks should not fire, as that would cause the nodes to
+			// be removed from the DOM
 			if (running_program) {
 				running_program.invalidated = true;
 			}

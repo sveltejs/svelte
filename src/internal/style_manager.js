@@ -43,13 +43,15 @@ export function create_rule({ a, b, d, duration }, ease, fn) {
 export function delete_rule(node, name) {
 	node.style.animation = node.style.animation
 		.split(', ')
-		.filter(anim => anim && anim.indexOf(name) === -1)
+		.filter(anim => anim.indexOf(name) < 0)
 		.join(', ');
 
+	console.log({ active });
 	if (--active <= 0) clear_rules();
 }
 
 export function clear_rules() {
+	console.log(`clear rules`, active);
 	let i = stylesheet.cssRules.length;
 	while (i--) stylesheet.deleteRule(i);
 	current_rules = {};
