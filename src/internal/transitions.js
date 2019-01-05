@@ -122,7 +122,7 @@ export function create_transition(node, fn, params, intro) {
 		if (!running) {
 			running = true;
 
-			const { abort, promise } = loop(now => {
+			loop(now => {
 				if (running_program && now >= running_program.end) {
 					done();
 				}

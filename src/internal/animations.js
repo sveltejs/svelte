@@ -45,7 +45,7 @@ export function animate(node, from, fn, params) {
 		running = false;
 	}
 
-	const { abort, promise } = loop(now => {
+	loop(now => {
 		if (!started && now >= start_time) {
 			start();
 		}
