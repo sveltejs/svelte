@@ -1,4 +1,4 @@
-import { identity as linear, noop, run } from './utils.js';
+import { identity as linear, noop, run, run_all } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 
@@ -24,6 +24,127 @@ export function group_outros() {
 	};
 }
 
+export function create_in_transition(node, fn, params) {
+	let config = fn(node, params);
+	let running = true;
+	let animation_name;
+
+	function cleanup() {
+		delete_rule(node, animation_name);
+	}
+
+	wait().then(() => {
+		if (typeof config === 'function') config = config();
+
+		const {
+			delay = 0,
+			duration = 300,
+			easing = linear,
+			tick = noop,
+			css
+		} = config;
+
+		if (css) {
+			animation_name = create_rule(0, 1, duration, easing, css);
+			node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
+		}
+
+		tick(0, 1);
+
+		const start_time = window.performance.now() + delay;
+		const end_time = start_time + duration;
+
+		loop(now => {
+			if (running) {
+				if (now > end_time) {
+					tick(1, 0);
+					cleanup();
+					return running = false;
+				}
+
+				if (now > start_time) {
+					const t = easing((now - start_time) / duration);
+					tick(t, 1 - t);
+				}
+			}
+
+			return running;
+		});
+	});
+
+	return {
+		end() {
+			if (running) {
+				cleanup();
+				running = false;
+			}
+		}
+	};
+}
+
+export function create_out_transition(node, fn, params, callback) {
+	let config = fn(node, params);
+	let running = true;
+	let animation_name;
+
+	const group = outros;
+
+	group.remaining += 1;
+	group.callbacks.push(callback); // TODO do we even need multiple callbacks? can we just have the one?
+
+	wait().then(() => {
+		if (typeof config === 'function') config = config();
+
+		const {
+			delay = 0,
+			duration = 300,
+			easing = linear,
+			tick = noop,
+			css
+		} = config;
+
+		if (css) {
+			animation_name = create_rule(1, 0, duration, easing, css);
+			node.style.animation += (node.style.animation ? ', ' : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
+		}
+
+		const start_time = window.performance.now() + delay;
+		const end_time = start_time + duration;
+
+		loop(now => {
+			if (running) {
+				if (now > end_time) {
+					tick(0, 1);
+
+					if (!--group.remaining) {
+						// this will result in `end()` being called,
+						// so we don't need to clean up here
+						run_all(group.callbacks);
+					}
+
+					return false;
+				}
+
+				if (now > start_time) {
+					const t = easing((now - start_time) / duration);
+					tick(1 - t, t);
+				}
+			}
+
+			return running;
+		});
+	});
+
+	return {
+		end() {
+			if (running) {
+				delete_rule(node, animation_name);
+				running = false;
+			}
+		}
+	};
+}
+
 export function create_transition(node, fn, params, intro) {
 	let config = fn(node, params);
 
@@ -40,17 +161,17 @@ export function create_transition(node, fn, params, intro) {
 		animation_name = null;
 	}
 
-	function start(program, delay, duration, easing) {
+	function start(program, duration, easing) {
 		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}start`));
 
 		program.a = t;
-		program.d = program.b - program.a;
-		program.duration = duration * Math.abs(program.b - program.a);
+		program.d = program.b - t;
+		program.duration = duration * Math.abs(program.d);
 		program.end = program.start + program.duration;
 
 		if (config.css) {
 			clear_animation();
-			animation_name = create_rule(program, easing, config.css);
+			animation_name = create_rule(t, program.b, program.duration, easing, config.css);
 
 			node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${program.duration}ms linear 1 forwards`;
 		}
@@ -101,7 +222,7 @@ export function create_transition(node, fn, params, intro) {
 		if (!ready) {
 			if (config.css && delay) {
 				// TODO can we just use the normal rule, but delay it?
-				animation_name = create_rule({ a: 0, b: 1, d: 1, duration: 1, }, linear, () => config.css(0, 1));
+				animation_name = create_rule(0, 1, 1, linear, () => config.css(0, 1));
 				node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} 9999s linear 1 both`;
 			}
 
@@ -117,7 +238,7 @@ export function create_transition(node, fn, params, intro) {
 		if (delay) {
 			pending_program = program;
 		} else {
-			start(program, delay, duration, easing);
+			start(program, duration, easing);
 		}
 
 		if (!running) {
@@ -129,7 +250,7 @@ export function create_transition(node, fn, params, intro) {
 				}
 
 				if (pending_program && now >= pending_program.start) {
-					start(pending_program, delay, duration, easing);
+					start(pending_program, duration, easing);
 				}
 
 				if (running) {

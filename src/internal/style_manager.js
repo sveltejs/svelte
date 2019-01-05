@@ -13,12 +13,12 @@ function hash(str) {
 	return hash >>> 0;
 }
 
-export function create_rule({ a, b, d, duration }, ease, fn) {
+export function create_rule(a, b, duration, ease, fn) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
 	for (let p = 0; p <= 1; p += step) {
-		const t = a + d * ease(p);
+		const t = a + (b - a) * ease(p);
 		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
 	}
 
@@ -41,6 +41,8 @@ export function create_rule({ a, b, d, duration }, ease, fn) {
 }
 
 export function delete_rule(node, name) {
+	console.log(`delete ${name} from ${node.textContent}`, { active });
+
 	node.style.animation = node.style.animation
 		.split(', ')
 		.filter(anim => anim.indexOf(name) < 0)
@@ -53,6 +55,7 @@ export function clear_rules() {
 	requestAnimationFrame(() => {
 		if (active) return;
 		let i = stylesheet.cssRules.length;
+		console.log(`clear_rules ${i}`);
 		while (i--) stylesheet.deleteRule(i);
 		current_rules = {};
 	});

@@ -621,27 +621,24 @@ export default class ElementWrapper extends Wrapper {
 					? intro.expression.render(block)
 					: '{}';
 
-				const fn = component.qualify(intro.name); // TODO add built-in transitions?
+				const fn = component.qualify(intro.name);
 
 				if (outro) {
-					block.builders.intro.addBlock(deindent`
-						if (${introName}) ${introName}.abort(1);
-						if (${outroName}) ${outroName}.abort(1);
+					block.builders.intro.addConditional(`@intros.enabled`, deindent`
+						@add_render_callback(() => {
+							if (${introName}) ${introName}.end();
+							${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+						});
+					`);
+				} else {
+					block.builders.intro.addConditional(`@intros.enabled`, deindent`
+						if (!${introName}) {
+							@add_render_callback(() => {
+								${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							});
+						}
 					`);
 				}
-
-				block.builders.intro.addConditional(`@intros.enabled`, deindent`
-					@add_render_callback(() => {
-						${introName} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
-						${introName}.run(1, () => {
-							${introName} = null;
-						});
-					});
-				`);
-
-				block.builders.outro.addBlock(deindent`
-					if (${introName}) ${introName}.abort();
-				`);
 			}
 
 			if (outro) {
@@ -653,17 +650,16 @@ export default class ElementWrapper extends Wrapper {
 				const fn = component.qualify(outro.name);
 
 				block.builders.intro.addBlock(deindent`
-					if (${outroName}) ${outroName}.abort(1);
+					if (${outroName}) ${outroName}.end();
 				`);
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
-					${outroName}.run(0, #outrocallback);
+					${outroName} = @create_out_transition(${this.var}, ${fn}, ${snippet}, #outrocallback);
 				`);
 
-				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.abort();`);
+				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.end();`);
 			}
 		}
 	}

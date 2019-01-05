@@ -27,6 +27,7 @@ export default class Tag extends Wrapper {
 		if (this.node.shouldCache) block.addVariable(value, snippet);
 
 		if (dependencies.size) {
+			// TODO can we check `#current` at the top of the `update` method, instead of in individual updates?
 			const changedCheck = (
 				(block.hasOutros ? `!#current || ` : '') +
 				[...dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')

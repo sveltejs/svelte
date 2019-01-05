@@ -220,9 +220,10 @@ export default class Block {
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			this.addVariable('#current');
+			this.addVariable('#mounted');
 
 			if (!this.builders.mount.isEmpty()) {
-				this.builders.mount.addLine(`#current = true;`);
+				this.builders.mount.addLine(`#current = #mounted = true;`);
 			}
 
 			if (!this.builders.outro.isEmpty()) {
@@ -352,9 +353,8 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						if (#current) return;
 						${this.builders.intro}
-						this.m(#target, anchor);
+						if (!#mounted) this.m(#target, anchor);
 					},
 				`);
 			}
@@ -364,8 +364,6 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						if (!#current) return;
-
 						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
 
 						${this.builders.outro}
