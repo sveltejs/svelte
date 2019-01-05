@@ -36,8 +36,8 @@ const specials = new Map([
 	],
 ]);
 
-const SELF = /^svelte:self[\s\/>]/;
-const COMPONENT = /^svelte:component[\s\/>]/;
+const SELF = /^svelte:self(?=[\s\/>])/;
+const COMPONENT = /^svelte:component(?=[\s\/>])/;
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 const disallowedContents = new Map([
@@ -283,8 +283,6 @@ function readTagName(parser: Parser) {
 	const start = parser.index;
 
 	if (parser.read(SELF)) {
-		parser.index -= 1;
-
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
 		let i = parser.stack.length;
@@ -308,10 +306,7 @@ function readTagName(parser: Parser) {
 		return 'svelte:self';
 	}
 
-	if (parser.read(COMPONENT)) {
-		parser.index -= 1;
-		return 'svelte:component';
-	}
+	if (parser.read(COMPONENT)) return 'svelte:component';
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 
