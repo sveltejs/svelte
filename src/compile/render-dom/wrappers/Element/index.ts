@@ -633,8 +633,14 @@ export default class ElementWrapper extends Wrapper {
 				block.builders.intro.addConditional(`@intros.enabled`, deindent`
 					@add_render_callback(() => {
 						${introName} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
-						${introName}.run(1);
+						${introName}.run(1, () => {
+							${introName} = null;
+						});
 					});
+				`);
+
+				block.builders.outro.addBlock(deindent`
+					if (${introName}) ${introName}.abort();
 				`);
 			}
 

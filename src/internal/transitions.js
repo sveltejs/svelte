@@ -26,7 +26,6 @@ export function group_outros() {
 
 export function create_transition(node, fn, params, intro) {
 	let config = fn(node, params);
-	let cssText;
 
 	let ready = !intro;
 	let t = intro ? 0 : 1;
@@ -50,8 +49,6 @@ export function create_transition(node, fn, params, intro) {
 		program.end = program.start + program.duration;
 
 		if (config.css) {
-			if (delay) node.style.cssText = cssText;
-
 			clear_animation();
 			animation_name = create_rule(program, easing, config.css);
 
@@ -103,8 +100,9 @@ export function create_transition(node, fn, params, intro) {
 
 		if (!ready) {
 			if (config.css && delay) {
-				cssText = node.style.cssText;
-				node.style.cssText += config.css(0, 1);
+				// TODO can we just use the normal rule, but delay it?
+				animation_name = create_rule({ a: 0, b: 1, d: 1, duration: 1, }, linear, () => config.css(0, 1));
+				node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} 9999s linear 1 both`;
 			}
 
 			if (config.tick) config.tick(0, 1);

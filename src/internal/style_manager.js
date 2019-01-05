@@ -46,13 +46,14 @@ export function delete_rule(node, name) {
 		.filter(anim => anim.indexOf(name) < 0)
 		.join(', ');
 
-	console.log({ active });
-	if (--active <= 0) clear_rules();
+	if (!--active) clear_rules();
 }
 
 export function clear_rules() {
-	console.log(`clear rules`, active);
-	let i = stylesheet.cssRules.length;
-	while (i--) stylesheet.deleteRule(i);
-	current_rules = {};
+	requestAnimationFrame(() => {
+		if (active) return;
+		let i = stylesheet.cssRules.length;
+		while (i--) stylesheet.deleteRule(i);
+		current_rules = {};
+	});
 }
