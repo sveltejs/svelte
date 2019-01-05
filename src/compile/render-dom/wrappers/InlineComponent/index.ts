@@ -304,9 +304,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
-			// TODO return declarations from handler.render()?
 			const snippet = handler.render(block);
-
 			return `${name}.$on("${handler.name}", ${snippet});`;
 		});
 
@@ -378,10 +376,6 @@ export default class InlineComponentWrapper extends Wrapper {
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
 						${name}.$$.fragment.c();
 						@mount_component(${name}, ${updateMountNode}, ${anchor});
-
-						${this.node.handlers.map(handler => deindent`
-							${name}.$on("${handler.name}", ${handler.var});
-						`)}
 					} else {
 						${name} = null;
 					}
