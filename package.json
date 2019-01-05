@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.0.0-alpha15",
+  "version": "3.0.0-alpha16",
   "description": "The magical disappearing UI framework",
   "module": "index.mjs",
   "main": "index.js",
@@ -55,8 +55,8 @@
   "devDependencies": {
     "@types/mocha": "^5.2.0",
     "@types/node": "^10.5.5",
-    "acorn": "^5.4.1",
-    "acorn-dynamic-import": "^3.0.0",
+    "acorn": "^6.0.5",
+    "acorn-dynamic-import": "^4.0.0",
     "agadoo": "^1.0.1",
     "codecov": "^3.0.0",
     "css-tree": "1.0.0-alpha22",

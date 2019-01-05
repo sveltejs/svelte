@@ -170,6 +170,7 @@ export default class Component {
 			const props = [...this.template_references];
 			this.declarations.push(...props);
 			addToSet(this.writable_declarations, this.template_references);
+			addToSet(this.userVars, this.template_references);
 
 			this.props = props.map(name => ({
 				name,
