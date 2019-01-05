@@ -596,7 +596,9 @@ export default class ElementWrapper extends Wrapper {
 
 				@add_render_callback(() => {
 					if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1);
+					${name}.run(1, () => {
+						${name} = null;
+					});
 				});
 			`);
 
