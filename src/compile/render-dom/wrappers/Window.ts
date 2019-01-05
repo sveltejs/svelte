@@ -114,7 +114,7 @@ export default class WindowWrapper extends Wrapper {
 				});
 
 				block.event_listeners.push(deindent`
-					@addListener(window, "${event}", ctx.${handler_name});
+					@addListener(window, "${event}", ctx.${handler_name})
 				`);
 			}
 
