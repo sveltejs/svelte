@@ -1,12 +1,16 @@
+import { on_outro } from './transitions.js';
+
 export function destroyBlock(block, lookup) {
 	block.d(1);
 	lookup[block.key] = null;
 }
 
 export function outroAndDestroyBlock(block, lookup) {
-	block.o(function() {
+	on_outro(() => {
 		destroyBlock(block, lookup);
 	});
+
+	block.o();
 }
 
 export function fixAndOutroAndDestroyBlock(block, lookup) {

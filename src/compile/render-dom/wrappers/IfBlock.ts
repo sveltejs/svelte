@@ -161,10 +161,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (hasOutros) {
 				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
 
-				block.builders.outro.addBlock(deindent`
-					if (${name}) ${name}.o(#outrocallback);
-					else #outrocallback();
-				`);
+				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
 			} else {
 				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
 			}
@@ -172,10 +169,7 @@ export default class IfBlockWrapper extends Wrapper {
 			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
 
 			if (hasOutros) {
-				block.builders.outro.addBlock(deindent`
-					if (${name}) ${name}.o(#outrocallback);
-					else #outrocallback();
-				`);
+				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
 			}
 		}
 
@@ -323,10 +317,12 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const destroyOldBlock = deindent`
 			@group_outros();
-			${name}.o(function() {
+			@on_outro(() => {
 				${if_blocks}[${previous_block_index}].d(1);
 				${if_blocks}[${previous_block_index}] = null;
 			});
+			${name}.o();
+			@check_outros();
 		`;
 
 		const createNewBlock = deindent`
@@ -446,10 +442,13 @@ export default class IfBlockWrapper extends Wrapper {
 		const exit = branch.block.hasOutroMethod
 			? deindent`
 				@group_outros();
-				${name}.o(function() {
+				@on_outro(() => {
 					${name}.d(1);
 					${name} = null;
 				});
+
+				${name}.o();
+				@check_outros();
 			`
 			: deindent`
 				${name}.d(1);

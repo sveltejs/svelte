@@ -208,13 +208,10 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 
 		if (this.pending.block.hasOutroMethod) {
-			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				const ${countdown} = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o(${countdown});
-					else ${countdown}();
+					if (block) block.o();
 				}
 			`);
 		}

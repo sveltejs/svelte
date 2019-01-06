@@ -606,7 +606,6 @@ export default class ElementWrapper extends Wrapper {
 			block.builders.outro.addBlock(deindent`
 				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0, () => {
-					#outrocallback();
 					${name} = null;
 				});
 			`);
@@ -659,7 +658,7 @@ export default class ElementWrapper extends Wrapper {
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @create_out_transition(${this.var}, ${fn}, ${snippet}, #outrocallback);
+					${outroName} = @create_out_transition(${this.var}, ${fn}, ${snippet});
 				`);
 
 				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.end();`);

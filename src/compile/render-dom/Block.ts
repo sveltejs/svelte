@@ -360,12 +360,10 @@ export default class Block {
 			}
 
 			if (this.builders.outro.isEmpty()) {
-				properties.addLine(`o: @run,`);
+				properties.addLine(`o: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
-
+					${dev ? 'o: function outro' : 'o'}() {
 						${this.builders.outro}
 					},
 				`);

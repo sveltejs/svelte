@@ -364,9 +364,11 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
-						old_component.$$.fragment.o(() => {
+						@on_outro(() => {
 							old_component.$destroy();
 						});
+						old_component.$$.fragment.o();
+						@check_outros();
 					}
 
 					if (${switch_value}) {
@@ -440,7 +442,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		block.builders.outro.addLine(
-			`if (${name}) ${name}.$$.fragment.o(#outrocallback);`
+			`if (${name}) ${name}.$$.fragment.o();`
 		);
 	}
 

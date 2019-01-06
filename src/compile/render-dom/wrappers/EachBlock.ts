@@ -345,13 +345,13 @@ export default class EachBlockWrapper extends Wrapper {
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].r();`}
 			${blocks} = @updateKeyedEach(${blocks}, $$, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, "${mountOrIntro}", ${anchor}, ${this.vars.get_each_context});
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].a();`}
+			${this.block.hasOutros && `@check_outros();`}
 		`);
 
 		if (this.block.hasOutros) {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				const ${countdown} = @callAfter(#outrocallback, ${blocks}.length);
-				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o(${countdown});
+				for (#i = 0; #i < ${blocks}.length; #i += 1) ${blocks}[#i].o();
 			`);
 		}
 
@@ -415,15 +415,16 @@ export default class EachBlockWrapper extends Wrapper {
 		const outroBlock = this.block.hasOutros && block.getUniqueName('outroBlock')
 		if (outroBlock) {
 			block.builders.init.addBlock(deindent`
-				function ${outroBlock}(i, detach, fn) {
+				function ${outroBlock}(i, detach) {
 					if (${iterations}[i]) {
-						${iterations}[i].o(() => {
-							if (detach) {
+						if (detach) {
+							@on_outro(() => {
 								${iterations}[i].d(detach);
 								${iterations}[i] = null;
-							}
-							if (fn) fn();
-						});
+							});
+						}
+
+						${iterations}[i].o();
 					}
 				}
 			`);
@@ -468,6 +469,7 @@ export default class EachBlockWrapper extends Wrapper {
 				destroy = deindent`
 					@group_outros();
 					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1);
+					@check_outros();
 				`;
 			} else {
 				destroy = deindent`
@@ -501,8 +503,7 @@ export default class EachBlockWrapper extends Wrapper {
 			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
 				${iterations} = ${iterations}.filter(Boolean);
-				const ${countdown} = @callAfter(#outrocallback, ${iterations}.length);
-				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0, ${countdown});`
+				for (let #i = 0; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 0);`
 			);
 		}
 

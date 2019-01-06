@@ -24,6 +24,16 @@ export function group_outros() {
 	};
 }
 
+export function check_outros() {
+	if (!outros.remaining) {
+		run_all(outros.callbacks);
+	}
+}
+
+export function on_outro(callback) {
+	outros.callbacks.push(callback);
+}
+
 export function create_in_transition(node, fn, params) {
 	let config = fn(node, params);
 	let running = true;
@@ -87,7 +97,7 @@ export function create_in_transition(node, fn, params) {
 	};
 }
 
-export function create_out_transition(node, fn, params, callback) {
+export function create_out_transition(node, fn, params) {
 	let config = fn(node, params);
 	let running = true;
 	let animation_name;
@@ -95,7 +105,6 @@ export function create_out_transition(node, fn, params, callback) {
 	const group = outros;
 
 	group.remaining += 1;
-	group.callbacks.push(callback); // TODO do we even need multiple callbacks? can we just have the one?
 
 	function go() {
 		if (typeof config === 'function') config = config();
