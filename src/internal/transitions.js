@@ -30,12 +30,10 @@ export function create_in_transition(node, fn, params) {
 	let animation_name;
 
 	function cleanup() {
-		delete_rule(node, animation_name);
+		if (animation_name) delete_rule(node, animation_name);
 	}
 
-	wait().then(() => {
-		if (typeof config === 'function') config = config();
-
+	function go() {
 		const {
 			delay = 0,
 			duration = 300,
@@ -56,13 +54,13 @@ export function create_in_transition(node, fn, params) {
 
 		loop(now => {
 			if (running) {
-				if (now > end_time) {
+				if (now >= end_time) {
 					tick(1, 0);
 					cleanup();
 					return running = false;
 				}
 
-				if (now > start_time) {
+				if (now >= start_time) {
 					const t = easing((now - start_time) / duration);
 					tick(t, 1 - t);
 				}
@@ -70,7 +68,14 @@ export function create_in_transition(node, fn, params) {
 
 			return running;
 		});
-	});
+	}
+
+	if (typeof config === 'function') {
+		config = config();
+		wait().then(go);
+	} else {
+		go();
+	}
 
 	return {
 		end() {
@@ -92,7 +97,7 @@ export function create_out_transition(node, fn, params, callback) {
 	group.remaining += 1;
 	group.callbacks.push(callback); // TODO do we even need multiple callbacks? can we just have the one?
 
-	wait().then(() => {
+	function go() {
 		if (typeof config === 'function') config = config();
 
 		const {
@@ -113,7 +118,7 @@ export function create_out_transition(node, fn, params, callback) {
 
 		loop(now => {
 			if (running) {
-				if (now > end_time) {
+				if (now >= end_time) {
 					tick(0, 1);
 
 					if (!--group.remaining) {
@@ -125,7 +130,7 @@ export function create_out_transition(node, fn, params, callback) {
 					return false;
 				}
 
-				if (now > start_time) {
+				if (now >= start_time) {
 					const t = easing((now - start_time) / duration);
 					tick(1 - t, t);
 				}
@@ -133,19 +138,30 @@ export function create_out_transition(node, fn, params, callback) {
 
 			return running;
 		});
-	});
+	}
+
+	if (typeof config === 'function') {
+		config = config();
+		wait().then(go);
+	} else {
+		go();
+	}
 
 	return {
-		end() {
+		end(reset) {
+			if (reset && config.tick) {
+				config.tick(1, 0);
+			}
+
 			if (running) {
-				delete_rule(node, animation_name);
+				if (animation_name) delete_rule(node, animation_name);
 				running = false;
 			}
 		}
 	};
 }
 
-export function create_transition(node, fn, params, intro) {
+export function create_bidirectional_transition(node, fn, params, intro) {
 	let config = fn(node, params);
 
 	let ready = !intro;

@@ -582,6 +582,7 @@ export default class ElementWrapper extends Wrapper {
 		const { component } = this.renderer;
 
 		if (intro === outro) {
+			// bidirectional transition
 			const name = block.getUniqueName(`${this.var}_transition`);
 			const snippet = intro.expression
 				? intro.expression.render(block)
@@ -595,7 +596,7 @@ export default class ElementWrapper extends Wrapper {
 				if (${name}) ${name}.invalidate();
 
 				@add_render_callback(() => {
-					if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
+					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1, () => {
 						${name} = null;
 					});
@@ -603,7 +604,7 @@ export default class ElementWrapper extends Wrapper {
 			`);
 
 			block.builders.outro.addBlock(deindent`
-				if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
+				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0, () => {
 					#outrocallback();
 					${name} = null;
@@ -611,7 +612,9 @@ export default class ElementWrapper extends Wrapper {
 			`);
 
 			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.abort();`);
-		} else {
+		}
+
+		else {
 			const introName = intro && block.getUniqueName(`${this.var}_intro`);
 			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
 
@@ -650,7 +653,7 @@ export default class ElementWrapper extends Wrapper {
 				const fn = component.qualify(outro.name);
 
 				block.builders.intro.addBlock(deindent`
-					if (${outroName}) ${outroName}.end();
+					if (${outroName}) ${outroName}.end(1);
 				`);
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
