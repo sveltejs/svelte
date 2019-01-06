@@ -153,6 +153,7 @@ export default class IfBlockWrapper extends Wrapper {
 		const if_name = hasElse ? '' : `if (${name}) `;
 
 		const dynamic = this.branches[0].block.hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
+		const hasIntros = this.branches[0].block.hasIntroMethod;
 		const hasOutros = this.branches[0].block.hasOutroMethod;
 
 		const vars = { name, anchor, if_name, hasElse };
@@ -179,6 +180,10 @@ export default class IfBlockWrapper extends Wrapper {
 			block.builders.claim.addLine(
 				`${if_name}${name}.l(${parentNodes});`
 			);
+		}
+
+		if (hasIntros || hasOutros) {
+			block.builders.intro.addLine(`if (${name}) ${name}.i();`);
 		}
 
 		if (needsAnchor) {
@@ -230,8 +235,11 @@ export default class IfBlockWrapper extends Wrapper {
 		const changeBlock = deindent`
 			${if_name}${name}.d(1);
 			${name} = ${current_block_type_and}${current_block_type}($$, ctx);
-			${if_name}${name}.c();
-			${if_name}${name}.m(${updateMountNode}, ${anchor});
+			if (${name}) {
+				${name}.c();
+				${name}.m(${updateMountNode}, ${anchor});
+				${this.branches[0].block.hasIntroMethod && `${name}.i();`}
+			}
 		`;
 
 		if (dynamic) {
@@ -434,10 +442,6 @@ export default class IfBlockWrapper extends Wrapper {
 				${name}.d(1);
 				${name} = null;
 			`;
-
-		if (has_transitions) {
-			block.builders.intro.addLine(`if (${name}) ${name}.i();`);
-		}
 
 		block.builders.update.addBlock(deindent`
 			if (${branch.condition}) {

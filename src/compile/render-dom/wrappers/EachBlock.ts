@@ -442,8 +442,8 @@ export default class EachBlockWrapper extends Wrapper {
 						${iterations}[#i] = ${create_each_block}($$, child_ctx);
 						${iterations}[#i].c();
 						${iterations}[#i].m(${updateMountNode}, ${anchor});
-						${has_transitions && `${iterations}[#i].i();`}
 					}
+					${has_transitions && `${iterations}[#i].i();`}
 				`
 				: deindent`
 					${iterations}[#i] = ${create_each_block}($$, child_ctx);

@@ -13,7 +13,6 @@ import {
 	setupHtmlEqual
 } from "../helpers.js";
 
-const main = path.resolve('index.js');
 let svelte$;
 let svelte;
 
@@ -28,7 +27,7 @@ function getName(filename) {
 const sveltePath = process.cwd().split('\\').join('/');
 const internal = `${sveltePath}/internal.js`;
 
-describe("runtime", () => {
+describe.only("runtime", () => {
 	before(() => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
