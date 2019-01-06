@@ -3,7 +3,7 @@ import { SvelteComponent as SvelteComponent_1, identity, init, mount_component, 
 import LazyLoad from "./LazyLoad.html";
 
 function create_fragment($$, ctx) {
-	var current;
+	var current, mounted;
 
 	var lazyload = new LazyLoad({ props: { load: func } });
 
@@ -14,20 +14,17 @@ function create_fragment($$, ctx) {
 
 		m(target, anchor) {
 			mount_component(lazyload, target, anchor);
-			current = true;
+			current = mounted = true;
 		},
 
 		p: noop,
 
 		i(target, anchor) {
-			if (current) return;
-			this.m(target, anchor);
+			if (!mounted) this.m(target, anchor);
 		},
 
-		o(outrocallback) {
-			if (!current) return;
-
-			if (lazyload) lazyload.$$.fragment.o(outrocallback);
+		o() {
+			if (lazyload) lazyload.$$.fragment.o();
 			current = false;
 		},
 
