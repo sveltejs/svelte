@@ -220,10 +220,9 @@ export default class Block {
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			this.addVariable('#current');
-			this.addVariable('#mounted');
 
 			if (!this.builders.mount.isEmpty()) {
-				this.builders.mount.addLine(`#current = #mounted = true;`);
+				this.builders.mount.addLine(`#current = true;`);
 			}
 
 			if (!this.builders.outro.isEmpty()) {
@@ -348,13 +347,12 @@ export default class Block {
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			if (this.builders.mount.isEmpty()) {
+			if (this.builders.intro.isEmpty()) {
 				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
+					${dev ? 'i: function intro' : 'i'}() {
 						${this.builders.intro}
-						if (!#mounted) this.m(#target, anchor);
 					},
 				`);
 			}

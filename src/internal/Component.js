@@ -12,7 +12,7 @@ export function bind(component, name, callback) {
 export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_render } = component.$$;
 
-	fragment[fragment.i ? 'i' : 'm'](target, anchor);
+	fragment.m(target, anchor);
 
 	// onMount happens after the initial afterUpdate. Because
 	// afterUpdate callbacks happen in reverse order (inner first)
@@ -101,8 +101,6 @@ export function init(component, options, instance, create_fragment, not_equal) {
 	$$.fragment = create_fragment($$, $$.ctx);
 
 	if (options.target) {
-		intros.enabled = !!options.intro;
-
 		if (options.hydrate) {
 			$$.fragment.l(children(options.target));
 		} else {
@@ -110,8 +108,8 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		}
 
 		mount_component(component, options.target, options.anchor);
+		if (options.intro && component.$$.fragment.i) component.$$.fragment.i();
 		flush();
-		intros.enabled = true;
 	}
 
 	set_current_component(previous_component);

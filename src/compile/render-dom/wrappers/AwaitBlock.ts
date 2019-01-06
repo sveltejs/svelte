@@ -172,10 +172,14 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const hasTransitions = this.pending.block.hasIntroMethod || this.pending.block.hasOutroMethod;
 
 		block.builders.mount.addBlock(deindent`
-			${info}.block.${hasTransitions ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
+			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
 			${info}.anchor = ${anchor};
 		`);
+
+		if (hasTransitions) {
+			block.builders.intro.addLine(`${info}.block.i();`);
+		}
 
 		const conditions = [];
 		if (this.node.expression.dependencies.size > 0) {

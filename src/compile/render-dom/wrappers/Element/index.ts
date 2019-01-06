@@ -592,7 +592,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = component.qualify(intro.name);
 
-			block.builders.intro.addConditional(`@intros.enabled`, deindent`
+			block.builders.intro.addBlock(deindent`
 				@add_render_callback(() => {
 					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
@@ -620,14 +620,14 @@ export default class ElementWrapper extends Wrapper {
 				const fn = component.qualify(intro.name);
 
 				if (outro) {
-					block.builders.intro.addConditional(`@intros.enabled`, deindent`
+					block.builders.intro.addBlock(deindent`
 						@add_render_callback(() => {
 							if (${introName}) ${introName}.end();
 							${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 						});
 					`);
 				} else {
-					block.builders.intro.addConditional(`@intros.enabled`, deindent`
+					block.builders.intro.addBlock(deindent`
 						if (!${introName}) {
 							@add_render_callback(() => {
 								${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
