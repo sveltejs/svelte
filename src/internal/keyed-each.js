@@ -52,6 +52,7 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 	var did_move = {};
 
 	function insert(block) {
+		console.log(`inserting`, block.key);
 		block[intro_method](node, next);
 		lookup[block.key] = block;
 		next = block.first;

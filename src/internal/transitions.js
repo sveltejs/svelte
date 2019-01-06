@@ -173,156 +173,126 @@ export function create_out_transition(node, fn, params) {
 export function create_bidirectional_transition(node, fn, params, intro) {
 	let config = fn(node, params);
 
-	let ready = !intro;
 	let t = intro ? 0 : 1;
 
-	let running = false;
 	let running_program = null;
 	let pending_program = null;
 	let animation_name = null;
 
 	function clear_animation() {
 		if (animation_name) delete_rule(node, animation_name);
-		animation_name = null;
 	}
 
-	function start(program, duration, easing) {
-		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}start`));
+	function init(program, duration) {
+		const d = program.b - t;
+		duration *= Math.abs(d);
 
-		program.a = t;
-		program.d = program.b - t;
-		program.duration = duration * Math.abs(program.d);
-		program.end = program.start + program.duration;
-
-		if (config.css) {
-			clear_animation();
-			animation_name = create_rule(t, program.b, program.duration, easing, config.css);
-
-			node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${program.duration}ms linear 1 forwards`;
-		}
-
-		running_program = program;
-		pending_program = null;
+		return {
+			a: t,
+			b: program.b,
+			d,
+			duration,
+			start: program.start,
+			end: program.start + duration,
+			group: program.group
+		};
 	}
 
-	function done() {
-		const program = running_program;
-		running_program = null;
-
-		t = program.b;
-
-		if (config.tick) config.tick(t, 1 - t);
-
-		node.dispatchEvent(new window.CustomEvent(`${program.b ? 'intro' : 'outro'}end`));
-
-		if (!program.b && !program.invalidated) {
-			program.group.callbacks.push(() => {
-				program.callback();
-				clear_animation();
-			});
-
-			if (--program.group.remaining === 0) {
-				program.group.callbacks.forEach(run);
-			}
-		} else {
-			clear_animation();
-		}
-
-		running = !!pending_program;
-	}
-
-	function go(b, callback) {
+	function go(b) {
 		const {
 			delay = 0,
 			duration = 300,
-			easing = linear
+			easing = linear,
+			tick = noop,
+			css
 		} = config;
 
 		const program = {
 			start: window.performance.now() + delay,
-			b,
-			callback
+			b
 		};
-
-		if (!ready) {
-			if (config.css && delay) {
-				// TODO can we just use the normal rule, but delay it?
-				animation_name = create_rule(0, 1, 1, linear, () => config.css(0, 1));
-				node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} 9999s linear 1 both`;
-			}
-
-			if (config.tick) config.tick(0, 1);
-			ready = true;
-		}
 
 		if (!b) {
 			program.group = outros;
 			outros.remaining += 1;
 		}
 
-		if (delay) {
+		if (running_program) {
 			pending_program = program;
 		} else {
-			start(program, duration, easing);
-		}
+			// if this is an intro, and there's a delay, we need to do
+			// and initial tick and/or apply CSS animation immediately
+			if (css) {
+				animation_name = create_rule(t, b, duration, easing, css);
+				node.style.animation = (node.style.animation ? `${node.style.animation}, ` : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
+			}
 
-		if (!running) {
-			running = true;
+			if (b) tick(0, 1);
+
+			running_program = init(program, duration);
+			node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}start`));
 
 			loop(now => {
-				if (running_program && now >= running_program.end) {
-					done();
+				if (pending_program && now > pending_program.start) {
+					running_program = init(pending_program, duration);
+					pending_program = null;
+
+					node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}start`));
+
+					if (css) {
+						clear_animation();
+						animation_name = create_rule(t, running_program.b, running_program.duration, easing, config.css);
+
+						node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${running_program.duration}ms linear 1 forwards`;
+					}
 				}
 
-				if (pending_program && now >= pending_program.start) {
-					start(pending_program, duration, easing);
-				}
+				if (running_program) {
+					if (now >= running_program.end) {
+						tick(t = running_program.b, 1 - t);
+						node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}end`));
 
-				if (running) {
-					if (running_program) {
-						const p = now - running_program.start;
-						t = running_program.a + running_program.d * easing(p / running_program.duration);
-						if (config.tick) config.tick(t, 1 - t);
+						if (!pending_program) {
+							// we're done
+							if (running_program.b) {
+								// intro — we can tidy up immediately
+								clear_animation();
+							} else {
+								// outro — needs to be coordinated
+								if (!--running_program.group.remaining) run_all(running_program.group.callbacks);
+							}
+						}
+
+						running_program = null;
 					}
 
-					return true;
+					else if (now >= running_program.start) {
+						const p = now - running_program.start;
+						t = running_program.a + running_program.d * easing(p / running_program.duration);
+						tick(t, 1 - t);
+					}
 				}
+
+				return !!(running_program || pending_program);
 			});
 		}
 	}
 
 	return {
-		run(b, callback = noop) {
+		run(b) {
 			if (typeof config === 'function') {
 				wait().then(() => {
 					config = config();
-					go(b, callback);
+					go(b);
 				});
 			} else {
-				go(b, callback);
+				go(b);
 			}
 		},
 
-		abort(reset) {
-			if (reset) {
-				// if an outro was aborted by an intro, we need
-				// to reset the node to its initial state
-				if (config.tick) config.tick(1, 0);
-			}
-
+		end() {
 			clear_animation();
-
 			running_program = pending_program = null;
-			running = false;
-		},
-
-		invalidate() {
-			// invalidation happens when a (bidirectional) outro is interrupted by an
-			// intro — callbacks should not fire, as that would cause the nodes to
-			// be removed from the DOM
-			if (running_program) {
-				running_program.invalidated = true;
-			}
 		}
 	};
 }

@@ -593,24 +593,18 @@ export default class ElementWrapper extends Wrapper {
 			const fn = component.qualify(intro.name);
 
 			block.builders.intro.addConditional(`@intros.enabled`, deindent`
-				if (${name}) ${name}.invalidate();
-
 				@add_render_callback(() => {
 					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
-					${name}.run(1, () => {
-						${name} = null;
-					});
+					${name}.run(1);
 				});
 			`);
 
 			block.builders.outro.addBlock(deindent`
 				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
-				${name}.run(0, () => {
-					${name} = null;
-				});
+				${name}.run(0);
 			`);
 
-			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.abort();`);
+			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.end();`);
 		}
 
 		else {

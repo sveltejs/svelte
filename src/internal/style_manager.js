@@ -41,8 +41,6 @@ export function create_rule(a, b, duration, ease, fn) {
 }
 
 export function delete_rule(node, name) {
-	console.log(`delete ${name} from ${node.textContent}`, { active });
-
 	node.style.animation = node.style.animation
 		.split(', ')
 		.filter(anim => anim.indexOf(name) < 0)
@@ -55,7 +53,6 @@ export function clear_rules() {
 	requestAnimationFrame(() => {
 		if (active) return;
 		let i = stylesheet.cssRules.length;
-		console.log(`clear_rules ${i}`);
 		while (i--) stylesheet.deleteRule(i);
 		current_rules = {};
 	});
