@@ -221,8 +221,8 @@ export default class Block {
 		if (this.hasIntroMethod || this.hasOutroMethod) {
 			this.addVariable('#current');
 
-			if (!this.builders.mount.isEmpty()) {
-				this.builders.mount.addLine(`#current = true;`);
+			if (!this.builders.intro.isEmpty()) {
+				this.builders.intro.addLine(`#current = true;`);
 			}
 
 			if (!this.builders.outro.isEmpty()) {
@@ -352,6 +352,7 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}() {
+						if (#current) return;
 						${this.builders.intro}
 					},
 				`);
@@ -362,6 +363,7 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}() {
+						if (#current === false) return;
 						${this.builders.outro}
 					},
 				`);
