@@ -114,11 +114,9 @@ You can also bind to certain values — so far `innerWidth`, `outerWidth`, `inne
 ```
 
 
-### `<svelte:document>`
+### `<svelte:body>`
 
-TODO REPLACE THIS WITH svelte:body
-
-The `<svelte:document>` tag, just like `<svelte:window>`, gives you a convenient way to declaratively add event listeners to the `document` object. This is useful for listening to events that don't fire on `window`, such as `mouseenter` and `mouseleave`.
+The `<svelte:body>` tag, just like `<svelte:window>`, gives you a convenient way to declaratively add event listeners to the `document.body` object. This is useful for listening to events that don't fire on `window`, such as `mouseenter` and `mouseleave`.
 
 
 ### `<svelte:head>`
