@@ -1,7 +1,7 @@
 import Wrapper from './shared/Wrapper';
 import AwaitBlock from './AwaitBlock';
+import Body from './Body';
 import DebugTag from './DebugTag';
-import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import Head from './Head';
@@ -21,8 +21,8 @@ import Block from '../Block';
 
 const wrappers = {
 	AwaitBlock,
+	Body,
 	Comment: null,
-	Document,
 	DebugTag,
 	EachBlock,
 	Element,
