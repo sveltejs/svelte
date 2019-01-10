@@ -431,6 +431,7 @@ export default class IfBlockWrapper extends Wrapper {
 			? deindent`
 				@group_outros();
 				@on_outro(() => {
+					console.log('outros completed');
 					${name}.d(1);
 					${name} = null;
 				});

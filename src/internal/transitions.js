@@ -18,6 +18,7 @@ function wait() {
 let outros;
 
 export function group_outros() {
+	console.log('grouping');
 	outros = {
 		remaining: 0,
 		callbacks: []
@@ -25,19 +26,23 @@ export function group_outros() {
 }
 
 export function check_outros() {
+	console.trace(`${outros.remaining} outros remaining`);
 	if (!outros.remaining) {
+		console.log(outros.callbacks.map(c => c.toString()))
 		run_all(outros.callbacks);
 	}
 }
 
 export function on_outro(callback) {
+	console.log('adding', callback.toString());
 	outros.callbacks.push(callback);
 }
 
 export function create_in_transition(node, fn, params) {
 	let config = fn(node, params);
-	let running = true;
+	let running = false;
 	let animation_name;
+	let task;
 
 	function cleanup() {
 		if (animation_name) delete_rule(node, animation_name);
@@ -62,7 +67,10 @@ export function create_in_transition(node, fn, params) {
 		const start_time = window.performance.now() + delay;
 		const end_time = start_time + duration;
 
-		loop(now => {
+		if (task) task.abort();
+		running = true;
+
+		task = loop(now => {
 			if (running) {
 				if (now >= end_time) {
 					tick(1, 0);
@@ -80,14 +88,24 @@ export function create_in_transition(node, fn, params) {
 		});
 	}
 
-	if (typeof config === 'function') {
-		config = config();
-		wait().then(go);
-	} else {
-		go();
-	}
+	let started = false;
 
 	return {
+		start() {
+			if (started) return;
+
+			if (typeof config === 'function') {
+				config = config();
+				wait().then(go);
+			} else {
+				go();
+			}
+		},
+
+		invalidate() {
+			started = false;
+		},
+
 		end() {
 			if (running) {
 				cleanup();
@@ -233,6 +251,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}start`));
 
 			loop(now => {
+				console.log({ now, pending_program, running_program });
 				if (pending_program && now > pending_program.start) {
 					running_program = init(pending_program, duration);
 					pending_program = null;
@@ -263,6 +282,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 							}
 						}
 
+						console.log('running program ended');
 						running_program = null;
 					}
 
@@ -280,6 +300,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 
 	return {
 		run(b) {
+			console.log(`run`, b);
 			if (typeof config === 'function') {
 				wait().then(() => {
 					config = config();
@@ -291,6 +312,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 		},
 
 		end() {
+			console.log('end');
 			clear_animation();
 			running_program = pending_program = null;
 		}

@@ -604,7 +604,7 @@ export default class ElementWrapper extends Wrapper {
 				${name}.run(0);
 			`);
 
-			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.end();`);
+			block.builders.destroy.addConditional('detach', `if (${name}) console.log('detaching'), ${name}.end();`);
 		}
 
 		else {
@@ -622,15 +622,18 @@ export default class ElementWrapper extends Wrapper {
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
 						@add_render_callback(() => {
-							if (${introName}) ${introName}.end();
-							${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							if (!${introName}) ${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							${introName}.start();
 						});
 					`);
+
+					block.builders.outro.addLine(`if (${introName}) ${introName}.invalidate()`);
 				} else {
 					block.builders.intro.addBlock(deindent`
 						if (!${introName}) {
 							@add_render_callback(() => {
 								${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+								${introName}.start();
 							});
 						}
 					`);
