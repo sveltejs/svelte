@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "sapper dev",
     "sapper": "sapper build --legacy",
-    "update": "sh scripts/update_template.sh && node scripts/get-contributors.js",
+    "update": "node scripts/update_template.js && node scripts/get-contributors.js",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
     "cy:open": "cypress open",
@@ -29,6 +29,7 @@
     "passport-github": "^1.1.0",
     "prismjs": "^1.15.0",
     "session-file-store": "^1.2.0",
+    "shelljs": "^0.8.3",
     "sirv": "^0.2.0",
     "yootils": "0.0.14"
   },
