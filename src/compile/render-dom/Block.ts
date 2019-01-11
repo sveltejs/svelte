@@ -363,7 +363,6 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'o: function outro' : 'o'}() {
-						if (#current === false) return;
 						${this.builders.outro}
 					},
 				`);

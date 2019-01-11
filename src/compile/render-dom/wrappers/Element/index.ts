@@ -604,7 +604,7 @@ export default class ElementWrapper extends Wrapper {
 				${name}.run(0);
 			`);
 
-			block.builders.destroy.addConditional('detach', `if (${name}) console.log('detaching'), ${name}.end();`);
+			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.end();`);
 		}
 
 		else {

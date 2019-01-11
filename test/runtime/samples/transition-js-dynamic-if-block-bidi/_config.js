@@ -16,15 +16,11 @@ export default {
 		assert.equal(div.foo, 0.75);
 		assert.htmlEqual(div.innerHTML, 'hello everybody!');
 
-		console.group('set visible false');
 		component.visible = false;
-		console.groupEnd();
 		component.name = 'again';
 		assert.htmlEqual(div.innerHTML, 'hello everybody!');
 
-		console.group('tick 125');
 		raf.tick(125);
-		console.groupEnd();
 		assert.equal(div.foo, 0.25);
 
 		component.visible = true;
