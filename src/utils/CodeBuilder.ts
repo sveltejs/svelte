@@ -1,168 +1,111 @@
 import repeat from './repeat';
 
-enum ChunkType {
-	Line,
-	Block
+const whitespace = /^\s+$/;
+
+interface Chunk {
+	parent?: BlockChunk;
+	type: 'root'|'line'|'condition';
+	children?: Chunk[];
+	line?: string;
+	block?: boolean;
+	condition?: string;
 }
 
-interface Condition {
-	condition: string;
-	used: boolean;
+interface BlockChunk extends Chunk {
+	type: 'root'|'condition';
+	children: Chunk[];
+	parent: BlockChunk;
 }
 
 export default class CodeBuilder {
-	result: string;
-	first: ChunkType;
-	last: ChunkType;
-	lastCondition: string;
-	conditionStack: Condition[];
-	indent: string;
+	root: BlockChunk = { type: 'root', children: [], parent: null };
+	last: Chunk;
+	current: BlockChunk;
 
 	constructor(str = '') {
-		this.result = str;
-
-		const initial = str
-			? /\n/.test(str) ? ChunkType.Block : ChunkType.Line
-			: null;
-		this.first = initial;
-		this.last = initial;
-
-		this.lastCondition = null;
-		this.conditionStack = [];
-		this.indent = '';
+		this.current = this.last = this.root;
+		this.addLine(str);
 	}
 
 	addConditional(condition: string, body: string) {
-		this.reifyConditions();
-
-		const indent = this.indent + (condition ? '\t' : '');
-		body = body.replace(/^/gm, indent);
-
-		if (condition === this.lastCondition) {
-			this.result += `\n${body}`;
+		if (this.last.type === 'condition' && this.last.condition === condition) {
+			if (body && !whitespace.test(body)) this.last.children.push({ type: 'line', line: body });
 		} else {
-			if (this.lastCondition) {
-				this.result += `\n${this.indent}}`;
-			}
-
-			const block = condition
-				? `if (${condition}) {\n${body}`
-				: body;
-
-			this.result += `${this.last === ChunkType.Block ? '\n\n' : '\n'}${this.indent}${block}`;
-			this.lastCondition = condition;
+			const next = this.last = { type: 'condition', condition, parent: this.current, children: [] };
+			this.current.children.push(next);
+			if (body && !whitespace.test(body)) next.children.push({ type: 'line', line: body });
 		}
-
-		this.last = ChunkType.Block;
 	}
 
 	addLine(line: string) {
-		this.reifyConditions();
-
-		if (this.lastCondition) {
-			this.result += `\n${this.indent}}`;
-			this.lastCondition = null;
-		}
-
-		if (this.last === ChunkType.Block) {
-			this.result += `\n\n${this.indent}${line}`;
-		} else if (this.last === ChunkType.Line) {
-			this.result += `\n${this.indent}${line}`;
-		} else {
-			this.result += line;
-		}
-
-		this.last = ChunkType.Line;
-		if (!this.first) this.first = ChunkType.Line;
+		if (line && !whitespace.test(line)) this.current.children.push(this.last = { type: 'line', line });
 	}
 
 	addLineAtStart(line: string) {
-		this.reifyConditions();
-
-		if (this.first === ChunkType.Block) {
-			this.result = `${line}\n\n${this.indent}${this.result}`;
-		} else if (this.first === ChunkType.Line) {
-			this.result = `${line}\n${this.indent}${this.result}`;
-		} else {
-			this.result += line;
-		}
-
-		this.first = ChunkType.Line;
-		if (!this.last) this.last = ChunkType.Line;
+		if (line && !whitespace.test(line)) this.root.children.unshift({ type: 'line', line });
 	}
 
 	addBlock(block: string) {
-		this.reifyConditions();
-
-		if (this.indent) block = block.replace(/^/gm, `${this.indent}`);
-
-		if (this.lastCondition) {
-			this.result += `\n${this.indent}}`;
-			this.lastCondition = null;
-		}
-
-		if (this.result) {
-			this.result += `\n\n${this.indent}${block}`;
-		} else {
-			this.result += block;
-		}
-
-		this.last = ChunkType.Block;
-		if (!this.first) this.first = ChunkType.Block;
+		if (block && !whitespace.test(block)) this.current.children.push(this.last = { type: 'line', line: block, block: true });
 	}
 
 	addBlockAtStart(block: string) {
-		this.reifyConditions();
-
-		if (this.result) {
-			this.result = `${block}\n\n${this.indent}${this.result}`;
-		} else {
-			this.result += block;
-		}
-
-		this.first = ChunkType.Block;
-		if (!this.last) this.last = ChunkType.Block;
+		if (block && !whitespace.test(block)) this.root.children.unshift({ type: 'line', line: block, block: true });
 	}
 
-	isEmpty() {
-		return this.result === '';
-	}
+	isEmpty() { return !findLine(this.root); }
 
 	pushCondition(condition: string) {
-		this.conditionStack.push({ condition, used: false });
+		if (this.last.type === 'condition' && this.last.condition === condition) {
+			this.current = this.last as BlockChunk;
+		} else {
+			const next = this.last = { type: 'condition', condition, parent: this.current, children: [] };
+			this.current.children.push(next);
+			this.current = next;
+		}
 	}
 
 	popCondition() {
-		const { used } = this.conditionStack.pop();
-
-		this.indent = repeat('\t', this.conditionStack.length);
-		if (used) this.addLine('}');
-	}
-
-	reifyConditions() {
-		for (let i = 0; i < this.conditionStack.length; i += 1) {
-			const condition = this.conditionStack[i];
-			if (!condition.used) {
-				const line = `if (${condition.condition}) {`;
-
-				if (this.last === ChunkType.Block) {
-					this.result += `\n\n${this.indent}${line}`;
-				} else if (this.last === ChunkType.Line) {
-					this.result += `\n${this.indent}${line}`;
-				} else {
-					this.result += line;
-				}
-
-				this.last = ChunkType.Line;
-				if (!this.first) this.first = ChunkType.Line;
-
-				this.indent = repeat('\t', this.conditionStack.length);
-				condition.used = true;
-			}
-		}
+		if (!this.current.parent) throw new Error(`Popping a condition that maybe wasn't pushed.`);
+		this.current = this.current.parent;
 	}
 
 	toString() {
-		return this.result.trim() + (this.lastCondition ? `\n}` : ``);
+		return chunkToString(this.root);
+	}
+}
+
+function findLine(chunk: BlockChunk) {
+	for (const c of chunk.children) {
+		if (c.type === 'line' || findLine(c as BlockChunk)) return true;
+	}
+	return false;
+}
+
+function chunkToString(chunk: Chunk, level: number = 0, lastBlock?: boolean, first?: boolean): string {
+	if (chunk.type === 'line') {
+		return `${lastBlock || (!first && chunk.block) ? '\n' : ''}${chunk.line.replace(/^/gm, repeat('\t', level))}`;
+	} else if (chunk.type === 'condition') {
+		let t = false;
+		const lines = chunk.children.map((c, i) => {
+			const str = chunkToString(c, level + 1, t, i === 0);
+			t = c.type !== 'line' || c.block;
+			return str;
+		}).filter(l => !!l);
+
+		if (!lines.length) return '';
+
+		return `${lastBlock || (!first) ? '\n' : ''}${repeat('\t', level)}if (${chunk.condition}) {\n${lines.join('\n')}\n${repeat('\t', level)}}`;
+	} else if (chunk.type === 'root') {
+		let t = false;
+		const lines = chunk.children.map((c, i) => {
+			const str = chunkToString(c, 0, t, i === 0);
+			t = c.type !== 'line' || c.block;
+			return str;
+		}).filter(l => !!l);
+
+		if (!lines.length) return '';
+
+		return lines.join('\n');
 	}
 }
