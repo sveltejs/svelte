@@ -1,9 +1,6 @@
 
-
-
+(function (){
 const importCache = {};
-
-
 
 function fetchImport(id) {
     return new Promise((fulfil, reject) => {
@@ -31,36 +28,30 @@ function fetchImports(bundle, progressFunc) {
 
         return promise
     } else {
-        return P.resolve();
+        return Promise.resolve();
     }
 }
 
-
-
 function handleMessage(ev) {
-    if (ev.data.action == "eval") {
-        let { script, evalId } = ev.data.args;
+    let { action, cmdId } = ev.data;
+    const sendMessage = (payload) => parent.postMessage( { ...payload }, ev.origin);
+    const sendReply = (payload) => sendMessage({ ...payload, cmdId })
+    const sendOk = () => sendReply({ action: "cmdOk" });
+    const sendError = (message, stack) => sendReply({ action: "cmdError", message, stack })
+    
+    parent.postMessage({ action: "test" }, ev.origin);
+
+    if (action == "eval") {
+        let { script } = ev.data.args;
         try {
             eval(script);
-            parent.postMessage({
-                action: "evalOk",
-                args: {
-                    evalId: evalId
-                }
-            }, ev.origin);
+            sendOk();
         } catch (e) {
-            parent.postMessage({
-                action: "evalError",
-                args: {
-                    evalId: evalId,
-                    stack: e.stack,
-                    message: e.message
-                }
-            }, ev.origin);
+            sendError(e.message, e.stack)
         }
     }
 
-    if (ev.data.action == "bind_props") {
+    if (action == "bind_props") {
         let { props } = ev.data.args
         
         if (!window.component) {
@@ -74,35 +65,52 @@ function handleMessage(ev) {
             // e.g. `component.$watch(prop, handler)`?
             // (answer: probably)
             window.component.$$.bound[prop] = value => {
-                parent.postMessage({
-                    action: "propUpdate",
-                    args: {
-                        prop: prop,
-                        value: value
-                    }
-                }, ev.origin);
+                sendMessage({ action:"prop_update", args: { prop, value } })
             };
         });
     }
 
-    if (ev.data.action == "set_prop") {
+    if (action == "set_prop") {
         if (!window.component) {
             return;
         }
         let { prop, value } = ev.data.args;
         component[prop] = value;
     }
-
-    if (ev.data.action == "fetch_imports") {
-        let { bundle, fetchId } = ev.data.args;
-        fetchImports(bundle, (remaining) => {
-            parent.postMessage({
-                action: "fetch_progress",
-                args: {
-                    fetchId: fetchId,
-                    remaining: remaining
+    
+    if (action == "catch_clicks") {
+        let topOrigin = ev.origin;
+        document.body.addEventListener('click', event => {
+            if (event.which !== 1) return;
+            if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+            if (event.defaultPrevented) return;
+        
+            // ensure target is a link
+            let el = event.target;
+            while (el && el.nodeName !== 'A') el = el.parentNode;
+            if (!el || el.nodeName !== 'A') return;
+        
+            if (el.hasAttribute('download') || el.getAttribute('rel') === 'external' || el.target) return;
+        
+            event.preventDefault();
+        
+            if (el.href.startsWith(topOrigin)) {
+                const url = new URL(el.href);
+                if (url.hash[0] === '#') {
+                    window.location.hash = url.hash;
+                    return;
                 }
-            }, ev.origin);
+            }
+        
+            window.open(el.href, '_blank');
+        });
+    }
+
+
+    if (action == "fetch_imports") {
+        let { bundle } = ev.data.args;
+        fetchImports(bundle, (remaining) => {
+            sendMessage({action: "fetch_progress", args: { remaining }});
         })
         .then(() => {
             bundle.imports.forEach(x=> {
@@ -110,22 +118,10 @@ function handleMessage(ev) {
                 const name = bundle.importMap.get(x);
                 window[name] = module;
             });
-
-            parent.postMessage({
-                action: "fetch_complete",
-                args: {
-                    fetchId: fetchId
-                }
-            }, ev.origin);
+            sendOk();
         })
         .catch(e => {
-            parent.postMessage({
-                action: "fetch_error",
-                args: {
-                    fetchId: fetchId,
-                    message: e.message
-                }
-            }, ev.origin);
+           sendError(e.message, e.stack);
         })
     }
 }
@@ -134,3 +130,4 @@ window.addEventListener("message", handleMessage, false)
 
 console.log("repl-runner initialized");
 
+})();
