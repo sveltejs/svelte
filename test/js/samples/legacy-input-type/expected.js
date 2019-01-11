@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, createElement, detachNode, identity, init, insert, noop, safe_not_equal, setInputType } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var input, current, mounted;
+	var input, current;
 
 	return {
 		c() {
@@ -12,15 +12,10 @@ function create_fragment($$, ctx) {
 
 		m(target, anchor) {
 			insert(target, input, anchor);
-			current = mounted = true;
 		},
 
 		p: noop,
-
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

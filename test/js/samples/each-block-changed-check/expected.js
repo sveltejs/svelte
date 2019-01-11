@@ -68,7 +68,7 @@ function create_each_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var text0, p, text1, current, mounted;
+	var text0, p, text1, current;
 
 	var each_value = ctx.comments;
 
@@ -97,7 +97,6 @@ function create_fragment($$, ctx) {
 			insert(target, text0, anchor);
 			insert(target, p, anchor);
 			append(p, text1);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -127,10 +126,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, init, mount_component, noop, not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var current, mounted;
+	var current;
 
 	var nested = new ctx.Nested({ props: { foo: "bar" } });
 
@@ -13,13 +13,15 @@ function create_fragment($$, ctx) {
 
 		m(target, anchor) {
 			mount_component(nested, target, anchor);
-			current = mounted = true;
 		},
 
 		p: noop,
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
+		i() {
+			if (current) return;
+			nested.$$.fragment.i();
+
+			current = true;
 		},
 
 		o() {

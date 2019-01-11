@@ -3,7 +3,7 @@ import { SvelteComponent as SvelteComponent_1, createText, detachNode, identity,
 import Imported from "Imported.html";
 
 function create_fragment($$, ctx) {
-	var text, current, mounted;
+	var text, current;
 
 	var imported = new Imported({});
 
@@ -20,13 +20,17 @@ function create_fragment($$, ctx) {
 			mount_component(imported, target, anchor);
 			insert(target, text, anchor);
 			mount_component(nonimported, target, anchor);
-			current = mounted = true;
 		},
 
 		p: noop,
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
+		i() {
+			if (current) return;
+			imported.$$.fragment.i();
+
+			nonimported.$$.fragment.i();
+
+			current = true;
 		},
 
 		o() {

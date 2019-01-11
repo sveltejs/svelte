@@ -46,7 +46,7 @@ function create_if_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var if_block_anchor, current, mounted;
+	var if_block_anchor, current;
 
 	function select_block_type(ctx) {
 		if (ctx.foo) return create_if_block;
@@ -65,22 +65,20 @@ function create_fragment($$, ctx) {
 		m(target, anchor) {
 			if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
 			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
 				if_block.d(1);
 				if_block = current_block_type($$, ctx);
-				if_block.c();
-				if_block.m(if_block_anchor.parentNode, if_block_anchor);
+				if (if_block) {
+					if_block.c();
+					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+				}
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

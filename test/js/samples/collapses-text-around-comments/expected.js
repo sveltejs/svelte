@@ -9,7 +9,7 @@ function add_css() {
 }
 
 function create_fragment($$, ctx) {
-	var p, text, current, mounted;
+	var p, text, current;
 
 	return {
 		c() {
@@ -21,7 +21,6 @@ function create_fragment($$, ctx) {
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, text);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -30,10 +29,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

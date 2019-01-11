@@ -9,7 +9,7 @@ function add_css() {
 }
 
 function create_fragment($$, ctx) {
-	var div, current, mounted;
+	var div, current;
 
 	return {
 		c() {
@@ -19,15 +19,10 @@ function create_fragment($$, ctx) {
 
 		m(target, anchor) {
 			insert(target, div, anchor);
-			current = mounted = true;
 		},
 
 		p: noop,
-
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

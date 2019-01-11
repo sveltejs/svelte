@@ -56,7 +56,7 @@ function create_each_block($$, key_1, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var each_blocks_1 = [], each_lookup = blankObject(), each_anchor, current, mounted;
+	var each_blocks = [], each_lookup = blankObject(), each_anchor, current;
 
 	var each_value = ctx.things;
 
@@ -65,38 +65,34 @@ function create_fragment($$, ctx) {
 	for (var i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
 		let key = get_key(child_ctx);
-		each_blocks_1[i] = each_lookup[key] = create_each_block($$, key, child_ctx);
+		each_blocks[i] = each_lookup[key] = create_each_block($$, key, child_ctx);
 	}
 
 	return {
 		c() {
-			for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
+			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
 
 			each_anchor = createComment();
 		},
 
 		m(target, anchor) {
-			for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].m(target, anchor);
+			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(target, anchor);
 
 			insert(target, each_anchor, anchor);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
 			const each_value = ctx.things;
-			for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].r();
-			each_blocks_1 = updateKeyedEach(each_blocks_1, $$, changed, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, fixAndOutroAndDestroyBlock, create_each_block, "m", each_anchor, get_each_context);
-			for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].a();
+			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
+			each_blocks = updateKeyedEach(each_blocks, $$, changed, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, fixAndOutroAndDestroyBlock, create_each_block, each_anchor, get_each_context);
+			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {
-			for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].d(detach);
+			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].d(detach);
 
 			if (detach) {
 				detachNode(each_anchor);

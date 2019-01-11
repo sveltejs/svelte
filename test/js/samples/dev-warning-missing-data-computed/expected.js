@@ -4,7 +4,7 @@ import { SvelteComponentDev, addLoc, append, createElement, createText, detachNo
 const file = undefined;
 
 function create_fragment($$, ctx) {
-	var p, text0_value = Math.max(0, ctx.foo), text0, text1, text2, current, mounted;
+	var p, text0_value = Math.max(0, ctx.foo), text0, text1, text2, current;
 
 	return {
 		c: function create() {
@@ -24,7 +24,6 @@ function create_fragment($$, ctx) {
 			append(p, text0);
 			append(p, text1);
 			append(p, text2);
-			current = mounted = true;
 		},
 
 		p: function update(changed, ctx) {
@@ -37,10 +36,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i: function intro(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d: function destroy(detach) {

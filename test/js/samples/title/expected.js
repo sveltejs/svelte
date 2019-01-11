@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, flush, init, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var title_value, current, mounted;
+	var title_value, current;
 
 	document.title = title_value = "a " + ctx.custom + " title";
 

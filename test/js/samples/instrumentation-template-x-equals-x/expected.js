@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, addListener, append, createElement, createText, detachNode, init, insert, noop, safe_not_equal, setData } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var button, text1, p, text2, text3_value = ctx.things.length, text3, current, mounted, dispose;
+	var button, text1, p, text2, text3_value = ctx.things.length, text3, current, dispose;
 
 	return {
 		c() {
@@ -21,7 +21,6 @@ function create_fragment($$, ctx) {
 			insert(target, p, anchor);
 			append(p, text2);
 			append(p, text3);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -30,10 +29,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

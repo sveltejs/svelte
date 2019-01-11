@@ -24,7 +24,7 @@ function create_if_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var if_block_anchor, current, mounted;
+	var if_block_anchor, current;
 
 	var if_block = (ctx.foo) && create_if_block($$, ctx);
 
@@ -37,7 +37,6 @@ function create_fragment($$, ctx) {
 		m(target, anchor) {
 			if (if_block) if_block.m(target, anchor);
 			insert(target, if_block_anchor, anchor);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -53,10 +52,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

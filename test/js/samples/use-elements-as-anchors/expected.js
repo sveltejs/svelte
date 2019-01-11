@@ -112,7 +112,7 @@ function create_if_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var div, text0, p0, text2, text3, text4, p1, text6, text7, if_block4_anchor, current, mounted;
+	var div, text0, p0, text2, text3, text4, p1, text6, text7, if_block4_anchor, current;
 
 	var if_block0 = (ctx.a) && create_if_block_4($$, ctx);
 
@@ -161,7 +161,6 @@ function create_fragment($$, ctx) {
 			insert(target, text7, anchor);
 			if (if_block4) if_block4.m(target, anchor);
 			insert(target, if_block4_anchor, anchor);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -221,10 +220,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

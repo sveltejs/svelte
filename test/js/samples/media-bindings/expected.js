@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, addListener, add_render_callback, createElement, detachNode, flush, init, insert, noop, run_all, safe_not_equal, timeRangesToArray } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var audio, audio_updating = false, audio_animationframe, audio_is_paused = true, current, mounted, dispose;
+	var audio, audio_updating = false, audio_animationframe, audio_is_paused = true, current, dispose;
 
 	function audio_timeupdate_handler() {
 		cancelAnimationFrame(audio_animationframe);
@@ -34,8 +34,6 @@ function create_fragment($$, ctx) {
 			insert(target, audio, anchor);
 
 			audio.volume = ctx.volume;
-
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -45,10 +43,7 @@ function create_fragment($$, ctx) {
 			audio_updating = false;
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {

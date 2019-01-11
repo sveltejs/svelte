@@ -37,7 +37,7 @@ function create_each_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var each_anchor, current, mounted;
+	var each_anchor, current;
 
 	var each_value = ctx.createElement;
 
@@ -62,7 +62,6 @@ function create_fragment($$, ctx) {
 			}
 
 			insert(target, each_anchor, anchor);
-			current = mounted = true;
 		},
 
 		p(changed, ctx) {
@@ -88,10 +87,7 @@ function create_fragment($$, ctx) {
 			}
 		},
 
-		i(target, anchor) {
-			if (!mounted) this.m(target, anchor);
-		},
-
+		i: noop,
 		o: noop,
 
 		d(detach) {
