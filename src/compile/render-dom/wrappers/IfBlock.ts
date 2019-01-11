@@ -155,8 +155,9 @@ export default class IfBlockWrapper extends Wrapper {
 		const dynamic = this.branches[0].block.hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
 		const hasIntros = this.branches[0].block.hasIntroMethod;
 		const hasOutros = this.branches[0].block.hasOutroMethod;
+		const has_transitions = hasIntros || hasOutros;
 
-		const vars = { name, anchor, if_name, hasElse };
+		const vars = { name, anchor, if_name, hasElse, has_transitions };
 
 		if (this.node.else) {
 			if (hasOutros) {
@@ -205,7 +206,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parentNode: string,
 		parentNodes: string,
 		dynamic,
-		{ name, anchor, hasElse, if_name }
+		{ name, anchor, hasElse, if_name, has_transitions }
 	) {
 		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
 		const current_block_type = block.getUniqueName(`current_block_type`);
@@ -238,7 +239,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (${name}) {
 				${name}.c();
 				${name}.m(${updateMountNode}, ${anchor});
-				${this.branches[0].block.hasIntroMethod && `${name}.i();`}
+				${has_transitions && `${name}.i();`}
 			}
 		`;
 
@@ -268,7 +269,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parentNode: string,
 		parentNodes: string,
 		dynamic,
-		{ name, anchor, hasElse }
+		{ name, anchor, hasElse, has_transitions }
 	) {
 		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
 		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
@@ -337,6 +338,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${name}.c();
 			}
 			${name}.m(${updateMountNode}, ${anchor});
+			${has_transitions && `${name}.i();`}
 		`;
 
 		const changeBlock = hasElse
@@ -387,7 +389,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parentNode: string,
 		parentNodes: string,
 		dynamic,
-		{ name, anchor, if_name }
+		{ name, anchor, if_name, has_transitions }
 	) {
 		const branch = this.branches[0];
 
@@ -403,7 +405,6 @@ export default class IfBlockWrapper extends Wrapper {
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
-		const has_transitions = !!(branch.block.hasIntroMethod || branch.block.hasOutroMethod);
 
 		const enter = dynamic
 			? deindent`
