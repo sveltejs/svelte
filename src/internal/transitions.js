@@ -235,8 +235,9 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			pending_program = program;
 		} else {
 			// if this is an intro, and there's a delay, we need to do
-			// and initial tick and/or apply CSS animation immediately
+			// an initial tick and/or apply CSS animation immediately
 			if (css) {
+				clear_animation();
 				animation_name = create_rule(t, b, duration, easing, css);
 				node.style.animation = (node.style.animation ? `${node.style.animation}, ` : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
 			}
