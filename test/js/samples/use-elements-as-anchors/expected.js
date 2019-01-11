@@ -237,11 +237,13 @@ function create_fragment($$, ctx) {
 			if (if_block1) if_block1.d();
 			if (if_block2) if_block2.d();
 			if (if_block3) if_block3.d();
+
 			if (detach) {
 				detachNode(text7);
 			}
 
 			if (if_block4) if_block4.d(detach);
+			
 			if (detach) {
 				detachNode(if_block4_anchor);
 			}
