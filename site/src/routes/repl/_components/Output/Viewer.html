@@ -14,9 +14,14 @@
 	export let error;
 
 	export function setProp(prop, value) {
-		if (component) {
-			component[prop] = value;
-		}
+		if (!refs.child) return;
+		refs.child.contentWindow.postMessage({
+			action: 'set_prop',
+			args: {
+				prop: prop,
+				value: value
+			}
+		},'*');
 	}
 
 	let component;
@@ -81,9 +86,84 @@
 	onMount(() => {
 		refs.child.addEventListener('load', () => {
 			const iframe = refs.child;
-			const body = iframe.contentDocument.body;
-			const evalInIframe = iframe.contentWindow.eval;
 
+			let evalId = 1;
+			let fetchId = 1;
+			let fetchHandler = null;
+			let pendingResults = new Map();
+
+			const evalInIframe = function(scriptToEval) {
+				let id = evalId++;
+				let promise = new Promise((resolve,reject) => {
+					iframe.contentWindow.postMessage({
+						action: "eval",
+						args: {
+							evalId: id,
+							script: scriptToEval
+						}
+					}, '*')
+					pendingResults.set(id, { resolve: resolve, reject: reject });
+				});
+				return promise;
+			}
+			
+			const handleReplMessage = (ev) => {
+				console.log("got message in parent", ev.data);
+				let action = ev.data.action;
+				if (action == "evalError") {
+					let { message, stack, evalId } = ev.data.args;
+					let e = new Error(message);
+					e.stack = e.stack;
+					let resultHandler = pendingResults.get(evalId);
+					if (resultHandler) {
+						pendingResults.delete(evalId);
+						resultHandler.reject(e);
+					} else {
+						console.err("error evaluating script in iframe", e);
+					}
+				}
+
+				if (action == "evalOk") {
+					let { evalId } = ev.data.args;
+					let resultHandler = pendingResults.get(evalId);
+					if (resultHandler) {
+						pendingResults.delete(evalId);
+						resultHandler.resolve();
+					} 
+				}
+
+				if (action == "prop_update") {
+					let { prop, value } = ev.data.args;
+					dispatch('binding', { prop, value });
+					values_store.update(values => Object.assign({}, values, {
+							[prop]: value
+					}));
+				}
+
+				if (action == "fetch_complete") {
+					console.log(fetchHandler, ev.data.args);
+					if (fetchHandler && fetchHandler.fetchId == ev.data.args.fetchId) {
+						fetchHandler.resolve()
+						fetchHandler = null;
+					}
+				}
+				if (action == "fetch_error") {
+					if (fetchHandler && fetchHandler.fetchId == ev.data.args.fetchId) {
+						fetchHandler.reject(new Error(ev.data.args.message));
+						fetchHandler =  null;
+					}
+				}
+				if (action == "fetch_progress") {
+					if (fetchHandler && fetchHandler.fetchId == ev.data.args.fetchId) {
+						pendingImports = ev.data.args.remaining;
+					}
+				}
+			}
+			
+			window.addEventListener("message", handleReplMessage, false);
+			
+		//	iframe.contentWindow.eval;
+			/* TODO
 			// intercept links, so that we can use #hashes inside the iframe
 			body.addEventListener('click', event => {
 				if (event.which !== 1) return;
@@ -109,6 +189,7 @@
 
 				window.open(el.href, '_blank');
 			});
+			*/
 
 			let promise = null;
 			let updating = false;
@@ -121,11 +202,14 @@
 				const imports = [];
 
 				const missingImports = bundle.imports.filter(x => !importCache[x]);
+				
 
 				const removeStyles = () => {
-					const styles = iframe.contentDocument.querySelectorAll('style.svelte');
-					let i = styles.length;
-					while (i--) styles[i].parentNode.removeChild(styles[i]);
+					evalInIframe(`
+						const styles = document.querySelectorAll('style.svelte');
+						let i = styles.length;
+						while (i--) styles[i].parentNode.removeChild(styles[i]);
+					`)
 				};
 
 				const ready = () => {
@@ -137,14 +221,7 @@
 						toDestroy.$destroy();
 						toDestroy = null;
 					}
-
-					bundle.imports.forEach(x => {
-						const module = importCache[x];
-						const name = bundle.importMap.get(x);
-
-						iframe.contentWindow[name] = module;
-					});
-
+			
 					if (ssr) { // this only gets generated if component uses lifecycle hooks
 						pending = true;
 						createHtml();
@@ -155,54 +232,45 @@
 				};
 
 				const createHtml = () => {
-					try {
-						evalInIframe(`${ssr.code}
-							var rendered = SvelteComponent.render(${JSON.stringify($values_store)});
+					
+					evalInIframe(`${ssr.code}
+						var rendered = SvelteComponent.render(${JSON.stringify($values_store)});
 
-							if (rendered.css.code) {
-								var style = document.createElement('style');
-								style.className = 'svelte';
-								style.textContent = rendered.css.code;
-								document.head.appendChild(style);
-							}
-
-							document.body.innerHTML = rendered.html;
-							`)
-					} catch (e) {
-						const loc = getLocationFromStack(e.stack, ssr.map);
-						if (loc) {
-							e.filename = loc.source;
-							e.loc = { line: loc.line, column: loc.column };
+						if (rendered.css.code) {
+							var style = document.createElement('style');
+							style.className = 'svelte';
+							style.textContent = rendered.css.code;
+							document.head.appendChild(style);
 						}
 
-						error = e;
-					}
-				};
+						document.body.innerHTML = rendered.html;
+						`).catch( e => {
+					
+							const loc = getLocationFromStack(e.stack, ssr.map);
+							if (loc) {
+								e.filename = loc.source;
+								e.loc = { line: loc.line, column: loc.column };
+							}
 
+							error = e;
+						});
+					};
+				
 				const createComponent = () => {
 					// remove leftover styles from SSR renderer
 					if (ssr) removeStyles();
 
-					try {
-						evalInIframe(`${dom.code}
-							document.body.innerHTML = '';
-							window.location.hash = '';
-							window._svelteTransitionManager = null;
+					evalInIframe(`${dom.code}
+						document.body.innerHTML = '';
+						window.location.hash = '';
+						window._svelteTransitionManager = null;
 
-							var component = new SvelteComponent({
-								target: document.body,
-								props: ${JSON.stringify($values_store)}
-							});`);
+						window.component = new SvelteComponent({
+							target: document.body,
+							props: ${JSON.stringify($values_store)}
+						});`)
+					.catch(e=> {
 
-						component = window.app = window.component = iframe.contentWindow.component;
-
-						// component.on('state', ({ current }) => {
-						// 	if (updating) return;
-						// 	updating = true;
-						// 	this.fire('data', { current });
-						// 	updating = false;
-						// });
-					} catch (e) {
 						// TODO show in UI
 						component = null;
 
@@ -213,35 +281,31 @@
 						}
 
 						error = e;
-					}
+					});
 				};
-
-				pendingImports = missingImports.length;
-
-				if (missingImports.length) {
-					let cancelled = false;
-
-					promise = Promise.all(
-						missingImports.map(id => fetchImport(id, iframe.contentWindow.curl).then(module => {
-							pendingImports -= 1;
-							return module;
-						}))
-					);
-					promise.cancel = () => cancelled = true;
-
-					promise
-						.then(() => {
-							if (cancelled) return;
-							ready();
-						})
-						.catch(e => {
-							if (cancelled) return;
-							error = e;
-						});
-				} else {
+				
+				
+				new Promise((resolve, reject)=> {
+					fetchHandler = {
+						fetchId: fetchId++,
+						resolve: resolve,
+						reject: reject
+					}
+					iframe.contentWindow.postMessage({
+						action: "fetch_imports",
+						args: {
+							bundle: bundle,
+							fetchId: fetchHandler.fetchId
+						}
+					}, '*');
+				})
+				.then(() => {
 					ready();
-				}
-
+				})
+				.catch(e => {
+					error = e;
+				});
+			
 				run = () => {
 					pending = false;
 
@@ -252,7 +316,7 @@
 
 			bundle_handler = bundle => {
 				if (!bundle) return; // TODO can this ever happen?
-				if (promise) promise.cancel();
+				if (fetchHandler) fetchHandler = null;
 
 				toDestroy = component;
 				component = null;
@@ -261,23 +325,12 @@
 			};
 
 			props_handler = props => {
-				if (!component) {
-					// TODO can this happen?
-					console.error(`no component to bind to`);
-					return;
-				}
-
-				props.forEach(prop => {
-					// TODO should there be a public API for binding?
-					// e.g. `component.$watch(prop, handler)`?
-					// (answer: probably)
-					component.$$.bound[prop] = value => {
-						dispatch('binding', { prop, value });
-						values_store.update(values => Object.assign({}, values, {
-							[prop]: value
-						}));
-					};
-				});
+				iframe.contentWindow.postMessage({
+					action:"bind_props",
+					args: {
+						props: [...props]
+					}
+				},'*')
 			};
 		});
 	});
@@ -346,7 +399,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={refs.child} class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" bind:this={refs.child} sandbox="allow-scripts" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
@@ -355,6 +408,7 @@
 			<body>
 				<script src="/curl.js"></script>
 				<script>curl.config(&#123; dontAddFileExt: /./ });</script>
+				<script src="/repl-runner.js"></script>
 			</body>
 		</html>
 	'></iframe>
