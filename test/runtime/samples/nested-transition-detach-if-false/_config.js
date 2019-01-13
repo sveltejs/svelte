@@ -13,7 +13,7 @@ export default {
 		</li>
 	`,
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target }) {
 		component.folder.open = false;
 		assert.htmlEqual(target.innerHTML, `
 			<li>

@@ -364,9 +364,11 @@ export default class InlineComponentWrapper extends Wrapper {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
-						old_component.$$.fragment.o(() => {
+						@on_outro(() => {
 							old_component.$destroy();
 						});
+						old_component.$$.fragment.o();
+						@check_outros();
 					}
 
 					if (${switch_value}) {
@@ -378,6 +380,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
 						${name}.$$.fragment.c();
 						@mount_component(${name}, ${updateMountNode}, ${anchor});
+						${name}.$$.fragment.i();
 
 						${this.node.handlers.map(handler => deindent`
 							${name}.$on("${handler.name}", ${handler.var});
@@ -386,6 +389,10 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = null;
 					}
 				}
+			`);
+
+			block.builders.intro.addBlock(deindent`
+				if (${name}) ${name}.$$.fragment.i();
 			`);
 
 			if (updates.length) {
@@ -426,6 +433,10 @@ export default class InlineComponentWrapper extends Wrapper {
 				`@mount_component(${name}, ${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});`
 			);
 
+			block.builders.intro.addBlock(deindent`
+				${name}.$$.fragment.i();
+			`);
+
 			if (updates.length) {
 				block.builders.update.addBlock(deindent`
 					${updates}
@@ -440,7 +451,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		block.builders.outro.addLine(
-			`if (${name}) ${name}.$$.fragment.o(#outrocallback);`
+			`if (${name}) ${name}.$$.fragment.o();`
 		);
 	}
 
