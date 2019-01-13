@@ -9,7 +9,7 @@ function add_css() {
 }
 
 function create_fragment($$, ctx) {
-	var div, current;
+	var div;
 
 	return {
 		c() {

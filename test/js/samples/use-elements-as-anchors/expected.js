@@ -112,7 +112,7 @@ function create_if_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var div, text0, p0, text2, text3, text4, p1, text6, text7, if_block4_anchor, current;
+	var div, text0, p0, text2, text3, text4, p1, text6, text7, if_block4_anchor;
 
 	var if_block0 = (ctx.a) && create_if_block_4($$, ctx);
 

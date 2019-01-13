@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, addListener, append, createElement, createText, detachNode, identity, init, insert, noop, preventDefault, run_all, safe_not_equal, stopPropagation } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var div, button0, text1, button1, text3, button2, current, dispose;
+	var div, button0, text1, button1, text3, button2, dispose;
 
 	return {
 		c() {

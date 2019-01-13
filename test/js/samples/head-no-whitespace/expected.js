@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, append, createElement, detachNode, identity, init, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var meta0, meta1, current;
+	var meta0, meta1;
 
 	return {
 		c() {

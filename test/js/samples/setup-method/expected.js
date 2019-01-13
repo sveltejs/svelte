@@ -2,8 +2,6 @@
 import { SvelteComponent as SvelteComponent_1, identity, init, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var current;
-
 	return {
 		c: noop,
 		m: noop,

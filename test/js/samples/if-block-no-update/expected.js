@@ -46,7 +46,7 @@ function create_if_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var if_block_anchor, current;
+	var if_block_anchor;
 
 	function select_block_type(ctx) {
 		if (ctx.foo) return create_if_block;

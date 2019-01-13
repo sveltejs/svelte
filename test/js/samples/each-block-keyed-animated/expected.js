@@ -56,7 +56,7 @@ function create_each_block($$, key_1, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var each_blocks = [], each_lookup = blankObject(), each_anchor, current;
+	var each_blocks = [], each_lookup = blankObject(), each_anchor;
 
 	var each_value = ctx.things;
 

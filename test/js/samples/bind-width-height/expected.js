@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, addResizeListener, add_render_callback, createElement, detachNode, flush, init, insert, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var div, div_resize_listener, current;
+	var div, div_resize_listener;
 
 	return {
 		c() {

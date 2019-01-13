@@ -2,7 +2,7 @@
 import { SvelteComponent as SvelteComponent_1, addListener, add_render_callback, append, createElement, createText, detachNode, flush, init, insert, noop, safe_not_equal, setData } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var scrolling = false, clear_scrolling = () => { scrolling = false }, scrolling_timeout, p, text0, text1, current, dispose;
+	var scrolling = false, clear_scrolling = () => { scrolling = false }, scrolling_timeout, p, text0, text1, dispose;
 
 	add_render_callback(ctx.onwindowscroll);
 

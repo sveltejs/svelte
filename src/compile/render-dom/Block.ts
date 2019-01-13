@@ -218,7 +218,7 @@ export default class Block {
 	getContents(localKey?: string) {
 		const { dev } = this.renderer.options;
 
-		if (this.hasIntroMethod || this.hasOutroMethod) {
+		if (this.hasOutros) {
 			this.addVariable('#current');
 
 			if (!this.builders.intro.isEmpty()) {
@@ -352,7 +352,7 @@ export default class Block {
 			} else {
 				properties.addBlock(deindent`
 					${dev ? 'i: function intro' : 'i'}() {
-						if (#current) return;
+						${this.hasOutros && `if (#current) return;`}
 						${this.builders.intro}
 					},
 				`);

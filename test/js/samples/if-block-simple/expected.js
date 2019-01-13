@@ -24,7 +24,7 @@ function create_if_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var if_block_anchor, current;
+	var if_block_anchor;
 
 	var if_block = (ctx.foo) && create_if_block($$, ctx);
 

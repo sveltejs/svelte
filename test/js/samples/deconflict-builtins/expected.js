@@ -37,7 +37,7 @@ function create_each_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var each_anchor, current;
+	var each_anchor;
 
 	var each_value = ctx.createElement;
 

@@ -55,7 +55,7 @@ function create_each_block($$, ctx) {
 }
 
 function create_fragment($$, ctx) {
-	var text0, p, text1, text2, current;
+	var text0, p, text1, text2;
 
 	var each_value = ctx.things;
 
