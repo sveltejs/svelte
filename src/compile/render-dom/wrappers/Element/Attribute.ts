@@ -187,7 +187,7 @@ export default class AttributeWrapper {
 						? `${element.var}.${propertyName} = ${value};`
 						: isDataSet
 							? `${element.var}.dataset.${camelCaseName} = ${value};`
-							: `${method}(${element.var}, "${name}", ${value});`
+							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
 			block.builders.hydrate.addLine(statement);
@@ -207,9 +207,9 @@ export default class AttributeWrapper {
 	}
 
 	stringify() {
-		const value = this.node.chunks;
+		if (this.node.isTrue) return '';
 
-		if (value === true) return '';
+		const value = this.node.chunks;
 		if (value.length === 0) return `=""`;
 
 		return `="${value.map(chunk => {
