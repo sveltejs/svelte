@@ -234,29 +234,7 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
-		if (this.event_listeners.length > 0) {
-			this.addVariable('#dispose');
-
-			if (this.event_listeners.length === 1) {
-				this.builders.hydrate.addLine(
-					`#dispose = ${this.event_listeners[0]};`
-				);
-
-				this.builders.destroy.addLine(
-					`#dispose();`
-				)
-			} else {
-				this.builders.hydrate.addBlock(deindent`
-					#dispose = [
-						${this.event_listeners.join(',\n')}
-					];
-				`);
-
-				this.builders.destroy.addLine(
-					`@run_all(#dispose);`
-				);
-			}
-		}
+		this.renderListeners();
 
 		const properties = new CodeBuilder();
 
@@ -396,6 +374,32 @@ export default class Block {
 		`.replace(/(#+)(\w*)/g, (match: string, sigil: string, name: string) => {
 			return sigil === '#' ? this.alias(name) : sigil.slice(1) + name;
 		});
+	}
+
+	renderListeners(chunk: string = '') {
+		if (this.event_listeners.length > 0) {
+			this.addVariable(`#dispose${chunk}`);
+
+			if (this.event_listeners.length === 1) {
+				this.builders.hydrate.addLine(
+					`#dispose${chunk} = ${this.event_listeners[0]};`
+				);
+
+				this.builders.destroy.addLine(
+					`#dispose${chunk}();`
+				)
+			} else {
+				this.builders.hydrate.addBlock(deindent`
+					#dispose${chunk} = [
+						${this.event_listeners.join(',\n')}
+					];
+				`);
+
+				this.builders.destroy.addLine(
+					`@run_all(#dispose${chunk});`
+				);
+			}
+		}
 	}
 
 	toString() {
