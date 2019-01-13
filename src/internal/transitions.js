@@ -1,6 +1,6 @@
-import { identity as linear, noop, run, run_all } from './utils.js';
+import { identity as linear, noop, run_all } from './utils.js';
 import { loop } from './loop.js';
-import { create_rule, delete_rule, delete_rules } from './style_manager.js';
+import { create_rule, delete_rule } from './style_manager.js';
 
 let promise;
 
@@ -120,8 +120,6 @@ export function create_out_transition(node, fn, params) {
 	group.remaining += 1;
 
 	function go() {
-		if (typeof config === 'function') config = config();
-
 		const {
 			delay = 0,
 			duration = 300,
@@ -130,9 +128,7 @@ export function create_out_transition(node, fn, params) {
 			css
 		} = config;
 
-		if (css) {
-			animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
-		}
+		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 
 		const start_time = window.performance.now() + delay;
 		const end_time = start_time + duration;
