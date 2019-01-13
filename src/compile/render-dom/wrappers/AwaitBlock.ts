@@ -172,10 +172,14 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const hasTransitions = this.pending.block.hasIntroMethod || this.pending.block.hasOutroMethod;
 
 		block.builders.mount.addBlock(deindent`
-			${info}.block.${hasTransitions ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
+			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
 			${info}.anchor = ${anchor};
 		`);
+
+		if (hasTransitions) {
+			block.builders.intro.addLine(`${info}.block.i();`);
+		}
 
 		const conditions = [];
 		if (this.node.expression.dependencies.size > 0) {
@@ -208,13 +212,10 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 
 		if (this.pending.block.hasOutroMethod) {
-			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				const ${countdown} = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o(${countdown});
-					else ${countdown}();
+					if (block) block.o();
 				}
 			`);
 		}

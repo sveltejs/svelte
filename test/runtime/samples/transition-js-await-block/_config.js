@@ -13,7 +13,7 @@ export default {
 
 	intro: true,
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, target, raf }) {
 		let p = target.querySelector('p');
 
 		assert.equal(p.className, 'pending');

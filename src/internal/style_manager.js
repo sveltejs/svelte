@@ -13,17 +13,17 @@ function hash(str) {
 	return hash >>> 0;
 }
 
-export function create_rule({ a, b, d, duration }, ease, fn) {
+export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
 	for (let p = 0; p <= 1; p += step) {
-		const t = a + d * ease(p);
+		const t = a + (b - a) * ease(p);
 		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
 	}
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
-	const name = `__svelte_${hash(rule)}`;
+	const name = `__svelte_${hash(rule)}_${uid}`;
 
 	if (!current_rules[name]) {
 		if (!stylesheet) {
@@ -36,21 +36,30 @@ export function create_rule({ a, b, d, duration }, ease, fn) {
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
 
+	const animation = node.style.animation || '';
+	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
+
 	active += 1;
 	return name;
 }
 
 export function delete_rule(node, name) {
-	node.style.animation = node.style.animation
+	node.style.animation = (node.style.animation || '')
 		.split(', ')
-		.filter(anim => anim && anim.indexOf(name) === -1)
+		.filter(name
+			? anim => anim.indexOf(name) < 0 // remove specific animation
+			: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+		)
 		.join(', ');
 
-	if (--active <= 0) clear_rules();
+	if (!--active) clear_rules();
 }
 
 export function clear_rules() {
-	let i = stylesheet.cssRules.length;
-	while (i--) stylesheet.deleteRule(i);
-	current_rules = {};
+	requestAnimationFrame(() => {
+		if (active) return;
+		let i = stylesheet.cssRules.length;
+		while (i--) stylesheet.deleteRule(i);
+		current_rules = {};
+	});
 }
