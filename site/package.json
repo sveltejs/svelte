@@ -1,17 +1,17 @@
 {
-  "name": "TODO",
-  "description": "TODO",
-  "version": "0.0.1",
+  "name": "svelte.technology",
+  "version": "1.0.0",
+  "description": "Docs and examples for Svelte",
   "scripts": {
     "dev": "sapper dev",
     "sapper": "sapper build --legacy",
-    "update_template": "sh ./scripts/update_template.sh",
+    "update": "node scripts/update_template.js && node scripts/get-contributors.js",
     "start": "node __sapper__/build",
     "cy:run": "cypress run",
     "cy:open": "cypress open",
     "test": "run-p --race dev cy:run",
     "deploy": "npm run stage && now alias",
-    "prestage": "npm run update_template && node scripts/get-contributors.js && npm run sapper",
+    "prestage": "npm run update && npm run sapper",
     "stage": "now"
   },
   "dependencies": {
@@ -29,6 +29,7 @@
     "passport-github": "^1.1.0",
     "prismjs": "^1.15.0",
     "session-file-store": "^1.2.0",
+    "shelljs": "^0.8.3",
     "sirv": "^0.2.0",
     "yootils": "0.0.14"
   },

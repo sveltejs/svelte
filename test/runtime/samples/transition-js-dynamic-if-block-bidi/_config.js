@@ -3,7 +3,7 @@ export default {
 		name: 'world'
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		global.count = 0;
 
 		component.visible = true;

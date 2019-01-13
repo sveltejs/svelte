@@ -5,15 +5,19 @@ import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
+import fuzzymatch from '../../utils/fuzzymatch';
+import list from '../../utils/list';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const metaTags = new Map([
-	['svelte:document', 'Document'],
-	['svelte:window', 'Window'],
+	['svelte:head', 'Head'],
 	['svelte:meta', 'Meta'],
-	['svelte:head', 'Head']
+	['svelte:window', 'Window'],
+	['svelte:body', 'Body']
 ]);
+
+const valid_meta_tags = [...metaTags.keys(), 'svelte:self', 'svelte:component'];
 
 const specials = new Map([
 	[
@@ -32,8 +36,8 @@ const specials = new Map([
 	],
 ]);
 
-const SELF = 'svelte:self';
-const COMPONENT = 'svelte:component';
+const SELF = /^svelte:self(?=[\s\/>])/;
+const COMPONENT = /^svelte:component(?=[\s\/>])/;
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 const disallowedContents = new Map([
@@ -97,7 +101,7 @@ export default function tag(parser: Parser) {
 		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
 			if (
-				(name === 'svelte:window' || name === 'svelte:document') &&
+				(name === 'svelte:window' || name === 'svelte:body') &&
 				parser.current().children.length
 			) {
 				parser.error({
@@ -278,7 +282,7 @@ export default function tag(parser: Parser) {
 function readTagName(parser: Parser) {
 	const start = parser.index;
 
-	if (parser.eat(SELF)) {
+	if (parser.read(SELF)) {
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
 		let i = parser.stack.length;
@@ -295,18 +299,30 @@ function readTagName(parser: Parser) {
 		if (!legal) {
 			parser.error({
 				code: `invalid-self-placement`,
-				message: `<${SELF}> components can only exist inside if-blocks or each-blocks`
+				message: `<svelte:self> components can only exist inside if-blocks or each-blocks`
 			}, start);
 		}
 
-		return SELF;
+		return 'svelte:self';
 	}
 
-	if (parser.eat(COMPONENT)) return COMPONENT;
+	if (parser.read(COMPONENT)) return 'svelte:component';
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 
 	if (metaTags.has(name)) return name;
+
+	if (name.startsWith('svelte:')) {
+		const match = fuzzymatch(name.slice(7), valid_meta_tags);
+
+		let message = `Valid <svelte:...> tag names are ${list(valid_meta_tags)}`;
+		if (match) message += ` (did you mean '${match}'?)`;
+
+		parser.error({
+			code: 'invalid-tag-name',
+			message
+		}, start);
+	}
 
 	if (!validTagName.test(name)) {
 		parser.error({

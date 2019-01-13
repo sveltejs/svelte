@@ -26,15 +26,8 @@ export function animate(node, from, fn, params) {
 
 	function start() {
 		if (css) {
-			if (delay) node.style.cssText = cssText;
-
-			name = create_rule({ a: 0, b: 1, d: 1, duration }, easing, css);
-
-			node.style.animation = (node.style.animation || '')
-				.split(', ')
-				.filter(anim => anim && !/__svelte/.test(anim))
-				.concat(`${name} ${duration}ms linear 1 forwards`)
-				.join(', ');
+			if (delay) node.style.cssText = cssText; // TODO create delayed animation instead?
+			name = create_rule(node, 0, 1, duration, 0, easing, css);
 		}
 
 		started = true;
@@ -45,7 +38,7 @@ export function animate(node, from, fn, params) {
 		running = false;
 	}
 
-	const { abort, promise } = loop(now => {
+	loop(now => {
 		if (!started && now >= start_time) {
 			start();
 		}
