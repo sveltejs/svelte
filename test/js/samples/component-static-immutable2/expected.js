@@ -13,20 +13,19 @@ function create_fragment($$, ctx) {
 
 		m(target, anchor) {
 			mount_component(nested, target, anchor);
-			current = true;
 		},
 
 		p: noop,
 
-		i(target, anchor) {
+		i() {
 			if (current) return;
-			this.m(target, anchor);
+			nested.$$.fragment.i();
+
+			current = true;
 		},
 
-		o(outrocallback) {
-			if (!current) return;
-
-			if (nested) nested.$$.fragment.o(outrocallback);
+		o() {
+			if (nested) nested.$$.fragment.o();
 			current = false;
 		},
 

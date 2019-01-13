@@ -29,7 +29,8 @@ export function handlePromise(promise, info) {
 			}
 
 			block.c();
-			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
+			block.m(info.mount(), info.anchor);
+			if (block.i) block.i();
 
 			flush();
 		}

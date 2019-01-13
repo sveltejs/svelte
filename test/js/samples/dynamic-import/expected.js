@@ -14,20 +14,19 @@ function create_fragment($$, ctx) {
 
 		m(target, anchor) {
 			mount_component(lazyload, target, anchor);
-			current = true;
 		},
 
 		p: noop,
 
-		i(target, anchor) {
+		i() {
 			if (current) return;
-			this.m(target, anchor);
+			lazyload.$$.fragment.i();
+
+			current = true;
 		},
 
-		o(outrocallback) {
-			if (!current) return;
-
-			if (lazyload) lazyload.$$.fragment.o(outrocallback);
+		o() {
+			if (lazyload) lazyload.$$.fragment.o();
 			current = false;
 		},
 
