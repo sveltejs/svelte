@@ -218,11 +218,11 @@ export default class Block {
 	getContents(localKey?: string) {
 		const { dev } = this.renderer.options;
 
-		if (this.hasIntroMethod || this.hasOutroMethod) {
+		if (this.hasOutros) {
 			this.addVariable('#current');
 
-			if (!this.builders.mount.isEmpty()) {
-				this.builders.mount.addLine(`#current = true;`);
+			if (!this.builders.intro.isEmpty()) {
+				this.builders.intro.addLine(`#current = true;`);
 			}
 
 			if (!this.builders.outro.isEmpty()) {
@@ -347,27 +347,22 @@ export default class Block {
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			if (this.builders.mount.isEmpty()) {
+			if (this.builders.intro.isEmpty()) {
 				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						if (#current) return;
+					${dev ? 'i: function intro' : 'i'}() {
+						${this.hasOutros && `if (#current) return;`}
 						${this.builders.intro}
-						this.m(#target, anchor);
 					},
 				`);
 			}
 
 			if (this.builders.outro.isEmpty()) {
-				properties.addLine(`o: @run,`);
+				properties.addLine(`o: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						if (!#current) return;
-
-						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
-
+					${dev ? 'o: function outro' : 'o'}() {
 						${this.builders.outro}
 					},
 				`);

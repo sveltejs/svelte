@@ -14,7 +14,7 @@ const metaTags = new Map([
 	['svelte:head', 'Head'],
 	['svelte:meta', 'Meta'],
 	['svelte:window', 'Window'],
-	['svelte:document', 'Document']
+	['svelte:body', 'Body']
 ]);
 
 const valid_meta_tags = [...metaTags.keys(), 'svelte:self', 'svelte:component'];
@@ -101,7 +101,7 @@ export default function tag(parser: Parser) {
 		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
 			if (
-				(name === 'svelte:window' || name === 'svelte:document') &&
+				(name === 'svelte:window' || name === 'svelte:body') &&
 				parser.current().children.length
 			) {
 				parser.error({

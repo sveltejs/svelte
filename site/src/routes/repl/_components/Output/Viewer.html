@@ -1,6 +1,7 @@
 <script>
 	import { onMount, createEventDispatcher } from 'svelte';
 	import getLocationFromStack from '../../_utils/getLocationFromStack.js';
+	import ReplProxy from '../../_utils/replProxy.js';
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
@@ -14,29 +15,18 @@
 	export let error;
 
 	export function setProp(prop, value) {
-		if (component) {
-			component[prop] = value;
-		}
-	}
+		if (!replProxy) return;
+		replProxy.setProp(prop, value);
+	}		
 
-	let component;
+	let hasComponent = false;
 
 	const refs = {};
-	const importCache = {};
 	let pendingImports = 0;
 	let pending = false;
 
-	function fetchImport(id, curl) {
-		return new Promise((fulfil, reject) => {
-			curl([`https://bundle.run/${id}`]).then(module => {
-				importCache[id] = module;
-				fulfil(module);
-			}, err => {
-				console.error(err.stack);
-				reject(new Error(`Error loading ${id} from bundle.run`));
-			});
-		});
-	}
+	let replProxy = null;
+
 
 	const namespaceSpecifier = /\*\s+as\s+(\w+)/;
 	const namedSpecifiers = /\{(.+)\}/;
@@ -77,39 +67,24 @@
 
 	let createComponent;
 	let init;
-
+	
 	onMount(() => {
+		replProxy = new ReplProxy(refs.child);
 		refs.child.addEventListener('load', () => {
-			const iframe = refs.child;
-			const body = iframe.contentDocument.body;
-			const evalInIframe = iframe.contentWindow.eval;
 
-			// intercept links, so that we can use #hashes inside the iframe
-			body.addEventListener('click', event => {
-				if (event.which !== 1) return;
-				if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-				if (event.defaultPrevented) return;
+			replProxy.onPropUpdate = (prop, value) => {
+				dispatch('binding', { prop, value });
+				values_store.update(values => Object.assign({}, values, {
+						[prop]: value
+				}));
+			};
 
-				// ensure target is a link
-				let el = event.target;
-				while (el && el.nodeName !== 'A') el = el.parentNode;
-				if (!el || el.nodeName !== 'A') return;
-
-				if (el.hasAttribute('download') || el.getAttribute('rel') === 'external' || el.target) return;
-
-				event.preventDefault();
-
-				if (el.href.startsWith(top.location.origin)) {
-					const url = new URL(el.href);
-					if (url.hash[0] === '#') {
-						iframe.contentWindow.location.hash = url.hash;
-						return;
-					}
-				}
-
-				window.open(el.href, '_blank');
-			});
-
+			replProxy.onFetchProgress = (progress) => {
+				pendingImports = progress
+			}
+			
+			replProxy.handleLinks();
+			
 			let promise = null;
 			let updating = false;
 
@@ -118,14 +93,18 @@
 			const init = () => {
 				if (sourceError) return;
 
-				const imports = [];
-
-				const missingImports = bundle.imports.filter(x => !importCache[x]);
-
 				const removeStyles = () => {
-					const styles = iframe.contentDocument.querySelectorAll('style.svelte');
-					let i = styles.length;
-					while (i--) styles[i].parentNode.removeChild(styles[i]);
+					replProxy.eval(`
+						const styles = document.querySelectorAll('style.svelte');
+						let i = styles.length;
+						while (i--) styles[i].parentNode.removeChild(styles[i]);
+					`)
+				};
+
+				const destroyComponent = () => {
+					replProxy.eval(`if (window.component)
+										 window.component.\$destroy(); 
+									window.component = null`);
 				};
 
 				const ready = () => {
@@ -133,18 +112,10 @@
 
 					if (toDestroy) {
 						removeStyles();
-
-						toDestroy.$destroy();
+						destroyComponent();
 						toDestroy = null;
 					}
-
-					bundle.imports.forEach(x => {
-						const module = importCache[x];
-						const name = bundle.importMap.get(x);
-
-						iframe.contentWindow[name] = module;
-					});
-
+			
 					if (ssr) { // this only gets generated if component uses lifecycle hooks
 						pending = true;
 						createHtml();
@@ -152,23 +123,22 @@
 						pending = false;
 						createComponent();
 					}
-				};
+				}
 
 				const createHtml = () => {
-					try {
-						evalInIframe(`${ssr.code}
-							var rendered = SvelteComponent.render(${JSON.stringify($values_store)});
+					replProxy.eval(`${ssr.code}
+						var rendered = SvelteComponent.render(${JSON.stringify($values_store)});
 
-							if (rendered.css.code) {
-								var style = document.createElement('style');
-								style.className = 'svelte';
-								style.textContent = rendered.css.code;
-								document.head.appendChild(style);
-							}
+						if (rendered.css.code) {
+							var style = document.createElement('style');
+							style.className = 'svelte';
+							style.textContent = rendered.css.code;
+							document.head.appendChild(style);
+						}
 
-							document.body.innerHTML = rendered.html;
-							`)
-					} catch (e) {
+						document.body.innerHTML = rendered.html;
+					`)
+					.catch( e => {
 						const loc = getLocationFromStack(e.stack, ssr.map);
 						if (loc) {
 							e.filename = loc.source;
@@ -176,35 +146,26 @@
 						}
 
 						error = e;
-					}
+					});
 				};
-
+				
 				const createComponent = () => {
 					// remove leftover styles from SSR renderer
 					if (ssr) removeStyles();
 
-					try {
-						evalInIframe(`${dom.code}
-							document.body.innerHTML = '';
-							window.location.hash = '';
-							window._svelteTransitionManager = null;
+					replProxy.eval(`${dom.code}
+						document.body.innerHTML = '';
+						window.location.hash = '';
+						window._svelteTransitionManager = null;
 
-							var component = new SvelteComponent({
-								target: document.body,
-								props: ${JSON.stringify($values_store)}
-							});`);
-
-						component = window.app = window.component = iframe.contentWindow.component;
-
-						// component.on('state', ({ current }) => {
-						// 	if (updating) return;
-						// 	updating = true;
-						// 	this.fire('data', { current });
-						// 	updating = false;
-						// });
-					} catch (e) {
+						window.component = new SvelteComponent({
+							target: document.body,
+							props: ${JSON.stringify($values_store)}
+						});
+					`)
+					.catch(e => {
 						// TODO show in UI
-						component = null;
+						hasComponent = false;
 
 						const loc = getLocationFromStack(e.stack, dom.map);
 						if (loc) {
@@ -213,35 +174,23 @@
 						}
 
 						error = e;
-					}
+					});
 				};
-
-				pendingImports = missingImports.length;
-
-				if (missingImports.length) {
+				
+				// Download the imports (sets them on iframe window when complete)
+			 	{
 					let cancelled = false;
-
-					promise = Promise.all(
-						missingImports.map(id => fetchImport(id, iframe.contentWindow.curl).then(module => {
-							pendingImports -= 1;
-							return module;
-						}))
-					);
-					promise.cancel = () => cancelled = true;
-
-					promise
-						.then(() => {
+					promise = replProxy.fetchImports(bundle);
+					promise.cancel = () => { cancelled = true };
+					promise.then(() => {
 							if (cancelled) return;
-							ready();
-						})
-						.catch(e => {
+							ready()
+						}).catch(e => {
 							if (cancelled) return;
 							error = e;
 						});
-				} else {
-					ready();
 				}
-
+		
 				run = () => {
 					pending = false;
 
@@ -254,30 +203,14 @@
 				if (!bundle) return; // TODO can this ever happen?
 				if (promise) promise.cancel();
 
-				toDestroy = component;
-				component = null;
+				toDestroy = hasComponent;
+				hasComponent = false;
 
 				init();
 			};
 
 			props_handler = props => {
-				if (!component) {
-					// TODO can this happen?
-					console.error(`no component to bind to`);
-					return;
-				}
-
-				props.forEach(prop => {
-					// TODO should there be a public API for binding?
-					// e.g. `component.$watch(prop, handler)`?
-					// (answer: probably)
-					component.$$.bound[prop] = value => {
-						dispatch('binding', { prop, value });
-						values_store.update(values => Object.assign({}, values, {
-							[prop]: value
-						}));
-					};
-				});
+				replProxy.bindProps(props)
 			};
 		});
 	});
@@ -346,7 +279,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={refs.child} class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" bind:this={refs.child} sandbox="allow-scripts allow-popups" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
@@ -355,6 +288,7 @@
 			<body>
 				<script src="/curl.js"></script>
 				<script>curl.config(&#123; dontAddFileExt: /./ });</script>
+				<script src="/repl-runner.js"></script>
 			</body>
 		</html>
 	'></iframe>

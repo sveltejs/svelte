@@ -1,5 +1,5 @@
 export default function process_markdown(markdown) {
-	const match = /---\n([\s\S]+?)\n---/.exec(markdown);
+	const match = /---\r?\n([\s\S]+?)\r?\n---/.exec(markdown);
 	const frontMatter = match[1];
 	const content = markdown.slice(match[0].length);
 

@@ -13,7 +13,6 @@ import {
 	setupHtmlEqual
 } from "../helpers.js";
 
-const main = path.resolve('index.js');
 let svelte$;
 let svelte;
 
