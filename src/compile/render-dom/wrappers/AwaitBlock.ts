@@ -80,7 +80,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				status,
 				renderer,
 				block,
-				parent,
+				this,
 				child,
 				stripWhitespace,
 				nextSibling
