@@ -72,7 +72,11 @@ export default class SlotWrapper extends Wrapper {
 		block.builders.update.pushCondition(`!${content_name}`);
 		block.builders.destroy.pushCondition(`!${content_name}`);
 
+		const listeners = block.event_listeners;
+		block.event_listeners = [];
 		this.fragment.render(block, parentNode, parentNodes);
+		block.renderListeners(`_${content_name}`);
+		block.event_listeners = listeners;
 
 		block.builders.create.popCondition();
 		block.builders.hydrate.popCondition();
