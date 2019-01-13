@@ -159,7 +159,8 @@ export default class AttributeWrapper {
 				updater = `${method}(${element.var}, "${name}", ${shouldCache ? last : value});`;
 			}
 
-			if (this.node.dependencies.size || isSelectValueAttribute) {
+			// only add an update if mutations are involved (or it's a select?)
+			if (this.node.parent.scope.containsMutable(this.node.dependencies) || isSelectValueAttribute) {
 				const dependencies = Array.from(this.node.dependencies);
 				const changedCheck = (
 					(block.hasOutros ? `!#current || ` : '') +
