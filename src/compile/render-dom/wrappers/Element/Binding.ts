@@ -24,7 +24,8 @@ export default class BindingWrapper {
 	handler: {
 		usesContext: boolean;
 		mutation: string;
-		contextual_dependencies: Set<string>
+		contextual_dependencies: Set<string>,
+		snippet?: string
 	};
 	snippet: string;
 	initialUpdate: string;
@@ -238,9 +239,10 @@ function getEventHandler(
 
 	if (binding.node.expression.node.type === 'MemberExpression') {
 		return {
-			usesContext: false,
+			usesContext: binding.node.expression.usesContext,
 			mutation: `${snippet} = ${value};`,
-			contextual_dependencies: new Set()
+			contextual_dependencies: binding.node.expression.contextual_dependencies,
+			snippet
 		};
 	}
 

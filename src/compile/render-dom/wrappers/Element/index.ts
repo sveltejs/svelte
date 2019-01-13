@@ -493,15 +493,28 @@ export default class ElementWrapper extends Wrapper {
 
 			const { handler, object } = this_binding;
 
+			const args = [];
+			for (const arg of handler.contextual_dependencies) {
+				args.push(arg);
+				block.addVariable(arg, `ctx.${arg}`);
+			}
+
 			renderer.component.partly_hoisted.push(deindent`
-				function ${name}($$node) {
-					${handler.mutation}
+				function ${name}(${['$$node', 'check'].concat(args).join(', ')}) {
+					${handler.snippet ? `if ($$node || (!$$node && ${handler.snippet} === check)) ` : ''}${handler.mutation}
 					$$invalidate('${object}', ${object});
 				}
 			`);
 
-			block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${this.var}));`);
-			block.builders.destroy.addLine(`ctx.${name}(null);`);
+			block.builders.mount.addLine(`@add_binding_callback(() => ctx.${name}(${[this.var, 'null'].concat(args).join(', ')}));`);
+			block.builders.destroy.addLine(`ctx.${name}(${['null', this.var].concat(args).join(', ')});`);
+			block.builders.update.addLine(deindent`
+				if (changed.items) {
+					ctx.${name}(${['null', this.var].concat(args).join(', ')});
+					${args.map(a => `${a} = ctx.${a}`).join(', ')};
+					ctx.${name}(${[this.var, 'null'].concat(args).join(', ')});
+				}`
+			);
 		}
 	}
 
