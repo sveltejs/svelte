@@ -104,15 +104,16 @@ export default class Expression {
 		const expression = this;
 		let function_expression;
 
-		function add_dependency(name) {
+		function add_dependency(name, deep = false) {
 			dependencies.add(name);
 
 			if (!function_expression) {
 				// dynamic_dependencies is used to create `if (changed.foo || ...)`
 				// conditions — it doesn't apply if the dependency is inside a
 				// function, and it only applies if the dependency is writable
+				// or a sub-path of a non-writable
 				if (component.instance_script) {
-					if (component.writable_declarations.has(name) || name[0] === '$') {
+					if (component.writable_declarations.has(name) || name[0] === '$' || (component.userVars.has(name) && deep)) {
 						dynamic_dependencies.add(name);
 					}
 				} else {
@@ -146,15 +147,28 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						template_scope.dependenciesForName.get(name).forEach(add_dependency);
+						template_scope.dependenciesForName.get(name).forEach(name => add_dependency(name, true));
 					} else {
-						add_dependency(name);
+						add_dependency(name, nodes.length > 1);
 						component.template_references.add(name);
 
 						component.warn_if_undefined(nodes[0], template_scope, true);
 					}
 
 					this.skip();
+				}
+
+				// track any assignments from template expressions as mutable
+				if (function_expression) {
+					if (node.type === 'AssignmentExpression') {
+						const names = node.left.type === 'MemberExpression'
+							? [getObject(node.left).name]
+							: extractNames(node.left);
+						names.forEach(name => template_scope.setMutable(name));
+					} else if (node.type === 'UpdateExpression') {
+						const { name } = getObject(node.argument);
+						template_scope.setMutable(name);
+					}
 				}
 			},
 

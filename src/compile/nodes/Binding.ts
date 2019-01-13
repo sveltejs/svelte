@@ -29,6 +29,9 @@ export default class Binding extends Node {
 		const { name } = getObject(this.expression.node);
 		this.isContextual = scope.names.has(name);
 
+		// make sure we track this as a mutable ref
+		scope.setMutable(name);
+
 		if (this.expression.node.type === 'MemberExpression') {
 			prop = `[✂${this.expression.node.property.start}-${this.expression.node.property.end}✂]`;
 			if (!this.expression.node.computed) prop = `'${prop}'`;
