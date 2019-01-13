@@ -582,6 +582,7 @@ export default class ElementWrapper extends Wrapper {
 		const { component } = this.renderer;
 
 		if (intro === outro) {
+			// bidirectional transition
 			const name = block.getUniqueName(`${this.var}_transition`);
 			const snippet = intro.expression
 				? intro.expression.render(block)
@@ -591,25 +592,22 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = component.qualify(intro.name);
 
-			block.builders.intro.addConditional(`@intros.enabled`, deindent`
-				if (${name}) ${name}.invalidate();
-
+			block.builders.intro.addBlock(deindent`
 				@add_render_callback(() => {
-					if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
+					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
 			`);
 
 			block.builders.outro.addBlock(deindent`
-				if (!${name}) ${name} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
-				${name}.run(0, () => {
-					#outrocallback();
-					${name} = null;
-				});
+				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
+				${name}.run(0);
 			`);
 
-			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.abort();`);
-		} else {
+			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.end();`);
+		}
+
+		else {
 			const introName = intro && block.getUniqueName(`${this.var}_intro`);
 			const outroName = outro && block.getUniqueName(`${this.var}_outro`);
 
@@ -619,21 +617,27 @@ export default class ElementWrapper extends Wrapper {
 					? intro.expression.render(block)
 					: '{}';
 
-				const fn = component.qualify(intro.name); // TODO add built-in transitions?
+				const fn = component.qualify(intro.name);
 
 				if (outro) {
 					block.builders.intro.addBlock(deindent`
-						if (${introName}) ${introName}.abort(1);
-						if (${outroName}) ${outroName}.abort(1);
+						@add_render_callback(() => {
+							if (!${introName}) ${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+							${introName}.start();
+						});
+					`);
+
+					block.builders.outro.addLine(`if (${introName}) ${introName}.invalidate()`);
+				} else {
+					block.builders.intro.addBlock(deindent`
+						if (!${introName}) {
+							@add_render_callback(() => {
+								${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
+								${introName}.start();
+							});
+						}
 					`);
 				}
-
-				block.builders.intro.addConditional(`@intros.enabled`, deindent`
-					@add_render_callback(() => {
-						${introName} = @create_transition(${this.var}, ${fn}, ${snippet}, true);
-						${introName}.run(1);
-					});
-				`);
 			}
 
 			if (outro) {
@@ -645,17 +649,16 @@ export default class ElementWrapper extends Wrapper {
 				const fn = component.qualify(outro.name);
 
 				block.builders.intro.addBlock(deindent`
-					if (${outroName}) ${outroName}.abort(1);
+					if (${outroName}) ${outroName}.end(1);
 				`);
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
 				block.builders.outro.addBlock(deindent`
-					${outroName} = @create_transition(${this.var}, ${fn}, ${snippet}, false);
-					${outroName}.run(0, #outrocallback);
+					${outroName} = @create_out_transition(${this.var}, ${fn}, ${snippet});
 				`);
 
-				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.abort();`);
+				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.end();`);
 			}
 		}
 	}
