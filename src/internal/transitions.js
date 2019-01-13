@@ -1,6 +1,6 @@
 import { identity as linear, noop, run, run_all } from './utils.js';
 import { loop } from './loop.js';
-import { create_rule, delete_rule } from './style_manager.js';
+import { create_rule, delete_rule, delete_rules } from './style_manager.js';
 
 let promise;
 
@@ -39,6 +39,7 @@ export function create_in_transition(node, fn, params) {
 	let running = false;
 	let animation_name;
 	let task;
+	let uid = 0;
 
 	function cleanup() {
 		if (animation_name) delete_rule(node, animation_name);
@@ -53,11 +54,7 @@ export function create_in_transition(node, fn, params) {
 			css
 		} = config;
 
-		if (css) {
-			animation_name = create_rule(0, 1, duration, easing, css);
-			node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
-		}
-
+		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
 		tick(0, 1);
 
 		const start_time = window.performance.now() + delay;
@@ -89,6 +86,8 @@ export function create_in_transition(node, fn, params) {
 	return {
 		start() {
 			if (started) return;
+
+			delete_rule(node);
 
 			if (typeof config === 'function') {
 				config = config();
@@ -132,8 +131,7 @@ export function create_out_transition(node, fn, params) {
 		} = config;
 
 		if (css) {
-			animation_name = create_rule(1, 0, duration, easing, css);
-			node.style.animation += (node.style.animation ? ', ' : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
+			animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
 		}
 
 		const start_time = window.performance.now() + delay;
@@ -238,8 +236,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			// an initial tick and/or apply CSS animation immediately
 			if (css) {
 				clear_animation();
-				animation_name = create_rule(t, b, duration, easing, css);
-				node.style.animation = (node.style.animation ? `${node.style.animation}, ` : '') + `${animation_name} ${duration}ms linear ${delay}ms 1 both`;
+				animation_name = create_rule(node, t, b, duration, delay, easing, css);
 			}
 
 			if (b) tick(0, 1);
@@ -256,9 +253,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 
 					if (css) {
 						clear_animation();
-						animation_name = create_rule(t, running_program.b, running_program.duration, easing, config.css);
-
-						node.style.animation = (node.style.animation ? ', ' : '') + `${animation_name} ${running_program.duration}ms linear 1 forwards`;
+						animation_name = create_rule(node, t, running_program.b, running_program.duration, 0, easing, config.css);
 					}
 				}
 

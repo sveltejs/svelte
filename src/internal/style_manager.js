@@ -13,7 +13,7 @@ function hash(str) {
 	return hash >>> 0;
 }
 
-export function create_rule(a, b, duration, ease, fn) {
+export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
@@ -23,7 +23,7 @@ export function create_rule(a, b, duration, ease, fn) {
 	}
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
-	const name = `__svelte_${hash(rule)}`;
+	const name = `__svelte_${hash(rule)}_${uid}`;
 
 	if (!current_rules[name]) {
 		if (!stylesheet) {
@@ -36,14 +36,20 @@ export function create_rule(a, b, duration, ease, fn) {
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
 
+	const animation = node.style.animation || '';
+	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
+
 	active += 1;
 	return name;
 }
 
 export function delete_rule(node, name) {
-	node.style.animation = node.style.animation
+	node.style.animation = (node.style.animation || '')
 		.split(', ')
-		.filter(anim => anim.indexOf(name) < 0)
+		.filter(name
+			? anim => anim.indexOf(name) < 0 // remove specific animation
+			: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+		)
 		.join(', ');
 
 	if (!--active) clear_rules();
