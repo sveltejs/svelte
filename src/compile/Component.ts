@@ -77,6 +77,7 @@ export default class Component {
 	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
+	mutable_props: Set<string> = new Set();
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
 	template_references: Set<string> = new Set();
@@ -169,6 +170,7 @@ export default class Component {
 		if (!this.instance_script) {
 			const props = [...this.template_references];
 			this.declarations.push(...props);
+			addToSet(this.mutable_props, this.template_references);
 			addToSet(this.writable_declarations, this.template_references);
 			addToSet(this.userVars, this.template_references);
 
@@ -177,6 +179,9 @@ export default class Component {
 				as: name
 			}));
 		}
+
+		// tell the root fragment scope about all of the mutable names we know from the script
+		this.mutable_props.forEach(name => this.fragment.scope.mutables.add(name));
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -405,6 +410,7 @@ export default class Component {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
 								exports.push({ name, as: name });
+								this.mutable_props.add(name);
 							});
 						});
 					} else {
@@ -537,11 +543,41 @@ export default class Component {
 			this.userVars.add(name);
 		});
 
+		this.track_mutations();
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 		this.extract_reactive_store_references();
 		this.javascript = this.extract_javascript(script);
+	}
+
+	// TODO merge this with other walks that are independent
+	track_mutations() {
+		const component = this;
+		let { instance_scope: scope, instance_scope_map: map } = this;
+
+		walk(this.instance_script.content, {
+			enter(node, parent) {
+				let names;
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				if (node.type === 'AssignmentExpression') {
+					names = node.left.type === 'MemberExpression'
+							? [getObject(node.left).name]
+							: extractNames(node.left);
+				} else if (node.type === 'UpdateExpression') {
+					names = [getObject(node.argument).name];
+				}
+
+				if (names) {
+					names.forEach(name => {
+						if (scope.has(name)) component.mutable_props.add(name);
+					});
+				}
+			}
+		})
 	}
 
 	extract_reactive_store_references() {
@@ -586,6 +622,7 @@ export default class Component {
 		const exported = new Set();
 		this.props.forEach(prop => {
 			exported.add(prop.name);
+			this.mutable_props.add(prop.name);
 		});
 
 		const coalesced_declarations = [];

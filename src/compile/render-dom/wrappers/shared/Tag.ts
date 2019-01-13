@@ -40,10 +40,13 @@ export default class Tag extends Wrapper {
 					: updateCachedValue
 				: changedCheck;
 
-			block.builders.update.addConditional(
-				condition,
-				update(content)
-			);
+			// only update if there's a mutation involved
+			if (this.node.expression.template_scope.containsMutable(dependencies)) {
+				block.builders.update.addConditional(
+					condition,
+					update(content)
+				);
+			}
 		}
 
 		return { init: content };
