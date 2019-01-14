@@ -16,10 +16,12 @@ describe.only('preprocess', () => {
 			const input = fs.readFileSync(`test/preprocess/samples/${dir}/input.html`, 'utf-8');
 			const expected = fs.readFileSync(`test/preprocess/samples/${dir}/output.html`, 'utf-8');
 
-			const actual = await svelte.preprocess(input, config.preprocess);
-			fs.writeFileSync(`test/preprocess/samples/${dir}/_actual.html`, actual);
+			const result = await svelte.preprocess(input, config.preprocess);
+			fs.writeFileSync(`test/preprocess/samples/${dir}/_actual.html`, result.code);
 
-			assert.equal(actual, expected);
+			assert.equal(result.code, expected);
+
+			assert.deepEqual(result.dependencies, config.dependencies || []);
 		});
 	});
 });
