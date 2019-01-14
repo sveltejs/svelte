@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as assert from 'assert';
 import { loadConfig, svelte } from '../helpers.js';
 
-describe.only('preprocess', () => {
+describe('preprocess', () => {
 	fs.readdirSync('test/preprocess/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
