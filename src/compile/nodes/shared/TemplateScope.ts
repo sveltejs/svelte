@@ -1,6 +1,6 @@
 export default class TemplateScope {
 	names: Set<string>;
-	dependenciesForName: Map<string, string>;
+	dependenciesForName: Map<string, Set<string>>;
 	mutables: Set<string>;
 	parent?: TemplateScope;
 
@@ -11,7 +11,7 @@ export default class TemplateScope {
 		this.mutables = new Set();
 	}
 
-	add(name, dependencies) {
+	add(name, dependencies: Set<string>) {
 		this.names.add(name);
 		this.dependenciesForName.set(name, dependencies);
 		return this;
@@ -23,8 +23,10 @@ export default class TemplateScope {
 	}
 
 	setMutable(name: string) {
-		if (this.names.has(name)) this.mutables.add(name);
-		else if (this.parent) this.parent.setMutable(name);
+		if (this.names.has(name)) {
+			this.mutables.add(name);
+			if (this.parent && this.dependenciesForName.has(name)) this.dependenciesForName.get(name).forEach(dep => this.parent.setMutable(dep));
+		} else if (this.parent) this.parent.setMutable(name);
 		else this.mutables.add(name);
 	}
 
