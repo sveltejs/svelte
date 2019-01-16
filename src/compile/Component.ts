@@ -1066,7 +1066,7 @@ function process_meta(component, nodes) {
 						const message = `'tag' must be a string literal`;
 						const tag = get_value(attribute, code, message);
 
-						if (typeof tag !== 'string') component.error({ code, message });
+						if (typeof tag !== 'string') component.error(attribute, { code, message });
 
 						if (!/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
@@ -1084,7 +1084,7 @@ function process_meta(component, nodes) {
 						const message = `The 'namespace' attribute must be a string literal representing a valid namespace`;
 						const ns = get_value(attribute, code, message);
 
-						if (typeof ns !== 'string') component.error({ code, message });
+						if (typeof ns !== 'string') component.error(attribute, { code, message });
 
 						if (validNamespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, validNamespaces);
@@ -1110,7 +1110,7 @@ function process_meta(component, nodes) {
 						const message = `immutable attribute must be true or false`
 						const value = get_value(attribute, code, message);
 
-						if (typeof value !== 'boolean') component.error({ code, message });
+						if (typeof value !== 'boolean') component.error(attribute, { code, message });
 
 						meta.immutable = value;
 						break;
