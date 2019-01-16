@@ -87,7 +87,7 @@ export default function dom(
 
 	const body = [];
 
-	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.meta.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
 	component.props.forEach(x => {
