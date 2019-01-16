@@ -1,6 +1,10 @@
+<svelte:meta immutable={false}/>
+
 <script>
 	export let count = 0;
 	export let foo = { bar: 'baz' };
+
+	$: if (foo) count += 1;
 </script>
 
 <div>

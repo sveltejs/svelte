@@ -1030,20 +1030,29 @@ export default class Component {
 }
 
 function process_meta(component, nodes) {
-	const meta: Meta = {};
+	const meta: Meta = {
+		immutable: component.options.immutable || false
+	};
+
 	const node = nodes.find(node => node.name === 'svelte:meta');
 
-	function get_value(attribute, message) {
-		const { name, value } = attribute;
+	function get_value(attribute, code, message) {
+		const { value } = attribute;
+		const chunk = value[0];
 
-		if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
-			component.error(attribute, {
-				code: `invalid-${name}-attribute`,
-				message
-			});
+		if (!chunk) return true;
+
+		if (value.length > 1) {
+			component.error(attribute, { code, message });
 		}
 
-		return value[0] ? value[0].data : true;
+		if (chunk.type === 'Text') return chunk.data;
+
+		if (chunk.expression.type !== 'Literal') {
+			component.error(attribute, { code, message });
+		}
+
+		return chunk.expression.value;
 	}
 
 	if (node) {
@@ -1052,8 +1061,12 @@ function process_meta(component, nodes) {
 				const { name } = attribute;
 
 				switch (name) {
-					case 'tag':
-						const tag = get_value(attribute, `'tag' must be a string literal`);
+					case 'tag': {
+						const code = 'invalid-tag-attribute';
+						const message = `'tag' must be a string literal`;
+						const tag = get_value(attribute, code, message);
+
+						if (typeof tag !== 'string') component.error(attribute, { code, message });
 
 						if (!/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
@@ -1064,9 +1077,14 @@ function process_meta(component, nodes) {
 
 						meta.tag = tag;
 						break;
+					}
 
-					case 'namespace':
-						const ns = get_value(attribute, `The 'namespace' attribute must be a string literal representing a valid namespace`);
+					case 'namespace': {
+						const code = 'invalid-namespace-attribute';
+						const message = `The 'namespace' attribute must be a string literal representing a valid namespace`;
+						const ns = get_value(attribute, code, message);
+
+						if (typeof ns !== 'string') component.error(attribute, { code, message });
 
 						if (validNamespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, validNamespaces);
@@ -1085,9 +1103,16 @@ function process_meta(component, nodes) {
 
 						meta.namespace = ns;
 						break;
+					}
 
 					case 'immutable':
-						meta.immutable = get_value(attribute, `immutable attribute must be true or false`) !== 'false';
+						const code = `invalid-immutable-value`;
+						const message = `immutable attribute must be true or false`
+						const value = get_value(attribute, code, message);
+
+						if (typeof value !== 'boolean') component.error(attribute, { code, message });
+
+						meta.immutable = value;
 						break;
 
 					default:
