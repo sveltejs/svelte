@@ -109,7 +109,7 @@ body {
 	/* --font: 'Roboto', 'sans-serif'; */
 	/* --font-mono: 'Overpass Mono', monospace; */
 	/* --font-mono: 'IBM Plex Mono'; */
-	--font-mono: 'Fira Mono';
+	--font-mono: 'Fira Mono', monospace;
 	--font-ui: var(--font-mono);
 	--font-system: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
 }
