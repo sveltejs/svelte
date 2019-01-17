@@ -36,7 +36,7 @@ Element bindings make it easy to respond to user interactions:
 ```html
 <!-- { title: 'Element bindings' } -->
 <h1>Hello {name}!</h1>
-<input bind:value=name>
+<input bind:value={name}>
 ```
 
 ```json
