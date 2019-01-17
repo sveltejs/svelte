@@ -1,0 +1,19 @@
+<script>
+	import { afterFlush } from 'svelte';
+
+	export let snapshots = [];
+
+	let count = 0;
+	let button;
+
+	function click() {
+		count += 1;
+		snapshots.push(`before ${button.textContent}`);
+
+		afterFlush(() => {
+			snapshots.push(`after ${button.textContent}`);
+		});
+	}
+</script>
+
+<button bind:this={button} on:click={click}>{count}</button>
