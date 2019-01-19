@@ -13,17 +13,7 @@ Start the server with `npm run dev`, and navigate to [localhost:3000](http://loc
 
 ## Using a local copy of Svelte
 
-By default, the REPL will fetch the most recent version of Svelte from https://unpkg.com/svelte. If you need to test a local version of Svelte, you can do so by linking it and navigating to [localhost:3000/repl?version=local](http://localhost:3000/repl?version=local):
-
-```bash
-cd /path/to/svelte
-npm link
-npm run dev # rebuild Svelte on changes
-
-cd /path/to/svelte/site
-npm link svelte
-npm run dev
-```
+By default, the REPL will fetch the most recent version of Svelte from https://unpkg.com/svelte. To use the local copy of the compiler and runtime from this repo, you can navigate to [localhost:3000/repl?version=local](http://localhost:3000/repl?version=local).
 
 ## REPL GitHub integration
 
