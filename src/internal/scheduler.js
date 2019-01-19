@@ -1,15 +1,13 @@
 import { run_all } from './utils.js';
 
-let update_scheduled = false;
+export let dirty_components = [];
+export const intros = { enabled: false };
 
-let dirty_components = [];
+let update_scheduled = false;
 const binding_callbacks = [];
 const render_callbacks = [];
 
-export const intros = { enabled: false };
-
-export function schedule_update(component) {
-	dirty_components.push(component);
+export function schedule_update() {
 	if (!update_scheduled) {
 		update_scheduled = true;
 		queue_microtask(flush);
@@ -18,6 +16,11 @@ export function schedule_update(component) {
 
 export function add_render_callback(fn) {
 	render_callbacks.push(fn);
+}
+
+export function nextTick(fn) {
+	add_render_callback(fn);
+	schedule_update();
 }
 
 export function add_binding_callback(fn) {
