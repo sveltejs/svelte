@@ -14,11 +14,13 @@
 	let name = 'loading...';
 
 	onMount(() => {
-		fetch(`https://unpkg.com/svelte@${version}/package.json`)
-			.then(r => r.json())
-			.then(pkg => {
-				version = pkg.version;
-			});
+		if (version !== 'local') {
+			fetch(`https://unpkg.com/svelte@${version}/package.json`)
+				.then(r => r.json())
+				.then(pkg => {
+					version = pkg.version;
+				});
+		}
 
 		if (query.gist) {
 			fetch(`gist/${query.gist}`).then(r => r.json()).then(data => {
