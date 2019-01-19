@@ -3,5 +3,6 @@ export {
 	onDestroy,
 	beforeUpdate,
 	afterUpdate,
+	nextTick,
 	createEventDispatcher
 } from './internal';
