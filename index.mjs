@@ -3,6 +3,6 @@ export {
 	onDestroy,
 	beforeUpdate,
 	afterUpdate,
-	add_render_callback as afterFlush,
+	nextTick,
 	createEventDispatcher
 } from './internal';

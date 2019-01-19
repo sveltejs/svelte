@@ -1,4 +1,4 @@
-import { add_render_callback, flush, intros, schedule_update } from './scheduler.js';
+import { add_render_callback, flush, intros, schedule_update, dirty_components } from './scheduler.js';
 import { current_component, set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
@@ -46,7 +46,8 @@ function destroy(component, detach) {
 
 function make_dirty(component, key) {
 	if (!component.$$.dirty) {
-		schedule_update(component);
+		dirty_components.push(component);
+		schedule_update();
 		component.$$.dirty = {};
 	}
 	component.$$.dirty[key] = true;
