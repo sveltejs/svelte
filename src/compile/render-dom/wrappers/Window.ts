@@ -146,9 +146,9 @@ export default class WindowWrapper extends Wrapper {
 					${scrolling} = true;
 					clearTimeout(${scrolling_timeout});
 					window.scrollTo(${
-						bindings.scrollX ? `current["${bindings.scrollX}"]` : `window.pageXOffset`
+						bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
 					}, ${
-						bindings.scrollY ? `current["${bindings.scrollY}"]` : `window.pageYOffset`
+						bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
 					});
 					${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
 				}
