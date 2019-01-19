@@ -2,21 +2,17 @@
 import { SvelteComponent as SvelteComponent_1, append, createElement, createText, detachNode, identity, init, insert, noop, safe_not_equal } from "svelte/internal";
 
 function create_fragment($$, ctx) {
-	var h1, text0, text1, text2;
+	var b, text_value = get_answer(), text;
 
 	return {
 		c() {
-			h1 = createElement("h1");
-			text0 = createText("Hello ");
-			text1 = createText(name);
-			text2 = createText("!");
+			b = createElement("b");
+			text = createText(text_value);
 		},
 
 		m(target, anchor) {
-			insert(target, h1, anchor);
-			append(h1, text0);
-			append(h1, text1);
-			append(h1, text2);
+			insert(target, b, anchor);
+			append(b, text);
 		},
 
 		p: noop,
@@ -25,13 +21,15 @@ function create_fragment($$, ctx) {
 
 		d(detach) {
 			if (detach) {
-				detachNode(h1);
+				detachNode(b);
 			}
 		}
 	};
 }
 
-let name = 'world';
+let ANSWER = 42;
+
+function get_answer() { return ANSWER; }
 
 class SvelteComponent extends SvelteComponent_1 {
 	constructor(options) {
