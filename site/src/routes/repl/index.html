@@ -45,11 +45,13 @@
 	});
 
 	onMount(() => {
-		fetch(`https://unpkg.com/svelte@${version || 'alpha'}/package.json`)
-			.then(r => r.json())
-			.then(pkg => {
-				version = pkg.version;
-			});
+		if (version !== 'local') {
+			fetch(`https://unpkg.com/svelte@${version || 'alpha'}/package.json`)
+				.then(r => r.json())
+				.then(pkg => {
+					version = pkg.version;
+				});
+		}
 
 		if (gist_id) {
 			fetch(`gist/${gist_id}`).then(r => r.json()).then(data => {

@@ -8,7 +8,11 @@ const ready = new Promise(f => {
 self.addEventListener('message', async event => {
 	switch (event.data.type) {
 		case 'init':
-			importScripts(`https://unpkg.com/svelte@${event.data.version}/compiler.js`);
+			importScripts(
+				event.data.version === 'local' ?
+					'/repl/local?file=compiler.js' :
+					`https://unpkg.com/svelte@${event.data.version}/compiler.js`
+			);
 			fulfil_ready();
 			break;
 
