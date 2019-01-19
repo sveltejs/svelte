@@ -11,7 +11,9 @@ self.addEventListener('message', async event => {
 			version = event.data.version;
 
 			importScripts(
-				`https://unpkg.com/svelte@${version}/compiler.js`,
+				version === 'local' ?
+					'/repl/local?file=compiler.js' :
+					`https://unpkg.com/svelte@${version}/compiler.js`,
 				`https://unpkg.com/rollup@0.68/dist/rollup.browser.js`
 			);
 			fulfil();
@@ -47,7 +49,7 @@ const is_svelte_module = id => id === 'svelte' || id.startsWith('svelte/');
 const cache = new Map();
 function fetch_if_uncached(url) {
 	if (!cache.has(url)) {
-		cache.set(url, fetch(url)
+		cache.set(url, fetch(url.startsWith('https://unpkg.com/svelte@local/') ? '/repl/local?file=' + url.slice(31) : url)
 			.then(r => r.text())
 			.catch(err => {
 				console.error(err);
@@ -78,7 +80,7 @@ async function getBundle(mode, cache, lookup) {
 				resolveId(importee, importer) {
 					// v3 hack
 					if (importee === `svelte`) return `https://unpkg.com/svelte@${version}/index.mjs`;
-					if (importee.startsWith(`svelte`)) return `https://unpkg.com/svelte@${version}/${importee.slice(7)}.mjs`;
+					if (importee.startsWith(`svelte/`)) return `https://unpkg.com/svelte@${version}/${importee.slice(7)}.mjs`;
 
 					if (importer && importer.startsWith(`https://`)) {
 						return new URL(`${importee}.mjs`, importer).href;
