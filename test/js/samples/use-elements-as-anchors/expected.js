@@ -238,7 +238,7 @@ function create_fragment($$, ctx) {
 			}
 
 			if (if_block4) if_block4.d(detach);
-			
+
 			if (detach) {
 				detachNode(if_block4_anchor);
 			}
