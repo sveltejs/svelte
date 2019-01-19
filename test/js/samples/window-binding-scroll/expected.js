@@ -29,7 +29,7 @@ function create_fragment($$, ctx) {
 			if (changed.y && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
-				window.scrollTo(window.pageXOffset, current["y"]);
+				window.scrollTo(window.pageXOffset, ctx.y);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
