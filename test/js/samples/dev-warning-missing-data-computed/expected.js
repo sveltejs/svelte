@@ -56,8 +56,8 @@ function instance($$self, $$props, $$invalidate) {
 		if ('foo' in $$props) $$invalidate('foo', foo = $$props.foo);
 	};
 
-	$$self.$$.update = ($$dirty = { foo: 1 }) => {
-		if ($$dirty.foo) {
+	$$self.$$.update = ($$dirty = { bar: 1, foo: 1 }) => {
+		if ($$dirty.bar || $$dirty.foo) {
 			bar = foo * 2; $$invalidate('bar', bar);
 		}
 	};
