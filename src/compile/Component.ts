@@ -881,15 +881,10 @@ export default class Component {
 							scope = map.get(node);
 						}
 
-						if (parent && parent.type === 'AssignmentExpression' && node === parent.left) {
-							return this.skip();
-						}
-
 						if (node.type === 'AssignmentExpression') {
 							assignees.add(getObject(node.left).name);
 						} else if (node.type === 'UpdateExpression') {
 							assignees.add(getObject(node.argument).name);
-							this.skip();
 						} else if (isReference(node, parent)) {
 							const object = getObject(node);
 							const { name } = object;
