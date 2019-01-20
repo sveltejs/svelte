@@ -275,7 +275,7 @@ export default function dom(
 
 	const definition = has_definition
 		? component.alias('instance')
-		: '@identity';
+		: 'null';
 
 	const all_reactive_dependencies = new Set();
 	component.reactive_declarations.forEach(d => {

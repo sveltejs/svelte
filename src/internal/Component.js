@@ -59,7 +59,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 
 	const $$ = component.$$ = {
 		fragment: null,
-		ctx: null,
+		ctx: options.props || {},
 
 		// state
 		set: noop,
@@ -82,19 +82,21 @@ export function init(component, options, instance, create_fragment, not_equal) {
 
 	let ready = false;
 
-	$$.ctx = instance(component, options.props || {}, (key, value) => {
-		if ($$.bound[key]) $$.bound[key](value);
+	if (instance) {
+		$$.ctx = instance(component, $$.ctx, (key, value) => {
+			if ($$.bound[key]) $$.bound[key](value);
 
-		if ($$.ctx) {
-			const changed = not_equal(value, $$.ctx[key]);
-			if (ready && changed) {
-				make_dirty(component, key);
+			if ($$.ctx) {
+				const changed = not_equal(value, $$.ctx[key]);
+				if (ready && changed) {
+					make_dirty(component, key);
+				}
+
+				$$.ctx[key] = value;
+				return changed;
 			}
-
-			$$.ctx[key] = value;
-			return changed;
-		}
-	});
+		});
+	}
 
 	$$.update();
 	ready = true;
