@@ -85,8 +85,4 @@ export default class Wrapper {
 	render(block: Block, parentNode: string, parentNodes: string) {
 		throw new Error(`render method not implemented by subclass ${this.node.type}`);
 	}
-
-	remount(name: string) {
-		return `${this.var}.m(${name}.$$.slotted.default, null);`;
-	}
 }

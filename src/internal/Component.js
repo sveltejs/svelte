@@ -57,9 +57,11 @@ export function init(component, options, instance, create_fragment, not_equal) {
 	const previous_component = current_component;
 	set_current_component(component);
 
+	const props = options.props || {};
+
 	const $$ = component.$$ = {
 		fragment: null,
-		ctx: options.props || {},
+		ctx: null,
 
 		// state
 		set: noop,
@@ -75,15 +77,13 @@ export function init(component, options, instance, create_fragment, not_equal) {
 
 		// everything else
 		callbacks: blankObject(),
-		slotted: options.slots || {},
-		dirty: null,
-		binding_groups: []
+		dirty: null
 	};
 
 	let ready = false;
 
-	if (instance) {
-		$$.ctx = instance(component, $$.ctx, (key, value) => {
+	$$.ctx = instance
+		? instance(component, props, (key, value) => {
 			if ($$.bound[key]) $$.bound[key](value);
 
 			if ($$.ctx) {
@@ -95,13 +95,15 @@ export function init(component, options, instance, create_fragment, not_equal) {
 				$$.ctx[key] = value;
 				return changed;
 			}
-		});
-	}
+		})
+		: props;
+
+	$$.ctx.$$binding_groups = []; // TODO this is awkward and usually unncessary
 
 	$$.update();
 	ready = true;
 	run_all($$.before_render);
-	$$.fragment = create_fragment($$, $$.ctx);
+	$$.fragment = create_fragment($$.ctx);
 
 	if (options.target) {
 		if (options.hydrate) {

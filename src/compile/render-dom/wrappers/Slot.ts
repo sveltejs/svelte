@@ -41,42 +41,24 @@ export default class SlotWrapper extends Wrapper {
 	) {
 		const { renderer } = this;
 
-		const slotName = this.node.getStaticAttributeValue('name') || 'default';
-		renderer.slots.add(slotName);
+		const slot_name = this.node.getStaticAttributeValue('name') || 'default';
+		renderer.slots.add(slot_name);
 
-		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
-		const prop = quotePropIfNecessary(slotName);
-		block.addVariable(content_name, `$$.slotted${prop}`);
+		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
 
-		// TODO can we use isDomNode instead of type === 'Element'?
-		const needsAnchorBefore = this.prev ? this.prev.node.type !== 'Element' : !parentNode;
-		const needsAnchorAfter = this.next ? this.next.node.type !== 'Element' : !parentNode;
-
-		const anchorBefore = needsAnchorBefore
-			? block.getUniqueName(`${content_name}_before`)
-			: (this.prev && this.prev.var) || 'null';
-
-		const anchorAfter = needsAnchorAfter
-			? block.getUniqueName(`${content_name}_after`)
-			: (this.next && this.next.var) || 'null';
-
-		if (needsAnchorBefore) block.addVariable(anchorBefore);
-		if (needsAnchorAfter) block.addVariable(anchorAfter);
+		block.builders.init.addLine(
+			`const ${slot} = ctx.$$slot_${sanitize(slot_name)} && ctx.$$slot_${sanitize(slot_name)}(ctx.$$scope.ctx);`
+		);
 
 		let mountBefore = block.builders.mount.toString();
-		let destroyBefore = block.builders.destroy.toString();
 
-		block.builders.create.pushCondition(`!${content_name}`);
-		block.builders.hydrate.pushCondition(`!${content_name}`);
-		block.builders.mount.pushCondition(`!${content_name}`);
-		block.builders.update.pushCondition(`!${content_name}`);
-		block.builders.destroy.pushCondition(`!${content_name}`);
+		block.builders.create.pushCondition(`!${slot}`);
+		block.builders.hydrate.pushCondition(`!${slot}`);
+		block.builders.mount.pushCondition(`!${slot}`);
+		block.builders.update.pushCondition(`!${slot}`);
+		block.builders.destroy.pushCondition(`!${slot}`);
 
-		const listeners = block.event_listeners;
-		block.event_listeners = [];
 		this.fragment.render(block, parentNode, parentNodes);
-		block.renderListeners(`_${content_name}`);
-		block.event_listeners = listeners;
 
 		block.builders.create.popCondition();
 		block.builders.hydrate.popCondition();
@@ -84,62 +66,26 @@ export default class SlotWrapper extends Wrapper {
 		block.builders.update.popCondition();
 		block.builders.destroy.popCondition();
 
+		block.builders.create.addLine(
+			`if (${slot}) ${slot}.c();`
+		);
+
+		block.builders.claim.addLine(
+			`if (${slot}) ${slot}.l(${parentNodes});`
+		);
+
 		const mountLeadin = block.builders.mount.toString() !== mountBefore
 			? `else`
-			: `if (${content_name})`;
+			: `if (${slot})`;
 
-		if (parentNode) {
-			block.builders.mount.addBlock(deindent`
-				${mountLeadin} {
-					${needsAnchorBefore && `@append(${parentNode}, ${anchorBefore} || (${anchorBefore} = @createComment()));`}
-					@append(${parentNode}, ${content_name});
-					${needsAnchorAfter && `@append(${parentNode}, ${anchorAfter} || (${anchorAfter} = @createComment()));`}
-				}
-			`);
-		} else {
-			block.builders.mount.addBlock(deindent`
-				${mountLeadin} {
-					${needsAnchorBefore && `@insert(#target, ${anchorBefore} || (${anchorBefore} = @createComment()), anchor);`}
-					@insert(#target, ${content_name}, anchor);
-					${needsAnchorAfter && `@insert(#target, ${anchorAfter} || (${anchorAfter} = @createComment()), anchor);`}
-				}
-			`);
-		}
+		block.builders.mount.addBlock(deindent`
+			${mountLeadin} {
+				${slot}.m(${parentNode || '#target'}, anchor);
+			}
+		`);
 
-		// if the slot is unmounted, move nodes back into the document fragment,
-		// so that it can be reinserted later
-		// TODO so that this can work with public API, component.$$.slotted should
-		// be all fragments, derived from options.slots. Not === options.slots
-		const unmountLeadin = block.builders.destroy.toString() !== destroyBefore
-			? `else`
-			: `if (${content_name})`;
-
-		if (anchorBefore === 'null' && anchorAfter === 'null') {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertChildren(${parentNode}, ${content_name});
-				}
-			`);
-		} else if (anchorBefore === 'null') {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertBefore(${anchorAfter}, ${content_name});
-				}
-			`);
-		} else if (anchorAfter === 'null') {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertAfter(${anchorBefore}, ${content_name});
-				}
-			`);
-		} else {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertBetween(${anchorBefore}, ${anchorAfter}, ${content_name});
-					@detachNode(${anchorBefore});
-					@detachNode(${anchorAfter});
-				}
-			`);
-		}
+		block.builders.update.addLine(
+			`if (${slot} && changed.$$scope) ${slot}.p(ctx.$$scope.changed, ctx.$$scope.ctx);`
+		);
 	}
 }

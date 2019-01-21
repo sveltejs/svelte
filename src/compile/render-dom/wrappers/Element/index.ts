@@ -19,6 +19,8 @@ import InlineComponentWrapper from '../InlineComponent';
 import addToSet from '../../../../utils/addToSet';
 import addEventHandlers from '../shared/addEventHandlers';
 import addActions from '../shared/addActions';
+import createDebuggingComment from '../../../../utils/createDebuggingComment';
+import sanitize from '../../../../utils/sanitize';
 
 const events = [
 	{
@@ -91,7 +93,7 @@ export default class ElementWrapper extends Wrapper {
 	bindings: Binding[];
 	classDependencies: string[];
 
-	slotOwner?: InlineComponentWrapper;
+	slot_block: Block;
 	selectBindingDependencies?: Set<string>;
 
 	var: string;
@@ -126,8 +128,17 @@ export default class ElementWrapper extends Wrapper {
 				}
 
 				if (owner && owner.node.type === 'InlineComponent') {
-					this.slotOwner = <InlineComponentWrapper>owner;
-					owner._slots.add(attribute.getStaticValue());
+					const name = attribute.getStaticValue();
+
+					this.slot_block = block.child({
+						comment: createDebuggingComment(node, this.renderer.component),
+						name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
+					});
+
+					(<InlineComponentWrapper>owner).slots.set(name, this.slot_block);
+					this.renderer.blocks.push(this.slot_block);
+
+					block = this.slot_block;
 				}
 			}
 			if (attribute.name === 'style') {
@@ -179,6 +190,10 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
+
+		if (this.slot_block) {
+			block.parent.addDependencies(block.dependencies);
+		}
 	}
 
 	render(block: Block, parentNode: string, parentNodes: string) {
@@ -194,15 +209,8 @@ export default class ElementWrapper extends Wrapper {
 		const node = this.var;
 		const nodes = parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
 
-		const slot = this.node.attributes.find((attribute: Node) => attribute.name === 'slot');
-		const prop = slot && quotePropIfNecessary(slot.chunks[0].data);
-
-		let initialMountNode;
-
-		if (this.slotOwner) {
-			initialMountNode = `${this.slotOwner.var}.$$.slotted${prop}`;
-		} else {
-			initialMountNode = parentNode;
+		if (this.slot_block) {
+			block = this.slot_block;
 		}
 
 		block.addVariable(node);
@@ -224,12 +232,12 @@ export default class ElementWrapper extends Wrapper {
 			}
 		}
 
-		if (initialMountNode) {
+		if (parentNode) {
 			block.builders.mount.addLine(
-				`@append(${initialMountNode}, ${node});`
+				`@append(${parentNode}, ${node});`
 			);
 
-			if (initialMountNode === 'document.head') {
+			if (parentNode === 'document.head') {
 				block.builders.destroy.addLine(`@detachNode(${node});`);
 			}
 		} else {
@@ -753,16 +761,6 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		return null;
-	}
-
-	remount(name: string) {
-		const slot = this.attributes.find(attribute => attribute.node.name === 'slot');
-		if (slot) {
-			const prop = quotePropIfNecessary(slot.node.chunks[0].data);
-			return `@append(${name}.$$.slotted${prop}, ${this.var});`;
-		}
-
-		return `@append(${name}.$$.slotted.default, ${this.var});`;
 	}
 
 	addCssClass(className = this.component.stylesheet.id) {

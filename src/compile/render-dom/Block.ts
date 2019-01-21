@@ -61,7 +61,7 @@ export default class Block {
 	variables: Map<string, string>;
 	getUniqueName: (name: string) => string;
 
-	hasUpdateMethod: boolean;
+	hasUpdateMethod = false;
 	autofocus: string;
 
 	constructor(options: BlockOptions) {
@@ -106,8 +106,6 @@ export default class Block {
 
 		this.aliases = new Map().set('ctx', this.getUniqueName('ctx'));
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
-
-		this.hasUpdateMethod = false; // determined later
 	}
 
 	assignVariableNames() {
@@ -151,6 +149,8 @@ export default class Block {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
 		});
+
+		this.hasUpdateMethod = true;
 	}
 
 	addElement(
@@ -407,7 +407,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${this.comment}`}
-			function ${this.name}($$, ${this.key ? `${localKey}, ` : ''}ctx) {
+			function ${this.name}(${this.key ? `${localKey}, ` : ''}ctx) {
 				${this.getContents(localKey)}
 			}
 		`;

@@ -637,16 +637,6 @@ export default class Element extends Node {
 		return this.name === 'audio' || this.name === 'video';
 	}
 
-	remount(name: string) {
-		const slot = this.attributes.find(attribute => attribute.name === 'slot');
-		if (slot) {
-			const prop = quotePropIfNecessary(slot.chunks[0].data);
-			return `@append(${name}.$$.slotted${prop}, ${this.var});`;
-		}
-
-		return `@append(${name}.$$.slotted.default, ${this.var});`;
-	}
-
 	addCssClass(className = this.component.stylesheet.id) {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
