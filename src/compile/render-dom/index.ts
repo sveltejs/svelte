@@ -274,6 +274,10 @@ export default function dom(
 		filtered_declarations.push(...arr.map(name => `$$slot_${sanitize(name)}`), '$$scope');
 	}
 
+	if (renderer.bindingGroups.length > 0) {
+		filtered_declarations.push(`$$binding_groups`);
+	}
+
 	const has_definition = (
 		component.javascript ||
 		filtered_props.length > 0 ||
@@ -312,6 +316,8 @@ export default function dom(
 				${user_code}
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
+
+				${renderer.bindingGroups.length > 0 && `const $$binding_groups = [${renderer.bindingGroups.map(_ => `[]`).join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 

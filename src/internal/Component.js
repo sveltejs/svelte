@@ -98,8 +98,6 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		})
 		: props;
 
-	$$.ctx.$$binding_groups = []; // TODO this is awkward and usually unncessary
-
 	$$.update();
 	ready = true;
 	run_all($$.before_render);
