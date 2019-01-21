@@ -12,6 +12,6 @@
 	});
 </script>
 
-<button class:selected={$selectedTab} on:click="{() => selectTab(tab)}">
+<button class:selected="{$selectedTab === tab}" on:click="{() => selectTab(tab)}">
 	<slot></slot>
 </button>

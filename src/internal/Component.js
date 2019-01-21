@@ -54,7 +54,7 @@ function make_dirty(component, key) {
 }
 
 export function init(component, options, instance, create_fragment, not_equal) {
-	const previous_component = current_component;
+	const parent_component = current_component;
 	set_current_component(component);
 
 	const props = options.props || {};
@@ -64,7 +64,6 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		ctx: null,
 
 		// state
-		set: noop,
 		update: noop,
 		not_equal,
 		bound: blankObject(),
@@ -74,6 +73,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		on_destroy: [],
 		before_render: [],
 		after_render: [],
+		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
 		callbacks: blankObject(),
@@ -115,7 +115,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		flush();
 	}
 
-	set_current_component(previous_component);
+	set_current_component(parent_component);
 }
 
 export let SvelteElement;

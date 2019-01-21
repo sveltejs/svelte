@@ -19,7 +19,7 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<div class="tabs">
 				<div class="tab-list">
-					<button>small</button>
+					<button class="">small</button>
 					<button class="selected">large</button>
 				</div>
 
@@ -32,7 +32,7 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<div class="tabs">
 				<div class="tab-list">
-					<button>small</button>
+					<button class="">small</button>
 					<button>medium</button>
 					<button class="selected">large</button>
 				</div>
@@ -48,9 +48,9 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<div class="tabs">
 				<div class="tab-list">
-					<button>small</button>
+					<button class="">small</button>
 					<button class="selected">medium</button>
-					<button>large</button>
+					<button class="">large</button>
 				</div>
 
 				<h2>Medium panel</h2>
@@ -62,7 +62,7 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<div class="tabs">
 				<div class="tab-list">
-					<button>small</button>
+					<button class="">small</button>
 					<button class="selected">large</button>
 				</div>
 
