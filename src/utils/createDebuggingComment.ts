@@ -10,7 +10,7 @@ export default function createDebuggingComment(
 	let c = node.start;
 	if (node.type === 'ElseBlock') {
 		while (source[c - 1] !== '{') c -= 1;
-		// while (source[c - 1] === '{') c -= 1;
+		while (source[c - 1] === '{') c -= 1;
 	}
 
 	let d;
@@ -21,7 +21,7 @@ export default function createDebuggingComment(
 	} else {
 		d = node.expression ? node.expression.node.end : c;
 		while (source[d] !== '}') d += 1;
-		// while (source[d] === '}') d += 1;
+		while (source[d] === '}') d += 1;
 	}
 
 	const start = locate(c);

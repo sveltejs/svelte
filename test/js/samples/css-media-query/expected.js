@@ -8,7 +8,7 @@ function add_css() {
 	append(document.head, style);
 }
 
-function create_fragment($$, ctx) {
+function create_fragment(ctx) {
 	var div;
 
 	return {
