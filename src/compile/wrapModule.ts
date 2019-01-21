@@ -41,6 +41,12 @@ export default function wrapModule(
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
 
+function editSource(source, sveltePath) {
+	return source === 'svelte' || source.startsWith('svelte/')
+		? source.replace('svelte', sveltePath)
+		: source;
+}
+
 function esm(
 	code: string,
 	name: string,
@@ -60,7 +66,7 @@ function esm(
 	const importBlock = imports.length > 0 && (
 		imports
 			.map((declaration: Node) => {
-				const import_source = declaration.source.value === 'svelte' ? sveltePath : declaration.source.value;
+				const import_source = editSource(declaration.source.value, sveltePath);
 
 				return (
 					source.slice(declaration.start, declaration.source.start) +
@@ -117,9 +123,7 @@ function cjs(
 			lhs = `{ ${properties.join(', ')} }`;
 		}
 
-		const source = node.source.value === 'svelte'
-			? sveltePath
-			: node.source.value;
+		const source = editSource(node.source.value, sveltePath);
 
 		return `const ${lhs} = require("${source}");`
 	});

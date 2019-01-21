@@ -1,0 +1,48 @@
+
+
+<script context="module">
+	export const TABS = {};
+</script>
+
+<script>
+	import { setContext } from 'svelte';
+	import { writable } from 'svelte/store';
+
+	const tabs = [];
+	const panels = [];
+	const selected = writable(null);
+
+	setContext(TABS, {
+		registerTab: tab => {
+			tabs.push(tab);
+		},
+
+		unregisterTab: tab => {
+			const i = tabs.indexOf(tab);
+			tabs.splice(i, 1);
+		},
+
+		registerPanel: panel => {
+			panels.push(panel);
+
+			// if this is the first panel, select it
+			selected.update(current => current || panel);
+		},
+
+		unregisterPanel: panel => {
+			const i = panels.indexOf(panel);
+			panels.splice(i, 1);
+		},
+
+		selectTab: tab => {
+			const i = tabs.indexOf(tab);
+			selected.set(panels[i]);
+		},
+
+		selected
+	});
+</script>
+
+<div class="tabs">
+	<slot></slot>
+</div>
