@@ -86,7 +86,7 @@ export default class SlotWrapper extends Wrapper {
 
 		block.builders.mount.addBlock(deindent`
 			${mountLeadin} {
-				${slot}.m(${parentNode || '#target'}, anchor);
+				${slot}.m(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
 			}
 		`);
 
