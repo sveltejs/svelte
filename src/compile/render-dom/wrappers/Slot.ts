@@ -32,6 +32,8 @@ export default class SlotWrapper extends Wrapper {
 			stripWhitespace,
 			nextSibling
 		);
+
+		block.addDependencies(new Set('$$scope'));
 	}
 
 	render(
@@ -58,7 +60,11 @@ export default class SlotWrapper extends Wrapper {
 		block.builders.update.pushCondition(`!${slot}`);
 		block.builders.destroy.pushCondition(`!${slot}`);
 
+		const listeners = block.event_listeners;
+		block.event_listeners = [];
 		this.fragment.render(block, parentNode, parentNodes);
+		block.renderListeners(`_${slot}`);
+		block.event_listeners = listeners;
 
 		block.builders.create.popCondition();
 		block.builders.hydrate.popCondition();
@@ -86,6 +92,10 @@ export default class SlotWrapper extends Wrapper {
 
 		block.builders.update.addLine(
 			`if (${slot} && changed.$$scope) ${slot}.p(ctx.$$scope.changed, ctx.$$scope.ctx);`
+		);
+
+		block.builders.destroy.addLine(
+			`if (${slot}) ${slot}.d(detach);`
 		);
 	}
 }
