@@ -130,14 +130,22 @@ export default class ElementWrapper extends Wrapper {
 				if (owner && owner.node.type === 'InlineComponent') {
 					const name = attribute.getStaticValue();
 
-					this.slot_block = block.child({
-						comment: createDebuggingComment(node, this.renderer.component),
-						name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
-					});
+					if (!(<InlineComponentWrapper>owner).slots.has(name)) {
+						const child_block = block.child({
+							comment: createDebuggingComment(node, this.renderer.component),
+							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
+						});
 
-					(<InlineComponentWrapper>owner).slots.set(name, this.slot_block);
-					this.renderer.blocks.push(this.slot_block);
+						const fn = `({ thing }) => ({ thing })`;
 
+						(<InlineComponentWrapper>owner).slots.set(name, {
+							block: child_block,
+							fn
+						});
+						this.renderer.blocks.push(child_block);
+					}
+
+					this.slot_block = (<InlineComponentWrapper>owner).slots.get(name).block;
 					block = this.slot_block;
 				}
 			}

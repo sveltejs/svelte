@@ -1,11 +1,9 @@
 import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
-import getObject from '../../../utils/getObject';
-import { get_tail_snippet } from '../../../utils/get_tail_snippet';
-import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
-import deindent from '../../../utils/deindent';
+import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
 import { snip } from '../utils';
 import Renderer from '../Renderer';
 import stringifyProps from '../../../utils/stringifyProps';
+import { get_slot_context } from './shared/get_slot_context';
 
 type AppendTarget = any; // TODO
 
@@ -31,12 +29,6 @@ function getAttributeValue(attribute) {
 	}
 
 	return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
-}
-
-function stringifyObject(props) {
-	return props.length > 0
-		? `{ ${props.join(', ')} }`
-		: `{};`
 }
 
 export default function(node, renderer: Renderer, options) {
@@ -98,11 +90,18 @@ export default function(node, renderer: Renderer, options) {
 
 		renderer.targets.push(target);
 
-		renderer.render(node.children, options);
+		const slot_contexts = new Map();
+		slot_contexts.set('default', get_slot_context(node.lets));
+
+		renderer.render(node.children, Object.assign({}, options, {
+			slot_contexts
+		}));
 
 		Object.keys(target.slots).forEach(name => {
+			const slot_context = slot_contexts.get(name);
+
 			slot_fns.push(
-				`${quoteNameIfNecessary(name)}: () => \`${target.slots[name]}\``
+				`${quoteNameIfNecessary(name)}: (${slot_context}) => \`${target.slots[name]}\``
 			);
 		});
 

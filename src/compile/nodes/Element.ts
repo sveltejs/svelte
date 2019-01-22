@@ -14,6 +14,8 @@ import mapChildren from './shared/mapChildren';
 import { dimensions } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
+import Let from './Let';
+import TemplateScope from './shared/TemplateScope';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -81,11 +83,13 @@ export default class Element extends Node {
 	bindings: Binding[] = [];
 	classes: Class[] = [];
 	handlers: EventHandler[] = [];
+	lets: Let[] = [];
 	intro?: Transition = null;
 	outro?: Transition = null;
 	animation?: Animation = null;
 	children: Node[];
 	namespace: string;
+	scope: TemplateScope;
 
 	constructor(component, parent, scope, info: any) {
 		super(component, parent, scope, info);
@@ -168,6 +172,10 @@ export default class Element extends Node {
 					this.handlers.push(new EventHandler(component, this, scope, node));
 					break;
 
+				case 'Let':
+					this.lets.push(new Let(component, this, scope, node));
+					break;
+
 				case 'Transition':
 					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
@@ -183,7 +191,21 @@ export default class Element extends Node {
 			}
 		});
 
-		this.children = mapChildren(component, this, scope, info.children);
+		if (this.lets.length > 0) {
+			this.scope = scope.child();
+
+			this.lets.forEach(l => {
+				const dependencies = new Set([l.name]);
+
+				l.names.forEach(name => {
+					this.scope.add(name, dependencies);
+				});
+			});
+		} else {
+			this.scope = scope;
+		}
+
+		this.children = mapChildren(component, this, this.scope, info.children);
 
 		this.validate();
 

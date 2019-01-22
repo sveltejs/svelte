@@ -13,10 +13,11 @@ import getObject from '../../../../utils/getObject';
 import flattenReference from '../../../../utils/flattenReference';
 import createDebuggingComment from '../../../../utils/createDebuggingComment';
 import sanitize from '../../../../utils/sanitize';
+import { get_context_merger } from '../shared/get_context_merger';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
-	slots: Map<string, Block> = new Map();
+	slots: Map<string, { block: Block, fn?: string }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -71,7 +72,13 @@ export default class InlineComponentWrapper extends Wrapper {
 				name: renderer.component.getUniqueName(`create_default_slot`)
 			});
 			this.renderer.blocks.push(default_slot);
-			this.slots.set('default', default_slot);
+
+			const fn = get_context_merger(this.node.lets);
+
+			this.slots.set('default', {
+				block: default_slot,
+				fn
+			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, stripWhitespace, nextSibling);
 
 			block.addDependencies(default_slot.dependencies);
@@ -101,7 +108,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
 
-		const slot_props = Array.from(this.slots).map(([name, block]) => `$$slot_${sanitize(name)}: ${block.name}`);
+		const slot_props = Array.from(this.slots).map(([name, slot]) => `$$slot_${sanitize(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
 		if (slot_props.length > 0) slot_props.push(`$$scope: { ctx }`);
 
 		const attributeObject = usesSpread
@@ -123,7 +130,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const default_slot = this.slots.get('default');
 
 			this.fragment.nodes.forEach((child: Wrapper) => {
-				child.render(default_slot, null, 'nodes');
+				child.render(default_slot.block, null, 'nodes');
 			});
 		}
 
@@ -136,8 +143,8 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const fragment_dependencies = new Set();
-		this.slots.forEach(block => {
-			block.dependencies.forEach(name => {
+		this.slots.forEach(slot => {
+			slot.block.dependencies.forEach(name => {
 				if (renderer.component.mutable_props.has(name)) {
 					fragment_dependencies.add(name);
 				}

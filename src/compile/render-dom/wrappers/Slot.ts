@@ -33,7 +33,7 @@ export default class SlotWrapper extends Wrapper {
 			nextSibling
 		);
 
-		block.addDependencies(new Set('$$scope'));
+		block.addDependencies(new Set(['$$scope']));
 	}
 
 	render(
@@ -49,7 +49,7 @@ export default class SlotWrapper extends Wrapper {
 		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
 
 		block.builders.init.addLine(
-			`const ${slot} = ctx.$$slot_${sanitize(slot_name)} && ctx.$$slot_${sanitize(slot_name)}(ctx.$$scope.ctx);`
+			`const ${slot} = @create_slot(ctx.$$slot_${sanitize(slot_name)}, ctx);`
 		);
 
 		let mountBefore = block.builders.mount.toString();
