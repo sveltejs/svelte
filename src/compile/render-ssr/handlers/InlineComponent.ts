@@ -3,7 +3,7 @@ import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
 import { snip } from '../utils';
 import Renderer from '../Renderer';
 import stringifyProps from '../../../utils/stringifyProps';
-import { get_slot_context } from './shared/get_slot_context';
+import { get_slot_scope } from './shared/get_slot_scope';
 
 type AppendTarget = any; // TODO
 
@@ -90,18 +90,18 @@ export default function(node, renderer: Renderer, options) {
 
 		renderer.targets.push(target);
 
-		const slot_contexts = new Map();
-		slot_contexts.set('default', get_slot_context(node.lets));
+		const slot_scopes = new Map();
+		slot_scopes.set('default', get_slot_scope(node.lets));
 
 		renderer.render(node.children, Object.assign({}, options, {
-			slot_contexts
+			slot_scopes
 		}));
 
 		Object.keys(target.slots).forEach(name => {
-			const slot_context = slot_contexts.get(name);
+			const slot_scope = slot_scopes.get(name);
 
 			slot_fns.push(
-				`${quoteNameIfNecessary(name)}: (${slot_context}) => \`${target.slots[name]}\``
+				`${quoteNameIfNecessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
 			);
 		});
 

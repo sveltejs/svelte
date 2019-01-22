@@ -4,7 +4,7 @@ import Attribute from '../../nodes/Attribute';
 import Node from '../../nodes/shared/Node';
 import { snip } from '../utils';
 import { stringify_attribute } from './shared/stringify_attribute';
-import { get_slot_context } from './shared/get_slot_context';
+import { get_slot_scope } from './shared/get_slot_scope';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
@@ -59,7 +59,7 @@ export default function(node, renderer, options) {
 		target.slotStack.push(slotName);
 		target.slots[slotName] = '';
 
-		options.slot_contexts.set(slotName, get_slot_context(node.lets));
+		options.slot_scopes.set(slotName, get_slot_scope(node.lets));
 	}
 
 	const classExpr = node.classes.map((classDir: Class) => {
