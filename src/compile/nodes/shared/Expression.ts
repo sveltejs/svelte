@@ -240,7 +240,7 @@ export default class Expression {
 							dependencies.add(name);
 							component.template_references.add(name);
 						}
-					} else if (!is_synthetic && !(component.hoistable_names.has(name) && template_scope.isTopLevel(name)) && !component.imported_declarations.has(name)) {
+					} else if (!is_synthetic && isContextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
@@ -436,4 +436,17 @@ function get_function_name(node, parent) {
 	}
 
 	return 'func';
+}
+
+function isContextual(component: Component, scope: TemplateScope, name: string) {
+	// if it's a name below root scope, it's contextual
+	if (!scope.isTopLevel(name)) return true;
+
+	// hoistables, module declarations, and imports are non-contextual
+	if (component.hoistable_names.has(name)) return false;
+	if (component.module_scope && component.module_scope.declarations.has(name)) return false;
+	if (component.imported_declarations.has(name)) return false;
+
+	// assume contextual
+	return true;
 }
