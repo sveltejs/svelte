@@ -199,10 +199,6 @@ export class Parser {
 		return this.template.slice(start);
 	}
 
-	remaining() {
-		return this.template.slice(this.index);
-	}
-
 	requireWhitespace() {
 		if (!whitespace.test(this.template[this.index])) {
 			this.error({

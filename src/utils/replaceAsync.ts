@@ -10,11 +10,11 @@ export default async function replaceAsync(
 		replacements.push(
 			func(...args).then(
 				res =>
-					<Replacement>{
+					<Replacement>({
 						offset: args[args.length - 2],
 						length: args[0].length,
 						replacement: res,
-					}
+					})
 			)
 		);
 		return '';
