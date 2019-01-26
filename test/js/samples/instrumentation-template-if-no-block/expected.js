@@ -11,7 +11,7 @@ function create_fragment($$, ctx) {
 			text1 = createText("\n\n");
 			p = createElement("p");
 			text2 = createText("x: ");
-			text3 = createText(x);
+			text3 = createText(ctx.x);
 			dispose = addListener(button, "click", ctx.click_handler);
 		},
 
@@ -25,7 +25,7 @@ function create_fragment($$, ctx) {
 
 		p(changed, ctx) {
 			if (changed.x) {
-				setData(text3, x);
+				setData(text3, ctx.x);
 			}
 		},
 
@@ -44,15 +44,14 @@ function create_fragment($$, ctx) {
 	};
 }
 
-let x = 0;
-
 function instance($$self, $$props, $$invalidate) {
+	let x = 0;
 
 	function click_handler() {
 		if (true) { x += 1; $$invalidate('x', x); }
 	}
 
-	return { click_handler };
+	return { x, click_handler };
 }
 
 class SvelteComponent extends SvelteComponent_1 {
