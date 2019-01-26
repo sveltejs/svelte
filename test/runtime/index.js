@@ -248,7 +248,7 @@ describe("runtime", () => {
 		});
 
 		return eval(
-			`(function () { ${result.code}; return App; }())`
+			`(function () { ${result.output[0].code}; return App; }())`
 		);
 	}
 

@@ -41,16 +41,8 @@ export default class CodeBuilder {
 		if (line && !whitespace.test(line)) this.current.children.push(this.last = { type: 'line', line });
 	}
 
-	addLineAtStart(line: string) {
-		if (line && !whitespace.test(line)) this.root.children.unshift({ type: 'line', line });
-	}
-
 	addBlock(block: string) {
 		if (block && !whitespace.test(block)) this.current.children.push(this.last = { type: 'line', line: block, block: true });
-	}
-
-	addBlockAtStart(block: string) {
-		if (block && !whitespace.test(block)) this.root.children.unshift({ type: 'line', line: block, block: true });
 	}
 
 	isEmpty() { return !findLine(this.root); }
