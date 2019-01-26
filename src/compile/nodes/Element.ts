@@ -1,5 +1,4 @@
 import isVoidElementName from '../../utils/isVoidElementName';
-import { quotePropIfNecessary } from '../../utils/quoteIfNecessary';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
@@ -77,7 +76,7 @@ const passiveEvents = new Set([
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
-	scope: any; // TODO
+	scope: TemplateScope;
 	attributes: Attribute[] = [];
 	actions: Action[] = [];
 	bindings: Binding[] = [];
@@ -89,7 +88,6 @@ export default class Element extends Node {
 	animation?: Animation = null;
 	children: Node[];
 	namespace: string;
-	scope: TemplateScope;
 
 	constructor(component, parent, scope, info: any) {
 		super(component, parent, scope, info);
