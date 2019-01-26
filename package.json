@@ -65,7 +65,7 @@
     "eslint-plugin-import": "^2.11.0",
     "estree-walker": "^0.6.0",
     "is-reference": "^1.1.1",
-    "jsdom": "^13.2.0",
+    "jsdom": "^12.2.0",
     "kleur": "^3.0.0",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.0",
