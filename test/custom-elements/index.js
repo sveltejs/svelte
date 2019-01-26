@@ -89,8 +89,8 @@ describe('custom-elements', function() {
 				]
 			})
 				.then(bundle => bundle.generate({ format: 'iife', name: 'test' }))
-				.then(generated => {
-					bundle = generated.code;
+				.then(result => {
+					bundle = result.output[0].code;
 
 					const nightmare = new Nightmare({ show: false });
 

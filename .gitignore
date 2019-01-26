@@ -2,6 +2,7 @@
 .nyc_output
 node_modules
 *.map
+/src/compile/internal-exports.ts
 /cli/
 /compiler.js
 /index.js
