@@ -47,16 +47,16 @@ export function validate_store(store, name) {
 	}
 }
 
-export function create_slot(definition, ctx) {
+export function create_slot(definition, ctx, fn) {
 	if (definition) {
-		const slot_ctx = get_slot_context(definition, ctx);
+		const slot_ctx = get_slot_context(definition, ctx, fn);
 		return definition[0](slot_ctx);
 	}
 }
 
-export function get_slot_context(definition, ctx) {
+export function get_slot_context(definition, ctx, fn) {
 	return definition[1]
-		? assign({}, assign(ctx.$$scope.ctx, definition[1](ctx)))
-		: ctx.$$scope.ctx
+		? assign({}, assign(ctx.$$scope.ctx, definition[1](fn ? fn(ctx) : {})))
+		: ctx.$$scope.ctx;
 }
 

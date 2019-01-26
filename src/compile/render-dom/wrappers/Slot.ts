@@ -6,6 +6,9 @@ import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
 import sanitize from '../../../utils/sanitize';
 import addToSet from '../../../utils/addToSet';
+import get_slot_data from '../../../utils/get_slot_data';
+import stringifyProps from '../../../utils/stringifyProps';
+import Expression from '../../nodes/shared/Expression';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
@@ -51,11 +54,50 @@ export default class SlotWrapper extends Wrapper {
 		const slot_name = this.node.getStaticAttributeValue('name') || 'default';
 		renderer.slots.add(slot_name);
 
-		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+		let get_slot_changes;
+		let get_slot_context;
 
-		block.builders.init.addLine(
-			`const ${slot} = @create_slot(ctx.$$slot_${sanitize(slot_name)}, ctx);`
-		);
+		const attributes = this.node.attributes.filter(attribute => attribute.name !== 'name');
+
+		if (attributes.length > 0) {
+			get_slot_changes = renderer.component.getUniqueName(`get_${slot_name}_slot_changes`);
+			get_slot_context = renderer.component.getUniqueName(`get_${slot_name}_slot_context`);
+
+			const context_props = get_slot_data(attributes);
+			const changes_props = [];
+
+			const dependencies = new Set();
+
+			attributes.forEach(attribute => {
+				attribute.chunks.forEach(chunk => {
+					if ((<Expression>chunk).dependencies) {
+						addToSet(dependencies, (<Expression>chunk).dependencies);
+						addToSet(dependencies, (<Expression>chunk).contextual_dependencies);
+					}
+				});
+
+				if (attribute.dependencies.size > 0) {
+					changes_props.push(`${attribute.name}: ${[...attribute.dependencies].join(' || ')}`)
+				}
+			});
+
+			const arg = dependencies.size > 0 ? `{ ${[...dependencies].join(', ')} }` : '{}';
+
+			renderer.blocks.push(deindent`
+				const ${get_slot_changes} = (${arg}) => (${stringifyProps(changes_props)});
+				const ${get_slot_context} = (${arg}) => (${stringifyProps(context_props)});
+			`);
+		} else {
+			get_slot_context = 'null';
+		}
+
+		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+		const slot_definition = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+
+		block.builders.init.addBlock(deindent`
+			const ${slot_definition} = ctx.$$slot_${sanitize(slot_name)};
+			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
+		`);
 
 		let mountBefore = block.builders.mount.toString();
 
@@ -100,7 +142,7 @@ export default class SlotWrapper extends Wrapper {
 
 		block.builders.update.addBlock(deindent`
 			if (${slot} && ${update_conditions}) {
-				${slot}.p(@assign(@assign({}, changed), ctx.$$scope.changed), @get_slot_context(ctx.$$slot_${sanitize(slot_name)}, ctx));
+				${slot}.p(@assign(@assign({}, ${get_slot_changes}(changed)), ctx.$$scope.changed), @get_slot_context(${slot_definition}, ctx, ${get_slot_context}));
 			}
 		`);
 

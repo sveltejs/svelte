@@ -1,6 +1,6 @@
 import Renderer from '../Renderer';
 import { CompileOptions } from '../../../interfaces';
-import { snip } from '../utils';
+import { snip } from '../../../utils/snip';
 
 export default function(node, renderer: Renderer, options: CompileOptions) {
 	renderer.append('${(function(__value) { if(@isPromise(__value)) return `');

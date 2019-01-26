@@ -1,6 +1,6 @@
 import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
 import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
-import { snip } from '../utils';
+import { snip } from '../../../utils/snip';
 import Renderer from '../Renderer';
 import stringifyProps from '../../../utils/stringifyProps';
 import { get_slot_scope } from './shared/get_slot_scope';
