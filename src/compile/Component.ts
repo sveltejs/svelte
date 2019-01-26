@@ -10,7 +10,7 @@ import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
-import * as internal from '../internal/index';
+import internal_exports from './internal-exports';
 import { Node, Ast, CompileOptions } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
@@ -212,8 +212,8 @@ export default class Component {
 		// TODO use same regex for both
 		result = result.replace(options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 			if (sigil === '@') {
-				if (name in internal) {
-					if (options.dev && `${name}Dev` in internal) name = `${name}Dev`;
+				if (internal_exports.has(name)) {
+					if (options.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
 					helpers.add(name);
 				}
 
