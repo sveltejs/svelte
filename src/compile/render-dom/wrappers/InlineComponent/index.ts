@@ -49,7 +49,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				const { name } = getObject(binding.expression.node);
 				const eachBlock = this.node.scope.getOwner(name);
 
-				(<EachBlock>eachBlock).has_binding = true;
+				(eachBlock as EachBlock).has_binding = true;
 			}
 
 			block.addDependencies(binding.expression.dynamic_dependencies);

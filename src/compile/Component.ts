@@ -156,7 +156,7 @@ export default class Component {
 		this.tag = options.customElement
 			? options.customElement === true
 				? this.meta.tag
-				: <string>options.customElement
+				: options.customElement as string
 			: this.name;
 
 		this.walk_module_js();
@@ -553,7 +553,7 @@ export default class Component {
 	walk_instance_js_post_template() {
 		const script = this.instance_script;
 		if (!script) return;
-		
+
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 		this.extract_reactive_store_references();

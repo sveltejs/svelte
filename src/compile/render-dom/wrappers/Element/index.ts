@@ -131,7 +131,7 @@ export default class ElementWrapper extends Wrapper {
 				if (owner && owner.node.type === 'InlineComponent') {
 					const name = attribute.getStaticValue();
 
-					if (!(<InlineComponentWrapper>owner).slots.has(name)) {
+					if (!(owner as InlineComponentWrapper).slots.has(name)) {
 						const child_block = block.child({
 							comment: createDebuggingComment(node, this.renderer.component),
 							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
@@ -139,14 +139,14 @@ export default class ElementWrapper extends Wrapper {
 
 						const fn = get_context_merger(this.node.lets);
 
-						(<InlineComponentWrapper>owner).slots.set(name, {
+						(owner as InlineComponentWrapper).slots.set(name, {
 							block: child_block,
 							fn
 						});
 						this.renderer.blocks.push(child_block);
 					}
 
-					this.slot_block = (<InlineComponentWrapper>owner).slots.get(name).block;
+					this.slot_block = (owner as InlineComponentWrapper).slots.get(name).block;
 					block = this.slot_block;
 				}
 			}
@@ -334,7 +334,7 @@ export default class ElementWrapper extends Wrapper {
 
 			let open = `<${wrapper.node.name}`;
 
-			(<ElementWrapper>wrapper).attributes.forEach((attr: AttributeWrapper) => {
+			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
 				open += ` ${fixAttributeCasing(attr.node.name)}${attr.stringify()}`
 			});
 
@@ -776,9 +776,9 @@ export default class ElementWrapper extends Wrapper {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
 			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
-				(<Text>classAttribute.chunks[0]).data += ` ${className}`;
+				(classAttribute.chunks[0] as Text).data += ` ${className}`;
 			} else {
-				(<Node[]>classAttribute.chunks).push(
+				(classAttribute.chunks as Node[]).push(
 					new Text(this.component, this, this.scope, {
 						type: 'Text',
 						data: ` ${className}`

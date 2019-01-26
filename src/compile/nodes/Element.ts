@@ -661,7 +661,7 @@ export default class Element extends Node {
 		const classAttribute = this.attributes.find(a => a.name === 'class');
 		if (classAttribute && !classAttribute.isTrue) {
 			if (classAttribute.chunks.length === 1 && classAttribute.chunks[0].type === 'Text') {
-				(<Text>classAttribute.chunks[0]).data += ` ${className}`;
+				(classAttribute.chunks[0] as Text).data += ` ${className}`;
 			} else {
 				(<Node[]>classAttribute.chunks).push(
 					new Text(this.component, this, this.scope, {

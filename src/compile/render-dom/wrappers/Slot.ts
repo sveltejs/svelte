@@ -70,9 +70,9 @@ export default class SlotWrapper extends Wrapper {
 
 			attributes.forEach(attribute => {
 				attribute.chunks.forEach(chunk => {
-					if ((<Expression>chunk).dependencies) {
-						addToSet(dependencies, (<Expression>chunk).dependencies);
-						addToSet(dependencies, (<Expression>chunk).contextual_dependencies);
+					if ((chunk as Expression).dependencies) {
+						addToSet(dependencies, (chunk as Expression).dependencies);
+						addToSet(dependencies, (chunk as Expression).contextual_dependencies);
 					}
 				});
 

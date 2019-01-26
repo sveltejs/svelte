@@ -55,7 +55,7 @@ export default class BindingWrapper {
 			const { name } = getObject(this.node.expression.node);
 			const eachBlock = this.parent.node.scope.getOwner(name);
 
-			(<EachBlock>eachBlock).has_binding = true;
+			(eachBlock as EachBlock).has_binding = true;
 		}
 
 		this.object = getObject(this.node.expression.node).name;

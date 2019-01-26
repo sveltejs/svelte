@@ -80,7 +80,7 @@ export default class EachBlockWrapper extends Wrapper {
 		this.block = block.child({
 			comment: createDebuggingComment(this.node, this.renderer.component),
 			name: renderer.component.getUniqueName('create_each_block'),
-			key: <string>node.key, // TODO...
+			key: node.key as string,
 
 			bindings: new Map(block.bindings)
 		});

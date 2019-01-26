@@ -32,12 +32,12 @@ class IfBlockBranch extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.condition = (<IfBlock>node).expression && (<IfBlock>node).expression.render(block);
+		this.condition = (node as IfBlock).expression && (node as IfBlock).expression.render(block);
 
 		this.block = block.child({
 			comment: createDebuggingComment(node, parent.renderer.component),
 			name: parent.renderer.component.getUniqueName(
-				(<IfBlock>node).expression ? `create_if_block` : `create_else_block`
+				(node as IfBlock).expression ? `create_if_block` : `create_else_block`
 			)
 		});
 

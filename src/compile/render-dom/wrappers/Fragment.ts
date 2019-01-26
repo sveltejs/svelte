@@ -118,7 +118,7 @@ export default class FragmentWrapper {
 		}
 
 		if (stripWhitespace) {
-			const first = <TextWrapper>this.nodes[0];
+			const first = this.nodes[0] as TextWrapper;
 
 			if (first && first.node.type === 'Text') {
 				first.data = trimStart(first.data);
