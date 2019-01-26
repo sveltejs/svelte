@@ -160,9 +160,12 @@ export default class Component {
 			: this.name;
 
 		this.walk_module_js();
-		this.walk_instance_js();
+		this.walk_instance_js_pre_template();
 
 		this.fragment = new Fragment(this, ast.html);
+
+		this.walk_instance_js_post_template();
+
 		if (!options.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warnOnUnusedSelectors(stats);
@@ -510,7 +513,7 @@ export default class Component {
 		this.module_javascript = this.extract_javascript(script);
 	}
 
-	walk_instance_js() {
+	walk_instance_js_pre_template() {
 		const script = this.instance_script;
 		if (!script) return;
 
@@ -545,6 +548,12 @@ export default class Component {
 
 		this.track_mutations();
 		this.extract_imports_and_exports(script.content, this.imports, this.props);
+	}
+
+	walk_instance_js_post_template() {
+		const script = this.instance_script;
+		if (!script) return;
+		
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 		this.extract_reactive_store_references();
@@ -756,12 +765,13 @@ export default class Component {
 		// hoistable functions. TODO others?
 
 		const { hoistable_names, hoistable_nodes, imported_declarations, instance_scope: scope } = this;
+		const template_scope = this.fragment.scope;
 
 		const top_level_function_declarations = new Map();
 
 		this.instance_script.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
-				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.mutable_props.has(d.id.name))) {
+				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.mutable_props.has(d.id.name) && !template_scope.containsMutable([d.id.name]))) {
 					node.declarations.forEach(d => {
 						hoistable_names.add(d.id.name);
 					});
