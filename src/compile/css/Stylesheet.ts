@@ -316,7 +316,7 @@ export default class Stylesheet {
 
 				leave: (node: Node) => {
 					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
-					if (node.type === 'Atrule') currentAtrule = <Atrule>stack[stack.length - 1];
+					if (node.type === 'Atrule') currentAtrule = stack[stack.length - 1] as Atrule;
 				}
 			});
 		} else {
@@ -330,7 +330,7 @@ export default class Stylesheet {
 		const stack: Element[] = [];
 		let parent: Node = node;
 		while (parent = parent.parent) {
-			if (parent.type === 'Element') stack.unshift(<Element>parent);
+			if (parent.type === 'Element') stack.unshift(parent as Element);
 		}
 
 		for (let i = 0; i < this.children.length; i += 1) {

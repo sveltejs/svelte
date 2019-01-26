@@ -7,6 +7,7 @@ import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flattenReference from '../../../../utils/flattenReference';
 import { get_tail } from '../../../../utils/get_tail_snippet';
+import EachBlock from '../../../nodes/EachBlock';
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -52,9 +53,9 @@ export default class BindingWrapper {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
 			const { name } = getObject(this.node.expression.node);
-			const eachBlock = block.contextOwners.get(name);
+			const eachBlock = this.parent.node.scope.getOwner(name);
 
-			eachBlock.hasBinding = true;
+			(eachBlock as EachBlock).has_binding = true;
 		}
 
 		this.object = getObject(this.node.expression.node).name;
@@ -124,11 +125,11 @@ export default class BindingWrapper {
 				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
 
 				block.builders.hydrate.addLine(
-					`($$.binding_groups[${bindingGroup}] || ($$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
+					`ctx.$$binding_groups[${bindingGroup}].push(${parent.var});`
 				);
 
 				block.builders.destroy.addLine(
-					`$$.binding_groups[${bindingGroup}].splice($$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
+					`ctx.$$binding_groups[${bindingGroup}].splice(ctx.$$binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
 				);
 				break;
 
@@ -278,7 +279,7 @@ function getValueFromDom(
 	if (name === 'group') {
 		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue($$self.$$.binding_groups[${bindingGroup}])`;
+			return `@getBindingGroupValue($$binding_groups[${bindingGroup}])`;
 		}
 
 		return `this.__value`;

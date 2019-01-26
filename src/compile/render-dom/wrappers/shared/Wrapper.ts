@@ -75,8 +75,4 @@ export default class Wrapper {
 			this.node.type === 'MustacheTag'
 		);
 	}
-
-	remount(name: string) {
-		return `${this.var}.m(${name}.$$.slotted.default, null);`;
-	}
 }

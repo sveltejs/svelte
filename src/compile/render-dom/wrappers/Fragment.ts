@@ -63,6 +63,10 @@ export default class FragmentWrapper {
 		while (i--) {
 			const child = nodes[i];
 
+			if (!child.type) {
+				throw new Error(`missing type`)
+			}
+
 			if (!(child.type in wrappers)) {
 				throw new Error(`TODO implement ${child.type}`);
 			}
@@ -114,7 +118,7 @@ export default class FragmentWrapper {
 		}
 
 		if (stripWhitespace) {
-			const first = <TextWrapper>this.nodes[0];
+			const first = this.nodes[0] as TextWrapper;
 
 			if (first && first.node.type === 'Text') {
 				first.data = trimStart(first.data);

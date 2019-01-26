@@ -2,8 +2,9 @@ import { quotePropIfNecessary, quoteNameIfNecessary } from '../../../utils/quote
 import isVoidElementName from '../../../utils/isVoidElementName';
 import Attribute from '../../nodes/Attribute';
 import Node from '../../nodes/shared/Node';
-import { escape, escapeTemplate } from '../../../utils/stringify';
-import { snip } from '../utils';
+import { snip } from '../../../utils/snip';
+import { stringify_attribute } from '../../../utils/stringify_attribute';
+import { get_slot_scope } from './shared/get_slot_scope';
 
 // source: https://gist.github.com/ArjanSchouten/0b8574a6ad7f5065a5e7
 const boolean_attributes = new Set([
@@ -57,6 +58,8 @@ export default function(node, renderer, options) {
 		const target = renderer.targets[renderer.targets.length - 1];
 		target.slotStack.push(slotName);
 		target.slots[slotName] = '';
+
+		options.slot_scopes.set(slotName, get_slot_scope(node.lets));
 	}
 
 	const classExpr = node.classes.map((classDir: Class) => {
@@ -75,7 +78,7 @@ export default function(node, renderer, options) {
 				args.push(snip(attribute.expression));
 			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
-					textareaContents = stringifyAttribute(attribute);
+					textareaContents = stringify_attribute(attribute);
 				} else if (attribute.isTrue) {
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: true }`);
 				} else if (
@@ -86,7 +89,7 @@ export default function(node, renderer, options) {
 					// a boolean attribute with one non-Text chunk
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else {
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringifyAttribute(attribute)}\` }`);
+					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringify_attribute(attribute)}\` }`);
 				}
 			}
 		});
@@ -97,7 +100,7 @@ export default function(node, renderer, options) {
 			if (attribute.type !== 'Attribute') return;
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
-				textareaContents = stringifyAttribute(attribute);
+				textareaContents = stringify_attribute(attribute);
 			} else if (attribute.isTrue) {
 				openingTag += ` ${attribute.name}`;
 			} else if (
@@ -109,14 +112,14 @@ export default function(node, renderer, options) {
 				openingTag += '${' + snip(attribute.chunks[0]) + ' ? " ' + attribute.name + '" : "" }';
 			} else if (attribute.name === 'class' && classExpr) {
 				addClassAttribute = false;
-				openingTag += ` class="\${[\`${stringifyAttribute(attribute)}\`, ${classExpr}].join(' ').trim() }"`;
+				openingTag += ` class="\${[\`${stringify_attribute(attribute)}\`, ${classExpr}].join(' ').trim() }"`;
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const snippet = snip(attribute.chunks[0]);
 
 				openingTag += '${(v => v == null ? "" : ` ' + name + '="${@escape(' + snippet + ')}"`)(' + snippet + ')}';
 			} else {
-				openingTag += ` ${attribute.name}="${stringifyAttribute(attribute)}"`;
+				openingTag += ` ${attribute.name}="${stringify_attribute(attribute)}"`;
 			}
 		});
 	}
@@ -149,16 +152,4 @@ export default function(node, renderer, options) {
 	if (!isVoidElementName(node.name)) {
 		renderer.append(`</${node.name}>`);
 	}
-}
-
-function stringifyAttribute(attribute: Attribute) {
-	return attribute.chunks
-		.map((chunk: Node) => {
-			if (chunk.type === 'Text') {
-				return escapeTemplate(escape(chunk.data).replace(/"/g, '&quot;'));
-			}
-
-			return '${@escape(' + snip(chunk) + ')}';
-		})
-		.join('');
 }

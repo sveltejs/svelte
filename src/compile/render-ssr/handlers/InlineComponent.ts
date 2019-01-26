@@ -1,11 +1,9 @@
 import { escape, escapeTemplate, stringify } from '../../../utils/stringify';
-import getObject from '../../../utils/getObject';
-import { get_tail_snippet } from '../../../utils/get_tail_snippet';
-import { quoteNameIfNecessary, quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
-import deindent from '../../../utils/deindent';
-import { snip } from '../utils';
+import { quoteNameIfNecessary } from '../../../utils/quoteIfNecessary';
+import { snip } from '../../../utils/snip';
 import Renderer from '../Renderer';
 import stringifyProps from '../../../utils/stringifyProps';
+import { get_slot_scope } from './shared/get_slot_scope';
 
 type AppendTarget = any; // TODO
 
@@ -31,12 +29,6 @@ function getAttributeValue(attribute) {
 	}
 
 	return '`' + attribute.chunks.map(stringifyAttribute).join('') + '`';
-}
-
-function stringifyObject(props) {
-	return props.length > 0
-		? `{ ${props.join(', ')} }`
-		: `{};`
 }
 
 export default function(node, renderer: Renderer, options) {
@@ -98,11 +90,18 @@ export default function(node, renderer: Renderer, options) {
 
 		renderer.targets.push(target);
 
-		renderer.render(node.children, options);
+		const slot_scopes = new Map();
+		slot_scopes.set('default', get_slot_scope(node.lets));
+
+		renderer.render(node.children, Object.assign({}, options, {
+			slot_scopes
+		}));
 
 		Object.keys(target.slots).forEach(name => {
+			const slot_scope = slot_scopes.get(name);
+
 			slot_fns.push(
-				`${quoteNameIfNecessary(name)}: () => \`${target.slots[name]}\``
+				`${quoteNameIfNecessary(name)}: (${slot_scope}) => \`${target.slots[name]}\``
 			);
 		});
 

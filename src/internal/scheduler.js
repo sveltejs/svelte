@@ -1,4 +1,5 @@
 import { run_all } from './utils.js';
+import { set_current_component } from './lifecycle.js';
 
 export let dirty_components = [];
 export const intros = { enabled: false };
@@ -34,7 +35,9 @@ export function flush() {
 		// first, call beforeUpdate functions
 		// and update components
 		while (dirty_components.length) {
-			update(dirty_components.shift().$$);
+			const component = dirty_components.shift();
+			set_current_component(component);
+			update(component.$$);
 		}
 
 		while (binding_callbacks.length) binding_callbacks.shift()();

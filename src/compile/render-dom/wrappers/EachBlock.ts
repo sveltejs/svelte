@@ -41,10 +41,6 @@ class ElseBlockWrapper extends Wrapper {
 		);
 
 		this.isDynamic = this.block.dependencies.size > 0;
-		if (this.isDynamic) {
-			// TODO this can't be right
-			this.block.hasUpdateMethod = true;
-		}
 	}
 }
 
@@ -66,7 +62,6 @@ export default class EachBlockWrapper extends Wrapper {
 	indexName: string;
 
 	var = 'each';
-	hasBinding = false;
 
 	constructor(
 		renderer: Renderer,
@@ -85,10 +80,9 @@ export default class EachBlockWrapper extends Wrapper {
 		this.block = block.child({
 			comment: createDebuggingComment(this.node, this.renderer.component),
 			name: renderer.component.getUniqueName('create_each_block'),
-			key: <string>node.key, // TODO...
+			key: node.key as string,
 
-			bindings: new Map(block.bindings),
-			contextOwners: new Map(block.contextOwners)
+			bindings: new Map(block.bindings)
 		});
 
 		// TODO this seems messy
@@ -114,8 +108,6 @@ export default class EachBlockWrapper extends Wrapper {
 		};
 
 		node.contexts.forEach(prop => {
-			this.block.contextOwners.set(prop.key.name, this);
-
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.indexName,
@@ -149,7 +141,6 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.addDependencies(this.block.dependencies);
-		this.block.hasUpdateMethod = this.block.dependencies.size > 0; // TODO should this logic be in Block?
 
 		if (this.block.hasOutros || (this.else && this.else.block.hasOutros)) {
 			block.addOutro();
@@ -172,8 +163,8 @@ export default class EachBlockWrapper extends Wrapper {
 
 		this.contextProps = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
 
-		if (this.hasBinding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
-		if (this.hasBinding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
+		if (this.node.has_binding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
+		if (this.node.has_binding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
 
 		const snippet = this.node.expression.render(block);
 
@@ -216,7 +207,7 @@ export default class EachBlockWrapper extends Wrapper {
 			// TODO neaten this up... will end up with an empty line in the block
 			block.builders.init.addBlock(deindent`
 				if (!${this.vars.each_block_value}.${this.vars.length}) {
-					${each_block_else} = ${this.else.block.name}($$, ctx);
+					${each_block_else} = ${this.else.block.name}(ctx);
 					${each_block_else}.c();
 				}
 			`);
@@ -234,7 +225,7 @@ export default class EachBlockWrapper extends Wrapper {
 					if (!${this.vars.each_block_value}.${this.vars.length} && ${each_block_else}) {
 						${each_block_else}.p(changed, ctx);
 					} else if (!${this.vars.each_block_value}.${this.vars.length}) {
-						${each_block_else} = ${this.else.block.name}($$, ctx);
+						${each_block_else} = ${this.else.block.name}(ctx);
 						${each_block_else}.c();
 						${each_block_else}.m(${initialMountNode}, ${this.vars.anchor});
 					} else if (${each_block_else}) {
@@ -250,7 +241,7 @@ export default class EachBlockWrapper extends Wrapper {
 							${each_block_else} = null;
 						}
 					} else if (!${each_block_else}) {
-						${each_block_else} = ${this.else.block.name}($$, ctx);
+						${each_block_else} = ${this.else.block.name}(ctx);
 						${each_block_else}.c();
 						${each_block_else}.m(${initialMountNode}, ${this.vars.anchor});
 					}
@@ -306,7 +297,7 @@ export default class EachBlockWrapper extends Wrapper {
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
 				let child_ctx = ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i);
 				let key = ${get_key}(child_ctx);
-				${iterations}[#i] = ${lookup}[key] = ${create_each_block}($$, key, child_ctx);
+				${iterations}[#i] = ${lookup}[key] = ${create_each_block}(key, child_ctx);
 			}
 		`);
 
@@ -342,7 +333,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			${this.block.hasOutros && `@group_outros();`}
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${iterations}.length; #i += 1) ${iterations}[#i].r();`}
-			${iterations} = @updateKeyedEach(${iterations}, $$, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, ${anchor}, ${this.vars.get_each_context});
+			${iterations} = @updateKeyedEach(${iterations}, changed, ${get_key}, ${dynamic ? '1' : '0'}, ctx, ${this.vars.each_block_value}, ${lookup}, ${updateMountNode}, ${destroy}, ${create_each_block}, ${anchor}, ${this.vars.get_each_context});
 			${this.node.hasAnimation && `for (let #i = 0; #i < ${iterations}.length; #i += 1) ${iterations}[#i].a();`}
 			${this.block.hasOutros && `@check_outros();`}
 		`);
@@ -375,7 +366,7 @@ export default class EachBlockWrapper extends Wrapper {
 			var ${iterations} = [];
 
 			for (var #i = 0; #i < ${this.vars.each_block_value}.${length}; #i += 1) {
-				${iterations}[#i] = ${create_each_block}($$, ${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
+				${iterations}[#i] = ${create_each_block}(${this.vars.get_each_context}(ctx, ${this.vars.each_block_value}, #i));
 			}
 		`);
 
@@ -439,14 +430,14 @@ export default class EachBlockWrapper extends Wrapper {
 					if (${iterations}[#i]) {
 						${iterations}[#i].p(changed, child_ctx);
 					} else {
-						${iterations}[#i] = ${create_each_block}($$, child_ctx);
+						${iterations}[#i] = ${create_each_block}(child_ctx);
 						${iterations}[#i].c();
 						${iterations}[#i].m(${updateMountNode}, ${anchor});
 					}
 					${has_transitions && `${iterations}[#i].i();`}
 				`
 				: deindent`
-					${iterations}[#i] = ${create_each_block}($$, child_ctx);
+					${iterations}[#i] = ${create_each_block}(child_ctx);
 					${iterations}[#i].c();
 					${iterations}[#i].m(${updateMountNode}, ${anchor});
 					${has_transitions && `${iterations}[#i].i();`}
@@ -498,10 +489,5 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		block.builders.destroy.addBlock(`@destroyEach(${iterations}, detach);`);
-	}
-
-	remount(name: string) {
-		// TODO consider keyed blocks
-		return `for (var #i = 0; #i < ${this.vars.iterations}.length; #i += 1) ${this.vars.iterations}[#i].m(${name}.$$.slotted.default, null);`;
 	}
 }

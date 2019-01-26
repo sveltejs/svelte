@@ -1,9 +1,10 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
-import { escape } from '../../utils/stringify';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import EachBlockWrapper from './wrappers/EachBlock';
+import InlineComponentWrapper from './wrappers/InlineComponent';
+import ElementWrapper from './wrappers/Element';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -12,7 +13,6 @@ export interface BlockOptions {
 	comment?: string;
 	key?: string;
 	bindings?: Map<string, () => { object: string, property: string, snippet: string }>;
-	contextOwners?: Map<string, EachBlockWrapper>;
 	dependencies?: Set<string>;
 }
 
@@ -30,7 +30,6 @@ export default class Block {
 	dependencies: Set<string>;
 
 	bindings: Map<string, { object: string, property: string, snippet: string }>;
-	contextOwners: Map<string, EachBlockWrapper>;
 
 	builders: {
 		init: CodeBuilder;
@@ -61,7 +60,7 @@ export default class Block {
 	variables: Map<string, string>;
 	getUniqueName: (name: string) => string;
 
-	hasUpdateMethod: boolean;
+	hasUpdateMethod = false;
 	autofocus: string;
 
 	constructor(options: BlockOptions) {
@@ -79,7 +78,6 @@ export default class Block {
 		this.dependencies = new Set();
 
 		this.bindings = options.bindings;
-		this.contextOwners = options.contextOwners;
 
 		this.builders = {
 			init: new CodeBuilder(),
@@ -106,8 +104,6 @@ export default class Block {
 
 		this.aliases = new Map().set('ctx', this.getUniqueName('ctx'));
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
-
-		this.hasUpdateMethod = false; // determined later
 	}
 
 	assignVariableNames() {
@@ -151,6 +147,8 @@ export default class Block {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
 		});
+
+		this.hasUpdateMethod = true;
 	}
 
 	addElement(
@@ -407,7 +405,7 @@ export default class Block {
 
 		return deindent`
 			${this.comment && `// ${this.comment}`}
-			function ${this.name}($$, ${this.key ? `${localKey}, ` : ''}ctx) {
+			function ${this.name}(${this.key ? `${localKey}, ` : ''}ctx) {
 				${this.getContents(localKey)}
 			}
 		`;

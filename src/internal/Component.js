@@ -54,15 +54,16 @@ function make_dirty(component, key) {
 }
 
 export function init(component, options, instance, create_fragment, not_equal) {
-	const previous_component = current_component;
+	const parent_component = current_component;
 	set_current_component(component);
+
+	const props = options.props || {};
 
 	const $$ = component.$$ = {
 		fragment: null,
-		ctx: options.props || {},
+		ctx: null,
 
 		// state
-		set: noop,
 		update: noop,
 		not_equal,
 		bound: blankObject(),
@@ -72,18 +73,17 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		on_destroy: [],
 		before_render: [],
 		after_render: [],
+		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
 		callbacks: blankObject(),
-		slotted: options.slots || {},
-		dirty: null,
-		binding_groups: []
+		dirty: null
 	};
 
 	let ready = false;
 
-	if (instance) {
-		$$.ctx = instance(component, $$.ctx, (key, value) => {
+	$$.ctx = instance
+		? instance(component, props, (key, value) => {
 			if ($$.bound[key]) $$.bound[key](value);
 
 			if ($$.ctx) {
@@ -95,13 +95,13 @@ export function init(component, options, instance, create_fragment, not_equal) {
 				$$.ctx[key] = value;
 				return changed;
 			}
-		});
-	}
+		})
+		: props;
 
 	$$.update();
 	ready = true;
 	run_all($$.before_render);
-	$$.fragment = create_fragment($$, $$.ctx);
+	$$.fragment = create_fragment($$.ctx);
 
 	if (options.target) {
 		if (options.hydrate) {
@@ -115,7 +115,7 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		flush();
 	}
 
-	set_current_component(previous_component);
+	set_current_component(parent_component);
 }
 
 export let SvelteElement;

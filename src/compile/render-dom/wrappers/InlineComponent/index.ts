@@ -10,12 +10,15 @@ import addToSet from '../../../../utils/addToSet';
 import deindent from '../../../../utils/deindent';
 import Attribute from '../../../nodes/Attribute';
 import getObject from '../../../../utils/getObject';
-import Binding from '../../../nodes/Binding';
 import flattenReference from '../../../../utils/flattenReference';
+import createDebuggingComment from '../../../../utils/createDebuggingComment';
+import sanitize from '../../../../utils/sanitize';
+import { get_context_merger } from '../shared/get_context_merger';
+import EachBlock from '../../../nodes/EachBlock';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
-	_slots: Set<string>; // TODO lose the underscore
+	slots: Map<string, { block: Block, fn?: string }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -44,9 +47,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				// we need to ensure that the each block creates a context including
 				// the list and the index, if they're not otherwise referenced
 				const { name } = getObject(binding.expression.node);
-				const eachBlock = block.contextOwners.get(name);
+				const eachBlock = this.node.scope.getOwner(name);
 
-				eachBlock.hasBinding = true;
+				(eachBlock as EachBlock).has_binding = true;
 			}
 
 			block.addDependencies(binding.expression.dynamic_dependencies);
@@ -65,8 +68,22 @@ export default class InlineComponentWrapper extends Wrapper {
 		).toLowerCase();
 
 		if (this.node.children.length) {
-			this._slots = new Set(['default']);
-			this.fragment = new FragmentWrapper(renderer, block, node.children, this, stripWhitespace, nextSibling);
+			const default_slot = block.child({
+				comment: createDebuggingComment(node, renderer.component),
+				name: renderer.component.getUniqueName(`create_default_slot`)
+			});
+
+			this.renderer.blocks.push(default_slot);
+
+			const fn = get_context_merger(this.node.lets);
+
+			this.slots.set('default', {
+				block: default_slot,
+				fn
+			});
+			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, stripWhitespace, nextSibling);
+
+			block.addDependencies(default_slot.dependencies);
 		}
 
 		block.addOutro();
@@ -84,15 +101,6 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const component_opts = [];
 
-		if (this.fragment) {
-			const slots = Array.from(this._slots).map(name => `${quoteNameIfNecessary(name)}: @createFragment()`);
-			component_opts.push(`slots: { ${slots.join(', ')} }`);
-
-			this.fragment.nodes.forEach((child: Wrapper) => {
-				child.render(block, `${this.var}.$$.slotted.default`, 'nodes');
-			});
-		}
-
 		const statements: string[] = [];
 		const updates: string[] = [];
 		const postupdates: string[] = [];
@@ -102,19 +110,30 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const usesSpread = !!this.node.attributes.find(a => a.isSpread);
 
+		const slot_props = Array.from(this.slots).map(([name, slot]) => `$$slot_${sanitize(name)}: [${slot.block.name}${slot.fn ? `, ${slot.fn}` : ''}]`);
+		if (slot_props.length > 0) slot_props.push(`$$scope: { ctx }`);
+
 		const attributeObject = usesSpread
-			? '{}'
+			? stringifyProps(slot_props)
 			: stringifyProps(
-				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue()}`)
+				this.node.attributes.map(attr => `${quoteNameIfNecessary(attr.name)}: ${attr.getValue()}`).concat(slot_props)
 			);
 
-		if (this.node.attributes.length || this.node.bindings.length) {
+		if (this.node.attributes.length || this.node.bindings.length || slot_props.length) {
 			if (!usesSpread && this.node.bindings.length === 0) {
 				component_opts.push(`props: ${attributeObject}`);
 			} else {
 				props = block.getUniqueName(`${name}_props`);
 				component_opts.push(`props: ${props}`);
 			}
+		}
+
+		if (this.fragment) {
+			const default_slot = this.slots.get('default');
+
+			this.fragment.nodes.forEach((child: Wrapper) => {
+				child.render(default_slot.block, null, 'nodes');
+			});
 		}
 
 		if (component.options.dev) {
@@ -125,7 +144,16 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.push(`$$inline: true`);
 		}
 
-		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length)) {
+		const fragment_dependencies = new Set();
+		this.slots.forEach(slot => {
+			slot.block.dependencies.forEach(name => {
+				if (renderer.component.mutable_props.has(name)) {
+					fragment_dependencies.add(name);
+				}
+			});
+		});
+
+		if (!usesSpread && (this.node.attributes.filter(a => a.isDynamic).length || this.node.bindings.length || fragment_dependencies.size > 0)) {
 			updates.push(`var ${name_changes} = {};`);
 		}
 
@@ -194,6 +222,10 @@ export default class InlineComponentWrapper extends Wrapper {
 						}
 					});
 				}
+		}
+
+		if (fragment_dependencies.size > 0) {
+			updates.push(`if (${[...fragment_dependencies].map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed, ctx };`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
@@ -375,7 +407,6 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_bindings}
 						${munged_handlers}
 
-						${this.fragment && this.fragment.nodes.map(child => child.remount(name))}
 						${name}.$$.fragment.c();
 						@mount_component(${name}, ${updateMountNode}, ${anchor});
 						${name}.$$.fragment.i();
@@ -447,10 +478,6 @@ export default class InlineComponentWrapper extends Wrapper {
 		block.builders.outro.addLine(
 			`if (${name}) ${name}.$$.fragment.o();`
 		);
-	}
-
-	remount(name: string) {
-		return `${this.var}.$$.fragment.m(${name}.$$.slotted.default, null);`;
 	}
 }
 

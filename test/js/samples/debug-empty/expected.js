@@ -3,7 +3,7 @@ import { SvelteComponentDev, addLoc, append, createElement, createText, detachNo
 
 const file = undefined;
 
-function create_fragment($$, ctx) {
+function create_fragment(ctx) {
 	var h1, text0, text1, text2, text3;
 
 	return {

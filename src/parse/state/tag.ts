@@ -182,18 +182,19 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	if (name === 'slot') {
-		let i = parser.stack.length;
-		while (i--) {
-			const item = parser.stack[i];
-			if (item.type === 'EachBlock') {
-				parser.error({
-					code: `invalid-slot-placement`,
-					message: `<slot> cannot be a child of an each-block`
-				}, start);
-			}
-		}
-	}
+	// TODO should this still error in in web component mode?
+	// if (name === 'slot') {
+	// 	let i = parser.stack.length;
+	// 	while (i--) {
+	// 		const item = parser.stack[i];
+	// 		if (item.type === 'EachBlock') {
+	// 			parser.error({
+	// 				code: `invalid-slot-placement`,
+	// 				message: `<slot> cannot be a child of an each-block`
+	// 			}, start);
+	// 		}
+	// 	}
+	// }
 
 	const uniqueNames = new Set();
 
@@ -464,6 +465,7 @@ function get_directive_type(name) {
 	if (name === 'bind') return 'Binding';
 	if (name === 'class') return 'Class';
 	if (name === 'on') return 'EventHandler';
+	if (name === 'let') return 'Let';
 	if (name === 'ref') return 'Ref';
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }

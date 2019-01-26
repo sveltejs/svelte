@@ -10,6 +10,7 @@ import addToSet from '../../utils/addToSet';
 import getObject from '../../utils/getObject';
 import { extractNames } from '../../utils/annotateWithScopes';
 import { nodes_match } from '../../utils/nodes_match';
+import sanitize from '../../utils/sanitize';
 
 export default function dom(
 	component: Component,
@@ -71,7 +72,7 @@ export default function dom(
 
 	const props = component.props.filter(x => component.writable_declarations.has(x.name));
 
-	const set = component.meta.props || props.length > 0
+	const set = (component.meta.props || props.length > 0 || renderer.slots.size > 0)
 		? deindent`
 			$$props => {
 				${component.meta.props && deindent`
@@ -81,6 +82,8 @@ export default function dom(
 				`}
 				${props.map(prop =>
 				`if ('${prop.as}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.as});`)}
+				${renderer.slots.size > 0 &&
+				`if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);`}
 			}
 		`
 		: null;
@@ -235,10 +238,12 @@ export default function dom(
 	}
 
 	const args = ['$$self'];
-	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props', '$$invalidate');
+	if (component.props.length > 0 || component.has_reactive_assignments || renderer.slots.size > 0) {
+		args.push('$$props', '$$invalidate');
+	}
 
 	builder.addBlock(deindent`
-		function create_fragment($$, ctx) {
+		function create_fragment(ctx) {
 			${block.getContents()}
 		}
 
@@ -263,6 +268,15 @@ export default function dom(
 
 	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
 	filtered_declarations.push(...reactive_stores);
+
+	if (renderer.slots.size > 0) {
+		const arr = Array.from(renderer.slots);
+		filtered_declarations.push(...arr.map(name => `$$slot_${sanitize(name)}`), '$$scope');
+	}
+
+	if (renderer.bindingGroups.length > 0) {
+		filtered_declarations.push(`$$binding_groups`);
+	}
 
 	const has_definition = (
 		component.javascript ||
@@ -300,6 +314,10 @@ export default function dom(
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${user_code}
+
+				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
+
+				${renderer.bindingGroups.length > 0 && `const $$binding_groups = [${renderer.bindingGroups.map(_ => `[]`).join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 

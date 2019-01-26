@@ -2,16 +2,20 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Slot from '../../nodes/Slot';
-import { quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
 import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
 import sanitize from '../../../utils/sanitize';
+import addToSet from '../../../utils/addToSet';
+import get_slot_data from '../../../utils/get_slot_data';
+import stringifyProps from '../../../utils/stringifyProps';
+import Expression from '../../nodes/shared/Expression';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
 
 	var = 'slot';
+	dependencies: Set<string> = new Set(['$$scope']);
 
 	constructor(
 		renderer: Renderer,
@@ -32,6 +36,12 @@ export default class SlotWrapper extends Wrapper {
 			stripWhitespace,
 			nextSibling
 		);
+
+		this.node.attributes.forEach(attribute => {
+			addToSet(this.dependencies, attribute.dependencies);
+		});
+
+		block.addDependencies(this.dependencies);
 	}
 
 	render(
@@ -41,41 +51,66 @@ export default class SlotWrapper extends Wrapper {
 	) {
 		const { renderer } = this;
 
-		const slotName = this.node.getStaticAttributeValue('name') || 'default';
-		renderer.slots.add(slotName);
+		const slot_name = this.node.getStaticAttributeValue('name') || 'default';
+		renderer.slots.add(slot_name);
 
-		const content_name = block.getUniqueName(`slot_content_${sanitize(slotName)}`);
-		const prop = quotePropIfNecessary(slotName);
-		block.addVariable(content_name, `$$.slotted${prop}`);
+		let get_slot_changes;
+		let get_slot_context;
 
-		// TODO can we use isDomNode instead of type === 'Element'?
-		const needsAnchorBefore = this.prev ? this.prev.node.type !== 'Element' : !parentNode;
-		const needsAnchorAfter = this.next ? this.next.node.type !== 'Element' : !parentNode;
+		const attributes = this.node.attributes.filter(attribute => attribute.name !== 'name');
 
-		const anchorBefore = needsAnchorBefore
-			? block.getUniqueName(`${content_name}_before`)
-			: (this.prev && this.prev.var) || 'null';
+		if (attributes.length > 0) {
+			get_slot_changes = renderer.component.getUniqueName(`get_${slot_name}_slot_changes`);
+			get_slot_context = renderer.component.getUniqueName(`get_${slot_name}_slot_context`);
 
-		const anchorAfter = needsAnchorAfter
-			? block.getUniqueName(`${content_name}_after`)
-			: (this.next && this.next.var) || 'null';
+			const context_props = get_slot_data(attributes);
+			const changes_props = [];
 
-		if (needsAnchorBefore) block.addVariable(anchorBefore);
-		if (needsAnchorAfter) block.addVariable(anchorAfter);
+			const dependencies = new Set();
+
+			attributes.forEach(attribute => {
+				attribute.chunks.forEach(chunk => {
+					if ((chunk as Expression).dependencies) {
+						addToSet(dependencies, (chunk as Expression).dependencies);
+						addToSet(dependencies, (chunk as Expression).contextual_dependencies);
+					}
+				});
+
+				if (attribute.dependencies.size > 0) {
+					changes_props.push(`${attribute.name}: ${[...attribute.dependencies].join(' || ')}`)
+				}
+			});
+
+			const arg = dependencies.size > 0 ? `{ ${[...dependencies].join(', ')} }` : '{}';
+
+			renderer.blocks.push(deindent`
+				const ${get_slot_changes} = (${arg}) => (${stringifyProps(changes_props)});
+				const ${get_slot_context} = (${arg}) => (${stringifyProps(context_props)});
+			`);
+		} else {
+			get_slot_context = 'null';
+		}
+
+		const slot = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+		const slot_definition = block.getUniqueName(`${sanitize(slot_name)}_slot`);
+
+		block.builders.init.addBlock(deindent`
+			const ${slot_definition} = ctx.$$slot_${sanitize(slot_name)};
+			const ${slot} = @create_slot(${slot_definition}, ctx, ${get_slot_context});
+		`);
 
 		let mountBefore = block.builders.mount.toString();
-		let destroyBefore = block.builders.destroy.toString();
 
-		block.builders.create.pushCondition(`!${content_name}`);
-		block.builders.hydrate.pushCondition(`!${content_name}`);
-		block.builders.mount.pushCondition(`!${content_name}`);
-		block.builders.update.pushCondition(`!${content_name}`);
-		block.builders.destroy.pushCondition(`!${content_name}`);
+		block.builders.create.pushCondition(`!${slot}`);
+		block.builders.hydrate.pushCondition(`!${slot}`);
+		block.builders.mount.pushCondition(`!${slot}`);
+		block.builders.update.pushCondition(`!${slot}`);
+		block.builders.destroy.pushCondition(`!${slot}`);
 
 		const listeners = block.event_listeners;
 		block.event_listeners = [];
 		this.fragment.render(block, parentNode, parentNodes);
-		block.renderListeners(`_${content_name}`);
+		block.renderListeners(`_${slot}`);
 		block.event_listeners = listeners;
 
 		block.builders.create.popCondition();
@@ -84,62 +119,35 @@ export default class SlotWrapper extends Wrapper {
 		block.builders.update.popCondition();
 		block.builders.destroy.popCondition();
 
+		block.builders.create.addLine(
+			`if (${slot}) ${slot}.c();`
+		);
+
+		block.builders.claim.addLine(
+			`if (${slot}) ${slot}.l(${parentNodes});`
+		);
+
 		const mountLeadin = block.builders.mount.toString() !== mountBefore
 			? `else`
-			: `if (${content_name})`;
+			: `if (${slot})`;
 
-		if (parentNode) {
-			block.builders.mount.addBlock(deindent`
-				${mountLeadin} {
-					${needsAnchorBefore && `@append(${parentNode}, ${anchorBefore} || (${anchorBefore} = @createComment()));`}
-					@append(${parentNode}, ${content_name});
-					${needsAnchorAfter && `@append(${parentNode}, ${anchorAfter} || (${anchorAfter} = @createComment()));`}
-				}
-			`);
-		} else {
-			block.builders.mount.addBlock(deindent`
-				${mountLeadin} {
-					${needsAnchorBefore && `@insert(#target, ${anchorBefore} || (${anchorBefore} = @createComment()), anchor);`}
-					@insert(#target, ${content_name}, anchor);
-					${needsAnchorAfter && `@insert(#target, ${anchorAfter} || (${anchorAfter} = @createComment()), anchor);`}
-				}
-			`);
-		}
+		block.builders.mount.addBlock(deindent`
+			${mountLeadin} {
+				${slot}.m(${parentNode || '#target'}, ${parentNode ? 'null' : 'anchor'});
+			}
+		`);
 
-		// if the slot is unmounted, move nodes back into the document fragment,
-		// so that it can be reinserted later
-		// TODO so that this can work with public API, component.$$.slotted should
-		// be all fragments, derived from options.slots. Not === options.slots
-		const unmountLeadin = block.builders.destroy.toString() !== destroyBefore
-			? `else`
-			: `if (${content_name})`;
+		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
+		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
 
-		if (anchorBefore === 'null' && anchorAfter === 'null') {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertChildren(${parentNode}, ${content_name});
-				}
-			`);
-		} else if (anchorBefore === 'null') {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertBefore(${anchorAfter}, ${content_name});
-				}
-			`);
-		} else if (anchorAfter === 'null') {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertAfter(${anchorBefore}, ${content_name});
-				}
-			`);
-		} else {
-			block.builders.destroy.addBlock(deindent`
-				${unmountLeadin} {
-					@reinsertBetween(${anchorBefore}, ${anchorAfter}, ${content_name});
-					@detachNode(${anchorBefore});
-					@detachNode(${anchorAfter});
-				}
-			`);
-		}
+		block.builders.update.addBlock(deindent`
+			if (${slot} && ${update_conditions}) {
+				${slot}.p(@assign(@assign({}, ${get_slot_changes}(changed)), ctx.$$scope.changed), @get_slot_context(${slot_definition}, ctx, ${get_slot_context}));
+			}
+		`);
+
+		block.builders.destroy.addLine(
+			`if (${slot}) ${slot}.d(detach);`
+		);
 	}
 }

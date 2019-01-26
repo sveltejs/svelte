@@ -51,8 +51,4 @@ export default class Tag extends Wrapper {
 
 		return { init: content };
 	}
-
-	remount(name: string) {
-		return `@append(${name}.$$.slotted.default, ${this.var});`;
-	}
 }
