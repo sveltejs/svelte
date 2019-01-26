@@ -4,13 +4,8 @@ import * as fleece from 'golden-fleece';
 import process_markdown from '../../utils/_process_markdown.js';
 import marked from 'marked';
 
-import Prism from 'prismjs'; // prism-highlighter – smaller footprint [hljs: 192.5k]
-require('prismjs/components/prism-bash');
-
-const langs = {
-	'hidden-data': 'json',
-	'html-no-repl': 'html',
-};
+import PrismJS from 'prismjs';
+import 'prismjs/components/prism-bash';
 
 // map lang to prism-language-attr
 const prismLang = {
@@ -19,10 +14,6 @@ const prismLang = {
 	js: 'javascript',
 	css: 'css',
 };
-
-function btoa(str) {
-	return new Buffer(str).toString('base64');
-}
 
 const escaped = {
 	'"': '&quot;',
@@ -112,13 +103,6 @@ export default function() {
 				let className = 'code-block';
 
 				if (lang === 'html' && !group) {
-					/* prettier-ignore
-					-----------------------------------------------
-						edit vedam
-						don't know how to access components here
-						so i hardcoded icon here
-					-----------------------------------------------
-					*/
 					if (!meta || meta.repl !== false) {
 						prefix = `<a class='open-in-repl' href='repl?demo=@@${uid}' title='open in REPL'><svg class='icon'><use xlink:href='#maximize-2' /></svg></a>`;
 					}
@@ -140,16 +124,10 @@ export default function() {
 
 				if (meta && meta.hidden) return '';
 
-				/* prettier-ignore
-				-----------------------------------------------
-				design-edit vedam
-				insert prism-highlighter
-				-----------------------------------------------
-				*/
-				let plang = prismLang[lang];
-				const highlighted = Prism.highlight(
+				const plang = prismLang[lang];
+				const highlighted = PrismJS.highlight(
 					source,
-					Prism.languages[plang],
+					PrismJS.languages[plang],
 					lang
 				);
 
