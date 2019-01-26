@@ -1,5 +1,5 @@
 import { assign, isPromise } from './utils.js';
-import { group_outros } from './transitions.js';
+import { check_outros, group_outros, on_outro } from './transitions.js';
 import { flush } from '../internal/scheduler.js';
 
 export function handlePromise(promise, info) {
@@ -18,10 +18,12 @@ export function handlePromise(promise, info) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
 						group_outros();
-						block.o(() => {
+						on_outro(() => {
 							block.d(1);
 							info.blocks[i] = null;
 						});
+						block.o();
+						check_outros();
 					}
 				});
 			} else {
