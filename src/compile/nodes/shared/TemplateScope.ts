@@ -40,4 +40,8 @@ export default class TemplateScope {
 		if (this.parent) return this.parent.containsMutable(names);
 		else return false;
 	}
+
+	isTopLevel(name: string) {
+		return !this.parent || !this.names.has(name) && this.parent.isTopLevel(name);
+	}
 }
