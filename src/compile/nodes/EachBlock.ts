@@ -20,6 +20,7 @@ export default class EachBlock extends Node {
 	scope: TemplateScope;
 	contexts: Array<{ name: string, tail: string }>;
 	hasAnimation: boolean;
+	has_binding = false;
 
 	children: Node[];
 	else?: ElseBlock;
@@ -38,7 +39,7 @@ export default class EachBlock extends Node {
 		unpackDestructuring(this.contexts, info.context, '');
 
 		this.contexts.forEach(context => {
-			this.scope.add(context.key.name, this.expression.dependencies);
+			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});
 
 		this.key = info.key
@@ -48,7 +49,7 @@ export default class EachBlock extends Node {
 		if (this.index) {
 			// index can only change if this is a keyed each block
 			const dependencies = this.key ? this.expression.dependencies : [];
-			this.scope.add(this.index, dependencies);
+			this.scope.add(this.index, dependencies, this);
 		}
 
 		this.hasAnimation = false;

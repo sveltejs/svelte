@@ -82,7 +82,7 @@ export default class InlineComponent extends Node {
 				const dependencies = new Set([l.name]);
 
 				l.names.forEach(name => {
-					this.scope.add(name, dependencies);
+					this.scope.add(name, dependencies, this);
 				});
 			});
 		} else {

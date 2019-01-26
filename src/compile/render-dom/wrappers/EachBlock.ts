@@ -62,7 +62,6 @@ export default class EachBlockWrapper extends Wrapper {
 	indexName: string;
 
 	var = 'each';
-	hasBinding = false;
 
 	constructor(
 		renderer: Renderer,
@@ -83,8 +82,7 @@ export default class EachBlockWrapper extends Wrapper {
 			name: renderer.component.getUniqueName('create_each_block'),
 			key: <string>node.key, // TODO...
 
-			bindings: new Map(block.bindings),
-			contextOwners: new Map(block.contextOwners)
+			bindings: new Map(block.bindings)
 		});
 
 		// TODO this seems messy
@@ -110,8 +108,6 @@ export default class EachBlockWrapper extends Wrapper {
 		};
 
 		node.contexts.forEach(prop => {
-			this.block.contextOwners.set(prop.key.name, this);
-
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.indexName,
@@ -167,8 +163,8 @@ export default class EachBlockWrapper extends Wrapper {
 
 		this.contextProps = this.node.contexts.map(prop => `child_ctx.${prop.key.name} = list[i]${prop.tail};`);
 
-		if (this.hasBinding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
-		if (this.hasBinding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
+		if (this.node.has_binding) this.contextProps.push(`child_ctx.${this.vars.each_block_value} = list;`);
+		if (this.node.has_binding || this.node.index) this.contextProps.push(`child_ctx.${this.indexName} = i;`);
 
 		const snippet = this.node.expression.render(block);
 

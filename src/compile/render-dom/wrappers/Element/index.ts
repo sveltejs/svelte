@@ -21,6 +21,7 @@ import addEventHandlers from '../shared/addEventHandlers';
 import addActions from '../shared/addActions';
 import createDebuggingComment from '../../../../utils/createDebuggingComment';
 import sanitize from '../../../../utils/sanitize';
+import { get_context_merger } from '../shared/get_context_merger';
 
 const events = [
 	{
@@ -136,7 +137,7 @@ export default class ElementWrapper extends Wrapper {
 							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
 						});
 
-						const fn = `({ thing }) => ({ thing })`;
+						const fn = get_context_merger(this.node.lets);
 
 						(<InlineComponentWrapper>owner).slots.set(name, {
 							block: child_block,

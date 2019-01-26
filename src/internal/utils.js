@@ -49,10 +49,14 @@ export function validate_store(store, name) {
 
 export function create_slot(definition, ctx) {
 	if (definition) {
-		const slot_ctx = definition[1]
-			? assign({}, assign(ctx.$$scope.ctx, definition[1](ctx)))
-			: ctx.$$scope.ctx;
-
+		const slot_ctx = get_slot_context(definition, ctx);
 		return definition[0](slot_ctx);
 	}
 }
+
+export function get_slot_context(definition, ctx) {
+	return definition[1]
+		? assign({}, assign(ctx.$$scope.ctx, definition[1](ctx)))
+		: ctx.$$scope.ctx
+}
+

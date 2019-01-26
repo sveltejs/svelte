@@ -14,6 +14,7 @@ import flattenReference from '../../../../utils/flattenReference';
 import createDebuggingComment from '../../../../utils/createDebuggingComment';
 import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
+import EachBlock from '../../../nodes/EachBlock';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
@@ -46,9 +47,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				// we need to ensure that the each block creates a context including
 				// the list and the index, if they're not otherwise referenced
 				const { name } = getObject(binding.expression.node);
-				const eachBlock = block.contextOwners.get(name);
+				const eachBlock = this.node.scope.getOwner(name);
 
-				eachBlock.hasBinding = true;
+				(<EachBlock>eachBlock).has_binding = true;
 			}
 
 			block.addDependencies(binding.expression.dynamic_dependencies);
@@ -71,6 +72,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				comment: createDebuggingComment(node, renderer.component),
 				name: renderer.component.getUniqueName(`create_default_slot`)
 			});
+
 			this.renderer.blocks.push(default_slot);
 
 			const fn = get_context_merger(this.node.lets);

@@ -63,6 +63,10 @@ export default class FragmentWrapper {
 		while (i--) {
 			const child = nodes[i];
 
+			if (!child.type) {
+				throw new Error(`missing type`)
+			}
+
 			if (!(child.type in wrappers)) {
 				throw new Error(`TODO implement ${child.type}`);
 			}

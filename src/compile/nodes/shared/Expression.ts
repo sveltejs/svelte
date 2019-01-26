@@ -113,7 +113,10 @@ export default class Expression {
 				// function, and it only applies if the dependency is writable
 				// or a sub-path of a non-writable
 				if (component.instance_script) {
-					if (component.writable_declarations.has(name) || name[0] === '$' || (component.userVars.has(name) && deep)) {
+					const owner = template_scope.getOwner(name);
+					const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
+
+					if (is_let || component.writable_declarations.has(name) || name[0] === '$' || (component.userVars.has(name) && deep)) {
 						dynamic_dependencies.add(name);
 					}
 				} else {

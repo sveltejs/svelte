@@ -7,6 +7,7 @@ import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flattenReference from '../../../../utils/flattenReference';
 import { get_tail } from '../../../../utils/get_tail_snippet';
+import EachBlock from '../../../nodes/EachBlock';
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -52,9 +53,9 @@ export default class BindingWrapper {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
 			const { name } = getObject(this.node.expression.node);
-			const eachBlock = block.contextOwners.get(name);
+			const eachBlock = this.parent.node.scope.getOwner(name);
 
-			eachBlock.hasBinding = true;
+			(<EachBlock>eachBlock).has_binding = true;
 		}
 
 		this.object = getObject(this.node.expression.node).name;

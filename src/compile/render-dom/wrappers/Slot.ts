@@ -2,16 +2,17 @@ import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Slot from '../../nodes/Slot';
-import { quotePropIfNecessary } from '../../../utils/quoteIfNecessary';
 import FragmentWrapper from './Fragment';
 import deindent from '../../../utils/deindent';
 import sanitize from '../../../utils/sanitize';
+import addToSet from '../../../utils/addToSet';
 
 export default class SlotWrapper extends Wrapper {
 	node: Slot;
 	fragment: FragmentWrapper;
 
 	var = 'slot';
+	dependencies: Set<string> = new Set(['$$scope']);
 
 	constructor(
 		renderer: Renderer,
@@ -33,7 +34,11 @@ export default class SlotWrapper extends Wrapper {
 			nextSibling
 		);
 
-		block.addDependencies(new Set(['$$scope']));
+		this.node.attributes.forEach(attribute => {
+			addToSet(this.dependencies, attribute.dependencies);
+		});
+
+		block.addDependencies(this.dependencies);
 	}
 
 	render(
@@ -90,9 +95,14 @@ export default class SlotWrapper extends Wrapper {
 			}
 		`);
 
-		block.builders.update.addLine(
-			`if (${slot} && changed.$$scope) ${slot}.p(ctx.$$scope.changed, ctx.$$scope.ctx);`
-		);
+		let update_conditions = [...this.dependencies].map(name => `changed.${name}`).join(' || ');
+		if (this.dependencies.size > 1) update_conditions = `(${update_conditions})`;
+
+		block.builders.update.addBlock(deindent`
+			if (${slot} && ${update_conditions}) {
+				${slot}.p(@assign(@assign({}, changed), ctx.$$scope.changed), @get_slot_context(ctx.$$slot_${sanitize(slot_name)}, ctx));
+			}
+		`);
 
 		block.builders.destroy.addLine(
 			`if (${slot}) ${slot}.d(detach);`
