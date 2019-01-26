@@ -10,7 +10,7 @@ function get_each_context(ctx, list, i) {
 }
 
 // (1:0) {#each things as thing}
-function create_each_block($$, ctx) {
+function create_each_block(ctx) {
 	var span, text0_value = ctx.thing.name, text0, text1;
 
 	return {
@@ -54,7 +54,7 @@ function create_each_block($$, ctx) {
 	};
 }
 
-function create_fragment($$, ctx) {
+function create_fragment(ctx) {
 	var text0, p, text1, text2;
 
 	var each_value = ctx.things;
@@ -62,7 +62,7 @@ function create_fragment($$, ctx) {
 	var each_blocks = [];
 
 	for (var i = 0; i < each_value.length; i += 1) {
-		each_blocks[i] = create_each_block($$, get_each_context(ctx, each_value, i));
+		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
 	return {
@@ -103,7 +103,7 @@ function create_fragment($$, ctx) {
 					if (each_blocks[i]) {
 						each_blocks[i].p(changed, child_ctx);
 					} else {
-						each_blocks[i] = create_each_block($$, child_ctx);
+						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
 						each_blocks[i].m(text0.parentNode, text0);
 					}

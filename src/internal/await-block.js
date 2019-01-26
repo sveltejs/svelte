@@ -11,7 +11,7 @@ export function handlePromise(promise, info) {
 		info.resolved = key && { [key]: value };
 
 		const child_ctx = assign(assign({}, info.ctx), info.resolved);
-		const block = type && (info.current = type)(info.$$, child_ctx);
+		const block = type && (info.current = type)(child_ctx);
 
 		if (info.block) {
 			if (info.blocks) {

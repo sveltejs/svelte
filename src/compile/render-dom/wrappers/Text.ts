@@ -60,8 +60,4 @@ export default class TextWrapper extends Wrapper {
 			parentNode
 		);
 	}
-
-	remount(name: string) {
-		return `@append(${name}.$$.slotted.default, ${this.var});`;
-	}
 }

@@ -19,26 +19,28 @@ export default class Slot extends Element {
 				});
 			}
 
-			if (attr.name !== 'name') {
-				component.error(attr, {
-					code: `invalid-slot-attribute`,
-					message: `"name" is the only attribute permitted on <slot> elements`
-				});
-			}
+			// if (attr.name !== 'name') {
+			// 	component.error(attr, {
+			// 		code: `invalid-slot-attribute`,
+			// 		message: `"name" is the only attribute permitted on <slot> elements`
+			// 	});
+			// }
 
-			if (attr.value.length !== 1 || attr.value[0].type !== 'Text') {
-				component.error(attr, {
-					code: `dynamic-slot-name`,
-					message: `<slot> name cannot be dynamic`
-				});
-			}
+			if (attr.name === 'name') {
+				if (attr.value.length !== 1 || attr.value[0].type !== 'Text') {
+					component.error(attr, {
+						code: `dynamic-slot-name`,
+						message: `<slot> name cannot be dynamic`
+					});
+				}
 
-			const slotName = attr.value[0].data;
-			if (slotName === 'default') {
-				component.error(attr, {
-					code: `invalid-slot-name`,
-					message: `default is a reserved word — it cannot be used as a slot name`
-				});
+				const slotName = attr.value[0].data;
+				if (slotName === 'default') {
+					component.error(attr, {
+						code: `invalid-slot-name`,
+						message: `default is a reserved word — it cannot be used as a slot name`
+					});
+				}
 			}
 
 			// TODO should duplicate slots be disallowed? Feels like it's more likely to be a

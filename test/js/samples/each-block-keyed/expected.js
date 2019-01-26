@@ -8,7 +8,7 @@ function get_each_context(ctx, list, i) {
 }
 
 // (1:0) {#each things as thing (thing.id)}
-function create_each_block($$, key_1, ctx) {
+function create_each_block(key_1, ctx) {
 	var div, text_value = ctx.thing.name, text;
 
 	return {
@@ -41,7 +41,7 @@ function create_each_block($$, key_1, ctx) {
 	};
 }
 
-function create_fragment($$, ctx) {
+function create_fragment(ctx) {
 	var each_blocks = [], each_lookup = blankObject(), each_anchor;
 
 	var each_value = ctx.things;
@@ -51,7 +51,7 @@ function create_fragment($$, ctx) {
 	for (var i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
 		let key = get_key(child_ctx);
-		each_blocks[i] = each_lookup[key] = create_each_block($$, key, child_ctx);
+		each_blocks[i] = each_lookup[key] = create_each_block(key, child_ctx);
 	}
 
 	return {
@@ -69,7 +69,7 @@ function create_fragment($$, ctx) {
 
 		p(changed, ctx) {
 			const each_value = ctx.things;
-			each_blocks = updateKeyedEach(each_blocks, $$, changed, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, destroyBlock, create_each_block, each_anchor, get_each_context);
+			each_blocks = updateKeyedEach(each_blocks, changed, get_key, 1, ctx, each_value, each_lookup, each_anchor.parentNode, destroyBlock, create_each_block, each_anchor, get_each_context);
 		},
 
 		i: noop,

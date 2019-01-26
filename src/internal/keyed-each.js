@@ -18,7 +18,7 @@ export function fixAndOutroAndDestroyBlock(block, lookup) {
 	outroAndDestroyBlock(block, lookup);
 }
 
-export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+export function updateKeyedEach(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
 	var o = old_blocks.length;
 	var n = list.length;
 
@@ -37,7 +37,7 @@ export function updateKeyedEach(old_blocks, component, changed, get_key, dynamic
 		var block = lookup[key];
 
 		if (!block) {
-			block = create_each_block(component, key, child_ctx);
+			block = create_each_block(key, child_ctx);
 			block.c();
 		} else if (dynamic) {
 			block.p(changed, child_ctx);

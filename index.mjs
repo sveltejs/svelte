@@ -3,6 +3,8 @@ export {
 	onDestroy,
 	beforeUpdate,
 	afterUpdate,
+	setContext,
+	getContext,
 	nextTick,
 	createEventDispatcher
 } from './internal';

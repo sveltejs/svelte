@@ -48,10 +48,6 @@ export default class Node {
 		if (this.parent) return this.parent.findNearest(selector);
 	}
 
-	remount(name: string) {
-		return `${this.var}.m(${name}.$$.slotted.default, null);`;
-	}
-
 	warnIfEmptyBlock() {
 		if (!this.component.options.dev) return;
 		if (!/Block$/.test(this.type) || !this.children) return;
