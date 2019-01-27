@@ -15,10 +15,11 @@ import createDebuggingComment from '../../../../utils/createDebuggingComment';
 import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
+import TemplateScope from '../../../nodes/shared/TemplateScope';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
-	slots: Map<string, { block: Block, fn?: string }> = new Map();
+	slots: Map<string, { block: Block, scope: TemplateScope, fn?: string }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -79,6 +80,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			this.slots.set('default', {
 				block: default_slot,
+				scope: this.node.scope,
 				fn
 			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, stripWhitespace, nextSibling);
@@ -145,9 +147,9 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const fragment_dependencies = new Set();
-		this.slots.forEach(slot => {
+		this.slots.forEach((slot, name) => {
 			slot.block.dependencies.forEach(name => {
-				const is_let = this.node.lets.some(l => l.names.indexOf(name) !== -1);
+				const is_let = slot.scope.is_let(name);
 				const variable = renderer.component.var_lookup.get(name);
 
 				if (is_let || variable.mutated) {

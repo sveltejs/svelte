@@ -124,7 +124,11 @@ export default class Expression {
 					if (scope.has(name)) return;
 					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
 
-					if (template_scope.names.has(name)) {
+					if (template_scope.is_let(name)) {
+						if (!function_expression) {
+							dependencies.add(name);
+						}
+					} else if (template_scope.names.has(name)) {
 						expression.usesContext = true;
 
 						contextual_dependencies.add(name);
@@ -188,9 +192,7 @@ export default class Expression {
 
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
-			const owner = this.template_scope.getOwner(name);
-			const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
-			if (is_let) return true;
+			if (this.template_scope.is_let(name)) return true;
 
 			const variable = this.component.var_lookup.get(name);
 			return variable.mutated;

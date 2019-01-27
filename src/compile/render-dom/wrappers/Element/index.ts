@@ -141,6 +141,7 @@ export default class ElementWrapper extends Wrapper {
 
 						(owner as InlineComponentWrapper).slots.set(name, {
 							block: child_block,
+							scope: this.node.scope,
 							fn
 						});
 						this.renderer.blocks.push(child_block);

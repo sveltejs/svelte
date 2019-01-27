@@ -37,4 +37,9 @@ export default class TemplateScope {
 	getOwner(name: string): NodeWithScope {
 		return this.owners.get(name) || (this.parent && this.parent.getOwner(name));
 	}
+
+	is_let(name: string) {
+		const owner = this.getOwner(name);
+		return owner && (owner.type === 'Element' || owner.type === 'InlineComponent');
+	}
 }
