@@ -403,7 +403,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const outroBlock = this.block.hasOutros && block.getUniqueName('outroBlock')
 		if (outroBlock) {
 			block.builders.init.addBlock(deindent`
-				function ${outroBlock}(i, detach) {
+				function ${outroBlock}(i, detach, local) {
 					if (${iterations}[i]) {
 						if (detach) {
 							@on_outro(() => {
@@ -412,7 +412,7 @@ export default class EachBlockWrapper extends Wrapper {
 							});
 						}
 
-						${iterations}[i].o();
+						${iterations}[i].o(local);
 					}
 				}
 			`);
@@ -434,27 +434,27 @@ export default class EachBlockWrapper extends Wrapper {
 						${iterations}[#i].c();
 						${iterations}[#i].m(${updateMountNode}, ${anchor});
 					}
-					${has_transitions && `${iterations}[#i].i();`}
+					${has_transitions && `${iterations}[#i].i(1);`}
 				`
 				: deindent`
 					${iterations}[#i] = ${create_each_block}(child_ctx);
 					${iterations}[#i].c();
 					${iterations}[#i].m(${updateMountNode}, ${anchor});
-					${has_transitions && `${iterations}[#i].i();`}
+					${has_transitions && `${iterations}[#i].i(1);`}
 				`;
 
 			const start = this.block.hasUpdateMethod ? '0' : `${iterations}.length`;
 
-			let destroy;
+			let remove_old_blocks;
 
 			if (this.block.hasOutros) {
-				destroy = deindent`
+				remove_old_blocks = deindent`
 					@group_outros();
-					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1);
+					for (; #i < ${iterations}.length; #i += 1) ${outroBlock}(#i, 1, 1);
 					@check_outros();
 				`;
 			} else {
-				destroy = deindent`
+				remove_old_blocks = deindent`
 					for (${this.block.hasUpdateMethod ? `` : `#i = ${this.vars.each_block_value}.${length}`}; #i < ${iterations}.length; #i += 1) {
 						${iterations}[#i].d(1);
 					}
@@ -471,7 +471,7 @@ export default class EachBlockWrapper extends Wrapper {
 					${forLoopBody}
 				}
 
-				${destroy}
+				${remove_old_blocks}
 			`;
 
 			block.builders.update.addBlock(deindent`

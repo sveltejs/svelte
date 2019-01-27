@@ -125,9 +125,6 @@ export default class IfBlockWrapper extends Wrapper {
 
 		createBranches(this.node);
 
-		if (hasIntros) block.addIntro();
-		if (hasOutros) block.addOutro();
-
 		blocks.forEach(block => {
 			block.hasUpdateMethod = isDynamic;
 			block.hasIntroMethod = hasIntros;
@@ -239,7 +236,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (${name}) {
 				${name}.c();
 				${name}.m(${updateMountNode}, ${anchor});
-				${has_transitions && `${name}.i();`}
+				${has_transitions && `${name}.i(1);`}
 			}
 		`;
 
@@ -327,7 +324,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${if_blocks}[${previous_block_index}].d(1);
 				${if_blocks}[${previous_block_index}] = null;
 			});
-			${name}.o();
+			${name}.o(1);
 			@check_outros();
 		`;
 
@@ -338,7 +335,7 @@ export default class IfBlockWrapper extends Wrapper {
 				${name}.c();
 			}
 			${name}.m(${updateMountNode}, ${anchor});
-			${has_transitions && `${name}.i();`}
+			${has_transitions && `${name}.i(1);`}
 		`;
 
 		const changeBlock = hasElse
@@ -415,7 +412,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${name}.c();
 					${name}.m(${updateMountNode}, ${anchor});
 				}
-				${has_transitions && `${name}.i();`}
+				${has_transitions && `${name}.i(1);`}
 			`
 			: deindent`
 				if (!${name}) {
@@ -423,7 +420,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${name}.c();
 					${name}.m(${updateMountNode}, ${anchor});
 				}
-				${has_transitions && `${name}.i();`}
+				${has_transitions && `${name}.i(1);`}
 			`;
 
 		// no `p()` here — we don't want to update outroing nodes,
@@ -436,7 +433,7 @@ export default class IfBlockWrapper extends Wrapper {
 					${name} = null;
 				});
 
-				${name}.o();
+				${name}.o(1);
 				@check_outros();
 			`
 			: deindent`

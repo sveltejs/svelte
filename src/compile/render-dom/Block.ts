@@ -174,13 +174,15 @@ export default class Block {
 		}
 	}
 
-	addIntro() {
+	addIntro(local?: boolean) {
 		this.hasIntros = this.hasIntroMethod = this.renderer.hasIntroTransitions = true;
+		if (!local && this.parent) this.parent.addIntro();
 	}
 
-	addOutro() {
+	addOutro(local?: boolean) {
 		this.hasOutros = this.hasOutroMethod = this.renderer.hasOutroTransitions = true;
 		this.outros += 1;
+		if (!local && this.parent) this.parent.addOutro();
 	}
 
 	addAnimation() {
@@ -327,7 +329,7 @@ export default class Block {
 				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}() {
+					${dev ? 'i: function intro' : 'i'}(#local) {
 						${this.hasOutros && `if (#current) return;`}
 						${this.builders.intro}
 					},
@@ -338,7 +340,7 @@ export default class Block {
 				properties.addLine(`o: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}() {
+					${dev ? 'o: function outro' : 'o'}(#local) {
 						${this.builders.outro}
 					},
 				`);
