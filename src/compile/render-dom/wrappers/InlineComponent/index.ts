@@ -397,7 +397,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						@on_outro(() => {
 							old_component.$destroy();
 						});
-						old_component.$$.fragment.o();
+						old_component.$$.fragment.o(1);
 						@check_outros();
 					}
 
@@ -409,7 +409,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 						${name}.$$.fragment.c();
 						@mount_component(${name}, ${updateMountNode}, ${anchor});
-						${name}.$$.fragment.i();
+						${name}.$$.fragment.i(1);
 					} else {
 						${name} = null;
 					}
@@ -417,7 +417,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			block.builders.intro.addBlock(deindent`
-				if (${name}) ${name}.$$.fragment.i();
+				if (${name}) ${name}.$$.fragment.i(#local);
 			`);
 
 			if (updates.length) {
@@ -429,6 +429,10 @@ export default class InlineComponentWrapper extends Wrapper {
 					${postupdates.length > 0 && `${postupdates.join(' = ')} = false;`}
 				`);
 			}
+
+			block.builders.outro.addLine(
+				`if (${name}) ${name}.$$.fragment.o(#local);`
+			);
 
 			block.builders.destroy.addLine(`if (${name}) ${name}.$destroy(${parentNode ? '' : 'detach'});`);
 		} else {
@@ -459,7 +463,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			block.builders.intro.addBlock(deindent`
-				${name}.$$.fragment.i();
+				${name}.$$.fragment.i(#local);
 			`);
 
 			if (updates.length) {
@@ -473,11 +477,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.builders.destroy.addBlock(deindent`
 				${name}.$destroy(${parentNode ? '' : 'detach'});
 			`);
-		}
 
-		block.builders.outro.addLine(
-			`if (${name}) ${name}.$$.fragment.o();`
-		);
+			block.builders.outro.addLine(
+				`${name}.$$.fragment.o(#local);`
+			);
+		}
 	}
 }
 

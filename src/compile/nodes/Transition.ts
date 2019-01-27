@@ -7,6 +7,7 @@ export default class Transition extends Node {
 	name: string;
 	directive: string;
 	expression: Expression;
+	is_local: boolean;
 
 	constructor(component: Component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -15,6 +16,7 @@ export default class Transition extends Node {
 
 		this.name = info.name;
 		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out';
+		this.is_local = info.modifiers.includes('local');
 
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
 			const parentTransition = (parent.intro || parent.outro);

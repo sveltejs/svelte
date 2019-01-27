@@ -18,15 +18,15 @@ function create_fragment(ctx) {
 
 		p: noop,
 
-		i() {
+		i(local) {
 			if (current) return;
-			lazyload.$$.fragment.i();
+			lazyload.$$.fragment.i(local);
 
 			current = true;
 		},
 
-		o() {
-			if (lazyload) lazyload.$$.fragment.o();
+		o(local) {
+			lazyload.$$.fragment.o(local);
 			current = false;
 		},
 

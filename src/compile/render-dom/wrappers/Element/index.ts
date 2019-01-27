@@ -162,8 +162,8 @@ export default class ElementWrapper extends Wrapper {
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
 
 		if (node.intro || node.outro) {
-			if (node.intro) block.addIntro();
-			if (node.outro) block.addOutro();
+			if (node.intro) block.addIntro(node.intro.is_local);
+			if (node.outro) block.addOutro(node.outro.is_local);
 		}
 
 		if (node.animation) {
@@ -622,17 +622,34 @@ export default class ElementWrapper extends Wrapper {
 
 			const fn = component.qualify(intro.name);
 
-			block.builders.intro.addBlock(deindent`
+			const intro_block = deindent`
 				@add_render_callback(() => {
 					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
-			`);
+			`;
 
-			block.builders.outro.addBlock(deindent`
+			const outro_block = deindent`
 				if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, false);
 				${name}.run(0);
-			`);
+			`;
+
+			if (intro.is_local) {
+				block.builders.intro.addBlock(deindent`
+					if (#local) {
+						${intro_block}
+					}
+				`);
+
+				block.builders.outro.addBlock(deindent`
+					if (#local) {
+						${outro_block}
+					}
+				`);
+			} else {
+				block.builders.intro.addBlock(intro_block);
+				block.builders.outro.addBlock(outro_block);
+			}
 
 			block.builders.destroy.addConditional('detach', `if (${name}) ${name}.end();`);
 		}
@@ -649,25 +666,37 @@ export default class ElementWrapper extends Wrapper {
 
 				const fn = component.qualify(intro.name);
 
+				let intro_block;
+
 				if (outro) {
-					block.builders.intro.addBlock(deindent`
+					intro_block = deindent`
 						@add_render_callback(() => {
 							if (!${introName}) ${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 							${introName}.start();
 						});
-					`);
+					`;
 
 					block.builders.outro.addLine(`if (${introName}) ${introName}.invalidate()`);
 				} else {
-					block.builders.intro.addBlock(deindent`
+					intro_block = deindent`
 						if (!${introName}) {
 							@add_render_callback(() => {
 								${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 								${introName}.start();
 							});
 						}
-					`);
+					`;
 				}
+
+				if (intro.is_local) {
+					intro_block = deindent`
+						if (#local) {
+							${intro_block}
+						}
+					`;
+				}
+
+				block.builders.intro.addBlock(intro_block);
 			}
 
 			if (outro) {
@@ -684,9 +713,19 @@ export default class ElementWrapper extends Wrapper {
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM
-				block.builders.outro.addBlock(deindent`
+				let outro_block = deindent`
 					${outroName} = @create_out_transition(${this.var}, ${fn}, ${snippet});
-				`);
+				`;
+
+				if (outro_block) {
+					outro_block = deindent`
+						if (#local) {
+							${outro_block}
+						}
+					`;
+				}
+
+				block.builders.outro.addBlock(outro_block);
 
 				block.builders.destroy.addConditional('detach', `if (${outroName}) ${outroName}.end();`);
 			}
