@@ -43,9 +43,7 @@ export default [
 			replace({
 				__VERSION__: pkg.version
 			}),
-			resolve({
-				extensions: ['.js', '.ts']
-			}),
+			resolve(),
 			commonjs({
 				include: ['node_modules/**']
 			}),
