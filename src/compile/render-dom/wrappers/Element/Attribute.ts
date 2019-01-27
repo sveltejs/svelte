@@ -160,8 +160,8 @@ export default class AttributeWrapper {
 			}
 
 			// only add an update if mutations are involved (or it's a select?)
-			if (this.node.parent.scope.containsMutable(this.node.dependencies) || isSelectValueAttribute) {
-				const dependencies = Array.from(this.node.dependencies);
+			const dependencies = this.node.get_dependencies();
+			if (dependencies.length > 0 || isSelectValueAttribute) {
 				const changedCheck = (
 					(block.hasOutros ? `!#current || ` : '') +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')

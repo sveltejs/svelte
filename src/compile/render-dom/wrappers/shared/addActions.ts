@@ -1,4 +1,3 @@
-import Renderer from '../../Renderer';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
@@ -15,7 +14,7 @@ export default function addActions(
 
 		if (expression) {
 			snippet = expression.render(block);
-			dependencies = expression.dynamic_dependencies;
+			dependencies = expression.dynamic_dependencies();
 		}
 
 		const name = block.getUniqueName(
@@ -33,10 +32,10 @@ export default function addActions(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
 
-		if (dependencies && dependencies.size > 0) {
+		if (dependencies && dependencies.length > 0) {
 			let conditional = `typeof ${name}.update === 'function' && `;
-			const deps = [...dependencies].map(dependency => `changed.${dependency}`).join(' || ');
-			conditional += dependencies.size > 1 ? `(${deps})` : deps;
+			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
+			conditional += dependencies.length > 1 ? `(${deps})` : deps;
 
 			block.builders.update.addConditional(
 				conditional,

@@ -31,14 +31,6 @@ export default class TemplateScope {
 		return child;
 	}
 
-	setMutable(name: string) {
-		if (this.names.has(name)) {
-			this.mutables.add(name);
-			if (this.parent && this.dependenciesForName.has(name)) this.dependenciesForName.get(name).forEach(dep => this.parent.setMutable(dep));
-		} else if (this.parent) this.parent.setMutable(name);
-		else this.mutables.add(name);
-	}
-
 	containsMutable(names: Iterable<string>) {
 		for (const name of names) {
 			const owner = this.getOwner(name);

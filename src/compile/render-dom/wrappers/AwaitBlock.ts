@@ -67,7 +67,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		this.cannotUseInnerHTML();
 
-		block.addDependencies(this.node.expression.dynamic_dependencies);
+		block.addDependencies(this.node.expression.dependencies);
 
 		let isDynamic = false;
 		let hasIntros = false;

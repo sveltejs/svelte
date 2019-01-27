@@ -77,7 +77,6 @@ export default class Component {
 	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
-	mutable_props: Set<string> = new Set();
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
 	template_references: Set<string> = new Set();
@@ -152,7 +151,6 @@ export default class Component {
 		if (!ast.instance && !ast.module) {
 			const props = [...this.template_references];
 			this.declarations.push(...props);
-			addToSet(this.mutable_props, this.template_references);
 			addToSet(this.writable_declarations, this.template_references);
 
 			props.forEach(name => {
@@ -163,7 +161,7 @@ export default class Component {
 					imported_as: null,
 					exported_as: name,
 					source: null,
-					mutated: false,
+					mutated: true, // TODO kind of a misnomer... it's *mutable* but not necessarily *mutated*. is that a problem?
 					referenced: true,
 					module: false
 				});
@@ -174,7 +172,9 @@ export default class Component {
 		}
 
 		// tell the root fragment scope about all of the mutable names we know from the script
-		this.mutable_props.forEach(name => this.fragment.scope.mutables.add(name));
+		this.vars.forEach(variable => {
+			if (variable.mutated) this.fragment.scope.mutables.add(name);
+		});
 	}
 
 	add_var(variable: Var) {
@@ -187,7 +187,7 @@ export default class Component {
 
 		if (variable) {
 			variable.referenced = true;
-		} else if (!this.ast.instance) {
+		} else if (!this.ast.instance || name[0] === '$') {
 			this.add_var({
 				name,
 				kind: 'injected',
@@ -485,11 +485,9 @@ export default class Component {
 									exported_as: name,
 									source: null,
 									module: is_module,
-									mutated: false,
+									mutated: !is_module,
 									referenced: false
 								});
-
-								if (!is_module) this.mutable_props.add(name);
 							});
 						});
 					} else {
@@ -512,7 +510,7 @@ export default class Component {
 							exported_as: name,
 							source: null,
 							module: is_module,
-							mutated: false,
+							mutated: !is_module,
 							referenced: false
 						});
 					}
@@ -586,6 +584,33 @@ export default class Component {
 					code: 'illegal-declaration',
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`
 				});
+			}
+
+			if (!/Import/.test(node.type)) {
+				const kind = node.type === 'VariableDeclaration'
+					? node.kind
+					: node.type === 'ClassDeclaration'
+						? 'class'
+						: node.type === 'FunctionDeclaration'
+							? 'function'
+							: null;
+
+				// sanity check
+				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
+
+				this.add_var({
+					name,
+					kind,
+					import_type: null,
+					imported_as: null,
+					exported_as: null,
+					source: null,
+					module: false,
+					mutated: false,
+					referenced: false
+				});
+
+				this.declarations.push(name);
 			}
 		});
 
@@ -666,9 +691,9 @@ export default class Component {
 			});
 		});
 
-		this.track_mutations();
 		this.extract_imports(script.content, false);
 		this.extract_exports(script.content, false);
+		this.track_mutations();
 
 		// TODO remove this, just use component.symbols everywhere
 		this.props = this.vars.filter(variable => !variable.module && variable.exported_as).map(variable => ({
@@ -690,7 +715,9 @@ export default class Component {
 	// TODO merge this with other walks that are independent
 	track_mutations() {
 		const component = this;
-		let { instance_scope: scope, instance_scope_map: map } = this;
+		const { instance_scope, instance_scope_map: map } = this;
+
+		let scope = instance_scope;
 
 		walk(this.ast.instance.content, {
 			enter(node, parent) {
@@ -701,16 +728,25 @@ export default class Component {
 
 				if (node.type === 'AssignmentExpression') {
 					names = node.left.type === 'MemberExpression'
-							? [getObject(node.left).name]
-							: extractNames(node.left);
+						? [getObject(node.left).name]
+						: extractNames(node.left);
 				} else if (node.type === 'UpdateExpression') {
 					names = [getObject(node.argument).name];
 				}
 
 				if (names) {
 					names.forEach(name => {
-						if (scope.has(name)) component.mutable_props.add(name);
+						if (scope.findOwner(name) === instance_scope) {
+							const variable = component.var_lookup.get(name);
+							variable.mutated = true;
+						}
 					});
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
 				}
 			}
 		})
@@ -758,7 +794,6 @@ export default class Component {
 		const exported = new Set();
 		this.props.forEach(prop => {
 			exported.add(prop.name);
-			this.mutable_props.add(prop.name);
 		});
 
 		const coalesced_declarations = [];
@@ -898,7 +933,7 @@ export default class Component {
 
 		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
-				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.mutable_props.has(d.id.name) && !template_scope.containsMutable([d.id.name]))) {
+				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).mutated && !template_scope.containsMutable([d.id.name]))) {
 					node.declarations.forEach(d => {
 						hoistable_names.add(d.id.name);
 					});

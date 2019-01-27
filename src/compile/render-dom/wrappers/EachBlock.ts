@@ -74,8 +74,8 @@ export default class EachBlockWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 		this.cannotUseInnerHTML();
 
-		const { dynamic_dependencies } = node.expression;
-		block.addDependencies(dynamic_dependencies);
+		const { dependencies } = node.expression;
+		block.addDependencies(dependencies);
 
 		this.block = block.child({
 			comment: createDebuggingComment(this.node, this.renderer.component),

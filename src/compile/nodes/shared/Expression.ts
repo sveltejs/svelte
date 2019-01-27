@@ -62,6 +62,7 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 export default class Expression {
+	type = 'Expression';
 	component: Component;
 	owner: Wrapper;
 	node: any;
@@ -69,7 +70,6 @@ export default class Expression {
 	references: Set<string>;
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
-	dynamic_dependencies: Set<string> = new Set();
 
 	template_scope: TemplateScope;
 	scope: Scope;
@@ -95,7 +95,7 @@ export default class Expression {
 		this.owner = owner;
 		this.is_synthetic = owner.isSynthetic;
 
-		const { dependencies, contextual_dependencies, dynamic_dependencies } = this;
+		const { dependencies, contextual_dependencies } = this;
 
 		let { map, scope } = createScopes(info);
 		this.scope = scope;
@@ -103,27 +103,6 @@ export default class Expression {
 
 		const expression = this;
 		let function_expression;
-
-		function add_dependency(name, deep = false) {
-			dependencies.add(name);
-
-			if (!function_expression) {
-				// dynamic_dependencies is used to create `if (changed.foo || ...)`
-				// conditions — it doesn't apply if the dependency is inside a
-				// function, and it only applies if the dependency is writable
-				// or a sub-path of a non-writable
-				if (component.ast.instance) {
-					const owner = template_scope.getOwner(name);
-					const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
-
-					if (is_let || component.writable_declarations.has(name) || name[0] === '$' || (component.var_lookup.has(name) && deep)) {
-						dynamic_dependencies.add(name);
-					}
-				} else {
-					dynamic_dependencies.add(name);
-				}
-			}
-		}
 
 		// discover dependencies, but don't change the code yet
 		walk(info, {
@@ -150,11 +129,15 @@ export default class Expression {
 
 						contextual_dependencies.add(name);
 
-						template_scope.dependenciesForName.get(name).forEach(name => add_dependency(name, true));
+						if (!function_expression) {
+							template_scope.dependenciesForName.get(name).forEach(name => dependencies.add(name));
+						}
 					} else {
-						add_dependency(name, nodes.length > 1);
-						component.add_reference(name);
+						if (!function_expression) {
+							dependencies.add(name);
+						}
 
+						component.add_reference(name);
 						component.warn_if_undefined(nodes[0], template_scope, true);
 					}
 
@@ -162,16 +145,32 @@ export default class Expression {
 				}
 
 				// track any assignments from template expressions as mutable
+				let mutated;
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
-						const names = node.left.type === 'MemberExpression'
+						mutated = node.left.type === 'MemberExpression'
 							? [getObject(node.left).name]
 							: extractNames(node.left);
-						names.forEach(name => template_scope.setMutable(name));
 					} else if (node.type === 'UpdateExpression') {
 						const { name } = getObject(node.argument);
-						template_scope.setMutable(name);
+						mutated = [name];
 					}
+				}
+
+				if (mutated) {
+					mutated.forEach(name => {
+						if (template_scope.names.has(name)) {
+							template_scope.dependenciesForName.get(name).forEach(name => {
+								const variable = component.var_lookup.get(name);
+								if (variable) variable.mutated = true;
+							});
+						} else {
+							component.add_reference(name);
+
+							const variable = component.var_lookup.get(name);
+							if (variable) variable.mutated = true;
+						}
+					});
 				}
 			},
 
@@ -184,6 +183,17 @@ export default class Expression {
 					function_expression = null;
 				}
 			}
+		});
+	}
+
+	dynamic_dependencies() {
+		return Array.from(this.dependencies).filter(name => {
+			const owner = this.template_scope.getOwner(name);
+			const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
+			if (is_let) return true;
+
+			const variable = this.component.var_lookup.get(name);
+			return variable.mutated;
 		});
 	}
 

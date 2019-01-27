@@ -35,7 +35,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.cannotUseInnerHTML();
 
 		if (this.node.expression) {
-			block.addDependencies(this.node.expression.dynamic_dependencies);
+			block.addDependencies(this.node.expression.dependencies);
 		}
 
 		this.node.attributes.forEach(attr => {
@@ -52,12 +52,12 @@ export default class InlineComponentWrapper extends Wrapper {
 				(eachBlock as EachBlock).has_binding = true;
 			}
 
-			block.addDependencies(binding.expression.dynamic_dependencies);
+			block.addDependencies(binding.expression.dependencies);
 		});
 
 		this.node.handlers.forEach(handler => {
 			if (handler.expression) {
-				block.addDependencies(handler.expression.dynamic_dependencies);
+				block.addDependencies(handler.expression.dependencies);
 			}
 		});
 
@@ -147,7 +147,10 @@ export default class InlineComponentWrapper extends Wrapper {
 		const fragment_dependencies = new Set();
 		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {
-				if (renderer.component.mutable_props.has(name)) {
+				const is_let = this.node.lets.some(l => l.names.indexOf(name) !== -1);
+				const variable = renderer.component.var_lookup.get(name);
+
+				if (is_let || variable.mutated) {
 					fragment_dependencies.add(name);
 				}
 			});
@@ -279,7 +282,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			updates.push(deindent`
-				if (!${updating} && ${[...binding.expression.dynamic_dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
 					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}
 			`);
