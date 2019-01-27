@@ -1,17 +1,23 @@
 export default {
 	test(assert, stats) {
-		assert.deepEqual(stats.imports, [
+		assert.deepEqual(stats.vars, [
 			{
-				source: 'x',
-				specifiers: [{ name: 'default', as: 'x' }]
+				kind: 'import',
+				imported: 'x',
+				default: true,
+				source: 'x'
 			},
 			{
-				source: 'y',
-				specifiers: [{ name: 'y', as: 'y' }]
+				kind: 'import',
+				imported: 'y',
+				named: true,
+				source: 'y'
 			},
 			{
-				source: 'z',
-				specifiers: [{ name: '*', as: 'z' }]
+				kind: 'import',
+				imported: 'y',
+				namespace: true,
+				source: 'y'
 			}
 		]);
 	}

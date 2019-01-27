@@ -57,7 +57,7 @@ export default class EventHandler extends Node {
 	render(block: Block) {
 		if (this.expression) return this.expression.render(block);
 
-		this.component.template_references.add(this.handler_name);
+		this.component.add_reference(this.handler_name);
 		return `ctx.${this.handler_name}`;
 	}
 }

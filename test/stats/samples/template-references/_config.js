@@ -1,8 +1,24 @@
 export default {
 	test(assert, stats) {
-		assert.equal(stats.templateReferences.size, 3);
-		assert.ok(stats.templateReferences.has('foo'));
-		assert.ok(stats.templateReferences.has('Bar'));
-		assert.ok(stats.templateReferences.has('baz'));
+		assert.deepEqual(stats.vars, [
+			{
+				name: 'foo',
+				kind: 'injected',
+				exported: 'foo',
+				referenced: true
+			},
+			{
+				name: 'Bar',
+				kind: 'injected',
+				exported: 'Bar',
+				referenced: true
+			},
+			{
+				name: 'baz',
+				kind: 'injected',
+				exported: 'baz',
+				referenced: true
+			}
+		]);
 	},
 };

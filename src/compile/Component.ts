@@ -11,7 +11,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal-exports';
-import { Node, Ast, CompileOptions } from '../interfaces';
+import { Node, Ast, CompileOptions, Var } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
@@ -56,6 +56,9 @@ export default class Component {
 	namespace: string;
 	tag: string;
 
+	vars: Var[] = [];
+	var_lookup: Map<string, Var> = new Map();
+
 	imports: Node[] = [];
 	module_javascript: string;
 	javascript: string;
@@ -90,7 +93,6 @@ export default class Component {
 
 	stylesheet: Stylesheet;
 
-	userVars: Set<string> = new Set();
 	aliases: Map<string, string> = new Map();
 	usedNames: Set<string> = new Set();
 
@@ -152,16 +154,55 @@ export default class Component {
 			this.declarations.push(...props);
 			addToSet(this.mutable_props, this.template_references);
 			addToSet(this.writable_declarations, this.template_references);
-			addToSet(this.userVars, this.template_references);
 
-			this.props = props.map(name => ({
-				name,
-				as: name
-			}));
+			props.forEach(name => {
+				this.add_var({
+					name,
+					kind: 'injected',
+					import_type: null,
+					imported_as: null,
+					exported_as: name,
+					source: null,
+					mutated: false,
+					referenced: true,
+					module: false
+				});
+			});
+
+			// TODO remove this
+			this.props = props.map(name => ({ name, as: name }));
 		}
 
 		// tell the root fragment scope about all of the mutable names we know from the script
 		this.mutable_props.forEach(name => this.fragment.scope.mutables.add(name));
+	}
+
+	add_var(variable: Var) {
+		this.vars.push(variable);
+		this.var_lookup.set(variable.name, variable);
+	}
+
+	add_reference(name: string) {
+		const variable = this.var_lookup.get(name);
+
+		if (variable) {
+			variable.referenced = true;
+		} else if (!this.ast.instance) {
+			this.add_var({
+				name,
+				kind: 'injected',
+				import_type: null,
+				imported_as: null,
+				source: null,
+				exported_as: null,
+				module: false,
+				mutated: true,
+				referenced: true
+			});
+		}
+
+		// TODO remove this
+		this.template_references.add(name);
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -290,7 +331,7 @@ export default class Component {
 		for (
 			let i = 1;
 			reservedNames.has(alias) ||
-			this.userVars.has(alias) ||
+			this.var_lookup.has(alias) ||
 			this.usedNames.has(alias);
 			alias = `${name}_${i++}`
 		);
@@ -306,7 +347,7 @@ export default class Component {
 		}
 
 		reservedNames.forEach(add);
-		this.userVars.forEach(add);
+		this.var_lookup.forEach((value, key) => add(key));
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -373,7 +414,54 @@ export default class Component {
 		});
 	}
 
-	extract_imports_and_exports(content, imports, exports) {
+	extract_imports(content, is_module: boolean) {
+		const { code } = this;
+
+		content.body.forEach(node => {
+			if (node.type === 'ImportDeclaration') {
+				// imports need to be hoisted out of the IIFE
+				removeNode(code, content.start, content.end, content.body, node);
+				this.imports.push(node);
+
+				node.specifiers.forEach((specifier: Node) => {
+					if (specifier.local.name[0] === '$') {
+						this.error(specifier.local, {
+							code: 'illegal-declaration',
+							message: `The $ prefix is reserved, and cannot be used for variable and import names`
+						});
+					}
+
+					const imported_as = specifier.imported
+						? specifier.imported.name
+						: specifier.type === 'ImportDefaultSpecifier'
+							? 'default'
+							: '*';
+
+					const import_type = specifier.type === 'ImportSpecifier'
+						? 'named'
+						: specifier.type === 'ImportDefaultSpecifier'
+							? 'default'
+							: 'namespace';
+
+					this.add_var({
+						name: specifier.local.name,
+						kind: 'import',
+						imported_as,
+						import_type,
+						source: node.source.value,
+						exported_as: null,
+						module: is_module,
+						mutated: false,
+						referenced: false
+					});
+
+					this.imported_declarations.add(specifier.local.name);
+				});
+			}
+		});
+	}
+
+	extract_exports(content, is_module: boolean) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -389,43 +477,59 @@ export default class Component {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
-								exports.push({ name, as: name });
-								this.mutable_props.add(name);
+								this.add_var({
+									name,
+									kind: node.declaration.kind,
+									import_type: null,
+									imported_as: null,
+									exported_as: name,
+									source: null,
+									module: is_module,
+									mutated: false,
+									referenced: false
+								});
+
+								if (!is_module) this.mutable_props.add(name);
 							});
 						});
 					} else {
 						const { name } = node.declaration.id;
-						exports.push({ name, as: name });
+
+						const kind = node.declaration.type === 'ClassDeclaration'
+							? 'class'
+							: node.declaration.type === 'FunctionDeclaration'
+								? 'function'
+								: null;
+
+						// sanity check
+						if (!kind) throw new Error(`Unknown declaration type ${node.declaration.type}`);
+
+						this.add_var({
+							name,
+							kind,
+							import_type: null,
+							imported_as: null,
+							exported_as: name,
+							source: null,
+							module: is_module,
+							mutated: false,
+							referenced: false
+						});
 					}
 
 					code.remove(node.start, node.declaration.start);
 				} else {
 					removeNode(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
-						exports.push({
-							name: specifier.local.name,
-							as: specifier.exported.name
-						});
+						const variable = this.var_lookup.get(specifier.local.name);
+
+						if (variable) {
+							variable.exported_as = specifier.exported.name;
+						} else {
+							// TODO what happens with `export { Math }` or some other global?
+						}
 					});
 				}
-			}
-
-			// imports need to be hoisted out of the IIFE
-			else if (node.type === 'ImportDeclaration') {
-				removeNode(code, content.start, content.end, content.body, node);
-				imports.push(node);
-
-				node.specifiers.forEach((specifier: Node) => {
-					if (specifier.local.name[0] === '$') {
-						this.error(specifier.local, {
-							code: 'illegal-declaration',
-							message: `The $ prefix is reserved, and cannot be used for variable and import names`
-						});
-					}
-
-					this.userVars.add(specifier.local.name);
-					this.imported_declarations.add(specifier.local.name);
-				});
 			}
 		});
 	}
@@ -485,9 +589,16 @@ export default class Component {
 			}
 		});
 
-		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
+		this.extract_imports(script.content, true);
+		this.extract_exports(script.content, true);
 		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
+
+		// TODO remove this
+		this.module_exports = this.vars.filter(variable => variable.module && variable.exported_as).map(variable => ({
+			name: variable.name,
+			as: variable.exported_as
+		}));
 	}
 
 	walk_instance_js_pre_template() {
@@ -507,11 +618,33 @@ export default class Component {
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`
 				});
 			}
-		});
 
-		instance_scope.declarations.forEach((node, name) => {
-			this.userVars.add(name);
-			this.declarations.push(name);
+			if (!/Import/.test(node.type)) {
+				const kind = node.type === 'VariableDeclaration'
+					? node.kind
+					: node.type === 'ClassDeclaration'
+						? 'class'
+						: node.type === 'FunctionDeclaration'
+							? 'function'
+							: null;
+
+				// sanity check
+				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
+
+				this.add_var({
+					name,
+					kind,
+					import_type: null,
+					imported_as: null,
+					exported_as: null,
+					source: null,
+					module: false,
+					mutated: false,
+					referenced: false
+				});
+
+				this.declarations.push(name);
+			}
 
 			this.node_for_declaration.set(name, node);
 		});
@@ -520,11 +653,28 @@ export default class Component {
 		this.initialised_declarations = instance_scope.initialised_declarations;
 
 		globals.forEach(name => {
-			this.userVars.add(name);
+			this.add_var({
+				name,
+				kind: 'global',
+				import_type: null,
+				imported_as: null,
+				source: null,
+				exported_as: null,
+				module: false,
+				mutated: false,
+				referenced: false
+			});
 		});
 
 		this.track_mutations();
-		this.extract_imports_and_exports(script.content, this.imports, this.props);
+		this.extract_imports(script.content, false);
+		this.extract_exports(script.content, false);
+
+		// TODO remove this, just use component.symbols everywhere
+		this.props = this.vars.filter(variable => !variable.module && variable.exported_as).map(variable => ({
+			name: variable.name,
+			as: variable.exported_as
+		}));
 	}
 
 	walk_instance_js_post_template() {
@@ -586,7 +736,7 @@ export default class Component {
 						component.warn_if_undefined(object, null);
 
 						// cheeky hack
-						component.template_references.add(name);
+						component.add_reference(name);
 					}
 				}
 			},
@@ -963,7 +1113,7 @@ export default class Component {
 		if (this.imported_declarations.has(name)) return name;
 		if (this.declarations.indexOf(name) === -1) return name;
 
-		this.template_references.add(name); // TODO we can probably remove most other occurrences of this
+		this.add_reference(name); // TODO we can probably remove most other occurrences of this
 		return `ctx.${name}`;
 	}
 

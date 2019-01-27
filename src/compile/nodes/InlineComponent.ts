@@ -24,7 +24,7 @@ export default class InlineComponent extends Node {
 
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			component.warn_if_undefined(info, scope);
-			component.template_references.add(info.name);
+			component.add_reference(info.name);
 		}
 
 		this.name = info.name;

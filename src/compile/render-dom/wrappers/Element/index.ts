@@ -405,7 +405,7 @@ export default class ElementWrapper extends Wrapper {
 		groups.forEach(group => {
 			const handler = renderer.component.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
 			renderer.component.declarations.push(handler);
-			renderer.component.template_references.add(handler);
+			renderer.component.add_reference(handler);
 
 			// TODO figure out how to handle locks
 			const needsLock = group.bindings.some(binding => binding.needsLock);
@@ -506,7 +506,7 @@ export default class ElementWrapper extends Wrapper {
 		if (this_binding) {
 			const name = renderer.component.getUniqueName(`${this.var}_binding`);
 			renderer.component.declarations.push(name);
-			renderer.component.template_references.add(name);
+			renderer.component.add_reference(name);
 
 			const { handler, object } = this_binding;
 

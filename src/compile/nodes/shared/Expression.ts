@@ -116,7 +116,7 @@ export default class Expression {
 					const owner = template_scope.getOwner(name);
 					const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
 
-					if (is_let || component.writable_declarations.has(name) || name[0] === '$' || (component.userVars.has(name) && deep)) {
+					if (is_let || component.writable_declarations.has(name) || name[0] === '$' || (component.var_lookup.has(name) && deep)) {
 						dynamic_dependencies.add(name);
 					}
 				} else {
@@ -153,7 +153,7 @@ export default class Expression {
 						template_scope.dependenciesForName.get(name).forEach(name => add_dependency(name, true));
 					} else {
 						add_dependency(name, nodes.length > 1);
-						component.template_references.add(name);
+						component.add_reference(name);
 
 						component.warn_if_undefined(nodes[0], template_scope, true);
 					}
@@ -241,7 +241,7 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.template_references.add(name);
+							component.add_reference(name);
 						}
 					} else if (!is_synthetic && isContextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
@@ -365,7 +365,7 @@ export default class Expression {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(fn);
 						component.declarations.push(name);
-						component.template_references.add(name);
+						component.add_reference(name);
 						code.overwrite(node.start, node.end, `ctx.${name}`);
 					}
 
@@ -373,7 +373,7 @@ export default class Expression {
 						// we need a combo block/init recipe
 						component.partly_hoisted.push(fn);
 						component.declarations.push(name);
-						component.template_references.add(name);
+						component.add_reference(name);
 						code.overwrite(node.start, node.end, name);
 
 						declarations.push(deindent`

@@ -234,7 +234,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			if (binding.name === 'this') {
 				const fn = component.getUniqueName(`${this.var}_binding`);
 				component.declarations.push(fn);
-				component.template_references.add(fn);
+				component.add_reference(fn);
 
 				let lhs;
 				let object;
@@ -265,7 +265,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
 			component.declarations.push(name);
-			component.template_references.add(name);
+			component.add_reference(name);
 
 			const updating = block.getUniqueName(`updating_${binding.name}`);
 			block.addVariable(updating);
