@@ -21,7 +21,8 @@ export interface Parser {
 export interface Ast {
 	html: Node;
 	css: Node;
-	js: Node;
+	instance: Node;
+	module: Node;
 }
 
 export interface Warning {

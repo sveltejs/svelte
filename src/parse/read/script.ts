@@ -5,6 +5,29 @@ import { Node } from '../../interfaces';
 
 const scriptClosingTag = '</script>';
 
+function get_context(parser: Parser, attributes: Node[], start: number) {
+	const context = attributes.find(attribute => attribute.name === 'context');
+	if (!context) return 'default';
+
+	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
+		parser.error({
+			code: 'invalid-script',
+			message: `context attribute must be static`
+		}, start);
+	}
+
+	const value = context.value[0].data;
+
+	if (value !== 'module') {
+		parser.error({
+			code: `invalid-script`,
+			message: `If the context attribute is supplied, its value must be "module"`
+		}, context.start);
+	}
+
+	return value;
+}
+
 export default function readScript(parser: Parser, start: number, attributes: Node[]) {
 	const scriptStart = parser.index;
 	const scriptEnd = parser.template.indexOf(scriptClosingTag, scriptStart);
@@ -30,7 +53,7 @@ export default function readScript(parser: Parser, start: number, attributes: No
 	return {
 		start,
 		end: parser.index,
-		attributes,
+		context: get_context(parser, attributes, start),
 		content: ast,
 	};
 }

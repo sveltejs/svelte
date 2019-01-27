@@ -112,7 +112,7 @@ export default class Expression {
 				// conditions — it doesn't apply if the dependency is inside a
 				// function, and it only applies if the dependency is writable
 				// or a sub-path of a non-writable
-				if (component.instance_script) {
+				if (component.ast.instance) {
 					const owner = template_scope.getOwner(name);
 					const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
 

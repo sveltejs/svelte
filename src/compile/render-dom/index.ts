@@ -144,13 +144,13 @@ export default function dom(
 	}
 
 	// instrument assignments
-	if (component.instance_script) {
+	if (component.ast.instance) {
 		let scope = component.instance_scope;
 		let map = component.instance_scope_map;
 
 		let pending_assignments = new Set();
 
-		walk(component.instance_script.content, {
+		walk(component.ast.instance.content, {
 			enter: (node, parent) => {
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -297,7 +297,7 @@ export default function dom(
 	});
 
 	const user_code = component.javascript || (
-		component.ast.js.length === 0 && filtered_props.length > 0
+		!component.ast.instance && !component.ast.module && filtered_props.length > 0
 			? `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
 			: null
 	);

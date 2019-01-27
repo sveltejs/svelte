@@ -44,46 +44,43 @@
 			}
 		]
 	},
-	"css": [],
-	"js": [
-		{
-			"start": 0,
-			"end": 66,
-			"attributes": [],
-			"content": {
-				"type": "Program",
-				"start": 8,
-				"end": 57,
-				"body": [
-					{
-						"type": "VariableDeclaration",
-						"start": 10,
-						"end": 29,
-						"declarations": [
-							{
-								"type": "VariableDeclarator",
+	"instance": {
+		"start": 0,
+		"end": 66,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 57,
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 10,
+					"end": 29,
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 14,
+							"end": 28,
+							"id": {
+								"type": "Identifier",
 								"start": 14,
+								"end": 18,
+								"name": "name"
+							},
+							"init": {
+								"type": "Literal",
+								"start": 21,
 								"end": 28,
-								"id": {
-									"type": "Identifier",
-									"start": 14,
-									"end": 18,
-									"name": "name"
-								},
-								"init": {
-									"type": "Literal",
-									"start": 21,
-									"end": 28,
-									"value": "world",
-									"raw": "'world'"
-								}
+								"value": "world",
+								"raw": "'world'"
 							}
-						],
-						"kind": "let"
-					}
-				],
-				"sourceType": "module"
-			}
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
 		}
-	]
+	}
 }

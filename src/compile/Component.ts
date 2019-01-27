@@ -56,9 +56,6 @@ export default class Component {
 	namespace: string;
 	tag: string;
 
-	instance_script: Node;
-	module_script: Node;
-
 	imports: Node[] = [];
 	module_javascript: string;
 	javascript: string;
@@ -122,26 +119,6 @@ export default class Component {
 		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
 
-		const module_scripts = ast.js.filter(script => this.get_context(script) === 'module');
-		const instance_scripts = ast.js.filter(script => this.get_context(script) === 'default');
-
-		if (module_scripts.length > 1) {
-			this.error(module_scripts[1], {
-				code: `invalid-script`,
-				message: `A component can only have one <script context="module"> element`
-			});
-		}
-
-		if (instance_scripts.length > 1) {
-			this.error(instance_scripts[1], {
-				code: `invalid-script`,
-				message: `A component can only have one instance-level <script> element`
-			});
-		}
-
-		this.module_script = module_scripts[0];
-		this.instance_script = instance_scripts[0];
-
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
 
@@ -170,7 +147,7 @@ export default class Component {
 
 		this.stylesheet.warnOnUnusedSelectors(stats);
 
-		if (!this.instance_script) {
+		if (!ast.instance && !ast.module) {
 			const props = [...this.template_references];
 			this.declarations.push(...props);
 			addToSet(this.mutable_props, this.template_references);
@@ -491,7 +468,7 @@ export default class Component {
 	}
 
 	walk_module_js() {
-		const script = this.module_script;
+		const script = this.ast.module;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
@@ -514,7 +491,7 @@ export default class Component {
 	}
 
 	walk_instance_js_pre_template() {
-		const script = this.instance_script;
+		const script = this.ast.instance;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
@@ -551,7 +528,7 @@ export default class Component {
 	}
 
 	walk_instance_js_post_template() {
-		const script = this.instance_script;
+		const script = this.ast.instance;
 		if (!script) return;
 
 		this.hoist_instance_declarations();
@@ -565,7 +542,7 @@ export default class Component {
 		const component = this;
 		let { instance_scope: scope, instance_scope_map: map } = this;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				let names;
 				if (map.has(node)) {
@@ -595,7 +572,7 @@ export default class Component {
 		const component = this;
 		let { instance_scope: scope, instance_scope_map: map } = this;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -637,7 +614,7 @@ export default class Component {
 		const coalesced_declarations = [];
 		let current_group;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				if (/Function/.test(node.type)) {
 					current_group = null;
@@ -769,7 +746,7 @@ export default class Component {
 
 		const top_level_function_declarations = new Map();
 
-		this.instance_script.content.body.forEach(node => {
+		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
 				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.mutable_props.has(d.id.name) && !template_scope.containsMutable([d.id.name]))) {
 					node.declarations.forEach(d => {
@@ -875,7 +852,7 @@ export default class Component {
 
 		const unsorted_reactive_declarations = [];
 
-		this.instance_script.content.body.forEach(node => {
+		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
@@ -998,7 +975,7 @@ export default class Component {
 			this.has_reactive_assignments = true;
 		}
 
-		if (allow_implicit && !this.instance_script) return;
+		if (allow_implicit && !this.ast.instance && !this.ast.module) return;
 		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
 		if (this.module_scope && this.module_scope.declarations.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
@@ -1008,29 +985,6 @@ export default class Component {
 			code: 'missing-declaration',
 			message: `'${name}' is not defined`
 		});
-	}
-
-	get_context(script) {
-		const context = script.attributes.find(attribute => attribute.name === 'context');
-		if (!context) return 'default';
-
-		if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-			this.error(script, {
-				code: 'invalid-script',
-				message: `context attribute must be static`
-			});
-		}
-
-		const value = context.value[0].data;
-
-		if (value !== 'module') {
-			this.error(context, {
-				code: `invalid-script`,
-				message: `If the context attribute is supplied, its value must be "module"`
-			});
-		}
-
-		return value;
 	}
 }
 

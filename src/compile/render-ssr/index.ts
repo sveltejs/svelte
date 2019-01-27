@@ -27,7 +27,7 @@ export default function ssr(
 	if (component.javascript) {
 		component.rewrite_props();
 		user_code = component.javascript;
-	} else if (component.ast.js.length === 0 && component.props.length > 0) {
+	} else if (!component.ast.instance && !component.ast.module && component.props.length > 0) {
 		const props = component.props.map(prop => prop.as).filter(name => name[0] !== '$');
 
 		user_code = `let { ${props.join(', ')} } = $$props;`
