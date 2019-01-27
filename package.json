@@ -77,7 +77,7 @@
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-plugin-replace": "^2.0.0",
-    "rollup-plugin-sucrase": "^2.0.0",
+    "rollup-plugin-sucrase": "^2.1.0",
     "rollup-plugin-typescript": "^1.0.0",
     "rollup-plugin-virtual": "^1.0.1",
     "rollup-watch": "^4.3.1",
