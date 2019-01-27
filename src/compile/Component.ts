@@ -170,11 +170,6 @@ export default class Component {
 			// TODO remove this
 			this.props = props.map(name => ({ name, as: name }));
 		}
-
-		// tell the root fragment scope about all of the mutable names we know from the script
-		this.vars.forEach(variable => {
-			if (variable.mutated) this.fragment.scope.mutables.add(name);
-		});
 	}
 
 	add_var(variable: Var) {
@@ -933,7 +928,7 @@ export default class Component {
 
 		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
-				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).mutated && !template_scope.containsMutable([d.id.name]))) {
+				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).mutated)) {
 					node.declarations.forEach(d => {
 						hoistable_names.add(d.id.name);
 					});

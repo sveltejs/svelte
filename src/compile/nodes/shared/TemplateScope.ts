@@ -9,7 +9,6 @@ type NodeWithScope = EachBlock | ThenBlock | CatchBlock | InlineComponent | Elem
 export default class TemplateScope {
 	names: Set<string>;
 	dependenciesForName: Map<string, Set<string>>;
-	mutables: Set<string> = new Set();
 	owners: Map<string, NodeWithScope> = new Map();
 	parent?: TemplateScope;
 
@@ -29,21 +28,6 @@ export default class TemplateScope {
 	child() {
 		const child = new TemplateScope(this);
 		return child;
-	}
-
-	containsMutable(names: Iterable<string>) {
-		for (const name of names) {
-			const owner = this.getOwner(name);
-			const is_let = owner && (owner.type === 'InlineComponent' || owner.type === 'Element');
-			if (is_let) return true;
-
-			if (name[0] === '$') return true;
-			if (this.mutables.has(name)) return true;
-			else if (this.dependenciesForName.has(name) && this.containsMutable(this.dependenciesForName.get(name))) return true;
-		}
-
-		if (this.parent) return this.parent.containsMutable(names);
-		else return false;
 	}
 
 	isTopLevel(name: string) {
