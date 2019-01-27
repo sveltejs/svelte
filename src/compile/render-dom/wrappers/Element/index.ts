@@ -456,7 +456,7 @@ export default class ElementWrapper extends Wrapper {
 			this.renderer.component.partly_hoisted.push(deindent`
 				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${[...contextual_dependencies].join(', ')} }` : ``}) {
 					${group.bindings.map(b => b.handler.mutation)}
-					${Array.from(dependencies).map(dep => `$$invalidate('${dep}', ${dep});`)}
+					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => `$$invalidate('${dep}', ${dep});`)}
 				}
 			`);
 
