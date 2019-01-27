@@ -132,7 +132,7 @@ export default class ElementWrapper extends Wrapper {
 					const name = attribute.getStaticValue();
 
 					if (!(owner as InlineComponentWrapper).slots.has(name)) {
-						const child_block = block.child({
+						const child_block = block.parent.child({
 							comment: createDebuggingComment(node, this.renderer.component),
 							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
 						});
