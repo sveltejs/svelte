@@ -162,8 +162,8 @@ export default class ElementWrapper extends Wrapper {
 		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
 
 		if (node.intro || node.outro) {
-			if (node.intro) block.addIntro();
-			if (node.outro) block.addOutro();
+			if (node.intro) block.addIntro(node.intro.is_local);
+			if (node.outro) block.addOutro(node.outro.is_local);
 		}
 
 		if (node.animation) {

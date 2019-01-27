@@ -125,9 +125,6 @@ export default class IfBlockWrapper extends Wrapper {
 
 		createBranches(this.node);
 
-		if (hasIntros) block.addIntro();
-		if (hasOutros) block.addOutro();
-
 		blocks.forEach(block => {
 			block.hasUpdateMethod = isDynamic;
 			block.hasIntroMethod = hasIntros;

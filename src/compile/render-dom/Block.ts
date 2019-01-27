@@ -174,13 +174,15 @@ export default class Block {
 		}
 	}
 
-	addIntro() {
+	addIntro(local?: boolean) {
 		this.hasIntros = this.hasIntroMethod = this.renderer.hasIntroTransitions = true;
+		if (!local && this.parent) this.parent.addIntro();
 	}
 
-	addOutro() {
+	addOutro(local?: boolean) {
 		this.hasOutros = this.hasOutroMethod = this.renderer.hasOutroTransitions = true;
 		this.outros += 1;
+		if (!local && this.parent) this.parent.addOutro();
 	}
 
 	addAnimation() {
