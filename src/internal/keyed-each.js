@@ -10,7 +10,7 @@ export function outroAndDestroyBlock(block, lookup) {
 		destroyBlock(block, lookup);
 	});
 
-	block.o();
+	block.o(1);
 }
 
 export function fixAndOutroAndDestroyBlock(block, lookup) {
@@ -53,7 +53,7 @@ export function updateKeyedEach(old_blocks, changed, get_key, dynamic, ctx, list
 
 	function insert(block) {
 		block.m(node, next);
-		if (block.i) block.i();
+		if (block.i) block.i(1);
 		lookup[block.key] = block;
 		next = block.first;
 		n--;

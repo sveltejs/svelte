@@ -327,7 +327,7 @@ export default class Block {
 				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}() {
+					${dev ? 'i: function intro' : 'i'}(#local) {
 						${this.hasOutros && `if (#current) return;`}
 						${this.builders.intro}
 					},
@@ -338,7 +338,7 @@ export default class Block {
 				properties.addLine(`o: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}() {
+					${dev ? 'o: function outro' : 'o'}(#local) {
 						${this.builders.outro}
 					},
 				`);

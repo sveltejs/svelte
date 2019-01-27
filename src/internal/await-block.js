@@ -22,7 +22,7 @@ export function handlePromise(promise, info) {
 							block.d(1);
 							info.blocks[i] = null;
 						});
-						block.o();
+						block.o(1);
 						check_outros();
 					}
 				});
@@ -32,7 +32,7 @@ export function handlePromise(promise, info) {
 
 			block.c();
 			block.m(info.mount(), info.anchor);
-			if (block.i) block.i();
+			if (block.i) block.i(1);
 
 			flush();
 		}
