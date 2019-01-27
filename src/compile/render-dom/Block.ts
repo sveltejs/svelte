@@ -223,6 +223,7 @@ export default class Block {
 
 			if (!this.builders.intro.isEmpty()) {
 				this.builders.intro.addLine(`#current = true;`);
+				this.builders.mount.addLine(`#current = true;`);
 			}
 
 			if (!this.builders.outro.isEmpty()) {

@@ -52,8 +52,8 @@ export function updateKeyedEach(old_blocks, changed, get_key, dynamic, ctx, list
 	var did_move = {};
 
 	function insert(block) {
-		block.m(node, next);
 		if (block.i) block.i(1);
+		block.m(node, next);
 		lookup[block.key] = block;
 		next = block.first;
 		n--;

@@ -408,8 +408,8 @@ export default class InlineComponentWrapper extends Wrapper {
 						${munged_handlers}
 
 						${name}.$$.fragment.c();
-						@mount_component(${name}, ${updateMountNode}, ${anchor});
 						${name}.$$.fragment.i(1);
+						@mount_component(${name}, ${updateMountNode}, ${anchor});
 					} else {
 						${name} = null;
 					}
