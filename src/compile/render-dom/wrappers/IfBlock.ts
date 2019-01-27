@@ -235,8 +235,8 @@ export default class IfBlockWrapper extends Wrapper {
 			${name} = ${current_block_type_and}${current_block_type}(ctx);
 			if (${name}) {
 				${name}.c();
-				${name}.m(${updateMountNode}, ${anchor});
 				${has_transitions && `${name}.i(1);`}
+				${name}.m(${updateMountNode}, ${anchor});
 			}
 		`;
 
@@ -334,8 +334,8 @@ export default class IfBlockWrapper extends Wrapper {
 				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				${name}.c();
 			}
-			${name}.m(${updateMountNode}, ${anchor});
 			${has_transitions && `${name}.i(1);`}
+			${name}.m(${updateMountNode}, ${anchor});
 		`;
 
 		const changeBlock = hasElse
@@ -407,20 +407,23 @@ export default class IfBlockWrapper extends Wrapper {
 			? deindent`
 				if (${name}) {
 					${name}.p(changed, ctx);
+					${has_transitions && `${name}.i(1);`}
 				} else {
 					${name} = ${branch.block.name}(ctx);
 					${name}.c();
+					${has_transitions && `${name}.i(1);`}
 					${name}.m(${updateMountNode}, ${anchor});
 				}
-				${has_transitions && `${name}.i(1);`}
 			`
 			: deindent`
 				if (!${name}) {
 					${name} = ${branch.block.name}(ctx);
 					${name}.c();
+					${has_transitions && `${name}.i(1);`}
 					${name}.m(${updateMountNode}, ${anchor});
+				${has_transitions && `} else {
+					${name}.i(1);`}
 				}
-				${has_transitions && `${name}.i(1);`}
 			`;
 
 		// no `p()` here — we don't want to update outroing nodes,
