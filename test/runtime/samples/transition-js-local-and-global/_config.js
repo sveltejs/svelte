@@ -33,7 +33,8 @@ export default {
 		assert.htmlEqual(target.innerHTML, '');
 
 		// then toggle y
-		component.set({ x: true, y: false });
+		component.y = false;
+		component.x = true;
 		component.y = true;
 
 		assert.htmlEqual(target.innerHTML, `

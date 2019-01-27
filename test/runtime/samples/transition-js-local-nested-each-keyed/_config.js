@@ -13,7 +13,7 @@ export default {
 		raf.tick(100);
 		assert.equal(div1.foo, undefined);
 
-		component.set({ things: ['a', 'b'] });
+		component.things = ['a', 'b'];
 		assert.htmlEqual(target.innerHTML, '<div></div><div></div>');
 
 		const div2 = target.querySelector('div:last-child');

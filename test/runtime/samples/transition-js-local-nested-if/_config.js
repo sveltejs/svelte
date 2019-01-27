@@ -20,7 +20,8 @@ export default {
 		raf.tick(100);
 		assert.htmlEqual(target.innerHTML, '');
 
-		component.set({ x: false, y: true });
+		component.x = false;
+		component.y = true;
 		assert.htmlEqual(target.innerHTML, '');
 
 		component.x = true;
