@@ -23,9 +23,11 @@ function create_if_block(ctx) {
 				if (!if_block) {
 					if_block = create_if_block_1(ctx);
 					if_block.c();
+					if_block.i(1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+				} else {
+									if_block.i(1);
 				}
-				if_block.i(1);
 			} else if (if_block) {
 				if_block.d(1);
 				if_block = null;

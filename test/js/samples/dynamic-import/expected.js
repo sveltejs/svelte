@@ -14,6 +14,7 @@ function create_fragment(ctx) {
 
 		m(target, anchor) {
 			mount_component(lazyload, target, anchor);
+			current = true;
 		},
 
 		p: noop,

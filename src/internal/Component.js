@@ -110,8 +110,8 @@ export function init(component, options, instance, create_fragment, not_equal) {
 			$$.fragment.c();
 		}
 
-		mount_component(component, options.target, options.anchor);
 		if (options.intro && component.$$.fragment.i) component.$$.fragment.i();
+		mount_component(component, options.target, options.anchor);
 		flush();
 	}
 

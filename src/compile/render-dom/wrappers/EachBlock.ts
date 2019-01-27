@@ -429,18 +429,19 @@ export default class EachBlockWrapper extends Wrapper {
 				? deindent`
 					if (${iterations}[#i]) {
 						${iterations}[#i].p(changed, child_ctx);
+						${has_transitions && `${iterations}[#i].i(1);`}
 					} else {
 						${iterations}[#i] = ${create_each_block}(child_ctx);
 						${iterations}[#i].c();
+						${has_transitions && `${iterations}[#i].i(1);`}
 						${iterations}[#i].m(${updateMountNode}, ${anchor});
 					}
-					${has_transitions && `${iterations}[#i].i(1);`}
 				`
 				: deindent`
 					${iterations}[#i] = ${create_each_block}(child_ctx);
 					${iterations}[#i].c();
-					${iterations}[#i].m(${updateMountNode}, ${anchor});
 					${has_transitions && `${iterations}[#i].i(1);`}
+					${iterations}[#i].m(${updateMountNode}, ${anchor});
 				`;
 
 			const start = this.block.hasUpdateMethod ? '0' : `${iterations}.length`;

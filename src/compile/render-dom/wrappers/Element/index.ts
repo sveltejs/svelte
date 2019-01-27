@@ -671,12 +671,13 @@ export default class ElementWrapper extends Wrapper {
 				if (outro) {
 					intro_block = deindent`
 						@add_render_callback(() => {
+							if (${outroName}) ${outroName}.end(1);
 							if (!${introName}) ${introName} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 							${introName}.start();
 						});
 					`;
 
-					block.builders.outro.addLine(`if (${introName}) ${introName}.invalidate()`);
+					block.builders.outro.addLine(`if (${introName}) ${introName}.invalidate();`);
 				} else {
 					intro_block = deindent`
 						if (!${introName}) {
@@ -707,9 +708,11 @@ export default class ElementWrapper extends Wrapper {
 
 				const fn = component.qualify(outro.name);
 
-				block.builders.intro.addBlock(deindent`
-					if (${outroName}) ${outroName}.end(1);
-				`);
+				if (!intro) {
+					block.builders.intro.addBlock(deindent`
+						if (${outroName}) ${outroName}.end(1);
+					`);
+				}
 
 				// TODO hide elements that have outro'd (unless they belong to a still-outroing
 				// group) prior to their removal from the DOM

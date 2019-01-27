@@ -31,8 +31,8 @@ export function handlePromise(promise, info) {
 			}
 
 			block.c();
-			block.m(info.mount(), info.anchor);
 			if (block.i) block.i(1);
+			block.m(info.mount(), info.anchor);
 
 			flush();
 		}

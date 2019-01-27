@@ -20,6 +20,7 @@ function create_fragment(ctx) {
 			mount_component(imported, target, anchor);
 			insert(target, text, anchor);
 			mount_component(nonimported, target, anchor);
+			current = true;
 		},
 
 		p: noop,

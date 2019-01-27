@@ -13,6 +13,7 @@ function create_fragment(ctx) {
 
 		m(target, anchor) {
 			mount_component(nested, target, anchor);
+			current = true;
 		},
 
 		p: noop,
