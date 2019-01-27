@@ -17,15 +17,15 @@ function create_fragment(ctx) {
 
 		p: noop,
 
-		i() {
+		i(local) {
 			if (current) return;
-			nested.$$.fragment.i();
+			nested.$$.fragment.i(local);
 
 			current = true;
 		},
 
-		o() {
-			if (nested) nested.$$.fragment.o();
+		o(local) {
+			nested.$$.fragment.o(local);
 			current = false;
 		},
 

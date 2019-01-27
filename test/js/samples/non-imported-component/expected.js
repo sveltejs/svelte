@@ -24,18 +24,18 @@ function create_fragment(ctx) {
 
 		p: noop,
 
-		i() {
+		i(local) {
 			if (current) return;
-			imported.$$.fragment.i();
+			imported.$$.fragment.i(local);
 
-			nonimported.$$.fragment.i();
+			nonimported.$$.fragment.i(local);
 
 			current = true;
 		},
 
-		o() {
-			if (imported) imported.$$.fragment.o();
-			if (nonimported) nonimported.$$.fragment.o();
+		o(local) {
+			imported.$$.fragment.o(local);
+			nonimported.$$.fragment.o(local);
 			current = false;
 		},
 
