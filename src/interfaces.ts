@@ -91,4 +91,5 @@ export interface Var {
 	referenced?: boolean;
 	writable?: boolean;
 	initialised?: boolean;
+	hoistable?: boolean;
 }

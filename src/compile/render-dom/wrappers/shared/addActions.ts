@@ -22,11 +22,8 @@ export default function addActions(
 		);
 
 		block.addVariable(name);
-		const fn = component.imported_declarations.has(action.name) || component.hoistable_names.has(action.name)
-			? action.name
-			: `ctx.${action.name}`;
 
-		component.add_reference(action.name);
+		const fn = component.qualify(action.name);
 
 		block.builders.mount.addLine(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`

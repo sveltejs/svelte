@@ -861,8 +861,7 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_names, hoistable_nodes, imported_declarations, instance_scope: scope } = this;
-		const template_scope = this.fragment.scope;
+		const { hoistable_names, hoistable_nodes, imported_declarations, var_lookup } = this;
 
 		const top_level_function_declarations = new Map();
 
@@ -870,6 +869,8 @@ export default class Component {
 			if (node.type === 'VariableDeclaration') {
 				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).mutated)) {
 					node.declarations.forEach(d => {
+						const variable = this.var_lookup.get(d.id.name);
+						variable.hoistable = true;
 						hoistable_names.add(d.id.name);
 					});
 
@@ -920,7 +921,9 @@ export default class Component {
 
 						else if (owner === instance_scope) {
 							if (name === fn_declaration.id.name) return;
-							if (hoistable_names.has(name)) return;
+
+							const variable = var_lookup.get(name);
+							if (variable.hoistable) return;
 							if (imported_declarations.has(name)) return;
 
 							if (top_level_function_declarations.has(name)) {
@@ -957,6 +960,8 @@ export default class Component {
 
 		for (const [name, node] of top_level_function_declarations) {
 			if (!checked.has(node) && is_hoistable(node)) {
+				const variable = this.var_lookup.get(name);
+				variable.hoistable = true;
 				hoistable_names.add(name);
 				hoistable_nodes.add(node);
 
@@ -1079,7 +1084,8 @@ export default class Component {
 	}
 
 	qualify(name) {
-		if (this.hoistable_names.has(name)) return name;
+		const variable = this.var_lookup.get(name);
+		if (variable && variable.hoistable) return name;
 		if (this.imported_declarations.has(name)) return name;
 		if (this.declarations.indexOf(name) === -1) return name;
 

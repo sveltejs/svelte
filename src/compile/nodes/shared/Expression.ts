@@ -457,10 +457,12 @@ function isContextual(component: Component, scope: TemplateScope, name: string) 
 	// if it's a name below root scope, it's contextual
 	if (!scope.isTopLevel(name)) return true;
 
+	const variable = component.var_lookup.get(name);
+
 	// hoistables, module declarations, and imports are non-contextual
-	if (component.hoistable_names.has(name)) return false;
-	if (component.module_scope && component.module_scope.declarations.has(name)) return false;
-	if (component.imported_declarations.has(name)) return false;
+	if (variable.hoistable) return false;
+	if (variable.module) return false; // TODO make all module-level variables hoistable by default
+	if (variable.import_type) return false; // TODO ditto
 
 	// assume contextual
 	return true;

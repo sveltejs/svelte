@@ -97,7 +97,7 @@ export default function dom(
 	props.forEach(x => {
 		const variable = component.var_lookup.get(x.name);
 
-		if (component.imported_declarations.has(x.name) || component.hoistable_names.has(x.name)) {
+		if (component.imported_declarations.has(x.name) || variable.hoistable) {
 			body.push(deindent`
 				get ${x.exported_as}() {
 					return ${x.name};
@@ -254,14 +254,18 @@ export default function dom(
 	`);
 
 	const filtered_declarations = component.declarations.filter(name => {
-		if (component.hoistable_names.has(name)) return false;
+		const variable = component.var_lookup.get(name);
+
+		if (variable && variable.hoistable) return false;
 		if (component.imported_declarations.has(name)) return false;
 		if (props.find(p => p.exported_as === name)) return true;
 		return component.template_references.has(name);
 	});
 
 	const filtered_props = props.filter(prop => {
-		if (component.hoistable_names.has(prop.name)) return false;
+		const variable = component.var_lookup.get(prop.name);
+
+		if (variable.hoistable) return false;
 		if (component.imported_declarations.has(prop.name)) return false;
 		if (prop.name[0] === '$') return false;
 		return true;
