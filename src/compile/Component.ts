@@ -64,7 +64,6 @@ export default class Component {
 	javascript: string;
 
 	declarations: string[] = [];
-	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
 	imported_declarations: Set<string> = new Set();
 	hoistable_names: Set<string> = new Set();
@@ -149,7 +148,6 @@ export default class Component {
 		if (!ast.instance && !ast.module) {
 			const props = [...this.template_references];
 			this.declarations.push(...props);
-			addToSet(this.writable_declarations, this.template_references);
 
 			props.forEach(name => {
 				this.add_var({
@@ -161,7 +159,8 @@ export default class Component {
 					source: null,
 					mutated: true, // TODO kind of a misnomer... it's *mutable* but not necessarily *mutated*. is that a problem?
 					referenced: true,
-					module: false
+					module: false,
+					writable: true
 				});
 			});
 		}
@@ -187,7 +186,8 @@ export default class Component {
 				exported_as: null,
 				module: false,
 				mutated: true,
-				referenced: true
+				referenced: true,
+				writable: name[0] !== '$'
 			});
 		}
 
@@ -445,7 +445,8 @@ export default class Component {
 						exported_as: null,
 						module: is_module,
 						mutated: false,
-						referenced: false
+						referenced: false,
+						writable: false
 					});
 
 					this.imported_declarations.add(specifier.local.name);
@@ -467,19 +468,22 @@ export default class Component {
 
 			if (node.type === 'ExportNamedDeclaration') {
 				if (node.declaration) {
+					const { kind } = node.declaration;
+
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
 								this.add_var({
 									name,
-									kind: node.declaration.kind,
+									kind,
 									import_type: null,
 									imported_as: null,
 									exported_as: name,
 									source: null,
 									module: is_module,
 									mutated: !is_module,
-									referenced: false
+									referenced: false,
+									writable: kind === 'let' || kind === 'var'
 								});
 							});
 						});
@@ -504,7 +508,8 @@ export default class Component {
 							source: null,
 							module: is_module,
 							mutated: !is_module,
-							referenced: false
+							referenced: false,
+							writable: false
 						});
 					}
 
@@ -600,7 +605,8 @@ export default class Component {
 					source: null,
 					module: false,
 					mutated: false,
-					referenced: false
+					referenced: false,
+					writable: false
 				});
 
 				this.declarations.push(name);
@@ -652,7 +658,8 @@ export default class Component {
 					source: null,
 					module: false,
 					mutated: false,
-					referenced: false
+					referenced: false,
+					writable: false
 				});
 
 				this.declarations.push(name);
@@ -661,7 +668,6 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		this.writable_declarations = instance_scope.writable_declarations;
 		this.initialised_declarations = instance_scope.initialised_declarations;
 
 		globals.forEach(name => {
@@ -674,7 +680,8 @@ export default class Component {
 				exported_as: null,
 				module: false,
 				mutated: false,
-				referenced: false
+				referenced: false,
+				writable: false
 			});
 		});
 

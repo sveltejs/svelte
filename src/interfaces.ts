@@ -89,4 +89,5 @@ export interface Var {
 	module: boolean;
 	mutated: boolean;
 	referenced: boolean;
+	writable: boolean;
 }

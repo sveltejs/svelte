@@ -71,7 +71,7 @@ export default function dom(
 	);
 
 	const props = component.vars.filter(variable => !variable.module && variable.exported_as);
-	const writable_props = props.filter(x => component.writable_declarations.has(x.name));
+	const writable_props = props.filter(variable => variable.writable);
 
 	const set = (component.meta.props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
@@ -95,6 +95,8 @@ export default function dom(
 	let dev_props_check;
 
 	props.forEach(x => {
+		const variable = component.var_lookup.get(x.name);
+
 		if (component.imported_declarations.has(x.name) || component.hoistable_names.has(x.name)) {
 			body.push(deindent`
 				get ${x.exported_as}() {
@@ -109,7 +111,7 @@ export default function dom(
 			`);
 		}
 
-		if (component.writable_declarations.has(x.exported_as) && !renderer.readonly.has(x.exported_as)) {
+		if (variable.writable && !renderer.readonly.has(x.exported_as)) {
 			body.push(deindent`
 				set ${x.exported_as}(${x.name}) {
 					this.$set({ ${x.name} });
