@@ -52,6 +52,10 @@ export function createScopes(expression: Node) {
 		},
 	});
 
+	scope.declarations.forEach((node, name) => {
+		globals.delete(name);
+	});
+
 	return { map, scope, globals };
 }
 

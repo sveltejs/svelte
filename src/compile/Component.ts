@@ -15,7 +15,6 @@ import { Node, Ast, CompileOptions, Var } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
-import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
@@ -65,7 +64,6 @@ export default class Component {
 
 	declarations: string[] = [];
 	imported_declarations: Set<string> = new Set();
-	hoistable_names: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
 	partly_hoisted: string[] = [];
@@ -148,20 +146,25 @@ export default class Component {
 			const props = [...this.template_references];
 			this.declarations.push(...props);
 
-			props.forEach(name => {
-				this.add_var({
-					name,
-					kind: 'injected',
-					exported_as: name,
-					mutated: true, // TODO kind of a misnomer... it's *mutable* but not necessarily *mutated*. is that a problem?
-					referenced: true,
-					writable: true
-				});
-			});
+			// props.forEach(name => {
+			// 	this.add_var({
+			// 		name,
+			// 		kind: 'injected',
+			// 		export_name: name,
+			// 		mutated: true, // TODO kind of a misnomer... it's *mutable* but not necessarily *mutated*. is that a problem?
+			// 		referenced: true,
+			// 		writable: true
+			// 	});
+			// });
 		}
 	}
 
 	add_var(variable: Var) {
+		// TODO remove this
+		if (this.var_lookup.has(variable.name)) {
+			throw new Error(`dupe: ${variable.name}`);
+		}
+
 		this.vars.push(variable);
 		this.var_lookup.set(variable.name, variable);
 	}
@@ -171,13 +174,21 @@ export default class Component {
 
 		if (variable) {
 			variable.referenced = true;
-		} else if (!this.ast.instance || name[0] === '$') {
+		} else if (name[0] === '$') {
 			this.add_var({
 				name,
 				kind: 'injected',
+				referenced: true,
+				mutated: true
+			});
+		} else if (!this.ast.instance) {
+			this.add_var({
+				name,
+				export_name: name,
+				kind: 'injected',
 				mutated: true,
 				referenced: true,
-				writable: name[0] !== '$'
+				writable: true
 			});
 		}
 
@@ -241,9 +252,9 @@ export default class Component {
 			options.sveltePath,
 			importedHelpers,
 			this.imports,
-			this.vars.filter(variable => variable.module && variable.exported_as).map(variable => ({
+			this.vars.filter(variable => variable.module && variable.export_name).map(variable => ({
 				name: variable.name,
-				as: variable.exported_as
+				as: variable.export_name
 			})),
 			this.source
 		);
@@ -414,25 +425,19 @@ export default class Component {
 						});
 					}
 
-					const imported_as = specifier.imported
+					const import_name = specifier.imported
 						? specifier.imported.name
 						: specifier.type === 'ImportDefaultSpecifier'
 							? 'default'
 							: '*';
 
-					const import_type = specifier.type === 'ImportSpecifier'
-						? 'named'
-						: specifier.type === 'ImportDefaultSpecifier'
-							? 'default'
-							: 'namespace';
-
 					this.add_var({
 						name: specifier.local.name,
 						kind: 'import',
-						imported_as,
-						import_type,
+						import_name,
 						source: node.source.value,
 						module: is_module,
+						hoistable: true
 					});
 
 					this.imported_declarations.add(specifier.local.name);
@@ -459,15 +464,9 @@ export default class Component {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
-								this.add_var({
-									name,
-									kind,
-									exported_as: name,
-									module: is_module,
-									mutated: !is_module,
-									writable: kind === 'let' || kind === 'var',
-									initialised: !!declarator.init
-								});
+								const variable = this.var_lookup.get(name);
+								variable.export_name = name;
+								if (kind !== 'const') variable.mutated = true;
 							});
 						});
 					} else {
@@ -482,14 +481,8 @@ export default class Component {
 						// sanity check
 						if (!kind) throw new Error(`Unknown declaration type ${node.declaration.type}`);
 
-						this.add_var({
-							name,
-							kind,
-							exported_as: name,
-							module: is_module,
-							mutated: !is_module,
-							initialised: true
-						});
+						const variable = this.var_lookup.get(name);
+						variable.export_name = name;
 					}
 
 					code.remove(node.start, node.declaration.start);
@@ -499,7 +492,7 @@ export default class Component {
 						const variable = this.var_lookup.get(specifier.local.name);
 
 						if (variable) {
-							variable.exported_as = specifier.exported.name;
+							variable.export_name = specifier.exported.name;
 						} else {
 							// TODO what happens with `export { Math }` or some other global?
 						}
@@ -577,7 +570,8 @@ export default class Component {
 
 				this.add_var({
 					name,
-					kind
+					kind,
+					module: true
 				});
 
 				this.declarations.push(name);
@@ -623,7 +617,8 @@ export default class Component {
 				this.add_var({
 					name,
 					kind,
-					initialised: instance_scope.initialised_declarations.has(name)
+					initialised: instance_scope.initialised_declarations.has(name),
+					writable: kind === 'var' || kind === 'let'
 				});
 
 				this.declarations.push(name);
@@ -633,6 +628,8 @@ export default class Component {
 		});
 
 		globals.forEach(name => {
+			if (this.module_scope && this.module_scope.declarations.has(name)) return;
+
 			this.add_var({
 				name,
 				kind: 'global'
@@ -756,7 +753,7 @@ export default class Component {
 								const variable = component.var_lookup.get(name);
 
 								if (name === meta.props_object) {
-									if (variable.exported_as) {
+									if (variable.export_name) {
 										component.error(declarator, {
 											code: 'exported-meta-props',
 											message: `Cannot export props binding`
@@ -777,7 +774,7 @@ export default class Component {
 									}
 								}
 
-								if (variable.exported_as) {
+								if (variable.export_name) {
 									has_exports = true;
 								} else {
 									has_only_exports = false;
@@ -861,7 +858,7 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_names, hoistable_nodes, imported_declarations, var_lookup } = this;
+		const { hoistable_nodes, imported_declarations, var_lookup } = this;
 
 		const top_level_function_declarations = new Map();
 
@@ -871,7 +868,6 @@ export default class Component {
 					node.declarations.forEach(d => {
 						const variable = this.var_lookup.get(d.id.name);
 						variable.hoistable = true;
-						hoistable_names.add(d.id.name);
 					});
 
 					hoistable_nodes.add(node);
@@ -924,7 +920,6 @@ export default class Component {
 
 							const variable = var_lookup.get(name);
 							if (variable.hoistable) return;
-							if (imported_declarations.has(name)) return;
 
 							if (top_level_function_declarations.has(name)) {
 								const other_declaration = top_level_function_declarations.get(name);
@@ -962,7 +957,6 @@ export default class Component {
 			if (!checked.has(node) && is_hoistable(node)) {
 				const variable = this.var_lookup.get(name);
 				variable.hoistable = true;
-				hoistable_names.add(name);
 				hoistable_nodes.add(node);
 
 				remove_indentation(this.code, node);
@@ -1086,7 +1080,6 @@ export default class Component {
 	qualify(name) {
 		const variable = this.var_lookup.get(name);
 		if (variable && variable.hoistable) return name;
-		if (this.imported_declarations.has(name)) return name;
 		if (this.declarations.indexOf(name) === -1) return name;
 
 		this.add_reference(name); // TODO we can probably remove most other occurrences of this

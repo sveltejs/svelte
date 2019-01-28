@@ -371,22 +371,37 @@ export default class Expression {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(fn);
 						code.overwrite(node.start, node.end, name);
+
+						component.add_var({
+							name,
+							kind: 'injected',
+							hoistable: true,
+							referenced: true
+						});
 					}
 
 					else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(fn);
-						component.declarations.push(name);
-						component.add_reference(name);
 						code.overwrite(node.start, node.end, `ctx.${name}`);
+
+						component.add_var({
+							name,
+							kind: 'injected',
+							referenced: true
+						});
 					}
 
 					else {
 						// we need a combo block/init recipe
 						component.partly_hoisted.push(fn);
-						component.declarations.push(name);
-						component.add_reference(name);
 						code.overwrite(node.start, node.end, name);
+
+						component.add_var({
+							name,
+							kind: 'injected',
+							referenced: true
+						});
 
 						declarations.push(deindent`
 							function ${name}(${original_params ? '...args' : ''}) {
@@ -461,8 +476,6 @@ function isContextual(component: Component, scope: TemplateScope, name: string) 
 
 	// hoistables, module declarations, and imports are non-contextual
 	if (variable.hoistable) return false;
-	if (variable.module) return false; // TODO make all module-level variables hoistable by default
-	if (variable.import_type) return false; // TODO ditto
 
 	// assume contextual
 	return true;

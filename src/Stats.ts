@@ -99,7 +99,16 @@ export default class Stats {
 		return {
 			timings,
 			warnings: this.warnings,
-			vars: component.vars
+			vars: component.vars.map(variable => ({
+				name: variable.name,
+				kind: variable.kind,
+				import_name: variable.import_name || null,
+				export_name: variable.export_name || null,
+				source: variable.source || null,
+				module: variable.module || false,
+				mutated: variable.mutated || false,
+				referenced: variable.referenced || false
+			}))
 		};
 	}
 

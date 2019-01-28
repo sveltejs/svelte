@@ -70,7 +70,7 @@ export default function dom(
 		options.css !== false
 	);
 
-	const props = component.vars.filter(variable => !variable.module && variable.exported_as);
+	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
 	const set = (component.meta.props || writable_props.length > 0 || renderer.slots.size > 0)
@@ -82,7 +82,7 @@ export default function dom(
 				$$invalidate('${component.meta.props_object}', ${component.meta.props_object});
 				`}
 				${writable_props.map(prop =>
-				`if ('${prop.exported_as}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.exported_as});`)}
+				`if ('${prop.export_name}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.export_name});`)}
 				${renderer.slots.size > 0 &&
 				`if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);`}
 			}
@@ -97,31 +97,31 @@ export default function dom(
 	props.forEach(x => {
 		const variable = component.var_lookup.get(x.name);
 
-		if (component.imported_declarations.has(x.name) || variable.hoistable) {
+		if (variable.hoistable) {
 			body.push(deindent`
-				get ${x.exported_as}() {
+				get ${x.export_name}() {
 					return ${x.name};
 				}
 			`);
 		} else {
 			body.push(deindent`
-				get ${x.exported_as}() {
+				get ${x.export_name}() {
 					return this.$$.ctx.${x.name};
 				}
 			`);
 		}
 
-		if (variable.writable && !renderer.readonly.has(x.exported_as)) {
+		if (variable.writable && !renderer.readonly.has(x.export_name)) {
 			body.push(deindent`
-				set ${x.exported_as}(${x.name}) {
+				set ${x.export_name}(${x.name}) {
 					this.$set({ ${x.name} });
 					@flush();
 				}
 			`);
 		} else if (component.options.dev) {
 			body.push(deindent`
-				set ${x.exported_as}(value) {
-					throw new Error("<${component.tag}>: Cannot set read-only property '${x.exported_as}'");
+				set ${x.export_name}(value) {
+					throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
 				}
 			`);
 		}
@@ -137,8 +137,8 @@ export default function dom(
 				const { ctx } = this.$$;
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
 				${expected.map(prop => deindent`
-				if (ctx.${prop.name} === undefined && !('${prop.exported_as}' in props)) {
-					console.warn("<${component.tag}> was created without expected prop '${prop.exported_as}'");
+				if (ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
+					console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
 		}
@@ -253,20 +253,14 @@ export default function dom(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 	`);
 
-	const filtered_declarations = component.declarations.filter(name => {
-		const variable = component.var_lookup.get(name);
-
-		if (variable && variable.hoistable) return false;
-		if (component.imported_declarations.has(name)) return false;
-		if (props.find(p => p.exported_as === name)) return true;
-		return component.template_references.has(name);
-	});
+	const filtered_declarations = component.vars.filter(variable => {
+		return (variable.referenced || variable.export_name) && !variable.hoistable;
+	}).map(variable => variable.name);
 
 	const filtered_props = props.filter(prop => {
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
-		if (component.imported_declarations.has(prop.name)) return false;
 		if (prop.name[0] === '$') return false;
 		return true;
 	});
@@ -368,7 +362,7 @@ export default function dom(
 				}
 
 				static get observedAttributes() {
-					return ${JSON.stringify(props.map(x => x.exported_as))};
+					return ${JSON.stringify(props.map(x => x.export_name))};
 				}
 
 				${body.length > 0 && body.join('\n\n')}

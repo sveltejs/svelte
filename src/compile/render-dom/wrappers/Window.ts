@@ -118,15 +118,17 @@ export default class WindowWrapper extends Wrapper {
 				`);
 			}
 
-			component.declarations.push(handler_name);
-			component.add_reference(handler_name);
+			component.add_var({
+				name: handler_name,
+				kind: 'injected',
+				referenced: true
+			});
+
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
 					${props.map(prop => `${prop.name} = window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
 				}
 			`);
-
-
 
 			block.builders.init.addBlock(deindent`
 				@add_render_callback(ctx.${handler_name});

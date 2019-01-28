@@ -238,8 +238,12 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			if (binding.name === 'this') {
 				const fn = component.getUniqueName(`${this.var}_binding`);
-				component.declarations.push(fn);
-				component.add_reference(fn);
+
+				component.add_var({
+					name: fn,
+					kind: 'injected',
+					referenced: true
+				});
 
 				let lhs;
 				let object;
@@ -269,8 +273,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
-			component.declarations.push(name);
-			component.add_reference(name);
+
+			component.add_var({
+				name,
+				kind: 'injected',
+				referenced: true
+			});
 
 			const updating = block.getUniqueName(`updating_${binding.name}`);
 			block.addVariable(updating);
