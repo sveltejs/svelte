@@ -288,7 +288,9 @@ export default class Expression {
 						} else {
 							names.forEach(name => {
 								if (scope.declarations.has(name)) return;
-								if (component.imported_declarations.has(name)) return;
+
+								const variable = component.var_lookup.get(name);
+								if (variable && variable.hoistable) return;
 
 								pending_assignments.add(name);
 							});
@@ -297,7 +299,9 @@ export default class Expression {
 						const { name } = getObject(node.argument);
 
 						if (scope.declarations.has(name)) return;
-						if (component.imported_declarations.has(name)) return;
+
+						const variable = component.var_lookup.get(name);
+						if (variable && variable.hoistable) return;
 
 						pending_assignments.add(name);
 					}

@@ -178,8 +178,10 @@ export default function dom(
 						code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
 					} else {
 						names.forEach(name => {
-							if (component.imported_declarations.has(name)) return;
 							if (scope.findOwner(name) !== component.instance_scope) return;
+
+							const variable = component.var_lookup.get(name);
+							if (variable && variable.hoistable) return;
 
 							pending_assignments.add(name);
 							component.has_reactive_assignments = true;
@@ -190,8 +192,10 @@ export default function dom(
 				else if (node.type === 'UpdateExpression') {
 					const { name } = getObject(node.argument);
 
-					if (component.imported_declarations.has(name)) return;
 					if (scope.findOwner(name) !== component.instance_scope) return;
+
+					const variable = component.var_lookup.get(name);
+					if (variable && variable.hoistable) return;
 
 					pending_assignments.add(name);
 					component.has_reactive_assignments = true;

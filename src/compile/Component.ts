@@ -62,7 +62,6 @@ export default class Component {
 	module_javascript: string;
 	javascript: string;
 
-	imported_declarations: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
 	partly_hoisted: string[] = [];
@@ -422,8 +421,6 @@ export default class Component {
 						module: is_module,
 						hoistable: true
 					});
-
-					this.imported_declarations.add(specifier.local.name);
 				});
 			}
 		});
@@ -837,7 +834,7 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_nodes, imported_declarations, var_lookup } = this;
+		const { hoistable_nodes, var_lookup } = this;
 
 		const top_level_function_declarations = new Map();
 
