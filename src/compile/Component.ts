@@ -551,7 +551,8 @@ export default class Component {
 				this.add_var({
 					name,
 					kind,
-					module: true
+					module: true,
+					hoistable: true
 				});
 			}
 		});
@@ -794,7 +795,6 @@ export default class Component {
 		});
 
 		coalesced_declarations.forEach(group => {
-			const kind = group[0].kind;
 			let c = 0;
 
 			let combining = false;
