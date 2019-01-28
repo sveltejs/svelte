@@ -4,10 +4,9 @@ export default {
 			{
 				name: 'foo',
 				kind: 'injected',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: 'foo',
 				source: null,
-				exported_as: 'foo',
 				referenced: true,
 				module: false,
 				mutated: true
@@ -15,10 +14,9 @@ export default {
 			{
 				name: 'Bar',
 				kind: 'injected',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: 'Bar',
 				source: null,
-				exported_as: 'Bar',
 				referenced: true,
 				module: false,
 				mutated: true
@@ -26,10 +24,9 @@ export default {
 			{
 				name: 'baz',
 				kind: 'injected',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: 'baz',
 				source: null,
-				exported_as: 'baz',
 				referenced: true,
 				module: false,
 				mutated: true

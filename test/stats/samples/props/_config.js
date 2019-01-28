@@ -4,45 +4,41 @@ export default {
 			{
 				name: 'name',
 				kind: 'let',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: 'name',
 				source: null,
-				exported_as: 'name',
 				module: false,
-				mutated: false,
+				mutated: true,
 				referenced: true
 			},
 			{
 				name: 'cats',
 				kind: 'let',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: 'cats',
 				source: null,
-				exported_as: 'name',
 				module: false,
-				mutated: false,
+				mutated: true,
 				referenced: true
 			},
 			{
 				name: 'foo',
 				kind: 'let',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: null,
 				source: null,
-				exported_as: null,
 				module: false,
 				mutated: false,
-				referenced: true
+				referenced: false
 			},
 			{
 				name: 'bar',
 				kind: 'let',
-				import_type: null,
-				imported_as: null,
+				import_name: null,
+				export_name: null,
 				source: null,
-				exported_as: null,
 				module: false,
-				mutated: false,
+				mutated: true,
 				referenced: true
 			}
 		]);

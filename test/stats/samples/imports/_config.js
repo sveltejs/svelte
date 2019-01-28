@@ -4,35 +4,32 @@ export default {
 			{
 				name: 'x',
 				kind: 'import',
-				import_type: 'default',
-				imported_as: 'default',
+				import_name: 'default',
+				export_name: null,
 				source: 'x',
-				exported_as: null,
 				module: false,
 				mutated: false,
-				referenced: true
+				referenced: false
 			},
 			{
 				name: 'y',
 				kind: 'import',
-				import_type: 'default',
-				imported_as: 'y',
+				import_name: 'y',
+				export_name: null,
 				source: 'y',
-				exported_as: null,
 				module: false,
 				mutated: false,
-				referenced: true
+				referenced: false
 			},
 			{
 				name: 'z',
 				kind: 'import',
-				import_type: 'default',
-				imported_as: '*',
+				import_name: '*',
+				export_name: null,
 				source: 'z',
-				exported_as: null,
 				module: false,
 				mutated: false,
-				referenced: true
+				referenced: false
 			}
 		]);
 	}
