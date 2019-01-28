@@ -34,8 +34,8 @@ export default function ssr(
 		user_code = `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
 	}
 
-	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
-	const reactive_store_values = reactive_stores.map(name => {
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_store_values = reactive_stores.map(({ name }) => {
 		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
 
 		return component.options.dev

@@ -71,7 +71,6 @@ export default class Component {
 	has_reactive_assignments = false;
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
-	template_references: Set<string> = new Set();
 
 	file: string;
 	locate: (c: number) => { line: number, column: number };
@@ -173,9 +172,6 @@ export default class Component {
 				writable: true
 			});
 		}
-
-		// TODO remove this
-		this.template_references.add(name);
 	}
 
 	addSourcemapLocations(node: Node) {
