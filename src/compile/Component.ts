@@ -64,7 +64,6 @@ export default class Component {
 	javascript: string;
 
 	declarations: string[] = [];
-	props: Array<{ name: string, as: string }> = [];
 	writable_declarations: Set<string> = new Set();
 	initialised_declarations: Set<string> = new Set();
 	imported_declarations: Set<string> = new Set();

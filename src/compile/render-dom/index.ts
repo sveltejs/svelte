@@ -70,15 +70,10 @@ export default function dom(
 		options.css !== false
 	);
 
-	// TODO remove this, just use component.symbols everywhere
-	component.props = component.vars.filter(variable => !variable.module && variable.exported_as).map(variable => ({
-		name: variable.name,
-		as: variable.exported_as
-	}));
+	const props = component.vars.filter(variable => !variable.module && variable.exported_as);
+	const writable_props = props.filter(x => component.writable_declarations.has(x.name));
 
-	const props = component.props.filter(x => component.writable_declarations.has(x.name));
-
-	const set = (component.meta.props || props.length > 0 || renderer.slots.size > 0)
+	const set = (component.meta.props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
 			$$props => {
 				${component.meta.props && deindent`
@@ -86,8 +81,8 @@ export default function dom(
 				@assign(${component.meta.props}, $$props);
 				$$invalidate('${component.meta.props_object}', ${component.meta.props_object});
 				`}
-				${props.map(prop =>
-				`if ('${prop.as}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.as});`)}
+				${writable_props.map(prop =>
+				`if ('${prop.exported_as}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.exported_as});`)}
 				${renderer.slots.size > 0 &&
 				`if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);`}
 			}
@@ -99,32 +94,32 @@ export default function dom(
 	const not_equal = component.meta.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
-	component.props.forEach(x => {
+	props.forEach(x => {
 		if (component.imported_declarations.has(x.name) || component.hoistable_names.has(x.name)) {
 			body.push(deindent`
-				get ${x.as}() {
+				get ${x.exported_as}() {
 					return ${x.name};
 				}
 			`);
 		} else {
 			body.push(deindent`
-				get ${x.as}() {
+				get ${x.exported_as}() {
 					return this.$$.ctx.${x.name};
 				}
 			`);
 		}
 
-		if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
+		if (component.writable_declarations.has(x.exported_as) && !renderer.readonly.has(x.exported_as)) {
 			body.push(deindent`
-				set ${x.as}(${x.name}) {
+				set ${x.exported_as}(${x.name}) {
 					this.$set({ ${x.name} });
 					@flush();
 				}
 			`);
 		} else if (component.options.dev) {
 			body.push(deindent`
-				set ${x.as}(value) {
-					throw new Error("<${component.tag}>: Cannot set read-only property '${x.as}'");
+				set ${x.exported_as}(value) {
+					throw new Error("<${component.tag}>: Cannot set read-only property '${x.exported_as}'");
 				}
 			`);
 		}
@@ -133,7 +128,7 @@ export default function dom(
 	if (component.options.dev) {
 		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
-		const expected = component.props
+		const expected = props
 			.map(x => x.name)
 			.filter(name => !component.initialised_declarations.has(name));
 
@@ -244,7 +239,7 @@ export default function dom(
 	}
 
 	const args = ['$$self'];
-	if (component.props.length > 0 || component.has_reactive_assignments || renderer.slots.size > 0) {
+	if (props.length > 0 || component.has_reactive_assignments || renderer.slots.size > 0) {
 		args.push('$$props', '$$invalidate');
 	}
 
@@ -261,11 +256,11 @@ export default function dom(
 	const filtered_declarations = component.declarations.filter(name => {
 		if (component.hoistable_names.has(name)) return false;
 		if (component.imported_declarations.has(name)) return false;
-		if (component.props.find(p => p.as === name)) return true;
+		if (props.find(p => p.exported_as === name)) return true;
 		return component.template_references.has(name);
 	});
 
-	const filtered_props = component.props.filter(prop => {
+	const filtered_props = props.filter(prop => {
 		if (component.hoistable_names.has(prop.name)) return false;
 		if (component.imported_declarations.has(prop.name)) return false;
 		if (prop.name[0] === '$') return false;
@@ -360,7 +355,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(component.props.length > 0 || component.meta.props) && deindent`
+						${(props.length > 0 || component.meta.props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
@@ -369,7 +364,7 @@ export default function dom(
 				}
 
 				static get observedAttributes() {
-					return ${JSON.stringify(component.props.map(x => x.as))};
+					return ${JSON.stringify(props.map(x => x.exported_as))};
 				}
 
 				${body.length > 0 && body.join('\n\n')}
