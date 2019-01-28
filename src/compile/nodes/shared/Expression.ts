@@ -122,7 +122,7 @@ export default class Expression {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
-					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
+					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
 
 					if (template_scope.is_let(name)) {
 						if (!function_expression) {
@@ -242,7 +242,7 @@ export default class Expression {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
-					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
+					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {

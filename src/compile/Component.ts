@@ -62,7 +62,6 @@ export default class Component {
 	module_javascript: string;
 	javascript: string;
 
-	declarations: string[] = [];
 	imported_declarations: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
@@ -141,22 +140,6 @@ export default class Component {
 		if (!options.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warnOnUnusedSelectors(stats);
-
-		if (!ast.instance && !ast.module) {
-			const props = [...this.template_references];
-			this.declarations.push(...props);
-
-			// props.forEach(name => {
-			// 	this.add_var({
-			// 		name,
-			// 		kind: 'injected',
-			// 		export_name: name,
-			// 		mutated: true, // TODO kind of a misnomer... it's *mutable* but not necessarily *mutated*. is that a problem?
-			// 		referenced: true,
-			// 		writable: true
-			// 	});
-			// });
-		}
 	}
 
 	add_var(variable: Var) {
@@ -573,8 +556,6 @@ export default class Component {
 					kind,
 					module: true
 				});
-
-				this.declarations.push(name);
 			}
 		});
 
@@ -620,8 +601,6 @@ export default class Component {
 					initialised: instance_scope.initialised_declarations.has(name),
 					writable: kind === 'var' || kind === 'let'
 				});
-
-				this.declarations.push(name);
 			}
 
 			this.node_for_declaration.set(name, node);
@@ -995,7 +974,7 @@ export default class Component {
 							const object = getObject(node);
 							const { name } = object;
 
-							if (name[0] === '$' || component.declarations.indexOf(name) !== -1) {
+							if (name[0] === '$' || component.var_lookup.has(name)) {
 								dependencies.add(name);
 							}
 
@@ -1079,8 +1058,9 @@ export default class Component {
 
 	qualify(name) {
 		const variable = this.var_lookup.get(name);
+
+		if (!variable) return name;
 		if (variable && variable.hoistable) return name;
-		if (this.declarations.indexOf(name) === -1) return name;
 
 		this.add_reference(name); // TODO we can probably remove most other occurrences of this
 		return `ctx.${name}`;
