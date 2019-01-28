@@ -130,17 +130,15 @@ export default function dom(
 	if (component.options.dev) {
 		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
-		const expected = props
-			.map(x => x.name)
-			.filter(name => !component.initialised_declarations.has(name));
+		const expected = props.filter(prop => !prop.initialised);
 
 		if (expected.length) {
 			dev_props_check = deindent`
 				const { ctx } = this.$$;
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
-				${expected.map(name => deindent`
-				if (ctx.${name} === undefined && !('${name}' in props)) {
-					console.warn("<${component.tag}> was created without expected prop '${name}'");
+				${expected.map(prop => deindent`
+				if (ctx.${prop.name} === undefined && !('${prop.exported_as}' in props)) {
+					console.warn("<${component.tag}> was created without expected prop '${prop.exported_as}'");
 				}`)}
 			`;
 		}

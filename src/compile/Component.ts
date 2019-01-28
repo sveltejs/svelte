@@ -64,7 +64,6 @@ export default class Component {
 	javascript: string;
 
 	declarations: string[] = [];
-	initialised_declarations: Set<string> = new Set();
 	imported_declarations: Set<string> = new Set();
 	hoistable_names: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
@@ -153,13 +152,9 @@ export default class Component {
 				this.add_var({
 					name,
 					kind: 'injected',
-					import_type: null,
-					imported_as: null,
 					exported_as: name,
-					source: null,
 					mutated: true, // TODO kind of a misnomer... it's *mutable* but not necessarily *mutated*. is that a problem?
 					referenced: true,
-					module: false,
 					writable: true
 				});
 			});
@@ -180,11 +175,6 @@ export default class Component {
 			this.add_var({
 				name,
 				kind: 'injected',
-				import_type: null,
-				imported_as: null,
-				source: null,
-				exported_as: null,
-				module: false,
 				mutated: true,
 				referenced: true,
 				writable: name[0] !== '$'
@@ -442,11 +432,7 @@ export default class Component {
 						imported_as,
 						import_type,
 						source: node.source.value,
-						exported_as: null,
 						module: is_module,
-						mutated: false,
-						referenced: false,
-						writable: false
 					});
 
 					this.imported_declarations.add(specifier.local.name);
@@ -476,14 +462,11 @@ export default class Component {
 								this.add_var({
 									name,
 									kind,
-									import_type: null,
-									imported_as: null,
 									exported_as: name,
-									source: null,
 									module: is_module,
 									mutated: !is_module,
-									referenced: false,
-									writable: kind === 'let' || kind === 'var'
+									writable: kind === 'let' || kind === 'var',
+									initialised: !!declarator.init
 								});
 							});
 						});
@@ -502,14 +485,10 @@ export default class Component {
 						this.add_var({
 							name,
 							kind,
-							import_type: null,
-							imported_as: null,
 							exported_as: name,
-							source: null,
 							module: is_module,
 							mutated: !is_module,
-							referenced: false,
-							writable: false
+							initialised: true
 						});
 					}
 
@@ -598,15 +577,7 @@ export default class Component {
 
 				this.add_var({
 					name,
-					kind,
-					import_type: null,
-					imported_as: null,
-					exported_as: null,
-					source: null,
-					module: false,
-					mutated: false,
-					referenced: false,
-					writable: false
+					kind
 				});
 
 				this.declarations.push(name);
@@ -652,14 +623,7 @@ export default class Component {
 				this.add_var({
 					name,
 					kind,
-					import_type: null,
-					imported_as: null,
-					exported_as: null,
-					source: null,
-					module: false,
-					mutated: false,
-					referenced: false,
-					writable: false
+					initialised: instance_scope.initialised_declarations.has(name)
 				});
 
 				this.declarations.push(name);
@@ -668,20 +632,10 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		this.initialised_declarations = instance_scope.initialised_declarations;
-
 		globals.forEach(name => {
 			this.add_var({
 				name,
-				kind: 'global',
-				import_type: null,
-				imported_as: null,
-				source: null,
-				exported_as: null,
-				module: false,
-				mutated: false,
-				referenced: false,
-				writable: false
+				kind: 'global'
 			});
 		});
 
