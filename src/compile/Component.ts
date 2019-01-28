@@ -71,7 +71,6 @@ export default class Component {
 	hoistable_names: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
 	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
@@ -256,7 +255,10 @@ export default class Component {
 			options.sveltePath,
 			importedHelpers,
 			this.imports,
-			this.module_exports,
+			this.vars.filter(variable => variable.module && variable.exported_as).map(variable => ({
+				name: variable.name,
+				as: variable.exported_as
+			})),
 			this.source
 		);
 
@@ -613,12 +615,6 @@ export default class Component {
 		this.extract_exports(script.content, true);
 		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
-
-		// TODO remove this
-		this.module_exports = this.vars.filter(variable => variable.module && variable.exported_as).map(variable => ({
-			name: variable.name,
-			as: variable.exported_as
-		}));
 	}
 
 	walk_instance_js_pre_template() {
