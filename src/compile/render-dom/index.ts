@@ -70,6 +70,12 @@ export default function dom(
 		options.css !== false
 	);
 
+	// TODO remove this, just use component.symbols everywhere
+	component.props = component.vars.filter(variable => !variable.module && variable.exported_as).map(variable => ({
+		name: variable.name,
+		as: variable.exported_as
+	}));
+
 	const props = component.props.filter(x => component.writable_declarations.has(x.name));
 
 	const set = (component.meta.props || props.length > 0 || renderer.slots.size > 0)

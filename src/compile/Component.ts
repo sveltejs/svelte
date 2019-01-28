@@ -165,9 +165,6 @@ export default class Component {
 					module: false
 				});
 			});
-
-			// TODO remove this
-			this.props = props.map(name => ({ name, as: name }));
 		}
 	}
 
@@ -685,12 +682,6 @@ export default class Component {
 		this.extract_imports(script.content, false);
 		this.extract_exports(script.content, false);
 		this.track_mutations();
-
-		// TODO remove this, just use component.symbols everywhere
-		this.props = this.vars.filter(variable => !variable.module && variable.exported_as).map(variable => ({
-			name: variable.name,
-			as: variable.exported_as
-		}));
 	}
 
 	walk_instance_js_post_template() {
@@ -781,12 +772,6 @@ export default class Component {
 		const { code, instance_scope, instance_scope_map: map, meta } = this;
 		let scope = instance_scope;
 
-		// TODO we will probably end up wanting to use this elsewhere
-		const exported = new Set();
-		this.props.forEach(prop => {
-			exported.add(prop.name);
-		});
-
 		const coalesced_declarations = [];
 		let current_group;
 
@@ -803,14 +788,15 @@ export default class Component {
 
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
-						let has_meta_props = false;
 						let has_exports = false;
 						let has_only_exports = true;
 
 						node.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
+								const variable = component.var_lookup.get(name);
+
 								if (name === meta.props_object) {
-									if (exported.has(name)) {
+									if (variable.exported_as) {
 										component.error(declarator, {
 											code: 'exported-meta-props',
 											message: `Cannot export props binding`
@@ -829,11 +815,9 @@ export default class Component {
 									} else {
 										code.overwrite(declarator.id.end, declarator.end, ' = $$props');
 									}
-
-									has_meta_props = true;
 								}
 
-								if (exported.has(name)) {
+								if (variable.exported_as) {
 									has_exports = true;
 								} else {
 									has_only_exports = false;

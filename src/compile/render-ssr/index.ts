@@ -24,13 +24,14 @@ export default function ssr(
 
 	let user_code;
 
+	// TODO remove this, just use component.symbols everywhere
+	const props = component.vars.filter(variable => !variable.module && variable.exported_as);
+
 	if (component.javascript) {
 		component.rewrite_props();
 		user_code = component.javascript;
-	} else if (!component.ast.instance && !component.ast.module && component.props.length > 0) {
-		const props = component.props.map(prop => prop.as).filter(name => name[0] !== '$');
-
-		user_code = `let { ${props.join(', ')} } = $$props;`
+	} else if (!component.ast.instance && !component.ast.module && props.length > 0) {
+		user_code = `let { ${props.map(prop => prop.exported_as).join(', ')} } = $$props;`
 	}
 
 	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
@@ -44,8 +45,8 @@ export default function ssr(
 
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript
-		? component.props.map(prop => {
-			return `if ($$props.${prop.as} === void 0 && $$bindings.${prop.as} && ${prop.name} !== void 0) $$bindings.${prop.as}(${prop.name});`;
+		? props.map(prop => {
+			return `if ($$props.${prop.exported_as} === void 0 && $$bindings.${prop.exported_as} && ${prop.name} !== void 0) $$bindings.${prop.exported_as}(${prop.name});`;
 		})
 		: [];
 
