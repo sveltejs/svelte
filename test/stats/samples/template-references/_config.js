@@ -4,20 +4,35 @@ export default {
 			{
 				name: 'foo',
 				kind: 'injected',
-				exported: 'foo',
-				referenced: true
+				import_type: null,
+				imported_as: null,
+				source: null,
+				exported_as: 'foo',
+				referenced: true,
+				module: false,
+				mutated: true
 			},
 			{
 				name: 'Bar',
 				kind: 'injected',
-				exported: 'Bar',
-				referenced: true
+				import_type: null,
+				imported_as: null,
+				source: null,
+				exported_as: 'Bar',
+				referenced: true,
+				module: false,
+				mutated: true
 			},
 			{
 				name: 'baz',
 				kind: 'injected',
-				exported: 'baz',
-				referenced: true
+				import_type: null,
+				imported_as: null,
+				source: null,
+				exported_as: 'baz',
+				referenced: true,
+				module: false,
+				mutated: true
 			}
 		]);
 	},

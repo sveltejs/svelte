@@ -2,22 +2,37 @@ export default {
 	test(assert, stats) {
 		assert.deepEqual(stats.vars, [
 			{
+				name: 'x',
 				kind: 'import',
-				imported: 'x',
-				default: true,
-				source: 'x'
+				import_type: 'default',
+				imported_as: 'default',
+				source: 'x',
+				exported_as: null,
+				module: false,
+				mutated: false,
+				referenced: true
 			},
 			{
+				name: 'y',
 				kind: 'import',
-				imported: 'y',
-				named: true,
-				source: 'y'
+				import_type: 'default',
+				imported_as: 'y',
+				source: 'y',
+				exported_as: null,
+				module: false,
+				mutated: false,
+				referenced: true
 			},
 			{
+				name: 'z',
 				kind: 'import',
-				imported: 'y',
-				namespace: true,
-				source: 'y'
+				import_type: 'default',
+				imported_as: '*',
+				source: 'z',
+				exported_as: null,
+				module: false,
+				mutated: false,
+				referenced: true
 			}
 		]);
 	}
