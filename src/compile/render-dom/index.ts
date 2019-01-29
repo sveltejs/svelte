@@ -28,7 +28,7 @@ export default function dom(
 
 	const builder = new CodeBuilder();
 
-	if (component.options.dev) {
+	if (component.compileOptions.dev) {
 		builder.addLine(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
 	}
 
@@ -37,7 +37,7 @@ export default function dom(
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { onlyEscapeAtSymbol: true });
 
-	if (styles && component.options.css !== false && !options.customElement) {
+	if (styles && component.compileOptions.css !== false && !options.customElement) {
 		builder.addBlock(deindent`
 			function @add_css() {
 				var style = @createElement("style");
@@ -73,13 +73,13 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (component.optionsTag.props || writable_props.length > 0 || renderer.slots.size > 0)
+	const set = (component.componentOptions.props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
 			$$props => {
-				${component.optionsTag.props && deindent`
-				if (!${component.optionsTag.props}) ${component.optionsTag.props} = {};
-				@assign(${component.optionsTag.props}, $$props);
-				$$invalidate('${component.optionsTag.props_object}', ${component.optionsTag.props_object});
+				${component.componentOptions.props && deindent`
+				if (!${component.componentOptions.props}) ${component.componentOptions.props} = {};
+				@assign(${component.componentOptions.props}, $$props);
+				$$invalidate('${component.componentOptions.props_object}', ${component.componentOptions.props_object});
 				`}
 				${writable_props.map(prop =>
 				`if ('${prop.export_name}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.export_name});`)}
@@ -91,7 +91,7 @@ export default function dom(
 
 	const body = [];
 
-	const not_equal = component.optionsTag.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.componentOptions.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
 	props.forEach(x => {
@@ -118,7 +118,7 @@ export default function dom(
 					@flush();
 				}
 			`);
-		} else if (component.options.dev) {
+		} else if (component.compileOptions.dev) {
 			body.push(deindent`
 				set ${x.export_name}(value) {
 					throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
@@ -127,7 +127,7 @@ export default function dom(
 		}
 	});
 
-	if (component.options.dev) {
+	if (component.compileOptions.dev) {
 		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
 		const expected = props.filter(prop => !prop.initialised);
@@ -306,7 +306,7 @@ export default function dom(
 	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
 		.map(({ name }) => deindent`
 			let ${name};
-			${component.options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$invalidate('${name}', ${name}); }));
 		`)
 		.join('\n\n');
@@ -355,7 +355,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || component.optionsTag.props) && deindent`
+						${(props.length > 0 || component.componentOptions.props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();

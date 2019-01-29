@@ -64,9 +64,9 @@ export default class AttributeWrapper {
 				? '@setXlinkAttribute'
 				: '@setAttribute';
 
-		const isLegacyInputType = element.renderer.component.options.legacy && name === 'type' && this.parent.node.name === 'input';
+		const isLegacyInputType = element.renderer.component.compileOptions.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !element.renderer.component.options.legacy && !element.node.namespace;
+		const isDataSet = /^data-/.test(name) && !element.renderer.component.compileOptions.legacy && !element.node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;

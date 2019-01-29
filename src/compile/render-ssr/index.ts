@@ -38,7 +38,7 @@ export default function ssr(
 	const reactive_store_values = reactive_stores.map(({ name }) => {
 		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
 
-		return component.options.dev
+		return component.compileOptions.dev
 			? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
 			: assignment;
 	});
