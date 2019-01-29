@@ -147,14 +147,16 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const fragment_dependencies = new Set();
-		this.slots.forEach((slot, name) => {
+		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {
 				const is_let = slot.scope.is_let(name);
 				const variable = renderer.component.var_lookup.get(name);
 
-				if (is_let || variable.mutated) {
-					fragment_dependencies.add(name);
-				}
+				if (is_let) fragment_dependencies.add(name);
+
+				if (!variable) return;
+				if (variable.mutated || variable.reassigned) fragment_dependencies.add(name);
+				if (!variable.module && variable.writable && variable.export_name) fragment_dependencies.add(name);
 			});
 		});
 
@@ -241,7 +243,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				component.add_var({
 					name: fn,
-					injected: true,
+					internal: true,
 					referenced: true
 				});
 
@@ -276,7 +278,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.add_var({
 				name,
-				injected: true,
+				internal: true,
 				referenced: true
 			});
 

@@ -99,7 +99,7 @@ export default class Stats {
 		return {
 			timings,
 			warnings: this.warnings,
-			vars: component.vars.filter(variable => !variable.global && !variable.implicit).map(variable => ({
+			vars: component.vars.filter(variable => !variable.global && !variable.implicit && !variable.internal).map(variable => ({
 				name: variable.name,
 				export_name: variable.export_name || null,
 				injected: variable.injected || false,

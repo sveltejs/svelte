@@ -6,7 +6,7 @@ export default {
 				export_name: 'name',
 				injected: false,
 				module: false,
-				mutated: true,
+				mutated: false,
 				reassigned: false,
 				referenced: true,
 				writable: true
@@ -16,7 +16,7 @@ export default {
 				export_name: 'cats',
 				injected: false,
 				module: false,
-				mutated: true,
+				mutated: false,
 				reassigned: false,
 				referenced: true,
 				writable: true
@@ -36,8 +36,8 @@ export default {
 				export_name: null,
 				injected: false,
 				module: false,
-				mutated: true,
-				reassigned: false,
+				mutated: false,
+				reassigned: true,
 				referenced: true,
 				writable: true
 			}

@@ -44,7 +44,7 @@ export default class EventHandler extends Node {
 
 			component.add_var({
 				name,
-				injected: true,
+				internal: true,
 				referenced: true
 			});
 

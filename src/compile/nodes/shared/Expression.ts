@@ -149,30 +149,33 @@ export default class Expression {
 				}
 
 				// track any assignments from template expressions as mutable
-				let mutated;
+				let names;
+				let deep = false;
+
 				if (function_expression) {
 					if (node.type === 'AssignmentExpression') {
-						mutated = node.left.type === 'MemberExpression'
+						deep = node.left.type === 'MemberExpression';
+						names = deep
 							? [getObject(node.left).name]
 							: extractNames(node.left);
 					} else if (node.type === 'UpdateExpression') {
 						const { name } = getObject(node.argument);
-						mutated = [name];
+						names = [name];
 					}
 				}
 
-				if (mutated) {
-					mutated.forEach(name => {
+				if (names) {
+					names.forEach(name => {
 						if (template_scope.names.has(name)) {
 							template_scope.dependenciesForName.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
-								if (variable) variable.mutated = true;
+								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
 						} else {
 							component.add_reference(name);
 
 							const variable = component.var_lookup.get(name);
-							if (variable) variable.mutated = true;
+							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
 					});
 				}
@@ -381,7 +384,7 @@ export default class Expression {
 
 						component.add_var({
 							name,
-							injected: true,
+							internal: true,
 							hoistable: true,
 							referenced: true
 						});
@@ -394,7 +397,7 @@ export default class Expression {
 
 						component.add_var({
 							name,
-							injected: true,
+							internal: true,
 							referenced: true
 						});
 					}
@@ -406,7 +409,7 @@ export default class Expression {
 
 						component.add_var({
 							name,
-							injected: true,
+							internal: true,
 							referenced: true
 						});
 

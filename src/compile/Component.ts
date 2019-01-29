@@ -429,27 +429,15 @@ export default class Component {
 
 			if (node.type === 'ExportNamedDeclaration') {
 				if (node.declaration) {
-					const { kind } = node.declaration;
-
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
 								const variable = this.var_lookup.get(name);
 								variable.export_name = name;
-								if (kind !== 'const') variable.mutated = true;
 							});
 						});
 					} else {
 						const { name } = node.declaration.id;
-
-						const kind = node.declaration.type === 'ClassDeclaration'
-							? 'class'
-							: node.declaration.type === 'FunctionDeclaration'
-								? 'function'
-								: null;
-
-						// sanity check
-						if (!kind) throw new Error(`Unknown declaration type ${node.declaration.type}`);
 
 						const variable = this.var_lookup.get(name);
 						variable.export_name = name;
@@ -636,13 +624,17 @@ export default class Component {
 
 		walk(this.ast.instance.content, {
 			enter(node, parent) {
-				let names;
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
 
+				let names;
+				let deep = false;
+
 				if (node.type === 'AssignmentExpression') {
-					names = node.left.type === 'MemberExpression'
+					deep = node.left.type === 'MemberExpression';
+
+					names = deep
 						? [getObject(node.left).name]
 						: extractNames(node.left);
 				} else if (node.type === 'UpdateExpression') {
@@ -653,7 +645,7 @@ export default class Component {
 					names.forEach(name => {
 						if (scope.findOwner(name) === instance_scope) {
 							const variable = component.var_lookup.get(name);
-							variable.mutated = true;
+							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
 					});
 				}
@@ -836,7 +828,7 @@ export default class Component {
 
 		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
-				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).mutated)) {
+				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).reassigned)) {
 					node.declarations.forEach(d => {
 						const variable = this.var_lookup.get(d.id.name);
 						variable.hoistable = true;

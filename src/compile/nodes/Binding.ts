@@ -34,11 +34,11 @@ export default class Binding extends Node {
 		if (this.isContextual) {
 			scope.dependenciesForName.get(name).forEach(name => {
 				const variable = component.var_lookup.get(name);
-				variable.mutated = true;
+				variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 			});
 		} else {
 			const variable = component.var_lookup.get(name);
-			variable.mutated = true;
+			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 		}
 
 		if (this.expression.node.type === 'MemberExpression') {
