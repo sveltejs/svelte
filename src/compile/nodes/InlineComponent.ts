@@ -42,6 +42,13 @@ export default class InlineComponent extends Node {
 					});
 
 				case 'Attribute':
+					if (node.name === 'slot') {
+						component.error(node, {
+							code: `invalid-prop`,
+							message: `'slot' is reserved for future use in named slots`
+						});
+					}
+					// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
