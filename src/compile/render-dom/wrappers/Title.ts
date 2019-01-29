@@ -34,7 +34,7 @@ export default class TitleWrapper extends Wrapper {
 				// single {tag} — may be a non-string
 				const { expression } = this.node.children[0];
 				value = expression.render(block);
-				addToSet(allDependencies, expression.dynamic_dependencies);
+				addToSet(allDependencies, expression.dependencies);
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value =
@@ -46,7 +46,7 @@ export default class TitleWrapper extends Wrapper {
 							} else {
 								const snippet = chunk.expression.render(block);
 
-								chunk.expression.dynamic_dependencies.forEach(d => {
+								chunk.expression.dependencies.forEach(d => {
 									allDependencies.add(d);
 								});
 

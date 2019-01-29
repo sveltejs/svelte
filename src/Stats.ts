@@ -97,11 +97,18 @@ export default class Stats {
 		});
 
 		return {
-			props: component.props.map(prop => prop.as),
 			timings,
 			warnings: this.warnings,
-			imports,
-			templateReferences: component && component.template_references
+			vars: component.vars.filter(variable => !variable.global && !variable.implicit && !variable.internal).map(variable => ({
+				name: variable.name,
+				export_name: variable.export_name || null,
+				injected: variable.injected || false,
+				module: variable.module || false,
+				mutated: variable.mutated || false,
+				reassigned: variable.reassigned || false,
+				referenced: variable.referenced || false,
+				writable: variable.writable || false
+			}))
 		};
 	}
 

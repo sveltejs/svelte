@@ -24,17 +24,18 @@ export default function ssr(
 
 	let user_code;
 
+	// TODO remove this, just use component.symbols everywhere
+	const props = component.vars.filter(variable => !variable.module && variable.export_name);
+
 	if (component.javascript) {
 		component.rewrite_props();
 		user_code = component.javascript;
-	} else if (component.ast.js.length === 0 && component.props.length > 0) {
-		const props = component.props.map(prop => prop.as).filter(name => name[0] !== '$');
-
-		user_code = `let { ${props.join(', ')} } = $$props;`
+	} else if (!component.ast.instance && !component.ast.module && props.length > 0) {
+		user_code = `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
 	}
 
-	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
-	const reactive_store_values = reactive_stores.map(name => {
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_store_values = reactive_stores.map(({ name }) => {
 		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
 
 		return component.options.dev
@@ -44,8 +45,8 @@ export default function ssr(
 
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript
-		? component.props.map(prop => {
-			return `if ($$props.${prop.as} === void 0 && $$bindings.${prop.as} && ${prop.name} !== void 0) $$bindings.${prop.as}(${prop.name});`;
+		? props.map(prop => {
+			return `if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
 		})
 		: [];
 

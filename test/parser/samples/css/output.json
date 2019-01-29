@@ -27,71 +27,70 @@
 			}
 		]
 	},
-	"css": [
-		{
-			"start": 16,
-			"end": 56,
-			"attributes": [],
-			"children": [
-				{
-					"type": "Rule",
-					"selector": {
-						"type": "SelectorList",
-						"children": [
-							{
-								"type": "Selector",
+	"css": {
+		"start": 16,
+		"end": 56,
+		"attributes": [],
+		"children": [
+			{
+				"type": "Rule",
+				"selector": {
+					"type": "SelectorList",
+					"children": [
+						{
+							"type": "Selector",
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "div",
+									"start": 25,
+									"end": 28
+								}
+							],
+							"start": 25,
+							"end": 28
+						}
+					],
+					"start": 25,
+					"end": 28
+				},
+				"block": {
+					"type": "Block",
+					"children": [
+						{
+							"type": "Declaration",
+							"important": false,
+							"property": "color",
+							"value": {
+								"type": "Value",
 								"children": [
 									{
-										"type": "TypeSelector",
-										"name": "div",
-										"start": 25,
-										"end": 28
+										"type": "Identifier",
+										"name": "red",
+										"start": 40,
+										"end": 43
 									}
 								],
-								"start": 25,
-								"end": 28
-							}
-						],
-						"start": 25,
-						"end": 28
-					},
-					"block": {
-						"type": "Block",
-						"children": [
-							{
-								"type": "Declaration",
-								"important": false,
-								"property": "color",
-								"value": {
-									"type": "Value",
-									"children": [
-										{
-											"type": "Identifier",
-											"name": "red",
-											"start": 40,
-											"end": 43
-										}
-									],
-									"start": 39,
-									"end": 43
-								},
-								"start": 33,
+								"start": 39,
 								"end": 43
-							}
-						],
-						"start": 29,
-						"end": 47
-					},
-					"start": 25,
+							},
+							"start": 33,
+							"end": 43
+						}
+					],
+					"start": 29,
 					"end": 47
-				}
-			],
-			"content": {
-				"start": 23,
-				"end": 48,
-				"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
+				},
+				"start": 25,
+				"end": 47
 			}
+		],
+		"content": {
+			"start": 23,
+			"end": 48,
+			"styles": "\n\tdiv {\n\t\tcolor: red;\n\t}\n"
 		}
-	],
-	"js": []
+	},
+	"instance": null,
+	"module": null
 }

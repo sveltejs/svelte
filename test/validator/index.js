@@ -64,11 +64,16 @@ describe("validate", () => {
 					throw new Error(`Expected an error: ${expected.message}`);
 				}
 
-				assert.equal(error.code, expected.code);
-				assert.equal(error.message, expected.message);
-				assert.deepEqual(error.start, expected.start);
-				assert.deepEqual(error.end, expected.end);
-				assert.equal(error.pos, expected.pos);
+				try {
+					assert.equal(error.code, expected.code);
+					assert.equal(error.message, expected.message);
+					assert.deepEqual(error.start, expected.start);
+					assert.deepEqual(error.end, expected.end);
+					assert.equal(error.pos, expected.pos);
+				} catch (e) {
+					console.error(error)
+					throw e;
+				}
 			}
 		});
 	});
@@ -102,7 +107,7 @@ describe("validate", () => {
 			name: "_",
 			generate: false
 		});
-		
+
 		assert.deepEqual(stats.warnings, []);
 	});
 });

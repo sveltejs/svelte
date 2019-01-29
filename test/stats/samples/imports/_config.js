@@ -1,17 +1,35 @@
 export default {
 	test(assert, stats) {
-		assert.deepEqual(stats.imports, [
+		assert.deepEqual(stats.vars, [
 			{
-				source: 'x',
-				specifiers: [{ name: 'default', as: 'x' }]
+				name: 'x',
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
+				reassigned: false,
+				referenced: false,
+				writable: false
 			},
 			{
-				source: 'y',
-				specifiers: [{ name: 'y', as: 'y' }]
+				name: 'y',
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
+				reassigned: false,
+				referenced: false,
+				writable: false
 			},
 			{
-				source: 'z',
-				specifiers: [{ name: '*', as: 'z' }]
+				name: 'z',
+				export_name: null,
+				injected: false,
+				module: false,
+				mutated: false,
+				reassigned: false,
+				referenced: false,
+				writable: false
 			}
 		]);
 	}

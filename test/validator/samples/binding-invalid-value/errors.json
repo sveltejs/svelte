@@ -1,0 +1,15 @@
+[{
+	"code": "binding-undeclared",
+	"message": "foo is not declared",
+	"pos": 37,
+	"start": {
+		"line": 2,
+		"column": 19,
+		"character": 37
+	},
+	"end": {
+		"line": 2,
+		"column": 22,
+		"character": 40
+	}
+}]

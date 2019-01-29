@@ -92,7 +92,6 @@ export default class Element extends Node {
 	constructor(component, parent, scope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
-		this.scope = scope;
 
 		const parentElement = parent.findNearest(/^Element/);
 		this.namespace = this.name === 'svg' ?
@@ -196,7 +195,7 @@ export default class Element extends Node {
 				const dependencies = new Set([l.name]);
 
 				l.names.forEach(name => {
-					this.scope.add(name, dependencies);
+					this.scope.add(name, dependencies, this);
 				});
 			});
 		} else {

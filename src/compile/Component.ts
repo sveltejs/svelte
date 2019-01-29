@@ -11,11 +11,10 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal-exports';
-import { Node, Ast, CompileOptions } from '../interfaces';
+import { Node, Ast, CompileOptions, Var } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
-import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
@@ -56,31 +55,22 @@ export default class Component {
 	namespace: string;
 	tag: string;
 
-	instance_script: Node;
-	module_script: Node;
+	vars: Var[] = [];
+	var_lookup: Map<string, Var> = new Map();
 
 	imports: Node[] = [];
 	module_javascript: string;
 	javascript: string;
 
-	declarations: string[] = [];
-	props: Array<{ name: string, as: string }> = [];
-	writable_declarations: Set<string> = new Set();
-	initialised_declarations: Set<string> = new Set();
-	imported_declarations: Set<string> = new Set();
-	hoistable_names: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
 	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
-	mutable_props: Set<string> = new Set();
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
-	template_references: Set<string> = new Set();
 
 	file: string;
 	locate: (c: number) => { line: number, column: number };
@@ -93,7 +83,6 @@ export default class Component {
 
 	stylesheet: Stylesheet;
 
-	userVars: Set<string> = new Set();
 	aliases: Map<string, string> = new Map();
 	usedNames: Set<string> = new Set();
 
@@ -122,26 +111,6 @@ export default class Component {
 		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
 
-		const module_scripts = ast.js.filter(script => this.get_context(script) === 'module');
-		const instance_scripts = ast.js.filter(script => this.get_context(script) === 'default');
-
-		if (module_scripts.length > 1) {
-			this.error(module_scripts[1], {
-				code: `invalid-script`,
-				message: `A component can only have one <script context="module"> element`
-			});
-		}
-
-		if (instance_scripts.length > 1) {
-			this.error(instance_scripts[1], {
-				code: `invalid-script`,
-				message: `A component can only have one instance-level <script> element`
-			});
-		}
-
-		this.module_script = module_scripts[0];
-		this.instance_script = instance_scripts[0];
-
 		this.meta = process_meta(this, this.ast.html.children);
 		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
 
@@ -169,22 +138,43 @@ export default class Component {
 		if (!options.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warnOnUnusedSelectors(stats);
+	}
 
-		if (!this.instance_script) {
-			const props = [...this.template_references];
-			this.declarations.push(...props);
-			addToSet(this.mutable_props, this.template_references);
-			addToSet(this.writable_declarations, this.template_references);
-			addToSet(this.userVars, this.template_references);
-
-			this.props = props.map(name => ({
-				name,
-				as: name
-			}));
+	add_var(variable: Var) {
+		// TODO remove this
+		if (this.var_lookup.has(variable.name)) {
+			throw new Error(`dupe: ${variable.name}`);
 		}
 
-		// tell the root fragment scope about all of the mutable names we know from the script
-		this.mutable_props.forEach(name => this.fragment.scope.mutables.add(name));
+		this.vars.push(variable);
+		this.var_lookup.set(variable.name, variable);
+	}
+
+	add_reference(name: string) {
+		const variable = this.var_lookup.get(name);
+
+		if (variable) {
+			variable.referenced = true;
+		} else if (name[0] === '$') {
+			this.add_var({
+				name,
+				injected: true,
+				referenced: true,
+				mutated: true,
+				writable: true
+			});
+
+			this.add_reference(name.slice(1));
+		} else if (!this.ast.instance) {
+			this.add_var({
+				name,
+				export_name: name,
+				implicit: true,
+				mutated: false,
+				referenced: true,
+				writable: true
+			});
+		}
 	}
 
 	addSourcemapLocations(node: Node) {
@@ -243,7 +233,10 @@ export default class Component {
 			options.sveltePath,
 			importedHelpers,
 			this.imports,
-			this.module_exports,
+			this.vars.filter(variable => variable.module && variable.export_name).map(variable => ({
+				name: variable.name,
+				as: variable.export_name
+			})),
 			this.source
 		);
 
@@ -313,7 +306,7 @@ export default class Component {
 		for (
 			let i = 1;
 			reservedNames.has(alias) ||
-			this.userVars.has(alias) ||
+			this.var_lookup.has(alias) ||
 			this.usedNames.has(alias);
 			alias = `${name}_${i++}`
 		);
@@ -329,7 +322,7 @@ export default class Component {
 		}
 
 		reservedNames.forEach(add);
-		this.userVars.forEach(add);
+		this.var_lookup.forEach((value, key) => add(key));
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -396,7 +389,34 @@ export default class Component {
 		});
 	}
 
-	extract_imports_and_exports(content, imports, exports) {
+	extract_imports(content, is_module: boolean) {
+		const { code } = this;
+
+		content.body.forEach(node => {
+			if (node.type === 'ImportDeclaration') {
+				// imports need to be hoisted out of the IIFE
+				removeNode(code, content.start, content.end, content.body, node);
+				this.imports.push(node);
+
+				node.specifiers.forEach((specifier: Node) => {
+					if (specifier.local.name[0] === '$') {
+						this.error(specifier.local, {
+							code: 'illegal-declaration',
+							message: `The $ prefix is reserved, and cannot be used for variable and import names`
+						});
+					}
+
+					this.add_var({
+						name: specifier.local.name,
+						module: is_module,
+						hoistable: true
+					});
+				});
+			}
+		});
+	}
+
+	extract_exports(content, is_module: boolean) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -412,43 +432,30 @@ export default class Component {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
-								exports.push({ name, as: name });
-								this.mutable_props.add(name);
+								const variable = this.var_lookup.get(name);
+								variable.export_name = name;
 							});
 						});
 					} else {
 						const { name } = node.declaration.id;
-						exports.push({ name, as: name });
+
+						const variable = this.var_lookup.get(name);
+						variable.export_name = name;
 					}
 
 					code.remove(node.start, node.declaration.start);
 				} else {
 					removeNode(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
-						exports.push({
-							name: specifier.local.name,
-							as: specifier.exported.name
-						});
+						const variable = this.var_lookup.get(specifier.local.name);
+
+						if (variable) {
+							variable.export_name = specifier.exported.name;
+						} else {
+							// TODO what happens with `export { Math }` or some other global?
+						}
 					});
 				}
-			}
-
-			// imports need to be hoisted out of the IIFE
-			else if (node.type === 'ImportDeclaration') {
-				removeNode(code, content.start, content.end, content.body, node);
-				imports.push(node);
-
-				node.specifiers.forEach((specifier: Node) => {
-					if (specifier.local.name[0] === '$') {
-						this.error(specifier.local, {
-							code: 'illegal-declaration',
-							message: `The $ prefix is reserved, and cannot be used for variable and import names`
-						});
-					}
-
-					this.userVars.add(specifier.local.name);
-					this.imported_declarations.add(specifier.local.name);
-				});
 			}
 		});
 	}
@@ -491,7 +498,7 @@ export default class Component {
 	}
 
 	walk_module_js() {
-		const script = this.module_script;
+		const script = this.ast.module;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
@@ -506,15 +513,35 @@ export default class Component {
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`
 				});
 			}
+
+			if (!/Import/.test(node.type)) {
+				const kind = node.type === 'VariableDeclaration'
+					? node.kind
+					: node.type === 'ClassDeclaration'
+						? 'class'
+						: node.type === 'FunctionDeclaration'
+							? 'function'
+							: null;
+
+				// sanity check
+				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
+
+				this.add_var({
+					name,
+					module: true,
+					hoistable: true
+				});
+			}
 		});
 
-		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
+		this.extract_imports(script.content, true);
+		this.extract_exports(script.content, true);
 		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
 	}
 
 	walk_instance_js_pre_template() {
-		const script = this.instance_script;
+		const script = this.ast.instance;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
@@ -530,28 +557,56 @@ export default class Component {
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`
 				});
 			}
-		});
 
-		instance_scope.declarations.forEach((node, name) => {
-			this.userVars.add(name);
-			this.declarations.push(name);
+			if (!/Import/.test(node.type)) {
+				const kind = node.type === 'VariableDeclaration'
+					? node.kind
+					: node.type === 'ClassDeclaration'
+						? 'class'
+						: node.type === 'FunctionDeclaration'
+							? 'function'
+							: null;
+
+				// sanity check
+				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
+
+				this.add_var({
+					name,
+					initialised: instance_scope.initialised_declarations.has(name),
+					writable: kind === 'var' || kind === 'let'
+				});
+			}
 
 			this.node_for_declaration.set(name, node);
 		});
 
-		this.writable_declarations = instance_scope.writable_declarations;
-		this.initialised_declarations = instance_scope.initialised_declarations;
-
 		globals.forEach(name => {
-			this.userVars.add(name);
+			if (this.module_scope && this.module_scope.declarations.has(name)) return;
+
+			if (name[0] === '$') {
+				this.add_var({
+					name,
+					injected: true,
+					mutated: true,
+					writable: true
+				});
+
+				this.add_reference(name.slice(1));
+			} else {
+				this.add_var({
+					name,
+					global: true
+				});
+			}
 		});
 
+		this.extract_imports(script.content, false);
+		this.extract_exports(script.content, false);
 		this.track_mutations();
-		this.extract_imports_and_exports(script.content, this.imports, this.props);
 	}
 
 	walk_instance_js_post_template() {
-		const script = this.instance_script;
+		const script = this.ast.instance;
 		if (!script) return;
 
 		this.hoist_instance_declarations();
@@ -563,27 +618,42 @@ export default class Component {
 	// TODO merge this with other walks that are independent
 	track_mutations() {
 		const component = this;
-		let { instance_scope: scope, instance_scope_map: map } = this;
+		const { instance_scope, instance_scope_map: map } = this;
 
-		walk(this.instance_script.content, {
+		let scope = instance_scope;
+
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
-				let names;
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
 
+				let names;
+				let deep = false;
+
 				if (node.type === 'AssignmentExpression') {
-					names = node.left.type === 'MemberExpression'
-							? [getObject(node.left).name]
-							: extractNames(node.left);
+					deep = node.left.type === 'MemberExpression';
+
+					names = deep
+						? [getObject(node.left).name]
+						: extractNames(node.left);
 				} else if (node.type === 'UpdateExpression') {
 					names = [getObject(node.argument).name];
 				}
 
 				if (names) {
 					names.forEach(name => {
-						if (scope.has(name)) component.mutable_props.add(name);
+						if (scope.findOwner(name) === instance_scope) {
+							const variable = component.var_lookup.get(name);
+							variable[deep ? 'mutated' : 'reassigned'] = true;
+						}
 					});
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
 				}
 			}
 		})
@@ -595,7 +665,7 @@ export default class Component {
 		const component = this;
 		let { instance_scope: scope, instance_scope_map: map } = this;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -607,9 +677,6 @@ export default class Component {
 
 					if (name[0] === '$' && !scope.has(name)) {
 						component.warn_if_undefined(object, null);
-
-						// cheeky hack
-						component.template_references.add(name);
 					}
 				}
 			},
@@ -627,17 +694,10 @@ export default class Component {
 		const { code, instance_scope, instance_scope_map: map, meta } = this;
 		let scope = instance_scope;
 
-		// TODO we will probably end up wanting to use this elsewhere
-		const exported = new Set();
-		this.props.forEach(prop => {
-			exported.add(prop.name);
-			this.mutable_props.add(prop.name);
-		});
-
 		const coalesced_declarations = [];
 		let current_group;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				if (/Function/.test(node.type)) {
 					current_group = null;
@@ -650,14 +710,15 @@ export default class Component {
 
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
-						let has_meta_props = false;
 						let has_exports = false;
 						let has_only_exports = true;
 
 						node.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
+								const variable = component.var_lookup.get(name);
+
 								if (name === meta.props_object) {
-									if (exported.has(name)) {
+									if (variable.export_name) {
 										component.error(declarator, {
 											code: 'exported-meta-props',
 											message: `Cannot export props binding`
@@ -676,11 +737,9 @@ export default class Component {
 									} else {
 										code.overwrite(declarator.id.end, declarator.end, ' = $$props');
 									}
-
-									has_meta_props = true;
 								}
 
-								if (exported.has(name)) {
+								if (variable.export_name) {
 									has_exports = true;
 								} else {
 									has_only_exports = false;
@@ -724,7 +783,6 @@ export default class Component {
 		});
 
 		coalesced_declarations.forEach(group => {
-			const kind = group[0].kind;
 			let c = 0;
 
 			let combining = false;
@@ -764,16 +822,16 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_names, hoistable_nodes, imported_declarations, instance_scope: scope } = this;
-		const template_scope = this.fragment.scope;
+		const { hoistable_nodes, var_lookup } = this;
 
 		const top_level_function_declarations = new Map();
 
-		this.instance_script.content.body.forEach(node => {
+		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
-				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.mutable_props.has(d.id.name) && !template_scope.containsMutable([d.id.name]))) {
+				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).reassigned)) {
 					node.declarations.forEach(d => {
-						hoistable_names.add(d.id.name);
+						const variable = this.var_lookup.get(d.id.name);
+						variable.hoistable = true;
 					});
 
 					hoistable_nodes.add(node);
@@ -823,8 +881,9 @@ export default class Component {
 
 						else if (owner === instance_scope) {
 							if (name === fn_declaration.id.name) return;
-							if (hoistable_names.has(name)) return;
-							if (imported_declarations.has(name)) return;
+
+							const variable = var_lookup.get(name);
+							if (variable.hoistable) return;
 
 							if (top_level_function_declarations.has(name)) {
 								const other_declaration = top_level_function_declarations.get(name);
@@ -860,7 +919,8 @@ export default class Component {
 
 		for (const [name, node] of top_level_function_declarations) {
 			if (!checked.has(node) && is_hoistable(node)) {
-				hoistable_names.add(name);
+				const variable = this.var_lookup.get(name);
+				variable.hoistable = true;
 				hoistable_nodes.add(node);
 
 				remove_indentation(this.code, node);
@@ -875,7 +935,7 @@ export default class Component {
 
 		const unsorted_reactive_declarations = [];
 
-		this.instance_script.content.body.forEach(node => {
+		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
@@ -899,7 +959,7 @@ export default class Component {
 							const object = getObject(node);
 							const { name } = object;
 
-							if (name[0] === '$' || component.declarations.indexOf(name) !== -1) {
+							if (name[0] === '$' || component.var_lookup.has(name)) {
 								dependencies.add(name);
 							}
 
@@ -982,11 +1042,12 @@ export default class Component {
 	}
 
 	qualify(name) {
-		if (this.hoistable_names.has(name)) return name;
-		if (this.imported_declarations.has(name)) return name;
-		if (this.declarations.indexOf(name) === -1) return name;
+		const variable = this.var_lookup.get(name);
 
-		this.template_references.add(name); // TODO we can probably remove most other occurrences of this
+		if (!variable) return name;
+		if (variable && variable.hoistable) return name;
+
+		this.add_reference(name); // TODO we can probably remove most other occurrences of this
 		return `ctx.${name}`;
 	}
 
@@ -998,7 +1059,7 @@ export default class Component {
 			this.has_reactive_assignments = true;
 		}
 
-		if (allow_implicit && !this.instance_script) return;
+		if (allow_implicit && !this.ast.instance && !this.ast.module) return;
 		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
 		if (this.module_scope && this.module_scope.declarations.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
@@ -1008,29 +1069,6 @@ export default class Component {
 			code: 'missing-declaration',
 			message: `'${name}' is not defined`
 		});
-	}
-
-	get_context(script) {
-		const context = script.attributes.find(attribute => attribute.name === 'context');
-		if (!context) return 'default';
-
-		if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-			this.error(script, {
-				code: 'invalid-script',
-				message: `context attribute must be static`
-			});
-		}
-
-		const value = context.value[0].data;
-
-		if (value !== 'module') {
-			this.error(context, {
-				code: `invalid-script`,
-				message: `If the context attribute is supplied, its value must be "module"`
-			});
-		}
-
-		return value;
 	}
 }
 

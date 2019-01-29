@@ -67,7 +67,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		this.cannotUseInnerHTML();
 
-		block.addDependencies(this.node.expression.dynamic_dependencies);
+		block.addDependencies(this.node.expression.dependencies);
 
 		let isDynamic = false;
 		let hasIntros = false;
@@ -181,9 +181,11 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 
 		const conditions = [];
-		if (this.node.expression.dependencies.size > 0) {
+		const dependencies = this.node.expression.dynamic_dependencies();
+
+		if (dependencies.length > 0) {
 			conditions.push(
-				`(${[...this.node.expression.dependencies].map(dep => `'${dep}' in changed`).join(' || ')})`
+				`(${dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
 			);
 		}
 

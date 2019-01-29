@@ -265,15 +265,15 @@ export default class Stylesheet {
 		this.nodesWithCssClass = new Set();
 		this.nodesWithRefCssClass = new Map();
 
-		if (ast.css[0] && ast.css[0].children.length) {
-			this.id = `svelte-${hash(ast.css[0].content.styles)}`;
+		if (ast.css && ast.css.children.length) {
+			this.id = `svelte-${hash(ast.css.content.styles)}`;
 
 			this.hasStyles = true;
 
 			const stack: (Rule | Atrule)[] = [];
 			let currentAtrule: Atrule = null;
 
-			walk(ast.css[0], {
+			walk(ast.css, {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
 						const last = stack[stack.length - 1];

@@ -37,14 +37,14 @@ export default class BindingWrapper {
 		this.node = node;
 		this.parent = parent;
 
-		const { dynamic_dependencies } = this.node.expression;
+		const { dependencies } = this.node.expression;
 
-		block.addDependencies(dynamic_dependencies);
+		block.addDependencies(dependencies);
 
 		// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 		if (parent.node.name === 'select') {
-			parent.selectBindingDependencies = dynamic_dependencies;
-			dynamic_dependencies.forEach((prop: string) => {
+			parent.selectBindingDependencies = dependencies;
+			dependencies.forEach((prop: string) => {
 				parent.renderer.component.indirectDependencies.set(prop, new Set());
 			});
 		}
@@ -106,7 +106,7 @@ export default class BindingWrapper {
 
 		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
 
-		const dependencyArray = [...this.node.expression.dynamic_dependencies]
+		const dependencyArray = [...this.node.expression.dependencies]
 
 		if (dependencyArray.length === 1) {
 			updateConditions.push(`changed.${dependencyArray[0]}`)

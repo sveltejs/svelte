@@ -34,7 +34,7 @@ export default class Attribute extends Node {
 			this.isSynthetic = false;
 
 			this.expression = new Expression(component, this, scope, info.expression);
-			this.dependencies = this.expression.dynamic_dependencies;
+			this.dependencies = this.expression.dependencies;
 			this.chunks = null;
 
 			this.isDynamic = true; // TODO not necessarily
@@ -59,7 +59,7 @@ export default class Attribute extends Node {
 
 					const expression = new Expression(component, this, scope, node.expression);
 
-					addToSet(this.dependencies, expression.dynamic_dependencies);
+					addToSet(this.dependencies, expression.dependencies);
 					return expression;
 				});
 
@@ -71,6 +71,19 @@ export default class Attribute extends Node {
 					: true
 				: false;
 		}
+	}
+
+	get_dependencies() {
+		if (this.isSpread) return this.expression.dynamic_dependencies();
+
+		const dependencies = new Set();
+		this.chunks.forEach(chunk => {
+			if (chunk.type === 'Expression') {
+				addToSet(dependencies, chunk.dynamic_dependencies());
+			}
+		});
+
+		return [...dependencies];
 	}
 
 	getValue() {
