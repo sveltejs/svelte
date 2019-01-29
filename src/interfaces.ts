@@ -81,14 +81,17 @@ export interface AppendTarget {
 
 export interface Var {
 	name: string;
-	kind: 'let' | 'var' | 'const' | 'class' | 'function' | 'import' | 'injected' | 'global' | 'implicit';
-	import_name?: '*' | 'default' | string; // the `foo` in `import { foo as bar }`
 	export_name?: string; // the `bar` in `export { foo as bar }`
-	source?: string;
+	injected?: boolean;
 	module?: boolean;
 	mutated?: boolean;
+	reassigned?: boolean;
 	referenced?: boolean;
 	writable?: boolean;
+
+	// used internally, but not exposed
+	global?: boolean;
+	implicit?: boolean;
 	initialised?: boolean;
 	hoistable?: boolean;
 }

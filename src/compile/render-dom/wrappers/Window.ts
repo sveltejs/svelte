@@ -120,7 +120,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.add_var({
 				name: handler_name,
-				kind: 'injected',
+				injected: true,
 				referenced: true
 			});
 

@@ -241,7 +241,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 				component.add_var({
 					name: fn,
-					kind: 'injected',
+					injected: true,
 					referenced: true
 				});
 
@@ -276,7 +276,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.add_var({
 				name,
-				kind: 'injected',
+				injected: true,
 				referenced: true
 			});
 

@@ -195,7 +195,10 @@ export default class Expression {
 			if (this.template_scope.is_let(name)) return true;
 
 			const variable = this.component.var_lookup.get(name);
-			return variable && variable.mutated;
+			if (!variable) return false;
+
+			if (variable.mutated || variable.reassigned) return true; // dynamic internal state
+			if (!variable.module && variable.writable && variable.export_name) return true; // writable props
 		});
 	}
 
@@ -378,7 +381,7 @@ export default class Expression {
 
 						component.add_var({
 							name,
-							kind: 'injected',
+							injected: true,
 							hoistable: true,
 							referenced: true
 						});
@@ -391,7 +394,7 @@ export default class Expression {
 
 						component.add_var({
 							name,
-							kind: 'injected',
+							injected: true,
 							referenced: true
 						});
 					}
@@ -403,7 +406,7 @@ export default class Expression {
 
 						component.add_var({
 							name,
-							kind: 'injected',
+							injected: true,
 							referenced: true
 						});
 

@@ -158,16 +158,19 @@ export default class Component {
 		} else if (name[0] === '$') {
 			this.add_var({
 				name,
-				kind: 'injected',
+				injected: true,
 				referenced: true,
-				mutated: true
+				mutated: true,
+				writable: true
 			});
+
+			this.add_reference(name.slice(1));
 		} else if (!this.ast.instance) {
 			this.add_var({
 				name,
 				export_name: name,
-				kind: 'implicit',
-				mutated: true,
+				implicit: true,
+				mutated: false,
 				referenced: true,
 				writable: true
 			});
@@ -403,17 +406,8 @@ export default class Component {
 						});
 					}
 
-					const import_name = specifier.imported
-						? specifier.imported.name
-						: specifier.type === 'ImportDefaultSpecifier'
-							? 'default'
-							: '*';
-
 					this.add_var({
 						name: specifier.local.name,
-						kind: 'import',
-						import_name,
-						source: node.source.value,
 						module: is_module,
 						hoistable: true
 					});
@@ -546,7 +540,6 @@ export default class Component {
 
 				this.add_var({
 					name,
-					kind,
 					module: true,
 					hoistable: true
 				});
@@ -591,7 +584,6 @@ export default class Component {
 
 				this.add_var({
 					name,
-					kind,
 					initialised: instance_scope.initialised_declarations.has(name),
 					writable: kind === 'var' || kind === 'let'
 				});
@@ -606,13 +598,16 @@ export default class Component {
 			if (name[0] === '$') {
 				this.add_var({
 					name,
-					kind: 'injected',
-					mutated: true
+					injected: true,
+					mutated: true,
+					writable: true
 				});
+
+				this.add_reference(name.slice(1));
 			} else {
 				this.add_var({
 					name,
-					kind: 'global'
+					global: true
 				});
 			}
 		});

@@ -408,7 +408,7 @@ export default class ElementWrapper extends Wrapper {
 
 			renderer.component.add_var({
 				name: handler,
-				kind: 'injected',
+				injected: true,
 				referenced: true
 			});
 
@@ -513,7 +513,7 @@ export default class ElementWrapper extends Wrapper {
 
 			renderer.component.add_var({
 				name,
-				kind: 'injected',
+				injected: true,
 				referenced: true
 			});
 

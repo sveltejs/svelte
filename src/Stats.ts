@@ -99,15 +99,15 @@ export default class Stats {
 		return {
 			timings,
 			warnings: this.warnings,
-			vars: component.vars.filter(variable => variable.kind !== 'global').map(variable => ({
+			vars: component.vars.filter(variable => !variable.global && !variable.implicit).map(variable => ({
 				name: variable.name,
-				kind: variable.kind,
-				import_name: variable.import_name || null,
 				export_name: variable.export_name || null,
-				source: variable.source || null,
+				injected: variable.injected || false,
 				module: variable.module || false,
 				mutated: variable.mutated || false,
-				referenced: variable.referenced || false
+				reassigned: variable.reassigned || false,
+				referenced: variable.referenced || false,
+				writable: variable.writable || false
 			}))
 		};
 	}

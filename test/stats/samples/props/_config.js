@@ -3,43 +3,43 @@ export default {
 		assert.deepEqual(stats.vars, [
 			{
 				name: 'name',
-				kind: 'let',
-				import_name: null,
 				export_name: 'name',
-				source: null,
+				injected: false,
 				module: false,
 				mutated: true,
-				referenced: true
+				reassigned: false,
+				referenced: true,
+				writable: true
 			},
 			{
 				name: 'cats',
-				kind: 'let',
-				import_name: null,
 				export_name: 'cats',
-				source: null,
+				injected: false,
 				module: false,
 				mutated: true,
-				referenced: true
+				reassigned: false,
+				referenced: true,
+				writable: true
 			},
 			{
 				name: 'foo',
-				kind: 'let',
-				import_name: null,
 				export_name: null,
-				source: null,
+				injected: false,
 				module: false,
 				mutated: false,
-				referenced: false
+				reassigned: false,
+				referenced: false,
+				writable: true
 			},
 			{
 				name: 'bar',
-				kind: 'let',
-				import_name: null,
 				export_name: null,
-				source: null,
+				injected: false,
 				module: false,
 				mutated: true,
-				referenced: true
+				reassigned: false,
+				referenced: true,
+				writable: true
 			}
 		]);
 	}

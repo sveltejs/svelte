@@ -3,23 +3,23 @@ export default {
 		assert.deepEqual(stats.vars, [
 			{
 				name: 'foo',
-				kind: 'let',
-				import_name: null,
 				export_name: null,
-				source: null,
+				injected: false,
 				module: false,
 				mutated: false,
-				referenced: false
+				reassigned: false,
+				referenced: true,
+				writable: true
 			},
 			{
 				name: '$foo',
-				kind: 'injected',
-				import_name: null,
 				export_name: null,
-				source: null,
+				injected: true,
 				module: false,
 				mutated: true,
-				referenced: false
+				reassigned: false,
+				referenced: false,
+				writable: true
 			}
 		]);
 	}

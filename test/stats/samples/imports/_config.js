@@ -3,33 +3,33 @@ export default {
 		assert.deepEqual(stats.vars, [
 			{
 				name: 'x',
-				kind: 'import',
-				import_name: 'default',
 				export_name: null,
-				source: 'x',
+				injected: false,
 				module: false,
 				mutated: false,
-				referenced: false
+				reassigned: false,
+				referenced: false,
+				writable: false
 			},
 			{
 				name: 'y',
-				kind: 'import',
-				import_name: 'y',
 				export_name: null,
-				source: 'y',
+				injected: false,
 				module: false,
 				mutated: false,
-				referenced: false
+				reassigned: false,
+				referenced: false,
+				writable: false
 			},
 			{
 				name: 'z',
-				kind: 'import',
-				import_name: '*',
 				export_name: null,
-				source: 'z',
+				injected: false,
 				module: false,
 				mutated: false,
-				referenced: false
+				reassigned: false,
+				referenced: false,
+				writable: false
 			}
 		]);
 	}
