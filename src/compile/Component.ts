@@ -603,10 +603,18 @@ export default class Component {
 		globals.forEach(name => {
 			if (this.module_scope && this.module_scope.declarations.has(name)) return;
 
-			this.add_var({
-				name,
-				kind: 'global'
-			});
+			if (name[0] === '$') {
+				this.add_var({
+					name,
+					kind: 'injected',
+					mutated: true
+				});
+			} else {
+				this.add_var({
+					name,
+					kind: 'global'
+				});
+			}
 		});
 
 		this.extract_imports(script.content, false);
@@ -682,9 +690,6 @@ export default class Component {
 
 					if (name[0] === '$' && !scope.has(name)) {
 						component.warn_if_undefined(object, null);
-
-						// cheeky hack
-						component.add_reference(name);
 					}
 				}
 			},

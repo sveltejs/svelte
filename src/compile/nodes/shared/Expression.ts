@@ -195,7 +195,7 @@ export default class Expression {
 			if (this.template_scope.is_let(name)) return true;
 
 			const variable = this.component.var_lookup.get(name);
-			return variable.mutated;
+			return variable && variable.mutated;
 		});
 	}
 
@@ -479,7 +479,7 @@ function isContextual(component: Component, scope: TemplateScope, name: string) 
 	const variable = component.var_lookup.get(name);
 
 	// hoistables, module declarations, and imports are non-contextual
-	if (variable.hoistable) return false;
+	if (!variable || variable.hoistable) return false;
 
 	// assume contextual
 	return true;
