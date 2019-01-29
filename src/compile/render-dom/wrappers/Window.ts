@@ -162,9 +162,9 @@ export default class WindowWrapper extends Wrapper {
 			const handler_name = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
 				function ${handler_name}(event) {
-					${component.options.dev && `component._updatingReadonlyProperty = true;`}
+					${component.compileOptions.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
-					${component.options.dev && `component._updatingReadonlyProperty = false;`}
+					${component.compileOptions.dev && `component._updatingReadonlyProperty = false;`}
 				}
 				window.addEventListener("online", ${handler_name});
 				window.addEventListener("offline", ${handler_name});

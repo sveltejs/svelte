@@ -618,7 +618,7 @@ export default class Element extends Node {
 					}
 				}
 
-				if (component.options.legacy && (modifier === 'once' || modifier === 'passive')) {
+				if (component.compileOptions.legacy && (modifier === 'once' || modifier === 'passive')) {
 					// TODO this could be supported, but it would need a few changes to
 					// how event listeners work
 					component.error(handler, {
