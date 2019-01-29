@@ -166,7 +166,7 @@ export default class Component {
 			this.add_var({
 				name,
 				export_name: name,
-				kind: 'injected',
+				kind: 'implicit',
 				mutated: true,
 				referenced: true,
 				writable: true
