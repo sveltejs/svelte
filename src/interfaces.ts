@@ -21,7 +21,8 @@ export interface Parser {
 export interface Ast {
 	html: Node;
 	css: Node;
-	js: Node;
+	instance: Node;
+	module: Node;
 }
 
 export interface Warning {
@@ -76,4 +77,22 @@ export interface CustomElementOptions {
 export interface AppendTarget {
 	slots: Record<string, string>;
 	slotStack: string[]
+}
+
+export interface Var {
+	name: string;
+	export_name?: string; // the `bar` in `export { foo as bar }`
+	injected?: boolean;
+	module?: boolean;
+	mutated?: boolean;
+	reassigned?: boolean;
+	referenced?: boolean;
+	writable?: boolean;
+
+	// used internally, but not exposed
+	global?: boolean;
+	implicit?: boolean; // logic-less template references
+	internal?: boolean; // event handlers, bindings
+	initialised?: boolean;
+	hoistable?: boolean;
 }

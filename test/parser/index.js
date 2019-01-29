@@ -31,7 +31,8 @@ describe('parse', () => {
 
 				assert.deepEqual(ast.html, expectedOutput.html);
 				assert.deepEqual(ast.css, expectedOutput.css);
-				assert.deepEqual(ast.js, expectedOutput.js);
+				assert.deepEqual(ast.instance, expectedOutput.instance);
+				assert.deepEqual(ast.module, expectedOutput.module);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;

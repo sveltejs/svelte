@@ -87,7 +87,7 @@ export default class IfBlockWrapper extends Wrapper {
 			this.branches.push(branch);
 
 			blocks.push(branch.block);
-			block.addDependencies(node.expression.dynamic_dependencies);
+			block.addDependencies(node.expression.dependencies);
 
 			if (branch.block.dependencies.size > 0) {
 				isDynamic = true;

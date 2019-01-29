@@ -11,14 +11,14 @@ export default class Tag extends Wrapper {
 		super(renderer, block, parent, node);
 		this.cannotUseInnerHTML();
 
-		block.addDependencies(node.expression.dynamic_dependencies);
+		block.addDependencies(node.expression.dependencies);
 	}
 
 	renameThisMethod(
 		block: Block,
 		update: ((value: string) => string)
 	) {
-		const dependencies = this.node.expression.dynamic_dependencies;
+		const dependencies = this.node.expression.dynamic_dependencies();
 		const snippet = this.node.expression.render(block);
 
 		const value = this.node.shouldCache && block.getUniqueName(`${this.var}_value`);
@@ -26,27 +26,22 @@ export default class Tag extends Wrapper {
 
 		if (this.node.shouldCache) block.addVariable(value, snippet);
 
-		if (dependencies.size) {
+		if (dependencies.length > 0) {
 			const changedCheck = (
 				(block.hasOutros ? `!#current || ` : '') +
-				[...dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')
+				dependencies.map((dependency: string) => `changed.${dependency}`).join(' || ')
 			);
 
 			const updateCachedValue = `${value} !== (${value} = ${snippet})`;
 
 			const condition =this.node.shouldCache
-				? dependencies.size > 0
-					? `(${changedCheck}) && ${updateCachedValue}`
-					: updateCachedValue
+				? `(${changedCheck}) && ${updateCachedValue}`
 				: changedCheck;
 
-			// only update if there's a mutation involved
-			if (this.node.expression.template_scope.containsMutable(dependencies)) {
-				block.builders.update.addConditional(
-					condition,
-					update(content)
-				);
-			}
+			block.builders.update.addConditional(
+				condition,
+				update(content)
+			);
 		}
 
 		return { init: content };

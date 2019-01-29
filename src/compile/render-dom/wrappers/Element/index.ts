@@ -132,7 +132,7 @@ export default class ElementWrapper extends Wrapper {
 					const name = attribute.getStaticValue();
 
 					if (!(owner as InlineComponentWrapper).slots.has(name)) {
-						const child_block = block.child({
+						const child_block = block.parent.child({
 							comment: createDebuggingComment(node, this.renderer.component),
 							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
 						});
@@ -141,6 +141,7 @@ export default class ElementWrapper extends Wrapper {
 
 						(owner as InlineComponentWrapper).slots.set(name, {
 							block: child_block,
+							scope: this.node.scope,
 							fn
 						});
 						this.renderer.blocks.push(child_block);
@@ -173,13 +174,13 @@ export default class ElementWrapper extends Wrapper {
 		// add directive and handler dependencies
 		[node.animation, node.outro, ...node.actions, ...node.classes].forEach(directive => {
 			if (directive && directive.expression) {
-				block.addDependencies(directive.expression.dynamic_dependencies);
+				block.addDependencies(directive.expression.dependencies);
 			}
 		});
 
 		node.handlers.forEach(handler => {
 			if (handler.expression) {
-				block.addDependencies(handler.expression.dynamic_dependencies);
+				block.addDependencies(handler.expression.dependencies);
 			}
 		});
 
@@ -404,8 +405,12 @@ export default class ElementWrapper extends Wrapper {
 
 		groups.forEach(group => {
 			const handler = renderer.component.getUniqueName(`${this.var}_${group.events.join('_')}_handler`);
-			renderer.component.declarations.push(handler);
-			renderer.component.template_references.add(handler);
+
+			renderer.component.add_var({
+				name: handler,
+				internal: true,
+				referenced: true
+			});
 
 			// TODO figure out how to handle locks
 			const needsLock = group.bindings.some(binding => binding.needsLock);
@@ -505,8 +510,12 @@ export default class ElementWrapper extends Wrapper {
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 		if (this_binding) {
 			const name = renderer.component.getUniqueName(`${this.var}_binding`);
-			renderer.component.declarations.push(name);
-			renderer.component.template_references.add(name);
+
+			renderer.component.add_var({
+				name,
+				internal: true,
+				referenced: true
+			});
 
 			const { handler, object } = this_binding;
 

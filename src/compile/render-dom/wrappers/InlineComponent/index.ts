@@ -15,10 +15,11 @@ import createDebuggingComment from '../../../../utils/createDebuggingComment';
 import sanitize from '../../../../utils/sanitize';
 import { get_context_merger } from '../shared/get_context_merger';
 import EachBlock from '../../../nodes/EachBlock';
+import TemplateScope from '../../../nodes/shared/TemplateScope';
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: string;
-	slots: Map<string, { block: Block, fn?: string }> = new Map();
+	slots: Map<string, { block: Block, scope: TemplateScope, fn?: string }> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 
@@ -35,7 +36,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.cannotUseInnerHTML();
 
 		if (this.node.expression) {
-			block.addDependencies(this.node.expression.dynamic_dependencies);
+			block.addDependencies(this.node.expression.dependencies);
 		}
 
 		this.node.attributes.forEach(attr => {
@@ -52,12 +53,12 @@ export default class InlineComponentWrapper extends Wrapper {
 				(eachBlock as EachBlock).has_binding = true;
 			}
 
-			block.addDependencies(binding.expression.dynamic_dependencies);
+			block.addDependencies(binding.expression.dependencies);
 		});
 
 		this.node.handlers.forEach(handler => {
 			if (handler.expression) {
-				block.addDependencies(handler.expression.dynamic_dependencies);
+				block.addDependencies(handler.expression.dependencies);
 			}
 		});
 
@@ -79,6 +80,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			this.slots.set('default', {
 				block: default_slot,
+				scope: this.node.scope,
 				fn
 			});
 			this.fragment = new FragmentWrapper(renderer, default_slot, node.children, this, stripWhitespace, nextSibling);
@@ -147,9 +149,14 @@ export default class InlineComponentWrapper extends Wrapper {
 		const fragment_dependencies = new Set();
 		this.slots.forEach(slot => {
 			slot.block.dependencies.forEach(name => {
-				if (renderer.component.mutable_props.has(name)) {
-					fragment_dependencies.add(name);
-				}
+				const is_let = slot.scope.is_let(name);
+				const variable = renderer.component.var_lookup.get(name);
+
+				if (is_let) fragment_dependencies.add(name);
+
+				if (!variable) return;
+				if (variable.mutated || variable.reassigned) fragment_dependencies.add(name);
+				if (!variable.module && variable.writable && variable.export_name) fragment_dependencies.add(name);
 			});
 		});
 
@@ -233,8 +240,12 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			if (binding.name === 'this') {
 				const fn = component.getUniqueName(`${this.var}_binding`);
-				component.declarations.push(fn);
-				component.template_references.add(fn);
+
+				component.add_var({
+					name: fn,
+					internal: true,
+					referenced: true
+				});
 
 				let lhs;
 				let object;
@@ -264,8 +275,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const name = component.getUniqueName(`${this.var}_${binding.name}_binding`);
-			component.declarations.push(name);
-			component.template_references.add(name);
+
+			component.add_var({
+				name,
+				internal: true,
+				referenced: true
+			});
 
 			const updating = block.getUniqueName(`updating_${binding.name}`);
 			block.addVariable(updating);
@@ -279,7 +294,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			);
 
 			updates.push(deindent`
-				if (!${updating} && ${[...binding.expression.dynamic_dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
+				if (!${updating} && ${[...binding.expression.dependencies].map((dependency: string) => `changed.${dependency}`).join(' || ')}) {
 					${name_changes}${quotePropIfNecessary(binding.name)} = ${snippet};
 				}
 			`);
