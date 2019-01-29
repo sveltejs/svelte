@@ -23,7 +23,7 @@ import getObject from '../utils/getObject';
 import deindent from '../utils/deindent';
 import globalWhitelist from '../utils/globalWhitelist';
 
-type Meta = {
+type Options = {
 	namespace?: string;
 	tag?: string;
 	immutable?: boolean;
@@ -51,7 +51,7 @@ export default class Component {
 	instance_scope: Scope;
 	instance_scope_map: WeakMap<Node, Scope>;
 
-	meta: Meta;
+	optionsTag: Options;
 	namespace: string;
 	tag: string;
 
@@ -111,20 +111,20 @@ export default class Component {
 		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
 		this.stylesheet.validate(this);
 
-		this.meta = process_meta(this, this.ast.html.children);
-		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
+		this.optionsTag = process_options_tag(this, this.ast.html.children);
+		this.namespace = namespaces[this.optionsTag.namespace] || this.optionsTag.namespace;
 
-		if (this.meta.props) {
+		if (this.optionsTag.props) {
 			this.has_reactive_assignments = true;
 		}
 
-		if (options.customElement === true && !this.meta.tag) {
+		if (options.customElement === true && !this.optionsTag.tag) {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
 
 		this.tag = options.customElement
 			? options.customElement === true
-				? this.meta.tag
+				? this.optionsTag.tag
 				: options.customElement as string
 			: this.name;
 
@@ -691,7 +691,7 @@ export default class Component {
 
 	rewrite_props() {
 		const component = this;
-		const { code, instance_scope, instance_scope_map: map, meta } = this;
+		const { code, instance_scope, instance_scope_map: map, optionsTag } = this;
 		let scope = instance_scope;
 
 		const coalesced_declarations = [];
@@ -717,10 +717,10 @@ export default class Component {
 							extractNames(declarator.id).forEach(name => {
 								const variable = component.var_lookup.get(name);
 
-								if (name === meta.props_object) {
+								if (name === optionsTag.props_object) {
 									if (variable.export_name) {
 										component.error(declarator, {
-											code: 'exported-meta-props',
+											code: 'exported-options-props',
 											message: `Cannot export props binding`
 										});
 									}
@@ -1072,12 +1072,12 @@ export default class Component {
 	}
 }
 
-function process_meta(component, nodes) {
-	const meta: Meta = {
+function process_options_tag(component, nodes) {
+	const optionsTag: Options = {
 		immutable: component.options.immutable || false
 	};
 
-	const node = nodes.find(node => node.name === 'svelte:meta');
+	const node = nodes.find(node => node.name === 'svelte:options');
 
 	function get_value(attribute, code, message) {
 		const { value } = attribute;
@@ -1118,7 +1118,7 @@ function process_meta(component, nodes) {
 							});
 						}
 
-						meta.tag = tag;
+						optionsTag.tag = tag;
 						break;
 					}
 
@@ -1144,7 +1144,7 @@ function process_meta(component, nodes) {
 							}
 						}
 
-						meta.namespace = ns;
+						optionsTag.namespace = ns;
 						break;
 					}
 
@@ -1155,13 +1155,13 @@ function process_meta(component, nodes) {
 
 						if (typeof value !== 'boolean') component.error(attribute, { code, message });
 
-						meta.immutable = value;
+						optionsTag.immutable = value;
 						break;
 
 					default:
 						component.error(attribute, {
-							code: `invalid-meta-attribute`,
-							message: `<svelte:meta> unknown attribute`
+							code: `invalid-options-attribute`,
+							message: `<svelte:options> unknown attribute`
 						});
 				}
 			}
@@ -1169,26 +1169,26 @@ function process_meta(component, nodes) {
 			else if (attribute.type === 'Binding') {
 				if (attribute.name !== 'props') {
 					component.error(attribute, {
-						code: `invalid-meta-binding`,
-						message: `<svelte:meta> only supports bind:props`
+						code: `invalid-options-binding`,
+						message: `<svelte:options> only supports bind:props`
 					});
 				}
 
 				const { start, end } = attribute.expression;
 				const { name } = flattenReference(attribute.expression);
 
-				meta.props = `[✂${start}-${end}✂]`;
-				meta.props_object = name;
+				optionsTag.props = `[✂${start}-${end}✂]`;
+				optionsTag.props_object = name;
 			}
 
 			else {
 				component.error(attribute, {
-					code: `invalid-meta-attribute`,
-					message: `<svelte:meta> can only have static 'tag', 'namespace' and 'immutable' attributes, or a bind:props directive`
+					code: `invalid-options-attribute`,
+					message: `<svelte:options> can only have static 'tag', 'namespace' and 'immutable' attributes, or a bind:props directive`
 				});
 			}
 		});
 	}
 
-	return meta;
+	return optionsTag;
 }

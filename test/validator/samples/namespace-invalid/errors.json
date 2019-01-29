@@ -1,15 +1,15 @@
 [{
 	"code": "invalid-namespace-property",
 	"message": "Invalid namespace 'http://www.w3.org/1999/svg' (did you mean 'http://www.w3.org/2000/svg'?)",
-	"pos": 13,
+	"pos": 16,
 	"start": {
 		"line": 1,
-		"column": 13,
-		"character": 13
+		"column": 16,
+		"character": 16
 	},
 	"end": {
 		"line": 1,
-		"column": 51,
-		"character": 51
+		"column": 54,
+		"character": 54
 	}
 }]

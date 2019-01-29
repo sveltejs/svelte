@@ -73,13 +73,13 @@ export default function dom(
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (component.meta.props || writable_props.length > 0 || renderer.slots.size > 0)
+	const set = (component.optionsTag.props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
 			$$props => {
-				${component.meta.props && deindent`
-				if (!${component.meta.props}) ${component.meta.props} = {};
-				@assign(${component.meta.props}, $$props);
-				$$invalidate('${component.meta.props_object}', ${component.meta.props_object});
+				${component.optionsTag.props && deindent`
+				if (!${component.optionsTag.props}) ${component.optionsTag.props} = {};
+				@assign(${component.optionsTag.props}, $$props);
+				$$invalidate('${component.optionsTag.props_object}', ${component.optionsTag.props_object});
 				`}
 				${writable_props.map(prop =>
 				`if ('${prop.export_name}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.export_name});`)}
@@ -91,7 +91,7 @@ export default function dom(
 
 	const body = [];
 
-	const not_equal = component.meta.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.optionsTag.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
 	props.forEach(x => {
@@ -355,7 +355,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || component.meta.props) && deindent`
+						${(props.length > 0 || component.optionsTag.props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
