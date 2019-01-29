@@ -38,6 +38,12 @@ export default class Binding extends Node {
 			});
 		} else {
 			const variable = component.var_lookup.get(name);
+
+			if (!variable) component.error(this.expression.node, {
+				code: 'binding-undeclared',
+				message: `${name} is not declared`
+			});
+
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 		}
 
