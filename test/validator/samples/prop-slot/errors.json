@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-prop",
+	"message": "'slot' is reserved for future use in named slots",
+	"start": {
+		"line": 5,
+		"column": 8,
+		"character": 65
+	},
+	"end": {
+		"line": 5,
+		"column": 18,
+		"character": 75
+	},
+	"pos": 65
+}]
