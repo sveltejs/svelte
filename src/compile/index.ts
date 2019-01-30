@@ -38,7 +38,13 @@ function get_name(filename) {
 	const parts = filename.split(/[\/\\]/);
 	if (/index\.\w+/.test(parts)) parts.pop();
 
-	const base = parts.pop().replace(/\..+/, "");
+	const base = parts.pop()
+		.replace(/\..+/, "")
+		.replace(/[^a-zA-Z_$0-9]+/g, '_')
+		.replace(/^_/, '')
+		.replace(/_$/, '')
+		.replace(/^(\d)/, '_$1');
+
 	return base[0].toUpperCase() + base.slice(1);
 }
 
