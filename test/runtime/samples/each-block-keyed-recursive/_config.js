@@ -1,6 +1,5 @@
 export default {
 	props: {
-		titles: [{ name: 'b' }, { name: 'c' }],
 		tree: [
 			{id: 1, sub: null},
 			{id: 2, sub: [{id: 11}]}
