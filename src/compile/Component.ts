@@ -93,6 +93,8 @@ export default class Component {
 		options: CompileOptions,
 		stats: Stats
 	) {
+		this.name = name;
+
 		this.stats = stats;
 		this.ast = ast;
 		this.source = source;
