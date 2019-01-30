@@ -34,7 +34,7 @@ describe("runtime", () => {
 
 		require.extensions[".html"] = function(module, filename) {
 			const options = Object.assign(
-				{ filename, name: getName(filename), format: 'cjs', sveltePath },
+				{ filename, name: compileOptions.name || getName(filename), format: 'cjs', sveltePath },
 				compileOptions
 			);
 
