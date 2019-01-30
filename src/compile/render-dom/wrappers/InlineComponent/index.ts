@@ -138,7 +138,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			});
 		}
 
-		if (component.options.dev) {
+		if (component.compileOptions.dev) {
 			// TODO this is a terrible hack, but without it the component
 			// will complain that options.target is missing. This would
 			// work better if components had separate public and private

@@ -1,15 +1,15 @@
 [{
 	"code": "invalid-namespace-attribute",
 	"message": "The 'namespace' attribute must be a string literal representing a valid namespace",
-	"pos": 13,
+	"pos": 16,
 	"start": {
 		"line": 1,
-		"column": 13,
-		"character": 13
+		"column": 16,
+		"character": 16
 	},
 	"end": {
 		"line": 1,
-		"column": 27,
-		"character": 27
+		"column": 30,
+		"character": 30
 	}
 }]
