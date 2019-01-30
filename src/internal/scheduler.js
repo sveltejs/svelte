@@ -18,8 +18,7 @@ export function add_render_callback(fn) {
 	render_callbacks.push(fn);
 }
 
-export function nextTick(fn) {
-	if (fn) add_render_callback(fn);
+export function tick() {
 	schedule_update();
 	return update_promise;
 }
