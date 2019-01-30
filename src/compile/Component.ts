@@ -93,7 +93,7 @@ export default class Component {
 		options: CompileOptions,
 		stats: Stats
 	) {
-		this.name = this.getUniqueName(name);
+		this.name = name;
 
 		this.stats = stats;
 		this.ast = ast;
@@ -131,6 +131,7 @@ export default class Component {
 		this.walk_module_js();
 		this.walk_instance_js_pre_template();
 
+		this.name = this.getUniqueName(name);
 		this.fragment = new Fragment(this, ast.html);
 
 		this.walk_instance_js_post_template();
