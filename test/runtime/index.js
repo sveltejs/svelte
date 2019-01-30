@@ -19,11 +19,6 @@ let svelte;
 let compileOptions = null;
 let compile = null;
 
-function getName(filename) {
-	const base = path.basename(filename).replace(".html", "");
-	return base[0].toUpperCase() + base.slice(1);
-}
-
 const sveltePath = process.cwd().split('\\').join('/');
 const internal = `${sveltePath}/internal.js`;
 
@@ -33,10 +28,11 @@ describe("runtime", () => {
 		svelte$ = loadSvelte(true);
 
 		require.extensions[".html"] = function(module, filename) {
-			const options = Object.assign(
-				{ filename, name: compileOptions.name || getName(filename), format: 'cjs', sveltePath },
-				compileOptions
-			);
+			const options = Object.assign({
+				filename,
+				format: 'cjs',
+				sveltePath
+			}, compileOptions);
 
 			const { js: { code } } = compile(fs.readFileSync(filename, "utf-8"), options);
 
@@ -118,7 +114,7 @@ describe("runtime", () => {
 						mod = require(`./samples/${dir}/main.html`);
 						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, { internal, hydratable: hydrate, format: 'cjs' }, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, compileOptions, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 
@@ -189,22 +185,13 @@ describe("runtime", () => {
 						}
 					} else {
 						failed.add(dir);
-						showOutput(cwd, {
-							internal,
-							hydratable: hydrate,
-							dev: compileOptions.dev,
-							format: 'cjs'
-						}, svelte.compile); // eslint-disable-line no-console
+						showOutput(cwd, compileOptions, svelte.compile); // eslint-disable-line no-console
 						throw err;
 					}
 				})
 				.then(() => {
 					if (config.show) {
-						showOutput(cwd, {
-							internal,
-							hydratable: hydrate,
-							format: 'cjs'
-						}, svelte.compile);
+						showOutput(cwd, compileOptions, svelte.compile);
 					}
 
 					flush();
