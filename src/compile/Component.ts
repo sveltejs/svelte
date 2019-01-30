@@ -504,7 +504,7 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
-		let { scope } = createScopes(script.content);
+		let { scope, globals } = createScopes(script.content);
 		this.module_scope = scope;
 
 		scope.declarations.forEach((node, name) => {
@@ -531,6 +531,17 @@ export default class Component {
 					name,
 					module: true,
 					hoistable: true
+				});
+			}
+		});
+
+		globals.forEach(name => {
+			if (name[0] === '$') {
+				// TODO should this be possible?
+			} else {
+				this.add_var({
+					name,
+					global: true
 				});
 			}
 		});
