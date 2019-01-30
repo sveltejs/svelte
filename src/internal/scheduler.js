@@ -19,7 +19,7 @@ export function add_render_callback(fn) {
 }
 
 export function nextTick(fn) {
-	add_render_callback(fn);
+	if (fn) add_render_callback(fn);
 	schedule_update();
 	return update_promise;
 }
