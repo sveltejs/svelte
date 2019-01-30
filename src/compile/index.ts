@@ -36,7 +36,10 @@ function validate_options(options: CompileOptions, stats: Stats) {
 function get_name(filename) {
 	if (!filename) return null;
 	const parts = filename.split(/[\/\\]/);
-	if (/index\.\w+/.test(parts)) parts.pop();
+
+	if (parts.length > 1 && /^index\.\w+/.test(parts[parts.length - 1])) {
+		parts.pop();
+	}
 
 	const base = parts.pop()
 		.replace(/\..+/, "")
