@@ -598,7 +598,7 @@ export default class Element extends Node {
 				if (!validModifiers.has(modifier)) {
 					component.error(handler, {
 						code: 'invalid-event-modifier',
-						message: `Valid event modifiers are ${list([...validModifiers])}`
+						message: `Valid event modifiers are ${list(Array.from(validModifiers))}`
 					});
 				}
 
