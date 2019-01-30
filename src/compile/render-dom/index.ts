@@ -203,7 +203,7 @@ export default function dom(
 
 				if (pending_assignments.size > 0) {
 					if (node.type === 'ArrowFunctionExpression') {
-						const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join(';');
+						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join(';');
 						pending_assignments = new Set();
 
 						code.prependRight(node.body.start, `{ const $$result = `);
@@ -213,7 +213,7 @@ export default function dom(
 					}
 
 					else if (/Statement/.test(node.type)) {
-						const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ');
+						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ');
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
