@@ -2,7 +2,6 @@ import * as jsdom from 'jsdom';
 import * as assert from 'assert';
 import * as glob from 'tiny-glob/sync.js';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as colors from 'kleur';
 
 // for coverage purposes, we need to test source files,
@@ -171,24 +170,14 @@ export function addLineNumbers(code) {
 		.join('\n');
 }
 
-function capitalise(str) {
-	return str[0].toUpperCase() + str.slice(1);
-}
-
 export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	glob('**/*.html', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
-		const name = path.basename(file)
-			.slice(0, -path.extname(file).length)
-			.replace(/^\d/, '_$&')
-			.replace(/[^a-zA-Z0-9_$]/g, '');
-
 		const { js } = compile(
 			fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
 			Object.assign(options, {
-				filename: file,
-				name: capitalise(name)
+				filename: file
 			})
 		);
 

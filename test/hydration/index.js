@@ -12,11 +12,6 @@ import {
 
 let compileOptions = null;
 
-function getName(filename) {
-	const base = path.basename(filename).replace('.html', '');
-	return base[0].toUpperCase() + base.slice(1);
-}
-
 const sveltePath = process.cwd();
 
 describe('hydration', () => {
@@ -27,7 +22,6 @@ describe('hydration', () => {
 			const options = Object.assign(
 				{
 					filename,
-					name: getName(filename),
 					hydratable: true,
 					format: 'cjs',
 					sveltePath
