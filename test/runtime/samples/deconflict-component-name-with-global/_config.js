@@ -1,5 +1,4 @@
 export default {
-	show: 1,
 	compileOptions: {
 		name: 'Set'
 	},
