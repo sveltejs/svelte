@@ -83,7 +83,7 @@ export default class Attribute extends Node {
 			}
 		});
 
-		return [...dependencies];
+		return Array.from(dependencies);
 	}
 
 	getValue() {
