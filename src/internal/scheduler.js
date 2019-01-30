@@ -10,7 +10,8 @@ const render_callbacks = [];
 
 export function schedule_update() {
 	if (!update_promise) {
-		update_promise = Promise.resolve().then(flush);
+		update_promise = Promise.resolve();
+		update_promise.then(flush);
 	}
 }
 

@@ -3,13 +3,13 @@ export default {
 		const buttons = target.querySelectorAll('button');
 		const click = new window.MouseEvent('click');
 
-		await (await buttons[0].dispatchEvent(click));
+		await buttons[0].dispatchEvent(click);
 		assert.deepEqual(component.snapshots, [
 			'before 0',
 			'after 1'
 		]);
 
-		await (await buttons[0].dispatchEvent(click));
+		await buttons[0].dispatchEvent(click);
 		assert.deepEqual(component.snapshots, [
 			'before 0',
 			'after 1',
@@ -17,7 +17,7 @@ export default {
 			'after 2'
 		]);
 
-		await (await buttons[1].dispatchEvent(click));
+		await buttons[1].dispatchEvent(click);
 		assert.deepEqual(component.snapshots, [
 			'before 0',
 			'after 1',
