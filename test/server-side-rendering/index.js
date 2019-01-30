@@ -109,7 +109,9 @@ describe("ssr", () => {
 				delete require.cache[resolved];
 			});
 
-			const compileOptions = Object.assign({ sveltePath }, config.compileOptions);
+			const compileOptions = Object.assign({ sveltePath }, config.compileOptions, {
+				generate: 'ssr'
+			});
 
 			require("../../register")(compileOptions);
 
@@ -128,6 +130,10 @@ describe("ssr", () => {
 				}
 
 				if (config.after_test) config.after_test();
+
+				if (config.show) {
+					showOutput(cwd, compileOptions);
+				}
 			} catch (err) {
 				if (config.error) {
 					if (typeof config.error === 'function') {
@@ -136,7 +142,7 @@ describe("ssr", () => {
 						assert.equal(config.error, err.message);
 					}
 				} else {
-					showOutput(cwd, { generate: "ssr" });
+					showOutput(cwd, compileOptions);
 					throw err;
 				}
 			}

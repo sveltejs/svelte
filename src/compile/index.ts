@@ -33,6 +33,15 @@ function validate_options(options: CompileOptions, stats: Stats) {
 	}
 }
 
+function get_name(filename) {
+	if (!filename) return null;
+	const parts = filename.split(/[\/\\]/);
+	if (/index\.\w+/.test(parts)) parts.pop();
+
+	const base = parts.pop().replace(/\..+/, "");
+	return base[0].toUpperCase() + base.slice(1);
+}
+
 export default function compile(source: string, options: CompileOptions = {}) {
 	options = assign({ generate: 'dom', dev: false }, options);
 
@@ -54,7 +63,7 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	const component = new Component(
 		ast,
 		source,
-		options.name || 'SvelteComponent',
+		options.name || get_name(options.filename) || 'SvelteComponent',
 		options,
 		stats
 	);
