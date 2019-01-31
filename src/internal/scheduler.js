@@ -4,14 +4,14 @@ import { set_current_component } from './lifecycle.js';
 export let dirty_components = [];
 export const intros = { enabled: false };
 
-let update_scheduled = false;
+let update_promise;
 const binding_callbacks = [];
 const render_callbacks = [];
 
 export function schedule_update() {
-	if (!update_scheduled) {
-		update_scheduled = true;
-		queue_microtask(flush);
+	if (!update_promise) {
+		update_promise = Promise.resolve();
+		update_promise.then(flush);
 	}
 }
 
@@ -19,9 +19,9 @@ export function add_render_callback(fn) {
 	render_callbacks.push(fn);
 }
 
-export function nextTick(fn) {
-	add_render_callback(fn);
+export function tick() {
 	schedule_update();
+	return update_promise;
 }
 
 export function add_binding_callback(fn) {
@@ -56,7 +56,7 @@ export function flush() {
 		}
 	} while (dirty_components.length);
 
-	update_scheduled = false;
+	update_promise = null;
 }
 
 function update($$) {
@@ -68,10 +68,4 @@ function update($$) {
 
 		$$.after_render.forEach(add_render_callback);
 	}
-}
-
-function queue_microtask(callback) {
-	Promise.resolve().then(() => {
-		if (update_scheduled) callback();
-	});
 }
