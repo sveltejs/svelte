@@ -343,7 +343,7 @@ export default class Expression {
 					);
 
 					const args = contextual_dependencies.size > 0
-						? [`{ ${[...contextual_dependencies].join(', ')} }`]
+						? [`{ ${Array.from(contextual_dependencies).join(', ')} }`]
 						: [];
 
 					let original_params;
@@ -356,7 +356,7 @@ export default class Expression {
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
 						if (pending_assignments.size > 0) {
-							const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ');
+							const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ');
 							pending_assignments = new Set();
 
 							component.has_reactive_assignments = true;
@@ -431,7 +431,7 @@ export default class Expression {
 
 						const insert = (
 							(has_semi ? ' ' : '; ') +
-							[...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ')
+							Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ')
 						);
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {

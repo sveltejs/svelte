@@ -181,7 +181,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					const { name, dependencies } = attr;
 
 					const condition = dependencies.size > 0 && (dependencies.size !== allDependencies.size)
-						? `(${[...dependencies].map(d => `changed.${d}`).join(' || ')})`
+						? `(${Array.from(dependencies).map(d => `changed.${d}`).join(' || ')})`
 						: null;
 
 					if (attr.isSpread) {
@@ -209,7 +209,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`);
 
-				const conditions = [...allDependencies].map(dep => `changed.${dep}`).join(' || ');
+				const conditions = Array.from(allDependencies).map(dep => `changed.${dep}`).join(' || ');
 
 				updates.push(deindent`
 					var ${name_changes} = ${allDependencies.size === 1 ? `${conditions}` : `(${conditions})`} ? @getSpreadUpdate(${levels}, [
@@ -232,7 +232,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		if (fragment_dependencies.size > 0) {
-			updates.push(`if (${[...fragment_dependencies].map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed, ctx };`);
+			updates.push(`if (${Array.from(fragment_dependencies).map(n => `changed.${n}`).join(' || ')}) ${name_changes}.$$scope = { changed, ctx };`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
