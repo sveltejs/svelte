@@ -5,6 +5,6 @@ export {
 	afterUpdate,
 	setContext,
 	getContext,
-	nextTick,
+	tick,
 	createEventDispatcher
 } from './internal';
