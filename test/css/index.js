@@ -62,7 +62,6 @@ describe('css', () => {
 				input,
 				Object.assign(config, {
 					format: 'cjs',
-					name: 'SvelteComponent',
 					onwarn: warning => {
 						domWarnings.push(warning);
 					}
@@ -76,7 +75,6 @@ describe('css', () => {
 				Object.assign(config, {
 					format: 'cjs',
 					generate: 'ssr',
-					name: 'SvelteComponent',
 					onwarn: warning => {
 						ssrWarnings.push(warning);
 					}

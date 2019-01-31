@@ -17,7 +17,7 @@ const metaTags = new Map([
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = [...metaTags.keys(), 'svelte:self', 'svelte:component'];
+const valid_meta_tags = Array.from(metaTags.keys()).concat('svelte:self', 'svelte:component');
 
 const specials = new Map([
 	[

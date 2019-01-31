@@ -81,7 +81,7 @@ export default class SlotWrapper extends Wrapper {
 				}
 			});
 
-			const arg = dependencies.size > 0 ? `{ ${[...dependencies].join(', ')} }` : '{}';
+			const arg = dependencies.size > 0 ? `{ ${Array.from(dependencies).join(', ')} }` : '{}';
 
 			renderer.blocks.push(deindent`
 				const ${get_slot_changes} = (${arg}) => (${stringifyProps(changes_props)});
