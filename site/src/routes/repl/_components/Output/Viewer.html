@@ -1,5 +1,5 @@
 <script>
-	import { onMount, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import getLocationFromStack from '../../_utils/getLocationFromStack.js';
 	import ReplProxy from '../../_utils/replProxy.js';
 	import { decode } from 'sourcemap-codec';
@@ -67,9 +67,14 @@
 
 	let createComponent;
 	let init;
-	
+	onDestroy(() => {
+		if (replProxy) {
+			replProxy.destroy();
+		}
+	});
 	onMount(() => {
 		replProxy = new ReplProxy(refs.child);
+	
 		refs.child.addEventListener('load', () => {
 
 			replProxy.onPropUpdate = (prop, value) => {
@@ -163,6 +168,9 @@
 							props: ${JSON.stringify($values_store)}
 						});
 					`)
+					.then(()=> {
+						replProxy.bindProps(props);
+					})
 					.catch(e => {
 						// TODO show in UI
 						hasComponent = false;
@@ -196,6 +204,10 @@
 
 					// TODO do we need to clear out SSR HTML?
 					createComponent();
+					props_handler = props => {
+						replProxy.bindProps(props)
+					};
+					replProxy.bindProps(props);
 				};
 			}
 
@@ -209,9 +221,7 @@
 				init();
 			};
 
-			props_handler = props => {
-				replProxy.bindProps(props)
-			};
+			
 		});
 	});
 
@@ -279,7 +289,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={refs.child} sandbox="allow-scripts allow-popups" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" bind:this={refs.child} sandbox="allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
