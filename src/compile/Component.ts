@@ -744,10 +744,14 @@ export default class Component {
 										});
 									}
 
+									const suffix = code.original[declarator.end] === ';'
+										? ` = $$props`
+										: ` = $$props;`
+
 									if (declarator.id.end === declarator.end) {
-										code.appendLeft(declarator.end, ' = $$props');
+										code.appendLeft(declarator.end, suffix);
 									} else {
-										code.overwrite(declarator.id.end, declarator.end, ' = $$props');
+										code.overwrite(declarator.id.end, declarator.end, suffix);
 									}
 								}
 
@@ -823,7 +827,8 @@ export default class Component {
 			});
 
 			if (combining) {
-				code.appendLeft(c, ' } = $$props');
+				const suffix = code.original[c] === ';' ? ` } = $$props` : ` } = $$props;`;
+				code.appendLeft(c, suffix);
 			}
 		});
 	}
