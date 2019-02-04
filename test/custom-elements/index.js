@@ -7,6 +7,7 @@ import { addLineNumbers, loadConfig, loadSvelte } from "../helpers.js";
 
 const page = `
 <body>
+	<custom-element name="world"></custom-element>
 	<main></main>
 	<script src='/bundle.js'></script>
 </body>
