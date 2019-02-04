@@ -142,11 +142,6 @@ export default class Component {
 	}
 
 	add_var(variable: Var) {
-		// TODO remove this
-		if (this.var_lookup.has(variable.name)) {
-			throw new Error(`dupe: ${variable.name}`);
-		}
-
 		this.vars.push(variable);
 		this.var_lookup.set(variable.name, variable);
 	}
@@ -530,7 +525,8 @@ export default class Component {
 				this.add_var({
 					name,
 					module: true,
-					hoistable: true
+					hoistable: true,
+					writable: kind === 'var' || kind === 'let'
 				});
 			}
 		});
@@ -845,7 +841,16 @@ export default class Component {
 
 		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'VariableDeclaration') {
-				if (node.declarations.every(d => d.init && d.init.type === 'Literal' && !this.var_lookup.get(d.id.name).reassigned)) {
+				const all_hoistable = node.declarations.every(d => {
+					if (!d.init) return false;
+					if (d.init.type !== 'Literal') return false;
+					if (this.var_lookup.get(d.id.name).reassigned) return false;
+					if (this.vars.find(variable => variable.name === d.id.name && variable.module)) return false;
+
+					return true;
+				});
+
+				if (all_hoistable) {
 					node.declarations.forEach(d => {
 						const variable = this.var_lookup.get(d.id.name);
 						variable.hoistable = true;
