@@ -66,7 +66,6 @@ export function derive(stores, fn) {
 	const single = !Array.isArray(stores);
 	if (single) stores = [stores];
 
-	const auto = fn.length === 1;
 	let value = {};
 
 	return readable(set => {
@@ -78,7 +77,7 @@ export function derive(stores, fn) {
 		const sync = () => {
 			if (pending) return;
 			const result = fn(single ? values[0] : values, set);
-			if (auto && (value !== (value = result))) set(result);
+			if (value !== (value = result)) set(result);
 		}
 
 		const unsubscribers = stores.map((store, i) => store.subscribe(
