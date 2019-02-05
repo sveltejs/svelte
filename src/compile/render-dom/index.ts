@@ -289,8 +289,6 @@ export default function dom(
 					target.insertBefore(this, anchor);
 				}
 			});
-
-			customElements.define("${component.tag}", ${name});
 		`);
 	} else {
 		builder.addBlock(deindent`
@@ -327,6 +325,10 @@ export default function dom(
 
 		${immutable && `${name}.prototype._differs = @_differsImmutable;`}
 	`);
+
+	if (component.customElement) {
+		builder.addBlock(`customElements.define("${component.tag}", ${name});`);
+	}
 
 	let result = builder.toString();
 

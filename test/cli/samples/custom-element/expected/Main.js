@@ -67,9 +67,9 @@ assign(Main.prototype, {
 	}
 });
 
-customElements.define("my-element", Main);
-
 Main.prototype._recompute = noop;
+
+customElements.define("my-element", Main);
 
 function createElement(name) {
 	return document.createElement(name);
