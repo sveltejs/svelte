@@ -178,10 +178,11 @@ export default function dom(
 						code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
 					} else {
 						names.forEach(name => {
-							if (scope.findOwner(name) !== component.instance_scope) return;
+							const owner = scope.findOwner(name);
+							if (owner && owner !== component.instance_scope) return;
 
 							const variable = component.var_lookup.get(name);
-							if (variable && variable.hoistable) return;
+							if (variable && variable.hoistable || variable.global || variable.module) return;
 
 							pending_assignments.add(name);
 							component.has_reactive_assignments = true;
@@ -312,6 +313,24 @@ export default function dom(
 		.join('\n\n');
 
 	if (has_definition) {
+		const reactive_declarations = component.reactive_declarations.map(d => {
+			const condition = Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ');
+			const snippet = d.node.body.type === 'BlockStatement'
+				? `[✂${d.node.body.start}-${d.node.end}✂]`
+				: deindent`
+					{
+						[✂${d.node.body.start}-${d.node.end}✂]
+					}`;
+
+			return deindent`
+				if (${condition}) ${snippet}`
+		});
+
+		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
+			const variable = component.var_lookup.get(name);
+			return variable.injected;
+		});
+
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${user_code}
@@ -326,10 +345,10 @@ export default function dom(
 
 				${set && `$$self.$set = ${set};`}
 
-				${component.reactive_declarations.length > 0 && deindent`
+				${reactive_declarations.length > 0 && deindent`
+				${injected.length && `let ${injected.join(', ')};`}
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
-					${component.reactive_declarations.map(d => deindent`
-					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}`)}
+					${reactive_declarations}
 				};
 				`}
 
