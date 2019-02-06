@@ -66,7 +66,7 @@ export function derive(stores, fn) {
 	const single = !Array.isArray(stores);
 	if (single) stores = [stores];
 
-	const auto = fn.length === 1;
+	const auto = fn.length < 2;
 	let value = {};
 
 	return readable(set => {
