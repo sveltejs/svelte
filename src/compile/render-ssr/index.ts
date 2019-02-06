@@ -50,6 +50,11 @@ export default function ssr(
 		})
 		: [];
 
+	const reactive_declarations = component.reactive_declarations.map(d => {
+		const snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+		return d.injected ? `let ${snippet}` : snippet;
+	});
+
 	const main = renderer.has_bindings
 		? deindent`
 			let $$settled;
@@ -60,7 +65,7 @@ export default function ssr(
 
 				${reactive_store_values}
 
-				${component.reactive_declarations.map(d => d.snippet)}
+				${reactive_declarations}
 
 				$$rendered = \`${renderer.code}\`;
 			} while (!$$settled);
@@ -70,7 +75,7 @@ export default function ssr(
 		: deindent`
 			${reactive_store_values}
 
-			${component.reactive_declarations.map(d => d.snippet)}
+			${reactive_declarations}
 
 			return \`${renderer.code}\`;`;
 

@@ -20,7 +20,6 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
 import getObject from '../utils/getObject';
-import deindent from '../utils/deindent';
 import globalWhitelist from '../utils/globalWhitelist';
 
 type ComponentOptions = {
@@ -66,9 +65,10 @@ export default class Component {
 	node_for_declaration: Map<string, Node> = new Map();
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
-	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
+	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, node: Node, injected: boolean }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
+	injected_reactive_declaration_vars: Set<string> = new Set();
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
 
@@ -554,6 +554,19 @@ export default class Component {
 
 		this.addSourcemapLocations(script.content);
 
+		// inject vars for reactive declarations
+		script.content.body.forEach(node => {
+			if (node.type !== 'LabeledStatement') return;
+			if (node.body.type !== 'ExpressionStatement') return;
+			if (node.body.expression.type !== 'AssignmentExpression') return;
+
+			const { type, name } = node.body.expression.left;
+
+			if (type === 'Identifier' && !this.var_lookup.has(name)) {
+				this.injected_reactive_declaration_vars.add(name);
+			}
+		});
+
 		let { scope: instance_scope, map, globals } = createScopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
@@ -589,9 +602,17 @@ export default class Component {
 		});
 
 		globals.forEach(name => {
-			if (this.module_scope && this.module_scope.declarations.has(name)) return;
+			if (this.var_lookup.has(name)) return;
 
-			if (name[0] === '$') {
+			if (this.injected_reactive_declaration_vars.has(name)) {
+				this.add_var({
+					name,
+					injected: true,
+					writable: true,
+					reassigned: true,
+					initialised: true
+				});
+			} else if (name[0] === '$') {
 				this.add_var({
 					name,
 					injected: true,
@@ -1002,12 +1023,12 @@ export default class Component {
 					assignees,
 					dependencies,
 					node,
-					snippet: node.body.type === 'BlockStatement'
-						? `[✂${node.body.start}-${node.end}✂]`
-						: deindent`
-							{
-								[✂${node.body.start}-${node.end}✂]
-							}`
+					injected: (
+						node.body.type === 'ExpressionStatement' &&
+						node.body.expression.type === 'AssignmentExpression' &&
+						node.body.expression.left.type === 'Identifier' &&
+						this.var_lookup.get(node.body.expression.left.name).injected
+					)
 				});
 			}
 		});
@@ -1082,8 +1103,7 @@ export default class Component {
 		}
 
 		if (allow_implicit && !this.ast.instance && !this.ast.module) return;
-		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
-		if (this.module_scope && this.module_scope.declarations.has(name)) return;
+		if (this.var_lookup.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globalWhitelist.has(name)) return;
 
