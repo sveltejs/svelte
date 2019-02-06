@@ -18,7 +18,7 @@ It's easier to show the effect of this than to describe it. Open the following e
 
 ```html
 <!-- { title: 'Keyed each blocks' } -->
-<button on:click="update()">update</button>
+<button on:click="{update}">update</button>
 
 <section>
 	<h2>Keyed</h2>
@@ -46,29 +46,21 @@ It's easier to show the effect of this than to describe it. Open the following e
 </style>
 
 <script>
-	import { slide } from 'svelte-transitions';
+	import { slide } from 'svelte/transition';
 
-	var people = ['Alice', 'Barry', 'Cecilia', 'Douglas', 'Eleanor', 'Felix', 'Grace', 'Horatio', 'Isabelle'];
-
+	const names = ['Alice', 'Barry', 'Cecilia', 'Douglas', 'Eleanor', 'Felix', 'Grace', 'Horatio', 'Isabelle'];
+	
 	function random() {
-		return people
+		return names
 			.filter(() => Math.random() < 0.5)
-			.map(name => ({ name }))
+			.map(name => ({ name }));
 	}
-
-	export default {
-		data() {
-			return { people: random() };
-		},
-
-		methods: {
-			update() {
-				this.set({ people: random() });
-			}
-		},
-
-		transitions: { slide }
-	};
+	
+	let people = random();
+	
+	function update() {
+		people = random();
+	}
 </script>
 ```
 
