@@ -7,7 +7,7 @@ export default function(node, renderer, options) {
 	const slot_name = name && name.chunks[0].data || 'default';
 	const prop = quotePropIfNecessary(slot_name);
 
-	const slot_data = get_slot_data(node.attributes);
+	const slot_data = get_slot_data(node.attributes, true);
 
 	const arg = slot_data.length > 0 ? `{ ${slot_data.join(', ')} }` : '';
 
