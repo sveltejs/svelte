@@ -314,7 +314,13 @@ export default function dom(
 
 	if (has_definition) {
 		const reactive_declarations = component.reactive_declarations.map(d => {
-			const condition = Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ');
+			const condition = Array.from(d.dependencies)
+				.filter(n => {
+					const variable = component.var_lookup.get(n);
+					return variable && variable.writable;
+				})
+				.map(n => `$$dirty.${n}`).join(' || ');
+
 			const snippet = d.node.body.type === 'BlockStatement'
 				? `[✂${d.node.body.start}-${d.node.end}✂]`
 				: deindent`
