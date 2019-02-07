@@ -1002,7 +1002,8 @@ export default class Component {
 							const object = getObject(node);
 							const { name } = object;
 
-							if (name[0] === '$' || component.var_lookup.has(name)) {
+							const owner = scope.findOwner(name);
+							if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name))) {
 								dependencies.add(name);
 							}
 
