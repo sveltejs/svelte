@@ -78,7 +78,7 @@ export default function(node, renderer, options) {
 				args.push(snip(attribute.expression));
 			} else {
 				if (attribute.name === 'value' && node.name === 'textarea') {
-					textareaContents = stringify_attribute(attribute);
+					textareaContents = stringify_attribute(attribute, true);
 				} else if (attribute.isTrue) {
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: true }`);
 				} else if (
@@ -89,7 +89,7 @@ export default function(node, renderer, options) {
 					// a boolean attribute with one non-Text chunk
 					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: ${snip(attribute.chunks[0])} }`);
 				} else {
-					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringify_attribute(attribute)}\` }`);
+					args.push(`{ ${quoteNameIfNecessary(attribute.name)}: \`${stringify_attribute(attribute, true)}\` }`);
 				}
 			}
 		});
@@ -100,7 +100,7 @@ export default function(node, renderer, options) {
 			if (attribute.type !== 'Attribute') return;
 
 			if (attribute.name === 'value' && node.name === 'textarea') {
-				textareaContents = stringify_attribute(attribute);
+				textareaContents = stringify_attribute(attribute, true);
 			} else if (attribute.isTrue) {
 				openingTag += ` ${attribute.name}`;
 			} else if (
@@ -112,14 +112,14 @@ export default function(node, renderer, options) {
 				openingTag += '${' + snip(attribute.chunks[0]) + ' ? " ' + attribute.name + '" : "" }';
 			} else if (attribute.name === 'class' && classExpr) {
 				addClassAttribute = false;
-				openingTag += ` class="\${[\`${stringify_attribute(attribute)}\`, ${classExpr}].join(' ').trim() }"`;
+				openingTag += ` class="\${[\`${stringify_attribute(attribute, true)}\`, ${classExpr}].join(' ').trim() }"`;
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const { name } = attribute;
 				const snippet = snip(attribute.chunks[0]);
 
 				openingTag += '${(v => v == null ? "" : ` ' + name + '="${@escape(' + snippet + ')}"`)(' + snippet + ')}';
 			} else {
-				openingTag += ` ${attribute.name}="${stringify_attribute(attribute)}"`;
+				openingTag += ` ${attribute.name}="${stringify_attribute(attribute, true)}"`;
 			}
 		});
 	}
