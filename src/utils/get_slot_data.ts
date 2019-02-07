@@ -11,7 +11,7 @@ export default function(attributes) {
 					? '""'
 					: attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text'
 						? snip(attribute.chunks[0])
-						: stringify_attribute(attribute);
+						: '`' + stringify_attribute(attribute) + '`';
 
 			return `${attribute.name}: ${value}`;
 		});
