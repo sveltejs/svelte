@@ -36,7 +36,11 @@ function compile({ source, options, entry }) {
 			Object.assign({}, commonCompilerOptions, options)
 		);
 
-		return { js: js.code, css: css.code, props: entry ? stats.props : null };
+		const props = entry
+			? stats.vars.map(v => v.export_name).filter(Boolean)
+			: null;
+
+		return { js: js.code, css: css.code, props };
 	} catch (err) {
 		let result = `/* Error compiling component\n\n${err.message}`;
 		if (err.frame) result += `\n${err.frame}`;
