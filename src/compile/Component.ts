@@ -1056,6 +1056,10 @@ export default class Component {
 				});
 			}
 
+			if (this.reactive_declarations.indexOf(declaration) !== -1) {
+				return;
+			}
+
 			seen.add(declaration);
 
 			if (declaration.dependencies.size === 0) {
@@ -1069,9 +1073,7 @@ export default class Component {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
 				if (earlier_declarations) earlier_declarations.forEach(declaration => {
-					if (this.reactive_declarations.indexOf(declaration) === -1) {
-						add_declaration(declaration);
-					}
+					add_declaration(declaration);
 				});
 			});
 
