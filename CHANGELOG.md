@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 2.16.1
+
+* Set `_recompute` method before defining custom elements — fixes ([#2049](https://github.com/sveltejs/svelte/issues/2049))
+
 ## 2.16.0
 
 * Allow multiple window bindings ([#1859](https://github.com/sveltejs/svelte/issues/1859))
