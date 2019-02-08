@@ -1,9 +1,0 @@
-<script>
-	import Foo from './Foo.html';
-	import Bar from './Bar.html';
-
-	export let x;
-	export let selected;
-</script>
-
-<svelte:component this="{x ? Foo : Bar}" on:select="{e => selected = e.detail.id}"/>
