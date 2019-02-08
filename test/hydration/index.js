@@ -18,7 +18,7 @@ describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
-		require.extensions['.html'] = function(module, filename) {
+		require.extensions['.svelte'] = function(module, filename) {
 			const options = Object.assign(
 				{
 					filename,
@@ -62,7 +62,7 @@ describe('hydration', () => {
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require(`${cwd}/main.html`).default;
+					SvelteComponent = require(`${cwd}/main.svelte`).default;
 				} catch (err) {
 					throw err;
 				}

@@ -17,7 +17,7 @@ describe("validate", () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./validator/samples/${dir}/_config.js`);
 
-			const input = fs.readFileSync(`test/validator/samples/${dir}/input.html`, "utf-8").replace(/\s+$/, "");
+			const input = fs.readFileSync(`test/validator/samples/${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
 			const expectedWarnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
 			const expectedErrors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
 

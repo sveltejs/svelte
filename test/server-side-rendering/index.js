@@ -46,15 +46,7 @@ describe("ssr", () => {
 		(solo ? it.only : it)(dir, () => {
 			dir = path.resolve("test/server-side-rendering/samples", dir);
 			try {
-				let Component;
-
-				const mainHtmlFile = `${dir}/main.html`;
-				const mainSvelteFile = `${dir}/main.svelte`;
-				if (fs.existsSync(mainHtmlFile)) {
-					Component = require(mainHtmlFile).default;
-				} else if (fs.existsSync(mainSvelteFile)) {
-					Component = require(mainSvelteFile).default;
-				}
+				const Component = require(`${dir}/main.svelte`).default;
 
 				const expectedHtml = tryToReadFile(`${dir}/_expected.html`);
 				const expectedCss = tryToReadFile(`${dir}/_expected.css`) || "";
@@ -104,7 +96,7 @@ describe("ssr", () => {
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve("test/runtime/samples", dir);
 
-			glob('**/*.html', { cwd: `test/runtime/samples/${dir}` }).forEach(file => {
+			glob('**/*.svelte', { cwd: `test/runtime/samples/${dir}` }).forEach(file => {
 				const resolved = require.resolve(`../runtime/samples/${dir}/${file}`);
 				delete require.cache[resolved];
 			});
@@ -118,7 +110,7 @@ describe("ssr", () => {
 			try {
 				if (config.before_test) config.before_test();
 
-				const Component = require(`../runtime/samples/${dir}/main.html`).default;
+				const Component = require(`../runtime/samples/${dir}/main.svelte`).default;
 				const { html } = Component.render(config.props, {
 					store: (config.store !== true) && config.store
 				});

@@ -27,7 +27,7 @@ describe("runtime", () => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
-		require.extensions[".html"] = function(module, filename) {
+		require.extensions[".svelte"] = function(module, filename) {
 			const options = Object.assign({
 				filename,
 				format: 'cjs',
@@ -74,7 +74,7 @@ describe("runtime", () => {
 			compileOptions.immutable = config.immutable;
 
 			Object.keys(require.cache)
-				.filter(x => x.endsWith(".html"))
+				.filter(x => x.endsWith(".svelte"))
 				.forEach(file => {
 					delete require.cache[file];
 				});
@@ -111,7 +111,7 @@ describe("runtime", () => {
 					};
 
 					try {
-						mod = require(`./samples/${dir}/main.html`);
+						mod = require(`./samples/${dir}/main.svelte`);
 						SvelteComponent = mod.default;
 					} catch (err) {
 						showOutput(cwd, compileOptions, svelte.compile); // eslint-disable-line no-console

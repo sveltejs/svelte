@@ -1,6 +1,6 @@
 export default {
 	preprocess: {
-		filename: 'file.html',
+		filename: 'file.svelte',
 		markup: ({ content, filename }) => {
 			return {
 				code: content.replace('__MARKUP_FILENAME__', filename)

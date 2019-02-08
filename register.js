@@ -3,7 +3,7 @@ const path = require('path');
 const { compile } = require('./compiler.js');
 
 let compileOptions = {
-	extensions: ['.html']
+	extensions: ['.svelte', '.html']
 };
 
 function capitalise(name) {
@@ -43,6 +43,7 @@ function registerExtension(extension) {
 	};
 }
 
+registerExtension('.svelte');
 registerExtension('.html');
 
 module.exports = register;
