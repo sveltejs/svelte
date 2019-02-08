@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import './main.html';
+import './main.svelte';
 
 export default function (target) {
 	target.innerHTML = '<my-app/>';

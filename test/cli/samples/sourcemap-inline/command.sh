@@ -1,1 +1,1 @@
-svelte compile src/Main.html -m inline -o actual/Main.js
+svelte compile src/Main.svelte -m inline -o actual/Main.js

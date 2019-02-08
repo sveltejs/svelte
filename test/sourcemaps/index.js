@@ -21,7 +21,7 @@ describe("sourcemaps", () => {
 			const config = loadConfig(`./sourcemaps/samples/${dir}/_config.js`);
 
 			const filename = path.resolve(
-				`test/sourcemaps/samples/${dir}/input.html`
+				`test/sourcemaps/samples/${dir}/input.svelte`
 			);
 			const outputFilename = path.resolve(
 				`test/sourcemaps/samples/${dir}/output`
@@ -56,8 +56,8 @@ describe("sourcemaps", () => {
 				);
 			}
 
-			assert.deepEqual(js.map.sources, ["input.html"]);
-			if (css.map) assert.deepEqual(css.map.sources, ["input.html"]);
+			assert.deepEqual(js.map.sources, ["input.svelte"]);
+			if (css.map) assert.deepEqual(css.map.sources, ["input.svelte"]);
 
 			const { test } = require(`./samples/${dir}/test.js`);
 
