@@ -1,8 +1,8 @@
 <script>
 	import * as fleece from 'golden-fleece';
 	import { createEventDispatcher } from 'svelte';
-	import UserMenu from './UserMenu.html';
-	import Icon from '../../../../components/Icon.html';
+	import UserMenu from './UserMenu.svelte';
+	import Icon from '../../../../components/Icon.svelte';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from '../../_utils/downloadBlob.js';
 	import { user } from '../../../../user.js';
@@ -115,7 +115,7 @@
 			// null out any deleted files
 			const set = new Set(components.map(m => `${m.name}.${m.type}`));
 			Object.keys(gist.files).forEach(file => {
-				if (/\.(html|js)$/.test(file)) {
+				if (/\.(svelte|html|js)$/.test(file)) {
 					if (!set.has(file)) files[file] = null;
 				}
 			});
@@ -126,7 +126,7 @@
 					throw new Error(`GitHub does not allow saving gists with empty files - ${file}`);
 				}
 
-				if (!gist.files[files] || module.source !== gist.files[file].content) {
+				if (!gist.files[file] || module.source !== gist.files[file].content) {
 					files[file] = { content: module.source };
 				}
 			});
@@ -189,7 +189,7 @@
 
 		files.push(...components.map(component => ({ path: `src/${component.name}.${component.type}`, data: component.source })));
 		files.push({
-			path: `src/main.js`, data: `import App from './App.html';
+			path: `src/main.js`, data: `import App from './App.svelte';
 
 var app = new App({
 	target: document.body,

@@ -1,6 +1,6 @@
 <script>
-	import InlineSvg from '../components/InlineSvg.html';
-	import Nav from '../components/TopNav.html';
+	import InlineSvg from '../components/InlineSvg.svelte';
+	import Nav from '../components/TopNav.svelte';
 
 	export let child;
 	export let path;

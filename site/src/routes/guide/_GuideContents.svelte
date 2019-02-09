@@ -1,6 +1,6 @@
 <script>
 	import { onMount, afterUpdate } from 'svelte';
-	import Icon from '../../components/Icon.html';
+	import Icon from '../../components/Icon.svelte';
 
 	export let sections = [];
 	export let active_section = null;
