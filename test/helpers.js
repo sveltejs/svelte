@@ -171,7 +171,7 @@ export function addLineNumbers(code) {
 }
 
 export function showOutput(cwd, options = {}, compile = svelte.compile) {
-	glob('**/*.html', { cwd }).forEach(file => {
+	glob('**/*.svelte', { cwd }).forEach(file => {
 		if (file[0] === '_') return;
 
 		const { js } = compile(

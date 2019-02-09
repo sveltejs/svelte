@@ -1,1 +1,1 @@
-svelte compile src/Main.html -d > actual/Main.js
+svelte compile src/Main.svelte -d > actual/Main.js

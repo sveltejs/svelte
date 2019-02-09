@@ -12,7 +12,7 @@ export function test({ assert, smc, locateInSource, locateInGenerated }) {
 	});
 
 	assert.deepEqual(actual, {
-		source: 'input.html',
+		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,
 		column: expected.column
@@ -26,7 +26,7 @@ export function test({ assert, smc, locateInSource, locateInGenerated }) {
 	});
 
 	assert.deepEqual(actual, {
-		source: 'input.html',
+		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,
 		column: expected.column

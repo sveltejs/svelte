@@ -72,7 +72,7 @@ describe('custom-elements', function() {
 						},
 
 						transform(code, id) {
-							if (id.endsWith('.html')) {
+							if (id.endsWith('.svelte')) {
 								const compiled = svelte.compile(code, {
 									customElement: true,
 									dev: config.dev

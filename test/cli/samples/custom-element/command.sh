@@ -1,1 +1,1 @@
-svelte compile src/Main.html --customElement > actual/Main.js
+svelte compile src/Main.svelte --customElement > actual/Main.js

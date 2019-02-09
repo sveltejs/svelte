@@ -18,7 +18,7 @@ describe("js", () => {
 			dir = path.resolve("test/js/samples", dir);
 			const config = loadConfig(`${dir}/_config.js`);
 
-			const input = fs.readFileSync(`${dir}/input.html`, "utf-8").replace(/\s+$/, "");
+			const input = fs.readFileSync(`${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
 
 			let actual;
 

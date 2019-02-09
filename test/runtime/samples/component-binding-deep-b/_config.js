@@ -21,8 +21,8 @@ export default {
 
 	html: `
 		<select>
-			<option value='[object Object]'>One.html</option>
-			<option value='[object Object]'>Two.html</option>
+			<option value='[object Object]'>One.svelte</option>
+			<option value='[object Object]'>Two.svelte</option>
 		</select>
 
 		<textarea></textarea>
@@ -40,8 +40,8 @@ export default {
 		assert.equal(component.compiled, 'ONE SOURCE CHANGED\nTWO SOURCE');
 		assert.htmlEqual(target.innerHTML, `
 			<select>
-				<option value='[object Object]'>One.html</option>
-				<option value='[object Object]'>Two.html</option>
+				<option value='[object Object]'>One.svelte</option>
+				<option value='[object Object]'>Two.svelte</option>
 			</select>
 
 			<textarea></textarea>
@@ -70,8 +70,8 @@ export default {
 		assert.equal(component.compiled, 'ONE SOURCE CHANGED\nTWO SOURCE CHANGED');
 		assert.htmlEqual(target.innerHTML, `
 			<select>
-				<option value='[object Object]'>One.html</option>
-				<option value='[object Object]'>Two.html</option>
+				<option value='[object Object]'>One.svelte</option>
+				<option value='[object Object]'>Two.svelte</option>
 			</select>
 
 			<textarea></textarea>

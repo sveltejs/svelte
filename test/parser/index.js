@@ -18,7 +18,7 @@ describe('parse', () => {
 		(solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`test/parser/samples/${dir}/options.json`) || {};
 
-			const input = fs.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8').replace(/\s+$/, '');
+			const input = fs.readFileSync(`test/parser/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
 			const expectedOutput = tryToLoadJson(`test/parser/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`test/parser/samples/${dir}/error.json`);
 
