@@ -289,7 +289,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={refs.child} sandbox="allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" bind:this={refs.child} sandbox="allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
