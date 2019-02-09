@@ -2,11 +2,11 @@
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
 	import * as fleece from 'golden-fleece';
-	import SplitPane from './SplitPane.html';
-	import CodeMirror from './CodeMirror.html';
-	import Input from './Input/index.html';
-	import Output from './Output/index.html';
-	import InputOutputToggle from './InputOutputToggle.html';
+	import SplitPane from './SplitPane.svelte';
+	import CodeMirror from './CodeMirror.svelte';
+	import Input from './Input/index.svelte';
+	import Output from './Output/index.svelte';
+	import InputOutputToggle from './InputOutputToggle.svelte';
 
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let app;
@@ -100,7 +100,7 @@
 		const selected = $selected_store;
 
 		if (selected.name === 'App') {
-			// App.html can't be removed
+			// App.svelte can't be removed
 			selected.source = '';
 			// $selected_store.set(selected);
 		} else {
@@ -118,13 +118,13 @@
 	}
 
 	function compile(component, options) {
-		if (component.type === 'html') {
+		if (component.type === 'svelte') {
 			workers.compiler.postMessage({
 				type: 'compile',
 				source: component.source,
 				options: Object.assign({
 					name: component.name,
-					filename: `${component.name}.html`
+					filename: `${component.name}.svelte`
 				}, options),
 				entry: component === $component_store[0]
 			});
@@ -154,7 +154,7 @@
 	}
 
 	function navigate(filename) {
-		const name = filename.replace(/\.html$/, '');
+		const name = filename.replace(/\.svelte$/, '');
 
 		console.error(`TODO navigate`);
 

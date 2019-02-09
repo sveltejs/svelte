@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
-	import Icon from './Icon.html';
-	import Logo from './Logo.html';
+	import Icon from './Icon.svelte';
+	import Logo from './Logo.svelte';
 
 	export let segment;
 

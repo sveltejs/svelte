@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import * as fleece from 'golden-fleece';
-	import CodeMirror from '../CodeMirror.html';
+	import CodeMirror from '../CodeMirror.svelte';
 
 	const dispatch = createEventDispatcher();
 

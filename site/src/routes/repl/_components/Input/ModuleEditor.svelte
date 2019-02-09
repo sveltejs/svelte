@@ -1,5 +1,5 @@
 <script>
-	import CodeMirror from '../CodeMirror.html';
+	import CodeMirror from '../CodeMirror.svelte';
 
 	export let component;
 	export let error;

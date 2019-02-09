@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import Icon from '../../../../components/Icon.html';
+	import Icon from '../../../../components/Icon.svelte';
 	import { enter } from '../events.js';
 
 	const dispatch = createEventDispatcher();
@@ -25,7 +25,7 @@
 	}
 
 	function closeEdit() {
-		const match = /(.+)\.(html|js)$/.exec($selected_store.name);
+		const match = /(.+)\.(svelte|js)$/.exec($selected_store.name);
 		$selected_store.name = match ? match[1] : $selected_store.name;
 		if (match && match[2]) $selected_store.type = match[2];
 		editing = null;
@@ -49,7 +49,7 @@
 	function addNew() {
 		const component = {
 			name: uid++ ? `Component${uid}` : 'Component1',
-			type: 'html',
+			type: 'svelte',
 			source: ''
 		};
 
@@ -181,7 +181,7 @@
 			>
 				{#if component.name == 'App'}
 					<div class="uneditable">
-						App.html
+						App.svelte
 					</div>
 				{:else}
 					{#if component === editing}

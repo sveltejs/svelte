@@ -1,8 +1,8 @@
 <svelte:options immutable/>
 
 <script>
-	import ImmutableTodo from './ImmutableTodo.html';
-	import MutableTodo from './MutableTodo.html';
+	import ImmutableTodo from './ImmutableTodo.svelte';
+	import MutableTodo from './MutableTodo.svelte';
 
 	export let todos;
 

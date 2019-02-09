@@ -1,6 +1,6 @@
 <script>
-	import ComponentSelector from './ComponentSelector.html';
-	import ModuleEditor from './ModuleEditor.html';
+	import ComponentSelector from './ComponentSelector.svelte';
+	import ModuleEditor from './ModuleEditor.svelte';
 
 	export let component_store;
 	export let selected_store;

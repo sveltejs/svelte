@@ -7,8 +7,8 @@
 
 <script>
 	import { onMount, afterUpdate } from 'svelte';
-	import GuideContents from './_GuideContents.html';
-	import Icon from '../../components/Icon.html';
+	import GuideContents from './_GuideContents.svelte';
+	import Icon from '../../components/Icon.svelte';
 
 	export let sections;
 	let active_section;

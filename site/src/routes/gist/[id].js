@@ -5,7 +5,7 @@ export async function get(req, res) {
 	const { id } = req.params;
 
 	const headers = {};
-	const user = req.session.passport && req.session.passport.user;
+	const user = req.session && req.session.passport && req.session.passport.user;
 	if (user) {
 		headers.Authorization = `token ${user.token}`;
 	}
@@ -34,7 +34,7 @@ export async function get(req, res) {
 }
 
 export async function patch(req, res) {
-	const user = req.session.passport && req.session.passport.user;
+	const user = req.session && req.session.passport && req.session.passport.user;
 
 	if (!user) {
 		res.writeHead(403, {

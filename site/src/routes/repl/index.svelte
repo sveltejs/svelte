@@ -12,8 +12,8 @@
 	import { onMount } from 'svelte';
 	import { locate } from 'locate-character';
 	import * as fleece from 'golden-fleece';
-	import AppControls from './_components/AppControls/index.html';
-	import Repl from './_components/Repl.html';
+	import AppControls from './_components/AppControls/index.svelte';
+	import Repl from './_components/Repl.svelte';
 	import examples from '../../../content/examples/manifest.json';
 
 	export let version, demo, gist_id;
@@ -80,18 +80,21 @@
 							values = tryParseData(source) || {};
 						}
 
+						let type = file.slice(dot + 1);
+						if (type === 'html') type = 'svelte';
+
 						return {
 							name: file.slice(0, dot),
-							type: file.slice(dot + 1),
+							type,
 							source
 						};
 					})
-					.filter(x => x.type === 'html' || x.type === 'js')
+					.filter(x => x.type === 'svelte' || x.type === 'js')
 					.sort((a, b) => {
-						if (a.name === 'App' && a.type === 'html') return -1;
-						if (b.name === 'App' && b.type === 'html') return 1;
+						if (a.name === 'App' && a.type === 'svelte') return -1;
+						if (b.name === 'App' && b.type === 'svelte') return 1;
 
-						if (a.type !== b.type) return a.type === 'html' ? -1 : 1;
+						if (a.type !== b.type) return a.type === 'svelte' ? -1 : 1;
 
 						return a.name < b.name ? -1 : 1;
 					});

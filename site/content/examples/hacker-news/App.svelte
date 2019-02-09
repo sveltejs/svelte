@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
-	import List from './List.html';
-	import Item from './Item.html';
+	import List from './List.svelte';
+	import Item from './Item.svelte';
 
 	let item;
 	let page;

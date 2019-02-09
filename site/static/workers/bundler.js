@@ -69,7 +69,7 @@ async function getBundle(mode, cache, lookup) {
 
 	try {
 		bundle = await rollup.rollup({
-			input: './App.html',
+			input: './App.svelte',
 			external: id => {
 				if (id[0] === '.') return false;
 				if (is_svelte_module(id)) return false;
@@ -86,6 +86,8 @@ async function getBundle(mode, cache, lookup) {
 						return new URL(`${importee}.mjs`, importer).href;
 					}
 
+					if (importee.endsWith('.html')) importee = importee.replace(/\.html$/, '.svelte');
+
 					if (importee in lookup) return importee;
 				},
 				load(id) {
@@ -93,15 +95,15 @@ async function getBundle(mode, cache, lookup) {
 					if (id in lookup) return lookup[id].source;
 				},
 				transform(code, id) {
-					if (!/\.html$/.test(id)) return null;
+					if (!/\.svelte$/.test(id)) return null;
 
-					const name = id.replace(/^\.\//, '').replace(/\.html$/, '');
+					const name = id.replace(/^\.\//, '').replace(/\.svelte$/, '');
 
 					const { js, css, stats } = svelte.compile(code, Object.assign({
 						generate: mode,
 						format: 'esm',
 						name: name,
-						filename: name + '.html',
+						filename: name + '.svelte',
 						onwarn: warning => {
 							console.warn(warning.message);
 							console.log(warning.frame);

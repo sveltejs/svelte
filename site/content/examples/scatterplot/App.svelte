@@ -1,5 +1,5 @@
 <script>
-	import Scatterplot from './Scatterplot.html';
+	import Scatterplot from './Scatterplot.svelte';
 
 	export let a;
 	export let b;

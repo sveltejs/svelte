@@ -1,6 +1,6 @@
 <script>
-	import Icon from '../components/Icon.html';
-	import Logo from '../components/Logo.html';
+	import Icon from '../components/Icon.svelte';
+	import Logo from '../components/Logo.svelte';
 	import contributors from './_contributors.js';
 
 	let sy = 0;

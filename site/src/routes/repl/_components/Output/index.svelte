@@ -1,9 +1,9 @@
 <script>
-	import SplitPane from '../SplitPane.html';
-	import Viewer from './Viewer.html';
-	import CompilerOptions from './CompilerOptions.html';
-	import PropEditor from './PropEditor.html';
-	import CodeMirror from '../CodeMirror.html';
+	import SplitPane from '../SplitPane.svelte';
+	import Viewer from './Viewer.svelte';
+	import CompilerOptions from './CompilerOptions.svelte';
+	import PropEditor from './PropEditor.svelte';
+	import CodeMirror from '../CodeMirror.svelte';
 
 	export let bundle;
 	export let js;

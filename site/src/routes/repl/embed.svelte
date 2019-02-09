@@ -11,7 +11,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import * as fleece from 'golden-fleece';
-	import Repl from './_components/Repl.html';
+	import Repl from './_components/Repl.svelte';
 
 	export let version, gist, demo;
 
@@ -57,12 +57,12 @@
 							source
 						};
 					})
-					.filter(x => x.type === 'html' || x.type === 'js')
+					.filter(x => x.type === 'svelte' || x.type === 'js')
 					.sort((a, b) => {
-						if (a.name === 'App' && a.type === 'html') return -1;
-						if (b.name === 'App' && b.type === 'html') return 1;
+						if (a.name === 'App' && a.type === 'svelte') return -1;
+						if (b.name === 'App' && b.type === 'svelte') return 1;
 
-						if (a.type !== b.type) return a.type === 'html' ? -1 : 1;
+						if (a.type !== b.type) return a.type === 'svelte' ? -1 : 1;
 
 						return a.name < b.name ? -1 : 1;
 					});

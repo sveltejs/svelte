@@ -1,5 +1,5 @@
 <script>
-	import Foo from './Foo.html';
+	import Foo from './Foo.svelte';
 </script>
 
 <style>
