@@ -16,7 +16,7 @@ describe('stats', () => {
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./stats/samples/${dir}/_config.js`);
-			const filename = `test/stats/samples/${dir}/input.html`;
+			const filename = `test/stats/samples/${dir}/input.svelte`;
 			const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
 
 			const expectedWarnings =

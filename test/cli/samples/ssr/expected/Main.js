@@ -2,7 +2,7 @@
 
 var Main = {};
 
-Main.filename = "src/Main.html";
+Main.filename = "src/Main.svelte";
 
 Main.data = function() {
 	return {};

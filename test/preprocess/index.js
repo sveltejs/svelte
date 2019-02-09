@@ -13,8 +13,8 @@ describe('preprocess', () => {
 		}
 
 		(config.skip ? it.skip : config.solo ? it.only : it)(dir, async () => {
-			const input = fs.readFileSync(`test/preprocess/samples/${dir}/input.html`, 'utf-8');
-			const expected = fs.readFileSync(`test/preprocess/samples/${dir}/output.html`, 'utf-8');
+			const input = fs.readFileSync(`test/preprocess/samples/${dir}/input.svelte`, 'utf-8');
+			const expected = fs.readFileSync(`test/preprocess/samples/${dir}/output.svelte`, 'utf-8');
 
 			const result = await svelte.preprocess(input, config.preprocess);
 			fs.writeFileSync(`test/preprocess/samples/${dir}/_actual.html`, result.code);

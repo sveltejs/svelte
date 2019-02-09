@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import CustomElement from './main.html';
+import CustomElement from './main.svelte';
 
 export default function (target) {
 	new CustomElement({

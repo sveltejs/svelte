@@ -113,7 +113,7 @@ export default function() {
 
 				if (meta) {
 					source = lines.slice(1).join('\n');
-					const filename = meta.filename || (lang === 'html' && 'App.html');
+					const filename = meta.filename || (lang === 'html' && 'App.svelte');
 					if (filename) {
 						prefix = `<span class='filename'>${prefix} ${filename}</span>`;
 						className += ' named';

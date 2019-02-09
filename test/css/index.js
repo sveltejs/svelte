@@ -51,7 +51,7 @@ describe('css', () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = tryRequire(`./samples/${dir}/_config.js`) || {};
 			const input = fs
-				.readFileSync(`test/css/samples/${dir}/input.html`, 'utf-8')
+				.readFileSync(`test/css/samples/${dir}/input.svelte`, 'utf-8')
 				.replace(/\s+$/, '');
 
 			const expectedWarnings = (config.warnings || []).map(normalizeWarning);
