@@ -11,6 +11,7 @@
 
 <svelte:head>
 	<title>Svelte • The magical disappearing UI framework</title>
+	<link rel="alternate" type="application/rss+xml" title="Svelte blog" href="blog/rss.xml">
 </svelte:head>
 
 <div class='posts stretch'>
