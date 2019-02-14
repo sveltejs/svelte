@@ -60,3 +60,8 @@ export function get_slot_context(definition, ctx, fn) {
 		: ctx.$$scope.ctx;
 }
 
+export function exclude_internal_props(props) {
+	const result = {};
+	for (const k in props) if (k[0] !== '$') result[k] = props[k];
+	return result;
+}
