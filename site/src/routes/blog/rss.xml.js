@@ -1,10 +1,10 @@
 import get_posts from '../api/blog/_posts.js';
 
-const months = ',Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split( ',' );
+const months = ',Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
 
-function formatPubdate ( str ) {
-	const [ y, m, d ] = str.split( '-' );
-	return `${d} ${months[+m]} ${y}`;
+function formatPubdate(str) {
+	const [y, m, d] = str.split('-');
+	return `${d} ${months[+m]} ${y} 12:00 +0000`;
 }
 
 const rss = `
@@ -20,18 +20,18 @@ const rss = `
 		<title>Svelte</title>
 		<link>https://svelte.technology/blog</link>
 	</image>
-	${get_posts().map( post => `
+	${get_posts().map(post => `
 		<item>
 			<title>${post.metadata.title}</title>
 			<link>https://svelte.technology/blog/${post.slug}</link>
 			<description>${post.metadata.description}</description>
 			<pubDate>${formatPubdate(post.metadata.pubdate)}</pubDate>
 		</item>
-	` )}
+	`).join('')}
 </channel>
 
 </rss>
-`.replace( />[^\S]+/gm, '>' ).replace( /[^\S]+</gm, '<' ).trim();
+`.replace(/>[^\S]+/gm, '>').replace(/[^\S]+</gm, '<').trim();
 
 export function get(req, res) {
 	res.set({
