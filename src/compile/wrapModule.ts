@@ -1,7 +1,6 @@
 import deindent from '../utils/deindent';
 import list from '../utils/list';
 import { CompileOptions, ModuleFormat, Node } from '../interfaces';
-import Stats from '../Stats';
 
 interface Dependency {
 	name: string;
@@ -9,7 +8,7 @@ interface Dependency {
 	source: string;
 }
 
-const wrappers = { esm, cjs, eval: expr };
+const wrappers = { esm, cjs };
 
 type Export = {
 	name: string;
@@ -21,7 +20,6 @@ export default function wrapModule(
 	format: ModuleFormat,
 	name: string,
 	options: CompileOptions,
-	stats: Stats,
 	banner: string,
 	sveltePath = 'svelte',
 	helpers: { name: string, alias: string }[],
@@ -36,7 +34,6 @@ export default function wrapModule(
 	}
 
 	if (format === 'cjs') return cjs(code, name, banner, sveltePath, internalPath, helpers, imports, module_exports);
-	if (format === 'eval') return expr(code, name, options, stats, banner, imports);
 
 	throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 }
@@ -142,114 +139,4 @@ function cjs(
 		${code}
 
 		${exports}`
-}
-
-function expr(
-	code: string,
-	name: string,
-	options: CompileOptions,
-	stats: Stats,
-	banner: string,
-	imports: Node[]
-) {
-	const dependencies = imports.map((declaration, i) => {
-		const defaultImport = declaration.specifiers.find(
-			(x: Node) =>
-				x.type === 'ImportDefaultSpecifier' ||
-				(x.type === 'ImportSpecifier' && x.imported.name === 'default')
-		);
-
-		const namespaceImport = declaration.specifiers.find(
-			(x: Node) => x.type === 'ImportNamespaceSpecifier'
-		);
-
-		const namedImports = declaration.specifiers.filter(
-			(x: Node) =>
-				x.type === 'ImportSpecifier' && x.imported.name !== 'default'
-		);
-
-		const name = defaultImport || namespaceImport
-			? (defaultImport || namespaceImport).local.name
-			: `__import${i}`;
-
-		const statements: string[] = [];
-
-		namedImports.forEach((specifier: Node) => {
-			statements.push(
-				`var ${specifier.local.name} = ${name}.${specifier.imported.name};`
-			);
-		});
-
-		if (defaultImport) {
-			statements.push(
-				`${name} = (${name} && ${name}.__esModule) ? ${name}["default"] : ${name};`
-			);
-		}
-
-		return { name, statements, source: declaration.source.value };
-	});
-
-	const globals = getGlobals(dependencies, options, stats);
-
-	return deindent`
-		(function (${paramString(dependencies)}) { "use strict";
-			${banner}
-
-			${getCompatibilityStatements(dependencies)}
-
-			${code}
-
-			return ${name};
-		}(${globals.join(', ')}))`;
-}
-
-function paramString(dependencies: Dependency[]) {
-	return dependencies.map(dep => dep.name).join(', ');
-}
-
-function getCompatibilityStatements(dependencies: Dependency[]) {
-	if (!dependencies.length) return null;
-
-	const statements: string[] = [];
-
-	dependencies.forEach(dependency => {
-		statements.push(...dependency.statements);
-	});
-
-	return statements.join('\n');
-}
-
-function getGlobals(dependencies: Dependency[], options: CompileOptions, stats: Stats) {
-	const { globals } = options;
-	const globalFn = getGlobalFn(globals);
-
-	return dependencies.map(d => {
-		let name = globalFn(d.source);
-
-		if (!name) {
-			if (d.name.startsWith('__import')) {
-				throw new Error(
-					`Could not determine name for imported module '${d.source}' – use options.globals`
-				);
-			} else {
-				stats.warn({
-					code: `options-missing-globals`,
-					message: `No name was supplied for imported module '${d.source}'. Guessing '${d.name}', but you should use options.globals`,
-				});
-			}
-
-			name = d.name;
-		}
-
-		return name;
-	});
-}
-
-function getGlobalFn(globals: any): (id: string) => string {
-	if (typeof globals === 'function') return globals;
-	if (typeof globals === 'object') {
-		return id => globals[id];
-	}
-
-	return () => undefined;
 }
