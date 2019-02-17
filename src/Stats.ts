@@ -26,8 +26,6 @@ function collapseTimings(timings) {
 }
 
 export default class Stats {
-	onwarn: (warning: Warning) => void;
-
 	startTime: number;
 	currentTiming: Timing;
 	currentChildren: Timing[];
@@ -35,14 +33,10 @@ export default class Stats {
 	stack: Timing[];
 	warnings: Warning[];
 
-	constructor({ onwarn }: {
-		onwarn: (warning: Warning) => void
-	}) {
+	constructor() {
 		this.startTime = now();
 		this.stack = [];
 		this.currentChildren = this.timings = [];
-
-		this.onwarn = onwarn;
 
 		this.warnings = [];
 	}
@@ -114,6 +108,5 @@ export default class Stats {
 
 	warn(warning) {
 		this.warnings.push(warning);
-		this.onwarn(warning);
 	}
 }
