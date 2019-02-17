@@ -21,6 +21,27 @@ describe('store', () => {
 
 			assert.deepEqual(values, [0, 1, 2]);
 		});
+
+		it('calls provided subscribe handler', () => {
+			let called = 0;
+
+			const store = writable(0, () => {
+				called += 1;
+				return () => called -= 1;
+			});
+
+			const unsubscribe1 = store.subscribe(() => {});
+			assert.equal(called, 1);
+
+			const unsubscribe2 = store.subscribe(() => {});
+			assert.equal(called, 1);
+
+			unsubscribe1();
+			assert.equal(called, 1);
+
+			unsubscribe2();
+			assert.equal(called, 0);
+		});
 	});
 
 	describe('readable', () => {
