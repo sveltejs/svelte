@@ -1,26 +1,24 @@
 <script>
 	const tomorrow = new Date(Date.now() + 86400000);
 
-	const tomorrowAsString = [
+	let start = [
 		tomorrow.getFullYear(),
 		pad(tomorrow.getMonth() + 1, 2),
 		pad(tomorrow.getDate(), 2)
 	].join('-');
 
-	let start = tomorrowAsString;
-	let end = tomorrowAsString;
+	let end = start;
 	let isReturn = false;
 
-	const startDate = () => convertToDate(start);
-	const endDate = () => convertToDate(end);
-
+	$: startDate = convertToDate(start);
+	$: endDate = convertToDate(end);
 
 	function bookFlight() {
 		const type = isReturn ? 'return' : 'one-way';
 
-		let message = `You have booked a ${type} flight, leaving ${startDate().toDateString()}`;
+		let message = `You have booked a ${type} flight, leaving ${startDate.toDateString()}`;
 		if (type === 'return') {
-			message += ` and returning ${endDate().toDateString()}`;
+			message += ` and returning ${endDate.toDateString()}`;
 		}
 
 		alert(message);
@@ -57,5 +55,5 @@
 
 <button
 	on:click={bookFlight}
-	disabled="{isReturn && (startDate() >= endDate())}"
+	disabled="{isReturn && (startDate >= endDate)}"
 >book</button>
