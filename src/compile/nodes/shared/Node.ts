@@ -49,7 +49,6 @@ export default class Node {
 	}
 
 	warnIfEmptyBlock() {
-		if (!this.component.compileOptions.dev) return;
 		if (!/Block$/.test(this.type) || !this.children) return;
 		if (this.children.length > 1) return;
 
