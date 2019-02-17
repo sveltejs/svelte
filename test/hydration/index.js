@@ -50,9 +50,6 @@ describe('hydration', () => {
 			const cwd = path.resolve(`test/hydration/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = path.resolve('internal.js');
-			compileOptions.dev = config.dev;
-			compileOptions.hydrate = true;
 
 			const window = env();
 
@@ -88,14 +85,12 @@ describe('hydration', () => {
 				}
 			} catch (err) {
 				showOutput(cwd, {
-					shared: 'svelte/internal.js',
 					hydratable: true
 				});
 				throw err;
 			}
 
 			if (config.show) showOutput(cwd, {
-				shared: 'svelte/internal.js',
 				hydratable: true
 			});
 		});

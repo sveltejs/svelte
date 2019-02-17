@@ -43,10 +43,6 @@ export interface CompileOptions {
 	name?: string;
 	filename?: string;
 	generate?: string | false;
-	globals?: ((id: string) => string) | object;
-	amd?: {
-		id?: string;
-	};
 
 	outputFilename?: string;
 	cssOutputFilename?: string;

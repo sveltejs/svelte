@@ -58,12 +58,12 @@ describe('css', () => {
 
 			const dom = svelte.compile(
 				input,
-				Object.assign(config, { format: 'cjs' })
+				Object.assign(config.compileOptions || {}, { format: 'cjs' })
 			);
 
 			const ssr = svelte.compile(
 				input,
-				Object.assign(config, { format: 'cjs', generate: 'ssr' })
+				Object.assign(config.compileOptions || {}, { format: 'cjs', generate: 'ssr' })
 			);
 
 			assert.equal(dom.css.code, ssr.css.code);
