@@ -3,23 +3,42 @@ import Stats from '../Stats';
 import parse from '../parse/index';
 import renderDOM from './render-dom/index';
 import renderSSR from './render-ssr/index';
-import { CompileOptions, Warning, Ast } from '../interfaces';
+import { CompileOptions, Ast } from '../interfaces';
 import Component from './Component';
+import fuzzymatch from '../utils/fuzzymatch';
 
-function default_onwarn({ start, message }: Warning) {
-	if (start) {
-		console.warn(`(${start.line}:${start.column}) – ${message}`);
-	} else {
-		console.warn(message);
-	}
-}
+const valid_options = [
+	'format',
+	'name',
+	'filename',
+	'generate',
+	'outputFilename',
+	'cssOutputFilename',
+	'sveltePath',
+	'dev',
+	'immutable',
+	'hydratable',
+	'legacy',
+	'customElement',
+	'css',
+	'preserveComments'
+];
 
 function validate_options(options: CompileOptions, stats: Stats) {
 	const { name, filename } = options;
 
+	Object.keys(options).forEach(key => {
+		if (valid_options.indexOf(key) === -1) {
+			const match = fuzzymatch(key, valid_options);
+			let message = `Unrecognized option '${key}'`;
+			if (match) message += ` (did you mean '${match}'?)`;
+
+			throw new Error(message);
+		}
+	});
+
 	if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
-		const error = new Error(`options.name must be a valid identifier (got '${name}')`);
-		throw error;
+		throw new Error(`options.name must be a valid identifier (got '${name}')`);
 	}
 
 	if (name && /^[a-z]/.test(name)) {

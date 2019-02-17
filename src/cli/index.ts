@@ -8,11 +8,9 @@ prog
 
 	.option('-o, --output', 'Output (if absent, prints to stdout)')
 	.option('-f, --format', 'Type of output (cjs or esm)', 'esm')
-	.option('-g, --globals', 'Comma-separate list of `module ID:Global` pairs')
 	.option('-n, --name', 'Name for IIFE/UMD export (inferred from filename by default)')
 	.option('-m, --sourcemap', 'Generate sourcemap (`-m inline` for inline map)')
 	.option('-d, --dev', 'Add dev mode warnings and errors')
-	.option('--amdId', 'ID for AMD module (default is anonymous)')
 	.option('--generate', 'Change generate format between `dom` and `ssr`')
 	.option('--no-css', `Don't include CSS (useful with SSR)`)
 	.option('--immutable', 'Support immutable data structures')
