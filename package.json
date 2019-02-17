@@ -22,6 +22,7 @@
   ],
   "scripts": {
     "test": "mocha --opts mocha.opts",
+    "test:unit": "mocha --require sucrase/register --recursive ./**/__test__.ts",
     "quicktest": "mocha --opts mocha.opts",
     "precoverage": "c8 mocha --opts mocha.coverage.opts",
     "coverage": "c8 report --reporter=text-lcov > coverage.lcov && c8 report --reporter=html",
