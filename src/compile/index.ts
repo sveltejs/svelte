@@ -54,11 +54,7 @@ function get_name(filename) {
 export default function compile(source: string, options: CompileOptions = {}) {
 	options = assign({ generate: 'dom', dev: false }, options);
 
-	const stats = new Stats({
-		onwarn: options.onwarn
-			? (warning: Warning) => options.onwarn(warning, default_onwarn)
-			: default_onwarn
-	});
+	const stats = new Stats();
 
 	let ast: Ast;
 

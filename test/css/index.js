@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import { env, normalizeHtml, svelte } from '../helpers.js';
 
-function tryRequire(file) {
+function try_require(file) {
 	try {
 		const mod = require(file);
 		return mod.default || mod;
@@ -12,7 +12,7 @@ function tryRequire(file) {
 	}
 }
 
-function normalizeWarning(warning) {
+function normalize_warning(warning) {
 	warning.frame = warning.frame
 		.replace(/^\n/, '')
 		.replace(/^\t+/gm, '')
@@ -49,47 +49,30 @@ describe('css', () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const config = tryRequire(`./samples/${dir}/_config.js`) || {};
+			const config = try_require(`./samples/${dir}/_config.js`) || {};
 			const input = fs
 				.readFileSync(`test/css/samples/${dir}/input.svelte`, 'utf-8')
 				.replace(/\s+$/, '');
 
-			const expectedWarnings = (config.warnings || []).map(normalizeWarning);
-			const domWarnings = [];
-			const ssrWarnings = [];
+			const expected_warnings = (config.warnings || []).map(normalize_warning);
 
 			const dom = svelte.compile(
 				input,
-				Object.assign(config, {
-					format: 'cjs',
-					onwarn: warning => {
-						domWarnings.push(warning);
-					}
-				})
+				Object.assign(config, { format: 'cjs' })
 			);
-
-			assert.deepEqual(dom.stats.warnings, domWarnings);
 
 			const ssr = svelte.compile(
 				input,
-				Object.assign(config, {
-					format: 'cjs',
-					generate: 'ssr',
-					onwarn: warning => {
-						ssrWarnings.push(warning);
-					}
-				})
+				Object.assign(config, { format: 'cjs', generate: 'ssr' })
 			);
-
-			assert.deepEqual(dom.stats.warnings, domWarnings);
 
 			assert.equal(dom.css.code, ssr.css.code);
 
-			assert.deepEqual(
-				domWarnings.map(normalizeWarning),
-				ssrWarnings.map(normalizeWarning)
-			);
-			assert.deepEqual(domWarnings.map(normalizeWarning), expectedWarnings);
+			const dom_warnings = dom.stats.warnings.map(normalize_warning);
+			const ssr_warnings = ssr.stats.warnings.map(normalize_warning);
+
+			assert.deepEqual(dom_warnings, ssr_warnings);
+			assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
 
 			fs.writeFileSync(`test/css/samples/${dir}/_actual.css`, dom.css.code);
 			const expected = {
