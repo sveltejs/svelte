@@ -1,5 +1,0 @@
-{#each things as thing}
-
-{/each}
-
-{#each things as thing}{/each}
