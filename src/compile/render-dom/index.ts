@@ -258,11 +258,13 @@ export default function dom(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 	`);
 
-	const filtered_declarations = component.vars.filter(variable => {
-		return (variable.referenced || variable.export_name) && !variable.hoistable;
-	}).map(variable => variable.name);
+	const filtered_declarations = component.vars
+		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
+		.map(v => v.name);
 
 	const filtered_props = props.filter(prop => {
+		if (prop.name === component.componentOptions.props_object) return false;
+
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
@@ -284,6 +286,7 @@ export default function dom(
 	const has_definition = (
 		component.javascript ||
 		filtered_props.length > 0 ||
+		component.componentOptions.props_object ||
 		component.partly_hoisted.length > 0 ||
 		filtered_declarations.length > 0 ||
 		component.reactive_declarations.length > 0
@@ -299,8 +302,11 @@ export default function dom(
 	});
 
 	const user_code = component.javascript || (
-		!component.ast.instance && !component.ast.module && filtered_props.length > 0
-			? `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
+		!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)
+			? [
+				component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
+				filtered_props.length > 0 && `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
+			].filter(Boolean).join('\n')
 			: null
 	);
 

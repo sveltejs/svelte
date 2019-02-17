@@ -24,14 +24,17 @@ export default function ssr(
 
 	let user_code;
 
-	// TODO remove this, just use component.symbols everywhere
-	const props = component.vars.filter(variable => !variable.module && variable.export_name);
+	// TODO remove this, just use component.vars everywhere
+	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
 
 	if (component.javascript) {
 		component.rewrite_props();
 		user_code = component.javascript;
-	} else if (!component.ast.instance && !component.ast.module && props.length > 0) {
-		user_code = `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
+	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
+		user_code = [
+			component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
+			props.length > 0 && `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
+		].filter(Boolean).join('\n');
 	}
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
