@@ -36,7 +36,7 @@ export interface Warning {
 	toString: () => string;
 }
 
-export type ModuleFormat = 'esm' | 'cjs' | 'eval';
+export type ModuleFormat = 'esm' | 'cjs';
 
 export interface CompileOptions {
 	format?: ModuleFormat;

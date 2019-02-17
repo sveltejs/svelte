@@ -226,7 +226,6 @@ export default class Component {
 			format,
 			name,
 			compileOptions,
-			this.stats,
 			banner,
 			compileOptions.sveltePath,
 			importedHelpers,
