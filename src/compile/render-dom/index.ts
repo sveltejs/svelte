@@ -182,7 +182,7 @@ export default function dom(
 							if (owner && owner !== component.instance_scope) return;
 
 							const variable = component.var_lookup.get(name);
-							if (variable && variable.hoistable || variable.global || variable.module) return;
+							if (variable && (variable.hoistable || variable.global || variable.module)) return;
 
 							pending_assignments.add(name);
 							component.has_reactive_assignments = true;
