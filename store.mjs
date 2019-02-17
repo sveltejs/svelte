@@ -34,7 +34,8 @@ export function readable(start, value) {
 	};
 }
 
-export function writable(value) {
+export function writable(value, start = noop) {
+	let stop;
 	const subscribers = [];
 
 	function set(newValue) {
@@ -51,11 +52,13 @@ export function writable(value) {
 	function subscribe(run, invalidate = noop) {
 		const subscriber = [run, invalidate];
 		subscribers.push(subscriber);
+		if (subscribers.length === 1) stop = start() || noop;
 		run(value);
 
 		return () => {
 			const index = subscribers.indexOf(subscriber);
 			if (index !== -1) subscribers.splice(index, 1);
+			if (subscribers.length === 0) stop();
 		};
 	}
 
