@@ -203,6 +203,10 @@ export default class ElementWrapper extends Wrapper {
 
 		if (this.slot_block) {
 			block.parent.addDependencies(block.dependencies);
+
+			// appalling hack
+			block.wrappers.splice(block.wrappers.indexOf(this), 1);
+			this.slot_block.wrappers.push(this);
 		}
 	}
 
@@ -216,12 +220,12 @@ export default class ElementWrapper extends Wrapper {
 
 		if (this.node.name === 'noscript') return;
 
-		const node = this.var;
-		const nodes = parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
-
 		if (this.slot_block) {
 			block = this.slot_block;
 		}
+
+		const node = this.var;
+		const nodes = parentNodes && block.getUniqueName(`${this.var}_nodes`) // if we're in unclaimable territory, i.e. <head>, parentNodes is null
 
 		block.addVariable(node);
 		const renderStatement = this.getRenderStatement();
