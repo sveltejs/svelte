@@ -28,6 +28,7 @@ type ComponentOptions = {
 	immutable?: boolean;
 	props?: string;
 	props_object?: string;
+	props_node?: Node;
 };
 
 // We need to tell estree-walker that it should always
@@ -131,7 +132,25 @@ export default class Component {
 		if (this.componentOptions.props) {
 			this.has_reactive_assignments = true;
 
-			const variable = this.var_lookup.get(this.componentOptions.props_object);
+			const name = this.componentOptions.props_object;
+
+			if (!this.ast.module && !this.ast.instance) {
+				this.add_var({
+					name,
+					export_name: name,
+					implicit: true
+				});
+			}
+
+			const variable = this.var_lookup.get(name);
+
+			if (!variable) {
+				this.error(this.componentOptions.props_node, {
+					code: 'missing-declaration',
+					message: `'${name}' is not defined`
+				});
+			}
+
 			variable.reassigned = true;
 		}
 
@@ -1229,6 +1248,7 @@ function process_component_options(component: Component, nodes) {
 				const { name } = flattenReference(attribute.expression);
 
 				componentOptions.props = `[✂${start}-${end}✂]`;
+				componentOptions.props_node = attribute.expression;
 				componentOptions.props_object = name;
 			}
 
