@@ -3,12 +3,21 @@
 <script>
 	export let people = [];
 
-	let filteredPeople;
-	let selected;
 	let prefix = '';
 	let first = '';
 	let last = '';
 	let i = 0;
+
+	$: filteredPeople = prefix
+		? people.filter(person => {
+			const name = `${person.last}, ${person.first}`;
+			return name.toLowerCase().startsWith(prefix.toLowerCase());
+		})
+		: people;
+
+	$: selected = filteredPeople[i];
+
+	$: reset_inputs(selected);
 
 	function create() {
 		people = people.concat({ first, last });
@@ -27,18 +36,8 @@
 		i = Math.min(i, people.length - 1);
 	}
 
-	$: filteredPeople = prefix
-		? people.filter(person => {
-			const name = `${person.last}, ${person.first}`;
-			return name.toLowerCase().startsWith(prefix.toLowerCase());
-		})
-		: people;
-
-	$: selected = filteredPeople[i];
-
-	$: if (selected) {
-		first = selected.first;
-		last = selected.last;
+	function reset_inputs(person) {
+		({ first, last } = person);
 	}
 </script>
 
