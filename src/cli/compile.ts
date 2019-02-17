@@ -31,24 +31,10 @@ export function compile(input, opts) {
 		}
 	}
 
-	const globals = {};
-	if (opts.globals) {
-		opts.globals.split(',').forEach(pair => {
-			const [key, value] = pair.split(':');
-			globals[key] = value;
-		});
-	}
-
 	const options = {
 		name: opts.name,
 		format: opts.format,
 		sourceMap: opts.sourcemap,
-		globals,
-		amd: opts.amdId
-			? {
-				id: opts.amdId,
-			}
-			: undefined,
 		css: opts.css !== false,
 		dev: opts.dev,
 		immutable: opts.immutable,

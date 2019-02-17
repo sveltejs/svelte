@@ -2,21 +2,21 @@ const fs = require('fs');
 const path = require('path');
 const { compile } = require('./compiler.js');
 
-let compileOptions = {
-	extensions: ['.svelte', '.html']
-};
+let extensions = ['.svelte', '.html'];
+let compileOptions = {};
 
 function capitalise(name) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
-function register(options) {
+function register(options = {}) {
 	if (options.extensions) {
-		compileOptions.extensions.forEach(deregisterExtension);
+		extensions.forEach(deregisterExtension);
 		options.extensions.forEach(registerExtension);
 	}
 
-	compileOptions = options;
+	compileOptions = Object.assign({}, options);
+	delete compileOptions.extensions;
 }
 
 function deregisterExtension(extension) {
