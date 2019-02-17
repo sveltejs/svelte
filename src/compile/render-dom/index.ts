@@ -312,7 +312,6 @@ export default function dom(
 
 	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
 		.map(({ name }) => deindent`
-			let ${name};
 			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$invalidate('${name}', ${name}); }));
 		`)
@@ -345,6 +344,8 @@ export default function dom(
 
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
+				${reactive_stores.length > 0 && `let ${reactive_stores.map(store => store.name).join(', ')};`}
+
 				${user_code}
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
