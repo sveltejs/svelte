@@ -1,3 +1,5 @@
 export default {
-	dev: true
+	compileOptions: {
+		dev: true
+	}
 };
