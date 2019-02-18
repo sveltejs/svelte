@@ -24,73 +24,6 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	// insert store values
-	if (component.ast.instance) {
-		let scope = component.instance_scope;
-		let map = component.instance_scope_map;
-
-		walk(component.ast.instance.content, {
-			enter: (node, parent) => {
-				if (map.has(node)) {
-					scope = map.get(node);
-				}
-			},
-
-			leave(node, parent) {
-				if (map.has(node)) {
-					scope = scope.parent;
-				}
-
-				if (node.type === 'VariableDeclarator') {
-					const names = extractNames(node.id);
-					names.forEach(name => {
-						const owner = scope.findOwner(name);
-						if (owner && owner !== component.instance_scope) return;
-
-						const variable = component.var_lookup.get(name);
-						if (variable && variable.subscribable) {
-							const value = `$${name}`;
-
-							const get_store_value = component.helper('get_store_value');
-
-							const index = parent.declarations.indexOf(node);
-							const next = parent.declarations[index + 1];
-
-							let insert = `const ${value} = ${get_store_value}(${name});`;
-							if (component.compileOptions.dev) {
-								const validate_store = component.helper('validate_store');
-								insert = `${validate_store}(${name}, '${name}'); ${insert}`;
-							}
-
-							// initialise store value here
-							if (next) {
-								component.code.overwrite(node.end, next.start, `; ${insert}; ${parent.kind} `);
-							} else {
-								// final (or only) declarator
-								component.code.appendLeft(node.end, `; ${insert}`);
-							}
-						}
-					});
-				}
-			}
-		});
-	}
-
-	// TODO remove this, just use component.vars everywhere
-	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
-
-	let user_code;
-
-	if (component.javascript) {
-		component.rewrite_props();
-		user_code = component.javascript;
-	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
-		user_code = [
-			component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
-			props.length > 0 && `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
-		].filter(Boolean).join('\n');
-	}
-
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
 	const reactive_store_values = reactive_stores
 		.filter(store => component.var_lookup.get(store.name).hoistable)
@@ -101,6 +34,44 @@ export default function ssr(
 				? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
 				: assignment;
 		});
+
+	// TODO remove this, just use component.vars everywhere
+	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
+
+	let user_code;
+
+	if (component.javascript) {
+		component.rewrite_props(name => {
+			const value = `$${name}`;
+
+			const get_store_value = component.helper('get_store_value');
+
+			let insert = `const ${value} = ${get_store_value}(${name})`;
+			if (component.compileOptions.dev) {
+				const validate_store = component.helper('validate_store');
+				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
+			}
+
+			return insert;
+		});
+
+		user_code = component.javascript;
+	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
+		const statements = [];
+
+		if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
+		if (props.length > 0) statements.push(`let { ${props.map(x => x.name).join(', ')} } = $$props;`);
+
+		reactive_stores.forEach(({ name }) => {
+			if (component.compileOptions.dev) {
+				statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
+			}
+
+			statements.push(`const ${name} = @get_store_value(${name.slice(1)});`);
+		});
+
+		user_code = statements.join('\n');
+	}
 
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript
