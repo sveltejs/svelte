@@ -62,7 +62,21 @@ const { js, css, ast } = svelte.compile(source, {
 
 The Svelte compiler exposes the following API:
 
-* `compile(source [, options]) => { js, css, ast, stats }` - Compile the component with the given options (see below). Returns an object containing the compiled JavaScript, the transformed CSS, the AST and other information about the component.
+* `compile(source [, options]) => { ... }` - Compile the component with the given options (see below). Returns an object, containing:
+	* `js` - the compiled JavaScript, containing:
+		* `code` - a string
+		* `map` - the sourcemap
+	* `css` - the transformed CSS, containing:
+		* `code` - a string
+		* `map` - the sourcemap
+	* `ast` - ASTs for the input component, containing:
+		* `html` - the template
+		* `css` - the styles
+		* `instance` - the per-instance JavaScript code
+		* `module` - the one-time (module-level) JavaScript code
+	* `warnings` - an array of compiler warnings
+	* `vars` - an array of referenced variables
+	* `stats` - other diagnostic information
 * `preprocess(source, options) => Promise` — Preprocess a source file, e.g. to use PostCSS or CoffeeScript
 * `VERSION` - The version of this copy of the Svelte compiler as a string, `'x.x.x'`.
 
