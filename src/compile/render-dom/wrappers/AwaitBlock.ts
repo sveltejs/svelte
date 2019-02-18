@@ -67,7 +67,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		this.cannotUseInnerHTML();
 
-		block.addDependencies(this.node.expression.dynamic_dependencies);
+		block.addDependencies(this.node.expression.dependencies);
 
 		let isDynamic = false;
 		let hasIntros = false;
@@ -80,7 +80,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				status,
 				renderer,
 				block,
-				parent,
+				this,
 				child,
 				stripWhitespace,
 				nextSibling
@@ -135,7 +135,6 @@ export default class AwaitBlockWrapper extends Wrapper {
 		block.maintainContext = true;
 
 		const infoProps = [
-			'$$',
 			'ctx',
 			'current: null',
 			this.pending.block.name && `pending: ${this.pending.block.name}`,
@@ -172,15 +171,21 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const hasTransitions = this.pending.block.hasIntroMethod || this.pending.block.hasOutroMethod;
 
 		block.builders.mount.addBlock(deindent`
-			${info}.block.${hasTransitions ? 'i' : 'm'}(${initialMountNode}, ${info}.anchor = ${anchorNode});
+			${info}.block.m(${initialMountNode}, ${info}.anchor = ${anchorNode});
 			${info}.mount = () => ${updateMountNode};
 			${info}.anchor = ${anchor};
 		`);
 
+		if (hasTransitions) {
+			block.builders.intro.addLine(`${info}.block.i();`);
+		}
+
 		const conditions = [];
-		if (this.node.expression.dependencies.size > 0) {
+		const dependencies = this.node.expression.dynamic_dependencies();
+
+		if (dependencies.length > 0) {
 			conditions.push(
-				`(${[...this.node.expression.dependencies].map(dep => `'${dep}' in changed`).join(' || ')})`
+				`(${dependencies.map(dep => `'${dep}' in changed`).join(' || ')})`
 			);
 		}
 
@@ -208,13 +213,10 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 
 		if (this.pending.block.hasOutroMethod) {
-			const countdown = block.getUniqueName('countdown');
 			block.builders.outro.addBlock(deindent`
-				const ${countdown} = @callAfter(#outrocallback, 3);
 				for (let #i = 0; #i < 3; #i += 1) {
 					const block = ${info}.blocks[#i];
-					if (block) block.o(${countdown});
-					else ${countdown}();
+					if (block) block.o();
 				}
 			`);
 		}

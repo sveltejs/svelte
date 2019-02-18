@@ -17,43 +17,33 @@ describe("validate", () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`./validator/samples/${dir}/_config.js`);
 
-			const input = fs.readFileSync(`test/validator/samples/${dir}/input.html`, "utf-8").replace(/\s+$/, "");
-			const expectedWarnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
-			const expectedErrors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
+			const input = fs.readFileSync(`test/validator/samples/${dir}/input.svelte`, "utf-8").replace(/\s+$/, "");
+			const expected_warnings = tryToLoadJson(`test/validator/samples/${dir}/warnings.json`) || [];
+			const expected_errors = tryToLoadJson(`test/validator/samples/${dir}/errors.json`);
 
 			let error;
 
 			try {
-				const warnings = [];
-
 				const { stats } = svelte.compile(input, {
-					onwarn(warning) {
-						const { code, message, pos, start, end } = warning;
-						warnings.push({ code, message, pos, start, end });
-					},
 					dev: config.dev,
 					legacy: config.legacy,
 					generate: false
 				});
 
-				assert.equal(stats.warnings.length, warnings.length);
-				stats.warnings.forEach((full, i) => {
-					const lite = warnings[i];
-					assert.deepEqual({
-						code: full.code,
-						message: full.message,
-						pos: full.pos,
-						start: full.start,
-						end: full.end
-					}, lite);
-				});
+				const warnings = stats.warnings.map(w => ({
+					code: w.code,
+					message: w.message,
+					pos: w.pos,
+					start: w.start,
+					end: w.end
+				}));
 
-				assert.deepEqual(warnings, expectedWarnings);
+				assert.deepEqual(warnings, expected_warnings);
 			} catch (e) {
 				error = e;
 			}
 
-			const expected = expectedErrors && expectedErrors[0];
+			const expected = expected_errors && expected_errors[0];
 
 			if (error || expected) {
 				if (error && !expected) {
@@ -64,11 +54,16 @@ describe("validate", () => {
 					throw new Error(`Expected an error: ${expected.message}`);
 				}
 
-				assert.equal(error.code, expected.code);
-				assert.equal(error.message, expected.message);
-				assert.deepEqual(error.start, expected.start);
-				assert.deepEqual(error.end, expected.end);
-				assert.equal(error.pos, expected.pos);
+				try {
+					assert.equal(error.code, expected.code);
+					assert.equal(error.message, expected.message);
+					assert.deepEqual(error.start, expected.start);
+					assert.deepEqual(error.end, expected.end);
+					assert.equal(error.pos, expected.pos);
+				} catch (e) {
+					console.error(error)
+					throw e;
+				}
 			}
 		});
 	});
@@ -102,7 +97,7 @@ describe("validate", () => {
 			name: "_",
 			generate: false
 		});
-		
+
 		assert.deepEqual(stats.warnings, []);
 	});
 });

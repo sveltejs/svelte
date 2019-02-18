@@ -19,16 +19,16 @@ function noop(){}
 
 const handlers: Record<string, Handler> = {
 	AwaitBlock,
+	Body: noop,
 	Comment,
 	DebugTag,
-	Document: noop,
 	EachBlock,
 	Element,
 	Head,
 	IfBlock,
 	InlineComponent,
-	Meta: noop,
 	MustacheTag: Tag, // TODO MustacheTag is an anachronism
+	Options: noop,
 	RawMustacheTag: HtmlTag,
 	Slot,
 	Text,

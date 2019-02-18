@@ -33,9 +33,8 @@
 		"plugin:import/errors",
 		"plugin:import/warnings"
 	],
-	"plugins": ["svelte3"],
 	"parserOptions": {
-		"ecmaVersion": 6,
+		"ecmaVersion": 9,
 		"sourceType": "module"
 	},
 	"settings": {

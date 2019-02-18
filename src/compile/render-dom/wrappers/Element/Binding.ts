@@ -7,6 +7,7 @@ import Node from '../../../nodes/shared/Node';
 import Renderer from '../../Renderer';
 import flattenReference from '../../../../utils/flattenReference';
 import { get_tail } from '../../../../utils/get_tail_snippet';
+import EachBlock from '../../../nodes/EachBlock';
 
 // TODO this should live in a specific binding
 const readOnlyMediaAttributes = new Set([
@@ -24,7 +25,8 @@ export default class BindingWrapper {
 	handler: {
 		usesContext: boolean;
 		mutation: string;
-		contextual_dependencies: Set<string>
+		contextual_dependencies: Set<string>,
+		snippet?: string
 	};
 	snippet: string;
 	initialUpdate: string;
@@ -35,14 +37,14 @@ export default class BindingWrapper {
 		this.node = node;
 		this.parent = parent;
 
-		const { dynamic_dependencies } = this.node.expression;
+		const { dependencies } = this.node.expression;
 
-		block.addDependencies(dynamic_dependencies);
+		block.addDependencies(dependencies);
 
 		// TODO does this also apply to e.g. `<input type='checkbox' bind:group='foo'>`?
 		if (parent.node.name === 'select') {
-			parent.selectBindingDependencies = dynamic_dependencies;
-			dynamic_dependencies.forEach((prop: string) => {
+			parent.selectBindingDependencies = dependencies;
+			dependencies.forEach((prop: string) => {
 				parent.renderer.component.indirectDependencies.set(prop, new Set());
 			});
 		}
@@ -51,9 +53,9 @@ export default class BindingWrapper {
 			// we need to ensure that the each block creates a context including
 			// the list and the index, if they're not otherwise referenced
 			const { name } = getObject(this.node.expression.node);
-			const eachBlock = block.contextOwners.get(name);
+			const eachBlock = this.parent.node.scope.getOwner(name);
 
-			eachBlock.hasBinding = true;
+			(eachBlock as EachBlock).has_binding = true;
 		}
 
 		this.object = getObject(this.node.expression.node).name;
@@ -104,7 +106,7 @@ export default class BindingWrapper {
 
 		let updateConditions: string[] = this.needsLock ? [`!${lock}`] : [];
 
-		const dependencyArray = [...this.node.expression.dynamic_dependencies]
+		const dependencyArray = [...this.node.expression.dependencies]
 
 		if (dependencyArray.length === 1) {
 			updateConditions.push(`changed.${dependencyArray[0]}`)
@@ -123,11 +125,11 @@ export default class BindingWrapper {
 				const bindingGroup = getBindingGroup(parent.renderer, this.node.expression.node);
 
 				block.builders.hydrate.addLine(
-					`($$.binding_groups[${bindingGroup}] || ($$.binding_groups[${bindingGroup}] = [])).push(${parent.var});`
+					`ctx.$$binding_groups[${bindingGroup}].push(${parent.var});`
 				);
 
 				block.builders.destroy.addLine(
-					`$$.binding_groups[${bindingGroup}].splice($$.binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
+					`ctx.$$binding_groups[${bindingGroup}].splice(ctx.$$binding_groups[${bindingGroup}].indexOf(${parent.var}), 1);`
 				);
 				break;
 
@@ -219,6 +221,17 @@ function getEventHandler(
 	snippet: string
 ) {
 	const value = getValueFromDom(renderer, binding.parent, binding);
+	const store = binding.object[0] === '$' ? binding.object.slice(1) : null;
+
+	if (store && binding.node.expression.node.type === 'MemberExpression') {
+		// TODO is there a way around this? Mutating an object doesn't work,
+		// because stores check for referential equality (i.e. immutable data).
+		// But we can't safely or easily clone objects. So for now, we bail
+		renderer.component.error(binding.node.expression.node.property, {
+			code: 'invalid-store-binding',
+			message: 'Cannot bind to a nested property of a store'
+		});
+	}
 
 	if (binding.node.isContextual) {
 		let tail = '';
@@ -231,22 +244,29 @@ function getEventHandler(
 
 		return {
 			usesContext: true,
-			mutation: `${snippet}${tail} = ${value};`,
+			mutation: store
+				? `${store}.set(${value});`
+				: `${snippet}${tail} = ${value};`,
 			contextual_dependencies: new Set([object, property])
 		};
 	}
 
+	const mutation = store
+		? `${store}.set(${value});`
+		: `${snippet} = ${value};`;
+
 	if (binding.node.expression.node.type === 'MemberExpression') {
 		return {
-			usesContext: false,
-			mutation: `${snippet} = ${value};`,
-			contextual_dependencies: new Set()
+			usesContext: binding.node.expression.usesContext,
+			mutation,
+			contextual_dependencies: binding.node.expression.contextual_dependencies,
+			snippet
 		};
 	}
 
 	return {
 		usesContext: false,
-		mutation: `${snippet} = ${value};`,
+		mutation,
 		contextual_dependencies: new Set()
 	};
 }
@@ -276,7 +296,7 @@ function getValueFromDom(
 	if (name === 'group') {
 		const bindingGroup = getBindingGroup(renderer, binding.node.expression.node);
 		if (type === 'checkbox') {
-			return `@getBindingGroupValue($$self.$$.binding_groups[${bindingGroup}])`;
+			return `@getBindingGroupValue($$binding_groups[${bindingGroup}])`;
 		}
 
 		return `this.__value`;

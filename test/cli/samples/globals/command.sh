@@ -1,1 +1,1 @@
-svelte compile src/Main.html -f iife -g the-answer:theAnswer > actual/Main.js
+svelte compile src/Main.svelte -f iife -g the-answer:theAnswer > actual/Main.js

@@ -5,15 +5,19 @@ import { decodeCharacterReferences } from '../utils/html';
 import isVoidElementName from '../../utils/isVoidElementName';
 import { Parser } from '../index';
 import { Node } from '../../interfaces';
+import fuzzymatch from '../../utils/fuzzymatch';
+import list from '../../utils/list';
 
 const validTagName = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
 const metaTags = new Map([
-	['svelte:document', 'Document'],
+	['svelte:head', 'Head'],
+	['svelte:options', 'Options'],
 	['svelte:window', 'Window'],
-	['svelte:meta', 'Meta'],
-	['svelte:head', 'Head']
+	['svelte:body', 'Body']
 ]);
+
+const valid_meta_tags = Array.from(metaTags.keys()).concat('svelte:self', 'svelte:component');
 
 const specials = new Map([
 	[
@@ -32,8 +36,8 @@ const specials = new Map([
 	],
 ]);
 
-const SELF = 'svelte:self';
-const COMPONENT = 'svelte:component';
+const SELF = /^svelte:self(?=[\s\/>])/;
+const COMPONENT = /^svelte:component(?=[\s\/>])/;
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 const disallowedContents = new Map([
@@ -97,7 +101,7 @@ export default function tag(parser: Parser) {
 		const slug = metaTags.get(name).toLowerCase();
 		if (isClosingTag) {
 			if (
-				(name === 'svelte:window' || name === 'svelte:document') &&
+				(name === 'svelte:window' || name === 'svelte:body') &&
 				parser.current().children.length
 			) {
 				parser.error({
@@ -178,18 +182,19 @@ export default function tag(parser: Parser) {
 		}
 	}
 
-	if (name === 'slot') {
-		let i = parser.stack.length;
-		while (i--) {
-			const item = parser.stack[i];
-			if (item.type === 'EachBlock') {
-				parser.error({
-					code: `invalid-slot-placement`,
-					message: `<slot> cannot be a child of an each-block`
-				}, start);
-			}
-		}
-	}
+	// TODO should this still error in in web component mode?
+	// if (name === 'slot') {
+	// 	let i = parser.stack.length;
+	// 	while (i--) {
+	// 		const item = parser.stack[i];
+	// 		if (item.type === 'EachBlock') {
+	// 			parser.error({
+	// 				code: `invalid-slot-placement`,
+	// 				message: `<slot> cannot be a child of an each-block`
+	// 			}, start);
+	// 		}
+	// 	}
+	// }
 
 	const uniqueNames = new Set();
 
@@ -278,7 +283,7 @@ export default function tag(parser: Parser) {
 function readTagName(parser: Parser) {
 	const start = parser.index;
 
-	if (parser.eat(SELF)) {
+	if (parser.read(SELF)) {
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
 		let i = parser.stack.length;
@@ -295,18 +300,30 @@ function readTagName(parser: Parser) {
 		if (!legal) {
 			parser.error({
 				code: `invalid-self-placement`,
-				message: `<${SELF}> components can only exist inside if-blocks or each-blocks`
+				message: `<svelte:self> components can only exist inside if-blocks or each-blocks`
 			}, start);
 		}
 
-		return SELF;
+		return 'svelte:self';
 	}
 
-	if (parser.eat(COMPONENT)) return COMPONENT;
+	if (parser.read(COMPONENT)) return 'svelte:component';
 
 	const name = parser.readUntil(/(\s|\/|>)/);
 
 	if (metaTags.has(name)) return name;
+
+	if (name.startsWith('svelte:')) {
+		const match = fuzzymatch(name.slice(7), valid_meta_tags);
+
+		let message = `Valid <svelte:...> tag names are ${list(valid_meta_tags)}`;
+		if (match) message += ` (did you mean '${match}'?)`;
+
+		parser.error({
+			code: 'invalid-tag-name',
+			message
+		}, start);
+	}
 
 	if (!validTagName.test(name)) {
 		parser.error({
@@ -379,7 +396,7 @@ function readAttribute(parser: Parser, uniqueNames: Set<string>) {
 	parser.allowWhitespace();
 
 	const colon_index = name.indexOf(':');
-	const type = colon_index !== 1 && get_directive_type(name.slice(0, colon_index));
+	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
 	let value: any[] | true = true;
 	if (parser.eat('=')) {
@@ -448,6 +465,7 @@ function get_directive_type(name) {
 	if (name === 'bind') return 'Binding';
 	if (name === 'class') return 'Class';
 	if (name === 'on') return 'EventHandler';
+	if (name === 'let') return 'Let';
 	if (name === 'ref') return 'Ref';
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }

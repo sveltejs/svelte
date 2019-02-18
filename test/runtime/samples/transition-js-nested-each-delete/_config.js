@@ -4,7 +4,7 @@ export default {
 		things: ['a', 'b', 'c']
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		assert.htmlEqual(target.innerHTML, `
 			<div>a</div>
 			<div>b</div>

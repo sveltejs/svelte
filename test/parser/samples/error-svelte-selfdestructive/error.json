@@ -1,0 +1,10 @@
+{
+	"code": "invalid-tag-name",
+	"message": "Valid <svelte:...> tag names are svelte:head, svelte:options, svelte:window, svelte:body, svelte:self or svelte:component",
+	"pos": 10,
+	"start": {
+		"character": 10,
+		"line": 2,
+		"column": 2
+	}
+}

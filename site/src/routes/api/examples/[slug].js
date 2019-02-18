@@ -19,7 +19,7 @@ function createExample(slug) {
 	const components = files
 		.map(file => {
 			const ext = path.extname(file);
-			if (ext !== '.html' && ext !== '.js') return null;
+			if (ext !== '.svelte' && ext !== '.js') return null;
 
 			const source = fs.readFileSync(`content/examples/${slug}/${file}`, 'utf-8');
 
@@ -31,10 +31,10 @@ function createExample(slug) {
 		})
 		.filter(Boolean)
 		.sort((a, b) => {
-			if (a.name === 'App' && a.type === 'html') return -1;
-			if (b.name === 'App' && b.type === 'html') return 1;
+			if (a.name === 'App' && a.type === 'svelte') return -1;
+			if (b.name === 'App' && b.type === 'svelte') return 1;
 
-			if (a.type !== b.type) return a.type === 'html' ? -1 : 1;
+			if (a.type !== b.type) return a.type === 'svelte' ? -1 : 1;
 
 			return a.name < b.name ? -1 : 1;
 		});

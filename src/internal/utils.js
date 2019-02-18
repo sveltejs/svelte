@@ -7,32 +7,14 @@ export function assign(tar, src) {
 	return tar;
 }
 
-export function assignTrue(tar, src) {
-	for (var k in src) tar[k] = 1;
-	return tar;
-}
-
 export function isPromise(value) {
 	return value && typeof value.then === 'function';
-}
-
-export function callAfter(fn, i) {
-	if (i === 0) fn();
-	return () => {
-		if (!--i) fn();
-	};
 }
 
 export function addLoc(element, file, line, column, char) {
 	element.__svelte_meta = {
 		loc: { file, line, column, char }
 	};
-}
-
-export function exclude(src, prop) {
-	const tar = {};
-	for (const k in src) k === prop || (tar[k] = src[k]);
-	return tar;
 }
 
 export function run(fn) {
@@ -63,4 +45,23 @@ export function validate_store(store, name) {
 	if (!store || typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
 	}
+}
+
+export function create_slot(definition, ctx, fn) {
+	if (definition) {
+		const slot_ctx = get_slot_context(definition, ctx, fn);
+		return definition[0](slot_ctx);
+	}
+}
+
+export function get_slot_context(definition, ctx, fn) {
+	return definition[1]
+		? assign({}, assign(ctx.$$scope.ctx, definition[1](fn ? fn(ctx) : {})))
+		: ctx.$$scope.ctx;
+}
+
+export function exclude_internal_props(props) {
+	const result = {};
+	for (const k in props) if (k[0] !== '$') result[k] = props[k];
+	return result;
 }

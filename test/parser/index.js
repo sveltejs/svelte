@@ -18,7 +18,7 @@ describe('parse', () => {
 		(solo ? it.only : it)(dir, () => {
 			const options = tryToLoadJson(`test/parser/samples/${dir}/options.json`) || {};
 
-			const input = fs.readFileSync(`test/parser/samples/${dir}/input.html`, 'utf-8').replace(/\s+$/, '');
+			const input = fs.readFileSync(`test/parser/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '');
 			const expectedOutput = tryToLoadJson(`test/parser/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`test/parser/samples/${dir}/error.json`);
 
@@ -31,7 +31,8 @@ describe('parse', () => {
 
 				assert.deepEqual(ast.html, expectedOutput.html);
 				assert.deepEqual(ast.css, expectedOutput.css);
-				assert.deepEqual(ast.js, expectedOutput.js);
+				assert.deepEqual(ast.instance, expectedOutput.instance);
+				assert.deepEqual(ast.module, expectedOutput.module);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;

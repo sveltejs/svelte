@@ -12,7 +12,7 @@ export default class CatchBlock extends Node {
 		super(component, parent, scope, info);
 
 		this.scope = scope.child();
-		this.scope.add(parent.error, parent.expression.dependencies);
+		this.scope.add(parent.error, parent.expression.dependencies, this);
 		this.children = mapChildren(component, parent, this.scope, info.children);
 
 		this.warnIfEmptyBlock();

@@ -24,30 +24,39 @@ export default function ssr(
 
 	let user_code;
 
+	// TODO remove this, just use component.vars everywhere
+	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
+
 	if (component.javascript) {
 		component.rewrite_props();
 		user_code = component.javascript;
-	} else if (component.ast.js.length === 0 && component.props.length > 0) {
-		const props = component.props.map(prop => prop.as).filter(name => name[0] !== '$');
-
-		user_code = `let { ${props.join(', ')} } = $$props;`
+	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
+		user_code = [
+			component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
+			props.length > 0 && `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
+		].filter(Boolean).join('\n');
 	}
 
-	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
-	const reactive_store_values = reactive_stores.map(name => {
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_store_values = reactive_stores.map(({ name }) => {
 		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
 
-		return component.options.dev
+		return component.compileOptions.dev
 			? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
 			: assignment;
 	});
 
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript
-		? component.props.map(prop => {
-			return `if ($$props.${prop.as} === void 0 && $$bindings.${prop.as} && ${prop.name} !== void 0) $$bindings.${prop.as}(${prop.name});`;
+		? props.map(prop => {
+			return `if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
 		})
 		: [];
+
+	const reactive_declarations = component.reactive_declarations.map(d => {
+		const snippet = `[✂${d.node.body.start}-${d.node.end}✂]`;
+		return d.injected ? `let ${snippet}` : snippet;
+	});
 
 	const main = renderer.has_bindings
 		? deindent`
@@ -59,7 +68,7 @@ export default function ssr(
 
 				${reactive_store_values}
 
-				${component.reactive_declarations.map(d => d.snippet)}
+				${reactive_declarations}
 
 				$$rendered = \`${renderer.code}\`;
 			} while (!$$settled);
@@ -69,7 +78,7 @@ export default function ssr(
 		: deindent`
 			${reactive_store_values}
 
-			${component.reactive_declarations.map(d => d.snippet)}
+			${reactive_declarations}
 
 			return \`${renderer.code}\`;`;
 

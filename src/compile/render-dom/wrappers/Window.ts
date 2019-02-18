@@ -114,19 +114,21 @@ export default class WindowWrapper extends Wrapper {
 				});
 
 				block.event_listeners.push(deindent`
-					@addListener(window, "${event}", ctx.${handler_name});
+					@addListener(window, "${event}", ctx.${handler_name})
 				`);
 			}
 
-			component.declarations.push(handler_name);
-			component.template_references.add(handler_name);
+			component.add_var({
+				name: handler_name,
+				internal: true,
+				referenced: true
+			});
+
 			component.partly_hoisted.push(deindent`
 				function ${handler_name}() {
 					${props.map(prop => `${prop.name} = window.${prop.value}; $$invalidate('${prop.name}', ${prop.name});`)}
 				}
 			`);
-
-
 
 			block.builders.init.addBlock(deindent`
 				@add_render_callback(ctx.${handler_name});
@@ -146,9 +148,9 @@ export default class WindowWrapper extends Wrapper {
 					${scrolling} = true;
 					clearTimeout(${scrolling_timeout});
 					window.scrollTo(${
-						bindings.scrollX ? `current["${bindings.scrollX}"]` : `window.pageXOffset`
+						bindings.scrollX ? `ctx.${bindings.scrollX}` : `window.pageXOffset`
 					}, ${
-						bindings.scrollY ? `current["${bindings.scrollY}"]` : `window.pageYOffset`
+						bindings.scrollY ? `ctx.${bindings.scrollY}` : `window.pageYOffset`
 					});
 					${scrolling_timeout} = setTimeout(${clear_scrolling}, 100);
 				}
@@ -160,9 +162,9 @@ export default class WindowWrapper extends Wrapper {
 			const handler_name = block.getUniqueName(`onlinestatuschanged`);
 			block.builders.init.addBlock(deindent`
 				function ${handler_name}(event) {
-					${component.options.dev && `component._updatingReadonlyProperty = true;`}
+					${component.compileOptions.dev && `component._updatingReadonlyProperty = true;`}
 					#component.set({ ${bindings.online}: navigator.onLine });
-					${component.options.dev && `component._updatingReadonlyProperty = false;`}
+					${component.compileOptions.dev && `component._updatingReadonlyProperty = false;`}
 				}
 				window.addEventListener("online", ${handler_name});
 				window.addEventListener("offline", ${handler_name});

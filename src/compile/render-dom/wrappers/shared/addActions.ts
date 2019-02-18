@@ -1,4 +1,3 @@
-import Renderer from '../../Renderer';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
 import Component from '../../../Component';
@@ -15,7 +14,7 @@ export default function addActions(
 
 		if (expression) {
 			snippet = expression.render(block);
-			dependencies = expression.dynamic_dependencies;
+			dependencies = expression.dynamic_dependencies();
 		}
 
 		const name = block.getUniqueName(
@@ -23,20 +22,17 @@ export default function addActions(
 		);
 
 		block.addVariable(name);
-		const fn = component.imported_declarations.has(action.name) || component.hoistable_names.has(action.name)
-			? action.name
-			: `ctx.${action.name}`;
 
-		component.template_references.add(action.name);
+		const fn = component.qualify(action.name);
 
 		block.builders.mount.addLine(
 			`${name} = ${fn}.call(null, ${target}${snippet ? `, ${snippet}` : ''}) || {};`
 		);
 
-		if (dependencies && dependencies.size > 0) {
+		if (dependencies && dependencies.length > 0) {
 			let conditional = `typeof ${name}.update === 'function' && `;
-			const deps = [...dependencies].map(dependency => `changed.${dependency}`).join(' || ');
-			conditional += dependencies.size > 1 ? `(${deps})` : deps;
+			const deps = dependencies.map(dependency => `changed.${dependency}`).join(' || ');
+			conditional += dependencies.length > 1 ? `(${deps})` : deps;
 
 			block.builders.update.addConditional(
 				conditional,

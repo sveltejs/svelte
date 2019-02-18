@@ -10,26 +10,25 @@ import { createScopes, extractNames, Scope } from '../utils/annotateWithScopes';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
-import * as internal from '../internal/index';
-import { Node, Ast, CompileOptions } from '../interfaces';
+import internal_exports from './internal-exports';
+import { Node, Ast, CompileOptions, Var } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
-import addToSet from '../utils/addToSet';
 import isReference from 'is-reference';
 import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import { remove_indentation, add_indentation } from '../utils/indentation';
 import getObject from '../utils/getObject';
-import deindent from '../utils/deindent';
 import globalWhitelist from '../utils/globalWhitelist';
 
-type Meta = {
+type ComponentOptions = {
 	namespace?: string;
 	tag?: string;
 	immutable?: boolean;
 	props?: string;
 	props_object?: string;
+	props_node?: Node;
 };
 
 // We need to tell estree-walker that it should always
@@ -46,40 +45,34 @@ export default class Component {
 	source: string;
 	code: MagicString;
 	name: string;
-	options: CompileOptions;
+	compileOptions: CompileOptions;
 	fragment: Fragment;
 	module_scope: Scope;
 	instance_scope: Scope;
 	instance_scope_map: WeakMap<Node, Scope>;
 
-	meta: Meta;
+	componentOptions: ComponentOptions;
 	namespace: string;
 	tag: string;
 
-	instance_script: Node;
-	module_script: Node;
+	vars: Var[] = [];
+	var_lookup: Map<string, Var> = new Map();
 
 	imports: Node[] = [];
 	module_javascript: string;
 	javascript: string;
 
-	declarations: string[] = [];
-	props: Array<{ name: string, as: string }> = [];
-	writable_declarations: Set<string> = new Set();
-	initialised_declarations: Set<string> = new Set();
-	imported_declarations: Set<string> = new Set();
-	hoistable_names: Set<string> = new Set();
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	module_exports: Array<{ name: string, as: string }> = [];
 	partly_hoisted: string[] = [];
 	fully_hoisted: string[] = [];
-	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, snippet: string }> = [];
+	reactive_declarations: Array<{ assignees: Set<string>, dependencies: Set<string>, node: Node, injected: boolean }> = [];
 	reactive_declaration_nodes: Set<Node> = new Set();
 	has_reactive_assignments = false;
+	injected_reactive_declaration_vars: Set<string> = new Set();
+	helpers: Set<string> = new Set();
 
 	indirectDependencies: Map<string, Set<string>> = new Map();
-	template_references: Set<string> = new Set();
 
 	file: string;
 	locate: (c: number) => { line: number, column: number };
@@ -92,7 +85,6 @@ export default class Component {
 
 	stylesheet: Stylesheet;
 
-	userVars: Set<string> = new Set();
 	aliases: Map<string, string> = new Map();
 	usedNames: Set<string> = new Set();
 
@@ -100,81 +92,107 @@ export default class Component {
 		ast: Ast,
 		source: string,
 		name: string,
-		options: CompileOptions,
+		compileOptions: CompileOptions,
 		stats: Stats
 	) {
-		this.name = this.getUniqueName(name);
+		this.name = name;
 
 		this.stats = stats;
 		this.ast = ast;
 		this.source = source;
-		this.options = options;
+		this.compileOptions = compileOptions;
 
-		this.file = options.filename && (
-			typeof process !== 'undefined' ? options.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : options.filename
+		this.file = compileOptions.filename && (
+			typeof process !== 'undefined' ? compileOptions.filename.replace(process.cwd(), '').replace(/^[\/\\]/, '') : compileOptions.filename
 		);
 		this.locate = getLocator(this.source);
 
 		this.code = new MagicString(source);
 
 		// styles
-		this.stylesheet = new Stylesheet(source, ast, options.filename, options.dev);
+		this.stylesheet = new Stylesheet(source, ast, compileOptions.filename, compileOptions.dev);
 		this.stylesheet.validate(this);
 
-		const module_scripts = ast.js.filter(script => this.get_context(script) === 'module');
-		const instance_scripts = ast.js.filter(script => this.get_context(script) === 'default');
+		this.componentOptions = process_component_options(this, this.ast.html.children);
+		this.namespace = namespaces[this.componentOptions.namespace] || this.componentOptions.namespace;
 
-		if (module_scripts.length > 1) {
-			this.error(module_scripts[1], {
-				code: `invalid-script`,
-				message: `A component can only have one <script context="module"> element`
-			});
-		}
-
-		if (instance_scripts.length > 1) {
-			this.error(instance_scripts[1], {
-				code: `invalid-script`,
-				message: `A component can only have one instance-level <script> element`
-			});
-		}
-
-		this.module_script = module_scripts[0];
-		this.instance_script = instance_scripts[0];
-
-		this.meta = process_meta(this, this.ast.html.children);
-		this.namespace = namespaces[this.meta.namespace] || this.meta.namespace;
-
-		if (this.meta.props) {
-			this.has_reactive_assignments = true;
-		}
-
-		if (options.customElement === true && !this.meta.tag) {
+		if (compileOptions.customElement === true && !this.componentOptions.tag) {
 			throw new Error(`No tag name specified`); // TODO better error
 		}
 
-		this.tag = options.customElement
-			? options.customElement === true
-				? this.meta.tag
-				: <string>options.customElement
+		this.tag = compileOptions.customElement
+			? compileOptions.customElement === true
+				? this.componentOptions.tag
+				: compileOptions.customElement as string
 			: this.name;
 
 		this.walk_module_js();
-		this.walk_instance_js();
+		this.walk_instance_js_pre_template();
 
+		if (this.componentOptions.props) {
+			this.has_reactive_assignments = true;
+
+			const name = this.componentOptions.props_object;
+
+			if (!this.ast.module && !this.ast.instance) {
+				this.add_var({
+					name,
+					export_name: name,
+					implicit: true
+				});
+			}
+
+			const variable = this.var_lookup.get(name);
+
+			if (!variable) {
+				this.error(this.componentOptions.props_node, {
+					code: 'missing-declaration',
+					message: `'${name}' is not defined`
+				});
+			}
+
+			variable.reassigned = true;
+		}
+
+		this.name = this.getUniqueName(name);
 		this.fragment = new Fragment(this, ast.html);
-		if (!options.customElement) this.stylesheet.reify();
+
+		this.walk_instance_js_post_template();
+
+		if (!compileOptions.customElement) this.stylesheet.reify();
 
 		this.stylesheet.warnOnUnusedSelectors(stats);
+	}
 
-		if (!this.instance_script) {
-			const props = [...this.template_references];
-			this.declarations.push(...props);
-			addToSet(this.writable_declarations, this.template_references);
+	add_var(variable: Var) {
+		this.vars.push(variable);
+		this.var_lookup.set(variable.name, variable);
+	}
 
-			this.props = props.map(name => ({
+	add_reference(name: string) {
+		const variable = this.var_lookup.get(name);
+
+		if (variable) {
+			variable.referenced = true;
+		} else if (name[0] === '$') {
+			this.add_var({
 				name,
-				as: name
-			}));
+				injected: true,
+				referenced: true,
+				mutated: true,
+				writable: true
+			});
+
+			this.add_reference(name.slice(1));
+		} else if (!this.ast.instance) {
+			this.add_var({
+				name,
+				export_name: name,
+				implicit: true,
+				mutated: false,
+				referenced: true,
+				writable: true
+			});
 		}
 	}
 
@@ -196,19 +214,17 @@ export default class Component {
 	}
 
 	generate(result: string) {
-		const { options, name } = this;
-		const { format = 'esm' } = options;
+		const { compileOptions, name } = this;
+		const { format = 'esm' } = compileOptions;
 
 		const banner = `/* ${this.file ? `${this.file} ` : ``}generated by Svelte v${"__VERSION__"} */`;
 
-		const helpers = new Set();
-
 		// TODO use same regex for both
-		result = result.replace(options.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
+		result = result.replace(compileOptions.generate === 'ssr' ? /(@+|#+)(\w*(?:-\w*)?)/g : /(@+)(\w*(?:-\w*)?)/g, (match: string, sigil: string, name: string) => {
 			if (sigil === '@') {
-				if (name in internal) {
-					if (options.dev && `${name}Dev` in internal) name = `${name}Dev`;
-					helpers.add(name);
+				if (internal_exports.has(name)) {
+					if (compileOptions.dev && internal_exports.has(`${name}Dev`)) name = `${name}Dev`;
+					this.helpers.add(name);
 				}
 
 				return this.alias(name);
@@ -217,7 +233,7 @@ export default class Component {
 			return sigil.slice(1) + name;
 		});
 
-		const importedHelpers = Array.from(helpers)
+		const importedHelpers = Array.from(this.helpers)
 			.sort()
 			.map(name => {
 				const alias = this.alias(name);
@@ -228,13 +244,15 @@ export default class Component {
 			result,
 			format,
 			name,
-			options,
-			this.stats,
+			compileOptions,
 			banner,
-			options.sveltePath,
+			compileOptions.sveltePath,
 			importedHelpers,
 			this.imports,
-			this.module_exports,
+			this.vars.filter(variable => variable.module && variable.export_name).map(variable => ({
+				name: variable.name,
+				as: variable.export_name
+			})),
 			this.source
 		);
 
@@ -249,7 +267,7 @@ export default class Component {
 			});
 		}
 
-		const { filename } = options;
+		const { filename } = compileOptions;
 
 		// special case — the source file doesn't actually get used anywhere. we need
 		// to add an empty file to populate map.sources and map.sourcesContent
@@ -278,15 +296,15 @@ export default class Component {
 
 		addString(finalChunk);
 
-		const css = options.customElement ?
+		const css = compileOptions.customElement ?
 			{ code: null, map: null } :
-			this.stylesheet.render(options.cssOutputFilename, true);
+			this.stylesheet.render(compileOptions.cssOutputFilename, true);
 
 		const js = {
 			code: compiled.toString(),
 			map: compiled.generateMap({
 				includeContent: true,
-				file: options.outputFilename,
+				file: compileOptions.outputFilename,
 			})
 		};
 
@@ -304,7 +322,7 @@ export default class Component {
 		for (
 			let i = 1;
 			reservedNames.has(alias) ||
-			this.userVars.has(alias) ||
+			this.var_lookup.has(alias) ||
 			this.usedNames.has(alias);
 			alias = `${name}_${i++}`
 		);
@@ -320,7 +338,7 @@ export default class Component {
 		}
 
 		reservedNames.forEach(add);
-		this.userVars.forEach(add);
+		this.var_lookup.forEach((value, key) => add(key));
 
 		return (name: string) => {
 			if (test) name = `${name}$`;
@@ -352,7 +370,7 @@ export default class Component {
 			source: this.source,
 			start: pos.start,
 			end: pos.end,
-			filename: this.options.filename
+			filename: this.compileOptions.filename
 		});
 	}
 
@@ -382,12 +400,39 @@ export default class Component {
 			start,
 			end,
 			pos: pos.start,
-			filename: this.options.filename,
+			filename: this.compileOptions.filename,
 			toString: () => `${warning.message} (${start.line + 1}:${start.column})\n${frame}`,
 		});
 	}
 
-	extract_imports_and_exports(content, imports, exports) {
+	extract_imports(content, is_module: boolean) {
+		const { code } = this;
+
+		content.body.forEach(node => {
+			if (node.type === 'ImportDeclaration') {
+				// imports need to be hoisted out of the IIFE
+				removeNode(code, content.start, content.end, content.body, node);
+				this.imports.push(node);
+
+				node.specifiers.forEach((specifier: Node) => {
+					if (specifier.local.name[0] === '$') {
+						this.error(specifier.local, {
+							code: 'illegal-declaration',
+							message: `The $ prefix is reserved, and cannot be used for variable and import names`
+						});
+					}
+
+					this.add_var({
+						name: specifier.local.name,
+						module: is_module,
+						hoistable: true
+					});
+				});
+			}
+		});
+	}
+
+	extract_exports(content, is_module: boolean) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -403,42 +448,30 @@ export default class Component {
 					if (node.declaration.type === 'VariableDeclaration') {
 						node.declaration.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
-								exports.push({ name, as: name });
+								const variable = this.var_lookup.get(name);
+								variable.export_name = name;
 							});
 						});
 					} else {
 						const { name } = node.declaration.id;
-						exports.push({ name, as: name });
+
+						const variable = this.var_lookup.get(name);
+						variable.export_name = name;
 					}
 
 					code.remove(node.start, node.declaration.start);
 				} else {
 					removeNode(code, content.start, content.end, content.body, node);
 					node.specifiers.forEach(specifier => {
-						exports.push({
-							name: specifier.local.name,
-							as: specifier.exported.name
-						});
+						const variable = this.var_lookup.get(specifier.local.name);
+
+						if (variable) {
+							variable.export_name = specifier.exported.name;
+						} else {
+							// TODO what happens with `export { Math }` or some other global?
+						}
 					});
 				}
-			}
-
-			// imports need to be hoisted out of the IIFE
-			else if (node.type === 'ImportDeclaration') {
-				removeNode(code, content.start, content.end, content.body, node);
-				imports.push(node);
-
-				node.specifiers.forEach((specifier: Node) => {
-					if (specifier.local.name[0] === '$') {
-						this.error(specifier.local, {
-							code: 'illegal-declaration',
-							message: `The $ prefix is reserved, and cannot be used for variable and import names`
-						});
-					}
-
-					this.userVars.add(specifier.local.name);
-					this.imported_declarations.add(specifier.local.name);
-				});
 			}
 		});
 	}
@@ -481,12 +514,12 @@ export default class Component {
 	}
 
 	walk_module_js() {
-		const script = this.module_script;
+		const script = this.ast.module;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
 
-		let { scope } = createScopes(script.content);
+		let { scope, globals } = createScopes(script.content);
 		this.module_scope = scope;
 
 		scope.declarations.forEach((node, name) => {
@@ -496,18 +529,63 @@ export default class Component {
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`
 				});
 			}
+
+			if (!/Import/.test(node.type)) {
+				const kind = node.type === 'VariableDeclaration'
+					? node.kind
+					: node.type === 'ClassDeclaration'
+						? 'class'
+						: node.type === 'FunctionDeclaration'
+							? 'function'
+							: null;
+
+				// sanity check
+				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
+
+				this.add_var({
+					name,
+					module: true,
+					hoistable: true,
+					writable: kind === 'var' || kind === 'let'
+				});
+			}
 		});
 
-		this.extract_imports_and_exports(script.content, this.imports, this.module_exports);
+		globals.forEach(name => {
+			if (name[0] === '$') {
+				// TODO should this be possible?
+			} else {
+				this.add_var({
+					name,
+					global: true
+				});
+			}
+		});
+
+		this.extract_imports(script.content, true);
+		this.extract_exports(script.content, true);
 		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
 	}
 
-	walk_instance_js() {
-		const script = this.instance_script;
+	walk_instance_js_pre_template() {
+		const script = this.ast.instance;
 		if (!script) return;
 
 		this.addSourcemapLocations(script.content);
+
+		// inject vars for reactive declarations
+		script.content.body.forEach(node => {
+			if (node.type !== 'LabeledStatement') return;
+			if (node.body.type !== 'ExpressionStatement') return;
+			if (node.body.expression.type !== 'AssignmentExpression') return;
+
+			const { type, name } = node.body.expression.left;
+
+			if (type === 'Identifier' && !this.var_lookup.has(name)) {
+				this.injected_reactive_declaration_vars.add(name);
+			}
+		});
 
 		let { scope: instance_scope, map, globals } = createScopes(script.content);
 		this.instance_scope = instance_scope;
@@ -520,27 +598,114 @@ export default class Component {
 					message: `The $ prefix is reserved, and cannot be used for variable and import names`
 				});
 			}
-		});
 
-		instance_scope.declarations.forEach((node, name) => {
-			this.userVars.add(name);
-			this.declarations.push(name);
+			if (!/Import/.test(node.type)) {
+				const kind = node.type === 'VariableDeclaration'
+					? node.kind
+					: node.type === 'ClassDeclaration'
+						? 'class'
+						: node.type === 'FunctionDeclaration'
+							? 'function'
+							: null;
+
+				// sanity check
+				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
+
+				this.add_var({
+					name,
+					initialised: instance_scope.initialised_declarations.has(name),
+					writable: kind === 'var' || kind === 'let'
+				});
+			}
 
 			this.node_for_declaration.set(name, node);
 		});
 
-		this.writable_declarations = instance_scope.writable_declarations;
-		this.initialised_declarations = instance_scope.initialised_declarations;
-
 		globals.forEach(name => {
-			this.userVars.add(name);
+			if (this.var_lookup.has(name)) return;
+
+			if (this.injected_reactive_declaration_vars.has(name)) {
+				this.add_var({
+					name,
+					injected: true,
+					writable: true,
+					reassigned: true,
+					initialised: true
+				});
+			} else if (name[0] === '$') {
+				this.add_var({
+					name,
+					injected: true,
+					mutated: true,
+					writable: true
+				});
+
+				this.add_reference(name.slice(1));
+			} else {
+				this.add_var({
+					name,
+					global: true
+				});
+			}
 		});
 
-		this.extract_imports_and_exports(script.content, this.imports, this.props);
+		this.extract_imports(script.content, false);
+		this.extract_exports(script.content, false);
+		this.track_mutations();
+	}
+
+	walk_instance_js_post_template() {
+		const script = this.ast.instance;
+		if (!script) return;
+
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
 		this.extract_reactive_store_references();
 		this.javascript = this.extract_javascript(script);
+	}
+
+	// TODO merge this with other walks that are independent
+	track_mutations() {
+		const component = this;
+		const { instance_scope, instance_scope_map: map } = this;
+
+		let scope = instance_scope;
+
+		walk(this.ast.instance.content, {
+			enter(node, parent) {
+				if (map.has(node)) {
+					scope = map.get(node);
+				}
+
+				let names;
+				let deep = false;
+
+				if (node.type === 'AssignmentExpression') {
+					deep = node.left.type === 'MemberExpression';
+
+					names = deep
+						? [getObject(node.left).name]
+						: extractNames(node.left);
+				} else if (node.type === 'UpdateExpression') {
+					names = [getObject(node.argument).name];
+				}
+
+				if (names) {
+					names.forEach(name => {
+						if (scope.findOwner(name) === instance_scope) {
+							const variable = component.var_lookup.get(name);
+							variable[deep ? 'mutated' : 'reassigned'] = true;
+						}
+					});
+				}
+			},
+
+			leave(node) {
+				if (map.has(node)) {
+					scope = scope.parent;
+				}
+			}
+		})
 	}
 
 	extract_reactive_store_references() {
@@ -549,7 +714,7 @@ export default class Component {
 		const component = this;
 		let { instance_scope: scope, instance_scope_map: map } = this;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -561,9 +726,6 @@ export default class Component {
 
 					if (name[0] === '$' && !scope.has(name)) {
 						component.warn_if_undefined(object, null);
-
-						// cheeky hack
-						component.template_references.add(name);
 					}
 				}
 			},
@@ -578,19 +740,13 @@ export default class Component {
 
 	rewrite_props() {
 		const component = this;
-		const { code, instance_scope, instance_scope_map: map, meta } = this;
+		const { code, instance_scope, instance_scope_map: map, componentOptions } = this;
 		let scope = instance_scope;
-
-		// TODO we will probably end up wanting to use this elsewhere
-		const exported = new Set();
-		this.props.forEach(prop => {
-			exported.add(prop.name);
-		});
 
 		const coalesced_declarations = [];
 		let current_group;
 
-		walk(this.instance_script.content, {
+		walk(this.ast.instance.content, {
 			enter(node, parent) {
 				if (/Function/.test(node.type)) {
 					current_group = null;
@@ -603,16 +759,17 @@ export default class Component {
 
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
-						let has_meta_props = false;
 						let has_exports = false;
 						let has_only_exports = true;
 
 						node.declarations.forEach(declarator => {
 							extractNames(declarator.id).forEach(name => {
-								if (name === meta.props_object) {
-									if (exported.has(name)) {
+								const variable = component.var_lookup.get(name);
+
+								if (name === componentOptions.props_object) {
+									if (variable.export_name) {
 										component.error(declarator, {
-											code: 'exported-meta-props',
+											code: 'exported-options-props',
 											message: `Cannot export props binding`
 										});
 									}
@@ -624,16 +781,23 @@ export default class Component {
 										});
 									}
 
-									if (declarator.id.end === declarator.end) {
-										code.appendLeft(declarator.end, ' = $$props');
-									} else {
-										code.overwrite(declarator.id.end, declarator.end, ' = $$props');
-									}
+									// can't use the @ trick here, because we're
+									// manipulating the underlying magic string
+									component.helpers.add('exclude_internal_props');
+									const exclude_internal_props = component.alias('exclude_internal_props');
 
-									has_meta_props = true;
+									const suffix = code.original[declarator.end] === ';'
+										? ` = ${exclude_internal_props}($$props)`
+										: ` = ${exclude_internal_props}($$props);`
+
+									if (declarator.id.end === declarator.end) {
+										code.appendLeft(declarator.end, suffix);
+									} else {
+										code.overwrite(declarator.id.end, declarator.end, suffix);
+									}
 								}
 
-								if (exported.has(name)) {
+								if (variable.export_name) {
 									has_exports = true;
 								} else {
 									has_only_exports = false;
@@ -677,7 +841,6 @@ export default class Component {
 		});
 
 		coalesced_declarations.forEach(group => {
-			const kind = group[0].kind;
 			let c = 0;
 
 			let combining = false;
@@ -706,26 +869,37 @@ export default class Component {
 			});
 
 			if (combining) {
-				code.appendLeft(c, ' } = $$props');
+				const suffix = code.original[c] === ';' ? ` } = $$props` : ` } = $$props;`;
+				code.appendLeft(c, suffix);
 			}
 		});
 	}
 
 	hoist_instance_declarations() {
-		// we can safely hoist `const` declarations that are
+		// we can safely hoist variable declarations that are
 		// initialised to literals, and functions that don't
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const { hoistable_names, hoistable_nodes, imported_declarations } = this;
+		const { hoistable_nodes, var_lookup } = this;
 
 		const top_level_function_declarations = new Map();
 
-		this.instance_script.content.body.forEach(node => {
-			if (node.kind === 'const') { // TODO or let or var, if never reassigned in <script> or template
-				if (node.declarations.every(d => d.init.type === 'Literal')) {
+		this.ast.instance.content.body.forEach(node => {
+			if (node.type === 'VariableDeclaration') {
+				const all_hoistable = node.declarations.every(d => {
+					if (!d.init) return false;
+					if (d.init.type !== 'Literal') return false;
+					if (this.var_lookup.get(d.id.name).reassigned) return false;
+					if (this.vars.find(variable => variable.name === d.id.name && variable.module)) return false;
+
+					return true;
+				});
+
+				if (all_hoistable) {
 					node.declarations.forEach(d => {
-						hoistable_names.add(d.id.name);
+						const variable = this.var_lookup.get(d.id.name);
+						variable.hoistable = true;
 					});
 
 					hoistable_nodes.add(node);
@@ -775,8 +949,9 @@ export default class Component {
 
 						else if (owner === instance_scope) {
 							if (name === fn_declaration.id.name) return;
-							if (hoistable_names.has(name)) return;
-							if (imported_declarations.has(name)) return;
+
+							const variable = var_lookup.get(name);
+							if (variable.hoistable) return;
 
 							if (top_level_function_declarations.has(name)) {
 								const other_declaration = top_level_function_declarations.get(name);
@@ -812,7 +987,8 @@ export default class Component {
 
 		for (const [name, node] of top_level_function_declarations) {
 			if (!checked.has(node) && is_hoistable(node)) {
-				hoistable_names.add(name);
+				const variable = this.var_lookup.get(name);
+				variable.hoistable = true;
 				hoistable_nodes.add(node);
 
 				remove_indentation(this.code, node);
@@ -827,7 +1003,7 @@ export default class Component {
 
 		const unsorted_reactive_declarations = [];
 
-		this.instance_script.content.body.forEach(node => {
+		this.ast.instance.content.body.forEach(node => {
 			if (node.type === 'LabeledStatement' && node.label.name === '$') {
 				this.reactive_declaration_nodes.add(node);
 
@@ -843,20 +1019,16 @@ export default class Component {
 							scope = map.get(node);
 						}
 
-						if (parent && parent.type === 'AssignmentExpression' && node === parent.left) {
-							return this.skip();
-						}
-
 						if (node.type === 'AssignmentExpression') {
 							assignees.add(getObject(node.left).name);
 						} else if (node.type === 'UpdateExpression') {
 							assignees.add(getObject(node.argument).name);
-							this.skip();
 						} else if (isReference(node, parent)) {
 							const object = getObject(node);
 							const { name } = object;
 
-							if (name[0] === '$' || component.declarations.indexOf(name) !== -1) {
+							const owner = scope.findOwner(name);
+							if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name))) {
 								dependencies.add(name);
 							}
 
@@ -877,12 +1049,12 @@ export default class Component {
 					assignees,
 					dependencies,
 					node,
-					snippet: node.body.type === 'BlockStatement'
-						? `[✂${node.body.start}-${node.end}✂]`
-						: deindent`
-							{
-								[✂${node.body.start}-${node.end}✂]
-							}`
+					injected: (
+						node.body.type === 'ExpressionStatement' &&
+						node.body.expression.type === 'AssignmentExpression' &&
+						node.body.expression.left.type === 'Identifier' &&
+						this.var_lookup.get(node.body.expression.left.name).injected
+					)
 				});
 			}
 		});
@@ -910,6 +1082,10 @@ export default class Component {
 				});
 			}
 
+			if (this.reactive_declarations.indexOf(declaration) !== -1) {
+				return;
+			}
+
 			seen.add(declaration);
 
 			if (declaration.dependencies.size === 0) {
@@ -923,9 +1099,7 @@ export default class Component {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
 				if (earlier_declarations) earlier_declarations.forEach(declaration => {
-					if (this.reactive_declarations.indexOf(declaration) === -1) {
-						add_declaration(declaration);
-					}
+					add_declaration(declaration);
 				});
 			});
 
@@ -939,11 +1113,12 @@ export default class Component {
 	}
 
 	qualify(name) {
-		if (this.hoistable_names.has(name)) return name;
-		if (this.imported_declarations.has(name)) return name;
-		if (this.declarations.indexOf(name) === -1) return name;
+		const variable = this.var_lookup.get(name);
 
-		this.template_references.add(name); // TODO we can probably remove most other occurrences of this
+		if (!variable) return name;
+		if (variable && variable.hoistable) return name;
+
+		this.add_reference(name); // TODO we can probably remove most other occurrences of this
 		return `ctx.${name}`;
 	}
 
@@ -955,9 +1130,8 @@ export default class Component {
 			this.has_reactive_assignments = true;
 		}
 
-		if (allow_implicit && !this.instance_script) return;
-		if (this.instance_scope && this.instance_scope.declarations.has(name)) return;
-		if (this.module_scope && this.module_scope.declarations.has(name)) return;
+		if (allow_implicit && !this.ast.instance && !this.ast.module) return;
+		if (this.var_lookup.has(name)) return;
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globalWhitelist.has(name)) return;
 
@@ -966,46 +1140,32 @@ export default class Component {
 			message: `'${name}' is not defined`
 		});
 	}
-
-	get_context(script) {
-		const context = script.attributes.find(attribute => attribute.name === 'context');
-		if (!context) return 'default';
-
-		if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-			this.error(script, {
-				code: 'invalid-script',
-				message: `context attribute must be static`
-			});
-		}
-
-		const value = context.value[0].data;
-
-		if (value !== 'module') {
-			this.error(context, {
-				code: `invalid-script`,
-				message: `If the context attribute is supplied, its value must be "module"`
-			});
-		}
-
-		return value;
-	}
 }
 
-function process_meta(component, nodes) {
-	const meta: Meta = {};
-	const node = nodes.find(node => node.name === 'svelte:meta');
+function process_component_options(component: Component, nodes) {
+	const componentOptions: ComponentOptions = {
+		immutable: component.compileOptions.immutable || false
+	};
 
-	function get_value(attribute, message) {
-		const { name, value } = attribute;
+	const node = nodes.find(node => node.name === 'svelte:options');
 
-		if (value.length > 1 || (value[0] && value[0].type !== 'Text')) {
-			component.error(attribute, {
-				code: `invalid-${name}-attribute`,
-				message
-			});
+	function get_value(attribute, code, message) {
+		const { value } = attribute;
+		const chunk = value[0];
+
+		if (!chunk) return true;
+
+		if (value.length > 1) {
+			component.error(attribute, { code, message });
 		}
 
-		return value[0] ? value[0].data : true;
+		if (chunk.type === 'Text') return chunk.data;
+
+		if (chunk.expression.type !== 'Literal') {
+			component.error(attribute, { code, message });
+		}
+
+		return chunk.expression.value;
 	}
 
 	if (node) {
@@ -1014,8 +1174,12 @@ function process_meta(component, nodes) {
 				const { name } = attribute;
 
 				switch (name) {
-					case 'tag':
-						const tag = get_value(attribute, `'tag' must be a string literal`);
+					case 'tag': {
+						const code = 'invalid-tag-attribute';
+						const message = `'tag' must be a string literal`;
+						const tag = get_value(attribute, code, message);
+
+						if (typeof tag !== 'string') component.error(attribute, { code, message });
 
 						if (!/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
 							component.error(attribute, {
@@ -1024,11 +1188,16 @@ function process_meta(component, nodes) {
 							});
 						}
 
-						meta.tag = tag;
+						componentOptions.tag = tag;
 						break;
+					}
 
-					case 'namespace':
-						const ns = get_value(attribute, `The 'namespace' attribute must be a string literal representing a valid namespace`);
+					case 'namespace': {
+						const code = 'invalid-namespace-attribute';
+						const message = `The 'namespace' attribute must be a string literal representing a valid namespace`;
+						const ns = get_value(attribute, code, message);
+
+						if (typeof ns !== 'string') component.error(attribute, { code, message });
 
 						if (validNamespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, validNamespaces);
@@ -1045,17 +1214,24 @@ function process_meta(component, nodes) {
 							}
 						}
 
-						meta.namespace = ns;
+						componentOptions.namespace = ns;
 						break;
+					}
 
 					case 'immutable':
-						meta.immutable = get_value(attribute, `immutable attribute must be true or false`) !== 'false';
+						const code = `invalid-immutable-value`;
+						const message = `immutable attribute must be true or false`
+						const value = get_value(attribute, code, message);
+
+						if (typeof value !== 'boolean') component.error(attribute, { code, message });
+
+						componentOptions.immutable = value;
 						break;
 
 					default:
 						component.error(attribute, {
-							code: `invalid-meta-attribute`,
-							message: `<svelte:meta> unknown attribute`
+							code: `invalid-options-attribute`,
+							message: `<svelte:options> unknown attribute`
 						});
 				}
 			}
@@ -1063,26 +1239,27 @@ function process_meta(component, nodes) {
 			else if (attribute.type === 'Binding') {
 				if (attribute.name !== 'props') {
 					component.error(attribute, {
-						code: `invalid-meta-binding`,
-						message: `<svelte:meta> only supports bind:props`
+						code: `invalid-options-binding`,
+						message: `<svelte:options> only supports bind:props`
 					});
 				}
 
 				const { start, end } = attribute.expression;
 				const { name } = flattenReference(attribute.expression);
 
-				meta.props = `[✂${start}-${end}✂]`;
-				meta.props_object = name;
+				componentOptions.props = `[✂${start}-${end}✂]`;
+				componentOptions.props_node = attribute.expression;
+				componentOptions.props_object = name;
 			}
 
 			else {
 				component.error(attribute, {
-					code: `invalid-meta-attribute`,
-					message: `<svelte:meta> can only have static 'tag', 'namespace' and 'immutable' attributes, or a bind:props directive`
+					code: `invalid-options-attribute`,
+					message: `<svelte:options> can only have static 'tag', 'namespace' and 'immutable' attributes, or a bind:props directive`
 				});
 			}
 		});
 	}
 
-	return meta;
+	return componentOptions;
 }

@@ -265,15 +265,15 @@ export default class Stylesheet {
 		this.nodesWithCssClass = new Set();
 		this.nodesWithRefCssClass = new Map();
 
-		if (ast.css[0] && ast.css[0].children.length) {
-			this.id = `svelte-${hash(ast.css[0].content.styles)}`;
+		if (ast.css && ast.css.children.length) {
+			this.id = `svelte-${hash(ast.css.content.styles)}`;
 
 			this.hasStyles = true;
 
 			const stack: (Rule | Atrule)[] = [];
 			let currentAtrule: Atrule = null;
 
-			walk(ast.css[0], {
+			walk(ast.css, {
 				enter: (node: Node) => {
 					if (node.type === 'Atrule') {
 						const last = stack[stack.length - 1];
@@ -316,7 +316,7 @@ export default class Stylesheet {
 
 				leave: (node: Node) => {
 					if (node.type === 'Rule' || node.type === 'Atrule') stack.pop();
-					if (node.type === 'Atrule') currentAtrule = <Atrule>stack[stack.length - 1];
+					if (node.type === 'Atrule') currentAtrule = stack[stack.length - 1] as Atrule;
 				}
 			});
 		} else {
@@ -330,7 +330,7 @@ export default class Stylesheet {
 		const stack: Element[] = [];
 		let parent: Node = node;
 		while (parent = parent.parent) {
-			if (parent.type === 'Element') stack.unshift(<Element>parent);
+			if (parent.type === 'Element') stack.unshift(parent as Element);
 		}
 
 		for (let i = 0; i < this.children.length; i += 1) {

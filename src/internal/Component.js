@@ -1,4 +1,4 @@
-import { add_render_callback, flush, intros, schedule_update } from './scheduler.js';
+import { add_render_callback, flush, intros, schedule_update, dirty_components } from './scheduler.js';
 import { current_component, set_current_component } from './lifecycle.js'
 import { is_function, run, run_all, noop } from './utils.js';
 import { blankObject } from './utils.js';
@@ -12,7 +12,7 @@ export function bind(component, name, callback) {
 export function mount_component(component, target, anchor) {
 	const { fragment, on_mount, on_destroy, after_render } = component.$$;
 
-	fragment[fragment.i ? 'i' : 'm'](target, anchor);
+	fragment.m(target, anchor);
 
 	// onMount happens after the initial afterUpdate. Because
 	// afterUpdate callbacks happen in reverse order (inner first)
@@ -46,22 +46,24 @@ function destroy(component, detach) {
 
 function make_dirty(component, key) {
 	if (!component.$$.dirty) {
-		schedule_update(component);
+		dirty_components.push(component);
+		schedule_update();
 		component.$$.dirty = {};
 	}
 	component.$$.dirty[key] = true;
 }
 
 export function init(component, options, instance, create_fragment, not_equal) {
-	const previous_component = current_component;
+	const parent_component = current_component;
 	set_current_component(component);
+
+	const props = options.props || {};
 
 	const $$ = component.$$ = {
 		fragment: null,
 		ctx: null,
 
 		// state
-		set: noop,
 		update: noop,
 		not_equal,
 		bound: blankObject(),
@@ -71,50 +73,49 @@ export function init(component, options, instance, create_fragment, not_equal) {
 		on_destroy: [],
 		before_render: [],
 		after_render: [],
+		context: new Map(parent_component ? parent_component.$$.context : []),
 
 		// everything else
 		callbacks: blankObject(),
-		slotted: options.slots || {},
-		dirty: null,
-		binding_groups: []
+		dirty: null
 	};
 
 	let ready = false;
 
-	$$.ctx = instance(component, options.props || {}, (key, value) => {
-		if ($$.bound[key]) $$.bound[key](value);
+	$$.ctx = instance
+		? instance(component, props, (key, value) => {
+			if ($$.bound[key]) $$.bound[key](value);
 
-		if ($$.ctx) {
-			const changed = not_equal(value, $$.ctx[key]);
-			if (ready && changed) {
-				make_dirty(component, key);
+			if ($$.ctx) {
+				const changed = not_equal(value, $$.ctx[key]);
+				if (ready && changed) {
+					make_dirty(component, key);
+				}
+
+				$$.ctx[key] = value;
+				return changed;
 			}
-
-			$$.ctx[key] = value;
-			return changed;
-		}
-	});
+		})
+		: props;
 
 	$$.update();
 	ready = true;
 	run_all($$.before_render);
-	$$.fragment = create_fragment($$, $$.ctx);
+	$$.fragment = create_fragment($$.ctx);
 
 	if (options.target) {
-		intros.enabled = !!options.intro;
-
 		if (options.hydrate) {
 			$$.fragment.l(children(options.target));
 		} else {
 			$$.fragment.c();
 		}
 
+		if (options.intro && component.$$.fragment.i) component.$$.fragment.i();
 		mount_component(component, options.target, options.anchor);
 		flush();
-		intros.enabled = true;
 	}
 
-	set_current_component(previous_component);
+	set_current_component(parent_component);
 }
 
 export let SvelteElement;

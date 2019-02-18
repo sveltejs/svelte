@@ -1,9 +1,0 @@
-<script>
-	export let events = [];
-
-	function log(event) {
-		events.push(event);
-	}
-</script>
-
-<svelte:document on:mouseenter='{() => log("enter")}' on:mouseleave='{() => log("leave")}'/>

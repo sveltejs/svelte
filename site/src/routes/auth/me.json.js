@@ -1,6 +1,6 @@
 export function get(req, res) {
-	if (!req.session.passport || !req.session.passport.user) {
-		res.send(null);
+	if (!req.session || !req.session.passport || !req.session.passport.user) {
+		res.send('null');
 		return;
 	}
 

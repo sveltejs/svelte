@@ -9,7 +9,7 @@ export function test({ assert, smcCss, locateInSource, locateInGeneratedCss }) {
 	});
 
 	assert.deepEqual( actual, {
-		source: 'input.html',
+		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,
 		column: expected.column

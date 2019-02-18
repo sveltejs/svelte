@@ -10,6 +10,7 @@ import addToSet from '../../utils/addToSet';
 import getObject from '../../utils/getObject';
 import { extractNames } from '../../utils/annotateWithScopes';
 import { nodes_match } from '../../utils/nodes_match';
+import sanitize from '../../utils/sanitize';
 
 export default function dom(
 	component: Component,
@@ -27,7 +28,7 @@ export default function dom(
 
 	const builder = new CodeBuilder();
 
-	if (component.options.dev) {
+	if (component.compileOptions.dev) {
 		builder.addLine(`const ${renderer.fileVar} = ${JSON.stringify(component.file)};`);
 	}
 
@@ -36,7 +37,7 @@ export default function dom(
 		`${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */` :
 		css.code, { onlyEscapeAtSymbol: true });
 
-	if (styles && component.options.css !== false && !options.customElement) {
+	if (styles && component.compileOptions.css !== false && !options.customElement) {
 		builder.addBlock(deindent`
 			function @add_css() {
 				var style = @createElement("style");
@@ -69,85 +70,88 @@ export default function dom(
 		options.css !== false
 	);
 
-	const props = component.props.filter(x => component.writable_declarations.has(x.name));
+	const props = component.vars.filter(variable => !variable.module && variable.export_name);
+	const writable_props = props.filter(variable => variable.writable);
 
-	const set = component.meta.props || props.length > 0
+	const set = (component.componentOptions.props || writable_props.length > 0 || renderer.slots.size > 0)
 		? deindent`
 			$$props => {
-				${component.meta.props && deindent`
-				if (!${component.meta.props}) ${component.meta.props} = {};
-				@assign(${component.meta.props}, $$props);
-				$$invalidate('${component.meta.props_object}', ${component.meta.props_object});
+				${component.componentOptions.props && deindent`
+				if (!${component.componentOptions.props}) ${component.componentOptions.props} = {};
+				@assign(${component.componentOptions.props}, $$props);
+				$$invalidate('${component.componentOptions.props_object}', ${component.componentOptions.props_object});
 				`}
-				${props.map(prop =>
-				`if ('${prop.as}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.as});`)}
+				${writable_props.map(prop =>
+				`if ('${prop.export_name}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.export_name});`)}
+				${renderer.slots.size > 0 &&
+				`if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);`}
 			}
 		`
 		: null;
 
 	const body = [];
 
-	const not_equal = component.options.immutable ? `@not_equal` : `@safe_not_equal`;
+	const not_equal = component.componentOptions.immutable ? `@not_equal` : `@safe_not_equal`;
 	let dev_props_check;
 
-	component.props.forEach(x => {
-		if (component.imported_declarations.has(x.name) || component.hoistable_names.has(x.name)) {
+	props.forEach(x => {
+		const variable = component.var_lookup.get(x.name);
+
+		if (variable.hoistable) {
 			body.push(deindent`
-				get ${x.as}() {
+				get ${x.export_name}() {
 					return ${x.name};
 				}
 			`);
 		} else {
 			body.push(deindent`
-				get ${x.as}() {
+				get ${x.export_name}() {
 					return this.$$.ctx.${x.name};
 				}
 			`);
 		}
 
-		if (component.writable_declarations.has(x.as) && !renderer.readonly.has(x.as)) {
+		if (variable.writable && !renderer.readonly.has(x.export_name)) {
 			body.push(deindent`
-				set ${x.as}(${x.name}) {
+				set ${x.export_name}(${x.name}) {
 					this.$set({ ${x.name} });
 					@flush();
 				}
 			`);
-		} else if (component.options.dev) {
+		} else if (component.compileOptions.dev) {
 			body.push(deindent`
-				set ${x.as}(value) {
-					throw new Error("<${component.tag}>: Cannot set read-only property '${x.as}'");
+				set ${x.export_name}(value) {
+					throw new Error("<${component.tag}>: Cannot set read-only property '${x.export_name}'");
 				}
 			`);
 		}
 	});
 
-	if (component.options.dev) {
+	if (component.compileOptions.dev) {
 		// TODO check no uunexpected props were passed, as well as
 		// checking that expected ones were passed
-		const expected = component.props
-			.map(x => x.name)
-			.filter(name => !component.initialised_declarations.has(name));
+		const expected = props.filter(prop => !prop.initialised);
 
 		if (expected.length) {
 			dev_props_check = deindent`
 				const { ctx } = this.$$;
 				const props = ${options.customElement ? `this.attributes` : `options.props || {}`};
-				${expected.map(name => deindent`
-				if (ctx.${name} === undefined && !('${name}' in props)) {
-					console.warn("<${component.tag}> was created without expected prop '${name}'");
+				${expected.map(prop => deindent`
+				if (ctx.${prop.name} === undefined && !('${prop.export_name}' in props)) {
+					console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
 				}`)}
 			`;
 		}
 	}
 
 	// instrument assignments
-	if (component.instance_script) {
+	if (component.ast.instance) {
 		let scope = component.instance_scope;
 		let map = component.instance_scope_map;
 
 		let pending_assignments = new Set();
 
-		walk(component.instance_script.content, {
+		walk(component.ast.instance.content, {
 			enter: (node, parent) => {
 				if (map.has(node)) {
 					scope = map.get(node);
@@ -174,8 +178,11 @@ export default function dom(
 						code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
 					} else {
 						names.forEach(name => {
-							if (component.imported_declarations.has(name)) return;
-							if (scope.findOwner(name) !== component.instance_scope) return;
+							const owner = scope.findOwner(name);
+							if (owner && owner !== component.instance_scope) return;
+
+							const variable = component.var_lookup.get(name);
+							if (variable && (variable.hoistable || variable.global || variable.module)) return;
 
 							pending_assignments.add(name);
 							component.has_reactive_assignments = true;
@@ -186,8 +193,10 @@ export default function dom(
 				else if (node.type === 'UpdateExpression') {
 					const { name } = getObject(node.argument);
 
-					if (component.imported_declarations.has(name)) return;
 					if (scope.findOwner(name) !== component.instance_scope) return;
+
+					const variable = component.var_lookup.get(name);
+					if (variable && variable.hoistable) return;
 
 					pending_assignments.add(name);
 					component.has_reactive_assignments = true;
@@ -195,7 +204,7 @@ export default function dom(
 
 				if (pending_assignments.size > 0) {
 					if (node.type === 'ArrowFunctionExpression') {
-						const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join(';');
+						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join(';');
 						pending_assignments = new Set();
 
 						code.prependRight(node.body.start, `{ const $$result = `);
@@ -205,7 +214,7 @@ export default function dom(
 					}
 
 					else if (/Statement/.test(node.type)) {
-						const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ');
+						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ');
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
@@ -235,10 +244,12 @@ export default function dom(
 	}
 
 	const args = ['$$self'];
-	if (component.props.length > 0 || component.has_reactive_assignments) args.push('$$props', '$$invalidate');
+	if (props.length > 0 || component.has_reactive_assignments || renderer.slots.size > 0) {
+		args.push('$$props', '$$invalidate');
+	}
 
 	builder.addBlock(deindent`
-		function create_fragment($$, ctx) {
+		function create_fragment(ctx) {
 			${block.getContents()}
 		}
 
@@ -247,35 +258,43 @@ export default function dom(
 		${component.fully_hoisted.length > 0 && component.fully_hoisted.join('\n\n')}
 	`);
 
-	const filtered_declarations = component.declarations.filter(name => {
-		if (component.hoistable_names.has(name)) return false;
-		if (component.imported_declarations.has(name)) return false;
-		if (component.props.find(p => p.as === name)) return true;
-		return component.template_references.has(name);
-	});
+	const filtered_declarations = component.vars
+		.filter(v => ((v.referenced || v.export_name) && !v.hoistable))
+		.map(v => v.name);
 
-	const filtered_props = component.props.filter(prop => {
-		if (component.hoistable_names.has(prop.name)) return false;
-		if (component.imported_declarations.has(prop.name)) return false;
+	const filtered_props = props.filter(prop => {
+		if (prop.name === component.componentOptions.props_object) return false;
+
+		const variable = component.var_lookup.get(prop.name);
+
+		if (variable.hoistable) return false;
 		if (prop.name[0] === '$') return false;
 		return true;
 	});
 
-	const reactive_stores = Array.from(component.template_references).filter(n => n[0] === '$');
-	filtered_declarations.push(...reactive_stores);
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+
+	if (renderer.slots.size > 0) {
+		const arr = Array.from(renderer.slots);
+		filtered_declarations.push(...arr.map(name => `$$slot_${sanitize(name)}`), '$$scope');
+	}
+
+	if (renderer.bindingGroups.length > 0) {
+		filtered_declarations.push(`$$binding_groups`);
+	}
 
 	const has_definition = (
 		component.javascript ||
 		filtered_props.length > 0 ||
+		component.componentOptions.props_object ||
 		component.partly_hoisted.length > 0 ||
 		filtered_declarations.length > 0 ||
-		reactive_stores.length > 0 ||
 		component.reactive_declarations.length > 0
 	);
 
 	const definition = has_definition
 		? component.alias('instance')
-		: '@identity';
+		: 'null';
 
 	const all_reactive_dependencies = new Set();
 	component.reactive_declarations.forEach(d => {
@@ -283,23 +302,54 @@ export default function dom(
 	});
 
 	const user_code = component.javascript || (
-		component.ast.js.length === 0 && filtered_props.length > 0
-			? `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
+		!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)
+			? [
+				component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
+				filtered_props.length > 0 && `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
+			].filter(Boolean).join('\n')
 			: null
 	);
 
 	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
-		.map(name => deindent`
+		.map(({ name }) => deindent`
 			let ${name};
-			${component.options.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$invalidate('${name}', ${name}); }));
 		`)
 		.join('\n\n');
 
 	if (has_definition) {
+		const reactive_declarations = component.reactive_declarations.map(d => {
+			const condition = Array.from(d.dependencies)
+				.filter(n => {
+					const variable = component.var_lookup.get(n);
+					return variable && variable.writable;
+				})
+				.map(n => `$$dirty.${n}`).join(' || ');
+
+			const snippet = d.node.body.type === 'BlockStatement'
+				? `[✂${d.node.body.start}-${d.node.end}✂]`
+				: deindent`
+					{
+						[✂${d.node.body.start}-${d.node.end}✂]
+					}`;
+
+			return deindent`
+				if (${condition}) ${snippet}`
+		});
+
+		const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
+			const variable = component.var_lookup.get(name);
+			return variable.injected;
+		});
+
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
 				${user_code}
+
+				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
+
+				${renderer.bindingGroups.length > 0 && `const $$binding_groups = [${renderer.bindingGroups.map(_ => `[]`).join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
 
@@ -307,10 +357,10 @@ export default function dom(
 
 				${set && `$$self.$set = ${set};`}
 
-				${component.reactive_declarations.length > 0 && deindent`
+				${reactive_declarations.length > 0 && deindent`
+				${injected.length && `let ${injected.join(', ')};`}
 				$$self.$$.update = ($$dirty = { ${Array.from(all_reactive_dependencies).map(n => `${n}: 1`).join(', ')} }) => {
-					${component.reactive_declarations.map(d => deindent`
-					if (${Array.from(d.dependencies).map(n => `$$dirty.${n}`).join(' || ')}) ${d.snippet}`)}
+					${reactive_declarations}
 				};
 				`}
 
@@ -336,7 +386,7 @@ export default function dom(
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(component.props.length > 0 || component.meta.props) && deindent`
+						${(props.length > 0 || component.componentOptions.props) && deindent`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
@@ -345,7 +395,7 @@ export default function dom(
 				}
 
 				static get observedAttributes() {
-					return ${JSON.stringify(component.props.map(x => x.as))};
+					return ${JSON.stringify(props.map(x => x.export_name))};
 				}
 
 				${body.length > 0 && body.join('\n\n')}

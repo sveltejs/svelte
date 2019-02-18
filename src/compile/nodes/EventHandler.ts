@@ -41,7 +41,12 @@ export default class EventHandler extends Node {
 			}
 		} else {
 			const name = component.getUniqueName(`${this.name}_handler`);
-			component.declarations.push(name);
+
+			component.add_var({
+				name,
+				internal: true,
+				referenced: true
+			});
 
 			component.partly_hoisted.push(deindent`
 				function ${name}(event) {
@@ -57,7 +62,7 @@ export default class EventHandler extends Node {
 	render(block: Block) {
 		if (this.expression) return this.expression.render(block);
 
-		this.component.template_references.add(this.handler_name);
+		// this.component.add_reference(this.handler_name);
 		return `ctx.${this.handler_name}`;
 	}
 }

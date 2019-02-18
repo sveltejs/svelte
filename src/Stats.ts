@@ -26,8 +26,6 @@ function collapseTimings(timings) {
 }
 
 export default class Stats {
-	onwarn: (warning: Warning) => void;
-
 	startTime: number;
 	currentTiming: Timing;
 	currentChildren: Timing[];
@@ -35,14 +33,10 @@ export default class Stats {
 	stack: Timing[];
 	warnings: Warning[];
 
-	constructor({ onwarn }: {
-		onwarn: (warning: Warning) => void
-	}) {
+	constructor() {
 		this.startTime = now();
 		this.stack = [];
 		this.currentChildren = this.timings = [];
-
-		this.onwarn = onwarn;
 
 		this.warnings = [];
 	}
@@ -97,16 +91,22 @@ export default class Stats {
 		});
 
 		return {
-			props: component.props.map(prop => prop.as),
 			timings,
 			warnings: this.warnings,
-			imports,
-			templateReferences: component && component.template_references
+			vars: component.vars.filter(variable => !variable.global && !variable.implicit && !variable.internal).map(variable => ({
+				name: variable.name,
+				export_name: variable.export_name || null,
+				injected: variable.injected || false,
+				module: variable.module || false,
+				mutated: variable.mutated || false,
+				reassigned: variable.reassigned || false,
+				referenced: variable.referenced || false,
+				writable: variable.writable || false
+			}))
 		};
 	}
 
 	warn(warning) {
 		this.warnings.push(warning);
-		this.onwarn(warning);
 	}
 }

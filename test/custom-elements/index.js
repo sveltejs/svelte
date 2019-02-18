@@ -72,7 +72,7 @@ describe('custom-elements', function() {
 						},
 
 						transform(code, id) {
-							if (id.endsWith('.html')) {
+							if (id.endsWith('.svelte')) {
 								const compiled = svelte.compile(code, {
 									customElement: true,
 									dev: config.dev
@@ -89,8 +89,8 @@ describe('custom-elements', function() {
 				]
 			})
 				.then(bundle => bundle.generate({ format: 'iife', name: 'test' }))
-				.then(generated => {
-					bundle = generated.code;
+				.then(result => {
+					bundle = result.output[0].code;
 
 					const nightmare = new Nightmare({ show: false });
 

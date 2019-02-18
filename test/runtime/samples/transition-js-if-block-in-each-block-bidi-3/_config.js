@@ -12,9 +12,7 @@ export default {
 		<div>5</div>
 	`,
 
-	test({ assert, component, target, window, raf }) {
-		const divs = target.querySelectorAll('div');
-
+	test({ assert, component, target, raf }) {
 		raf.tick(100);
 
 		component.threshold = 4;

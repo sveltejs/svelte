@@ -1,5 +1,5 @@
 import { assign, isPromise } from './utils.js';
-import { group_outros } from './transitions.js';
+import { check_outros, group_outros, on_outro } from './transitions.js';
 import { flush } from '../internal/scheduler.js';
 
 export function handlePromise(promise, info) {
@@ -11,17 +11,19 @@ export function handlePromise(promise, info) {
 		info.resolved = key && { [key]: value };
 
 		const child_ctx = assign(assign({}, info.ctx), info.resolved);
-		const block = type && (info.current = type)(info.$$, child_ctx);
+		const block = type && (info.current = type)(child_ctx);
 
 		if (info.block) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
 					if (i !== index && block) {
 						group_outros();
-						block.o(() => {
+						on_outro(() => {
 							block.d(1);
 							info.blocks[i] = null;
 						});
+						block.o(1);
+						check_outros();
 					}
 				});
 			} else {
@@ -29,7 +31,8 @@ export function handlePromise(promise, info) {
 			}
 
 			block.c();
-			block[block.i ? 'i' : 'm'](info.mount(), info.anchor);
+			if (block.i) block.i(1);
+			block.m(info.mount(), info.anchor);
 
 			flush();
 		}

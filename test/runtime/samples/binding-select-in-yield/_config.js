@@ -18,7 +18,7 @@ export default {
 			</select>
 		`);
 
-		const select = target.querySelector('select');
+		let select = target.querySelector('select');
 		const change = new window.MouseEvent('change');
 
 		select.options[2].selected = true;
@@ -43,6 +43,8 @@ export default {
 
 		await component.modal.toggle();
 		await component.modal.toggle();
+
+		select = target.querySelector('select');
 
 		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
 			false,

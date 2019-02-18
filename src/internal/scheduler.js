@@ -1,23 +1,27 @@
 import { run_all } from './utils.js';
+import { set_current_component } from './lifecycle.js';
 
-let update_scheduled = false;
+export let dirty_components = [];
+export const intros = { enabled: false };
 
-let dirty_components = [];
+let update_promise;
 const binding_callbacks = [];
 const render_callbacks = [];
 
-export const intros = { enabled: false };
-
-export function schedule_update(component) {
-	dirty_components.push(component);
-	if (!update_scheduled) {
-		update_scheduled = true;
-		queue_microtask(flush);
+export function schedule_update() {
+	if (!update_promise) {
+		update_promise = Promise.resolve();
+		update_promise.then(flush);
 	}
 }
 
 export function add_render_callback(fn) {
 	render_callbacks.push(fn);
+}
+
+export function tick() {
+	schedule_update();
+	return update_promise;
 }
 
 export function add_binding_callback(fn) {
@@ -31,7 +35,9 @@ export function flush() {
 		// first, call beforeUpdate functions
 		// and update components
 		while (dirty_components.length) {
-			update(dirty_components.shift().$$);
+			const component = dirty_components.shift();
+			set_current_component(component);
+			update(component.$$);
 		}
 
 		while (binding_callbacks.length) binding_callbacks.shift()();
@@ -50,7 +56,7 @@ export function flush() {
 		}
 	} while (dirty_components.length);
 
-	update_scheduled = false;
+	update_promise = null;
 }
 
 function update($$) {
@@ -62,10 +68,4 @@ function update($$) {
 
 		$$.after_render.forEach(add_render_callback);
 	}
-}
-
-function queue_microtask(callback) {
-	Promise.resolve().then(() => {
-		if (update_scheduled) callback();
-	});
 }

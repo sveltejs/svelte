@@ -7,7 +7,7 @@ import { Strategy } from 'passport-github';
 import sessionFileStore from 'session-file-store';
 import serve from 'serve-static';
 import devalue from 'devalue';
-import * as sapper from '../__sapper__/server.js';
+import * as sapper from '@sapper/server';
 
 const app = express();
 

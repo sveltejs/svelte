@@ -10,7 +10,7 @@ export function test({ assert, code, smc, locateInSource, locateInGenerated }) {
 	});
 
 	assert.deepEqual( actual, {
-		source: 'input.html',
+		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,
 		column: expected.column

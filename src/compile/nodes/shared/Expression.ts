@@ -62,6 +62,7 @@ const precedence: Record<string, (node?: Node) => number> = {
 };
 
 export default class Expression {
+	type = 'Expression';
 	component: Component;
 	owner: Wrapper;
 	node: any;
@@ -69,7 +70,6 @@ export default class Expression {
 	references: Set<string>;
 	dependencies: Set<string> = new Set();
 	contextual_dependencies: Set<string> = new Set();
-	dynamic_dependencies: Set<string> = new Set();
 
 	template_scope: TemplateScope;
 	scope: Scope;
@@ -95,7 +95,7 @@ export default class Expression {
 		this.owner = owner;
 		this.is_synthetic = owner.isSynthetic;
 
-		const { dependencies, contextual_dependencies, dynamic_dependencies } = this;
+		const { dependencies, contextual_dependencies } = this;
 
 		let { map, scope } = createScopes(info);
 		this.scope = scope;
@@ -103,23 +103,6 @@ export default class Expression {
 
 		const expression = this;
 		let function_expression;
-
-		function add_dependency(name) {
-			dependencies.add(name);
-
-			if (!function_expression) {
-				// dynamic_dependencies is used to create `if (changed.foo || ...)`
-				// conditions — it doesn't apply if the dependency is inside a
-				// function, and it only applies if the dependency is writable
-				if (component.instance_script) {
-					if (component.writable_declarations.has(name) || name[0] === '$') {
-						dynamic_dependencies.add(name);
-					}
-				} else {
-					dynamic_dependencies.add(name);
-				}
-			}
-		}
 
 		// discover dependencies, but don't change the code yet
 		walk(info, {
@@ -139,22 +122,62 @@ export default class Expression {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
-					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
+					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
 
-					if (template_scope.names.has(name)) {
+					if (template_scope.is_let(name)) {
+						if (!function_expression) {
+							dependencies.add(name);
+						}
+					} else if (template_scope.names.has(name)) {
 						expression.usesContext = true;
 
 						contextual_dependencies.add(name);
 
-						template_scope.dependenciesForName.get(name).forEach(add_dependency);
+						if (!function_expression) {
+							template_scope.dependenciesForName.get(name).forEach(name => dependencies.add(name));
+						}
 					} else {
-						add_dependency(name);
-						component.template_references.add(name);
+						if (!function_expression) {
+							dependencies.add(name);
+						}
 
+						component.add_reference(name);
 						component.warn_if_undefined(nodes[0], template_scope, true);
 					}
 
 					this.skip();
+				}
+
+				// track any assignments from template expressions as mutable
+				let names;
+				let deep = false;
+
+				if (function_expression) {
+					if (node.type === 'AssignmentExpression') {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [getObject(node.left).name]
+							: extractNames(node.left);
+					} else if (node.type === 'UpdateExpression') {
+						const { name } = getObject(node.argument);
+						names = [name];
+					}
+				}
+
+				if (names) {
+					names.forEach(name => {
+						if (template_scope.names.has(name)) {
+							template_scope.dependenciesForName.get(name).forEach(name => {
+								const variable = component.var_lookup.get(name);
+								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+							});
+						} else {
+							component.add_reference(name);
+
+							const variable = component.var_lookup.get(name);
+							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+						}
+					});
 				}
 			},
 
@@ -167,6 +190,18 @@ export default class Expression {
 					function_expression = null;
 				}
 			}
+		});
+	}
+
+	dynamic_dependencies() {
+		return Array.from(this.dependencies).filter(name => {
+			if (this.template_scope.is_let(name)) return true;
+
+			const variable = this.component.var_lookup.get(name);
+			if (!variable) return false;
+
+			if (variable.mutated || variable.reassigned) return true; // dynamic internal state
+			if (!variable.module && variable.writable && variable.export_name) return true; // writable props
 		});
 	}
 
@@ -213,7 +248,7 @@ export default class Expression {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
-					if (globalWhitelist.has(name) && component.declarations.indexOf(name) === -1) return;
+					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
 
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
@@ -224,9 +259,9 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.template_references.add(name);
+							component.add_reference(name);
 						}
-					} else if (!is_synthetic && !component.hoistable_names.has(name) && !component.imported_declarations.has(name)) {
+					} else if (!is_synthetic && isContextual(component, template_scope, name)) {
 						code.prependRight(node.start, key === 'key' && parent.shorthand
 							? `${name}: ctx.`
 							: 'ctx.');
@@ -259,7 +294,9 @@ export default class Expression {
 						} else {
 							names.forEach(name => {
 								if (scope.declarations.has(name)) return;
-								if (component.imported_declarations.has(name)) return;
+
+								const variable = component.var_lookup.get(name);
+								if (variable && variable.hoistable) return;
 
 								pending_assignments.add(name);
 							});
@@ -268,7 +305,9 @@ export default class Expression {
 						const { name } = getObject(node.argument);
 
 						if (scope.declarations.has(name)) return;
-						if (component.imported_declarations.has(name)) return;
+
+						const variable = component.var_lookup.get(name);
+						if (variable && variable.hoistable) return;
 
 						pending_assignments.add(name);
 					}
@@ -304,7 +343,7 @@ export default class Expression {
 					);
 
 					const args = contextual_dependencies.size > 0
-						? [`{ ${[...contextual_dependencies].join(', ')} }`]
+						? [`{ ${Array.from(contextual_dependencies).join(', ')} }`]
 						: [];
 
 					let original_params;
@@ -317,7 +356,7 @@ export default class Expression {
 					let body = code.slice(node.body.start, node.body.end).trim();
 					if (node.body.type !== 'BlockStatement') {
 						if (pending_assignments.size > 0) {
-							const insert = [...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ');
+							const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ');
 							pending_assignments = new Set();
 
 							component.has_reactive_assignments = true;
@@ -342,22 +381,37 @@ export default class Expression {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(fn);
 						code.overwrite(node.start, node.end, name);
+
+						component.add_var({
+							name,
+							internal: true,
+							hoistable: true,
+							referenced: true
+						});
 					}
 
 					else if (contextual_dependencies.size === 0) {
 						// function can be hoisted inside the component init
 						component.partly_hoisted.push(fn);
-						component.declarations.push(name);
-						component.template_references.add(name);
 						code.overwrite(node.start, node.end, `ctx.${name}`);
+
+						component.add_var({
+							name,
+							internal: true,
+							referenced: true
+						});
 					}
 
 					else {
 						// we need a combo block/init recipe
 						component.partly_hoisted.push(fn);
-						component.declarations.push(name);
-						component.template_references.add(name);
 						code.overwrite(node.start, node.end, name);
+
+						component.add_var({
+							name,
+							internal: true,
+							referenced: true
+						});
 
 						declarations.push(deindent`
 							function ${name}(${original_params ? '...args' : ''}) {
@@ -377,7 +431,7 @@ export default class Expression {
 
 						const insert = (
 							(has_semi ? ' ' : '; ') +
-							[...pending_assignments].map(name => `$$invalidate('${name}', ${name})`).join('; ')
+							Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ')
 						);
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
@@ -422,4 +476,17 @@ function get_function_name(node, parent) {
 	}
 
 	return 'func';
+}
+
+function isContextual(component: Component, scope: TemplateScope, name: string) {
+	// if it's a name below root scope, it's contextual
+	if (!scope.isTopLevel(name)) return true;
+
+	const variable = component.var_lookup.get(name);
+
+	// hoistables, module declarations, and imports are non-contextual
+	if (!variable || variable.hoistable) return false;
+
+	// assume contextual
+	return true;
 }

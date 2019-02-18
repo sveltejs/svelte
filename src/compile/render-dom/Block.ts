@@ -1,9 +1,10 @@
 import CodeBuilder from '../../utils/CodeBuilder';
 import deindent from '../../utils/deindent';
-import { escape } from '../../utils/stringify';
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import EachBlockWrapper from './wrappers/EachBlock';
+import InlineComponentWrapper from './wrappers/InlineComponent';
+import ElementWrapper from './wrappers/Element';
 
 export interface BlockOptions {
 	parent?: Block;
@@ -12,7 +13,6 @@ export interface BlockOptions {
 	comment?: string;
 	key?: string;
 	bindings?: Map<string, () => { object: string, property: string, snippet: string }>;
-	contextOwners?: Map<string, EachBlockWrapper>;
 	dependencies?: Set<string>;
 }
 
@@ -30,7 +30,6 @@ export default class Block {
 	dependencies: Set<string>;
 
 	bindings: Map<string, { object: string, property: string, snippet: string }>;
-	contextOwners: Map<string, EachBlockWrapper>;
 
 	builders: {
 		init: CodeBuilder;
@@ -61,7 +60,7 @@ export default class Block {
 	variables: Map<string, string>;
 	getUniqueName: (name: string) => string;
 
-	hasUpdateMethod: boolean;
+	hasUpdateMethod = false;
 	autofocus: string;
 
 	constructor(options: BlockOptions) {
@@ -79,7 +78,6 @@ export default class Block {
 		this.dependencies = new Set();
 
 		this.bindings = options.bindings;
-		this.contextOwners = options.contextOwners;
 
 		this.builders = {
 			init: new CodeBuilder(),
@@ -106,8 +104,6 @@ export default class Block {
 
 		this.aliases = new Map().set('ctx', this.getUniqueName('ctx'));
 		if (this.key) this.aliases.set('key', this.getUniqueName('key'));
-
-		this.hasUpdateMethod = false; // determined later
 	}
 
 	assignVariableNames() {
@@ -151,6 +147,8 @@ export default class Block {
 		dependencies.forEach(dependency => {
 			this.dependencies.add(dependency);
 		});
+
+		this.hasUpdateMethod = true;
 	}
 
 	addElement(
@@ -176,13 +174,15 @@ export default class Block {
 		}
 	}
 
-	addIntro() {
+	addIntro(local?: boolean) {
 		this.hasIntros = this.hasIntroMethod = this.renderer.hasIntroTransitions = true;
+		if (!local && this.parent) this.parent.addIntro();
 	}
 
-	addOutro() {
+	addOutro(local?: boolean) {
 		this.hasOutros = this.hasOutroMethod = this.renderer.hasOutroTransitions = true;
 		this.outros += 1;
+		if (!local && this.parent) this.parent.addOutro();
 	}
 
 	addAnimation() {
@@ -218,10 +218,11 @@ export default class Block {
 	getContents(localKey?: string) {
 		const { dev } = this.renderer.options;
 
-		if (this.hasIntroMethod || this.hasOutroMethod) {
+		if (this.hasOutros) {
 			this.addVariable('#current');
 
-			if (!this.builders.mount.isEmpty()) {
+			if (!this.builders.intro.isEmpty()) {
+				this.builders.intro.addLine(`#current = true;`);
 				this.builders.mount.addLine(`#current = true;`);
 			}
 
@@ -234,29 +235,7 @@ export default class Block {
 			this.builders.mount.addLine(`${this.autofocus}.focus();`);
 		}
 
-		if (this.event_listeners.length > 0) {
-			this.addVariable('#dispose');
-
-			if (this.event_listeners.length === 1) {
-				this.builders.hydrate.addLine(
-					`#dispose = ${this.event_listeners[0]};`
-				);
-
-				this.builders.destroy.addLine(
-					`#dispose();`
-				)
-			} else {
-				this.builders.hydrate.addBlock(deindent`
-					#dispose = [
-						${this.event_listeners.join(',\n')}
-					];
-				`);
-
-				this.builders.destroy.addLine(
-					`@run_all(#dispose);`
-				);
-			}
-		}
+		this.renderListeners();
 
 		const properties = new CodeBuilder();
 
@@ -347,27 +326,22 @@ export default class Block {
 		}
 
 		if (this.hasIntroMethod || this.hasOutroMethod) {
-			if (this.builders.mount.isEmpty()) {
+			if (this.builders.intro.isEmpty()) {
 				properties.addLine(`i: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'i: function intro' : 'i'}(#target, anchor) {
-						if (#current) return;
+					${dev ? 'i: function intro' : 'i'}(#local) {
+						${this.hasOutros && `if (#current) return;`}
 						${this.builders.intro}
-						this.m(#target, anchor);
 					},
 				`);
 			}
 
 			if (this.builders.outro.isEmpty()) {
-				properties.addLine(`o: @run,`);
+				properties.addLine(`o: @noop,`);
 			} else {
 				properties.addBlock(deindent`
-					${dev ? 'o: function outro' : 'o'}(#outrocallback) {
-						if (!#current) return;
-
-						${this.outros > 1 && `#outrocallback = @callAfter(#outrocallback, ${this.outros});`}
-
+					${dev ? 'o: function outro' : 'o'}(#local) {
 						${this.builders.outro}
 					},
 				`);
@@ -403,12 +377,38 @@ export default class Block {
 		});
 	}
 
+	renderListeners(chunk: string = '') {
+		if (this.event_listeners.length > 0) {
+			this.addVariable(`#dispose${chunk}`);
+
+			if (this.event_listeners.length === 1) {
+				this.builders.hydrate.addLine(
+					`#dispose${chunk} = ${this.event_listeners[0]};`
+				);
+
+				this.builders.destroy.addLine(
+					`#dispose${chunk}();`
+				)
+			} else {
+				this.builders.hydrate.addBlock(deindent`
+					#dispose${chunk} = [
+						${this.event_listeners.join(',\n')}
+					];
+				`);
+
+				this.builders.destroy.addLine(
+					`@run_all(#dispose${chunk});`
+				);
+			}
+		}
+	}
+
 	toString() {
 		const localKey = this.key && this.getUniqueName('key');
 
 		return deindent`
 			${this.comment && `// ${this.comment}`}
-			function ${this.name}($$, ${this.key ? `${localKey}, ` : ''}ctx) {
+			function ${this.name}(${this.key ? `${localKey}, ` : ''}ctx) {
 				${this.getContents(localKey)}
 			}
 		`;

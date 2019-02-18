@@ -64,9 +64,9 @@ export default class AttributeWrapper {
 				? '@setXlinkAttribute'
 				: '@setAttribute';
 
-		const isLegacyInputType = element.renderer.component.options.legacy && name === 'type' && this.parent.node.name === 'input';
+		const isLegacyInputType = element.renderer.component.compileOptions.legacy && name === 'type' && this.parent.node.name === 'input';
 
-		const isDataSet = /^data-/.test(name) && !element.renderer.component.options.legacy && !element.node.namespace;
+		const isDataSet = /^data-/.test(name) && !element.renderer.component.compileOptions.legacy && !element.node.namespace;
 		const camelCaseName = isDataSet ? name.replace('data-', '').replace(/(-\w)/g, function (m) {
 			return m[1].toUpperCase();
 		}) : name;
@@ -159,8 +159,9 @@ export default class AttributeWrapper {
 				updater = `${method}(${element.var}, "${name}", ${shouldCache ? last : value});`;
 			}
 
-			if (this.node.dependencies.size || isSelectValueAttribute) {
-				const dependencies = Array.from(this.node.dependencies);
+			// only add an update if mutations are involved (or it's a select?)
+			const dependencies = this.node.get_dependencies();
+			if (dependencies.length > 0 || isSelectValueAttribute) {
 				const changedCheck = (
 					(block.hasOutros ? `!#current || ` : '') +
 					dependencies.map(dependency => `changed.${dependency}`).join(' || ')
@@ -187,7 +188,7 @@ export default class AttributeWrapper {
 						? `${element.var}.${propertyName} = ${value};`
 						: isDataSet
 							? `${element.var}.dataset.${camelCaseName} = ${value};`
-							: `${method}(${element.var}, "${name}", ${value});`
+							: `${method}(${element.var}, "${name}", ${value === true ? '""' : value});`
 			);
 
 			block.builders.hydrate.addLine(statement);
@@ -207,9 +208,9 @@ export default class AttributeWrapper {
 	}
 
 	stringify() {
-		const value = this.node.chunks;
+		if (this.node.isTrue) return '';
 
-		if (value === true) return '';
+		const value = this.node.chunks;
 		if (value.length === 0) return `=""`;
 
 		return `="${value.map(chunk => {

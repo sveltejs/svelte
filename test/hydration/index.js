@@ -12,22 +12,16 @@ import {
 
 let compileOptions = null;
 
-function getName(filename) {
-	const base = path.basename(filename).replace('.html', '');
-	return base[0].toUpperCase() + base.slice(1);
-}
-
 const sveltePath = process.cwd();
 
 describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
-		require.extensions['.html'] = function(module, filename) {
+		require.extensions['.svelte'] = function(module, filename) {
 			const options = Object.assign(
 				{
 					filename,
-					name: getName(filename),
 					hydratable: true,
 					format: 'cjs',
 					sveltePath
@@ -56,9 +50,6 @@ describe('hydration', () => {
 			const cwd = path.resolve(`test/hydration/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
-			compileOptions.shared = path.resolve('internal.js');
-			compileOptions.dev = config.dev;
-			compileOptions.hydrate = true;
 
 			const window = env();
 
@@ -68,7 +59,7 @@ describe('hydration', () => {
 				let SvelteComponent;
 
 				try {
-					SvelteComponent = require(`${cwd}/main.html`).default;
+					SvelteComponent = require(`${cwd}/main.svelte`).default;
 				} catch (err) {
 					throw err;
 				}
@@ -94,14 +85,12 @@ describe('hydration', () => {
 				}
 			} catch (err) {
 				showOutput(cwd, {
-					shared: 'svelte/internal.js',
 					hydratable: true
 				});
 				throw err;
 			}
 
 			if (config.show) showOutput(cwd, {
-				shared: 'svelte/internal.js',
 				hydratable: true
 			});
 		});

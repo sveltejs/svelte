@@ -32,12 +32,12 @@ class IfBlockBranch extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.condition = (<IfBlock>node).expression && (<IfBlock>node).expression.render(block);
+		this.condition = (node as IfBlock).expression && (node as IfBlock).expression.render(block);
 
 		this.block = block.child({
 			comment: createDebuggingComment(node, parent.renderer.component),
 			name: parent.renderer.component.getUniqueName(
-				(<IfBlock>node).expression ? `create_if_block` : `create_else_block`
+				(node as IfBlock).expression ? `create_if_block` : `create_else_block`
 			)
 		});
 
@@ -87,7 +87,7 @@ export default class IfBlockWrapper extends Wrapper {
 			this.branches.push(branch);
 
 			blocks.push(branch.block);
-			block.addDependencies(node.expression.dynamic_dependencies);
+			block.addDependencies(node.expression.dependencies);
 
 			if (branch.block.dependencies.size > 0) {
 				isDynamic = true;
@@ -125,9 +125,6 @@ export default class IfBlockWrapper extends Wrapper {
 
 		createBranches(this.node);
 
-		if (hasIntros) block.addIntro();
-		if (hasOutros) block.addOutro();
-
 		blocks.forEach(block => {
 			block.hasUpdateMethod = isDynamic;
 			block.hasIntroMethod = hasIntros;
@@ -153,18 +150,17 @@ export default class IfBlockWrapper extends Wrapper {
 		const if_name = hasElse ? '' : `if (${name}) `;
 
 		const dynamic = this.branches[0].block.hasUpdateMethod; // can use [0] as proxy for all, since they necessarily have the same value
+		const hasIntros = this.branches[0].block.hasIntroMethod;
 		const hasOutros = this.branches[0].block.hasOutroMethod;
+		const has_transitions = hasIntros || hasOutros;
 
-		const vars = { name, anchor, if_name, hasElse };
+		const vars = { name, anchor, if_name, hasElse, has_transitions };
 
 		if (this.node.else) {
 			if (hasOutros) {
 				this.renderCompoundWithOutros(block, parentNode, parentNodes, dynamic, vars);
 
-				block.builders.outro.addBlock(deindent`
-					if (${name}) ${name}.o(#outrocallback);
-					else #outrocallback();
-				`);
+				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
 			} else {
 				this.renderCompound(block, parentNode, parentNodes, dynamic, vars);
 			}
@@ -172,10 +168,7 @@ export default class IfBlockWrapper extends Wrapper {
 			this.renderSimple(block, parentNode, parentNodes, dynamic, vars);
 
 			if (hasOutros) {
-				block.builders.outro.addBlock(deindent`
-					if (${name}) ${name}.o(#outrocallback);
-					else #outrocallback();
-				`);
+				block.builders.outro.addLine(`if (${name}) ${name}.o();`);
 			}
 		}
 
@@ -185,6 +178,10 @@ export default class IfBlockWrapper extends Wrapper {
 			block.builders.claim.addLine(
 				`${if_name}${name}.l(${parentNodes});`
 			);
+		}
+
+		if (hasIntros || hasOutros) {
+			block.builders.intro.addLine(`if (${name}) ${name}.i();`);
 		}
 
 		if (needsAnchor) {
@@ -206,7 +203,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parentNode: string,
 		parentNodes: string,
 		dynamic,
-		{ name, anchor, hasElse, if_name }
+		{ name, anchor, hasElse, if_name, has_transitions }
 	) {
 		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
 		const current_block_type = block.getUniqueName(`current_block_type`);
@@ -222,24 +219,25 @@ export default class IfBlockWrapper extends Wrapper {
 
 		block.builders.init.addBlock(deindent`
 			var ${current_block_type} = ${select_block_type}(ctx);
-			var ${name} = ${current_block_type_and}${current_block_type}($$, ctx);
+			var ${name} = ${current_block_type_and}${current_block_type}(ctx);
 		`);
-
-		const mountOrIntro = this.branches[0].block.hasIntroMethod ? 'i' : 'm';
 
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 		block.builders.mount.addLine(
-			`${if_name}${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`${if_name}${name}.m(${initialMountNode}, ${anchorNode});`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const changeBlock = deindent`
 			${if_name}${name}.d(1);
-			${name} = ${current_block_type_and}${current_block_type}($$, ctx);
-			${if_name}${name}.c();
-			${if_name}${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
+			${name} = ${current_block_type_and}${current_block_type}(ctx);
+			if (${name}) {
+				${name}.c();
+				${has_transitions && `${name}.i(1);`}
+				${name}.m(${updateMountNode}, ${anchor});
+			}
 		`;
 
 		if (dynamic) {
@@ -268,7 +266,7 @@ export default class IfBlockWrapper extends Wrapper {
 		parentNode: string,
 		parentNodes: string,
 		dynamic,
-		{ name, anchor, hasElse }
+		{ name, anchor, hasElse, has_transitions }
 	) {
 		const select_block_type = this.renderer.component.getUniqueName(`select_block_type`);
 		const current_block_type_index = block.getUniqueName(`current_block_type_index`);
@@ -301,41 +299,43 @@ export default class IfBlockWrapper extends Wrapper {
 		if (hasElse) {
 			block.builders.init.addBlock(deindent`
 				${current_block_type_index} = ${select_block_type}(ctx);
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}]($$, ctx);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 			`);
 		} else {
 			block.builders.init.addBlock(deindent`
 				if (~(${current_block_type_index} = ${select_block_type}(ctx))) {
-					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}]($$, ctx);
+					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				}
 			`);
 		}
 
-		const mountOrIntro = this.branches[0].block.hasIntroMethod ? 'i' : 'm';
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addLine(
-			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`${if_current_block_type_index}${if_blocks}[${current_block_type_index}].m(${initialMountNode}, ${anchorNode});`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const destroyOldBlock = deindent`
 			@group_outros();
-			${name}.o(function() {
+			@on_outro(() => {
 				${if_blocks}[${previous_block_index}].d(1);
 				${if_blocks}[${previous_block_index}] = null;
 			});
+			${name}.o(1);
+			@check_outros();
 		`;
 
 		const createNewBlock = deindent`
 			${name} = ${if_blocks}[${current_block_type_index}];
 			if (!${name}) {
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}]($$, ctx);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](ctx);
 				${name}.c();
 			}
-			${name}.${mountOrIntro}(${updateMountNode}, ${anchor});
+			${has_transitions && `${name}.i(1);`}
+			${name}.m(${updateMountNode}, ${anchor});
 		`;
 
 		const changeBlock = hasElse
@@ -386,70 +386,58 @@ export default class IfBlockWrapper extends Wrapper {
 		parentNode: string,
 		parentNodes: string,
 		dynamic,
-		{ name, anchor, if_name }
+		{ name, anchor, if_name, has_transitions }
 	) {
 		const branch = this.branches[0];
 
 		block.builders.init.addBlock(deindent`
-			var ${name} = (${branch.condition}) && ${branch.block.name}($$, ctx);
+			var ${name} = (${branch.condition}) && ${branch.block.name}(ctx);
 		`);
 
-		const mountOrIntro = branch.block.hasIntroMethod ? 'i' : 'm';
 		const initialMountNode = parentNode || '#target';
 		const anchorNode = parentNode ? 'null' : 'anchor';
 
 		block.builders.mount.addLine(
-			`if (${name}) ${name}.${mountOrIntro}(${initialMountNode}, ${anchorNode});`
+			`if (${name}) ${name}.m(${initialMountNode}, ${anchorNode});`
 		);
 
 		const updateMountNode = this.getUpdateMountNode(anchor);
 
 		const enter = dynamic
-			? (branch.block.hasIntroMethod || branch.block.hasOutroMethod)
-				? deindent`
-					if (${name}) {
-						${name}.p(changed, ctx);
-					} else {
-						${name} = ${branch.block.name}($$, ctx);
-						if (${name}) ${name}.c();
-					}
-
-					${name}.i(${updateMountNode}, ${anchor});
-				`
-				: deindent`
-					if (${name}) {
-						${name}.p(changed, ctx);
-					} else {
-						${name} = ${branch.block.name}($$, ctx);
-						${name}.c();
-						${name}.m(${updateMountNode}, ${anchor});
-					}
-				`
-			: (branch.block.hasIntroMethod || branch.block.hasOutroMethod)
-				? deindent`
-					if (!${name}) {
-						${name} = ${branch.block.name}($$, ctx);
-						${name}.c();
-					}
-					${name}.i(${updateMountNode}, ${anchor});
-				`
-				: deindent`
-					if (!${name}) {
-						${name} = ${branch.block.name}($$, ctx);
-						${name}.c();
-						${name}.m(${updateMountNode}, ${anchor});
-					}
-				`;
+			? deindent`
+				if (${name}) {
+					${name}.p(changed, ctx);
+					${has_transitions && `${name}.i(1);`}
+				} else {
+					${name} = ${branch.block.name}(ctx);
+					${name}.c();
+					${has_transitions && `${name}.i(1);`}
+					${name}.m(${updateMountNode}, ${anchor});
+				}
+			`
+			: deindent`
+				if (!${name}) {
+					${name} = ${branch.block.name}(ctx);
+					${name}.c();
+					${has_transitions && `${name}.i(1);`}
+					${name}.m(${updateMountNode}, ${anchor});
+				${has_transitions && `} else {
+					${name}.i(1);`}
+				}
+			`;
 
 		// no `p()` here — we don't want to update outroing nodes,
 		// as that will typically result in glitching
 		const exit = branch.block.hasOutroMethod
 			? deindent`
 				@group_outros();
-				${name}.o(function() {
+				@on_outro(() => {
 					${name}.d(1);
 					${name} = null;
 				});
+
+				${name}.o(1);
+				@check_outros();
 			`
 			: deindent`
 				${name}.d(1);

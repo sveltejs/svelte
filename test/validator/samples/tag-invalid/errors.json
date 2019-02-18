@@ -3,13 +3,13 @@
 	"message": "tag name must be two or more words joined by the '-' character",
 	"start": {
 		"line": 1,
-		"column": 13,
-		"character": 13
+		"column": 16,
+		"character": 16
 	},
 	"end": {
 		"line": 1,
-		"column": 26,
-		"character": 26
+		"column": 29,
+		"character": 29
 	},
-	"pos": 13
+	"pos": 16
 }]

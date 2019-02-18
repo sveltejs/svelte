@@ -1,12 +1,12 @@
 import Wrapper from './shared/Wrapper';
 import AwaitBlock from './AwaitBlock';
+import Body from './Body';
 import DebugTag from './DebugTag';
-import Document from './Document';
 import EachBlock from './EachBlock';
-import Element from './Element';
+import Element from './Element/index';
 import Head from './Head';
 import IfBlock from './IfBlock';
-import InlineComponent from './InlineComponent';
+import InlineComponent from './InlineComponent/index';
 import MustacheTag from './MustacheTag';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
@@ -21,16 +21,16 @@ import Block from '../Block';
 
 const wrappers = {
 	AwaitBlock,
+	Body,
 	Comment: null,
-	Document,
 	DebugTag,
 	EachBlock,
 	Element,
 	Head,
 	IfBlock,
 	InlineComponent,
-	Meta: null,
 	MustacheTag,
+	Options: null,
 	RawMustacheTag,
 	Slot,
 	Text,
@@ -62,6 +62,10 @@ export default class FragmentWrapper {
 		let i = nodes.length;
 		while (i--) {
 			const child = nodes[i];
+
+			if (!child.type) {
+				throw new Error(`missing type`)
+			}
 
 			if (!(child.type in wrappers)) {
 				throw new Error(`TODO implement ${child.type}`);
@@ -114,7 +118,7 @@ export default class FragmentWrapper {
 		}
 
 		if (stripWhitespace) {
-			const first = <TextWrapper>this.nodes[0];
+			const first = this.nodes[0] as TextWrapper;
 
 			if (first && first.node.type === 'Text') {
 				first.data = trimStart(first.data);
