@@ -202,38 +202,6 @@ export default function dom(
 					component.has_reactive_assignments = true;
 				}
 
-				else if (node.type === 'VariableDeclarator') {
-					const names = extractNames(node.id);
-					names.forEach(name => {
-						const owner = scope.findOwner(name);
-						if (owner && owner !== component.instance_scope) return;
-
-						const variable = component.var_lookup.get(name);
-						if (variable && variable.subscribable) {
-							const value = `$${name}`;
-
-							const subscribe = component.helper('subscribe');
-
-							const index = parent.declarations.indexOf(node);
-							const next = parent.declarations[index + 1];
-
-							let insert = `${subscribe}($$self, ${name}, $$value => { ${value} = $$value; $$invalidate('${value}', ${value}) })`;
-							if (component.compileOptions.dev) {
-								const validate_store = component.helper('validate_store');
-								insert = `${validate_store}(${name}, '${name}'); ${insert}`;
-							}
-
-							// initialise store value here
-							if (next) {
-								code.overwrite(node.end, next.start, `; ${insert}; ${parent.kind} `);
-							} else {
-								// final (or only) declarator
-								code.appendLeft(node.end, `; ${insert}`);
-							}
-						}
-					});
-				}
-
 				if (pending_assignments.size > 0) {
 					if (node.type === 'ArrowFunctionExpression') {
 						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join(';');
@@ -272,7 +240,19 @@ export default function dom(
 			throw new Error(`TODO this should not happen!`);
 		}
 
-		component.rewrite_props();
+		component.rewrite_props(name => {
+			const value = `$${name}`;
+
+			const subscribe = component.helper('subscribe');
+
+			let insert = `${subscribe}($$self, ${name}, $$value => { ${value} = $$value; $$invalidate('${value}', ${value}) })`;
+			if (component.compileOptions.dev) {
+				const validate_store = component.helper('validate_store');
+				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
+			}
+
+			return insert;
+		});
 	}
 
 	const args = ['$$self'];
@@ -333,17 +313,34 @@ export default function dom(
 		addToSet(all_reactive_dependencies, d.dependencies);
 	});
 
-	const user_code = component.javascript || (
-		!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)
-			? [
-				component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
-				filtered_props.length > 0 && `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
-			].filter(Boolean).join('\n')
-			: null
-	);
+	let user_code;
+
+	if (component.javascript) {
+		user_code = component.javascript;
+	} else {
+		if (!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)) {
+			const statements = [];
+
+			if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
+			if (filtered_props.length > 0) statements.push(`let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`);
+
+			reactive_stores.forEach(({ name }) => {
+				if (component.compileOptions.dev) {
+					statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
+				}
+
+				statements.push(`@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });`);
+			});
+
+			user_code = statements.join('\n');
+		}
+	}
 
 	const reactive_store_subscriptions = reactive_stores
-		.filter(store => component.var_lookup.get(store.name).hoistable)
+		.filter(store => {
+			const variable = component.var_lookup.get(store.name.slice(1));
+			return variable.hoistable;
+		})
 		.map(({ name }) => deindent`
 			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
