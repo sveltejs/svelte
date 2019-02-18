@@ -750,7 +750,15 @@ export default class Component {
 		});
 	}
 
-	rewrite_props(get_insert: (name: string) => string) {
+	invalidate(name, value = name) {
+		const variable = this.var_lookup.get(name);
+		if (variable && (variable.subscribable && variable.reassigned)) {
+			return `$$subscribe_${name}(), $$invalidate('${name}', ${value})`;
+		}
+		return `$$invalidate('${name}', ${value})`;
+	}
+
+	rewrite_props(get_insert: (variable: Var) => string) {
 		const component = this;
 		const { code, instance_scope, instance_scope_map: map, componentOptions } = this;
 		let scope = instance_scope;
@@ -788,7 +796,7 @@ export default class Component {
 									}
 
 									if (variable.subscribable) {
-										inserts.push(get_insert(name));
+										inserts.push(get_insert(variable));
 									}
 								});
 
@@ -834,7 +842,7 @@ export default class Component {
 									coalesced_declarations.push({
 										kind: node.kind,
 										declarators: [declarator],
-										insert: get_insert(name)
+										insert: get_insert(variable)
 									});
 								} else {
 									if (current_group && current_group.kind !== node.kind) {
@@ -852,7 +860,7 @@ export default class Component {
 								current_group = null;
 
 								if (variable.subscribable) {
-									let insert = get_insert(name);
+									let insert = get_insert(variable);
 
 									if (next) {
 										code.overwrite(declarator.end, next.start, `; ${insert}; ${node.kind} `);

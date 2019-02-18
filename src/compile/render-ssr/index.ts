@@ -40,7 +40,7 @@ export default function ssr(
 	let user_code;
 
 	if (component.javascript) {
-		component.rewrite_props(name => {
+		component.rewrite_props(({ name }) => {
 			const value = `$${name}`;
 
 			const get_store_value = component.helper('get_store_value');
