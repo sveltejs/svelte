@@ -183,7 +183,11 @@ export default class Component {
 				writable: true
 			});
 
-			this.add_reference(name.slice(1));
+			const subscribable_name = name.slice(1);
+			this.add_reference(subscribable_name);
+
+			const variable = this.var_lookup.get(subscribable_name);
+			variable.subscribable = true;
 		} else if (!this.ast.instance) {
 			this.add_var({
 				name,
@@ -211,6 +215,11 @@ export default class Component {
 		}
 
 		return this.aliases.get(name);
+	}
+
+	helper(name: string) {
+		this.helpers.add(name);
+		return this.alias(name);
 	}
 
 	generate(result: string) {
@@ -641,6 +650,9 @@ export default class Component {
 				});
 
 				this.add_reference(name.slice(1));
+
+				const variable = this.var_lookup.get(name.slice(1));
+				variable.subscribable = true;
 			} else {
 				this.add_var({
 					name,
@@ -783,8 +795,7 @@ export default class Component {
 
 									// can't use the @ trick here, because we're
 									// manipulating the underlying magic string
-									component.helpers.add('exclude_internal_props');
-									const exclude_internal_props = component.alias('exclude_internal_props');
+									const exclude_internal_props = component.helper('exclude_internal_props');
 
 									const suffix = code.original[declarator.end] === ';'
 										? ` = ${exclude_internal_props}($$props)`
@@ -799,7 +810,9 @@ export default class Component {
 
 								if (variable.export_name) {
 									has_exports = true;
-								} else {
+								}
+
+								if (!variable.export_name || variable.subscribable) {
 									has_only_exports = false;
 								}
 							});

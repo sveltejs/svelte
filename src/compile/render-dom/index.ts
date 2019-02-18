@@ -202,6 +202,38 @@ export default function dom(
 					component.has_reactive_assignments = true;
 				}
 
+				else if (node.type === 'VariableDeclarator') {
+					const names = extractNames(node.id);
+					names.forEach(name => {
+						const owner = scope.findOwner(name);
+						if (owner && owner !== component.instance_scope) return;
+
+						const variable = component.var_lookup.get(name);
+						if (variable && variable.subscribable) {
+							const value = `$${name}`;
+
+							const subscribe = component.helper('subscribe');
+
+							const index = parent.declarations.indexOf(node);
+							const next = parent.declarations[index + 1];
+
+							let insert = `${subscribe}($$self, ${name}, $$value => { ${value} = $$value; $$invalidate('${value}', ${value}) })`;
+							if (component.compileOptions.dev) {
+								const validate_store = component.helper('validate_store');
+								insert = `${validate_store}(${name}, '${name}'); ${insert}`;
+							}
+
+							// initialise store value here
+							if (next) {
+								code.overwrite(node.end, next.start, `; ${insert}; ${parent.kind} `);
+							} else {
+								// final (or only) declarator
+								code.appendLeft(node.end, `; ${insert}`);
+							}
+						}
+					});
+				}
+
 				if (pending_assignments.size > 0) {
 					if (node.type === 'ArrowFunctionExpression') {
 						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join(';');
@@ -310,12 +342,12 @@ export default function dom(
 			: null
 	);
 
-	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
+	const reactive_store_subscriptions = reactive_stores
+		.filter(store => component.var_lookup.get(store.name).hoistable)
 		.map(({ name }) => deindent`
 			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$invalidate('${name}', ${name}); }));
-		`)
-		.join('\n\n');
+			@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
+		`);
 
 	if (has_definition) {
 		const reactive_declarations = component.reactive_declarations.map(d => {
@@ -346,6 +378,8 @@ export default function dom(
 			function ${definition}(${args.join(', ')}) {
 				${reactive_stores.length > 0 && `let ${reactive_stores.map(store => store.name).join(', ')};`}
 
+				${reactive_store_subscriptions}
+
 				${user_code}
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
@@ -353,8 +387,6 @@ export default function dom(
 				${renderer.bindingGroups.length > 0 && `const $$binding_groups = [${renderer.bindingGroups.map(_ => `[]`).join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
-
-				${reactive_store_subscriptions}
 
 				${set && `$$self.$set = ${set};`}
 
