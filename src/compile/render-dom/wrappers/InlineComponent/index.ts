@@ -266,7 +266,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				component.partly_hoisted.push(deindent`
 					function ${fn}($$component) {
 						${lhs} = $$component;
-						${object && `$$invalidate('${object}', ${object});`}
+						${object && component.invalidate(object)}
 					}
 				`);
 
@@ -341,7 +341,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const body = deindent`
 				function ${name}(${args.join(', ')}) {
 					${lhs} = value;
-					return $$invalidate('${dependencies[0]}', ${dependencies[0]});
+					return ${component.invalidate(dependencies[0])}
 				}
 			`;
 
