@@ -90,6 +90,7 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `dev` | `boolean` | Whether to enable run-time checks in the compiled component. These are helpful during development, but slow your component down. | `false` |
 | `css` | `boolean` | Whether to include JavaScript code to inject your component's styles into the DOM. | `true` |
 | `hydratable` | `boolean` | Whether to support hydration on the compiled component. | `false` |
+| `immutable` | `boolean` | Whether to use object comparisons that assume immutability. This only affects components without `<svelte:options immutable={...}/>`, which has higher precedence than this option. | `false` |
 | `customElement` | `boolean`, `{ tag, props }` | Whether to compile this component to a custom element. If `tag`/`props` are passed, compiles to a custom element and overrides the values exported by the component. | `false` |
 | `bind` | `boolean` | If `false`, disallows `bind:` directives. | `true` |
 | `legacy` | `boolean` | Ensures compatibility with very old browsers, at the cost of some extra code. | `false` |
