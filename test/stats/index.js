@@ -19,8 +19,6 @@ describe('stats', () => {
 			const filename = `test/stats/samples/${dir}/input.svelte`;
 			const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
 
-			const expectedWarnings =
-				tryToLoadJson(`test/stats/samples/${dir}/warnings.json`) || [];
 			const expectedError = tryToLoadJson(
 				`test/stats/samples/${dir}/error.json`
 			);
@@ -31,10 +29,6 @@ describe('stats', () => {
 			try {
 				result = svelte.compile(input, config.options);
 				config.test(assert, result.stats);
-
-				if (result.warnings.length || expectedWarnings.length) {
-					// TODO check warnings are added to warnings
-				}
 			} catch (e) {
 				error = e;
 			}
