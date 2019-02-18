@@ -26,9 +26,8 @@ export default function ssr(
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
 	const reactive_store_values = reactive_stores
-		.filter(store => component.var_lookup.get(store.name).hoistable)
 		.map(({ name }) => {
-			const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
+			const assignment = `${name} = @get_store_value(${name.slice(1)});`;
 
 			return component.compileOptions.dev
 				? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
@@ -46,7 +45,7 @@ export default function ssr(
 
 			const get_store_value = component.helper('get_store_value');
 
-			let insert = `const ${value} = ${get_store_value}(${name})`;
+			let insert = `${value} = ${get_store_value}(${name})`;
 			if (component.compileOptions.dev) {
 				const validate_store = component.helper('validate_store');
 				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
@@ -67,7 +66,7 @@ export default function ssr(
 				statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
 			}
 
-			statements.push(`const ${name} = @get_store_value(${name.slice(1)});`);
+			statements.push(`${name} = @get_store_value(${name.slice(1)});`);
 		});
 
 		user_code = statements.join('\n');
@@ -110,6 +109,7 @@ export default function ssr(
 			return \`${renderer.code}\`;`;
 
 	const blocks = [
+		reactive_stores.length > 0 && `let ${reactive_stores.map(store => store.name).join(', ')};`,
 		user_code,
 		parent_bindings.join('\n'),
 		css.code && `$$result.css.add(#css);`,
