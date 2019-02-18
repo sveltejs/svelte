@@ -788,7 +788,7 @@ export default class Component {
 
 									if (declarator.id.type !== 'Identifier') {
 										component.error(declarator, {
-											code: 'todo',
+											code: 'destructured-prop',
 											message: `props binding in destructured declaration is not yet supported`
 										});
 									}
