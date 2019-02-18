@@ -1,6 +1,6 @@
 export default {
-	test(assert, stats) {
-		assert.deepEqual(stats.vars, [
+	test(assert, vars) {
+		assert.deepEqual(vars, [
 			{
 				name: 'name',
 				export_name: 'name',

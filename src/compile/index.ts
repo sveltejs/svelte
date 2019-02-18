@@ -95,13 +95,11 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	);
 	stats.stop('create component');
 
-	if (options.generate === false) {
-		return { ast, warnings, stats: stats.render(component), js: null, css: null };
-	}
-
-	const js = options.generate === 'ssr'
-		? renderSSR(component, options)
-		: renderDOM(component, options);
+	const js = options.generate === false
+		? null
+		: options.generate === 'ssr'
+			? renderSSR(component, options)
+			: renderDOM(component, options);
 
 	return component.generate(js);
 }
