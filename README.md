@@ -84,8 +84,6 @@ The Svelte compiler optionally takes a second argument, an object of configurati
 | `name` | `string` | The name of the constructor in the compiled component. | `'SvelteComponent'` |
 | `filename` | `string` | The filename to use in sourcemaps and compiler error and warning messages. | `'SvelteComponent.html'` |
 | `preserveComments` | `boolean` | Include comments in rendering. Currently, only applies to SSR rendering. | `false` |
-| | | |
-| `onwarn` | `function` | Specify a callback for when Svelte encounters a non-fatal warning while compiling the component. Passed two arguments: the warning object, and another function that is Svelte's default onwarn handling. | (warning is logged to console) |
 
 ### Preprocessor options
 
