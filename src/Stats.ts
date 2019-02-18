@@ -1,4 +1,3 @@
-import { Warning } from './interfaces';
 import Component from './compile/Component';
 
 const now = (typeof process !== 'undefined' && process.hrtime)
@@ -31,14 +30,11 @@ export default class Stats {
 	currentChildren: Timing[];
 	timings: Timing[];
 	stack: Timing[];
-	warnings: Warning[];
 
 	constructor() {
 		this.startTime = now();
 		this.stack = [];
 		this.currentChildren = this.timings = [];
-
-		this.warnings = [];
 	}
 
 	start(label) {
@@ -92,7 +88,6 @@ export default class Stats {
 
 		return {
 			timings,
-			warnings: this.warnings,
 			vars: component.vars.filter(variable => !variable.global && !variable.implicit && !variable.internal).map(variable => ({
 				name: variable.name,
 				export_name: variable.export_name || null,
@@ -104,9 +99,5 @@ export default class Stats {
 				writable: variable.writable || false
 			}))
 		};
-	}
-
-	warn(warning) {
-		this.warnings.push(warning);
 	}
 }

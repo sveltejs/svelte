@@ -32,8 +32,8 @@ describe('stats', () => {
 				result = svelte.compile(input, config.options);
 				config.test(assert, result.stats);
 
-				if (result.stats.warnings.length || expectedWarnings.length) {
-					// TODO check warnings are added to stats.warnings
+				if (result.warnings.length || expectedWarnings.length) {
+					// TODO check warnings are added to warnings
 				}
 			} catch (e) {
 				error = e;
