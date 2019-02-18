@@ -47,6 +47,10 @@ export function validate_store(store, name) {
 	}
 }
 
+export function subscribe(component, store, callback) {
+	component.$$.on_destroy.push(store.subscribe(callback));
+}
+
 export function create_slot(definition, ctx, fn) {
 	if (definition) {
 		const slot_ctx = get_slot_context(definition, ctx, fn);
