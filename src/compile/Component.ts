@@ -11,7 +11,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal-exports';
-import { Node, Ast, CompileOptions, Var } from '../interfaces';
+import { Node, Ast, CompileOptions, Var, Warning } from '../interfaces';
 import error from '../utils/error';
 import getCodeFrame from '../utils/getCodeFrame';
 import flattenReference from '../utils/flattenReference';
@@ -40,6 +40,7 @@ childKeys.ExportNamedDeclaration = ['declaration', 'specifiers'];
 
 export default class Component {
 	stats: Stats;
+	warnings: Warning[];
 
 	ast: Ast;
 	source: string;
@@ -93,11 +94,13 @@ export default class Component {
 		source: string,
 		name: string,
 		compileOptions: CompileOptions,
-		stats: Stats
+		stats: Stats,
+		warnings: Warning[]
 	) {
 		this.name = name;
 
 		this.stats = stats;
+		this.warnings = warnings;
 		this.ast = ast;
 		this.source = source;
 		this.compileOptions = compileOptions;
@@ -161,7 +164,7 @@ export default class Component {
 
 		if (!compileOptions.customElement) this.stylesheet.reify();
 
-		this.stylesheet.warnOnUnusedSelectors(stats);
+		this.stylesheet.warnOnUnusedSelectors(this);
 	}
 
 	add_var(variable: Var) {
@@ -309,9 +312,10 @@ export default class Component {
 		};
 
 		return {
-			ast: this.ast,
 			js,
 			css,
+			ast: this.ast,
+			warnings: this.warnings,
 			stats: this.stats.render(this)
 		};
 	}
@@ -393,7 +397,7 @@ export default class Component {
 
 		const frame = getCodeFrame(this.source, start.line - 1, start.column);
 
-		this.stats.warn({
+		this.warnings.push({
 			code: warning.code,
 			message: warning.message,
 			frame,

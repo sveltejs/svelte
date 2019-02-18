@@ -1,14 +1,11 @@
 import MagicString from 'magic-string';
 import { walk } from 'estree-walker';
-import { getLocator } from 'locate-character';
 import Selector from './Selector';
-import getCodeFrame from '../../utils/getCodeFrame';
 import hash from '../../utils/hash';
 import removeCSSPrefix from '../../utils/removeCSSPrefix';
 import Element from '../nodes/Element';
-import { Node, Ast, Warning } from '../../interfaces';
+import { Node, Ast } from '../../interfaces';
 import Component from '../Component';
-import Stats from '../../Stats';
 
 const isKeyframesNode = (node: Node) => removeCSSPrefix(node.name) === 'keyframes'
 
@@ -392,33 +389,14 @@ export default class Stylesheet {
 		});
 	}
 
-	warnOnUnusedSelectors(stats: Stats) {
-		let locator;
-
-		const handler = (selector: Selector) => {
-			const pos = selector.node.start;
-
-			if (!locator) locator = getLocator(this.source, { offsetLine: 1 });
-			const start = locator(pos);
-			const end = locator(selector.node.end);
-
-			const frame = getCodeFrame(this.source, start.line - 1, start.column);
-			const message = `Unused CSS selector`;
-
-			stats.warn({
-				code: `css-unused-selector`,
-				message,
-				frame,
-				start,
-				end,
-				pos,
-				filename: this.filename,
-				toString: () => `${message} (${start.line}:${start.column})\n${frame}`,
-			});
-		};
-
+	warnOnUnusedSelectors(component: Component) {
 		this.children.forEach(child => {
-			child.warnOnUnusedSelector(handler);
+			child.warnOnUnusedSelector((selector: Selector) => {
+				component.warn(selector.node, {
+					code: `css-unused-selector`,
+					message: `Unused CSS selector`
+				});
+			});
 		});
 	}
 }
