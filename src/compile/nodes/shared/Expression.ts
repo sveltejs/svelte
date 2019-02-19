@@ -122,7 +122,15 @@ export default class Expression {
 					const { name, nodes } = flattenReference(node);
 
 					if (scope.has(name)) return;
+
 					if (globalWhitelist.has(name) && !component.var_lookup.has(name)) return;
+
+					if (name[0] === '$' && template_scope.names.has(name.slice(1))) {
+						component.error(node, {
+							code: `contextual-store`,
+							message: `Stores must be declared at the top level of the component (this may change in a future version of Svelte)`
+						});
+					}
 
 					if (template_scope.is_let(name)) {
 						if (!function_expression) {
