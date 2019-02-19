@@ -99,17 +99,18 @@ async function getBundle(mode, cache, lookup) {
 
 					const name = id.replace(/^\.\//, '').replace(/\.svelte$/, '');
 
-					const { js, css, stats } = svelte.compile(code, Object.assign({
+					const { js, stats, warnings } = svelte.compile(code, Object.assign({
 						generate: mode,
 						format: 'esm',
 						name: name,
-						filename: name + '.svelte',
-						onwarn: warning => {
-							console.warn(warning.message);
-							console.log(warning.frame);
-							warningCount += 1;
-						},
+						filename: name + '.svelte'
 					}, commonCompilerOptions));
+
+					(warnings || stats.warnings).forEach(warning => { // TODO remove stats post-launch
+						console.warn(warning.message);
+						console.log(warning.frame);
+						warningCount += 1;
+					});
 
 					return js;
 				}
