@@ -24,21 +24,19 @@ describe("validate", () => {
 			let error;
 
 			try {
-				const { stats } = svelte.compile(input, {
+				let { warnings } = svelte.compile(input, {
 					dev: config.dev,
 					legacy: config.legacy,
 					generate: false
 				});
 
-				const warnings = stats.warnings.map(w => ({
+				assert.deepEqual(warnings.map(w => ({
 					code: w.code,
 					message: w.message,
 					pos: w.pos,
 					start: w.start,
 					end: w.end
-				}));
-
-				assert.deepEqual(warnings, expected_warnings);
+				})), expected_warnings);
 			} catch (e) {
 				error = e;
 			}
@@ -78,12 +76,12 @@ describe("validate", () => {
 	});
 
 	it("warns if options.name is not capitalised", () => {
-		const { stats } = svelte.compile("<div></div>", {
+		const { warnings } = svelte.compile("<div></div>", {
 			name: "lowercase",
 			generate: false
 		});
 
-		assert.deepEqual(stats.warnings.map(w => ({
+		assert.deepEqual(warnings.map(w => ({
 			code: w.code,
 			message: w.message
 		})), [{
@@ -93,11 +91,11 @@ describe("validate", () => {
 	});
 
 	it("does not warn if options.name begins with non-alphabetic character", () => {
-		const { stats } = svelte.compile("<div></div>", {
+		const { warnings } = svelte.compile("<div></div>", {
 			name: "_",
 			generate: false
 		});
 
-		assert.deepEqual(stats.warnings, []);
+		assert.deepEqual(warnings, []);
 	});
 });

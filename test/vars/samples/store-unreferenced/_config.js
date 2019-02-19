@@ -1,6 +1,6 @@
 export default {
-	test(assert, stats) {
-		assert.deepEqual(stats.vars, [
+	test(assert, vars) {
+		assert.deepEqual(vars, [
 			{
 				name: 'foo',
 				export_name: null,
@@ -18,7 +18,7 @@ export default {
 				module: false,
 				mutated: true,
 				reassigned: false,
-				referenced: true,
+				referenced: false,
 				writable: true
 			}
 		]);
