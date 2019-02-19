@@ -1,6 +1,3 @@
-import { Warning } from './interfaces';
-import Component from './compile/Component';
-
 const now = (typeof process !== 'undefined' && process.hrtime)
 	? () => {
 		const t = process.hrtime();
@@ -31,14 +28,11 @@ export default class Stats {
 	currentChildren: Timing[];
 	timings: Timing[];
 	stack: Timing[];
-	warnings: Warning[];
 
 	constructor() {
 		this.startTime = now();
 		this.stack = [];
 		this.currentChildren = this.timings = [];
-
-		this.warnings = [];
 	}
 
 	start(label) {
@@ -67,46 +61,13 @@ export default class Stats {
 		this.currentChildren = this.currentTiming ? this.currentTiming.children : this.timings;
 	}
 
-	render(component: Component) {
+	render() {
 		const timings = Object.assign({
 			total: now() - this.startTime
 		}, collapseTimings(this.timings));
 
-		// TODO would be good to have this info even
-		// if options.generate is false
-		const imports = component && component.imports.map(node => {
-			return {
-				source: node.source.value,
-				specifiers: node.specifiers.map(specifier => {
-					return {
-						name: (
-							specifier.type === 'ImportDefaultSpecifier' ? 'default' :
-							specifier.type === 'ImportNamespaceSpecifier' ? '*' :
-							specifier.imported.name
-						),
-						as: specifier.local.name
-					};
-				})
-			}
-		});
-
 		return {
-			timings,
-			warnings: this.warnings,
-			vars: component.vars.filter(variable => !variable.global && !variable.implicit && !variable.internal).map(variable => ({
-				name: variable.name,
-				export_name: variable.export_name || null,
-				injected: variable.injected || false,
-				module: variable.module || false,
-				mutated: variable.mutated || false,
-				reassigned: variable.reassigned || false,
-				referenced: variable.referenced || false,
-				writable: variable.writable || false
-			}))
+			timings
 		};
-	}
-
-	warn(warning) {
-		this.warnings.push(warning);
 	}
 }
