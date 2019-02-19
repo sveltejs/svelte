@@ -250,3 +250,9 @@ export function addResizeListener(element, fn) {
 export function toggleClass(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
+
+export function custom_event(type, detail) {
+	const e = document.createEvent('CustomEvent');
+	e.initCustomEvent(type, false, false, detail);
+	return e;
+}
