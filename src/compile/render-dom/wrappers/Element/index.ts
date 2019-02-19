@@ -465,7 +465,7 @@ export default class ElementWrapper extends Wrapper {
 			this.renderer.component.partly_hoisted.push(deindent`
 				function ${handler}(${contextual_dependencies.size > 0 ? `{ ${Array.from(contextual_dependencies).join(', ')} }` : ``}) {
 					${group.bindings.map(b => b.handler.mutation)}
-					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => `$$invalidate('${dep}', ${dep});`)}
+					${Array.from(dependencies).filter(dep => dep[0] !== '$').map(dep => `${this.renderer.component.invalidate(dep)};`)}
 				}
 			`);
 
@@ -532,7 +532,7 @@ export default class ElementWrapper extends Wrapper {
 			renderer.component.partly_hoisted.push(deindent`
 				function ${name}(${['$$node', 'check'].concat(args).join(', ')}) {
 					${handler.snippet ? `if ($$node || (!$$node && ${handler.snippet} === check)) ` : ''}${handler.mutation}
-					$$invalidate('${object}', ${object});
+					${renderer.component.invalidate(object)};
 				}
 			`);
 

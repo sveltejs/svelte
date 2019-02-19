@@ -39,7 +39,7 @@ export default function deindent(
 		current_indentation = get_current_indentation(result);
 	}
 
-	return result.trim().replace(/\t+$/gm, '');
+	return result.trim().replace(/\t+$/gm, '').replace(/{\n\n/gm, '{\n');
 }
 
 function get_current_indentation(str: string) {

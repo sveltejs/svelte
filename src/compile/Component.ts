@@ -186,7 +186,11 @@ export default class Component {
 				writable: true
 			});
 
-			this.add_reference(name.slice(1));
+			const subscribable_name = name.slice(1);
+			this.add_reference(subscribable_name);
+
+			const variable = this.var_lookup.get(subscribable_name);
+			variable.subscribable = true;
 		} else if (!this.ast.instance) {
 			this.add_var({
 				name,
@@ -214,6 +218,11 @@ export default class Component {
 		}
 
 		return this.aliases.get(name);
+	}
+
+	helper(name: string) {
+		this.helpers.add(name);
+		return this.alias(name);
 	}
 
 	generate(result: string) {
@@ -660,6 +669,9 @@ export default class Component {
 				});
 
 				this.add_reference(name.slice(1));
+
+				const variable = this.var_lookup.get(name.slice(1));
+				variable.subscribable = true;
 			} else {
 				this.add_var({
 					name,
@@ -757,7 +769,15 @@ export default class Component {
 		});
 	}
 
-	rewrite_props() {
+	invalidate(name, value = name) {
+		const variable = this.var_lookup.get(name);
+		if (variable && (variable.subscribable && variable.reassigned)) {
+			return `$$subscribe_${name}(), $$invalidate('${name}', ${value})`;
+		}
+		return `$$invalidate('${name}', ${value})`;
+	}
+
+	rewrite_props(get_insert: (variable: Var) => string) {
 		const component = this;
 		const { code, instance_scope, instance_scope_map: map, componentOptions } = this;
 		let scope = instance_scope;
@@ -778,72 +798,97 @@ export default class Component {
 
 				if (node.type === 'VariableDeclaration') {
 					if (node.kind === 'var' || scope === instance_scope) {
-						let has_exports = false;
-						let has_only_exports = true;
+						node.declarations.forEach((declarator, i) => {
+							const next = node.declarations[i + 1];
 
-						node.declarations.forEach(declarator => {
-							extractNames(declarator.id).forEach(name => {
-								const variable = component.var_lookup.get(name);
+							if (declarator.id.type !== 'Identifier') {
+								const inserts = [];
 
-								if (name === componentOptions.props_object) {
-									if (variable.export_name) {
+								extractNames(declarator.id).forEach(name => {
+									const variable = component.var_lookup.get(name);
+
+									if (variable.export_name || name === componentOptions.props_object) {
 										component.error(declarator, {
-											code: 'exported-options-props',
-											message: `Cannot export props binding`
+											code: 'destructured-prop',
+											message: `Cannot declare props in destructured declaration`
 										});
 									}
 
-									if (declarator.id.type !== 'Identifier') {
-										component.error(declarator, {
-											code: 'todo',
-											message: `props binding in destructured declaration is not yet supported`
-										});
+									if (variable.subscribable) {
+										inserts.push(get_insert(variable));
 									}
+								});
 
-									// can't use the @ trick here, because we're
-									// manipulating the underlying magic string
-									component.helpers.add('exclude_internal_props');
-									const exclude_internal_props = component.alias('exclude_internal_props');
-
-									const suffix = code.original[declarator.end] === ';'
-										? ` = ${exclude_internal_props}($$props)`
-										: ` = ${exclude_internal_props}($$props);`
-
-									if (declarator.id.end === declarator.end) {
-										code.appendLeft(declarator.end, suffix);
+								if (inserts.length > 0) {
+									if (next) {
+										code.overwrite(declarator.end, next.start, `; ${inserts.join('; ')}; ${node.kind} `);
 									} else {
-										code.overwrite(declarator.id.end, declarator.end, suffix);
+										code.appendLeft(declarator.end, `; ${inserts.join('; ')}`);
 									}
 								}
 
+								return;
+							}
+
+							const { name } = declarator.id;
+							const variable = component.var_lookup.get(name);
+
+							if (name === componentOptions.props_object) {
 								if (variable.export_name) {
-									has_exports = true;
-								} else {
-									has_only_exports = false;
+									component.error(declarator, {
+										code: 'exported-options-props',
+										message: `Cannot export props binding`
+									});
 								}
-							});
-						});
 
-						if (has_only_exports) {
-							if (current_group && current_group[current_group.length - 1].kind !== node.kind) {
+								// can't use the @ trick here, because we're
+								// manipulating the underlying magic string
+								const exclude_internal_props = component.helper('exclude_internal_props');
+
+								const suffix = code.original[declarator.end] === ';'
+									? ` = ${exclude_internal_props}($$props)`
+									: ` = ${exclude_internal_props}($$props);`
+
+								if (declarator.id.end === declarator.end) {
+									code.appendLeft(declarator.end, suffix);
+								} else {
+									code.overwrite(declarator.id.end, declarator.end, suffix);
+								}
+							}
+
+							if (variable.export_name) {
+								if (variable.subscribable) {
+									coalesced_declarations.push({
+										kind: node.kind,
+										declarators: [declarator],
+										insert: get_insert(variable)
+									});
+								} else {
+									if (current_group && current_group.kind !== node.kind) {
+										current_group = null;
+									}
+
+									if (!current_group) {
+										current_group = { kind: node.kind, declarators: [], insert: null };
+										coalesced_declarations.push(current_group);
+									}
+
+									current_group.declarators.push(declarator);
+								}
+							} else {
 								current_group = null;
-							}
 
-							// rewrite as a group, later
-							if (!current_group) {
-								current_group = [];
-								coalesced_declarations.push(current_group);
-							}
+								if (variable.subscribable) {
+									let insert = get_insert(variable);
 
-							current_group.push(node);
-						} else {
-							if (has_exports) {
-								// rewrite in place
-								throw new Error('TODO rewrite prop declaration in place');
+									if (next) {
+										code.overwrite(declarator.end, next.start, `; ${insert}; ${node.kind} `);
+									} else {
+										code.appendLeft(declarator.end, `; ${insert}`);
+									}
+								}
 							}
-
-							current_group = null;
-						}
+						});
 					}
 				} else {
 					if (node.type !== 'ExportNamedDeclaration') {
@@ -864,31 +909,25 @@ export default class Component {
 
 			let combining = false;
 
-			group.forEach(node => {
-				node.declarations.forEach(declarator => {
-					const { id, init } = declarator;
+			group.declarators.forEach(declarator => {
+				const { id } = declarator;
 
-					if (id.type === 'Identifier') {
-						const value = init
-							? this.code.slice(id.start, init.end)
-							: this.code.slice(id.start, id.end);
+				if (combining) {
+					code.overwrite(c, id.start, ', ');
+				} else {
+					code.appendLeft(id.start, '{ ');
+					combining = true;
+				}
 
-						if (combining) {
-							code.overwrite(c, id.start, ', ');
-						} else {
-							code.appendLeft(id.start, '{ ');
-							combining = true;
-						}
-					} else {
-						throw new Error('TODO destructured declarations');
-					}
-
-					c = declarator.end;
-				});
+				c = declarator.end;
 			});
 
 			if (combining) {
-				const suffix = code.original[c] === ';' ? ` } = $$props` : ` } = $$props;`;
+				const insert = group.insert
+					? `; ${group.insert}`
+					: '';
+
+				const suffix = code.original[c] === ';' ? ` } = $$props${insert}` : ` } = $$props${insert};`;
 				code.appendLeft(c, suffix);
 			}
 		});
