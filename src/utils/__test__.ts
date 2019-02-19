@@ -34,6 +34,45 @@ describe('deindent', () => {
 
 		assert.equal(deindented, `before\n\tline one\n\tline two\nafter`);
 	});
+
+	it('removes newlines before an empty expression', () => {
+		const deindented = deindent`
+			{
+				some text
+
+				${null}
+			}`;
+
+		assert.equal(deindented, `{\n\tsome text\n}`);
+	});
+
+	it('removes newlines after an empty expression', () => {
+		const deindented = deindent`
+			{
+				${null}
+
+				some text
+			}`;
+
+		assert.equal(deindented, `{\n\tsome text\n}`);
+	});
+
+	it('removes newlines around empty expressions', () => {
+		const deindented = deindent`
+			{
+				${null}
+
+				some text
+
+				${null}
+
+				some text
+
+				${null}
+			}`;
+
+		assert.equal(deindented, `{\n\tsome text\n\n\tsome text\n}`);
+	});
 });
 
 describe('CodeBuilder', () => {

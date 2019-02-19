@@ -68,8 +68,8 @@ describe('css', () => {
 
 			assert.equal(dom.css.code, ssr.css.code);
 
-			const dom_warnings = dom.stats.warnings.map(normalize_warning);
-			const ssr_warnings = ssr.stats.warnings.map(normalize_warning);
+			const dom_warnings = dom.warnings.map(normalize_warning);
+			const ssr_warnings = ssr.warnings.map(normalize_warning);
 
 			assert.deepEqual(dom_warnings, ssr_warnings);
 			assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);

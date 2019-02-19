@@ -3,6 +3,8 @@ import Component from '../Component';
 import { CompileOptions } from '../../interfaces';
 import { stringify } from '../../utils/stringify';
 import Renderer from './Renderer';
+import { walk } from 'estree-walker';
+import { extractNames } from '../../utils/annotateWithScopes';
 
 export default function ssr(
 	component: Component,
@@ -22,29 +24,53 @@ export default function ssr(
 		{ code: null, map: null } :
 		component.stylesheet.render(options.filename, true);
 
-	let user_code;
+	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
+	const reactive_store_values = reactive_stores
+		.map(({ name }) => {
+			const assignment = `${name} = @get_store_value(${name.slice(1)});`;
+
+			return component.compileOptions.dev
+				? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
+				: assignment;
+		});
 
 	// TODO remove this, just use component.vars everywhere
 	const props = component.vars.filter(variable => !variable.module && variable.export_name && variable.export_name !== component.componentOptions.props_object);
 
+	let user_code;
+
 	if (component.javascript) {
-		component.rewrite_props();
+		component.rewrite_props(({ name }) => {
+			const value = `$${name}`;
+
+			const get_store_value = component.helper('get_store_value');
+
+			let insert = `${value} = ${get_store_value}(${name})`;
+			if (component.compileOptions.dev) {
+				const validate_store = component.helper('validate_store');
+				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
+			}
+
+			return insert;
+		});
+
 		user_code = component.javascript;
 	} else if (!component.ast.instance && !component.ast.module && (props.length > 0 || component.componentOptions.props)) {
-		user_code = [
-			component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
-			props.length > 0 && `let { ${props.map(prop => prop.export_name).join(', ')} } = $$props;`
-		].filter(Boolean).join('\n');
+		const statements = [];
+
+		if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
+		if (props.length > 0) statements.push(`let { ${props.map(x => x.name).join(', ')} } = $$props;`);
+
+		reactive_stores.forEach(({ name }) => {
+			if (component.compileOptions.dev) {
+				statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
+			}
+
+			statements.push(`${name} = @get_store_value(${name.slice(1)});`);
+		});
+
+		user_code = statements.join('\n');
 	}
-
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$');
-	const reactive_store_values = reactive_stores.map(({ name }) => {
-		const assignment = `const ${name} = @get_store_value(${name.slice(1)});`;
-
-		return component.compileOptions.dev
-			? `@validate_store(${name.slice(1)}, '${name.slice(1)}'); ${assignment}`
-			: assignment;
-	});
 
 	// TODO only do this for props with a default value
 	const parent_bindings = component.javascript
@@ -83,6 +109,7 @@ export default function ssr(
 			return \`${renderer.code}\`;`;
 
 	const blocks = [
+		reactive_stores.length > 0 && `let ${reactive_stores.map(store => store.name).join(', ')};`,
 		user_code,
 		parent_bindings.join('\n'),
 		css.code && `$$result.css.add(#css);`,

@@ -1,6 +1,7 @@
 import { identity as linear, noop, run_all } from './utils.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
+import { custom_event } from './dom.js';
 
 let promise;
 
@@ -238,14 +239,14 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			if (b) tick(0, 1);
 
 			running_program = init(program, duration);
-			node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}start`));
+			node.dispatchEvent(custom_event(`${running_program.b ? 'intro' : 'outro'}start`));
 
 			loop(now => {
 				if (pending_program && now > pending_program.start) {
 					running_program = init(pending_program, duration);
 					pending_program = null;
 
-					node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}start`));
+					node.dispatchEvent(custom_event(`${running_program.b ? 'intro' : 'outro'}start`));
 
 					if (css) {
 						clear_animation();
@@ -256,7 +257,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 				if (running_program) {
 					if (now >= running_program.end) {
 						tick(t = running_program.b, 1 - t);
-						node.dispatchEvent(new window.CustomEvent(`${running_program.b ? 'intro' : 'outro'}end`));
+						node.dispatchEvent(custom_event(`${running_program.b ? 'intro' : 'outro'}end`));
 
 						if (!pending_program) {
 							// we're done

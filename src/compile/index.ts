@@ -3,7 +3,7 @@ import Stats from '../Stats';
 import parse from '../parse/index';
 import renderDOM from './render-dom/index';
 import renderSSR from './render-ssr/index';
-import { CompileOptions, Ast } from '../interfaces';
+import { CompileOptions, Ast, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
 
@@ -24,7 +24,7 @@ const valid_options = [
 	'preserveComments'
 ];
 
-function validate_options(options: CompileOptions, stats: Stats) {
+function validate_options(options: CompileOptions, warnings: Warning[]) {
 	const { name, filename } = options;
 
 	Object.keys(options).forEach(key => {
@@ -43,7 +43,7 @@ function validate_options(options: CompileOptions, stats: Stats) {
 
 	if (name && /^[a-z]/.test(name)) {
 		const message = `options.name should be capitalised`;
-		stats.warn({
+		warnings.push({
 			code: `options-lowercase-name`,
 			message,
 			filename,
@@ -74,10 +74,11 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	options = assign({ generate: 'dom', dev: false }, options);
 
 	const stats = new Stats();
+	const warnings = [];
 
 	let ast: Ast;
 
-	validate_options(options, stats);
+	validate_options(options, warnings);
 
 	stats.start('parse');
 	ast = parse(source, options);
@@ -89,17 +90,16 @@ export default function compile(source: string, options: CompileOptions = {}) {
 		source,
 		options.name || get_name(options.filename) || 'SvelteComponent',
 		options,
-		stats
+		stats,
+		warnings
 	);
 	stats.stop('create component');
 
-	if (options.generate === false) {
-		return { ast, stats: stats.render(component), js: null, css: null };
-	}
-
-	const js = options.generate === 'ssr'
-		? renderSSR(component, options)
-		: renderDOM(component, options);
+	const js = options.generate === false
+		? null
+		: options.generate === 'ssr'
+			? renderSSR(component, options)
+			: renderDOM(component, options);
 
 	return component.generate(js);
 }

@@ -1,3 +1,5 @@
+import { custom_event } from './dom';
+
 export let current_component;
 
 export function set_current_component(component) {
@@ -34,7 +36,7 @@ export function createEventDispatcher() {
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
-			const event = new window.CustomEvent(type, { detail });
+			const event = custom_event(type, detail);
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});

@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as assert from 'assert';
 import { svelte, loadConfig, tryToLoadJson } from '../helpers.js';
 
-describe('stats', () => {
-	fs.readdirSync('test/stats/samples').forEach(dir => {
+describe('vars', () => {
+	fs.readdirSync('test/vars/samples').forEach(dir => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -15,12 +15,12 @@ describe('stats', () => {
 		}
 
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const config = loadConfig(`./stats/samples/${dir}/_config.js`);
-			const filename = `test/stats/samples/${dir}/input.svelte`;
+			const config = loadConfig(`./vars/samples/${dir}/_config.js`);
+			const filename = `test/vars/samples/${dir}/input.svelte`;
 			const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
 
 			const expectedError = tryToLoadJson(
-				`test/stats/samples/${dir}/error.json`
+				`test/vars/samples/${dir}/error.json`
 			);
 
 			let result;
@@ -28,7 +28,7 @@ describe('stats', () => {
 
 			try {
 				result = svelte.compile(input, config.options);
-				config.test(assert, result.stats);
+				config.test(assert, result.vars);
 			} catch (e) {
 				error = e;
 			}
@@ -50,11 +50,11 @@ describe('stats', () => {
 		});
 	});
 
-	it('returns a stats object when options.generate is false', () => {
-		const { stats } = svelte.compile('', {
+	it('returns a vars object when options.generate is false', () => {
+		const { vars } = svelte.compile('', {
 			generate: false
 		});
 
-		assert.equal(typeof stats.timings.total, 'number');
+		assert.ok(Array.isArray(vars));
 	});
 });
