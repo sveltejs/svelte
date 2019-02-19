@@ -36,10 +36,8 @@ function compile({ source, options, entry }) {
 			Object.assign({}, commonCompilerOptions, options)
 		);
 
-		vars = vars || stats.vars; // TODO remove this post-launch
-
 		const props = entry
-			? vars.map(v => v.export_name).filter(Boolean)
+			? (vars || stats.vars).map(v => v.export_name).filter(Boolean) // TODO remove stats post-launch
 			: null;
 
 		return { js: js.code, css: css.code, props };
