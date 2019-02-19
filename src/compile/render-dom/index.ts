@@ -79,12 +79,13 @@ export default function dom(
 				${component.componentOptions.props && deindent`
 				if (!${component.componentOptions.props}) ${component.componentOptions.props} = {};
 				@assign(${component.componentOptions.props}, $$props);
-				$$invalidate('${component.componentOptions.props_object}', ${component.componentOptions.props_object});
+				${component.invalidate(component.componentOptions.props_object)};
 				`}
 				${writable_props.map(prop =>
-				`if ('${prop.export_name}' in $$props) $$invalidate('${prop.name}', ${prop.name} = $$props.${prop.export_name});`)}
+				`if ('${prop.export_name}' in $$props) ${component.invalidate(prop.name, `${prop.name} = $$props.${prop.export_name}`)};`
+				)}
 				${renderer.slots.size > 0 &&
-				`if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);`}
+				`if ('$$scope' in $$props) ${component.invalidate('$$scope', `$$scope = $$props.$$scope`)};`}
 			}
 		`
 		: null;
@@ -175,7 +176,7 @@ export default function dom(
 
 						if (dirty.length) component.has_reactive_assignments = true;
 
-						code.overwrite(node.start, node.end, dirty.map(n => `$$invalidate('${n}', ${n})`).join('; '));
+						code.overwrite(node.start, node.end, dirty.map(n => component.invalidate(n)).join('; '));
 					} else {
 						names.forEach(name => {
 							const owner = scope.findOwner(name);
@@ -204,7 +205,7 @@ export default function dom(
 
 				if (pending_assignments.size > 0) {
 					if (node.type === 'ArrowFunctionExpression') {
-						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join(';');
+						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
 						pending_assignments = new Set();
 
 						code.prependRight(node.body.start, `{ const $$result = `);
@@ -214,7 +215,7 @@ export default function dom(
 					}
 
 					else if (/Statement/.test(node.type)) {
-						const insert = Array.from(pending_assignments).map(name => `$$invalidate('${name}', ${name})`).join('; ');
+						const insert = Array.from(pending_assignments).map(name => component.invalidate(name)).join('; ');
 
 						if (/^(Break|Continue|Return)Statement/.test(node.type)) {
 							if (node.argument) {
@@ -240,7 +241,25 @@ export default function dom(
 			throw new Error(`TODO this should not happen!`);
 		}
 
-		component.rewrite_props();
+		component.rewrite_props(({ name, reassigned }) => {
+			const value = `$${name}`;
+
+			const callback = `$value => { ${value} = $$value; $$invalidate('${value}', ${value}) }`;
+
+			if (reassigned) {
+				return `$$subscribe_${name}()`;
+			}
+
+			const subscribe = component.helper('subscribe');
+
+			let insert = `${subscribe}($$self, ${name}, $${callback})`;
+			if (component.compileOptions.dev) {
+				const validate_store = component.helper('validate_store');
+				insert = `${validate_store}(${name}, '${name}'); ${insert}`;
+			}
+
+			return insert;
+		});
 	}
 
 	const args = ['$$self'];
@@ -301,22 +320,45 @@ export default function dom(
 		addToSet(all_reactive_dependencies, d.dependencies);
 	});
 
-	const user_code = component.javascript || (
-		!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)
-			? [
-				component.componentOptions.props && `let ${component.componentOptions.props} = $$props;`,
-				filtered_props.length > 0 && `let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`
-			].filter(Boolean).join('\n')
-			: null
-	);
+	let user_code;
 
-	const reactive_store_subscriptions = reactive_stores.length > 0 && reactive_stores
+	if (component.javascript) {
+		user_code = component.javascript;
+	} else {
+		if (!component.ast.instance && !component.ast.module && (filtered_props.length > 0 || component.componentOptions.props)) {
+			const statements = [];
+
+			if (component.componentOptions.props) statements.push(`let ${component.componentOptions.props} = $$props;`);
+			if (filtered_props.length > 0) statements.push(`let { ${filtered_props.map(x => x.name).join(', ')} } = $$props;`);
+
+			reactive_stores.forEach(({ name }) => {
+				if (component.compileOptions.dev) {
+					statements.push(`${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}`);
+				}
+
+				statements.push(`@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });`);
+			});
+
+			user_code = statements.join('\n');
+		}
+	}
+
+	const reactive_store_subscriptions = reactive_stores
+		.filter(store => {
+			const variable = component.var_lookup.get(store.name.slice(1));
+			return variable.hoistable;
+		})
 		.map(({ name }) => deindent`
-			let ${name};
 			${component.compileOptions.dev && `@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
-			$$self.$$.on_destroy.push(${name.slice(1)}.subscribe($$value => { ${name} = $$value; $$invalidate('${name}', ${name}); }));
-		`)
-		.join('\n\n');
+			@subscribe($$self, ${name.slice(1)}, $$value => { ${name} = $$value; $$invalidate('${name}', ${name}); });
+		`);
+
+	const resubscribable_reactive_store_unsubscribers = reactive_stores
+		.filter(store => {
+			const variable = component.var_lookup.get(store.name.slice(1));
+			return variable.reassigned;
+		})
+		.map(({ name }) => `$$self.$$.on_destroy.push(() => $$unsubscribe_${name.slice(1)}());`);
 
 	if (has_definition) {
 		const reactive_declarations = component.reactive_declarations.map(d => {
@@ -343,8 +385,26 @@ export default function dom(
 			return variable.injected;
 		});
 
+		const reactive_store_declarations = reactive_stores.map(variable => {
+			const $name = variable.name;
+			const name = $name.slice(1);
+
+			const store = component.var_lookup.get(name);
+			if (store.reassigned) {
+				return `${$name}, $$unsubscribe_${name} = @noop, $$subscribe_${name} = () => { $$unsubscribe_${name}(); $$unsubscribe_${name} = ${name}.subscribe($$value => { ${$name} = $$value; $$invalidate('${$name}', ${$name}); }) }`
+			}
+
+			return $name;
+		});
+
 		builder.addBlock(deindent`
 			function ${definition}(${args.join(', ')}) {
+				${reactive_store_declarations.length > 0 && `let ${reactive_store_declarations.join(', ')};`}
+
+				${reactive_store_subscriptions}
+
+				${resubscribable_reactive_store_unsubscribers}
+
 				${user_code}
 
 				${renderer.slots.size && `let { ${[...renderer.slots].map(name => `$$slot_${sanitize(name)}`).join(', ')}, $$scope } = $$props;`}
@@ -352,8 +412,6 @@ export default function dom(
 				${renderer.bindingGroups.length > 0 && `const $$binding_groups = [${renderer.bindingGroups.map(_ => `[]`).join(', ')}];`}
 
 				${component.partly_hoisted.length > 0 && component.partly_hoisted.join('\n\n')}
-
-				${reactive_store_subscriptions}
 
 				${set && `$$self.$set = ${set};`}
 

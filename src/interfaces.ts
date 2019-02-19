@@ -89,4 +89,5 @@ export interface Var {
 	internal?: boolean; // event handlers, bindings
 	initialised?: boolean;
 	hoistable?: boolean;
+	subscribable?: boolean;
 }
