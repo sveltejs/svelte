@@ -20,7 +20,7 @@
 		version; // workaround
 
 		return {
-			imports: bundle.imports,
+			imports: bundle && bundle.imports || [],
 			components: $component_store,
 			values: $values_store
 		};
