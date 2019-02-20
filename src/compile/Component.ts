@@ -433,7 +433,7 @@ export default class Component {
 		});
 	}
 
-	extract_imports(content, is_module: boolean) {
+	extract_imports(content) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -441,26 +441,11 @@ export default class Component {
 				// imports need to be hoisted out of the IIFE
 				removeNode(code, content.start, content.end, content.body, node);
 				this.imports.push(node);
-
-				node.specifiers.forEach((specifier: Node) => {
-					if (specifier.local.name[0] === '$') {
-						this.error(specifier.local, {
-							code: 'illegal-declaration',
-							message: `The $ prefix is reserved, and cannot be used for variable and import names`
-						});
-					}
-
-					this.add_var({
-						name: specifier.local.name,
-						module: is_module,
-						hoistable: true
-					});
-				});
 			}
 		});
 	}
 
-	extract_exports(content, is_module: boolean) {
+	extract_exports(content) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -558,30 +543,20 @@ export default class Component {
 				});
 			}
 
-			if (!/Import/.test(node.type)) {
-				const kind = node.type === 'VariableDeclaration'
-					? node.kind
-					: node.type === 'ClassDeclaration'
-						? 'class'
-						: node.type === 'FunctionDeclaration'
-							? 'function'
-							: null;
-
-				// sanity check
-				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
-
-				this.add_var({
-					name,
-					module: true,
-					hoistable: true,
-					writable: kind === 'var' || kind === 'let'
-				});
-			}
+			this.add_var({
+				name,
+				module: true,
+				hoistable: true,
+				writable: node.kind === 'var' || node.kind === 'let'
+			});
 		});
 
-		globals.forEach(name => {
+		globals.forEach((node, name) => {
 			if (name[0] === '$') {
-				// TODO should this be possible?
+				this.error(node, {
+					code: 'illegal-subscription',
+					message: `Cannot reference store value inside <script context="module">`
+				})
 			} else {
 				this.add_var({
 					name,
@@ -590,8 +565,8 @@ export default class Component {
 			}
 		});
 
-		this.extract_imports(script.content, true);
-		this.extract_exports(script.content, true);
+		this.extract_imports(script.content);
+		this.extract_exports(script.content);
 		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
 	}
@@ -627,29 +602,17 @@ export default class Component {
 				});
 			}
 
-			if (!/Import/.test(node.type)) {
-				const kind = node.type === 'VariableDeclaration'
-					? node.kind
-					: node.type === 'ClassDeclaration'
-						? 'class'
-						: node.type === 'FunctionDeclaration'
-							? 'function'
-							: null;
-
-				// sanity check
-				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
-
-				this.add_var({
-					name,
-					initialised: instance_scope.initialised_declarations.has(name),
-					writable: kind === 'var' || kind === 'let'
-				});
-			}
+			this.add_var({
+				name,
+				initialised: instance_scope.initialised_declarations.has(name),
+				hoistable: /^Import/.test(node.type),
+				writable: node.kind === 'var' || node.kind === 'let'
+			});
 
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach(name => {
+		globals.forEach((node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
@@ -680,8 +643,8 @@ export default class Component {
 			}
 		});
 
-		this.extract_imports(script.content, false);
-		this.extract_exports(script.content, false);
+		this.extract_imports(script.content);
+		this.extract_exports(script.content);
 		this.track_mutations();
 	}
 

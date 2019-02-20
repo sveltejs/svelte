@@ -5,7 +5,7 @@ import { Node } from '../interfaces';
 export function createScopes(expression: Node) {
 	const map = new WeakMap();
 
-	const globals = new Set();
+	const globals: Map<string, Node> = new Map();
 	let scope = new Scope(null, false);
 
 	walk(expression, {
@@ -39,8 +39,8 @@ export function createScopes(expression: Node) {
 			} else if (/(Class|Variable)Declaration/.test(node.type)) {
 				scope.addDeclaration(node);
 			} else if (node.type === 'Identifier' && isReference(node, parent)) {
-				if (!scope.has(node.name)) {
-					globals.add(node.name);
+				if (!scope.has(node.name) && !globals.has(node.name)) {
+					globals.set(node.name, node);
 				}
 			}
 		},
