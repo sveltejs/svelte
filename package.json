@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.0.0-beta.5",
+  "version": "3.0.0-beta.6",
   "description": "The magical disappearing UI framework",
   "module": "index.mjs",
   "main": "index",
@@ -81,7 +81,6 @@
     "rollup-plugin-sucrase": "^2.1.0",
     "rollup-plugin-typescript": "^1.0.0",
     "rollup-plugin-virtual": "^1.0.1",
-    "rollup-watch": "^4.3.1",
     "sade": "^1.4.0",
     "sander": "^0.6.0",
     "shelljs": "^0.8.2",
