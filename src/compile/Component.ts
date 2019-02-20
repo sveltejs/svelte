@@ -433,7 +433,7 @@ export default class Component {
 		});
 	}
 
-	extract_imports(content, is_module: boolean) {
+	extract_imports(content) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -445,7 +445,7 @@ export default class Component {
 		});
 	}
 
-	extract_exports(content, is_module: boolean) {
+	extract_exports(content) {
 		const { code } = this;
 
 		content.body.forEach(node => {
@@ -565,8 +565,8 @@ export default class Component {
 			}
 		});
 
-		this.extract_imports(script.content, true);
-		this.extract_exports(script.content, true);
+		this.extract_imports(script.content);
+		this.extract_exports(script.content);
 		remove_indentation(this.code, script.content);
 		this.module_javascript = this.extract_javascript(script);
 	}
@@ -643,8 +643,8 @@ export default class Component {
 			}
 		});
 
-		this.extract_imports(script.content, false);
-		this.extract_exports(script.content, false);
+		this.extract_imports(script.content);
+		this.extract_exports(script.content);
 		this.track_mutations();
 	}
 
