@@ -205,8 +205,8 @@ export default class ElementWrapper extends Wrapper {
 			block.parent.addDependencies(block.dependencies);
 
 			// appalling hack
-			block.wrappers.splice(block.wrappers.indexOf(this), 1);
-			this.slot_block.wrappers.push(this);
+			block.parent.wrappers.splice(block.parent.wrappers.indexOf(this), 1);
+			block.wrappers.push(this);
 		}
 	}
 
