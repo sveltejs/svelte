@@ -441,21 +441,6 @@ export default class Component {
 				// imports need to be hoisted out of the IIFE
 				removeNode(code, content.start, content.end, content.body, node);
 				this.imports.push(node);
-
-				node.specifiers.forEach((specifier: Node) => {
-					if (specifier.local.name[0] === '$') {
-						this.error(specifier.local, {
-							code: 'illegal-declaration',
-							message: `The $ prefix is reserved, and cannot be used for variable and import names`
-						});
-					}
-
-					this.add_var({
-						name: specifier.local.name,
-						module: is_module,
-						hoistable: true
-					});
-				});
 			}
 		});
 	}
@@ -627,24 +612,12 @@ export default class Component {
 				});
 			}
 
-			if (!/Import/.test(node.type)) {
-				const kind = node.type === 'VariableDeclaration'
-					? node.kind
-					: node.type === 'ClassDeclaration'
-						? 'class'
-						: node.type === 'FunctionDeclaration'
-							? 'function'
-							: null;
-
-				// sanity check
-				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
-
-				this.add_var({
-					name,
-					initialised: instance_scope.initialised_declarations.has(name),
-					writable: kind === 'var' || kind === 'let'
-				});
-			}
+			this.add_var({
+				name,
+				initialised: instance_scope.initialised_declarations.has(name),
+				hoistable: /^Import/.test(node.type),
+				writable: node.kind === 'var' || node.kind === 'let'
+			});
 
 			this.node_for_declaration.set(name, node);
 		});
