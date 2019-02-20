@@ -34,7 +34,6 @@ export function compile(input, opts) {
 	const options = {
 		name: opts.name,
 		format: opts.format,
-		sourceMap: opts.sourcemap,
 		css: opts.css !== false,
 		dev: opts.dev,
 		immutable: opts.immutable,
@@ -45,13 +44,13 @@ export function compile(input, opts) {
 
 	if (isDir) {
 		mkdirp(output);
-		compileDirectory(input, output, options);
+		compileDirectory(input, output, options, opts.sourcemap);
 	} else {
-		compileFile(input, output, options);
+		compileFile(input, output, options, opts.sourcemap);
 	}
 }
 
-function compileDirectory(input, output, options) {
+function compileDirectory(input, output, options, sourcemap) {
 	fs.readdirSync(input).forEach(file => {
 		const src = path.resolve(input, file);
 		const dest = path.resolve(output, file);
@@ -60,12 +59,13 @@ function compileDirectory(input, output, options) {
 			compileFile(
 				src,
 				dest.substring(0, dest.lastIndexOf('.html')) + '.js',
-				options
+				options,
+				sourcemap
 			);
 		} else {
 			const stats = fs.statSync(src);
 			if (stats.isDirectory()) {
-				compileDirectory(src, dest, options);
+				compileDirectory(src, dest, options, sourcemap);
 			}
 		}
 	});
@@ -74,7 +74,7 @@ function compileDirectory(input, output, options) {
 let SOURCEMAPPING_URL = 'sourceMa';
 SOURCEMAPPING_URL += 'ppingURL';
 
-function compileFile(input, output, options) {
+function compileFile(input, output, options, sourcemap) {
 	console.error(`compiling ${path.relative(process.cwd(), input)}...`); // eslint-disable-line no-console
 
 	options = Object.assign({}, options);
@@ -83,8 +83,7 @@ function compileFile(input, output, options) {
 	options.filename = input;
 	options.outputFilename = output;
 
-	const { sourceMap } = options;
-	const inline = sourceMap === 'inline';
+	const inline = sourcemap === 'inline';
 
 	let source = fs.readFileSync(input, 'utf-8');
 	if (source[0] === 0xfeff) source = source.slice(1);
@@ -97,9 +96,11 @@ function compileFile(input, output, options) {
 		error(err);
 	}
 
-	const { js } = compiled;
+	const { js, warnings } = compiled;
 
-	if (sourceMap) {
+	warnings.forEach(warning => console.warn(warning.toString()));
+
+	if (sourcemap) {
 		js.code += `\n//# ${SOURCEMAPPING_URL}=${inline || !output
 			? js.map.toUrl()
 			: `${path.basename(output)}.map`}\n`;
@@ -110,7 +111,7 @@ function compileFile(input, output, options) {
 		mkdirp(outputDir);
 		fs.writeFileSync(output, js.code);
 		console.error(`wrote ${path.relative(process.cwd(), output)}`); // eslint-disable-line no-console
-		if (sourceMap && !inline) {
+		if (sourcemap && !inline) {
 			fs.writeFileSync(`${output}.map`, js.map);
 			console.error(`wrote ${path.relative(process.cwd(), `${output}.map`)}`); // eslint-disable-line no-console
 		}
