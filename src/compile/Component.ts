@@ -543,30 +543,20 @@ export default class Component {
 				});
 			}
 
-			if (!/Import/.test(node.type)) {
-				const kind = node.type === 'VariableDeclaration'
-					? node.kind
-					: node.type === 'ClassDeclaration'
-						? 'class'
-						: node.type === 'FunctionDeclaration'
-							? 'function'
-							: null;
-
-				// sanity check
-				if (!kind) throw new Error(`Unknown declaration type ${node.type}`);
-
-				this.add_var({
-					name,
-					module: true,
-					hoistable: true,
-					writable: kind === 'var' || kind === 'let'
-				});
-			}
+			this.add_var({
+				name,
+				module: true,
+				hoistable: true,
+				writable: node.kind === 'var' || node.kind === 'let'
+			});
 		});
 
-		globals.forEach(name => {
+		globals.forEach((node, name) => {
 			if (name[0] === '$') {
-				// TODO should this be possible?
+				this.error(node, {
+					code: 'illegal-subscription',
+					message: `Cannot reference store value inside <script context="module">`
+				})
 			} else {
 				this.add_var({
 					name,
@@ -622,7 +612,7 @@ export default class Component {
 			this.node_for_declaration.set(name, node);
 		});
 
-		globals.forEach(name => {
+		globals.forEach((node, name) => {
 			if (this.var_lookup.has(name)) return;
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
