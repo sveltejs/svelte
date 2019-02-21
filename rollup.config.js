@@ -69,27 +69,6 @@ export default [
 			: id => id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree')
 	},
 
-	/* cli/*.js */
-	{
-		input: ['src/cli/index.ts'],
-		output: {
-			dir: 'cli',
-			format: 'cjs',
-			paths: {
-				svelte: '../compiler.js'
-			}
-		},
-		external: ['fs', 'path', 'os', 'svelte'],
-		plugins: [
-			json(),
-			commonjs(),
-			resolve(),
-			typescript({
-				typescript: require('typescript')
-			})
-		]
-	},
-
 	/* motion.mjs */
 	{
 		input: `src/motion/index.js`,

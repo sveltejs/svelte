@@ -1,1 +1,0 @@
-svelte compile src/Main.svelte -m -o actual/Main.js
