@@ -24,6 +24,7 @@ This is the Svelte compiler, which is primarily intended for authors of tooling 
 * [rollup-plugin-svelte](https://github.com/rollup/rollup-plugin-svelte) – Rollup plugin
 * [parcel-plugin-svelte](https://github.com/DeMoorJasper/parcel-plugin-svelte) - Parcel build plugin
 * [sveltify](https://github.com/tehshrike/sveltify) - Browserify transform
+* [rules_svelte](https://github.com/thelgevold/rules_svelte) - Bazel Rules
 
 ### CSS Preprocessors
 
@@ -144,6 +145,7 @@ The `style` and `script` preprocessors will run *after* the `markup` preprocesso
 * [EmilTholin/svelte-test](https://github.com/EmilTholin/svelte-test)
 * [lukechinworth/codenames](https://github.com/lukechinworth/codenames/tree/svelte) – example integration with Redux
 * [khtdr/svelte-redux-shopping-cart](https://github.com/khtdr/svelte-redux-shopping-cart) – Redux Shopping Cart example (with devtools and hot-reloading)
+* [svelte-bazel-example](https://github.com/thelgevold/svelte-bazel-example) — Building Svelte with Bazel
 
 ## Development
 
