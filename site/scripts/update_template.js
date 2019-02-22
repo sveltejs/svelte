@@ -5,7 +5,7 @@ sh.cd(__dirname+'/../')
 
 // fetch svelte app
 sh.rm('-rf','scripts/svelte-app')
-sh.exec('npx degit sveltejs/template scripts/svelte-app')
+sh.exec('npx degit sveltejs/template#v3 scripts/svelte-app')
 
 // update repl-viewer.css based on template
 sh.cp('scripts/svelte-app/public/global.css', 'static/repl-viewer.css')
