@@ -47,13 +47,7 @@ const { js, css, ast } = svelte.compile(source, {
 	format: 'cjs',
 
 	// the filename of the source file, used in e.g. generating sourcemaps
-	filename: 'MyComponent.html',
-
-	// custom warning handler. By default, warnings will be printed to the console.
-	// Where applicable, the warning object will have `pos`, `loc` and `frame` properties
-	onwarn: warning => {
-		console.warn(warning.message);
-	}
+	filename: 'MyComponent.html'
 });
 ```
 
