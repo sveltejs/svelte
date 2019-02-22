@@ -37,7 +37,7 @@ function compile({ source, options, entry }) {
 		);
 
 		const props = entry
-			? (vars || stats.vars).map(v => v.export_name).filter(Boolean) // TODO remove stats post-launch
+			? (vars || stats.vars).map(v => v.writable && v.export_name).filter(Boolean) // TODO remove stats post-launch
 			: null;
 
 		return { js: js.code, css: css.code, props };
