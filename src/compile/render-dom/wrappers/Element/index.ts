@@ -132,7 +132,7 @@ export default class ElementWrapper extends Wrapper {
 					const name = attribute.getStaticValue();
 
 					if (!(owner as InlineComponentWrapper).slots.has(name)) {
-						const child_block = block.parent.child({
+						const child_block = block.child({
 							comment: createDebuggingComment(node, this.renderer.component),
 							name: this.renderer.component.getUniqueName(`create_${sanitize(name)}_slot`)
 						});
@@ -205,7 +205,8 @@ export default class ElementWrapper extends Wrapper {
 			block.parent.addDependencies(block.dependencies);
 
 			// appalling hack
-			block.parent.wrappers.splice(block.parent.wrappers.indexOf(this), 1);
+			const index = block.parent.wrappers.indexOf(this);
+			block.parent.wrappers.splice(index, 1);
 			block.wrappers.push(this);
 		}
 	}
