@@ -2,6 +2,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import Node from '../../nodes/shared/Node';
 import Tag from './shared/Tag';
+import Wrapper from './shared/Wrapper';
 
 export default class MustacheTagWrapper extends Tag {
 	var = 'text';

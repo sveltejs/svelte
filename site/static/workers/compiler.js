@@ -31,13 +31,13 @@ const commonCompilerOptions = {
 
 function compile({ source, options, entry }) {
 	try {
-		const { js, css, stats } = svelte.compile(
+		const { js, css, stats, vars } = svelte.compile(
 			source,
 			Object.assign({}, commonCompilerOptions, options)
 		);
 
 		const props = entry
-			? stats.vars.map(v => v.export_name).filter(Boolean)
+			? (vars || stats.vars).map(v => v.export_name).filter(Boolean) // TODO remove stats post-launch
 			: null;
 
 		return { js: js.code, css: css.code, props };
