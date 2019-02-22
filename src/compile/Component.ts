@@ -330,7 +330,7 @@ export default class Component {
 			css,
 			ast: this.ast,
 			warnings: this.warnings,
-			vars: this.vars.filter(v => !v.global && !v.implicit && !v.internal).map(v => ({
+			vars: this.vars.filter(v => !v.global && !v.internal).map(v => ({
 				name: v.name,
 				export_name: v.export_name || null,
 				injected: v.injected || false,
