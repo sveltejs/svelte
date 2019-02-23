@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 
-	export let time = new Date();
+	let time = new Date();
 	let hours, minutes, seconds;
 
 	$: {
