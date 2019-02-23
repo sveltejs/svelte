@@ -2,9 +2,8 @@
 	import ComponentSelector from './ComponentSelector.svelte';
 	import ModuleEditor from './ModuleEditor.svelte';
 
-	export let component_store;
 	export let selected_store;
-
+	export let component_store;
 	export let error;
 	export let errorLoc;
 	export let warningCount;

@@ -6,10 +6,10 @@
 
 	const dispatch = createEventDispatcher();
 
+	export let values_store;
 	export let bundle;
 	export let dom;
 	export let ssr;
-	export let values_store;
 	export let props;
 	export let sourceError;
 	export let error;
@@ -17,7 +17,7 @@
 	export function setProp(prop, value) {
 		if (!replProxy) return;
 		replProxy.setProp(prop, value);
-	}		
+	}
 
 	let hasComponent = false;
 
@@ -74,7 +74,7 @@
 	});
 	onMount(() => {
 		replProxy = new ReplProxy(refs.child);
-	
+
 		refs.child.addEventListener('load', () => {
 
 			replProxy.onPropUpdate = (prop, value) => {
@@ -87,9 +87,9 @@
 			replProxy.onFetchProgress = (progress) => {
 				pendingImports = progress
 			}
-			
+
 			replProxy.handleLinks();
-			
+
 			let promise = null;
 			let updating = false;
 
@@ -108,7 +108,7 @@
 
 				const destroyComponent = () => {
 					replProxy.eval(`if (window.component)
-										 window.component.\$destroy(); 
+										 window.component.\$destroy();
 									window.component = null`);
 				};
 
@@ -120,7 +120,7 @@
 						destroyComponent();
 						toDestroy = null;
 					}
-			
+
 					if (ssr) { // this only gets generated if component uses lifecycle hooks
 						pending = true;
 						createHtml();
@@ -153,7 +153,7 @@
 						error = e;
 					});
 				};
-				
+
 				const createComponent = () => {
 					// remove leftover styles from SSR renderer
 					if (ssr) removeStyles();
@@ -184,7 +184,7 @@
 						error = e;
 					});
 				};
-				
+
 				// Download the imports (sets them on iframe window when complete)
 			 	{
 					let cancelled = false;
@@ -198,7 +198,7 @@
 							error = e;
 						});
 				}
-		
+
 				run = () => {
 					pending = false;
 
@@ -221,7 +221,7 @@
 				init();
 			};
 
-			
+
 		});
 	});
 
@@ -232,11 +232,6 @@
 
 	$: bundle_handler(bundle);
 	$: props_handler(props);
-
-	// pending https://github.com/sveltejs/svelte/issues/1889
-	$: {
-		$values_store;
-	}
 </script>
 
 <style>
