@@ -28,7 +28,7 @@
 	function handleChange(event) {
 		try {
 			const value = fleece.evaluate(event.detail.value);
-			previous_code = event.detail.value;
+			code = previous_code = event.detail.value;
 			error = null;
 			dispatch('change', { value });
 		} catch (e) {
@@ -59,7 +59,7 @@
 	}
 </style>
 
-<div class="prop-editor" class:error title="{error && error.message}">
+<div class="prop-editor" class:error title="{error && error.message || ''}">
 	<CodeMirror
 		mode="json"
 		code={stringify(value)}
