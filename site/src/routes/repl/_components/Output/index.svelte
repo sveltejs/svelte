@@ -5,13 +5,14 @@
 	import PropEditor from './PropEditor.svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
+	export let values_store;
+
 	export let bundle;
 	export let js;
 	export let css;
 	export let dom;
 	export let ssr;
 	export let props;
-	export let values_store;
 	export let json5;
 	export let sourceError;
 	export let sourceErrorLoc;
