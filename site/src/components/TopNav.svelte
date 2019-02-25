@@ -244,6 +244,7 @@
 			on:mouseleave="{() => open = false}"
 		>
 			<li class="hide-if-desktop" class:active="{!segment}"><a rel="prefetch" href=".">Home</a></li>
+			<li class:active="{segment === 'tutorial'}"><a rel="prefetch" href="tutorial">Tutorial</a></li>
 			<li class:active="{segment === 'guide'}"><a rel="prefetch" href="guide">Guide</a></li>
 			<li class:active="{segment === 'repl'}"><a rel="prefetch" href="repl">REPL</a></li>
 			<li class:active="{segment === 'blog'}"><a rel="prefetch" href="blog">Blog</a></li>
