@@ -1,18 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import process_markdown from '../../../utils/_process_markdown.js';
+import { extract_frontmatter, langs } from '../../../utils/markdown.js';
 import marked from 'marked';
-
 import PrismJS from 'prismjs';
 import 'prismjs/components/prism-bash';
-
-// map lang to prism-language-attr
-const prismLang = {
-	bash: 'bash',
-	html: 'markup',
-	js: 'javascript',
-	css: 'css',
-};
 
 export default function() {
 	return fs
@@ -22,7 +13,7 @@ export default function() {
 
 			const markdown = fs.readFileSync(`content/blog/${file}`, 'utf-8');
 
-			const { content, metadata } = process_markdown(markdown);
+			const { content, metadata } = extract_frontmatter(markdown);
 
 			const date = new Date(`${metadata.pubdate} EDT`); // cheeky hack
 			metadata.dateString = date.toDateString();
@@ -30,7 +21,7 @@ export default function() {
 			const renderer = new marked.Renderer();
 
 			renderer.code = (source, lang) => {
-				const plang = prismLang[lang];
+				const plang = langs[lang];
 				const highlighted = PrismJS.highlight(
 					source,
 					PrismJS.languages[plang],
