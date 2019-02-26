@@ -19,6 +19,7 @@
 	export let runtimeError;
 	export let compileOptions;
 	export let embedded;
+	export let show_props;
 
 	// refs
 	let viewer;
@@ -121,7 +122,7 @@
 </div>
 
 {#if view === 'result'}
-	<SplitPane type="vertical" pos={67}>
+	<SplitPane type="vertical" pos={67} fixed={!show_props} fixed_pos={100}>
 		<div slot="a">
 			{#if bundle}
 				<Viewer
@@ -143,27 +144,29 @@
 		</div>
 
 		<section slot="b">
-			<h3>Props editor</h3>
+			{#if show_props}
+				<h3>Props editor</h3>
 
-			{#if props}
-				{#if props.length > 0}
-					<div class="props">
-						{#each props.sort() as prop (prop)}
-							<code style="display: block; whitespace: pre;">{prop}</code>
+				{#if props}
+					{#if props.length > 0}
+						<div class="props">
+							{#each props.sort() as prop (prop)}
+								<code style="display: block; whitespace: pre;">{prop}</code>
 
-							<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
-							<PropEditor
-								value={$values_store[prop]}
-								on:change="{e => setPropFromEditor(prop, e.detail.value)}"
-							/>
-						{/each}
-					</div>
-				{:else}
-					<div style="padding: 0.5em" class="linkify">
-						<!-- TODO explain distincion between logic-less and logic-ful components? -->
-						<!-- TODO style the <a> so it looks like a link -->
-						<p style="font-size: 1.3rem; color: var(--second)">This component has no props — <a href="guide#external-properties">declare props with the export keyword</a></p>
-					</div>
+								<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
+								<PropEditor
+									value={$values_store[prop]}
+									on:change="{e => setPropFromEditor(prop, e.detail.value)}"
+								/>
+							{/each}
+						</div>
+					{:else}
+						<div style="padding: 0.5em" class="linkify">
+							<!-- TODO explain distincion between logic-less and logic-ful components? -->
+							<!-- TODO style the <a> so it looks like a link -->
+							<p style="font-size: 1.3rem; color: var(--second)">This component has no props — <a href="guide#external-properties">declare props with the export keyword</a></p>
+						</div>
+					{/if}
 				{/if}
 			{/if}
 		</section>

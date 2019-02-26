@@ -146,7 +146,7 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl {app}/>
+		<Repl {app} orientation="rows" show_props={false}/>
 	</div>
 
 </div>

@@ -11,6 +11,8 @@
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let app;
 	export let embedded = false;
+	export let orientation = 'auto';
+	export let show_props = true;
 
 	export function toJSON() {
 		// TODO there's a bug here — Svelte hoists this function because
@@ -277,7 +279,12 @@
 
 <div class="container" bind:clientWidth={width}>
 	<div class="repl-inner" class:offset="{show_output}">
-		<SplitPane type="horizontal" fixed="{600 > width}" pos={60} fixed_pos={50}>
+		<SplitPane
+			type="{orientation === 'rows' ? 'vertical' : 'horizontal'}"
+			fixed="{600 > width}"
+			pos="{orientation === 'rows' ? 50 : 60}"
+			fixed_pos={50}
+		>
 			<section slot=a>
 				<Input
 					{component_store}
@@ -306,6 +313,7 @@
 					{sourceError}
 					{runtimeError}
 					{embedded}
+					{show_props}
 				/>
 			</section>
 		</SplitPane>
