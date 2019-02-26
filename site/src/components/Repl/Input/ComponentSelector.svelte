@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import Icon from '../../../../components/Icon.svelte';
-	import { enter } from '../events.js';
+	import Icon from '../../Icon.svelte';
+	import { enter } from '../../../utils/events.js';
 
 	const dispatch = createEventDispatcher();
 

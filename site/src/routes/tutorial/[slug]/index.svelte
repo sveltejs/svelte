@@ -12,6 +12,7 @@
 <script>
 	import TableOfContents from './_components/TableOfContents.svelte';
 	import Icon from '../../../components/Icon.svelte';
+	import Repl from '../../../components/Repl/index.svelte';
 	import { getContext } from 'svelte';
 
 	export let slug;
@@ -41,6 +42,11 @@
 	});
 
 	$: selected = lookup.get(slug);
+
+	$: app = {
+		components: chapter.files,
+		values: {}
+	};
 </script>
 
 <style>
@@ -60,6 +66,8 @@
 		flex-direction: column;
 		height: 100%;
 		border-right: 1px solid var(--second);
+		background-color: var(--second);
+		color: white;
 	}
 
 	.tutorial-repl {
@@ -67,7 +75,7 @@
 	}
 
 	.table-of-contents {
-		background-color: white;
+
 	}
 
 	.chapter-markup {
@@ -79,9 +87,41 @@
 
 	.chapter-markup :global(h2) {
 		font-size: var(--h3);
-		color: var(--second);
 		margin: 3.2rem 0 1.6rem 0;
 		line-height: 1;
+		color: white;
+	}
+
+	.chapter-markup :global(blockquote) {
+		background-color: rgba(255,255,255,0.1);
+		color: white;
+	}
+
+	/* .chapter-markup::-webkit-scrollbar-track {
+		background-color: var(--second);
+		width: 4px;
+	} */
+
+	.chapter-markup::-webkit-scrollbar {
+		background-color: var(--second);
+		width: 8px;
+	}
+
+	.chapter-markup::-webkit-scrollbar-thumb {
+		background-color: rgba(255,255,255,0.7);
+		border-radius: 1em;
+		outline: 1px solid green;
+	}
+
+	.chapter-markup :global(p) > :global(code) {
+		color: white;
+		background: rgba(255,255,255,0.1);
+		padding: 0.2em 0.4em;
+		white-space: nowrap;
+	}
+
+	.chapter-markup :global(pre) :global(code) {
+		/* color: var(--text); */
 	}
 
 	.next {
@@ -106,7 +146,7 @@
 	</div>
 
 	<div class="tutorial-repl">
-		TODO add the REPL
+		<Repl {app}/>
 	</div>
 
 </div>

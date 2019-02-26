@@ -36,12 +36,6 @@
 		selected_store.set(app.components[0]);
 	}
 
-	$: {
-		// necessary pending https://github.com/sveltejs/svelte/issues/1889
-		$component_store;
-		$values_store;
-	}
-
 	let workers;
 
 	let bundle = null;

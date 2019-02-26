@@ -11,7 +11,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import * as fleece from 'golden-fleece';
-	import Repl from './_components/Repl.svelte';
+	import Repl from '../../components/Repl/index.svelte';
 
 	export let version, gist, demo;
 

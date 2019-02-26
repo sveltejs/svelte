@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import marked from 'marked';
 import PrismJS from 'prismjs';
 import { extract_frontmatter, extract_metadata, langs } from '../../../utils/markdown';
@@ -66,10 +67,17 @@ function get_tutorial(slug) {
 
 	return {
 		html,
-		files: files.map(file => ({
-			file,
-			contents: fs.readFileSync(`${dir}/${file}`, 'utf-8')
-		}))
+		files: files.map(file => {
+			const ext = path.extname(file);
+			const name = file.slice(0, -ext.length);
+			const type = ext.slice(1);
+
+			return {
+				name,
+				type,
+				source: fs.readFileSync(`${dir}/${file}`, 'utf-8')
+			};
+		})
 	};
 }
 

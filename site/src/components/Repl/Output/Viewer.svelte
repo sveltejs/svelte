@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-	import getLocationFromStack from '../../_utils/getLocationFromStack.js';
-	import ReplProxy from '../../_utils/replProxy.js';
+	import getLocationFromStack from './getLocationFromStack.js';
+	import ReplProxy from './replProxy.js';
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();

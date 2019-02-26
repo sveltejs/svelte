@@ -15,7 +15,7 @@
 	nav {
 		display: grid;
 		grid-template-columns: 2.5em 1fr 2.5em;
-		border-bottom: 1px solid #eee;
+		border-bottom: 1px solid rgba(255,255,255,0.1);
 	}
 
 	div {
@@ -23,7 +23,7 @@
 		padding: 1em 0.5em;
 		font-weight: 300;
 		font-size: var(--h6);
-		color: var(--text);
+		color: white;
 		cursor: pointer;
 	}
 
@@ -31,19 +31,20 @@
 		display: block;
 		padding: 0.7em 0;
 		text-align: center;
+		opacity: 0.7;
 	}
 
 	a.disabled, a.disabled:hover, a.disabled:active {
-		color: var(--second);
+		color: white;
+		opacity: 0.4;
 	}
 
 	span {
 		white-space: nowrap;
-		color: var(--prime);
 	}
 
 	strong {
-		color: var(--heading);
+		opacity: 0.7;
 	}
 
 	select {

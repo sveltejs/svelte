@@ -13,7 +13,7 @@
 	import { locate } from 'locate-character';
 	import * as fleece from 'golden-fleece';
 	import AppControls from './_components/AppControls/index.svelte';
-	import Repl from './_components/Repl.svelte';
+	import Repl from '../../components/Repl/index.svelte';
 	import examples from '../../../content/examples/manifest.json';
 
 	export let version, demo, gist_id;
@@ -114,6 +114,8 @@
 				const data = await response.json();
 
 				name = data.title;
+
+				console.log(data.components);
 
 				app = {
 					values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
