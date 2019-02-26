@@ -63,7 +63,12 @@ function get_tutorial(slug) {
 		return `<div class='${className}'>${prefix}<pre class='language-${plang}'><code>${highlighted}</code></pre></div>`;
 	};
 
-	const html = marked(content, { renderer });
+	let html = marked(content, { renderer });
+	if (found.chapter.startsWith('01')) {
+		const meta = JSON.parse(fs.readFileSync(`content/tutorial/${found.section}/meta.json`));
+		html = `<h2>${meta.title}</h2>\n${html}`;
+	}
+
 
 	return {
 		html,

@@ -1,10 +1,14 @@
 <script context="module">
 	export async function preload({ params }) {
-		const chapter = await this.fetch(`tutorial/${params.slug}.json`).then(r => r.json());
+		const res = await this.fetch(`tutorial/${params.slug}.json`);
+
+		if (!res.ok) {
+			return this.redirect(301, `tutorial/basics`);
+		}
 
 		return {
 			slug: params.slug,
-			chapter
+			chapter: await res.json()
 		};
 	}
 </script>
@@ -92,6 +96,11 @@
 		color: white;
 	}
 
+	.chapter-markup :global(ul) {
+		padding: 0;
+		list-style: none;
+	}
+
 	.chapter-markup :global(blockquote) {
 		background-color: rgba(255,255,255,0.1);
 		color: white;
@@ -113,7 +122,8 @@
 		outline: 1px solid green;
 	}
 
-	.chapter-markup :global(p) > :global(code) {
+	.chapter-markup :global(p) > :global(code),
+	.chapter-markup :global(ul) :global(code) {
 		color: white;
 		background: rgba(255,255,255,0.1);
 		padding: 0.2em 0.4em;
