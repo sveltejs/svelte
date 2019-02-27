@@ -13,6 +13,7 @@ export default class Animation extends Node {
 		component.warn_if_undefined(info, scope);
 
 		this.name = info.name;
+		component.qualify(info.name);
 
 		if (parent.animation) {
 			component.error(this, {
