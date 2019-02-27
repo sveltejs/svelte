@@ -15,6 +15,8 @@ export default class Transition extends Node {
 		component.warn_if_undefined(info, scope);
 
 		this.name = info.name;
+		component.qualify(info.name);
+
 		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out';
 		this.is_local = info.modifiers.includes('local');
 
