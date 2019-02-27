@@ -47,10 +47,28 @@
 
 	$: selected = lookup.get(slug);
 
-	$: app = {
-		components: chapter.files,
-		values: {}
-	};
+	// TODO once reactive values are fixed
+	// $: app = {
+	// 	components: chapter.app_a,
+	// 	values: {}
+	// };
+
+	let app;
+	$: start(chapter);
+
+	function start(chapter) {
+		app = {
+			components: chapter.app_a,
+			values: {}
+		};
+	}
+
+	function complete() {
+		app = {
+			components: chapter.app_b,
+			values: {}
+		};
+	}
 </script>
 
 <style>
@@ -134,9 +152,29 @@
 		/* color: var(--text); */
 	}
 
+	.controls {
+		border-top: 1px solid rgba(255,255,255,0.1);
+		padding: 1em 0 0 0;
+	}
+
+	.show {
+		float: left;
+		text-transform: uppercase;
+		background: rgba(255,255,255,0.1);
+		padding: 0.2em 0.7em;
+		border-radius: 2em;
+		top: 0.1em;
+		position: relative;
+		font-size: var(--h5);
+		font-weight: 300;
+	}
+
+	.show:hover {
+		background: rgba(255,255,255,0.2);
+	}
+
 	.next {
-		display: block;
-		text-align: right;
+		float: right;
 	}
 </style>
 
@@ -149,9 +187,19 @@
 		<div class="chapter-markup">
 			{@html chapter.html}
 
-			{#if selected.next}
-				<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
-			{/if}
+			<div class="controls">
+				{#if chapter.app_b}
+					<!-- TODO disable this button when the contents of the REPL
+						matches the expected end result -->
+					<button class="show" on:click={complete}>
+						Show me
+					</button>
+				{/if}
+
+				{#if selected.next}
+					<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
+				{/if}
+			</div>
 		</div>
 	</div>
 

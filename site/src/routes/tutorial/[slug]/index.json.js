@@ -26,7 +26,8 @@ function get_tutorial(slug) {
 	const dir = `content/tutorial/${found.section}/${found.chapter}`;
 
 	const markdown = fs.readFileSync(`${dir}/text.md`, 'utf-8');
-	const files = fs.readdirSync(dir).filter(file => file[0] !== '.' && file !== 'text.md');
+	const app_a = fs.readdirSync(`${dir}/app-a`);
+	const app_b = fs.existsSync(`${dir}/app-b`) && fs.readdirSync(`${dir}/app-b`);
 
 	const { content } = extract_frontmatter(markdown);
 
@@ -69,20 +70,22 @@ function get_tutorial(slug) {
 		html = `<h2>${meta.title}</h2>\n${html}`;
 	}
 
+	function get_file(stage, file) {
+		const ext = path.extname(file);
+		const name = file.slice(0, -ext.length);
+		const type = ext.slice(1);
+
+		return {
+			name,
+			type,
+			source: fs.readFileSync(`${dir}/${stage}/${file}`, 'utf-8')
+		};
+	}
 
 	return {
 		html,
-		files: files.map(file => {
-			const ext = path.extname(file);
-			const name = file.slice(0, -ext.length);
-			const type = ext.slice(1);
-
-			return {
-				name,
-				type,
-				source: fs.readFileSync(`${dir}/${file}`, 'utf-8')
-			};
-		})
+		app_a: app_a.map(file => get_file('app-a', file)),
+		app_b: app_b && app_b.map(file => get_file('app-b', file))
 	};
 }
 
