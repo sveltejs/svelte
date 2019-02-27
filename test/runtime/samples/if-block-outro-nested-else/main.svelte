@@ -7,7 +7,7 @@
 {#if foo}
 	{#if false}
 		<Component/>
-	{:elseif false}
+	{:else if false}
 		<Component/>
 	{/if}
 {/if}

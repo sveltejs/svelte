@@ -86,58 +86,73 @@ export default function mustache(parser: Parser) {
 
 		block.end = parser.index;
 		parser.stack.pop();
-	} else if (parser.eat(':elseif')) {
-		const block = parser.current();
-		if (block.type !== 'IfBlock')
-			parser.error({
-				code: `invalid-elseif-placement`,
-				message: 'Cannot have an {:elseif ...} block outside an {#if ...} block'
-			});
-
-		parser.requireWhitespace();
-
-		const expression = readExpression(parser);
-
-		parser.allowWhitespace();
-		parser.eat('}', true);
-
-		block.else = {
-			start: parser.index,
-			end: null,
-			type: 'ElseBlock',
-			children: [
-				{
-					start: parser.index,
-					end: null,
-					type: 'IfBlock',
-					elseif: true,
-					expression,
-					children: [],
-				},
-			],
-		};
-
-		parser.stack.push(block.else.children[0]);
 	} else if (parser.eat(':else')) {
-		const block = parser.current();
-		if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
+		if (parser.eat('if')) {
 			parser.error({
-				code: `invalid-else-placement`,
-				message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
+				code: 'invalid-elseif',
+				message: `'elseif' should be 'else if'`
 			});
 		}
 
 		parser.allowWhitespace();
-		parser.eat('}', true);
 
-		block.else = {
-			start: parser.index,
-			end: null,
-			type: 'ElseBlock',
-			children: [],
-		};
+		// :else if
+		if (parser.eat('if')) {
+			const block = parser.current();
+			if (block.type !== 'IfBlock')
+				parser.error({
+					code: `invalid-elseif-placement`,
+					message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
+				});
 
-		parser.stack.push(block.else);
+			parser.requireWhitespace();
+
+			const expression = readExpression(parser);
+
+			parser.allowWhitespace();
+			parser.eat('}', true);
+
+			block.else = {
+				start: parser.index,
+				end: null,
+				type: 'ElseBlock',
+				children: [
+					{
+						start: parser.index,
+						end: null,
+						type: 'IfBlock',
+						elseif: true,
+						expression,
+						children: [],
+					},
+				],
+			};
+
+			parser.stack.push(block.else.children[0]);
+		}
+
+		// :else
+		else {
+			const block = parser.current();
+			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
+				parser.error({
+					code: `invalid-else-placement`,
+					message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
+				});
+			}
+
+			parser.allowWhitespace();
+			parser.eat('}', true);
+
+			block.else = {
+				start: parser.index,
+				end: null,
+				type: 'ElseBlock',
+				children: [],
+			};
+
+			parser.stack.push(block.else);
+		}
 	} else if (parser.eat(':then')) {
 		// TODO DRY out this and the next section
 		const pendingBlock = parser.current();
