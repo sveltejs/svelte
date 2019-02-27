@@ -81,6 +81,7 @@
 		box-sizing: border-box;
 		display: grid;
 		grid-template-columns: 400px 1fr;
+		grid-auto-rows: 100%;
 	}
 
 	.tutorial-text {
