@@ -8,6 +8,13 @@ title: TODO
 
 Outline (subject to change):
 
+<style>
+	ul {
+		padding: 0 !important;
+		list-style: none !important;
+	}
+</style>
+
 
 ## Introduction
 
@@ -15,8 +22,10 @@ Outline (subject to change):
 * [x] Dynamic attributes
 * [x] Styling (mention DCE? global styles?)
 * [x] Nested components
-* [ ] HTML tags
-* [ ] Creating an app — how to import components into JS, etc
+* [x] HTML tags
+* [x] Creating an app — how to import components into JS, etc
+
+Side-quest: create a 'Svelte for new developers' blog post that assumes no knowledge beyond HTML, CSS and JS (i.e. CLI, Node and npm, degit, build tools)
 
 
 ## Reactivity

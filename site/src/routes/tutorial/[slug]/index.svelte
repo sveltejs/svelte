@@ -116,8 +116,7 @@
 	}
 
 	.chapter-markup :global(ul) {
-		padding: 0;
-		list-style: none;
+		padding: 0 0 0 2em;
 	}
 
 	.chapter-markup :global(blockquote) {
