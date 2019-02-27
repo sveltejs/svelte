@@ -38,7 +38,7 @@ Side-quest: create a 'Svelte for new developers' blog post that assumes no knowl
 ## Logic
 
 * [x] If blocks
-* [ ] Else/elseif blocks
+* [x] Else/elseif blocks
 * [ ] Each blocks
 * [ ] Keyed each blocks (maybe? kind of need to cover transitions before we can make this obvious)
 * [ ] Await blocks
