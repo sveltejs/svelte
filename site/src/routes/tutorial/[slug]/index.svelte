@@ -184,7 +184,6 @@
 
 	a.next {
 		margin-left: auto;
-		text-decoration: none;
 	}
 
 	.improve-chapter {
