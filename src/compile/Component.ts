@@ -826,6 +826,7 @@ export default class Component {
 										declarators: [declarator],
 										insert: get_insert(variable)
 									});
+									current_group = null;
 								} else {
 									if (current_group && current_group.kind !== node.kind) {
 										current_group = null;
