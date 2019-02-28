@@ -45,7 +45,12 @@
 		});
 	});
 
+	// TODO: this will need to be changed to the master branch, and probably should be dynamic instead of included
+	//   here statically
+	const tutorial_repo_link = 'https://github.com/sveltejs/svelte/tree/restructure-docs/site/content/tutorial';
+
 	$: selected = lookup.get(slug);
+	$: improve_link = `${tutorial_repo_link}/${selected.chapter.section_dir}/${selected.chapter.chapter_dir}/text.md`;
 
 	// TODO once reactive values are fixed
 	// $: app = {
@@ -159,10 +164,10 @@
 	.controls {
 		border-top: 1px solid rgba(255,255,255,0.1);
 		padding: 1em 0 0 0;
+		display: flex;
 	}
 
 	.show {
-		float: left;
 		text-transform: uppercase;
 		background: rgba(255,255,255,0.1);
 		padding: 0.2em 0.7em;
@@ -178,8 +183,25 @@
 	}
 
 	a.next {
-		float: right;
+		margin-left: auto;
 		text-decoration: none;
+	}
+
+	.improve-chapter {
+		text-align: center;
+		padding: 1em 0 .5em 0;
+	}
+
+	.improve-chapter > a {
+		font-size: 0.6em;
+		text-decoration: none;
+		border-radius: 0.7em;
+		background: rgba(255,255,255,0.1);
+		padding: 0.2em 0.7em;
+	}
+
+	.improve-chapter > a:hover {
+		background: rgba(255,255,255,0.2);
 	}
 </style>
 
@@ -204,6 +226,10 @@
 				{#if selected.next}
 					<a class="next" href="tutorial/{selected.next.slug}">Next <Icon name="arrow-right" /></a>
 				{/if}
+			</div>
+
+			<div class="improve-chapter">
+				<a href={improve_link}>Improve this Tutorial</a>
 			</div>
 		</div>
 	</div>
