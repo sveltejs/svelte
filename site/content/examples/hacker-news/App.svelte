@@ -53,7 +53,7 @@
 <main>
 	{#if item}
 		<Item {item}/>
-	{:elseif page}
+	{:else if page}
 		<List {page}/>
 	{/if}
 </main>

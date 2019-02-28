@@ -87,13 +87,13 @@ You can combine the two blocks above with `{:else}`:
 {/if}
 ```
 
-You can also use `{:elseif ...}`:
+You can also use `{:else if ...}`:
 
 ```html
-<!--{ title: 'If, else and elseif' }-->
+<!--{ title: 'If, else and else if' }-->
 {#if x > 10}
 	<p>{x} is greater than 10</p>
-{:elseif 5 > x}
+{:else if 5 > x}
 	<p>{x} is less than 5</p>
 {:else}
 	<p>{x} is between 5 and 10</p>

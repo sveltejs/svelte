@@ -314,11 +314,11 @@
 
 			{error.message}
 		</p>
-	{:elseif pending}
+	{:else if pending}
 		<div class="pending" on:click={run}>
 			<button class="bg-second white">Click to run</button>
 		</div>
-	{:elseif pendingImports}
+	{:else if pendingImports}
 		<p class="info message">loading {pendingImports} {pendingImports === 1 ? 'dependency' : 'dependencies'} from
 		https://bundle.run</p>
 	{/if}

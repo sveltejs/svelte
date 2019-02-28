@@ -171,7 +171,7 @@
 			{/if}
 		</section>
 	</SplitPane>
-{:elseif embedded}
+{:else if embedded}
 	<CodeMirror
 		mode="javascript"
 		code="{view === 'js' ? js : css}"
