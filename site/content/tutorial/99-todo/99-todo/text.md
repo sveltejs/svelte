@@ -67,9 +67,10 @@ Another one should cover how to set up an editor for syntax highlighting.
 
 ## Bindings
 
-* [ ] Form bindings (input, textarea, select)
+* [ ] Form bindings (input, textarea, select, multiple select)
 * [ ] Dimensions
 * [ ] `this`
+* [ ] shorthand
 
 
 ## Stores
