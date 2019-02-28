@@ -80,7 +80,7 @@
 		margin: 0 calc(var(--side-nav) * -1);
 		box-sizing: border-box;
 		display: grid;
-		grid-template-columns: 400px 1fr;
+		grid-template-columns: 1fr 2fr;
 		grid-auto-rows: 100%;
 	}
 
@@ -113,6 +113,10 @@
 		margin: 3.2rem 0 1.6rem 0;
 		line-height: 1;
 		color: white;
+	}
+
+	.chapter-markup :global(a) {
+		text-decoration: underline;
 	}
 
 	.chapter-markup :global(ul) {
@@ -173,8 +177,9 @@
 		background: rgba(255,255,255,0.2);
 	}
 
-	.next {
+	a.next {
 		float: right;
+		text-decoration: none;
 	}
 </style>
 

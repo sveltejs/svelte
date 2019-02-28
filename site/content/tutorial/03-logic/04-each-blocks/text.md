@@ -15,3 +15,5 @@ If you need to loop over lists of data, use an `each` block:
 > The expression (`cats`, in this case) can be any array or array-like object (i.e. it has a `length` property). You can loop over generic iterables with `each [...iterable]`.
 
 If you prefer, you can use destructuring — `each cats as { id, name }` — and replace `cat.id` and `cat.name` with `id` and `name`.
+
+> In some cases, you will need to use *keyed each blocks*. We'll learn about those [later](tutorial/keyed-each-blocks).

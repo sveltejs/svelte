@@ -27,6 +27,8 @@ Outline (subject to change):
 
 Side-quest: create a 'Svelte for new developers' blog post that assumes no knowledge beyond HTML, CSS and JS (i.e. CLI, Node and npm, degit, build tools)
 
+Another one should cover how to set up an editor for syntax highlighting.
+
 
 ## Reactivity
 
@@ -39,23 +41,28 @@ Side-quest: create a 'Svelte for new developers' blog post that assumes no knowl
 
 * [x] If blocks
 * [x] Else/elseif blocks
-* [ ] Each blocks
-* [ ] Keyed each blocks (maybe? kind of need to cover transitions before we can make this obvious)
+* [x] Each blocks
 * [ ] Await blocks
+
+
+* [ ] Keyed each blocks (maybe? kind of need to cover transitions before we can make this obvious)
 
 
 ## Props
 
-* [ ] `export let foo`
-* [ ] `export let foo = 1`
+* [x] `export let foo`
+* [x] `export let foo = 1`
+
+
 * [ ] `export function foo(){...}`
 
 
 ## Events
 
-* [ ] `createEventDispatcher` and `dispatch`
-* [ ] `on:blah`
-* [ ] DOM event modifiers
+* [x] `on:blah`
+* [x] DOM event modifiers
+* [x] `createEventDispatcher` and `dispatch`
+* [x] shorthand events
 
 
 ## Bindings
@@ -96,6 +103,7 @@ Side-quest: create a 'Svelte for new developers' blog post that assumes no knowl
 * [ ] Custom JS transitions
 * [ ] `in`
 * [ ] `out`
+* [ ] `on:introstart` etc
 
 ## Animations
 
@@ -133,3 +141,12 @@ Side-quest: create a 'Svelte for new developers' blog post that assumes no knowl
 
 * Keyed each blocks
 * Debug tags
+* `context="module"`
+
+
+---
+
+## Bugs etc
+
+* 'Show me' should be greyed out if current state is identical to target state
+* Clicking 'Show me' shouldn't change the file you're looking at
