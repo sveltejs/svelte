@@ -17,7 +17,7 @@
 
 	{#if foo}
 		<p>foo</p>
-	{:elseif bar}
+	{:else if bar}
 		<p>bar</p>
 	{:else}
 		<p>neither foo nor bar</p>
