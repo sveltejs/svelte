@@ -1,4 +1,4 @@
-import { run_all, noop } from './internal';
+import { run_all, noop, get_store_value } from './internal';
 
 export function readable(start, value) {
 	const subscribers = [];
@@ -103,3 +103,5 @@ export function derive(stores, fn) {
 		};
 	});
 }
+
+export { get_store_value as get };
