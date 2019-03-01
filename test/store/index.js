@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derive } from '../../store.js';
+import { readable, writable, derive, get } from '../../store.js';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -170,6 +170,13 @@ describe('store', () => {
 			]);
 
 			unsubscribe();
+		});
+	});
+
+	describe('get', () => {
+		it('gets the current value of a store', () => {
+			const store = readable(() => {}, 42);
+			assert.equal(get(store), 42);
 		});
 	});
 });
