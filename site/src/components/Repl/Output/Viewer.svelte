@@ -159,6 +159,14 @@
 					if (ssr) removeStyles();
 
 					replProxy.eval(`${dom.code}
+						if (window.component) {
+							try {
+								window.component.$destroy();
+							} catch (err) {
+								console.error(err);
+							}
+						}
+
 						document.body.innerHTML = '';
 						window.location.hash = '';
 						window._svelteTransitionManager = null;
