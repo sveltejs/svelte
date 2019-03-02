@@ -69,9 +69,11 @@ Another one should cover how to set up an editor for syntax highlighting.
 
 * [x] Form bindings (input, textarea, select, multiple select)
 * [x] deep/contextual bindings
-* [ ] Dimensions
-* [ ] `this`
+* [x] Dimensions
+* [x] `this`
 * [ ] shorthand
+
+Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 
 ## Stores
