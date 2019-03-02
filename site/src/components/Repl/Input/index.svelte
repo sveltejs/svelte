@@ -7,12 +7,7 @@
 	export let warningCount;
 </script>
 
-<!-- TODO would be nice if events bubbled -->
-<ComponentSelector
-	on:create
-	on:remove
-	on:select
-/>
+<ComponentSelector/>
 
 <ModuleEditor
 	{error}

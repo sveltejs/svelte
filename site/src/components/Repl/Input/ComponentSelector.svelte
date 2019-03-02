@@ -4,7 +4,6 @@
 	import { enter } from '../../../utils/events.js';
 
 	const { components, selected } = getContext('REPL');
-	const dispatch = createEventDispatcher();
 
 	let editing = null;
 
@@ -33,7 +32,18 @@
 
 	function remove(component) {
 		let result = confirm(`Are you sure you want to delete ${component.name}.${component.type}?`);
-		if (result) dispatch('remove');
+
+		if (result) {
+			const index = $components.indexOf(component);
+
+			if (~index) {
+				components.set($components.slice(0, index).concat($components.slice(index + 1)));
+			} else {
+				console.error(`Could not find component! That's... odd`);
+			}
+
+			selected.set($components[index] || $components[$components.length - 1]);
+		}
 	}
 
 	function selectInput(event) {
@@ -183,11 +193,11 @@
 					</div>
 				{:else}
 					{#if component === editing}
-						<span class="input-sizer">{component.name + (/\./.test(component.name) ? '' : `.${component.type}`)}</span>
+						<span class="input-sizer">{editing.name + (/\./.test(editing.name) ? '' : `.${editing.type}`)}</span>
 
 						<input
 							autofocus
-							bind:value={component.name}
+							bind:value={editing.name}
 							on:focus={selectInput}
 							on:blur="{() => closeEdit()}"
 							use:enter="{e => e.target.blur()}"
@@ -211,7 +221,7 @@
 		{/each}
 	</div>
 
-	<button class="add-new" on:click="{addNew}" title="add new component">
+	<button class="add-new" on:click={addNew} title="add new component">
 		<Icon name="plus" />
 	</button>
 </div>

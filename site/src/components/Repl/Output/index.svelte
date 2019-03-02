@@ -18,7 +18,7 @@
 	export let sourceError;
 	export let sourceErrorLoc;
 	export let runtimeError;
-	export let compileOptions;
+	export let compile_options;
 	export let embedded;
 	export let show_props;
 
@@ -194,7 +194,7 @@
 		<section slot="b">
 			<h3>Compiler options</h3>
 
-			<CompilerOptions bind:options={compileOptions}/>
+			<CompilerOptions bind:options={compile_options}/>
 		</section>
 	</SplitPane>
 {/if}

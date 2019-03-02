@@ -59,7 +59,7 @@
 	let sourceErrorLoc;
 	let runtimeErrorLoc;
 
-	let compileOptions = {
+	let compile_options = {
 		generate: 'dom',
 		dev: false,
 		css: false,
@@ -98,23 +98,6 @@
 		};
 	});
 
-	function removeComponent() {
-		if ($selected.name === 'App') {
-			// App.svelte can't be removed
-			$selected.source = '';
-		} else {
-			const index = $components.indexOf($selected);
-
-			if (~index) {
-				components.set($components.slice(0, index).concat($components.slice(index + 1)));
-			} else {
-				console.error(`Could not find component! That's... odd`);
-			}
-
-			selected.set($components[index] || $components[$components.length - 1]);
-		}
-	}
-
 	function compile(component, options) {
 		if (component.type === 'svelte') {
 			workers.compiler.postMessage({
@@ -145,7 +128,7 @@
 		components.update(c => c);
 
 		// recompile selected component
-		compile($selected, compileOptions);
+		compile($selected, compile_options);
 
 		// regenerate bundle (TODO do this in a separate worker?)
 		workers.bundler.postMessage({ type: 'bundle', components: $components });
@@ -177,7 +160,7 @@
 	}
 
 	$: if (workers && $selected) {
-		compile($selected, compileOptions);
+		compile($selected, compile_options);
 	}
 </script>
 
@@ -292,14 +275,13 @@
 					error={sourceError}
 					errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
 					{warningCount}
-					on:remove={removeComponent}
 					on:change="{handleChange}"
 				/>
 			</section>
 
 			<section slot=b style='height: 100%;'>
 				<Output
-					bind:compileOptions
+					bind:compile_options
 					{version}
 					{js}
 					{css}
