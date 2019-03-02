@@ -11,7 +11,7 @@
 	export let version = 'beta'; // TODO change this to latest when the time comes
 	export let app;
 	export let embedded = false;
-	export let orientation = 'auto';
+	export let orientation = 'columns';
 	export let show_props = true;
 
 	export function toJSON() {
@@ -262,7 +262,7 @@
 	}
 </style>
 
-<div class="container" bind:clientWidth={width}>
+<div class="container" class:orientation bind:clientWidth={width}>
 	<div class="repl-inner" class:offset="{show_output}">
 		<SplitPane
 			type="{orientation === 'rows' ? 'vertical' : 'horizontal'}"

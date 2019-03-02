@@ -170,7 +170,6 @@
 	<CodeMirror
 		mode="javascript"
 		code="{view === 'js' ? js : css}"
-		error={sourceError}
 		errorLoc={sourceErrorLoc}
 		readonly
 	/>
@@ -180,7 +179,6 @@
 			<CodeMirror
 				mode="javascript"
 				code="{view === 'js' ? js : css}"
-				error={sourceError}
 				errorLoc={sourceErrorLoc}
 				readonly
 			/>

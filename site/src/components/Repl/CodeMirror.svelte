@@ -20,9 +20,7 @@
 	export let mode;
 	export let code;
 	export let readonly = false;
-	export let error = null;
 	export let errorLoc = null;
-	export let warningCount = 0;
 	export let flex = false;
 	export let lineNumbers = true;
 	export let tab = true;
@@ -200,8 +198,7 @@
 		background-color: rgba(200, 0, 0, .05);
 	}
 
-	.loading,
-	.error {
+	.loading {
 		text-align: center;
 		color: #999;
 		font-weight: 400;
@@ -245,13 +242,6 @@
 	}
 </style>
 
-<!--
------------------------------------------------
-	syntax-highlighting [prism]
-	NOTE
-	- just started to transfer colors from prism to codemirror
------------------------------------------------
--->
 <div class='codemirror-container' class:flex bind:offsetWidth={w} bind:offsetHeight={h}>
 	<textarea
 		tabindex='2'
@@ -259,29 +249,6 @@
 		readonly
 		value={code}
 	></textarea>
-
-	{#if error}
-		<p class='error message'>
-			{#if error.loc}
-				<strong>
-					{#if error.filename}
-						<span
-							class='filename'
-							on:click="{() => navigate({ filename: error.filename })}"
-						>{error.filename}</span>
-					{/if}
-
-					({error.loc.line}:{error.loc.column})
-				</strong>
-			{/if}
-
-			{error.message}
-		</p>
-	{:else if warningCount > 0}
-		<p class='warning message'>
-			Compiled, but with {warningCount} {warningCount === 1 ? 'warning' : 'warnings'} — check the console for details
-		</p>
-	{/if}
 
 	{#if !CodeMirror}
 		<pre style="position: absolute; left: 0; top: 0"
