@@ -4,13 +4,9 @@
 
 	export let error;
 	export let errorLoc;
-	export let warningCount;
+	export let warnings; // TODO use context
 </script>
 
 <ComponentSelector/>
 
-<ModuleEditor
-	{error}
-	{errorLoc}
-	{warningCount}
-/>
+<ModuleEditor {error} {errorLoc} {warnings}/>

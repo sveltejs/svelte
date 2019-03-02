@@ -37,13 +37,15 @@
 		values,
 		selected,
 
-		navigate: filename => {
-			const name = filename.replace(/\.svelte$/, '');
+		navigate: item => {
+			const match = /^(.+)\.(\w+)$/.exec(item.filename);
+			if (!match) return; // ???
 
-			console.error(`TODO navigate`);
+			const [, name, type] = match;
+			const component = $components.find(c => c.name === name && c.type === type);
+			selected.set(component);
 
-			// if (selected.name === name) return;
-			// selected = components.find(c => c.name === name);
+			// TODO select the line/column in question
 		},
 
 		handle_change: event => {
@@ -80,7 +82,7 @@
 	let ssr;
 	let sourceError = null;
 	let runtimeError = null;
-	let warningCount = 0;
+	let warnings = [];
 	let js = '';
 	let css = '';
 	let uid = 0;
@@ -110,13 +112,13 @@
 		workers.compiler.postMessage({ type: 'init', version });
 		workers.compiler.onmessage = event => {
 			js = event.data.js;
-			css = event.data.css || `/* Add a <style> tag to see compiled CSS */`;
+			css = event.data.css || `/* Add a <sty` + `le> tag to see compiled CSS */`;
 			if (event.data.props) props = event.data.props;
 		};
 
 		workers.bundler.postMessage({ type: 'init', version });
 		workers.bundler.onmessage = event => {
-			({ bundle, dom, ssr, warningCount, error: sourceError } = event.data);
+			({ bundle, dom, ssr, warnings, error: sourceError } = event.data);
 			if (sourceError) console.error(sourceError);
 			runtimeError = null;
 		};
@@ -274,7 +276,7 @@
 				<Input
 					error={sourceError}
 					errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
-					{warningCount}
+					{warnings}
 				/>
 			</section>
 

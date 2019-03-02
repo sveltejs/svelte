@@ -6,7 +6,21 @@
 
 	export let error;
 	export let errorLoc;
-	export let warningCount = 0;
+	export let warnings;
+
+	$: message = warning => {
+		let str = warning.message;
+
+		let loc = [];
+
+		if (warning.filename && warning.filename !== `${$selected.name}.${$selected.type}`) {
+			loc.push(warning.filename);
+		}
+
+		if (warning.start) loc.push(warning.start.line, warning.start.column);
+
+		return str + (loc.length ? ` (${loc.join(':')})` : ``);
+	};
 </script>
 
 <style>
@@ -29,6 +43,10 @@
 		font: 400 1.2rem/1.7 var(--font);
 		margin: 0;
 		border-top: 1px solid white;
+	}
+
+	.navigable {
+		cursor: pointer;
 	}
 
 	.info p::before {
@@ -78,9 +96,19 @@
 
 	<div class="info">
 		{#if error}
-			<p class="error" on:click="{() => navigate(error)}">{error.message}</p>
-		{:else if warningCount > 0}
-			<p class="warning">Compiled, but with {warningCount} {warningCount === 1 ? 'warning' : 'warnings'} — check the console for details</p>
+			<p
+				class="error"
+				class:navigable={error.filename}
+				on:click="{() => navigate(error)}"
+			>{error.message}</p>
+		{:else if warnings.length > 0}
+			{#each warnings as warning}
+				<p
+					class="warning"
+					class:navigable={warning.filename}
+					on:click="{() => navigate(warning)}"
+				>{message(warning)}</p>
+			{/each}
 		{/if}
 	</div>
 </div>

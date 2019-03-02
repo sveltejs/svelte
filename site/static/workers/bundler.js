@@ -38,8 +38,8 @@ const commonCompilerOptions = {
 };
 
 let cached = {
-	dom: null,
-	ssr: null
+	dom: {},
+	ssr: {}
 };
 
 let currentToken;
@@ -63,9 +63,9 @@ function fetch_if_uncached(url) {
 async function getBundle(mode, cache, lookup) {
 	let bundle;
 	let error;
-	let warningCount = 0;
+	const all_warnings = [];
 
-	const info = {};
+	const new_cache = {};
 
 	try {
 		bundle = await rollup.rollup({
@@ -99,33 +99,40 @@ async function getBundle(mode, cache, lookup) {
 
 					const name = id.replace(/^\.\//, '').replace(/\.svelte$/, '');
 
-					const { js, stats, warnings } = svelte.compile(code, Object.assign({
-						generate: mode,
-						format: 'esm',
-						name: name,
-						filename: name + '.svelte'
-					}, commonCompilerOptions));
+					const result = cache[id] && cache[id].code === code
+						? cache[id].result
+						: svelte.compile(code, Object.assign({
+							generate: mode,
+							format: 'esm',
+							name: name,
+							filename: name + '.svelte'
+						}, commonCompilerOptions));
 
-					(warnings || stats.warnings).forEach(warning => { // TODO remove stats post-launch
-						console.warn(warning.message);
-						console.log(warning.frame);
-						warningCount += 1;
+					new_cache[id] = { code, result };
+
+					(result.warnings || result.stats.warnings).forEach(warning => { // TODO remove stats post-launch
+						all_warnings.push({
+							message: warning.message,
+							filename: warning.filename,
+							start: warning.start,
+							end: warning.end
+						});
 					});
 
-					return js;
+					return result.js;
 				}
 			}],
 			onwarn(warning) {
-				console.warn(warning);
-				warningCount += 1;
-			},
-			cache
+				all_warnings.push({
+					message: warning.message
+				});
+			}
 		});
 	} catch (error) {
-		return { error, bundle: null, info: null, warningCount: null }
+		return { error, bundle: null, cache: new_cache, warnings: all_warnings }
 	}
 
-	return { bundle, info, error: null, warningCount };
+	return { bundle, cache: new_cache, error: null, warnings: all_warnings };
 }
 
 async function bundle(components) {
@@ -154,7 +161,7 @@ async function bundle(components) {
 			return;
 		}
 
-		cached.dom = dom.bundle;
+		cached.dom = dom.cache;
 
 		let uid = 1;
 		const importMap = new Map();
@@ -172,12 +179,12 @@ async function bundle(components) {
 
 		if (token !== currentToken) return;
 
-		const ssr = dom.info.usesHooks
+		const ssr = false // TODO how can we do SSR?
 			? await getBundle('ssr', cached.ssr, lookup)
 			: null;
 
 		if (ssr) {
-			cached.ssr = ssr.bundle;
+			cached.ssr = ssr.cache;
 			if (ssr.error) {
 				throw ssr.error;
 			}
@@ -201,7 +208,7 @@ async function bundle(components) {
 			},
 			dom: domResult,
 			ssr: ssrResult,
-			warningCount: dom.warningCount,
+			warnings: dom.warnings,
 			error: null
 		};
 	} catch (err) {
@@ -212,7 +219,7 @@ async function bundle(components) {
 			bundle: null,
 			dom: null,
 			ssr: null,
-			warningCount: dom.warningCount,
+			warnings: dom.warnings,
 			error: Object.assign({}, e, {
 				message: e.message,
 				stack: e.stack
