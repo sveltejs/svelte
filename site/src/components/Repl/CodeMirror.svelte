@@ -12,9 +12,10 @@
 </script>
 
 <script>
-	import { onMount, beforeUpdate, createEventDispatcher } from 'svelte';
+	import { onMount, beforeUpdate, createEventDispatcher, getContext } from 'svelte';
 
 	const dispatch = createEventDispatcher();
+	const { navigate } = getContext('REPL');
 
 	export let mode;
 	export let code;
@@ -266,7 +267,7 @@
 					{#if error.filename}
 						<span
 							class='filename'
-							on:click="{() => dispatch('navigate', { filename: error.filename })}"
+							on:click="{() => navigate({ filename: error.filename })}"
 						>{error.filename}</span>
 					{/if}
 

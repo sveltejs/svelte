@@ -5,7 +5,7 @@
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
-	const { values } = getContext('REPL');
+	const { values, navigate } = getContext('REPL');
 
 	export let bundle;
 	export let dom;
@@ -313,7 +313,7 @@
 			{#if error.loc}
 			<strong>
 				{#if error.filename}
-					<span class="filename" on:click="{() => dispatch('navigate', { filename: error.filename })}">{error.filename}</span>
+					<span class="filename" on:click="{() => navigate({ filename: error.filename })}">{error.filename}</span>
 				{/if}
 
 				({error.loc.line}:{error.loc.column})

@@ -35,7 +35,16 @@
 	setContext('REPL', {
 		components,
 		values,
-		selected
+		selected,
+
+		navigate: filename => {
+			const name = filename.replace(/\.svelte$/, '');
+
+			console.error(`TODO navigate`);
+
+			// if (selected.name === name) return;
+			// selected = components.find(c => c.name === name);
+		}
 	});
 
 	$: {
@@ -132,15 +141,6 @@
 
 		// regenerate bundle (TODO do this in a separate worker?)
 		workers.bundler.postMessage({ type: 'bundle', components: $components });
-	}
-
-	function navigate(filename) {
-		const name = filename.replace(/\.svelte$/, '');
-
-		console.error(`TODO navigate`);
-
-		// if (selected.name === name) return;
-		// selected = components.find(c => c.name === name);
 	}
 
 	$: if (sourceError && $selected) {

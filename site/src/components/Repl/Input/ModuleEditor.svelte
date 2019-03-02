@@ -34,7 +34,6 @@
 			{errorLoc}
 			{warningCount}
 			on:change
-			on:navigate
 		/>
 	{/if}
 </div>

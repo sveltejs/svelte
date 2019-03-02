@@ -44,10 +44,6 @@
 		viewer.setProp(prop, value);
 		updateValues(prop, value);
 	}
-
-	function navigate(event) {
-		// TODO handle navigation from error messages
-	}
 </script>
 
 <style>
@@ -134,7 +130,6 @@
 					{props}
 					{sourceError}
 					bind:error={runtimeError}
-					on:navigate={navigate}
 					on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
 				/>
 			{:else}
