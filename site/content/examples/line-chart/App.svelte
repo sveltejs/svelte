@@ -11,13 +11,6 @@
 	let width = 500;
 	let height = 200;
 
-	let xScale;
-	let yScale;
-	let minX;
-	let maxX;
-	let path;
-	let area;
-
 	$: xScale = scaleLinear()
 		.domain([minX, maxX])
 		.range([padding.left, width - padding.right]);
