@@ -23,20 +23,26 @@
 		version; // workaround
 
 		return {
-			imports: bundle && bundle.imports || [],
+			imports,
 			components: $components,
 			values: $values
 		};
 	}
 
+	export function update(app) {
+		// TODO
+	}
+
 	const components = writable([]);
 	const values = writable({});
 	const selected = writable(null);
+	const bundle = writable(null);
 
 	setContext('REPL', {
 		components,
 		values,
 		selected,
+		bundle,
 
 		navigate: item => {
 			const match = /^(.+)\.(\w+)$/.exec(item.filename);
@@ -78,7 +84,8 @@
 
 	let workers;
 
-	let bundle = null;
+	let imports = null;
+	let import_map = null;
 	let dom;
 	let ssr;
 	let sourceError = null;
@@ -119,7 +126,8 @@
 
 		workers.bundler.postMessage({ type: 'init', version });
 		workers.bundler.onmessage = event => {
-			({ bundle, dom, ssr, warnings, error: sourceError } = event.data);
+			bundle.set(event.data);
+			({ imports, import_map, dom, ssr, warnings, error: sourceError } = event.data);
 			if (sourceError) console.error(sourceError);
 			runtimeError = null;
 		};
@@ -284,11 +292,7 @@
 					{version}
 					{js}
 					{css}
-					{bundle}
-					{ssr}
-					{dom}
 					{props}
-					{sourceError}
 					{runtimeError}
 					{embedded}
 					{show_props}

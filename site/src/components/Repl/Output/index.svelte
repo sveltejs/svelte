@@ -6,16 +6,11 @@
 	import PropEditor from './PropEditor.svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	const { values } = getContext('REPL');
+	const { bundle, values } = getContext('REPL');
 
-	export let bundle;
 	export let js;
 	export let css;
-	export let dom;
-	export let ssr;
 	export let props;
-	export let json5;
-	export let sourceError;
 	export let sourceErrorLoc;
 	export let runtimeError;
 	export let compile_options;
@@ -121,14 +116,10 @@
 {#if view === 'result'}
 	<SplitPane type="vertical" pos={67} fixed={!show_props} fixed_pos={100}>
 		<div slot="a">
-			{#if bundle}
+			{#if $bundle}
 				<Viewer
 					bind:this={viewer}
-					{bundle}
-					{dom}
-					{ssr}
 					{props}
-					{sourceError}
 					bind:error={runtimeError}
 					on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
 				/>

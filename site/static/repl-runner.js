@@ -14,8 +14,8 @@ function fetchImport(id) {
 	});
 }
 
-function fetchImports(bundle, progressFunc) {
-	const missingImports = bundle.imports.filter(x => !importCache[x]);
+function fetchImports(imports, progressFunc) {
+	const missingImports = imports.filter(x => !importCache[x]);
 	let pendingImports = missingImports.length;
 
 	if (missingImports.length) {
@@ -124,14 +124,14 @@ function handleMessage(ev) {
 
 
 	if (action == "fetch_imports") {
-		let { bundle } = ev.data.args;
-		fetchImports(bundle, (remaining) => {
+		let { imports, import_map } = ev.data.args;
+		fetchImports(imports, (remaining) => {
 			sendMessage({action: "fetch_progress", args: { remaining }});
 		})
 		.then(() => {
-			bundle.imports.forEach(x=> {
+			imports.forEach(x=> {
 				const module = importCache[x];
-				const name = bundle.importMap.get(x);
+				const name = import_map.get(x);
 				window[name] = module;
 			});
 			sendOk();

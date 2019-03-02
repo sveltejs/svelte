@@ -147,6 +147,7 @@ async function bundle(components) {
 		lookup[path] = component;
 	});
 
+	const import_map = new Map();
 	let dom;
 	let error;
 
@@ -164,14 +165,13 @@ async function bundle(components) {
 		cached.dom = dom.cache;
 
 		let uid = 1;
-		const importMap = new Map();
 
-		const domResult = await dom.bundle.generate({
+		const dom_result = await dom.bundle.generate({
 			format: 'iife',
 			name: 'SvelteComponent',
 			globals: id => {
 				const name = `import_${uid++}`;
-				importMap.set(id, name);
+				import_map.set(id, name);
 				return name;
 			},
 			sourcemap: true
@@ -192,22 +192,20 @@ async function bundle(components) {
 
 		if (token !== currentToken) return;
 
-		const ssrResult = ssr
+		const ssr_result = ssr
 			? await ssr.bundle.generate({
 				format: 'iife',
 				name: 'SvelteComponent',
-				globals: id => importMap.get(id),
+				globals: id => import_map.get(id),
 				sourcemap: true
 			})
 			: null;
 
 		return {
-			bundle: {
-				imports: dom.bundle.imports,
-				importMap
-			},
-			dom: domResult,
-			ssr: ssrResult,
+			imports: dom.bundle.imports,
+			import_map,
+			dom: dom_result,
+			ssr: ssr_result,
 			warnings: dom.warnings,
 			error: null
 		};
@@ -216,7 +214,8 @@ async function bundle(components) {
 		delete e.toString;
 
 		return {
-			bundle: null,
+			imports: [],
+			import_map,
 			dom: null,
 			ssr: null,
 			warnings: dom.warnings,

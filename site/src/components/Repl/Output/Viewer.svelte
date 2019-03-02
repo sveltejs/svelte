@@ -5,14 +5,10 @@
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
-	const { values, navigate } = getContext('REPL');
+	const { bundle, values, navigate } = getContext('REPL');
 
-	export let bundle;
-	export let dom;
-	export let ssr;
 	export let props;
-	export let sourceError;
-	export let error;
+	export let error; // TODO should this be exposed as a prop?
 
 	export function setProp(prop, value) {
 		if (!replProxy) return;
@@ -21,12 +17,11 @@
 
 	let hasComponent = false;
 
-	const refs = {};
+	let iframe;
 	let pendingImports = 0;
 	let pending = false;
 
 	let replProxy = null;
-
 
 	const namespaceSpecifier = /\*\s+as\s+(\w+)/;
 	const namedSpecifiers = /\{(.+)\}/;
@@ -73,10 +68,9 @@
 		}
 	});
 	onMount(() => {
-		replProxy = new ReplProxy(refs.child);
+		replProxy = new ReplProxy(iframe);
 
-		refs.child.addEventListener('load', () => {
-
+		iframe.addEventListener('load', () => {
 			replProxy.onPropUpdate = (prop, value) => {
 				dispatch('binding', { prop, value });
 				values.update(values => Object.assign({}, values, {
@@ -96,7 +90,7 @@
 			let toDestroy = null;
 
 			const init = () => {
-				if (sourceError) return;
+				if ($bundle.error) return;
 
 				const removeStyles = () => {
 					replProxy.eval(`
@@ -121,7 +115,7 @@
 						toDestroy = null;
 					}
 
-					if (ssr) { // this only gets generated if component uses lifecycle hooks
+					if ($bundle.ssr) { // this only gets generated if component uses lifecycle hooks
 						pending = true;
 						createHtml();
 					} else {
@@ -131,7 +125,7 @@
 				}
 
 				const createHtml = () => {
-					replProxy.eval(`${ssr.code}
+					replProxy.eval(`${$bundle.ssr.code}
 						var rendered = SvelteComponent.render(${JSON.stringify($values)});
 
 						if (rendered.css.code) {
@@ -144,7 +138,7 @@
 						document.body.innerHTML = rendered.html;
 					`)
 					.catch( e => {
-						const loc = getLocationFromStack(e.stack, ssr.map);
+						const loc = getLocationFromStack(e.stack, $bundle.ssr.map);
 						if (loc) {
 							e.filename = loc.source;
 							e.loc = { line: loc.line, column: loc.column };
@@ -156,9 +150,9 @@
 
 				const createComponent = () => {
 					// remove leftover styles from SSR renderer
-					if (ssr) removeStyles();
+					if ($bundle.ssr) removeStyles();
 
-					replProxy.eval(`${dom.code}
+					replProxy.eval(`${$bundle.dom.code}
 						if (window.component) {
 							try {
 								window.component.$destroy();
@@ -183,7 +177,7 @@
 						// TODO show in UI
 						hasComponent = false;
 
-						const loc = getLocationFromStack(e.stack, dom.map);
+						const loc = getLocationFromStack(e.stack, $bundle.dom.map);
 						if (loc) {
 							e.filename = loc.source;
 							e.loc = { line: loc.line, column: loc.column };
@@ -196,7 +190,7 @@
 				// Download the imports (sets them on iframe window when complete)
 			 	{
 					let cancelled = false;
-					promise = replProxy.fetchImports(bundle);
+					promise = replProxy.fetchImports($bundle.imports, $bundle.import_map);
 					promise.cancel = () => { cancelled = true };
 					promise.then(() => {
 							if (cancelled) return;
@@ -219,8 +213,8 @@
 				};
 			}
 
-			bundle_handler = bundle => {
-				if (!bundle) return; // TODO can this ever happen?
+			bundle_handler = $bundle => {
+				if (!$bundle) return; // TODO can this ever happen?
 				if (promise) promise.cancel();
 
 				toDestroy = hasComponent;
@@ -228,8 +222,6 @@
 
 				init();
 			};
-
-
 		});
 	});
 
@@ -238,7 +230,7 @@
 	let bundle_handler = noop;
 	let props_handler = noop;
 
-	$: bundle_handler(bundle);
+	$: bundle_handler($bundle);
 	$: props_handler(props);
 </script>
 
@@ -292,7 +284,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={refs.child} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
