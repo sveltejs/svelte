@@ -44,6 +44,26 @@
 
 			// if (selected.name === name) return;
 			// selected = components.find(c => c.name === name);
+		},
+
+		handle_change: event => {
+			selected.update(component => {
+				// TODO this is a bit hacky — we're relying on mutability
+				// so that updating components works... might be better
+				// if a) components had unique IDs, b) we tracked selected
+				// *index* rather than component, and c) `selected` was
+				// derived from `components` and `index`
+				component.source = event.detail.value;
+				return component;
+			});
+
+			components.update(c => c);
+
+			// recompile selected component
+			compile($selected, compile_options);
+
+			// regenerate bundle (TODO do this in a separate worker?)
+			workers.bundler.postMessage({ type: 'bundle', components: $components });
 		}
 	});
 
@@ -121,26 +141,6 @@
 		} else {
 			js = css = `/* Select a component to see its compiled code */`;
 		}
-	}
-
-	function handleChange(event) {
-		selected.update(component => {
-			// TODO this is a bit hacky — we're relying on mutability
-			// so that updating components works... might be better
-			// if a) components had unique IDs, b) we tracked selected
-			// *index* rather than component, and c) `selected` was
-			// derived from `components` and `index`
-			component.source = event.detail.value;
-			return component;
-		});
-
-		components.update(c => c);
-
-		// recompile selected component
-		compile($selected, compile_options);
-
-		// regenerate bundle (TODO do this in a separate worker?)
-		workers.bundler.postMessage({ type: 'bundle', components: $components });
 	}
 
 	$: if (sourceError && $selected) {
@@ -275,7 +275,6 @@
 					error={sourceError}
 					errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
 					{warningCount}
-					on:change="{handleChange}"
 				/>
 			</section>
 

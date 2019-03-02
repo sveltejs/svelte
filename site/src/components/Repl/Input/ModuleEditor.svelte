@@ -2,7 +2,7 @@
 	import { getContext } from 'svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	const { selected } = getContext('REPL');
+	const { selected, handle_change } = getContext('REPL');
 
 	export let error;
 	export let errorLoc;
@@ -33,7 +33,7 @@
 			{error}
 			{errorLoc}
 			{warningCount}
-			on:change
+			on:change={handle_change}
 		/>
 	{/if}
 </div>

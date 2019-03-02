@@ -13,5 +13,4 @@
 	{error}
 	{errorLoc}
 	{warningCount}
-	on:change
 />
