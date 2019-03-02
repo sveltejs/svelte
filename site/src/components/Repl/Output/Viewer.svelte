@@ -1,5 +1,5 @@
 <script>
-	import { onMount, onDestroy, createEventDispatcher, getContext } from 'svelte';
+	import { onMount, createEventDispatcher, getContext } from 'svelte';
 	import getLocationFromStack from './getLocationFromStack.js';
 	import ReplProxy from './replProxy.js';
 	import { decode } from 'sourcemap-codec';
@@ -23,50 +23,9 @@
 
 	let replProxy = null;
 
-	const namespaceSpecifier = /\*\s+as\s+(\w+)/;
-	const namedSpecifiers = /\{(.+)\}/;
-
-	function parseSpecifiers(specifiers) {
-		specifiers = specifiers.trim();
-
-		let match = namespaceSpecifier.exec(specifiers);
-		if (match) {
-			return {
-				namespace: true,
-				name: match[1]
-			};
-		}
-
-		let names = [];
-
-		specifiers = specifiers.replace(namedSpecifiers, (match, str) => {
-			names = str.split(',').map(name => {
-				const split = name.split('as');
-				const exported = split[0].trim();
-				const local = (split[1] || exported).trim();
-
-				return { local, exported };
-			});
-
-			return '';
-		});
-
-		match = /\w+/.exec(specifiers);
-
-		return {
-			namespace: false,
-			names,
-			default: match ? match[0] : null
-		};
-	}
-
 	let createComponent;
 	let init;
-	onDestroy(() => {
-		if (replProxy) {
-			replProxy.destroy();
-		}
-	});
+
 	onMount(() => {
 		replProxy = new ReplProxy(iframe);
 
@@ -74,7 +33,7 @@
 			replProxy.onPropUpdate = (prop, value) => {
 				dispatch('binding', { prop, value });
 				values.update(values => Object.assign({}, values, {
-						[prop]: value
+					[prop]: value
 				}));
 			};
 
@@ -223,6 +182,8 @@
 				init();
 			};
 		});
+
+		return () => replProxy.destroy();
 	});
 
 	function noop(){}
