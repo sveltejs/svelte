@@ -26,7 +26,9 @@ function get_sections() {
 
 						return {
 							slug,
-							title: metadata.title
+							title: metadata.title,
+							section_dir: dir,
+							chapter_dir: tutorial,
 						};
 					})
 			}
