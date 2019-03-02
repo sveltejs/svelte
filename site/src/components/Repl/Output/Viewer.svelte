@@ -12,188 +12,94 @@
 	export let error; // TODO should this be exposed as a prop?
 
 	export function setProp(prop, value) {
-		if (!replProxy) return;
-		replProxy.setProp(prop, value);
+		if (!proxy) return;
+		proxy.setProp(prop, value);
 	}
 
-	let hasComponent = false;
-
 	let iframe;
-	let pendingImports = 0;
+	let pending_imports = 0;
 	let pending = false;
 
-	let replProxy = null;
+	let proxy = null;
 
-	let createComponent;
-	let init;
+	let ready = false;
 
 	onMount(() => {
-		replProxy = new ReplProxy(iframe);
-
-		iframe.addEventListener('load', () => {
-			replProxy.onPropUpdate = (prop, value) => {
+		proxy = new ReplProxy(iframe, {
+			onPropUpdate: (prop, value) => {
 				dispatch('binding', { prop, value });
 				values.update(values => Object.assign({}, values, {
 					[prop]: value
 				}));
-			};
+			},
 
-			replProxy.onFetchProgress = (progress) => {
-				pendingImports = progress
+			onFetchProgress: progress => {
+				pending_imports = progress;
 			}
-
-			replProxy.handleLinks();
-
-			let promise = null;
-			let updating = false;
-
-			let toDestroy = null;
-
-			const init = () => {
-				if ($bundle.error) return;
-
-				const removeStyles = () => {
-					replProxy.eval(`
-						const styles = document.querySelectorAll('style.svelte');
-						let i = styles.length;
-						while (i--) styles[i].parentNode.removeChild(styles[i]);
-					`)
-				};
-
-				const destroyComponent = () => {
-					replProxy.eval(`if (window.component)
-										 window.component.\$destroy();
-									window.component = null`);
-				};
-
-				const ready = () => {
-					error = null;
-
-					if (toDestroy) {
-						removeStyles();
-						destroyComponent();
-						toDestroy = null;
-					}
-
-					if ($bundle.ssr) { // this only gets generated if component uses lifecycle hooks
-						pending = true;
-						createHtml();
-					} else {
-						pending = false;
-						createComponent();
-					}
-				}
-
-				const createHtml = () => {
-					replProxy.eval(`${$bundle.ssr.code}
-						var rendered = SvelteComponent.render(${JSON.stringify($values)});
-
-						if (rendered.css.code) {
-							var style = document.createElement('style');
-							style.className = 'svelte';
-							style.textContent = rendered.css.code;
-							document.head.appendChild(style);
-						}
-
-						document.body.innerHTML = rendered.html;
-					`)
-					.catch( e => {
-						const loc = getLocationFromStack(e.stack, $bundle.ssr.map);
-						if (loc) {
-							e.filename = loc.source;
-							e.start = { line: loc.line, column: loc.column };
-						}
-
-						error = e;
-					});
-				};
-
-				const createComponent = () => {
-					// remove leftover styles from SSR renderer
-					if ($bundle.ssr) removeStyles();
-
-					replProxy.eval(`${$bundle.dom.code}
-						if (window.component) {
-							try {
-								window.component.$destroy();
-							} catch (err) {
-								console.error(err);
-							}
-						}
-
-						document.body.innerHTML = '';
-						window.location.hash = '';
-						window._svelteTransitionManager = null;
-
-						window.component = new SvelteComponent({
-							target: document.body,
-							props: ${JSON.stringify($values)}
-						});
-					`)
-					.then(()=> {
-						replProxy.bindProps(props);
-					})
-					.catch(e => {
-						// TODO show in UI
-						hasComponent = false;
-
-						const loc = getLocationFromStack(e.stack, $bundle.dom.map);
-						if (loc) {
-							e.filename = loc.source;
-							e.loc = { line: loc.line, column: loc.column };
-						}
-
-						error = e;
-					});
-				};
-
-				// Download the imports (sets them on iframe window when complete)
-			 	{
-					let cancelled = false;
-					promise = replProxy.fetchImports($bundle.imports, $bundle.import_map);
-					promise.cancel = () => { cancelled = true };
-					promise.then(() => {
-							if (cancelled) return;
-							ready()
-						}).catch(e => {
-							if (cancelled) return;
-							error = e;
-						});
-				}
-
-				run = () => {
-					pending = false;
-
-					// TODO do we need to clear out SSR HTML?
-					createComponent();
-					props_handler = props => {
-						replProxy.bindProps(props)
-					};
-					replProxy.bindProps(props);
-				};
-			}
-
-			bundle_handler = $bundle => {
-				if (!$bundle) return; // TODO can this ever happen?
-				if (promise) promise.cancel();
-
-				toDestroy = hasComponent;
-				hasComponent = false;
-
-				init();
-			};
 		});
 
-		return () => replProxy.destroy();
+		iframe.addEventListener('load', () => {
+			proxy.handleLinks();
+			ready = true;
+		});
+
+		return () => {
+			proxy.eval(`if (window.component) window.component.\$destroy();`)
+			proxy.destroy();
+		}
 	});
 
-	function noop(){}
-	let run = noop;
-	let bundle_handler = noop;
-	let props_handler = noop;
+	let current_token;
 
-	$: bundle_handler($bundle);
-	$: props_handler(props);
+	async function apply_bundle($bundle) {
+		if (!$bundle || $bundle.error) return;
+
+		const token = current_token = {};
+
+		try {
+			await proxy.fetchImports($bundle.imports, $bundle.import_map);
+			if (token !== current_token) return;
+
+			await proxy.eval(`
+				const styles = document.querySelectorAll('style.svelte');
+				let i = styles.length;
+				while (i--) styles[i].parentNode.removeChild(styles[i]);
+			`)
+
+			await proxy.eval(`${$bundle.dom.code}
+				if (window.component) {
+					try {
+						window.component.$destroy();
+					} catch (err) {
+						console.error(err);
+					}
+				}
+
+				document.body.innerHTML = '';
+				window.location.hash = '';
+				window._svelteTransitionManager = null;
+
+				window.component = new SvelteComponent({
+					target: document.body,
+					props: ${JSON.stringify($values)}
+				});
+			`);
+
+			await proxy.bindProps(props);
+		} catch (e) {
+			const loc = getLocationFromStack(e.stack, $bundle.dom.map);
+			if (loc) {
+				e.filename = loc.source;
+				e.loc = { line: loc.line, column: loc.column };
+			}
+
+			console.error(e);
+
+			error = e;
+		}
+	}
+
+	$: if (ready) apply_bundle($bundle);
 </script>
 
 <style>
@@ -245,7 +151,7 @@
 </style>
 
 <div class="iframe-container">
-	<iframe title="Result" bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pendingImports ? 'greyed-out' : ''}" srcdoc='
+	<iframe title="Result" bind:this={iframe} sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals" class="{error || pending || pending_imports ? 'greyed-out' : ''}" srcdoc='
 		<!doctype html>
 		<html>
 			<head>
@@ -264,8 +170,8 @@
 			<Message kind="error" details={error}/>
 		{:else if !$bundle}
 			<Message kind="info">loading Svelte compiler...</Message>
-		{:else if pendingImports}
-			<Message kind="info">loading {pendingImports} {pendingImports === 1 ? 'dependency' : 'dependencies'} from
+		{:else if pending_imports}
+			<Message kind="info">loading {pending_imports} {pending_imports === 1 ? 'dependency' : 'dependencies'} from
 			https://bundle.run</Message>
 		{/if}
 	</div>

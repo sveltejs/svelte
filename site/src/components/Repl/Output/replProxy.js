@@ -1,10 +1,11 @@
 export default class ReplProxy {
-	constructor(iframe) {
+	constructor(iframe, handlers) {
 		this.iframe = iframe;
+		this.handlers = handlers;
+
 		this.cmdId = 1;
 		this.pendingCmds = new Map();
-		this.onPropUpdate = null;
-		this.onFetchProgress = null;
+
 		this.handle_event = (ev) => this.handleReplMessage(ev);
 		window.addEventListener("message", this.handle_event, false);
 	}
@@ -57,13 +58,11 @@ export default class ReplProxy {
 
 		if (action == "prop_update") {
 			let { prop, value } = ev.data.args;
-			if (this.onPropUpdate)
-				this.onPropUpdate(prop, value)
+			this.handlers.onPropUpdate(prop, value)
 		}
 
 		if (action == "fetch_progress") {
-			if (this.onFetchProgress)
-				this.onFetchProgress(ev.data.args.remaining)
+			this.handlers.onFetchProgress(ev.data.args.remaining)
 		}
 	}
 
