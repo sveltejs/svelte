@@ -4,7 +4,8 @@
 	import * as fleece from 'golden-fleece';
 	import SplitPane from './SplitPane.svelte';
 	import CodeMirror from './CodeMirror.svelte';
-	import Input from './Input/index.svelte';
+	import ComponentSelector from './Input/ComponentSelector.svelte';
+	import ModuleEditor from './Input/ModuleEditor.svelte';
 	import Output from './Output/index.svelte';
 	import InputOutputToggle from './InputOutputToggle.svelte';
 
@@ -273,11 +274,8 @@
 			fixed_pos={50}
 		>
 			<section slot=a>
-				<Input
-					error={sourceError}
-					errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
-					{warnings}
-				/>
+				<ComponentSelector/>
+				<ModuleEditor error={sourceError} errorLoc="{sourceErrorLoc || runtimeErrorLoc}" {warnings}/>
 			</section>
 
 			<section slot=b style='height: 100%;'>
