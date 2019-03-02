@@ -159,6 +159,7 @@
 		height: 100%;
 		border: none;
 		line-height: 1.5;
+		overflow: hidden;
 	}
 
 	.codemirror-container :global(.CodeMirror) {
@@ -221,7 +222,7 @@
 		top: 0;
 		left: 0;
 		border: none;
-		padding: 4px 4px 4px 57px;
+		padding: 4px 4px 4px 60px;
 		resize: none;
 		font-family: var(--font-mono);
 		font-size: 1.3rem;
