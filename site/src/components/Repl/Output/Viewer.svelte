@@ -1,7 +1,7 @@
 <script>
 	import { onMount, createEventDispatcher, getContext } from 'svelte';
 	import getLocationFromStack from './getLocationFromStack.js';
-	import ReplProxy from './replProxy.js';
+	import ReplProxy from './ReplProxy.js';
 	import Message from '../Message.svelte';
 	import { decode } from 'sourcemap-codec';
 
