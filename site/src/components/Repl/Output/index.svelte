@@ -116,17 +116,12 @@
 {#if view === 'result'}
 	<SplitPane type="vertical" pos={67} fixed={!show_props} fixed_pos={100}>
 		<div slot="a">
-			{#if $bundle}
-				<Viewer
-					bind:this={viewer}
-					{props}
-					bind:error={runtimeError}
-					on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
-				/>
-			{:else}
-				<!-- TODO componentise this -->
-				<p class="loading message">loading Svelte compiler...</p>
-			{/if}
+			<Viewer
+				bind:this={viewer}
+				{props}
+				bind:error={runtimeError}
+				on:binding="{e => setPropFromViewer(e.detail.prop, e.detail.value)}"
+			/>
 		</div>
 
 		<section slot="b">

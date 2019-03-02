@@ -207,48 +207,6 @@
 		height: 100%;
 	}
 
-	.repl-inner :global(.message) {
-		position: relative;
-		border-radius: var(--border-r);
-		margin: 0;
-		padding: 1.2rem 1.6rem 1.2rem 4.4rem;
-		vertical-align: middle;
-		font: 400 1.2rem/1.7 var(--font);
-		color: white;
-	}
-
-	.repl-inner :global(.message::before) {
-		content: '!';
-		position: absolute;
-		left: 1.2rem;
-		top: 1.1rem;
-		width: 1rem;
-		height: 1rem;
-		text-align: center;
-		line-height: 1;
-		padding: .4rem;
-		border-radius: 50%;
-		color: white;
-		border: .2rem solid white;
-	}
-
-	.repl-inner :global(.error.message) {
-		background-color: #da106e;
-	}
-
-	.repl-inner :global(.warning.message) {
-		background-color: #e47e0a;
-	}
-
-	.repl-inner :global(.info.message) {
-		background-color: var(--second);
-		animation: fade-in .4s .2s both;
-	}
-
-	.repl-inner :global(.error) :global(.filename) {
-		cursor: pointer;
-	}
-
 	.offset {
 		transform: translate(-50%,0);
 	}

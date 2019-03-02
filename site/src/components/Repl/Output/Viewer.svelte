@@ -2,6 +2,7 @@
 	import { onMount, createEventDispatcher, getContext } from 'svelte';
 	import getLocationFromStack from './getLocationFromStack.js';
 	import ReplProxy from './replProxy.js';
+	import Message from '../Message.svelte';
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
@@ -100,7 +101,7 @@
 						const loc = getLocationFromStack(e.stack, $bundle.ssr.map);
 						if (loc) {
 							e.filename = loc.source;
-							e.loc = { line: loc.line, column: loc.column };
+							e.start = { line: loc.line, column: loc.column };
 						}
 
 						error = e;
@@ -197,8 +198,10 @@
 
 <style>
 	.iframe-container {
+		position: absolute;
 		background-color: white;
 		border: none;
+		width: 100%;
 		height: 100%;
 	}
 
@@ -217,11 +220,8 @@
 
 	.overlay {
 		position: absolute;
-		top: 0;
+		bottom: 0;
 		width: 100%;
-		height: 100%;
-		padding: 1em;
-		pointer-events: none;
 	}
 
 	.overlay p {
@@ -258,29 +258,15 @@
 			</body>
 		</html>
 	'></iframe>
-</div>
 
-<div class="overlay">
-	{#if error}
-		<p class="error message">
-			{#if error.loc}
-			<strong>
-				{#if error.filename}
-					<span class="filename" on:click="{() => navigate({ filename: error.filename })}">{error.filename}</span>
-				{/if}
-
-				({error.loc.line}:{error.loc.column})
-			</strong>
-			{/if}
-
-			{error.message}
-		</p>
-	{:else if pending}
-		<div class="pending" on:click={run}>
-			<button class="bg-second white">Click to run</button>
-		</div>
-	{:else if pendingImports}
-		<p class="info message">loading {pendingImports} {pendingImports === 1 ? 'dependency' : 'dependencies'} from
-		https://bundle.run</p>
-	{/if}
+	<div class="overlay">
+		{#if error}
+			<Message kind="error" details={error}/>
+		{:else if !$bundle}
+			<Message kind="info">loading Svelte compiler...</Message>
+		{:else if pendingImports}
+			<Message kind="info">loading {pendingImports} {pendingImports === 1 ? 'dependency' : 'dependencies'} from
+			https://bundle.run</Message>
+		{/if}
+	</div>
 </div>
