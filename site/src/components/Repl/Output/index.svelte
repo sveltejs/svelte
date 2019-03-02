@@ -1,11 +1,12 @@
 <script>
+	import { getContext } from 'svelte';
 	import SplitPane from '../SplitPane.svelte';
 	import Viewer from './Viewer.svelte';
 	import CompilerOptions from './CompilerOptions.svelte';
 	import PropEditor from './PropEditor.svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	export let values_store;
+	const { values } = getContext('REPL');
 
 	export let bundle;
 	export let js;
@@ -28,7 +29,7 @@
 	let view = 'result';
 
 	function updateValues(prop, value) {
-		values_store.update(v => Object.assign({}, v, {
+		values.update(v => Object.assign({}, v, {
 			[prop]: value
 		}));
 	}
@@ -130,7 +131,6 @@
 					{bundle}
 					{dom}
 					{ssr}
-					{values_store}
 					{props}
 					{sourceError}
 					bind:error={runtimeError}
@@ -155,7 +155,7 @@
 
 								<!-- TODO `bind:this={propEditors[prop]}` — currently fails -->
 								<PropEditor
-									value={$values_store[prop]}
+									value={$values[prop]}
 									on:change="{e => setPropFromEditor(prop, e.detail.value)}"
 								/>
 							{/each}

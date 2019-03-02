@@ -1,7 +1,9 @@
 <script>
+	import { getContext } from 'svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	export let component;
+	const { selected } = getContext('REPL');
+
 	export let error;
 	export let errorLoc;
 	export let warningCount = 0;
@@ -24,10 +26,10 @@
 </style>
 
 <div class="editor-wrapper">
-	{#if component}
+	{#if $selected}
 		<CodeMirror
-			mode="{component.type === 'js' ? 'javascript' : 'handlebars'}"
-			code={component.source}
+			mode="{$selected.type === 'js' ? 'javascript' : 'handlebars'}"
+			code={$selected.source}
 			{error}
 			{errorLoc}
 			{warningCount}

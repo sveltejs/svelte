@@ -1,33 +1,31 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { getContext, createEventDispatcher } from 'svelte';
 	import Icon from '../../Icon.svelte';
 	import { enter } from '../../../utils/events.js';
 
+	const { components, selected } = getContext('REPL');
 	const dispatch = createEventDispatcher();
-
-	export let component_store;
-	export let selected_store;
 
 	let editing = null;
 
 	function selectComponent(component) {
-		if ($selected_store != component) {
+		if ($selected != component) {
 			editing = null;
 		}
 
-		selected_store.set(component);
+		selected.set(component);
 	}
 
 	function editTab(component) {
-		if ($selected_store === component) {
-			editing = $selected_store;
+		if ($selected === component) {
+			editing = $selected;
 		}
 	}
 
 	function closeEdit() {
-		const match = /(.+)\.(svelte|js)$/.exec($selected_store.name);
-		$selected_store.name = match ? match[1] : $selected_store.name;
-		if (match && match[2]) $selected_store.type = match[2];
+		const match = /(.+)\.(svelte|js)$/.exec($selected.name);
+		$selected.name = match ? match[1] : $selected.name;
+		if (match && match[2]) $selected.type = match[2];
 		editing = null;
 
 		components = components; // TODO necessary?
@@ -60,8 +58,8 @@
 			document.getElementById(component.name).scrollIntoView(false);
 		});
 
-		component_store.update(components => components.concat(component));
-		selected_store.set(component);
+		components.update(components => components.concat(component));
+		selected.set(component);
 	}
 </script>
 
@@ -171,10 +169,10 @@
 
 <div class="component-selector">
 	<div class="file-tabs" on:dblclick="{addNew}">
-		{#each $component_store as component}
+		{#each $components as component}
 			<button
 				id={component.name}
-				class:active="{component === $selected_store}"
+				class:active="{component === $selected}"
 				data-name={component.name}
 				on:click="{() => selectComponent(component)}"
 				on:dblclick="{e => e.stopPropagation()}"

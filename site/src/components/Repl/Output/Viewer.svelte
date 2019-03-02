@@ -1,12 +1,12 @@
 <script>
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy, createEventDispatcher, getContext } from 'svelte';
 	import getLocationFromStack from './getLocationFromStack.js';
 	import ReplProxy from './replProxy.js';
 	import { decode } from 'sourcemap-codec';
 
 	const dispatch = createEventDispatcher();
+	const { values } = getContext('REPL');
 
-	export let values_store;
 	export let bundle;
 	export let dom;
 	export let ssr;
@@ -79,7 +79,7 @@
 
 			replProxy.onPropUpdate = (prop, value) => {
 				dispatch('binding', { prop, value });
-				values_store.update(values => Object.assign({}, values, {
+				values.update(values => Object.assign({}, values, {
 						[prop]: value
 				}));
 			};
@@ -132,7 +132,7 @@
 
 				const createHtml = () => {
 					replProxy.eval(`${ssr.code}
-						var rendered = SvelteComponent.render(${JSON.stringify($values_store)});
+						var rendered = SvelteComponent.render(${JSON.stringify($values)});
 
 						if (rendered.css.code) {
 							var style = document.createElement('style');
@@ -173,7 +173,7 @@
 
 						window.component = new SvelteComponent({
 							target: document.body,
-							props: ${JSON.stringify($values_store)}
+							props: ${JSON.stringify($values)}
 						});
 					`)
 					.then(()=> {

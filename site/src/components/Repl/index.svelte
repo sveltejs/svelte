@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import * as fleece from 'golden-fleece';
 	import SplitPane from './SplitPane.svelte';
@@ -16,26 +16,32 @@
 
 	export function toJSON() {
 		// TODO there's a bug here — Svelte hoists this function because
-		// it wrongly things that $component_store is global. Needs to
+		// it wrongly things that $components is global. Needs to
 		// factor in $ variables when determining hoistability
 
 		version; // workaround
 
 		return {
 			imports: bundle && bundle.imports || [],
-			components: $component_store,
-			values: $values_store
+			components: $components,
+			values: $values
 		};
 	}
 
-	let component_store = writable([]);
-	let values_store = writable({});
-	let selected_store = writable(null);
+	const components = writable([]);
+	const values = writable({});
+	const selected = writable(null);
+
+	setContext('REPL', {
+		components,
+		values,
+		selected
+	});
 
 	$: {
-		component_store.set(app.components);
-		values_store.set(app.values);
-		selected_store.set(app.components[0]);
+		components.set(app.components);
+		values.set(app.values);
+		selected.set(app.components[0]);
 	}
 
 	let workers;
@@ -93,23 +99,19 @@
 	});
 
 	function removeComponent() {
-		const selected = $selected_store;
-
-		if (selected.name === 'App') {
+		if ($selected.name === 'App') {
 			// App.svelte can't be removed
-			selected.source = '';
-			// $selected_store.set(selected);
+			$selected.source = '';
 		} else {
-			const components = $component_store;
-			const index = components.indexOf(selected);
+			const index = $components.indexOf($selected);
 
 			if (~index) {
-				component_store.set(components.slice(0, index).concat(components.slice(index + 1)));
+				components.set($components.slice(0, index).concat($components.slice(index + 1)));
 			} else {
 				console.error(`Could not find component! That's... odd`);
 			}
 
-			selected_store.set(components[index] || components[components.length - 1]);
+			selected.set($components[index] || $components[$components.length - 1]);
 		}
 	}
 
@@ -122,7 +124,7 @@
 					name: component.name,
 					filename: `${component.name}.svelte`
 				}, options),
-				entry: component === $component_store[0]
+				entry: component === $components[0]
 			});
 		} else {
 			js = css = `/* Select a component to see its compiled code */`;
@@ -130,9 +132,9 @@
 	}
 
 	function handleChange(event) {
-		selected_store.update(component => {
+		selected.update(component => {
 			// TODO this is a bit hacky — we're relying on mutability
-			// so that updating component_store works... might be better
+			// so that updating components works... might be better
 			// if a) components had unique IDs, b) we tracked selected
 			// *index* rather than component, and c) `selected` was
 			// derived from `components` and `index`
@@ -140,13 +142,13 @@
 			return component;
 		});
 
-		component_store.update(c => c);
+		components.update(c => c);
 
 		// recompile selected component
-		compile($selected_store, compileOptions);
+		compile($selected, compileOptions);
 
 		// regenerate bundle (TODO do this in a separate worker?)
-		workers.bundler.postMessage({ type: 'bundle', components: $component_store });
+		workers.bundler.postMessage({ type: 'bundle', components: $components });
 	}
 
 	function navigate(filename) {
@@ -158,14 +160,14 @@
 		// selected = components.find(c => c.name === name);
 	}
 
-	$: if (sourceError && $selected_store) {
-		sourceErrorLoc = sourceError.filename === `${$selected_store.name}.${$selected_store.type}`
+	$: if (sourceError && $selected) {
+		sourceErrorLoc = sourceError.filename === `${$selected.name}.${$selected.type}`
 			? sourceError.start
 			: null;
 	}
 
-	$: if (runtimeError && $selected_store) {
-		runtimeErrorLoc = runtimeError.filename === `${$selected_store.name}.${$selected_store.type}`
+	$: if (runtimeError && $selected) {
+		runtimeErrorLoc = runtimeError.filename === `${$selected.name}.${$selected.type}`
 			? runtimeError.start
 			: null;
 	}
@@ -174,8 +176,8 @@
 		workers.bundler.postMessage({ type: 'bundle', components: app.components });
 	}
 
-	$: if (workers && $selected_store) {
-		compile($selected_store, compileOptions);
+	$: if (workers && $selected) {
+		compile($selected, compileOptions);
 	}
 </script>
 
@@ -287,9 +289,6 @@
 		>
 			<section slot=a>
 				<Input
-					{component_store}
-					{selected_store}
-					{values_store}
 					error={sourceError}
 					errorLoc="{sourceErrorLoc || runtimeErrorLoc}"
 					{warningCount}
@@ -302,14 +301,12 @@
 				<Output
 					bind:compileOptions
 					{version}
-					{selected_store}
 					{js}
 					{css}
 					{bundle}
 					{ssr}
 					{dom}
 					{props}
-					{values_store}
 					{sourceError}
 					{runtimeError}
 					{embedded}
