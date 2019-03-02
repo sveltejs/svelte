@@ -50,7 +50,7 @@
 	const tutorial_repo_link = 'https://github.com/sveltejs/svelte/tree/restructure-docs/site/content/tutorial';
 
 	$: selected = lookup.get(slug);
-	$: improve_link = `${tutorial_repo_link}/${selected.chapter.section_dir}/${selected.chapter.chapter_dir}/text.md`;
+	$: improve_link = `${tutorial_repo_link}/${selected.chapter.section_dir}/${selected.chapter.chapter_dir}`;
 
 	// TODO once reactive values are fixed
 	// $: app = {
@@ -187,20 +187,18 @@
 	}
 
 	.improve-chapter {
-		text-align: center;
 		padding: 1em 0 .5em 0;
 	}
 
-	.improve-chapter > a {
-		font-size: 0.6em;
+	.improve-chapter a {
+		font-size: 14px;
 		text-decoration: none;
-		border-radius: 0.7em;
-		background: rgba(255,255,255,0.1);
-		padding: 0.2em 0.7em;
+		opacity: 0.3;
+		padding: 0 0.1em;
 	}
 
-	.improve-chapter > a:hover {
-		background: rgba(255,255,255,0.2);
+	.improve-chapter a:hover {
+		opacity: 1;
 	}
 </style>
 
@@ -228,7 +226,7 @@
 			</div>
 
 			<div class="improve-chapter">
-				<a href={improve_link}>Improve this Tutorial</a>
+				<a href={improve_link}><Icon name="edit" size={14}/> Edit this chapter</a>
 			</div>
 		</div>
 	</div>
@@ -236,5 +234,4 @@
 	<div class="tutorial-repl">
 		<Repl {app} orientation="rows" show_props={false}/>
 	</div>
-
 </div>
