@@ -66,10 +66,30 @@
 		});
 	}
 
+	function reset() {
+		repl.update({
+			components: chapter.app_a.map(clone),
+			values: {}
+		});
+	}
+
 	function complete() {
 		repl.update({
 			components: chapter.app_b.map(clone),
 			values: {}
+		});
+	}
+
+	let completed = false;
+
+	function handle_change(event) {
+		completed = event.detail.components.every((file, i) => {
+			const expected = chapter.app_b[i];
+			return (
+				file.name === expected.name &&
+				file.type === expected.type &&
+				file.source === expected.source
+			);
 		});
 	}
 </script>
@@ -213,8 +233,8 @@
 				{#if chapter.app_b}
 					<!-- TODO disable this button when the contents of the REPL
 						matches the expected end result -->
-					<button class="show" on:click={complete}>
-						Show me
+					<button class="show" on:click="{() => completed ? reset() : complete()}">
+						{completed ? 'Reset' : 'Show me'}
 					</button>
 				{/if}
 
@@ -230,6 +250,6 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl bind:this={repl} orientation="rows" show_props={false}/>
+		<Repl bind:this={repl} orientation="rows" show_props={false} on:change={handle_change}/>
 	</div>
 </div>

@@ -1,5 +1,5 @@
 <script>
-	import { onMount, setContext } from 'svelte';
+	import { onMount, setContext, createEventDispatcher } from 'svelte';
 	import { writable } from 'svelte/store';
 	import SplitPane from './SplitPane.svelte';
 	import CodeMirror from './CodeMirror.svelte';
@@ -54,6 +54,8 @@
 		}
 	}
 
+	const dispatch = createEventDispatcher();
+
 	const components = writable([]);
 	const values = writable({});
 	const selected = writable(null);
@@ -99,6 +101,10 @@
 
 			// regenerate bundle (TODO do this in a separate worker?)
 			workers.bundler.postMessage({ type: 'bundle', components: $components });
+
+			dispatch('change', {
+				components: $components
+			});
 		},
 
 		register_module_editor(editor) {
