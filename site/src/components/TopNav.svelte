@@ -156,23 +156,6 @@
 		height: 2rem;
 	}
 
-	.menu-link {
-		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
-		-webkit-touch-callout: none;
-	}
-
-	.logo {
-		position: relative;
-		top: .3rem;
-		width: 18rem;
-		color: var(--second);
-		-webkit-tap-highlight-color: transparent;
-		-webkit-touch-callout: none;
-		z-index: 11;
-		padding: 0.5em 0;
-	}
-
 	.home {
 		position: relative;
 		top: 0;

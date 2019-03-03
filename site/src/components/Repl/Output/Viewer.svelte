@@ -128,25 +128,6 @@
 		bottom: 0;
 		width: 100%;
 	}
-
-	.overlay p {
-		pointer-events: all;
-	}
-
-	.pending {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		text-align: center;
-		pointer-events: all;
-	}
-
-	.pending button {
-		position: absolute;
-		margin-top: 6rem;
-	}
 </style>
 
 <div class="iframe-container">

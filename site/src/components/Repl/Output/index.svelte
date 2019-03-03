@@ -119,14 +119,6 @@
 		color: var(--text);
 	}
 
-	.loading.message {
-		position: absolute !important;
-		background-color: #666;
-		top: 1em;
-		left: 50%;
-		transform: translate(-50%,0);
-	}
-
 	.props {
 		display: grid;
 		padding: 0.5em;

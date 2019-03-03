@@ -196,10 +196,6 @@
 			width: 100%;
 		}
 
-		.input-output-toggle {
-			display: none;
-		}
-
 		.offset {
 			transition: none;
 			transform: none;

@@ -205,13 +205,6 @@
 		border: none;
 	}
 
-	.codemirror-container .message {
-		position: absolute;
-		bottom: 2.4rem;
-		left: 2.4rem;
-		z-index: 20;
-	}
-
 	.codemirror-container :global(.error-loc) {
 		position: relative;
 		border-bottom: 2px solid #da106e;
@@ -219,17 +212,6 @@
 
 	.codemirror-container :global(.error-line) {
 		background-color: rgba(200, 0, 0, .05);
-	}
-
-	.loading {
-		text-align: center;
-		color: #999;
-		font-weight: 400;
-		margin: 2.4rem 0 0 0;
-	}
-
-	.loading {
-		background-color: #666;
 	}
 
 	textarea {
@@ -258,10 +240,6 @@
 	.flex pre {
 		padding: 0 0 0 4px;
 		height: auto;
-	}
-
-	.flex .loading {
-		display: none;
 	}
 </style>
 
