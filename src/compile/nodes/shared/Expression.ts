@@ -149,6 +149,13 @@ export default class Expression {
 							dependencies.add(name);
 						}
 
+						if (name[0] === '$' && !component.var_lookup.get(name.slice(1)) && name !== '$$props') {
+							component.error(node, {
+								code: `missing-store`,
+								message: `Stores must be declared`
+							});
+						}
+
 						component.add_reference(name);
 						component.warn_if_undefined(nodes[0], template_scope, true);
 					}
