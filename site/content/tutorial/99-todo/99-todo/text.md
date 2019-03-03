@@ -124,13 +124,13 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## use: directive
 
-* `use:foo`
-* `use:foo={bar}`
+* [ ] `use:foo`
+* [ ] `use:foo={bar}`
 
 ## class: directive
 
-* `class:foo={bar}`
-* `class:foo`
+* [ ] `class:foo={bar}`
+* [ ] `class:foo`
 
 
 ## Composition
@@ -142,18 +142,18 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Special elements
 
-* `<svelte:self>`
-* `<svelte:component>`
-* `<svelte:window>`
-* `<svelte:body>`
-* `<svelte:head>`
+* [ ] `<svelte:self>`
+* [ ] `<svelte:component>`
+* [ ] `<svelte:window>`
+* [ ] `<svelte:body>`
+* [ ] `<svelte:head>`
 
 
 ## Miscellaneous
 
-* Keyed each blocks
-* Debug tags
-* `context="module"`
+* [ ] Keyed each blocks
+* [ ] Debug tags
+* [ ] `context="module"`
 
 
 ---
