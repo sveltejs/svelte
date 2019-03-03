@@ -78,11 +78,19 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Stores
 
-* [ ] `writable` (and second argument?)
-* [ ] `$foo`
-* [ ] `readable`
-* [ ] `derive`
+* [x] `writable` (and second argument?)
+* [x] `$foo`
+* [x] `readable`
+* [x] `derive`
+* [ ] custom stores
+* [ ] `bind:value={$foo}`
 * [ ] `$foo += 1` (if we implement it)
+
+
+## Motion
+
+* [ ] `tweened`
+* [ ] `spring`
 
 
 ## Lifecycle

@@ -26,6 +26,7 @@
 
 	let repl;
 	let prev;
+	let scrollable;
 	const lookup = new Map();
 
 	sections.forEach(section => {
@@ -45,6 +46,9 @@
 			}
 		});
 	});
+
+	// TODO is there a non-hacky way to trigger scroll when chapter changes?
+	$: if (scrollable) chapter, scrollable.scrollTo(0, 0);
 
 	// TODO: this will need to be changed to the master branch, and probably should be dynamic instead of included
 	//   here statically
@@ -226,7 +230,7 @@
 			<TableOfContents {sections} {slug} {selected}/>
 		</div>
 
-		<div class="chapter-markup">
+		<div class="chapter-markup" bind:this={scrollable}>
 			{@html chapter.html}
 
 			<div class="controls">
