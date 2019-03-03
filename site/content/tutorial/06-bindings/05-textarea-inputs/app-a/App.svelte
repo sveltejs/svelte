@@ -1,8 +1,6 @@
 <script>
 	import marked from 'marked';
-
 	let markdown = `Some words are *italic*, some are **bold**`;
-	$: rendered = marked(markdown);
 </script>
 
 <style>
@@ -11,4 +9,4 @@
 
 <textarea value={markdown}></textarea>
 
-{@html rendered}
+{@html marked(markdown)}
