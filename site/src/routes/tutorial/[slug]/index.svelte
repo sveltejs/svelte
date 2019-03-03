@@ -83,7 +83,7 @@
 		margin: 0 calc(var(--side-nav) * -1);
 		box-sizing: border-box;
 		display: grid;
-		grid-template-columns: 1fr 2fr;
+		grid-template-columns: minmax(33.333%, 480px) auto;
 		grid-auto-rows: 100%;
 	}
 
