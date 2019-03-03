@@ -44,7 +44,6 @@
 		});
 
 		return () => {
-			proxy.eval(`if (window.component) window.component.\$destroy();`)
 			proxy.destroy();
 		}
 	});

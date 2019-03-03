@@ -1,24 +1,69 @@
 <script>
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import SplitPane from '../SplitPane.svelte';
 	import Viewer from './Viewer.svelte';
 	import CompilerOptions from './CompilerOptions.svelte';
+	import Compiler from './Compiler.js';
 	import PropEditor from './PropEditor.svelte';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	const { bundle, values } = getContext('REPL');
+	const { values, register_output } = getContext('REPL');
 
-	export let js;
-	export let css;
-	export let props;
+	export let version;
 	export let sourceErrorLoc;
 	export let runtimeError;
-	export let compile_options;
 	export let embedded;
 	export let show_props;
 
+	let props;
+
+	let compile_options = {
+		generate: 'dom',
+		dev: false,
+		css: false,
+		hydratable: false,
+		customElement: false,
+		immutable: false,
+		legacy: false
+	};
+
+	register_output({
+		set: async selected => {
+			if (selected.type === 'js') {
+				js_editor.set(`/* Select a component to see its compiled code */`);
+				css_editor.set(`/* Select a component to see its compiled code */`);
+				return;
+			}
+
+			const compiled = await compiler.compile(selected, compile_options);
+
+			js_editor.set(compiled.js, 'js');
+			css_editor.set(compiled.css, 'css');
+			if (compiled.props) props = compiled.props;
+		},
+
+		update: async selected => {
+			if (selected.type === 'js') return;
+
+			const compiled = await compiler.compile(selected, compile_options);
+
+			js_editor.update(compiled.js);
+			css_editor.update(compiled.css);
+			if (compiled.props) props = compiled.props;
+		}
+	});
+
+	let compiler;
+
+	onMount(() => {
+		compiler = new Compiler(version);
+		return () => compiler.destroy();
+	});
+
 	// refs
 	let viewer;
+	let js_editor;
+	let css_editor;
 	const setters = {};
 
 	let view = 'result';
@@ -94,6 +139,20 @@
 	.props code {
 		top: .1rem;
 	}
+
+	.tab-content {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.tab-content.visible {
+		/* can't use visibility due to a weird painting bug in Chrome */
+		opacity: 1;
+		pointer-events: all;
+	}
 </style>
 
 <div class="view-toggle">
@@ -113,7 +172,8 @@
 	>CSS output</button>
 </div>
 
-{#if view === 'result'}
+<!-- component viewer -->
+<div class="tab-content" class:visible="{view === 'result'}">
 	<SplitPane type="vertical" pos={67} fixed={!show_props} fixed_pos={100}>
 		<div slot="a">
 			<Viewer
@@ -152,28 +212,43 @@
 			{/if}
 		</section>
 	</SplitPane>
-{:else if embedded}
+</div>
+
+<!-- js output -->
+<div class="tab-content" class:visible="{view === 'js'}">
+	{#if embedded}
+		<CodeMirror
+			bind:this={js_editor}
+			mode="js"
+			errorLoc={sourceErrorLoc}
+			readonly
+		/>
+	{:else}
+		<SplitPane type="vertical" pos={67}>
+			<div slot="a">
+				<CodeMirror
+					bind:this={js_editor}
+					mode="js"
+					errorLoc={sourceErrorLoc}
+					readonly
+				/>
+			</div>
+
+			<section slot="b">
+				<h3>Compiler options</h3>
+
+				<CompilerOptions bind:options={compile_options}/>
+			</section>
+		</SplitPane>
+	{/if}
+</div>
+
+<!-- css output -->
+<div class="tab-content" class:visible="{view === 'css'}">
 	<CodeMirror
-		mode="javascript"
-		code="{view === 'js' ? js : css}"
+		bind:this={css_editor}
+		mode="css"
 		errorLoc={sourceErrorLoc}
 		readonly
 	/>
-{:else}
-	<SplitPane type="vertical" pos={67}>
-		<div slot="a">
-			<CodeMirror
-				mode="javascript"
-				code="{view === 'js' ? js : css}"
-				errorLoc={sourceErrorLoc}
-				readonly
-			/>
-		</div>
-
-		<section slot="b">
-			<h3>Compiler options</h3>
-
-			<CompilerOptions bind:options={compile_options}/>
-		</section>
-	</SplitPane>
-{/if}
+</div>

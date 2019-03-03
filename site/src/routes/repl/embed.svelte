@@ -15,11 +15,7 @@
 
 	export let version, gist, demo;
 
-	let app = {
-		components: [],
-		values: {}
-	};
-
+	let repl;
 	let name = 'loading...';
 
 	onMount(() => {
@@ -67,7 +63,7 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				app = { components, values };
+				repl.set({ components, values });
 			});
 		} else if (demo) {
 			const url = `api/examples/${demo}`;
@@ -76,10 +72,10 @@
 				if (response.ok) {
 					const data = await response.json();
 
-					app = {
+					repl.set({
 						values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
 						components: data.components
-					};
+					});
 				}
 			});
 		}
@@ -114,6 +110,6 @@
 
 <div class="repl-outer">
 	{#if process.browser}
-		<Repl {version} {app} embedded={true}/>
+		<Repl bind:this={repl} {version} embedded={true}/>
 	{/if}
 </div>

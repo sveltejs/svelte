@@ -4,8 +4,8 @@
 	const { navigate } = getContext('REPL');
 
 	export let kind;
-	export let details;
-	export let filename;
+	export let details = null;
+	export let filename = null;
 
 	function message(details) {
 		let str = details.message || '[missing message]';

@@ -3,16 +3,17 @@
 	import Icon from '../../Icon.svelte';
 	import { enter } from '../../../utils/events.js';
 
+	export let handle_select;
+
 	const { components, selected } = getContext('REPL');
 
 	let editing = null;
 
 	function selectComponent(component) {
-		if ($selected != component) {
+		if ($selected !== component) {
 			editing = null;
+			handle_select(component);
 		}
-
-		selected.set(component);
 	}
 
 	function editTab(component) {

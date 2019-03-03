@@ -24,8 +24,9 @@
 
 	const { sections } = getContext('tutorial');
 
-	const lookup = new Map();
+	let repl;
 	let prev;
+	const lookup = new Map();
 
 	sections.forEach(section => {
 		section.chapters.forEach(chapter => {
@@ -52,27 +53,24 @@
 	$: selected = lookup.get(slug);
 	$: improve_link = `${tutorial_repo_link}/${selected.chapter.section_dir}/${selected.chapter.chapter_dir}`;
 
-	// TODO once reactive values are fixed
-	// $: app = {
-	// 	components: chapter.app_a,
-	// 	values: {}
-	// };
+	const clone = file => ({
+		name: file.name,
+		type: file.type,
+		source: file.source
+	});
 
-	let app;
-	$: start(chapter);
-
-	function start(chapter) {
-		app = {
-			components: chapter.app_a,
+	$: if (repl) {
+		repl.set({
+			components: chapter.app_a.map(clone),
 			values: {}
-		};
+		});
 	}
 
 	function complete() {
-		app = {
-			components: chapter.app_b,
+		repl.update({
+			components: chapter.app_b.map(clone),
 			values: {}
-		};
+		});
 	}
 </script>
 
@@ -232,6 +230,6 @@
 	</div>
 
 	<div class="tutorial-repl">
-		<Repl {app} orientation="rows" show_props={false}/>
+		<Repl bind:this={repl} orientation="rows" show_props={false}/>
 	</div>
 </div>

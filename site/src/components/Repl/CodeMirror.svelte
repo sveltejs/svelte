@@ -13,12 +13,11 @@
 
 <script>
 	import { onMount, beforeUpdate, createEventDispatcher, getContext } from 'svelte';
+	import Message from './Message.svelte';
 
 	const dispatch = createEventDispatcher();
 	const { navigate } = getContext('REPL');
 
-	export let mode;
-	export let code;
 	export let readonly = false;
 	export let errorLoc = null;
 	export let flex = false;
@@ -27,17 +26,46 @@
 
 	let w;
 	let h;
+	let code = '';
+	let mode;
+
+	// We have to expose set and update methods, rather
+	// than making this state-driven through props,
+	// because it's difficult to update an editor
+	// without resetting scroll otherwise
+	export function set(new_code, new_mode) {
+		if (new_mode !== mode) {
+			createEditor(mode = new_mode);
+		}
+
+		code = new_code;
+		if (editor) editor.setValue(code);
+	}
+
+	export function update(new_code) {
+		code = new_code;
+
+		if (editor) {
+			const { left, top } = editor.getScrollInfo();
+			editor.setValue(code = new_code);
+			editor.scrollTo(left, top);
+		}
+	}
 
 	export function resize() {
 		editor.refresh();
 	}
 
 	const modes = {
+		js: {
+			name: 'javascript',
+			json: false
+		},
 		json: {
 			name: 'javascript',
 			json: true
 		},
-		handlebars: {
+		svelte: {
 			name: 'handlebars',
 			base: 'text/html'
 		}
@@ -50,15 +78,6 @@
 	let error_line;
 	let destroyed = false;
 	let CodeMirror;
-
-	$: if (CodeMirror) {
-		createEditor(mode);
-	}
-
-	$: if (editor && !updating && code != null) {
-		updating = true;
-		editor.setValue(code);
-	}
 
 	$: if (editor && w && h) {
 		editor.refresh();
@@ -96,9 +115,13 @@
 	onMount(() => {
 		if (_CodeMirror) {
 			CodeMirror = _CodeMirror;
+			createEditor(mode || 'svelte');
+			editor.setValue(code || '');
 		} else {
 			codemirror_promise.then(mod => {
 				CodeMirror = mod.default;
+				createEditor(mode || 'svelte');
+				editor.setValue(code || '');
 			});
 		}
 
@@ -113,7 +136,7 @@
 	});
 
 	function createEditor(mode) {
-		if (destroyed) return;
+		if (destroyed || !CodeMirror) return;
 
 		if (editor) {
 			editor.toTextArea();
@@ -125,7 +148,7 @@
 			indentWithTabs: true,
 			indentUnit: 2,
 			tabSize: 2,
-			value: code,
+			value: '',
 			mode: modes[mode] || {
 				name: mode
 			},
@@ -142,8 +165,8 @@
 		editor.on('change', instance => {
 			if (!updating) {
 				updating = true;
-				code = instance.getValue();
-				dispatch('change', { value: code });
+				// code = instance.getValue();
+				dispatch('change', { value: instance.getValue() });
 			}
 		});
 
@@ -254,6 +277,8 @@
 		<pre style="position: absolute; left: 0; top: 0"
 		>{code}</pre>
 
-		<p class='loading message'>loading editor...</p>
+		<div style="position: absolute; width: 100%; bottom: 0">
+			<Message kind='info'>loading editor...</Message>
+		</div>
 	{/if}
 </div>

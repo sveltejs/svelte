@@ -29,7 +29,7 @@ const commonCompilerOptions = {
 	css: false
 };
 
-function compile({ source, options, entry }) {
+function compile({ id, source, options, entry }) {
 	try {
 		const { js, css, stats, vars } = svelte.compile(
 			source,
@@ -40,11 +40,26 @@ function compile({ source, options, entry }) {
 			? (vars || stats.vars).map(v => v.writable && v.export_name).filter(Boolean) // TODO remove stats post-launch
 			: null;
 
-		return { js: js.code, css: css.code, props };
+		return {
+			id,
+			result: {
+				js: js.code,
+				css: css.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
+				props
+			}
+		};
 	} catch (err) {
-		let result = `/* Error compiling component\n\n${err.message}`;
-		if (err.frame) result += `\n${err.frame}`;
-		result += `\n\n*/`;
-		return { code: result, props: null };
+		let message = `/* Error compiling component\n\n${err.message}`;
+		if (err.frame) message += `\n${err.frame}`;
+		message += `\n\n*/`;
+
+		return {
+			id,
+			result: {
+				js: message,
+				css: message,
+				props: null
+			}
+		};
 	}
 }

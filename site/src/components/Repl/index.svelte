@@ -1,7 +1,6 @@
 <script>
 	import { onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
-	import * as fleece from 'golden-fleece';
 	import SplitPane from './SplitPane.svelte';
 	import CodeMirror from './CodeMirror.svelte';
 	import ComponentSelector from './Input/ComponentSelector.svelte';
@@ -10,7 +9,6 @@
 	import InputOutputToggle from './InputOutputToggle.svelte';
 
 	export let version = 'beta'; // TODO change this to latest when the time comes
-	export let app;
 	export let embedded = false;
 	export let orientation = 'columns';
 	export let show_props = true;
@@ -23,20 +21,46 @@
 		version; // workaround
 
 		return {
-			imports,
+			imports: $bundle.imports,
 			components: $components,
 			values: $values
 		};
 	}
 
-	export function update(app) {
-		// TODO
+	export function set(data) {
+		components.set(data.components);
+		values.set(data.values);
+		selected.set(data.components[0]);
+
+		module_editor.set($selected.source, $selected.type);
+		output.set($selected);
+	}
+
+	export function update(data) {
+		const { name, type } = $selected || {};
+
+		components.set(data.components);
+		values.set(data.values);
+
+		const matched_component = data.components.find(file => file.name === name && file.type === type);
+		selected.set(matched_component || data.components[0]);
+
+		if (matched_component) {
+			module_editor.update(matched_component.source);
+			output.update(matched_component);
+		} else {
+			module_editor.set(matched_component.source, matched_component.type);
+			output.set(matched_component);
+		}
 	}
 
 	const components = writable([]);
 	const values = writable({});
 	const selected = writable(null);
 	const bundle = writable(null);
+
+	let module_editor;
+	let output;
 
 	setContext('REPL', {
 		components,
@@ -51,6 +75,8 @@
 			const [, name, type] = match;
 			const component = $components.find(c => c.name === name && c.type === type);
 			selected.set(component);
+
+			output.set($selected);
 
 			// TODO select the line/column in question
 		},
@@ -69,109 +95,59 @@
 			components.update(c => c);
 
 			// recompile selected component
-			compile($selected, compile_options);
+			output.update($selected);
 
 			// regenerate bundle (TODO do this in a separate worker?)
 			workers.bundler.postMessage({ type: 'bundle', components: $components });
+		},
+
+		register_module_editor(editor) {
+			module_editor = editor;
+		},
+
+		register_output(handlers) {
+			output = handlers;
 		}
 	});
 
-	$: {
-		components.set(app.components);
-		values.set(app.values);
-		selected.set(app.components[0]);
+	function handle_select(component) {
+		selected.set(component);
+		module_editor.set(component.source, component.type);
+		output.set($selected);
 	}
 
 	let workers;
 
-	let imports = null;
-	let import_map = null;
-	let dom;
-	let ssr;
-	let sourceError = null;
-	let runtimeError = null;
-	let warnings = [];
-	let js = '';
-	let css = '';
-	let uid = 0;
-	let props = [];
+	let input;
 	let sourceErrorLoc;
-	let runtimeErrorLoc;
-
-	let compile_options = {
-		generate: 'dom',
-		dev: false,
-		css: false,
-		hydratable: false,
-		customElement: false,
-		immutable: false,
-		legacy: false
-	};
+	let runtimeErrorLoc; // TODO refactor this stuff — runtimeErrorLoc is unused
 
 	let width = typeof window !== 'undefined' ? window.innerWidth : 300;
 	let show_output = false;
 
 	onMount(async () => {
 		workers = {
-			compiler: new Worker('/workers/compiler.js'),
 			bundler: new Worker('/workers/bundler.js')
-		};
-
-		workers.compiler.postMessage({ type: 'init', version });
-		workers.compiler.onmessage = event => {
-			js = event.data.js;
-			css = event.data.css || `/* Add a <sty` + `le> tag to see compiled CSS */`;
-			if (event.data.props) props = event.data.props;
 		};
 
 		workers.bundler.postMessage({ type: 'init', version });
 		workers.bundler.onmessage = event => {
 			bundle.set(event.data);
-			({ imports, import_map, dom, ssr, warnings, error: sourceError } = event.data);
-			if (sourceError) console.error(sourceError);
-			runtimeError = null;
 		};
 
 		return () => {
-			workers.compiler.terminate();
 			workers.bundler.terminate();
 		};
 	});
 
-	function compile(component, options) {
-		if (component.type === 'svelte') {
-			workers.compiler.postMessage({
-				type: 'compile',
-				source: component.source,
-				options: Object.assign({
-					name: component.name,
-					filename: `${component.name}.svelte`
-				}, options),
-				entry: component === $components[0]
-			});
-		} else {
-			js = css = `/* Select a component to see its compiled code */`;
-		}
-	}
-
-	$: if (sourceError && $selected) {
-		sourceErrorLoc = sourceError.filename === `${$selected.name}.${$selected.type}`
-			? sourceError.start
+	$: if ($bundle && $bundle.error && $selected) {
+		sourceErrorLoc = $bundle.error.filename === `${$selected.name}.${$selected.type}`
+			? $bundle.error.start
 			: null;
 	}
 
-	$: if (runtimeError && $selected) {
-		runtimeErrorLoc = runtimeError.filename === `${$selected.name}.${$selected.type}`
-			? runtimeError.start
-			: null;
-	}
-
-	$: if (workers && app.components) {
-		workers.bundler.postMessage({ type: 'bundle', components: app.components });
-	}
-
-	$: if (workers && $selected) {
-		compile($selected, compile_options);
+	$: if (workers && $components) {
+		workers.bundler.postMessage({ type: 'bundle', components: $components });
 	}
 </script>
 
@@ -240,21 +216,12 @@
 			fixed_pos={50}
 		>
 			<section slot=a>
-				<ComponentSelector/>
-				<ModuleEditor error={sourceError} errorLoc="{sourceErrorLoc || runtimeErrorLoc}" {warnings}/>
+				<ComponentSelector {handle_select}/>
+				<ModuleEditor bind:this={input} errorLoc="{sourceErrorLoc || runtimeErrorLoc}"/>
 			</section>
 
 			<section slot=b style='height: 100%;'>
-				<Output
-					bind:compile_options
-					{version}
-					{js}
-					{css}
-					{props}
-					{runtimeError}
-					{embedded}
-					{show_props}
-				/>
+				<Output {version} {embedded} {show_props}/>
 			</section>
 		</SplitPane>
 	</div>

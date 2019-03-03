@@ -18,16 +18,10 @@
 
 	export let version, demo, gist_id;
 
+	let repl;
 	let gist;
-
-	let app = {
-		components: [],
-		values: {}
-	};
-
 	let name = 'loading...';
 	let zen_mode = false;
-	let repl;
 
 	$: if (typeof history !== 'undefined') {
 		const params = [];
@@ -99,7 +93,7 @@
 						return a.name < b.name ? -1 : 1;
 					});
 
-				app = { components, values };
+				repl.set({ components, values });
 			});
 		}
 	});
@@ -117,10 +111,10 @@
 
 				console.log(data.components);
 
-				app = {
+				repl.set({
 					values: tryParseData(data.json5) || {}, // TODO make this more error-resistant
 					components: data.components
-				};
+				});
 
 				gist = null;
 			}
@@ -198,7 +192,6 @@
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
 	<AppControls
 		{examples}
-		{app}
 		{name}
 		{gist}
 		{repl}
@@ -208,6 +201,6 @@
 	/>
 
 	{#if process.browser}
-		<Repl bind:this={repl} {version} {app}/>
+		<Repl bind:this={repl} {version}/>
 	{/if}
 </div>
