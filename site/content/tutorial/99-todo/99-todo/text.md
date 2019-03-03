@@ -89,8 +89,8 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Motion
 
-* [ ] `tweened`
-* [ ] `spring`
+* [x] `tweened`
+* [x] `spring`
 
 
 ## Lifecycle
