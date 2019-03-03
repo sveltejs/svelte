@@ -85,14 +85,14 @@
 			`);
 
 			await proxy.bindProps(props);
+
+			error = null;
 		} catch (e) {
 			const loc = getLocationFromStack(e.stack, $bundle.dom.map);
 			if (loc) {
 				e.filename = loc.source;
 				e.loc = { line: loc.line, column: loc.column };
 			}
-
-			console.error(e);
 
 			error = e;
 		}

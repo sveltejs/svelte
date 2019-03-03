@@ -143,7 +143,7 @@
 	.tab-content {
 		position: absolute;
 		width: 100%;
-		height: 100%;
+		height: calc(100% - 4.2rem);
 		opacity: 0;
 		pointer-events: none;
 	}

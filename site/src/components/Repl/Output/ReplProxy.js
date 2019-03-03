@@ -6,22 +6,23 @@ export default class ReplProxy {
 		this.cmdId = 1;
 		this.pendingCmds = new Map();
 
-		this.handle_event = (ev) => this.handleReplMessage(ev);
-		window.addEventListener("message", this.handle_event, false);
+		this.handle_event = e => this.handleReplMessage(e);
+		window.addEventListener('message', this.handle_event, false);
 	}
 
 	destroy() {
-		window.removeEventListener("message", this.handle_event);
+		window.removeEventListener('message', this.handle_event);
 	}
 
 	iframeCommand(command, args) {
 		return new Promise( (resolve, reject) => {
-			this.cmdId = this.cmdId + 1;
-			this.pendingCmds.set(this.cmdId, { resolve: resolve, reject: reject });
+			this.cmdId += 1;
+			this.pendingCmds.set(this.cmdId, { resolve, reject });
+
 			this.iframe.contentWindow.postMessage({
 				action: command,
 				cmdId: this.cmdId,
-				args: args
+				args
 			}, '*')
 		});
 	}
@@ -30,59 +31,59 @@ export default class ReplProxy {
 		let action = cmdData.action;
 		let id = cmdData.cmdId;
 		let handler = this.pendingCmds.get(id);
-		if (handler) {
 
+		if (handler) {
 			this.pendingCmds.delete(id);
-			if (action == "cmdError") {
+			if (action === 'cmdError') {
 				let { message, stack } = cmdData;
 				let e = new Error(message);
 				e.stack = stack;
-				console.log("repl cmd fail");
+				console.log('repl cmd fail');
 				handler.reject(e)
 			}
 
-			if (action == "cmdOk") {
+			if (action === 'cmdOk') {
 				handler.resolve(cmdData.args)
 			}
 		} else {
-			console.error("command not found", id, cmdData, [...this.pendingCmds.keys()]);
+			console.error('command not found', id, cmdData, [...this.pendingCmds.keys()]);
 		}
 	}
 
-	handleReplMessage(ev) {
+	handleReplMessage(event) {
+		const { action, args } = event.data;
 
-		let action = ev.data.action;
-		if ( action == "cmdError" || action == "cmdOk" ) {
-			this.handleCommandMessage(ev.data);
+		if (action === 'cmdError' || action === 'cmdOk') {
+			this.handleCommandMessage(event.data);
 		}
 
-		if (action == "prop_update") {
-			let { prop, value } = ev.data.args;
+		if (action === 'prop_update') {
+			const { prop, value } = args;
 			this.handlers.onPropUpdate(prop, value)
 		}
 
-		if (action == "fetch_progress") {
-			this.handlers.onFetchProgress(ev.data.args.remaining)
+		if (action === 'fetch_progress') {
+			this.handlers.onFetchProgress(args.remaining)
 		}
 	}
 
 	eval(script) {
-		return this.iframeCommand("eval", { script: script });
+		return this.iframeCommand('eval', { script });
 	}
 
 	setProp(prop, value) {
-		return this.iframeCommand("set_prop", {prop, value})
+		return this.iframeCommand('set_prop', {prop, value})
 	}
 
 	bindProps(props) {
-		return this.iframeCommand("bind_props", { props: props })
+		return this.iframeCommand('bind_props', { props })
 	}
 
 	handleLinks() {
-		return this.iframeCommand("catch_clicks", {});
+		return this.iframeCommand('catch_clicks', {});
 	}
 
 	fetchImports(imports, import_map) {
-		return this.iframeCommand("fetch_imports", { imports, import_map })
+		return this.iframeCommand('fetch_imports', { imports, import_map })
 	}
 }
