@@ -110,5 +110,5 @@ export default function(node, renderer: Renderer, options) {
 
 	const slots = stringifyProps(slot_fns);
 
-	renderer.append(`\${@validate_component(${expression}, '${node.name}').$$render($$result, ${props}, ${bindings}, ${slots})}`);
+	renderer.append(`\${@validate_component(${expression}, '${node.name}').render($$result, ${props}, ${bindings}, ${slots})}`);
 }
