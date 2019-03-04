@@ -68,6 +68,22 @@ export function debug(file, line, column, values) {
 export function create_ssr_component($$render) {
 	return {
 		render: (props = {}, options = {}) => {
+			const result = { head: '', css: new Set() };
+			this.$$render(result, props, {}, options);
+
+			run_all($$.on_destroy);
+
+			return {
+				html,
+				css: {
+					code: Array.from(result.css).map(css => css.code).join('\n'),
+					map: null // TODO
+				},
+				head: result.head
+			};
+		},
+
+		$$render: (result, props, bindings, options) => {
 			const parent_component = current_component;
 
 			// TODO do we need on_ready, since on_mount,
@@ -82,23 +98,9 @@ export function create_ssr_component($$render) {
 			};
 
 			set_current_component({ $$ });
+			return $$render(result, props, bindings, options);
 
-			const result = { head: '', css: new Set() };
-			const html = $$render(result, props, {}, options);
-
-			run_all($$.on_destroy);
-
-			return {
-				html,
-				css: {
-					code: Array.from(result.css).map(css => css.code).join('\n'),
-					map: null // TODO
-				},
-				head: result.head
-			};
-		},
-
-		$$render
+		}
 	};
 }
 
