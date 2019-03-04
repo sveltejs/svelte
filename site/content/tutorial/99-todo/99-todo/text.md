@@ -102,19 +102,15 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [ ] how lifecycle functions behave in SSR mode?
 
 
-## Context
-
-* [ ] `setContext` and `getContext`
-
-
 ## Transitions
 
-* [ ] `transition` with built-in transitions
-* [ ] Custom CSS transitions
-* [ ] Custom JS transitions
-* [ ] `in`
-* [ ] `out`
-* [ ] `on:introstart` etc
+* [x] `transition` with built-in transitions
+* [x] `in`
+* [x] `out`
+* [x] Custom CSS transitions
+* [x] Custom JS transitions
+* [x] Thunk(?) transitions
+* [x] `on:introstart` etc
 
 ## Animations
 
@@ -137,6 +133,11 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [ ] `<slot>`
 * [ ] `<slot name="foo">`
 * [ ] `<slot bar={baz}>` and `let:bar`
+
+
+## Context
+
+* [ ] `setContext` and `getContext`
 
 
 ## Special elements
