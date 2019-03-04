@@ -95,11 +95,10 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Lifecycle
 
-* [ ] `onMount`
-* [ ] `onDestroy`
-* [ ] `beforeUpdate`
-* [ ] `afterUpdate`
-* [ ] `tick`
+* [x] `onMount`
+* [x] `onDestroy`
+* [x] `beforeUpdate`
+* [x] `afterUpdate`
 * [ ] how lifecycle functions behave in SSR mode?
 
 
@@ -154,6 +153,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [ ] Keyed each blocks
 * [ ] Debug tags
 * [ ] `context="module"`
+* [ ] `tick`
 
 
 ---
