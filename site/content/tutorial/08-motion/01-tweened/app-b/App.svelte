@@ -17,6 +17,10 @@
 
 <progress value={$progress}></progress>
 
+<button on:click="{() => progress.set(0)}">
+	0%
+</button>
+
 <button on:click="{() => progress.set(0.25)}">
 	25%
 </button>
