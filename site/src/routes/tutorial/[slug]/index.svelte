@@ -89,7 +89,7 @@
 	function handle_change(event) {
 		completed = event.detail.components.every((file, i) => {
 			const expected = chapter.app_b[i];
-			return (
+			return expected && (
 				file.name === expected.name &&
 				file.type === expected.type &&
 				file.source === expected.source

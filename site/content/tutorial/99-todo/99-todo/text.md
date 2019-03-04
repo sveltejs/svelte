@@ -85,6 +85,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 * [ ] custom stores
 * [ ] `bind:value={$foo}`
 * [ ] `$foo += 1` (if we implement it)
+* [ ] Adapting Immer, Redux, Microstates, xstate etc
 
 
 ## Motion
@@ -119,7 +120,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## use: directive
 
-* [ ] `use:foo`
+* [x] `use:foo`
 * [ ] `use:foo={bar}`
 
 ## class: directive
