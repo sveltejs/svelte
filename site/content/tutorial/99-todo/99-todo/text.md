@@ -131,7 +131,7 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## Composition
 
-* [ ] `<slot>`
+* [x] `<slot>`
 * [ ] `<slot name="foo">`
 * [ ] `<slot bar={baz}>` and `let:bar`
 
