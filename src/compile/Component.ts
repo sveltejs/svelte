@@ -1042,15 +1042,17 @@ export default class Component {
 						}
 
 						if (node.type === 'AssignmentExpression') {
-							assignees.add(getObject(node.left).name);
+							const { name } = getObject(node.left)
+							assignees.add(name);
+							dependencies.delete(name);
 						} else if (node.type === 'UpdateExpression') {
-							assignees.add(getObject(node.argument).name);
+							const { name } = getObject(node.argument);
+							assignees.add(name);
+							dependencies.delete(name);
 						} else if (isReference(node, parent)) {
-							const object = getObject(node);
-							const { name } = object;
-
+							const { name } = getObject(node);
 							const owner = scope.findOwner(name);
-							if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name))) {
+							if ((!owner || owner === component.instance_scope) && (name[0] === '$' || component.var_lookup.has(name)) && !assignees.has(name)) {
 								dependencies.add(name);
 							}
 
