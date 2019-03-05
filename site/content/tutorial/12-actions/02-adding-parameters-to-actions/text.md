@@ -2,4 +2,4 @@
 title: Adding parameters
 ---
 
-TODO example with Prism highlighting
+TODO come up with a better example

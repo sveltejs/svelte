@@ -125,8 +125,8 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
 ## class: directive
 
-* [ ] `class:foo={bar}`
-* [ ] `class:foo`
+* [x] `class:foo={bar}`
+* [x] `class:foo`
 
 
 ## Composition
