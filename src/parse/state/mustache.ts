@@ -316,6 +316,8 @@ export default function mustache(parser: Parser) {
 		}
 	} else if (parser.eat('@html')) {
 		// {@html content} tag
+		parser.requireWhitespace();
+
 		const expression = readExpression(parser);
 
 		parser.allowWhitespace();
