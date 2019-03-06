@@ -72,6 +72,7 @@ Another one should cover how to set up an editor for syntax highlighting.
 * [x] Dimensions
 * [x] `this`
 * [ ] shorthand
+* [ ] component bindings
 
 Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 
@@ -132,8 +133,8 @@ Maybe lifecycle should go first, since we're using `onMount` in the `this` demo?
 ## Composition
 
 * [x] `<slot>`
-* [ ] `<slot name="foo">`
-* [ ] `<slot bar={baz}>` and `let:bar`
+* [x] `<slot name="foo">`
+* [x] `<slot bar={baz}>` and `let:bar`
 
 
 ## Context
